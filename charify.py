@@ -35,6 +35,7 @@ Run CLI examples:
 
 from __future__ import annotations
 import argparse
+from base64 import b64decode
 import fnmatch
 import json
 import os
@@ -47,7 +48,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tupl
 _PYSIDE = True
 try:
     from PySide6.QtCore import Qt, QTimer, Signal, QByteArray
-    from PySide6.QtGui import QAction, QIcon, QPalette, QColor
+    from PySide6.QtGui import QAction, QIcon, QPalette, QColor, QPixmap, QIcon
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
         QLabel, QLineEdit, QCheckBox, QPushButton, QSplitter, QGroupBox, QComboBox,
@@ -1285,6 +1286,31 @@ if _PYSIDE:
             self.app = app
             self.setWindowTitle("Clarify")
 
+            self.ICON_BASE_64 = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAD40lEQVR4nO2bv07cMBzHv3HSgzu6sB/qTFk6FfUB+gCor4FUqVIXJCYkhiJVQuI1EN07dKyuLJUQYka6vUt7R6+J3eFwznFsx0ns5HLcd7kj/hN/P/7ZTnw4QIFe7O6zojzLrPu7UWBK1yZ23bgsHQjlRZV5xhiArjAJEAR5ayoImQtq4xSMMTCazCGwJYcQzM0HJJx/BiSXRQQR6WtioJSCJgloEuNhOvPSXl/a7PdAwggkDEEIgW60p1ezvc9AE4oknmE6+eu7rV7VH2wgjHogYRYCjwICrK55AJhO/iKJZ6AJhTiHcc+5AULp6pjnSiFQmksLxN5njCKJY0x+TxptYFMaPB8gjKLMxJiJAMYYaBI33rCmRJP4cTlfKAXAl7plm+3Hp2Nn5R+ms8Vy/ihhGWQ5OiZtX+7j17tRrcbZipsYHg1Ll5G1eKCbrwhESrWqfPtyP/PZlGyjwZhP8mh4EFJLNt1kJADmaKgyXNJVgDGK5N8Mkz8P2symHi+CsP31u77s2zfp97ImhkfD0mV2P71MV4JSAAA1BJ15k2mdbq53rPOKUVAGQi0AQBaCyrzKuNjLZfLLxmwmQlOZwdYmwme9egAA/dgXzYimrw5vlfUcXOwZy4tmqq4CXgCoJDdeZ1onDkOs5+Z6p5RxWePTcTMAeKN5r5c1zyVGhFynC3kBYGNeDnWuoryuIcgA8tslJSVPYLKhg4s9rXldugpKlRXFRrUBcKnGvMm4LDGv+N1l+KtUawiI4VnHfNl71ZHzIaCSa/M+5QVAl1QZgC78ffU+D33Xk+E6AtpuQNtaA2i7AW1rDcBFJeLMX/UlqC1VBuBrWdLJx5sh4GkIdCkKnAGweaMr0tXhbePwagGQh0EdCGJeuZyv8AccRoAJggmEKp3XcXJ27n2O8bIjBNTfEjs5O0+vfX71enl3hAD1ilDlpUhlHgA+/PxRo3Vm5SJg48u3XCZb+rotccB+W5zXozJ9/PG9VTtMKtwUrQMA0D8XVIHoA4IMQPvjqO+9OFG6X4aOkR8OJ2fnTiKBSxsBLgBUmcFV95UhANUjwXoIuIoAGwg291JBAMqDaA2Ai/pcQGhkV9iXXI59rk4B8KHOAZCjoG5UlP4foWWQy6HQuQhwrTWAzF+KUxYrJ8mjAEB9zGTVNPe48EnEhICEbbSpMW32e+lRGq7MEFj1CCBhlPMY3d+N0sdh1QGjsmpqm7ys+oMNkDDMeLy/GwXa5wDT5kbXlJ4bIvkOjoA5CVcHJZcNVtGhKcO5wdU9Nmd5bjAAeZwxSRhiK4pW5uBkJrvq4pM9OivqSR+eFtV1EEXH5/8DsBV3DcmuUHgAAAAASUVORK5CYII="
+            try:
+                # 2. Decode Base64 string to bytes
+                icon_data = b64decode(self.ICON_BASE_64)
+
+                # 3. Load the image bytes into a QPixmap
+                pixmap = QPixmap()
+                if not pixmap.loadFromData(QByteArray(icon_data)):
+                    print("Erro ao carregar os dados do ícone do QPixmap.")
+                    # Handle the error, perhaps use a default icon or stop
+                    icon = QIcon() # empty icon
+                else:
+                    # Optional: Resize the pixmap if necessary before creating the QIcon
+                    # pixmap = pixmap.scaled(64, 64, aspect_ratio_mode=Qt.KeepAspectRatio)
+
+                    # 4. Create a QIcon from QPixmap
+                    icon = QIcon(pixmap)
+
+            except Exception as exc:
+                print(f"Erro ao processar a string base64 ou criar o ícone: {exc}")
+                icon = QIcon() # Ícone vazio em caso de erro
+
+            # 5. Set the icon for the main window
+            self.setWindowIcon(icon)
+            
             # Central tabs
             tabs = QTabWidget()
             self.search_panel = SearchReplacePanel(self)
