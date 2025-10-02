@@ -39,6 +39,13 @@ Run CLI examples:
         --cond "content:contains:React" --include "*.tsx"
     python clarify.py translate ./web --dictionary dict.ts
     python clarify.py dedupe en.ts --from-ts --join-keys --eliminate-duplicates --no-line-break -o en2.ts --indent 2
+  
+  Programming Tasks:
+    
+    [X] implement threads to search files;
+    [X] include single files and not only directories;
+    [X] replace text from dropdown relative to insert panel;
+    [] incluir botão de clear conditions;
 """
 
 from __future__ import annotations
@@ -57,13 +64,16 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
 # ---------------------------------------------------------------------------
+
 _PYSIDE = True
+
 try:
     from PySide6.QtCore import (
-        Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QByteArray, QAbstractListModel, QModelIndex
+        Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QByteArray, QAbstractListModel, QModelIndex, QObject, Signal, QThread
         )
     from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon, QPalette, QColor
     from PySide6.QtWidgets import (
@@ -75,6 +85,7 @@ try:
 except Exception:
     _PYSIDE = False
     print("ERROR: PYSIDE is not installed!")
+
 
 # =============================================================================
 #                          FILE DISCOVERY & UTILITIES
@@ -314,77 +325,77 @@ class Condition:
         return False
 
 
-def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition]) -> List[str]:
-    conds = list(conds or [])
-    if not conds:
-        return list(files)
-    out = []
-    for p in files:
-        if all(c.matches(p) for c in conds):
-            out.append(p)
-    return out
-
 # def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition]) -> List[str]:
-#     """
-#     Evaluate conditions against metadata and, when needed, file content (for 'content' field).
-#     We read content at most once per file if any content-condition is present.
-#     """
-#     conds = [c for c in (conds or []) if c.field and c.operator]
+#     conds = list(conds or [])
 #     if not conds:
 #         return list(files)
-
-#     need_content = any(c.field == "content" for c in conds)
-#     out: List[str] = []
-
+#     out = []
 #     for p in files:
-#         try:
-#             # Pre-compute fields
-#             base = os.path.basename(p)
-#             ext = os.path.splitext(p)[1].lstrip(".")
-#             st = None
-#             txt = None
-
-#             ok = True
-#             for c in conds:
-#                 if c.field == "filename":
-#                     a, b = base, c.value
-#                 elif c.field == "path":
-#                     a, b = p, c.value
-#                 elif c.field == "ext":
-#                     a, b = ext, c.value.lstrip(".")
-#                 elif c.field in ("size", "mtime"):
-#                     st = st or os.stat(p)
-#                     a = st.st_size if c.field == "size" else int(st.st_mtime)
-#                     b = int(c.value)
-#                 elif c.field == "content":
-#                     txt = txt if txt is not None else read_text(p)
-#                     a, b = txt, c.value
-#                 else:
-#                     ok = False
-#                     break
-
-#                 if not OPS.get(c.operator, lambda *_: False)(a, b):
-#                     ok = False
-#                     break
-
-#             if ok:
-#                 out.append(p)
-#         except Exception:
-#             # Ignore unreadable files
-#             pass
-
+#         if all(c.matches(p) for c in conds):
+#             out.append(p)
 #     return out
+
+def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition]) -> List[str]:
+    """
+    Evaluate conditions against metadata and, when needed, file content (for 'content' field).
+    We read content at most once per file if any content-condition is present.
+    """
+    conds = [c for c in (conds or []) if c.field and c.operator]
+    if not conds:
+        return list(files)
+
+    need_content = any(c.field == "content" for c in conds)
+    out: List[str] = []
+
+    for p in files:
+        try:
+            # Pre-compute fields
+            base = os.path.basename(p)
+            ext = os.path.splitext(p)[1].lstrip(".")
+            st = None
+            txt = None
+
+            ok = True
+            for c in conds:
+                if c.field == "filename":
+                    a, b = base, c.value
+                elif c.field == "path":
+                    a, b = p, c.value
+                elif c.field == "ext":
+                    a, b = ext, c.value.lstrip(".")
+                elif c.field in ("size", "mtime"):
+                    st = st or os.stat(p)
+                    a = st.st_size if c.field == "size" else int(st.st_mtime)
+                    b = int(c.value)
+                elif c.field == "content":
+                    txt = txt if txt is not None else read_text(p)
+                    a, b = txt, c.value
+                else:
+                    ok = False
+                    break
+
+                if not OPS.get(c.operator, lambda *_: False)(a, b):
+                    ok = False
+                    break
+
+            if ok:
+                out.append(p)
+        except Exception:
+            # Ignore unreadable files
+            pass
+
+    return out
 
 # =============================================================================
 #                              INSERT TEXT ENGINE
 # =============================================================================
 
 class InsertMode:
-    LEFT = "left"               # prepend to the existing line text
-    RIGHT = "right"             # append to the existing line text
-    REPLACE = "replace"         # replace the line content with the text
-    INSERT_ABOVE = "insert_above"  # insert a new line above with the text (pushes current down)
-    INSERT_BELOW = "insert_below"  # insert a new line below with the text (keeps current)
+    LEFT = "Insert left of line"               # prepend to the existing line text
+    RIGHT = "Insert right of line"             # append to the existing line text
+    REPLACE = "Replace line content"         # replace the line content with the text
+    INSERT_ABOVE = "Push line down and insert above"  # insert a new line above with the text (pushes current down)
+    INSERT_BELOW = "Insert on next line (push rest)"  # insert a new line below with the text (keeps current)
 
 
 def insert_at_line(content: str, line_no: int, text: str, mode: str) -> str:
@@ -1229,6 +1240,48 @@ def build_file_list(root: str, include_globs: List[str], exclude_globs: List[str
             files.append(full)
     return files
 
+class SearchWorker(QObject):
+    # Emite progresso opcional (ex: caminho do arquivo atual)
+    progress = Signal(str)
+    # Emite o resultado final (dict de matches)
+    done = Signal(dict)
+    # Emite erros (se quiser mostrar)
+    error = Signal(str)
+
+    def __init__(self, pattern_text: str, iter_files_fn, search_options_factory):
+        super().__init__()
+        self.pattern_text = pattern_text
+        self.iter_files_fn = iter_files_fn
+        self.search_options_factory = search_options_factory
+        self._cancel = False
+
+    def cancel(self):
+        self._cancel = True
+
+    def run(self):
+        """Executa o processamento pesado fora da GUI thread."""
+        
+        matches: Dict[str, List[Tuple[int, int, str]]] = {}
+        for p in self.iter_files_fn():
+            if self._cancel:
+                break
+            try:
+                self.progress.emit(p)  # opcional
+                text = read_text(p)
+                lst: List[Tuple[int, int, str]] = []
+                for m in self.pattern_text.finditer(text):
+                    line = text.count("\n", 0, m.start()) + 1
+                    col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+                    snippet = text.splitlines()[line - 1] if line - 1 < len(text.splitlines()) else ""
+                    lst.append((line, col, snippet))
+                if lst:
+                    matches[p] = lst
+            except Exception as e:
+                self.error.emit(f"[WARN] {p}: {e}")
+                # continua para próximos arquivos
+        self.done.emit(matches)
+
+
 # =============================================================================
 #                                   GUI
 # =============================================================================
@@ -1249,14 +1302,28 @@ if _PYSIDE:
             self.setUniformRowHeights(True)
 
         def populate(self, matches: Dict[str, List[Tuple[int,int,str]]]):
-            self.clear()
-            for path, items in matches.items():
-                top = QTreeWidgetItem([path])
+            self.setUpdatesEnabled(False)
+            try:
+                self.clear()
+                for path, items in matches.items():
+                    top = QTreeWidgetItem([path])
+                    self.addTopLevelItem(top)
+                    for line, col, snippet in items:
+                        leaf = QTreeWidgetItem([f"{line}:{col}  {snippet.strip()}"])
+                        top.addChild(leaf)
+                self.expandAll()
+            finally:
+                self.setUpdatesEnabled(True)
+        
+        def print_message(self, message : str = ""):
+            self.setUpdatesEnabled(False)
+            try:
+                self.clear()
+                top = QTreeWidgetItem(message)
                 self.addTopLevelItem(top)
-                for line, col, snippet in items:
-                    leaf = QTreeWidgetItem([f"{line}:{col}  {snippet.strip()}"])
-                    top.addChild(leaf)
-            self.expandAll()
+                self.expandAll()
+            finally:
+                self.setUpdatesEnabled(True)
 
 
     class SearchReplacePanel(QWidget):
@@ -1269,15 +1336,20 @@ if _PYSIDE:
         def __init__(self, parent=None):
             super().__init__(parent)
             root = QVBoxLayout(self)
-
+            self.processing_search = False
+            
             # Path row
+            column = QVBoxLayout()
             row = QHBoxLayout()
             row.addWidget(QLabel("Root path:"))
             self.ed_path = QLineEdit()
             self.btn_browse = QPushButton("Browse…")
             row.addWidget(self.ed_path, 1)
             row.addWidget(self.btn_browse)
-            root.addLayout(row)
+            column.addLayout(row)
+            self.is_file = QCheckBox("Is File?")
+            column.addWidget(self.is_file)
+            root.addLayout(column)
 
             # Include/Exclude globs
             row = QHBoxLayout()
@@ -1299,7 +1371,7 @@ if _PYSIDE:
             self.chk_case = QCheckBox("Case sensitive")
             self.chk_word = QCheckBox("Whole word")
             self.chk_regex = QCheckBox("Regex")
-            self.btn_search = QPushButton("Search")
+            self.btn_search = QPushButton("Search/Cancel")
             g.addWidget(self.ed_query, 0, 1, 1, 3)
             g.addWidget(self.chk_case, 1, 0)
             g.addWidget(self.chk_word, 1, 1)
@@ -1350,56 +1422,146 @@ if _PYSIDE:
             wroot.addWidget(splitter)
 
             # Connect
+            self.is_file.stateChanged.connect(self.change_advanced_conditions)
             self.btn_browse.clicked.connect(self._browse)
-            self.btn_search.clicked.connect(self._do_search)
+            self.btn_search.clicked.connect(self._start_search_threaded)
             self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
             self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
 
+        def change_advanced_conditions(self):
+            self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
+        
         def _browse(self):
-            path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
+            if self.is_file.isChecked():
+                #self.enable_buttons(False, include_buttons = False)
+                path, _ = QFileDialog.getOpenFileName(self, "Select dictionary", "", "JSON/TS (*.json *.ts *.tsx *.js *.jsx);;All (*)")
+            else:
+                #self.enable_buttons(True, include_buttons = False)
+                path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
+            
             if path:
                 self.ed_path.setText(path)
-
+            
         def _conds(self) -> List[Condition]:
             out: List[Condition] = []
-            for cb_field, cb_op, ed in self.cond_list:
-                f = cb_field.currentText().strip()
-                o = cb_op.currentText().strip()
-                v = ed.text().strip()
-                if f and o and v:
-                    out.append(Condition(f, o, v))
+            if not self.is_file.isChecked():
+                for cb_field, cb_op, ed in self.cond_list:
+                    f = cb_field.currentText().strip()
+                    o = cb_op.currentText().strip()
+                    v = ed.text().strip()
+                    if f and o and v:
+                        out.append(Condition(f, o, v))
             return out
         
         def _iter_files(self) -> List[str]:
             path = self.ed_path.text().strip()
-            inc = [g.strip() for g in re.split(r"[;,]", self.ed_inc.text()) if g.strip()]
+            ed_inc_text = "*.*"
+            if self.ed_inc.text():
+                ed_inc_text = self.ed_inc.text()
+                
+            inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
             exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
             files = list(walk_files(path, inc, exc))
             return filter_files_by_conditions(files, self._conds())
 
-        def _do_search(self):
-            try:
-                patt = SearchOptions(self.chk_case.isChecked(),
-                                     self.chk_word.isChecked(),
-                                     self.chk_regex.isChecked()).compile(self.ed_query.text())
-            except ValueError as e:
-                QMessageBox.critical(self, "Invalid pattern", str(e)); return
+        # def _do_search(self):
+        #     try:
+        #         patt = SearchOptions(self.chk_case.isChecked(),
+        #                              self.chk_word.isChecked(),
+        #                              self.chk_regex.isChecked()).compile(self.ed_query.text())
+        #     except ValueError as e:
+        #         QMessageBox.critical(self, "Invalid pattern", str(e)); return
 
-            matches: Dict[str, List[Tuple[int,int,str]]] = {}
-            for p in self._iter_files():
+        #     matches: Dict[str, List[Tuple[int,int,str]]] = {}
+        #     for p in self._iter_files():
+        #         try:
+        #             text = read_text(p)
+        #             lst: List[Tuple[int,int,str]] = []
+        #             for m in patt.finditer(text):
+        #                 line = text.count("\n", 0, m.start()) + 1
+        #                 col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+        #                 snippet = text.splitlines()[line-1]
+        #                 lst.append((line, col, snippet))
+        #             if lst:
+        #                 matches[p] = lst
+        #         except Exception as e:
+        #             print(f"[WARN] {p}: {e}", file=sys.stderr)
+        #     self.results.populate(matches)
+        
+        def enable_buttons(self, state, include_buttons=True, include_advanced_conditions = True):
+            if include_buttons:
+                self.btn_browse.setEnabled(state)
+                self.btn_replace_one.setEnabled(state)
+                self.btn_replace_all.setEnabled(state)
+            
+            if include_advanced_conditions:
+                for cb_field, cb_op, ed in self.cond_list:
+                    cb_field.setEnabled(state)
+                    cb_op.setEnabled(state)
+                    ed.setEnabled(state)
+                    ed.setReadOnly(not state)
+        
+        def _start_search_threaded(self):
+            if not self.processing_search:
+                self.results.print_message("Loading...")
+                
                 try:
-                    text = read_text(p)
-                    lst: List[Tuple[int,int,str]] = []
-                    for m in patt.finditer(text):
-                        line = text.count("\n", 0, m.start()) + 1
-                        col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
-                        snippet = text.splitlines()[line-1]
-                        lst.append((line, col, snippet))
-                    if lst:
-                        matches[p] = lst
+                    # compile o padrão
+                    pattern_text = SearchOptions(self.chk_case.isChecked(),
+                        self.chk_word.isChecked(),
+                        self.chk_regex.isChecked()).compile(self.ed_query.text())
                 except Exception as e:
-                    print(f"[WARN] {p}: {e}", file=sys.stderr)
-            self.results.populate(matches)
+                    self.error.emit(f"Invalid pattern: {e}")
+                    self.done.emit({})
+                    return
+                
+                # Cria a thread e o worker
+                self._search_thread = QThread(self)
+                self._search_worker = SearchWorker(
+                    pattern_text=pattern_text,
+                    iter_files_fn=self._iter_files,                 # sua função existente
+                    search_options_factory=lambda a,b,c: SearchOptions(a,b,c)  # sua classe existente
+                )
+                self._search_worker.moveToThread(self._search_thread)
+
+                # Conexões: quando a thread começar, chama worker.run
+                self._search_thread.started.connect(self._search_worker.run)
+
+                # Resultados / erros -> atualizam UI (na thread da GUI!)
+                self._search_worker.done.connect(self._on_search_done)
+                self._search_worker.progress.connect(self._on_search_progress)  # opcional
+                self._search_worker.error.connect(self._on_search_error)        # opcional
+
+                # Limpeza
+                self._search_worker.done.connect(self._search_thread.quit)
+                self._search_worker.done.connect(self._search_worker.deleteLater)
+                self._search_thread.finished.connect(self._search_thread.deleteLater)
+
+                # Desabilita botões enquanto busca, se desejar
+                # self.btn_search.setEnabled(False)
+
+                self._search_thread.start()
+                self.enable_buttons(False)
+                self.processing_search = True
+            else:
+                self._search_worker.cancel()
+                self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+                self.processing_search = False
+
+        def _on_search_progress(self, current_path: str):
+            # opcional: atualizar um label/statusbar, sem travar
+            #self.statusBar().showMessage(f"Scanning: {current_path}")
+            pass
+
+        def _on_search_error(self, msg: str):
+            # opcional: log ou snackbar
+            print(msg)
+
+        def _on_search_done(self, matches: dict):
+            # Agora você pode atualizar widgets com segurança
+            self.results.populate(matches)       # seu método existente
+            self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)   # reabilita se tiver desabilitado
+            self.processing_search = False
 
         def _do_replace(self, all_: bool):
             try:
@@ -1422,7 +1584,7 @@ if _PYSIDE:
                 except Exception as e:
                     print(f"[WARN] {p}: {e}", file=sys.stderr)
             QMessageBox.information(self, "Replace", f"Modified files: {count_files}")
-            self._do_search()
+            self.results.print_message()
 
 
     class InsertPanel(QWidget):
@@ -1431,53 +1593,62 @@ if _PYSIDE:
         def __init__(self, parent=None):
             super().__init__(parent)
             layout = QGridLayout(self)
-
+            self.processing_search = False
+            
             layout.addWidget(QLabel("Root path:"), 0, 0)
             self.ed_path = QLineEdit()
             self.btn_browse = QPushButton("Browse…")
             layout.addWidget(self.ed_path, 0, 1, 1, 3)
             layout.addWidget(self.btn_browse, 0, 4)
-
-            layout.addWidget(QLabel("Include globs:"), 1, 0)
+            
+            self.is_file = QCheckBox("Is File?")
+            layout.addWidget(self.is_file, 1, 0)
+            
+            layout.addWidget(QLabel("Include globs:"), 2, 0)
             self.ed_inc = QLineEdit("*.ts;*.tsx;*.js;*.jsx;*.py;*.md")
-            layout.addWidget(self.ed_inc, 1, 1, 1, 4)
+            layout.addWidget(self.ed_inc, 2, 1, 1, 4)
 
-            layout.addWidget(QLabel("Exclude globs:"), 2, 0)
+            layout.addWidget(QLabel("Exclude globs:"), 3, 0)
             self.ed_exc = QLineEdit("node_modules;dist;build;.git")
-            layout.addWidget(self.ed_exc, 2, 1, 1, 4)
+            layout.addWidget(self.ed_exc, 3, 1, 1, 4)
 
-            layout.addWidget(QLabel("Line number (1-based):"), 3, 0)
+            layout.addWidget(QLabel("Line number (1-based):"), 4, 0)
             self.spin_line = QSpinBox(); self.spin_line.setRange(1, 10_000_000); self.spin_line.setValue(1)
-            layout.addWidget(self.spin_line, 3, 1)
+            layout.addWidget(self.spin_line, 4, 1)
 
-            layout.addWidget(QLabel("Insert text:"), 4, 0)
+            layout.addWidget(QLabel("Insert text:"), 5, 0)
             self.ed_text = QPlainTextEdit()
-            layout.addWidget(self.ed_text, 4, 1, 1, 4)
+            layout.addWidget(self.ed_text, 5, 1, 1, 4)
 
-            layout.addWidget(QLabel("Mode:"), 5, 0)
+            layout.addWidget(QLabel("Mode:"), 6, 0)
             self.cb_mode = QComboBox()
             self.cb_mode.addItems([InsertMode.LEFT, InsertMode.RIGHT, InsertMode.REPLACE,
                                    InsertMode.INSERT_ABOVE, InsertMode.INSERT_BELOW])
-            layout.addWidget(self.cb_mode, 5, 1)
+            layout.addWidget(self.cb_mode, 6, 1)
 
+            self._debounce_timer = QTimer(self)
+            self._debounce_timer.setSingleShot(True)
+            self._debounce_timer.setInterval(300)
+            self._debounce_timer.timeout.connect(self._start_search_threaded)
+            
             # Advanced conditions (same as Search/Replace, including `content`)
             gb3 = QGroupBox("Advanced conditions (folder mode)")
             g3 = QGridLayout(gb3)
             self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit]] = []
             for row_i in range(3):
                 cb_field = QComboBox(); cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-                cb_field.currentTextChanged.connect(self.some_filled_field_line)
+                cb_field.currentTextChanged.connect(self._schedule_live_refresh)
                 cb_op = QComboBox(); cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
                                                      "starts with", "ends with", ">", "<", ">=", "<="])
-                cb_op.currentTextChanged.connect(self.some_filled_field_line)
+                cb_op.currentTextChanged.connect(self._schedule_live_refresh)
                 ed_val = QLineEdit()
-                ed_val.textChanged.connect(self.some_filled_field_line)
+                ed_val.textChanged.connect(self._schedule_live_refresh)
                 g3.addWidget(cb_field, row_i, 0); g3.addWidget(cb_op, row_i, 1); g3.addWidget(ed_val, row_i, 2, 1, 2)
                 self.cond_list.append((cb_field, cb_op, ed_val))
-            layout.addWidget(gb3, 6, 0, 1, 5)
+            layout.addWidget(gb3,7, 0, 1, 5)
             
             self.btn_apply = QPushButton("Apply to files")
-            layout.addWidget(self.btn_apply, 7, 4)
+            layout.addWidget(self.btn_apply, 8, 4)
 
             # Results on the right
             self.results = ResultsTree()
@@ -1492,11 +1663,21 @@ if _PYSIDE:
             wroot.setContentsMargins(0, 0, 0, 0)
             wroot.addWidget(splitter)
             
+            self.is_file.stateChanged.connect(self.change_advanced_conditions)
             self.btn_browse.clicked.connect(self._browse)
-            self.btn_apply.clicked.connect(lambda : self._apply)
+            self.btn_apply.clicked.connect(self._apply)
+
+        def change_advanced_conditions(self):
+            self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
 
         def _browse(self):
-            path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
+            if self.is_file.isChecked():
+                path, _ = QFileDialog.getOpenFileName(self, "Select dictionary", "", "JSON/TS (*.json *.ts *.tsx *.js *.jsx);;All (*)")
+                #self.enable_buttons(False, include_buttons = False)
+            else:
+                path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
+                #self.enable_buttons(True, include_buttons = False)
+            
             if path:
                 self.ed_path.setText(path)
 
@@ -1509,13 +1690,31 @@ if _PYSIDE:
         
         def _conds(self) -> List[Condition]:
             out: List[Condition] = []
-            for cb_field, cb_op, ed in self.cond_list:
-                f = cb_field.currentText().strip()
-                o = cb_op.currentText().strip()
-                v = ed.text().strip()
-                if f and o and v:
-                    out.append(Condition(f, o, v))
+            if not self.is_file.isChecked():
+                for cb_field, cb_op, ed in self.cond_list:
+                    f = cb_field.currentText().strip()
+                    o = cb_op.currentText().strip()
+                    v = ed.text().strip()
+                    if f and o and v:
+                        out.append(Condition(f, o, v))
             return out
+        
+        def enable_buttons(self,state, include_buttons=True, include_advanced_conditions = True):
+            if include_buttons:
+                self.btn_browse.setEnabled(state)
+                
+            if include_advanced_conditions:
+                for cb_field, cb_op, ed in self.cond_list:
+                    cb_field.setEnabled(state)
+                    cb_op.setEnabled(state)
+                    ed.setEnabled(state)
+                    ed.setReadOnly(not state)
+            
+        def reset_advanced_conditions(self):
+            for cb_field, cb_op, ed in self.cond_list:
+                cb_field.clear()
+                cb_op.setCurrentIndex(0)
+                ed.setCurrentIndex(0)
         
         def _iter_files(self) -> List[str]:
             path = self.ed_path.text().strip()
@@ -1524,33 +1723,102 @@ if _PYSIDE:
             files = list(walk_files(path, inc, exc))
             return filter_files_by_conditions(files, self._conds())
 
-        def some_filled_field_line (self):
-            if self._conds():
-                self._do_search()
+        def _schedule_live_refresh(self):
+            if not self._conds():  # só dispara se há pelo menos 1 regra válida
+                return
+            # Só faça live preview quando o path é diretório:
+            p = self.ed_path.text().strip()
+            if not p or os.path.isfile(p):
+                return
+            self._debounce_timer.start()
         
-        def _do_search(self):
-            try:
-                patt = SearchOptions(False,
-                                     False,
-                                     False).compile(self.ed_text.text())
-            except ValueError as e:
-                QMessageBox.critical(self, "Invalid pattern", str(e)); return
+        def _start_search_threaded(self):
+            if not self.processing_search:
+                words = "|".join([ed.text().strip() for k, n, ed in self.cond_list if ed.text().strip()])
+                if words:
+                    self.results.print_message("Loading...")
+                    # if self.is_file.isChecked():
+                    #     self.reset_advanced_conditions()
+                    try:
+                        # compile o padrão
+                        pattern_text = SearchOptions(False, False, True).compile(rf"(?:{words})")
+                    except Exception as e:
+                        self.error.emit(f"Invalid pattern: {e}")
+                        self.done.emit({})
+                        return
+                    
+                    # Cria a thread e o worker
+                    self._search_thread = QThread(self)
+                    self._search_worker = SearchWorker(
+                        pattern_text=pattern_text,
+                        iter_files_fn=self._iter_files,                 # sua função existente
+                        search_options_factory=lambda a,b,c: SearchOptions(a,b,c)  # sua classe existente
+                    )
+                    self._search_worker.moveToThread(self._search_thread)
+
+                    # Conexões: quando a thread começar, chama worker.run
+                    self._search_thread.started.connect(self._search_worker.run)
+
+                    # Resultados / erros -> atualizam UI (na thread da GUI!)
+                    self._search_worker.done.connect(self._on_search_done)
+                    self._search_worker.progress.connect(self._on_search_progress)  # opcional
+                    self._search_worker.error.connect(self._on_search_error)        # opcional
+
+                    # Limpeza
+                    self._search_worker.done.connect(self._search_thread.quit)
+                    self._search_worker.done.connect(self._search_worker.deleteLater)
+                    self._search_thread.finished.connect(self._search_thread.deleteLater)
+
+                    # Desabilita botões enquanto busca, se desejar
+                    # self.btn_search.setEnabled(False)
+
+                    self._search_thread.start()
+                    self.enable_buttons(False)
+                    self.processing_search = True
+            else:
+                self._search_worker.cancel()
+                self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+                self.processing_search = False
+
+        def _on_search_progress(self, current_path: str):
+            # opcional: atualizar um label/statusbar, sem travar
+            #self.statusBar().showMessage(f"Scanning: {current_path}")
+            pass
+
+        def _on_search_error(self, msg: str):
+            # opcional: log ou snackbar
+            print(msg)
+
+        def _on_search_done(self, matches: dict):
+            # Agora você pode atualizar widgets com segurança
+            self.results.populate(matches)       # seu método existente
+            self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+            self.processing_search = False
+        
+        # def _do_search(self):
+        #     try:
+        #         patt = SearchOptions(False,
+        #                              False,
+        #                              False).compile(self.ed_text.toPlainText())
+        #     except ValueError as e:
+        #         QMessageBox.critical(self, "Invalid pattern", str(e)); return
             
-            matches: Dict[str, List[Tuple[int,int,str]]] = {}
-            for p in self._iter_files():
-                try:
-                    text = read_text(p)
-                    lst: List[Tuple[int,int,str]] = []
-                    for m in patt.finditer(text):
-                        line = text.count("\n", 0, m.start()) + 1
-                        col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
-                        snippet = text.splitlines()[line-1]
-                        lst.append((line, col, snippet))
-                    if lst:
-                        matches[p] = lst
-                except Exception as e:
-                    print(f"[WARN] {p}: {e}", file=sys.stderr)
-            self.results.populate(matches)
+        #     matches: Dict[str, List[Tuple[int,int,str]]] = {}
+        #     for p in self._iter_files():
+        #         print(f"TESTE {p}")
+        #         try:
+        #             text = read_text(p)
+        #             lst: List[Tuple[int,int,str]] = []
+        #             for m in patt.finditer(text):
+        #                 line = text.count("\n", 0, m.start()) + 1
+        #                 col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+        #                 snippet = text.splitlines()[line-1]
+        #                 lst.append((line, col, snippet))
+        #             if lst:
+        #                 matches[p] = lst
+        #         except Exception as e:
+        #             print(f"[WARN] {p}: {e}", file=sys.stderr)
+        #     self.results.populate(matches)
         
         def _files(self) -> List[str]:
             path = self.ed_path.text().strip()
@@ -1574,7 +1842,7 @@ if _PYSIDE:
                 except Exception as e:
                     print(f"[WARN] {p}: {e}", file=sys.stderr)
             QMessageBox.information(self, "Insert", f"Modified files: {count}")
-            self._do_search()
+            self._start_search_threaded()
 
     # class InsertPanel(QWidget):
     #     """
