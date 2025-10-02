@@ -1360,9 +1360,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_arg_parser()
     if not argv:
         # GUI (if available). If PySide6 is missing and no args were given, print help.
+        
         if not _PYSIDE:
             parser.print_help()
             return 0
+            
         app = QApplication(sys.argv)
         win = MainWindow(app)
         win.resize(1200, 800)
@@ -1377,3 +1379,4 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
