@@ -56,6 +56,8 @@ Run CLI examples:
     [] include search and character lookup in the Insert panel tab for inserting characters with search and lookup instead of defining the line number in which the text should be inserted.
     [] add JSON translation reversal functionality;
     [] Add user data backup for undo and redo with ECC, or, whether or not, use Gof command architecture;
+    [] include the ability to open and read files, differentiate scope with different color themes;
+    [] provide the ability to change the application's appearance to a transparent background;
 """
 
 from __future__ import annotations
