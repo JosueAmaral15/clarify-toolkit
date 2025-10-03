@@ -59,6 +59,9 @@ Run CLI examples:
     [] include the ability to open and read files, differentiate scope with different color themes;
     [] provide the ability to change the application's appearance to a transparent background;
     [] add the ability to right-click to open three options in the match panel: copy, open file, and open all files;
+    [] change the insert text, query and replacement text boxes to a text box that can be resized by the user;
+    [] include Gemini in the list of artificial intelligences to be used;
+    [] include the ability to connect to Google Translate;
 """
 
 from __future__ import annotations
