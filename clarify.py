@@ -45,9 +45,17 @@ Run CLI examples:
     [X] implement threads to search files;
     [X] include single files and not only directories;
     [X] replace text from dropdown relative to insert panel;
-    [] include 'clear conditions' button;
-    [] include the possibility of adding a new line of conditional advanced options, with a minimum of 3 and no maximum limit.
+    [] add scroll in 'search/replace' and 'insert' panels;
     [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
+    [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
+    [] add scope in the conditional advanced options in algorithm case, for example, only between brackets;
+    [] include the possibility of adding a new line of conditional advanced options, with a minimum of 3 and no maximum limit.
+    [] include 'clear all conditions' button in conditional advanced options;
+    [] add the options to undo and redo the changes made;
+    [] add three new panel called 'Smart file editing - AI'
+    [] include search and character lookup in the Insert panel tab for inserting characters with search and lookup instead of defining the line number in which the text should be inserted.
+    [] add JSON translation reversal functionality;
+    [] Add user data backup for undo and redo with ECC, or, whether or not, use Gof command architecture;
 """
 
 from __future__ import annotations
