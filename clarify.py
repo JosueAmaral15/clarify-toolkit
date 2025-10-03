@@ -58,6 +58,7 @@ Run CLI examples:
     [] Add user data backup for undo and redo with ECC, or, whether or not, use Gof command architecture;
     [] include the ability to open and read files, differentiate scope with different color themes;
     [] provide the ability to change the application's appearance to a transparent background;
+    [] add the ability to right-click to open three options in the match panel: copy, open file, and open all files;
 """
 
 from __future__ import annotations
