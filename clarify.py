@@ -45,7 +45,9 @@ Run CLI examples:
     [X] implement threads to search files;
     [X] include single files and not only directories;
     [X] replace text from dropdown relative to insert panel;
-    [] incluir botão de clear conditions;
+    [] include 'clear conditions' button;
+    [] include the possibility of adding a new line of conditional advanced options, with a minimum of 3 and no maximum limit.
+    [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
 """
 
 from __future__ import annotations
