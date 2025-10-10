@@ -40,28 +40,63 @@ Run CLI examples:
     python clarify.py translate ./web --dictionary dict.ts
     python clarify.py dedupe en.ts --from-ts --join-keys --eliminate-duplicates --no-line-break -o en2.ts --indent 2
   
+  
   Programming Tasks:
     
-    [X] implement threads to search files;
-    [X] include single files and not only directories;
-    [X] replace text from dropdown relative to insert panel;
-    [] add scroll in 'search/replace' and 'insert' panels;
-    [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
-    [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
-    [] add scope in the conditional advanced options in algorithm case, for example, only between brackets;
-    [] include the possibility of adding a new line of conditional advanced options, with a minimum of 3 and no maximum limit.
-    [] include 'clear all conditions' button in conditional advanced options;
-    [] add the options to undo and redo the changes made;
-    [] add three new panel called 'Smart file editing - AI'
-    [] include search and character lookup in the Insert panel tab for inserting characters with search and lookup instead of defining the line number in which the text should be inserted.
-    [] add JSON translation reversal functionality;
-    [] Add user data backup for undo and redo with ECC, or, whether or not, use Gof command architecture;
-    [] include the ability to open and read files, differentiate scope with different color themes;
-    [] provide the ability to change the application's appearance to a transparent background;
-    [] add the ability to right-click to open three options in the match panel: copy, open file, and open all files;
-    [] change the insert text, query and replacement text boxes to a text box that can be resized by the user;
-    [] include Gemini in the list of artificial intelligences to be used;
-    [] include the ability to connect to Google Translate;
+    MUST HAVE
+        TASKS DONE
+            [X] implement threads to search files;
+            [X] include single files and not only directories;
+            [X] replace text from dropdown relative to insert panel;
+        TASKS TO-DO
+            [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
+            [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
+            [] add scope in the conditional advanced options in algorithm case, for example, only between brackets;
+            [] make the inverse from translate from text to object;
+            
+    SHOULD HAVE
+        TASKS DONE
+        
+        TASKS TO-DO
+            [] include search and character lookup in the Insert panel tab for inserting characters with search and lookup instead of defining the line number in which the text should be inserted.
+            [] add JSON translation reversal functionality;
+            [] add the ability to right-click to open some options in the match panel: copy, copy all, select all, open file, and open all files. When the user click with CTRL or shift buttons pressioned, the application must select all the results which the user select with the mouse;
+            [] include saving result from match panel as txt file;
+            [] Possibility of placing results in separate files (each iteration) or in a single file;
+            [] Ability to insert included and not included ranges in Insert, even when using regular expressions;
+            [] Fix the Loading message (only appears L letter);
+            [] Put the result quantity on the first line at the match panel;
+            [] include the possibility of put the mouse over the result search in the match panel and show the character or word absolute position related with the file size;
+    COULD HAVE
+        TASKS DONE
+        
+        TASKS TO-DO
+            [] include the ability to open and read files, differentiate scope with different color themes;
+            [] Include JSON editors as tabs;
+            [] add new panel called 'Smart file editing - AI'
+            [] include the ability to connect to Google Translate;
+            [] include Gemini in the list of artificial intelligences to be used;
+            [] add conditional advanced options also in the Smart file editing - AI panel;
+            [] Include all Search/Replace and Insert features in Smart Edit File (AI) and in JSON editors;
+            [] make the possibility the changes made only in text editor from own clarify app, and don't more in files;
+            [] add the feature which the result can be reused on clarify text edit;
+    
+    WOULD HAVE LATER
+        TASKS DONE
+        
+        TASKS TO-DO
+            [] include 'clear all conditions' button in conditional advanced options;
+            [] add scroll in 'search/replace' and 'insert' panels;
+            [] include the possibility of adding a new line of conditional advanced options, with a minimum of 3 and no maximum limit.
+            [] provide the ability to change the application's appearance to a transparent background;
+            [] change the insert text, query and replacement text boxes to a text box that can be resized by the user;
+            [] add the options to undo and redo the changes made;
+            [] Translate the application into the world's most spoken languages;
+            [] Include usage tutorials;
+            [] Embed a virtual assistant for use with AI;
+            [] Include AI usage fee of 50% more than the actual amount for my account + 1% to remain in the cash bank, as the user must make the payment using AI, totaling around 151% of the actual amount to be paid. Inform the user that they pay in tokens;
+            [] Research the possibility of embedding Clarify in the Linux application manager and how much you earn by doing so. Once installed, compile the code before sending;
+            [] Add user data backup for undo and redo with ECC, or, whether or not, use Gof command architecture;
 """
 
 from __future__ import annotations
@@ -1335,7 +1370,7 @@ if _PYSIDE:
             self.setUpdatesEnabled(False)
             try:
                 self.clear()
-                top = QTreeWidgetItem(message)
+                top = QTreeWidgetItem(f"{message}")
                 self.addTopLevelItem(top)
                 self.expandAll()
             finally:
@@ -2228,7 +2263,7 @@ if _PYSIDE:
         def __init__(self, app: QApplication):
             super().__init__()
             self.app = app
-            self.setWindowTitle("Clarify - TextWorkbench")
+            self.setWindowTitle("Clarify - JSON file management system")
             #self.resize(1080, 720)
             
             self._build_icon()
@@ -2329,7 +2364,7 @@ if _PYSIDE:
 
         def _about_dialog(self):
             QMessageBox.information(self, "About",
-                                    "Clarify\n\nPurpose: search, replace, insert and JSON utilities.\n"
+                                    "Clarify\n\nJSON file management system\nPurpose: search, replace, insert and JSON utilities.\n"
                                     "Author: Josué Amaral\nVersion and year: 2025")
 
         def _build_ui(self):
