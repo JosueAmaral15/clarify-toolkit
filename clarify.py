@@ -51,10 +51,10 @@ Run CLI examples:
             [X] solve the following issue "json.decoder.JSONDecodeError: Expecting ':' delimiter: line 4629 column 21 (char 185171)"
             
         TASKS TO-DO
-            [] avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
+            [] dont override: avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
             [] ajust the JSON Translate to translate only in a code scope (and don't anymore). The example: 'children: React.React{t.pages.translation.buttons.no}de' is not a text to be translated, when it keep as following like children: React.ReactNode;
-            [] make the inverse from JSON translate (where is from text to object) to text from object;
-            [] the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
+            [] reverse: make the reverse from JSON translate (where is from text to object) to text from object;
+            [] first object variable name: the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
             [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
             
     SHOULD HAVE
@@ -75,7 +75,7 @@ Run CLI examples:
             [] include the possibility to change the case from keys words (camelCase, PascalCase, snake_case and kebab-case);
             [] include the possibility to remove a certain JSON sub-structure from a JSON structure bigger;
             [] include progress bar to show the progress of the application processing;
-            
+            [] include is file checkbox to JSON translate;
     COULD HAVE
         TASKS DONE
         
@@ -608,41 +608,56 @@ def flatten_dict_paths(d: Dict[str, Any], prefix: str = "") -> Dict[str, str]:
     return out
 
 
+# def translate_replace_texts(content: str,
+#                             dictionary: Dict[str, Any],
+#                             open_tag: str = "{",
+#                             close_tag: str = "}") -> str:
+#     """
+#     Replace visible texts BETWEEN tags by dictionary keys, e.g.:
+#       "<p>Submit</p>"  →  "<p>{t.common.buttons.submit}</p>"
+#     Strategy:
+#       - Build value→key map from the dictionary by flattening.
+#       - For every value (longest first), replace occurrences that are not inside existing braces.
+#     NOTE: This is a heuristic; for precise HTML/TSX you’d use a real parser. Good enough for batch refactors.
+#     """
+#     flat = flatten_dict_paths(dictionary)
+#     val2key: Dict[str, str] = {}
+#     for k, v in flat.items():
+#         if isinstance(v, str) and v.strip():
+#             val2key[v] = k
+
+#     # Sort by descending length to prefer longer matches first.
+#     items = sorted(val2key.items(), key=lambda kv: len(kv[0]), reverse=True)
+
+#     def _outside_braces(text: str, pos: int, span: int) -> bool:
+#         # crude: ensure no '{' or '}' inside the window; avoids replacing existing {t...}
+#         window = text[max(0, pos-1):pos+span+1]
+#         return ("{" not in window) and ("}" not in window)
+
+#     s = content
+#     for val, key in items:
+#         if not val:
+#             continue
+#         pat = re.escape(val)
+#         for m in list(re.finditer(pat, s)):
+#             if _outside_braces(s, m.start(), len(val)):
+#                 s = s[:m.start()] + f"{open_tag}t.{key}{close_tag}" + s[m.end():]
+#     return s
+
+
 def translate_replace_texts(content: str,
                             dictionary: Dict[str, Any],
-                            open_tag: str = "{",
-                            close_tag: str = "}") -> str:
+                            root_name: str = "t",
+                            inverse: bool = False) -> str:
     """
-    Replace visible texts BETWEEN tags by dictionary keys, e.g.:
-      "<p>Submit</p>"  →  "<p>{t.common.buttons.submit}</p>"
-    Strategy:
-      - Build value→key map from the dictionary by flattening.
-      - For every value (longest first), replace occurrences that are not inside existing braces.
-    NOTE: This is a heuristic; for precise HTML/TSX you’d use a real parser. Good enough for batch refactors.
+    Wrapper around CodeAwareJSONTranslator.
+    - forward  (inverse=False): text → {root.path}
+    - inverse  (inverse=True):  {root.path} → text
     """
-    flat = flatten_dict_paths(dictionary)
-    val2key: Dict[str, str] = {}
-    for k, v in flat.items():
-        if isinstance(v, str) and v.strip():
-            val2key[v] = k
-
-    # Sort by descending length to prefer longer matches first.
-    items = sorted(val2key.items(), key=lambda kv: len(kv[0]), reverse=True)
-
-    def _outside_braces(text: str, pos: int, span: int) -> bool:
-        # crude: ensure no '{' or '}' inside the window; avoids replacing existing {t...}
-        window = text[max(0, pos-1):pos+span+1]
-        return ("{" not in window) and ("}" not in window)
-
-    s = content
-    for val, key in items:
-        if not val:
-            continue
-        pat = re.escape(val)
-        for m in list(re.finditer(pat, s)):
-            if _outside_braces(s, m.start(), len(val)):
-                s = s[:m.start()] + f"{open_tag}t.{key}{close_tag}" + s[m.end():]
-    return s
+    tr = CodeAwareJSONTranslator(dictionary, root_name=root_name)
+    if inverse:
+        return tr.translate_refs_to_text(content)
+    return tr.translate_text_to_refs(content)
 
 
 # =============================================================================
@@ -1054,27 +1069,6 @@ def read_translation_dict(path: str) -> Dict[str, Any]:
 #     return 0
 
 
-# def cli_translate(args: argparse.Namespace) -> int:
-#     files = list(walk_files(args.path, args.include, args.exclude))
-#     d = load_translation_dict(args.dictionary)
-#     changed = 0
-#     for p in files:
-#         try:
-#             text = read_text(p)
-#             new = translate_replace_texts(text, d, "{", "}")
-#             if new != text:
-#                 if args.dry_run:
-#                     print(f"[DRY] {p}: would translate")
-#                 else:
-#                     write_text(p, new)
-#                     print(f"[OK ] {p}: translated")
-#                     changed += 1
-#         except Exception as e:
-#             print(f"[WARN] {p}: {e}", file=sys.stderr)
-#     print(f"\nChanged files: {changed}")
-#     return 0
-
-
 # def cli_dedupe(args: argparse.Namespace) -> int:
 #     raw = read_text(args.input)
 #     indent = None if args.indent is not None and args.indent <= 0 else args.indent
@@ -1195,14 +1189,36 @@ def cli_insert(args: argparse.Namespace) -> int:
     print(f"\nChanged files: {changed}")
     return 0
 
+# def cli_translate(args: argparse.Namespace) -> int:
+#     files = list(walk_files(args.path, split_globs(args.include), split_globs(args.exclude)))
+#     d = read_translation_dict(args.dictionary)
+#     changed = 0
+#     for p in files:
+#         try:
+#             old = read_text(p)
+#             new = translate_replace_texts(old, d)
+#             if new != old:
+#                 if args.dry_run:
+#                     print(f"[DRY] {p}: would translate")
+#                 else:
+#                     write_text(p, new); changed += 1
+#         except Exception as e:
+#             print(f"[WARN] {p}: {e}", file=sys.stderr)
+#     print(f"\nChanged files: {changed}")
+#     return 0
+
 def cli_translate(args: argparse.Namespace) -> int:
     files = list(walk_files(args.path, split_globs(args.include), split_globs(args.exclude)))
     d = read_translation_dict(args.dictionary)
+
+    root_name = getattr(args, "root", "t")
+    inverse = getattr(args, "inverse", False)
+
     changed = 0
     for p in files:
         try:
             old = read_text(p)
-            new = translate_replace_texts(old, d)
+            new = translate_replace_texts(old, d, root_name=root_name, inverse=inverse)
             if new != old:
                 if args.dry_run:
                     print(f"[DRY] {p}: would translate")
@@ -2153,7 +2169,209 @@ if _PYSIDE:
     #                 pass
     #         QMessageBox.information(self, "Insert", f"Files modified: {changed}")
     #         self._live_refresh()
-        
+
+    
+    # ============================ Code-aware JSON Translator ============================
+
+class CodeAwareJSONTranslator:
+    """
+    Translate visible text to {<root>.<path>} using a dictionary (and inverse).
+    Goals:
+      • Translate only in "code scope" that makes sense:
+          - JSX text nodes (between '>' and '<')
+          - String literals in code
+        and SKIP:
+          - Anything inside {...} expressions
+          - Inside JSX tags/attributes (<Tag ...>)
+          - Type annotations and identifiers like React.ReactNode
+      • Configurable root alias (default: 't'), e.g. {t.pages.home.title}
+      • Never break existing placeholders; protect existing {root.*} blocks
+      • Inverse: turn {root.*} back into original strings using the same dictionary
+    """
+
+    _re_jsx_tag = re.compile(r"<[^>]*>")  # a rough "inside tag" region
+    _re_placeholder = re.compile(r"\{([A-Za-z_]\w*)(?:\.[A-Za-z0-9_]+)+\}")  # {t.pages.home.title}
+    _re_string = re.compile(
+        r"""
+        (?P<q>['"])                # opening quote
+        (?P<body>(?:\\.|(?!\1).)*) # body allowing escapes
+        \1                         # closing quote
+        """,
+        re.VERBOSE | re.DOTALL,
+    )
+
+    def __init__(self, dictionary: dict, root_name: str = "t"):
+        self.root = root_name
+        # Build flat key → value and value → key
+        self.flat = self._flatten(dictionary)
+        self.value_to_key = {v: k for k, v in self.flat.items() if isinstance(v, str) and v.strip()}
+
+        # Pre-sort values longest-first to avoid partial overlaps when replacing
+        self.sorted_values = sorted(self.value_to_key.keys(), key=len, reverse=True)
+
+    # ---------- public API ----------
+
+    def translate_text_to_refs(self, content: str) -> str:
+        """
+        Forward: Replace visible text with {root.path}.
+        Only in safe scopes (JSX text nodes and string literals), never inside {...} or tags.
+        """
+        if not content.strip():
+            return content
+
+        # 0) protect existing placeholders so we never touch inside/around them
+        content, guards = self._mask_existing_placeholders(content)
+
+        # 1) replace in JSX text nodes (outside tags and outside {...})
+        content = self._replace_in_jsx_text_nodes(content)
+
+        # 2) replace in string literals (again skipping {...})
+        content = self._replace_in_string_literals(content)
+
+        # 3) unmask placeholders
+        content = self._unmask_placeholders(content, guards)
+        return content
+
+    def translate_refs_to_text(self, content: str) -> str:
+        """
+        Inverse: Replace {root.path.to.key} with dictionary value.
+        Only if key exists; otherwise leave as-is.
+        """
+        def _repl(m: re.Match) -> str:
+            alias = m.group(1)
+            if alias != self.root:
+                return m.group(0)
+            keypath = m.group(0)[1:-1]  # strip {}
+            val = self.flat.get(keypath[len(self.root) + 1 :], None) if "." in keypath else None
+            return val if isinstance(val, str) else m.group(0)
+
+        return self._re_placeholder.sub(_repl, content)
+
+    # ---------- core steps ----------
+
+    def _replace_in_jsx_text_nodes(self, s: str) -> str:
+        """
+        Replace plain text BETWEEN '>' and '<', excluding braces blocks and tags.
+        """
+        out = []
+        i = 0
+        n = len(s)
+        while i < n:
+            gt = s.find(">", i)
+            if gt == -1:
+                out.append(s[i:])
+                break
+            out.append(s[i:gt + 1])  # include '>'
+            lt = s.find("<", gt + 1)
+            if lt == -1:
+                # trailing text node to EOF
+                segment = s[gt + 1 :]
+                out.append(self._replace_outside_braces(segment))
+                break
+            segment = s[gt + 1 : lt]
+            out.append(self._replace_outside_braces(segment))
+            i = lt
+        return "".join(out)
+
+    def _replace_in_string_literals(self, s: str) -> str:
+        """
+        Replace only inside string literals, but not if the string looks like a type/identifier blob.
+        """
+        out = []
+        last = 0
+        for m in self._re_string.finditer(s):
+            out.append(s[last : m.start()])
+            q = m.group("q")
+            body = m.group("body")
+            new_body = self._replace_outside_braces(body, inside_string=True)
+            out.append(q + new_body + q)
+            last = m.end()
+        out.append(s[last:])
+        return "".join(out)
+
+    def _replace_outside_braces(self, text: str, inside_string: bool = False) -> str:
+        """
+        Replace occurrences of known values with {root.key} only when NOT inside {...}.
+        Heuristics:
+          • Skip chunks that obviously look like identifiers/types (contain dots and no spaces)
+          • Don’t replace if either neighbor char is alnum or '.' (avoid breaking identifiers)
+        """
+        if not text.strip():
+            return text
+
+        # quick skip: likely code-ish (React.ReactNode etc.) with no spaces
+        if not inside_string and "." in text and " " not in text.strip():
+            return text
+
+        out = []
+        i = 0
+        depth = 0
+        while i < len(text):
+            ch = text[i]
+            if ch == "{":
+                depth += 1
+                out.append(ch)
+                i += 1
+                continue
+            if ch == "}":
+                depth = max(0, depth - 1)
+                out.append(ch)
+                i += 1
+                continue
+
+            if depth == 0:
+                # Try to match any known value at this position
+                replaced = False
+                for val in self.sorted_values:
+                    if not val:
+                        continue
+                    if text.startswith(val, i):
+                        left = text[i - 1] if i > 0 else ""
+                        right = text[i + len(val)] if i + len(val) < len(text) else ""
+                        # neighbors: avoid attaching to identifiers or JSX attr names
+                        if (left.isalnum() or left == ".") or (right.isalnum() or right == "."):
+                            continue
+                        key = self.value_to_key[val]
+                        out.append("{" + self.root + "." + key + "}")
+                        i += len(val)
+                        replaced = True
+                        break
+                if replaced:
+                    continue
+
+            # default
+            out.append(ch)
+            i += 1
+
+        return "".join(out)
+
+    # ---------- masking helpers ----------
+
+    def _mask_existing_placeholders(self, s: str) -> tuple[str, List[str]]:
+        guards: List[str] = []
+        def _mask(m: re.Match) -> str:
+            idx = len(guards)
+            guards.append(m.group(0))
+            return f"@@TREF{idx}@@"
+        return self._re_placeholder.sub(_mask, s), guards
+
+    def _unmask_placeholders(self, s: str, guards: List[str]) -> str:
+        for i, tok in enumerate(guards):
+            s = s.replace(f"@@TREF{i}@@", tok)
+        return s
+
+    # ---------- dictionary flatten ----------
+
+    def _flatten(self, d: dict, prefix: str = "") -> Dict[str, Any]:
+        out: Dict[str, Any] = {}
+        for k, v in (d or {}).items():
+            kk = f"{prefix}.{k}" if prefix else str(k)
+            if isinstance(v, dict):
+                out.update(self._flatten(v, kk))
+            else:
+                out[kk] = v
+        return out
+    
     class JsonTranslateDock(QDockWidget):
         def __init__(self, parent=None):
             super().__init__("JSON Translate", parent)
@@ -2162,26 +2380,33 @@ if _PYSIDE:
             g.addWidget(QLabel("Root path:"), 0, 0)
             self.ed_path = QLineEdit()
             self.btn_browse = QPushButton("Browse…")
-            g.addWidget(self.ed_path, 0, 1, 1, 3)
-            g.addWidget(self.btn_browse, 0, 4)
+            g.addWidget(self.ed_path, 0, 1, 1, 2)
+            g.addWidget(self.btn_browse, 0, 3)
             g.addWidget(QLabel("Dictionary file (JSON/TS):"), 1, 0)
             self.ed_dict = QLineEdit()
             self.btn_open = QPushButton("Open…")
-            g.addWidget(self.ed_dict, 1, 1, 1, 3)
-            g.addWidget(self.btn_open, 1, 4)
+            g.addWidget(self.ed_dict, 1, 1, 1, 2)
+            g.addWidget(self.btn_open, 1, 3)
             g.addWidget(QLabel("First object variable name:"), 2, 0)
             self.object_variable_name = QLineEdit()
-            g.addWidget(self.object_variable_name, 2, 1, 1, 3)
+            g.addWidget(self.object_variable_name, 2, 1,1,2)
+            # Generic delimiters
+            g.addWidget(QLabel("Start delimiter (regex):"), 3, 0)
+            self.ed_start = QLineEdit("<.*?>")  # example default
+            g.addWidget(self.ed_start, 3,1)
+            g.addWidget(QLabel("End delimiter (regex):"))
+            self.ed_end = QLineEdit("</.*?>")   # example default
+            g.addWidget(self.ed_end, 3,2)
             self.chk_backup = QCheckBox("Backup original files (filename.bak)")
             self.chk_backup.setChecked(True)
-            g.addWidget(self.chk_backup, 2, 0, 1, 1)
+            g.addWidget(self.chk_backup, 4, 0)
             self.chk_dont_override = QCheckBox("Don't override existing translations")
             self.chk_dont_override.setChecked(True)
-            g.addWidget(self.chk_dont_override, 2, 1, 1, 1)
-            self.chk_inverse_json_translate = QCheckBox("inverse JSON Translate")
-            g.addWidget(self.chk_inverse_json_translate, 2, 2, 1, 1)
+            g.addWidget(self.chk_dont_override, 4, 1)
+            self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate changes\n(with dictionary)")
+            g.addWidget(self.chk_inverse_json_translate, 4, 2)
             self.btn_run = QPushButton("Run translation")
-            g.addWidget(self.btn_run, 3, 4)
+            g.addWidget(self.btn_run, 5, 2)
 
             self.btn_browse.clicked.connect(self._browse_root)
             self.btn_open.clicked.connect(self._browse_dict)
@@ -2437,7 +2662,7 @@ def build_parser() -> argparse.ArgumentParser:
     ps.add_argument("--include", nargs="*", default=None, help="Include globs (*.ts *.tsx …)")
     ps.add_argument("--exclude", nargs="*", default=None, help="Exclude globs (node_modules …)")
     ps.add_argument("--cond", nargs="*", help="Advanced conditions like field:op:value "
-                                              "(field=filename|path|ext|size|mtime) (op like contains, equals, >, …)")
+                                                  "(field=filename|path|ext|size|mtime) (op like contains, equals, >, …)")
     ps.set_defaults(func=cli_search)
 
     # replace
@@ -2477,6 +2702,8 @@ def build_parser() -> argparse.ArgumentParser:
     pt.add_argument("--include", nargs="*", default=None)
     pt.add_argument("--exclude", nargs="*", default=None)
     pt.add_argument("--dry-run", action="store_true")
+    pt.add_argument("--root", default="t", help="Root alias for placeholders (default: t)")
+    pt.add_argument("--inverse", action="store_true", help="Inverse mode: {t.path} → text")
     pt.set_defaults(func=cli_translate)
 
     # dedupe
