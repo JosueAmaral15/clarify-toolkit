@@ -48,16 +48,21 @@ Run CLI examples:
             [X] implement threads to search files;
             [X] include single files and not only directories;
             [X] replace text from dropdown relative to insert panel;
+            [X] solve the following issue "json.decoder.JSONDecodeError: Expecting ':' delimiter: line 4629 column 21 (char 185171)"
+            
         TASKS TO-DO
-            [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
+            [] avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
+            [] ajust the JSON Translate to translate only in a code scope (and don't anymore). The example: 'children: React.React{t.pages.translation.buttons.no}de' is not a text to be translated, when it keep as following like children: React.ReactNode;
+            [] make the inverse from JSON translate (where is from text to object) to text from object;
+            [] the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
             [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
-            [] add scope in the conditional advanced options in algorithm case, for example, only between brackets;
-            [] make the inverse from translate from text to object;
             
     SHOULD HAVE
         TASKS DONE
         
         TASKS TO-DO
+            [] include the possibility to use the three following checkbox options in the conditional advanced options: case sensitive, match whole word and regular expression;
+            [] add scope in the conditional advanced options in algorithm case, for example, only between brackets;
             [] include search and character lookup in the Insert panel tab for inserting characters with search and lookup instead of defining the line number in which the text should be inserted.
             [] add JSON translation reversal functionality;
             [] add the ability to right-click to open some options in the match panel: copy, copy all, select all, open file, and open all files. When the user click with CTRL or shift buttons pressioned, the application must select all the results which the user select with the mouse;
@@ -67,6 +72,10 @@ Run CLI examples:
             [] Fix the Loading message (only appears L letter);
             [] Put the result quantity on the first line at the match panel;
             [] include the possibility of put the mouse over the result search in the match panel and show the character or word absolute position related with the file size;
+            [] include the possibility to change the case from keys words (camelCase, PascalCase, snake_case and kebab-case);
+            [] include the possibility to remove a certain JSON sub-structure from a JSON structure bigger;
+            [] include progress bar to show the progress of the application processing;
+            
     COULD HAVE
         TASKS DONE
         
@@ -80,6 +89,7 @@ Run CLI examples:
             [] Include all Search/Replace and Insert features in Smart Edit File (AI) and in JSON editors;
             [] make the possibility the changes made only in text editor from own clarify app, and don't more in files;
             [] add the feature which the result can be reused on clarify text edit;
+            [] possibility search for JSON keys and values with the following example: t.auth.brandTitle;
     
     WOULD HAVE LATER
         TASKS DONE
@@ -2159,8 +2169,19 @@ if _PYSIDE:
             self.btn_open = QPushButton("Open…")
             g.addWidget(self.ed_dict, 1, 1, 1, 3)
             g.addWidget(self.btn_open, 1, 4)
+            g.addWidget(QLabel("First object variable name:"), 2, 0)
+            self.object_variable_name = QLineEdit()
+            g.addWidget(self.object_variable_name, 2, 1, 1, 3)
+            self.chk_backup = QCheckBox("Backup original files (filename.bak)")
+            self.chk_backup.setChecked(True)
+            g.addWidget(self.chk_backup, 2, 0, 1, 1)
+            self.chk_dont_override = QCheckBox("Don't override existing translations")
+            self.chk_dont_override.setChecked(True)
+            g.addWidget(self.chk_dont_override, 2, 1, 1, 1)
+            self.chk_inverse_json_translate = QCheckBox("inverse JSON Translate")
+            g.addWidget(self.chk_inverse_json_translate, 2, 2, 1, 1)
             self.btn_run = QPushButton("Run translation")
-            g.addWidget(self.btn_run, 2, 4)
+            g.addWidget(self.btn_run, 3, 4)
 
             self.btn_browse.clicked.connect(self._browse_root)
             self.btn_open.clicked.connect(self._browse_dict)
