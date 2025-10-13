@@ -49,12 +49,13 @@ Run CLI examples:
             [X] include single files and not only directories;
             [X] replace text from dropdown relative to insert panel;
             [X] solve the following issue "json.decoder.JSONDecodeError: Expecting ':' delimiter: line 4629 column 21 (char 185171)"
-            
+
         TASKS TO-DO
             [] dont override: avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
             [] ajust the JSON Translate to translate only in a code scope (and don't anymore). The example: 'children: React.React{t.pages.translation.buttons.no}de' is not a text to be translated, when it keep as following like children: React.ReactNode;
             [] reverse: make the reverse from JSON translate (where is from text to object) to text from object;
             [] first object variable name: the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
+
             [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
             
     SHOULD HAVE
@@ -202,6 +203,115 @@ def write_text(path: str, content: str) -> None:
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+        
+# ---------- JSON Translate — GUI helpers (scope, masking, backup) ----------
+
+RE_PLACEHOLDER = re.compile(r"\{([A-Za-z_]\w*)(?:\.[A-Za-z0-9_]+)+\}")
+
+def mask_existing_placeholders(text: str) -> tuple[str, list[str]]:
+    """Protect existing {root.path} so we don't touch/duplicate them."""
+    guards: list[str] = []
+    def _mask(m: re.Match) -> str:
+        idx = len(guards); guards.append(m.group(0))
+        return f"@@TREF{idx}@@"
+    return RE_PLACEHOLDER.sub(_mask, text), guards
+
+def unmask_existing_placeholders(text: str, guards: list[str]) -> str:
+    for i, tok in enumerate(guards):
+        text = text.replace(f"@@TREF{i}@@", tok)
+    return text
+
+def apply_scoped_translation(content: str,
+                             start_rx: str,
+                             end_rx: str,
+                             fn_transform) -> str:
+    """
+    Apply 'fn_transform' ONLY to chunks between start/end delimiters.
+    Delimiters are regex patterns; nesting is not tracked (flat pairing).
+    """
+    if not start_rx or not end_rx:
+        # whole file
+        return fn_transform(content)
+
+    start = re.compile(start_rx, re.DOTALL)
+    end = re.compile(end_rx, re.DOTALL)
+
+    out = []
+    i = 0
+    n = len(content)
+
+    while i < n:
+        mstart = start.search(content, i)
+        if not mstart:
+            out.append(content[i:]); break
+        out.append(content[i:mstart.start()])
+        mend = end.search(content, mstart.end())
+        if not mend:
+            # no closing; leave rest untouched
+            out.append(content[mstart.start():]); break
+
+        # translate only inside the scope bounds (EXCLUDING delimiters themselves)
+        before = content[mstart.start():mstart.end()]
+        inner = content[mstart.end():mend.start()]
+        after = content[mend.start():mend.end()]
+
+        out.append(before)
+        out.append(fn_transform(inner))
+        out.append(after)
+
+        i = mend.end()
+
+    return "".join(out)
+
+def safe_backup_file(path: str) -> None:
+    """Create path.bak once. If already exists, do not overwrite."""
+    bak = path + ".bak"
+    if not os.path.exists(bak):
+        shutil.copy2(path, bak)
+
+def process_translate_file(path: str,
+                           dictionary: dict,
+                           root_alias: str,
+                           start_rx: str,
+                           end_rx: str,
+                           make_backup: bool,
+                           dont_override: bool,
+                           inverse: bool) -> tuple[bool, Optional[str]]:
+    """
+    Load file, translate (forward or inverse), honoring scope and options.
+    Returns (changed, error_message).
+    """
+    try:
+        original = read_text(path)
+        content = original
+
+        def _one_chunk(chunk: str) -> str:
+            # Optionally protect existing placeholders so we DO NOT override translations
+            if dont_override:
+                chunk, guards = mask_existing_placeholders(chunk)
+                if inverse:
+                    # inverse must NOT unmask before inverse run; unmask after changing
+                    changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=True)
+                    return unmask_existing_placeholders(changed, guards)
+                else:
+                    changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=False)
+                    return unmask_existing_placeholders(changed, guards)
+            else:
+                return translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=inverse)
+
+        new_content = apply_scoped_translation(content, start_rx, end_rx, _one_chunk)
+
+        if new_content != original:
+            if make_backup:
+                safe_backup_file(path)
+            write_text(path, new_content)
+            return True, None
+        return False, None
+    except Exception as e:
+        return False, str(e)
+
 
 # =============================== Match Model/Panel ===============================
 class MatchListModel(QAbstractListModel):
@@ -2173,204 +2283,204 @@ if _PYSIDE:
     
     # ============================ Code-aware JSON Translator ============================
 
-class CodeAwareJSONTranslator:
-    """
-    Translate visible text to {<root>.<path>} using a dictionary (and inverse).
-    Goals:
-      • Translate only in "code scope" that makes sense:
-          - JSX text nodes (between '>' and '<')
-          - String literals in code
-        and SKIP:
-          - Anything inside {...} expressions
-          - Inside JSX tags/attributes (<Tag ...>)
-          - Type annotations and identifiers like React.ReactNode
-      • Configurable root alias (default: 't'), e.g. {t.pages.home.title}
-      • Never break existing placeholders; protect existing {root.*} blocks
-      • Inverse: turn {root.*} back into original strings using the same dictionary
-    """
-
-    _re_jsx_tag = re.compile(r"<[^>]*>")  # a rough "inside tag" region
-    _re_placeholder = re.compile(r"\{([A-Za-z_]\w*)(?:\.[A-Za-z0-9_]+)+\}")  # {t.pages.home.title}
-    _re_string = re.compile(
-        r"""
-        (?P<q>['"])                # opening quote
-        (?P<body>(?:\\.|(?!\1).)*) # body allowing escapes
-        \1                         # closing quote
-        """,
-        re.VERBOSE | re.DOTALL,
-    )
-
-    def __init__(self, dictionary: dict, root_name: str = "t"):
-        self.root = root_name
-        # Build flat key → value and value → key
-        self.flat = self._flatten(dictionary)
-        self.value_to_key = {v: k for k, v in self.flat.items() if isinstance(v, str) and v.strip()}
-
-        # Pre-sort values longest-first to avoid partial overlaps when replacing
-        self.sorted_values = sorted(self.value_to_key.keys(), key=len, reverse=True)
-
-    # ---------- public API ----------
-
-    def translate_text_to_refs(self, content: str) -> str:
+    class CodeAwareJSONTranslator:
         """
-        Forward: Replace visible text with {root.path}.
-        Only in safe scopes (JSX text nodes and string literals), never inside {...} or tags.
+        Translate visible text to {<root>.<path>} using a dictionary (and inverse).
+        Goals:
+        • Translate only in "code scope" that makes sense:
+            - JSX text nodes (between '>' and '<')
+            - String literals in code
+            and SKIP:
+            - Anything inside {...} expressions
+            - Inside JSX tags/attributes (<Tag ...>)
+            - Type annotations and identifiers like React.ReactNode
+        • Configurable root alias (default: 't'), e.g. {t.pages.home.title}
+        • Never break existing placeholders; protect existing {root.*} blocks
+        • Inverse: turn {root.*} back into original strings using the same dictionary
         """
-        if not content.strip():
+
+        _re_jsx_tag = re.compile(r"<[^>]*>")  # a rough "inside tag" region
+        _re_placeholder = re.compile(r"\{([A-Za-z_]\w*)(?:\.[A-Za-z0-9_]+)+\}")  # {t.pages.home.title}
+        _re_string = re.compile(
+            r"""
+            (?P<q>['"])                # opening quote
+            (?P<body>(?:\\.|(?!\1).)*) # body allowing escapes
+            \1                         # closing quote
+            """,
+            re.VERBOSE | re.DOTALL,
+        )
+
+        def __init__(self, dictionary: dict, root_name: str = "t"):
+            self.root = root_name
+            # Build flat key → value and value → key
+            self.flat = self._flatten(dictionary)
+            self.value_to_key = {v: k for k, v in self.flat.items() if isinstance(v, str) and v.strip()}
+
+            # Pre-sort values longest-first to avoid partial overlaps when replacing
+            self.sorted_values = sorted(self.value_to_key.keys(), key=len, reverse=True)
+
+        # ---------- public API ----------
+
+        def translate_text_to_refs(self, content: str) -> str:
+            """
+            Forward: Replace visible text with {root.path}.
+            Only in safe scopes (JSX text nodes and string literals), never inside {...} or tags.
+            """
+            if not content.strip():
+                return content
+
+            # 0) protect existing placeholders so we never touch inside/around them
+            content, guards = self._mask_existing_placeholders(content)
+
+            # 1) replace in JSX text nodes (outside tags and outside {...})
+            content = self._replace_in_jsx_text_nodes(content)
+
+            # 2) replace in string literals (again skipping {...})
+            content = self._replace_in_string_literals(content)
+
+            # 3) unmask placeholders
+            content = self._unmask_placeholders(content, guards)
             return content
 
-        # 0) protect existing placeholders so we never touch inside/around them
-        content, guards = self._mask_existing_placeholders(content)
+        def translate_refs_to_text(self, content: str) -> str:
+            """
+            Inverse: Replace {root.path.to.key} with dictionary value.
+            Only if key exists; otherwise leave as-is.
+            """
+            def _repl(m: re.Match) -> str:
+                alias = m.group(1)
+                if alias != self.root:
+                    return m.group(0)
+                keypath = m.group(0)[1:-1]  # strip {}
+                val = self.flat.get(keypath[len(self.root) + 1 :], None) if "." in keypath else None
+                return val if isinstance(val, str) else m.group(0)
 
-        # 1) replace in JSX text nodes (outside tags and outside {...})
-        content = self._replace_in_jsx_text_nodes(content)
+            return self._re_placeholder.sub(_repl, content)
 
-        # 2) replace in string literals (again skipping {...})
-        content = self._replace_in_string_literals(content)
+        # ---------- core steps ----------
 
-        # 3) unmask placeholders
-        content = self._unmask_placeholders(content, guards)
-        return content
-
-    def translate_refs_to_text(self, content: str) -> str:
-        """
-        Inverse: Replace {root.path.to.key} with dictionary value.
-        Only if key exists; otherwise leave as-is.
-        """
-        def _repl(m: re.Match) -> str:
-            alias = m.group(1)
-            if alias != self.root:
-                return m.group(0)
-            keypath = m.group(0)[1:-1]  # strip {}
-            val = self.flat.get(keypath[len(self.root) + 1 :], None) if "." in keypath else None
-            return val if isinstance(val, str) else m.group(0)
-
-        return self._re_placeholder.sub(_repl, content)
-
-    # ---------- core steps ----------
-
-    def _replace_in_jsx_text_nodes(self, s: str) -> str:
-        """
-        Replace plain text BETWEEN '>' and '<', excluding braces blocks and tags.
-        """
-        out = []
-        i = 0
-        n = len(s)
-        while i < n:
-            gt = s.find(">", i)
-            if gt == -1:
-                out.append(s[i:])
-                break
-            out.append(s[i:gt + 1])  # include '>'
-            lt = s.find("<", gt + 1)
-            if lt == -1:
-                # trailing text node to EOF
-                segment = s[gt + 1 :]
+        def _replace_in_jsx_text_nodes(self, s: str) -> str:
+            """
+            Replace plain text BETWEEN '>' and '<', excluding braces blocks and tags.
+            """
+            out = []
+            i = 0
+            n = len(s)
+            while i < n:
+                gt = s.find(">", i)
+                if gt == -1:
+                    out.append(s[i:])
+                    break
+                out.append(s[i:gt + 1])  # include '>'
+                lt = s.find("<", gt + 1)
+                if lt == -1:
+                    # trailing text node to EOF
+                    segment = s[gt + 1 :]
+                    out.append(self._replace_outside_braces(segment))
+                    break
+                segment = s[gt + 1 : lt]
                 out.append(self._replace_outside_braces(segment))
-                break
-            segment = s[gt + 1 : lt]
-            out.append(self._replace_outside_braces(segment))
-            i = lt
-        return "".join(out)
+                i = lt
+            return "".join(out)
 
-    def _replace_in_string_literals(self, s: str) -> str:
-        """
-        Replace only inside string literals, but not if the string looks like a type/identifier blob.
-        """
-        out = []
-        last = 0
-        for m in self._re_string.finditer(s):
-            out.append(s[last : m.start()])
-            q = m.group("q")
-            body = m.group("body")
-            new_body = self._replace_outside_braces(body, inside_string=True)
-            out.append(q + new_body + q)
-            last = m.end()
-        out.append(s[last:])
-        return "".join(out)
+        def _replace_in_string_literals(self, s: str) -> str:
+            """
+            Replace only inside string literals, but not if the string looks like a type/identifier blob.
+            """
+            out = []
+            last = 0
+            for m in self._re_string.finditer(s):
+                out.append(s[last : m.start()])
+                q = m.group("q")
+                body = m.group("body")
+                new_body = self._replace_outside_braces(body, inside_string=True)
+                out.append(q + new_body + q)
+                last = m.end()
+            out.append(s[last:])
+            return "".join(out)
 
-    def _replace_outside_braces(self, text: str, inside_string: bool = False) -> str:
-        """
-        Replace occurrences of known values with {root.key} only when NOT inside {...}.
-        Heuristics:
-          • Skip chunks that obviously look like identifiers/types (contain dots and no spaces)
-          • Don’t replace if either neighbor char is alnum or '.' (avoid breaking identifiers)
-        """
-        if not text.strip():
-            return text
+        def _replace_outside_braces(self, text: str, inside_string: bool = False) -> str:
+            """
+            Replace occurrences of known values with {root.key} only when NOT inside {...}.
+            Heuristics:
+            • Skip chunks that obviously look like identifiers/types (contain dots and no spaces)
+            • Don’t replace if either neighbor char is alnum or '.' (avoid breaking identifiers)
+            """
+            if not text.strip():
+                return text
 
-        # quick skip: likely code-ish (React.ReactNode etc.) with no spaces
-        if not inside_string and "." in text and " " not in text.strip():
-            return text
+            # quick skip: likely code-ish (React.ReactNode etc.) with no spaces
+            if not inside_string and "." in text and " " not in text.strip():
+                return text
 
-        out = []
-        i = 0
-        depth = 0
-        while i < len(text):
-            ch = text[i]
-            if ch == "{":
-                depth += 1
-                out.append(ch)
-                i += 1
-                continue
-            if ch == "}":
-                depth = max(0, depth - 1)
-                out.append(ch)
-                i += 1
-                continue
-
-            if depth == 0:
-                # Try to match any known value at this position
-                replaced = False
-                for val in self.sorted_values:
-                    if not val:
-                        continue
-                    if text.startswith(val, i):
-                        left = text[i - 1] if i > 0 else ""
-                        right = text[i + len(val)] if i + len(val) < len(text) else ""
-                        # neighbors: avoid attaching to identifiers or JSX attr names
-                        if (left.isalnum() or left == ".") or (right.isalnum() or right == "."):
-                            continue
-                        key = self.value_to_key[val]
-                        out.append("{" + self.root + "." + key + "}")
-                        i += len(val)
-                        replaced = True
-                        break
-                if replaced:
+            out = []
+            i = 0
+            depth = 0
+            while i < len(text):
+                ch = text[i]
+                if ch == "{":
+                    depth += 1
+                    out.append(ch)
+                    i += 1
+                    continue
+                if ch == "}":
+                    depth = max(0, depth - 1)
+                    out.append(ch)
+                    i += 1
                     continue
 
-            # default
-            out.append(ch)
-            i += 1
+                if depth == 0:
+                    # Try to match any known value at this position
+                    replaced = False
+                    for val in self.sorted_values:
+                        if not val:
+                            continue
+                        if text.startswith(val, i):
+                            left = text[i - 1] if i > 0 else ""
+                            right = text[i + len(val)] if i + len(val) < len(text) else ""
+                            # neighbors: avoid attaching to identifiers or JSX attr names
+                            if (left.isalnum() or left == ".") or (right.isalnum() or right == "."):
+                                continue
+                            key = self.value_to_key[val]
+                            out.append("{" + self.root + "." + key + "}")
+                            i += len(val)
+                            replaced = True
+                            break
+                    if replaced:
+                        continue
 
-        return "".join(out)
+                # default
+                out.append(ch)
+                i += 1
 
-    # ---------- masking helpers ----------
+            return "".join(out)
 
-    def _mask_existing_placeholders(self, s: str) -> tuple[str, List[str]]:
-        guards: List[str] = []
-        def _mask(m: re.Match) -> str:
-            idx = len(guards)
-            guards.append(m.group(0))
-            return f"@@TREF{idx}@@"
-        return self._re_placeholder.sub(_mask, s), guards
+        # ---------- masking helpers ----------
 
-    def _unmask_placeholders(self, s: str, guards: List[str]) -> str:
-        for i, tok in enumerate(guards):
-            s = s.replace(f"@@TREF{i}@@", tok)
-        return s
+        def _mask_existing_placeholders(self, s: str) -> tuple[str, List[str]]:
+            guards: List[str] = []
+            def _mask(m: re.Match) -> str:
+                idx = len(guards)
+                guards.append(m.group(0))
+                return f"@@TREF{idx}@@"
+            return self._re_placeholder.sub(_mask, s), guards
 
-    # ---------- dictionary flatten ----------
+        def _unmask_placeholders(self, s: str, guards: List[str]) -> str:
+            for i, tok in enumerate(guards):
+                s = s.replace(f"@@TREF{i}@@", tok)
+            return s
 
-    def _flatten(self, d: dict, prefix: str = "") -> Dict[str, Any]:
-        out: Dict[str, Any] = {}
-        for k, v in (d or {}).items():
-            kk = f"{prefix}.{k}" if prefix else str(k)
-            if isinstance(v, dict):
-                out.update(self._flatten(v, kk))
-            else:
-                out[kk] = v
-        return out
+        # ---------- dictionary flatten ----------
+
+        def _flatten(self, d: dict, prefix: str = "") -> Dict[str, Any]:
+            out: Dict[str, Any] = {}
+            for k, v in (d or {}).items():
+                kk = f"{prefix}.{k}" if prefix else str(k)
+                if isinstance(v, dict):
+                    out.update(self._flatten(v, kk))
+                else:
+                    out[kk] = v
+            return out
     
     class JsonTranslateDock(QDockWidget):
         def __init__(self, parent=None):
@@ -2382,31 +2492,31 @@ class CodeAwareJSONTranslator:
             self.btn_browse = QPushButton("Browse…")
             g.addWidget(self.ed_path, 0, 1, 1, 2)
             g.addWidget(self.btn_browse, 0, 3)
-            g.addWidget(QLabel("Dictionary file (JSON/TS):"), 1, 0)
+            g.addWidget(QLabel("Dictionary file\n(JSON/TS):"), 1, 0)
             self.ed_dict = QLineEdit()
             self.btn_open = QPushButton("Open…")
             g.addWidget(self.ed_dict, 1, 1, 1, 2)
             g.addWidget(self.btn_open, 1, 3)
-            g.addWidget(QLabel("First object variable name:"), 2, 0)
+            g.addWidget(QLabel("First object\nvariable name:"), 2, 0)
             self.object_variable_name = QLineEdit()
             g.addWidget(self.object_variable_name, 2, 1,1,2)
             # Generic delimiters
-            g.addWidget(QLabel("Start delimiter (regex):"), 3, 0)
+            g.addWidget(QLabel("Start delimiter\n(regex):"), 3, 0)
             self.ed_start = QLineEdit("<.*?>")  # example default
             g.addWidget(self.ed_start, 3,1)
-            g.addWidget(QLabel("End delimiter (regex):"))
+            g.addWidget(QLabel("End delimiter\n(regex):"),3,2)
             self.ed_end = QLineEdit("</.*?>")   # example default
-            g.addWidget(self.ed_end, 3,2)
-            self.chk_backup = QCheckBox("Backup original files (filename.bak)")
+            g.addWidget(self.ed_end, 3,3)
+            self.chk_backup = QCheckBox("Backup original files\n (filename.bak)")
             self.chk_backup.setChecked(True)
             g.addWidget(self.chk_backup, 4, 0)
-            self.chk_dont_override = QCheckBox("Don't override existing translations")
+            self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
             self.chk_dont_override.setChecked(True)
             g.addWidget(self.chk_dont_override, 4, 1)
-            self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate changes\n(with dictionary)")
+            self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate\nchanges (with dictionary)")
             g.addWidget(self.chk_inverse_json_translate, 4, 2)
             self.btn_run = QPushButton("Run translation")
-            g.addWidget(self.btn_run, 5, 2)
+            g.addWidget(self.btn_run, 5, 3,1,2)
 
             self.btn_browse.clicked.connect(self._browse_root)
             self.btn_open.clicked.connect(self._browse_dict)
@@ -2465,7 +2575,7 @@ class CodeAwareJSONTranslator:
             g.addWidget(self.chk_join, 2, 2)
             g.addWidget(self.chk_elim, 2, 3)
             g.addWidget(self.chk_nlb, 2, 4)
-
+            
             g.addWidget(QLabel("Indent (<=0 compact):"), 3, 0)
             self.spin_indent = QSpinBox(); self.spin_indent.setRange(-1, 16); self.spin_indent.setValue(2)
             self.btn_run = QPushButton("Rewrite")
