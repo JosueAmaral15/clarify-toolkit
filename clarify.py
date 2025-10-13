@@ -205,6 +205,49 @@ def write_text(path: str, content: str) -> None:
         f.write(content)
 
 
+# ---------- Exclusion masking (skip-regex) ----------
+
+def parse_exclusion_patterns(csv_regex: str) -> list[str]:
+    """Split a comma-separated regex list into individual non-empty patterns."""
+    if not csv_regex.strip():
+        return []
+    return [p.strip() for p in csv_regex.split(",") if p.strip()]
+
+def mask_exclusions(text: str, patterns: list[str]) -> tuple[str, list[str]]:
+    """
+    Replace each region matched by any exclusion regex with a guard token @@XCL{n}@@.
+    Returns (masked_text, guards) where guards[i] is the original match.
+    """
+    if not patterns:
+        return text, []
+
+    # We will apply patterns sequentially, accumulating guards.
+    guards: list[str] = []
+    token_prefix = "@@XCL"
+    token_suffix = "@@"
+
+    # To avoid nested index drift, we replace using re.sub with a function, per pattern, per pass.
+    def _make_replacer(pat: str):
+        rx = re.compile(pat, flags=re.DOTALL | re.MULTILINE)
+        def _repl(m: re.Match) -> str:
+            idx = len(guards)
+            guards.append(m.group(0))
+            return f"{token_prefix}{idx}{token_suffix}"
+        return rx, _repl
+
+    masked = text
+    for pat in patterns:
+        rx, repl = _make_replacer(pat)
+        masked = rx.sub(repl, masked)
+    return masked, guards
+
+def unmask_exclusions(text: str, guards: list[str]) -> str:
+    token_prefix = "@@XCL"
+    token_suffix = "@@"
+    for i, original in enumerate(guards):
+        text = text.replace(f"{token_prefix}{i}{token_suffix}", original)
+    return text
+
         
 # ---------- JSON Translate — GUI helpers (scope, masking, backup) ----------
 
@@ -2482,72 +2525,125 @@ if _PYSIDE:
                     out[kk] = v
             return out
     
+# =============================== JSON Translate Dock ===============================
+
     class JsonTranslateDock(QDockWidget):
         def __init__(self, parent=None):
             super().__init__("JSON Translate", parent)
             w = QWidget(); self.setWidget(w)
             g = QGridLayout(w)
+
             g.addWidget(QLabel("Root path:"), 0, 0)
             self.ed_path = QLineEdit()
             self.btn_browse = QPushButton("Browse…")
             g.addWidget(self.ed_path, 0, 1, 1, 2)
             g.addWidget(self.btn_browse, 0, 3)
-            g.addWidget(QLabel("Dictionary file\n(JSON/TS):"), 1, 0)
+
+            g.addWidget(QLabel("Dictionary file (JSON/TS):"), 1, 0)
             self.ed_dict = QLineEdit()
             self.btn_open = QPushButton("Open…")
             g.addWidget(self.ed_dict, 1, 1, 1, 2)
             g.addWidget(self.btn_open, 1, 3)
-            g.addWidget(QLabel("First object\nvariable name:"), 2, 0)
+
+            g.addWidget(QLabel("First object variable name:"), 2, 0)
             self.object_variable_name = QLineEdit()
-            g.addWidget(self.object_variable_name, 2, 1,1,2)
-            # Generic delimiters
-            g.addWidget(QLabel("Start delimiter\n(regex):"), 3, 0)
-            self.ed_start = QLineEdit("<.*?>")  # example default
-            g.addWidget(self.ed_start, 3,1)
-            g.addWidget(QLabel("End delimiter\n(regex):"),3,2)
-            self.ed_end = QLineEdit("</.*?>")   # example default
-            g.addWidget(self.ed_end, 3,3)
-            self.chk_backup = QCheckBox("Backup original files\n (filename.bak)")
+            self.object_variable_name.setPlaceholderText("e.g. t")
+            g.addWidget(self.object_variable_name, 2, 1, 1, 2)
+
+            # Generic delimiters as scope limits (regex)
+            g.addWidget(QLabel("Start delimiter (regex):"), 3, 0)
+            self.ed_start = QLineEdit("<[^>]*?>")  # default: start of an HTML/JSX tag
+            g.addWidget(self.ed_start, 3, 1)
+            g.addWidget(QLabel("End delimiter (regex):"), 3, 2)
+            self.ed_end = QLineEdit("</[^>]*?>")   # default: end tag
+            g.addWidget(self.ed_end, 3, 3)
+
+            self.chk_backup = QCheckBox("Backup original files (filename.bak)")
             self.chk_backup.setChecked(True)
-            g.addWidget(self.chk_backup, 4, 0)
-            self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
+            g.addWidget(self.chk_backup, 4, 0, 1, 2)
+
+            self.chk_dont_override = QCheckBox("Don't override existing translations")
             self.chk_dont_override.setChecked(True)
-            g.addWidget(self.chk_dont_override, 4, 1)
-            self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate\nchanges (with dictionary)")
-            g.addWidget(self.chk_inverse_json_translate, 4, 2)
+            g.addWidget(self.chk_dont_override, 4, 2, 1, 2)
+
+            self.chk_inverse_json_translate = QCheckBox(
+                "Reverse JSON Translate changes\n(with dictionary)"
+            )
+            g.addWidget(self.chk_inverse_json_translate, 5, 0, 1, 2)
+
             self.btn_run = QPushButton("Run translation")
-            g.addWidget(self.btn_run, 5, 3,1,2)
+            g.addWidget(self.btn_run, 5, 2, 1, 2)
 
             self.btn_browse.clicked.connect(self._browse_root)
             self.btn_open.clicked.connect(self._browse_dict)
             self.btn_run.clicked.connect(self._run)
 
+        # ------ UI helpers ------
+
         def _browse_root(self):
-            path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
-            if path: self.ed_path.setText(path)
+            # Let user pick file or directory
+            path, _ = QFileDialog.getOpenFileName(self, "Select file (or Cancel to pick a folder)")
+            if path:
+                self.ed_path.setText(path); return
+            folder = QFileDialog.getExistingDirectory(self, "Select folder")
+            if folder:
+                self.ed_path.setText(folder)
 
         def _browse_dict(self):
-            f, _ = QFileDialog.getOpenFileName(self, "Select dictionary", "", "JSON/TS (*.json *.ts *.tsx *.js *.jsx);;All (*)")
-            if f: self.ed_dict.setText(f)
+            path, _ = QFileDialog.getOpenFileName(
+                self, "Dictionary file", "", "JSON/TS (*.json *.ts *.js);;All files (*)"
+            )
+            if path:
+                self.ed_dict.setText(path)
+
+        # ------ Core run ------
 
         def _run(self):
-            path = self.ed_path.text().strip()
-            dpath = self.ed_dict.text().strip()
-            if not path or not dpath:
-                QMessageBox.warning(self, "Missing", "Select path and dictionary file."); return
-            d = load_translation_dict(dpath)
-            changed = 0
-            for p in walk_files(path, None, ["node_modules",".git","dist","build"]):
-                try:
-                    old = read_text(p)
-                    new = translate_replace_texts(old, d)
-                    if new != old:
-                        write_text(p, new)
-                        changed += 1
-                except Exception as e:
-                    print(f"[WARN] {p}: {e}", file=sys.stderr)
-            QMessageBox.information(self, "Translate", f"Modified files: {changed}")
+            root = self.ed_path.text().strip()
+            dict_path = self.ed_dict.text().strip()
+            alias = (self.object_variable_name.text().strip() or "t")
+            start_rx = self.ed_start.text().strip()
+            end_rx = self.ed_end.text().strip()
+            make_backup = self.chk_backup.isChecked()
+            dont_override = self.chk_dont_override.isChecked()
+            inverse = self.chk_inverse_json_translate.isChecked()
 
+            if not root or not dict_path:
+                QMessageBox.information(self, "JSON Translate", "Fill Root path and Dictionary file.")
+                return
+            try:
+                dictionary = load_translation_dict(dict_path)
+            except Exception as e:
+                QMessageBox.critical(self, "Dictionary", f"Failed to load dictionary:\n{e}")
+                return
+
+            # Gather input files (file or folder)
+            includes = ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.*"]
+            paths: list[str] = []
+            if os.path.isfile(root):
+                paths = [root]
+            else:
+                paths = list(walk_files(root, includes, []))
+
+            if not paths:
+                QMessageBox.information(self, "JSON Translate", "No files found to process.")
+                return
+
+            changed = 0
+            errors: list[str] = []
+            for p in paths:
+                ok, err = process_translate_file(
+                    p, dictionary, alias, start_rx, end_rx, make_backup, dont_override, inverse
+                )
+                if ok: changed += 1
+                if err: errors.append(f"{p}: {err}")
+
+            msg = f"Processed: {len(paths)} file(s)\nChanged: {changed}"
+            if errors:
+                msg += f"\n\nErrors ({len(errors)}):\n" + "\n".join(errors[:10])
+                if len(errors) > 10:
+                    msg += f"\n... and {len(errors)-10} more."
+            QMessageBox.information(self, "JSON Translate", msg)
 
     class JsonRewriterDock(QDockWidget):
         def __init__(self, parent=None):
