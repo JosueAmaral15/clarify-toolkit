@@ -77,6 +77,7 @@ Run CLI examples:
             [] include the possibility to remove a certain JSON sub-structure from a JSON structure bigger;
             [] include progress bar to show the progress of the application processing;
             [] include is file checkbox to JSON translate;
+            [] Add a modal screen class to display the loading of each of the features present in the algorithm, and tell me how to make this loading appear in a way that doesn't lock the screen, allowing the user to continue using the application freely. The idea would be to allow the user to see the modal screen and minimize it on the main graphical screen itself, and then maximize it. The user can continue navigating the application and perform parallel processing of other features (for example, with threads), but they cannot perform the same processing with the same feature, which must be locked.
     COULD HAVE
         TASKS DONE
         
@@ -91,6 +92,7 @@ Run CLI examples:
             [] make the possibility the changes made only in text editor from own clarify app, and don't more in files;
             [] add the feature which the result can be reused on clarify text edit;
             [] possibility search for JSON keys and values with the following example: t.auth.brandTitle;
+            [] include 'is file' in other places to take more files with directory paths;
     
     WOULD HAVE LATER
         TASKS DONE
@@ -321,9 +323,10 @@ def process_translate_file(path: str,
                            end_rx: str,
                            make_backup: bool,
                            dont_override: bool,
-                           inverse: bool) -> tuple[bool, Optional[str]]:
+                           inverse: bool,
+                           exclude_patterns: list[str]) -> tuple[bool, Optional[str]]:
     """
-    Load file, translate (forward or inverse), honoring scope and options.
+    Load file, translate (forward or inverse) honoring scope, options, and exclusions.
     Returns (changed, error_message).
     """
     try:
@@ -331,18 +334,27 @@ def process_translate_file(path: str,
         content = original
 
         def _one_chunk(chunk: str) -> str:
-            # Optionally protect existing placeholders so we DO NOT override translations
+            # 1) Mask exclusions so they are never touched
+            chunk, excl_guards = mask_exclusions(chunk, exclude_patterns)
+
+            # 2) Optionally protect existing {root.*} placeholders
             if dont_override:
-                chunk, guards = mask_existing_placeholders(chunk)
-                if inverse:
-                    # inverse must NOT unmask before inverse run; unmask after changing
-                    changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=True)
-                    return unmask_existing_placeholders(changed, guards)
-                else:
-                    changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=False)
-                    return unmask_existing_placeholders(changed, guards)
+                chunk, tref_guards = mask_existing_placeholders(chunk)
             else:
-                return translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=inverse)
+                tref_guards = []
+
+            # 3) Run translation (forward or inverse)
+            if inverse:
+                changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=True)
+            else:
+                changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=False)
+
+            # 4) Unmask in reverse order (placeholders first, then exclusions)
+            if tref_guards:
+                changed = unmask_existing_placeholders(changed, tref_guards)
+            changed = unmask_exclusions(changed, excl_guards)
+
+            return changed
 
         new_content = apply_scoped_translation(content, start_rx, end_rx, _one_chunk)
 
@@ -354,7 +366,6 @@ def process_translate_file(path: str,
         return False, None
     except Exception as e:
         return False, str(e)
-
 
 # =============================== Match Model/Panel ===============================
 class MatchListModel(QAbstractListModel):
@@ -2353,14 +2364,91 @@ if _PYSIDE:
             re.VERBOSE | re.DOTALL,
         )
 
+        _SMART_TO_STRAIGHT = str.maketrans({
+            "’": "'", "‘": "'", "‛": "'",
+            "“": '"', "”": '"', "‟": '"',
+        })
+
         def __init__(self, dictionary: dict, root_name: str = "t"):
             self.root = root_name
-            # Build flat key → value and value → key
+            # flat: "pages.contact.hero.subtitle" -> "We\'re here ..."
             self.flat = self._flatten(dictionary)
-            self.value_to_key = {v: k for k, v in self.flat.items() if isinstance(v, str) and v.strip()}
 
-            # Pre-sort values longest-first to avoid partial overlaps when replacing
-            self.sorted_values = sorted(self.value_to_key.keys(), key=len, reverse=True)
+            # Build variants → key map (multiple textual forms for each value)
+            pairs: list[tuple[str, str]] = []
+            for key, val in self.flat.items():
+                if not isinstance(val, str) or not val.strip():
+                    continue
+                for vv in self._variants_for_value(val):
+                    pairs.append((vv, key))
+
+            # Sort by length (desc) so longer phrases win and avoid partial overlaps
+            pairs.sort(key=lambda kv: len(kv[0]), reverse=True)
+
+            # Keep as lists for fast iteration in the scanner
+            self._variant_values = [p[0] for p in pairs]
+            self._variant_keys   = [p[1] for p in pairs]
+
+
+        @staticmethod
+        def _normalize_quotes(s: str) -> str:
+            """Normalize curly quotes to straight, and unescape common HTML entities."""
+            if not isinstance(s, str):
+                return s
+            s2 = s.translate(CodeAwareJSONTranslator._SMART_TO_STRAIGHT)
+            # normalize common HTML entities
+            s2 = s2.replace("&apos;", "'").replace("&#39;", "'") \
+                .replace("&quot;", '"').replace("&#34;", '"')
+            return s2
+
+        @staticmethod
+        def _unescape_backslashes(s: str) -> str:
+            """
+            Convert common backslash-escaped quotes into literal quotes, without touching other escapes.
+            We handle simple forms: \' and \"
+            """
+            if not isinstance(s, str):
+                return s
+            return s.replace(r"\'", "'").replace(r"\"", '"')
+
+        @staticmethod
+        def _variants_for_value(v: str) -> list[str]:
+            """
+            Generate acceptable textual variants for a dictionary value:
+            - raw v
+            - normalized smart quotes → straight
+            - unescaped (\' → ')
+            - HTML-entity-decoded variants
+            - combinations thereof
+            Deduplicated, keep non-empty strings only.
+            """
+            if not isinstance(v, str) or not v.strip():
+                return []
+
+            variants = set()
+            base = v
+
+            # 1) raw
+            variants.add(base)
+
+            # 2) unescape backslash quotes
+            unesc = CodeAwareJSONTranslator._unescape_backslashes(base)
+            variants.add(unesc)
+
+            # 3) normalize smart + html entities on both
+            for s in (base, unesc):
+                s2 = CodeAwareJSONTranslator._normalize_quotes(s)
+                variants.add(s2)
+
+                # Also try entity→char then normalize (covers cases like &apos; already in source)
+                s3 = (s.replace("&apos;", "'")
+                        .replace("&#39;", "'")
+                        .replace("&quot;", '"')
+                        .replace("&#34;", '"'))
+                variants.add(CodeAwareJSONTranslator._normalize_quotes(s3))
+
+            # 4) last-pass trim (no-op if not needed)
+            return [x for x in variants if x]
 
         # ---------- public API ----------
 
@@ -2473,24 +2561,25 @@ if _PYSIDE:
                     continue
 
                 if depth == 0:
-                    # Try to match any known value at this position
+                    # Try to match any known variant at this position
                     replaced = False
-                    for val in self.sorted_values:
+                    for idx, val in enumerate(self._variant_values):
                         if not val:
                             continue
                         if text.startswith(val, i):
                             left = text[i - 1] if i > 0 else ""
                             right = text[i + len(val)] if i + len(val) < len(text) else ""
-                            # neighbors: avoid attaching to identifiers or JSX attr names
+                            # neighbors: don’t glue into identifiers or dotted tokens
                             if (left.isalnum() or left == ".") or (right.isalnum() or right == "."):
                                 continue
-                            key = self.value_to_key[val]
+                            key = self._variant_keys[idx]
                             out.append("{" + self.root + "." + key + "}")
                             i += len(val)
                             replaced = True
                             break
                     if replaced:
                         continue
+
 
                 # default
                 out.append(ch)
@@ -2538,42 +2627,52 @@ if _PYSIDE:
             self.btn_browse = QPushButton("Browse…")
             g.addWidget(self.ed_path, 0, 1, 1, 2)
             g.addWidget(self.btn_browse, 0, 3)
+            
+            self.is_file = QCheckBox("Is file?")
+            g.addWidget(self.is_file,1,0)
 
-            g.addWidget(QLabel("Dictionary file (JSON/TS):"), 1, 0)
+            g.addWidget(QLabel("Dictionary file (JSON/TS):"), 2, 0)
             self.ed_dict = QLineEdit()
             self.btn_open = QPushButton("Open…")
-            g.addWidget(self.ed_dict, 1, 1, 1, 2)
-            g.addWidget(self.btn_open, 1, 3)
+            g.addWidget(self.ed_dict, 2, 1, 1, 2)
+            g.addWidget(self.btn_open, 2, 3)
 
-            g.addWidget(QLabel("First object variable name:"), 2, 0)
+            g.addWidget(QLabel("First object variable name:"), 3, 0)
             self.object_variable_name = QLineEdit()
             self.object_variable_name.setPlaceholderText("e.g. t")
-            g.addWidget(self.object_variable_name, 2, 1, 1, 2)
+            g.addWidget(self.object_variable_name, 3, 1, 1, 2)
 
             # Generic delimiters as scope limits (regex)
-            g.addWidget(QLabel("Start delimiter (regex):"), 3, 0)
+            g.addWidget(QLabel("Start delimiter (regex):"), 4, 0)
             self.ed_start = QLineEdit("<[^>]*?>")  # default: start of an HTML/JSX tag
-            g.addWidget(self.ed_start, 3, 1)
-            g.addWidget(QLabel("End delimiter (regex):"), 3, 2)
+            g.addWidget(self.ed_start, 4, 1)
+            g.addWidget(QLabel("End delimiter (regex):"), 4, 2)
             self.ed_end = QLineEdit("</[^>]*?>")   # default: end tag
-            g.addWidget(self.ed_end, 3, 3)
+            g.addWidget(self.ed_end, 4, 3)
 
-            self.chk_backup = QCheckBox("Backup original files (filename.bak)")
+            # "Do not translate" regex patterns (comma-separated)
+            g.addWidget(QLabel('Do not translate\n(regex, comma-separated):'), 5, 0)
+            self.ed_exclude = QLineEdit()
+            self.ed_exclude.setPlaceholderText(r'className="[^"]*" , data-testid="[^"]*"')
+            g.addWidget(self.ed_exclude, 5, 1, 1, 3)
+
+            
+            self.chk_backup = QCheckBox("Backup original files\n(filename.bak)")
             self.chk_backup.setChecked(True)
-            g.addWidget(self.chk_backup, 4, 0, 1, 2)
+            g.addWidget(self.chk_backup, 6, 0, 1, 2)
 
-            self.chk_dont_override = QCheckBox("Don't override existing translations")
+            self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
             self.chk_dont_override.setChecked(True)
-            g.addWidget(self.chk_dont_override, 4, 2, 1, 2)
+            g.addWidget(self.chk_dont_override, 6, 2, 1, 2)
 
             self.chk_inverse_json_translate = QCheckBox(
-                "Reverse JSON Translate changes\n(with dictionary)"
+                "Reverse JSON Translate\nchanges (with dictionary)"
             )
-            g.addWidget(self.chk_inverse_json_translate, 5, 0, 1, 2)
+            g.addWidget(self.chk_inverse_json_translate, 7, 0, 1, 2)
 
             self.btn_run = QPushButton("Run translation")
-            g.addWidget(self.btn_run, 5, 2, 1, 2)
-
+            g.addWidget(self.btn_run, 7, 2, 1, 2)
+            
             self.btn_browse.clicked.connect(self._browse_root)
             self.btn_open.clicked.connect(self._browse_dict)
             self.btn_run.clicked.connect(self._run)
@@ -2582,12 +2681,14 @@ if _PYSIDE:
 
         def _browse_root(self):
             # Let user pick file or directory
-            path, _ = QFileDialog.getOpenFileName(self, "Select file (or Cancel to pick a folder)")
-            if path:
-                self.ed_path.setText(path); return
-            folder = QFileDialog.getExistingDirectory(self, "Select folder")
-            if folder:
-                self.ed_path.setText(folder)
+            if self.is_file.isChecked():
+                path, _ = QFileDialog.getOpenFileName(self, "Select file (or Cancel to pick a folder)")
+                if path:
+                    self.ed_path.setText(path)
+            else:
+                folder = QFileDialog.getExistingDirectory(self, "Select folder")
+                if folder:
+                    self.ed_path.setText(folder)
 
         def _browse_dict(self):
             path, _ = QFileDialog.getOpenFileName(
@@ -2607,6 +2708,8 @@ if _PYSIDE:
             make_backup = self.chk_backup.isChecked()
             dont_override = self.chk_dont_override.isChecked()
             inverse = self.chk_inverse_json_translate.isChecked()
+            exclude_csv = self.ed_exclude.text().strip()
+            exclude_patterns = parse_exclusion_patterns(exclude_csv)
 
             if not root or not dict_path:
                 QMessageBox.information(self, "JSON Translate", "Fill Root path and Dictionary file.")
@@ -2619,7 +2722,6 @@ if _PYSIDE:
 
             # Gather input files (file or folder)
             includes = ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.*"]
-            paths: list[str] = []
             if os.path.isfile(root):
                 paths = [root]
             else:
@@ -2633,7 +2735,8 @@ if _PYSIDE:
             errors: list[str] = []
             for p in paths:
                 ok, err = process_translate_file(
-                    p, dictionary, alias, start_rx, end_rx, make_backup, dont_override, inverse
+                    p, dictionary, alias, start_rx, end_rx,
+                    make_backup, dont_override, inverse, exclude_patterns
                 )
                 if ok: changed += 1
                 if err: errors.append(f"{p}: {err}")
@@ -2644,6 +2747,7 @@ if _PYSIDE:
                 if len(errors) > 10:
                     msg += f"\n... and {len(errors)-10} more."
             QMessageBox.information(self, "JSON Translate", msg)
+
 
     class JsonRewriterDock(QDockWidget):
         def __init__(self, parent=None):
