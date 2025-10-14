@@ -49,15 +49,13 @@ Run CLI examples:
             [X] include single files and not only directories;
             [X] replace text from dropdown relative to insert panel;
             [X] solve the following issue "json.decoder.JSONDecodeError: Expecting ':' delimiter: line 4629 column 21 (char 185171)"
+            [X] dont override: avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
+            [X] ajust the JSON Translate to translate only in a code scope (and don't anymore). The example: 'children: React.React{t.pages.translation.buttons.no}de' is not a text to be translated, when it keep as following like children: React.ReactNode;
+            [X] first object variable name: the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
+            [X] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
 
         TASKS TO-DO
-            [] dont override: avoid JSON Translate processing which the translate overrides translate names (e.g.: {t.pages.Prac{t.pages.Navbar.blog}HistoryPage.blank}Lin{t.pages.BlogPage.read});
-            [] ajust the JSON Translate to translate only in a code scope (and don't anymore). The example: 'children: React.React{t.pages.translation.buttons.no}de' is not a text to be translated, when it keep as following like children: React.ReactNode;
-            [] reverse: make the reverse from JSON translate (where is from text to object) to text from object;
-            [] first object variable name: the JSON Translate is not sufficient to cover all algorithm translation problems, since the name t, which is the root, must be specified, where the input parameters can customize the root name.
-
-            [] add possibility to use regular expression in replacement to don't replace some characters, only what's needs;
-            
+            [] fix serious problem with the JSON Rewriter, which some data is lost after processing, omitting some keys and values;
     SHOULD HAVE
         TASKS DONE
         
@@ -78,6 +76,28 @@ Run CLI examples:
             [] include progress bar to show the progress of the application processing;
             [] include is file checkbox to JSON translate;
             [] Add a modal screen class to display the loading of each of the features present in the algorithm, and tell me how to make this loading appear in a way that doesn't lock the screen, allowing the user to continue using the application freely. The idea would be to allow the user to see the modal screen and minimize it on the main graphical screen itself, and then maximize it. The user can continue navigating the application and perform parallel processing of other features (for example, with threads), but they cannot perform the same processing with the same feature, which must be locked.
+            [] fix the JSON translate reverse (the ChatGPT didn't solved the issue): reverse: make the reverse from JSON translate (where is from text to object) to text from object;
+            [] include the possibility to filter extensions (i.e.: .jsx);
+            [] adjust 'Emit Export default' option from JSON Translate;
+            [] The result from JSON Translate should not contains three slacklashs (\\\) in the output file. Something need to be doing to avoid this issue;
+            [] avoid empty values in JSON Extractor output file;
+            [] include 'avoid childs keys with the same name' in JSON Extractor output;
+            [] add 'not include number keys' option in JSON Extractor;
+            [] sort all the results, including JSON Rewriter output;
+            [] fix case issue that output have some keys, for example, with pascal-case otherwise camel-case;
+            [] fix the following situations: retelllecture: '\'RetellLecture\', \'Retell Lecture\', \'Re-tell Lecture\',',
+                answershortquestion: [
+                    '\'AnswerShortQuestion\', \'Answer Short Question\','
+                ],
+                respondtosituation: [
+                    '\'RespondToSituation\', \'Respond to a Situation\','
+                ],
+            [] avoid repeted keys:
+            whyItSWrong: [
+                'Why it\'s wrong:',
+                'Why it\'s wrong:'
+            ],
+            
     COULD HAVE
         TASKS DONE
         
@@ -250,10 +270,145 @@ def unmask_exclusions(text: str, guards: list[str]) -> str:
         text = text.replace(f"{token_prefix}{i}{token_suffix}", original)
     return text
 
-        
+# --- NEW: robust value → regex compiler for dictionary texts (handles quotes/apostrophes) ---
+
+def _escape_variants_for_quotes(s: str) -> list[str]:
+    """
+    Return regex-safe variants of the same text so we can match values written with
+    real quotes/apostrophes or with escaped forms (\" \').
+    """
+    # Base escaped
+    base = re.escape(s)
+
+    # If text contains double quotes, also allow escaped-double-quote variant
+    variants = { base }
+    if '"' in s:
+        variants.add(re.escape(s.replace('"', '\\"')))
+    if "'" in s:
+        variants.add(re.escape(s.replace("'", "\\'")))
+
+    # Also handle cases where the source file has “already-escaped” strings in TS/JS blocks
+    # (e.g., We\\'re). We accept both one and two backslashes before quotes.
+    if "\\\"" in s or "\\\'" in s:
+        variants.add(re.escape(s.replace("\\\"", "\"").replace("\\\'", "'")))
+    return list(variants)
+
+def _compile_value_union_regex(value_to_key: dict[str, str]) -> re.Pattern:
+    """
+    Build a single alternation regex with named groups for each value.
+    We sort by length (desc) to prefer the longest phrase first.
+    """
+    # Sort items by length of value, desc
+    items = sorted(value_to_key.items(), key=lambda kv: len(kv[0]), reverse=True)
+
+    parts = []
+    group_names = []  # keep for debug if needed
+    idx = 0
+    for val, _key in items:
+        if not val:
+            continue
+        # produce variants for quotes/apostrophes
+        variants = _escape_variants_for_quotes(val)
+        # fold multiple variants into a small alternation
+        if len(variants) == 1:
+            body = variants[0]
+        else:
+            body = "(?:" + "|".join(variants) + ")"
+        gname = f"V{idx}"
+        parts.append(f"(?P<{gname}>{body})")
+        group_names.append(gname)
+        idx += 1
+
+    if not parts:
+        # something degenerate but keep a harmless regex
+        return re.compile(r"(?!x)x")
+
+    # We’re replacing *visible text* in scoped chunks, so we don’t anchor with word boundaries.
+    # The masking of {t.…} ensures we won’t replace inside placeholders.
+    big = "|".join(parts)
+    return re.compile(big)
+
+
 # ---------- JSON Translate — GUI helpers (scope, masking, backup) ----------
 
 RE_PLACEHOLDER = re.compile(r"\{([A-Za-z_]\w*)(?:\.[A-Za-z0-9_]+)+\}")
+_TAG_OPEN_RE  = re.compile(r"<\s*([A-Za-z][\w:-]*)[^>]*?>", re.DOTALL)
+_TAG_CLOSE_RE = re.compile(r"</\s*([A-Za-z][\w:-]*)\s*>", re.DOTALL)
+
+def _apply_scoped_translation_tag_balanced(content: str, fn_transform) -> str:
+    """
+    Tag-balanced scope:
+      - Scan for tags <name ...> and </name>
+      - When an opening tag is found, find its *matching* closing tag of the same name,
+        counting nested occurrences of the same tag.
+      - Apply fn_transform to the *inner* content (after open tag, before close tag).
+      - Leave tags themselves untouched.
+    We process outermost-to-innermost to ensure all text within elements is covered.
+    """
+    out = []
+    i = 0
+    n = len(content)
+
+    while i < n:
+        m_open = _TAG_OPEN_RE.search(content, i)
+        if not m_open:
+            out.append(content[i:])
+            break
+
+        # Write everything before the opening tag
+        out.append(content[i:m_open.start()])
+
+        tag_name = m_open.group(1)
+        tag_open_end = m_open.end()
+
+        # Find matching closing tag for tag_name (with nesting of the *same* tag)
+        depth = 1
+        j = tag_open_end
+        while j < n and depth > 0:
+            m_next_open  = _TAG_OPEN_RE.search(content, j)
+            m_next_close = _TAG_CLOSE_RE.search(content, j)
+
+            if not m_next_close and not m_next_open:
+                # unmatched => give up and dump the rest
+                out.append(content[m_open.start():])
+                return "".join(out)
+
+            # choose the nearest next tag of any kind
+            candidates = [m for m in (m_next_open, m_next_close) if m]
+            m_next = min(candidates, key=lambda m: m.start())
+
+            if m_next.re is _TAG_OPEN_RE and m_next.group(1) == tag_name:
+                depth += 1
+                j = m_next.end()
+                continue
+
+            if m_next.re is _TAG_CLOSE_RE and m_next.group(1) == tag_name:
+                depth -= 1
+                j = m_next.end()
+                if depth == 0:
+                    # We have a full <tag> ... </tag> region
+                    open_tag  = content[m_open.start():tag_open_end]
+                    inner     = content[tag_open_end:m_next.start()]
+                    close_tag = content[m_next.start():j]
+
+                    out.append(open_tag)
+                    out.append(fn_transform(inner))
+                    out.append(close_tag)
+
+                    i = j
+                    break
+
+                continue
+
+            # A different tag; skip past it and continue searching
+            j = m_next.end()
+
+        # If loop exited without finding matching close (depth > 0), append rest and break
+        if depth > 0:
+            out.append(content[m_open.start():])
+            break
+
+    return "".join(out)
 
 def mask_existing_placeholders(text: str) -> tuple[str, list[str]]:
     """Protect existing {root.path} so we don't touch/duplicate them."""
@@ -274,12 +429,31 @@ def apply_scoped_translation(content: str,
                              fn_transform) -> str:
     """
     Apply 'fn_transform' ONLY to chunks between start/end delimiters.
-    Delimiters are regex patterns; nesting is not tracked (flat pairing).
+
+    If delimiters look like generic HTML/JSX tags (start '<...>' / end '</...>'),
+    we switch to a tag-balanced mode: pair opening tag <name ...> with </name>, honoring nesting
+    of the *same* tag, and transform the entire element's *inner* content.
+
+    Otherwise we fall back to simple flat pairing using the provided regexes.
     """
+    start_rx = (start_rx or "").strip()
+    end_rx = (end_rx or "").strip()
+
     if not start_rx or not end_rx:
-        # whole file
+        # no scope => transform whole file
         return fn_transform(content)
 
+    # Detect "generic tag" mode
+    generic_tag_mode = (
+        start_rx == "<[^>]*?>" and end_rx == "</[^>]*?>"
+    ) or (
+        start_rx.startswith("<") and end_rx.startswith("</")
+    )
+
+    if generic_tag_mode:
+        return _apply_scoped_translation_tag_balanced(content, fn_transform)
+
+    # Fallback: flat regex pairing (previous behavior)
     start = re.compile(start_rx, re.DOTALL)
     end = re.compile(end_rx, re.DOTALL)
 
@@ -290,17 +464,17 @@ def apply_scoped_translation(content: str,
     while i < n:
         mstart = start.search(content, i)
         if not mstart:
-            out.append(content[i:]); break
+            out.append(content[i:])
+            break
         out.append(content[i:mstart.start()])
         mend = end.search(content, mstart.end())
         if not mend:
-            # no closing; leave rest untouched
-            out.append(content[mstart.start():]); break
+            out.append(content[mstart.start():])
+            break
 
-        # translate only inside the scope bounds (EXCLUDING delimiters themselves)
         before = content[mstart.start():mstart.end()]
-        inner = content[mstart.end():mend.start()]
-        after = content[mend.start():mend.end()]
+        inner  = content[mstart.end():mend.start()]
+        after  = content[mend.start():mend.end()]
 
         out.append(before)
         out.append(fn_transform(inner))
@@ -309,6 +483,7 @@ def apply_scoped_translation(content: str,
         i = mend.end()
 
     return "".join(out)
+
 
 def safe_backup_file(path: str) -> None:
     """Create path.bak once. If already exists, do not overwrite."""
@@ -366,6 +541,50 @@ def process_translate_file(path: str,
         return False, None
     except Exception as e:
         return False, str(e)
+
+# def process_translate_file(path: str,
+#                            dictionary: dict,
+#                            root_alias: str,
+#                            start_rx: str,
+#                            end_rx: str,
+#                            make_backup: bool,
+#                            dont_override: bool,
+#                            inverse: bool,
+#                            exclude_patterns: list[str]) -> tuple[bool, Optional[str]]:
+
+#     try:
+#         original = read_text(path)
+
+#         def _one_chunk(chunk: str) -> str:
+#             # 1) never touch user-excluded regions
+#             chunk, excl_guards = mask_exclusions(chunk, exclude_patterns)
+
+#             # 2) protect existing {t.*} **only on forward**
+#             tref_guards = []
+#             if dont_override and not inverse:                    # ← changed line
+#                 chunk, tref_guards = mask_existing_placeholders(chunk)
+
+#             # 3) translate
+#             changed = translate_replace_texts(
+#                 chunk, dictionary, root_name=root_alias, inverse=inverse
+#             )
+
+#             # 4) unmask
+#             if tref_guards:
+#                 changed = unmask_existing_placeholders(changed, tref_guards)
+#             changed = unmask_exclusions(changed, excl_guards)
+#             return changed
+
+#         new_content = apply_scoped_translation(original, start_rx, end_rx, _one_chunk)
+#         if new_content != original:
+#             if make_backup:
+#                 safe_backup_file(path)
+#             write_text(path, new_content)
+#             return True, None
+#         return False, None
+#     except Exception as e:
+#         return False, str(e)
+
 
 # =============================== Match Model/Panel ===============================
 class MatchListModel(QAbstractListModel):
@@ -822,6 +1041,77 @@ def translate_replace_texts(content: str,
     if inverse:
         return tr.translate_refs_to_text(content)
     return tr.translate_text_to_refs(content)
+
+# def translate_replace_texts(content: str,
+#                             dictionary: Dict[str, Any],
+#                             root_name: str = "t",
+#                             inverse: bool = False) -> str:
+#     """
+#     Forward:  text  → {root.path}
+#     Inverse:  {root.path} → text
+
+#     Improvements:
+#       - matches dictionary values even when they use quotes/apostrophes or escaped quotes
+#       - prefers longer matches first
+#       - never touches already existing {root.*} placeholders (they are masked by caller)
+#     """
+#     flat = flatten_dict_paths(dictionary)
+
+#     if inverse:
+#         # {root.foo.bar} -> actual text
+#         # Build regex for {root.something...}
+#         ref_rx = re.compile(r"\{"+re.escape(root_name)+r"\.([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\}")
+#         def _repl_ref(m: re.Match) -> str:
+#             path = m.group(1)
+#             return flat.get(path, m.group(0))
+#         return ref_rx.sub(_repl_ref, content)
+
+#     # Forward direction: text -> {root.path}
+#     # Build value→key map
+#     val2key: Dict[str, str] = {}
+#     for k, v in flat.items():
+#         if isinstance(v, str) and v.strip():
+#             val2key[v] = k
+
+#     if not val2key:
+#         return content
+
+#     rx = _compile_value_union_regex(val2key)
+
+#     def _replace(m: re.Match) -> str:
+#         # Find which group hit and map back to original value->key
+#         gdict = m.groupdict()
+#         # Determine the *actual* matched surface text, then find the canonical key by
+#         # looking up which source value(s) produced this group index. We built groups
+#         # in the same order as items sorted by length; we can reconstruct by scanning.
+#         # Simpler: use the matched text to look up the original value ignoring escaping.
+#         matched = m.group(0)
+#         # Normalize escape variants back to a canonical candidate set
+#         # Try exact/escaped/unescaped matches against val2key keys
+#         candidates = []
+#         for val, key in val2key.items():
+#             if matched == val \
+#                or matched.replace('\\"', '"').replace("\\'", "'") == val \
+#                or matched == val.replace('"', '\\"') \
+#                or matched == val.replace("'", "\\'"):
+#                 candidates.append((val, key))
+#         # Prefer the longest val among candidates
+#         if candidates:
+#             key = max(candidates, key=lambda t: len(t[0]))[1]
+#             return "{%s.%s}" % (root_name, key)
+#         # Fallback: best-effort direct mapping by picking first named group that matched
+#         for name, text in gdict.items():
+#             if text is not None:
+#                 # Find original value whose variants could produce this text
+#                 for val, key in val2key.items():
+#                     if text == val:
+#                         return "{%s.%s}" % (root_name, key)
+#                     if text.replace('\\"', '"').replace("\\'", "'") == val:
+#                         return "{%s.%s}" % (root_name, key)
+#         return matched  # no change
+
+#     return rx.sub(_replace, content)
+
 
 
 # =============================================================================
@@ -2699,54 +2989,103 @@ if _PYSIDE:
 
         # ------ Core run ------
 
+        # def _run(self):
+        #     root = self.ed_path.text().strip()
+        #     dict_path = self.ed_dict.text().strip()
+        #     alias = (self.object_variable_name.text().strip() or "t")
+        #     start_rx = self.ed_start.text().strip()
+        #     end_rx = self.ed_end.text().strip()
+        #     make_backup = self.chk_backup.isChecked()
+        #     dont_override = self.chk_dont_override.isChecked()
+        #     inverse = self.chk_inverse_json_translate.isChecked()
+        #     exclude_csv = self.ed_exclude.text().strip()
+        #     exclude_patterns = parse_exclusion_patterns(exclude_csv)
+
+        #     if not root or not dict_path:
+        #         QMessageBox.information(self, "JSON Translate", "Fill Root path and Dictionary file.")
+        #         return
+        #     try:
+        #         dictionary = load_translation_dict(dict_path)
+        #     except Exception as e:
+        #         QMessageBox.critical(self, "Dictionary", f"Failed to load dictionary:\n{e}")
+        #         return
+
+        #     # Gather input files (file or folder)
+        #     includes = ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.*"]
+        #     if os.path.isfile(root):
+        #         paths = [root]
+        #     else:
+        #         paths = list(walk_files(root, includes, []))
+
+        #     if not paths:
+        #         QMessageBox.information(self, "JSON Translate", "No files found to process.")
+        #         return
+
+        #     changed = 0
+        #     errors: list[str] = []
+        #     for p in paths:
+        #         ok, err = process_translate_file(
+        #             p, dictionary, alias, start_rx, end_rx,
+        #             make_backup, dont_override, inverse, exclude_patterns
+        #         )
+        #         if ok: changed += 1
+        #         if err: errors.append(f"{p}: {err}")
+
+        #     msg = f"Processed: {len(paths)} file(s)\nChanged: {changed}"
+        #     if errors:
+        #         msg += f"\n\nErrors ({len(errors)}):\n" + "\n".join(errors[:10])
+        #         if len(errors) > 10:
+        #             msg += f"\n... and {len(errors)-10} more."
+        #     QMessageBox.information(self, "JSON Translate", msg)
+        
         def _run(self):
-            root = self.ed_path.text().strip()
-            dict_path = self.ed_dict.text().strip()
-            alias = (self.object_variable_name.text().strip() or "t")
+            path = self.ed_path.text().strip()
+            dpath = self.ed_dict.text().strip()
+            root_alias = (self.object_variable_name.text().strip() or "t")
             start_rx = self.ed_start.text().strip()
             end_rx = self.ed_end.text().strip()
+            exclude_csv = self.ed_exclude.text().strip()
             make_backup = self.chk_backup.isChecked()
             dont_override = self.chk_dont_override.isChecked()
             inverse = self.chk_inverse_json_translate.isChecked()
-            exclude_csv = self.ed_exclude.text().strip()
+
+            if not path or not dpath:
+                QMessageBox.warning(self, "Missing", "Select path and dictionary file.")
+                return
+
+            try:
+                dictionary = load_translation_dict(dpath)
+            except Exception as e:
+                QMessageBox.critical(self, "Dictionary error", str(e))
+                return
+
             exclude_patterns = parse_exclusion_patterns(exclude_csv)
 
-            if not root or not dict_path:
-                QMessageBox.information(self, "JSON Translate", "Fill Root path and Dictionary file.")
-                return
-            try:
-                dictionary = load_translation_dict(dict_path)
-            except Exception as e:
-                QMessageBox.critical(self, "Dictionary", f"Failed to load dictionary:\n{e}")
-                return
-
-            # Gather input files (file or folder)
-            includes = ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.*"]
-            if os.path.isfile(root):
-                paths = [root]
-            else:
-                paths = list(walk_files(root, includes, []))
-
-            if not paths:
-                QMessageBox.information(self, "JSON Translate", "No files found to process.")
-                return
-
             changed = 0
-            errors: list[str] = []
+            errors = []
+
+            # single file or folder
+            paths = [path] if os.path.isfile(path) else list(
+                walk_files(path, include_globs=None, exclude_globs=["node_modules",".git","dist","build"])
+            )
+
             for p in paths:
                 ok, err = process_translate_file(
-                    p, dictionary, alias, start_rx, end_rx,
-                    make_backup, dont_override, inverse, exclude_patterns
+                    p, dictionary, root_alias,
+                    start_rx, end_rx,
+                    make_backup, dont_override, inverse,
+                    exclude_patterns,
                 )
-                if ok: changed += 1
-                if err: errors.append(f"{p}: {err}")
+                if ok:
+                    changed += 1
+                if err:
+                    errors.append(f"{p}: {err}")
 
-            msg = f"Processed: {len(paths)} file(s)\nChanged: {changed}"
+            msg = f"Modified files: {changed}"
             if errors:
-                msg += f"\n\nErrors ({len(errors)}):\n" + "\n".join(errors[:10])
-                if len(errors) > 10:
-                    msg += f"\n... and {len(errors)-10} more."
-            QMessageBox.information(self, "JSON Translate", msg)
+                msg += f"\nErrors: {len(errors)}\n" + "\n".join(errors[:5])  # show a few
+            QMessageBox.information(self, "Translate", msg)
+
 
 
     class JsonRewriterDock(QDockWidget):
