@@ -2118,40 +2118,34 @@ if _PYSIDE:
             g3.addWidget(QLabel("Word"), 1, 6)
             g3.addWidget(QLabel("Regex"), 1, 7)
             
-            self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox]] = []
-            for row_i in range(2, 5):  # three rows to start; users can reuse them (row 0 is logic operator, row 1 is headers)
-                cb_field = QComboBox(); cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-                cb_op = QComboBox(); cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
-                                                     "starts with", "ends with", ">", "<", ">=", "<="])
-                ed_val = QLineEdit()
-                cb_scope = QComboBox(); cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
-                ed_scope_val = QLineEdit()
-                ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
-                
-                # Checkboxes for matching options
-                chk_case = QCheckBox()
-                chk_case.setChecked(True)  # Default: case sensitive
-                chk_case.setToolTip("Case sensitive")
-                chk_word = QCheckBox()
-                chk_word.setToolTip("Match whole word")
-                chk_regex = QCheckBox()
-                chk_regex.setToolTip("Use regular expression")
-                
-                g3.addWidget(cb_field, row_i, 0)
-                g3.addWidget(cb_op,    row_i, 1)
-                g3.addWidget(ed_val,   row_i, 2)
-                g3.addWidget(cb_scope, row_i, 3)
-                g3.addWidget(ed_scope_val, row_i, 4)
-                g3.addWidget(chk_case, row_i, 5)
-                g3.addWidget(chk_word, row_i, 6)
-                g3.addWidget(chk_regex, row_i, 7)
-                self.cond_list.append((cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex))
+            # Dynamic condition rows (Task #5 - v2.9.7)
+            self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]] = []
+            self.cond_grid = g3  # Store grid reference for dynamic row management
+            self.next_cond_row = 2  # Track next available row (0=logic, 1=headers, 2+=conditions)
+            
+            # Add initial 3 condition rows (minimum)
+            for _ in range(3):
+                self._add_condition_row()
+            
+            # Buttons layout
+            buttons_layout = QHBoxLayout()
+            
+            # Add Condition button
+            btn_add_condition = QPushButton("➕ Add Condition")
+            btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
+            btn_add_condition.clicked.connect(self._add_condition_row)
+            buttons_layout.addWidget(btn_add_condition)
             
             # Clear All Conditions button (v2.9.5)
             btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
             btn_clear_conditions.setToolTip("Clear all advanced condition fields")
             btn_clear_conditions.clicked.connect(self._clear_all_conditions)
-            g3.addWidget(btn_clear_conditions, 5, 6, 1, 2)
+            buttons_layout.addWidget(btn_clear_conditions)
+            
+            buttons_layout.addStretch()
+            
+            # Add buttons to grid
+            g3.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
             
             root.addWidget(gb3)
 
@@ -2212,13 +2206,95 @@ if _PYSIDE:
         def change_advanced_conditions(self):
             self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
         
+        def _add_condition_row(self):
+            """Add a new dynamic condition row (Task #5 - v2.9.7)"""
+            row_i = self.next_cond_row
+            
+            # Create widgets
+            cb_field = QComboBox()
+            cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+            
+            cb_op = QComboBox()
+            cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
+                           "starts with", "ends with", ">", "<", ">=", "<="])
+            
+            ed_val = QLineEdit()
+            
+            cb_scope = QComboBox()
+            cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
+            
+            ed_scope_val = QLineEdit()
+            ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
+            
+            # Checkboxes for matching options
+            chk_case = QCheckBox()
+            chk_case.setChecked(True)  # Default: case sensitive
+            chk_case.setToolTip("Case sensitive")
+            
+            chk_word = QCheckBox()
+            chk_word.setToolTip("Match whole word")
+            
+            chk_regex = QCheckBox()
+            chk_regex.setToolTip("Use regular expression")
+            
+            # Remove button (X)
+            btn_remove = QPushButton("✖")
+            btn_remove.setFixedWidth(30)
+            btn_remove.setToolTip("Remove this condition row")
+            btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
+            
+            # Add widgets to grid
+            self.cond_grid.addWidget(cb_field, row_i, 0)
+            self.cond_grid.addWidget(cb_op, row_i, 1)
+            self.cond_grid.addWidget(ed_val, row_i, 2)
+            self.cond_grid.addWidget(cb_scope, row_i, 3)
+            self.cond_grid.addWidget(ed_scope_val, row_i, 4)
+            self.cond_grid.addWidget(chk_case, row_i, 5)
+            self.cond_grid.addWidget(chk_word, row_i, 6)
+            self.cond_grid.addWidget(chk_regex, row_i, 7)
+            self.cond_grid.addWidget(btn_remove, row_i, 8)
+            
+            # Store reference
+            widgets_tuple = (cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex, btn_remove)
+            self.cond_list.append(widgets_tuple)
+            
+            # Connect remove button
+            btn_remove.clicked.connect(lambda: self._remove_condition_row(widgets_tuple))
+            
+            # Increment row counter
+            self.next_cond_row += 1
+            
+            # Move buttons layout to new bottom position
+            buttons_layout = self.cond_grid.itemAtPosition(row_i + 1, 0)
+            if buttons_layout:
+                self.cond_grid.removeItem(buttons_layout)
+                self.cond_grid.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+        
+        def _remove_condition_row(self, widgets_tuple):
+            """Remove a condition row (Task #5 - v2.9.7)"""
+            # Enforce minimum of 3 rows
+            if len(self.cond_list) <= 3:
+                QMessageBox.warning(self, "Cannot Remove", 
+                                  "Minimum of 3 condition rows required.\nClear the fields instead.")
+                return
+            
+            # Remove from list
+            if widgets_tuple in self.cond_list:
+                self.cond_list.remove(widgets_tuple)
+            
+            # Remove widgets from grid and delete them
+            for widget in widgets_tuple:
+                self.cond_grid.removeWidget(widget)
+                widget.deleteLater()
+        
         def _clear_all_conditions(self):
             """Clear all advanced condition fields (v2.9.5)"""
             # Reset logic operator to AND
             self.combo_logic_op.setCurrentIndex(0)
             
-            # Clear all condition rows
-            for cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            # Clear all condition rows (updated for v2.9.7 - tuple now has 9 elements)
+            for widgets in self.cond_list:
+                cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
                 cb_field.setCurrentIndex(0)  # Reset to empty
                 cb_op.setCurrentIndex(0)     # Reset to empty
                 ed_val.clear()               # Clear value
@@ -2776,48 +2852,34 @@ if _PYSIDE:
             g3.addWidget(QLabel("Word"), 1, 6)
             g3.addWidget(QLabel("Regex"), 1, 7)
             
-            self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox]] = []
-            for row_i in range(2, 5):  # three rows to start (row 0 is logic operator, row 1 is headers)
-                cb_field = QComboBox(); cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-                cb_field.currentTextChanged.connect(self._schedule_live_refresh)
-                cb_op = QComboBox(); cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
-                                                     "starts with", "ends with", ">", "<", ">=", "<="])
-                cb_op.currentTextChanged.connect(self._schedule_live_refresh)
-                ed_val = QLineEdit()
-                ed_val.textChanged.connect(self._schedule_live_refresh)
-                cb_scope = QComboBox(); cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
-                cb_scope.currentTextChanged.connect(self._schedule_live_refresh)
-                ed_scope_val = QLineEdit()
-                ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
-                ed_scope_val.textChanged.connect(self._schedule_live_refresh)
-                
-                # Checkboxes for matching options
-                chk_case = QCheckBox()
-                chk_case.setChecked(True)  # Default: case sensitive
-                chk_case.setToolTip("Case sensitive")
-                chk_case.stateChanged.connect(self._schedule_live_refresh)
-                chk_word = QCheckBox()
-                chk_word.setToolTip("Match whole word")
-                chk_word.stateChanged.connect(self._schedule_live_refresh)
-                chk_regex = QCheckBox()
-                chk_regex.setToolTip("Use regular expression")
-                chk_regex.stateChanged.connect(self._schedule_live_refresh)
-                
-                g3.addWidget(cb_field, row_i, 0)
-                g3.addWidget(cb_op, row_i, 1)
-                g3.addWidget(ed_val, row_i, 2)
-                g3.addWidget(cb_scope, row_i, 3)
-                g3.addWidget(ed_scope_val, row_i, 4)
-                g3.addWidget(chk_case, row_i, 5)
-                g3.addWidget(chk_word, row_i, 6)
-                g3.addWidget(chk_regex, row_i, 7)
-                self.cond_list.append((cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex))
+            # Dynamic condition rows (Task #5 - v2.9.7) - same as SearchReplacePanel
+            self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]] = []
+            self.cond_grid = g3  # Store grid reference
+            self.next_cond_row = 2  # Track next row (0=logic, 1=headers, 2+=conditions)
+            
+            # Add initial 3 condition rows (minimum)
+            for _ in range(3):
+                self._add_condition_row()
+            
+            # Buttons layout
+            buttons_layout = QHBoxLayout()
+            
+            # Add Condition button
+            btn_add_condition = QPushButton("➕ Add Condition")
+            btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
+            btn_add_condition.clicked.connect(self._add_condition_row)
+            buttons_layout.addWidget(btn_add_condition)
             
             # Clear All Conditions button (v2.9.5)
             btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
             btn_clear_conditions.setToolTip("Clear all advanced condition fields")
             btn_clear_conditions.clicked.connect(self._clear_all_conditions)
-            g3.addWidget(btn_clear_conditions, 5, 6, 1, 2)
+            buttons_layout.addWidget(btn_clear_conditions)
+            
+            buttons_layout.addStretch()
+            
+            # Add buttons to grid
+            g3.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
             
             layout.addWidget(gb3, 9, 0, 1, 5)
             
@@ -2879,13 +2941,103 @@ if _PYSIDE:
         def change_advanced_conditions(self):
             self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
         
+        def _add_condition_row(self):
+            """Add a new dynamic condition row (Task #5 - v2.9.7)"""
+            row_i = self.next_cond_row
+            
+            # Create widgets
+            cb_field = QComboBox()
+            cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+            cb_field.currentTextChanged.connect(self._schedule_live_refresh)
+            
+            cb_op = QComboBox()
+            cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
+                           "starts with", "ends with", ">", "<", ">=", "<="])
+            cb_op.currentTextChanged.connect(self._schedule_live_refresh)
+            
+            ed_val = QLineEdit()
+            ed_val.textChanged.connect(self._schedule_live_refresh)
+            
+            cb_scope = QComboBox()
+            cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
+            cb_scope.currentTextChanged.connect(self._schedule_live_refresh)
+            
+            ed_scope_val = QLineEdit()
+            ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
+            ed_scope_val.textChanged.connect(self._schedule_live_refresh)
+            
+            # Checkboxes for matching options
+            chk_case = QCheckBox()
+            chk_case.setChecked(True)  # Default: case sensitive
+            chk_case.setToolTip("Case sensitive")
+            chk_case.stateChanged.connect(self._schedule_live_refresh)
+            
+            chk_word = QCheckBox()
+            chk_word.setToolTip("Match whole word")
+            chk_word.stateChanged.connect(self._schedule_live_refresh)
+            
+            chk_regex = QCheckBox()
+            chk_regex.setToolTip("Use regular expression")
+            chk_regex.stateChanged.connect(self._schedule_live_refresh)
+            
+            # Remove button (X)
+            btn_remove = QPushButton("✖")
+            btn_remove.setFixedWidth(30)
+            btn_remove.setToolTip("Remove this condition row")
+            btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
+            
+            # Add widgets to grid
+            self.cond_grid.addWidget(cb_field, row_i, 0)
+            self.cond_grid.addWidget(cb_op, row_i, 1)
+            self.cond_grid.addWidget(ed_val, row_i, 2)
+            self.cond_grid.addWidget(cb_scope, row_i, 3)
+            self.cond_grid.addWidget(ed_scope_val, row_i, 4)
+            self.cond_grid.addWidget(chk_case, row_i, 5)
+            self.cond_grid.addWidget(chk_word, row_i, 6)
+            self.cond_grid.addWidget(chk_regex, row_i, 7)
+            self.cond_grid.addWidget(btn_remove, row_i, 8)
+            
+            # Store reference
+            widgets_tuple = (cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex, btn_remove)
+            self.cond_list.append(widgets_tuple)
+            
+            # Connect remove button
+            btn_remove.clicked.connect(lambda: self._remove_condition_row(widgets_tuple))
+            
+            # Increment row counter
+            self.next_cond_row += 1
+            
+            # Move buttons layout to new bottom position
+            buttons_layout = self.cond_grid.itemAtPosition(row_i + 1, 0)
+            if buttons_layout:
+                self.cond_grid.removeItem(buttons_layout)
+                self.cond_grid.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+        
+        def _remove_condition_row(self, widgets_tuple):
+            """Remove a condition row (Task #5 - v2.9.7)"""
+            # Enforce minimum of 3 rows
+            if len(self.cond_list) <= 3:
+                QMessageBox.warning(self, "Cannot Remove", 
+                                  "Minimum of 3 condition rows required.\nClear the fields instead.")
+                return
+            
+            # Remove from list
+            if widgets_tuple in self.cond_list:
+                self.cond_list.remove(widgets_tuple)
+            
+            # Remove widgets from grid and delete them
+            for widget in widgets_tuple:
+                self.cond_grid.removeWidget(widget)
+                widget.deleteLater()
+        
         def _clear_all_conditions(self):
-            """Clear all advanced condition fields (v2.9.5)"""
+            """Clear all advanced condition fields (v2.9.5, updated v2.9.7)"""
             # Reset logic operator to AND
             self.combo_logic_op.setCurrentIndex(0)
             
-            # Clear all condition rows
-            for cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            # Clear all condition rows (updated for v2.9.7 - tuple now has 9 elements)
+            for widgets in self.cond_list:
+                cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
                 cb_field.setCurrentIndex(0)  # Reset to empty
                 cb_op.setCurrentIndex(0)     # Reset to empty
                 ed_val.clear()               # Clear value
@@ -2914,10 +3066,11 @@ if _PYSIDE:
         #     return list(files)
         
         def _conds(self) -> tuple[List[Condition], str]:
-            """Return conditions and logic operator (AND/OR)"""
+            """Return conditions and logic operator (AND/OR) - updated for v2.9.7"""
             out: List[Condition] = []
             if not self.is_file.isChecked():
-                for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+                for widgets in self.cond_list:
+                    cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
                     f = cb_field.currentText().strip()
                     o = cb_op.currentText().strip()
                     v = ed.text().strip()
