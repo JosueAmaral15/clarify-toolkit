@@ -69,7 +69,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Adicionar funcionalidade de reversão de tradução JSON (Swap Dictionaries + Undo with Backup) **(v2.9.8)**
 - **[X]** Adicionar menu com botão direito no painel de matches: copy, copy all, select all, open file, open all files. Suportar CTRL/Shift para seleção múltipla *(v2.9.2 - Context Menu)*
 - **[X]** Possibilidade de colocar resultados em arquivos separados (cada iteração) ou em arquivo único **(v2.9.7 - Save Results)**
-- **[]** Habilidade de inserir ranges incluídos/excluídos no Insert, mesmo usando regex
+- **[X]** Habilidade de inserir ranges incluídos/excluídos no Insert, mesmo usando regex **(v2.9.9 - Hierarchical Ranges)**
 - **[X]** Corrigir mensagem de Loading (só aparece letra L)
 - **[X]** Mostrar quantidade de resultados na primeira linha do match panel
 - **[X]** Mostrar posição absoluta do caractere/palavra ao passar mouse sobre resultado no match panel
@@ -86,7 +86,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor **(v2.9.7 - Avoid Duplicate Child Keys)**
 - **[X]** Adicionar opção 'not include number keys' no JSON Extractor **(v2.9.6)**
 - **[X]** Ordenar todos os resultados, incluindo output do JSON Rewriter **(v2.9.5 - Parcial: implementado para SearchReplacePanel e InsertPanel)**
-- **[]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente
+- **[X]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente **(v2.9.9 - Case Validator Dialog)**
 - **[]** Corrigir situações problemáticas:
   ```javascript
   retelllecture: '\'RetellLecture\', \'Retell Lecture\', \'Re-tell Lecture\',',
@@ -99,7 +99,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   ```
 - **[]** Adicionar feature para substituir listas por objetos/dicionários em arquivos JSON com restrições de escopo (ex: apenas em `t.pages`)
 - **[X]** Incluir possibilidade de filtrar extensões (ex: `.jsx`) em todos os módulos e funcionalidades *(v2.9.0 - Extension Filter)*;
-- **[]** Resolver issue de tradução quando texto tem parênteses (ex: `'Multiple Choice (Multiple)'`)
+- **[X]** Resolver issue de tradução quando texto tem parênteses (ex: `'Multiple Choice (Multiple)'`) **(v2.9.9 - Parentheses Support)**
 - **[]** Evitar problema onde JSON Translate não substitui object keys de arquivos afetados ao remover keys do dicionário, causando omissão e erro 'undefined'
 - **[X]** Forçar aplicação e JSON translate a obedecer regras de sintaxe e case (enforce consistent case) **(v2.9.8)**
 - **[X]** Incluir whole word, case sensitive e regex nas condições avançadas *(v2.2.0 - Implementado em Search/Replace e Insert panels)*
@@ -175,7 +175,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Adicionar scroll nos painéis 'search/replace' e 'insert' **(v2.9.5)**
 - **[X]** Incluir histórico de atividades como feature do Google Translate **(v2.9.6 - History Dock)**
 - **[X]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo) **(v2.9.7 - Dynamic Condition Lines)**
-- **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
+- **[X]** Fornecer habilidade de mudar aparência da aplicação para background transparente **(v2.9.9 - Transparency Slider)**
 - **[X]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário **(v2.9.6)**
 - **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
 - **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
@@ -247,18 +247,20 @@ def walk(v):
 
 | Categoria | Total | Completas | Pendentes | % Completo |
 |-----------|-------|-----------|-----------|------------|
-| MUST HAVE | 12 | 10 | 2 | 83.3% |
-| SHOULD HAVE | 46 | 24 | 22 | 52.2% |
+| MUST HAVE | 12 | 11 | 1 | 91.7% |
+| SHOULD HAVE | 46 | 32 | 14 | 69.6% |
 | COULD HAVE | 18 | 0 | 18 | 0% |
-| WOULD HAVE LATER | 21 | 4 | 17 | 19.0% |
-| **TOTAL** | **97** | **36** | **61** | **37.1%** |
+| WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
+| **TOTAL** | **100** | **55** | **45** | **55.0%** |
 
 ### Notas
 
 - Este é um projeto ambicioso com roadmap de longo prazo
-- Funcionalidades MUST HAVE essenciais já implementadas (83.3%)
+- Funcionalidades MUST HAVE essenciais praticamente completas (91.7%)
+- **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
+- 55% do projeto total completo - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 
 ### Marcos Importantes
@@ -285,6 +287,14 @@ def walk(v):
 ---
 
 ## 🎯 Marcos Recentes
+
+- **v2.9.9 (29/11/2025)**: +6 tasks completadas (MUST HAVE + SHOULD HAVE + WOULD HAVE LATER)
+  - ✅ Task #17: Validated dynamic condition lines (already complete in v2.9.7)
+  - ✅ Task #15: Case inconsistency validator (before/after preview dialog, apply/cancel)
+  - ✅ Task #14: Hierarchical include/exclude ranges (syntax: "include div#test1, exclude #test2")
+  - ✅ Task #16: Parentheses in translation (treated as part of translatable text)
+  - ✅ Task #13: Auto-consolidate fragmented placeholders (merge adjacent refs into single unit)
+  - ✅ Task #18: Transparent background slider (0-100%, persistent settings)
 
 - **v2.9.8 (28/11/2025)**: +6 tasks completadas (MUST HAVE + SHOULD HAVE + WOULD HAVE LATER)
   - ✅ Task #8: Remove duplicate array values (consecutive & all duplicates)
