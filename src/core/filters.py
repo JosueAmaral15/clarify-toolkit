@@ -22,20 +22,127 @@ OPS = {
 }
 
 
-def extract_scope_content(text: str, scope_type: str, scope_value: str = "") -> str:
+def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
+    """
+    Parse hierarchical include/exclude ranges from scope_value.
+    
+    Syntax: "include div#test1, exclude #test2, include #test3"
+    Returns: [("include", "div#test1"), ("exclude", "#test2"), ("include", "#test3")]
+    
+    Supports:
+    - include/exclude directives
+    - ID selectors: #myId
+    - Tag+ID selectors: div#test1
+    - Regex patterns (when use_regex is enabled)
+    """
+    if not scope_value:
+        return []
+    
+    ranges = []
+    parts = [p.strip() for p in scope_value.split(",")]
+    
+    for part in parts:
+        if not part:
+            continue
+        
+        # Parse "include/exclude selector"
+        tokens = part.split(None, 1)  # Split on first whitespace
+        if len(tokens) == 2:
+            action, selector = tokens
+            action = action.lower()
+            if action in ("include", "exclude"):
+                ranges.append((action, selector.strip()))
+        elif len(tokens) == 1:
+            # No explicit action, default to include
+            ranges.append(("include", tokens[0].strip()))
+    
+    return ranges
+
+
+def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_regex: bool = False) -> str:
+    """
+    Apply hierarchical include/exclude filtering to HTML/XML content.
+    
+    Args:
+        text: The HTML/XML text to filter
+        ranges: List of (action, selector) tuples from parse_hierarchical_ranges
+        use_regex: Whether to treat selectors as regex patterns
+    
+    Returns:
+        Filtered text containing only included sections minus excluded sections
+    """
+    if not ranges:
+        return text
+    
+    results = []
+    
+    for action, selector in ranges:
+        if use_regex:
+            # Treat selector as regex pattern
+            try:
+                pattern = re.compile(selector, re.DOTALL | re.IGNORECASE)
+                matches = pattern.findall(text)
+                
+                if action == "include":
+                    results.extend(matches)
+                elif action == "exclude":
+                    # Remove excluded content from results
+                    for match in matches:
+                        results = [r for r in results if match not in r]
+            except re.error:
+                continue
+        else:
+            # Parse selector (supports #id and tag#id)
+            if selector.startswith("#"):
+                # ID selector: #myId
+                element_id = selector[1:]
+                pattern = rf'<[^>]+id=["\']?{re.escape(element_id)}["\']?[^>]*>(.*?)</[^>]+>'
+            elif "#" in selector:
+                # Tag+ID selector: div#test1
+                tag, element_id = selector.split("#", 1)
+                pattern = rf'<{re.escape(tag)}[^>]+id=["\']?{re.escape(element_id)}["\']?[^>]*>(.*?)</{re.escape(tag)}>'
+            else:
+                # Plain tag selector
+                pattern = rf'<{re.escape(selector)}[^>]*>(.*?)</{re.escape(selector)}>'
+            
+            matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+            
+            if action == "include":
+                results.extend(matches)
+            elif action == "exclude":
+                # Remove excluded content from results
+                for match in matches:
+                    results = [r for r in results if r != match]
+    
+    return '\n'.join(results) if results else ""
+
+
+def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use_regex: bool = False) -> str:
     """
     Extract content within specified scope delimiters.
     
     Args:
         text: The full text to extract from
-        scope_type: Type of scope ("brackets", "braces", "custom", "tag", "specific-tag", "" for no scope)
-        scope_value: Additional value for custom delimiters or specific tag name
+        scope_type: Type of scope ("brackets", "braces", "custom", "tag", "specific-tag", "hierarchical", "" for no scope)
+        scope_value: Additional value for custom delimiters, specific tag name, or hierarchical ranges
+        use_regex: Whether to treat patterns as regex (for hierarchical ranges)
     
     Returns:
         Concatenated content within all matching scopes
+    
+    Hierarchical Ranges Syntax (scope_type="hierarchical"):
+        "include div#test1, exclude #test2, include #test3"
+        - include: Add matching content
+        - exclude: Remove matching content from results
+        - Supports: #id, tag#id, tag, regex patterns
     """
     if not scope_type or scope_type == "none":
         return text
+    
+    # Hierarchical include/exclude ranges
+    if scope_type == "hierarchical":
+        ranges = parse_hierarchical_ranges(scope_value)
+        return apply_hierarchical_filter(text, ranges, use_regex)
     
     results = []
     
@@ -193,7 +300,7 @@ class Condition:
                 txt = read_text(path)
                 # Apply scope filtering if specified
                 if self.scope_type and self.scope_type != "none":
-                    txt = extract_scope_content(txt, self.scope_type, self.scope_value)
+                    txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex)
                 a = txt
                 b = self.value
                 return self._apply_string_matching(a, b, self.operator)
