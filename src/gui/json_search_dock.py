@@ -74,6 +74,7 @@ class JsonSearchDock(StandardToolDock):
     def __init__(self, parent=None):
         super().__init__("JSON Search", parent)
         self.worker = None
+        self.last_results = []  # Store last search results for saving
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -140,10 +141,12 @@ class JsonSearchDock(StandardToolDock):
         buttons = [
             ("Search", self._search),
             ("Interrupt", self._interrupt),
+            ("Save Results", self._save_results),
             ("Clear", self._clear)
         ]
         btn_layout = self.create_action_buttons(buttons)
         self.btn_interrupt.setEnabled(False)
+        self.btn_save_results.setEnabled(False)  # Disable until we have results
         self.layout.addLayout(btn_layout)
         
         # Results panel
@@ -268,6 +271,8 @@ class JsonSearchDock(StandardToolDock):
     
     def _on_finished(self, results):
         """Handle search completion."""
+        self.last_results = results  # Store results for saving
+        
         self.append_result(self.text_results, f"\n{'='*60}")
         self.append_result(self.text_results, f"✅ Search complete! Found {len(results)} match(es).\n")
         
@@ -287,6 +292,7 @@ class JsonSearchDock(StandardToolDock):
         
         self.btn_search.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
+        self.btn_save_results.setEnabled(bool(results))  # Enable if we have results
     
     def _on_failed(self, error):
         """Handle search failure."""
@@ -294,9 +300,194 @@ class JsonSearchDock(StandardToolDock):
         self.btn_search.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
     
+    def _save_results(self):
+        """Save search results to file(s) with format options."""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QRadioButton, QButtonGroup, QDialogButtonBox, QLabel
+        
+        if not self.last_results:
+            self.show_warning("No Results", "No search results to save. Please run a search first.")
+            return
+        
+        # Create dialog for save options
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Save Results Options")
+        layout = QVBoxLayout(dialog)
+        
+        # Title
+        layout.addWidget(QLabel("Choose how to save the results:"))
+        
+        # Radio buttons for save format
+        self.radio_group = QButtonGroup(dialog)
+        
+        radio_single = QRadioButton("Single file (all results in one TXT)")
+        radio_single.setToolTip("Save all results to a single text file")
+        radio_single.setChecked(True)
+        self.radio_group.addButton(radio_single, 0)
+        layout.addWidget(radio_single)
+        
+        radio_per_file = QRadioButton("Per original file (one result file per source)")
+        radio_per_file.setToolTip("Create one result file for each source file that had matches")
+        self.radio_group.addButton(radio_per_file, 1)
+        layout.addWidget(radio_per_file)
+        
+        radio_per_query = QRadioButton("Per query (group by search term)")
+        radio_per_query.setToolTip("Group results by search query (key or value)")
+        self.radio_group.addButton(radio_per_query, 2)
+        layout.addWidget(radio_per_query)
+        
+        # OK/Cancel buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        
+        # Show dialog
+        if dialog.exec() != QDialog.Accepted:
+            return
+        
+        # Get selected option
+        selected_option = self.radio_group.checkedId()
+        
+        # Execute save based on selection
+        if selected_option == 0:
+            self._save_single_file()
+        elif selected_option == 1:
+            self._save_per_original_file()
+        elif selected_option == 2:
+            self._save_per_query()
+    
+    def _save_single_file(self):
+        """Save all results to a single text file."""
+        from PySide6.QtWidgets import QFileDialog
+        
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save All Results",
+            "search_results.txt",
+            "Text Files (*.txt);;All Files (*)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write("=" * 80 + "\n")
+                f.write("CLARIFY - JSON SEARCH RESULTS\n")
+                f.write("=" * 80 + "\n")
+                f.write(f"Total matches: {len(self.last_results)}\n")
+                f.write("=" * 80 + "\n\n")
+                
+                for i, result in enumerate(self.last_results, 1):
+                    file_path_res = result.get('file', 'unknown')
+                    key = result.get('key', '')
+                    value = result.get('value', '')
+                    f.write(f"Match {i}:\n")
+                    f.write(f"  File: {file_path_res}\n")
+                    f.write(f"  Key: {key}\n")
+                    f.write(f"  Value: {value}\n")
+                    f.write("\n")
+            
+            self.show_info("Success", f"Results saved to:\n{file_path}")
+        except Exception as e:
+            self.show_error("Save Error", f"Failed to save results:\n{str(e)}")
+    
+    def _save_per_original_file(self):
+        """Save results grouped by original source file."""
+        from PySide6.QtWidgets import QFileDialog
+        from collections import defaultdict
+        
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory for Result Files"
+        )
+        
+        if not output_dir:
+            return
+        
+        try:
+            # Group results by source file
+            grouped = defaultdict(list)
+            for result in self.last_results:
+                source_file = result.get('file', 'unknown')
+                grouped[source_file].append(result)
+            
+            # Save one file per source
+            for source_file, results in grouped.items():
+                base_name = os.path.basename(source_file)
+                output_file = os.path.join(output_dir, f"{base_name}_results.txt")
+                
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(f"Results for: {source_file}\n")
+                    f.write("=" * 80 + "\n")
+                    f.write(f"Total matches: {len(results)}\n")
+                    f.write("=" * 80 + "\n\n")
+                    
+                    for i, result in enumerate(results, 1):
+                        key = result.get('key', '')
+                        value = result.get('value', '')
+                        f.write(f"Match {i}:\n")
+                        f.write(f"  Key: {key}\n")
+                        f.write(f"  Value: {value}\n")
+                        f.write("\n")
+            
+            self.show_info("Success", f"Saved {len(grouped)} result file(s) to:\n{output_dir}")
+        except Exception as e:
+            self.show_error("Save Error", f"Failed to save results:\n{str(e)}")
+    
+    def _save_per_query(self):
+        """Save results grouped by search query (key or value)."""
+        from PySide6.QtWidgets import QFileDialog
+        from collections import defaultdict
+        
+        output_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory for Query Result Files"
+        )
+        
+        if not output_dir:
+            return
+        
+        try:
+            # Group by query (use key if present, else value)
+            grouped = defaultdict(list)
+            for result in self.last_results:
+                query_key = result.get('key') or result.get('value') or 'unknown'
+                # Use first part of key path for grouping
+                group_name = query_key.split('.')[0] if '.' in query_key else query_key
+                grouped[group_name].append(result)
+            
+            # Save one file per query group
+            for query_name, results in grouped.items():
+                # Sanitize filename
+                safe_name = "".join(c if c.isalnum() or c in ('_', '-') else '_' for c in query_name)
+                output_file = os.path.join(output_dir, f"query_{safe_name}_results.txt")
+                
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(f"Results for query: {query_name}\n")
+                    f.write("=" * 80 + "\n")
+                    f.write(f"Total matches: {len(results)}\n")
+                    f.write("=" * 80 + "\n\n")
+                    
+                    for i, result in enumerate(results, 1):
+                        file_path = result.get('file', 'unknown')
+                        key = result.get('key', '')
+                        value = result.get('value', '')
+                        f.write(f"Match {i}:\n")
+                        f.write(f"  File: {file_path}\n")
+                        f.write(f"  Key: {key}\n")
+                        f.write(f"  Value: {value}\n")
+                        f.write("\n")
+            
+            self.show_info("Success", f"Saved {len(grouped)} query result file(s) to:\n{output_dir}")
+        except Exception as e:
+            self.show_error("Save Error", f"Failed to save results:\n{str(e)}")
+    
     def _clear(self):
         """Clear results."""
         self.clear_results(self.text_results)
+        self.last_results = []
+        self.btn_save_results.setEnabled(False)
     
     def _execute_action(self):
         """Execute the main action when ENTER is pressed."""
