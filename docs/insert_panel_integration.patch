@@ -1,0 +1,182 @@
+"""
+insert_panel_integration.patch
+
+Patch para integrar ThreadManager e ProcessingModal no InsertPanel.
+Este arquivo documenta as mudanças necessárias para completar a integração.
+"""
+
+# ==============================================================================
+# MUDANÇAS NECESSÁRIAS NO InsertPanel (src/app.py, linha ~2588)
+# ==============================================================================
+
+# 1. No método _start_search_threaded(), adicionar verificação de feature:
+"""
+def _start_search_threaded(self):
+    if not self.processing_search:
+        # ===== ADICIONAR ESTA VERIFICAÇÃO =====
+        if not thread_manager.can_start_feature(FeatureType.INSERT):
+            QMessageBox.warning(
+                self, 
+                "Already Running",
+                "Insert operation is already running. Please wait or cancel the current operation."
+            )
+            return
+        # ======================================
+        
+        words = "|".join([ed.text().strip() for k, n, ed in self.cond_list if ed.text().strip()])
+        if words:
+            self.results.print_message("Loading...")
+            
+            try:
+                pattern_text = SearchOptions(False, False, True).compile(rf"(?:{words})")
+            except Exception as e:
+                self.error.emit(f"Invalid pattern: {e}")
+                self.done.emit({})
+                return
+            
+            # ===== ADICIONAR CRIAÇÃO DO MODAL =====
+            self._processing_modal = ProcessingModal(
+                title="Insert Processing",
+                parent=self,
+                show_progress=True,
+                show_cancel=True
+            )
+            self._processing_modal.set_title("Searching Match Files...")
+            self._processing_modal.set_status("Initializing search...")
+            self._processing_modal.start_loading_animation()
+            self._processing_modal.show()
+            # ======================================
+            
+            # Progress bar (v2.5.0) - mantido para compatibilidade
+            if self.progress_manager:
+                import uuid
+                self._current_task_id = f"insert_search_{uuid.uuid4().hex[:8]}"
+                self._current_progress_widget = self.progress_manager.add_task(
+                    self._current_task_id,
+                    f"Match Search: {words[:30]}"
+                )
+            
+            # Create thread and worker
+            self._search_thread = QThread(self)
+            self._search_worker = SearchWorker(
+                pattern_text=pattern_text,
+                iter_files_fn=self._iter_files,
+                search_options_factory=lambda a,b,c: SearchOptions(a,b,c)
+            )
+            self._search_worker.moveToThread(self._search_thread)
+            
+            # ===== ADICIONAR REGISTRO NO THREADMANAGER =====
+            import uuid
+            thread_id = f"insert_{uuid.uuid4().hex[:8]}"
+            if not thread_manager.start_thread(
+                thread_id=thread_id,
+                thread=self._search_thread,
+                worker=self._search_worker,
+                feature=FeatureType.INSERT,
+                cancel_callback=lambda: self._search_worker.cancel()
+            ):
+                QMessageBox.warning(self, "Error", "Failed to start insert thread.")
+                if self._processing_modal:
+                    self._processing_modal.close()
+                    self._processing_modal = None
+                return
+            # ================================================
+
+            # Connections
+            self._search_thread.started.connect(self._search_worker.run)
+            self._search_worker.done.connect(self._on_search_done)
+            self._search_worker.progress.connect(self._on_search_progress)
+            self._search_worker.progress_detailed.connect(self._on_search_progress_detailed)
+            self._search_worker.error.connect(self._on_search_error)
+            
+            # ===== ADICIONAR CONEXÃO DO MODAL =====
+            if self._processing_modal:
+                self._processing_modal.cancel_requested.connect(
+                    lambda: self._search_worker.cancel()
+                )
+            # ======================================
+
+            # Connect cancel and pause from progress bar to worker (v2.5.0+)
+            if self._current_progress_widget:
+                self._current_progress_widget.cancel_requested.connect(
+                    lambda _: self._search_worker.cancel()
+                )
+                self._current_progress_widget.pause_requested.connect(
+                    lambda _, paused: self._search_worker.pause() if paused else self._search_worker.resume()
+                )
+
+            # Cleanup
+            self._search_worker.done.connect(self._search_thread.quit)
+            self._search_worker.done.connect(self._search_worker.deleteLater)
+            self._search_thread.finished.connect(self._search_thread.deleteLater)
+
+            self._search_thread.start()
+            self.enable_buttons(False)
+            self.processing_search = True
+    else:
+        if self._search_worker:
+            self._search_worker.cancel()
+        self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+        self.processing_search = False
+"""
+
+# 2. Atualizar _on_search_progress_detailed():
+"""
+def _on_search_progress_detailed(self, current: int, total: int, message: str):
+    '''New detailed progress handler (v2.5.0).'''
+    # ===== ADICIONAR ATUALIZAÇÃO DO MODAL =====
+    if self._processing_modal:
+        progress = int((current / total * 100)) if total > 0 else 0
+        self._processing_modal.set_progress(progress)
+        self._processing_modal.set_status(f"Processing {current}/{total} files")
+        self._processing_modal.log_message(message)
+    # ===========================================
+    
+    # Update progress widget (v2.5.0) - mantido para compatibilidade
+    if self._current_progress_widget:
+        self._current_progress_widget.update_progress(current, total, message)
+        self._current_progress_widget.add_log(f"Processing: {message}")
+"""
+
+# 3. Atualizar _on_search_error():
+"""
+def _on_search_error(self, msg: str):
+    '''Handle search errors.'''
+    # ===== ADICIONAR ATUALIZAÇÃO DO MODAL =====
+    if self._processing_modal:
+        self._processing_modal.log_message(f"ERROR: {msg}")
+    # ===========================================
+    
+    # Update progress widget (v2.5.0) - mantido para compatibilidade
+    if self._current_progress_widget:
+        self._current_progress_widget.add_log(f"ERROR: {msg}")
+    print(msg)
+"""
+
+# 4. Atualizar _on_search_done():
+"""
+def _on_search_done(self, matches: dict):
+    '''Handle search completion.'''
+    self.results.populate(matches)
+    self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+    self.processing_search = False
+    
+    # ===== ADICIONAR CONCLUSÃO DO MODAL =====
+    if self._processing_modal:
+        self._processing_modal.mark_completed(
+            success=True,
+            message=f"Match search completed!\nFound matches in {len(matches)} file(s)."
+        )
+        # Modal permanece aberto para usuário revisar logs
+    # =========================================
+    
+    # Mark progress as complete (v2.5.0)
+    if self._current_progress_widget:
+        self._current_progress_widget.set_complete(success=True)
+        self._current_progress_widget.add_log(f"Match search completed: {len(matches)} files")
+"""
+
+# ==============================================================================
+# NOTA: Estas mudanças devem ser aplicadas manualmente ao src/app.py
+# devido ao tamanho do arquivo e limitações de tokens.
+# ==============================================================================

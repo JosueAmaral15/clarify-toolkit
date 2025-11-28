@@ -1,0 +1,24 @@
+{
+  "pages": {
+    "home": {
+      "title": "Home Page",
+      "subtitle": "Welcome to our website"
+    },
+    "about": {
+      "title": "About Us",
+      "description": "Learn more about our company"
+    },
+    "contact": {
+      "title": "Contact",
+      "email": "Email Address",
+      "phone": "Phone Number"
+    }
+  },
+  "common": {
+    "button": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "save": "Save Changes"
+    }
+  }
+}

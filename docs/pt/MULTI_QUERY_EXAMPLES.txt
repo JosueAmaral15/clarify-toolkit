@@ -1,0 +1,200 @@
+"""
+EXEMPLO DE USO: Multi-Query Search (v2.8.0)
+
+Este arquivo demonstra casos de uso práticos da funcionalidade
+de busca multi-query do Clarify.
+"""
+
+# ============================================================
+# EXEMPLO 1: Busca de Níveis de Log
+# ============================================================
+# Cole isso no campo de busca multi-line:
+
+ERROR
+WARNING
+CRITICAL
+FATAL
+
+# Encontrará todas as ocorrências desses níveis em arquivos de log
+
+
+# ============================================================
+# EXEMPLO 2: Busca de Configurações Sensíveis
+# ============================================================
+# Cole isso no campo de busca multi-line:
+
+# Credenciais
+password
+api_key
+secret_key
+# Tokens
+token
+access_token
+auth_token
+
+
+# ============================================================
+# EXEMPLO 3: Busca com Regex - Padrões de Erro
+# ============================================================
+# Marque [✓] Regex e cole:
+
+# Erros numerados
+error-\d{3,}
+# Warnings com contexto
+warning:.*database
+# Exceptions
+Exception in thread
+# Stack traces
+at\s+\w+\.\w+
+
+
+# ============================================================
+# EXEMPLO 4: Busca de TODOs e FIXMEs
+# ============================================================
+
+# Código para revisar
+TODO
+FIXME
+XXX
+HACK
+# APIs deprecadas (descomente para buscar)
+# deprecated_function
+# old_api_call
+
+
+# ============================================================
+# EXEMPLO 5: Busca de Imports Python
+# ============================================================
+# Marque [✓] Regex e cole:
+
+import os
+import sys
+from pathlib import Path
+from typing import.*
+import re
+
+
+# ============================================================
+# EXEMPLO 6: Busca de Padrões de Data
+# ============================================================
+# Marque [✓] Regex e cole:
+
+# ISO format
+\d{4}-\d{2}-\d{2}
+# US format
+\d{2}/\d{2}/\d{4}
+# Compact format
+\d{8}
+
+
+# ============================================================
+# EXEMPLO 7: Busca Case-Sensitive de Classes
+# ============================================================
+# Marque [✓] Case Sensitive e cole:
+
+class User
+class Admin
+class Manager
+class Employee
+
+
+# ============================================================
+# EXEMPLO 8: Busca Whole-Word de Variáveis
+# ============================================================
+# Marque [✓] Whole Word e cole:
+
+user_id
+username
+user_email
+user_name
+userId
+
+
+# ============================================================
+# EXEMPLO 9: Busca de URLs e IPs
+# ============================================================
+# Marque [✓] Regex e cole:
+
+# URLs
+https?://[^\s]+
+# IPs
+\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b
+# Emails
+[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+
+
+# ============================================================
+# EXEMPLO 10: Busca de SQL Queries
+# ============================================================
+
+# DML
+SELECT
+INSERT INTO
+UPDATE
+DELETE FROM
+# DDL
+CREATE TABLE
+ALTER TABLE
+DROP TABLE
+
+
+# ============================================================
+# DICAS DE PERFORMANCE
+# ============================================================
+
+# ✅ BOM: 5-10 queries simples
+error
+warning
+info
+debug
+trace
+
+# ⚠️ CUIDADO: Muitas queries complexas (mais lento)
+# \b[A-Z]{3,}\b.*error.*\d+
+# \b[A-Z]{3,}\b.*warning.*\d+
+# \b[A-Z]{3,}\b.*critical.*\d+
+# ... (20+ queries)
+
+# ✅ MELHOR: Use regex com alternation para muitos padrões similares
+(error|warning|info|debug|trace)\d+
+
+# ✅ BOM: Desabilite regex se não precisar (mais rápido)
+# [  ] Regex
+error
+warning
+info
+
+
+# ============================================================
+# TROUBLESHOOTING
+# ============================================================
+
+# PROBLEMA: Nenhum resultado encontrado
+# SOLUÇÃO: Verifique as opções Case/Word/Regex
+
+# PROBLEMA: Query too long error
+# SOLUÇÃO: Divida em múltiplas linhas ou simplifique
+
+# PROBLEMA: Resultados duplicados
+# SOLUÇÃO: Sistema deduplica automaticamente por (linha, col)
+
+
+# ============================================================
+# COMPARAÇÃO: Single vs Multi-Query
+# ============================================================
+
+# Single-Query (modo tradicional):
+# error|warning|info|debug|trace
+
+# Multi-Query (v2.8.0):
+error
+warning
+info
+debug
+trace
+
+# Vantagens Multi-Query:
+# - Mais fácil de ler e manter
+# - Suporte a comentários
+# - Adicionar/remover padrões sem quebrar regex
+# - Melhor organização

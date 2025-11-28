@@ -1,2 +1,421 @@
-# Clarify
-## Clarify — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
+# Clarify - Advanced Text Processing & JSON Manipulation System
+
+## 📋 Descrição
+
+**Clarify** é um sistema completo e modular para processamento de texto e manipulação de JSON, com interface gráfica (GUI) moderna e linha de comando (CLI) poderosa.
+
+### ✨ Versão 1.0.0 - Arquitetura Modular
+- 🏗️ **Nova arquitetura modular** com 7 ferramentas independentes
+- 📦 **Base classes reutilizáveis** reduzindo 40-60% de código duplicado
+- 🎨 **Interface consistente** em todas as ferramentas
+- 🚀 **Performance otimizada** com threading e processamento assíncrono
+- 📊 **-26.6% de código** no arquivo principal (de 4913 para 3606 linhas)
+
+## 🎯 Funcionalidades Principais
+
+### 🔍 Busca e Substituição
+- Busca case-sensitive, whole-word, regex
+- Substituição com preservação de capitalização
+- Filtros avançados por extensão, tamanho, data, conteúdo
+
+### 📝 Inserção de Texto
+- 5 modos de inserção (esquerda, direita, substituir, acima, abaixo)
+- Inserção condicional baseada em conteúdo
+- Filtros avançados com operadores relacionais
+
+### 🔧 JSON Rewriter
+- Deduplicação de pares chave-valor
+- Join de chaves duplicadas
+- Eliminação global de duplicatas
+- Suporte para TypeScript/JavaScript objects
+- **✅ BUG FIX**: Correção crítica de perda de dados (tipo Obj agora suportado)
+
+### 🌐 JSON Translator
+- Tradução de textos usando dicionário JSON/TS
+- Suporte para scopes customizados (JSX, string literals)
+- Modo reverso (objetos → texto)
+- Proteção de placeholders existentes
+- Root name configurável
+
+### 🆕 Ferramentas Modulares (v1.0.0)
+
+#### 🔤 Case Converter
+- **Conversão entre 4 estilos**: camelCase, PascalCase, snake_case, kebab-case
+- Processamento de arquivo único ou diretório recursivo
+- Filtro por extensões (.js, .ts, .jsx, .tsx, etc.)
+- Suporte para JSON puro e TypeScript/JavaScript objects
+- Threading para processamento em background
+
+#### 🔎 JSON Search
+- **Busca avançada** em arquivos JSON e TypeScript
+- Suporta `export default`, `export const` e object literals
+- Busca por chave, valor ou ambos
+- Case-sensitive, whole-word e regex
+- Indexação inteligente com dot-path notation
+- Suporte para arquivos grandes (>10MB)
+
+#### 📄 Text Extractor (ENHANCED)
+- **3 modos de extração**: JSX Attributes, Tag Content, Generic Scope
+- **4 estilos de normalização**: snake_case, camelCase, PascalCase, kebab-case
+- Smart truncation com word boundary awareness
+- Filtro de tags HTML padrão
+- Path building configurável (add key, add value)
+- Nested JSON output automático
+- TypeScript export support
+
+#### 🤖 AI Processor (ENHANCED)
+- **Integração com OpenAI** (ChatGPT) e Google Gemini
+- **Token counter persistente**: session + lifetime statistics
+- **Code fence removal**: Strip automático de \`\`\`json e \`\`\`
+- Estatísticas salvas em `~/.clarify_ai_stats.json`
+- Monitoramento de custos em tempo real
+- Processamento de múltiplos arquivos
+- Line-by-line mode para prompts cíclicos
+
+#### 🔄 Placeholder Replacer
+- Substituição em lote de placeholders (ex: `{t.key}`)
+- Suporte para JSON, CSV e mappings customizados
+- Processamento recursivo de diretórios
+- Backup automático opcional
+- Validation e error reporting
+
+#### 🌐 JSON Translator
+- Tradução de textos usando dicionário JSON/TS
+- **Scope delimiters** configuráveis via regex
+- **Exclusion patterns** para proteger código
+- Root variable customizável (default: `t`)
+- Modo reverso: `{t.path}` → texto original
+- Don't override existing translations
+- Backup automático
+
+#### 🔧 JSON Rewriter
+- Deduplicação de pares chave-valor
+- Join de chaves duplicadas
+- Eliminação global de duplicatas
+- Suporte para TypeScript/JavaScript objects
+- Configuração de indentação (-1 a 16)
+- Output: JSON puro ou TS export
+- Preserva hierarquia de tags
+- Remove duplicatas automaticamente
+- Ignora scripts, estilos e comentários
+- Suporte para className como chaves opcionais
+- Output em JSON ou TypeScript (export default)
+
+#### 🔄 Placeholder Replacer
+- Substituição em lote de placeholders (ex: {t.pages.home.title})
+- Suporte para arquivos de mapeamento JSON ou CSV
+- Estratégia longest-match-first (evita colisões)
+- Filtro de escopo com regex (start/end markers)
+- Criação automática de backups
+- Modo preview (dry-run) antes de aplicar
+
+#### 🤖 AI File Processor
+- Integração com OpenAI (ChatGPT) e Google Gemini
+- Processamento em lote de arquivos com IA
+- Contagem de tokens e estimativa de custo
+- Modo line-by-line (prompt diferente por arquivo)
+- Limite de bytes configurável por arquivo
+- Interrupção de processamento em tempo real
+- Salvamento de resultados em arquivo único
+- Suporte para múltiplas extensões de arquivo
+
+## 📁 Estrutura do Projeto
+
+```
+clarify/
+├── 📄 clarify.py              # ⭐ Ponto de entrada principal (USE ESTE)
+├── 📄 main.py                 # Script de teste/validação modular
+│
+├── 📁 src/                    # 🆕 Todo código fonte organizado aqui
+│   ├── __init__.py           # Package initialization
+│   ├── __main__.py           # Entry point para: python -m src
+│   ├── app.py                # Aplicação completa GUI+CLI (~2,700 linhas)
+│   │
+│   ├── 📁 core/              # ✅ Funcionalidades principais
+│   │   ├── search_replace.py    # Busca e substituição
+│   │   ├── insert.py            # Inserção de texto
+│   │   └── filters.py           # Filtros avançados
+│   │
+│   ├── 📁 utils/             # ✅ Utilitários
+│   │   ├── file_utils.py        # Operações de arquivo
+│   │   ├── text_utils.py        # Processamento de texto
+│   │   └── ts_utils.py          # TypeScript/JavaScript
+│   │
+│   ├── 📁 rewriter/          # ✅ JSON Rewriter
+│   │   ├── types.py             # Tipos (Obj, JSONNode)
+│   │   ├── rewriter.py          # ⭐ BUG FIX APLICADO
+│   │   ├── ts_parser.py         # Parser TS/JS
+│   │   ├── operations.py        # Dedupe, join, eliminate
+│   │   └── serializer.py        # Serialização
+│   │
+│   ├── 📁 translators/       # 🚧 JSON Translator (futuro)
+│   ├── 📁 ui/                # 🚧 GUI components (futuro)
+│   └── 📁 cli/               # 🚧 CLI commands (futuro)
+│
+├── 📁 docs/                   # 📚 Documentação organizada
+│   ├── README.md             # Índice bilíngue
+│   ├── REORGANIZATION.md     # Detalhes da reorganização v2.1.0
+│   ├── LAUNCHERS.md          # Documentação dos launchers GUI
+│   │
+│   ├── 📁 architecture/      # Documentação de arquitetura
+│   │   ├── ARCHITECTURE.md       # Explicação dos entry points
+│   │   ├── ARCHITECTURE_DIAGRAM.txt  # Diagrama visual
+│   │   └── STRUCTURE.txt         # Estrutura completa do projeto
+│   │
+│   ├── 📁 reports/           # Relatórios de análise
+│   │   ├── BUG_FIX_REPORT.md     # Correções de bugs documentação (EN)
+│   │   ├── BUG_FIX_REPORT_PT.md  # Correções de bugs documentação (PT)
+│   │   ├── CODE_BUG_REPORT.md    # Análise de bugs no código (EN)
+│   │   └── CODE_BUG_REPORT_PT.md # Análise de bugs no código (PT)
+│   │
+│   ├── 📁 archive/           # Documentação histórica
+│   │   ├── LANGUAGE_FIX.md       # Log da correção de idiomas
+│   │   └── project_structure.txt # Estrutura antiga (referência)
+│   │
+│   ├── 📁 en/                # Documentação em inglês
+│   │   ├── README.md             # Navegação
+│   │   └── TASKS.md              # Roadmap de desenvolvimento
+│   │
+│   └── 📁 pt/                # Documentação em português
+│       ├── README.md
+│       ├── CODE_REVIEW_DETAILED.md
+│       ├── CODE_REVIEW_FINAL.md
+│       ├── MIGRATION_COMPLETE.md
+│       ├── MIGRATION_FINAL_STATUS.md
+│       ├── MIGRATION_CHECKLIST.md
+│       ├── REORGANIZATION_STATUS.md
+│       ├── RENAMING.md
+│       └── REVIEW_REPORT.md
+│
+├── 📁 tests/                  # 🆕 Testes unitários (futuro)
+│
+├── 📁 archive/                # 🆕 Arquivos históricos
+│   ├── backup/               # Backups antigos do código
+│   └── old/                  # Versões antigas do projeto
+│
+├── 📄 clarify_gui.sh         # Launcher script para Linux/Mac
+├── 📄 clarify_gui.bat        # Launcher script para Windows
+│
+├── pyproject.toml            # Poetry configuration
+├── poetry.lock               # Dependency lock
+└── README.md                 # Este arquivo
+```
+
+## 🚀 Como Usar
+
+### Instalação
+
+```bash
+git clone https://github.com/JosueAmaral15/clarify.git
+cd clarify
+pip install PySide6  # Necessário para GUI
+```
+
+### 🖥️ Modo GUI (Recomendado)
+
+```bash
+python clarify.py            # Método direto
+# OU
+python -m src                # Executar como módulo Python
+```
+
+### 💻 Modo CLI
+
+```bash
+# Busca
+python clarify.py search ./src --query "foo" --include "*.ts;*.tsx"
+
+# Substituição
+python clarify.py replace ./src --query "foo" --replacement "bar" --all
+
+# Inserção
+python clarify.py insert ./src --line 1 --text "HEADER" --mode insert_above
+
+# JSON Translator
+python clarify.py translate ./web --dictionary dict.ts --root-name t
+
+# JSON Rewriter (com bug fix)
+python clarify.py dedupe en.ts --join-keys --eliminate-duplicates -o en2.ts
+```
+
+### 🧪 Validar Arquitetura Modular
+
+```bash
+python main.py test
+# ✅ src.core.SearchOptions, src.core.InsertMode, src.core.Condition
+# ✅ src.utils.walk_files, src.utils.read_text
+# ✅ src.rewriter.Obj, src.rewriter.dedupe, src.rewriter.sanitize_keys_and_values
+```
+
+### 📚 Uso Programático (Módulos Organizados)
+
+```python
+import sys
+sys.path.insert(0, '/caminho/para/clarify')
+
+# Busca e substituição
+from src.core import SearchOptions, replace_in_text
+opts = SearchOptions(case_sensitive=True)
+pattern = opts.compile("antigo")
+novo, count = replace_in_text(texto, pattern, "novo")
+
+# Inserção
+from src.core import InsertMode, insert_at_line
+novo_texto = insert_at_line(texto, line_no=10, text="Nova linha", mode=InsertMode.INSERT_ABOVE)
+
+# Filtros avançados
+from src.core import Condition, filter_files_by_conditions
+from src.utils import walk_files
+cond = Condition("content", "contains", "React")
+files = list(walk_files("./src"))
+filtered = filter_files_by_conditions(files, [cond])
+
+# JSON Rewriter (COM BUG FIX)
+from src.rewriter import (
+    parse_json_preserving_duplicates_text,
+    sanitize_keys_and_values,
+    dedupe, join_keys, eliminate_duplicates
+)
+
+data = parse_json_preserving_duplicates_text(json_text)
+data = sanitize_keys_and_values(data)  # ⭐ Bug fix aplicado aqui
+data = join_keys(data)
+data = dedupe(data)
+final = eliminate_duplicates(data)
+```
+
+## 🐛 Bug Fix Crítico Aplicado
+
+**Problema**: JSON Rewriter perdia dados ao processar estruturas `Obj` (lista de tuplas chave-valor).
+
+**Solução**: Adicionado suporte para tipo `Obj` na função `sanitize_keys_and_values()` em `rewriter/rewriter.py`.
+
+**Localização do Fix**:
+```python
+# rewriter/rewriter.py, linhas ~40-55
+def walk(v):
+    if isinstance(v, Obj):  # ⭐ CORREÇÃO CRÍTICA
+        out = Obj()
+        for k, x in v:
+            nk = clean_key(k)
+            if nk is None:
+                continue
+            vx = walk(x)
+            if drop_empty_values and isinstance(vx, str) and not vx.strip():
+                continue
+            out.append((nk, vx))
+        return out
+    # ... continua com dict e list
+```
+
+## 📊 Status da Reorganização
+
+### ✅ Reorganização Completa (v2.1.0)
+- **src/** - Todo código fonte organizado em um pacote Python
+- **src/core/** - 4 arquivos, ~260 linhas (SearchOptions, InsertMode, Condition, filtros)
+- **src/utils/** - 4 arquivos, ~270 linhas (file_utils, text_utils, ts_utils)
+- **src/rewriter/** - 6 arquivos, ~690 linhas (tipos, parser, operações, serializer + bug fix)
+- **src/app.py** - Aplicação completa GUI+CLI (~2,700 linhas)
+- **docs/** - Documentação organizada por idioma (en/, pt/)
+- **archive/** - Backups e versões antigas arquivados
+
+### 🚧 Planejado para Futuras Versões
+- **src/translators/** - Extrair JSON Translator do app.py
+- **src/ui/** - Extrair componentes GUI do app.py
+- **src/cli/** - Extrair comandos CLI do app.py
+- **tests/** - Adicionar testes unitários
+
+## ⚠️ Importante
+
+**Para uso completo, utilize `python clarify.py`** - ponto de entrada principal.
+
+**Alternativa**: `python -m src` - executar como módulo Python.
+
+**Para validação modular, use `python main.py test`** - valida arquitetura modular.
+
+**Arquivo principal**: `src/app.py` contém toda a aplicação GUI+CLI (~2,700 linhas).
+
+## 🧪 Validação
+
+```bash
+# Validar arquitetura modular
+python main.py test
+
+# Executar aplicação completa
+python clarify.py
+
+# Executar como módulo Python
+python -m src
+
+# Ver ajuda CLI
+python clarify.py --help
+```
+
+## 📚 Documentação Adicional
+
+### 📖 Documentação em Inglês (docs/en/)
+- **TASKS.md** - Development roadmap (MoSCoW priorities)
+- **CODE_REVIEW_FINAL.md** - Executive code review summary
+- **CODE_REVIEW_DETAILED.md** - Comprehensive code analysis
+- **MIGRATION_COMPLETE.md** - Complete migration history
+- **RENAMING.md** - File renaming documentation
+- **REORGANIZATION_STATUS.md** - Module organization status
+
+### 📖 Documentação em Português (docs/pt/)
+- Em desenvolvimento - contribuições bem-vindas!
+
+### 🔗 Acesso Rápido
+- **docs/README.md** - Índice bilíngue de toda documentação
+
+## 👤 Autor
+
+**Josué Amaral**  
+GitHub: [@JosueAmaral15](https://github.com/JosueAmaral15)  
+Data: 2025/10/01
+
+## 📄 Licença
+
+MIT License
+
+---
+
+## 💡 Dica
+
+Para melhor experiência:
+- **GUI (Launcher)**: Clique duplo em `clarify_gui.bat` (Windows) ou `clarify_gui.sh` (Linux/Mac)
+- **GUI (Python)**: `python clarify.py` ou `python -m src` (interface completa)
+- **CLI**: `python clarify.py <comando>` (linha de comando)
+- **Validação**: `python main.py test` (validar arquitetura modular)
+- **Documentação**: `docs/README.md` (índice bilíngue)
+
+### 🚀 Launchers GUI
+Criados scripts de conveniência para iniciar a GUI com um clique:
+- **Windows**: `clarify_gui.bat` - Double-click para executar
+- **Linux/Mac**: `clarify_gui.sh` - Double-click ou `./clarify_gui.sh`
+- Ambos verificam dependências e oferecem instalar PySide6 se necessário
+- Ver [LAUNCHERS.md](LAUNCHERS.md) para detalhes
+
+## 📝 Changelog v2.1.0 (2025-11-23)
+
+### 🎉 Reorganização Completa
+- ✅ Todo código movido para `src/` (arquitetura modular padrão Python)
+- ✅ Código movido para `src/app.py` (clareza e consistência)
+- ✅ Criado `src/__init__.py` e `src/__main__.py` (suporte a `python -m src`)
+- ✅ Documentação organizada por idioma: `docs/en/` e `docs/pt/`
+- ✅ Arquivos históricos movidos para `archive/` (backup/, old/)
+- ✅ Imports atualizados: `from src.core import ...`
+- ✅ Lazy loading de PySide6 (CLI funciona sem GUI)
+- ✅ Estrutura pronta para testes unitários em `tests/`
+
+### 🔧 Melhorias Técnicas
+- Suporte a execução como módulo: `python -m src`
+- Validação de arquitetura: `python main.py test`
+- Imports relativos no `src/app.py`
+- Classes GUI condicionadas a `_PYSIDE`
+
+### 📚 Documentação
+- README.md atualizado com nova estrutura
+- Documentação bilíngue (docs/en/, docs/pt/)
+- Changelog desta versão
+
+⭐ **Dê uma estrela se este projeto foi útil!**

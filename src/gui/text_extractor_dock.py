@@ -1,0 +1,491 @@
+"""
+Text Extractor Dock Widget - Advanced Version
+
+Provides UI for extracting text/attributes from HTML/JSX to structured JSON.
+
+Features:
+- JSX/HTML attribute extraction (e.g., label, title, placeholder)
+- Hierarchical path building with file context
+- Multiple normalization styles (snake_case, camelCase, PascalCase, kebab-case)
+- Smart truncation with word boundary awareness
+- Drop standard HTML tags option
+- Add key/value to path options
+- Nested JSON output generation
+- Generic scope parser with custom delimiters
+"""
+
+import os
+import re
+import json
+from typing import Dict, Any, List, Optional
+from PySide6.QtWidgets import (
+    QGridLayout, QLabel, QLineEdit, QCheckBox, QComboBox, 
+    QPushButton, QSpinBox, QGroupBox, QVBoxLayout
+)
+from ..gui.base_dock import StandardToolDock
+
+
+class TextExtractorDock(StandardToolDock):
+    """
+    Advanced dock widget for text/attribute extraction from JSX/HTML.
+    
+    Supports:
+    - Parameter extraction (JSX attributes like label="...")
+    - Tag content extraction (text between tags)
+    - Hierarchical path construction
+    - Multiple normalization options
+    - Smart value truncation
+    - Standard HTML tag filtering
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__("Advanced Text to JSON Extractor", parent)
+    
+    def _setup_ui(self):
+        """Setup UI components with advanced options."""
+        grid = QGridLayout()
+        
+        # Input file/directory
+        lbl_input, self.ed_input, self.btn_browse_input, self.chk_is_file = self.create_file_input(
+            "Input path:",
+            "HTML/JSX file or directory"
+        )
+        grid.addWidget(lbl_input, 0, 0)
+        grid.addWidget(self.ed_input, 0, 1, 1, 2)
+        grid.addWidget(self.btn_browse_input, 0, 3)
+        
+        # Output file
+        grid.addWidget(QLabel("Output file:"), 1, 0)
+        self.ed_output = QLineEdit()
+        self.ed_output.setPlaceholderText("Output JSON/TS file")
+        self.btn_browse_output = QPushButton("Browse...")
+        grid.addWidget(self.ed_output, 1, 1, 1, 2)
+        grid.addWidget(self.btn_browse_output, 1, 3)
+        
+        # Extraction mode
+        grid.addWidget(QLabel("Extraction mode:"), 2, 0)
+        self.combo_mode = QComboBox()
+        self.combo_mode.addItems(["JSX Attributes", "Tag Content", "Generic Scope"])
+        self.combo_mode.setToolTip("JSX Attributes: Extract label=\"text\" patterns\n"
+                                   "Tag Content: Extract <tag>text</tag> content\n"
+                                   "Generic Scope: Extract all quoted strings")
+        grid.addWidget(self.combo_mode, 2, 1)
+        
+        # Parameter/Tag name
+        grid.addWidget(QLabel("Parameter/Tag:"), 2, 2)
+        self.ed_param = QLineEdit()
+        self.ed_param.setPlaceholderText("e.g., label, title (empty = all)")
+        grid.addWidget(self.ed_param, 2, 3)
+        
+        # Normalization options
+        grid.addWidget(QLabel("Case style:"), 3, 0)
+        self.combo_case = QComboBox()
+        self.combo_case.addItems(["snake_case", "camelCase", "PascalCase", "kebab-case"])
+        self.combo_case.setToolTip("How to format extracted keys: snake_case (Python), camelCase (JS), PascalCase (components), kebab-case (CSS)")
+        grid.addWidget(self.combo_case, 3, 1)
+        
+        grid.addWidget(QLabel("Truncate at:"), 3, 2)
+        self.ed_limit = QLineEdit("all")
+        self.ed_limit.setPlaceholderText("chars or 'all'")
+        grid.addWidget(self.ed_limit, 3, 3)
+        
+        # Advanced options group
+        options_group = QGroupBox("Advanced Options")
+        options_layout = QGridLayout()
+        
+        self.chk_uppercase = QCheckBox("UPPERCASE")
+        self.chk_avoid_cut = QCheckBox("Avoid word cut")
+        self.chk_avoid_cut.setChecked(True)
+        self.chk_drop_standard = QCheckBox("Drop standard HTML")
+        self.chk_drop_standard.setChecked(True)
+        
+        options_layout.addWidget(self.chk_uppercase, 0, 0)
+        options_layout.addWidget(self.chk_avoid_cut, 0, 1)
+        options_layout.addWidget(self.chk_drop_standard, 0, 2)
+        
+        self.chk_add_key = QCheckBox("Add key to path")
+        self.chk_add_value = QCheckBox("Add value to path")
+        self.chk_nested_json = QCheckBox("Nested JSON output")
+        self.chk_nested_json.setChecked(True)
+        
+        options_layout.addWidget(self.chk_add_key, 1, 0)
+        options_layout.addWidget(self.chk_add_value, 1, 1)
+        options_layout.addWidget(self.chk_nested_json, 1, 2)
+        
+        self.chk_is_file.setChecked(False)
+        self.chk_ts_export = QCheckBox("TypeScript export")
+        self.chk_only_strings = QCheckBox("Only string literals")
+        self.chk_only_strings.setChecked(True)
+        
+        options_layout.addWidget(self.chk_is_file, 2, 0)
+        options_layout.addWidget(self.chk_ts_export, 2, 1)
+        options_layout.addWidget(self.chk_only_strings, 2, 2)
+        
+        options_group.setLayout(options_layout)
+        
+        self.layout.addLayout(grid)
+        self.layout.addWidget(options_group)
+        
+        # Action buttons
+        buttons = [
+            ("Extract", self._extract),
+            ("Clear", self._clear)
+        ]
+        btn_layout = self.create_action_buttons(buttons)
+        self.layout.addLayout(btn_layout)
+        
+        # Results panel
+        lbl_results, self.text_results = self.create_results_panel()
+        self.layout.addWidget(lbl_results)
+        self.layout.addWidget(self.text_results)
+    
+    def _connect_signals(self):
+        """Connect signals."""
+        self.btn_browse_input.clicked.connect(self._browse_input)
+        self.btn_browse_output.clicked.connect(self._browse_output)
+        
+        # Enable Enter key execution on input fields
+        self._setup_enter_key_execution(self.ed_input, self.ed_param, self.ed_limit)
+    
+    def _execute_action(self):
+        """Execute extraction when Enter is pressed."""
+        self._extract()
+    
+    def _browse_input(self):
+        """Browse for input file or directory."""
+        self.browse_file_or_directory(
+            self.ed_input,
+            self.chk_is_file.isChecked(),
+            "HTML/JSX files (*.html *.htm *.jsx *.tsx);;All files (*)"
+        )
+    
+    def _browse_output(self):
+        """Browse for output file."""
+        from PySide6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save output file", "",
+            "JSON files (*.json);;TypeScript (*.ts);;All (*)"
+        )
+        if path:
+            self.ed_output.setText(path)
+    
+    def _extract(self):
+        """Extract text from HTML/JSX with advanced options."""
+        try:
+            input_path = self.ed_input.text().strip()
+            output_path = self.ed_output.text().strip()
+            
+            # Validate
+            valid, error = self.validate_file_path(input_path)
+            if not valid:
+                raise ValueError(error)
+            
+            if not output_path:
+                raise ValueError("Output file path is required")
+            
+            valid, error = self.validate_file_writable(output_path)
+            if not valid:
+                raise ValueError(error)
+            
+            # Gather options
+            options = {
+                'mode': self.combo_mode.currentText(),
+                'param': self.ed_param.text().strip() or None,
+                'case_style': self.combo_case.currentText().split('_')[0].lower() if '_' in self.combo_case.currentText() else self.combo_case.currentText().lower().replace('case', ''),
+                'limit': self.ed_limit.text().strip(),
+                'uppercase': self.chk_uppercase.isChecked(),
+                'avoid_cut': self.chk_avoid_cut.isChecked(),
+                'drop_standard': self.chk_drop_standard.isChecked(),
+                'add_key': self.chk_add_key.isChecked(),
+                'add_value': self.chk_add_value.isChecked(),
+                'nested': self.chk_nested_json.isChecked(),
+                'only_strings': self.chk_only_strings.isChecked(),
+            }
+            
+            # Extract
+            self.clear_results(self.text_results)
+            self.append_result(self.text_results, f"🔄 Extracting with {options['mode']} mode...\n")
+            
+            if self.chk_is_file.isChecked():
+                result = self._extract_from_file(input_path, options)
+                files_processed = 1
+            else:
+                result = self._extract_from_directory(input_path, options)
+                files_processed = len([f for f in self._list_files(input_path)])
+            
+            # Convert to nested if requested
+            if options['nested'] and isinstance(result, dict):
+                result = self._flatten_to_nested(result)
+            
+            # Save result
+            with open(output_path, 'w', encoding='utf-8') as f:
+                if self.chk_ts_export.isChecked():
+                    f.write("export default ")
+                json.dump(result, f, indent=2, ensure_ascii=False)
+                if self.chk_ts_export.isChecked():
+                    f.write(";")
+            
+            # Calculate statistics
+            total_keys = self._count_keys(result)
+            
+            self.append_result(self.text_results, f"✅ Extraction complete!\n")
+            self.append_result(self.text_results, f"Files processed: {files_processed}")
+            self.append_result(self.text_results, f"Keys extracted: {total_keys}")
+            self.append_result(self.text_results, f"Output: {output_path}\n")
+            
+            # Show preview
+            preview = json.dumps(result, indent=2, ensure_ascii=False)
+            if len(preview) > 800:
+                preview = preview[:800] + "\n  ...(truncated)..."
+            self.append_result(self.text_results, f"Preview:\n{preview}")
+            
+            self.show_info("Success", f"Extraction complete!\n\nFiles: {files_processed}\nKeys: {total_keys}\nSaved to: {output_path}")
+            
+        except Exception as e:
+            import traceback
+            self.append_result(self.text_results, f"\n❌ Error: {str(e)}\n")
+            self.append_result(self.text_results, traceback.format_exc())
+            self.show_error("Extraction Error", str(e))
+    
+    def _clear(self):
+        """Clear results."""
+        self.clear_results(self.text_results)
+    
+    # ==================== Extraction Core Methods ====================
+    
+    def _extract_from_file(self, file_path: str, options: dict) -> Dict[str, Any]:
+        """Extract from a single file."""
+        result = {}
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            
+            file_key = os.path.splitext(os.path.basename(file_path))[0]
+            file_result = self._extract_from_content(content, file_key, options)
+            result.update(file_result)
+        except Exception as e:
+            self.append_result(self.text_results, f"⚠️ Error in {file_path}: {e}\n")
+        
+        return result
+    
+    def _extract_from_directory(self, dir_path: str, options: dict) -> Dict[str, Any]:
+        """Extract from all files in directory."""
+        result = {}
+        for file_path in self._list_files(dir_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                    content = f.read()
+                
+                rel_path = os.path.relpath(file_path, dir_path)
+                file_key = os.path.splitext(rel_path.replace(os.sep, '.'))[0]
+                file_result = self._extract_from_content(content, file_key, options)
+                result.update(file_result)
+            except Exception as e:
+                self.append_result(self.text_results, f"⚠️ Error in {file_path}: {e}\n")
+        
+        return result
+    
+    def _extract_from_content(self, content: str, file_key: str, options: dict) -> Dict[str, Any]:
+        """Extract from file content based on mode."""
+        mode = options['mode']
+        
+        if mode == "JSX Attributes":
+            return self._extract_jsx_attributes(content, file_key, options)
+        elif mode == "Tag Content":
+            return self._extract_tag_content(content, file_key, options)
+        else:  # Generic Scope
+            return self._extract_generic_scope(content, file_key, options)
+    
+    def _extract_jsx_attributes(self, content: str, file_key: str, options: dict) -> Dict[str, Any]:
+        """Extract JSX attributes (e.g., label="text")."""
+        result = {}
+        param = options['param']
+        
+        # Pattern for JSX attributes: param="value" or param='value' or param={"value"}
+        if param:
+            patterns = [
+                rf'{re.escape(param)}\s*=\s*"([^"]*)"',  # param="value"
+                rf"{re.escape(param)}\s*=\s*'([^']*)'",  # param='value'
+                rf'{re.escape(param)}\s*=\s*{{\s*["\']([^"\']*)["\']',  # param={"value"}
+            ]
+        else:
+            # Match any attribute
+            patterns = [
+                r'(\w+)\s*=\s*"([^"]*)"',
+                r"(\w+)\s*=\s*'([^']*)'",
+                r'(\w+)\s*=\s*{{\s*["\']([^"\']*)["\']',
+            ]
+        
+        for pattern in patterns:
+            for match in re.finditer(pattern, content):
+                if param:
+                    value = match.group(1)
+                    key_name = param
+                else:
+                    key_name = match.group(1)
+                    value = match.group(2)
+                
+                # Filter only strings if requested
+                if options['only_strings']:
+                    if not value or value.startswith('{') or value.startswith('['):
+                        continue
+                
+                # Normalize value
+                normalized = self._normalize_value(value, options)
+                
+                # Build path
+                path_parts = [file_key]
+                if options['add_key']:
+                    path_parts.append(key_name)
+                if options['add_value'] and normalized:
+                    path_parts.append(normalized)
+                
+                path = '.'.join(path_parts)
+                result[path] = value
+        
+        return result
+    
+    def _extract_tag_content(self, content: str, file_key: str, options: dict) -> Dict[str, Any]:
+        """Extract text content between tags."""
+        result = {}
+        param = options['param'] or r'\w+'  # Default to any tag
+        
+        # Pattern for tag content: <tag>content</tag>
+        pattern = rf'<({param})(?:\s[^>]*)?>([^<]+)<\/\1>'
+        
+        for match in re.finditer(pattern, content, re.DOTALL):
+            tag_name = match.group(1)
+            value = match.group(2).strip()
+            
+            # Skip standard HTML if requested
+            if options['drop_standard'] and self._is_standard_html_tag(tag_name):
+                continue
+            
+            # Filter only text (no JSX expressions)
+            if options['only_strings']:
+                if '{' in value or '}' in value:
+                    continue
+            
+            # Normalize value
+            normalized = self._normalize_value(value, options)
+            
+            # Build path
+            path_parts = [file_key, tag_name]
+            if options['add_value'] and normalized:
+                path_parts.append(normalized)
+            
+            path = '.'.join(path_parts)
+            result[path] = value
+        
+        return result
+    
+    def _extract_generic_scope(self, content: str, file_key: str, options: dict) -> Dict[str, Any]:
+        """Extract using generic regex delimiters."""
+        result = {}
+        # Simple implementation - can be extended with user-provided delimiters
+        # For now, extract quoted strings
+        pattern = r'["\']([^"\']{3,})["\']'
+        
+        for match in re.finditer(pattern, content):
+            value = match.group(1)
+            
+            # Normalize value
+            normalized = self._normalize_value(value, options)
+            
+            if normalized:
+                path = f"{file_key}.{normalized}"
+                result[path] = value
+        
+        return result
+    
+    # ==================== Helper Methods ====================
+    
+    def _normalize_value(self, value: str, options: dict) -> str:
+        """Normalize value according to options."""
+        # Truncate
+        limit = options['limit']
+        if limit != 'all':
+            try:
+                max_len = int(limit)
+                if options['avoid_cut'] and len(value) > max_len:
+                    # Cut at word boundary
+                    truncated = value[:max_len]
+                    last_space = truncated.rfind(' ')
+                    if last_space > 0:
+                        value = truncated[:last_space]
+                    else:
+                        value = truncated
+                else:
+                    value = value[:max_len] if len(value) > max_len else value
+            except ValueError:
+                pass
+        
+        # Remove special chars and split into tokens
+        cleaned = re.sub(r'[^a-zA-Z0-9\s]', ' ', value)
+        tokens = [t for t in cleaned.split() if t]
+        
+        if not tokens:
+            return ""
+        
+        # Apply case style
+        case_style = options['case_style']
+        if case_style == 'snake':
+            result = '_'.join(t.lower() for t in tokens)
+        elif case_style == 'camel':
+            result = tokens[0].lower() + ''.join(t.capitalize() for t in tokens[1:])
+        elif case_style == 'pascal':
+            result = ''.join(t.capitalize() for t in tokens)
+        elif case_style == 'kebab':
+            result = '-'.join(t.lower() for t in tokens)
+        else:
+            result = '_'.join(t.lower() for t in tokens)
+        
+        # Apply uppercase
+        if options['uppercase']:
+            result = result.upper()
+        
+        return result
+    
+    def _flatten_to_nested(self, flat: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert flat dot-notation dict to nested dict."""
+        nested = {}
+        for path, value in flat.items():
+            parts = path.split('.')
+            current = nested
+            for part in parts[:-1]:
+                if part not in current:
+                    current[part] = {}
+                current = current[part]
+            current[parts[-1]] = value
+        return nested
+    
+    def _count_keys(self, obj: Any, count: int = 0) -> int:
+        """Count total keys recursively."""
+        if isinstance(obj, dict):
+            count += len(obj)
+            for value in obj.values():
+                count = self._count_keys(value, count)
+        return count
+    
+    def _list_files(self, root: str, extensions: List[str] = None) -> List[str]:
+        """List files recursively."""
+        if extensions is None:
+            extensions = ['.tsx', '.jsx', '.html', '.htm', '.js', '.ts']
+        
+        files = []
+        for dirpath, _, filenames in os.walk(root):
+            for filename in filenames:
+                if any(filename.endswith(ext) for ext in extensions):
+                    files.append(os.path.join(dirpath, filename))
+        return files
+    
+    def _is_standard_html_tag(self, tag: str) -> bool:
+        """Check if tag is a standard HTML tag."""
+        standard_tags = {
+            'div', 'span', 'p', 'a', 'button', 'input', 'label', 'form',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li',
+            'table', 'tr', 'td', 'th', 'thead', 'tbody', 'section',
+            'article', 'nav', 'header', 'footer', 'main', 'aside',
+            'img', 'video', 'audio', 'canvas', 'svg', 'iframe'
+        }
+        return tag.lower() in standard_tags

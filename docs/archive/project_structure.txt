@@ -1,0 +1,27 @@
+clarify_app/
+├── cli
+│   └── __init__.py
+├── core
+│   ├── filters.py
+│   ├── __init__.py
+│   ├── insert.py
+│   └── search_replace.py
+├── __init__.py
+├── rewriter
+│   ├── __init__.py
+│   ├── operations.py
+│   ├── rewriter.py
+│   ├── serializer.py
+│   ├── ts_parser.py
+│   └── types.py
+├── translators
+│   └── __init__.py
+├── ui
+│   └── __init__.py
+└── utils
+    ├── file_utils.py
+    ├── __init__.py
+    ├── text_utils.py
+    └── ts_utils.py
+
+6 directories, 18 files

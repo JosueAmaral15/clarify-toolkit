@@ -1,0 +1,110 @@
+Clarify v2.1.0 - Final Project Structure
+=========================================
+
+clarify/
+├── 📄 clarify.py              # ⭐ Main entry point
+├── 📄 main.py                 # Testing/validation script
+├── 📄 README.md               # Project documentation
+├── 📄 REORGANIZATION.md       # Reorganization details
+├── 📄 STRUCTURE.txt           # This file
+│
+├── 📄 pyproject.toml          # Poetry configuration
+├── 📄 poetry.lock             # Dependency lock
+│
+├── 📁 src/                    # 🆕 All source code
+│   ├── __init__.py           # Package init (lazy loading)
+│   ├── __main__.py           # Module execution support
+│   ├── app.py                # Main application (2,719 lines, 116 KB)
+│   │
+│   ├── 📁 core/              # Core functionality
+│   │   ├── __init__.py
+│   │   ├── search_replace.py    # Search & replace logic
+│   │   ├── insert.py            # Text insertion
+│   │   └── filters.py           # Advanced filtering
+│   │
+│   ├── 📁 utils/             # Utilities
+│   │   ├── __init__.py
+│   │   ├── file_utils.py        # File operations
+│   │   ├── text_utils.py        # Text processing
+│   │   └── ts_utils.py          # TypeScript/JS utilities
+│   │
+│   ├── 📁 rewriter/          # JSON Rewriter (with bug fix)
+│   │   ├── __init__.py
+│   │   ├── types.py             # Obj, JSONNode types
+│   │   ├── rewriter.py          # ⭐ BUG FIX HERE
+│   │   ├── ts_parser.py         # TS/JS parser
+│   │   ├── operations.py        # dedupe, join, eliminate
+│   │   └── serializer.py        # Serialization
+│   │
+│   ├── 📁 translators/       # JSON Translator
+│   │   └── __init__.py
+│   │
+│   ├── 📁 ui/                # GUI components (future)
+│   └── 📁 cli/               # CLI commands (future)
+│
+├── 📁 docs/                   # Documentation
+│   ├── README.md             # Bilingual index
+│   ├── REORGANIZATION.md     # v2.1.0 reorganization details
+│   ├── LAUNCHERS.md          # GUI launcher documentation
+│   │
+│   ├── 📁 architecture/      # Architecture documentation
+│   │   ├── ARCHITECTURE.md       # Entry points explanation
+│   │   ├── ARCHITECTURE_DIAGRAM.txt  # Visual diagram
+│   │   └── STRUCTURE.txt         # This file
+│   │
+│   ├── 📁 reports/           # Analysis reports
+│   │   ├── BUG_FIX_REPORT.md     # Documentation bug fixes (EN)
+│   │   ├── BUG_FIX_REPORT_PT.md  # Documentation bug fixes (PT)
+│   │   ├── CODE_BUG_REPORT.md    # Code bug analysis (EN)
+│   │   └── CODE_BUG_REPORT_PT.md # Code bug analysis (PT)
+│   │
+│   ├── 📁 archive/           # Historical documentation
+│   │   ├── LANGUAGE_FIX.md       # Language fix log
+│   │   └── project_structure.txt # Old structure reference
+│   │
+│   ├── 📁 en/                # English documentation
+│   │   ├── README.md             # Navigation
+│   │   └── TASKS.md              # ⭐ Development roadmap
+│   │
+│   └── 📁 pt/                # Portuguese documentation
+│       ├── README.md
+│       ├── CODE_REVIEW_DETAILED.md
+│       ├── CODE_REVIEW_FINAL.md
+│       ├── MIGRATION_COMPLETE.md
+│       ├── MIGRATION_FINAL_STATUS.md
+│       ├── MIGRATION_CHECKLIST.md
+│       ├── REORGANIZATION_STATUS.md
+│       ├── RENAMING.md
+│       └── REVIEW_REPORT.md
+│
+├── 📁 tests/                  # Unit tests (future)
+│
+├── 📁 archive/                # Historical files
+│   ├── 📁 backup/            # Old code backups
+│   │   ├── clarify_gui_cli_before_refactor.py
+│   │   └── clarify_patched.py
+│   └── 📁 old/               # Legacy versions
+│       ├── old_other_version_clarify.py
+│       └── other_version_clarify.py
+│
+├── 📄 clarify_gui.sh         # GUI launcher for Linux/Mac
+├── 📄 clarify_gui.bat        # GUI launcher for Windows
+│
+├── 📄 pyproject.toml         # Poetry configuration
+└── 📄 poetry.lock            # Dependency lock
+
+Usage:
+------
+python clarify.py              # Main entry (GUI/CLI)
+python -m src                  # Run as Python module
+python main.py test            # Validate architecture
+
+Import Examples:
+----------------
+from src.core import SearchOptions, InsertMode, Condition
+from src.utils import walk_files, read_text, write_text
+from src.rewriter import Obj, dedupe, sanitize_keys_and_values
+
+Version: 2.1.0
+Date: 2025-11-23
+Author: Josué Amaral

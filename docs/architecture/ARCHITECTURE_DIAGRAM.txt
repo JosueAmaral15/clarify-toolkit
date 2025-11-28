@@ -1,0 +1,154 @@
+┌─────────────────────────────────────────────────────────────────────┐
+│                    CLARIFY - ARCHITECTURE DIAGRAM                   │
+│                         Version 2.1.0                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                         ENTRY POINTS                                  │
+│                    (Different ways to start)                          │
+└───────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────┐       ┌─────────────────┐       ┌──────────────┐
+    │  clarify.py     │       │  clarify_gui.sh │       │ python -m    │
+    │                 │       │  clarify_gui.bat│       │    src       │
+    │  User-friendly  │       │                 │       │              │
+    │  entry point    │       │  GUI launchers  │       │  "Pythonic"  │
+    │  (convenience)  │       │  (double-click) │       │   way        │
+    └────────┬────────┘       └────────┬────────┘       └──────┬───────┘
+             │                         │                        │
+             │                         │                        │
+             └─────────────────────────┴────────────────────────┘
+                                       │
+                                       ▼
+                            ┌──────────────────┐
+                            │   src/__init__   │
+                            │   .main()        │
+                            │                  │
+                            │  Lazy loading    │
+                            │  (avoids PySide6 │
+                            │   at import)     │
+                            └────────┬─────────┘
+                                     │
+                                     ▼
+                            ┌──────────────────┐
+                            │  src/__main__.py │
+                            │                  │
+                            │  Standard Python │
+                            │  module entry    │
+                            └────────┬─────────┘
+                                     │
+                                     ▼
+         ┌───────────────────────────────────────────────────┐
+         │              src/app.py                           │
+         │         THE REAL APPLICATION                      │
+         │         (~2,700 lines of code)                    │
+         │                                                   │
+         │  • GUI interface (PySide6)                        │
+         │  • CLI commands (argparse)                        │
+         │  • Search/Replace engine                          │
+         │  • JSON Translator                                │
+         │  • All business logic                             │
+         └───────────────────┬───────────────────────────────┘
+                             │
+         ┌───────────────────┴────────────────────┐
+         │                                        │
+         ▼                                        ▼
+┌─────────────────┐                    ┌──────────────────┐
+│   src/core/     │                    │   src/utils/     │
+│                 │                    │                  │
+│ • search_replace│                    │ • file_utils     │
+│ • insert        │                    │ • text_utils     │
+│ • filters       │                    │ • ts_utils       │
+└─────────────────┘                    └──────────────────┘
+         │                                        │
+         └───────────────────┬────────────────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  src/rewriter/   │
+                    │                  │
+                    │ • types          │
+                    │ • rewriter       │
+                    │ • ts_parser      │
+                    │ • operations     │
+                    │ • serializer     │
+                    └──────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                      DEVELOPMENT TOOLS                                │
+│                  (Not for end users)                                  │
+└───────────────────────────────────────────────────────────────────────┘
+
+                        ┌──────────────────┐
+                        │    main.py       │
+                        │                  │
+                        │  Test & Validate │
+                        │  module imports  │
+                        │                  │
+                        │  python main.py  │
+                        │       test       │
+                        └──────────────────┘
+
+═══════════════════════════════════════════════════════════════════════
+
+                           KEY CONCEPTS
+
+1. ENTRY POINTS (What users run):
+   • clarify.py          → Most intuitive for users
+   • python -m src       → Standard Python convention
+   • clarify_gui.sh/bat  → GUI convenience (one click)
+
+2. THE REAL CODE (Where logic lives):
+   • src/app.py          → Main application (~2,700 lines)
+   • src/core/           → Core functionality
+   • src/utils/          → Utilities
+   • src/rewriter/       → JSON processing
+
+3. DEVELOPMENT TOOLS (For developers):
+   • main.py             → Test module architecture
+   • tests/              → Unit tests (future)
+
+4. WHY MULTIPLE ENTRY POINTS?
+   • clarify.py          → User expectation/convenience
+   • src/__main__.py     → Python standard
+   • main.py             → Development testing
+
+═══════════════════════════════════════════════════════════════════════
+
+                         CALL FLOW EXAMPLE
+
+User types: python clarify.py search ./src --query "foo"
+
+1. clarify.py
+   │
+   └─→ import src
+       │
+       └─→ src/__init__.py
+           │
+           └─→ def main() → lazy import
+               │
+               └─→ src/app.py
+                   │
+                   └─→ def main(argv)
+                       │
+                       ├─→ Parse args with argparse
+                       │
+                       ├─→ Detect "search" subcommand
+                       │
+                       └─→ cli_search(args)
+                           │
+                           ├─→ src.core.SearchOptions
+                           ├─→ src.utils.walk_files
+                           └─→ Search & display results
+
+═══════════════════════════════════════════════════════════════════════
+
+                       SIMPLIFIED TRUTH
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  clarify.py = "Hey src, start the app!"                            │
+│  main.py    = "Let me test if src is working correctly"            │
+│  src/       = "I AM the app, here's the actual code!"              │
+└─────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════

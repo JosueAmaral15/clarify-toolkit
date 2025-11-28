@@ -1,0 +1,384 @@
+{
+  "critical": [],
+  "warnings": [
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "Nested fences (greedy match): Expected '```code``` blocks', got '```nested ```code``` blocks```'",
+      "suggestion": "Review regex pattern"
+    }
+  ],
+  "info": [
+    {
+      "module": "ValidationMixin",
+      "issue": "Permission denied (depends on system): False - Path does not exist: /root/protected.txt",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "duplicate_keys.json: Python keeps last key (expected behavior)",
+      "suggestion": ""
+    },
+    {
+      "module": "PlaceholderReplacerDock",
+      "issue": "Placeholder patterns to test: 10",
+      "suggestion": ""
+    },
+    {
+      "module": "PlaceholderReplacerDock",
+      "issue": "Manual testing recommended with actual mapping files",
+      "suggestion": ""
+    }
+  ],
+  "passed": [
+    {
+      "module": "src.gui.base_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.ai_processor_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.text_extractor_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.case_converter_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.json_search_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.placeholder_replacer_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.json_translate_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "src.gui.json_rewriter_dock",
+      "issue": "All imports successful",
+      "suggestion": ""
+    },
+    {
+      "module": "base_dock.BaseDock",
+      "issue": "Class definition OK (abstract)",
+      "suggestion": ""
+    },
+    {
+      "module": "base_dock.StandardToolDock",
+      "issue": "Class definition OK (abstract)",
+      "suggestion": ""
+    },
+    {
+      "module": "ai_processor_dock.AIProcessorDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "text_extractor_dock.TextExtractorDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "case_converter_dock.CaseConverterDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "json_search_dock.JsonSearchDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "placeholder_replacer_dock.PlaceholderReplacerDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "json_translate_dock.JsonTranslateDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "json_rewriter_dock.JsonRewriterDock",
+      "issue": "Instance created successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Empty path: Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Whitespace only: Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Non-existent path: Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Non-existent (not required): Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Valid existing file: Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Relative path (non-existent): Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Relative path (not required to exist): Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "File URI (not supported): Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "ValidationMixin",
+      "issue": "Platform-specific path: Handled correctly",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "valid.json: Parsed successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "empty.json: Correctly rejected",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "invalid.json: Correctly rejected",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "nested.json: Parsed successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "unicode.json: Parsed successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "large.json: Parsed successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "JSON Parsing",
+      "issue": "special_chars.json: Parsed successfully",
+      "suggestion": ""
+    },
+    {
+      "module": "ProcessorWorkerBase",
+      "issue": "Initial state correct",
+      "suggestion": ""
+    },
+    {
+      "module": "ProcessorWorkerBase",
+      "issue": "Interrupt mechanism works",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "Standard JSON fence",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "No language identifier",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "Python fence",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "No fences",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "Empty string",
+      "suggestion": ""
+    },
+    {
+      "module": "AIProcessorDock._strip_code_fences",
+      "issue": "Incomplete fence",
+      "suggestion": ""
+    },
+    {
+      "module": "count_tokens",
+      "issue": "Empty string: 0 tokens",
+      "suggestion": ""
+    },
+    {
+      "module": "count_tokens",
+      "issue": "Very long string: 25000 tokens",
+      "suggestion": ""
+    },
+    {
+      "module": "count_tokens",
+      "issue": "Many emojis: 250 tokens",
+      "suggestion": ""
+    },
+    {
+      "module": "count_tokens",
+      "issue": "Many newlines: 250 tokens",
+      "suggestion": ""
+    },
+    {
+      "module": "count_tokens",
+      "issue": "Many spaces: 1000 tokens",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Empty string",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Whitespace only",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Basic snake_case",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Basic camelCase",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Basic PascalCase",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Basic kebab-case",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Numbers in text",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Special characters",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "Truncation with avoid cut",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._normalize_value",
+      "issue": "No truncation needed",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'div' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'span' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'p' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'button' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'input' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'h1' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'table' correctly identified as standard",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'MyComponent' correctly identified as custom",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'CustomDiv' correctly identified as custom",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'React' correctly identified as custom",
+      "suggestion": ""
+    },
+    {
+      "module": "TextExtractorDock._is_standard_html_tag",
+      "issue": "'Fragment' correctly identified as custom",
+      "suggestion": ""
+    },
+    {
+      "module": "File I/O",
+      "issue": "Can handle 10MB file",
+      "suggestion": ""
+    },
+    {
+      "module": "Recursion",
+      "issue": "Can handle 100-level nesting",
+      "suggestion": ""
+    },
+    {
+      "module": "CaseConverterDock",
+      "issue": "_convert() uses string-based style mapping (fixed)",
+      "suggestion": ""
+    }
+  ]
+}

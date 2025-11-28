@@ -1,0 +1,11 @@
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "emailAddress": "john.doe@example.com",
+  "phoneNumber": "+1-555-0123",
+  "homeAddress": {
+    "streetName": "Main Street",
+    "cityName": "New York",
+    "zipCode": "10001"
+  }
+}

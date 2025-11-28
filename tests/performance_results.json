@@ -1,0 +1,64 @@
+{
+  "timestamp": 1764094269.2196243,
+  "results": [
+    {
+      "name": "Large JSON Parsing (10K items)",
+      "status": "passed",
+      "time": 0.40691351890563965,
+      "result": {
+        "File Size": "781.63 KB",
+        "Items": 10000,
+        "Parse Time": "17.62ms"
+      }
+    },
+    {
+      "name": "Recursive JSON Processing (100 levels)",
+      "status": "passed",
+      "time": 0.0037841796875,
+      "result": {
+        "Nesting Depth": 100,
+        "JSON Size": "32.34 KB",
+        "Serialize Time": "3.43ms",
+        "Deserialize Time": "0.23ms"
+      }
+    },
+    {
+      "name": "Text Normalization (1000 items)",
+      "status": "passed",
+      "time": 1.454669713973999,
+      "result": {
+        "Normalizations": 1000,
+        "Total Time": "6.70ms",
+        "Avg per item": "0.01ms"
+      }
+    },
+    {
+      "name": "File Validation (100 files)",
+      "status": "passed",
+      "time": 0.015213489532470703,
+      "result": {
+        "Files Validated": 100,
+        "Total Time": "0.71ms",
+        "Avg per file": "0.01ms"
+      }
+    },
+    {
+      "name": "Concurrent Operations (20 docks)",
+      "status": "passed",
+      "time": 0.1744074821472168,
+      "result": {
+        "Docks Created": 20,
+        "Creation Time": "162.02ms",
+        "Avg per dock": "8.10ms"
+      }
+    },
+    {
+      "name": "Memory Footprint (150 instances)",
+      "status": "passed",
+      "time": 0.0069277286529541016,
+      "result": {
+        "Status": "psutil not available - install with 'pip install psutil'"
+      }
+    }
+  ]
+}
