@@ -50,7 +50,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 ### 🔨 Tasks Pendentes
 
 - **[]** Evitar comportamento: `{t.pages.onboarding.navigationHints.skip} if stuck - unanswered = zero {t.pages.PracticeHistoryPage.points}`
-- **[]** Durante tradução JSON, preservar uppercase com parâmetro do usuário
+- **[X]** Durante tradução JSON, preservar uppercase com parâmetro do usuário **(v2.9.8)**
 
 ---
 
@@ -66,7 +66,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 ### 🔨 Tasks Pendentes
 
 #### Interface e Usabilidade
-- **[]** Adicionar funcionalidade de reversão de tradução JSON
+- **[X]** Adicionar funcionalidade de reversão de tradução JSON (Swap Dictionaries + Undo with Backup) **(v2.9.8)**
 - **[X]** Adicionar menu com botão direito no painel de matches: copy, copy all, select all, open file, open all files. Suportar CTRL/Shift para seleção múltipla *(v2.9.2 - Context Menu)*
 - **[X]** Possibilidade de colocar resultados em arquivos separados (cada iteração) ou em arquivo único **(v2.9.7 - Save Results)**
 - **[]** Habilidade de inserir ranges incluídos/excluídos no Insert, mesmo usando regex
@@ -93,15 +93,15 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   answershortquestion: ['\'AnswerShortQuestion\', \'Answer Short Question\','],
   respondtosituation: ['\'RespondToSituation\', \'Respond to a Situation\',']
   ```
-- **[]** Evitar chaves repetidas:
+- **[X]** Evitar chaves repetidas em arrays (remove duplicados consecutivos e totais) **(v2.9.8)**
   ```javascript
-  whyItSWrong: ['Why it\'s wrong:', 'Why it\'s wrong:']
+  whyItSWrong: ['Why it\'s wrong:', 'Why it\'s wrong:'] → ['Why it\'s wrong:']
   ```
 - **[]** Adicionar feature para substituir listas por objetos/dicionários em arquivos JSON com restrições de escopo (ex: apenas em `t.pages`)
 - **[X]** Incluir possibilidade de filtrar extensões (ex: `.jsx`) em todos os módulos e funcionalidades *(v2.9.0 - Extension Filter)*;
 - **[]** Resolver issue de tradução quando texto tem parênteses (ex: `'Multiple Choice (Multiple)'`)
 - **[]** Evitar problema onde JSON Translate não substitui object keys de arquivos afetados ao remover keys do dicionário, causando omissão e erro 'undefined'
-- **[]** Forçar aplicação e JSON translate a obedecer regras de sintaxe e case
+- **[X]** Forçar aplicação e JSON translate a obedecer regras de sintaxe e case (enforce consistent case) **(v2.9.8)**
 - **[X]** Incluir whole word, case sensitive e regex nas condições avançadas *(v2.2.0 - Implementado em Search/Replace e Insert panels)*
 - **[X]** Adicionar tipo de filtro nas condições avançadas: operadores AND e OR *(v2.6.0 - Dropdown com AND/OR em ambos panels)*
 - **[]** Valor após chave em JSON é valor atômico, lista também é valor atômico. Ambos precisam ser iguais para ser eliminados ao remover redundâncias
@@ -119,7 +119,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Identificar tags, chaves curvas, colchetes e parênteses para evitar erros no JSON Rewriter e uso de editor de texto *(v3.0.0 - Text Extractor)*
 - **[X]** Incluir busca avançada onde usuário pode buscar com múltiplas queries separadas por novas linhas com possibilidade de usar regex (cada linha = nova query de busca) *(v2.8.0 - Multi-Query Search)*
 - **[X]** Remover erros ` ```typescript` e ` ``` ` no output ao usar IA query *(v3.0.0 - AI File Processor com strip_code_fences)*
-- **[]** Incluir busca onde word key tem contagem de ocorrências (ex: apenas chaves com mais de 2 ocorrências). Usar operações relacionais;
+- **[X]** Incluir busca onde word key tem contagem de ocorrências (Top 5 files/keys, total count) **(v2.9.8)**
 - **[X]** Interrupt Request no ChatGPT File Processor não funciona. Resolver issue *(v3.0.0 - AI File Processor com worker.request_interrupt())*
 
 ---
@@ -179,7 +179,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário **(v2.9.6)**
 - **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
 - **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
-- **[]** Adicionar opções de undo e redo para mudanças feitas
+- **[X]** Adicionar opções de undo e redo para mudanças feitas (Command Pattern, Ctrl+Z/Ctrl+Y, 10 níveis) **(v2.9.8)**
 - **[]** Traduzir aplicação para idiomas mais falados do mundo
 
 #### Advanced Features
@@ -285,6 +285,22 @@ def walk(v):
 ---
 
 ## 🎯 Marcos Recentes
+
+- **v2.9.8 (28/11/2025)**: +6 tasks completadas (MUST HAVE + SHOULD HAVE + WOULD HAVE LATER)
+  - ✅ Task #8: Remove duplicate array values (consecutive & all duplicates)
+  - ✅ Task #9: Enforce consistent case (camelCase, PascalCase, snake_case, kebab-case)
+  - ✅ Task #7: Preserve uppercase keys durante tradução JSON
+  - ✅ Task #11: Occurrence count in JSON search (Top 5 files/keys, total)
+  - ✅ Task #10: Reverse translation (Swap Dictionaries + Undo with Backup)
+  - ✅ Task #12: Undo/Redo system (Command Pattern, Ctrl+Z/Y, 10 níveis)
+
+- **v2.9.7 (28/11/2025)**: +6 tasks completadas (MUST HAVE + SHOULD HAVE)
+  - ✅ Emit export const (backend integration)
+  - ✅ Fix backslash escaping (esc_single normalization)
+  - ✅ Avoid duplicate child keys (parent.child.child → parent.child)
+  - ✅ Filename search (wildcards, prefix "filename:", regex)
+  - ✅ Save results (single file, per file, per query)
+  - ✅ Dynamic condition lines (Add/Remove buttons, min 3, no max)
 
 - **v2.9.6 (28/11/2025)**: +5 tasks completadas (SHOULD HAVE + WOULD HAVE LATER)
   - ✅ Exclude numeric keys (Text Extractor + JSON Rewriter)

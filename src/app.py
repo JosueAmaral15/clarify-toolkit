@@ -4018,6 +4018,10 @@ if _PYSIDE:
             # Initialize settings manager
             from .settings_manager import get_settings
             self.settings = get_settings()
+            
+            # Initialize Command Manager for Undo/Redo (Task #12 - v2.9.8)
+            from .core.command_manager import CommandManager
+            self.command_manager = CommandManager(max_history=10)
 
             # Plugin loader
             from .plugin_loader import PluginLoader
@@ -4143,6 +4147,25 @@ if _PYSIDE:
             act_exit = QAction("Exit", self)
             act_exit.triggered.connect(self.close)
             m_file.addAction(act_exit)
+            
+            # Edit menu with Undo/Redo (Task #12 - v2.9.8)
+            m_edit = bar.addMenu("Edit")
+            self.act_undo = QAction("Undo", self)
+            self.act_undo.setShortcut("Ctrl+Z")
+            self.act_undo.setEnabled(False)
+            self.act_undo.triggered.connect(self._undo)
+            m_edit.addAction(self.act_undo)
+            
+            self.act_redo = QAction("Redo", self)
+            self.act_redo.setShortcut("Ctrl+Y")
+            self.act_redo.setEnabled(False)
+            self.act_redo.triggered.connect(self._redo)
+            m_edit.addAction(self.act_redo)
+            
+            m_edit.addSeparator()
+            act_clear_history = QAction("Clear Undo History", self)
+            act_clear_history.triggered.connect(self._clear_undo_history)
+            m_edit.addAction(act_clear_history)
 
             m_tools = bar.addMenu("Tools")
             self.act_open_translate = QAction("Open JSON Translate", self)
@@ -4347,6 +4370,62 @@ if _PYSIDE:
             
             dialog.setLayout(layout)
             dialog.exec()
+        
+        # Undo/Redo Methods (Task #12 - v2.9.8)
+        
+        def _undo(self):
+            """Undo the last command."""
+            if self.command_manager.undo():
+                self._update_undo_redo_state()
+                QMessageBox.information(
+                    self,
+                    "Undo",
+                    f"Undone: {self.command_manager.get_redo_description() or 'Last operation'}"
+                )
+            else:
+                QMessageBox.warning(self, "Undo", "Nothing to undo.")
+        
+        def _redo(self):
+            """Redo the last undone command."""
+            if self.command_manager.redo():
+                self._update_undo_redo_state()
+                QMessageBox.information(
+                    self,
+                    "Redo",
+                    f"Redone: {self.command_manager.get_undo_description() or 'Last operation'}"
+                )
+            else:
+                QMessageBox.warning(self, "Redo", "Nothing to redo.")
+        
+        def _clear_undo_history(self):
+            """Clear all undo/redo history."""
+            reply = QMessageBox.question(
+                self,
+                "Clear History",
+                "Are you sure you want to clear all undo/redo history?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                self.command_manager.clear_history()
+                self._update_undo_redo_state()
+                QMessageBox.information(self, "Success", "Undo/redo history cleared!")
+        
+        def _update_undo_redo_state(self):
+            """Update the enabled state of undo/redo buttons based on history."""
+            self.act_undo.setEnabled(self.command_manager.can_undo())
+            self.act_redo.setEnabled(self.command_manager.can_redo())
+            
+            # Update button tooltips with descriptions
+            if self.command_manager.can_undo():
+                self.act_undo.setToolTip(f"Undo: {self.command_manager.get_undo_description()}")
+            else:
+                self.act_undo.setToolTip("Nothing to undo")
+            
+            if self.command_manager.can_redo():
+                self.act_redo.setToolTip(f"Redo: {self.command_manager.get_redo_description()}")
+            else:
+                self.act_redo.setToolTip("Nothing to redo")
         
         def _clear_recent_files(self):
             """Clear recent files list."""
