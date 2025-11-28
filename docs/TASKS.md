@@ -187,7 +187,6 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir tutoriais de uso
 - **[]** Incluir busca com ajuda de inteligência artificial
 - **[]** Embutir assistente virtual para uso com IA
-- **[]** Incluir taxa de uso de IA de 50% a mais que valor real para minha conta + 1% para permanecer no banco de caixa, usuário deve fazer pagamento usando IA, totalizando ~151% do valor real. Informar usuário que paga em tokens
 - **[]** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
 - **[]** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
 - **[]** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período

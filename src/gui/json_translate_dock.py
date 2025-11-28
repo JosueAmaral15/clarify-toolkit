@@ -143,6 +143,10 @@ class JsonTranslateDock(BaseDock):
         )
         self.chk_inverse_json_translate.setToolTip("Reverse translation: replace variable references with dictionary values")
         
+        self.chk_emit_export = QCheckBox("Emit export const")
+        self.chk_emit_export.setChecked(True)
+        self.chk_emit_export.setToolTip("Add 'export const varName = {...}' wrapper to output (TS/JS files)")
+        
         # Action button
         self.btn_run = QPushButton("Run translation")
     
@@ -182,9 +186,12 @@ class JsonTranslateDock(BaseDock):
         g.addWidget(self.chk_backup, 6, 0, 1, 2)
         g.addWidget(self.chk_dont_override, 6, 2, 1, 2)
         
-        # Row 7: Inverse option and run button
+        # Row 7: Inverse and emit export options
         g.addWidget(self.chk_inverse_json_translate, 7, 0, 1, 2)
-        g.addWidget(self.btn_run, 7, 2, 1, 2)
+        g.addWidget(self.chk_emit_export, 7, 2, 1, 2)
+        
+        # Row 8: Run button
+        g.addWidget(self.btn_run, 8, 2, 1, 2)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
