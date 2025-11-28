@@ -1,5 +1,47 @@
 # Changelog - Clarify Project
 
+## [2.9.4] - 2025-11-28
+
+### 🎨 Theme System - Light, Dark, and System
+
+#### Novas Funcionalidades
+- ✅ **Sistema completo de temas** com 3 opções:
+  - ☀️ **Light Theme**: Tema claro profissional com cores suaves
+  - 🌙 **Dark Theme**: Tema escuro moderno para reduzir fadiga ocular
+  - 🖥️ **System Theme**: Usa configurações do sistema operacional
+
+- ✅ **ThemeManager dedicado** (`src/theme_manager.py`):
+  - Gerenciamento centralizado de temas
+  - Paletas de cores consistentes
+  - Stylesheets customizados para cada tema
+  - Suporte completo a todos os componentes Qt
+
+- ✅ **Menu Themes aprimorado**:
+  - Ícones visuais para cada tema (☀️/🌙/🖥️)
+  - Tooltips explicativos
+  - Persistência de preferência (salva automaticamente)
+  - Estado sincronizado entre reinicializações
+
+#### Componentes Estilizados
+- GroupBox, LineEdit, PlainTextEdit, TextEdit, SpinBox
+- QPushButton com estados hover/pressed/disabled
+- QCheckBox e QRadioButton
+- QComboBox com dropdown customizado
+- QTabWidget e QTabBar
+- QTreeView e QListView
+- Scrollbars verticais e horizontais
+- MenuBar e Menu
+- StatusBar e DockWidget
+
+#### Benefícios
+- Experiência visual consistente em toda aplicação
+- Redução de fadiga ocular com tema escuro
+- Flexibilidade para preferências do usuário
+- Design moderno e profissional
+- Melhor legibilidade em diferentes ambientes
+
+---
+
 ## [2.9.3] - 2025-11-28
 
 ### 💬 Tooltips - English Documentation

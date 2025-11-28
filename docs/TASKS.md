@@ -176,7 +176,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo)
 - **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
 - **[]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário
-- **[]** Incluir tooltips na aplicação Clarify
+- **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
+- **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
 - **[]** Adicionar opções de undo e redo para mudanças feitas
 - **[]** Traduzir aplicação para idiomas mais falados do mundo
 

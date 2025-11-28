@@ -96,6 +96,9 @@ from .rewriter import (
 # Case Converter: camelCase/PascalCase/snake_case/kebab-case conversion
 from .case_converter import JSObjectCaseConverter
 
+# Theme Manager: application theming (light, dark, system)
+from .theme_manager import ThemeManager
+
 # JSON Search: search keys and values in JSON/TS/TSX files
 from .json_search import (
     ProjectIndexer, parse_composite_query, resolve_query, 
@@ -589,62 +592,14 @@ def save_prefs(cfg: configparser.ConfigParser):
 
 
 # =============================== Utility: theming ===============================
+# Theme functions delegated to ThemeManager for better organization
 
-def apply_system_theme(app: QApplication):
-    app.setStyle("Fusion")
-    app.setPalette(app.style().standardPalette())
-
-def apply_light_theme(app: QApplication):
-    pal = QPalette()
-    pal.setColor(QPalette.Window, QColor(255, 255, 255))
-    pal.setColor(QPalette.WindowText, QColor(0, 0, 0))
-    pal.setColor(QPalette.Base, QColor(245, 245, 245))
-    pal.setColor(QPalette.AlternateBase, QColor(235, 235, 235))
-    pal.setColor(QPalette.ToolTipBase, QColor(255, 255, 220))
-    pal.setColor(QPalette.ToolTipText, QColor(0, 0, 0))
-    pal.setColor(QPalette.Text, QColor(0, 0, 0))
-    pal.setColor(QPalette.Button, QColor(240, 240, 240))
-    pal.setColor(QPalette.ButtonText, QColor(0, 0, 0))
-    pal.setColor(QPalette.Highlight, QColor(38, 79, 120))
-    pal.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
-    
-    # app.setStyleSheet("""
-    #         QGroupBox { border: 1px solid #d6d6dc; border-radius: 6px; margin-top: 8px; }
-    #         QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; color: #111; }
-    #         QListView, QPlainTextEdit, QTextEdit, QLineEdit { border: 1px solid #d6d6dc; border-radius: 4px; }
-    #     """)
-    app.setPalette(pal)
-
-def apply_dark_theme(app: QApplication):
-    pal = QPalette()
-    pal.setColor(QPalette.Window, QColor(45, 45, 45))
-    pal.setColor(QPalette.WindowText, QColor(240, 240, 240))
-    pal.setColor(QPalette.Base, QColor(35, 35, 35))
-    pal.setColor(QPalette.AlternateBase, QColor(55, 55, 55))
-    pal.setColor(QPalette.ToolTipBase, QColor(65, 65, 65))
-    pal.setColor(QPalette.ToolTipText, QColor(240, 240, 240))
-    pal.setColor(QPalette.Text, QColor(240, 240, 240))
-    pal.setColor(QPalette.Button, QColor(60, 60, 60))
-    pal.setColor(QPalette.ButtonText, QColor(240, 240, 240))
-    pal.setColor(QPalette.Highlight, QColor(90, 120, 190))
-    pal.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
-    # app.setStyleSheet("""
-    #     QGroupBox { border: 1px solid #3a3a40; border-radius: 6px; margin-top: 8px; }
-    #     QGroupBox::title { subcontrol-origin: margin; left: 8px; padding: 0 4px; color: #d0d0d6; }
-    #     QListView, QPlainTextEdit, QTextEdit, QLineEdit { border: 1px solid #3a3a40; border-radius: 4px; }
-    # """)
-    app.setPalette(pal)
-        
 def apply_theme(app: QApplication, mode: str):
     """
+    Apply theme to application.
     mode: "system" | "light" | "dark"
     """
-    if mode == "light":
-        apply_light_theme(app)
-    elif mode == "dark":
-        apply_dark_theme(app)
-    else: # system
-        apply_system_theme(app)
+    ThemeManager.apply_theme(app, mode)
 
 # =============================================================================
 #                 JSON TRANSLATE (dictionary-driven replacement)
@@ -3977,15 +3932,18 @@ if _PYSIDE:
             cfg["THEME"]["mode"] = mode
             save_prefs(cfg)
 
-        def _about_dialog(self):
-            QMessageBox.information(self, "About",
-                                    "Clarify\n\nJSON file management system\nPurpose: search, replace, insert and JSON utilities.\n"
-                                    "Author: Josué Amaral\nVersion: 1.1.0 (2025)")
-        
-        def _setup_shortcuts(self):
-            """Setup keyboard shortcuts."""
-            from .shortcut_manager import ShortcutManager
-            from PySide6.QtGui import QShortcut
+            m_themes = bar.addMenu("Themes")
+            self.act_theme_system = QAction("🖥️ System", self, checkable=True)
+            self.act_theme_system.setToolTip("Use system theme settings")
+            self.act_theme_light = QAction("☀️ Light", self, checkable=True)
+            self.act_theme_light.setToolTip("Use light theme with bright colors")
+            self.act_theme_dark = QAction("🌙 Dark", self, checkable=True)
+            self.act_theme_dark.setToolTip("Use dark theme for reduced eye strain")
+            grp = [self.act_theme_system, self.act_theme_light, self.act_theme_dark]
+            for a in grp:
+                m_themes.addAction(a)
+                a.triggered.connect(lambda _, x=a: self._apply_theme_action(x))
+            self.act_theme_system.setChecked(True)
             
             # Exit shortcut
             shortcut_exit = QShortcut(ShortcutManager.get_key_sequence("exit"), self)
