@@ -113,9 +113,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir possibilidade de listar arquivos com parâmetros ls/dir com ferramentas de busca avançadas;
 - **[]** Inserção de arquivos e diretórios de forma assíncrona e selecionável, ou seja, se pode selecionar múltiplos arquivos e diretórios para uma mesma funcionalidade, por exemplo, de busca, em que os processamentos podem ser paralelos para cada arquivo com threads a cada processamento de uma mesma funcionalidade;
 - **[X]** Incluir query para inteligência artificial sem arquivos/diretórios, apenas com texto do usuário *(v3.0.0 - AI File Processor)*
-- **[X]** Identificar tags, chaves curvas, colchetes e parênteses para evitar erros no JSON Rewriter e uso de editor de texto ros ls/dir com ferramentas de busca avançadas
+- **[X]** Identificar tags, curly brackets {}, colchetes [] e parênteses () para evitar erros no JSON Rewriter e uso de editor de texto
 - **[X]** Incluir query para inteligência artificial sem arquivos/diretórios, apenas com texto do usuário *(v3.0.0 - AI File Processor)*
-- **[X]** Identificar tags, chaves curvas, colchetes e parênteses para evitar erros no JSON Rewriter e uso de editor de texto *(v3.0.0 - Text Extractor)*
+- **[X]** Identificar tags, curly brackets {}, colchetes [] e parênteses () para evitar erros no JSON Rewriter e uso de editor de texto *(v3.0.0 - Text Extractor)*
 - **[X]** Incluir busca avançada onde usuário pode buscar com múltiplas queries separadas por novas linhas com possibilidade de usar regex (cada linha = nova query de busca) *(v2.8.0 - Multi-Query Search)*
 - **[X]** Remover erros ` ```typescript` e ` ``` ` no output ao usar IA query *(v3.0.0 - AI File Processor com strip_code_fences)*
 - **[]** Incluir busca onde word key tem contagem de ocorrências (ex: apenas chaves com mais de 2 ocorrências). Usar operações relacionais;
@@ -156,7 +156,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também
 - **[]** Incluir possibilidade de não permitir fazer chave que não tem sibling, ou remover chaves que não têm sibling key
 - **[]** Ferramenta de busca pode incluir busca por nome de arquivo
-- **[]** Para busca de arquivos/diretórios, ao invés de escrever ou buscar com ferramenta pobre, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
+- **[]** Para busca de arquivos/diretórios, ao invés de usar ferramenta básica, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
 
 ---
 
@@ -176,7 +176,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo)
 - **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
 - **[]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário
-- **[]** Incluir tooltips na aplicação Clarify
+- **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
 - **[]** Adicionar opções de undo e redo para mudanças feitas
 - **[]** Traduzir aplicação para idiomas mais falados do mundo
 
@@ -186,13 +186,13 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir tutoriais de uso
 - **[]** Incluir busca com ajuda de inteligência artificial
 - **[]** Embutir assistente virtual para uso com IA
-- **[]** Incluir taxa de uso de IA de 50% a mais que valor real para minha conta + 1% para permanecer no banco de caixa, usuário deve fazer pagamento usando IA, totalizando ~151% do valor real. Informar usuário que paga em tokens
+- **[]** Incluir taxa de uso de IA de 50% a mais que valor real para minha conta + 1% para permanecer na reserva de caixa, usuário deve fazer pagamento usando IA, totalizando ~151% do valor real. Informar usuário que paga em tokens
 - **[]** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
 - **[]** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
 - **[]** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período
 - **[]** Permitir usuário fazer macros e algoritmos com features da aplicação para utilidades mais complexas, com código Python ou programação em blocos
 - **[]** Quando usuário clicar em resultado de busca ou insert, aplicação deve abrir arquivo em editor próprio
-- **[]** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript). Esses algoritmos 
+- **[]** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript)
 
 #### Calculator & Set Operations
 

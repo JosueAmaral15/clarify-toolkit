@@ -2028,11 +2028,14 @@ if _PYSIDE:
             row = QHBoxLayout()
             row.addWidget(QLabel("Root path:"))
             self.ed_path = QLineEdit()
+            self.ed_path.setToolTip("Enter the directory path or file path to search in")
             self.btn_browse = QPushButton("Browse…")
+            self.btn_browse.setToolTip("Open file browser to select a directory or file")
             row.addWidget(self.ed_path, 1)
             row.addWidget(self.btn_browse)
             column.addLayout(row)
             self.is_file = QCheckBox("Is File?")
+            self.is_file.setToolTip("Check this if you want to process a single file instead of a directory")
             column.addWidget(self.is_file)
             root.addLayout(column)
 
@@ -2058,11 +2061,13 @@ if _PYSIDE:
             row.addWidget(QLabel("Include globs (advanced, comma-separated):"))
             self.ed_inc = QLineEdit()
             self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/** (leave empty for all)")
+            self.ed_inc.setToolTip("Advanced glob patterns to include specific files.\nExamples:\n  *.test.*    - Test files\n  **/src/**   - Files in src folders")
             root.addLayout(row)
             root.addWidget(self.ed_inc)
             row = QHBoxLayout()
             row.addWidget(QLabel("Exclude globs (comma-separated):"))
             self.ed_exc = QLineEdit("node_modules;dist;build;.git")
+            self.ed_exc.setToolTip("Glob patterns to exclude folders/files.\nDefault excludes common build/dependency folders")
             root.addLayout(row)
             root.addWidget(self.ed_exc)
 
@@ -2071,15 +2076,20 @@ if _PYSIDE:
             g = QGridLayout(gb)
             g.addWidget(QLabel("Query:"), 0, 0)
             self.ed_query = QLineEdit()
+            self.ed_query.setToolTip("Enter the text pattern to search for in files")
             self.chk_case = QCheckBox("Case sensitive")
+            self.chk_case.setToolTip("Match exact case (A ≠ a)")
             self.chk_word = QCheckBox("Whole word")
+            self.chk_word.setToolTip("Match only complete words (not partial matches)")
             self.chk_regex = QCheckBox("Regex")
+            self.chk_regex.setToolTip("Treat query as a regular expression pattern")
             self.chk_multi_query = QCheckBox("Multi-line")  # v2.8.0
             self.chk_multi_query.setToolTip("Enable multi-line query mode:\n"
                                            "- Each line is a separate search\n"
                                            "- Lines starting with # are comments\n"
                                            "- Empty lines are ignored")
             self.btn_search = QPushButton("Search/Cancel")
+            self.btn_search.setToolTip("Start search operation or cancel if already running")
             g.addWidget(self.ed_query, 0, 1, 1, 3)
             g.addWidget(self.chk_case, 1, 0)
             g.addWidget(self.chk_word, 1, 1)
@@ -2097,9 +2107,13 @@ if _PYSIDE:
             g2 = QGridLayout(gb2)
             g2.addWidget(QLabel("Replacement:"), 0, 0)
             self.ed_repl = QLineEdit()
+            self.ed_repl.setToolTip("Enter the replacement text (supports regex capture groups like $1, $2)")
             self.chk_preserve = QCheckBox("Preserve case")
+            self.chk_preserve.setToolTip("Maintain the original case pattern when replacing")
             self.btn_replace_one = QPushButton("Replace first per file")
+            self.btn_replace_one.setToolTip("Replace only the first occurrence in each file")
             self.btn_replace_all = QPushButton("Replace all")
+            self.btn_replace_all.setToolTip("Replace all occurrences in all matching files")
             g2.addWidget(self.ed_repl, 0, 1, 1, 3)
             g2.addWidget(self.chk_preserve, 1, 0)
             g2.addWidget(self.btn_replace_one, 1, 2)
@@ -2170,7 +2184,7 @@ if _PYSIDE:
             results_label = QLabel("Search Results")
             results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
             self.btn_save_results = QPushButton("💾 Save Results")
-            self.btn_save_results.setToolTip("Save all search results to a text file")
+            self.btn_save_results.setToolTip("Save all search results to a formatted text file with statistics")
             self.btn_save_results.clicked.connect(self._save_results)
             results_header.addWidget(results_label)
             results_header.addStretch()
@@ -2656,11 +2670,14 @@ if _PYSIDE:
             
             layout.addWidget(QLabel("Root path:"), 0, 0)
             self.ed_path = QLineEdit()
+            self.ed_path.setToolTip("Enter the directory path or file path for insertion")
             self.btn_browse = QPushButton("Browse…")
+            self.btn_browse.setToolTip("Open file browser to select a directory or file")
             layout.addWidget(self.ed_path, 0, 1, 1, 3)
             layout.addWidget(self.btn_browse, 0, 4)
             
             self.is_file = QCheckBox("Is File?")
+            self.is_file.setToolTip("Check this if you want to process a single file instead of a directory")
             layout.addWidget(self.is_file, 1, 0)
             
             # Extension filter (v2.9.0, v2.9.1 - optional)
@@ -2677,10 +2694,12 @@ if _PYSIDE:
             layout.addWidget(QLabel("Include globs (advanced):"), 3, 0)
             self.ed_inc = QLineEdit()
             self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/**")
+            self.ed_inc.setToolTip("Advanced glob patterns to include specific files")
             layout.addWidget(self.ed_inc, 3, 1, 1, 4)
 
             layout.addWidget(QLabel("Exclude globs:"), 4, 0)
             self.ed_exc = QLineEdit("node_modules;dist;build;.git")
+            self.ed_exc.setToolTip("Glob patterns to exclude folders/files")
             layout.addWidget(self.ed_exc, 4, 1, 1, 4)
 
             # Search/Lookup section (new feature)
@@ -2689,11 +2708,15 @@ if _PYSIDE:
             g_lookup.addWidget(QLabel("Search query:"), 0, 0)
             self.ed_query = QLineEdit()
             self.ed_query.setPlaceholderText("Enter text to search for line position")
+            self.ed_query.setToolTip("Search for text to determine insertion position dynamically")
             g_lookup.addWidget(self.ed_query, 0, 1, 1, 3)
             
             self.chk_lookup_case = QCheckBox("Case sensitive")
+            self.chk_lookup_case.setToolTip("Match exact case in lookup query")
             self.chk_lookup_word = QCheckBox("Whole word")
+            self.chk_lookup_word.setToolTip("Match only complete words in lookup")
             self.chk_lookup_regex = QCheckBox("Regex")
+            self.chk_lookup_regex.setToolTip("Treat lookup query as a regular expression")
             g_lookup.addWidget(self.chk_lookup_case, 1, 0)
             g_lookup.addWidget(self.chk_lookup_word, 1, 1)
             g_lookup.addWidget(self.chk_lookup_regex, 1, 2)
@@ -2712,12 +2735,14 @@ if _PYSIDE:
 
             layout.addWidget(QLabel("Insert text:"), 7, 0)
             self.ed_text = QPlainTextEdit()
+            self.ed_text.setToolTip("Enter the text content to insert into files")
             layout.addWidget(self.ed_text, 7, 1, 1, 4)
 
             layout.addWidget(QLabel("Mode:"), 8, 0)
             self.cb_mode = QComboBox()
             self.cb_mode.addItems([InsertMode.LEFT, InsertMode.RIGHT, InsertMode.REPLACE,
                                    InsertMode.INSERT_ABOVE, InsertMode.INSERT_BELOW])
+            self.cb_mode.setToolTip("Choose insertion mode:\n  left: Insert before line\n  right: Insert after line\n  replace: Replace line\n  insert-above: Add new line above\n  insert-below: Add new line below")
             layout.addWidget(self.cb_mode, 8, 1)
 
             self._debounce_timer = QTimer(self)
@@ -2790,6 +2815,7 @@ if _PYSIDE:
             layout.addWidget(gb3, 9, 0, 1, 5)
             
             self.btn_apply = QPushButton("Apply to files")
+            self.btn_apply.setToolTip("Execute insertion operation on all matching files")
             layout.addWidget(self.btn_apply, 10, 4)
 
             # Results on the right

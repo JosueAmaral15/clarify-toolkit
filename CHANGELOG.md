@@ -1,5 +1,35 @@
 # Changelog - Clarify Project
 
+## [2.9.3] - 2025-11-28
+
+### 💬 Tooltips - English Documentation
+
+#### Novas Funcionalidades
+- ✅ **Tooltips em inglês em toda a aplicação**:
+  - 📌 **SearchReplacePanel**: ~20 tooltips
+    - Path, Browse, Is File: Navegação de arquivos
+    - Include/Exclude globs: Filtros avançados
+    - Query, Case/Word/Regex: Opções de busca
+    - Replacement, Preserve case: Opções de substituição
+    - Buttons: Search/Cancel, Replace operations
+    - Save Results: Exportação
+  
+  - 📌 **InsertPanel**: ~15 tooltips
+    - Path, Browse, Is File: Navegação
+    - Include/Exclude globs: Filtros
+    - Lookup query, Case/Word/Regex: Busca dinâmica de posição
+    - Occurrence: First/Last/All
+    - Line number, Insert text, Mode: Configuração de inserção
+    - Apply button: Execução
+
+#### Benefícios
+- Onboarding mais fácil para novos usuários
+- Documentação contextual inline
+- Explicações de features complexas (multi-line, scope, modes)
+- Exemplos práticos nos tooltips de globs
+
+---
+
 ## [2.9.2] - 2025-11-28
 
 ### 📝 Context Menu - Results Panel
