@@ -4310,13 +4310,16 @@ if _PYSIDE:
             m_settings = bar.addMenu("Settings")
             act_preferences = QAction("Preferences...", self)
             act_shortcuts = QAction("Keyboard Shortcuts...", self)
+            act_transparency = QAction("Window Transparency...", self)
             act_clear_recent = QAction("Clear Recent Files", self)
             m_settings.addAction(act_preferences)
             m_settings.addAction(act_shortcuts)
+            m_settings.addAction(act_transparency)
             m_settings.addSeparator()
             m_settings.addAction(act_clear_recent)
             act_preferences.triggered.connect(self._show_preferences)
             act_shortcuts.triggered.connect(self._show_shortcuts)
+            act_transparency.triggered.connect(self._show_transparency_dialog)
             act_clear_recent.triggered.connect(self._clear_recent_files)
             
 
@@ -4383,6 +4386,19 @@ if _PYSIDE:
             else:
                 self.act_theme_system.setChecked(True)
                 apply_theme(QApplication.instance(), "system")
+            
+            # Apply saved transparency (Task #18 - v2.9.9)
+            saved_opacity = int(self.settings.get("window_opacity", 100))
+            opacity = saved_opacity / 100.0
+            self.setWindowOpacity(opacity)
+            
+            # Apply to all docks
+            for dock in [
+                self.dock_translate, self.dock_rewriter, self.dock_text_extractor,
+                self.dock_placeholder_replacer, self.dock_ai_processor,
+                self.dock_json_search, self.dock_case_converter, self.dock_history
+            ]:
+                dock.setWindowOpacity(opacity)
         
         def get_current_json(self):
             """Get current JSON data (placeholder for plugin integration)."""
@@ -4446,6 +4462,94 @@ if _PYSIDE:
             })
             dialog.accept()
             QMessageBox.information(self, "Success", "Preferences saved successfully!")
+        
+        def _show_transparency_dialog(self):
+            """Show window transparency configuration dialog with live preview."""
+            from PySide6.QtWidgets import (
+                QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+                QPushButton, QSlider, QGroupBox
+            )
+            from PySide6.QtCore import Qt
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Window Transparency")
+            dialog.setMinimumWidth(400)
+            
+            layout = QVBoxLayout()
+            
+            # Info label
+            info_label = QLabel("Adjust the transparency level for all windows and docks.\n"
+                              "0% = Fully transparent, 100% = Fully opaque")
+            info_label.setWordWrap(True)
+            layout.addWidget(info_label)
+            
+            # Transparency group
+            trans_group = QGroupBox("Transparency Level")
+            trans_layout = QVBoxLayout()
+            
+            # Slider
+            slider_layout = QHBoxLayout()
+            slider_layout.addWidget(QLabel("0%"))
+            
+            self.opacity_slider = QSlider(Qt.Horizontal)
+            self.opacity_slider.setRange(0, 100)
+            self.opacity_slider.setValue(self._get_saved_opacity())
+            self.opacity_slider.setTickPosition(QSlider.TicksBelow)
+            self.opacity_slider.setTickInterval(10)
+            self.opacity_slider.valueChanged.connect(self._update_transparency_preview)
+            slider_layout.addWidget(self.opacity_slider)
+            
+            slider_layout.addWidget(QLabel("100%"))
+            trans_layout.addLayout(slider_layout)
+            
+            # Value display
+            self.opacity_label = QLabel(f"Current: {self.opacity_slider.value()}%")
+            self.opacity_label.setAlignment(Qt.AlignCenter)
+            self.opacity_label.setStyleSheet("font-weight: bold; font-size: 14pt;")
+            trans_layout.addWidget(self.opacity_label)
+            
+            trans_group.setLayout(trans_layout)
+            layout.addWidget(trans_group)
+            
+            # Buttons
+            from PySide6.QtWidgets import QDialogButtonBox
+            buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            buttons.accepted.connect(lambda: self._save_transparency(dialog))
+            buttons.rejected.connect(lambda: self._cancel_transparency(dialog))
+            
+            layout.addWidget(buttons)
+            dialog.setLayout(layout)
+            dialog.exec()
+        
+        def _get_saved_opacity(self):
+            """Get saved opacity value from settings (default 100%)."""
+            return int(self.settings.get("window_opacity", 100))
+        
+        def _update_transparency_preview(self, value):
+            """Update transparency in real-time for preview."""
+            opacity = value / 100.0
+            self.setWindowOpacity(opacity)
+            self.opacity_label.setText(f"Current: {value}%")
+            
+            # Apply to all docks
+            for dock in [
+                self.dock_translate, self.dock_rewriter, self.dock_text_extractor,
+                self.dock_placeholder_replacer, self.dock_ai_processor,
+                self.dock_json_search, self.dock_case_converter, self.dock_history
+            ]:
+                dock.setWindowOpacity(opacity)
+        
+        def _save_transparency(self, dialog):
+            """Save transparency setting and close dialog."""
+            value = self.opacity_slider.value()
+            self.settings.update("window_opacity", value)
+            dialog.accept()
+        
+        def _cancel_transparency(self, dialog):
+            """Restore previous transparency and close dialog."""
+            saved_opacity = self._get_saved_opacity()
+            self._update_transparency_preview(saved_opacity)
+            dialog.reject()
         
         def _show_shortcuts(self):
             """Show keyboard shortcuts dialog."""
