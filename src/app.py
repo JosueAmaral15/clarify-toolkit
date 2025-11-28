@@ -3853,6 +3853,10 @@ if _PYSIDE:
 
             # 3) unmask placeholders
             content = self._unmask_placeholders(content, guards)
+            
+            # 4) consolidate fragmented placeholders (auto-fix)
+            content = self._consolidate_fragmented_placeholders(content)
+            
             return content
 
         def translate_refs_to_text(self, content: str) -> str:
@@ -3968,6 +3972,102 @@ if _PYSIDE:
                 i += 1
 
             return "".join(out)
+
+        # ---------- fragmentation consolidation ----------
+
+        def _consolidate_fragmented_placeholders(self, s: str) -> str:
+            """
+            Auto-fix fragmented placeholders: merge adjacent placeholders into single unit.
+            Example: '{t.our} {t.products}' → '{t.ourProducts}' (if values are "our" and "products")
+            
+            Algorithm:
+            1. Find sequences of 2+ adjacent placeholders (separated only by whitespace)
+            2. Retrieve original text values for each placeholder
+            3. Generate consolidated key from concatenated values
+            4. Replace fragment sequence with single placeholder
+            """
+            import re
+            
+            # Pattern: 2 or more placeholders separated by whitespace
+            pattern = re.compile(
+                r'(\{' + re.escape(self.root) + r'\.[A-Za-z0-9_.]+\})'  # first placeholder
+                r'(\s+\{' + re.escape(self.root) + r'\.[A-Za-z0-9_.]+\})+'  # 1+ more placeholders
+            )
+            
+            def consolidate_match(m: re.Match) -> str:
+                full_match = m.group(0)
+                
+                # Extract all placeholder keys
+                placeholder_pattern = re.compile(r'\{' + re.escape(self.root) + r'\.([A-Za-z0-9_.]+)\}')
+                keys = placeholder_pattern.findall(full_match)
+                
+                if len(keys) < 2:
+                    return full_match  # Not fragmented, keep as-is
+                
+                # Get original text values
+                values = []
+                for key in keys:
+                    val = self.flat.get(key)
+                    if val and isinstance(val, str):
+                        values.append(val)
+                    else:
+                        # Can't consolidate if any key is missing/invalid
+                        return full_match
+                
+                # Generate consolidated key from concatenated text
+                # Example: ["Our", "products"] → "ourProducts" (camelCase)
+                consolidated_text = ' '.join(values)
+                consolidated_key = self._generate_consolidated_key(keys, consolidated_text)
+                
+                # Return single placeholder
+                return '{' + self.root + '.' + consolidated_key + '}'
+            
+            return pattern.sub(consolidate_match, s)
+        
+        def _generate_consolidated_key(self, fragment_keys: list[str], consolidated_text: str) -> str:
+            """
+            Generate a consolidated key name from fragment keys and their combined text.
+            
+            Strategy:
+            1. Use first fragment's path prefix (e.g., "pages.home" from "pages.home.title")
+            2. Generate suffix from consolidated text (camelCase)
+            3. If result already exists in dict, use it; otherwise create new synthetic key
+            """
+            # Try to extract common prefix from fragment keys
+            if not fragment_keys:
+                return "consolidated"
+            
+            # Split first key by dots to get path components
+            parts = fragment_keys[0].split('.')
+            
+            if len(parts) > 1:
+                # Use parent path: "pages.home.title" → prefix "pages.home"
+                prefix = '.'.join(parts[:-1])
+            else:
+                # No parent, use root-level
+                prefix = ""
+            
+            # Generate camelCase suffix from consolidated text
+            # Example: "Our products is what you need" → "ourProductsIsWhatYouNeed"
+            words = consolidated_text.split()
+            if not words:
+                suffix = "merged"
+            else:
+                suffix = words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+            
+            # Build final key
+            if prefix:
+                candidate = f"{prefix}.{suffix}"
+            else:
+                candidate = suffix
+            
+            # Check if this key already exists in dictionary
+            # If yes, use it (perfect match!); if no, use synthetic key
+            if candidate in self.flat:
+                return candidate
+            
+            # Synthetic key (mark as auto-generated)
+            return f"{prefix}.autoMerged_{suffix}" if prefix else f"autoMerged_{suffix}"
 
         # ---------- masking helpers ----------
 
