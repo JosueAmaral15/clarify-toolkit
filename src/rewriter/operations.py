@@ -165,3 +165,46 @@ def skip_empty_values(node: JSONNode) -> JSONNode:
                 out.append(processed)
         return out
     return node
+
+
+def avoid_duplicate_child_keys(node: JSONNode) -> JSONNode:
+    """
+    Avoid child keys with the same name as parent keys.
+    
+    Example:
+        { pages: { home: { home: { home: 'Welcome' } } } }
+    Becomes:
+        { pages: { home: 'Welcome' } }
+    
+    If both parent and child are objects, they are merged.
+    If values conflict, parent value is kept (child ignored).
+    
+    Recursively processes Obj and list nodes.
+    """
+    if isinstance(node, Obj):
+        out = Obj()
+        for k, v in node:
+            # First, recursively process the value
+            processed_v = avoid_duplicate_child_keys(v)
+            
+            # Check if the value is an Obj with a single key that matches current key
+            if isinstance(processed_v, Obj) and len(processed_v) == 1:
+                child_key, child_val = processed_v[0]
+                if child_key == k:
+                    # Found duplicate: t.pages.home.home
+                    # If both are objects, merge them
+                    if isinstance(child_val, Obj):
+                        # Recursively check child_val for more duplicates
+                        final_val = avoid_duplicate_child_keys(child_val)
+                        out.append((k, final_val))
+                    else:
+                        # Child is not an object, just use it directly
+                        out.append((k, child_val))
+                    continue
+            
+            # No duplicate found, keep as is
+            out.append((k, processed_v))
+        return out
+    if isinstance(node, list):
+        return [avoid_duplicate_child_keys(x) for x in node]
+    return node

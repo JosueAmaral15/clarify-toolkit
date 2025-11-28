@@ -90,6 +90,7 @@ from .rewriter import (
     find_object_block, ts_block_to_json_text,
     sanitize_keys_and_values, ts_process_full_preserving,
     dedupe, join_keys, eliminate_duplicates, merge_obj_values,
+    avoid_duplicate_child_keys, exclude_numeric_keys, skip_empty_values,
     dump_ts_node, dump_ts_obj, collapse_blank_lines
 )
 

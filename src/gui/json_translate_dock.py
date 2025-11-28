@@ -46,7 +46,8 @@ def process_translate_file(
     make_backup: bool,
     dont_override: bool,
     inverse: bool,
-    exclude_patterns: list
+    exclude_patterns: list,
+    emit_export: bool = True
 ) -> tuple[bool, str]:
     """
     Process a single file for translation.
@@ -240,6 +241,7 @@ class JsonTranslateDock(BaseDock):
         make_backup = self.chk_backup.isChecked()
         dont_override = self.chk_dont_override.isChecked()
         inverse = self.chk_inverse_json_translate.isChecked()
+        emit_export = self.chk_emit_export.isChecked()
         
         # Validation
         if not path or not dpath:
@@ -277,7 +279,8 @@ class JsonTranslateDock(BaseDock):
                 p, dictionary, root_alias,
                 start_rx, end_rx,
                 make_backup, dont_override, inverse,
-                exclude_patterns
+                exclude_patterns,
+                emit_export
             )
             if ok:
                 changed += 1

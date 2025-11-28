@@ -54,6 +54,10 @@ def cli_dedupe(args: argparse.Namespace):
     if hasattr(args, 'skip_empty') and args.skip_empty:
         obj = rw.skip_empty_values(obj)
     
+    # Avoid duplicate child keys if requested
+    if hasattr(args, 'avoid_duplicate_child_keys') and args.avoid_duplicate_child_keys:
+        obj = rw.avoid_duplicate_child_keys(obj)
+    
     # Serialize output
     if args.ts_out:
         output_text = rw.dump_ts_node(obj, indent=args.indent)
@@ -122,6 +126,8 @@ class JsonRewriterDock(BaseDock):
         self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
         self.chk_skip_empty = QCheckBox("Skip empty values")
         self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
+        self.chk_avoid_dup_child = QCheckBox("Avoid duplicate child keys")
+        self.chk_avoid_dup_child.setToolTip("Merge parent.child.child -> parent.child (e.g., t.pages.home.home -> t.pages.home)")
         self.chk_is_file = QCheckBox("Is file")
         self.chk_is_file.setToolTip("Input path is a single file (unchecked for directory)")
         self.chk_is_file.setChecked(True)
@@ -161,7 +167,8 @@ class JsonRewriterDock(BaseDock):
         # Row 3: Options checkboxes (line 2)
         g.addWidget(self.chk_exclude_numeric, 3, 0)
         g.addWidget(self.chk_skip_empty, 3, 1)
-        g.addWidget(self.chk_is_file, 3, 2)
+        g.addWidget(self.chk_avoid_dup_child, 3, 2)
+        g.addWidget(self.chk_is_file, 3, 3)
         
         # Row 4: Indent and run button
         g.addWidget(self.lbl_indent, 4, 0)
@@ -212,6 +219,7 @@ class JsonRewriterDock(BaseDock):
             no_line_break=self.chk_nlb.isChecked(),
             exclude_numeric=self.chk_exclude_numeric.isChecked(),
             skip_empty=self.chk_skip_empty.isChecked(),
+            avoid_duplicate_child_keys=self.chk_avoid_dup_child.isChecked(),
             is_file=self.chk_is_file.isChecked(),
         )
         

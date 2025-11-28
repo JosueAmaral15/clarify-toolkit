@@ -12,6 +12,13 @@ _num_re = re.compile(r'^\d+$')
 
 def esc_single(s: str) -> str:
     """Escape string for single-quoted TS/JS strings."""
+    # First normalize: unescape any already-escaped quotes to avoid double-escaping
+    # This fixes the issue where \' becomes \\' or \\\\'  
+    s = s.replace("\\\\", "TEMP_BACKSLASH_PLACEHOLDER")
+    s = s.replace("\\'" , "'")
+    s = s.replace("TEMP_BACKSLASH_PLACEHOLDER", "\\")
+    
+    # Now do standard escaping
     return (s.replace('\\', '\\\\')
              .replace("'", "\\'")
              .replace('\r', '\\r')
