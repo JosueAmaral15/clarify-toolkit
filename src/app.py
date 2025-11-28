@@ -125,7 +125,7 @@ from .ai_processor import (
 from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock
+    JsonRewriterDock, HistoryDock
 )
 
 # ---------------------------------------------------------------------------
@@ -2045,8 +2045,10 @@ if _PYSIDE:
             gb = QGroupBox("Search")
             g = QGridLayout(gb)
             g.addWidget(QLabel("Query:"), 0, 0)
-            self.ed_query = QLineEdit()
-            self.ed_query.setToolTip("Enter the text pattern to search for in files")
+            self.ed_query = QPlainTextEdit()
+            self.ed_query.setMinimumHeight(30)
+            self.ed_query.setMaximumHeight(150)
+            self.ed_query.setToolTip("Enter the text pattern to search for in files\nResizable: drag bottom edge to adjust height")
             self.chk_case = QCheckBox("Case sensitive")
             self.chk_case.setToolTip("Match exact case (A ≠ a)")
             self.chk_word = QCheckBox("Whole word")
@@ -2057,7 +2059,8 @@ if _PYSIDE:
             self.chk_multi_query.setToolTip("Enable multi-line query mode:\n"
                                            "- Each line is a separate search\n"
                                            "- Lines starting with # are comments\n"
-                                           "- Empty lines are ignored")
+                                           "- Empty lines are ignored\n"
+                                           "(Query field is now always multi-line capable)")
             self.btn_search = QPushButton("Search/Cancel")
             self.btn_search.setToolTip("Start search operation or cancel if already running")
             g.addWidget(self.ed_query, 0, 1, 1, 3)
@@ -2067,17 +2070,16 @@ if _PYSIDE:
             g.addWidget(self.chk_multi_query, 1, 3)  # v2.8.0
             g.addWidget(self.btn_search, 2, 3)  # Moved to row 2
             
-            # Connect multi-query checkbox to switch input mode
-            self.chk_multi_query.toggled.connect(self._toggle_multi_query_mode)
-            
             root.addWidget(gb)
 
             # Replace extras (optional)
             gb2 = QGroupBox("Replace (enable if needed)")
             g2 = QGridLayout(gb2)
             g2.addWidget(QLabel("Replacement:"), 0, 0)
-            self.ed_repl = QLineEdit()
-            self.ed_repl.setToolTip("Enter the replacement text (supports regex capture groups like $1, $2)")
+            self.ed_repl = QPlainTextEdit()
+            self.ed_repl.setMinimumHeight(30)
+            self.ed_repl.setMaximumHeight(150)
+            self.ed_repl.setToolTip("Enter the replacement text (supports regex capture groups like $1, $2)\nResizable: drag bottom edge to adjust height")
             self.chk_preserve = QCheckBox("Preserve case")
             self.chk_preserve.setToolTip("Maintain the original case pattern when replacing")
             self.btn_replace_one = QPushButton("Replace first per file")
@@ -2313,43 +2315,7 @@ if _PYSIDE:
         #             print(f"[WARN] {p}: {e}", file=sys.stderr)
         #     self.results.populate(matches)
         
-        def _toggle_multi_query_mode(self, enabled: bool):
-            """Toggle between single-line and multi-line query mode (v2.8.0)"""
-            if enabled:
-                # Switch to QPlainTextEdit for multi-line
-                current_text = self.ed_query.text()
-                
-                # Replace QLineEdit with QPlainTextEdit
-                layout = self.ed_query.parent().layout()
-                item_index = layout.indexOf(self.ed_query)
-                self.ed_query.hide()
-                
-                if not hasattr(self, 'ed_query_multi'):
-                    self.ed_query_multi = QPlainTextEdit()
-                    self.ed_query_multi.setMaximumHeight(120)
-                    self.ed_query_multi.setPlaceholderText(
-                        "Enter multiple queries (one per line)\n"
-                        "# Lines starting with # are comments\n"
-                        "Example:\n"
-                        "  function.*test\n"
-                        "  class\\s+\\w+\n"
-                        "  # This is a comment"
-                    )
-                    layout.addWidget(self.ed_query_multi, 0, 1, 1, 3)
-                
-                self.ed_query_multi.setPlainText(current_text)
-                self.ed_query_multi.show()
-            else:
-                # Switch back to QLineEdit for single-line
-                if hasattr(self, 'ed_query_multi'):
-                    current_text = self.ed_query_multi.toPlainText().strip()
-                    # Take only first non-empty line
-                    first_line = next((line for line in current_text.split('\n') 
-                                      if line.strip() and not line.strip().startswith('#')), "")
-                    self.ed_query.setText(first_line)
-                    self.ed_query_multi.hide()
-                
-                self.ed_query.show()
+
         
         def enable_buttons(self, state, include_buttons=True, include_advanced_conditions = True):
             if include_buttons:
@@ -2456,7 +2422,7 @@ if _PYSIDE:
                         query_count = multi_query_processor.get_query_count()
                         task_label = f"Multi-Search ({query_count} queries)"
                     else:
-                        task_label = f"Search: {self.ed_query.text()[:30]}"
+                        task_label = f"Search: {self.ed_query.toPlainText().strip()[:30]}"
                     self._current_progress_widget = self.progress_manager.add_task(
                         self._current_task_id,
                         task_label
@@ -2575,18 +2541,29 @@ if _PYSIDE:
                 self._current_progress_widget.set_complete(success=True)
                 self._current_progress_widget.add_log(f"Search completed: {len(matches)} files with matches")
             
-            # Save to history (NEW - v2.5.0+)
+            # Save to history (NEW - v2.5.0+, v2.9.6 - HistoryDock integration)
             try:
                 history = OperationHistory()
+                query_text = self.ed_query.toPlainText().strip()
+                total_matches = sum(len(items) for items in matches.values())
+                
                 history.add_operation("search", {
-                    "query": self.ed_query.text(),
+                    "query": query_text,
                     "path": self.ed_path.text(),
                     "files_matched": len(matches),
-                    "total_matches": sum(len(items) for items in matches.values()),
+                    "total_matches": total_matches,
                     "case_sensitive": self.chk_case.isChecked(),
                     "whole_word": self.chk_word.isChecked(),
                     "regex": self.chk_regex.isChecked()
                 })
+                
+                # Add to History Dock (v2.9.6)
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("Search", {
+                        "query": query_text,
+                        "files_processed": len(matches),
+                        "matches_found": total_matches
+                    })
             except Exception as e:
                 print(f"Failed to save history: {e}")
             
@@ -2638,11 +2615,11 @@ if _PYSIDE:
             try:
                 patt = SearchOptions(self.chk_case.isChecked(),
                                      self.chk_word.isChecked(),
-                                     self.chk_regex.isChecked()).compile(self.ed_query.text())
+                                     self.chk_regex.isChecked()).compile(self.ed_query.toPlainText().strip())
             except ValueError as e:
                 QMessageBox.critical(self, "Invalid pattern", str(e)); return
 
-            repl = self.ed_repl.text()
+            repl = self.ed_repl.toPlainText().strip()
             preserve = self.chk_preserve.isChecked()
             count_files = 0
             for p in self._iter_files():
@@ -2654,6 +2631,18 @@ if _PYSIDE:
                         count_files += 1
                 except Exception as e:
                     print(f"[WARN] {p}: {e}", file=sys.stderr)
+            
+            # Add to History Dock (v2.9.6)
+            try:
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("Replace", {
+                        "query": self.ed_query.toPlainText().strip(),
+                        "replacement": repl,
+                        "files_processed": count_files
+                    })
+            except Exception as e:
+                print(f"Failed to save to history dock: {e}")
+            
             QMessageBox.information(self, "Replace", f"Modified files: {count_files}")
             self.results.print_message()
 
@@ -2743,7 +2732,9 @@ if _PYSIDE:
 
             layout.addWidget(QLabel("Insert text:"), 7, 0)
             self.ed_text = QPlainTextEdit()
-            self.ed_text.setToolTip("Enter the text content to insert into files")
+            self.ed_text.setMinimumHeight(60)
+            self.ed_text.setMaximumHeight(200)
+            self.ed_text.setToolTip("Enter the text content to insert into files\nResizable: drag bottom edge to adjust height")
             layout.addWidget(self.ed_text, 7, 1, 1, 4)
 
             layout.addWidget(QLabel("Mode:"), 8, 0)
@@ -3183,7 +3174,7 @@ if _PYSIDE:
                 return False
 
         def _apply(self):
-            query = self.ed_query.text().strip()
+            query = self.ed_query.toPlainText().strip()
             manual_line = self.spin_line.value()
             insert_text = self.ed_text.toPlainText()
             mode = self.cb_mode.currentText()
@@ -3937,6 +3928,22 @@ if _PYSIDE:
             self.addDockWidget(Qt.RightDockWidgetArea, self.dock_case_converter)
             self.dock_case_converter.hide()
 
+        def _open_history(self):
+            if not hasattr(self, 'dock_history'):
+                self.dock_history = HistoryDock(self, max_entries=10)
+                self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_history)
+                self.dock_history.hide()
+        
+        def _toggle_history(self, checked: bool):
+            """Toggle history dock visibility."""
+            if not hasattr(self, 'dock_history'):
+                self._open_history()
+            
+            if checked:
+                self.dock_history.show()
+            else:
+                self.dock_history.hide()
+
         def _build_menu(self):
             bar = self.menuBar()
 
@@ -3968,6 +3975,12 @@ if _PYSIDE:
             self.act_open_ai_processor.triggered.connect(lambda: self.dock_ai_processor.show())
             self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
             self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
+
+            m_view = bar.addMenu("View")
+            self.act_toggle_history = QAction("History", self, checkable=True)
+            self.act_toggle_history.setToolTip("Show/hide operation history panel")
+            self.act_toggle_history.triggered.connect(self._toggle_history)
+            m_view.addAction(self.act_toggle_history)
 
             m_themes = bar.addMenu("Themes")
             self.act_theme_system = QAction("System", self, checkable=True)
@@ -4254,6 +4267,7 @@ if _PYSIDE:
             self._open_ai_processor()
             self._open_json_search()
             self._open_case_converter()
+            self._open_history()
         
         def _restore_prefs(self):
             cfg = load_prefs()

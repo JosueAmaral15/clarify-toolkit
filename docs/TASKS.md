@@ -81,9 +81,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Incluir checkbox "is file" no JSON translate
 - **[]** Ajustar opção 'Emit Export default' do JSON Translate
 - **[]** Resultado do JSON Translate não deve conter três barras invertidas (`\\\`)
-- **[]** Evitar valores vazios no output do JSON Extractor
+- **[X]** Evitar valores vazios no output do JSON Extractor **(v2.9.6)**
 - **[]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor
-- **[]** Adicionar opção 'not include number keys' no JSON Extractor
+- **[X]** Adicionar opção 'not include number keys' no JSON Extractor **(v2.9.6)**
 - **[X]** Ordenar todos os resultados, incluindo output do JSON Rewriter **(v2.9.5 - Parcial: implementado para SearchReplacePanel e InsertPanel)**
 - **[]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente
 - **[]** Corrigir situações problemáticas:
@@ -146,7 +146,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 #### JSON Advanced Features
 
 - **[X]** Possibilidade de buscar chaves e valores JSON (ex: `t.auth.brandTitle`) *(v3.0.0 - JSON Search)*
-- **[]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios
+- **[X]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios **(v2.9.6)**
 - **[]** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
 - **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
 - **[]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes
@@ -172,10 +172,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 - **[X]** Incluir botão 'clear all conditions' nas opções avançadas condicionais **(v2.9.5)**
 - **[X]** Adicionar scroll nos painéis 'search/replace' e 'insert' **(v2.9.5)**
-- **[]** Incluir histórico de atividades como feature do Google Translate
+- **[X]** Incluir histórico de atividades como feature do Google Translate **(v2.9.6 - History Dock)**
 - **[]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo)
 - **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
-- **[]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário
+- **[X]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário **(v2.9.6)**
 - **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
 - **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
 - **[]** Adicionar opções de undo e redo para mudanças feitas
@@ -242,10 +242,10 @@ def walk(v):
 | Categoria | Total | Completas | Pendentes | % Completo |
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 10 | 2 | 83.3% |
-| SHOULD HAVE | 46 | 19 | 27 | 41.3% |
+| SHOULD HAVE | 46 | 24 | 22 | 52.2% |
 | COULD HAVE | 18 | 0 | 18 | 0% |
-| WOULD HAVE LATER | 21 | 2 | 19 | 9.5% |
-| **TOTAL** | **97** | **31** | **66** | **32.0%** |
+| WOULD HAVE LATER | 21 | 4 | 17 | 19.0% |
+| **TOTAL** | **97** | **36** | **61** | **37.1%** |
 
 ### Notas
 
@@ -279,6 +279,13 @@ def walk(v):
 ---
 
 ## 🎯 Marcos Recentes
+
+- **v2.9.6 (28/11/2025)**: +5 tasks completadas (SHOULD HAVE + WOULD HAVE LATER)
+  - ✅ Exclude numeric keys (Text Extractor + JSON Rewriter)
+  - ✅ Skip empty values (Text Extractor + JSON Rewriter)
+  - ✅ Resizable text boxes (ed_query, ed_repl, ed_text)
+  - ✅ History Panel (View → History com 10 entradas)
+  - ✅ "Is File" consistency em todos os módulos JSON
 
 - **v2.9.5 (28/11/2025)**: +3 tasks completadas (UI/UX Improvements)
   - ✅ Clear All Conditions button

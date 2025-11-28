@@ -46,6 +46,14 @@ def cli_dedupe(args: argparse.Namespace):
     if args.eliminate_duplicates:
         obj = rw.eliminate_duplicates(obj)
     
+    # Exclude numeric keys if requested
+    if hasattr(args, 'exclude_numeric') and args.exclude_numeric:
+        obj = rw.exclude_numeric_keys(obj)
+    
+    # Skip empty values if requested
+    if hasattr(args, 'skip_empty') and args.skip_empty:
+        obj = rw.skip_empty_values(obj)
+    
     # Serialize output
     if args.ts_out:
         output_text = rw.dump_ts_node(obj, indent=args.indent)
@@ -110,6 +118,13 @@ class JsonRewriterDock(BaseDock):
         self.chk_elim.setToolTip("Remove duplicate keys, keeping the last occurrence")
         self.chk_nlb = QCheckBox("No blank lines")
         self.chk_nlb.setToolTip("Remove blank lines from output")
+        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
+        self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
+        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
+        self.chk_is_file = QCheckBox("Is file")
+        self.chk_is_file.setToolTip("Input path is a single file (unchecked for directory)")
+        self.chk_is_file.setChecked(True)
         
         # Indent spinner
         self.lbl_indent = QLabel("Indent (<=0 compact):")
@@ -136,17 +151,22 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.ed_out, 1, 1, 1, 3)
         g.addWidget(self.btn_out, 1, 4)
         
-        # Row 2: Options checkboxes
+        # Row 2: Options checkboxes (line 1)
         g.addWidget(self.chk_from_ts, 2, 0)
         g.addWidget(self.chk_ts_out, 2, 1)
         g.addWidget(self.chk_join, 2, 2)
         g.addWidget(self.chk_elim, 2, 3)
         g.addWidget(self.chk_nlb, 2, 4)
         
-        # Row 3: Indent and run button
-        g.addWidget(self.lbl_indent, 3, 0)
-        g.addWidget(self.spin_indent, 3, 1)
-        g.addWidget(self.btn_run, 3, 4)
+        # Row 3: Options checkboxes (line 2)
+        g.addWidget(self.chk_exclude_numeric, 3, 0)
+        g.addWidget(self.chk_skip_empty, 3, 1)
+        g.addWidget(self.chk_is_file, 3, 2)
+        
+        # Row 4: Indent and run button
+        g.addWidget(self.lbl_indent, 4, 0)
+        g.addWidget(self.spin_indent, 4, 1)
+        g.addWidget(self.btn_run, 4, 4)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -190,6 +210,9 @@ class JsonRewriterDock(BaseDock):
             join_keys=self.chk_join.isChecked(),
             eliminate_duplicates=self.chk_elim.isChecked(),
             no_line_break=self.chk_nlb.isChecked(),
+            exclude_numeric=self.chk_exclude_numeric.isChecked(),
+            skip_empty=self.chk_skip_empty.isChecked(),
+            is_file=self.chk_is_file.isChecked(),
         )
         
         # Execute rewrite

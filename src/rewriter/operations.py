@@ -101,3 +101,67 @@ def eliminate_duplicates(node: JSONNode) -> JSONNode:
     
     res = _visit(node)
     return res if res is not None else Obj()
+
+
+def exclude_numeric_keys(node: JSONNode) -> JSONNode:
+    """
+    Remove keys that are purely numeric (e.g., '0', '123', '456').
+    Recursively processes Obj and list nodes.
+    """
+    if isinstance(node, Obj):
+        out = Obj()
+        for k, v in node:
+            # Skip if key is numeric
+            if k.isdigit():
+                continue
+            # Recursively process value
+            out.append((k, exclude_numeric_keys(v)))
+        return out
+    if isinstance(node, list):
+        return [exclude_numeric_keys(x) for x in node]
+    return node
+
+
+def skip_empty_values(node: JSONNode) -> JSONNode:
+    """
+    Remove empty values from JSON structure.
+    
+    Empty values include:
+    - Empty strings: ""
+    - None/null
+    - Empty lists: []
+    - Empty dicts/Obj: {}
+    - Whitespace-only strings: "   "
+    
+    Recursively processes Obj and list nodes.
+    """
+    def is_empty(value: Any) -> bool:
+        """Check if value is considered empty."""
+        if value is None:
+            return True
+        if isinstance(value, str):
+            return not value.strip()
+        if isinstance(value, (list, Obj)):
+            return len(value) == 0
+        if isinstance(value, dict):
+            return len(value) == 0
+        return False
+    
+    if isinstance(node, Obj):
+        out = Obj()
+        for k, v in node:
+            # Recursively process value first
+            processed = skip_empty_values(v)
+            # Skip if empty
+            if is_empty(processed):
+                continue
+            out.append((k, processed))
+        return out
+    if isinstance(node, list):
+        out = []
+        for item in node:
+            processed = skip_empty_values(item)
+            if not is_empty(processed):
+                out.append(processed)
+        return out
+    return node

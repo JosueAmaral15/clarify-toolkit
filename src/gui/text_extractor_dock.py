@@ -121,6 +121,14 @@ class TextExtractorDock(StandardToolDock):
         options_layout.addWidget(self.chk_ts_export, 2, 1)
         options_layout.addWidget(self.chk_only_strings, 2, 2)
         
+        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
+        self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
+        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
+        
+        options_layout.addWidget(self.chk_exclude_numeric, 3, 0)
+        options_layout.addWidget(self.chk_skip_empty, 3, 1)
+        
         options_group.setLayout(options_layout)
         
         self.layout.addLayout(grid)
@@ -200,6 +208,8 @@ class TextExtractorDock(StandardToolDock):
                 'add_value': self.chk_add_value.isChecked(),
                 'nested': self.chk_nested_json.isChecked(),
                 'only_strings': self.chk_only_strings.isChecked(),
+                'exclude_numeric': self.chk_exclude_numeric.isChecked(),
+                'skip_empty': self.chk_skip_empty.isChecked(),
             }
             
             # Extract
@@ -215,7 +225,7 @@ class TextExtractorDock(StandardToolDock):
             
             # Convert to nested if requested
             if options['nested'] and isinstance(result, dict):
-                result = self._flatten_to_nested(result)
+                result = self._flatten_to_nested(result, options['exclude_numeric'], options['skip_empty'])
             
             # Save result
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -446,11 +456,22 @@ class TextExtractorDock(StandardToolDock):
         
         return result
     
-    def _flatten_to_nested(self, flat: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert flat dot-notation dict to nested dict."""
+    def _flatten_to_nested(self, flat: Dict[str, Any], exclude_numeric: bool = False, skip_empty: bool = False) -> Dict[str, Any]:
+        """Convert flat dot-notation dict to nested dict with optional filtering."""
         nested = {}
         for path, value in flat.items():
+            # Skip empty values if requested
+            if skip_empty and self._is_empty_value(value):
+                continue
+            
             parts = path.split('.')
+            
+            # Filter numeric keys if requested
+            if exclude_numeric:
+                parts = [p for p in parts if not p.isdigit()]
+                if not parts:  # All parts were numeric
+                    continue
+            
             current = nested
             for part in parts[:-1]:
                 if part not in current:
@@ -489,3 +510,21 @@ class TextExtractorDock(StandardToolDock):
             'img', 'video', 'audio', 'canvas', 'svg', 'iframe'
         }
         return tag.lower() in standard_tags
+    
+    def _is_empty_value(self, value: Any) -> bool:
+        """Check if value is considered empty.
+        
+        Empty values include:
+        - Empty strings: ""
+        - None/null
+        - Empty lists: []
+        - Empty dicts: {}
+        - Whitespace-only strings: "   "
+        """
+        if value is None:
+            return True
+        if isinstance(value, str):
+            return not value.strip()
+        if isinstance(value, (list, dict)):
+            return len(value) == 0
+        return False

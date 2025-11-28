@@ -1,5 +1,69 @@
 # Changelog - Clarify Project
 
+## [2.9.6] - 2025-11-28
+
+### ✨ Advanced Filtering, Resizable Fields, and History Panel
+
+#### Novas Funcionalidades
+
+##### 1. Exclude Numeric Keys 🔢
+- ✅ **Checkbox "Exclude numeric keys"** em Text Extractor e JSON Rewriter:
+  - Filtra chaves que são puramente numéricas (ex: '0', '123', '456')
+  - Usa `key.isdigit()` para detecção
+  - Processamento recursivo em estruturas aninhadas
+  - Útil para limpar índices de arrays convertidos em objetos
+  - Nova função `exclude_numeric_keys()` no módulo `rewriter.operations`
+
+**Benefícios**: Remove chaves numéricas indesejadas automaticamente, melhora qualidade do output JSON
+
+##### 2. Skip Empty Values 🚫
+- ✅ **Checkbox "Skip empty values"** em Text Extractor e JSON Rewriter:
+  - Define vazio como: strings vazias `""`, `null`, arrays `[]`, objetos `{}`, whitespace-only `"   "`
+  - Filtragem durante serialização do output
+  - Nova função `skip_empty_values()` no módulo `rewriter.operations`
+  - Método helper `_is_empty_value()` no Text Extractor
+
+**Benefícios**: Output JSON mais limpo, remove ruído de valores vazios
+
+##### 3. Resizable Text Boxes 📏
+- ✅ **Caixas de texto redimensionáveis** em Search/Replace e Insert panels:
+  - `ed_query`, `ed_repl` e `ed_text` agora são QPlainTextEdit
+  - Altura mínima: 30px, máxima: 150-200px
+  - Usuário pode arrastar borda inferior para ajustar altura
+  - Melhor para queries longas ou texto multi-linha
+  - Tooltips atualizados com instrução de resize
+  - Simplificação: removida função `_toggle_multi_query_mode` (sempre multi-line)
+
+**Benefícios**: Flexibilidade visual, melhor experiência com textos longos
+
+##### 4. History Panel 📜
+- ✅ **Painel de histórico de operações** (View → History):
+  - Dock panel toggleable na parte inferior
+  - Mantém até 10 operações recentes (configurável)
+  - Exibe: timestamp, tipo de operação, detalhes, arquivos processados
+  - Operações rastreadas: Search, Replace, Insert
+  - Botões: Clear History, Export to file, Refresh
+  - TreeWidget com colunas organizadas
+  - Integração com `OperationHistory` existente
+  - Nova classe `HistoryDock` em `src/gui/history_dock.py`
+
+**Benefícios**: Rastreabilidade de ações, facilita auditoria e revisão de trabalho
+
+##### 5. "Is File" Consistency ✅
+- ✅ **Checkbox "Is file"** agora presente em todos os módulos JSON:
+  - JSON Rewriter (novo)
+  - Text Extractor (já existia)
+  - JSON Translate (original)
+  - Consistência de interface em toda aplicação
+
+**Benefícios**: Interface unificada, experiência de usuário consistente
+
+#### Estatísticas de Conclusão
+- ✅ 5 tasks completadas
+- ⏱️ Tempo total: ~2-2.5 horas
+- 📦 Novos arquivos: `src/gui/history_dock.py`
+- 🔧 Módulos modificados: `src/app.py`, `text_extractor_dock.py`, `json_rewriter_dock.py`, `rewriter/operations.py`, `rewriter/__init__.py`, `gui/__init__.py`
+
 ## [2.9.5] - 2025-11-28
 
 ### ✨ UI Improvements - Clear Conditions, Scroll, and Sort
