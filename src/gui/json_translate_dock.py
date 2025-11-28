@@ -47,7 +47,8 @@ def process_translate_file(
     dont_override: bool,
     inverse: bool,
     exclude_patterns: list,
-    emit_export: bool = True
+    emit_export: bool = True,
+    preserve_uppercase: bool = False
 ) -> tuple[bool, str]:
     """
     Process a single file for translation.
@@ -148,6 +149,9 @@ class JsonTranslateDock(BaseDock):
         self.chk_emit_export.setChecked(True)
         self.chk_emit_export.setToolTip("Add 'export const varName = {...}' wrapper to output (TS/JS files)")
         
+        self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
+        self.chk_preserve_uppercase.setToolTip("Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE)")
+        
         # Action button
         self.btn_run = QPushButton("Run translation")
     
@@ -191,8 +195,11 @@ class JsonTranslateDock(BaseDock):
         g.addWidget(self.chk_inverse_json_translate, 7, 0, 1, 2)
         g.addWidget(self.chk_emit_export, 7, 2, 1, 2)
         
-        # Row 8: Run button
-        g.addWidget(self.btn_run, 8, 2, 1, 2)
+        # Row 8: Preserve uppercase option
+        g.addWidget(self.chk_preserve_uppercase, 8, 0, 1, 2)
+        
+        # Row 9: Run button
+        g.addWidget(self.btn_run, 9, 2, 1, 2)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -242,6 +249,7 @@ class JsonTranslateDock(BaseDock):
         dont_override = self.chk_dont_override.isChecked()
         inverse = self.chk_inverse_json_translate.isChecked()
         emit_export = self.chk_emit_export.isChecked()
+        preserve_uppercase = self.chk_preserve_uppercase.isChecked()
         
         # Validation
         if not path or not dpath:
@@ -280,7 +288,8 @@ class JsonTranslateDock(BaseDock):
                 start_rx, end_rx,
                 make_backup, dont_override, inverse,
                 exclude_patterns,
-                emit_export
+                emit_export,
+                preserve_uppercase
             )
             if ok:
                 changed += 1

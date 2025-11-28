@@ -395,14 +395,52 @@ def process_translate_file(path: str,
                            make_backup: bool,
                            dont_override: bool,
                            inverse: bool,
-                           exclude_patterns: list[str]) -> tuple[bool, Optional[str]]:
+                           exclude_patterns: list[str],
+                           emit_export: bool = True,
+                           preserve_uppercase: bool = False) -> tuple[bool, Optional[str]]:
     """
     Load file, translate (forward or inverse) honoring scope, options, and exclusions.
     Returns (changed, error_message).
+    
+    Args:
+        preserve_uppercase: If True, only keys that are already UPPERCASE in the original 
+                           will remain UPPERCASE after translation (Task #7 - v2.9.8)
     """
     try:
         original = read_text(path)
         content = original
+        
+        # Helper: filter dictionary to preserve uppercase keys (Task #7)
+        filtered_dict = dictionary
+        if preserve_uppercase and not inverse:
+            # Only translate keys that are UPPERCASE if they were already UPPERCASE in file
+            # We need to detect which keys in the file are uppercase
+            import re
+            uppercase_keys = set()
+            # Simple heuristic: find all-uppercase identifiers in the file
+            for match in re.finditer(r'\b([A-Z_][A-Z0-9_]*)\b', original):
+                key = match.group(1)
+                if key.isupper() and len(key) > 1:  # Avoid single letters
+                    uppercase_keys.add(key)
+            
+            # Filter dictionary: only keep paths that end with uppercase keys if they match
+            def filter_dict_preserve_uppercase(d, path=""):
+                if isinstance(d, dict):
+                    result = {}
+                    for k, v in d.items():
+                        current_path = f"{path}.{k}" if path else k
+                        # Check if this key should be preserved as uppercase
+                        if k.isupper() and k in uppercase_keys:
+                            # Keep this key as-is (it's uppercase in original)
+                            result[k] = filter_dict_preserve_uppercase(v, current_path)
+                        elif not k.isupper():
+                            # This is a normal key, process normally
+                            result[k] = filter_dict_preserve_uppercase(v, current_path)
+                        # else: skip uppercase keys not in original file
+                    return result
+                return d
+            
+            filtered_dict = filter_dict_preserve_uppercase(dictionary)
 
         def _one_chunk(chunk: str) -> str:
             # 1) Mask exclusions so they are never touched
@@ -416,9 +454,9 @@ def process_translate_file(path: str,
 
             # 3) Run translation (forward or inverse)
             if inverse:
-                changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=True)
+                changed = translate_replace_texts(chunk, filtered_dict, root_name=root_alias, inverse=True)
             else:
-                changed = translate_replace_texts(chunk, dictionary, root_name=root_alias, inverse=False)
+                changed = translate_replace_texts(chunk, filtered_dict, root_name=root_alias, inverse=False)
 
             # 4) Unmask in reverse order (placeholders first, then exclusions)
             if tref_guards:

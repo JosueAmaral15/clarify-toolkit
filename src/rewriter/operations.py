@@ -208,3 +208,142 @@ def avoid_duplicate_child_keys(node: JSONNode) -> JSONNode:
     if isinstance(node, list):
         return [avoid_duplicate_child_keys(x) for x in node]
     return node
+
+
+def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False) -> JSONNode:
+    """
+    Remove duplicate values from arrays in JSON structure.
+    
+    Args:
+        node: JSON node to process
+        consecutive_only: If True, only removes consecutive duplicates (e.g., ['a','a','b'] → ['a','b'])
+                         If False, removes all duplicates (e.g., ['a','b','a'] → ['a','b'])
+    
+    Examples:
+        consecutive_only=True:  ['a', 'a', 'b', 'c', 'c'] → ['a', 'b', 'c']
+        consecutive_only=False: ['a', 'b', 'a', 'c', 'b'] → ['a', 'b', 'c']
+    
+    Recursively processes Obj and list nodes.
+    Uses set-like behavior to preserve first occurrence.
+    """
+    if isinstance(node, Obj):
+        out = Obj()
+        for k, v in node:
+            # Recursively process value
+            out.append((k, remove_duplicate_array_values(v, consecutive_only)))
+        return out
+    
+    if isinstance(node, list):
+        if consecutive_only:
+            # Remove only consecutive duplicates
+            if not node:
+                return []
+            result = [node[0]]
+            for i in range(1, len(node)):
+                # Compare with previous item using freeze for consistent comparison
+                if freeze(node[i]) != freeze(node[i-1]):
+                    result.append(remove_duplicate_array_values(node[i], consecutive_only))
+                # If equal to previous, skip it (don't add to result)
+            return result
+        else:
+            # Remove all duplicates (set-like behavior)
+            seen = set()
+            result = []
+            for item in node:
+                processed = remove_duplicate_array_values(item, consecutive_only)
+                sig = freeze(processed)
+                if sig not in seen:
+                    seen.add(sig)
+                    result.append(processed)
+            return result
+    
+    return node
+
+
+def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inconsistencies: bool = True) -> tuple[JSONNode, List[str]]:
+    """
+    Enforce consistent case style on all JSON keys.
+    
+    Args:
+        node: JSON node to process
+        target_case: Target case style - 'camel', 'pascal', 'snake', or 'kebab' (default: 'camel')
+        warn_inconsistencies: If True, collect warnings for keys that deviate from target case
+    
+    Returns:
+        Tuple of (processed_node, warnings_list)
+        
+    Examples:
+        Input:  { "homeTitle": "A", "AboutPage": "B", "user_name": "C" }
+        Output: { "homeTitle": "A", "aboutPage": "B", "userName": "C" }
+        Warnings: ["Key 'AboutPage' converted to 'aboutPage'", "Key 'user_name' converted to 'userName'"]
+    """
+    import re
+    
+    warnings = []
+    
+    def split_words(s: str) -> List[str]:
+        """Split identifier into words."""
+        # Handle kebab-case and snake_case
+        s = s.replace('-', ' ').replace('_', ' ')
+        # Handle camelCase and PascalCase
+        s = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+        s = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', s)
+        return [w for w in s.split() if w]
+    
+    def to_camel(s: str) -> str:
+        words = split_words(s)
+        if not words:
+            return s
+        return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+    
+    def to_pascal(s: str) -> str:
+        words = split_words(s)
+        if not words:
+            return s
+        return ''.join(w.capitalize() for w in words)
+    
+    def to_snake(s: str) -> str:
+        words = split_words(s)
+        return '_'.join(w.lower() for w in words)
+    
+    def to_kebab(s: str) -> str:
+        words = split_words(s)
+        return '-'.join(w.lower() for w in words)
+    
+    converters = {
+        'camel': to_camel,
+        'pascal': to_pascal,
+        'snake': to_snake,
+        'kebab': to_kebab
+    }
+    
+    converter = converters.get(target_case)
+    if not converter:
+        warnings.append(f"Unknown case style '{target_case}', defaulting to camelCase")
+        converter = to_camel
+    
+    def process_node(n: JSONNode, path: str = "") -> JSONNode:
+        if isinstance(n, Obj):
+            out = Obj()
+            for k, v in n:
+                # Convert key
+                new_key = converter(k)
+                
+                # Warn if changed
+                if warn_inconsistencies and new_key != k:
+                    key_path = f"{path}.{k}" if path else k
+                    warnings.append(f"Key '{key_path}' converted from '{k}' to '{new_key}'")
+                
+                # Recursively process value
+                new_path = f"{path}.{new_key}" if path else new_key
+                processed_v = process_node(v, new_path)
+                out.append((new_key, processed_v))
+            return out
+        
+        if isinstance(n, list):
+            return [process_node(item, f"{path}[]") for item in n]
+        
+        return n
+    
+    processed = process_node(node)
+    return processed, warnings

@@ -187,7 +187,13 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos
 - **[]** Incluir tutoriais de uso
 - **[]** Incluir busca com ajuda de inteligência artificial
-- **[]** Embutir assistente virtual para uso com IA
+- **[]** Embutir assistente virtual para uso com IAOnde mostrar a contagem?
+Nova coluna "Count" na tabela de resultados do JSON Search?
+Campo de texto embaixo dos resultados: "Total occurrences: 5"?
+Contagem deve ser:
+Por arquivo: en.json (3 occurrências), pt.json (2 ocorrências)
+Total geral: 5 occurrências
+Ambos?
 - **[]** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
 - **[]** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
 - **[]** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período
