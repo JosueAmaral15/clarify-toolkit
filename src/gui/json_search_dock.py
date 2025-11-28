@@ -92,35 +92,47 @@ class JsonSearchDock(StandardToolDock):
         self.ed_search_value.setToolTip("Search for specific values in your JSON files (supports regex)")
         grid.addWidget(self.ed_search_value, 1, 1, 1, 3)
         
+        # Filename filter (NEW - Task #6)
+        grid.addWidget(QLabel("Filename filter:"), 2, 0)
+        self.ed_filename = QLineEdit()
+        self.ed_filename.setPlaceholderText("e.g., '*.config.ts' or 'filename:en' or leave empty")
+        self.ed_filename.setToolTip(
+            "Filter files by name:\n"
+            "• Wildcards: '*.config.ts', 'en_*.json'\n"
+            "• Prefix: 'filename:en' (matches en.ts, en-US.json, etc.)\n"
+            "• Advanced: Use regex when 'Use regex' is checked"
+        )
+        grid.addWidget(self.ed_filename, 2, 1, 1, 3)
+        
         # Search mode
-        grid.addWidget(QLabel("Search mode:"), 2, 0)
+        grid.addWidget(QLabel("Search mode:"), 3, 0)
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(["Key and Value", "Key only", "Value only"])
-        grid.addWidget(self.combo_mode, 2, 1, 1, 3)
+        grid.addWidget(self.combo_mode, 3, 1, 1, 3)
         
         # File/directory input
         lbl_path, self.ed_path, self.btn_browse, self.chk_is_file = self.create_file_input(
             "Search path:",
             "File or directory to search"
         )
-        grid.addWidget(lbl_path, 3, 0)
-        grid.addWidget(self.ed_path, 3, 1, 1, 2)
-        grid.addWidget(self.btn_browse, 3, 3)
+        grid.addWidget(lbl_path, 4, 0)
+        grid.addWidget(self.ed_path, 4, 1, 1, 2)
+        grid.addWidget(self.btn_browse, 4, 3)
         
         # Options
         self.chk_case = QCheckBox("Case sensitive")
         self.chk_regex = QCheckBox("Use regex")
-        grid.addWidget(self.chk_is_file, 4, 0)
-        grid.addWidget(self.chk_case, 4, 1)
-        grid.addWidget(self.chk_regex, 4, 2)
+        grid.addWidget(self.chk_is_file, 5, 0)
+        grid.addWidget(self.chk_case, 5, 1)
+        grid.addWidget(self.chk_regex, 5, 2)
         
         # Max results
-        grid.addWidget(QLabel("Max results:"), 4, 3)
+        grid.addWidget(QLabel("Max results:"), 5, 3)
         self.spin_max = QSpinBox()
         self.spin_max.setRange(0, 10000)
         self.spin_max.setValue(1000)
         self.spin_max.setSpecialValueText("Unlimited")
-        grid.addWidget(self.spin_max, 4, 4)
+        grid.addWidget(self.spin_max, 5, 4)
         
         self.layout.addLayout(grid)
         
@@ -142,7 +154,7 @@ class JsonSearchDock(StandardToolDock):
     def _connect_signals(self):
         """Connect signals."""
         self.btn_browse.clicked.connect(self._browse)
-        self._setup_enter_key_execution(self.ed_search_key, self.ed_search_value)
+        self._setup_enter_key_execution(self.ed_search_key, self.ed_search_value, self.ed_filename)
     
     def _browse(self):
         """Browse for file or directory."""
@@ -154,15 +166,19 @@ class JsonSearchDock(StandardToolDock):
     
     def _get_files(self):
         """Get list of files to search."""
+        import re
+        import fnmatch
+        
         path = self.ed_path.text().strip()
         valid, error = self.validate_file_path(path)
         if not valid:
             raise ValueError(error)
         
+        # Get base file list
         if self.chk_is_file.isChecked():
             if not os.path.isfile(path):
                 raise ValueError(f"Not a file: {path}")
-            return [path]
+            files = [path]
         else:
             if not os.path.isdir(path):
                 raise ValueError(f"Not a directory: {path}")
@@ -170,7 +186,33 @@ class JsonSearchDock(StandardToolDock):
             files = list_files_recursive(path, ['.json', '.ts', '.js'])
             if not files:
                 raise ValueError(f"No JSON/TS files found in {path}")
-            return files
+        
+        # Apply filename filter (Task #6)
+        filename_filter = self.ed_filename.text().strip()
+        if filename_filter:
+            use_regex = self.chk_regex.isChecked()
+            
+            # Method 1: prefix "filename:" - matches files containing the text
+            if filename_filter.startswith("filename:"):
+                search_text = filename_filter[9:].strip()  # Remove "filename:" prefix
+                files = [f for f in files if search_text in os.path.basename(f)]
+            
+            # Method 2: regex (when checkbox is enabled)
+            elif use_regex:
+                try:
+                    pattern = re.compile(filename_filter)
+                    files = [f for f in files if pattern.search(os.path.basename(f))]
+                except re.error as e:
+                    raise ValueError(f"Invalid regex pattern: {e}")
+            
+            # Method 3: wildcards (default)
+            else:
+                files = [f for f in files if fnmatch.fnmatch(os.path.basename(f), filename_filter)]
+            
+            if not files:
+                raise ValueError(f"No files match filename filter: {filename_filter}")
+        
+        return files
     
     def _search(self):
         """Start search process."""
