@@ -271,12 +271,43 @@ class JsonSearchDock(StandardToolDock):
     
     def _on_finished(self, results):
         """Handle search completion."""
+        from collections import Counter
+        
         self.last_results = results  # Store results for saving
         
         self.append_result(self.text_results, f"\n{'='*60}")
         self.append_result(self.text_results, f"✅ Search complete! Found {len(results)} match(es).\n")
         
         if results:
+            # Task #11 - Contagem de ocorrências
+            # Count occurrences per file and per key
+            file_counter = Counter()
+            key_counter = Counter()
+            
+            for result in results:
+                file_path = result.get('file', 'unknown')
+                key = result.get('key', '')
+                file_counter[os.path.basename(file_path)] += 1
+                if key:
+                    key_counter[key] += 1
+            
+            # Display occurrence statistics
+            self.append_result(self.text_results, "\n📊 Occurrence Statistics:")
+            self.append_result(self.text_results, f"Total occurrences: {len(results)}")
+            self.append_result(self.text_results, f"Files with matches: {len(file_counter)}")
+            
+            # Top files by occurrence count
+            if file_counter:
+                self.append_result(self.text_results, "\nTop files by occurrences:")
+                for filename, count in file_counter.most_common(5):
+                    self.append_result(self.text_results, f"  • {filename}: {count} occurrence(s)")
+            
+            # Top keys by occurrence count
+            if key_counter:
+                self.append_result(self.text_results, "\nTop keys by occurrences:")
+                for key, count in key_counter.most_common(5):
+                    self.append_result(self.text_results, f"  • {key}: {count} occurrence(s)")
+            
             self.append_result(self.text_results, "\nMatches:")
             for i, result in enumerate(results[:100], 1):  # Show first 100
                 file_path = result.get('file', 'unknown')

@@ -152,8 +152,12 @@ class JsonTranslateDock(BaseDock):
         self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
         self.chk_preserve_uppercase.setToolTip("Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE)")
         
-        # Action button
+        # Action buttons (Task #10 - v2.9.8)
         self.btn_run = QPushButton("Run translation")
+        self.btn_swap = QPushButton("Swap Dictionaries")
+        self.btn_swap.setToolTip("Swap source and target dictionaries (useful for reverse translation)")
+        self.btn_undo = QPushButton("Undo with Backup")
+        self.btn_undo.setToolTip("Restore original file from backup (.bak files)")
     
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -198,7 +202,9 @@ class JsonTranslateDock(BaseDock):
         # Row 8: Preserve uppercase option
         g.addWidget(self.chk_preserve_uppercase, 8, 0, 1, 2)
         
-        # Row 9: Run button
+        # Row 9: Action buttons
+        g.addWidget(self.btn_swap, 9, 0)
+        g.addWidget(self.btn_undo, 9, 1)
         g.addWidget(self.btn_run, 9, 2, 1, 2)
     
     def _connect_signals(self) -> None:
@@ -206,6 +212,8 @@ class JsonTranslateDock(BaseDock):
         self.btn_browse.clicked.connect(self._browse_root)
         self.btn_open.clicked.connect(self._browse_dict)
         self.btn_run.clicked.connect(self._run)
+        self.btn_swap.clicked.connect(self._swap_dictionaries)
+        self.btn_undo.clicked.connect(self._undo_translation)
         self._setup_enter_key_execution(
             self.ed_path, self.ed_dict, self.ed_start, 
             self.ed_end, self.ed_exclude
@@ -301,6 +309,101 @@ class JsonTranslateDock(BaseDock):
         if errors:
             msg += f"\nErrors: {len(errors)}\n" + "\n".join(errors[:5])  # show first 5
         QMessageBox.information(self, "Translate", msg)
+    
+    def _swap_dictionaries(self) -> None:
+        """
+        Swap source and target dictionaries (Task #10 - v2.9.8).
+        This is useful for reverse translation workflows.
+        Note: This doesn't physically swap files, just toggles the inverse checkbox.
+        """
+        # Toggle inverse checkbox to reverse translation direction
+        self.chk_inverse_json_translate.setChecked(
+            not self.chk_inverse_json_translate.isChecked()
+        )
+        
+        status = "enabled" if self.chk_inverse_json_translate.isChecked() else "disabled"
+        QMessageBox.information(
+            self,
+            "Swap Dictionaries",
+            f"Reverse translation mode {status}.\n\n"
+            "When enabled:\n"
+            "• Replaces {t.key} placeholders with dictionary values\n"
+            "• Converts code back to original text\n\n"
+            "When disabled:\n"
+            "• Replaces text with {t.key} placeholders\n"
+            "• Normal forward translation"
+        )
+    
+    def _undo_translation(self) -> None:
+        """
+        Restore original files from backup (.bak files) (Task #10 - v2.9.8).
+        Searches for .bak files and restores them.
+        """
+        path = self.ed_path.text().strip()
+        
+        if not path:
+            QMessageBox.warning(self, "Missing", "Select a path first.")
+            return
+        
+        # Find .bak files
+        backup_files = []
+        
+        if os.path.isfile(path):
+            # Single file mode
+            backup_path = path + ".bak"
+            if os.path.exists(backup_path):
+                backup_files.append((backup_path, path))
+        else:
+            # Directory mode - find all .bak files
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    if file.endswith('.bak'):
+                        backup_path = os.path.join(root, file)
+                        original_path = backup_path[:-4]  # Remove .bak
+                        if os.path.exists(original_path):
+                            backup_files.append((backup_path, original_path))
+        
+        if not backup_files:
+            QMessageBox.warning(
+                self,
+                "No Backups",
+                "No backup files (.bak) found in the selected path."
+            )
+            return
+        
+        # Confirm restoration
+        reply = QMessageBox.question(
+            self,
+            "Confirm Restoration",
+            f"Found {len(backup_files)} backup file(s).\n\n"
+            "This will restore original files from backups.\n"
+            "Current files will be overwritten!\n\n"
+            "Continue?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply != QMessageBox.Yes:
+            return
+        
+        # Restore files
+        restored = 0
+        errors = []
+        
+        for backup_path, original_path in backup_files:
+            try:
+                import shutil
+                shutil.copy2(backup_path, original_path)
+                restored += 1
+            except Exception as e:
+                errors.append(f"{os.path.basename(original_path)}: {str(e)}")
+        
+        # Show results
+        msg = f"Restored {restored} file(s) from backup."
+        if errors:
+            msg += f"\n\nErrors ({len(errors)}):\n" + "\n".join(errors[:5])
+        
+        QMessageBox.information(self, "Restoration Complete", msg)
     
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""
