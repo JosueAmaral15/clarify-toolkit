@@ -174,7 +174,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Incluir botão 'clear all conditions' nas opções avançadas condicionais **(v2.9.5)**
 - **[X]** Adicionar scroll nos painéis 'search/replace' e 'insert' **(v2.9.5)**
 - **[X]** Incluir histórico de atividades como feature do Google Translate **(v2.9.6 - History Dock)**
-- **[]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo)
+- **[X]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo) **(v2.9.7 - Dynamic Condition Lines)**
 - **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
 - **[X]** Mudar caixas de texto de insert, query e replacement para caixas redimensionáveis pelo usuário **(v2.9.6)**
 - **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**

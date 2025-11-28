@@ -157,6 +157,9 @@ class JsonRewriterDock(BaseDock):
         self.combo_case_style.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
         self.combo_case_style.setCurrentIndex(0)  # Default: camelCase
         self.combo_case_style.setToolTip("Target case style for key conversion")
+        self.chk_validate_case = QCheckBox("Validate case before applying")
+        self.chk_validate_case.setToolTip("Show preview dialog with before/after comparison before applying case conversion")
+        self.chk_validate_case.setChecked(False)  # Optional validation
         self.chk_is_file = QCheckBox("Is file")
         self.chk_is_file.setToolTip("Input path is a single file (unchecked for directory)")
         self.chk_is_file.setChecked(True)
@@ -207,6 +210,7 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.chk_enforce_case, 5, 0, 1, 2)
         g.addWidget(QLabel("Case style:"), 5, 2)
         g.addWidget(self.combo_case_style, 5, 3)
+        g.addWidget(self.chk_validate_case, 5, 4)
         
         # Row 6: Indent and run button
         g.addWidget(self.lbl_indent, 6, 0)
@@ -244,6 +248,59 @@ class JsonRewriterDock(BaseDock):
         if not self.ed_in.text().strip():
             QMessageBox.warning(self, "Missing", "Choose an input file.")
             return
+        
+        # Case validation dialog (if enabled)
+        if self.chk_enforce_case.isChecked() and self.chk_validate_case.isChecked():
+            try:
+                # Read and parse input file
+                from .. import rewriter as rw
+                with open(self.ed_in.text().strip(), 'r', encoding='utf-8') as f:
+                    text = f.read()
+                
+                # Parse based on format
+                if self.chk_from_ts.isChecked():
+                    obj = rw.ts_process_full_preserving(text)
+                else:
+                    obj = rw.parse_json_preserving_duplicates_text(text)
+                
+                # Show validation dialog
+                from .case_validator_dialog import show_case_validator
+                accepted, obj_converted, warnings = show_case_validator(obj, self)
+                
+                # User cancelled
+                if not accepted:
+                    QMessageBox.information(self, "Cancelled", "Case conversion cancelled by user.")
+                    return
+                
+                # User accepted - we'll use the converted object
+                # But first, temporarily disable enforce_case to avoid double conversion
+                # (We'll write the already-converted object)
+                self.chk_enforce_case.setChecked(False)
+                
+                # Write the converted object to a temporary state
+                # and let cli_dedupe handle the rest
+                # Actually, we need to serialize it back to text first
+                if self.chk_ts_out.isChecked():
+                    temp_text = rw.dump_ts_node(obj_converted, indent=self.spin_indent.value())
+                    if not self.chk_nlb.isChecked():
+                        temp_text = rw.collapse_blank_lines(temp_text)
+                else:
+                    temp_text = rw.dump_ts_obj(obj_converted, indent=self.spin_indent.value())
+                
+                # Write to output
+                out_path = self.ed_out.text().strip() or self.ed_in.text().strip()
+                with open(out_path, 'w', encoding='utf-8') as f:
+                    f.write(temp_text)
+                
+                QMessageBox.information(self, "Done", f"Rewriter finished with {len(warnings)} case conversions.")
+                
+                # Re-enable enforce_case for next run
+                self.chk_enforce_case.setChecked(True)
+                return
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Validation Error", f"Failed to validate case: {e}")
+                return
         
         # Build argparse namespace with all options
         ns = argparse.Namespace(
