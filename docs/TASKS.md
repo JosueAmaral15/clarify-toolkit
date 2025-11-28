@@ -68,21 +68,22 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 #### Interface e Usabilidade
 - **[]** Adicionar funcionalidade de reversão de tradução JSON
 - **[X]** Adicionar menu com botão direito no painel de matches: copy, copy all, select all, open file, open all files. Suportar CTRL/Shift para seleção múltipla *(v2.9.2 - Context Menu)*
-- **[]** Possibilidade de colocar resultados em arquivos separados (cada iteração) ou em arquivo único
+- **[X]** Possibilidade de colocar resultados em arquivos separados (cada iteração) ou em arquivo único **(v2.9.7 - Save Results)**
 - **[]** Habilidade de inserir ranges incluídos/excluídos no Insert, mesmo usando regex
 - **[X]** Corrigir mensagem de Loading (só aparece letra L)
 - **[X]** Mostrar quantidade de resultados na primeira linha do match panel
 - **[X]** Mostrar posição absoluta do caractere/palavra ao passar mouse sobre resultado no match panel
+- **[X]** Adicionar busca por nome de arquivo com suporte a wildcards, prefix e regex **(v2.9.7 - Filename Search)**
 
 #### JSON Features
 
 - **[X]** Incluir possibilidade de mudar case de palavras-chave (camelCase, PascalCase, snake_case, kebab-case) *(v3.0.0 - Case Converter)*
 - **[]** Incluir possibilidade de remover certa sub-estrutura JSON de uma estrutura maior
 - **[X]** Incluir checkbox "is file" no JSON translate
-- **[]** Ajustar opção 'Emit Export default' do JSON Translate
-- **[]** Resultado do JSON Translate não deve conter três barras invertidas (`\\\`)
+- **[X]** Ajustar opção 'Emit Export default' do JSON Translate **(v2.9.7)**
+- **[X]** Resultado do JSON Translate não deve conter três barras invertidas (`\\\`) **(v2.9.7 - Fix Backslash Escaping)**
 - **[X]** Evitar valores vazios no output do JSON Extractor **(v2.9.6)**
-- **[]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor
+- **[X]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor **(v2.9.7 - Avoid Duplicate Child Keys)**
 - **[X]** Adicionar opção 'not include number keys' no JSON Extractor **(v2.9.6)**
 - **[X]** Ordenar todos os resultados, incluindo output do JSON Rewriter **(v2.9.5 - Parcial: implementado para SearchReplacePanel e InsertPanel)**
 - **[]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente
