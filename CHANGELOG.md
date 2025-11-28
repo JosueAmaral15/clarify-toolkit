@@ -1,5 +1,55 @@
 # Changelog - Clarify Project
 
+## [2.9.5] - 2025-11-28
+
+### ✨ UI Improvements - Clear Conditions, Scroll, and Sort
+
+#### Novas Funcionalidades
+
+##### 1. Clear All Conditions Button 🗑️
+- ✅ **Botão "Clear All Conditions"** nas opções avançadas condicionais:
+  - Presente em SearchReplacePanel e InsertPanel
+  - Limpa todos os campos de condição com um clique
+  - Reseta logic operator para AND
+  - Restaura checkboxes para valores padrão
+  - Ícone intuitivo de lixeira
+  - Tooltip explicativo
+  
+**Benefícios**: Economiza tempo ao limpar múltiplas condições, evita erros de dados residuais
+
+##### 2. Scroll em Painéis 📜
+- ✅ **QScrollArea adicionado** em ambos painéis principais:
+  - SearchReplacePanel com scroll vertical/horizontal
+  - InsertPanel com scroll vertical/horizontal
+  - Ajuste automático de tamanho (widgetResizable)
+  - Scrollbars aparecem conforme necessário
+  
+**Benefícios**: Melhor experiência em telas pequenas, acesso a todas as opções sem redimensionar janela
+
+##### 3. Ordenação de Resultados 🔤
+- ✅ **Checkbox "Sort results alphabetically"**:
+  - Disponível em SearchReplacePanel e InsertPanel
+  - Ordena caminhos de arquivos alfabeticamente
+  - Ordena resultados por linha e coluna
+  - Opcional (padrão: desativado)
+  - Tooltip explicativo
+  
+**Benefícios**: Facilita localização de arquivos específicos, resultados mais organizados para análise
+
+#### Detalhes Técnicos
+- `_clear_all_conditions()`: Método para resetar todas as condições
+- `ResultsTree.populate()`: Agora aceita parâmetro `sort_results`
+- QScrollArea com políticas de scroll configuráveis
+- Sorting usando `sorted()` do Python com key functions
+
+#### Melhorias de UX
+- Interface mais limpa e organizada
+- Maior produtividade ao gerenciar condições
+- Melhor suporte para diferentes resoluções de tela
+- Resultados mais fáceis de navegar
+
+---
+
 ## [2.9.4] - 2025-11-28
 
 ### 🎨 Theme System - Light, Dark, and System

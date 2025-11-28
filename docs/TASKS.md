@@ -84,7 +84,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Evitar valores vazios no output do JSON Extractor
 - **[]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor
 - **[]** Adicionar opção 'not include number keys' no JSON Extractor
-- **[]** Ordenar todos os resultados, incluindo output do JSON Rewriter
+- **[X]** Ordenar todos os resultados, incluindo output do JSON Rewriter **(v2.9.5 - Parcial: implementado para SearchReplacePanel e InsertPanel)**
 - **[]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente
 - **[]** Corrigir situações problemáticas:
   ```javascript
@@ -170,8 +170,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 #### UI/UX Improvements
 
-- **[]** Incluir botão 'clear all conditions' nas opções avançadas condicionais
-- **[]** Adicionar scroll nos painéis 'search/replace' e 'insert'
+- **[X]** Incluir botão 'clear all conditions' nas opções avançadas condicionais **(v2.9.5)**
+- **[X]** Adicionar scroll nos painéis 'search/replace' e 'insert' **(v2.9.5)**
 - **[]** Incluir histórico de atividades como feature do Google Translate
 - **[]** Incluir possibilidade de adicionar nova linha de opções avançadas condicionais (mínimo 3, sem limite máximo)
 - **[]** Fornecer habilidade de mudar aparência da aplicação para background transparente
@@ -242,10 +242,10 @@ def walk(v):
 | Categoria | Total | Completas | Pendentes | % Completo |
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 10 | 2 | 83.3% |
-| SHOULD HAVE | 46 | 18 | 28 | 39.1% |
+| SHOULD HAVE | 46 | 19 | 27 | 41.3% |
 | COULD HAVE | 18 | 0 | 18 | 0% |
-| WOULD HAVE LATER | 21 | 0 | 21 | 0% |
-| **TOTAL** | **97** | **28** | **69** | **28.9%** |
+| WOULD HAVE LATER | 21 | 2 | 19 | 9.5% |
+| **TOTAL** | **97** | **31** | **66** | **32.0%** |
 
 ### Notas
 
@@ -273,6 +273,17 @@ def walk(v):
 - **Documentação Principal**: `README.md`
 - **Status de Migração**: `docs/MIGRATION_FINAL_STATUS.md`
 - **Estrutura do Projeto**: `docs/project_structure.txt`
+
+---
+
+---
+
+## 🎯 Marcos Recentes
+
+- **v2.9.5 (28/11/2025)**: +3 tasks completadas (UI/UX Improvements)
+  - ✅ Clear All Conditions button
+  - ✅ Scroll em painéis principais
+  - ✅ Ordenação alfabética de resultados
 
 ---
 

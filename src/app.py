@@ -1721,7 +1721,7 @@ if _PYSIDE:
                 if self._status_label:
                     self._status_label.setText("")
 
-        def populate(self, matches: Dict[str, List[Tuple[int,int,str]]]):
+        def populate(self, matches: Dict[str, List[Tuple[int,int,str]]], sort_results: bool = False):
             self.setUpdatesEnabled(False)
             try:
                 self.clear()
@@ -1740,10 +1740,19 @@ if _PYSIDE:
                     summary.setFont(0, font)
                     self.addTopLevelItem(summary)
                 
+                # Sort file paths if requested (v2.9.5)
+                paths = sorted(matches.keys()) if sort_results else matches.keys()
+                
                 # Add file matches
-                for path, items in matches.items():
+                for path in paths:
+                    items = matches[path]
                     top = QTreeWidgetItem([path])
                     self.addTopLevelItem(top)
+                    
+                    # Sort items by line number if requested
+                    if sort_results:
+                        items = sorted(items, key=lambda x: (x[0], x[1]))  # Sort by line, then col
+                    
                     for line, col, snippet in items:
                         leaf = QTreeWidgetItem([f"{line}:{col}  {snippet.strip()}"])
                         top.addChild(leaf)
@@ -2011,6 +2020,12 @@ if _PYSIDE:
             row.addWidget(self.ed_extensions)
             root.addLayout(row)
             
+            # Sort results option (v2.9.5)
+            self.chk_sort_results = QCheckBox("Sort results alphabetically")
+            self.chk_sort_results.setChecked(False)
+            self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
+            root.addWidget(self.chk_sort_results)
+            
             # Include/Exclude globs (advanced)
             row = QHBoxLayout()
             row.addWidget(QLabel("Include globs (advanced, comma-separated):"))
@@ -2128,6 +2143,13 @@ if _PYSIDE:
                 g3.addWidget(chk_word, row_i, 6)
                 g3.addWidget(chk_regex, row_i, 7)
                 self.cond_list.append((cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex))
+            
+            # Clear All Conditions button (v2.9.5)
+            btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
+            btn_clear_conditions.setToolTip("Clear all advanced condition fields")
+            btn_clear_conditions.clicked.connect(self._clear_all_conditions)
+            g3.addWidget(btn_clear_conditions, 5, 6, 1, 2)
+            
             root.addWidget(gb3)
 
             # Results on the right
@@ -2159,9 +2181,17 @@ if _PYSIDE:
             results_widget = QWidget()
             results_widget.setLayout(results_layout)
 
+            # Wrap left panel in scroll area (v2.9.5)
+            left_widget = QWidget()
+            left_widget.setLayout(root)
+            scroll_area = QScrollArea()
+            scroll_area.setWidget(left_widget)
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            
             splitter = QSplitter()
-            left = QWidget(); left.setLayout(root)
-            splitter.addWidget(left)
+            splitter.addWidget(scroll_area)
             splitter.addWidget(results_widget)
             splitter.setSizes([500, 800])
 
@@ -2178,6 +2208,22 @@ if _PYSIDE:
 
         def change_advanced_conditions(self):
             self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
+        
+        def _clear_all_conditions(self):
+            """Clear all advanced condition fields (v2.9.5)"""
+            # Reset logic operator to AND
+            self.combo_logic_op.setCurrentIndex(0)
+            
+            # Clear all condition rows
+            for cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+                cb_field.setCurrentIndex(0)  # Reset to empty
+                cb_op.setCurrentIndex(0)     # Reset to empty
+                ed_val.clear()               # Clear value
+                cb_scope.setCurrentIndex(0)  # Reset to "none"
+                ed_scope_val.clear()         # Clear scope param
+                chk_case.setChecked(True)    # Default: case sensitive
+                chk_word.setChecked(False)   # Default: not whole word
+                chk_regex.setChecked(False)  # Default: not regex
         
         def _browse(self):
             if self.is_file.isChecked():
@@ -2511,7 +2557,8 @@ if _PYSIDE:
 
         def _on_search_done(self, matches: dict):
             """Handle search completion with history tracking (v2.5.0+)."""
-            self.results.populate(matches)
+            sort_results = self.chk_sort_results.isChecked()
+            self.results.populate(matches, sort_results)
             self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
             self.processing_search = False
             
@@ -2646,6 +2693,12 @@ if _PYSIDE:
             self.ed_extensions.setToolTip("Filter files by extensions")
             layout.addWidget(self.ed_extensions, 2, 2, 1, 3)
             
+            # Sort results option (v2.9.5)
+            self.chk_sort_results = QCheckBox("Sort results alphabetically")
+            self.chk_sort_results.setChecked(False)
+            self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
+            layout.addWidget(self.chk_sort_results, 2, 5)
+            
             layout.addWidget(QLabel("Include globs (advanced):"), 3, 0)
             self.ed_inc = QLineEdit()
             self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/**")
@@ -2767,6 +2820,13 @@ if _PYSIDE:
                 g3.addWidget(chk_word, row_i, 6)
                 g3.addWidget(chk_regex, row_i, 7)
                 self.cond_list.append((cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex))
+            
+            # Clear All Conditions button (v2.9.5)
+            btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
+            btn_clear_conditions.setToolTip("Clear all advanced condition fields")
+            btn_clear_conditions.clicked.connect(self._clear_all_conditions)
+            g3.addWidget(btn_clear_conditions, 5, 6, 1, 2)
+            
             layout.addWidget(gb3, 9, 0, 1, 5)
             
             self.btn_apply = QPushButton("Apply to files")
@@ -2802,9 +2862,17 @@ if _PYSIDE:
             results_widget = QWidget()
             results_widget.setLayout(results_layout)
             
+            # Wrap left panel in scroll area (v2.9.5)
+            left_widget = QWidget()
+            left_widget.setLayout(layout)
+            scroll_area = QScrollArea()
+            scroll_area.setWidget(left_widget)
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            
             splitter = QSplitter()
-            left = QWidget(); left.setLayout(layout)
-            splitter.addWidget(left)
+            splitter.addWidget(scroll_area)
             splitter.addWidget(results_widget)
             splitter.setSizes([500, 800])
 
@@ -2818,6 +2886,22 @@ if _PYSIDE:
 
         def change_advanced_conditions(self):
             self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
+        
+        def _clear_all_conditions(self):
+            """Clear all advanced condition fields (v2.9.5)"""
+            # Reset logic operator to AND
+            self.combo_logic_op.setCurrentIndex(0)
+            
+            # Clear all condition rows
+            for cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+                cb_field.setCurrentIndex(0)  # Reset to empty
+                cb_op.setCurrentIndex(0)     # Reset to empty
+                ed_val.clear()               # Clear value
+                cb_scope.setCurrentIndex(0)  # Reset to "none"
+                ed_scope_val.clear()         # Clear scope param
+                chk_case.setChecked(True)    # Default: case sensitive
+                chk_word.setChecked(False)   # Default: not whole word
+                chk_regex.setChecked(False)  # Default: not regex
 
         def _browse(self):
             if self.is_file.isChecked():
@@ -2999,7 +3083,8 @@ if _PYSIDE:
 
         def _on_search_done(self, matches: dict):
             """Handle search completion with history tracking (v2.5.0+)."""
-            self.results.populate(matches)
+            sort_results = self.chk_sort_results.isChecked()
+            self.results.populate(matches, sort_results)
             self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
             self.processing_search = False
             
