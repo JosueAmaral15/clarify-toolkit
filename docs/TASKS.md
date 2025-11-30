@@ -115,6 +115,19 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Remover erros ` ```typescript` e ` ``` ` no output ao usar IA query *(v3.0.0 - AI File Processor com strip_code_fences)*
 - **[X]** Incluir busca onde word key tem contagem de ocorrências (Top 5 files/keys, total count) **(v2.9.8)**
 - **[X]** Interrupt Request no ChatGPT File Processor não funciona. Resolver issue *(v3.0.0 - AI File Processor com worker.request_interrupt())*
+- **[X]** Skip keys without siblings: remover hierarquias seriais (cadeias) onde chaves não têm siblings **(v2.9.11 - Task #35)**
+  - Remove estruturas como `{a: {b: {c: "val"}}}` (cadeia serial)
+  - Mantém estruturas com siblings como `{a: {b: "v1", c: "v2"}}`
+  - 7 testes unitários (100% passing)
+- **[X]** Advanced File/Directory Search: busca avançada com múltiplos filtros **(v2.9.11 - Task #36)**
+  - Filtros: filename regex, tamanho (MB), data modificação, tipo (file/dir/any)
+  - Busca recursiva opcional
+  - Exibição em tabela sortable
+  - Exportação para CSV
+- **[X]** File List com parâmetros ls/dir: listar arquivos com parâmetros Unix-like **(v2.9.11 - Task #33)**
+  - Parâmetros: -a (show hidden), -l (long format), -h (human-readable), -R (recursive)
+  - Exibe: Name, Size, Modified, Permissions (drwxr-xr-x), Owner:Group
+  - Tabela sortable com exportação CSV
 
 ---
 
