@@ -16,14 +16,14 @@ from .ts_parser import (
     quote_bare_and_numeric_keys,
     remove_trailing_commas
 )
-from .operations import dedupe, join_keys, eliminate_duplicates, merge_obj_values, exclude_numeric_keys, skip_empty_values, avoid_duplicate_child_keys, remove_duplicate_array_values, enforce_consistent_case, normalize_escaping
+from .operations import dedupe, join_keys, eliminate_duplicates, merge_obj_values, exclude_numeric_keys, skip_empty_values, avoid_duplicate_child_keys, remove_duplicate_array_values, enforce_consistent_case, normalize_escaping, array_to_object_conversion
 from .serializer import dump_ts_node, dump_ts_obj, dump_ts_array, dump_ts_scalar, collapse_blank_lines
 from .rewriter import sanitize_keys_and_values, ts_process_full_preserving, load_translation_dict
 
 __all__ = [
     'Obj', 'JSONNode', 'parse_json_preserving_duplicates_text', 'freeze',
     'find_object_block', 'ts_block_to_json_text',
-    'dedupe', 'join_keys', 'eliminate_duplicates', 'merge_obj_values', 'exclude_numeric_keys', 'skip_empty_values', 'avoid_duplicate_child_keys', 'remove_duplicate_array_values', 'enforce_consistent_case', 'normalize_escaping',
+    'dedupe', 'join_keys', 'eliminate_duplicates', 'merge_obj_values', 'exclude_numeric_keys', 'skip_empty_values', 'avoid_duplicate_child_keys', 'remove_duplicate_array_values', 'enforce_consistent_case', 'normalize_escaping', 'array_to_object_conversion',
     'dump_ts_node', 'dump_ts_obj', 'dump_ts_array', 'dump_ts_scalar', 'collapse_blank_lines',
     'sanitize_keys_and_values', 'ts_process_full_preserving', 'load_translation_dict'
 ]

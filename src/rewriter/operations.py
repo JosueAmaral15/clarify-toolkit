@@ -409,3 +409,177 @@ def normalize_escaping(node: JSONNode) -> JSONNode:
         return n
     
     return process_node(node)
+
+
+def array_to_object_conversion(
+    node: JSONNode,
+    max_key_length: int = 30,
+    case_style: str = 'camel',
+    scope_path: str = ''
+) -> JSONNode:
+    """
+    Convert arrays to objects with intelligently generated keys (Task #21 - v2.9.10).
+    
+    Strategy:
+    1. Take first N characters of string value (default 30)
+    2. Remove accents, special characters, keep only alphanumeric
+    3. Convert to target case style (camelCase by default)
+    4. Handle conflicts by adding more words until unique
+    
+    Args:
+        node: JSONNode tree to process
+        max_key_length: Maximum initial key length (default 30 chars)
+        case_style: Target case style ('camel', 'pascal', 'snake', 'kebab')
+        scope_path: Current path for conflict resolution (internal)
+    
+    Returns:
+        Processed JSONNode with arrays converted to objects
+    
+    Example:
+        ["O usuario pode seguir..."] →
+        {oUsuarioPodeSeguir: "O usuario pode seguir..."}
+    """
+    import re
+    import unicodedata
+    
+    def remove_accents(text: str) -> str:
+        """Remove accents from text."""
+        nfd = unicodedata.normalize('NFD', text)
+        return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
+    
+    def clean_text(text: str) -> str:
+        """Remove special characters, keep alphanumeric and spaces."""
+        # Remove accents
+        text = remove_accents(text)
+        # Keep only alphanumeric and spaces
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+        return text.strip()
+    
+    def to_case(text: str, style: str) -> str:
+        """Convert text to target case style."""
+        words = text.split()
+        if not words:
+            return text
+        
+        if style == 'camel':
+            # camelCase: first word lowercase, rest capitalized
+            return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+        elif style == 'pascal':
+            # PascalCase: all words capitalized
+            return ''.join(w.capitalize() for w in words)
+        elif style == 'snake':
+            # snake_case: all lowercase with underscores
+            return '_'.join(w.lower() for w in words)
+        elif style == 'kebab':
+            # kebab-case: all lowercase with hyphens
+            return '-'.join(w.lower() for w in words)
+        else:
+            # Default to camelCase
+            return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
+    
+    def generate_key(value: str, max_len: int, used_keys: set) -> str:
+        """
+        Generate unique key from value string.
+        
+        Strategy:
+        1. Take first max_len chars
+        2. Clean and convert to case
+        3. If conflict, add more words until unique or exhaust value
+        """
+        if not isinstance(value, str) or not value.strip():
+            # Fallback for non-string or empty
+            base = "item"
+            counter = 1
+            while f"{base}{counter}" in used_keys:
+                counter += 1
+            return f"{base}{counter}"
+        
+        # Clean value
+        cleaned = clean_text(value)
+        if not cleaned:
+            # If cleaning removed everything, use fallback
+            base = "item"
+            counter = 1
+            while f"{base}{counter}" in used_keys:
+                counter += 1
+            return f"{base}{counter}"
+        
+        # Try with initial length
+        words = cleaned.split()
+        key = to_case(' '.join(words)[:max_len], case_style)
+        
+        if key not in used_keys:
+            return key
+        
+        # Conflict: try adding more words
+        for i in range(1, len(words) + 1):
+            key = to_case(' '.join(words[:i]), case_style)
+            if key not in used_keys:
+                return key
+        
+        # Still conflict: add entire string
+        key = to_case(cleaned, case_style)
+        if key not in used_keys:
+            return key
+        
+        # Ultimate fallback: add counter
+        counter = 1
+        base_key = key
+        while f"{base_key}{counter}" in used_keys:
+            counter += 1
+        return f"{base_key}{counter}"
+    
+    def process_array(arr: list, path: str) -> JSONNode:
+        """Convert array to object if it contains strings."""
+        # Check if array contains only strings
+        if not arr:
+            return arr
+        
+        # Check if all items are strings
+        all_strings = all(isinstance(item, str) for item in arr)
+        
+        if all_strings:
+            # Convert to object
+            obj = Obj()
+            used_keys = set()
+            
+            for value in arr:
+                key = generate_key(value, max_key_length, used_keys)
+                used_keys.add(key)
+                obj.append((key, value))
+            
+            return obj
+        else:
+            # Recursively process array items
+            return [process_node(item, f"{path}[]") for item in arr]
+    
+    def process_node(n: JSONNode, path: str = "") -> JSONNode:
+        """Recursively process node."""
+        if isinstance(n, str):
+            return n
+        
+        if isinstance(n, Obj):
+            out = Obj()
+            for k, v in n:
+                new_path = f"{path}.{k}" if path else k
+                
+                # Apply conversion only within scope (if specified)
+                if not scope_path or new_path.startswith(scope_path):
+                    processed_v = process_node(v, new_path)
+                else:
+                    processed_v = v
+                
+                out.append((k, processed_v))
+            return out
+        
+        if isinstance(n, list):
+            # Check if we should convert this array
+            if not scope_path or path.startswith(scope_path):
+                return process_array(n, path)
+            else:
+                return [process_node(item, f"{path}[]") for item in n]
+        
+        # Other types (int, float, bool, None)
+        return n
+    
+    return process_node(node)

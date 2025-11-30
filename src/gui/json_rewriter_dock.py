@@ -148,6 +148,8 @@ class JsonRewriterDock(BaseDock):
         self.chk_avoid_dup_child.setToolTip("Merge parent.child.child -> parent.child (e.g., t.pages.home.home -> t.pages.home)")
         self.chk_normalize_escaping = QCheckBox("Normalize escaping")
         self.chk_normalize_escaping.setToolTip("Auto-detect excessive escaping (\\\\\\' or more) and normalize to \\' (Task #22)")
+        self.chk_convert_arrays = QCheckBox("Convert arrays to objects")
+        self.chk_convert_arrays.setToolTip("Convert string arrays to objects with generated keys (Task #21)")
         self.chk_remove_dup_consecutive = QCheckBox("Remove consecutive duplicates")
         self.chk_remove_dup_consecutive.setToolTip("Remove only consecutive duplicates in arrays: ['a','a','b'] → ['a','b']")
         self.chk_remove_dup_all = QCheckBox("Remove all duplicates")
@@ -205,9 +207,10 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.chk_normalize_escaping, 3, 3)
         g.addWidget(self.chk_is_file, 3, 4)
         
-        # Row 4: Options checkboxes (line 3) - Array duplicate removal
-        g.addWidget(self.chk_remove_dup_consecutive, 4, 0, 1, 2)
-        g.addWidget(self.chk_remove_dup_all, 4, 2, 1, 2)
+        # Row 4: Options checkboxes (line 3) - Array operations
+        g.addWidget(self.chk_convert_arrays, 4, 0, 1, 2)
+        g.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 2)
+        g.addWidget(self.chk_remove_dup_all, 4, 4, 1, 1)
         
         # Row 5: Enforce consistent case
         g.addWidget(self.chk_enforce_case, 5, 0, 1, 2)
@@ -319,6 +322,7 @@ class JsonRewriterDock(BaseDock):
             skip_empty=self.chk_skip_empty.isChecked(),
             avoid_duplicate_child_keys=self.chk_avoid_dup_child.isChecked(),
             normalize_escaping=self.chk_normalize_escaping.isChecked(),
+            convert_arrays_to_objects=self.chk_convert_arrays.isChecked(),
             remove_dup_consecutive=self.chk_remove_dup_consecutive.isChecked(),
             remove_dup_all=self.chk_remove_dup_all.isChecked(),
             enforce_case=self.chk_enforce_case.isChecked(),

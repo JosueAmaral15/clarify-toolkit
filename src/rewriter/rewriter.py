@@ -71,9 +71,9 @@ def sanitize_keys_and_values(obj: dict,
     return walk(obj)
 
 
-def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool, elim: bool, normalize_esc: bool = False) -> str:
+def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool, elim: bool, normalize_esc: bool = False, convert_arrays: bool = False) -> str:
     """
-    Complete pipeline: find TS/JS object block → parse → dedupe → join → eliminate → normalize escaping → serialize.
+    Complete pipeline: find TS/JS object block → parse → dedupe → join → eliminate → normalize escaping → array to object → serialize.
     
     Args:
         raw_full: Full TS/JS file content
@@ -81,6 +81,7 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
         join: Apply join_keys operation
         elim: Apply eliminate_duplicates operation
         normalize_esc: Apply normalize_escaping operation (Task #22 - v2.9.10)
+        convert_arrays: Apply array_to_object_conversion operation (Task #21 - v2.9.10)
     """
     start, end, block = find_object_block(raw_full)
     block_json = ts_block_to_json_text(block)
@@ -95,6 +96,8 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
         node = eliminate_duplicates(node)
     if normalize_esc:
         node = normalize_escaping(node)
+    if convert_arrays:
+        node = array_to_object_conversion(node)
 
     new_block = dump_ts_node(node, indent, 0)
     
