@@ -2,7 +2,8 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.0  
+**Versão**: 1.1  
+**Última Atualização**: 30 de Novembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
 
 ---
@@ -15,7 +16,19 @@
 
 ---
 
-## 📋 Espinha Dorsal do Protocolo (8 Etapas)
+## 📋 Espinha Dorsal do Protocolo (10 Etapas)
+
+**Resumo Executivo**:
+1. 📚 Ler a documentação
+2. ✅ Escolher tarefas mais simples
+3. ❓ Fazer perguntas até sanar 100% das dúvidas
+4. 🔍 **Analisar e estudar o projeto** (NOVO)
+5. 🎯 Fazer sprints das tarefas mais simples
+6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
+7. 🧪 Fazer testes (100% cobertura)
+8. 📝 Preencher documentação
+9. 🧹 **Organizar pasta raiz** (NOVO)
+🔟 🚀 Fazer commit e push
 
 ### 1️⃣ **Ler a Documentação**
 - Consultar `docs/TASKS.md` para entender o contexto do projeto
@@ -96,7 +109,54 @@ Lista de tasks complexas restantes:
 
 ---
 
-### 4️⃣ **Fazer Sprints das Tarefas Mais Simples**
+### 4️⃣ **Analisar e Estudar o Projeto**
+- **CRÍTICO**: Após sanar todas as dúvidas, **estudar o código antes de implementar**
+- Ler documentação relevante (README, docs/, comentários no código)
+- Entender arquitetura existente e padrões utilizados
+- Verificar dependências e imports necessários
+- Identificar funções/classes reutilizáveis
+
+**Checklist de Análise**:
+1. **Leitura de Documentação**:
+   - `docs/TASKS.md` - Contexto geral do projeto
+   - `docs/vX.X.X-SPECIFICATIONS.md` - Especificações de versões anteriores
+   - `README.md` - Visão geral e instruções de uso
+   - Docstrings de módulos relacionados
+
+2. **Análise de Código Existente**:
+   - Encontrar módulos similares ao que será implementado
+   - Identificar padrões de design já utilizados (GoF, GRASP)
+   - Verificar convenções de nomenclatura e estrutura
+   - Localizar funções auxiliares reutilizáveis
+
+3. **Mapeamento de Dependências**:
+   - Quais módulos precisam ser importados?
+   - Há conflitos de nomes ou versões?
+   - Quais classes base ou mixins devem ser herdadas?
+   - Onde os novos arquivos devem ser criados?
+
+4. **Validação de Compatibilidade**:
+   - A solução quebrará código existente?
+   - É necessário refatorar algo antes de implementar?
+   - Há testes que precisam ser atualizados?
+   - A API pública será mantida?
+
+**Exemplo Real (Task #45 - Tutorials)**:
+```
+✅ Analisado: Outros docks (JsonTranslateDock, JsonRewriterDock)
+✅ Identificado: Padrão BaseDock com FileInputMixin
+✅ Verificado: QTreeWidget + QTextBrowser para navegação
+✅ Estudado: Como outros módulos fazem markdown → HTML
+✅ Localizado: Onde adicionar imports em app.py
+✅ Confirmado: Estrutura de menu em _build_menu()
+→ Resultado: Implementação em 2h ao invés de 5h (economia de 60%)
+```
+
+**Por quê?**: Evita refatorações, economiza tempo, garante código consistente com a base existente.
+
+---
+
+### 5️⃣ **Fazer Sprints das Tarefas Mais Simples**
 - Agrupar 2-4 tarefas relacionadas em um sprint
 - Estimar tempo total: **máximo 3-4 horas** por sprint
 - Manter foco: **uma sprint = uma versão (ex: v2.9.14)**
@@ -116,7 +176,7 @@ Sprint v2.9.14 (Exemplo Task #23):
 
 ---
 
-### 5️⃣ **Implementar do Simples ao Complexo com Arquitetura Profissional**
+### 6️⃣ **Implementar do Simples ao Complexo com Arquitetura Profissional**
 - **Dentro de cada task**, começar pela parte mais fácil
 - Construir incrementalmente: função auxiliar → função principal → integração
 - Testar cada parte antes de avançar
@@ -379,7 +439,7 @@ class ReferenceUpdater:
 
 ---
 
-### 6️⃣ **Fazer Testes**
+### 7️⃣ **Fazer Testes**
 - **Obrigatório**: Testes unitários para cada função pública
 - **Meta**: 100% de cobertura das funcionalidades implementadas
 - **Ferramentas**: `unittest` (nativo) ou `pytest`
@@ -403,7 +463,7 @@ class ReferenceUpdater:
 
 ---
 
-### 7️⃣ **Preencher Nova Documentação**
+### 8️⃣ **Preencher Nova Documentação**
 - **Atualizar TASKS.md**: Marcar tasks como `[X]` completas
 - **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
@@ -444,7 +504,86 @@ class ReferenceUpdater:
 
 ---
 
-### 8️⃣ **Fazer Commit e Push**
+### 9️⃣ **Organizar Pasta Raiz do Projeto**
+- **CRÍTICO**: Antes do commit e push, **organizar a pasta raiz**
+- Remover arquivos temporários, backups desnecessários
+- Verificar se todos os arquivos estão nos lugares corretos
+- Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
+- Garantir que `.gitignore` está atualizado
+
+**Checklist de Organização**:
+1. **Remoção de Arquivos Temporários**:
+   ```bash
+   # Remover backups antigos
+   rm -f *.backup_* *.bak *~
+   
+   # Limpar cache Python
+   find . -type d -name "__pycache__" -exec rm -rf {} +
+   find . -type f -name "*.pyc" -delete
+   find . -type f -name "*.pyo" -delete
+   ```
+
+2. **Verificação de Estrutura de Diretórios**:
+   ```
+   ✅ src/ - Código-fonte organizado por módulos
+   ✅ tests/ - Testes unitários espelhando src/
+   ✅ docs/ - Documentação atualizada
+   ✅ archive/ - Versões antigas (se necessário)
+   ❌ Raiz - Não deixar arquivos soltos (test.py, temp.txt, etc.)
+   ```
+
+3. **Validação de .gitignore**:
+   ```gitignore
+   # Python
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   *.so
+   
+   # Backups
+   *.backup*
+   *.bak
+   *~
+   
+   # IDE
+   .vscode/
+   .idea/
+   
+   # Temporários
+   tmp/
+   temp/
+   *.tmp
+   ```
+
+4. **Git Status Clean**:
+   ```bash
+   git status
+   # Verificar se apenas arquivos relevantes estão staged
+   # Não commitar: __pycache__, .pyc, backups, temporários
+   ```
+
+**Exemplo Real (v2.9.15)**:
+```bash
+# ANTES (pasta bagunçada):
+├── src/
+├── apply_v2913_patches.py  ❌ temporário
+├── test_temp.py           ❌ teste descartável
+├── backup_old/            ❌ backup antigo
+├── __pycache__/           ❌ cache
+└── file.py.backup_v2913   ❌ backup desnecessário
+
+# DEPOIS (organizado):
+├── src/          ✅
+├── tests/        ✅
+├── docs/         ✅
+└── README.md     ✅
+```
+
+**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo.
+
+---
+
+### 🔟 **Fazer Commit e Push**
 - **Formato**: Conventional Commits (feat/fix/docs/refactor/test)
 - **Mensagem**: Descritiva, completa, com contexto
 - **Frequência**: 1 commit por task ou grupo lógico de mudanças
