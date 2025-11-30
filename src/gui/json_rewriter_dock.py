@@ -49,16 +49,16 @@ def cli_dedupe(args: argparse.Namespace):
     if args.join_keys:
         obj = rw.join_keys(obj)
     
-    # Build substitution map for eliminated keys (Task #23)
+    # Build substitution map for eliminated keys (Task #23 - v2.9.14 COMPLETO)
     substitution_map = {}
     if args.eliminate_duplicates:
-        # Extract all keys before elimination
-        old_keys = rw.extract_all_keys_from_dict(obj.data if hasattr(obj, 'data') else obj)
+        # Extract all keys AND values before elimination
+        old_keys_values = rw.extract_all_keys_from_obj(obj.data if hasattr(obj, 'data') else obj, prefix='t')
         obj = rw.eliminate_duplicates(obj)
-        # Extract all keys after elimination
-        new_keys = rw.extract_all_keys_from_dict(obj.data if hasattr(obj, 'data') else obj)
-        # Build substitution map
-        substitution_map = rw.build_substitution_map(old_keys, new_keys)
+        # Extract all keys AND values after elimination
+        new_keys_values = rw.extract_all_keys_from_obj(obj.data if hasattr(obj, 'data') else obj, prefix='t')
+        # Build substitution map based on VALUE EQUALITY (not string similarity)
+        substitution_map = rw.build_substitution_map_by_value(old_keys_values, new_keys_values)
     
     # Exclude numeric keys if requested
     if hasattr(args, 'exclude_numeric') and args.exclude_numeric:

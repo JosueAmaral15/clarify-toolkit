@@ -128,89 +128,90 @@ def scan_project_references(
     return references
 
 
-def build_substitution_map(
-    old_keys: Set[str],
-    new_keys: Set[str]
+def build_substitution_map_by_value(
+    old_keys_values: Dict[str, str],
+    new_keys_values: Dict[str, str]
 ) -> Dict[str, str]:
     """
-    Build substitution map for eliminated keys.
+    Build substitution map based on VALUE EQUALITY (not string similarity).
     
-    Strategy:
-    - For each key in old_keys that's NOT in new_keys
-    - Find the closest match in new_keys using string similarity
-    - Map: removed_key → kept_key
+    Strategy (conforme especificações do usuário):
+    1. Identify removed keys: keys in old but not in new
+    2. For each removed key, find new key with SAME VALUE (identical)
+    3. Priority rules:
+       a) Prefer key with same parent path (t.pages.contact > t.pages.contactPage)
+       b) If multiple candidates, use first one (linha menor vence)
+       c) Do NOT touch if values are different
+       d) Same key in different paths is OK (different full paths)
     
     Args:
-        old_keys: Set of all keys before elimination
-        new_keys: Set of all keys after elimination
+        old_keys_values: Dict of path → value BEFORE elimination
+        new_keys_values: Dict of path → value AFTER elimination
     
     Returns:
-        Dictionary mapping removed keys to their replacements
-        Example: {'t.pages.contactPage': 't.pages.contact'}
+        Dict mapping removed_path → kept_path (only for IDENTICAL values)
+        Example: {'t.pages.contactPage.title': 't.pages.contact.title'}
+    
+    User Requirements:
+    - "Se ocorrer duas chaves com valores redundantes, e se marcado que se deve
+      eliminar redundâncias, então a chave/objeto/caminho mais abaixo do arquivo
+      deve ser eliminado, ou seja, apagado do arquivo."
+    - "Se essas chaves estão em paths diferentes, ou seja, de pais chaves ou
+      ancestrais chaves diferentes, ainda sim devem ser eliminados caso houver
+      redundâncias de valores."
+    - "E se houver chaves iguais com valores diferentes, deixa quieto, não mexa!"
+    - "Não mexa se tiverem a mesma chave em caminhos diferentes, somente se
+      estiverem com a mesma chave pai."
     """
-    def string_similarity(s1: str, s2: str) -> float:
-        """Calculate similarity between two strings (0-1)."""
-        # Simple similarity: common prefix length / max length
-        common = 0
-        for c1, c2 in zip(s1, s2):
-            if c1 == c2:
-                common += 1
-            else:
-                break
-        return common / max(len(s1), len(s2))
-    
     substitutions: Dict[str, str] = {}
-    removed_keys = old_keys - new_keys
     
-    for removed_key in removed_keys:
-        # Split key into parts
-        parts = removed_key.split('.')
+    old_paths = set(old_keys_values.keys())
+    new_paths = set(new_keys_values.keys())
+    removed_paths = old_paths - new_paths
+    
+    for removed_path in removed_paths:
+        removed_value = old_keys_values[removed_path]
         
-        # Find best match in new_keys
-        # Strategy: Look for keys with same parent path and depth
-        if len(parts) <= 2:
-            # Root level key, can't find parent
-            continue
-        
-        # Get parent path (e.g., "t.pages" from "t.pages.contactPage")
-        parent = '.'.join(parts[:-1])
-        removed_name = parts[-1].lower()
-        
-        # Find candidates with same parent and depth
-        candidates = []
-        for new_key in new_keys:
-            new_parts = new_key.split('.')
-            if len(new_parts) == len(parts):
-                new_parent = '.'.join(new_parts[:-1])
-                if new_parent == parent:
-                    candidates.append(new_key)
+        # Find candidates with IDENTICAL VALUE (not similarity!)
+        candidates = [
+            new_path for new_path, new_value in new_keys_values.items()
+            if new_value == removed_value  # ✅ VALUE EQUALITY
+        ]
         
         if not candidates:
-            # No direct siblings, look for similar keys (same depth)
-            candidates = [
-                k for k in new_keys
-                if k.startswith(parent) and len(k.split('.')) == len(parts)
-            ]
+            # No key with same value found
+            continue
         
-        if candidates:
-            # Find best match based on name similarity
-            best_match = None
-            best_score = 0.0
-            
-            for candidate in candidates:
-                candidate_name = candidate.split('.')[-1].lower()
-                score = string_similarity(removed_name, candidate_name)
-                
-                # Also check if removed name contains candidate name or vice versa
-                if candidate_name in removed_name or removed_name in candidate_name:
-                    score += 0.5
-                
-                if score > best_score:
-                    best_score = score
-                    best_match = candidate
-            
-            if best_match:
-                substitutions[removed_key] = best_match
+        # Priority rules:
+        # 1. Single candidate: use it
+        if len(candidates) == 1:
+            substitutions[removed_path] = candidates[0]
+            continue
+        
+        # 2. Multiple candidates: prefer same parent path
+        removed_parts = removed_path.split('.')
+        if len(removed_parts) <= 1:
+            # Root level, no parent to compare
+            substitutions[removed_path] = candidates[0]
+            continue
+        
+        removed_parent = '.'.join(removed_parts[:-1])
+        
+        # Find candidate with same parent
+        same_parent_candidates = []
+        for candidate in candidates:
+            candidate_parts = candidate.split('.')
+            if len(candidate_parts) > 1:
+                candidate_parent = '.'.join(candidate_parts[:-1])
+                if candidate_parent == removed_parent:
+                    same_parent_candidates.append(candidate)
+        
+        if same_parent_candidates:
+            # Use first same-parent candidate (linha menor vence)
+            substitutions[removed_path] = same_parent_candidates[0]
+        else:
+            # No same-parent match: use first candidate
+            substitutions[removed_path] = candidates[0]
     
     return substitutions
 
@@ -314,30 +315,63 @@ def update_references_in_project(
     return results
 
 
-def extract_all_keys_from_dict(data: dict, prefix: str = 't') -> Set[str]:
+def extract_all_keys_from_obj(data, prefix: str = 't') -> Dict[str, str]:
     """
-    Extract all possible reference paths from a dictionary.
+    Extract all reference paths AND their values from Obj/dict structure.
+    
+    Supports both dict and Obj (list of tuples from rewriter).
+    Returns dictionary mapping full path to its leaf value (primitives only).
     
     Args:
-        data: Dictionary to extract keys from
+        data: Obj or dict structure from JSON rewriter
         prefix: Prefix for keys (default 't')
     
     Returns:
-        Set of all possible reference paths
-        Example: {'t', 't.pages', 't.pages.contact', 't.pages.contact.title'}
+        Dictionary mapping full path → value (only leaf nodes)
+        Example: {'t.pages.contact.title': 'Contact Us', 't.pages.contact.description': 'Get in touch'}
+    
+    Example:
+        >>> from ..utils.json_types import Obj
+        >>> obj = Obj([('pages', Obj([('contact', Obj([('title', 'Contact')]))]))])
+        >>> extract_all_keys_from_obj(obj)
+        {'t.pages.contact.title': 'Contact'}
     """
-    keys: Set[str] = set()
+    # Import Obj type locally to avoid circular import
+    try:
+        from ..utils.json_types import Obj
+    except ImportError:
+        # Fallback: define Obj as list if import fails
+        Obj = list
+    
+    keys_values: Dict[str, str] = {}
     
     def recurse(obj, path: str):
-        keys.add(path)
+        # Handle Obj type (list of tuples)
+        if hasattr(obj, '__iter__') and not isinstance(obj, (str, dict)):
+            # Check if it's Obj-like (list of tuples with 2 elements)
+            if isinstance(obj, list) and obj and isinstance(obj[0], tuple) and len(obj[0]) == 2:
+                for key, value in obj:
+                    new_path = f"{path}.{key}" if path else key
+                    if isinstance(value, (str, int, float, bool, type(None))):
+                        # Leaf node: store path → value
+                        keys_values[new_path] = str(value) if value is not None else ''
+                    else:
+                        # Non-leaf: recurse
+                        recurse(value, new_path)
+                return
         
+        # Handle dict type
         if isinstance(obj, dict):
             for key, value in obj.items():
-                new_path = f"{path}.{key}"
-                recurse(value, new_path)
-        elif isinstance(obj, list):
-            # Don't recurse into arrays (not reference paths)
-            pass
+                new_path = f"{path}.{key}" if path else key
+                if isinstance(value, (str, int, float, bool, type(None))):
+                    # Leaf node: store path → value
+                    keys_values[new_path] = str(value) if value is not None else ''
+                else:
+                    # Non-leaf: recurse
+                    recurse(value, new_path)
+        
+        # Don't recurse into arrays (not reference paths)
     
     recurse(data, prefix)
-    return keys
+    return keys_values
