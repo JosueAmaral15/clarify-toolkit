@@ -148,6 +148,86 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ### ✅ Tasks Concluídas
 
+#### Task #6 - Open in Editor from Results (v2.9.19)
+**Status**: ✅ Completa - 30/11/2025  
+**Arquivos Modificados**: `src/gui/base_dock.py`, 5 dock files  
+**Arquivo de Teste**: `tests/test_open_in_editor.py` (24 testes - 100% passing)
+
+**Objetivo**: Permitir reutilizar resultados de operações abrindo-os diretamente no editor integrado em modo sandbox (edit-only), facilitando análise, modificação e exportação de outputs.
+
+**Componentes Implementados**:
+
+1. ✅ **ResultsOutputMixin Enhancement** (`src/gui/base_dock.py` - 150+ linhas):
+   - Context Menu no QTextEdit (right-click):
+     * **📝 Open in Editor**: Abre conteúdo em edit-only mode
+     * Copy / Select All (ações padrão)
+   - Methods adicionados:
+     * `_show_results_context_menu(text_edit, pos)`: Exibe menu contextual
+     * `_open_results_in_editor(text_edit)`: Cria temp file + abre no EditorDock
+     * `_detect_content_extension(content)`: Auto-detect formato (JSON/HTML/TS/PY/TXT)
+     * `_get_editor_dock()`: Encontra EditorDock via parent traversal
+     * `add_open_in_editor_button(text_edit, layout, text)`: Helper para criar toolbar button
+
+2. ✅ **Auto-Detection de Extensão** (Smart Format Recognition):
+   - **JSON**: Detecta `{` ou `[` + valida com `json.loads()`
+   - **HTML**: Detecta `<html`, `<div`, `<span`, `<body>` tags
+   - **XML**: Detecta `<root>` ou tags XML genéricas
+   - **TypeScript**: Detecta `const`, `let`, `function`, `=>`
+   - **Python**: Detecta `def`, `import`, `class`, `from`
+   - **Fallback**: `.txt` para conteúdo não reconhecido
+
+3. ✅ **Integration em 5 Docks** (Toolbar Button + Context Menu):
+   - ✅ `json_search_dock.py`: Busca de chaves/valores JSON
+   - ✅ `text_extractor_dock.py`: Extração de texto HTML/JSX
+   - ✅ `case_converter_dock.py`: Conversão de case
+   - ✅ `ai_processor_dock.py`: Respostas de IA (OpenAI/Gemini)
+   - ✅ `placeholder_replacer_dock.py`: Substituição de placeholders
+
+4. ✅ **Workflow Completo**:
+   - **Passo 1**: Usuário executa operação (busca, extração, AI processing)
+   - **Passo 2**: Resultados aparecem em `QTextEdit` read-only
+   - **Passo 3**: Usuário clica em "📝 Open in Editor" button OU right-click → "Open in Editor"
+   - **Passo 4**: Sistema auto-detecta formato (JSON/HTML/TXT/etc)
+   - **Passo 5**: Cria arquivo temporário com extensão correta
+   - **Passo 6**: Abre no EditorDock em **edit-only mode** (sandbox)
+   - **Passo 7**: Usuário pode:
+     * 📋 Copiar para clipboard
+     * 💾 Exportar para arquivo
+     * 🔓 Enable Saving (converter para file-backed)
+     * ✏️ Editar livremente sem afetar arquivos originais
+
+**Padrões de Projeto**:
+- **Template Method**: `_open_results_in_editor()` define algoritmo
+- **Strategy Pattern**: `_detect_content_extension()` seleciona estratégia de formato
+- **Chain of Responsibility**: Parent traversal em `_get_editor_dock()`
+- **Factory Pattern**: Criação de temp files com extensões dinâmicas
+- **Observer**: Context menu signal/slot connection
+
+**Testes** (`tests/test_open_in_editor.py` - 350 linhas):
+- ✅ 2 testes de criação de results panel
+- ✅ 2 testes de botão "Open in Editor"
+- ✅ 7 testes de auto-detection (JSON/HTML/XML/TS/PY/TXT/invalid)
+- ✅ 5 testes de integração EditorDock (empty, temp file, edit-only, error handling)
+- ✅ 2 testes de _get_editor_dock()
+- ✅ 2 testes de context menu integration
+- ✅ 3 testes de múltiplos formatos (JSON/HTML/plain text)
+- **Total**: 24/24 passing (100%)
+
+**Benefícios**:
+- 🎯 **Reusabilidade**: Resultados podem ser editados, salvos, ou integrados em workflows
+- 🔒 **Segurança**: Edit-only mode previne modificações acidentais de arquivos
+- 🎨 **UX**: Transição fluida entre result panels e editor
+- 🧠 **Smart**: Auto-detection de formato para syntax highlighting correto
+- ♻️ **DRY**: Código centralizado em `ResultsOutputMixin` reutilizado por 5 docks
+
+**Integração com Task #5** (Edit-Only Mode):
+- Usa `EditorDock.open_file_path(temp_path, edit_only=True)` criado em v2.9.18
+- Aproveita visual indicators (🔒 icon, orange status, golden border)
+- Herda toolbar buttons (Copy, Export, Enable Saving)
+- Integração perfeita com close behavior customizado
+
+---
+
 #### Task #44 - Análise de Funcionalidades em `add/` (v2.9.15)
 **Status**: ✅ Completa - 24/11/2025
 
@@ -607,9 +687,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 5 | 13 | 27.8% |
+| COULD HAVE | 18 | 6 | 12 | 33.3% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **68** | **36** | **65.4%** |
+| **TOTAL** | **104** | **69** | **35** | **66.3%** |
 
 ### Notas
 

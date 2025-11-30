@@ -20,7 +20,7 @@ import json
 from typing import Dict, Any, List, Optional
 from PySide6.QtWidgets import (
     QGridLayout, QLabel, QLineEdit, QCheckBox, QComboBox, 
-    QPushButton, QSpinBox, QGroupBox, QVBoxLayout
+    QPushButton, QSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout
 )
 from ..gui.base_dock import StandardToolDock
 
@@ -146,6 +146,11 @@ class TextExtractorDock(StandardToolDock):
         lbl_results, self.text_results = self.create_results_panel()
         self.layout.addWidget(lbl_results)
         self.layout.addWidget(self.text_results)
+        
+        # Open in Editor button (Task #6 - v2.9.19)
+        editor_btn_layout = QHBoxLayout()
+        self.add_open_in_editor_button(self.text_results, editor_btn_layout)
+        self.layout.addLayout(editor_btn_layout)
     
     def _connect_signals(self):
         """Connect signals."""

@@ -348,6 +348,12 @@ class AIProcessorDock(StandardToolDock):
         lbl_results, self.text_results = self.create_results_panel()
         results_layout.addWidget(lbl_results)
         results_layout.addWidget(self.text_results)
+        
+        # Open in Editor button (Task #6 - v2.9.19)
+        editor_btn_layout = QHBoxLayout()
+        self.add_open_in_editor_button(self.text_results, editor_btn_layout)
+        results_layout.addLayout(editor_btn_layout)
+        
         splitter.addWidget(results_widget)
         
         # Set initial splitter sizes (40% controls, 60% results)

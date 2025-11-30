@@ -6,7 +6,7 @@ from mapping files (JSON or CSV).
 """
 
 import os
-from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QPushButton
+from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout
 from ..gui.base_dock import StandardToolDock
 from ..placeholder_replacer import (
     parse_mapping_file, process_file, process_directory
@@ -87,6 +87,11 @@ class PlaceholderReplacerDock(StandardToolDock):
         lbl_results, self.text_results = self.create_results_panel()
         self.layout.addWidget(lbl_results)
         self.layout.addWidget(self.text_results)
+        
+        # Open in Editor button (Task #6 - v2.9.19)
+        editor_btn_layout = QHBoxLayout()
+        self.add_open_in_editor_button(self.text_results, editor_btn_layout)
+        self.layout.addLayout(editor_btn_layout)
     
     def _connect_signals(self) -> None:
         """Connect signals."""

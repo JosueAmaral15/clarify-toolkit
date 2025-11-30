@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QCheckBox, QMessageBox,
-    QFileDialog, QSpinBox, QComboBox
+    QFileDialog, QSpinBox, QComboBox, QMenu
 )
 from PySide6.QtGui import QIcon
 from typing import Optional, Callable, List
@@ -181,7 +181,7 @@ class ResultsOutputMixin:
     
     def create_results_panel(self, label_text: str = "Results:") -> tuple[QLabel, QTextEdit]:
         """
-        Create results output panel with search bar.
+        Create results output panel with search bar and 'Open in Editor' functionality.
         
         Returns:
             tuple: (label, text_edit)
@@ -194,6 +194,12 @@ class ResultsOutputMixin:
         from PySide6.QtGui import QShortcut, QKeySequence
         search_shortcut = QShortcut(QKeySequence("Ctrl+F"), text_edit)
         search_shortcut.activated.connect(lambda: self._show_search_dialog(text_edit))
+        
+        # Add context menu for "Open in Editor" (Task #6 - v2.9.19)
+        text_edit.setContextMenuPolicy(Qt.CustomContextMenu)
+        text_edit.customContextMenuRequested.connect(
+            lambda pos: self._show_results_context_menu(text_edit, pos)
+        )
         
         return label, text_edit
     
@@ -254,6 +260,169 @@ class ResultsOutputMixin:
     def clear_results(self, text_edit: QTextEdit) -> None:
         """Clear results."""
         text_edit.clear()
+    
+    def _show_results_context_menu(self, text_edit: QTextEdit, pos) -> None:
+        """
+        Show context menu with 'Open in Editor' option (Task #6 - v2.9.19).
+        
+        Args:
+            text_edit: QTextEdit widget with results
+            pos: Position where menu was requested
+        """
+        menu = QMenu(text_edit)
+        
+        # Add "Open in Editor" action
+        open_action = menu.addAction("📝 Open in Editor")
+        open_action.triggered.connect(lambda: self._open_results_in_editor(text_edit))
+        
+        # Show standard context menu items
+        menu.addSeparator()
+        menu.addAction("Copy", text_edit.copy)
+        menu.addAction("Select All", text_edit.selectAll)
+        
+        # Show menu at cursor position
+        menu.exec_(text_edit.mapToGlobal(pos))
+    
+    def _open_results_in_editor(self, text_edit: QTextEdit) -> None:
+        """
+        Open results content in editor (Task #6 - v2.9.19).
+        
+        Creates a temporary file with appropriate extension based on content,
+        then opens it in edit-only mode (sandbox).
+        
+        Args:
+            text_edit: QTextEdit widget containing results
+        """
+        content = text_edit.toPlainText()
+        
+        if not content or not content.strip():
+            QMessageBox.information(
+                self,
+                "No Results",
+                "Results panel is empty. Nothing to open in editor."
+            )
+            return
+        
+        # Auto-detect file extension based on content
+        extension = self._detect_content_extension(content)
+        
+        # Create temporary file
+        import tempfile
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                suffix=extension,
+                delete=False,
+                encoding='utf-8'
+            ) as temp_file:
+                temp_file.write(content)
+                temp_path = temp_file.name
+            
+            # Get EditorDock from main window
+            editor_dock = self._get_editor_dock()
+            if editor_dock:
+                # Open in edit-only mode (sandbox)
+                editor_dock.open_file_path(temp_path, edit_only=True)
+                
+                # Update status
+                if hasattr(self, 'lbl_status'):
+                    self.lbl_status.setText(f"Opened results in editor (edit-only mode)")
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Editor Not Found",
+                    "Could not find Editor dock. Please ensure Editor is available."
+                )
+                # Clean up temp file if editor not found
+                os.unlink(temp_path)
+        
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to open results in editor:\n{str(e)}"
+            )
+    
+    def _detect_content_extension(self, content: str) -> str:
+        """
+        Auto-detect file extension based on content (Task #6 - v2.9.19).
+        
+        Args:
+            content: Text content to analyze
+        
+        Returns:
+            File extension (e.g., '.json', '.txt')
+        """
+        content_stripped = content.strip()
+        
+        # Check for JSON content
+        if content_stripped.startswith(('{', '[')):
+            try:
+                import json
+                json.loads(content_stripped)
+                return '.json'
+            except (json.JSONDecodeError, ValueError):
+                pass
+        
+        # Check for HTML/XML content
+        if content_stripped.startswith('<') and '>' in content_stripped:
+            if any(tag in content_stripped.lower() for tag in ['<html', '<div', '<span', '<body']):
+                return '.html'
+            return '.xml'
+        
+        # Check for TypeScript/JavaScript (has 'const', 'let', 'function', '=>')
+        if any(keyword in content for keyword in ['const ', 'let ', 'function ', ' => ']):
+            return '.ts'
+        
+        # Check for Python (has 'def ', 'import ', 'class ')
+        if any(keyword in content for keyword in ['def ', 'import ', 'class ', 'from ']):
+            return '.py'
+        
+        # Default to plain text
+        return '.txt'
+    
+    def _get_editor_dock(self):
+        """
+        Get EditorDock instance from main window (Task #6 - v2.9.19).
+        
+        Returns:
+            EditorDock instance or None if not found
+        """
+        # Traverse up to find main window
+        parent = self.parent()
+        while parent and not hasattr(parent, 'findChild'):
+            parent = parent.parent()
+        
+        if parent:
+            # Search for EditorDock
+            from .editor_dock import EditorDock
+            editor_dock = parent.findChild(EditorDock)
+            return editor_dock
+        
+        return None
+    
+    def add_open_in_editor_button(
+        self,
+        text_edit: QTextEdit,
+        layout: QVBoxLayout | QHBoxLayout,
+        button_text: str = "📝 Open in Editor"
+    ) -> QPushButton:
+        """
+        Add 'Open in Editor' button to layout (Task #6 - v2.9.19).
+        
+        Args:
+            text_edit: QTextEdit widget with results
+            layout: Layout to add button to
+            button_text: Button label
+        
+        Returns:
+            Created button instance
+        """
+        btn_open = QPushButton(button_text)
+        btn_open.setToolTip("Open results in editor (edit-only mode)")
+        btn_open.clicked.connect(lambda: self._open_results_in_editor(text_edit))
+        layout.addWidget(btn_open)
+        return btn_open
 
 
 class ActionButtonsMixin:

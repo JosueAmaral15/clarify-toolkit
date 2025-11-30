@@ -5,7 +5,7 @@ Provides UI for searching keys and values in JSON and TypeScript files.
 """
 
 import os
-from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox, QComboBox
+from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox, QComboBox, QHBoxLayout
 from ..gui.base_dock import StandardToolDock, ProcessorWorkerBase
 from ..json_search import ProjectIndexer, parse_composite_query, resolve_query, match_with_options
 
@@ -153,6 +153,11 @@ class JsonSearchDock(StandardToolDock):
         lbl_results, self.text_results = self.create_results_panel()
         self.layout.addWidget(lbl_results)
         self.layout.addWidget(self.text_results)
+        
+        # Open in Editor button (Task #6 - v2.9.19)
+        editor_btn_layout = QHBoxLayout()
+        self.add_open_in_editor_button(self.text_results, editor_btn_layout)
+        self.layout.addLayout(editor_btn_layout)
     
     def _connect_signals(self):
         """Connect signals."""
