@@ -624,7 +624,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
 - **[]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação
 - **[]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também
-- **[]** Ferramenta de busca pode incluir busca por nome de arquivo
+- **[X]** Ferramenta de busca pode incluir busca por nome de arquivo *(Já implementado - json_search_dock.py lines 98-101, 175-222: suporta wildcards, regex e prefix 'filename:')*
 - **[]** Para busca de arquivos/diretórios, ao invés de escrever ou buscar com ferramenta pobre, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
 
 ---
