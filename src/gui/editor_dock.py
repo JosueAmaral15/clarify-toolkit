@@ -22,15 +22,15 @@ from typing import Optional, Dict, List
 import os
 import re
 
-from PySide6.QtCore import Qt, Signal, QRegularExpression
+from PySide6.QtCore import Qt, Signal, QRegularExpression, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
     QLabel, QFileDialog, QMessageBox, QTabWidget, QLineEdit,
-    QCheckBox, QPlainTextEdit
+    QCheckBox, QPlainTextEdit, QMenu, QToolBar, QApplication
 )
 from PySide6.QtGui import (
     QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
-    QTextCursor, QPalette
+    QTextCursor, QPalette, QAction, QKeySequence
 )
 
 from .base_dock import BaseDock
@@ -193,18 +193,26 @@ class EditorTab(QWidget):
     - Text editor with syntax highlighting
     - File path tracking
     - Modified state tracking
+    - Edit-only mode (sandbox editing without file backing)
+    
+    Pattern: State (GoF) - edit_only_mode changes save behavior
     """
     
     modified_changed = Signal(bool)  # Emitted when modified state changes
+    edit_only_changed = Signal(bool)  # Emitted when edit-only mode changes
     
-    def __init__(self, file_path: Optional[str] = None, parent=None):
+    def __init__(self, file_path: Optional[str] = None, parent=None, edit_only_mode: bool = False):
         super().__init__(parent)
         self.file_path = file_path
         self.is_modified = False
+        self.edit_only_mode = edit_only_mode  # State pattern: changes behavior
         
         # Setup UI
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Toolbar for edit-only features
+        self._setup_toolbar()
         
         # Text editor
         self.editor = QTextEdit()
@@ -218,10 +226,154 @@ class EditorTab(QWidget):
         
         layout.addWidget(self.editor)
         
+        # Apply visual indicators if edit-only
+        self._update_visual_indicators()
+        
         # Syntax highlighter
         self.highlighter = None
         if file_path:
             self._setup_highlighter()
+    
+    def _setup_toolbar(self):
+        """Setup toolbar with edit-only mode buttons."""
+        toolbar = QToolBar()
+        toolbar.setStyleSheet("QToolBar { border: none; padding: 2px; }")
+        
+        # Copy to Clipboard button
+        self.btn_copy = QPushButton("📋 Copy")
+        self.btn_copy.setToolTip("Copy content to clipboard")
+        self.btn_copy.clicked.connect(self._copy_to_clipboard)
+        toolbar.addWidget(self.btn_copy)
+        
+        # Export to File button
+        self.btn_export = QPushButton("💾 Export")
+        self.btn_export.setToolTip("Export content to file")
+        self.btn_export.clicked.connect(self._export_to_file)
+        toolbar.addWidget(self.btn_export)
+        
+        # Enable File Saving button (only visible in edit-only mode)
+        self.btn_enable_saving = QPushButton("🔓 Enable Saving")
+        self.btn_enable_saving.setToolTip("Convert to file-backed editor")
+        self.btn_enable_saving.clicked.connect(self._enable_file_saving)
+        toolbar.addWidget(self.btn_enable_saving)
+        
+        self.layout().addWidget(toolbar)
+        self.toolbar = toolbar
+        
+        # Update button visibility
+        self._update_toolbar_visibility()
+    
+    def _update_toolbar_visibility(self):
+        """Update toolbar button visibility based on mode."""
+        # Enable Saving button only visible in edit-only mode
+        self.btn_enable_saving.setVisible(self.edit_only_mode)
+        
+        # Copy/Export always visible but more prominent in edit-only
+        if self.edit_only_mode:
+            self.btn_copy.setStyleSheet("font-weight: bold;")
+            self.btn_export.setStyleSheet("font-weight: bold;")
+        else:
+            self.btn_copy.setStyleSheet("")
+            self.btn_export.setStyleSheet("")
+    
+    def _copy_to_clipboard(self):
+        """Copy editor content to clipboard (Command pattern)."""
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.editor.toPlainText())
+        # Visual feedback
+        self.btn_copy.setText("✓ Copied!")
+        QTimer.singleShot(1500, lambda: self.btn_copy.setText("📋 Copy"))
+    
+    def _export_to_file(self):
+        """Export content to file (Command pattern)."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export File",
+            "",
+            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(self.editor.toPlainText())
+            
+            # Visual feedback
+            self.btn_export.setText("✓ Exported!")
+            QTimer.singleShot(1500, lambda: self.btn_export.setText("💾 Export"))
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Failed to export file:\n{e}")
+    
+    def _enable_file_saving(self):
+        """Convert edit-only tab to normal file-backed editor."""
+        reply = QMessageBox.question(
+            self,
+            "Enable File Saving",
+            "This will convert the editor to file-backed mode.\n\nYou'll need to choose a file location to save to.\n\nContinue?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Trigger Save As to get file path
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save File As",
+                "",
+                "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py)"
+            )
+            
+            if file_path:
+                # Save content
+                try:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(self.editor.toPlainText())
+                    
+                    # Update state
+                    self.edit_only_mode = False
+                    self.file_path = file_path
+                    self.is_modified = False
+                    self._setup_highlighter()
+                    self._update_visual_indicators()
+                    self._update_toolbar_visibility()
+                    self.edit_only_changed.emit(False)
+                    self.modified_changed.emit(False)
+                except Exception as e:
+                    QMessageBox.critical(self, "Save Error", f"Failed to save file:\n{e}")
+    
+    def _update_visual_indicators(self):
+        """Update visual indicators for edit-only mode."""
+        if self.edit_only_mode:
+            # Golden border (indicator #3)
+            self.editor.setStyleSheet("""
+                QTextEdit {
+                    border: 3px solid #FFD700;
+                    background-color: #FFF8DC;
+                }
+            """)
+        else:
+            # Normal border
+            self.editor.setStyleSheet("")
+    
+    def toggle_edit_only_mode(self):
+        """Toggle edit-only mode on/off (State pattern transition)."""
+        if not self.edit_only_mode and self.file_path:
+            # Cannot enable edit-only if file is already backed
+            reply = QMessageBox.question(
+                self,
+                "Enable Edit-Only Mode",
+                "This will disconnect the editor from the file.\n\nChanges will not be saved automatically.\n\nContinue?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            if reply == QMessageBox.No:
+                return
+        
+        self.edit_only_mode = not self.edit_only_mode
+        self._update_visual_indicators()
+        self._update_toolbar_visibility()
+        self.edit_only_changed.emit(self.edit_only_mode)
     
     def _setup_highlighter(self):
         """Setup syntax highlighter based on file extension."""
@@ -299,11 +451,25 @@ class EditorTab(QWidget):
         return "Untitled"
     
     def get_display_title(self) -> str:
-        """Get display title with modified indicator."""
+        """Get display title with modified and edit-only indicators."""
         title = self.get_tab_title()
+        
+        # Edit-only indicator (visual indicator #1)
+        if self.edit_only_mode:
+            title = "🔒 " + title
+        
+        # Modified indicator
         if self.is_modified:
             title += " *"
+        
         return title
+    
+    def get_status_text(self) -> str:
+        """Get status bar text with mode indicator."""
+        status = "Text Editor"
+        if self.edit_only_mode:
+            status = "Edit-Only Mode"  # Visual indicator #4
+        return status
 
 
 class EditorDock(BaseDock):
@@ -314,6 +480,9 @@ class EditorDock(BaseDock):
     - Tabbed interface for multiple files
     - Syntax highlighting for common file types
     - Open/Save/Save As functionality
+    - Edit-only mode for sandbox editing
+    - Context menu for mode switching
+    - Keyboard shortcuts (Ctrl+Shift+E for edit-only)
     - Find/Replace (basic)
     - Recent files list
     """
@@ -322,6 +491,7 @@ class EditorDock(BaseDock):
         super().__init__("File Editor", parent)
         self.recent_files: List[str] = []
         self.max_recent = 10
+        self.untitled_counter = 0  # Counter for Untitled-N tabs
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -371,28 +541,104 @@ class EditorDock(BaseDock):
         self.btn_close_tab.clicked.connect(self._close_current_tab)
         self.tab_widget.tabCloseRequested.connect(self._close_tab)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
-    
-    def _new_file(self):
-        """Create new untitled file."""
-        # Create text editor tab by default
-        tab = EditorTab(None, self)
-        tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         
-        index = self.tab_widget.addTab(tab, "Untitled")
+        # Context menu on tabs
+        self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tab_widget.customContextMenuRequested.connect(self._show_tab_context_menu)
+    
+    def _show_tab_context_menu(self, pos):
+        """Show context menu on tab right-click."""
+        # Get tab at position
+        tab_bar = self.tab_widget.tabBar()
+        index = tab_bar.tabAt(pos)
+        
+        if index < 0:
+            return
+        
+        tab = self.tab_widget.widget(index)
+        if not hasattr(tab, 'edit_only_mode'):
+            return
+        
+        # Create context menu
+        menu = QMenu(self)
+        
+        # Toggle edit-only action
+        if tab.edit_only_mode:
+            action_text = "Disable Edit-Only Mode"
+        else:
+            action_text = "Enable Edit-Only Mode"
+        
+        toggle_action = QAction(action_text, self)
+        toggle_action.triggered.connect(lambda: self._toggle_edit_only_for_tab(index))
+        menu.addAction(toggle_action)
+        
+        # Show menu
+        menu.exec_(tab_bar.mapToGlobal(pos))
+    
+    def _new_file(self, edit_only: bool = False):
+        """Create new untitled file."""
+        # Increment counter for unique names
+        self.untitled_counter += 1
+        
+        # Create text editor tab
+        tab = EditorTab(None, self, edit_only_mode=edit_only)
+        tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
+        tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
+        
+        # Set custom title with counter
+        if self.untitled_counter > 1:
+            custom_title = f"Untitled-{self.untitled_counter}"
+        else:
+            custom_title = "Untitled"
+        
+        # Override get_tab_title temporarily
+        original_get_tab_title = tab.get_tab_title
+        tab.get_tab_title = lambda: custom_title if not tab.file_path else original_get_tab_title()
+        
+        index = self.tab_widget.addTab(tab, tab.get_display_title())
         self.tab_widget.setCurrentIndex(index)
-        self.lbl_status.setText("New file created")
+        
+        mode_text = "Edit-Only" if edit_only else "Normal"
+        self.lbl_status.setText(f"New {mode_text} file created")
+    
+    def _toggle_edit_only_for_tab(self, index: int):
+        """Toggle edit-only mode for specific tab."""
+        tab = self.tab_widget.widget(index)
+        if hasattr(tab, 'toggle_edit_only_mode'):
+            tab.toggle_edit_only_mode()
+            self._update_tab_title(tab)
+            self._on_tab_changed(index)
     
     def _open_file(self):
-        """Open existing file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open File",
-            "",
-            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;HTML (*.html *.htm);;React (*.jsx *.tsx)"
-        )
+        """Open existing file with optional edit-only mode."""
+        # Create custom dialog with edit-only checkbox
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle("Open File")
+        dialog.setNameFilters([
+            "All Files (*)",
+            "JSON Files (*.json)",
+            "Text Files (*.txt)",
+            "Python (*.py)",
+            "JavaScript (*.js)",
+            "TypeScript (*.ts)",
+            "HTML (*.html *.htm)",
+            "React (*.jsx *.tsx)"
+        ])
+        dialog.setFileMode(QFileDialog.ExistingFile)
         
-        if not file_path:
+        # Add checkbox for edit-only mode
+        chk_edit_only = QCheckBox("Open in Edit-Only Mode (no file changes)")
+        dialog.layout().addWidget(chk_edit_only)
+        
+        if not dialog.exec_():
             return
+        
+        file_paths = dialog.selectedFiles()
+        if not file_paths:
+            return
+        
+        file_path = file_paths[0]
+        edit_only = chk_edit_only.isChecked()
         
         # Check if already open
         for i in range(self.tab_widget.count()):
@@ -403,46 +649,68 @@ class EditorDock(BaseDock):
                 return
         
         # Create appropriate tab based on file extension
-        tab = self._create_tab_for_file(file_path)
+        tab = self._create_tab_for_file(file_path, edit_only)
         
         if not tab.load_file(file_path):
             QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")
             return
         
-        tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
+        # If edit-only, disconnect from file
+        if edit_only:
+            tab.file_path = None  # Disconnect from file
         
-        # Use display title (includes JSON icon if JSON file)
+        tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
+        tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
+        
+        # Use display title (includes JSON icon if JSON file, 🔒 if edit-only)
         index = self.tab_widget.addTab(tab, tab.get_display_title())
         self.tab_widget.setCurrentIndex(index)
         
-        # Add to recent files
-        self._add_recent_file(file_path)
+        # Add to recent files (only if not edit-only)
+        if not edit_only:
+            self._add_recent_file(file_path)
         
-        # Update status with editor type
+        # Update status with editor type and mode
         editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
-        self.lbl_status.setText(f"Opened in {editor_type}: {os.path.basename(file_path)}")
+        mode_text = " (Edit-Only)" if edit_only else ""
+        self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
     
-    def _create_tab_for_file(self, file_path: str):
+    def _create_tab_for_file(self, file_path: str, edit_only: bool = False):
         """
         Create appropriate tab type based on file extension.
         
         Pattern: Factory Method (GoF)
         - Creates JsonEditorTab for .json files
         - Creates EditorTab for other files
+        - Supports edit_only mode for both
         """
         ext = os.path.splitext(file_path)[1].lower()
         
         if ext == '.json':
             # JSON file → use JSON editor with advanced features
-            return JsonEditorTab(file_path, self)
+            return JsonEditorTab(file_path, self, edit_only_mode=edit_only)
         else:
             # Other files → use simple text editor
-            return EditorTab(file_path, self)
+            return EditorTab(file_path, self, edit_only_mode=edit_only)
     
     def _save_file(self):
-        """Save current file."""
+        """Save current file (State pattern: behavior depends on edit_only_mode)."""
         tab = self.tab_widget.currentWidget()
         if not tab:
+            return
+        
+        # Check if edit-only mode (State pattern)
+        if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
+            # Edit-only: open Save As dialog to convert to file-backed
+            reply = QMessageBox.question(
+                self,
+                "Edit-Only Mode",
+                "This editor is in Edit-Only mode.\n\nSave will convert it to a file-backed editor.\n\nContinue?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                self._save_file_as()
             return
         
         if not tab.file_path:
@@ -502,7 +770,7 @@ class EditorDock(BaseDock):
         self._close_tab(self.tab_widget.currentIndex())
     
     def _close_tab(self, index: int):
-        """Close tab at index."""
+        """Close tab at index with edit-only mode handling."""
         if index < 0:
             return
         
@@ -510,45 +778,92 @@ class EditorDock(BaseDock):
         
         # Check if modified
         if hasattr(tab, 'is_modified') and tab.is_modified:
-            reply = QMessageBox.question(
-                self,
-                "Unsaved Changes",
-                f"'{tab.get_tab_title()}' has unsaved changes.\n\nSave before closing?",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
-            )
-            
-            if reply == QMessageBox.Save:
-                # Save first
-                if not tab.file_path:
+            # Special handling for edit-only tabs (requirement #6)
+            if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
+                msg = QMessageBox(self)
+                msg.setWindowTitle("Close Edit-Only Tab")
+                msg.setText(f"'{tab.get_tab_title()}' has unsaved changes.")
+                msg.setInformativeText("What would you like to do?")
+                
+                btn_save = msg.addButton("Save to File", QMessageBox.ActionRole)
+                btn_clipboard = msg.addButton("Copy to Clipboard", QMessageBox.ActionRole)
+                btn_discard = msg.addButton("Discard", QMessageBox.DestructiveRole)
+                btn_cancel = msg.addButton("Cancel", QMessageBox.RejectRole)
+                
+                msg.exec_()
+                clicked = msg.clickedButton()
+                
+                if clicked == btn_save:
+                    # Save to file
                     self.tab_widget.setCurrentIndex(index)
                     self._save_file_as()
-                else:
-                    # Handle different tab types
-                    if isinstance(tab, JsonEditorTab):
-                        success, _ = tab.save_file()
+                    # Check if actually saved (file_path set)
+                    if not tab.file_path:
+                        return  # User cancelled save, don't close
+                elif clicked == btn_clipboard:
+                    # Copy to clipboard
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(tab.editor.toPlainText())
+                    self.lbl_status.setText("Content copied to clipboard")
+                elif clicked == btn_cancel:
+                    return
+                # btn_discard falls through to remove tab
+            else:
+                # Normal file-backed tab
+                reply = QMessageBox.question(
+                    self,
+                    "Unsaved Changes",
+                    f"'{tab.get_tab_title()}' has unsaved changes.\n\nSave before closing?",
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel
+                )
+                
+                if reply == QMessageBox.Save:
+                    # Save first
+                    if not tab.file_path:
+                        self.tab_widget.setCurrentIndex(index)
+                        self._save_file_as()
                     else:
-                        success = tab.save_file()
-                    
-                    if not success:
-                        return  # Don't close if save failed
-            elif reply == QMessageBox.Cancel:
-                return
+                        # Handle different tab types
+                        if isinstance(tab, JsonEditorTab):
+                            success, _ = tab.save_file()
+                        else:
+                            success = tab.save_file()
+                        
+                        if not success:
+                            return  # Don't close if save failed
+                elif reply == QMessageBox.Cancel:
+                    return
         
         self.tab_widget.removeTab(index)
         self.lbl_status.setText(f"Closed: {tab.get_tab_title()}")
     
     def _on_tab_changed(self, index: int):
-        """Handle tab change."""
+        """Handle tab change with edit-only mode indicators."""
         if index >= 0:
             tab = self.tab_widget.widget(index)
-            editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
+            
+            # Get editor type
+            if isinstance(tab, JsonEditorTab):
+                editor_type = "JSON Editor"
+            else:
+                editor_type = "Text Editor"
+            
+            # Get mode status (visual indicator #4)
+            if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
+                mode_text = " - Edit-Only Mode"
+                # Change status label color (visual indicator #2)
+                self.lbl_status.setStyleSheet("color: #FF8C00; font-weight: bold;")  # Orange
+            else:
+                mode_text = ""
+                self.lbl_status.setStyleSheet("color: #6A9955;")  # Green (normal)
             
             if hasattr(tab, 'file_path') and tab.file_path:
-                self.lbl_status.setText(f"{editor_type}: {os.path.basename(tab.file_path)}")
+                self.lbl_status.setText(f"{editor_type}{mode_text}: {os.path.basename(tab.file_path)}")
             else:
-                self.lbl_status.setText(f"{editor_type}: Untitled")
+                self.lbl_status.setText(f"{editor_type}{mode_text}: {tab.get_tab_title()}")
         else:
             self.lbl_status.setText("Ready")
+            self.lbl_status.setStyleSheet("color: #6A9955;")
     
     def _update_tab_title(self, tab: EditorTab):
         """Update tab title based on modified state."""
@@ -563,7 +878,7 @@ class EditorDock(BaseDock):
         self.recent_files.insert(0, file_path)
         self.recent_files = self.recent_files[:self.max_recent]
     
-    def open_file_path(self, file_path: str):
+    def open_file_path(self, file_path: str, edit_only: bool = False):
         """
         Open file from external call (e.g., from search results).
         
@@ -581,15 +896,23 @@ class EditorDock(BaseDock):
                 return
         
         # Create appropriate tab based on file extension
-        tab = self._create_tab_for_file(file_path)
+        tab = self._create_tab_for_file(file_path, edit_only)
         
         if tab.load_file(file_path):
+            # If edit-only, disconnect from file
+            if edit_only:
+                tab.file_path = None
+            
             tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
+            tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
             index = self.tab_widget.addTab(tab, tab.get_display_title())
             self.tab_widget.setCurrentIndex(index)
-            self._add_recent_file(file_path)
+            
+            if not edit_only:
+                self._add_recent_file(file_path)
             
             editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
-            self.lbl_status.setText(f"Opened in {editor_type}: {os.path.basename(file_path)}")
+            mode_text = " (Edit-Only)" if edit_only else ""
+            self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
         else:
             QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")

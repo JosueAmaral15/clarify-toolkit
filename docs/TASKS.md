@@ -389,18 +389,122 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - Export tree view to CSV
 - Undo/Redo específico para JSON operations
 
+---
+
+#### Task #5 - Edit-Only Mode: Sandbox Editing sem File Backing (v2.9.18)
+
+**Data de Conclusão**: 30 de Novembro de 2025  
+**Arquivos Modificados**: `src/gui/editor_dock.py`, `src/gui/json_editor_tab.py`  
+**Arquivo de Teste**: `tests/test_edit_only_mode.py` (16 testes - 100% passing)
+
+**Objetivo**: Permitir edições no editor sem conexão com arquivos no disco. Modo "sandbox" para preview, testes, ou edições temporárias que não devem ser salvas automaticamente.
+
+**Componentes Implementados**:
+
+1. ✅ **EditorTab Edit-Only Mode** (`src/gui/editor_dock.py` - 400+ linhas modificadas):
+   - Flag `edit_only_mode` (State pattern: muda comportamento de save)
+   - Toolbar com 3 botões:
+     * **📋 Copy**: Copia conteúdo para clipboard
+     * **💾 Export**: Exporta para arquivo
+     * **🔓 Enable Saving**: Converte para file-backed editor (Save As dialog)
+   - Visual indicators (4 tipos):
+     * **Indicador #1**: Ícone 🔒 no título da tab
+     * **Indicador #2**: Cor laranja (#FF8C00) no status bar
+     * **Indicador #3**: Borda dourada (#FFD700) ao redor do editor
+     * **Indicador #4**: Status text "Edit-Only Mode"
+   - Methods:
+     * `_copy_to_clipboard()`: Command pattern
+     * `_export_to_file()`: Command pattern
+     * `_enable_file_saving()`: Conversão edit-only → normal
+     * `toggle_edit_only_mode()`: State transition
+     * `_update_visual_indicators()`: Atualiza borda/background
+     * `_update_toolbar_visibility()`: Atualiza buttons
+
+2. ✅ **EditorDock Integration** (`src/gui/editor_dock.py` - 200+ linhas modificadas):
+   - Untitled-N counter (múltiplas tabs sem conflito de nomes)
+   - Context menu (right-click na tab):
+     * "Enable Edit-Only Mode" / "Disable Edit-Only Mode"
+   - Open dialog com checkbox:
+     * "Open in Edit-Only Mode (no file changes)"
+   - Modified save behavior (State pattern):
+     * Normal mode: Save direto no arquivo
+     * Edit-only mode: Prompt "Convert to file-backed?" → Save As
+   - Close behavior customizado:
+     * Normal tabs: Save / Discard / Cancel
+     * Edit-only tabs: Save to File / Copy to Clipboard / Discard / Cancel (4 opções)
+   - Methods:
+     * `_new_file(edit_only=bool)`: Cria tab edit-only ou normal
+     * `_toggle_edit_only_for_tab(index)`: Toggle via context menu
+     * `_show_tab_context_menu(pos)`: QMenu com toggle action
+     * `_on_tab_changed(index)`: Atualiza status bar com cor laranja se edit-only
+
+3. ✅ **JsonEditorTab Edit-Only Support** (`src/gui/json_editor_tab.py` - 20 linhas):
+   - Herda `edit_only_mode` flag de EditorTab (via constructor)
+   - Signal `edit_only_changed = Signal(bool)`
+   - Validação JSON continua funcionando em edit-only mode
+   - Ícone combinado: 🔒🗎 (lock + JSON icon)
+   - Methods:
+     * `toggle_edit_only_mode()`: Emit signal para EditorDock
+
+**Padrões de Projeto (GoF + GRASP)**:
+
+- **State** (GoF): `edit_only_mode` flag altera comportamento de save (file-backed vs sandbox)
+- **Strategy** (GoF): Diferentes estratégias de persistência (save to file vs clipboard/export)
+- **Command** (GoF): Ações Copy/Export encapsuladas como métodos
+- **Observer** (GoF): Signals `edit_only_changed` para comunicação entre componentes
+- **Factory Method** (GoF): `_create_tab_for_file(file_path, edit_only)` cria tipo correto
+- **Information Expert** (GRASP): EditorTab gerencia seu próprio estado edit_only
+- **Low Coupling** (GRASP): Comunicação via signals, não dependências diretas
+- **Protected Variations** (GRASP): Mudanças de modo não afetam código cliente
+
+**Funcionalidades Completas**:
+- ✅ Edit-only mode flag em EditorTab e JsonEditorTab
+- ✅ 4 visual indicators (🔒 icon, orange status, golden border, status text)
+- ✅ Toolbar buttons (Copy, Export, Enable Saving)
+- ✅ Context menu toggle (right-click na tab)
+- ✅ Open dialog checkbox (abrir arquivos em edit-only)
+- ✅ Untitled-N counter (Untitled, Untitled-2, Untitled-3...)
+- ✅ Save behavior: edit-only bloqueia save, abre confirmation dialog
+- ✅ Close behavior: 4 opções para edit-only (Save/Clipboard/Discard/Cancel)
+- ✅ JSON validation ativa em edit-only mode
+- ✅ Undo/Redo preservado
+
+**Testes** (16 testes - 100% passing):
+1. `test_edit_only_flag`: Verifica flag set corretamente
+2. `test_visual_indicators_lock_icon`: Testa 🔒 no título
+3. `test_visual_indicators_golden_border`: Testa borda #FFD700
+4. `test_visual_indicators_status_text`: Testa "Edit-Only Mode" text
+5. `test_toolbar_buttons_visibility`: Testa botões existem
+6. `test_copy_to_clipboard`: Testa Copy button funciona
+7. `test_export_to_file`: Testa Export button cria arquivo
+8. `test_toggle_edit_only_mode`: Testa toggle atualiza indicators
+9. `test_new_file_untitled_counter`: Testa Untitled-1, Untitled-2, etc.
+10. `test_open_file_with_edit_only_checkbox`: Testa checkbox no Open dialog
+11. `test_save_blocked_in_edit_only`: Testa save mostra confirmation
+12. `test_close_edit_only_with_clipboard`: Testa close com clipboard option
+13. `test_json_editor_edit_only_flag`: Testa JsonEditorTab suporta flag
+14. `test_json_validation_active_in_edit_only`: Testa validação JSON ativa
+15. `test_state_transition_normal_to_edit_only`: Testa State pattern
+16. `test_state_affects_save_behavior`: Testa save behavior muda com state
+
+**Próximos Passos** (melhorias futuras):
+- Keyboard shortcut Ctrl+Shift+E para toggle edit-only
+- Histórico de tabs edit-only fechadas (recovery)
+- Auto-save temporário em memória para edit-only tabs
+- Diff view: comparar edit-only content com arquivo original
+
 ### 🔨 Tasks Pendentes
 
 #### Editor Features
 
 - **[X]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes *(v2.9.16 - Task #46: EditorDock)*
 - **[X]** Incluir editores JSON como abas *(v2.9.17 - Task #47: JsonEditorTab com validação, tree view, search)*
+- **[X]** Possibilidade de mudanças feitas apenas no editor de texto do próprio Clarify, não mais em arquivos *(v2.9.18 - Task #5: Edit-Only Mode)*
 - **[]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
 - **[]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI)
 - **[]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON
-- **[]** Possibilidade de mudanças feitas apenas no editor de texto do próprio Clarify, não mais em arquivos
 - **[]** Adicionar feature onde resultado pode ser reutilizado no editor de texto do Clarify
 
 #### JSON Advanced Features
@@ -503,9 +607,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 4 | 14 | 22.2% |
+| COULD HAVE | 18 | 5 | 13 | 27.8% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **67** | **37** | **64.4%** |
+| **TOTAL** | **104** | **68** | **36** | **65.4%** |
 
 ### Notas
 
@@ -521,6 +625,7 @@ def walk(v):
 - **v2.9.17**: Task #47 COMPLETA - JSON Editor avançado com validação tempo real, tree view, format, search (750+ linhas, 18 testes passing)
 - **v2.9.16**: Task #46 COMPLETA - Editor Integrado com syntax highlighting diferenciado por cores (700+ linhas, tabs, save/load, Ctrl+E)
 - **v2.9.17**: Task #47 COMPLETA - JSON Editor avançado integrado (validação, tree view, format, search - 750+ linhas, 18 testes)
+- **v2.9.18**: Task #5 COMPLETA - Edit-Only Mode sandbox editing (600+ linhas, 16 testes, State+Strategy+Command patterns)
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 

@@ -349,11 +349,13 @@ class JsonEditorTab(QWidget):
     
     modified_changed = Signal(bool)
     validation_changed = Signal(bool, str)  # (is_valid, error_msg)
+    edit_only_changed = Signal(bool)  # Emitted when edit-only mode changes
     
-    def __init__(self, file_path: Optional[str] = None, parent=None):
+    def __init__(self, file_path: Optional[str] = None, parent=None, edit_only_mode: bool = False):
         super().__init__(parent)
         self.file_path = file_path
         self.is_modified = False
+        self.edit_only_mode = edit_only_mode  # State pattern: changes save behavior
         self.validator = JsonValidator()
         self.validation_timer = QTimer(self)
         self.validation_timer.setSingleShot(True)
@@ -581,8 +583,27 @@ class JsonEditorTab(QWidget):
         return "Untitled.json"
     
     def get_display_title(self) -> str:
-        """Get display title with modified indicator and JSON icon."""
+        """Get display title with modified indicator, JSON icon, and edit-only indicator."""
         title = "🗎 " + self.get_tab_title()  # JSON icon
+        
+        # Edit-only indicator (visual indicator #1)
+        if self.edit_only_mode:
+            title = "🔒 " + title
+        
         if self.is_modified:
             title += " *"
         return title
+    
+    def get_status_text(self) -> str:
+        """Get status bar text with mode indicator."""
+        status = "JSON Editor"
+        if self.edit_only_mode:
+            status = "JSON Editor - Edit-Only Mode"  # Visual indicator #4
+        return status
+    
+    def toggle_edit_only_mode(self):
+        """Toggle edit-only mode on/off (State pattern transition)."""
+        # JsonEditorTab inherits EditorTab functionality but can override
+        # For now, just emit signal - EditorDock will handle
+        self.edit_only_mode = not self.edit_only_mode
+        self.edit_only_changed.emit(self.edit_only_mode)
