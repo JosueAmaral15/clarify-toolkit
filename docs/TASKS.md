@@ -228,6 +228,33 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ---
 
+#### Task #14 - Remove Chaves sem Siblings (v2.9.20)
+**Status**: ✅ Completa - 30/11/2025 (Já implementada como Task #35 em v2.9.11)
+
+**Objetivo**: Incluir possibilidade de remover chaves que não têm sibling key (chaves órfãs em hierarquias seriais).
+
+**Conclusão**: Esta task foi **DUPLICADA** com Task #35 que foi implementada em v2.9.11. A funcionalidade já existe e está funcional:
+
+1. ✅ **Função Backend**: `skip_keys_without_siblings(node)` em `src/rewriter/operations.py`
+   - Remove hierarquias seriais (cadeias) onde cada nível tem apenas um filho
+   - Exemplo: `{a: {b: {c: "value"}}}` → `{}` (serial chain removida)
+   - Exemplo: `{a: {b: "val1", c: "val2"}}` → mantida (b e c são siblings)
+
+2. ✅ **UI Checkbox**: `chk_skip_no_siblings` em `JsonRewriterDock`
+   - Label: "Skip keys without siblings"
+   - Tooltip: "Remove serial hierarchies (chains) where keys don't have siblings (Task #35)"
+   - Localização: Row 4, Column 4 no grid layout
+
+3. ✅ **Integração Backend**: 
+   - `cli_dedupe()` verifica flag `args.skip_no_siblings`
+   - Chama `rw.skip_keys_without_siblings(obj)` quando habilitado
+
+**Referência**: Ver Task #35 (v2.9.11) na seção SHOULD HAVE para detalhes completos da implementação.
+
+**Impacto**: Task #14 pode ser marcada como completa sem necessidade de código adicional.
+
+---
+
 #### Task #44 - Análise de Funcionalidades em `add/` (v2.9.15)
 **Status**: ✅ Completa - 24/11/2025
 
