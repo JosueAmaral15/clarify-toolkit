@@ -99,10 +99,13 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Adicionar feature para substituir listas por objetos/dicionários em arquivos JSON com restrições de escopo (ex: apenas em `t.pages`) **(v2.9.10 - Task #21)**
 - **[X]** Normalizar escaping excessivo automaticamente (detectar `\\\\'` ou mais → `\\'`) **(v2.9.10 - Task #22)**
 - **[X]** Converter arrays para objetos com geração inteligente de chaves (camelCase, primeiras 30 chars, remove acentos) **(v2.9.10 - Task #21)**
-- **[X]** Atualizar referências órfãs em arquivos do projeto após eliminação de duplicatas **(v2.9.10 - Task #23)**
+- **[⚠️]** Atualizar referências órfãs em arquivos do projeto após eliminação de duplicatas **(v2.9.10 - Task #23 PARCIAL | v2.9.14 - TARGET)**
+  - **PROBLEMA**: Implementação parcial usa similaridade de strings ao invés de VALUE EQUALITY para detectar keys eliminadas
+  - **FALTA**: Reescrever `extract_all_keys_from_obj()` + `build_substitution_map_by_value()` + suporte ao tipo `Obj`
+  - **DOCUMENTAÇÃO COMPLETA**: `docs/TASK_23_ORPHANED_KEYS_SPECIFICATION.md` (5000+ linhas, 30/11/2025)
+  - **EXEMPLOS**: `tests/files/en.ts` + `tests/files/page.tsx` demonstram problema real
 - **[X]** Incluir possibilidade de filtrar extensões (ex: `.jsx`) em todos os módulos e funcionalidades *(v2.9.0 - Extension Filter)*;
 - **[X]** Resolver issue de tradução quando texto tem parênteses (ex: `'Multiple Choice (Multiple)'`) **(v2.9.9 - Parentheses Support)**
-- **[]** Evitar problema onde JSON Translate não substitui object keys de arquivos afetados ao remover keys do dicionário, causando omissão e erro 'undefined'
 - **[X]** Forçar aplicação e JSON translate a obedecer regras de sintaxe e case (enforce consistent case) **(v2.9.8)**
 - **[X]** Incluir whole word, case sensitive e regex nas condições avançadas *(v2.2.0 - Implementado em Search/Replace e Insert panels)*
 - **[X]** Adicionar tipo de filtro nas condições avançadas: operadores AND e OR *(v2.6.0 - Dropdown com AND/OR em ambos panels)*
@@ -262,13 +265,18 @@ def walk(v):
 
 ### Por Categoria
 
-| Categoria | Total | Completas | Pendentes | % Completo |
-|-----------|-------|-----------|-----------|------------|
-| MUST HAVE | 12 | 11 | 1 | 91.7% |
-| SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 0 | 18 | 0% |
-| WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **63** | **41** | **60.6%** |
+| Categoria | Total | Completas | Parciais | Pendentes | % Completo |
+|-----------|-------|-----------|----------|-----------|------------|
+| MUST HAVE | 12 | 11 | 0 | 1 | 91.7% |
+| SHOULD HAVE | 50 | 39 | 1 | 10 | 78.0% |
+| COULD HAVE | 18 | 0 | 0 | 18 | 0% |
+| WOULD HAVE LATER | 24 | 12 | 0 | 12 | 50.0% |
+| **TOTAL** | **104** | **62** | **1** | **41** | **59.6%** |
+
+**Legenda**:
+- ✅ **Completas**: Funcionalidade 100% implementada e testada
+- ⚠️ **Parciais**: Implementação existe mas incompleta ou com bugs (ex: Task #23)
+- ❌ **Pendentes**: Não iniciadas
 
 ### Notas
 
@@ -277,10 +285,12 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **60.6%** do projeto total completo - em progressão constante
+- **59.6%** do projeto total completo (62 completas + 1 parcial) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
-- **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
+- **Correção 30/11/2025**: 
+  - 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
+  - Task #23 (orphaned keys) marcada como **PARCIAL** - implementação existe mas incompleta (usa string similarity ao invés de value equality)
 
 ### Marcos Importantes
 
