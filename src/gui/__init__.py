@@ -22,6 +22,7 @@ from .json_rewriter_dock import JsonRewriterDock
 from .history_dock import HistoryDock
 from .file_list_dock import FileListDock
 from .tutorials_dock import TutorialsDock
+from .editor_dock import EditorDock
 
 __all__ = [
     # Base classes
@@ -32,5 +33,6 @@ __all__ = [
     # Tool docks
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
-    'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock'
+    'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
+    'EditorDock'
 ]

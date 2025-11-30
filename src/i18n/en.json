@@ -3,6 +3,7 @@
   "app.version": "v2.9.10",
   
   "menu.file": "File",
+  "menu.file.open_editor": "Open Editor",
   "menu.file.exit": "Exit",
   "menu.edit": "Edit",
   "menu.edit.undo": "Undo",

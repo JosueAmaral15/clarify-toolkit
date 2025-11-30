@@ -208,11 +208,72 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - Tutoriais avançados (regex, scope filtering, batch operations)
 - Tutoriais para desenvolvedores (extending Clarify, plugin system)
 
+---
+
+#### Task #46 - Editor de Arquivos Integrado (v2.9.16)
+**Status**: ✅ Completa - 30/11/2025
+
+**Objetivo**: Implementar editor de texto integrado com diferenciação de escopo por cores (tipo Notepad).
+
+**Implementação**:
+1. ✅ **EditorDock** (`src/gui/editor_dock.py` - 700+ linhas):
+   - Interface tabbed para múltiplos arquivos abertos simultaneamente
+   - Botões: New, Open, Save, Save As, Close Tab
+   - Status bar com indicador de arquivo atual
+   - Recent files list (últimos 10 arquivos)
+   - Atalhos de teclado (Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+W, Ctrl+E)
+
+2. ✅ **SyntaxHighlighter** (diferenciação de escopo por cores):
+   - **HTML/JSX/TSX**: Tags azul bold (#569CD6), atributos light blue (#9CDCFE)
+   - **JSON**: Keys light blue (#9CDCFE), brackets gold (#FFD700), values orange (#CE9178)
+   - **Python**: Keywords purple bold (#C586C0), comments green italic (#6A9955), strings orange
+   - **JavaScript/TypeScript**: Keywords purple, strings orange, comments green
+   - **Números**: Light green (#B5CEA8) em todos os tipos
+   - Suporte automático por extensão de arquivo
+
+3. ✅ **EditorTab** (gerenciamento de abas):
+   - Tracking de modified state (asterisco * no título quando modificado)
+   - Signal `modified_changed` para atualização de UI
+   - Load/save file com encoding UTF-8
+   - Monospace font (Courier New, 10pt)
+   - Tab stop distance: 40 pixels (≈4 espaços)
+
+4. ✅ **Funcionalidades**:
+   - Abrir/salvar arquivos (.txt, .json, .html, .tsx, .py, .js, .ts, etc.)
+   - Prevenir abertura duplicada (switch para tab existente)
+   - Confirmação ao fechar tab com mudanças não salvas
+   - API pública `open_file_path()` para integração com outros módulos
+   - Suporte a arquivos "Untitled" (sem path)
+
+5. ✅ **Menu File**:
+   - Adicionado `File → Open Editor` em `app.py`
+   - Atalho: Ctrl+E
+   - Traduções EN/PT-BR em `i18n/`
+   - Método `_show_editor()` para exibir dock
+
+6. ✅ **Arquitetura**:
+   - Padrões aplicados: Strategy (syntax highlighting), Factory (tab creation), Observer (modified signal)
+   - Herda de BaseDock (consistência com outros docks)
+   - Low Coupling com app.py (comunicação via sinais)
+   - High Cohesion (EditorTab, EditorDock, SyntaxHighlighter - responsabilidades claras)
+
+**Arquivos Criados**:
+- `src/gui/editor_dock.py` (700+ linhas)
+- `tests/test_editor_dock.py` (15 testes estruturados)
+
+**Próximos Passos** (melhorias futuras):
+- Find/Replace functionality (Ctrl+F, Ctrl+H)
+- Line numbers panel
+- Code folding para blocos
+- Auto-indentation por tipo de arquivo
+- Context menu (copy, paste, select all)
+- Syntax highlighting para mais linguagens (Ruby, Go, Rust)
+
 ### 🔨 Tasks Pendentes
 
 #### Editor Features
 
-- **[]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes
+- **[X]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes *(v2.9.16 - Task #46: EditorDock)*
 - **[]** Incluir editores JSON como abas
 - **[]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
@@ -322,9 +383,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 2 | 16 | 11.1% |
+| COULD HAVE | 18 | 3 | 15 | 16.7% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **65** | **39** | **62.5%** |
+| **TOTAL** | **104** | **66** | **38** | **63.5%** |
 
 ### Notas
 
@@ -333,10 +394,11 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **62.5%** do projeto total completo (65 tasks completas) - em progressão constante
+- **63.5%** do projeto total completo (66 tasks completas) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.14**: Task #23 COMPLETA - Orphaned Keys Update System com VALUE EQUALITY (12 unit tests passing)
 - **v2.9.15**: Tasks #44 e #45 COMPLETAS - Análise add/ + Sistema de Tutoriais com Help menu (3 tutoriais MVP, TutorialsDock, preparação chatbot)
+- **v2.9.16**: Task #46 COMPLETA - Editor Integrado com syntax highlighting diferenciado por cores (700+ linhas, tabs, save/load, Ctrl+E)
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 

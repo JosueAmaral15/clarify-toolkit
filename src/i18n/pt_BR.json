@@ -3,6 +3,7 @@
   "app.version": "v2.9.10",
   
   "menu.file": "Arquivo",
+  "menu.file.open_editor": "Abrir Editor",
   "menu.file.exit": "Sair",
   "menu.edit": "Editar",
   "menu.edit.undo": "Desfazer",

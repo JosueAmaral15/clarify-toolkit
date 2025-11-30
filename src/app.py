@@ -130,7 +130,8 @@ from .ai_processor import (
 from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock
+    JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
+    EditorDock
 )
 
 # ---------------------------------------------------------------------------
@@ -4262,6 +4263,12 @@ if _PYSIDE:
                 self.addDockWidget(Qt.RightDockWidgetArea, self.dock_tutorials)
                 self.dock_tutorials.hide()
         
+        def _open_editor(self):
+            if not hasattr(self, 'dock_editor'):
+                self.dock_editor = EditorDock(self)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.dock_editor)
+                self.dock_editor.hide()
+        
         def _toggle_history(self, checked: bool):
             """Toggle history dock visibility."""
             if not hasattr(self, 'dock_history'):
@@ -4277,6 +4284,12 @@ if _PYSIDE:
             if not hasattr(self, 'dock_tutorials'):
                 self._open_tutorials()
             self.dock_tutorials.show()
+        
+        def _show_editor(self):
+            """Show editor dock (Task #46 - v2.9.16)."""
+            if not hasattr(self, 'dock_editor'):
+                self._open_editor()
+            self.dock_editor.show()
         
         def _show_advanced_file_search(self):
             """Show advanced file search dialog (Task #36 - v2.9.11)."""
@@ -4304,6 +4317,12 @@ if _PYSIDE:
 
             # File menu
             m_file = bar.addMenu(tr("menu.file"))
+            self.act_open_editor = QAction(tr("menu.file.open_editor"), self)
+            self.act_open_editor.setToolTip("Open integrated file editor")
+            self.act_open_editor.setShortcut("Ctrl+E")
+            m_file.addAction(self.act_open_editor)
+            self.act_open_editor.triggered.connect(lambda: self._show_editor())
+            m_file.addSeparator()
             act_exit = QAction(tr("menu.file.exit"), self)
             act_exit.triggered.connect(self.close)
             m_file.addAction(act_exit)
