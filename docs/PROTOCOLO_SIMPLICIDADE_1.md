@@ -464,9 +464,61 @@ class ReferenceUpdater:
 ---
 
 ### 8️⃣ **Preencher Nova Documentação**
-- **Atualizar TASKS.md**: Marcar tasks como `[X]` completas
+- **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
 - **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
+
+**📋 Marcação de Tarefas em Arquivo de Requisitos**:
+
+**Regra Geral**:
+- Se existe arquivo de tarefas/requisitos (ex: `TASKS.md`, `TODO.md`, `requirements.md`):
+  - ✅ **Marcar tasks como completas** após implementação: `[ ]` → `[X]`
+  - ✅ **Atualizar estatísticas** (percentuais, contadores)
+  - ✅ **Adicionar notas de conclusão** (data, versão, descrição breve)
+  
+- Se **NÃO existe** arquivo de tarefas/requisitos:
+  - ❓ **Perguntar ao usuário** qual o local/path do arquivo
+  - ❓ **Perguntar sobre próximas tarefas e requisitos** caso não haja documento formal
+  - ❓ **Sugerir criação** de arquivo de controle de tarefas
+
+**Exemplo de Marcação (TASKS.md)**:
+```markdown
+## 🟢 COULD HAVE (Prioridade Baixa)
+
+### ✅ Tasks Concluídas
+
+#### Task #46 - Editor de Arquivos Integrado (v2.9.16)
+**Status**: ✅ Completa - 30/11/2025
+
+**Objetivo**: Implementar editor de texto integrado com diferenciação de escopo por cores.
+
+**Implementação**:
+1. ✅ EditorDock com QTextEdit e syntax highlighting
+2. ✅ Diferenciação de escopo por cores (HTML tags, JSON keys, etc.)
+3. ✅ Abrir/salvar arquivos (.txt, .json, .html, .tsx, .py)
+4. ✅ Integração com menu File → Open Editor
+
+**Arquivos Criados**:
+- `src/gui/editor_dock.py` (500+ linhas)
+- `tests/test_editor_dock.py` (15 testes)
+
+### 🔨 Tasks Pendentes
+- **[]** Próxima task não implementada...
+```
+
+**Estrutura Mínima Recomendada**:
+```markdown
+# Projeto - Tasks
+
+## Categorias
+- MUST HAVE: [X/Y completas] (Z%)
+- SHOULD HAVE: [X/Y completas] (Z%)
+- COULD HAVE: [X/Y completas] (Z%)
+- WOULD HAVE: [X/Y completas] (Z%)
+
+## Estatísticas
+- **TOTAL**: [X/Y completas] (Z%)
+```
 
 **Estrutura da Documentação de Versão**:
 ```markdown
