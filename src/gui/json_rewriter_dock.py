@@ -79,6 +79,10 @@ def cli_dedupe(args: argparse.Namespace):
     if hasattr(args, 'remove_dup_all') and args.remove_dup_all:
         obj = rw.remove_duplicate_array_values(obj, consecutive_only=False)
     
+    # Skip keys without siblings if requested (Task #35 - v2.9.11)
+    if hasattr(args, 'skip_no_siblings') and args.skip_no_siblings:
+        obj = rw.skip_keys_without_siblings(obj)
+    
     # Enforce consistent case if requested (Task #9 - v2.9.8)
     if hasattr(args, 'enforce_case') and args.enforce_case:
         case_style = getattr(args, 'case_style', 'camel')
@@ -166,6 +170,8 @@ class JsonRewriterDock(BaseDock):
         self.chk_normalize_escaping.setToolTip("Auto-detect excessive escaping (\\\\\\' or more) and normalize to \\' (Task #22)")
         self.chk_convert_arrays = QCheckBox("Convert arrays to objects")
         self.chk_convert_arrays.setToolTip("Convert string arrays to objects with generated keys (Task #21)")
+        self.chk_skip_no_siblings = QCheckBox("Skip keys without siblings")
+        self.chk_skip_no_siblings.setToolTip("Remove serial hierarchies (chains) where keys don't have siblings (Task #35)")
         
         # Task #23 - Update orphaned references
         self.chk_update_refs = QCheckBox("Update references in project")
@@ -237,8 +243,9 @@ class JsonRewriterDock(BaseDock):
         
         # Row 4: Options checkboxes (line 3) - Array operations
         g.addWidget(self.chk_convert_arrays, 4, 0, 1, 2)
-        g.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 2)
-        g.addWidget(self.chk_remove_dup_all, 4, 4, 1, 1)
+        g.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 1)
+        g.addWidget(self.chk_remove_dup_all, 4, 3, 1, 1)
+        g.addWidget(self.chk_skip_no_siblings, 4, 4, 1, 1)
         
         # Row 5: Update references (Task #23)
         g.addWidget(self.chk_update_refs, 5, 0, 1, 1)
@@ -370,6 +377,7 @@ class JsonRewriterDock(BaseDock):
             convert_arrays_to_objects=self.chk_convert_arrays.isChecked(),
             remove_dup_consecutive=self.chk_remove_dup_consecutive.isChecked(),
             remove_dup_all=self.chk_remove_dup_all.isChecked(),
+            skip_no_siblings=self.chk_skip_no_siblings.isChecked(),
             enforce_case=self.chk_enforce_case.isChecked(),
             case_style=self.combo_case_style.currentText().lower().replace('-', '').replace('case', ''),  # 'camelCase' -> 'camel'
             is_file=self.chk_is_file.isChecked(),

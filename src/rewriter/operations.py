@@ -583,3 +583,100 @@ def array_to_object_conversion(
         return n
     
     return process_node(node)
+
+
+def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
+    """
+    Remove keys that don't have siblings (Task #35 - v2.9.11).
+    
+    A serial chain is a hierarchy where each level has only one child,
+    continuing until reaching a leaf value (not an object with multiple children).
+    
+    Example:
+        Input:  {a: {b: {c: "value"}}}  // Serial chain: a->b->c->leaf
+        Output: {}  // All removed (no siblings at any level)
+        
+        Input:  {a: {b: "val1", c: "val2"}}  // a->{b,c} (siblings exist)
+        Output: {a: {b: "val1", c: "val2"}}  // Kept (b and c are siblings)
+    
+    Args:
+        node: JSON node to process
+    
+    Returns:
+        Processed node with serial chains removed
+    """
+    def has_siblings_in_subtree(obj: Obj) -> bool:
+        """Check if obj or any descendant has multiple children."""
+        if len(obj) > 1:
+            return True  # This level has siblings
+        
+        if len(obj) == 0:
+            return False  # Empty object
+        
+        # Single child - check if it's an object with descendants
+        k, v = obj[0]
+        if isinstance(v, Obj):
+            return has_siblings_in_subtree(v)
+        else:
+            # Leaf value (not an object)
+            return False
+    
+    def process_obj(obj: Obj) -> Optional[Obj]:
+        """Process Obj node, returning None if should be removed."""
+        if not obj:
+            return obj
+        
+        # Process all children first (recursively)
+        processed_children = []
+        for k, v in obj:
+            if isinstance(v, Obj):
+                processed_v = process_obj(v)
+                if processed_v is not None:  # Keep if not removed
+                    processed_children.append((k, processed_v))
+            elif isinstance(v, list):
+                processed_v = process_list(v)
+                processed_children.append((k, processed_v))
+            else:
+                # Leaf value - always keep at this stage
+                processed_children.append((k, v))
+        
+        # Now check if this object should be kept
+        # Keep if: has multiple children OR has siblings in subtree
+        if len(processed_children) > 1:
+            # Has siblings at this level
+            return Obj(processed_children)
+        elif len(processed_children) == 1:
+            # Single child - check if it (or descendants) has siblings
+            k, v = processed_children[0]
+            if isinstance(v, Obj) and has_siblings_in_subtree(v):
+                # Child subtree has siblings - keep this level
+                return Obj(processed_children)
+            else:
+                # Serial chain (no siblings anywhere) - remove
+                return None
+        else:
+            # Empty after processing
+            return None
+    
+    def process_list(arr: list) -> list:
+        """Process list items."""
+        result = []
+        for item in arr:
+            if isinstance(item, Obj):
+                processed = process_obj(item)
+                if processed is not None:
+                    result.append(processed)
+            elif isinstance(item, list):
+                result.append(process_list(item))
+            else:
+                result.append(item)
+        return result
+    
+    # Start processing
+    if isinstance(node, Obj):
+        result = process_obj(node)
+        return result if result is not None else Obj()
+    elif isinstance(node, list):
+        return process_list(node)
+    else:
+        return node

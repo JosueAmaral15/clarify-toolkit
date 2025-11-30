@@ -49,7 +49,6 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ### 🔨 Tasks Pendentes
 
-- **[]** Evitar comportamento: `{t.pages.onboarding.navigationHints.skip} if stuck - unanswered = zero {t.pages.PracticeHistoryPage.points}`
 - **[X]** Durante tradução JSON, preservar uppercase com parâmetro do usuário **(v2.9.8)**
 
 ---
@@ -78,7 +77,6 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 #### JSON Features
 
 - **[X]** Incluir possibilidade de mudar case de palavras-chave (camelCase, PascalCase, snake_case, kebab-case) *(v3.0.0 - Case Converter)*
-- **[]** Incluir possibilidade de remover certa sub-estrutura JSON de uma estrutura maior
 - **[X]** Incluir checkbox "is file" no JSON translate
 - **[X]** Ajustar opção 'Emit Export default' do JSON Translate **(v2.9.7)**
 - **[X]** Resultado do JSON Translate não deve conter três barras invertidas (`\\\`) **(v2.9.7 - Fix Backslash Escaping)**
@@ -86,13 +84,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Incluir 'avoid childs keys with the same name' no output do JSON Extractor **(v2.9.7 - Avoid Duplicate Child Keys)**
 - **[X]** Adicionar opção 'not include number keys' no JSON Extractor **(v2.9.6)**
 - **[X]** Ordenar todos os resultados, incluindo output do JSON Rewriter **(v2.9.5 - Parcial: implementado para SearchReplacePanel e InsertPanel)**
-- **[X]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente **(v2.9.9 - Case Validator Dialog)**
-- **[]** Corrigir situações problemáticas:
-  ```javascript
-  retelllecture: '\'RetellLecture\', \'Retell Lecture\', \'Re-tell Lecture\',',
-  answershortquestion: ['\'AnswerShortQuestion\', \'Answer Short Question\','],
-  respondtosituation: ['\'RespondToSituation\', \'Respond to a Situation\',']
-  ```
+- **[X]** Corrigir issue de case onde output tem chaves com pascal-case ou camel-case inconsistente **(v2.9.9 - Case Validator Dialog)**  ```
 - **[X]** Evitar chaves repetidas em arrays (remove duplicados consecutivos e totais) **(v2.9.8)**
   ```javascript
   whyItSWrong: ['Why it\'s wrong:', 'Why it\'s wrong:'] → ['Why it\'s wrong:']
@@ -107,7 +99,6 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Forçar aplicação e JSON translate a obedecer regras de sintaxe e case (enforce consistent case) **(v2.9.8)**
 - **[X]** Incluir whole word, case sensitive e regex nas condições avançadas *(v2.2.0 - Implementado em Search/Replace e Insert panels)*
 - **[X]** Adicionar tipo de filtro nas condições avançadas: operadores AND e OR *(v2.6.0 - Dropdown com AND/OR em ambos panels)*
-- **[]** Valor após chave em JSON é valor atômico, lista também é valor atômico. Ambos precisam ser iguais para ser eliminados ao remover redundâncias
 
 #### System Features
 
@@ -187,9 +178,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 #### Advanced Features
 
-- **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos
+- **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos e low-code;
 - **[]** Incluir tutoriais de uso
-- **[]** Incluir busca com ajuda de inteligência artificial
+- **[]** Incluir busca com ajuda de inteligência artificial da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F.
 - **[]** Embutir assistente virtual para uso com IAOnde mostrar a contagem?
 Nova coluna "Count" na tabela de resultados do JSON Search?
 Campo de texto embaixo dos resultados: "Total occurrences: 5"?
@@ -208,6 +199,7 @@ Ambos?
 
 - **[]** Calculator: Adicionar conceitos de calculadora como registrador de memória, adição, concatenação e recall de memória padrão com histórico de modificações. A ideia seria a seguinte: o registro de memória seria o resultado do processamento, por exemplo, de busca, do painel de resultado de buscas. A adição significa: adicione um resultado de busca com outro resultado de forma que estes se complementem, por exemplo, em ordem alfabética ou unindo resultados de um mesmo arquivo (quando é em formato de árvore) no painel de resultados. Concatenação iria concatenar um resultado a outro, colocando o segundo resultado debaixo do primeiro no painel de resultados. O recall de memória iria chamar resultados salvos e jogar no painel de resultados, como pesquisas pela palavra "span".
 - **[]** Set: Adicionar operações de conjunto lógico de arquivos JSON como interseção, diferença, união e diferença exclusiva. Incluir checkboxes para incluir chaves e/ou valores nesta operação de conjunto, em que, por exemplo, se for escolhida a intersecção entre arquivo A e arquivo B, ambos JSON, se tem valores equivalentes tanto em A quanto em B no sentido de chave e valor (title: "Tarefas de Casa"), no sentido de caminhos de chave e valor (t.pages.home.features.title, title: "Tarefas de Casa"), e somente no sentido de caminhos de chave (t.pages.home.features.title);
+- **[]** Verificar se na pasta add existe alguma funcionalidade que ainda não foi implementada;
 
 ---
 
