@@ -15,7 +15,7 @@
 
 ---
 
-## 📋 Espinha Dorsal do Protocolo (7 Etapas)
+## 📋 Espinha Dorsal do Protocolo (8 Etapas)
 
 ### 1️⃣ **Ler a Documentação**
 - Consultar `docs/TASKS.md` para entender o contexto do projeto
@@ -49,7 +49,54 @@ Lista de tasks complexas restantes:
 
 ---
 
-### 3️⃣ **Fazer Sprints das Tarefas Mais Simples**
+### 3️⃣ **Fazer Perguntas e Mais Perguntas ao Programador**
+- **CRÍTICO**: Nunca assumir ou adivinhar requisitos
+- Fazer **todas as perguntas necessárias** até sanar **100% das dúvidas**
+- Validar entendimento antes de começar a implementar
+
+**Categorias de Perguntas**:
+1. **Requisitos Funcionais**:
+   - "Como deve se comportar quando [cenário X]?"
+   - "O que acontece se o usuário [ação Y]?"
+   - "Qual é a prioridade entre [opção A] e [opção B]?"
+
+2. **Requisitos Técnicos**:
+   - "Devo usar [biblioteca X] ou criar do zero?"
+   - "Qual é o formato esperado do output?"
+   - "Há alguma restrição de performance?"
+
+3. **Edge Cases**:
+   - "E se o arquivo estiver vazio?"
+   - "E se houver caracteres especiais?"
+   - "Como tratar valores None/null?"
+
+4. **Integração**:
+   - "Precisa integrar com [módulo existente]?"
+   - "Devo manter compatibilidade com [versão anterior]?"
+   - "Onde salvar os resultados?"
+
+5. **Validação de Entendimento**:
+   - "Entendi que você quer [X]. Está correto?"
+   - "Minha solução proposta é [Y]. Faz sentido?"
+   - "Posso começar ou há algo que esqueci?"
+
+**Exemplo Real (Task #23)**:
+```
+❓ "Pegar primeiras N palavras (quantas? 3-5?)?"
+✅ Resposta: "Default pode ser 30 caracteres"
+
+❓ "Converter para camelCase removendo acentos?"
+✅ Resposta: "Sim, devem ser removidos acentos"
+
+❓ "Conflitos de nomes: como resolver?"
+✅ Resposta: "Se tiverem a mesma chave pai, não mexa. Linha menor vence."
+```
+
+**Por quê?**: Economiza tempo, evita retrabalho, garante que a solução atende exatamente o que foi pedido.
+
+---
+
+### 4️⃣ **Fazer Sprints das Tarefas Mais Simples**
 - Agrupar 2-4 tarefas relacionadas em um sprint
 - Estimar tempo total: **máximo 3-4 horas** por sprint
 - Manter foco: **uma sprint = uma versão (ex: v2.9.14)**
@@ -58,17 +105,18 @@ Lista de tasks complexas restantes:
 ```
 Sprint v2.9.14 (Exemplo Task #23):
 ├── Task #23: Orphaned Keys Update (3h estimado)
-│   ├── Subtask 1: extract_all_keys_from_obj() (45min)
-│   ├── Subtask 2: build_substitution_map_by_value() (45min)
-│   ├── Subtask 3: Integração em cli_dedupe() (30min)
-│   ├── Subtask 4: Testes unitários (60min)
-│   └── Subtask 5: Documentação (30min)
-└── Total: 3h30min ✅
+│   ├── Subtask 1: Fazer perguntas ao programador (15min)
+│   ├── Subtask 2: extract_all_keys_from_obj() (45min)
+│   ├── Subtask 3: build_substitution_map_by_value() (45min)
+│   ├── Subtask 4: Integração em cli_dedupe() (30min)
+│   ├── Subtask 5: Testes unitários (60min)
+│   └── Subtask 6: Documentação (30min)
+└── Total: 3h45min ✅
 ```
 
 ---
 
-### 4️⃣ **Implementar do Simples ao Complexo**
+### 5️⃣ **Implementar do Simples ao Complexo com Arquitetura Profissional**
 - **Dentro de cada task**, começar pela parte mais fácil
 - Construir incrementalmente: função auxiliar → função principal → integração
 - Testar cada parte antes de avançar
@@ -80,6 +128,215 @@ Sprint v2.9.14 (Exemplo Task #23):
 4. **GUI/UX** (se aplicável)
 5. **Otimizações** (último passo)
 
+**Princípios de Arquitetura (Obrigatórios)**:
+
+#### 🔄 **Reutilização de Código com Módulos**
+- Criar módulos separados para cada responsabilidade
+- Evitar duplicação (DRY - Don't Repeat Yourself)
+- Funções genéricas reutilizáveis em múltiplos contextos
+
+**Exemplo**:
+```python
+# ✅ BOM: Módulo reutilizável
+# src/utils/file_utils.py
+def read_file_safe(path: str) -> Optional[str]:
+    """Função reutilizada em 10+ lugares"""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Error reading {path}: {e}")
+        return None
+
+# ❌ RUIM: Duplicar código em cada módulo
+# (repete try/except 20 vezes)
+```
+
+#### 📦 **Hierarquias e Encapsulamento**
+- Usar classes quando há estado compartilhado
+- Encapsular atributos privados (`_attribute`)
+- Expor apenas interface pública necessária
+
+**Exemplo**:
+```python
+# ✅ BOM: Encapsulamento adequado
+class ReferenceUpdater:
+    def __init__(self, project_dir: str):
+        self._project_dir = project_dir
+        self._substitutions = {}
+    
+    def update_references(self) -> Dict[str, int]:
+        """Interface pública clara"""
+        self._scan_files()  # Método privado
+        self._build_map()   # Método privado
+        return self._apply_changes()
+
+# ❌ RUIM: Tudo exposto, sem estrutura
+def do_everything(dir, old, new, backup, ext):
+    # 200 linhas sem organização
+```
+
+#### 🎯 **Alta Coesão e Baixo Acoplamento**
+- **Alta Coesão**: Cada módulo/classe tem uma única responsabilidade clara
+- **Baixo Acoplamento**: Módulos independentes, comunicação por interfaces
+
+**Exemplo**:
+```python
+# ✅ ALTA COESÃO: Cada classe faz UMA coisa
+class KeyExtractor:
+    """Apenas extrai chaves de estruturas"""
+    def extract(self, data) -> Dict[str, str]: ...
+
+class SubstitutionMapBuilder:
+    """Apenas constrói mapa de substituições"""
+    def build(self, old, new) -> Dict[str, str]: ...
+
+class FileUpdater:
+    """Apenas atualiza arquivos"""
+    def update(self, files, map) -> int: ...
+
+# ✅ BAIXO ACOPLAMENTO: Comunicação por interfaces
+class ReferenceUpdater:
+    def __init__(self, extractor: KeyExtractor, builder: SubstitutionMapBuilder):
+        self._extractor = extractor  # Injeção de dependência
+        self._builder = builder
+
+# ❌ RUIM: Baixa coesão, alto acoplamento
+class EverythingManager:
+    def do_all(self):
+        # Faz extração + construção + atualização + logging + GUI
+        # Importa 20 módulos diferentes
+        # Impossível testar isoladamente
+```
+
+#### 🏗️ **Padrões GoF (Gang of Four)**
+Aplicar padrões de design quando apropriado:
+
+1. **Strategy Pattern** (escolha de algoritmo em runtime):
+```python
+class CaseConverter:
+    def __init__(self, strategy: CaseStrategy):
+        self._strategy = strategy
+    
+    def convert(self, text: str) -> str:
+        return self._strategy.apply(text)
+
+class CamelCaseStrategy(CaseStrategy):
+    def apply(self, text: str) -> str: ...
+
+class SnakeCaseStrategy(CaseStrategy):
+    def apply(self, text: str) -> str: ...
+```
+
+2. **Factory Pattern** (criação de objetos complexos):
+```python
+class ProcessorFactory:
+    @staticmethod
+    def create(type: str) -> Processor:
+        if type == "json":
+            return JSONProcessor()
+        elif type == "ts":
+            return TypeScriptProcessor()
+```
+
+3. **Observer Pattern** (notificação de eventos):
+```python
+class ProcessingModal(QDialog):
+    cancel_requested = Signal()  # Observer pattern
+    
+    def _on_cancel_clicked(self):
+        self.cancel_requested.emit()  # Notifica observadores
+```
+
+4. **Command Pattern** (undo/redo):
+```python
+class ReplaceCommand:
+    def __init__(self, file: str, old: str, new: str):
+        self._file = file
+        self._old = old
+        self._new = new
+    
+    def execute(self): ...
+    def undo(self): ...
+```
+
+#### 🎨 **Padrões GRASP (General Responsibility Assignment Software Patterns)**
+
+1. **Information Expert**: Atribua responsabilidade a quem tem a informação
+```python
+# ✅ BOM: Dictionary tem a info, então tem o método
+class TranslationDictionary:
+    def __init__(self, data: dict):
+        self._data = data
+    
+    def get_value(self, key_path: str) -> Optional[str]:
+        """Dictionary conhece sua estrutura"""
+        return self._navigate_path(key_path)
+
+# ❌ RUIM: Classe externa manipula estrutura interna
+def get_value_from_dict(dict_data, key_path):
+    # Acesso direto à estrutura interna do dict
+```
+
+2. **Creator**: Classe A cria B se A contém/agrega B
+```python
+# ✅ BOM: RewriterDock cria seus próprios widgets
+class JsonRewriterDock(BaseDock):
+    def __init__(self):
+        self._create_widgets()  # Creator pattern
+        self._setup_layout()
+    
+    def _create_widgets(self):
+        self.ed_input = QLineEdit()  # Cria seus filhos
+        self.btn_process = QPushButton()
+```
+
+3. **Controller**: Delegar operações do sistema a controlador
+```python
+# ✅ BOM: Controlador coordena operações
+class RewriterController:
+    def process_file(self, path: str):
+        data = self._reader.read(path)
+        processed = self._processor.process(data)
+        self._writer.write(path, processed)
+
+# ❌ RUIM: GUI faz tudo diretamente
+class RewriterDock:
+    def on_button_click(self):
+        # 50 linhas de lógica de negócio na GUI
+```
+
+4. **Low Coupling**: Minimizar dependências
+```python
+# ✅ BOM: Interface genérica
+def update_references(updater: ReferenceUpdater):
+    """Aceita qualquer updater que implemente a interface"""
+    updater.update()
+
+# ❌ RUIM: Dependência concreta
+def update_references(file_path: str, backup: bool, ext: list):
+    """Muitos parâmetros, alto acoplamento"""
+```
+
+5. **High Cohesion**: Uma classe, uma responsabilidade
+```python
+# ✅ BOM: Alta coesão
+class FileReader:
+    """Apenas lê arquivos"""
+    def read(self, path: str) -> str: ...
+
+class DataValidator:
+    """Apenas valida dados"""
+    def validate(self, data: dict) -> bool: ...
+
+# ❌ RUIM: Baixa coesão
+class FileManager:
+    def read(self): ...
+    def write(self): ...
+    def validate(self): ...
+    def send_email(self): ...  # ?!
+```
+
 **Anti-padrão** ❌:
 ```python
 # NÃO fazer tudo de uma vez:
@@ -87,23 +344,42 @@ def complex_function_with_everything():
     # 500 linhas de código
     # Múltiplas responsabilidades
     # Difícil de testar
+    # Alto acoplamento
+    # Sem reutilização
 ```
 
 **Padrão Correto** ✅:
 ```python
-def extract_keys(data):  # Simples, testável
-    ...
+# Módulo: src/rewriter/key_extractor.py
+class KeyExtractor:
+    """Alta coesão: só extrai chaves"""
+    def extract_from_obj(self, data) -> Dict[str, str]:
+        return self._recurse(data, prefix='t')
 
-def build_map(old, new):  # Simples, testável
-    ...
+# Módulo: src/rewriter/substitution_builder.py
+class SubstitutionMapBuilder:
+    """Alta coesão: só constrói mapas"""
+    def build_by_value(self, old, new) -> Dict[str, str]:
+        return self._match_values(old, new)
 
-def update_project(dir, map):  # Usa as anteriores
-    ...
+# Módulo: src/rewriter/reference_updater.py
+class ReferenceUpdater:
+    """Baixo acoplamento: usa interfaces"""
+    def __init__(self, extractor: KeyExtractor, builder: SubstitutionMapBuilder):
+        self._extractor = extractor  # Injeção de dependência
+        self._builder = builder
+    
+    def update_project(self, dir: str) -> Dict[str, int]:
+        """Coordena mas não implementa tudo"""
+        old = self._extractor.extract(self._read_old())
+        new = self._extractor.extract(self._read_new())
+        map = self._builder.build_by_value(old, new)
+        return self._apply_to_files(dir, map)
 ```
 
 ---
 
-### 5️⃣ **Fazer Testes**
+### 6️⃣ **Fazer Testes**
 - **Obrigatório**: Testes unitários para cada função pública
 - **Meta**: 100% de cobertura das funcionalidades implementadas
 - **Ferramentas**: `unittest` (nativo) ou `pytest`
@@ -127,7 +403,7 @@ def update_project(dir, map):  # Usa as anteriores
 
 ---
 
-### 6️⃣ **Preencher Nova Documentação**
+### 7️⃣ **Preencher Nova Documentação**
 - **Atualizar TASKS.md**: Marcar tasks como `[X]` completas
 - **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
@@ -168,7 +444,7 @@ def update_project(dir, map):  # Usa as anteriores
 
 ---
 
-### 7️⃣ **Fazer Commit e Push**
+### 8️⃣ **Fazer Commit e Push**
 - **Formato**: Conventional Commits (feat/fix/docs/refactor/test)
 - **Mensagem**: Descritiva, completa, com contexto
 - **Frequência**: 1 commit por task ou grupo lógico de mudanças
@@ -276,21 +552,36 @@ Complexidade: MÉDIA (mais simples que as outras)
 - Task #23 é **mais simples** que editor de texto ou IA
 - Escopo claro: 2 funções principais + integração
 
-**3. Sprint** ✅
-- 5 subtasks planejadas
-- Tempo estimado: 3h30min
+**3. Fazer Perguntas** ✅
+- Perguntado: "Quantas palavras pegar? 3-5?"
+- Resposta: "Default 30 caracteres"
+- Perguntado: "Converter para camelCase?"
+- Resposta: "Sim, remover acentos"
+- Perguntado: "Conflitos de nomes?"
+- Resposta: "Linha menor vence, não mexer se valores diferentes"
 
-**4. Implementar do Simples ao Complexo** ✅
+**4. Sprint** ✅
+- 6 subtasks planejadas (incluindo perguntas)
+- Tempo estimado: 3h45min
+
+**5. Implementar com Arquitetura** ✅
 ```
 Ordem executada:
-1. extract_all_keys_from_obj() (função auxiliar)
-2. build_substitution_map_by_value() (função principal)
-3. Atualizar cli_dedupe() (integração)
+1. extract_all_keys_from_obj() (função auxiliar - Alta Coesão)
+2. build_substitution_map_by_value() (função principal - Baixo Acoplamento)
+3. Atualizar cli_dedupe() (integração - Injeção de Dependência)
 4. Criar testes (validação)
 5. Documentação (finalização)
+
+Padrões Aplicados:
+- ✅ Módulos separados (Reutilização)
+- ✅ Type hints em todas funções
+- ✅ Information Expert (GRASP): cada função tem a info que precisa
+- ✅ Baixo acoplamento: funções independentes
+- ✅ Alta coesão: cada função faz UMA coisa
 ```
 
-**5. Fazer Testes** ✅
+**6. Fazer Testes** ✅
 ```
 12 unit tests criados:
 - 4 testes para extract_all_keys_from_obj()
@@ -300,7 +591,7 @@ Ordem executada:
 Resultado: 12/12 passing (100%)
 ```
 
-**6. Documentação** ✅
+**7. Documentação** ✅
 ```
 Arquivos criados/atualizados:
 - docs/TASKS.md (Task #23 marcada [X])
@@ -309,7 +600,7 @@ Arquivos criados/atualizados:
 Estatísticas: 59.6% → 60.6% (63 tasks completas)
 ```
 
-**7. Commit e Push** ✅
+**8. Commit e Push** ✅
 ```bash
 Commit: 903bca4
 Mensagem: 60 linhas (completa e detalhada)
@@ -371,11 +662,12 @@ O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 ┌─────────────────────────────────────────────┐
 │  1. Ler Documentação                        │
 │  2. Escolher Tarefas Mais Simples           │
-│  3. Planejar Sprint (2-4 tasks, 3-4h)       │
-│  4. Implementar (simples → complexo)        │
-│  5. Testar (100% coverage)                  │
-│  6. Documentar (TASKS + vX.X.X-SPECS)       │
-│  7. Commit + Push (conventional)            │
+│  3. Fazer Perguntas ao Programador          │
+│  4. Planejar Sprint (2-4 tasks, 3-4h)       │
+│  5. Implementar (arquitetura GoF + GRASP)   │
+│  6. Testar (100% coverage)                  │
+│  7. Documentar (TASKS + vX.X.X-SPECS)       │
+│  8. Commit + Push (conventional)            │
 └─────────────────────────────────────────────┘
            ↓
     ┌──────────────┐
