@@ -4326,6 +4326,7 @@ if _PYSIDE:
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
+            self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
             m_tools.addAction(self.act_open_translate)
             m_tools.addAction(self.act_open_rewriter)
             m_tools.addAction(self.act_open_text_extractor)

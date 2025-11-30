@@ -67,6 +67,11 @@ class FileListDock(BaseDock):
         self.btn_list = QPushButton("List Files")
         self.btn_list.clicked.connect(self._list_files)
         
+        # Quick filter (Task #39 - v2.9.12)
+        self.ed_quick_filter = QLineEdit()
+        self.ed_quick_filter.setPlaceholderText("Quick filter by filename...")
+        self.ed_quick_filter.textChanged.connect(self._apply_quick_filter)
+        
         # Results table
         self.table = QTableWidget()
         self.table.setColumnCount(5)
@@ -108,6 +113,9 @@ class FileListDock(BaseDock):
         # List button
         layout.addWidget(self.btn_list)
         
+        # Quick filter
+        layout.addWidget(self.ed_quick_filter)
+        
         # Table
         layout.addWidget(self.table)
         
@@ -129,6 +137,15 @@ class FileListDock(BaseDock):
         )
         if directory:
             self.ed_directory.setText(directory)
+    
+    def _apply_quick_filter(self, text: str):
+        """Apply quick filter to visible rows (Task #39 - v2.9.12)."""
+        text = text.lower()
+        for row in range(self.table.rowCount()):
+            name_item = self.table.item(row, 0)
+            if name_item:
+                name = name_item.text().lower()
+                self.table.setRowHidden(row, text not in name)
     
     def _list_files(self):
         """List files with selected options."""
