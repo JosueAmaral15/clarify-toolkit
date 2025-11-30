@@ -34,6 +34,7 @@ from PySide6.QtGui import (
 )
 
 from .base_dock import BaseDock
+from .json_editor_tab import JsonEditorTab
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
@@ -373,6 +374,7 @@ class EditorDock(BaseDock):
     
     def _new_file(self):
         """Create new untitled file."""
+        # Create text editor tab by default
         tab = EditorTab(None, self)
         tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         
@@ -386,7 +388,7 @@ class EditorDock(BaseDock):
             self,
             "Open File",
             "",
-            "All Files (*);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;JSON (*.json);;HTML (*.html *.htm);;React (*.jsx *.tsx)"
+            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;HTML (*.html *.htm);;React (*.jsx *.tsx)"
         )
         
         if not file_path:
@@ -395,26 +397,47 @@ class EditorDock(BaseDock):
         # Check if already open
         for i in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(i)
-            if tab.file_path == file_path:
+            if hasattr(tab, 'file_path') and tab.file_path == file_path:
                 self.tab_widget.setCurrentIndex(i)
                 self.lbl_status.setText(f"File already open: {os.path.basename(file_path)}")
                 return
         
-        # Load file
-        tab = EditorTab(file_path, self)
+        # Create appropriate tab based on file extension
+        tab = self._create_tab_for_file(file_path)
+        
         if not tab.load_file(file_path):
             QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")
             return
         
         tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         
-        index = self.tab_widget.addTab(tab, tab.get_tab_title())
+        # Use display title (includes JSON icon if JSON file)
+        index = self.tab_widget.addTab(tab, tab.get_display_title())
         self.tab_widget.setCurrentIndex(index)
         
         # Add to recent files
         self._add_recent_file(file_path)
         
-        self.lbl_status.setText(f"Opened: {os.path.basename(file_path)}")
+        # Update status with editor type
+        editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
+        self.lbl_status.setText(f"Opened in {editor_type}: {os.path.basename(file_path)}")
+    
+    def _create_tab_for_file(self, file_path: str):
+        """
+        Create appropriate tab type based on file extension.
+        
+        Pattern: Factory Method (GoF)
+        - Creates JsonEditorTab for .json files
+        - Creates EditorTab for other files
+        """
+        ext = os.path.splitext(file_path)[1].lower()
+        
+        if ext == '.json':
+            # JSON file → use JSON editor with advanced features
+            return JsonEditorTab(file_path, self)
+        else:
+            # Other files → use simple text editor
+            return EditorTab(file_path, self)
     
     def _save_file(self):
         """Save current file."""
@@ -426,11 +449,21 @@ class EditorDock(BaseDock):
             self._save_file_as()
             return
         
-        if tab.save_file():
-            self._update_tab_title(tab)
-            self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
+        # Handle different tab types
+        if isinstance(tab, JsonEditorTab):
+            success, error_msg = tab.save_file()
+            if success:
+                self._update_tab_title(tab)
+                self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{error_msg}")
         else:
-            QMessageBox.critical(self, "Error", f"Failed to save file:\n{tab.file_path}")
+            # EditorTab
+            if tab.save_file():
+                self._update_tab_title(tab)
+                self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{tab.file_path}")
     
     def _save_file_as(self):
         """Save current file with new name."""
@@ -442,17 +475,27 @@ class EditorDock(BaseDock):
             self,
             "Save File As",
             "",
-            "All Files (*);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;JSON (*.json);;HTML (*.html)"
+            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;HTML (*.html)"
         )
         
         if not file_path:
             return
         
-        if tab.save_file(file_path):
-            self._update_tab_title(tab)
-            self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
+        # Handle different tab types
+        if isinstance(tab, JsonEditorTab):
+            success, error_msg = tab.save_file(file_path)
+            if success:
+                self._update_tab_title(tab)
+                self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{error_msg}")
         else:
-            QMessageBox.critical(self, "Error", f"Failed to save file:\n{file_path}")
+            # EditorTab
+            if tab.save_file(file_path):
+                self._update_tab_title(tab)
+                self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
+            else:
+                QMessageBox.critical(self, "Error", f"Failed to save file:\n{file_path}")
     
     def _close_current_tab(self):
         """Close currently active tab."""
@@ -466,7 +509,7 @@ class EditorDock(BaseDock):
         tab = self.tab_widget.widget(index)
         
         # Check if modified
-        if tab.is_modified:
+        if hasattr(tab, 'is_modified') and tab.is_modified:
             reply = QMessageBox.question(
                 self,
                 "Unsaved Changes",
@@ -480,7 +523,14 @@ class EditorDock(BaseDock):
                     self.tab_widget.setCurrentIndex(index)
                     self._save_file_as()
                 else:
-                    tab.save_file()
+                    # Handle different tab types
+                    if isinstance(tab, JsonEditorTab):
+                        success, _ = tab.save_file()
+                    else:
+                        success = tab.save_file()
+                    
+                    if not success:
+                        return  # Don't close if save failed
             elif reply == QMessageBox.Cancel:
                 return
         
@@ -491,10 +541,12 @@ class EditorDock(BaseDock):
         """Handle tab change."""
         if index >= 0:
             tab = self.tab_widget.widget(index)
-            if tab.file_path:
-                self.lbl_status.setText(f"Editing: {os.path.basename(tab.file_path)}")
+            editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
+            
+            if hasattr(tab, 'file_path') and tab.file_path:
+                self.lbl_status.setText(f"{editor_type}: {os.path.basename(tab.file_path)}")
             else:
-                self.lbl_status.setText("Editing: Untitled")
+                self.lbl_status.setText(f"{editor_type}: Untitled")
         else:
             self.lbl_status.setText("Ready")
     
@@ -524,17 +576,20 @@ class EditorDock(BaseDock):
         # Check if already open
         for i in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(i)
-            if tab.file_path == file_path:
+            if hasattr(tab, 'file_path') and tab.file_path == file_path:
                 self.tab_widget.setCurrentIndex(i)
                 return
         
-        # Load file
-        tab = EditorTab(file_path, self)
+        # Create appropriate tab based on file extension
+        tab = self._create_tab_for_file(file_path)
+        
         if tab.load_file(file_path):
             tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
-            index = self.tab_widget.addTab(tab, tab.get_tab_title())
+            index = self.tab_widget.addTab(tab, tab.get_display_title())
             self.tab_widget.setCurrentIndex(index)
             self._add_recent_file(file_path)
-            self.lbl_status.setText(f"Opened: {os.path.basename(file_path)}")
+            
+            editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
+            self.lbl_status.setText(f"Opened in {editor_type}: {os.path.basename(file_path)}")
         else:
             QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")

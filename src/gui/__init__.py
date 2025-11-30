@@ -23,6 +23,8 @@ from .history_dock import HistoryDock
 from .file_list_dock import FileListDock
 from .tutorials_dock import TutorialsDock
 from .editor_dock import EditorDock
+from .json_editor_tab import JsonEditorTab
+from .json_validator import JsonValidator
 
 __all__ = [
     # Base classes
@@ -34,5 +36,7 @@ __all__ = [
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
     'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
-    'EditorDock'
+    'EditorDock',
+    # Editor components
+    'JsonEditorTab', 'JsonValidator'
 ]

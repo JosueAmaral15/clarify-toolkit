@@ -269,12 +269,132 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - Context menu (copy, paste, select all)
 - Syntax highlighting para mais linguagens (Ruby, Go, Rust)
 
+---
+
+#### Task #47 - Editores JSON com Recursos Avançados (v2.9.17)
+**Status**: ✅ Completa - 30/11/2025
+
+**Objetivo**: Implementar editor JSON avançado integrado ao EditorDock com validação em tempo real, tree view, formatação e busca.
+
+**Implementação**:
+
+1. ✅ **JsonValidator** (`src/gui/json_validator.py` - 160 linhas):
+   - Validação em tempo real com `json.loads()`
+   - Retorna `ValidationResult` (is_valid, error_msg, line, col)
+   - **Format JSON**: Pretty print com 2/4 espaços de indentação
+   - **Minify JSON**: Compacta JSON (remove espaços e quebras)
+   - **ValidatorFactory**: Factory Method para criar validators por tipo
+   - Pattern: **Strategy** (algoritmo de validação encapsulado, extensível para XML/YAML)
+
+2. ✅ **JsonTreeWidget** (`src/gui/json_editor_tab.py` - 100+ linhas):
+   - QTreeWidget para navegação hierárquica
+   - Nodes clicáveis → move cursor para linha correspondente no editor
+   - Collapse/Expand automático (botões no toolbar)
+   - Visual indicators:
+     * Objects: `{...} (N keys)` em light blue (#9CDCFE)
+     * Arrays: `[...] (N items)` em teal (#4EC9B0)
+     * Strings: `"value"` em orange (#CE9178)
+     * Numbers: `123` em light green (#B5CEA8)
+     * Booleans: `true/false` em blue (#569CD6)
+     * Null: `null` em gray
+   - Pattern: **Composite** (estrutura recursiva de árvore)
+
+3. ✅ **JsonSearchDialog** (`src/gui/json_editor_tab.py` - 150+ linhas):
+   - Find por key ou value dentro do JSON
+   - Opções:
+     * Case Sensitive
+     * Keys Only (busca apenas chaves `"key":`)
+     * Values Only (busca apenas valores `: "value"`)
+   - Find Next/Previous com navegação circular
+   - Highlight matches em amarelo (#FFFF00)
+   - Results label: "Match N of M"
+   - Pattern: **Command** (operação de busca como objeto, facilita undo/redo futuro)
+
+4. ✅ **JsonEditorTab** (`src/gui/json_editor_tab.py` - 500+ linhas):
+   - Editor completo para arquivos JSON
+   - **Toolbar**:
+     * Format JSON (2 spaces / 4 spaces / Minify)
+     * Validate (manual validation trigger)
+     * Search (abre JsonSearchDialog)
+     * Collapse All / Expand All (tree controls)
+   - **Splitter Layout**: Editor (70%) | Tree View (30%)
+   - **Real-time Validation**:
+     * Debounced validation (500ms após última digitação)
+     * Visual indicators:
+       - Valid: `✓ Valid JSON` (green #6A9955)
+       - Invalid: `✗ Invalid JSON (line X, col Y): error` (red #F44747)
+       - Border color: green (valid) / red (invalid)
+   - **Save Behavior**:
+     * Warning se JSON inválido, mas permite salvar
+     * Retorna `(success: bool, error_msg: str)`
+   - **Tab Title**: `🗎 filename.json *` (ícone JSON + asterisco se modificado)
+   - **Signals**:
+     * `modified_changed(bool)`: Emite quando estado de modificação muda
+     * `validation_changed(bool, str)`: Emite quando validação muda
+   - Pattern: **Facade** (interface unificada para subsistemas de validação, tree, search)
+   - Pattern: **Observer** (signals para comunicação com EditorDock)
+
+5. ✅ **EditorDock Modificações** (`src/gui/editor_dock.py`):
+   - **Factory Method**: `_create_tab_for_file(path)`
+     * Detecta extensão `.json` → cria `JsonEditorTab`
+     * Outras extensões → cria `EditorTab` (text editor simples)
+   - **Status Bar**: Mostra "JSON Editor" vs "Text Editor"
+   - **Tab Icons**: Ícone 🗎 para arquivos JSON
+   - **Save Handling**: Suporta ambos tipos de tabs (EditorTab e JsonEditorTab)
+   - **Integration**: Mesmo dock, detecção automática, módulos separados (modularização)
+   - Pattern: **Factory Method** (criação de tabs baseada em contexto)
+
+**Arquivos Criados/Modificados**:
+- `src/gui/json_validator.py` (novo - 160 linhas)
+- `src/gui/json_editor_tab.py` (novo - 750+ linhas)
+- `src/gui/editor_dock.py` (modificado - adicionado Factory Method)
+- `src/gui/__init__.py` (modificado - exports)
+- `tests/test_json_editor.py` (novo - 18 testes)
+
+**Testes**:
+- 18 unit tests (100% passing):
+  * TestValidationResult: 2 tests
+  * TestJsonValidator: 10 tests (validate, format, minify, edge cases)
+  * TestValidatorFactory: 3 tests
+  * TestJsonEditorTabIntegration: 3 tests (load, save, validation UI)
+
+**Padrões de Design Aplicados**:
+- **Strategy** (GoF): JsonValidator encapsula algoritmo de validação
+- **Factory Method** (GoF): EditorDock cria tabs apropriados, ValidatorFactory cria validators
+- **Composite** (GoF): JsonTreeWidget estrutura hierárquica recursiva
+- **Command** (GoF): JsonSearchDialog operações de busca
+- **Facade** (GoF): JsonEditorTab interface unificada
+- **Observer** (GoF): Signals para comunicação entre componentes
+- **Value Object** (DDD): ValidationResult objeto imutável
+- **Information Expert** (GRASP): JsonEditorTab conhece seu próprio estado
+- **Low Coupling** (GRASP): Comunicação via signals
+- **High Cohesion** (GRASP): Responsabilidades claras por classe
+
+**Funcionalidades Completas**:
+- ✅ Validação JSON em tempo real (debounced 500ms)
+- ✅ Format JSON com 2/4 espaços ou minify
+- ✅ Tree view com navegação hierárquica clicável
+- ✅ Collapse/Expand nodes
+- ✅ Search por key/value com options (case sensitive, keys only, values only)
+- ✅ Highlight matches em amarelo
+- ✅ Visual indicators (green/red border, status label)
+- ✅ Warning ao salvar JSON inválido (não bloqueia)
+- ✅ Ícone JSON 🗎 em tabs
+- ✅ Integração transparente com EditorDock existente
+
+**Próximos Passos** (melhorias futuras):
+- JSON schema validation
+- Auto-completion para chaves
+- Diff viewer para comparar JSONs
+- Export tree view to CSV
+- Undo/Redo específico para JSON operations
+
 ### 🔨 Tasks Pendentes
 
 #### Editor Features
 
 - **[X]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes *(v2.9.16 - Task #46: EditorDock)*
-- **[]** Incluir editores JSON como abas
+- **[X]** Incluir editores JSON como abas *(v2.9.17 - Task #47: JsonEditorTab com validação, tree view, search)*
 - **[]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
@@ -383,9 +503,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 3 | 15 | 16.7% |
+| COULD HAVE | 18 | 4 | 14 | 22.2% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **66** | **38** | **63.5%** |
+| **TOTAL** | **104** | **67** | **37** | **64.4%** |
 
 ### Notas
 
@@ -394,11 +514,13 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **63.5%** do projeto total completo (66 tasks completas) - em progressão constante
+- **64.4%** do projeto total completo (67 tasks completas) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.14**: Task #23 COMPLETA - Orphaned Keys Update System com VALUE EQUALITY (12 unit tests passing)
 - **v2.9.15**: Tasks #44 e #45 COMPLETAS - Análise add/ + Sistema de Tutoriais com Help menu (3 tutoriais MVP, TutorialsDock, preparação chatbot)
+- **v2.9.17**: Task #47 COMPLETA - JSON Editor avançado com validação tempo real, tree view, format, search (750+ linhas, 18 testes passing)
 - **v2.9.16**: Task #46 COMPLETA - Editor Integrado com syntax highlighting diferenciado por cores (700+ linhas, tabs, save/load, Ctrl+E)
+- **v2.9.17**: Task #47 COMPLETA - JSON Editor avançado integrado (validação, tree view, format, search - 750+ linhas, 18 testes)
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 

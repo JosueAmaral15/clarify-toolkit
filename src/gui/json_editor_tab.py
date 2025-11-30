@@ -1,0 +1,588 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+JSON Editor Tab - Advanced JSON Editing with Tree Navigation
+
+Complete JSON editor with:
+- Real-time validation with error indicators
+- Tree view for hierarchical navigation
+- Format JSON (2/4 spaces indentation)
+- Search by key/value
+- Collapse/Expand nodes
+- Syntax highlighting
+
+Patterns:
+- Facade (GoF): Simplifies JSON editing operations
+- Composite (GoF): Tree structure for JSON hierarchy
+- Command (GoF): Search operations
+- Observer (GoF): Signals for state changes
+"""
+
+from __future__ import annotations
+from typing import Optional, Dict, Any, List, Tuple
+import os
+import json
+import re
+
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
+    QLabel, QTreeWidget, QTreeWidgetItem, QSplitter, QDialog,
+    QLineEdit, QCheckBox, QMessageBox, QToolBar, QComboBox
+)
+from PySide6.QtGui import QFont, QColor, QTextCursor, QTextCharFormat, QPalette
+
+from .json_validator import JsonValidator, ValidationResult
+
+
+class JsonTreeWidget(QTreeWidget):
+    """
+    Tree widget for JSON structure navigation.
+    
+    Pattern: Composite (GoF)
+    - Recursive tree structure
+    - Each node can have children (objects/arrays)
+    
+    Features:
+    - Click node → jump to line in editor
+    - Collapse/Expand controls
+    - Visual indicators: {} for objects, [] for arrays
+    """
+    
+    node_clicked = Signal(int)  # Emits line number when node clicked
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setHeaderLabels(["Key", "Value", "Type"])
+        self.setColumnWidth(0, 200)
+        self.setColumnWidth(1, 300)
+        self.setColumnWidth(2, 80)
+        self.setAlternatingRowColors(True)
+        self.itemClicked.connect(self._on_item_clicked)
+        
+        # Store line numbers for each node
+        self.line_map: Dict[QTreeWidgetItem, int] = {}
+    
+    def _on_item_clicked(self, item: QTreeWidgetItem, column: int):
+        """Handle tree item click - emit line number."""
+        if item in self.line_map:
+            self.node_clicked.emit(self.line_map[item])
+    
+    def build_tree(self, json_text: str):
+        """
+        Build tree from JSON text.
+        
+        Pattern: Composite (recursive tree building)
+        """
+        self.clear()
+        self.line_map.clear()
+        
+        try:
+            obj = json.loads(json_text)
+            self._add_node(None, "root", obj, 1)
+            self.expandAll()
+        except json.JSONDecodeError:
+            # Invalid JSON - don't build tree
+            pass
+    
+    def _add_node(self, parent: Optional[QTreeWidgetItem], key: str, value: Any, line: int):
+        """
+        Recursively add node to tree.
+        
+        Pattern: Composite (GoF) - recursive structure
+        """
+        if parent is None:
+            item = QTreeWidgetItem(self)
+        else:
+            item = QTreeWidgetItem(parent)
+        
+        # Store line number
+        self.line_map[item] = line
+        
+        if isinstance(value, dict):
+            # Object node
+            item.setText(0, key)
+            item.setText(1, f"{{...}} ({len(value)} keys)")
+            item.setText(2, "Object")
+            item.setForeground(0, QColor("#9CDCFE"))  # Light blue
+            
+            # Add children
+            for child_key, child_value in value.items():
+                self._add_node(item, child_key, child_value, line + 1)
+        
+        elif isinstance(value, list):
+            # Array node
+            item.setText(0, key)
+            item.setText(1, f"[...] ({len(value)} items)")
+            item.setText(2, "Array")
+            item.setForeground(0, QColor("#4EC9B0"))  # Teal
+            
+            # Add children
+            for i, child_value in enumerate(value):
+                self._add_node(item, f"[{i}]", child_value, line + 1)
+        
+        elif isinstance(value, str):
+            # String value
+            item.setText(0, key)
+            display_value = value[:50] + "..." if len(value) > 50 else value
+            item.setText(1, f'"{display_value}"')
+            item.setText(2, "String")
+            item.setForeground(1, QColor("#CE9178"))  # Orange
+        
+        elif isinstance(value, bool):
+            # Boolean value
+            item.setText(0, key)
+            item.setText(1, str(value).lower())
+            item.setText(2, "Boolean")
+            item.setForeground(1, QColor("#569CD6"))  # Blue
+        
+        elif isinstance(value, (int, float)):
+            # Number value
+            item.setText(0, key)
+            item.setText(1, str(value))
+            item.setText(2, "Number")
+            item.setForeground(1, QColor("#B5CEA8"))  # Light green
+        
+        elif value is None:
+            # Null value
+            item.setText(0, key)
+            item.setText(1, "null")
+            item.setText(2, "Null")
+            item.setForeground(1, QColor("#808080"))  # Gray
+
+
+class JsonSearchDialog(QDialog):
+    """
+    Search dialog for finding keys/values in JSON.
+    
+    Pattern: Command (GoF)
+    - Encapsulates search operation as object
+    - Easy to add undo/redo, history
+    """
+    
+    def __init__(self, editor: QTextEdit, parent=None):
+        super().__init__(parent)
+        self.editor = editor
+        self.current_match_index = -1
+        self.matches: List[Tuple[int, int]] = []  # [(start, length), ...]
+        
+        self.setWindowTitle("Search in JSON")
+        self.setMinimumWidth(500)
+        
+        self._setup_ui()
+        self._connect_signals()
+    
+    def _setup_ui(self):
+        """Setup search dialog UI."""
+        layout = QVBoxLayout(self)
+        
+        # Search input
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Find:"))
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Enter key or value to search...")
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+        
+        # Options
+        options_layout = QHBoxLayout()
+        self.chk_case_sensitive = QCheckBox("Case Sensitive")
+        self.chk_keys_only = QCheckBox("Keys Only")
+        self.chk_values_only = QCheckBox("Values Only")
+        options_layout.addWidget(self.chk_case_sensitive)
+        options_layout.addWidget(self.chk_keys_only)
+        options_layout.addWidget(self.chk_values_only)
+        options_layout.addStretch()
+        layout.addLayout(options_layout)
+        
+        # Results label
+        self.lbl_results = QLabel("0 matches found")
+        self.lbl_results.setStyleSheet("color: #6A9955;")
+        layout.addWidget(self.lbl_results)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_find = QPushButton("Find All")
+        self.btn_next = QPushButton("Next")
+        self.btn_prev = QPushButton("Previous")
+        self.btn_close = QPushButton("Close")
+        
+        self.btn_next.setEnabled(False)
+        self.btn_prev.setEnabled(False)
+        
+        btn_layout.addWidget(self.btn_find)
+        btn_layout.addWidget(self.btn_prev)
+        btn_layout.addWidget(self.btn_next)
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.btn_close)
+        layout.addLayout(btn_layout)
+    
+    def _connect_signals(self):
+        """Connect signals."""
+        self.btn_find.clicked.connect(self._find_all)
+        self.btn_next.clicked.connect(self._find_next)
+        self.btn_prev.clicked.connect(self._find_prev)
+        self.btn_close.clicked.connect(self.close)
+        self.search_input.returnPressed.connect(self._find_all)
+    
+    def _find_all(self):
+        """
+        Find all matches in editor.
+        
+        Pattern: Command (GoF) - execute search command
+        """
+        search_text = self.search_input.text()
+        if not search_text:
+            return
+        
+        # Clear previous highlights
+        self._clear_highlights()
+        self.matches.clear()
+        self.current_match_index = -1
+        
+        # Get editor text
+        text = self.editor.toPlainText()
+        
+        # Case sensitivity
+        if self.chk_case_sensitive.isChecked():
+            search_flags = 0
+        else:
+            search_flags = re.IGNORECASE
+        
+        # Search pattern
+        if self.chk_keys_only.isChecked():
+            # Search only in keys: "key":
+            pattern = rf'"{re.escape(search_text)}"(?=\s*:)'
+        elif self.chk_values_only.isChecked():
+            # Search only in values: : "value"
+            pattern = rf':\s*"[^"]*{re.escape(search_text)}[^"]*"'
+        else:
+            # Search everywhere
+            pattern = re.escape(search_text)
+        
+        # Find all matches
+        try:
+            for match in re.finditer(pattern, text, search_flags):
+                self.matches.append((match.start(), len(match.group())))
+        except re.error:
+            QMessageBox.warning(self, "Invalid Pattern", "Invalid search pattern")
+            return
+        
+        # Update results label
+        self.lbl_results.setText(f"{len(self.matches)} matches found")
+        
+        # Enable navigation buttons
+        if self.matches:
+            self.btn_next.setEnabled(True)
+            self.btn_prev.setEnabled(True)
+            self.current_match_index = 0
+            self._highlight_current_match()
+        else:
+            self.btn_next.setEnabled(False)
+            self.btn_prev.setEnabled(False)
+    
+    def _find_next(self):
+        """Navigate to next match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index + 1) % len(self.matches)
+        self._highlight_current_match()
+    
+    def _find_prev(self):
+        """Navigate to previous match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index - 1) % len(self.matches)
+        self._highlight_current_match()
+    
+    def _highlight_current_match(self):
+        """Highlight current match in editor."""
+        if not self.matches or self.current_match_index < 0:
+            return
+        
+        start, length = self.matches[self.current_match_index]
+        
+        # Move cursor to match
+        cursor = self.editor.textCursor()
+        cursor.setPosition(start)
+        cursor.setPosition(start + length, QTextCursor.KeepAnchor)
+        self.editor.setTextCursor(cursor)
+        
+        # Highlight with yellow background
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor("#FFFF00"))  # Yellow
+        cursor.mergeCharFormat(fmt)
+        
+        # Update results label
+        self.lbl_results.setText(f"Match {self.current_match_index + 1} of {len(self.matches)}")
+    
+    def _clear_highlights(self):
+        """Clear all highlights in editor."""
+        cursor = self.editor.textCursor()
+        cursor.select(QTextCursor.Document)
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor())  # Clear background
+        cursor.mergeCharFormat(fmt)
+
+
+class JsonEditorTab(QWidget):
+    """
+    Complete JSON editor tab with validation, tree view, and search.
+    
+    Pattern: Facade (GoF)
+    - Provides unified interface to JSON editing subsystems
+    - Simplifies interaction between validator, tree, search
+    
+    Pattern: Observer (GoF)
+    - Emits signals for modified state, validation state
+    
+    Features:
+    - Real-time validation with visual indicators
+    - Tree view for navigation
+    - Format JSON (2/4 spaces)
+    - Search by key/value
+    - Syntax highlighting (reuses existing SyntaxHighlighter)
+    """
+    
+    modified_changed = Signal(bool)
+    validation_changed = Signal(bool, str)  # (is_valid, error_msg)
+    
+    def __init__(self, file_path: Optional[str] = None, parent=None):
+        super().__init__(parent)
+        self.file_path = file_path
+        self.is_modified = False
+        self.validator = JsonValidator()
+        self.validation_timer = QTimer(self)
+        self.validation_timer.setSingleShot(True)
+        self.validation_timer.setInterval(500)  # 500ms debounce
+        
+        self._setup_ui()
+        self._connect_signals()
+        
+        if file_path:
+            self.load_file(file_path)
+    
+    def _setup_ui(self):
+        """Setup JSON editor UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Toolbar
+        toolbar = QHBoxLayout()
+        
+        self.btn_format = QPushButton("Format JSON")
+        self.btn_format.setToolTip("Pretty print JSON with indentation")
+        
+        self.combo_indent = QComboBox()
+        self.combo_indent.addItems(["2 spaces", "4 spaces", "Minify"])
+        self.combo_indent.setToolTip("Indentation style")
+        
+        self.btn_validate = QPushButton("Validate")
+        self.btn_validate.setToolTip("Check JSON syntax")
+        
+        self.btn_search = QPushButton("Search")
+        self.btn_search.setToolTip("Search for key or value")
+        
+        self.btn_collapse = QPushButton("Collapse All")
+        self.btn_expand = QPushButton("Expand All")
+        
+        toolbar.addWidget(self.btn_format)
+        toolbar.addWidget(self.combo_indent)
+        toolbar.addWidget(self.btn_validate)
+        toolbar.addWidget(self.btn_search)
+        toolbar.addWidget(self.btn_collapse)
+        toolbar.addWidget(self.btn_expand)
+        toolbar.addStretch()
+        
+        layout.addLayout(toolbar)
+        
+        # Splitter: Editor (70%) | Tree View (30%)
+        splitter = QSplitter(Qt.Horizontal)
+        
+        # Left: Editor with validation indicator
+        editor_container = QWidget()
+        editor_layout = QVBoxLayout(editor_container)
+        editor_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Validation status
+        self.lbl_validation = QLabel("✓ Valid JSON")
+        self.lbl_validation.setStyleSheet("color: #6A9955; font-weight: bold;")
+        editor_layout.addWidget(self.lbl_validation)
+        
+        # Text editor
+        self.editor = QTextEdit()
+        self.editor.setAcceptRichText(False)
+        self.editor.setTabStopDistance(40)
+        font = QFont("Courier New", 10)
+        self.editor.setFont(font)
+        editor_layout.addWidget(self.editor)
+        
+        splitter.addWidget(editor_container)
+        
+        # Right: Tree view
+        self.tree = JsonTreeWidget()
+        splitter.addWidget(self.tree)
+        
+        # Set initial splitter sizes (70% editor, 30% tree)
+        splitter.setStretchFactor(0, 7)
+        splitter.setStretchFactor(1, 3)
+        
+        layout.addWidget(splitter)
+        
+        # Setup syntax highlighter
+        from .editor_dock import SyntaxHighlighter
+        self.highlighter = SyntaxHighlighter(self.editor.document(), "json")
+    
+    def _connect_signals(self):
+        """Connect signals."""
+        self.editor.textChanged.connect(self._on_text_changed)
+        self.validation_timer.timeout.connect(self._validate)
+        self.tree.node_clicked.connect(self._jump_to_line)
+        
+        self.btn_format.clicked.connect(self._format_json)
+        self.btn_validate.clicked.connect(self._validate)
+        self.btn_search.clicked.connect(self._show_search)
+        self.btn_collapse.clicked.connect(self.tree.collapseAll)
+        self.btn_expand.clicked.connect(self.tree.expandAll)
+    
+    def _on_text_changed(self):
+        """Handle text changes - mark as modified and schedule validation."""
+        if not self.is_modified:
+            self.is_modified = True
+            self.modified_changed.emit(True)
+        
+        # Schedule validation (debounced)
+        self.validation_timer.start()
+    
+    def _validate(self):
+        """
+        Validate JSON and update UI indicators.
+        
+        Pattern: Strategy (validation algorithm)
+        """
+        text = self.editor.toPlainText()
+        result = self.validator.validate(text)
+        
+        if result.is_valid:
+            self.lbl_validation.setText("✓ Valid JSON")
+            self.lbl_validation.setStyleSheet("color: #6A9955; font-weight: bold;")
+            self.editor.setStyleSheet("")
+            
+            # Update tree view
+            self.tree.build_tree(text)
+            
+            self.validation_changed.emit(True, "")
+        else:
+            error_text = f"✗ Invalid JSON (line {result.line}, col {result.col}): {result.error_msg}"
+            self.lbl_validation.setText(error_text)
+            self.lbl_validation.setStyleSheet("color: #F44747; font-weight: bold;")
+            self.editor.setStyleSheet("QTextEdit { border: 2px solid #F44747; }")
+            
+            self.validation_changed.emit(False, error_text)
+    
+    def _format_json(self):
+        """Format JSON with selected indentation."""
+        text = self.editor.toPlainText()
+        indent_choice = self.combo_indent.currentText()
+        
+        if indent_choice == "Minify":
+            success, result = self.validator.minify_json(text)
+        else:
+            indent = 2 if "2" in indent_choice else 4
+            success, result = self.validator.format_json(text, indent)
+        
+        if success:
+            self.editor.blockSignals(True)
+            self.editor.setPlainText(result)
+            self.editor.blockSignals(False)
+            self._validate()
+        else:
+            QMessageBox.warning(self, "Format Error", result)
+    
+    def _show_search(self):
+        """Show search dialog."""
+        dialog = JsonSearchDialog(self.editor, self)
+        dialog.exec()
+    
+    def _jump_to_line(self, line: int):
+        """Jump editor cursor to specified line."""
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        for _ in range(line - 1):
+            cursor.movePosition(QTextCursor.Down)
+        self.editor.setTextCursor(cursor)
+        self.editor.setFocus()
+    
+    def load_file(self, file_path: str) -> bool:
+        """Load JSON file into editor."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            self.file_path = file_path
+            self.editor.blockSignals(True)
+            self.editor.setPlainText(content)
+            self.editor.blockSignals(False)
+            self.is_modified = False
+            self.modified_changed.emit(False)
+            
+            # Validate and build tree
+            self._validate()
+            
+            return True
+        except Exception as e:
+            return False
+    
+    def save_file(self, file_path: Optional[str] = None) -> Tuple[bool, str]:
+        """
+        Save editor content to file.
+        
+        Returns:
+            Tuple of (success, error_message)
+        """
+        save_path = file_path or self.file_path
+        if not save_path:
+            return (False, "No file path specified")
+        
+        # Validate before save
+        text = self.editor.toPlainText()
+        result = self.validator.validate(text)
+        
+        if not result.is_valid:
+            # Warning: Invalid JSON - allow save anyway
+            reply = QMessageBox.question(
+                self,
+                "Invalid JSON",
+                f"JSON is invalid:\n{result.error_msg}\n\nSave anyway?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.No:
+                return (False, "Save cancelled by user")
+        
+        try:
+            with open(save_path, 'w', encoding='utf-8') as f:
+                f.write(text)
+            
+            self.file_path = save_path
+            self.is_modified = False
+            self.modified_changed.emit(False)
+            
+            return (True, "")
+        except Exception as e:
+            return (False, str(e))
+    
+    def get_tab_title(self) -> str:
+        """Get title for tab."""
+        if self.file_path:
+            return os.path.basename(self.file_path)
+        return "Untitled.json"
+    
+    def get_display_title(self) -> str:
+        """Get display title with modified indicator and JSON icon."""
+        title = "🗎 " + self.get_tab_title()  # JSON icon
+        if self.is_modified:
+            title += " *"
+        return title
