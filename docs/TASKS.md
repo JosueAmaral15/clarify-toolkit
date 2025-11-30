@@ -128,6 +128,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - Parâmetros: -a (show hidden), -l (long format), -h (human-readable), -R (recursive)
   - Exibe: Name, Size, Modified, Permissions (drwxr-xr-x), Owner:Group
   - Tabela sortable com exportação CSV
+- **[X]** Keyboard shortcut para Advanced File Search: Ctrl+Shift+F **(v2.9.12 - Task #37)**
+- **[X]** Quick filter no File List: filtro rápido por filename sem re-executar busca **(v2.9.12 - Task #39)**
 
 ---
 
