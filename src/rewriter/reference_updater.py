@@ -137,7 +137,7 @@ def build_substitution_map(
     
     Strategy:
     - For each key in old_keys that's NOT in new_keys
-    - Find the closest match in new_keys (same parent path)
+    - Find the closest match in new_keys using string similarity
     - Map: removed_key → kept_key
     
     Args:
@@ -148,6 +148,17 @@ def build_substitution_map(
         Dictionary mapping removed keys to their replacements
         Example: {'t.pages.contactPage': 't.pages.contact'}
     """
+    def string_similarity(s1: str, s2: str) -> float:
+        """Calculate similarity between two strings (0-1)."""
+        # Simple similarity: common prefix length / max length
+        common = 0
+        for c1, c2 in zip(s1, s2):
+            if c1 == c2:
+                common += 1
+            else:
+                break
+        return common / max(len(s1), len(s2))
+    
     substitutions: Dict[str, str] = {}
     removed_keys = old_keys - new_keys
     
@@ -156,16 +167,16 @@ def build_substitution_map(
         parts = removed_key.split('.')
         
         # Find best match in new_keys
-        # Strategy: Look for keys with same parent path
+        # Strategy: Look for keys with same parent path and depth
         if len(parts) <= 2:
             # Root level key, can't find parent
             continue
         
         # Get parent path (e.g., "t.pages" from "t.pages.contactPage")
         parent = '.'.join(parts[:-1])
-        removed_name = parts[-1]
+        removed_name = parts[-1].lower()
         
-        # Find candidates with same parent
+        # Find candidates with same parent and depth
         candidates = []
         for new_key in new_keys:
             new_parts = new_key.split('.')
@@ -175,17 +186,31 @@ def build_substitution_map(
                     candidates.append(new_key)
         
         if not candidates:
-            # No direct siblings, look for similar keys
-            # Use simple string similarity (starts with same prefix)
+            # No direct siblings, look for similar keys (same depth)
             candidates = [
                 k for k in new_keys
                 if k.startswith(parent) and len(k.split('.')) == len(parts)
             ]
         
         if candidates:
-            # Use first candidate (could be improved with better similarity)
-            best_match = candidates[0]
-            substitutions[removed_key] = best_match
+            # Find best match based on name similarity
+            best_match = None
+            best_score = 0.0
+            
+            for candidate in candidates:
+                candidate_name = candidate.split('.')[-1].lower()
+                score = string_similarity(removed_name, candidate_name)
+                
+                # Also check if removed name contains candidate name or vice versa
+                if candidate_name in removed_name or removed_name in candidate_name:
+                    score += 0.5
+                
+                if score > best_score:
+                    best_score = score
+                    best_match = candidate
+            
+            if best_match:
+                substitutions[removed_key] = best_match
     
     return substitutions
 
