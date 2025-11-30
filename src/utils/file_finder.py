@@ -9,13 +9,13 @@ import os
 import re
 from datetime import datetime
 from typing import List, Tuple, Optional
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QComboBox, QSpinBox, QDateTimeEdit, QCheckBox,
     QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QMessageBox, QFileDialog
 )
-from PyQt6.QtCore import Qt, QDateTime
+from PySide6.QtCore import Qt, QDateTime
 
 
 class AdvancedFileSearchDialog(QDialog):
@@ -127,6 +127,9 @@ class AdvancedFileSearchDialog(QDialog):
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSortingEnabled(True)
+        # Task #41 - v2.9.13: Enable tooltips for preview
+        self.table.setMouseTracking(True)
+        self.table.itemEntered.connect(self._show_file_preview)
         results_layout.addWidget(self.table)
         
         # Results stats
@@ -345,6 +348,44 @@ class AdvancedFileSearchDialog(QDialog):
             )
         except Exception as e:
             QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+    
+    def _show_file_preview(self, item: QTableWidgetItem):
+        """Show file preview tooltip on hover (Task #41 - v2.9.13)."""
+        if not item:
+            return
+        
+        row = item.row()
+        if row >= len(self.results):
+            return
+        
+        filepath, stat = self.results[row]
+        
+        # Only show preview for files (not directories)
+        if not os.path.isfile(filepath):
+            item.setToolTip("Directory")
+            return
+        
+        try:
+            # Read first 3 lines (max 200 chars)
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = []
+                char_count = 0
+                for _ in range(3):
+                    line = f.readline()
+                    if not line:
+                        break
+                    lines.append(line.rstrip())
+                    char_count += len(line)
+                    if char_count >= 200:
+                        break
+                
+                preview = '\n'.join(lines)
+                if char_count >= 200:
+                    preview = preview[:200] + "..."
+                
+                item.setToolTip(preview if preview else "(empty file)")
+        except Exception as e:
+            item.setToolTip(f"Could not read file: {e}")
 
 
 def show_advanced_file_search(parent=None, initial_dir: str = "") -> Optional[List[str]]:
