@@ -97,9 +97,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   ```javascript
   whyItSWrong: ['Why it\'s wrong:', 'Why it\'s wrong:'] → ['Why it\'s wrong:']
   ```
-- **[]** Adicionar feature para substituir listas por objetos/dicionários em arquivos JSON com restrições de escopo (ex: apenas em `t.pages`)
+- **[X]** Adicionar feature para substituir listas por objetos/dicionários em arquivos JSON com restrições de escopo (ex: apenas em `t.pages`) **(v2.9.10 - Task #21)**
 - **[X]** Normalizar escaping excessivo automaticamente (detectar `\\\\'` ou mais → `\\'`) **(v2.9.10 - Task #22)**
-- **[]** Converter arrays para objetos com geração inteligente de chaves (camelCase, primeiras 30 chars) **(v2.9.10 - Task #21 - EM PROGRESSO)**
+- **[X]** Converter arrays para objetos com geração inteligente de chaves (camelCase, primeiras 30 chars, remove acentos) **(v2.9.10 - Task #21)**
 - **[]** Atualizar referências órfãs em arquivos do projeto após eliminação de duplicatas **(v2.9.10 - Task #23 - PENDENTE)**
 - **[X]** Incluir possibilidade de filtrar extensões (ex: `.jsx`) em todos os módulos e funcionalidades *(v2.9.0 - Extension Filter)*;
 - **[X]** Resolver issue de tradução quando texto tem parênteses (ex: `'Multiple Choice (Multiple)'`) **(v2.9.9 - Parentheses Support)**
@@ -291,10 +291,10 @@ def walk(v):
 
 ## 🎯 Marcos Recentes
 
-- **v2.9.10 (30/11/2025)**: +2 tasks completadas (SHOULD HAVE + WOULD HAVE LATER) - **EM PROGRESSO**
+- **v2.9.10 (30/11/2025)**: +3 tasks completadas (SHOULD HAVE + WOULD HAVE LATER) - **75% COMPLETO**
   - ✅ Task #24: Sistema de internacionalização (i18n) com alternância runtime EN↔PT-BR
   - ✅ Task #22: Normalizar escaping excessivo automaticamente (`\\\\'` → `\\'`)
-  - 🔄 Task #21: Converter arrays para objetos com geração inteligente de chaves (EM PROGRESSO)
+  - ✅ Task #21: Converter arrays para objetos com geração inteligente de chaves
   - 📋 Task #23: Atualizar referências órfãs após eliminação de duplicatas (PENDENTE)
 
 - **v2.9.9 (29/11/2025)**: +6 tasks completadas (MUST HAVE + SHOULD HAVE + WOULD HAVE LATER)
