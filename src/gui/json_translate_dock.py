@@ -152,6 +152,11 @@ class JsonTranslateDock(BaseDock):
         self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
         self.chk_preserve_uppercase.setToolTip("Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE)")
         
+        # Stats label (Task #43 - v2.9.13)
+        self.lbl_stats = QLabel("Ready")
+        self.lbl_stats.setStyleSheet("color: gray; font-style: italic;")
+        self.lbl_stats.setWordWrap(True)
+        
         # Action buttons (Task #10 - v2.9.8)
         self.btn_run = QPushButton("Run translation")
         self.btn_swap = QPushButton("Swap Dictionaries")
@@ -202,10 +207,13 @@ class JsonTranslateDock(BaseDock):
         # Row 8: Preserve uppercase option
         g.addWidget(self.chk_preserve_uppercase, 8, 0, 1, 2)
         
-        # Row 9: Action buttons
-        g.addWidget(self.btn_swap, 9, 0)
-        g.addWidget(self.btn_undo, 9, 1)
-        g.addWidget(self.btn_run, 9, 2, 1, 2)
+        # Row 9: Stats label (Task #43 - v2.9.13)
+        g.addWidget(self.lbl_stats, 9, 0, 1, 4)
+        
+        # Row 10: Action buttons
+        g.addWidget(self.btn_swap, 10, 0)
+        g.addWidget(self.btn_undo, 10, 1)
+        g.addWidget(self.btn_run, 10, 2, 1, 2)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -218,6 +226,9 @@ class JsonTranslateDock(BaseDock):
             self.ed_path, self.ed_dict, self.ed_start, 
             self.ed_end, self.ed_exclude
         )
+        # Task #43 - v2.9.13: Update stats on path/dict changes
+        self.ed_path.textChanged.connect(self._update_stats)
+        self.ed_dict.textChanged.connect(self._update_stats)
     
     # UI Helper Methods
     
@@ -231,9 +242,6 @@ class JsonTranslateDock(BaseDock):
                 self.ed_path.setText(path)
         else:
             folder = QFileDialog.getExistingDirectory(self, "Select folder")
-            if folder:
-                self.ed_path.setText(folder)
-    
     def _browse_dict(self) -> None:
         """Browse for dictionary file."""
         path, _ = QFileDialog.getOpenFileName(
@@ -241,6 +249,57 @@ class JsonTranslateDock(BaseDock):
             "JSON/TS (*.json *.ts *.js);;All files (*)"
         )
         if path:
+            self.ed_dict.setText(path)
+    
+    def _update_stats(self) -> None:
+        """Update stats label (Task #43 - v2.9.13)."""
+        path = self.ed_path.text().strip()
+        dict_path = self.ed_dict.text().strip()
+        
+        if not path and not dict_path:
+            self.lbl_stats.setText("Ready")
+            return
+        
+        file_count = 0
+        translation_count = 0
+        
+        # Count files to process
+        if path:
+            if os.path.isfile(path):
+                file_count = 1
+            elif os.path.isdir(path):
+                try:
+                    paths = list(
+                        walk_files(
+                            path,
+                            include_globs=None,
+                            exclude_globs=["node_modules", ".git", "dist", "build"]
+                        )
+                    )
+                    file_count = len(paths)
+                except Exception:
+                    file_count = 0
+        
+        # Count translations in dictionary
+        if dict_path and os.path.isfile(dict_path):
+            try:
+                dictionary = load_translation_dict(dict_path)
+                translation_count = len(dictionary) if isinstance(dictionary, dict) else 0
+            except Exception:
+                translation_count = 0
+        
+        # Update label
+        if file_count > 0 or translation_count > 0:
+            parts = []
+            if file_count > 0:
+                parts.append(f"{file_count} file{'s' if file_count != 1 else ''} to process")
+            if translation_count > 0:
+                parts.append(f"{translation_count} translation{'s' if translation_count != 1 else ''} available")
+            self.lbl_stats.setText(" | ".join(parts))
+        else:
+            self.lbl_stats.setText("Ready")
+    
+    # Core Processing
             self.ed_dict.setText(path)
     
     # Core Processing
