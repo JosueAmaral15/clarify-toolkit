@@ -74,6 +74,13 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Mostrar posição absoluta do caractere/palavra ao passar mouse sobre resultado no match panel
 - **[X]** Adicionar busca por nome de arquivo com suporte a wildcards, prefix e regex **(v2.9.7 - Filename Search)**
 
+#### UX/UI Improvements (v2.9.13)
+
+- **[X]** Adicionar menu de contexto na tabela File List com "Open in File Manager" (multi-select) **(v2.9.13 - Task #40)**
+- **[X]** Adicionar tooltip preview em Advanced Search mostrando primeiras 3 linhas (max 200 chars) **(v2.9.13 - Task #41)**
+- **[X]** Salvar preferências dos checkboxes e últimos 10 diretórios com QSettings **(v2.9.13 - Task #42)**
+- **[X]** Adicionar label de estatísticas em JSON Translate mostrando contagem de arquivos/traduções **(v2.9.13 - Task #43)**
+
 #### JSON Features
 
 - **[X]** Incluir possibilidade de mudar case de palavras-chave (camelCase, PascalCase, snake_case, kebab-case) *(v3.0.0 - Case Converter)*
@@ -258,10 +265,10 @@ def walk(v):
 | Categoria | Total | Completas | Pendentes | % Completo |
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
-| SHOULD HAVE | 46 | 32 | 14 | 69.6% |
+| SHOULD HAVE | 50 | 36 | 14 | 72.0% |
 | COULD HAVE | 18 | 0 | 18 | 0% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **100** | **55** | **45** | **55.0%** |
+| **TOTAL** | **104** | **59** | **45** | **56.7%** |
 
 ### Notas
 
@@ -270,8 +277,9 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- 55% do projeto total completo - em progressão constante
+- 56.7% do projeto total completo - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
+- **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 
 ### Marcos Importantes
 
@@ -297,6 +305,12 @@ def walk(v):
 ---
 
 ## 🎯 Marcos Recentes
+
+- **v2.9.13 (30/11/2025)**: +4 tasks completadas (SHOULD HAVE - UX/UI Improvements) - **100% COMPLETO** ✅
+  - ✅ Task #40: Context Menu em File List com multi-select "Open in File Manager"
+  - ✅ Task #41: Tooltip preview em Advanced Search (3 linhas, 200 chars max)
+  - ✅ Task #42: Save preferences (checkboxes + últimos 10 diretórios com QSettings)
+  - ✅ Task #43: Stats label em JSON Translate (contagem arquivos/traduções em tempo real)
 
 - **v2.9.10 (30/11/2025)**: +4 tasks completadas (SHOULD HAVE + WOULD HAVE LATER) - **100% COMPLETO** ✅
   - ✅ Task #24: Sistema de internacionalização (i18n) com alternância runtime EN↔PT-BR
@@ -341,6 +355,6 @@ def walk(v):
   - ✅ Ordenação alfabética de resultados
 
 ---
-
-**Última atualização**: 28 de Novembro de 2025  
+**Última atualização**: 30 de Novembro de 2025  
+**Mantido por**: Josué Amaral Novembro de 2025  
 **Mantido por**: Josué Amaral
