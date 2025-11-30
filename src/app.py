@@ -4259,6 +4259,27 @@ if _PYSIDE:
                 self.dock_history.show()
             else:
                 self.dock_history.hide()
+        
+        def _show_advanced_file_search(self):
+            """Show advanced file search dialog (Task #36 - v2.9.11)."""
+            from .utils.file_finder import show_advanced_file_search
+            
+            # Get initial directory (current working directory or last used)
+            initial_dir = os.getcwd()
+            
+            # Show dialog
+            results = show_advanced_file_search(self, initial_dir)
+            
+            if results:
+                # User selected files - could integrate with other tools here
+                # For now, just show info message
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "Search Complete",
+                    f"Found and selected {len(results)} items.\n\n"
+                    f"First item: {results[0] if results else 'None'}"
+                )
 
         def _build_menu(self):
             bar = self.menuBar()
@@ -4297,6 +4318,7 @@ if _PYSIDE:
             self.act_open_ai_processor = QAction(tr("menu.tools.ai_processor"), self)
             self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
+            self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             m_tools.addAction(self.act_open_translate)
             m_tools.addAction(self.act_open_rewriter)
             m_tools.addAction(self.act_open_text_extractor)
@@ -4304,6 +4326,8 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_ai_processor)
             m_tools.addAction(self.act_open_json_search)
             m_tools.addAction(self.act_open_case_converter)
+            m_tools.addSeparator()
+            m_tools.addAction(self.act_advanced_file_search)
 
             self.act_open_translate.triggered.connect(lambda: self.dock_translate.show())
             self.act_open_rewriter.triggered.connect(lambda: self.dock_rewriter.show())
@@ -4312,6 +4336,7 @@ if _PYSIDE:
             self.act_open_ai_processor.triggered.connect(lambda: self.dock_ai_processor.show())
             self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
             self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
+            self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 
             # View menu
             m_view = bar.addMenu(tr("menu.view"))

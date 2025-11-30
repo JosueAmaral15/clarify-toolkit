@@ -1,0 +1,369 @@
+"""
+Advanced File Finder (Task #36 - v2.9.11)
+
+Module for advanced file and directory search with conditions.
+Provides GUI dialog with filters: filename regex, size range, date range, type filter.
+"""
+
+import os
+import re
+from datetime import datetime
+from typing import List, Tuple, Optional
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QComboBox, QSpinBox, QDateTimeEdit, QCheckBox,
+    QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView,
+    QMessageBox, QFileDialog
+)
+from PyQt6.QtCore import Qt, QDateTime
+
+
+class AdvancedFileSearchDialog(QDialog):
+    """Dialog for advanced file/directory search with conditions."""
+    
+    def __init__(self, parent=None, initial_dir: str = ""):
+        super().__init__(parent)
+        self.setWindowTitle("Advanced File Search")
+        self.setModal(True)
+        self.resize(800, 600)
+        
+        self.initial_dir = initial_dir or os.getcwd()
+        self.results: List[Tuple[str, os.stat_result]] = []
+        
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        """Setup UI components."""
+        layout = QVBoxLayout(self)
+        
+        # Search directory
+        dir_group = QGroupBox("Search Directory")
+        dir_layout = QHBoxLayout()
+        self.ed_directory = QLineEdit(self.initial_dir)
+        self.ed_directory.setPlaceholderText("Directory to search...")
+        btn_browse = QPushButton("Browse...")
+        btn_browse.clicked.connect(self._browse_directory)
+        dir_layout.addWidget(self.ed_directory)
+        dir_layout.addWidget(btn_browse)
+        dir_group.setLayout(dir_layout)
+        layout.addWidget(dir_group)
+        
+        # Filters group
+        filter_group = QGroupBox("Search Filters")
+        filter_layout = QVBoxLayout()
+        
+        # Filename pattern (regex)
+        pattern_layout = QHBoxLayout()
+        pattern_layout.addWidget(QLabel("Filename pattern (regex):"))
+        self.ed_pattern = QLineEdit()
+        self.ed_pattern.setPlaceholderText(r"e.g., .*\.json$")
+        self.chk_case_sensitive = QCheckBox("Case-sensitive")
+        pattern_layout.addWidget(self.ed_pattern)
+        pattern_layout.addWidget(self.chk_case_sensitive)
+        filter_layout.addLayout(pattern_layout)
+        
+        # File type filter
+        type_layout = QHBoxLayout()
+        type_layout.addWidget(QLabel("Type:"))
+        self.combo_type = QComboBox()
+        self.combo_type.addItems(["Any", "Files only", "Directories only"])
+        type_layout.addWidget(self.combo_type)
+        type_layout.addStretch()
+        filter_layout.addLayout(type_layout)
+        
+        # Size range (MB)
+        size_layout = QHBoxLayout()
+        self.chk_size_filter = QCheckBox("Size range (MB):")
+        self.spin_size_min = QSpinBox()
+        self.spin_size_min.setRange(0, 100000)
+        self.spin_size_min.setValue(0)
+        self.spin_size_max = QSpinBox()
+        self.spin_size_max.setRange(0, 100000)
+        self.spin_size_max.setValue(1000)
+        size_layout.addWidget(self.chk_size_filter)
+        size_layout.addWidget(QLabel("Min:"))
+        size_layout.addWidget(self.spin_size_min)
+        size_layout.addWidget(QLabel("Max:"))
+        size_layout.addWidget(self.spin_size_max)
+        size_layout.addStretch()
+        filter_layout.addLayout(size_layout)
+        
+        # Date range
+        date_layout = QHBoxLayout()
+        self.chk_date_filter = QCheckBox("Modified date range:")
+        self.date_from = QDateTimeEdit()
+        self.date_from.setCalendarPopup(True)
+        self.date_from.setDateTime(QDateTime.currentDateTime().addDays(-30))
+        self.date_to = QDateTimeEdit()
+        self.date_to.setCalendarPopup(True)
+        self.date_to.setDateTime(QDateTime.currentDateTime())
+        date_layout.addWidget(self.chk_date_filter)
+        date_layout.addWidget(QLabel("From:"))
+        date_layout.addWidget(self.date_from)
+        date_layout.addWidget(QLabel("To:"))
+        date_layout.addWidget(self.date_to)
+        date_layout.addStretch()
+        filter_layout.addLayout(date_layout)
+        
+        # Recursive search
+        self.chk_recursive = QCheckBox("Recursive search (include subdirectories)")
+        self.chk_recursive.setChecked(True)
+        filter_layout.addWidget(self.chk_recursive)
+        
+        filter_group.setLayout(filter_layout)
+        layout.addWidget(filter_group)
+        
+        # Search button
+        btn_search = QPushButton("Search")
+        btn_search.clicked.connect(self._perform_search)
+        layout.addWidget(btn_search)
+        
+        # Results table
+        results_group = QGroupBox("Results")
+        results_layout = QVBoxLayout()
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["Name", "Path", "Size (MB)", "Modified"])
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSortingEnabled(True)
+        results_layout.addWidget(self.table)
+        
+        # Results stats
+        self.lbl_stats = QLabel("No results")
+        results_layout.addWidget(self.lbl_stats)
+        
+        results_group.setLayout(results_layout)
+        layout.addWidget(results_group)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_export = QPushButton("Export to File...")
+        btn_export.clicked.connect(self._export_results)
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.accept)
+        btn_layout.addWidget(btn_export)
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_close)
+        layout.addLayout(btn_layout)
+    
+    def _browse_directory(self):
+        """Browse for search directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory to Search",
+            self.ed_directory.text() or self.initial_dir,
+            QFileDialog.Option.ShowDirsOnly
+        )
+        if directory:
+            self.ed_directory.setText(directory)
+    
+    def _perform_search(self):
+        """Execute search with current filters."""
+        directory = self.ed_directory.text().strip()
+        
+        if not directory:
+            QMessageBox.warning(self, "Missing", "Please select a directory to search.")
+            return
+        
+        if not os.path.isdir(directory):
+            QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            return
+        
+        # Build search criteria
+        pattern = self.ed_pattern.text().strip()
+        if pattern:
+            try:
+                flags = 0 if self.chk_case_sensitive.isChecked() else re.IGNORECASE
+                regex = re.compile(pattern, flags)
+            except re.error as e:
+                QMessageBox.warning(self, "Invalid Regex", f"Invalid regex pattern: {e}")
+                return
+        else:
+            regex = None
+        
+        type_filter = self.combo_type.currentText()
+        recursive = self.chk_recursive.isChecked()
+        
+        # Size filter (convert MB to bytes)
+        if self.chk_size_filter.isChecked():
+            size_min = self.spin_size_min.value() * 1024 * 1024
+            size_max = self.spin_size_max.value() * 1024 * 1024
+        else:
+            size_min = size_max = None
+        
+        # Date filter
+        if self.chk_date_filter.isChecked():
+            date_min = self.date_from.dateTime().toPyDateTime().timestamp()
+            date_max = self.date_to.dateTime().toPyDateTime().timestamp()
+        else:
+            date_min = date_max = None
+        
+        # Perform search
+        self.results = []
+        self._search_directory(
+            directory, regex, type_filter, recursive,
+            size_min, size_max, date_min, date_max
+        )
+        
+        # Display results
+        self._display_results()
+    
+    def _search_directory(
+        self,
+        directory: str,
+        regex: Optional[re.Pattern],
+        type_filter: str,
+        recursive: bool,
+        size_min: Optional[int],
+        size_max: Optional[int],
+        date_min: Optional[float],
+        date_max: Optional[float]
+    ):
+        """Recursively search directory with filters."""
+        try:
+            entries = os.listdir(directory)
+        except PermissionError:
+            return
+        
+        for entry in entries:
+            path = os.path.join(directory, entry)
+            
+            # Skip if can't stat
+            try:
+                stat = os.stat(path)
+            except (PermissionError, FileNotFoundError):
+                continue
+            
+            is_dir = os.path.isdir(path)
+            is_file = os.path.isfile(path)
+            
+            # Apply type filter
+            if type_filter == "Files only" and not is_file:
+                continue
+            if type_filter == "Directories only" and not is_dir:
+                continue
+            
+            # Apply filename pattern
+            if regex and not regex.search(entry):
+                continue
+            
+            # Apply size filter (files only)
+            if is_file and size_min is not None and size_max is not None:
+                if not (size_min <= stat.st_size <= size_max):
+                    continue
+            
+            # Apply date filter
+            if date_min is not None and date_max is not None:
+                if not (date_min <= stat.st_mtime <= date_max):
+                    continue
+            
+            # Match - add to results
+            self.results.append((path, stat))
+            
+            # Recurse into subdirectories
+            if recursive and is_dir:
+                self._search_directory(
+                    path, regex, type_filter, True,
+                    size_min, size_max, date_min, date_max
+                )
+    
+    def _display_results(self):
+        """Display search results in table."""
+        self.table.setRowCount(0)
+        self.table.setSortingEnabled(False)
+        
+        for path, stat in self.results:
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            
+            # Name
+            name = os.path.basename(path)
+            self.table.setItem(row, 0, QTableWidgetItem(name))
+            
+            # Path
+            self.table.setItem(row, 1, QTableWidgetItem(path))
+            
+            # Size (MB)
+            size_mb = stat.st_size / (1024 * 1024)
+            size_item = QTableWidgetItem(f"{size_mb:.2f}")
+            size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.table.setItem(row, 2, size_item)
+            
+            # Modified date
+            mtime = datetime.fromtimestamp(stat.st_mtime)
+            mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+            self.table.setItem(row, 3, QTableWidgetItem(mtime_str))
+        
+        self.table.setSortingEnabled(True)
+        
+        # Update stats
+        total_size = sum(stat.st_size for _, stat in self.results)
+        total_size_mb = total_size / (1024 * 1024)
+        self.lbl_stats.setText(
+            f"Found {len(self.results)} items | Total size: {total_size_mb:.2f} MB"
+        )
+    
+    def _export_results(self):
+        """Export results to CSV file."""
+        if not self.results:
+            QMessageBox.information(self, "No Results", "No results to export.")
+            return
+        
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Results",
+            "search_results.csv",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                # Header
+                f.write("Name,Path,Size (bytes),Size (MB),Modified\n")
+                
+                # Data
+                for path, stat in self.results:
+                    name = os.path.basename(path)
+                    size_mb = stat.st_size / (1024 * 1024)
+                    mtime = datetime.fromtimestamp(stat.st_mtime)
+                    mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    # Escape commas in path/name
+                    name = name.replace('"', '""')
+                    path = path.replace('"', '""')
+                    
+                    f.write(f'"{name}","{path}",{stat.st_size},{size_mb:.2f},{mtime_str}\n')
+            
+            QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Results exported to:\n{filepath}"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+
+
+def show_advanced_file_search(parent=None, initial_dir: str = "") -> Optional[List[str]]:
+    """
+    Show advanced file search dialog.
+    
+    Args:
+        parent: Parent widget
+        initial_dir: Initial directory to search
+    
+    Returns:
+        List of selected file paths, or None if cancelled
+    """
+    dialog = AdvancedFileSearchDialog(parent, initial_dir)
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        # Get selected rows
+        selected_rows = set(item.row() for item in dialog.table.selectedItems())
+        if selected_rows:
+            return [dialog.results[row][0] for row in sorted(selected_rows)]
+        else:
+            return [path for path, _ in dialog.results]
+    return None
