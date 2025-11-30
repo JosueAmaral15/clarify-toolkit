@@ -595,10 +595,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
 - **[]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
-- **[]** Adicionar parâmetro para não permitir chaves com hierarquia serial (sequência de chaves sem siblings). Com este parâmetro, apenas chaves com siblings são parte do output
 - **[]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação
 - **[]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também
-- **[]** Incluir possibilidade de não permitir fazer chave que não tem sibling, ou remover chaves que não têm sibling key
 - **[]** Ferramenta de busca pode incluir busca por nome de arquivo
 - **[]** Para busca de arquivos/diretórios, ao invés de escrever ou buscar com ferramenta pobre, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
 
@@ -687,9 +685,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 6 | 12 | 33.3% |
+| COULD HAVE | 18 | 7 | 11 | 38.9% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **69** | **35** | **66.3%** |
+| **TOTAL** | **104** | **70** | **34** | **67.3%** |
 
 ### Notas
 
