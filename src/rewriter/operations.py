@@ -347,3 +347,65 @@ def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inc
     
     processed = process_node(node)
     return processed, warnings
+
+
+def normalize_escaping(node: JSONNode) -> JSONNode:
+    """
+    Normalize excessive escaping in string values (Task #22 - v2.9.10).
+    
+    Detects patterns like:
+    - \\\\\\' (3+ backslashes before quote) → \\'
+    - \\\\\\\\" (3+ backslashes before double quote) → \\\\"
+    
+    Examples:
+        "value": "don\\\\\\'t" → "value": "don\\'t"
+        "value": "say \\\\\\"hi\\\\\\"" → "value": "say \\"hi\\""
+    
+    Note: \\' (single backslash + quote) is kept unchanged as it's valid.
+    
+    Args:
+        node: JSONNode tree to process
+    
+    Returns:
+        Processed JSONNode with normalized escaping
+    """
+    import re
+    
+    def normalize_string(s: str) -> str:
+        """Normalize excessive backslash escaping in a single string."""
+        if not isinstance(s, str):
+            return s
+        
+        # Pattern 1: Detect 2+ backslashes before single quote → normalize to \'
+        # Match: \\\\' or \\\\\' or \\\\\\' etc. → replace with \'
+        pattern1 = r"\\{2,}'"
+        normalized = re.sub(pattern1, r"\'", s)
+        
+        # Pattern 2: Detect 2+ backslashes before double quote → normalize to \"
+        # Match: \\\\" or \\\\\\" or \\\\\\\\" etc. → replace with \"
+        pattern2 = r'\\{2,}"'
+        normalized = re.sub(pattern2, r'\"', normalized)
+        
+        return normalized
+    
+    def process_node(n: JSONNode) -> JSONNode:
+        """Recursively process node and normalize string escaping."""
+        if isinstance(n, str):
+            return normalize_string(n)
+        
+        if isinstance(n, Obj):
+            out = Obj()
+            for k, v in n:
+                # Normalize both key and value
+                new_k = normalize_string(k) if isinstance(k, str) else k
+                new_v = process_node(v)
+                out.append((new_k, new_v))
+            return out
+        
+        if isinstance(n, list):
+            return [process_node(item) for item in n]
+        
+        # For other types (int, float, bool, None), return as-is
+        return n
+    
+    return process_node(node)

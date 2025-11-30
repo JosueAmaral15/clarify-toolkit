@@ -91,6 +91,7 @@ from .rewriter import (
     sanitize_keys_and_values, ts_process_full_preserving,
     dedupe, join_keys, eliminate_duplicates, merge_obj_values,
     avoid_duplicate_child_keys, exclude_numeric_keys, skip_empty_values,
+    normalize_escaping,
     dump_ts_node, dump_ts_obj, collapse_blank_lines
 )
 
@@ -1044,6 +1045,8 @@ def cli_translate(args: argparse.Namespace) -> int:
 def cli_dedupe(args: argparse.Namespace) -> int:
     raw = read_text(args.input)
     indent = None if args.indent is not None and args.indent <= 0 else args.indent
+    normalize_esc = getattr(args, 'normalize_escaping', False)
+    
     if args.from_ts or args.input.lower().endswith((".ts",".tsx",".js",".jsx")):
         if args.ts_out:
             start,end,block = find_object_block(raw)
@@ -1052,15 +1055,19 @@ def cli_dedupe(args: argparse.Namespace) -> int:
             result = join_keys(data) if args.join_keys else dedupe(data)
             if args.eliminate_duplicates:
                 result = eliminate_duplicates(result)
+            if normalize_esc:
+                result = normalize_escaping(result)
             body = dump_ts_node(result, indent, 0)
             out = f"export default {body};\n"
         else:
-            out = ts_process_full_preserving(raw, indent, args.join_keys, args.eliminate_duplicates)
+            out = ts_process_full_preserving(raw, indent, args.join_keys, args.eliminate_duplicates, normalize_esc)
     else:
         data = parse_json_preserving_duplicates_text(raw)
         result = join_keys(data) if args.join_keys else dedupe(data)
         if args.eliminate_duplicates:
             result = eliminate_duplicates(result)
+        if normalize_esc:
+            result = normalize_escaping(result)
 
         def dump_json(n: JSONNode, ind: Optional[int], lvl: int) -> str:
             if isinstance(n, Obj):

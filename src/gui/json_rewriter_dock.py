@@ -146,6 +146,8 @@ class JsonRewriterDock(BaseDock):
         self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
         self.chk_avoid_dup_child = QCheckBox("Avoid duplicate child keys")
         self.chk_avoid_dup_child.setToolTip("Merge parent.child.child -> parent.child (e.g., t.pages.home.home -> t.pages.home)")
+        self.chk_normalize_escaping = QCheckBox("Normalize escaping")
+        self.chk_normalize_escaping.setToolTip("Auto-detect excessive escaping (\\\\\\' or more) and normalize to \\' (Task #22)")
         self.chk_remove_dup_consecutive = QCheckBox("Remove consecutive duplicates")
         self.chk_remove_dup_consecutive.setToolTip("Remove only consecutive duplicates in arrays: ['a','a','b'] → ['a','b']")
         self.chk_remove_dup_all = QCheckBox("Remove all duplicates")
@@ -200,7 +202,8 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.chk_exclude_numeric, 3, 0)
         g.addWidget(self.chk_skip_empty, 3, 1)
         g.addWidget(self.chk_avoid_dup_child, 3, 2)
-        g.addWidget(self.chk_is_file, 3, 3)
+        g.addWidget(self.chk_normalize_escaping, 3, 3)
+        g.addWidget(self.chk_is_file, 3, 4)
         
         # Row 4: Options checkboxes (line 3) - Array duplicate removal
         g.addWidget(self.chk_remove_dup_consecutive, 4, 0, 1, 2)
@@ -315,6 +318,7 @@ class JsonRewriterDock(BaseDock):
             exclude_numeric=self.chk_exclude_numeric.isChecked(),
             skip_empty=self.chk_skip_empty.isChecked(),
             avoid_duplicate_child_keys=self.chk_avoid_dup_child.isChecked(),
+            normalize_escaping=self.chk_normalize_escaping.isChecked(),
             remove_dup_consecutive=self.chk_remove_dup_consecutive.isChecked(),
             remove_dup_all=self.chk_remove_dup_all.isChecked(),
             enforce_case=self.chk_enforce_case.isChecked(),
