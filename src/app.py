@@ -130,7 +130,7 @@ from .ai_processor import (
 from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock, HistoryDock
+    JsonRewriterDock, HistoryDock, FileListDock
 )
 
 # ---------------------------------------------------------------------------
@@ -4243,6 +4243,12 @@ if _PYSIDE:
             self.dock_case_converter = CaseConverterDock(self)
             self.addDockWidget(Qt.RightDockWidgetArea, self.dock_case_converter)
             self.dock_case_converter.hide()
+        
+        def _open_file_list(self):
+            """Open File List dock (Task #33 - v2.9.11)."""
+            self.dock_file_list = FileListDock(self)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_file_list)
+            self.dock_file_list.hide()
 
         def _open_history(self):
             if not hasattr(self, 'dock_history'):
@@ -4318,6 +4324,7 @@ if _PYSIDE:
             self.act_open_ai_processor = QAction(tr("menu.tools.ai_processor"), self)
             self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
+            self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             m_tools.addAction(self.act_open_translate)
             m_tools.addAction(self.act_open_rewriter)
@@ -4327,6 +4334,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_json_search)
             m_tools.addAction(self.act_open_case_converter)
             m_tools.addSeparator()
+            m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
 
             self.act_open_translate.triggered.connect(lambda: self.dock_translate.show())
@@ -4336,6 +4344,7 @@ if _PYSIDE:
             self.act_open_ai_processor.triggered.connect(lambda: self.dock_ai_processor.show())
             self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
             self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
+            self.act_open_file_list.triggered.connect(lambda: self.dock_file_list.show())
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 
             # View menu
@@ -4849,6 +4858,7 @@ if _PYSIDE:
             self._open_ai_processor()
             self._open_json_search()
             self._open_case_converter()
+            self._open_file_list()
             self._open_history()
         
         def _restore_prefs(self):
