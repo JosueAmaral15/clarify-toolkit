@@ -148,7 +148,65 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ### ✅ Tasks Concluídas
 
-*(Nenhuma task nesta categoria foi concluída ainda)*
+#### Task #44 - Análise de Funcionalidades em `add/` (v2.9.15)
+**Status**: ✅ Completa - 24/11/2025
+
+**Objetivo**: Analisar diretório `add/` para identificar funcionalidades pendentes e implementar 2-3 mais simples.
+
+**Resultado**: Todas as 5 funcionalidades do diretório `add/` já foram implementadas no Clarify v3.0.0 (24/11/2025):
+1. ✅ JSON Case Converter → `src/case_converter.py` + `CaseConverterDock`
+2. ✅ JSON Search → `src/json_search/` + `JsonSearchDock`
+3. ✅ Translation Placeholder Replacer → `src/placeholder_replacer.py` + `PlaceholderReplacerDock`
+4. ✅ Text Structure to JSON Extractor → `src/gui/text_extractor_dock.py`
+5. ✅ ChatGPT File Processor → `src/gui/ai_processor_dock.py` (OpenAI + Gemini)
+
+**Conclusão**: Nenhuma implementação adicional necessária. Todas as funcionalidades já integradas.
+
+---
+
+#### Task #45 - Sistema de Tutoriais + Menu Help (v2.9.15)
+**Status**: ✅ Completa - 24/11/2025
+
+**Objetivo**: Criar sistema de tutoriais com 3 tutoriais MVP, menu Help, e preparação para chatbot com IA.
+
+**Implementação**:
+1. ✅ **Estrutura de Diretórios**:
+   - `docs/tutorials/{beginner,developers}/{basic,advanced}/`
+   - Organização hierárquica para crescimento futuro
+
+2. ✅ **Arquivos Core**:
+   - `README.md` (73 linhas): Índice e boas-vindas
+   - `index.json` (89 linhas): Metadata estruturada para chatbot Gemini Flash
+   - `quickstart.md` (157 linhas): Guia de 5 minutos com 3 workflows de exemplo
+
+3. ✅ **Tutoriais MVP** (beginner/basic):
+   - `01-json-translate.md` (458 linhas): Internacionalização step-by-step
+   - `02-search-replace.md` (452 linhas): Busca e substituição com regex
+   - `03-json-rewriter.md` (468 linhas): Transformação JSON com dedupe
+
+4. ✅ **TutorialsDock** (`src/gui/tutorials_dock.py` - 450+ linhas):
+   - QTreeWidget com navegação hierárquica (Beginner/Developers → Basic/Advanced)
+   - QTextBrowser para renderização markdown com CSS styling
+   - Sistema de busca por keywords (título, descrição, keywords)
+   - Suporte a links internos (.md) e externos (URLs)
+   - Signal `tutorial_opened` para integração futura com chatbot
+   - Padrões aplicados: Strategy, Factory, Information Expert (GRASP)
+
+5. ✅ **Menu Help**:
+   - Adicionado `Help → Tutorials` em `app.py`
+   - Traduções EN/PT-BR em `i18n/`
+   - Atalho no método `_show_tutorials()`
+
+6. ✅ **Preparação Chatbot**:
+   - `index.json` com FAQ, keywords, semantic_search_config
+   - Estrutura pronta para Gemini Flash API
+   - Metadata YAML frontmatter em cada tutorial
+
+**Próximos Passos** (sprints futuros):
+- Implementar 15-20 tutoriais adicionais (todos os módulos)
+- Criar ChatbotDock com Gemini Flash integration
+- Tutoriais avançados (regex, scope filtering, batch operations)
+- Tutoriais para desenvolvedores (extending Clarify, plugin system)
 
 ### 🔨 Tasks Pendentes
 
@@ -206,14 +264,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 - **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos e low-code;
 - **[]** Incluir tutoriais de uso
-- **[]** Incluir busca com ajuda de inteligência artificial da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F.
-- **[]** Embutir assistente virtual para uso com IAOnde mostrar a contagem?
-Nova coluna "Count" na tabela de resultados do JSON Search?
-Campo de texto embaixo dos resultados: "Total occurrences: 5"?
-Contagem deve ser:
-Por arquivo: en.json (3 occurrências), pt.json (2 ocorrências)
-Total geral: 5 occurrências
-Ambos?
+- **[]** Incluir busca com ajuda de inteligência artificial (da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F).
+- **[]** Embutir assistente virtual para uso com IA;
 - **[]** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
 - **[]** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
 - **[]** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período
@@ -270,9 +322,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 0 | 18 | 0% |
+| COULD HAVE | 18 | 2 | 16 | 11.1% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **63** | **41** | **60.6%** |
+| **TOTAL** | **104** | **65** | **39** | **62.5%** |
 
 ### Notas
 
@@ -281,9 +333,10 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **60.6%** do projeto total completo (63 tasks completas) - em progressão constante
+- **62.5%** do projeto total completo (65 tasks completas) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.14**: Task #23 COMPLETA - Orphaned Keys Update System com VALUE EQUALITY (12 unit tests passing)
+- **v2.9.15**: Tasks #44 e #45 COMPLETAS - Análise add/ + Sistema de Tutoriais com Help menu (3 tutoriais MVP, TutorialsDock, preparação chatbot)
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 

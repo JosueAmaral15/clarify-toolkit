@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-11-30",
+  "chatbot": {
+    "provider": "gemini-flash",
+    "embedding_model": "text-embedding-004",
+    "context_window": 1000000
+  },
+  "tutorials": [
+    {
+      "id": "json-translate-basic",
+      "title": "JSON Translate - Basic",
+      "category": "beginner/basic",
+      "file": "beginner/basic/01-json-translate.md",
+      "difficulty": "easy",
+      "estimated_time": "10 minutes",
+      "keywords": ["json", "translate", "i18n", "translation", "internationalization"],
+      "description": "Learn how to extract text from code and convert it to JSON translation files",
+      "prerequisites": []
+    },
+    {
+      "id": "search-replace-basic",
+      "title": "Search & Replace - Basic",
+      "category": "beginner/basic",
+      "file": "beginner/basic/02-search-replace.md",
+      "difficulty": "easy",
+      "estimated_time": "15 minutes",
+      "keywords": ["search", "replace", "find", "regex", "text", "batch"],
+      "description": "Find and replace text across multiple files with advanced options",
+      "prerequisites": []
+    },
+    {
+      "id": "json-rewriter-basic",
+      "title": "JSON Rewriter - Basic",
+      "category": "beginner/basic",
+      "file": "beginner/basic/03-json-rewriter.md",
+      "difficulty": "easy",
+      "estimated_time": "12 minutes",
+      "keywords": ["json", "rewriter", "transform", "deduplicate", "clean"],
+      "description": "Transform and clean JSON structures with powerful operations",
+      "prerequisites": []
+    }
+  ],
+  "faq": [
+    {
+      "question": "What is Clarify?",
+      "answer": "Clarify is a professional tool for managing JSON files, translations, and text transformations. It provides advanced features like JSON translation, search & replace, case conversion, and AI-powered file processing.",
+      "category": "general",
+      "keywords": ["clarify", "about", "what is"]
+    },
+    {
+      "question": "How do I open JSON Translate?",
+      "answer": "Go to Tools → Open JSON Translate, or use the JSON Translate panel on the main window. You can also access it via the dock system (View → Docks → JSON Translate).",
+      "category": "navigation",
+      "keywords": ["open", "json translate", "menu", "tools"]
+    },
+    {
+      "question": "What file formats does Clarify support?",
+      "answer": "Clarify supports JSON, TypeScript (.ts, .tsx), JavaScript (.js, .jsx), and plain text files. It can parse and transform TypeScript export statements automatically.",
+      "category": "formats",
+      "keywords": ["formats", "file types", "json", "typescript", "javascript"]
+    },
+    {
+      "question": "Can I use regex in Search & Replace?",
+      "answer": "Yes! Enable the 'Regular Expression' checkbox in Search & Replace. Clarify supports full Python regex syntax with capture groups and backreferences.",
+      "category": "features",
+      "keywords": ["regex", "regular expression", "search", "replace"]
+    },
+    {
+      "question": "How do I eliminate duplicate JSON keys?",
+      "answer": "Use JSON Rewriter and enable 'Eliminate Duplicates'. This will merge duplicate keys intelligently, keeping unique values and removing redundant entries.",
+      "category": "json",
+      "keywords": ["duplicate", "deduplicate", "json", "merge"]
+    }
+  ],
+  "semantic_search_config": {
+    "enabled": true,
+    "min_similarity": 0.7,
+    "max_results": 5,
+    "search_fields": ["title", "description", "keywords", "content"]
+  }
+}

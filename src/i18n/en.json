@@ -29,6 +29,8 @@
   "menu.settings.language": "Language",
   "menu.settings.clear_recent": "Clear Recent Files",
   "menu.plugins": "Plugins",
+  "menu.help": "Help",
+  "menu.help.tutorials": "Tutorials",
   "menu.about": "About",
   "menu.about.clarify": "About Clarify",
   

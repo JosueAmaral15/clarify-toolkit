@@ -130,7 +130,7 @@ from .ai_processor import (
 from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock, HistoryDock, FileListDock
+    JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock
 )
 
 # ---------------------------------------------------------------------------
@@ -4256,6 +4256,12 @@ if _PYSIDE:
                 self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_history)
                 self.dock_history.hide()
         
+        def _open_tutorials(self):
+            if not hasattr(self, 'dock_tutorials'):
+                self.dock_tutorials = TutorialsDock(self)
+                self.addDockWidget(Qt.RightDockWidgetArea, self.dock_tutorials)
+                self.dock_tutorials.hide()
+        
         def _toggle_history(self, checked: bool):
             """Toggle history dock visibility."""
             if not hasattr(self, 'dock_history'):
@@ -4265,6 +4271,12 @@ if _PYSIDE:
                 self.dock_history.show()
             else:
                 self.dock_history.hide()
+        
+        def _show_tutorials(self):
+            """Show tutorials dock (Task #45 - v2.9.15)."""
+            if not hasattr(self, 'dock_tutorials'):
+                self._open_tutorials()
+            self.dock_tutorials.show()
         
         def _show_advanced_file_search(self):
             """Show advanced file search dialog (Task #36 - v2.9.11)."""
@@ -4406,6 +4418,13 @@ if _PYSIDE:
                 act.setToolTip(plugin.description)
                 act.triggered.connect(lambda _, p=plugin: p.activate(self))
                 m_plugins.addAction(act)
+
+            # Help menu (Task #45 - v2.9.15)
+            m_help = bar.addMenu(tr("menu.help"))
+            self.act_open_tutorials = QAction(tr("menu.help.tutorials"), self)
+            self.act_open_tutorials.setToolTip("Browse beginner and developer tutorials")
+            m_help.addAction(self.act_open_tutorials)
+            self.act_open_tutorials.triggered.connect(self._show_tutorials)
 
             # About menu
             m_about = bar.addMenu(tr("menu.about"))
