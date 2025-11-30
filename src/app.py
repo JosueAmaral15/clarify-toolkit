@@ -100,6 +100,9 @@ from .case_converter import JSObjectCaseConverter
 # Theme Manager: application theming (light, dark, system)
 from .theme_manager import ThemeManager
 
+# Internationalization: runtime language switching (Task #24 - v2.9.10)
+from .i18n import get_translator, switch_language, tr
+
 # JSON Search: search keys and values in JSON/TS/TSX files
 from .json_search import (
     ProjectIndexer, parse_composite_query, resolve_query, 
@@ -4112,7 +4115,12 @@ if _PYSIDE:
         def __init__(self, app: QApplication):
             super().__init__()
             self.app = app
-            self.setWindowTitle("Clarify - JSON file management system")
+            
+            # Initialize translator (Task #24 - v2.9.10)
+            self.translator = get_translator()
+            self.translator.languageChanged.connect(self._on_language_changed)
+            
+            self.setWindowTitle(tr("app.title"))
             #self.resize(1080, 720)
 
             # Initialize settings manager
@@ -4243,38 +4251,40 @@ if _PYSIDE:
         def _build_menu(self):
             bar = self.menuBar()
 
-            m_file = bar.addMenu("File")
-            act_exit = QAction("Exit", self)
+            # File menu
+            m_file = bar.addMenu(tr("menu.file"))
+            act_exit = QAction(tr("menu.file.exit"), self)
             act_exit.triggered.connect(self.close)
             m_file.addAction(act_exit)
             
             # Edit menu with Undo/Redo (Task #12 - v2.9.8)
-            m_edit = bar.addMenu("Edit")
-            self.act_undo = QAction("Undo", self)
+            m_edit = bar.addMenu(tr("menu.edit"))
+            self.act_undo = QAction(tr("menu.edit.undo"), self)
             self.act_undo.setShortcut("Ctrl+Z")
             self.act_undo.setEnabled(False)
             self.act_undo.triggered.connect(self._undo)
             m_edit.addAction(self.act_undo)
             
-            self.act_redo = QAction("Redo", self)
+            self.act_redo = QAction(tr("menu.edit.redo"), self)
             self.act_redo.setShortcut("Ctrl+Y")
             self.act_redo.setEnabled(False)
             self.act_redo.triggered.connect(self._redo)
             m_edit.addAction(self.act_redo)
             
             m_edit.addSeparator()
-            act_clear_history = QAction("Clear Undo History", self)
+            act_clear_history = QAction(tr("menu.edit.clear_history"), self)
             act_clear_history.triggered.connect(self._clear_undo_history)
             m_edit.addAction(act_clear_history)
 
-            m_tools = bar.addMenu("Tools")
-            self.act_open_translate = QAction("Open JSON Translate", self)
-            self.act_open_rewriter = QAction("Open JSON Rewriter", self)
-            self.act_open_text_extractor = QAction("Open Text Extractor", self)
-            self.act_open_placeholder_replacer = QAction("Open Placeholder Replacer", self)
-            self.act_open_ai_processor = QAction("Open AI File Processor", self)
-            self.act_open_json_search = QAction("Open JSON Search", self)
-            self.act_open_case_converter = QAction("Open Case Converter", self)
+            # Tools menu
+            m_tools = bar.addMenu(tr("menu.tools"))
+            self.act_open_translate = QAction(tr("menu.tools.json_translate"), self)
+            self.act_open_rewriter = QAction(tr("menu.tools.json_rewriter"), self)
+            self.act_open_text_extractor = QAction(tr("menu.tools.text_extractor"), self)
+            self.act_open_placeholder_replacer = QAction(tr("menu.tools.placeholder_replacer"), self)
+            self.act_open_ai_processor = QAction(tr("menu.tools.ai_processor"), self)
+            self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
+            self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
             m_tools.addAction(self.act_open_translate)
             m_tools.addAction(self.act_open_rewriter)
             m_tools.addAction(self.act_open_text_extractor)
@@ -4291,31 +4301,50 @@ if _PYSIDE:
             self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
             self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
 
-            m_view = bar.addMenu("View")
-            self.act_toggle_history = QAction("History", self, checkable=True)
+            # View menu
+            m_view = bar.addMenu(tr("menu.view"))
+            self.act_toggle_history = QAction(tr("menu.view.history"), self, checkable=True)
             self.act_toggle_history.setToolTip("Show/hide operation history panel")
             self.act_toggle_history.triggered.connect(self._toggle_history)
             m_view.addAction(self.act_toggle_history)
 
-            m_themes = bar.addMenu("Themes")
-            self.act_theme_system = QAction("System", self, checkable=True)
-            self.act_theme_light = QAction("Light", self, checkable=True)
-            self.act_theme_dark = QAction("Dark", self, checkable=True)
+            # Themes menu
+            m_themes = bar.addMenu(tr("menu.themes"))
+            self.act_theme_system = QAction(tr("menu.themes.system"), self, checkable=True)
+            self.act_theme_light = QAction(tr("menu.themes.light"), self, checkable=True)
+            self.act_theme_dark = QAction(tr("menu.themes.dark"), self, checkable=True)
             grp = [self.act_theme_system, self.act_theme_light, self.act_theme_dark]
             for a in grp:
                 m_themes.addAction(a)
                 a.triggered.connect(lambda _, x=a: self._apply_theme_action(x))
             self.act_theme_system.setChecked(True)
 
-            m_settings = bar.addMenu("Settings")
-            act_preferences = QAction("Preferences...", self)
-            act_shortcuts = QAction("Keyboard Shortcuts...", self)
-            act_transparency = QAction("Window Transparency...", self)
-            act_clear_recent = QAction("Clear Recent Files", self)
+            # Settings menu
+            m_settings = bar.addMenu(tr("menu.settings"))
+            act_preferences = QAction(tr("menu.settings.preferences"), self)
+            act_shortcuts = QAction(tr("menu.settings.shortcuts"), self)
+            act_transparency = QAction(tr("menu.settings.transparency"), self)
+            
+            # Language submenu (Task #24 - v2.9.10)
+            m_language = m_settings.addMenu(tr("menu.settings.language"))
+            self.act_lang_en = QAction("English", self, checkable=True)
+            self.act_lang_pt = QAction("Português (Brasil)", self, checkable=True)
+            m_language.addAction(self.act_lang_en)
+            m_language.addAction(self.act_lang_pt)
+            self.act_lang_en.triggered.connect(lambda: self._switch_language("en"))
+            self.act_lang_pt.triggered.connect(lambda: self._switch_language("pt_BR"))
+            # Set current language checked
+            current_lang = self.translator.current_language
+            if current_lang == "en":
+                self.act_lang_en.setChecked(True)
+            else:
+                self.act_lang_pt.setChecked(True)
+            
             m_settings.addAction(act_preferences)
             m_settings.addAction(act_shortcuts)
             m_settings.addAction(act_transparency)
             m_settings.addSeparator()
+            act_clear_recent = QAction(tr("menu.settings.clear_recent"), self)
             m_settings.addAction(act_clear_recent)
             act_preferences.triggered.connect(self._show_preferences)
             act_shortcuts.triggered.connect(self._show_shortcuts)
@@ -4324,15 +4353,16 @@ if _PYSIDE:
             
 
             # Plugins menu
-            m_plugins = bar.addMenu("Plugins")
+            m_plugins = bar.addMenu(tr("menu.plugins"))
             for plugin in getattr(self, "plugin_loader", []).plugins:
                 act = QAction(f"{plugin.name}", self)
                 act.setToolTip(plugin.description)
                 act.triggered.connect(lambda _, p=plugin: p.activate(self))
                 m_plugins.addAction(act)
 
-            m_about = bar.addMenu("About")
-            act_about = QAction("About Clarify", self)
+            # About menu
+            m_about = bar.addMenu(tr("menu.about"))
+            act_about = QAction(tr("menu.about.clarify"), self)
             m_about.addAction(act_about)
             act_about.triggered.connect(self._about_dialog)
 
@@ -4550,6 +4580,46 @@ if _PYSIDE:
             saved_opacity = self._get_saved_opacity()
             self._update_transparency_preview(saved_opacity)
             dialog.reject()
+        
+        def _switch_language(self, lang: str):
+            """Switch application language at runtime (Task #24 - v2.9.10)."""
+            # Update checkboxes
+            self.act_lang_en.setChecked(lang == "en")
+            self.act_lang_pt.setChecked(lang == "pt_BR")
+            
+            # Switch language
+            switch_language(lang)
+            
+            # Save preference
+            self.settings.update("language", lang)
+        
+        def _on_language_changed(self, lang: str):
+            """Called when language changes - retranslate all UI (Task #24 - v2.9.10)."""
+            self._retranslate_ui()
+        
+        def _retranslate_ui(self):
+            """Retranslate all UI elements (Task #24 - v2.9.10)."""
+            # Window title
+            self.setWindowTitle(tr("app.title"))
+            
+            # Update menu texts
+            self.act_undo.setText(tr("menu.edit.undo"))
+            self.act_redo.setText(tr("menu.edit.redo"))
+            self.act_open_translate.setText(tr("menu.tools.json_translate"))
+            self.act_open_rewriter.setText(tr("menu.tools.json_rewriter"))
+            self.act_open_text_extractor.setText(tr("menu.tools.text_extractor"))
+            self.act_open_placeholder_replacer.setText(tr("menu.tools.placeholder_replacer"))
+            self.act_open_ai_processor.setText(tr("menu.tools.ai_processor"))
+            self.act_open_json_search.setText(tr("menu.tools.json_search"))
+            self.act_open_case_converter.setText(tr("menu.tools.case_converter"))
+            self.act_toggle_history.setText(tr("menu.view.history"))
+            self.act_theme_system.setText(tr("menu.themes.system"))
+            self.act_theme_light.setText(tr("menu.themes.light"))
+            self.act_theme_dark.setText(tr("menu.themes.dark"))
+            
+            # Rebuild menu bar to update menu titles
+            self.menuBar().clear()
+            self._build_menu()
         
         def _show_shortcuts(self):
             """Show keyboard shortcuts dialog."""
