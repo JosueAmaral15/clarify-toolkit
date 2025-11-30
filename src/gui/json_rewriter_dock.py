@@ -8,6 +8,7 @@ Rewrites JSON/TS files with options to join keys, eliminate duplicates, and form
 
 from __future__ import annotations
 import argparse
+import os
 from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import (
@@ -24,7 +25,12 @@ if TYPE_CHECKING:
 
 # Import CLI dedupe function (assumed to exist in app.py)
 def cli_dedupe(args: argparse.Namespace):
-    """Execute the dedupe/rewrite operation based on args."""
+    """Execute the dedupe/rewrite operation based on args.
+    
+    Returns:
+        tuple: (output_text, substitution_map) where substitution_map
+               maps removed keys to their replacements (for Task #23)
+    """
     from .. import rewriter as rw
     
     # Read input
@@ -43,8 +49,16 @@ def cli_dedupe(args: argparse.Namespace):
     if args.join_keys:
         obj = rw.join_keys(obj)
     
+    # Build substitution map for eliminated keys (Task #23)
+    substitution_map = {}
     if args.eliminate_duplicates:
+        # Extract all keys before elimination
+        old_keys = rw.extract_all_keys_from_dict(obj.data if hasattr(obj, 'data') else obj)
         obj = rw.eliminate_duplicates(obj)
+        # Extract all keys after elimination
+        new_keys = rw.extract_all_keys_from_dict(obj.data if hasattr(obj, 'data') else obj)
+        # Build substitution map
+        substitution_map = rw.build_substitution_map(old_keys, new_keys)
     
     # Exclude numeric keys if requested
     if hasattr(args, 'exclude_numeric') and args.exclude_numeric:
@@ -88,6 +102,8 @@ def cli_dedupe(args: argparse.Namespace):
     out_path = args.output or args.input
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(output_text)
+    
+    return output_text, substitution_map
 
 
 class JsonRewriterDock(BaseDock):
@@ -150,6 +166,18 @@ class JsonRewriterDock(BaseDock):
         self.chk_normalize_escaping.setToolTip("Auto-detect excessive escaping (\\\\\\' or more) and normalize to \\' (Task #22)")
         self.chk_convert_arrays = QCheckBox("Convert arrays to objects")
         self.chk_convert_arrays.setToolTip("Convert string arrays to objects with generated keys (Task #21)")
+        
+        # Task #23 - Update orphaned references
+        self.chk_update_refs = QCheckBox("Update references in project")
+        self.chk_update_refs.setToolTip("Update orphaned translation references (t.key.path) in .tsx/.jsx files after eliminating duplicates (Task #23)")
+        self.ed_project_dir = QLineEdit()
+        self.ed_project_dir.setToolTip("Project directory containing .tsx/.jsx/.ts/.js files to update")
+        self.btn_project_browse = QPushButton("Browse…")
+        self.btn_project_browse.setToolTip("Browse for project directory")
+        self.chk_ref_backup = QCheckBox("Create backups")
+        self.chk_ref_backup.setToolTip("Create .bak files before modifying references")
+        self.chk_ref_backup.setChecked(True)
+        
         self.chk_remove_dup_consecutive = QCheckBox("Remove consecutive duplicates")
         self.chk_remove_dup_consecutive.setToolTip("Remove only consecutive duplicates in arrays: ['a','a','b'] → ['a','b']")
         self.chk_remove_dup_all = QCheckBox("Remove all duplicates")
@@ -212,21 +240,28 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 2)
         g.addWidget(self.chk_remove_dup_all, 4, 4, 1, 1)
         
-        # Row 5: Enforce consistent case
-        g.addWidget(self.chk_enforce_case, 5, 0, 1, 2)
-        g.addWidget(QLabel("Case style:"), 5, 2)
-        g.addWidget(self.combo_case_style, 5, 3)
-        g.addWidget(self.chk_validate_case, 5, 4)
+        # Row 5: Update references (Task #23)
+        g.addWidget(self.chk_update_refs, 5, 0, 1, 1)
+        g.addWidget(self.ed_project_dir, 5, 1, 1, 2)
+        g.addWidget(self.btn_project_browse, 5, 3)
+        g.addWidget(self.chk_ref_backup, 5, 4)
         
-        # Row 6: Indent and run button
-        g.addWidget(self.lbl_indent, 6, 0)
-        g.addWidget(self.spin_indent, 6, 1)
-        g.addWidget(self.btn_run, 6, 4)
+        # Row 6: Enforce consistent case
+        g.addWidget(self.chk_enforce_case, 6, 0, 1, 2)
+        g.addWidget(QLabel("Case style:"), 6, 2)
+        g.addWidget(self.combo_case_style, 6, 3)
+        g.addWidget(self.chk_validate_case, 6, 4)
+        
+        # Row 7: Indent and run button
+        g.addWidget(self.lbl_indent, 7, 0)
+        g.addWidget(self.spin_indent, 7, 1)
+        g.addWidget(self.btn_run, 7, 4)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
         self.btn_in.clicked.connect(self._open_in)
         self.btn_out.clicked.connect(self._open_out)
+        self.btn_project_browse.clicked.connect(self._browse_project_dir)
         self.btn_run.clicked.connect(self._rewrite)
         self._setup_enter_key_execution(self.ed_in, self.ed_out)
     
@@ -246,6 +281,16 @@ class JsonRewriterDock(BaseDock):
         f, _ = QFileDialog.getSaveFileName(self, "Save output", "", "All (*)")
         if f:
             self.ed_out.setText(f)
+    
+    def _browse_project_dir(self) -> None:
+        """Browse for project directory (Task #23)."""
+        d = QFileDialog.getExistingDirectory(
+            self, "Select project directory",
+            "",
+            QFileDialog.Option.ShowDirsOnly
+        )
+        if d:
+            self.ed_project_dir.setText(d)
     
     # Core Processing
     
@@ -332,10 +377,45 @@ class JsonRewriterDock(BaseDock):
         
         # Execute rewrite
         try:
-            cli_dedupe(ns)
+            output_text, substitution_map = cli_dedupe(ns)
+            
+            # Task #23: Update orphaned references in project (if enabled)
+            if self.chk_update_refs.isChecked() and substitution_map:
+                project_dir = self.ed_project_dir.text().strip()
+                
+                if not project_dir:
+                    QMessageBox.warning(self, "Missing", "Choose a project directory to update references.")
+                    return
+                
+                if not os.path.isdir(project_dir):
+                    QMessageBox.warning(self, "Invalid", f"Project directory does not exist: {project_dir}")
+                    return
+                
+                # Show preview dialog with substitutions
+                from .. import rewriter as rw
+                results = rw.update_references_in_project(
+                    project_dir,
+                    substitution_map,
+                    create_backup=self.chk_ref_backup.isChecked()
+                )
+                
+                if results:
+                    # Show summary
+                    total_subs = sum(results.values())
+                    file_count = len(results)
+                    msg = f"Updated {total_subs} references in {file_count} files:\n\n"
+                    for filepath, count in list(results.items())[:10]:
+                        msg += f"  - {os.path.basename(filepath)}: {count} changes\n"
+                    if file_count > 10:
+                        msg += f"  ... and {file_count - 10} more files\n"
+                    QMessageBox.information(self, "References Updated", msg)
+                else:
+                    QMessageBox.information(self, "No Changes", "No orphaned references found in project.")
+            
             QMessageBox.information(self, "Done", "Rewriter finished.")
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            import traceback
+            QMessageBox.critical(self, "Error", f"{str(e)}\n\n{traceback.format_exc()}")
     
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""
