@@ -110,10 +110,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 #### System Features
 
 - **[X]** Adicionar classe de modal screen para mostrar loading sem travar tela, permitindo minimizar/maximizar modal, continuar navegando e fazer processamento paralelo (com threads), mas sem permitir processar mesma feature simultaneamente *(v2.7.0 - ThreadManager + ProcessingModal)*
-- **[]** Corrigir reversão de JSON translate (ChatGPT não resolveu): fazer reverso de tradução (texto para objeto) para texto do objeto, ou seja, se um arquivo está como {t.pages.home.features.title}, então deve ser buscado em qual parte do JSON está essa informação para depois reverter para o que estava antes, por exemplo, em um HTML ou react: "Lista de Tarefas", que era o título de antes.
-- **[]** Adicionar feature para interromper processamento enquanto carrega resultados, ou seja, um botão para cancelar quaisquer tipo de processamentos, carregamentos e threads, por exemplo, de busca ou de tradução;
-- **[]** Incluir possibilidade de listar arquivos com parâmetros ls/dir com ferramentas de busca avançadas;
-- **[]** Inserção de arquivos e diretórios de forma assíncrona e selecionável, ou seja, se pode selecionar múltiplos arquivos e diretórios para uma mesma funcionalidade, por exemplo, de busca, em que os processamentos podem ser paralelos para cada arquivo com threads a cada processamento de uma mesma funcionalidade;
+- **[X]** Corrigir reversão de JSON translate: fazer reverso de tradução (objeto para texto) com checkbox "Reverse JSON Translate" + botões "Swap Dictionaries" e "Undo with Backup" **(v2.9.8 - Task #10)**
+- **[X]** Adicionar feature para interromper processamento: botão Cancel em ProcessingModal com ThreadManager.cancel_thread() e interrupt_check callbacks **(v2.7.0 + v3.0.0 - ThreadManager + AI Interrupt)**
+- **[X]** Incluir possibilidade de listar arquivos com parâmetros ls/dir: FileListDock com -a, -l, -h, -R e busca avançada **(v2.9.11 - Task #33 + v2.9.11 - Task #36)**
+- **[X]** Inserção de arquivos e diretórios de forma assíncrona e selecionável: ThreadManager com processamento paralelo por arquivo e feature **(v2.7.0 - ThreadManager)**
 - **[X]** Incluir query para inteligência artificial sem arquivos/diretórios, apenas com texto do usuário *(v3.0.0 - AI File Processor)*
 - **[X]** Identificar tags, chaves curvas, colchetes e parênteses para evitar erros no JSON Rewriter e uso de editor de texto ros ls/dir com ferramentas de busca avançadas
 - **[X]** Incluir query para inteligência artificial sem arquivos/diretórios, apenas com texto do usuário *(v3.0.0 - AI File Processor)*
@@ -265,10 +265,10 @@ def walk(v):
 | Categoria | Total | Completas | Pendentes | % Completo |
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
-| SHOULD HAVE | 50 | 36 | 14 | 72.0% |
+| SHOULD HAVE | 50 | 40 | 10 | 80.0% |
 | COULD HAVE | 18 | 0 | 18 | 0% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **59** | **45** | **56.7%** |
+| **TOTAL** | **104** | **63** | **41** | **60.6%** |
 
 ### Notas
 
@@ -277,9 +277,10 @@ def walk(v):
 - **v2.9.9**: Melhorias em tradução, validação de case, ranges hierárquicos e transparência
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- 56.7% do projeto total completo - em progressão constante
+- **60.6%** do projeto total completo - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
+- **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 
 ### Marcos Importantes
 
