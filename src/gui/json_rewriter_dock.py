@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget, QGridLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
     QSpinBox, QFileDialog, QMessageBox, QComboBox
 )
+from PySide6.QtCore import QSettings
 
 from .base_dock import BaseDock
 
@@ -45,7 +46,8 @@ def format_removal_statistics(stats: dict) -> str:
         'duplicate_child': ('Avoided duplicate child hierarchies', 'object hierarchies'),
         'array_duplicates_consecutive': ('Removed consecutive duplicate array elements', 'array elements'),
         'array_duplicates_all': ('Removed all duplicate array elements', 'array elements'),
-        'no_siblings': ('Skipped orphan object chains', 'object chains')
+        'no_siblings': ('Skipped orphan object chains', 'object chains'),
+        'duplicate_objects': ('Removed duplicate objects', 'objects')
     }
     
     # Omit operations with 0 count (Q5-B)
@@ -142,6 +144,18 @@ def cli_dedupe(args: argparse.Namespace):
     if hasattr(args, 'skip_no_siblings') and args.skip_no_siblings:
         obj, stats['no_siblings'] = rw.skip_keys_without_siblings(obj)
     
+    # Remove duplicate objects if requested (Task #52 - v2.9.27)
+    if hasattr(args, 'remove_duplicate_objects') and args.remove_duplicate_objects:
+        threshold = getattr(args, 'duplicate_threshold', 100) / 100.0  # Convert percentage to 0.0-1.0
+        include_arrays = getattr(args, 'include_duplicate_arrays', False)
+        mode = getattr(args, 'duplicate_mode', 'remove')
+        obj, stats['duplicate_objects'], dup_stats = rw.remove_duplicate_objects(
+            obj,
+            threshold=threshold,
+            include_arrays=include_arrays,
+            mode=mode
+        )
+    
     # Enforce consistent case if requested (Task #9 - v2.9.8)
     if hasattr(args, 'enforce_case') and args.enforce_case:
         case_style = getattr(args, 'case_style', 'camel')
@@ -186,6 +200,7 @@ class JsonRewriterDock(BaseDock):
     
     def __init__(self, parent: QWidgetType | None = None):
         super().__init__("JSON Rewriter", parent)
+        self._load_preferences()
     
     def _setup_ui(self) -> None:
         """Setup UI components."""
@@ -231,6 +246,21 @@ class JsonRewriterDock(BaseDock):
         self.chk_convert_arrays.setToolTip("Convert string arrays to objects with generated keys (Task #21)")
         self.chk_skip_no_siblings = QCheckBox("Skip keys without siblings")
         self.chk_skip_no_siblings.setToolTip("Remove serial hierarchies (chains) where keys don't have siblings (Task #35)")
+        
+        # Task #52 - Remove duplicate objects
+        self.chk_remove_dup_objects = QCheckBox("Remove duplicate objects")
+        self.chk_remove_dup_objects.setToolTip("Remove objects with identical or similar values, keeping the first occurrence (smallest line number)")
+        self.chk_include_dup_arrays = QCheckBox("Include arrays")
+        self.chk_include_dup_arrays.setToolTip("Also check arrays for duplicates (only when all elements match)")
+        self.lbl_dup_threshold = QLabel("Similarity:")
+        self.spin_dup_threshold = QSpinBox()
+        self.spin_dup_threshold.setRange(50, 100)
+        self.spin_dup_threshold.setValue(100)
+        self.spin_dup_threshold.setSuffix("%")
+        self.spin_dup_threshold.setToolTip("Minimum similarity percentage (100% = exact match only, 80% = allow 20% field differences)")
+        self.combo_dup_mode = QComboBox()
+        self.combo_dup_mode.addItems(["Remove (default)", "Reference ($ref)"])
+        self.combo_dup_mode.setToolTip("Remove: delete duplicates | Reference: replace with $ref:path to original")
         
         # Task #23 - Update orphaned references
         self.chk_update_refs = QCheckBox("Update references in project")
@@ -318,10 +348,17 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.combo_case_style, 6, 3)
         g.addWidget(self.chk_validate_case, 6, 4)
         
-        # Row 7: Indent and run button
-        g.addWidget(self.lbl_indent, 7, 0)
-        g.addWidget(self.spin_indent, 7, 1)
-        g.addWidget(self.btn_run, 7, 4)
+        # Row 7: Remove duplicate objects (Task #52)
+        g.addWidget(self.chk_remove_dup_objects, 7, 0, 1, 1)
+        g.addWidget(self.chk_include_dup_arrays, 7, 1)
+        g.addWidget(self.lbl_dup_threshold, 7, 2)
+        g.addWidget(self.spin_dup_threshold, 7, 3)
+        g.addWidget(self.combo_dup_mode, 7, 4)
+        
+        # Row 8: Indent and run button
+        g.addWidget(self.lbl_indent, 8, 0)
+        g.addWidget(self.spin_indent, 8, 1)
+        g.addWidget(self.btn_run, 8, 4)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -440,6 +477,10 @@ class JsonRewriterDock(BaseDock):
             enforce_case=self.chk_enforce_case.isChecked(),
             case_style=self.combo_case_style.currentText().lower().replace('-', '').replace('case', ''),  # 'camelCase' -> 'camel'
             is_file=self.chk_is_file.isChecked(),
+            remove_duplicate_objects=self.chk_remove_dup_objects.isChecked(),
+            duplicate_threshold=self.spin_dup_threshold.value(),
+            include_duplicate_arrays=self.chk_include_dup_arrays.isChecked(),
+            duplicate_mode='reference' if self.combo_dup_mode.currentIndex() == 1 else 'remove',
         )
         
         # Execute rewrite
@@ -486,9 +527,33 @@ class JsonRewriterDock(BaseDock):
             else:
                 # Q5-C: Special message if nothing was removed
                 QMessageBox.information(self, "Done", "Rewriter finished.\n\nℹ️ No items were removed by any operation.")
+            
+            # Save preferences after successful execution
+            self._save_preferences()
         except Exception as e:
             import traceback
             QMessageBox.critical(self, "Error", f"{str(e)}\n\n{traceback.format_exc()}")
+    
+    def _load_preferences(self) -> None:
+        """Load preferences from QSettings (Task #52)."""
+        settings = QSettings("Clarify", "JsonRewriter")
+        
+        # Load duplicate objects settings
+        if hasattr(self, 'chk_remove_dup_objects'):
+            self.chk_remove_dup_objects.setChecked(settings.value("remove_duplicate_objects", False, type=bool))
+            self.chk_include_dup_arrays.setChecked(settings.value("include_duplicate_arrays", False, type=bool))
+            self.spin_dup_threshold.setValue(settings.value("duplicate_threshold", 100, type=int))
+            self.combo_dup_mode.setCurrentIndex(settings.value("duplicate_mode_index", 0, type=int))
+    
+    def _save_preferences(self) -> None:
+        """Save preferences to QSettings (Task #52)."""
+        settings = QSettings("Clarify", "JsonRewriter")
+        
+        # Save duplicate objects settings
+        settings.setValue("remove_duplicate_objects", self.chk_remove_dup_objects.isChecked())
+        settings.setValue("include_duplicate_arrays", self.chk_include_dup_arrays.isChecked())
+        settings.setValue("duplicate_threshold", self.spin_dup_threshold.value())
+        settings.setValue("duplicate_mode_index", self.combo_dup_mode.currentIndex())
     
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""

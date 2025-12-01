@@ -932,7 +932,27 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios **(v2.9.6)**
 - **[]** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
 - **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
-- **[]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes
+- **[X]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes nomes *(v2.9.27 - Task #52: Remove Duplicate Objects)*
+  - **Sprint A (MVP - COMPLETO - 01/12/2025)**:
+    * ✅ Novo checkbox "Remove duplicate objects" no JSON Rewriter
+    * ✅ Threshold configurável (50-100%): permite similarity parcial
+    * ✅ Modo Remove (default): deleta duplicatas, mantém primeiro (menor linha)
+    * ✅ Modo Reference (opcional): substitui por $ref:path.to.original
+    * ✅ Include Arrays: opcionalmente compara arrays também
+    * ✅ Statistics feedback em MessageBox
+    * ✅ QSettings persistence (4 preferências salvas automaticamente)
+    * ✅ 19 unit tests (100% passing em 0.21s)
+  - **Arquivos**:
+    * `src/rewriter/operations.py` (+220 linhas): remove_duplicate_objects()
+    * `src/gui/json_rewriter_dock.py` (+85 linhas): UI widgets, integration, persistence
+    * `tests/test_remove_duplicate_objects.py` (+330 linhas, novo): 19 tests em 10 classes
+    * `docs/v2.9.27-SPECIFICATION.md` (novo): Especificação técnica completa
+  - **Sprint B (Advanced Features - PENDENTE)**:
+    * ❌ Performance options dialog (Worker thread / Sync / Batching com progress bar)
+    * ❌ Visual threshold slider com preview em tempo real
+    * ❌ Integration com Advanced Conditions (filtrar arquivos antes de processar)
+    * ❌ Detailed statistics dialog (table com Original Key | Kept Key | Similarity % | Line Numbers, export CSV)
+    * ❌ Reference resolver (expand $ref: paths para valores reais)
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
@@ -1051,9 +1071,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 18 | 12 | 6 | 66.7% |
+| COULD HAVE | 18 | 13 | 5 | 72.2% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **107** | **89** | **18** | **83.2%** |
+| **TOTAL** | **107** | **90** | **17** | **84.1%** |
 
 ### Notas
 
@@ -1064,7 +1084,7 @@ def walk(v):
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - **v2.9.24**: Adicionado Text to JSON Converter com 10 formatos (Key-Value, CSV, YAML, TOML, TOON, etc.)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **83.2%** do projeto total completo (89 tasks completas) - em progressão constante
+- **84.1%** do projeto total completo (90 tasks completas) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.14**: Task #23 COMPLETA - Orphaned Keys Update System com VALUE EQUALITY (12 unit tests passing)
 - **v2.9.15**: Tasks #44 e #45 COMPLETAS - Análise add/ + Sistema de Tutoriais com Help menu (3 tutoriais MVP, TutorialsDock, preparação chatbot)
@@ -1075,11 +1095,13 @@ def walk(v):
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
 - **v2.9.26**: Task #51 COMPLETA - Advanced File Filters no AI Processor (660+ linhas, 21 testes passing em 0.33s, Protocolo Simplicidade 1 v1.6)
+- **v2.9.27**: Task #52 COMPLETA - Remove Duplicate Objects no JSON Rewriter (637+ linhas, 19 testes passing em 0.21s, Protocolo Simplicidade 1 v1.6)
 
 ### Marcos Importantes
 
 - **v3.0.0 (24/11/2025)**: +6 tasks completadas (SHOULD HAVE)
 - **v2.9.26 (01/12/2025)**: Task #51 COMPLETA - Advanced File Filters (6 field types, 10 operators, AND/OR logic, QSettings persistence)
+- **v2.9.27 (01/12/2025)**: Task #52 COMPLETA - Remove Duplicate Objects (threshold 50-100%, remove/reference modes, array support, 19 tests)
   - Case Converter integrado
   - JSON Search com suporte TS
   - Text Extractor HTML/JSX

@@ -782,3 +782,209 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
         return process_list(node), removed_count
     else:
         return node, 0
+
+
+def remove_duplicate_objects(
+    node: JSONNode,
+    threshold: float = 1.0,
+    include_arrays: bool = False,
+    mode: str = 'remove'
+) -> Tuple[JSONNode, int, dict]:
+    """
+    Remove duplicate objects based on value equality.
+    
+    Finds objects with identical or similar values and removes duplicates,
+    keeping the first occurrence (smallest line number in source).
+    
+    Args:
+        node: JSONNode to process
+        threshold: Similarity threshold (0.0-1.0). 1.0 = exact match only
+        include_arrays: If True, also compare arrays for duplicates
+        mode: 'remove' (delete duplicates) or 'reference' (replace with $ref:path)
+    
+    Returns:
+        Tuple of (processed_node, removed_count, stats_dict) where:
+            - processed_node: JSONNode with duplicates removed
+            - removed_count: Number of duplicate objects removed
+            - stats_dict: Details like {'duplicates_found': [...], 'references_created': [...]}
+    
+    Examples:
+        >>> obj = Obj([('user', {'name': 'John'}), ('author', {'name': 'John'})])
+        >>> result, count, stats = remove_duplicate_objects(obj, threshold=1.0)
+        >>> count
+        1
+    """
+    removed_count = 0
+    stats_dict = {
+        'duplicates_found': [],
+        'references_created': [],
+        'kept_objects': []
+    }
+    
+    # Track seen objects: {frozen_value: (path, first_key, obj_value)}
+    seen_objects: Dict[Any, Tuple[str, str, JSONNode]] = {}
+    
+    def calculate_similarity(obj1: JSONNode, obj2: JSONNode) -> float:
+        """
+        Calculate similarity score between two objects (0.0 to 1.0).
+        
+        For Obj: percentage of matching fields.
+        For others: 1.0 if identical, 0.0 otherwise.
+        """
+        if isinstance(obj1, Obj) and isinstance(obj2, Obj):
+            # Convert to dicts for comparison
+            dict1 = {k: freeze(v) for k, v in obj1}
+            dict2 = {k: freeze(v) for k, v in obj2}
+            
+            all_keys = set(dict1.keys()) | set(dict2.keys())
+            if not all_keys:
+                return 1.0  # Both empty
+            
+            matching_keys = sum(
+                1 for k in all_keys
+                if k in dict1 and k in dict2 and dict1[k] == dict2[k]
+            )
+            return matching_keys / len(all_keys)
+        
+        elif isinstance(obj1, list) and isinstance(obj2, list):
+            # For arrays: must be exactly equal
+            return 1.0 if freeze(obj1) == freeze(obj2) else 0.0
+        
+        else:
+            # Primitives: exact match
+            return 1.0 if freeze(obj1) == freeze(obj2) else 0.0
+    
+    def process_node(n: JSONNode, path: str = '') -> Optional[JSONNode]:
+        """
+        Recursively process node, tracking and removing duplicates.
+        
+        Args:
+            n: Current node to process
+            path: Current path in tree (e.g., 'root.users.0')
+        
+        Returns:
+            Processed node or None if removed as duplicate
+        """
+        nonlocal removed_count
+        
+        if isinstance(n, Obj):
+            # Check if this object is a duplicate
+            should_check = True
+            frozen_val = freeze(n)
+            
+            # Look for similar objects in seen_objects
+            duplicate_of = None
+            best_similarity = 0.0
+            
+            for seen_frozen, (seen_path, seen_key, seen_obj) in seen_objects.items():
+                similarity = calculate_similarity(n, seen_obj)
+                
+                if similarity >= threshold and similarity > best_similarity:
+                    best_similarity = similarity
+                    duplicate_of = (seen_path, seen_key, seen_obj, seen_frozen)
+            
+            if duplicate_of:
+                # Found duplicate!
+                seen_path, seen_key, seen_obj, seen_frozen = duplicate_of
+                
+                removed_count += 1  # Increment regardless of mode
+                
+                if mode == 'reference':
+                    # Create reference instead of removing
+                    ref_path = seen_path if seen_path else seen_key
+                    stats_dict['references_created'].append({
+                        'removed_path': path,
+                        'reference_to': ref_path,
+                        'similarity': best_similarity
+                    })
+                    # Return special reference marker (not None)
+                    return f"$ref:{ref_path}"
+                else:
+                    # Remove mode (default)
+                    stats_dict['duplicates_found'].append({
+                        'removed_path': path,
+                        'kept_path': seen_path,
+                        'kept_key': seen_key,
+                        'similarity': best_similarity
+                    })
+                    return None  # Remove this object
+            
+            # Not a duplicate - process recursively and track it
+            seen_objects[frozen_val] = (path, '', n)
+            stats_dict['kept_objects'].append({
+                'path': path,
+                'frozen_signature': str(frozen_val)[:100]  # First 100 chars
+            })
+            
+            # Process children
+            out = Obj()
+            for idx, (k, v) in enumerate(n):
+                child_path = f"{path}.{k}" if path else k
+                processed_v = process_node(v, child_path)
+                if processed_v is not None:
+                    out.append((k, processed_v))
+            
+            return out  # Return even if empty (empty objects are valid)
+        
+        elif isinstance(n, list):
+            if not include_arrays:
+                # Don't check arrays for duplicates, but process children
+                result = []
+                for idx, item in enumerate(n):
+                    child_path = f"{path}[{idx}]" if path else f"[{idx}]"
+                    processed_item = process_node(item, child_path)
+                    if processed_item is not None:
+                        result.append(processed_item)
+                return result
+            else:
+                # Check arrays for duplicates too
+                frozen_val = freeze(n)
+                
+                # Look for duplicate array
+                duplicate_of = None
+                for seen_frozen, (seen_path, seen_key, seen_obj) in seen_objects.items():
+                    if isinstance(seen_obj, list):
+                        similarity = calculate_similarity(n, seen_obj)
+                        if similarity >= threshold:
+                            duplicate_of = (seen_path, seen_key, seen_obj, seen_frozen)
+                            break
+                
+                if duplicate_of:
+                    seen_path, seen_key, seen_obj, seen_frozen = duplicate_of
+                    
+                    if mode == 'reference':
+                        ref_path = seen_path if seen_path else seen_key
+                        stats_dict['references_created'].append({
+                            'removed_path': path,
+                            'reference_to': ref_path,
+                            'similarity': 1.0
+                        })
+                        return f"$ref:{ref_path}"
+                    else:
+                        stats_dict['duplicates_found'].append({
+                            'removed_path': path,
+                            'kept_path': seen_path,
+                            'kept_key': seen_key,
+                            'similarity': 1.0
+                        })
+                        removed_count += 1
+                        return None
+                
+                # Not duplicate - track and process
+                seen_objects[frozen_val] = (path, '', n)
+                
+                result = []
+                for idx, item in enumerate(n):
+                    child_path = f"{path}[{idx}]" if path else f"[{idx}]"
+                    processed_item = process_node(item, child_path)
+                    if processed_item is not None:
+                        result.append(processed_item)
+                return result
+        
+        else:
+            # Primitive value - no duplication check
+            return n
+    
+    # Process the tree
+    result = process_node(node, 'root')
+    return (result if result is not None else Obj()), removed_count, stats_dict
