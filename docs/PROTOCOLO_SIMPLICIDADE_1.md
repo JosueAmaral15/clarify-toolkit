@@ -2,9 +2,15 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.3  
+**Versão**: 1.4  
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v1.4**:
+- ✅ Reorganizada ordem final: Implementar → Integrar GUI → CLI → Testar → Organizar → Documentar → Commit
+- ✅ Testes movidos para DEPOIS das verificações de integração (testar sistema integrado)
+- ✅ Organizar pasta raiz movido para ANTES da documentação (documentar estado limpo)
+- ✅ Lógica: Integrar → Testar integração → Limpar repositório → Documentar estado final
 
 **Changelog v1.3**:
 - ✅ Reorganizada ordem das etapas: Verificação de Integração GUI e CLI agora vêm ANTES da Documentação
@@ -35,11 +41,11 @@
 4. 🔍 Analisar e estudar o projeto
 5. 🎯 Fazer sprints das tarefas mais simples
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
-7. 🧪 Fazer testes (100% cobertura)
-8. 🔗 **Verificar integração com programa principal**
-9. ⌨️ **Verificar implementação CLI**
-🔟 📝 Preencher documentação
-1️⃣1️⃣ 🧹 Organizar pasta raiz
+7. 🔗 **Verificar integração com programa principal**
+8. ⌨️ **Verificar implementação CLI**
+9. 🧪 Fazer testes (100% cobertura)
+🔟 🧹 Organizar pasta raiz
+1️⃣1️⃣ 📝 Preencher documentação
 1️⃣2️⃣ 🚀 Fazer commit e push
 
 ### 1️⃣ **Ler a Documentação**
@@ -451,32 +457,8 @@ class ReferenceUpdater:
 
 ---
 
-### 7️⃣ **Fazer Testes**
-- **Obrigatório**: Testes unitários para cada função pública
-- **Meta**: 100% de cobertura das funcionalidades implementadas
-- **Ferramentas**: `unittest` (nativo) ou `pytest`
-
-**Categorias de Testes**:
-1. **Happy Path**: Casos normais de uso
-2. **Edge Cases**: Valores vazios, None, strings longas
-3. **Error Handling**: Exceções esperadas
-4. **Integration**: Fluxo completo
-
-**Exemplo Task #23**:
-```python
-✅ test_extract_from_dict_simple()
-✅ test_extract_from_obj_type()
-✅ test_simple_substitution_same_value()
-✅ test_different_values_no_substitution()
-✅ test_apply_substitutions_tsx_file()
-✅ test_update_multiple_files()
-# ... 12 testes no total (100% passing)
-```
-
----
-
-### 8️⃣ **Verificar Integração com Programa Principal**
-- **CRÍTICO**: Antes da documentação, **verificar se os componentes estão integrados ao programa principal**
+### 7️⃣ **Verificar Integração com Programa Principal**
+- **CRÍTICO**: Antes dos testes, **verificar se os componentes estão integrados ao programa principal**
 - Não basta implementar o módulo/dock, ele precisa estar **acessível e funcional** no app
 - Verificar menu, imports, inicialização e conexões
 
@@ -595,7 +577,7 @@ class ReferenceUpdater:
 
 ---
 
-### 9️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
+### 8️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
 - **CRÍTICO**: Verificar se a nova funcionalidade está disponível também via **CLI (Command Line Interface)**
 - Não basta implementar GUI, funcionalidades importantes devem ter **interface CLI** para automação
 - Verificar subcomandos, argumentos, help text e integração
@@ -795,7 +777,86 @@ clarify text2json data.csv --format csv --pretty -o output.json
 
 ---
 
-### 🔟 **Preencher Nova Documentação**
+### 9️⃣ **Fazer Testes**
+- **Obrigatório**: Testes unitários para cada função pública
+- **Meta**: 100% de cobertura das funcionalidades implementadas
+- **Ferramentas**: `unittest` (nativo) ou `pytest`
+- **CRÍTICO**: Testar o sistema **após integração** (GUI + CLI integrados)
+
+**Categorias de Testes**:
+1. **Happy Path**: Casos normais de uso
+2. **Edge Cases**: Valores vazios, None, strings longas
+3. **Error Handling**: Exceções esperadas
+4. **Integration**: Fluxo completo (incluindo integração GUI/CLI)
+
+**Exemplo Task #23**:
+```python
+✅ test_extract_from_dict_simple()
+✅ test_extract_from_obj_type()
+✅ test_simple_substitution_same_value()
+✅ test_different_values_no_substitution()
+✅ test_apply_substitutions_tsx_file()
+✅ test_update_multiple_files()
+# ... 12 testes no total (100% passing)
+```
+
+**Por quê testar DEPOIS da integração?**:
+- Garante que testes validam o **sistema integrado**, não componentes isolados
+- Detecta problemas de integração durante os testes
+- Valida que features realmente funcionam no contexto do aplicativo
+- Evita falsos positivos (testes passam mas feature não está acessível)
+
+**Por quê?**: Garantir qualidade, evitar regressões, facilitar manutenção futura.
+
+---
+
+### 🔟 **Organizar Pasta Raiz do Projeto**
+- **CRÍTICO**: Antes da documentação, **organizar a pasta raiz**
+- Remover arquivos temporários, backups desnecessários
+- Verificar se todos os arquivos estão nos lugares corretos
+- Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
+- Garantir que `.gitignore` está atualizado
+
+**Checklist de Organização**:
+1. **Remoção de Arquivos Temporários**:
+   ```bash
+   # Remover backups antigos
+   rm -f *.backup_* *.bak *~
+   
+   # Limpar cache Python
+   find . -type d -name "__pycache__" -exec rm -rf {} +
+   find . -type f -name "*.pyc" -delete
+   find . -type f -name "*.pyo" -delete
+   ```
+
+2. **Verificação de Estrutura de Diretórios**:
+   - `src/` - código-fonte
+   - `tests/` - testes unitários
+   - `docs/` - documentação
+   - Arquivos raiz organizados (README, setup.py, etc.)
+
+**Exemplo**:
+```bash
+# ANTES (pasta bagunçada):
+├── src/
+├── apply_v2913_patches.py  ❌ temporário
+├── test_temp.py           ❌ teste descartável
+├── backup_old/            ❌ backup antigo
+├── __pycache__/           ❌ cache
+└── file.py.backup_v2913   ❌ backup desnecessário
+
+# DEPOIS (organizado):
+├── src/          ✅
+├── tests/        ✅
+├── docs/         ✅
+└── README.md     ✅
+```
+
+**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo. Documentar o estado **limpo** do projeto.
+
+---
+
+### 1️⃣1️⃣ **Preencher Nova Documentação**
 - **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
 - **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
@@ -885,85 +946,6 @@ clarify text2json data.csv --format csv --pretty -o output.json
 - TOTAL: X% completo (Y/Z tasks)
 - Commits: N pushed
 ```
-
----
-
-### 9️⃣ **Organizar Pasta Raiz do Projeto**
-- **CRÍTICO**: Antes do commit e push, **organizar a pasta raiz**
-- Remover arquivos temporários, backups desnecessários
-- Verificar se todos os arquivos estão nos lugares corretos
-- Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
-- Garantir que `.gitignore` está atualizado
-
-**Checklist de Organização**:
-1. **Remoção de Arquivos Temporários**:
-   ```bash
-   # Remover backups antigos
-   rm -f *.backup_* *.bak *~
-   
-   # Limpar cache Python
-   find . -type d -name "__pycache__" -exec rm -rf {} +
-   find . -type f -name "*.pyc" -delete
-   find . -type f -name "*.pyo" -delete
-   ```
-
-2. **Verificação de Estrutura de Diretórios**:
-   ```
-   ✅ src/ - Código-fonte organizado por módulos
-   ✅ tests/ - Testes unitários espelhando src/
-   ✅ docs/ - Documentação atualizada
-   ✅ archive/ - Versões antigas (se necessário)
-   ❌ Raiz - Não deixar arquivos soltos (test.py, temp.txt, etc.)
-   ```
-
-3. **Validação de .gitignore**:
-   ```gitignore
-   # Python
-   __pycache__/
-   *.py[cod]
-   *$py.class
-   *.so
-   
-   # Backups
-   *.backup*
-   *.bak
-   *~
-   
-   # IDE
-   .vscode/
-   .idea/
-   
-   # Temporários
-   tmp/
-   temp/
-   *.tmp
-   ```
-
-4. **Git Status Clean**:
-   ```bash
-   git status
-   # Verificar se apenas arquivos relevantes estão staged
-   # Não commitar: __pycache__, .pyc, backups, temporários
-   ```
-
-**Exemplo Real (v2.9.15)**:
-```bash
-# ANTES (pasta bagunçada):
-├── src/
-├── apply_v2913_patches.py  ❌ temporário
-├── test_temp.py           ❌ teste descartável
-├── backup_old/            ❌ backup antigo
-├── __pycache__/           ❌ cache
-└── file.py.backup_v2913   ❌ backup desnecessário
-
-# DEPOIS (organizado):
-├── src/          ✅
-├── tests/        ✅
-├── docs/         ✅
-└── README.md     ✅
-```
-
-**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo.
 
 ---
 
@@ -1191,11 +1173,11 @@ O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 │  4. Analisar e Estudar o Projeto             │
 │  5. Planejar Sprint (2-4 tasks, 3-4h)        │
 │  6. Implementar (arquitetura GoF + GRASP)    │
-│  7. Testar (100% coverage)                   │
-│  8. Documentar (TASKS + vX.X.X-SPECS)        │
-│  9. Organizar Pasta Raiz                     │
-│  10. Verificar Integração GUI                │
-│  11. Verificar Implementação CLI             │
+│  7. Verificar Integração GUI                 │
+│  8. Verificar Implementação CLI              │
+│  9. Testar (100% coverage)                   │
+│  10. Organizar Pasta Raiz                    │
+│  11. Documentar (TASKS + vX.X.X-SPECS)       │
 │  12. Commit + Push (conventional)            │
 └──────────────────────────────────────────────┘
            ↓
@@ -1224,7 +1206,7 @@ O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 
 ---
 
-**Versão**: 1.3  
+**Versão**: 1.4  
 **Última atualização**: 01 de Dezembro de 2025  
 **Mantido por**: Josué Amaral  
 **Status**: ATIVO - Protocolo oficial do projeto Clarify
