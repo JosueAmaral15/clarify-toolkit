@@ -589,12 +589,3 @@ class StandardToolDock(
         This should typically call your main processing method (e.g., _process).
         """
         pass
-
-
-class StandardToolDock(BaseDock, FileInputMixin, ResultsOutputMixin, ActionButtonsMixin):
-    """
-    Standard tool dock with all common functionality.
-    
-    Inherits from all mixins for maximum reusability.
-    """
-    pass
