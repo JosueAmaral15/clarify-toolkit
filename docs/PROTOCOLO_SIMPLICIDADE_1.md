@@ -2,9 +2,14 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.1  
-**Última Atualização**: 30 de Novembro de 2025  
+**Versão**: 1.2  
+**Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v1.2**:
+- ✅ Adicionada Etapa 10: Verificar integração com programa principal
+- ✅ Adicionada Etapa 11: Verificar implementação CLI com passagem de parâmetros
+- ✅ Total de etapas: 10 → 12
 
 ---
 
@@ -16,19 +21,21 @@
 
 ---
 
-## 📋 Espinha Dorsal do Protocolo (10 Etapas)
+## 📋 Espinha Dorsal do Protocolo (12 Etapas)
 
 **Resumo Executivo**:
 1. 📚 Ler a documentação
 2. ✅ Escolher tarefas mais simples
 3. ❓ Fazer perguntas até sanar 100% das dúvidas
-4. 🔍 **Analisar e estudar o projeto** (NOVO)
+4. 🔍 Analisar e estudar o projeto
 5. 🎯 Fazer sprints das tarefas mais simples
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
 7. 🧪 Fazer testes (100% cobertura)
 8. 📝 Preencher documentação
-9. 🧹 **Organizar pasta raiz** (NOVO)
-🔟 🚀 Fazer commit e push
+9. 🧹 Organizar pasta raiz
+🔟 🔗 **Verificar integração com programa principal** (NOVO)
+1️⃣1️⃣ ⌨️ **Verificar implementação CLI** (NOVO)
+1️⃣2️⃣ 🚀 Fazer commit e push
 
 ### 1️⃣ **Ler a Documentação**
 - Consultar `docs/TASKS.md` para entender o contexto do projeto
@@ -635,7 +642,327 @@ class ReferenceUpdater:
 
 ---
 
-### 🔟 **Fazer Commit e Push**
+### 🔟 **Verificar Integração com Programa Principal**
+- **CRÍTICO**: Antes do commit, **verificar se os componentes estão integrados ao programa principal**
+- Não basta implementar o módulo/dock, ele precisa estar **acessível e funcional** no app
+- Verificar menu, imports, inicialização e conexões
+
+**Checklist de Integração GUI**:
+
+1. **Import Correto no app.py**:
+   ```python
+   # ✅ Verificar se módulo foi importado
+   from .gui import (
+       CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
+       TextExtractorDock, AIProcessorDock, JsonTranslateDock,
+       JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
+       EditorDock, TextToJsonDock  # ← NOVO módulo deve estar aqui
+   )
+   ```
+
+2. **Export no __init__.py do Módulo**:
+   ```python
+   # src/gui/__init__.py
+   from .text_to_json_dock import TextToJsonDock
+   
+   __all__ = [
+       'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
+       'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
+       'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
+       'EditorDock', 'TextToJsonDock'  # ← NOVO módulo exportado
+   ]
+   ```
+
+3. **Menu Item Criado e Conectado**:
+   ```python
+   # Em _build_menu() ou similar
+   m_tools = bar.addMenu(tr("menu.tools"))
+   
+   # Criar QAction
+   self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
+   
+   # Adicionar ao menu
+   m_tools.addAction(self.act_open_text_to_json)
+   
+   # Conectar signal
+   self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
+   ```
+
+4. **Dock Inicializado no __init__() ou método de setup**:
+   ```python
+   # Em __init__() da MainWindow
+   def __init__(self):
+       super().__init__()
+       # ... outros docks ...
+       self._open_text_to_json()  # ← Inicializar dock
+   
+   def _open_text_to_json(self):
+       self.dock_text_to_json = TextToJsonDock(self)
+       self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
+       self.dock_text_to_json.hide()
+   ```
+
+5. **Signals Conectados** (se aplicável):
+   ```python
+   # Conectar signals customizados
+   self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+   
+   def _load_json_from_converter(self, json_str: str):
+       """Callback para abrir JSON no editor"""
+       if not hasattr(self, 'dock_editor'):
+           self._open_editor()
+       self.dock_editor.load_json_string(json_str)
+       self.dock_editor.show()
+   ```
+
+6. **Traduções i18n Adicionadas**:
+   ```json
+   // src/i18n/en.json
+   {
+     "menu.tools.text_to_json": "Text to JSON Converter"
+   }
+   
+   // src/i18n/pt_BR.json
+   {
+     "menu.tools.text_to_json": "Conversor de Texto para JSON"
+   }
+   ```
+
+**Checklist de Teste de Integração**:
+- ✅ **Menu acessível**: Verificar se item aparece no menu Tools
+- ✅ **Dock abre**: Clicar no menu deve abrir o dock corretamente
+- ✅ **Funcionalidade básica**: Testar conversão simples
+- ✅ **Signals funcionam**: Testar integração com outros componentes (ex: Open in Editor)
+- ✅ **Sem erros no console**: Não deve haver ImportError, AttributeError, etc.
+- ✅ **Tradução funcionando**: Menu em PT-BR deve mostrar texto traduzido
+
+**Exemplo Real (Task #49 - Text to JSON Converter)**:
+```python
+✅ Import: from .gui import TextToJsonDock
+✅ Export: __all__ = [..., 'TextToJsonDock']
+✅ Menu: self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
+✅ Init: self._open_text_to_json() chamado em __init__()
+✅ Signal: open_in_editor_requested.connect(self._load_json_from_converter)
+✅ i18n: EN "Text to JSON Converter", PT-BR "Conversor de Texto para JSON"
+✅ Teste: Menu abre dock, conversão funciona, signal para editor OK
+```
+
+**Perguntas para Validar Integração**:
+1. ❓ "O novo módulo está importado no arquivo principal (app.py)?"
+2. ❓ "O módulo está exportado no __init__.py da pasta?"
+3. ❓ "Há um item de menu para acessar a funcionalidade?"
+4. ❓ "O item de menu está conectado ao método correto?"
+5. ❓ "O dock/componente é inicializado no startup da aplicação?"
+6. ❓ "Signals customizados estão conectados?"
+7. ❓ "Traduções foram adicionadas (EN e PT-BR)?"
+8. ❓ "A funcionalidade está acessível sem erros?"
+
+**Por quê?**: Garantir que o código implementado está **realmente utilizável** pelo usuário final, não apenas "funciona isoladamente".
+
+---
+
+### 1️⃣1️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
+- **CRÍTICO**: Verificar se a nova funcionalidade está disponível também via **CLI (Command Line Interface)**
+- Não basta implementar GUI, funcionalidades importantes devem ter **interface CLI** para automação
+- Verificar subcomandos, argumentos, help text e integração
+
+**Checklist de Implementação CLI**:
+
+1. **Subcomando Criado no Parser**:
+   ```python
+   # No arquivo principal (ex: __main__.py, app.py, clarify.py)
+   def _build_cli_parser():
+       parser = argparse.ArgumentParser(description="Clarify - JSON Management System")
+       subparsers = parser.add_subparsers(dest='command')
+       
+       # Subcomandos existentes
+       parser_search = subparsers.add_parser('search', help='Search in files')
+       parser_replace = subparsers.add_parser('replace', help='Replace text')
+       
+       # ✅ NOVO subcomando para funcionalidade
+       parser_text2json = subparsers.add_parser(
+           'text2json',
+           help='Convert text to JSON format'
+       )
+   ```
+
+2. **Argumentos Definidos**:
+   ```python
+   # Argumentos obrigatórios e opcionais
+   parser_text2json.add_argument(
+       'input',
+       help='Input text file or - for stdin'
+   )
+   parser_text2json.add_argument(
+       '-f', '--format',
+       choices=['auto', 'key-value', 'csv', 'yaml', 'ini', 'toml', 'toon'],
+       default='auto',
+       help='Input format (default: auto-detect)'
+   )
+   parser_text2json.add_argument(
+       '-o', '--output',
+       help='Output JSON file (default: stdout)'
+   )
+   parser_text2json.add_argument(
+       '--no-infer-types',
+       action='store_true',
+       help='Keep all values as strings (disable type inference)'
+   )
+   parser_text2json.add_argument(
+       '--pretty',
+       action='store_true',
+       help='Pretty-print JSON output with indentation'
+   )
+   ```
+
+3. **Handler Function Implementada**:
+   ```python
+   def cli_text2json(args):
+       """Handle text2json CLI subcommand."""
+       from .text_to_json import convert_text_to_json
+       
+       # Ler input
+       if args.input == '-':
+           text = sys.stdin.read()
+       else:
+           with open(args.input, 'r', encoding='utf-8') as f:
+               text = f.read()
+       
+       # Converter
+       result = convert_text_to_json(
+           text,
+           format_type=args.format,
+           infer_types=not args.no_infer_types
+       )
+       
+       # Output
+       if args.pretty:
+           json_str = json.dumps(result, indent=2, ensure_ascii=False)
+       else:
+           json_str = json.dumps(result, ensure_ascii=False)
+       
+       if args.output:
+           with open(args.output, 'w', encoding='utf-8') as f:
+               f.write(json_str)
+           print(f"✓ Converted to {args.output}")
+       else:
+           print(json_str)
+   ```
+
+4. **Dispatcher/Router Atualizado**:
+   ```python
+   def main():
+       parser = _build_cli_parser()
+       args = parser.parse_args()
+       
+       # Router para handlers
+       if args.command == 'search':
+           cli_search(args)
+       elif args.command == 'replace':
+           cli_replace(args)
+       elif args.command == 'text2json':  # ← NOVO
+           cli_text2json(args)
+       else:
+           # GUI mode
+           run_gui()
+   ```
+
+5. **Help Text Documentado**:
+   ```python
+   parser_text2json = subparsers.add_parser(
+       'text2json',
+       help='Convert structured text to JSON',
+       description='''
+       Convert various text formats to JSON:
+       - Key-Value pairs (name: value)
+       - CSV (comma-separated values)
+       - YAML-like format
+       - INI files
+       - TOML files
+       - TOON (Token-Oriented Object Notation)
+       - Auto-detect format
+       
+       Examples:
+         clarify text2json data.csv --format csv --pretty
+         clarify text2json config.ini -o output.json
+         echo "name: John\\nage: 30" | clarify text2json -
+       '''
+   )
+   ```
+
+**Checklist de Validação CLI**:
+- ✅ **Subcomando existe**: `python -m clarify text2json --help` mostra ajuda
+- ✅ **Argumentos funcionam**: Flags obrigatórios e opcionais aceitos
+- ✅ **Help text completo**: Descrição, exemplos, opções documentadas
+- ✅ **Stdin/stdout suportado**: Aceita `-` para pipe/redirect
+- ✅ **Error handling**: Trata erros com mensagens claras (não traceback)
+- ✅ **Exit codes**: 0 para sucesso, 1 para erro
+- ✅ **Performance**: Funciona com arquivos grandes (>100MB)
+
+**Exemplos de Uso CLI** (devem funcionar):
+```bash
+# Converter CSV para JSON
+clarify text2json data.csv --format csv --pretty -o output.json
+
+# Usar stdin (pipe)
+cat config.ini | clarify text2json - --format ini
+
+# Auto-detect formato
+clarify text2json input.txt --pretty
+
+# Converter YAML com type inference
+clarify text2json config.yaml --format yaml -o config.json
+
+# Converter sem inferência de tipos
+clarify text2json data.txt --no-infer-types
+```
+
+**Exemplo Real (Funcionalidades Existentes)**:
+```bash
+# ✅ CLI search (já implementado)
+clarify search ./src --query "foo" --include "*.py"
+
+# ✅ CLI replace (já implementado)
+clarify replace ./src --query "foo" --replacement "bar" --all
+
+# ✅ CLI dedupe (já implementado)
+clarify dedupe en.ts --from-ts --join-keys -o en2.ts
+
+# ❓ CLI text2json (NOVO - precisa implementar?)
+clarify text2json data.csv --format csv --pretty -o output.json
+```
+
+**Quando NÃO Implementar CLI**:
+- ❌ Funcionalidades puramente visuais (syntax highlighting, color picker)
+- ❌ Docks de navegação/exploração (tutorials, file list)
+- ❌ Features interativas que requerem feedback em tempo real
+- ❌ Funcionalidades GUI-only explicitamente (preferences dialog)
+
+**Quando IMPLEMENTAR CLI**:
+- ✅ Conversões de formato (text → JSON, case converter)
+- ✅ Processamento de arquivos (replace, translate, dedupe)
+- ✅ Extração/busca (search, extract keys, JSON query)
+- ✅ Validação (JSON validator, syntax check)
+- ✅ Batch operations (processar múltiplos arquivos)
+
+**Perguntas para Validar CLI**:
+1. ❓ "A funcionalidade é útil para automação/scripts?"
+2. ❓ "Pode processar arquivos em batch?"
+3. ❓ "Seria útil em CI/CD pipelines?"
+4. ❓ "Pode ser usada sem interface gráfica?"
+5. ❓ "Se SIM para qualquer pergunta acima → Implementar CLI"
+
+**Por quê?**: 
+- Permitir **automação** de tarefas repetitivas
+- Integração com **scripts** e **pipelines CI/CD**
+- Uso em **servidores sem GUI** (headless environments)
+- **Power users** preferem CLI para velocidade
+- Torna a ferramenta mais **profissional e versátil**
+
+---
+
+### 1️⃣2️⃣ **Fazer Commit e Push**
 - **Formato**: Conventional Commits (feat/fix/docs/refactor/test)
 - **Mensagem**: Descritiva, completa, com contexto
 - **Frequência**: 1 commit por task ou grupo lógico de mudanças
@@ -800,10 +1127,12 @@ Status: pushed para GitHub ✅
 
 ### Resultado Final
 ✅ **Task #23 100% completa**  
-✅ **Protocolo Simplicidade 1: 8/8 critérios cumpridos**  
+✅ **Protocolo Simplicidade 1: 10/10 etapas cumpridas** (v1.1 - 10 etapas)  
 ✅ **Tempo real: ~3h (dentro da estimativa)**  
 ✅ **Zero bugs detectados**  
 ✅ **Documentação profissional**
+
+**Nota**: Este exemplo usa v1.1 do protocolo (10 etapas). A v1.2 adiciona mais 2 etapas (integração GUI e CLI).
 
 ---
 
@@ -850,16 +1179,20 @@ Status: pushed para GitHub ✅
 O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 
 ```
-┌─────────────────────────────────────────────┐
-│  1. Ler Documentação                        │
-│  2. Escolher Tarefas Mais Simples           │
-│  3. Fazer Perguntas ao Programador          │
-│  4. Planejar Sprint (2-4 tasks, 3-4h)       │
-│  5. Implementar (arquitetura GoF + GRASP)   │
-│  6. Testar (100% coverage)                  │
-│  7. Documentar (TASKS + vX.X.X-SPECS)       │
-│  8. Commit + Push (conventional)            │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  1. Ler Documentação                         │
+│  2. Escolher Tarefas Mais Simples            │
+│  3. Fazer Perguntas ao Programador           │
+│  4. Analisar e Estudar o Projeto             │
+│  5. Planejar Sprint (2-4 tasks, 3-4h)        │
+│  6. Implementar (arquitetura GoF + GRASP)    │
+│  7. Testar (100% coverage)                   │
+│  8. Documentar (TASKS + vX.X.X-SPECS)        │
+│  9. Organizar Pasta Raiz                     │
+│  10. Verificar Integração GUI                │
+│  11. Verificar Implementação CLI             │
+│  12. Commit + Push (conventional)            │
+└──────────────────────────────────────────────┘
            ↓
     ┌──────────────┐
     │   REPETIR    │ ← Sempre há tarefas mais simples!
@@ -875,16 +1208,18 @@ O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 > "Quero um trabalho completo e profissional!"
 
 **Este protocolo garante**:
-- ✅ Qualidade profissional (8 critérios obrigatórios)
+- ✅ Qualidade profissional (12 etapas obrigatórias)
 - ✅ Progresso incremental (do simples ao complexo)
 - ✅ Documentação completa (nunca esquecer o que foi feito)
 - ✅ Código testado (100% confiável)
+- ✅ Integração verificada (GUI + CLI funcionais)
 - ✅ Commits organizados (histórico limpo)
 
 **Releia este documento antes de cada sprint!**
 
 ---
 
-**Última atualização**: 30 de Novembro de 2025  
+**Versão**: 1.2  
+**Última atualização**: 01 de Dezembro de 2025  
 **Mantido por**: Josué Amaral  
 **Status**: ATIVO - Protocolo oficial do projeto Clarify
