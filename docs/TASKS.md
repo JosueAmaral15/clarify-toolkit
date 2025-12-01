@@ -1021,103 +1021,52 @@ def walk(v):
 - **Documentação Principal**: `README.md`
 - **Status de Migração**: `docs/MIGRATION_FINAL_STATUS.md`
 - **Estrutura do Projeto**: `docs/project_structure.txt`
+- **⭐ Protocolo Simplicidade 1**: `docs/PROTOCOLO_SIMPLICIDADE_1.md` (v1.5 - **LER SEMPRE!**)
 
 ---
 
-## 📋 Protocolo Simplicidade 1 - Workflow Obrigatório
+## 📋 Protocolo Simplicidade 1 - Referência Rápida
 
-**IMPORTANTE**: Este protocolo DEVE ser seguido em TODAS as implementações de COULD HAVE tasks. Nunca pular etapas!
+**⚠️ IMPORTANTE**: Para implementação completa, consultar **`docs/PROTOCOLO_SIMPLICIDADE_1.md` (v1.5)**.
 
-### Etapas Obrigatórias
+### 12 Etapas Obrigatórias (Resumo)
 
-1. **Etapa 1 - Ler Documentação**: Ler TASKS.md completo, identificar tasks pendentes por categoria
-2. **Etapa 2 - Escolher Tarefas**: Selecionar task mais simples (menor escopo, menor complexidade)
-3. **Etapa 3 - Fazer Perguntas**: Formular Q1-Q13 sobre requisitos, escopo, UI, integração, prioridades
-4. **Etapa 4 - Analisar Projeto**: Deep code analysis (grep, semantic search, read existing implementations)
-5. **Etapa 5 - Planejar Sprint**: **DIVIDIR EM SPRINTS MENORES** (Sprint A = MVP, Sprint B = Advanced)
-6. **Etapa 6 - Implementar**: Codificar em sprints incrementais (máx 200 linhas por sprint)
-7. **Etapa 7 - Verificar GUI**: Syntax check, import test, error checking
-8. **Etapa 8 - Verificar CLI**: Testar comandos CLI (se aplicável)
-9. **Etapa 9 - Fazer Testes**: Executar testes com **SEGURANÇA** (ver Etapa 9.1 abaixo)
-10. **Etapa 10 - Organizar**: Verificar estrutura de pastas
-11. **Etapa 11 - Documentar**: Atualizar TASKS.md com status, arquivos modificados, estatísticas
-12. **Etapa 12 - Commit/Push**: Git commit + push com mensagem descritiva
+1. 📚 Ler documentação (TASKS.md)
+2. ✅ Escolher tarefas mais simples
+3. ❓ Fazer perguntas (Q1-Q13)
+4. 🔍 Analisar projeto (deep code analysis)
+5. 🎯 Planejar sprints (Sprint A + B)
+6. 💻 Implementar (máx 200 linhas/sprint)
+7. 🔗 Verificar integração GUI
+8. ⌨️ Verificar CLI
+9. 🧪 **Fazer testes COM SEGURANÇA** (ver Etapa 9.1)
+10. 🧹 Organizar pasta raiz
+11. 📝 Documentar (TASKS.md)
+12. 🚀 Commit e push
 
 ### 🛡️ Etapa 9.1 - Segurança em Testes (CRÍTICO)
 
-**Problema**: Testes GUI podem travar em loop infinito sem display X11, testes podem demorar horas sem timeout.
+**Ver `docs/PROTOCOLO_SIMPLICIDADE_1.md` para detalhes completos.**
 
-**Soluções Obrigatórias**:
+**Resumo**:
+- ✅ Timeout obrigatório: `--timeout=30`
+- ✅ Ambiente headless: `QT_QPA_PLATFORM=offscreen`
+- ✅ Dry-run antes: `python -m py_compile tests/*.py`
+- ✅ Detecção de loop: `timeout 10s pytest ...`
+- ✅ Fallback: mocks, unit tests sem GUI
+- ✅ Documentar limitações se necessário
 
-1. **Timeout Máximo**: SEMPRE definir timeout de **30 segundos** por teste
-   ```bash
-   pytest tests/test_*.py --timeout=30 -v
-   ```
+**Comando seguro**:
+```bash
+QT_QPA_PLATFORM=offscreen timeout 5m pytest tests/test_gui_*.py -v --timeout=30
+```
 
-2. **Detecção de Loop Infinito**: Se teste ultrapassar 10 segundos, interromper e investigar
-   ```bash
-   timeout 10s pytest tests/test_specific.py || echo "TIMEOUT: Possível loop infinito"
-   ```
+### ⚠️ Regras de Ouro
 
-3. **Testes GUI Isolados**: Usar `pytest-xvfb` para ambiente virtual X11
-   ```bash
-   pip install pytest-xvfb
-   pytest tests/test_gui_*.py --xvfb-backend xvfb
-   ```
-
-4. **Ambiente Seguro (Headless)**: Usar `QT_QPA_PLATFORM=offscreen` para testes sem display
-   ```bash
-   QT_QPA_PLATFORM=offscreen pytest tests/test_gui_*.py -v --timeout=30
-   ```
-
-5. **Dry-Run Primeiro**: Antes de executar testes completos, fazer syntax check:
-   ```bash
-   python -m py_compile tests/test_*.py
-   python -c "import tests.test_module; print('✅ Import OK')"
-   ```
-
-6. **Monitoramento de Tempo**: Registrar tempo de cada etapa
-   ```bash
-   time pytest tests/test_*.py -v --timeout=30 | tee test_output.log
-   ```
-
-7. **Fallback**: Se testes GUI não executarem (timeout/travamento), considerar:
-   - Unit tests sem GUI (testar lógica isolada)
-   - Mocks de widgets Qt
-   - Testes de integração CLI apenas
-   - Documentar limitação no TASKS.md
-
-**Checklist de Segurança** (antes de Etapa 9):
-- [ ] Timeout definido (30s por teste)
-- [ ] Ambiente headless configurado (`QT_QPA_PLATFORM=offscreen`)
-- [ ] Dry-run executado (syntax + import)
-- [ ] Tempo estimado calculado (< 5 min total)
-- [ ] Plano B definido (mocks, skip GUI tests)
-
-### 🔄 Sprints Obrigatórios
-
-**NUNCA implementar tudo de uma vez!** Sempre dividir em sprints:
-
-- **Sprint A (MVP)**: Funcionalidades básicas (60-70% da feature)
-  * Máximo 200 linhas de código
-  * Implementar, testar, commitar
-  * Duração: 1-2 horas máximo
-
-- **Sprint B (Advanced)**: Funcionalidades avançadas (30-40% restante)
-  * Máximo 200 linhas de código
-  * Implementar, testar, commitar
-  * Duração: 1-2 horas máximo
-
-**Exemplo Task #50**:
-- ✅ Sprint A: 8 filtros básicos (regex, size, mtime, ext, depth, exclude, panel, presets)
-- ⏳ Sprint B: 6 features avançadas (multi-root, tree view, AND/OR, visual builder, hotkeys, export)
-
-### ⚠️ Avisos Críticos
-
-1. **NUNCA esquecer do Protocolo**: Mesmo após responder Q1-Q13, LEMBRAR dos sprints
-2. **NUNCA pular Etapa 9.1**: Testes sem timeout podem travar por horas
-3. **NUNCA implementar tudo junto**: Dividir em sprints menores sempre
-4. **SEMPRE documentar limitações**: Se testes GUI não rodarem, registrar motivo
+1. **NUNCA** esquecer dos sprints após Q&A
+2. **NUNCA** executar testes sem timeout
+3. **NUNCA** implementar >200 linhas de uma vez
+4. **SEMPRE** consultar `docs/PROTOCOLO_SIMPLICIDADE_1.md` (v1.5)
 
 ---
 

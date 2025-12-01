@@ -2,9 +2,19 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.4  
+**Versão**: 1.5  
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v1.5**:
+- ✅ **[CRÍTICO]** Adicionada Etapa 9.1: Segurança em Testes
+- ✅ 7 soluções obrigatórias para evitar loops infinitos e timeouts
+- ✅ Timeout máximo obrigatório (30s por teste)
+- ✅ Ambiente headless obrigatório para testes GUI (QT_QPA_PLATFORM=offscreen)
+- ✅ Dry-run obrigatório antes de executar testes (syntax + import + collect)
+- ✅ Checklist de segurança com 6 itens obrigatórios
+- ✅ Regras de ouro e comandos seguros documentados
+- ✅ Lições aprendidas do Task #50 (loop infinito >1h)
 
 **Changelog v1.4**:
 - ✅ Reorganizada ordem final: Implementar → Integrar GUI → CLI → Testar → Organizar → Documentar → Commit
@@ -807,6 +817,131 @@ clarify text2json data.csv --format csv --pretty -o output.json
 - Evita falsos positivos (testes passam mas feature não está acessível)
 
 **Por quê?**: Garantir qualidade, evitar regressões, facilitar manutenção futura.
+
+---
+
+#### 🛡️ **Etapa 9.1 - Segurança em Testes (CRÍTICO)**
+
+**Problema Identificado** (Task #50 - 01/12/2025):
+- Testes GUI travaram em **loop infinito** por >1 hora sem timeout
+- Nenhuma detecção automática de deadlock ou travamento
+- Testes aguardavam display X11 inexistente (ambiente headless)
+
+**Soluções Obrigatórias**:
+
+1. **⏱️ Timeout Máximo Obrigatório** (30s por teste):
+   ```bash
+   # SEMPRE usar timeout em testes
+   pytest tests/test_*.py --timeout=30 -v
+   
+   # Instalar plugin pytest-timeout se necessário
+   pip install pytest-timeout
+   ```
+
+2. **🚨 Detecção de Loop Infinito** (warning em 10s):
+   ```bash
+   # Timeout mais agressivo para detectar loops
+   timeout 10s pytest tests/test_specific.py || echo "⚠️ TIMEOUT: Possível loop infinito detectado!"
+   ```
+
+3. **🖥️ Ambiente Headless Obrigatório** (testes GUI sem display):
+   ```bash
+   # Usar Qt offscreen platform
+   QT_QPA_PLATFORM=offscreen pytest tests/test_gui_*.py -v --timeout=30
+   
+   # OU usar pytest-xvfb para ambiente virtual X11
+   pip install pytest-xvfb
+   pytest tests/test_gui_*.py --xvfb-backend xvfb --timeout=30
+   ```
+
+4. **✅ Dry-Run Obrigatório** (antes de executar):
+   ```bash
+   # 1. Verificar sintaxe
+   python -m py_compile tests/test_*.py && echo "✅ Sintaxe válida"
+   
+   # 2. Verificar imports
+   python -c "from tests.test_module import *; print('✅ Imports OK')"
+   
+   # 3. Listar testes sem executar
+   pytest tests/test_*.py --collect-only
+   ```
+
+5. **⏲️ Monitoramento de Tempo** (registrar duração):
+   ```bash
+   # Medir tempo total e salvar log
+   time pytest tests/test_*.py -v --timeout=30 | tee test_output.log
+   
+   # Usar pytest-benchmark para métricas
+   pytest tests/test_*.py --benchmark-only --timeout=30
+   ```
+
+6. **🔄 Fallback para Testes Sem GUI**:
+   - Se testes GUI não executarem (timeout/travamento):
+     * Criar **unit tests isolados** (testar lógica sem widgets)
+     * Usar **mocks de widgets Qt** (`unittest.mock.Mock`)
+     * Testar apenas **CLI/backend** (sem interface gráfica)
+     * **Documentar limitação** no TASKS.md
+
+7. **📋 Checklist de Segurança** (ANTES de Etapa 9):
+   ```
+   [ ] Timeout definido (--timeout=30)
+   [ ] Ambiente headless configurado (QT_QPA_PLATFORM=offscreen)
+   [ ] Dry-run executado (syntax + import + collect)
+   [ ] Tempo estimado calculado (< 5 min total esperado)
+   [ ] Plano B definido (mocks/skip GUI se necessário)
+   [ ] Monitoramento ativo (observar output em tempo real)
+   ```
+
+**Exemplo de Teste Seguro**:
+```python
+# tests/test_file_list_dock.py
+import pytest
+from unittest.mock import Mock, patch
+from PySide6.QtWidgets import QApplication
+
+@pytest.fixture(scope="module")
+def qapp():
+    """QApplication com timeout de segurança."""
+    app = QApplication.instance() or QApplication([])
+    yield app
+    app.quit()  # Garantir cleanup
+
+@pytest.mark.timeout(5)  # Timeout individual de 5s
+def test_regex_filter_safe(qapp):
+    """Teste com timeout individual."""
+    # ... teste aqui
+    pass
+
+# Mock para evitar dependências GUI
+@patch('PySide6.QtWidgets.QTableWidget')
+def test_filter_logic_no_gui(mock_table):
+    """Testar lógica sem criar widgets reais."""
+    # ... teste lógica isolada
+    pass
+```
+
+**Comandos Seguros (Copiar e Colar)**:
+```bash
+# Comando completo recomendado para testes GUI:
+QT_QPA_PLATFORM=offscreen timeout 5m pytest tests/test_gui_*.py -v --timeout=30 --tb=short | tee test_gui.log
+
+# Comando para testes backend (sem GUI):
+timeout 2m pytest tests/test_backend_*.py -v --timeout=10 --tb=short | tee test_backend.log
+```
+
+**Regras de Ouro**:
+- ⚠️ **NUNCA** executar testes GUI sem timeout
+- ⚠️ **NUNCA** assumir que teste vai terminar sozinho
+- ⚠️ **SEMPRE** usar ambiente headless para testes GUI
+- ⚠️ **SEMPRE** fazer dry-run antes de execução completa
+- ⚠️ **SEMPRE** documentar se testes GUI não rodarem (limitação aceitável)
+
+**Lições Aprendidas (Task #50)**:
+- ✅ 23 testes criados (530 linhas)
+- ❌ Não executados (travamento em loop infinito)
+- ✅ Sintaxe validada (`py_compile` OK)
+- ✅ Imports validados (módulo carrega sem erros)
+- 📝 **Limitação documentada**: Testes GUI requerem ambiente headless não configurado
 
 ---
 
