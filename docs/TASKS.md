@@ -968,7 +968,18 @@ result = convert_text_to_json(text, "auto")
     * ❌ Performance options dialog (Worker thread / Sync / Batching com progress bar)
     * ❌ Visual threshold slider com preview em tempo real
     * ❌ Detailed statistics dialog (table com Original Key | Kept Key | Similarity % | Line Numbers, export CSV)
-    * ❌ Reference resolver (expand $ref: paths para valores reais)
+    * ✅ **Reference Resolver Sprint A (v2.9.29 - COMPLETO - 02/12/2025)**:
+      - ✅ Radio buttons (Delete duplicates | Use references)
+      - ✅ create_references(): Replace duplicates com $ref:path:line
+      - ✅ resolve_references(): Expand $ref para valores reais
+      - ✅ QSettings persistence para preferências
+      - ✅ 13/13 tests passing (~430 LOC total)
+      - ✅ Documentação completa (docs/v2.9.29-SPECIFICATION.md)
+    * ❌ **Reference Resolver Sprint B (Avançado - PENDENTE ~200 LOC)**:
+      - ❌ Multi-format support ($ref:, #/, @path) (~50 LOC)
+      - ❌ Cross-file references ($ref:file.json:path) (~80 LOC)
+      - ❌ Detailed statistics dialog (interactive table, export CSV) (~40 LOC)
+      - ❌ Format preference configuration (dropdown, line numbers toggle) (~30 LOC)
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
@@ -1091,7 +1102,7 @@ def walk(v):
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
 | **TOTAL** | **107** | **90** | **17** | **84.1%** |
 
-**Última Atualização**: 01/12/2025 - Sprint B Feature #1 (v2.9.28: Advanced Conditions Integration)
+**Última Atualização**: 02/12/2025 - Reference Resolver Sprint A (v2.9.29)
 
 ### Notas
 

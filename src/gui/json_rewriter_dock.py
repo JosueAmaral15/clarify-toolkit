@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QWidget, QGridLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
-    QSpinBox, QFileDialog, QMessageBox, QComboBox
+    QSpinBox, QFileDialog, QMessageBox, QComboBox, QRadioButton
 )
 from PySide6.QtCore import QSettings
 
@@ -137,6 +137,12 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
         # Pure JSON
         obj = rw.parse_json_preserving_duplicates_text(text)
     
+    # Sprint A v2.9.29: Resolve existing references FIRST (if enabled)
+    if hasattr(args, 'resolve_references') and args.resolve_references:
+        obj, ref_stats = rw.resolve_references(obj)
+        stats['references_resolved'] = ref_stats.get('resolved', 0)
+        stats['references_invalid'] = ref_stats.get('invalid', 0)
+    
     # Apply transformations with counting
     obj, stats['dedupe'] = rw.dedupe(obj)
     
@@ -177,17 +183,25 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
     if hasattr(args, 'skip_no_siblings') and args.skip_no_siblings:
         obj, stats['no_siblings'] = rw.skip_keys_without_siblings(obj)
     
-    # Remove duplicate objects if requested (Task #52 - v2.9.27)
+    # Remove duplicate objects if requested (Task #52 - v2.9.27 + Sprint A v2.9.29)
     if hasattr(args, 'remove_duplicate_objects') and args.remove_duplicate_objects:
-        threshold = getattr(args, 'duplicate_threshold', 100) / 100.0  # Convert percentage to 0.0-1.0
-        include_arrays = getattr(args, 'include_duplicate_arrays', False)
-        mode = getattr(args, 'duplicate_mode', 'remove')
-        obj, stats['duplicate_objects'], dup_stats = rw.remove_duplicate_objects(
-            obj,
-            threshold=threshold,
-            include_arrays=include_arrays,
-            mode=mode
-        )
+        # Sprint A v2.9.29: Use create_references() if use_references mode enabled
+        if hasattr(args, 'use_references') and args.use_references:
+            # Use new reference resolver (Sprint A)
+            obj, ref_stats = rw.create_references(obj, mode='references', include_line_numbers=True)
+            stats['references_created'] = ref_stats.get('created', 0)
+            stats['duplicate_objects'] = ref_stats.get('created', 0)  # For backward compatibility
+        else:
+            # Use legacy remove_duplicate_objects (delete mode)
+            threshold = getattr(args, 'duplicate_threshold', 100) / 100.0  # Convert percentage to 0.0-1.0
+            include_arrays = getattr(args, 'include_duplicate_arrays', False)
+            mode = getattr(args, 'duplicate_mode', 'remove')
+            obj, stats['duplicate_objects'], dup_stats = rw.remove_duplicate_objects(
+                obj,
+                threshold=threshold,
+                include_arrays=include_arrays,
+                mode=mode
+            )
     
     # Enforce consistent case if requested (Task #9 - v2.9.8)
     if hasattr(args, 'enforce_case') and args.enforce_case:
@@ -333,6 +347,17 @@ class JsonRewriterDock(BaseDock):
         self.advanced_conditions: list[Condition] = []  # Storage for configured conditions
         self.advanced_filters_enabled = False  # Whether filters are active
         
+        # Sprint A Feature: Reference Resolver (v2.9.29)
+        self.lbl_ref_mode = QLabel("Duplicate handling:")
+        self.radio_delete_dups = QRadioButton("Delete duplicates")
+        self.radio_delete_dups.setToolTip("Remove duplicate objects (default behavior)")
+        self.radio_delete_dups.setChecked(True)  # Default mode
+        self.radio_use_refs = QRadioButton("Use references ($ref)")
+        self.radio_use_refs.setToolTip("Replace duplicates with $ref:path:line references")
+        self.chk_resolve_refs = QCheckBox("Resolve existing references")
+        self.chk_resolve_refs.setToolTip("Expand $ref:path:line to actual values before processing")
+        self.chk_resolve_refs.setChecked(False)
+        
         # Indent spinner
         self.lbl_indent = QLabel("Indent (<=0 compact):")
         self.spin_indent = QSpinBox()
@@ -407,10 +432,18 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.btn_advanced_filters, 8, 0, 1, 2)
         g.addWidget(self.chk_apply_all_types, 8, 2, 1, 2)
         
-        # Row 9: Indent and run button
-        g.addWidget(self.lbl_indent, 9, 0)
-        g.addWidget(self.spin_indent, 9, 1)
-        g.addWidget(self.btn_run, 9, 4)
+        # Row 9: Reference Resolver (Sprint A v2.9.29)
+        g.addWidget(self.lbl_ref_mode, 9, 0)
+        g.addWidget(self.radio_delete_dups, 9, 1, 1, 2)
+        g.addWidget(self.radio_use_refs, 9, 3, 1, 2)
+        
+        # Row 10: Resolve references checkbox
+        g.addWidget(self.chk_resolve_refs, 10, 0, 1, 3)
+        
+        # Row 11: Indent and run button
+        g.addWidget(self.lbl_indent, 11, 0)
+        g.addWidget(self.spin_indent, 11, 1)
+        g.addWidget(self.btn_run, 11, 4)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -419,6 +452,11 @@ class JsonRewriterDock(BaseDock):
         self.btn_project_browse.clicked.connect(self._browse_project_dir)
         self.btn_run.clicked.connect(self._rewrite)
         self.btn_advanced_filters.clicked.connect(self._open_advanced_filters_dialog)
+        
+        # Sprint A v2.9.29: Save preferences when reference resolver options change
+        self.radio_delete_dups.toggled.connect(self._save_preferences)
+        self.radio_use_refs.toggled.connect(self._save_preferences)
+        self.chk_resolve_refs.toggled.connect(self._save_preferences)
     
     # UI Helper Methods
     
@@ -632,6 +670,9 @@ class JsonRewriterDock(BaseDock):
             duplicate_threshold=self.spin_dup_threshold.value(),
             include_duplicate_arrays=self.chk_include_dup_arrays.isChecked(),
             duplicate_mode='reference' if self.combo_dup_mode.currentIndex() == 1 else 'remove',
+            # Sprint A v2.9.29: Reference Resolver
+            resolve_references=self.chk_resolve_refs.isChecked(),
+            use_references=self.radio_use_refs.isChecked(),
         )
         
         # Execute rewrite (Sprint B Feature #1: pass advanced conditions)
@@ -700,6 +741,16 @@ class JsonRewriterDock(BaseDock):
             self.spin_dup_threshold.setValue(settings.value("duplicate_threshold", 100, type=int))
             self.combo_dup_mode.setCurrentIndex(settings.value("duplicate_mode_index", 0, type=int))
         
+        # Load reference resolver settings (Sprint A v2.9.29)
+        if hasattr(self, 'radio_use_refs'):
+            use_refs = settings.value("use_references", False, type=bool)
+            if use_refs:
+                self.radio_use_refs.setChecked(True)
+            else:
+                self.radio_delete_dups.setChecked(True)
+            
+            self.chk_resolve_refs.setChecked(settings.value("resolve_references", False, type=bool))
+        
         # Load advanced filters settings (Sprint B Feature #1)
         if hasattr(self, 'chk_apply_all_types'):
             self.chk_apply_all_types.setChecked(settings.value("advanced_filters_apply_all_types", False, type=bool))
@@ -735,6 +786,10 @@ class JsonRewriterDock(BaseDock):
         settings.setValue("include_duplicate_arrays", self.chk_include_dup_arrays.isChecked())
         settings.setValue("duplicate_threshold", self.spin_dup_threshold.value())
         settings.setValue("duplicate_mode_index", self.combo_dup_mode.currentIndex())
+        
+        # Save reference resolver settings (Sprint A v2.9.29)
+        settings.setValue("use_references", self.radio_use_refs.isChecked())
+        settings.setValue("resolve_references", self.chk_resolve_refs.isChecked())
         
         # Save advanced filters settings (Sprint B Feature #1)
         settings.setValue("advanced_filters_apply_all_types", self.chk_apply_all_types.isChecked())

@@ -25,6 +25,7 @@ from .reference_updater import (
     update_references_in_project,
     extract_all_keys_from_obj
 )
+from .reference_resolver import create_references, resolve_references
 
 __all__ = [
     'Obj', 'JSONNode', 'parse_json_preserving_duplicates_text', 'freeze',
@@ -32,5 +33,6 @@ __all__ = [
     'dedupe', 'join_keys', 'eliminate_duplicates', 'merge_obj_values', 'exclude_numeric_keys', 'skip_empty_values', 'avoid_duplicate_child_keys', 'remove_duplicate_array_values', 'enforce_consistent_case', 'normalize_escaping', 'array_to_object_conversion', 'skip_keys_without_siblings', 'remove_duplicate_objects',
     'dump_ts_node', 'dump_ts_obj', 'dump_ts_array', 'dump_ts_scalar', 'collapse_blank_lines',
     'sanitize_keys_and_values', 'ts_process_full_preserving', 'load_translation_dict',
-    'scan_project_references', 'build_substitution_map_by_value', 'update_references_in_project', 'extract_all_keys_from_obj'
+    'scan_project_references', 'build_substitution_map_by_value', 'update_references_in_project', 'extract_all_keys_from_obj',
+    'create_references', 'resolve_references'
 ]
