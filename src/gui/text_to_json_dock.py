@@ -1,0 +1,546 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Text to JSON Converter Dock
+
+Converts various text formats to JSON with advanced options:
+- Key-Value pairs
+- Lists (bullet points)
+- CSV (with options)
+- Python dict literals
+- YAML-like format
+- INI files
+- TOML files
+- Java Properties
+- TOON (Token-Oriented Object Notation)
+- Auto-detect format
+
+Features:
+- Live preview with debounce
+- Type inference (auto-detect vs all strings)
+- CSV advanced options (header, separator, format)
+- Templates with examples
+- Conversion history
+- Validate JSON
+- Swap (JSON to text)
+- Copy result
+- Open in editor
+
+Author: Josué Amaral
+Date: 2025-12-01
+"""
+
+from __future__ import annotations
+import json
+from typing import TYPE_CHECKING, Any, Dict, List
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
+    QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
+    QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem
+)
+from PySide6.QtGui import QFont
+
+from .base_dock import BaseDock
+from ..text_to_json import convert_text_to_json, detect_format
+
+# Type checking imports
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import QWidget as QWidgetType
+
+
+class TemplatesDialog(QDialog):
+    """Dialog to show format templates and examples."""
+    
+    TEMPLATES = {
+        "Key-Value": """name: John Doe
+age: 30
+city: New York
+active: true""",
+        
+        "List": """- Apple
+- Banana
+- Orange
+- Mango""",
+        
+        "CSV": """name,age,city
+John,30,New York
+Alice,25,London
+Bob,35,Paris""",
+        
+        "Python Dict": """{'name': 'John Doe', 'age': 30, 'city': 'New York', 'active': True}""",
+        
+        "YAML": """user:
+  name: John Doe
+  age: 30
+  address:
+    city: New York
+    zip: 10001
+  hobbies:
+    - coding
+    - reading""",
+        
+        "INI": """[user]
+name=John Doe
+age=30
+city=New York
+
+[settings]
+theme=dark
+language=en""",
+        
+        "TOML": """[user]
+name = "John Doe"
+age = 30
+city = "New York"
+
+[[projects]]
+name = "Project A"
+status = "active"
+
+[[projects]]
+name = "Project B"
+status = "completed" """,
+        
+        "Java Properties": """user.name=John Doe
+user.age=30
+user.city=New York
+app.theme=dark
+app.language=en""",
+        
+        "TOON": """name: John Doe
+age: 30
+tags[3]: python,coding,llm
+items[2]{id,name}:
+  1,Apple
+  2,Banana"""
+    }
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Format Templates")
+        self.resize(500, 600)
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Format selector
+        self.format_combo = QComboBox()
+        self.format_combo.addItems(self.TEMPLATES.keys())
+        self.format_combo.currentTextChanged.connect(self._on_format_changed)
+        layout.addWidget(QLabel("Select format:"))
+        layout.addWidget(self.format_combo)
+        
+        # Example text
+        self.example_text = QPlainTextEdit()
+        self.example_text.setReadOnly(True)
+        font = QFont("Courier New", 10)
+        self.example_text.setFont(font)
+        layout.addWidget(QLabel("Example:"))
+        layout.addWidget(self.example_text)
+        
+        # Use button
+        self.use_btn = QPushButton("Use This Template")
+        self.use_btn.clicked.connect(self.accept)
+        layout.addWidget(self.use_btn)
+        
+        # Close button
+        self.close_btn = QPushButton("Close")
+        self.close_btn.clicked.connect(self.reject)
+        layout.addWidget(self.close_btn)
+        
+        # Load first template
+        self._on_format_changed(self.format_combo.currentText())
+    
+    def _on_format_changed(self, format_name: str):
+        """Update example text when format changes."""
+        self.example_text.setPlainText(self.TEMPLATES.get(format_name, ""))
+    
+    def get_selected_template(self) -> str:
+        """Get the currently selected template text."""
+        return self.example_text.toPlainText()
+
+
+class TextToJsonDock(BaseDock):
+    """
+    Dock widget for text to JSON conversion.
+    
+    Supports 10 text formats with advanced options and features.
+    """
+    
+    # Signal emitted when user wants to open result in editor
+    open_in_editor_requested = Signal(str)  # JSON string
+    
+    def __init__(self, parent: QWidgetType | None = None):
+        super().__init__("Text to JSON Converter", parent)
+        self.conversion_history: List[Dict[str, str]] = []
+        self.live_preview_timer = QTimer()
+        self.live_preview_timer.setSingleShot(True)
+        self.live_preview_timer.timeout.connect(self._do_live_preview)
+    
+    def _setup_ui(self) -> None:
+        """Setup UI components."""
+        self._create_widgets()
+        self._create_layout()
+    
+    def _create_widgets(self) -> None:
+        """Create all widgets."""
+        # Input section
+        self.input_label = QLabel("Input Text:")
+        self.input_text = QPlainTextEdit()
+        self.input_text.setPlaceholderText("Paste your text here...")
+        self.input_text.textChanged.connect(self._on_input_changed)
+        
+        # Format selector
+        self.format_label = QLabel("Format:")
+        self.format_combo = QComboBox()
+        self.format_combo.addItems([
+            "Auto-detect",
+            "Key-Value pairs",
+            "List (bullets)",
+            "CSV",
+            "Python Dict",
+            "YAML",
+            "INI file",
+            "TOML",
+            "Java Properties",
+            "TOON"
+        ])
+        self.format_combo.setToolTip("Select input text format or use Auto-detect")
+        
+        # Type inference options
+        self.type_group = QGroupBox("Type Inference")
+        self.type_auto_radio = QRadioButton("Auto-detect types (int, float, bool, null)")
+        self.type_string_radio = QRadioButton("All values as strings")
+        self.type_auto_radio.setChecked(True)
+        self.type_button_group = QButtonGroup()
+        self.type_button_group.addButton(self.type_auto_radio)
+        self.type_button_group.addButton(self.type_string_radio)
+        
+        # CSV options group
+        self.csv_group = QGroupBox("CSV Options")
+        self.csv_header_check = QCheckBox("First row is header")
+        self.csv_header_check.setChecked(True)
+        
+        self.csv_separator_label = QLabel("Separator:")
+        self.csv_separator_combo = QComboBox()
+        self.csv_separator_combo.addItems(["Comma (,)", "Semicolon (;)", "Tab (\\t)"])
+        
+        self.csv_format_label = QLabel("Output format:")
+        self.csv_array_objects_radio = QRadioButton("Array of objects")
+        self.csv_array_arrays_radio = QRadioButton("Array of arrays")
+        self.csv_array_objects_radio.setChecked(True)
+        self.csv_format_group = QButtonGroup()
+        self.csv_format_group.addButton(self.csv_array_objects_radio)
+        self.csv_format_group.addButton(self.csv_array_arrays_radio)
+        
+        # General options
+        self.pretty_print_check = QCheckBox("Pretty print JSON")
+        self.pretty_print_check.setChecked(True)
+        
+        self.live_preview_check = QCheckBox("Enable live preview (500ms delay)")
+        self.live_preview_check.setChecked(False)
+        self.live_preview_check.setToolTip("Automatically convert as you type (with 500ms delay)")
+        
+        # Action buttons
+        self.convert_btn = QPushButton("Convert")
+        self.convert_btn.setToolTip("Convert text to JSON (Ctrl+Enter)")
+        self.convert_btn.clicked.connect(self._on_convert_clicked)
+        
+        self.templates_btn = QPushButton("Templates")
+        self.templates_btn.setToolTip("View format examples and templates")
+        self.templates_btn.clicked.connect(self._on_templates_clicked)
+        
+        self.clear_btn = QPushButton("Clear")
+        self.clear_btn.setToolTip("Clear input and output")
+        self.clear_btn.clicked.connect(self._on_clear_clicked)
+        
+        self.validate_btn = QPushButton("Validate JSON")
+        self.validate_btn.setToolTip("Validate output JSON syntax")
+        self.validate_btn.clicked.connect(self._on_validate_clicked)
+        
+        self.copy_btn = QPushButton("Copy Result")
+        self.copy_btn.setToolTip("Copy JSON to clipboard")
+        self.copy_btn.clicked.connect(self._on_copy_clicked)
+        
+        self.open_editor_btn = QPushButton("Open in Editor")
+        self.open_editor_btn.setToolTip("Open result in main JSON editor")
+        self.open_editor_btn.clicked.connect(self._on_open_editor_clicked)
+        
+        self.history_btn = QPushButton("History")
+        self.history_btn.setToolTip("View conversion history")
+        self.history_btn.clicked.connect(self._on_history_clicked)
+        
+        self.swap_btn = QPushButton("Swap (JSON → Text)")
+        self.swap_btn.setToolTip("Convert JSON back to text format")
+        self.swap_btn.clicked.connect(self._on_swap_clicked)
+        
+        # Output section
+        self.output_label = QLabel("JSON Output:")
+        self.output_text = QPlainTextEdit()
+        self.output_text.setReadOnly(True)
+        self.output_text.setPlaceholderText("Converted JSON will appear here...")
+        
+        # Status label
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("color: gray;")
+    
+    def _create_layout(self) -> None:
+        """Create and arrange layout."""
+        # Type inference group layout
+        type_layout = QVBoxLayout()
+        type_layout.addWidget(self.type_auto_radio)
+        type_layout.addWidget(self.type_string_radio)
+        self.type_group.setLayout(type_layout)
+        
+        # CSV options group layout
+        csv_layout = QGridLayout()
+        csv_layout.addWidget(self.csv_header_check, 0, 0, 1, 2)
+        csv_layout.addWidget(self.csv_separator_label, 1, 0)
+        csv_layout.addWidget(self.csv_separator_combo, 1, 1)
+        csv_layout.addWidget(self.csv_format_label, 2, 0)
+        csv_layout.addWidget(self.csv_array_objects_radio, 2, 1)
+        csv_layout.addWidget(self.csv_array_arrays_radio, 3, 1)
+        self.csv_group.setLayout(csv_layout)
+        
+        # Options section
+        options_layout = QVBoxLayout()
+        
+        # Format row
+        format_row = QHBoxLayout()
+        format_row.addWidget(self.format_label)
+        format_row.addWidget(self.format_combo, 1)
+        options_layout.addLayout(format_row)
+        
+        # Type inference and CSV options in horizontal layout
+        groups_row = QHBoxLayout()
+        groups_row.addWidget(self.type_group)
+        groups_row.addWidget(self.csv_group)
+        options_layout.addLayout(groups_row)
+        
+        # Checkboxes
+        options_layout.addWidget(self.pretty_print_check)
+        options_layout.addWidget(self.live_preview_check)
+        
+        # Buttons grid (3 columns)
+        buttons_layout = QGridLayout()
+        buttons_layout.addWidget(self.convert_btn, 0, 0)
+        buttons_layout.addWidget(self.templates_btn, 0, 1)
+        buttons_layout.addWidget(self.clear_btn, 0, 2)
+        buttons_layout.addWidget(self.validate_btn, 1, 0)
+        buttons_layout.addWidget(self.copy_btn, 1, 1)
+        buttons_layout.addWidget(self.open_editor_btn, 1, 2)
+        buttons_layout.addWidget(self.history_btn, 2, 0)
+        buttons_layout.addWidget(self.swap_btn, 2, 1)
+        options_layout.addLayout(buttons_layout)
+        
+        # Main layout
+        self.layout.addWidget(self.input_label)
+        self.layout.addWidget(self.input_text, 2)  # 2/5 space
+        self.layout.addLayout(options_layout)
+        self.layout.addWidget(self.output_label)
+        self.layout.addWidget(self.output_text, 2)  # 2/5 space
+        self.layout.addWidget(self.status_label)
+    
+    def _on_input_changed(self) -> None:
+        """Handle input text changes for live preview."""
+        if self.live_preview_check.isChecked():
+            # Restart timer (debounce)
+            self.live_preview_timer.stop()
+            self.live_preview_timer.start(500)  # 500ms delay
+    
+    def _do_live_preview(self) -> None:
+        """Execute live preview conversion."""
+        self._on_convert_clicked()
+    
+    def _get_format_key(self) -> str:
+        """Get format key from combo selection."""
+        format_map = {
+            "Auto-detect": "auto",
+            "Key-Value pairs": "key_value",
+            "List (bullets)": "list",
+            "CSV": "csv",
+            "Python Dict": "python_dict",
+            "YAML": "yaml",
+            "INI file": "ini",
+            "TOML": "toml",
+            "Java Properties": "java_properties",
+            "TOON": "toon"
+        }
+        return format_map.get(self.format_combo.currentText(), "auto")
+    
+    def _get_csv_separator(self) -> str:
+        """Get CSV separator from combo."""
+        separator_map = {
+            "Comma (,)": ",",
+            "Semicolon (;)": ";",
+            "Tab (\\t)": "\t"
+        }
+        return separator_map.get(self.csv_separator_combo.currentText(), ",")
+    
+    def _on_convert_clicked(self) -> None:
+        """Convert text to JSON."""
+        input_text = self.input_text.toPlainText().strip()
+        
+        if not input_text:
+            self.show_warning("Empty Input", "Please enter text to convert.")
+            return
+        
+        try:
+            # Get options
+            format_type = self._get_format_key()
+            infer_types = self.type_auto_radio.isChecked()
+            
+            # CSV-specific options
+            kwargs = {}
+            if format_type == "csv" or format_type == "auto":
+                kwargs['has_header'] = self.csv_header_check.isChecked()
+                kwargs['delimiter'] = self._get_csv_separator()
+                kwargs['array_of_objects'] = self.csv_array_objects_radio.isChecked()
+            
+            # Convert
+            result = convert_text_to_json(input_text, format_type, infer_types, **kwargs)
+            
+            # Format JSON
+            if self.pretty_print_check.isChecked():
+                json_str = json.dumps(result, indent=2, ensure_ascii=False)
+            else:
+                json_str = json.dumps(result, ensure_ascii=False)
+            
+            # Display result
+            self.output_text.setPlainText(json_str)
+            
+            # Update status
+            detected_format = detect_format(input_text) if format_type == "auto" else format_type
+            self.status_label.setText(f"✓ Conversion successful (format: {detected_format})")
+            self.status_label.setStyleSheet("color: green;")
+            
+            # Add to history
+            self._add_to_history(input_text, json_str, detected_format)
+            
+        except Exception as e:
+            self.show_error("Conversion Error", f"Failed to convert text:\n\n{str(e)}")
+            self.status_label.setText(f"✗ Conversion failed: {str(e)}")
+            self.status_label.setStyleSheet("color: red;")
+    
+    def _on_templates_clicked(self) -> None:
+        """Show templates dialog."""
+        dialog = TemplatesDialog(self)
+        if dialog.exec():
+            # User clicked "Use This Template"
+            template_text = dialog.get_selected_template()
+            self.input_text.setPlainText(template_text)
+    
+    def _on_clear_clicked(self) -> None:
+        """Clear input and output."""
+        self.input_text.clear()
+        self.output_text.clear()
+        self.status_label.setText("")
+    
+    def _on_validate_clicked(self) -> None:
+        """Validate output JSON."""
+        json_str = self.output_text.toPlainText().strip()
+        
+        if not json_str:
+            self.show_warning("Empty Output", "No JSON to validate.")
+            return
+        
+        try:
+            json.loads(json_str)
+            self.show_info("Validation Success", "✓ JSON is valid!")
+            self.status_label.setText("✓ JSON is valid")
+            self.status_label.setStyleSheet("color: green;")
+        except json.JSONDecodeError as e:
+            self.show_error("Validation Error", f"Invalid JSON:\n\n{str(e)}")
+            self.status_label.setText(f"✗ Invalid JSON: {str(e)}")
+            self.status_label.setStyleSheet("color: red;")
+    
+    def _on_copy_clicked(self) -> None:
+        """Copy output JSON to clipboard."""
+        json_str = self.output_text.toPlainText()
+        
+        if not json_str:
+            self.show_warning("Empty Output", "No JSON to copy.")
+            return
+        
+        from PySide6.QtWidgets import QApplication
+        clipboard = QApplication.clipboard()
+        clipboard.setText(json_str)
+        
+        self.show_info("Copied", "JSON copied to clipboard!")
+        self.status_label.setText("✓ Copied to clipboard")
+        self.status_label.setStyleSheet("color: green;")
+    
+    def _on_open_editor_clicked(self) -> None:
+        """Open result in main editor."""
+        json_str = self.output_text.toPlainText()
+        
+        if not json_str:
+            self.show_warning("Empty Output", "No JSON to open in editor.")
+            return
+        
+        # Emit signal to main window
+        self.open_in_editor_requested.emit(json_str)
+        self.status_label.setText("✓ Opened in editor")
+        self.status_label.setStyleSheet("color: green;")
+    
+    def _on_history_clicked(self) -> None:
+        """Show conversion history."""
+        if not self.conversion_history:
+            self.show_info("History Empty", "No conversion history yet.")
+            return
+        
+        # Create history dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Conversion History")
+        dialog.resize(600, 400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        list_widget = QListWidget()
+        for i, entry in enumerate(reversed(self.conversion_history)):
+            format_str = entry.get('format', 'unknown')
+            preview = entry['input'][:50].replace('\n', ' ')
+            item_text = f"{i+1}. [{format_str}] {preview}..."
+            list_widget.addItem(item_text)
+        
+        list_widget.itemDoubleClicked.connect(lambda item: self._load_history_item(item, dialog))
+        
+        layout.addWidget(QLabel("Double-click to load:"))
+        layout.addWidget(list_widget)
+        
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.reject)
+        layout.addWidget(close_btn)
+        
+        dialog.exec()
+    
+    def _load_history_item(self, item: QListWidgetItem, dialog: QDialog) -> None:
+        """Load history item into input."""
+        index = len(self.conversion_history) - 1 - item.listWidget().row(item)
+        if 0 <= index < len(self.conversion_history):
+            entry = self.conversion_history[index]
+            self.input_text.setPlainText(entry['input'])
+            self.output_text.setPlainText(entry['output'])
+            dialog.accept()
+    
+    def _on_swap_clicked(self) -> None:
+        """Swap JSON to text (reverse conversion)."""
+        self.show_info("Swap Feature", "JSON to text conversion will be implemented in a future version.")
+        # TODO: Implement reverse conversion (JSON → text format)
+        # This would require converting JSON back to chosen text format
+    
+    def _add_to_history(self, input_text: str, output_json: str, format_type: str) -> None:
+        """Add conversion to history."""
+        entry = {
+            'input': input_text,
+            'output': output_json,
+            'format': format_type
+        }
+        self.conversion_history.append(entry)
+        
+        # Limit history to 50 entries
+        if len(self.conversion_history) > 50:
+            self.conversion_history.pop(0)

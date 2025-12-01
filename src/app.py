@@ -131,7 +131,7 @@ from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
     JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-    EditorDock
+    EditorDock, TextToJsonDock
 )
 
 # ---------------------------------------------------------------------------
@@ -4245,6 +4245,20 @@ if _PYSIDE:
             self.addDockWidget(Qt.RightDockWidgetArea, self.dock_case_converter)
             self.dock_case_converter.hide()
         
+        def _open_text_to_json(self):
+            """Open Text to JSON Converter dock (Task #49 - v2.9.24)."""
+            self.dock_text_to_json = TextToJsonDock(self)
+            self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
+            self.dock_text_to_json.hide()
+        
+        def _load_json_from_converter(self, json_str: str):
+            """Load JSON from text converter into main editor."""
+            if not hasattr(self, 'dock_editor'):
+                self._open_editor()
+            self.dock_editor.load_json_string(json_str)
+            self.dock_editor.show()
+        
         def _open_file_list(self):
             """Open File List dock (Task #33 - v2.9.11)."""
             self.dock_file_list = FileListDock(self)
@@ -4355,6 +4369,7 @@ if _PYSIDE:
             self.act_open_ai_processor = QAction(tr("menu.tools.ai_processor"), self)
             self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
+            self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)  # Task #49 - v2.9.24
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
@@ -4365,6 +4380,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_ai_processor)
             m_tools.addAction(self.act_open_json_search)
             m_tools.addAction(self.act_open_case_converter)
+            m_tools.addAction(self.act_open_text_to_json)
             m_tools.addSeparator()
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
@@ -4376,6 +4392,7 @@ if _PYSIDE:
             self.act_open_ai_processor.triggered.connect(lambda: self.dock_ai_processor.show())
             self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
             self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
+            self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
             self.act_open_file_list.triggered.connect(lambda: self.dock_file_list.show())
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 
@@ -4897,6 +4914,7 @@ if _PYSIDE:
             self._open_ai_processor()
             self._open_json_search()
             self._open_case_converter()
+            self._open_text_to_json()
             self._open_file_list()
             self._open_history()
         

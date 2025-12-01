@@ -17,6 +17,7 @@
   "menu.tools.ai_processor": "Abrir Processador de Arquivos IA",
   "menu.tools.json_search": "Abrir Busca JSON",
   "menu.tools.case_converter": "Abrir Conversor de Case",
+  "menu.tools.text_to_json": "Conversor de Texto para JSON",
   "menu.view": "Visualizar",
   "menu.view.history": "Histórico",
   "menu.themes": "Temas",
