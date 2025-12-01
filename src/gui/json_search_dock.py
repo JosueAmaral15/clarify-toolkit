@@ -284,7 +284,7 @@ class JsonSearchDock(StandardToolDock):
         self.append_result(self.text_results, f"✅ Search complete! Found {len(results)} match(es).\n")
         
         if results:
-            # Task #11 - Contagem de ocorrências
+            # Task #11 - Occurrence counting
             # Count occurrences per file and per key
             file_counter = Counter()
             key_counter = Counter()

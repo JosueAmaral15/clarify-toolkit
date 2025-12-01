@@ -17,7 +17,7 @@ try:
     _PYSIDE = True
 except ImportError:
     _PYSIDE = False
-    # Stubs para quando PySide6 não está disponível
+    # Stubs for when PySide6 is not available
     class QDialog: pass
     class QVBoxLayout: pass
     class QHBoxLayout: pass
@@ -46,7 +46,7 @@ class ProcessingModal(QDialog):
     - Sempre no topo (stays on top)
     """
     
-    # Sinal emitido quando usuário clica em cancelar
+    # Signal emitted when user clicks cancel
     cancel_requested = Signal()
     
     def __init__(self, 
@@ -64,7 +64,7 @@ class ProcessingModal(QDialog):
         super().__init__(parent)
         
         self.setWindowTitle(title)
-        self.setModal(False)  # Não-bloqueante
+        self.setModal(False)  # Non-blocking
         self.setWindowFlags(
             Qt.Window | 
             Qt.WindowStaysOnTopHint |  # Sempre no topo
@@ -80,7 +80,7 @@ class ProcessingModal(QDialog):
         self._setup_ui()
         self._apply_styles()
         
-        # Timer para animação de loading
+        # Timer for loading animation
         self._loading_timer = QTimer()
         self._loading_timer.timeout.connect(self._animate_loading)
         self._loading_dots = 0
@@ -93,7 +93,7 @@ class ProcessingModal(QDialog):
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(10)
         
-        # === Header com título e botões ===
+        # === Header with title and buttons ===
         header = QHBoxLayout()
         
         self.lbl_title = QLabel("Processing...")
@@ -105,8 +105,8 @@ class ProcessingModal(QDialog):
         
         header.addStretch()
         
-        # Botão minimizar/maximizar
-        self.btn_minimize = QPushButton("−")  # Símbolo de menos
+        # Minimize/maximize button
+        self.btn_minimize = QPushButton("−")  # Minus symbol
         self.btn_minimize.setFixedSize(30, 30)
         self.btn_minimize.setToolTip("Minimize")
         self.btn_minimize.clicked.connect(self.toggle_minimize)
@@ -114,13 +114,13 @@ class ProcessingModal(QDialog):
         
         main_layout.addLayout(header)
         
-        # === Container de conteúdo (pode ser escondido) ===
+        # === Content container (can be hidden) ===
         self.content_widget = QWidget()
         content_layout = QVBoxLayout(self.content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(10)
         
-        # Status label com animação
+        # Status label with animation
         self.lbl_status = QLabel("Initializing...")
         self.lbl_status.setWordWrap(True)
         content_layout.addWidget(self.lbl_status)
@@ -133,7 +133,7 @@ class ProcessingModal(QDialog):
             self.progress_bar.setTextVisible(True)
             content_layout.addWidget(self.progress_bar)
         
-        # Área de log/detalhes (expansível)
+        # Log/details area (expandable)
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
         self.log_area.setMaximumHeight(150)
@@ -141,7 +141,7 @@ class ProcessingModal(QDialog):
         
         content_layout.addStretch()
         
-        # === Footer com botões ===
+        # === Footer with buttons ===
         footer = QHBoxLayout()
         footer.addStretch()
         
@@ -215,15 +215,15 @@ class ProcessingModal(QDialog):
         self._is_minimized = not self._is_minimized
         
         if self._is_minimized:
-            # Minimizar: esconde conteúdo
+            # Minimize: hide content
             self.content_widget.hide()
-            self.btn_minimize.setText("□")  # Símbolo de maximizar
+            self.btn_minimize.setText("□")  # Maximize symbol
             self.btn_minimize.setToolTip("Maximize")
-            self.resize(500, 60)  # Altura mínima
+            self.resize(500, 60)  # Minimum height
         else:
-            # Maximizar: mostra conteúdo
+            # Maximize: show content
             self.content_widget.show()
-            self.btn_minimize.setText("−")  # Símbolo de minimizar
+            self.btn_minimize.setText("−")  # Minimize symbol
             self.btn_minimize.setToolTip("Minimize")
             self.resize(500, 300)
     
@@ -302,7 +302,7 @@ class ProcessingModal(QDialog):
                 message = "Processing failed or was cancelled."
             self.set_status(message)
         
-        # Troca botão cancelar por fechar
+        # Replace cancel button with close
         if self._show_cancel and hasattr(self, 'btn_cancel'):
             self.btn_cancel.setText("Close")
             self.btn_cancel.setEnabled(True)
@@ -313,12 +313,12 @@ class ProcessingModal(QDialog):
         """Sobrescreve close event para emitir sinal de cancelamento"""
         if self._show_cancel and hasattr(self, 'btn_cancel'):
             if self.btn_cancel.text() != "Close":
-                # Processamento ainda ativo, emite cancelamento
+                # Processing still active, emit cancellation
                 self.cancel_requested.emit()
-                event.ignore()  # Não fecha ainda
+                event.ignore()  # Don't close yet
                 return
         
-        # Processamento completo ou botão cancelar não existe
+        # Processing complete or cancel button doesn't exist
         self.stop_loading_animation()
         event.accept()
 

@@ -2469,7 +2469,7 @@ if _PYSIDE:
         
         def _start_search_threaded(self):
             if not self.processing_search:
-                # Verifica se feature já está rodando
+                # Check if feature is already running
                 if not thread_manager.can_start_feature(FeatureType.SEARCH_REPLACE):
                     QMessageBox.warning(
                         self, 
@@ -2665,7 +2665,7 @@ if _PYSIDE:
                     success=True,
                     message=f"Search completed successfully!\nFound matches in {len(matches)} file(s)."
                 )
-                # Modal permanece aberta para usuário revisar logs e fechar manualmente
+                # Modal remains open for user to review logs and close manually
             
             # Mark progress as complete (v2.5.0)
             if self._current_progress_widget:

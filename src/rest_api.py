@@ -26,7 +26,7 @@ class ClarifyAPI(Thread):
 
         @self.api.post("/translate")
         def translate(payload: dict):
-            # Exemplo: delega para função do app
+            # Example: delegates to app function
             return {"translated": self.app.translate_json(payload.get("json"), payload.get("lang"))}
 
     def run(self):

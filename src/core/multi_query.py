@@ -15,7 +15,7 @@ class QueryLine:
     """Representa uma linha de query"""
     raw_text: str
     pattern: Pattern
-    line_number: int  # Número da linha original (1-based)
+    line_number: int  # Original line number (1-based)
     
 
 class MultiQueryProcessor:
@@ -23,7 +23,7 @@ class MultiQueryProcessor:
     Processa múltiplas queries separadas por linha.
     
     Cada linha não-vazia é tratada como uma query independente.
-    Linhas começando com # são ignoradas (comentários).
+    Lines starting with # are ignored (comments).
     """
     
     def __init__(self, 
@@ -177,7 +177,7 @@ def combine_query_results(results_by_query: List[List[Tuple]]) -> List[Tuple]:
     
     for results in results_by_query:
         for match in results:
-            # Use (line, col) como chave única
+            # Use (line, col) as unique key
             key = (match[0], match[1])
             if key not in seen:
                 seen.add(key)

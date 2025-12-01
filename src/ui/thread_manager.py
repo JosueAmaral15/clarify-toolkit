@@ -115,21 +115,21 @@ class ThreadManager:
         if self._shutdown:
             return False
         
-        # Tenta adquirir lock da feature
+        # Try to acquire feature lock
         if not self._feature_locks[feature].acquire(blocking=False):
-            return False  # Feature já está rodando
+            return False  # Feature is already running
         
         try:
-            # Registra thread
+            # Register thread
             info = ThreadInfo(thread, worker, feature, cancel_callback)
             self._threads[thread_id] = info
             
-            # Conecta cleanup automático
+            # Connect automatic cleanup
             thread.finished.connect(lambda: self._on_thread_finished(thread_id))
             
             return True
         except Exception:
-            # Se algo der errado, libera o lock
+            # If something goes wrong, release the lock
             self._feature_locks[feature].release()
             return False
     
@@ -145,17 +145,17 @@ class ThreadManager:
         
         info = self._threads[thread_id]
         
-        # Chama callback de cancelamento se disponível
+        # Call cancellation callback if available
         if info.cancel_callback:
             try:
                 info.cancel_callback()
             except Exception as e:
                 print(f"[ThreadManager] Error canceling thread {thread_id}: {e}")
         
-        # Marca como não rodando
+        # Mark as not running
         info.is_running = False
         
-        # Thread será removida automaticamente quando terminar
+        # Thread will be removed automatically when finished
         return True
     
     def cancel_feature(self, feature: FeatureType) -> int:
@@ -173,21 +173,21 @@ class ThreadManager:
         return count
     
     def _on_thread_finished(self, thread_id: str):
-        """Callback chamado quando thread termina"""
+        """Callback called when thread finishes"""
         if thread_id in self._threads:
             info = self._threads[thread_id]
             
-            # Libera lock da feature
+            # Release feature lock
             try:
                 self._feature_locks[info.feature].release()
             except Exception:
-                pass  # Lock já foi liberado
+                pass  # Lock already released
             
-            # Remove thread do registro
+            # Remove thread from registry
             del self._threads[thread_id]
     
     def get_active_threads(self) -> Dict[FeatureType, int]:
-        """Retorna contagem de threads ativas por feature"""
+        """Returns count of active threads per feature"""
         counts = {feature: 0 for feature in FeatureType}
         for info in self._threads.values():
             if info.is_running:
@@ -195,7 +195,7 @@ class ThreadManager:
         return counts
     
     def is_feature_running(self, feature: FeatureType) -> bool:
-        """Verifica se alguma thread da feature está rodando"""
+        """Checks if any thread of the feature is running"""
         for info in self._threads.values():
             if info.feature == feature and info.is_running:
                 return True
@@ -203,8 +203,8 @@ class ThreadManager:
     
     def wait_all_threads(self, timeout_ms: int = 5000) -> bool:
         """
-        Aguarda término de todas as threads.
-        Usado no fechamento da aplicação.
+        Wait for all threads to finish.
+        Used when closing the application.
         
         Args:
             timeout_ms: Timeout em milissegundos para cada thread
@@ -217,10 +217,10 @@ class ThreadManager:
         all_finished = True
         for thread_id, info in list(self._threads.items()):
             if info.is_running:
-                # Cancela thread
+                # Cancel thread
                 self.cancel_thread(thread_id)
                 
-                # Aguarda término
+                # Wait for finish
                 if not info.thread.wait(timeout_ms):
                     all_finished = False
                     print(f"[ThreadManager] Warning: Thread {thread_id} did not finish in time")
