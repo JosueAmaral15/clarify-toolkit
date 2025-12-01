@@ -871,7 +871,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
 - **[X]** Ferramenta de busca pode incluir busca por nome de arquivo *(Já implementado - json_search_dock.py lines 98-101, 175-222: suporta wildcards, regex e prefix 'filename:')*
-- **[X]** **Task #50 - Advanced File Search (Sprint A - v2.9.25)**: Melhorar FileListDock com busca avançada de arquivos/diretórios *(Completo - 2025-01-09)*:
+- **[X]** **Task #50 - Advanced File Search (Sprint A - v2.9.25)**: Melhorar FileListDock com busca avançada de arquivos/diretórios *(Completo - 2025-12-01)*:
   - **Sprint A (MVP Básico - COMPLETO)**:
     * ✅ Regex em filenames (QLineEdit + QCheckBox "Enable Regex")
     * ✅ Filtros size (min/max em bytes/KB/MB/GB com QComboBox)
@@ -884,7 +884,13 @@ result = convert_text_to_json(text, "auto")
   - **Arquivos modificados**:
     * `src/gui/file_list_dock.py` (+350 linhas): Adicionado painel de filtros avançados, métodos de preset, lógica de filtros
   - **Arquivos criados**:
-    * `tests/test_advanced_file_search.py` (23 testes): Cobertura completa de regex, size, mtime, ext, depth, exclude, presets
+    * `tests/test_advanced_file_search_logic.py` (**27 testes - 100% passing em 2.14s**): Testes de lógica sem GUI
+    * `tests/test_runner_monitored.py` (280 linhas): Test runner com monitoramento (Protocolo v1.6 - Etapa 9.2)
+  - **Testes Executados**:
+    * ✅ 27/27 testes passaram (100%)
+    * ⏱️ Tempo: 2.14s (muito rápido!)
+    * 🛡️ Protocolo Simplicidade 1 v1.6 aplicado (Etapa 9.2 - Monitoramento)
+    * 📊 Cobertura: regex (4), size (5), mtime (3), ext (4), depth (2), exclude (4), presets (3), integration (2)
   - **Sprint B (Avançado - PENDENTE)**:
     * ❌ Busca em múltiplos diretórios raiz simultaneamente
     * ❌ Tree view mode (toggle Table ↔ Tree ou split view side-by-side)
