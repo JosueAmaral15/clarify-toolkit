@@ -222,10 +222,6 @@ class JsonTranslateDock(BaseDock):
         self.btn_run.clicked.connect(self._run)
         self.btn_swap.clicked.connect(self._swap_dictionaries)
         self.btn_undo.clicked.connect(self._undo_translation)
-        self._setup_enter_key_execution(
-            self.ed_path, self.ed_dict, self.ed_start, 
-            self.ed_end, self.ed_exclude
-        )
         # Task #43 - v2.9.13: Update stats on path/dict changes
         self.ed_path.textChanged.connect(self._update_stats)
         self.ed_dict.textChanged.connect(self._update_stats)
