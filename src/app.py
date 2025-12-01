@@ -4169,7 +4169,6 @@ if _PYSIDE:
             self._build_icon()
             self._build_ui()
             self._build_menu()
-            self._setup_shortcuts()
             self._restore_prefs()
             self._apply_saved_settings()
 
@@ -4293,6 +4292,61 @@ if _PYSIDE:
             else:
                 self.dock_history.hide()
         
+        # Lazy-loading show methods for docks
+        def _show_translate(self):
+            """Show JSON Translate dock (create on-demand)."""
+            if not hasattr(self, 'dock_translate'):
+                self._open_trans()
+            self.dock_translate.show()
+        
+        def _show_rewriter(self):
+            """Show JSON Rewriter dock (create on-demand)."""
+            if not hasattr(self, 'dock_rewriter'):
+                self._open_rewrite()
+            self.dock_rewriter.show()
+        
+        def _show_text_extractor(self):
+            """Show Text Extractor dock (create on-demand)."""
+            if not hasattr(self, 'dock_text_extractor'):
+                self._open_text_extractor()
+            self.dock_text_extractor.show()
+        
+        def _show_placeholder_replacer(self):
+            """Show Placeholder Replacer dock (create on-demand)."""
+            if not hasattr(self, 'dock_placeholder_replacer'):
+                self._open_placeholder_replacer()
+            self.dock_placeholder_replacer.show()
+        
+        def _show_ai_processor(self):
+            """Show AI Processor dock (create on-demand)."""
+            if not hasattr(self, 'dock_ai_processor'):
+                self._open_ai_processor()
+            self.dock_ai_processor.show()
+        
+        def _show_json_search(self):
+            """Show JSON Search dock (create on-demand)."""
+            if not hasattr(self, 'dock_json_search'):
+                self._open_json_search()
+            self.dock_json_search.show()
+        
+        def _show_case_converter(self):
+            """Show Case Converter dock (create on-demand)."""
+            if not hasattr(self, 'dock_case_converter'):
+                self._open_case_converter()
+            self.dock_case_converter.show()
+        
+        def _show_text_to_json(self):
+            """Show Text to JSON dock (create on-demand)."""
+            if not hasattr(self, 'dock_text_to_json'):
+                self._open_text_to_json()
+            self.dock_text_to_json.show()
+        
+        def _show_file_list(self):
+            """Show File List dock (create on-demand)."""
+            if not hasattr(self, 'dock_file_list'):
+                self._open_file_list()
+            self.dock_file_list.show()
+        
         def _show_tutorials(self):
             """Show tutorials dock (Task #45 - v2.9.15)."""
             if not hasattr(self, 'dock_tutorials'):
@@ -4397,15 +4451,15 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
 
-            self.act_open_translate.triggered.connect(lambda: self.dock_translate.show())
-            self.act_open_rewriter.triggered.connect(lambda: self.dock_rewriter.show())
-            self.act_open_text_extractor.triggered.connect(lambda: self.dock_text_extractor.show())
-            self.act_open_placeholder_replacer.triggered.connect(lambda: self.dock_placeholder_replacer.show())
-            self.act_open_ai_processor.triggered.connect(lambda: self.dock_ai_processor.show())
-            self.act_open_json_search.triggered.connect(lambda: self.dock_json_search.show())
-            self.act_open_case_converter.triggered.connect(lambda: self.dock_case_converter.show())
-            self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
-            self.act_open_file_list.triggered.connect(lambda: self.dock_file_list.show())
+            self.act_open_translate.triggered.connect(self._show_translate)
+            self.act_open_rewriter.triggered.connect(self._show_rewriter)
+            self.act_open_text_extractor.triggered.connect(self._show_text_extractor)
+            self.act_open_placeholder_replacer.triggered.connect(self._show_placeholder_replacer)
+            self.act_open_ai_processor.triggered.connect(self._show_ai_processor)
+            self.act_open_json_search.triggered.connect(self._show_json_search)
+            self.act_open_case_converter.triggered.connect(self._show_case_converter)
+            self.act_open_text_to_json.triggered.connect(self._show_text_to_json)
+            self.act_open_file_list.triggered.connect(self._show_file_list)
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 
             # View menu
@@ -4536,13 +4590,13 @@ if _PYSIDE:
             opacity = saved_opacity / 100.0
             self.setWindowOpacity(opacity)
             
-            # Apply to all docks
-            for dock in [
-                self.dock_translate, self.dock_rewriter, self.dock_text_extractor,
-                self.dock_placeholder_replacer, self.dock_ai_processor,
-                self.dock_json_search, self.dock_case_converter, self.dock_history
-            ]:
-                dock.setWindowOpacity(opacity)
+            # Apply to all existing docks
+            dock_names = ['dock_translate', 'dock_rewriter', 'dock_text_extractor',
+                         'dock_placeholder_replacer', 'dock_ai_processor',
+                         'dock_json_search', 'dock_case_converter', 'dock_history']
+            for dock_name in dock_names:
+                if hasattr(self, dock_name):
+                    getattr(self, dock_name).setWindowOpacity(opacity)
         
         def get_current_json(self):
             """Get current JSON data (placeholder for plugin integration)."""
@@ -4675,13 +4729,13 @@ if _PYSIDE:
             self.setWindowOpacity(opacity)
             self.opacity_label.setText(f"Current: {value}%")
             
-            # Apply to all docks
-            for dock in [
-                self.dock_translate, self.dock_rewriter, self.dock_text_extractor,
-                self.dock_placeholder_replacer, self.dock_ai_processor,
-                self.dock_json_search, self.dock_case_converter, self.dock_history
-            ]:
-                dock.setWindowOpacity(opacity)
+            # Apply to all existing docks
+            dock_names = ['dock_translate', 'dock_rewriter', 'dock_text_extractor',
+                         'dock_placeholder_replacer', 'dock_ai_processor',
+                         'dock_json_search', 'dock_case_converter', 'dock_history']
+            for dock_name in dock_names:
+                if hasattr(self, dock_name):
+                    getattr(self, dock_name).setWindowOpacity(opacity)
         
         def _save_transparency(self, dialog):
             """Save transparency setting and close dialog."""
@@ -4914,21 +4968,16 @@ if _PYSIDE:
             # Create panels and pass progress_manager reference
             self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
             self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
+            
+            # Aliases for backward compatibility
+            self.search_panel = self.tab_search
+            self.insert_panel = self.tab_insert
 
             self.tabs.addTab(self.tab_search, "Search / Replace")
             self.tabs.addTab(self.tab_insert, "Insert")
 
-            # Docks (Tools menu toggles them)
-            self._open_trans()
-            self._open_rewrite()
-            self._open_text_extractor()
-            self._open_placeholder_replacer()
-            self._open_ai_processor()
-            self._open_json_search()
-            self._open_case_converter()
-            self._open_text_to_json()
-            self._open_file_list()
-            self._open_history()
+            # Docks are created on-demand when user opens them via Tools menu
+            # No automatic opening to avoid cluttering the interface at startup
         
         def _restore_prefs(self):
             cfg = load_prefs()
