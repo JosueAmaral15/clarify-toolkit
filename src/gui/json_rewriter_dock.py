@@ -345,7 +345,13 @@ class JsonRewriterDock(BaseDock):
     
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
+        # Clear the existing VBoxLayout and replace with QGridLayout
         g = QGridLayout()
+        
+        # Remove the old layout and set the new one
+        old_layout = self.main_widget.layout()
+        if old_layout:
+            QWidget().setLayout(old_layout)  # Take ownership to delete
         self.main_widget.setLayout(g)
         
         # Row 0: Input file

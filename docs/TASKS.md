@@ -932,6 +932,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios **(v2.9.6)**
 - **[]** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
 - **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
+- **[]** Quando o usuário clicar em Tools do menu de contexto, e escolher uma opção, o sistema deve abrir em uma nova aba, como ocorre com as abas Search/Replace e Insert. Todas essas abas devem ter um ícone de X vermelho, em que quando clicado, fecha a aba, tendo o usuário novamente clicar em uma das opções Tools para abrir uma aba.
 - **[X]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes nomes *(v2.9.27 - Task #52: Remove Duplicate Objects)*
   - **Sprint A (MVP - COMPLETO - 01/12/2025)**:
     * ✅ Novo checkbox "Remove duplicate objects" no JSON Rewriter
