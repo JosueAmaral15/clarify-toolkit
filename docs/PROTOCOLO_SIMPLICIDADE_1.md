@@ -2,9 +2,19 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.5  
+**Versão**: 1.6  
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v1.6**:
+- ✅ **[AVANÇADO]** Adicionada Etapa 9.2: Testes em Threads/Processos com Monitoramento
+- ✅ Execução de testes em processo separado (`multiprocessing.Process`)
+- ✅ Logging em tempo real via `Queue` (progresso de cada teste)
+- ✅ Cancelamento manual a qualquer momento (Ctrl+C gracioso)
+- ✅ Timeout global + individual (dupla proteção)
+- ✅ Estatísticas em tempo real (passed/failed/elapsed)
+- ✅ Implementação completa de `test_runner_monitored.py` (~150 linhas)
+- ✅ Checklist adicional opcional (6 itens)
 
 **Changelog v1.5**:
 - ✅ **[CRÍTICO]** Adicionada Etapa 9.1: Segurança em Testes
@@ -942,6 +952,240 @@ timeout 2m pytest tests/test_backend_*.py -v --timeout=10 --tb=short | tee test_
 - ✅ Sintaxe validada (`py_compile` OK)
 - ✅ Imports validados (módulo carrega sem erros)
 - 📝 **Limitação documentada**: Testes GUI requerem ambiente headless não configurado
+
+---
+
+#### 🔬 **Etapa 9.2 - Testes em Threads/Processos com Monitoramento (AVANÇADO)**
+
+**Objetivo**: Controle total sobre execução de testes com possibilidade de **interromper**, **monitorar** e **registrar** progresso em tempo real.
+
+**Quando Usar**:
+- Testes GUI que podem travar
+- Testes de longa duração (>1 min)
+- Testes com dependências externas (rede, banco de dados)
+- Necessidade de logging em tempo real
+- Necessidade de cancelamento manual durante execução
+
+**Implementação com `multiprocessing.Process`**:
+
+```python
+# tests/test_runner_monitored.py
+import multiprocessing as mp
+import time
+import sys
+from queue import Empty
+
+def run_tests_in_process(test_module: str, queue: mp.Queue, timeout: int = 30):
+    """
+    Executa testes em processo separado com logging para queue.
+    
+    Args:
+        test_module: Módulo de teste (ex: 'tests.test_file_list_dock')
+        queue: Queue para comunicação de progresso
+        timeout: Timeout em segundos
+    """
+    try:
+        import pytest
+        
+        # Configurar logging em tempo real
+        class QueueReporter:
+            def __init__(self, queue):
+                self.queue = queue
+            
+            def pytest_runtest_logreport(self, report):
+                """Hook do pytest para capturar resultados."""
+                if report.when == 'call':
+                    status = '✅ PASS' if report.passed else '❌ FAIL'
+                    self.queue.put({
+                        'type': 'test_result',
+                        'test': report.nodeid,
+                        'status': status,
+                        'duration': report.duration
+                    })
+        
+        # Executar pytest com reporter customizado
+        queue.put({'type': 'info', 'msg': f'Iniciando testes: {test_module}'})
+        
+        result = pytest.main([
+            test_module,
+            '-v',
+            f'--timeout={timeout}',
+            '--tb=short',
+            '-p', 'no:cacheprovider'  # Desabilitar cache
+        ])
+        
+        queue.put({'type': 'info', 'msg': f'Testes finalizados. Exit code: {result}'})
+        queue.put({'type': 'exit', 'code': result})
+        
+    except Exception as e:
+        queue.put({'type': 'error', 'msg': str(e)})
+        queue.put({'type': 'exit', 'code': 1})
+
+def monitor_test_execution(test_module: str, max_timeout: int = 300):
+    """
+    Monitora execução de testes com controle total.
+    
+    Args:
+        test_module: Módulo de teste
+        max_timeout: Timeout máximo em segundos (padrão: 5 min)
+    
+    Returns:
+        dict: Resultado da execução com estatísticas
+    """
+    queue = mp.Queue()
+    process = mp.Process(
+        target=run_tests_in_process,
+        args=(test_module, queue, 30)
+    )
+    
+    print(f"🚀 Iniciando testes: {test_module}")
+    print(f"⏱️  Timeout máximo: {max_timeout}s")
+    print(f"📊 Monitoramento ativo. Pressione Ctrl+C para cancelar.\n")
+    
+    process.start()
+    start_time = time.time()
+    results = {'passed': 0, 'failed': 0, 'tests': []}
+    
+    try:
+        while process.is_alive():
+            elapsed = time.time() - start_time
+            
+            # Verificar timeout global
+            if elapsed > max_timeout:
+                print(f"\n⚠️  TIMEOUT GLOBAL ({max_timeout}s excedido)")
+                process.terminate()
+                process.join(timeout=5)
+                if process.is_alive():
+                    process.kill()
+                return {'status': 'timeout', 'elapsed': elapsed, 'results': results}
+            
+            # Ler mensagens da queue (não-bloqueante)
+            try:
+                msg = queue.get(timeout=0.5)
+                
+                if msg['type'] == 'test_result':
+                    print(f"  {msg['status']} {msg['test']} ({msg['duration']:.2f}s)")
+                    results['tests'].append(msg)
+                    if '✅' in msg['status']:
+                        results['passed'] += 1
+                    else:
+                        results['failed'] += 1
+                
+                elif msg['type'] == 'info':
+                    print(f"ℹ️  {msg['msg']}")
+                
+                elif msg['type'] == 'error':
+                    print(f"❌ ERRO: {msg['msg']}")
+                
+                elif msg['type'] == 'exit':
+                    process.join(timeout=2)
+                    elapsed = time.time() - start_time
+                    print(f"\n✅ Testes finalizados em {elapsed:.2f}s")
+                    return {
+                        'status': 'completed',
+                        'exit_code': msg['code'],
+                        'elapsed': elapsed,
+                        'results': results
+                    }
+            
+            except Empty:
+                # Nenhuma mensagem, continuar monitorando
+                pass
+            
+            # Mostrar progresso a cada 10s
+            if int(elapsed) % 10 == 0 and int(elapsed) > 0:
+                print(f"⏳ Executando... {int(elapsed)}s ({results['passed']} passed, {results['failed']} failed)")
+    
+    except KeyboardInterrupt:
+        print("\n⚠️  Cancelamento manual (Ctrl+C)")
+        process.terminate()
+        process.join(timeout=5)
+        if process.is_alive():
+            process.kill()
+        elapsed = time.time() - start_time
+        return {'status': 'cancelled', 'elapsed': elapsed, 'results': results}
+    
+    finally:
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=5)
+
+# Exemplo de uso:
+if __name__ == '__main__':
+    result = monitor_test_execution('tests/test_advanced_file_search.py', max_timeout=300)
+    
+    print(f"\n{'='*60}")
+    print(f"Status: {result['status']}")
+    print(f"Tempo: {result['elapsed']:.2f}s")
+    print(f"Passed: {result['results']['passed']}")
+    print(f"Failed: {result['results']['failed']}")
+    print(f"{'='*60}")
+```
+
+**Uso Prático**:
+
+```bash
+# 1. Criar runner monitorado
+cat > tests/run_tests_monitored.py << 'EOF'
+# [código acima]
+EOF
+
+# 2. Executar com monitoramento
+python tests/run_tests_monitored.py
+
+# 3. Cancelar a qualquer momento (Ctrl+C)
+# O processo será terminado graciosamente
+```
+
+**Vantagens**:
+- ✅ **Controle total**: Pode cancelar testes a qualquer momento
+- ✅ **Logging em tempo real**: Vê progresso de cada teste
+- ✅ **Timeout global + individual**: Dupla proteção
+- ✅ **Estatísticas**: Passa/falha em tempo real
+- ✅ **Isolamento**: Testes rodam em processo separado (não travam o terminal)
+- ✅ **Cleanup garantido**: `terminate()` + `kill()` forçado se necessário
+
+**Configurações Opcionais**:
+
+1. **Logging em Arquivo** (além de stdout):
+   ```python
+   # Adicionar ao run_tests_in_process:
+   import logging
+   logging.basicConfig(
+       filename=f'test_{time.time()}.log',
+       level=logging.INFO,
+       format='%(asctime)s - %(message)s'
+   )
+   ```
+
+2. **Notificação Sonora** (ao finalizar):
+   ```python
+   import os
+   # No final de monitor_test_execution:
+   os.system('paplay /usr/share/sounds/freedesktop/stereo/complete.oga')
+   ```
+
+3. **Integração com CI/CD**:
+   ```python
+   # Retornar exit code correto:
+   sys.exit(0 if result['status'] == 'completed' and result['results']['failed'] == 0 else 1)
+   ```
+
+**Checklist Adicional (Etapa 9.2 - Opcional)**:
+```
+[ ] Criar test_runner_monitored.py com multiprocessing
+[ ] Definir timeout global (padrão: 5 min)
+[ ] Definir timeout individual por teste (padrão: 30s)
+[ ] Implementar logging em tempo real (Queue)
+[ ] Testar cancelamento manual (Ctrl+C)
+[ ] Verificar cleanup de processos (ps aux | grep pytest)
+```
+
+**Quando NÃO usar**:
+- Testes simples e rápidos (<10s total)
+- Testes sem GUI (backend puro)
+- CI/CD com timeout nativo configurado
+- Primeira execução de testes (overhead desnecessário)
 
 ---
 
