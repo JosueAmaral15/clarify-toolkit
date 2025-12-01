@@ -18,9 +18,10 @@ from datetime import datetime, timedelta
 from PySide6.QtWidgets import (
     QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox, 
     QComboBox, QTextEdit, QPushButton, QGroupBox, QHBoxLayout,
-    QSplitter, QWidget, QVBoxLayout, QScrollArea, QFrame, QFileDialog
+    QSplitter, QWidget, QVBoxLayout, QScrollArea, QFrame, QFileDialog,
+    QMessageBox
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSettings
 from ..gui.base_dock import StandardToolDock, ProcessorWorkerBase
 from ..ai_processor import (
     OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS, 
@@ -29,6 +30,7 @@ from ..ai_processor import (
     list_files_recursive as ai_list_files, extract_between_markers,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models
 )
+from ..core.filters import Condition, filter_files_by_conditions
 
 
 class PathEntry(QWidget):
@@ -307,6 +309,95 @@ class AIProcessorDock(StandardToolDock):
         scope_group.setLayout(scope_layout)
         controls_layout.addWidget(scope_group)
         
+        # Advanced Conditions section (Task #51 - v2.9.26)
+        adv_cond_group = QGroupBox("Advanced File Filters (Optional)")
+        adv_cond_group.setCheckable(True)
+        adv_cond_group.setChecked(False)
+        adv_cond_group.setToolTip("Filter files by filename, size, date, content patterns, etc.")
+        adv_cond_layout = QGridLayout()
+        
+        # Logic operator
+        adv_cond_layout.addWidget(QLabel("Logic:"), 0, 0)
+        self.combo_cond_logic = QComboBox()
+        self.combo_cond_logic.addItems(["AND", "OR"])
+        self.combo_cond_logic.setToolTip("AND: All conditions must match | OR: At least one must match")
+        adv_cond_layout.addWidget(self.combo_cond_logic, 0, 1, 1, 2)
+        
+        # Headers
+        adv_cond_layout.addWidget(QLabel("Field"), 1, 0)
+        adv_cond_layout.addWidget(QLabel("Operator"), 1, 1)
+        adv_cond_layout.addWidget(QLabel("Value"), 1, 2)
+        adv_cond_layout.addWidget(QLabel("Scope"), 1, 3)
+        adv_cond_layout.addWidget(QLabel("Case"), 1, 4)
+        adv_cond_layout.addWidget(QLabel("Regex"), 1, 5)
+        
+        # 3 condition rows (minimum)
+        self.cond_rows = []
+        for row in range(3):
+            # Field combo
+            combo_field = QComboBox()
+            combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+            combo_field.setToolTip("Select field to filter on")
+            
+            # Operator combo
+            combo_op = QComboBox()
+            combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
+                              "starts with", "ends with", ">", "<", ">=", "<="])
+            combo_op.setToolTip("Select comparison operator")
+            
+            # Value input
+            ed_value = QLineEdit()
+            ed_value.setPlaceholderText("Filter value")
+            
+            # Scope combo
+            combo_scope = QComboBox()
+            combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
+                                 "custom", "tag", "specific-tag", "hierarchical"])
+            combo_scope.setToolTip("Scope for content field (e.g., only search within {} or tags)")
+            
+            # Case sensitive checkbox
+            chk_case = QCheckBox()
+            chk_case.setChecked(True)
+            chk_case.setToolTip("Case sensitive matching")
+            
+            # Regex checkbox
+            chk_regex = QCheckBox()
+            chk_regex.setToolTip("Use value as regex pattern")
+            
+            # Add to grid (row + 2 because of headers)
+            grid_row = row + 2
+            adv_cond_layout.addWidget(combo_field, grid_row, 0)
+            adv_cond_layout.addWidget(combo_op, grid_row, 1)
+            adv_cond_layout.addWidget(ed_value, grid_row, 2)
+            adv_cond_layout.addWidget(combo_scope, grid_row, 3)
+            adv_cond_layout.addWidget(chk_case, grid_row, 4)
+            adv_cond_layout.addWidget(chk_regex, grid_row, 5)
+            
+            self.cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
+        
+        # Add buttons: Add Condition and Clear All
+        btn_layout_cond = QHBoxLayout()
+        btn_add_cond = QPushButton("➕ Add Condition")
+        btn_add_cond.setToolTip("Add more condition rows (no limit)")
+        btn_add_cond.clicked.connect(self._add_condition_row)
+        btn_layout_cond.addWidget(btn_add_cond)
+        
+        btn_clear_cond = QPushButton("🗑️ Clear All")
+        btn_clear_cond.setToolTip("Clear all conditions")
+        btn_clear_cond.clicked.connect(self._clear_all_conditions)
+        btn_layout_cond.addWidget(btn_clear_cond)
+        btn_layout_cond.addStretch()
+        
+        adv_cond_layout.addLayout(btn_layout_cond, 100, 0, 1, 6)  # Row 100 = at bottom
+        
+        adv_cond_group.setLayout(adv_cond_layout)
+        controls_layout.addWidget(adv_cond_group)
+        
+        # Store reference to group for enable/disable
+        self.adv_cond_group = adv_cond_group
+        self.adv_cond_grid = adv_cond_layout
+        self.next_cond_row = 5  # Next available row after initial 3
+        
         # Action buttons
         buttons = [
             ("Process", self._process),
@@ -368,6 +459,9 @@ class AIProcessorDock(StandardToolDock):
         
         # Initialize provider
         self._on_provider_changed()
+        
+        # Load advanced conditions preferences (Task #51 - v2.9.26)
+        self._load_advanced_conditions_preferences()
     
     def _add_path_entry(self):
         """Add a new path entry."""
@@ -587,12 +681,34 @@ class AIProcessorDock(StandardToolDock):
             client = self._get_client()
             files = self._get_files()
             
+            # Apply advanced conditions BEFORE processing (Task #51 - v2.9.26)
+            original_count = len(files)
+            filtered_files, filtered_out = self._apply_advanced_conditions(files)
+            
+            # Check if any files remain after filtering
+            if not filtered_files:
+                self.show_warning(
+                    "No Files Match Filters",
+                    f"All {original_count} file(s) were filtered out by advanced conditions.\n"
+                    "Please adjust your filters and try again."
+                )
+                return
+            
+            # Show feedback about filtering
+            if filtered_out > 0:
+                filter_msg = (
+                    f"📊 Filtering: {len(filtered_files)} of {original_count} file(s) "
+                    f"({filtered_out} filtered out)\n"
+                )
+            else:
+                filter_msg = f"📊 Processing {len(filtered_files)} file(s) (no filters applied)\n"
+            
             # Don't reset session stats - accumulate
             self.last_responses = []
             
-            # Start worker
+            # Start worker with filtered files
             self.worker = AIProcessorWorker(
-                files,
+                filtered_files,  # Use filtered list instead of original
                 prompt,
                 client,
                 self.spin_max_bytes.value(),
@@ -612,7 +728,10 @@ class AIProcessorDock(StandardToolDock):
             self.btn_process.setEnabled(False)
             self.btn_interrupt.setEnabled(True)
             self.clear_results(self.text_results)
-            self.append_result(self.text_results, f"Processing {len(files)} file(s)...\n")
+            self.append_result(self.text_results, filter_msg)
+            
+            # Save preferences for next session
+            self._save_advanced_conditions_preferences()
             
             self.worker.start()
             
@@ -705,6 +824,182 @@ class AIProcessorDock(StandardToolDock):
     def _execute_action(self):
         """Execute the main action when ENTER is pressed."""
         self._process()
+    
+    # ==================== Advanced Conditions (Task #51 - v2.9.26) ====================
+    
+    def _add_condition_row(self):
+        """Add a new condition row dynamically."""
+        row_num = self.next_cond_row
+        
+        # Create widgets
+        combo_field = QComboBox()
+        combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+        combo_field.setToolTip("Select field to filter on")
+        
+        combo_op = QComboBox()
+        combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
+                          "starts with", "ends with", ">", "<", ">=", "<="])
+        combo_op.setToolTip("Select comparison operator")
+        
+        ed_value = QLineEdit()
+        ed_value.setPlaceholderText("Filter value")
+        
+        combo_scope = QComboBox()
+        combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
+                             "custom", "tag", "specific-tag", "hierarchical"])
+        combo_scope.setToolTip("Scope for content field")
+        
+        chk_case = QCheckBox()
+        chk_case.setChecked(True)
+        chk_case.setToolTip("Case sensitive matching")
+        
+        chk_regex = QCheckBox()
+        chk_regex.setToolTip("Use value as regex pattern")
+        
+        # Add to grid
+        self.adv_cond_grid.addWidget(combo_field, row_num, 0)
+        self.adv_cond_grid.addWidget(combo_op, row_num, 1)
+        self.adv_cond_grid.addWidget(ed_value, row_num, 2)
+        self.adv_cond_grid.addWidget(combo_scope, row_num, 3)
+        self.adv_cond_grid.addWidget(chk_case, row_num, 4)
+        self.adv_cond_grid.addWidget(chk_regex, row_num, 5)
+        
+        # Store reference
+        self.cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
+        
+        # Increment next row
+        self.next_cond_row += 1
+    
+    def _clear_all_conditions(self):
+        """Clear all condition fields."""
+        for combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex in self.cond_rows:
+            combo_field.setCurrentIndex(0)
+            combo_op.setCurrentIndex(0)
+            ed_value.clear()
+            combo_scope.setCurrentIndex(0)
+            chk_case.setChecked(True)
+            chk_regex.setChecked(False)
+    
+    def _get_conditions(self) -> list[Condition]:
+        """
+        Build list of Condition objects from UI.
+        Skips empty rows (no field selected).
+        """
+        conditions = []
+        
+        for combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex in self.cond_rows:
+            field = combo_field.currentText().strip()
+            operator = combo_op.currentText().strip()
+            value = ed_value.text().strip()
+            scope_type = combo_scope.currentText().strip()
+            case_sensitive = chk_case.isChecked()
+            use_regex = chk_regex.isChecked()
+            
+            # Skip empty rows
+            if not field or not operator or not value:
+                continue
+            
+            # Create Condition object
+            cond = Condition(
+                field=field,
+                operator=operator,
+                value=value,
+                scope_type=scope_type,
+                scope_value="",  # Not used in AI Processor yet
+                case_sensitive=case_sensitive,
+                whole_word=False,  # Not exposed in UI yet
+                use_regex=use_regex
+            )
+            conditions.append(cond)
+        
+        return conditions
+    
+    def _apply_advanced_conditions(self, files: list[str]) -> tuple[list[str], int]:
+        """
+        Apply advanced conditions to file list.
+        Returns: (filtered_files, num_filtered_out)
+        """
+        # Check if advanced conditions are enabled
+        if not self.adv_cond_group.isChecked():
+            return files, 0
+        
+        # Get conditions from UI
+        conditions = self._get_conditions()
+        
+        # If no valid conditions, return all files
+        if not conditions:
+            return files, 0
+        
+        # Get logic operator
+        logic_op = self.combo_cond_logic.currentText()
+        
+        # Apply filters
+        original_count = len(files)
+        filtered_files = filter_files_by_conditions(files, conditions, logic_op)
+        filtered_out = original_count - len(filtered_files)
+        
+        return filtered_files, filtered_out
+    
+    def _save_advanced_conditions_preferences(self):
+        """Save advanced conditions state to QSettings."""
+        settings = QSettings("Clarify", "AIProcessor")
+        settings.setValue("adv_cond/enabled", self.adv_cond_group.isChecked())
+        settings.setValue("adv_cond/logic", self.combo_cond_logic.currentText())
+        
+        # Save each condition row
+        for i, (combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex) in enumerate(self.cond_rows):
+            settings.setValue(f"adv_cond/row{i}/field", combo_field.currentText())
+            settings.setValue(f"adv_cond/row{i}/operator", combo_op.currentText())
+            settings.setValue(f"adv_cond/row{i}/value", ed_value.text())
+            settings.setValue(f"adv_cond/row{i}/scope", combo_scope.currentText())
+            settings.setValue(f"adv_cond/row{i}/case", chk_case.isChecked())
+            settings.setValue(f"adv_cond/row{i}/regex", chk_regex.isChecked())
+        
+        settings.setValue("adv_cond/row_count", len(self.cond_rows))
+    
+    def _load_advanced_conditions_preferences(self):
+        """Load advanced conditions state from QSettings."""
+        settings = QSettings("Clarify", "AIProcessor")
+        
+        # Load enabled state
+        enabled = settings.value("adv_cond/enabled", False, type=bool)
+        self.adv_cond_group.setChecked(enabled)
+        
+        # Load logic operator
+        logic = settings.value("adv_cond/logic", "AND", type=str)
+        index = self.combo_cond_logic.findText(logic)
+        if index >= 0:
+            self.combo_cond_logic.setCurrentIndex(index)
+        
+        # Load condition rows
+        row_count = settings.value("adv_cond/row_count", 0, type=int)
+        for i in range(min(row_count, len(self.cond_rows))):
+            combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex = self.cond_rows[i]
+            
+            field = settings.value(f"adv_cond/row{i}/field", "", type=str)
+            operator = settings.value(f"adv_cond/row{i}/operator", "", type=str)
+            value = settings.value(f"adv_cond/row{i}/value", "", type=str)
+            scope = settings.value(f"adv_cond/row{i}/scope", "none", type=str)
+            case = settings.value(f"adv_cond/row{i}/case", True, type=bool)
+            regex = settings.value(f"adv_cond/row{i}/regex", False, type=bool)
+            
+            # Set values
+            idx = combo_field.findText(field)
+            if idx >= 0:
+                combo_field.setCurrentIndex(idx)
+            
+            idx = combo_op.findText(operator)
+            if idx >= 0:
+                combo_op.setCurrentIndex(idx)
+            
+            ed_value.setText(value)
+            
+            idx = combo_scope.findText(scope)
+            if idx >= 0:
+                combo_scope.setCurrentIndex(idx)
+            
+            chk_case.setChecked(case)
+            chk_regex.setChecked(regex)
     
     # ==================== Enhanced Features ====================
     

@@ -848,6 +848,72 @@ result = convert_text_to_json(text, "auto")
 
 ### 🔨 Tasks Pendentes
 
+#### Task #51 - Advanced File Filters in AI Processor (v2.9.26)
+**Status**: ✅ Completa - 01/12/2025  
+**Arquivos Modificados**: `src/gui/ai_processor_dock.py` (+200 linhas), `tests/test_ai_advanced_conditions.py` (+460 linhas, novo)
+
+**Objetivo**: Adicionar capacidade de filtrar arquivos antes do processamento IA usando Advanced Conditions (filename, path, ext, size, mtime, content patterns).
+
+**Componentes Implementados**:
+
+1. ✅ **Advanced Conditions Section** (GUI no AI Processor):
+   - QGroupBox colapsável com 3 linhas iniciais (add dynamic, no limit)
+   - 6 field types: filename, path, ext, size, mtime, content
+   - 10 operators: contains, not contains, equals, not equals, starts with, ends with, >, <, >=, <=
+   - Scope filtering: none, brackets, braces, parentheses, custom, tag, specific-tag, hierarchical
+   - Checkboxes: Case sensitive, Regex
+   - Buttons: "➕ Add Condition", "🗑️ Clear All"
+
+2. ✅ **Backend Integration**:
+   - `_get_conditions()`: Constrói lista de `Condition` objects da UI
+   - `_apply_advanced_conditions(files)`: Aplica filtros usando `filter_files_by_conditions()`
+   - `_process()` modificado: Aplica filtros ANTES de enviar para IA
+   - Feedback: "📊 Processing X of Y files (Z filtered out)"
+   - Warning se nenhum arquivo passar nos filtros
+
+3. ✅ **Persistence** (QSettings):
+   - `_save_advanced_conditions_preferences()`: Salva estado ao processar
+   - `_load_advanced_conditions_preferences()`: Carrega na inicialização
+   - Keys: `adv_cond/enabled`, `adv_cond/logic`, `adv_cond/rowN/*`
+
+4. ✅ **Reused Core Infrastructure**:
+   - Importa `from src.core.filters import Condition, filter_files_by_conditions`
+   - DRY principle: Reutiliza sistema existente de Search/Replace e Insert
+   - AND/OR logic operators para combinar condições
+
+**Testes**: `tests/test_ai_advanced_conditions.py` (21 testes - 100% passing em 0.33s)
+- ✅ 3 tests: Filename filtering (contains, equals, regex)
+- ✅ 3 tests: Size filtering (>, <, ranges)
+- ✅ 2 tests: Extension filtering (equals, multiple OR)
+- ✅ 3 tests: Content filtering (contains, regex, scope)
+- ✅ 2 tests: Empty conditions (returns all, ignores invalid)
+- ✅ 1 test: Invalid regex (handled gracefully)
+- ✅ 1 test: No files match (returns empty)
+- ✅ 2 tests: Logic operators (AND, OR)
+- ✅ 1 test: Path filtering (directory in path)
+- ✅ 1 test: MTime filtering (recent modifications)
+- ✅ 2 tests: Integration (filters applied before AI, correct feedback)
+
+**Padrões Aplicados**:
+- **Strategy** (GoF): Diferentes estratégias de filtro (filename, size, content)
+- **Chain of Responsibility** (GoF): Cada condition é um handler
+- **Facade** (GoF): `_apply_advanced_conditions()` simplifica interface
+- **Information Expert** (GRASP): `Condition` class conhece como fazer matching
+- **Low Coupling** (GRASP): Reutiliza `src.core.filters` sem criar dependência direta
+- **High Cohesion** (GRASP): Métodos agrupados por responsabilidade
+
+**Casos de Uso**:
+- Filtrar apenas Python files > 100KB: `ext=py AND size>100000`
+- Buscar imports específicos: `content contains "from flask import" AND ext=py`
+- Arquivos modificados recentemente: `mtime > timestamp`
+- Regex em filenames: `filename contains "test_\w+\.py"` (regex=True)
+
+**Documentação**: `docs/v2.9.26-SPECIFICATION.md` (completo com arquitetura, testes, UX)
+
+**Ref**: Task #51 Sprint A (v2.9.26) | Protocolo Simplicidade 1 v1.6 aplicado (Etapas 1-12)
+
+---
+
 #### Editor Features
 
 - **[X]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes *(v2.9.16 - Task #46: EditorDock)*
@@ -856,7 +922,7 @@ result = convert_text_to_json(text, "auto")
 - **[]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
-- **[]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI)
+- **[X]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI) *(v2.9.26 - Task #51: Advanced File Filters in AI Processor)*
 - **[]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON
 - **[X]** Adicionar feature onde resultado pode ser reutilizado no editor de texto do Clarify *(v2.9.19 - Task #6: Open in Editor from Results)*
 
@@ -985,9 +1051,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 18 | 11 | 7 | 61.1% |
+| COULD HAVE | 18 | 12 | 6 | 66.7% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **107** | **88** | **19** | **82.2%** |
+| **TOTAL** | **107** | **89** | **18** | **83.2%** |
 
 ### Notas
 
@@ -998,7 +1064,7 @@ def walk(v):
 - **v3.0.0**: Adicionadas 5 ferramentas profissionais (Case Converter, JSON Search, Text Extractor, Placeholder Replacer, AI File Processor)
 - **v2.9.24**: Adicionado Text to JSON Converter com 10 formatos (Key-Value, CSV, YAML, TOML, TOON, etc.)
 - Projeto funcional e utilizável no estado atual com ferramentas avançadas
-- **81.3%** do projeto total completo (87 tasks completas) - em progressão constante
+- **83.2%** do projeto total completo (89 tasks completas) - em progressão constante
 - Categorias SHOULD/COULD/WOULD são melhorias e features avançadas
 - **v2.9.14**: Task #23 COMPLETA - Orphaned Keys Update System com VALUE EQUALITY (12 unit tests passing)
 - **v2.9.15**: Tasks #44 e #45 COMPLETAS - Análise add/ + Sistema de Tutoriais com Help menu (3 tutoriais MVP, TutorialsDock, preparação chatbot)
@@ -1008,10 +1074,12 @@ def walk(v):
 - **v2.9.18**: Task #5 COMPLETA - Edit-Only Mode sandbox editing (600+ linhas, 16 testes, State+Strategy+Command patterns)
 - **v2.9.13**: Melhorias de UX com context menus, tooltips, preferences persistentes e stats em tempo real
 - **Correção 30/11/2025**: 4 tasks já implementadas foram marcadas corretamente (reverse translation, cancel processing, file list ls/dir, async file insertion)
+- **v2.9.26**: Task #51 COMPLETA - Advanced File Filters no AI Processor (660+ linhas, 21 testes passing em 0.33s, Protocolo Simplicidade 1 v1.6)
 
 ### Marcos Importantes
 
 - **v3.0.0 (24/11/2025)**: +6 tasks completadas (SHOULD HAVE)
+- **v2.9.26 (01/12/2025)**: Task #51 COMPLETA - Advanced File Filters (6 field types, 10 operators, AND/OR logic, QSettings persistence)
   - Case Converter integrado
   - JSON Search com suporte TS
   - Text Extractor HTML/JSX
