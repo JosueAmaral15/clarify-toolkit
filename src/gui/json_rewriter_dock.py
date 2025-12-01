@@ -23,15 +23,72 @@ if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget as QWidgetType
 
 
-# Import CLI dedupe function (assumed to exist in app.py)
-def cli_dedupe(args: argparse.Namespace):
-    """Execute the dedupe/rewrite operation based on args.
+def format_removal_statistics(stats: dict) -> str:
+    """
+    Format removal statistics for display.
+    
+    Args:
+        stats: Dictionary with removal counters
     
     Returns:
-        tuple: (output_text, substitution_map) where substitution_map
-               maps removed keys to their replacements (for Task #23)
+        Formatted string or empty string if nothing was removed
+    """
+    lines = []
+    total = 0
+    
+    # Map operation keys to display labels (Q4: specific terms)
+    labels = {
+        'dedupe': ('Removed duplicate key-value pairs', 'key-value pairs'),
+        'eliminate': ('Eliminated duplicate values', 'values'),
+        'numeric_keys': ('Excluded numeric keys', 'keys'),
+        'empty_values': ('Skipped empty key-value pairs', 'key-value pairs'),
+        'duplicate_child': ('Avoided duplicate child hierarchies', 'object hierarchies'),
+        'array_duplicates_consecutive': ('Removed consecutive duplicate array elements', 'array elements'),
+        'array_duplicates_all': ('Removed all duplicate array elements', 'array elements'),
+        'no_siblings': ('Skipped orphan object chains', 'object chains')
+    }
+    
+    # Omit operations with 0 count (Q5-B)
+    for key, (label, unit) in labels.items():
+        count = stats.get(key, 0)
+        if count > 0:
+            lines.append(f"• {label}: {count} {unit}")
+            total += count
+    
+    # If nothing was removed, return empty (Q5-C handled in caller)
+    if total == 0:
+        return ""
+    
+    # Format final message
+    result = "✂️ Removal Statistics:\n"
+    result += "\n".join(lines)
+    result += f"\n\nTotal: {total} items removed"
+    
+    return result
+
+
+def cli_dedupe(args: argparse.Namespace):
+    \"\"\"Execute the dedupe/rewrite operation based on args.
+    
+    Returns:
+        tuple: (output_text, substitution_map, removal_stats) where:
+            - output_text: processed file content
+            - substitution_map: maps removed keys to replacements (Task #23)
+            - removal_stats: dict with removal counters (Task v2.9.22)
     """
     from .. import rewriter as rw
+    
+    # Initialize removal statistics counter
+    stats = {
+        'dedupe': 0,
+        'eliminate': 0,
+        'numeric_keys': 0,
+        'empty_values': 0,
+        'duplicate_child': 0,
+        'array_duplicates_consecutive': 0,
+        'array_duplicates_all': 0,
+        'no_siblings': 0
+    }
     
     # Read input
     with open(args.input, 'r', encoding='utf-8') as f:
@@ -45,16 +102,18 @@ def cli_dedupe(args: argparse.Namespace):
         # Pure JSON
         obj = rw.parse_json_preserving_duplicates_text(text)
     
-    # Apply transformations
+    # Apply transformations with counting
+    obj, stats['dedupe'] = rw.dedupe(obj)
+    
     if args.join_keys:
-        obj = rw.join_keys(obj)
+        obj, _ = rw.join_keys(obj)  # join_keys doesn't remove items
     
     # Build substitution map for eliminated keys (Task #23 - v2.9.14 COMPLETO)
     substitution_map = {}
     if args.eliminate_duplicates:
         # Extract all keys AND values before elimination
         old_keys_values = rw.extract_all_keys_from_obj(obj.data if hasattr(obj, 'data') else obj, prefix='t')
-        obj = rw.eliminate_duplicates(obj)
+        obj, stats['eliminate'] = rw.eliminate_duplicates(obj)
         # Extract all keys AND values after elimination
         new_keys_values = rw.extract_all_keys_from_obj(obj.data if hasattr(obj, 'data') else obj, prefix='t')
         # Build substitution map based on VALUE EQUALITY (not string similarity)
@@ -62,26 +121,26 @@ def cli_dedupe(args: argparse.Namespace):
     
     # Exclude numeric keys if requested
     if hasattr(args, 'exclude_numeric') and args.exclude_numeric:
-        obj = rw.exclude_numeric_keys(obj)
+        obj, stats['numeric_keys'] = rw.exclude_numeric_keys(obj)
     
     # Skip empty values if requested
     if hasattr(args, 'skip_empty') and args.skip_empty:
-        obj = rw.skip_empty_values(obj)
+        obj, stats['empty_values'] = rw.skip_empty_values(obj)
     
     # Avoid duplicate child keys if requested
     if hasattr(args, 'avoid_duplicate_child_keys') and args.avoid_duplicate_child_keys:
-        obj = rw.avoid_duplicate_child_keys(obj)
+        obj, stats['duplicate_child'] = rw.avoid_duplicate_child_keys(obj)
     
     # Remove duplicate array values if requested (Task #8 - v2.9.8)
     if hasattr(args, 'remove_dup_consecutive') and args.remove_dup_consecutive:
-        obj = rw.remove_duplicate_array_values(obj, consecutive_only=True)
+        obj, stats['array_duplicates_consecutive'] = rw.remove_duplicate_array_values(obj, consecutive_only=True)
     
     if hasattr(args, 'remove_dup_all') and args.remove_dup_all:
-        obj = rw.remove_duplicate_array_values(obj, consecutive_only=False)
+        obj, stats['array_duplicates_all'] = rw.remove_duplicate_array_values(obj, consecutive_only=False)
     
     # Skip keys without siblings if requested (Task #35 - v2.9.11)
     if hasattr(args, 'skip_no_siblings') and args.skip_no_siblings:
-        obj = rw.skip_keys_without_siblings(obj)
+        obj, stats['no_siblings'] = rw.skip_keys_without_siblings(obj)
     
     # Enforce consistent case if requested (Task #9 - v2.9.8)
     if hasattr(args, 'enforce_case') and args.enforce_case:
@@ -107,7 +166,7 @@ def cli_dedupe(args: argparse.Namespace):
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(output_text)
     
-    return output_text, substitution_map
+    return output_text, substitution_map, stats
 
 
 class JsonRewriterDock(BaseDock):
@@ -385,7 +444,7 @@ class JsonRewriterDock(BaseDock):
         
         # Execute rewrite
         try:
-            output_text, substitution_map = cli_dedupe(ns)
+            output_text, substitution_map, removal_stats = cli_dedupe(ns)
             
             # Task #23: Update orphaned references in project (if enabled)
             if self.chk_update_refs.isChecked() and substitution_map:
@@ -420,7 +479,13 @@ class JsonRewriterDock(BaseDock):
                 else:
                     QMessageBox.information(self, "No Changes", "No orphaned references found in project.")
             
-            QMessageBox.information(self, "Done", "Rewriter finished.")
+            # Task v2.9.22: Format and display removal statistics (Q3: MessageBox only)
+            stats_msg = format_removal_statistics(removal_stats)
+            if stats_msg:
+                QMessageBox.information(self, "Done", f"Rewriter finished.\n\n{stats_msg}")
+            else:
+                # Q5-C: Special message if nothing was removed
+                QMessageBox.information(self, "Done", "Rewriter finished.\n\nℹ️ No items were removed by any operation.")
         except Exception as e:
             import traceback
             QMessageBox.critical(self, "Error", f"{str(e)}\n\n{traceback.format_exc()}")

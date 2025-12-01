@@ -1,44 +1,71 @@
 """JSON deduplication operations: dedupe, join_keys, eliminate_duplicates."""
 
-from typing import List, Dict, Optional, Set, Any
+from typing import List, Dict, Optional, Set, Any, Tuple
 from .types import Obj, JSONNode, freeze
 
 
-def dedupe(node: JSONNode) -> JSONNode:
-    """Remove duplicate (key, value) pairs in Obj nodes, recursively."""
+def dedupe(node: JSONNode) -> Tuple[JSONNode, int]:
+    """Remove duplicate (key, value) pairs in Obj nodes, recursively.
+    
+    Returns:
+        Tuple of (processed_node, removed_count)
+    """
+    removed_count = 0
+    
     if isinstance(node, Obj):
         seen: Set = set()
         out = Obj()
         for k, v in node:
-            v2 = dedupe(v)
+            v2, child_removed = dedupe(v)
+            removed_count += child_removed
             sig = (k, freeze(v2))
             if sig in seen:
+                removed_count += 1
                 continue
             seen.add(sig)
             out.append((k, v2))
-        return out
+        return out, removed_count
     if isinstance(node, list):
-        return [dedupe(x) for x in node]
-    return node
+        result = []
+        for x in node:
+            processed, child_removed = dedupe(x)
+            removed_count += child_removed
+            result.append(processed)
+        return result, removed_count
+    return node, 0
 
 
-def merge_obj_values(values: List[Obj]) -> Obj:
-    """Merge multiple Obj values by concatenating their pairs and joining keys."""
+def merge_obj_values(values: List[Obj]) -> Tuple[Obj, int]:
+    """Merge multiple Obj values by concatenating their pairs and joining keys.
+    
+    Returns:
+        Tuple of (merged_result, removed_count)
+    """
     merged_pairs: Obj = Obj()
     for o in values:
         merged_pairs.extend(o)
     return join_keys(merged_pairs)
 
 
-def join_keys(node: JSONNode) -> JSONNode:
+def join_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Combine duplicate keys in Obj nodes:
     - If all values are identical → keep one
     - If all values are Obj → merge them recursively
     - Otherwise → deduplicate and keep first unique value(s)
+    
+    Returns:
+        Tuple of (processed_node, merged_count) - always 0 for removed_count
     """
+    removed_count = 0
+    
     if isinstance(node, Obj):
-        processed = [(k, join_keys(v)) for (k, v) in node]
+        processed = []
+        for k, v in node:
+            processed_v, child_removed = join_keys(v)
+            removed_count += child_removed
+            processed.append((k, processed_v))
+        
         order: List[str] = []
         groups: Dict[str, List[JSONNode]] = {}
         for k, v in processed:
@@ -55,7 +82,9 @@ def join_keys(node: JSONNode) -> JSONNode:
             if all(freeze(v) == first_sig for v in vals[1:]):
                 out.append((k, vals[0])); continue
             if all(isinstance(v, Obj) for v in vals):
-                out.append((k, merge_obj_values(vals))); continue
+                merged_val, merge_removed = merge_obj_values(vals)
+                removed_count += merge_removed
+                out.append((k, merged_val)); continue
             uniq: List[JSONNode] = []
             seen = set()
             for v in vals:
@@ -63,27 +92,39 @@ def join_keys(node: JSONNode) -> JSONNode:
                 if sig in seen: continue
                 seen.add(sig); uniq.append(v)
             out.append((k, uniq[0] if len(uniq) == 1 else uniq))
-        return out
+        return out, removed_count
     if isinstance(node, list):
-        return [join_keys(x) for x in node]
-    return node
+        result = []
+        for x in node:
+            processed, child_removed = join_keys(x)
+            removed_count += child_removed
+            result.append(processed)
+        return result, removed_count
+    return node, 0
 
 
-def eliminate_duplicates(node: JSONNode) -> JSONNode:
+def eliminate_duplicates(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove globally duplicate values across the entire tree.
     Only the first occurrence of each unique value is kept.
+    
+    Returns:
+        Tuple of (processed_node, removed_duplicate_values_count)
     """
     seen: Set = set()
+    removed_count = 0
     
     def _visit(n: JSONNode) -> Optional[JSONNode]:
+        nonlocal removed_count
         if isinstance(n, Obj):
             out = Obj()
             for k, v in n:
                 v2 = _visit(v)
                 if v2 is None: continue
                 sig = freeze(v2)
-                if sig in seen: continue
+                if sig in seen:
+                    removed_count += 1
+                    continue
                 seen.add(sig)
                 out.append((k, v2))
             return out if out else None
@@ -93,36 +134,51 @@ def eliminate_duplicates(node: JSONNode) -> JSONNode:
                 v2 = _visit(v)
                 if v2 is None: continue
                 sig = freeze(v2)
-                if sig in seen: continue
+                if sig in seen:
+                    removed_count += 1
+                    continue
                 seen.add(sig)
                 out.append(v2)
             return out if out else None
         return n
     
     res = _visit(node)
-    return res if res is not None else Obj()
+    return (res if res is not None else Obj()), removed_count
 
 
-def exclude_numeric_keys(node: JSONNode) -> JSONNode:
+def exclude_numeric_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove keys that are purely numeric (e.g., '0', '123', '456').
     Recursively processes Obj and list nodes.
+    
+    Returns:
+        Tuple of (processed_node, removed_numeric_keys_count)
     """
+    removed_count = 0
+    
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
             # Skip if key is numeric
             if k.isdigit():
+                removed_count += 1
                 continue
             # Recursively process value
-            out.append((k, exclude_numeric_keys(v)))
-        return out
+            processed_v, child_removed = exclude_numeric_keys(v)
+            removed_count += child_removed
+            out.append((k, processed_v))
+        return out, removed_count
     if isinstance(node, list):
-        return [exclude_numeric_keys(x) for x in node]
-    return node
+        result = []
+        for x in node:
+            processed, child_removed = exclude_numeric_keys(x)
+            removed_count += child_removed
+            result.append(processed)
+        return result, removed_count
+    return node, 0
 
 
-def skip_empty_values(node: JSONNode) -> JSONNode:
+def skip_empty_values(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove empty values from JSON structure.
     
@@ -134,7 +190,12 @@ def skip_empty_values(node: JSONNode) -> JSONNode:
     - Whitespace-only strings: "   "
     
     Recursively processes Obj and list nodes.
+    
+    Returns:
+        Tuple of (processed_node, removed_empty_pairs_count)
     """
+    removed_count = 0
+    
     def is_empty(value: Any) -> bool:
         """Check if value is considered empty."""
         if value is None:
@@ -151,23 +212,26 @@ def skip_empty_values(node: JSONNode) -> JSONNode:
         out = Obj()
         for k, v in node:
             # Recursively process value first
-            processed = skip_empty_values(v)
+            processed, child_removed = skip_empty_values(v)
+            removed_count += child_removed
             # Skip if empty
             if is_empty(processed):
+                removed_count += 1
                 continue
             out.append((k, processed))
-        return out
+        return out, removed_count
     if isinstance(node, list):
         out = []
         for item in node:
-            processed = skip_empty_values(item)
+            processed, child_removed = skip_empty_values(item)
+            removed_count += child_removed
             if not is_empty(processed):
                 out.append(processed)
-        return out
-    return node
+        return out, removed_count
+    return node, 0
 
 
-def avoid_duplicate_child_keys(node: JSONNode) -> JSONNode:
+def avoid_duplicate_child_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Avoid child keys with the same name as parent keys.
     
@@ -180,22 +244,30 @@ def avoid_duplicate_child_keys(node: JSONNode) -> JSONNode:
     If values conflict, parent value is kept (child ignored).
     
     Recursively processes Obj and list nodes.
+    
+    Returns:
+        Tuple of (processed_node, collapsed_hierarchies_count)
     """
+    removed_count = 0
+    
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
             # First, recursively process the value
-            processed_v = avoid_duplicate_child_keys(v)
+            processed_v, child_removed = avoid_duplicate_child_keys(v)
+            removed_count += child_removed
             
             # Check if the value is an Obj with a single key that matches current key
             if isinstance(processed_v, Obj) and len(processed_v) == 1:
                 child_key, child_val = processed_v[0]
                 if child_key == k:
                     # Found duplicate: t.pages.home.home
+                    removed_count += 1
                     # If both are objects, merge them
                     if isinstance(child_val, Obj):
                         # Recursively check child_val for more duplicates
-                        final_val = avoid_duplicate_child_keys(child_val)
+                        final_val, more_removed = avoid_duplicate_child_keys(child_val)
+                        removed_count += more_removed
                         out.append((k, final_val))
                     else:
                         # Child is not an object, just use it directly
@@ -204,13 +276,18 @@ def avoid_duplicate_child_keys(node: JSONNode) -> JSONNode:
             
             # No duplicate found, keep as is
             out.append((k, processed_v))
-        return out
+        return out, removed_count
     if isinstance(node, list):
-        return [avoid_duplicate_child_keys(x) for x in node]
-    return node
+        result = []
+        for x in node:
+            processed, child_removed = avoid_duplicate_child_keys(x)
+            removed_count += child_removed
+            result.append(processed)
+        return result, removed_count
+    return node, 0
 
 
-def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False) -> JSONNode:
+def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False) -> Tuple[JSONNode, int]:
     """
     Remove duplicate values from arrays in JSON structure.
     
@@ -225,39 +302,59 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
     
     Recursively processes Obj and list nodes.
     Uses set-like behavior to preserve first occurrence.
+    
+    Returns:
+        Tuple of (processed_node, removed_array_elements_count)
     """
+    removed_count = 0
+    
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
             # Recursively process value
-            out.append((k, remove_duplicate_array_values(v, consecutive_only)))
-        return out
+            processed_v, child_removed = remove_duplicate_array_values(v, consecutive_only)
+            removed_count += child_removed
+            out.append((k, processed_v))
+        return out, removed_count
     
     if isinstance(node, list):
         if consecutive_only:
             # Remove only consecutive duplicates
             if not node:
-                return []
-            result = [node[0]]
+                return [], 0
+            result = []
+            prev_item, prev_removed = remove_duplicate_array_values(node[0], consecutive_only)
+            removed_count += prev_removed
+            result.append(prev_item)
+            
             for i in range(1, len(node)):
+                curr_item, curr_removed = remove_duplicate_array_values(node[i], consecutive_only)
+                removed_count += curr_removed
                 # Compare with previous item using freeze for consistent comparison
-                if freeze(node[i]) != freeze(node[i-1]):
-                    result.append(remove_duplicate_array_values(node[i], consecutive_only))
-                # If equal to previous, skip it (don't add to result)
-            return result
+                if freeze(curr_item) != freeze(prev_item):
+                    result.append(curr_item)
+                    prev_item = curr_item
+                else:
+                    # Consecutive duplicate found
+                    removed_count += 1
+            return result, removed_count
         else:
             # Remove all duplicates (set-like behavior)
             seen = set()
             result = []
             for item in node:
-                processed = remove_duplicate_array_values(item, consecutive_only)
+                processed, child_removed = remove_duplicate_array_values(item, consecutive_only)
+                removed_count += child_removed
                 sig = freeze(processed)
                 if sig not in seen:
                     seen.add(sig)
                     result.append(processed)
-            return result
+                else:
+                    # Duplicate found
+                    removed_count += 1
+            return result, removed_count
     
-    return node
+    return node, 0
 
 
 def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inconsistencies: bool = True) -> tuple[JSONNode, List[str]]:
@@ -585,7 +682,7 @@ def array_to_object_conversion(
     return process_node(node)
 
 
-def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
+def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove keys that don't have siblings (Task #35 - v2.9.11).
     
@@ -603,8 +700,10 @@ def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
         node: JSON node to process
     
     Returns:
-        Processed node with serial chains removed
+        Tuple of (processed_node, removed_orphan_chains_count)
     """
+    removed_count = 0
+    
     def has_siblings_in_subtree(obj: Obj) -> bool:
         """Check if obj or any descendant has multiple children."""
         if len(obj) > 1:
@@ -623,6 +722,8 @@ def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
     
     def process_obj(obj: Obj) -> Optional[Obj]:
         """Process Obj node, returning None if should be removed."""
+        nonlocal removed_count
+        
         if not obj:
             return obj
         
@@ -653,6 +754,7 @@ def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
                 return Obj(processed_children)
             else:
                 # Serial chain (no siblings anywhere) - remove
+                removed_count += 1
                 return None
         else:
             # Empty after processing
@@ -675,8 +777,8 @@ def skip_keys_without_siblings(node: JSONNode) -> JSONNode:
     # Start processing
     if isinstance(node, Obj):
         result = process_obj(node)
-        return result if result is not None else Obj()
+        return (result if result is not None else Obj()), removed_count
     elif isinstance(node, list):
-        return process_list(node)
+        return process_list(node), removed_count
     else:
-        return node
+        return node, 0

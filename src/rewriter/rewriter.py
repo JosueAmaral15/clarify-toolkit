@@ -82,6 +82,9 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
         elim: Apply eliminate_duplicates operation
         normalize_esc: Apply normalize_escaping operation (Task #22 - v2.9.10)
         convert_arrays: Apply array_to_object_conversion operation (Task #21 - v2.9.10)
+    
+    Returns:
+        Processed file content (statistics are discarded here - use cli_dedupe for full stats)
     """
     start, end, block = find_object_block(raw_full)
     block_json = ts_block_to_json_text(block)
@@ -89,11 +92,12 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
     from .types import parse_json_preserving_duplicates_text
     node = parse_json_preserving_duplicates_text(block_json)
     
-    node = dedupe(node)
+    # Apply operations (discard counters in this simplified function)
+    node, _ = dedupe(node)
     if join:
-        node = join_keys(node)
+        node, _ = join_keys(node)
     if elim:
-        node = eliminate_duplicates(node)
+        node, _ = eliminate_duplicates(node)
     if normalize_esc:
         node = normalize_escaping(node)
     if convert_arrays:

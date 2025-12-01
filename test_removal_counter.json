@@ -1,0 +1,29 @@
+{
+  "home": {
+    "title": "Welcome",
+    "title": "Welcome",
+    "subtitle": "",
+    "0": "numeric key",
+    "pages": {
+      "home": {
+        "home": {
+          "message": "Hello"
+        }
+      }
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "content": null,
+    "items": ["a", "b", "a", "c", "b"]
+  },
+  "contact": {
+    "email": "test@example.com"
+  },
+  "settings": {
+    "theme": "dark"
+  },
+  "settings": {
+    "theme": "dark"
+  }
+}

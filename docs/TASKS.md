@@ -255,6 +255,39 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ---
 
+#### Task v2.9.22 - Contador de Remoções no JSON Rewriter
+**Status**: ✅ Completa - 01/12/2025  
+**Arquivos Modificados**: `src/rewriter/operations.py` (+97 linhas), `src/gui/json_rewriter_dock.py` (+50 linhas), `src/rewriter/rewriter.py` (+3 linhas)  
+**Arquivo de Teste**: `tests/test_removal_counter.py` (350 linhas, 18 testes - 100% passing)
+
+**Objetivo**: Adicionar contador de estatísticas de remoção exibindo quantos itens foram removidos por cada operação do JSON Rewriter.
+
+**Componentes Implementados**:
+
+**1. operations.py - 8 Funções Modificadas**:
+- Todas retornam tuplas `(resultado, contador)`
+- Pattern: `removed_count` acumula recursivamente
+- Funções: `dedupe`, `join_keys`, `eliminate_duplicates`, `exclude_numeric_keys`, `skip_empty_values`, `avoid_duplicate_child_keys`, `remove_duplicate_array_values`, `skip_keys_without_siblings`
+
+**2. json_rewriter_dock.py**:
+- `format_removal_statistics(stats)`: Formata output detalhado
+- `cli_dedupe()`: Captura 8 contadores, retorna `(output, substitution_map, stats)`
+- `_rewrite()`: Exibe estatísticas em MessageBox
+
+**Exemplo de Output**:
+```
+✂️ Removal Statistics:
+• Removed duplicate key-value pairs: 3 key-value pairs
+• Eliminated duplicate values: 12 values
+• Excluded numeric keys: 5 keys
+• Skipped empty key-value pairs: 8 key-value pairs
+Total: 28 items removed
+```
+
+**Testes**: 18 testes (9 classes), 100% passing em 0.28s
+
+---
+
 #### Task #44 - Análise de Funcionalidades em `add/` (v2.9.15)
 **Status**: ✅ Completa - 24/11/2025
 
@@ -712,9 +745,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 11 | 1 | 91.7% |
 | SHOULD HAVE | 50 | 40 | 10 | 80.0% |
-| COULD HAVE | 18 | 7 | 11 | 38.9% |
+| COULD HAVE | 18 | 8 | 10 | 44.4% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **104** | **70** | **34** | **67.3%** |
+| **TOTAL** | **104** | **71** | **33** | **68.3%** |
 
 ### Notas
 
