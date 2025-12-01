@@ -16,8 +16,8 @@ class CloudSyncProvider:
 class DummyProvider(CloudSyncProvider):
     """Provedor fictício para testes."""
     def login(self):
-        print("Login fictício realizado.")
+        print("Dummy login performed.")
     def upload_settings(self, settings_path):
-        print(f"Upload fictício de {settings_path}")
+        print(f"Dummy upload of {settings_path}")
     def download_settings(self, dest_path):
-        print(f"Download fictício para {dest_path}")
+        print(f"Dummy download to {dest_path}")

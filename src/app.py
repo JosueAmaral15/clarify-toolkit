@@ -4156,7 +4156,7 @@ if _PYSIDE:
                 self.rest_api = ClarifyAPI(self)
                 self.rest_api.start()
             except Exception as e:
-                print(f"[REST API] Não inicializada: {e}")
+                print(f"[REST API] Not initialized: {e}")
 
             # Cloud sync (opcional)
             try:
@@ -4164,7 +4164,7 @@ if _PYSIDE:
                 self.cloud_sync = DummyProvider()
                 self.cloud_sync.login()
             except Exception as e:
-                print(f"[Cloud Sync] Não inicializado: {e}")
+                print(f"[Cloud Sync] Not initialized: {e}")
 
             self._build_icon()
             self._build_ui()

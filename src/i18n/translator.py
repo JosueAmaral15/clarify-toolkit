@@ -45,31 +45,15 @@ class Translator(QObject):
         super().__init__()
         self._initialized = True
         
-        self._current_language: str = "en"
+        self._current_language: str = "en"  # Default to English
         self._translations: Dict[str, Dict[str, str]] = {}
         self._available_languages = ["en", "pt_BR"]
         
-        # Detect system language
-        self._detect_system_language()
-        
-        # Load initial language
+        # Load initial language (always English by default)
         self._load_language(self._current_language)
     
-    def _detect_system_language(self) -> None:
-        """Detect system language and set as default."""
-        try:
-            # Get system locale
-            system_locale = locale.getdefaultlocale()[0]  # e.g., 'pt_BR', 'en_US'
-            
-            if system_locale:
-                # Check if we have translation for this locale
-                if system_locale.startswith("pt"):
-                    self._current_language = "pt_BR"
-                elif system_locale.startswith("en"):
-                    self._current_language = "en"
-        except:
-            # Fallback to English
-            self._current_language = "en"
+    # Removed: Auto-detect system language (now defaults to English)
+    # User can manually switch to pt_BR via menu if desired
     
     def _load_language(self, lang: str) -> None:
         """Load translation file for the given language."""
