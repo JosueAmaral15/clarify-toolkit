@@ -4150,21 +4150,23 @@ if _PYSIDE:
             self.plugin_loader.discover_plugins()
             # Note: plugins are activated only when user clicks on Plugins menu
 
-            # REST API (opcional)
-            try:
-                from .rest_api import ClarifyAPI
-                self.rest_api = ClarifyAPI(self)
-                self.rest_api.start()
-            except Exception as e:
-                print(f"[REST API] Not initialized: {e}")
+            # REST API (optional - disabled by default, requires fastapi)
+            # Uncomment to enable REST API server
+            # try:
+            #     from .rest_api import ClarifyAPI
+            #     self.rest_api = ClarifyAPI(self)
+            #     self.rest_api.start()
+            # except Exception as e:
+            #     print(f"[REST API] Not initialized: {e}")
 
-            # Cloud sync (opcional)
-            try:
-                from .cloud_sync import DummyProvider
-                self.cloud_sync = DummyProvider()
-                self.cloud_sync.login()
-            except Exception as e:
-                print(f"[Cloud Sync] Not initialized: {e}")
+            # Cloud sync (optional - disabled by default, dummy implementation)
+            # Uncomment to enable cloud sync
+            # try:
+            #     from .cloud_sync import DummyProvider
+            #     self.cloud_sync = DummyProvider()
+            #     self.cloud_sync.login()
+            # except Exception as e:
+            #     print(f"[Cloud Sync] Not initialized: {e}")
 
             self._build_icon()
             self._build_ui()
