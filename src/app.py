@@ -4360,7 +4360,7 @@ if _PYSIDE:
             from PySide6.QtWidgets import QMessageBox
             about_text = """<h2>Clarify</h2>
             <p><b>Text Processing Tool</b></p>
-            <p>Version: 2.9.28 (Sprint B Feature #1)</p>
+            <p>Version: 2.9.29 (Reference Resolver Sprint A)</p>
             <p>A powerful tool for JSON processing, translation, AI integration, and more.</p>
             <p><a href="https://github.com/JosueAmaral15/clarify">GitHub Repository</a></p>
             <p>© 2025 Josue Amaral</p>
