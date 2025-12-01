@@ -975,11 +975,16 @@ result = convert_text_to_json(text, "auto")
       - ✅ QSettings persistence para preferências
       - ✅ 13/13 tests passing (~430 LOC total)
       - ✅ Documentação completa (docs/v2.9.29-SPECIFICATION.md)
-    * ❌ **Reference Resolver Sprint B (Avançado - PENDENTE ~200 LOC)**:
-      - ❌ Multi-format support ($ref:, #/, @path) (~50 LOC)
+    * ✅ **Reference Resolver Sprint B Feature #4 (v2.9.30 - COMPLETO - 02/12/2025)**:
+      - ✅ Multi-format support ($ref:, #/, @) - 3 formatos configuráveis (~60 LOC)
+      - ✅ Format configuration dialog (dropdown + 2 checkboxes + preview) (~90 LOC)
+      - ✅ Relative path support (remove 'root.' prefix) (~15 LOC)
+      - ✅ QSettings persistence (reference_format, include_line_numbers_ref, use_relative_paths) (~15 LOC)
+      - ✅ 25/25 tests passing (12 novos testes + 13 Sprint A) (~180 LOC total)
+      - ✅ Protocolo Simplicidade 1 v1.6 aplicado (16 perguntas Q&A + 9 tasks)
+    * ❌ **Reference Resolver Sprint B Remaining (Avançado - PENDENTE ~120 LOC)**:
       - ❌ Cross-file references ($ref:file.json:path) (~80 LOC)
       - ❌ Detailed statistics dialog (interactive table, export CSV) (~40 LOC)
-      - ❌ Format preference configuration (dropdown, line numbers toggle) (~30 LOC)
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
@@ -1102,7 +1107,7 @@ def walk(v):
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
 | **TOTAL** | **107** | **90** | **17** | **84.1%** |
 
-**Última Atualização**: 02/12/2025 - Reference Resolver Sprint A (v2.9.29)
+**Última Atualização**: 02/12/2025 - Reference Resolver Sprint B Feature #4 (v2.9.30)
 
 ### Notas
 
