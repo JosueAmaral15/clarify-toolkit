@@ -1,9 +1,10 @@
 """
-Reference Resolver functions for Sprint A (v2.9.29).
+Reference Resolver functions for Sprint A (v2.9.29) + Sprint B Feature #4.
 
 These functions implement reference resolution for JSON deduplication:
 - create_references(): Replace duplicates with $ref:path:line or delete them
 - resolve_references(): Expand $ref to actual values
+- format_reference(): Helper to format references in multiple formats (Sprint B)
 """
 
 import re
@@ -11,20 +12,73 @@ from typing import Tuple, Dict, Any, Optional
 from .types import Obj, JSONNode, freeze
 
 
+def format_reference(
+    path: str,
+    line: Optional[int] = None,
+    format_type: str = '$ref',
+    use_relative_path: bool = False
+) -> str:
+    """
+    Format a reference string in the specified format (Sprint B Feature #4).
+    
+    Args:
+        path: Full path to referenced object (e.g., 'root.users.admin')
+        line: Optional line number
+        format_type: Format style - '$ref', '#/', or '@'
+        use_relative_path: If True, remove 'root.' prefix
+    
+    Returns:
+        Formatted reference string
+    
+    Examples:
+        >>> format_reference('root.users.admin', 123, '$ref', False)
+        '$ref:root.users.admin:123'
+        >>> format_reference('root.users.admin', None, '#/', True)
+        '#/users.admin'
+        >>> format_reference('root.users.admin', 456, '@', True)
+        '@users.admin:456'
+    """
+    # Apply relative path if requested (remove 'root.' prefix)
+    if use_relative_path and path.startswith('root.'):
+        path = path[5:]  # Remove 'root.'
+    
+    # Format based on type
+    if format_type == '$ref':
+        base = f'$ref:{path}'
+    elif format_type == '#/':
+        base = f'#/{path}'
+    elif format_type == '@':
+        base = f'@{path}'
+    else:
+        # Fallback to default
+        base = f'$ref:{path}'
+    
+    # Append line number if provided
+    if line is not None and line > 0:
+        return f'{base}:{line}'
+    
+    return base
+
+
 def create_references(
     node: JSONNode,
     mode: str = 'delete',
-    include_line_numbers: bool = True
+    include_line_numbers: bool = True,
+    format_type: str = '$ref',
+    use_relative_path: bool = False
 ) -> Tuple[JSONNode, Dict[str, int]]:
     """
     Replace duplicate objects with references or delete them.
     
-    This is Sprint A implementation (single-file only).
+    Sprint A: Basic $ref:path:line support (single-file).
+    Sprint B Feature #4: Multi-format support (#/, @) + relative paths.
     
     Args:
         node: JSONNode to process
-        mode: 'delete' removes duplicates, 'references' creates $ref
-        include_line_numbers: If True, format is $ref:path:line, else $ref:path
+        mode: 'delete' removes duplicates, 'references' creates refs
+        include_line_numbers: If True, include line numbers in refs
+        format_type: Format style - '$ref' (default), '#/', or '@'
+        use_relative_path: If True, remove 'root.' prefix from paths
     
     Returns:
         Tuple of (processed_node, stats) where stats contains:
@@ -77,11 +131,13 @@ def create_references(
                 orig_path, orig_line, _ = seen_objects[frozen_val]
                 
                 if mode == 'references':
-                    # Create reference
-                    if include_line_numbers and orig_line > 0:
-                        ref_str = f"$ref:{orig_path}:{orig_line}"
-                    else:
-                        ref_str = f"$ref:{orig_path}"
+                    # Create reference using format_reference helper (Sprint B Feature #4)
+                    ref_str = format_reference(
+                        path=orig_path,
+                        line=orig_line if include_line_numbers else None,
+                        format_type=format_type,
+                        use_relative_path=use_relative_path
+                    )
                     
                     stats['created'] += 1
                     return ref_str
@@ -129,13 +185,17 @@ def create_references(
 
 def resolve_references(node: JSONNode) -> Tuple[JSONNode, Dict[str, int]]:
     """
-    Expand $ref references to their actual values.
+    Expand references to their actual values (Sprint A + Sprint B Feature #4).
     
-    Supports formats:
+    Supports multiple formats:
     - $ref:path.to.key:123 (with line number)
     - $ref:path.to.key (without line number)
+    - #/path.to.key:123 (JSON Pointer format - Sprint B)
+    - #/path.to.key (JSON Pointer without line)
+    - @path.to.key:123 (Custom format - Sprint B)
+    - @path.to.key (Custom without line)
     
-    This is Sprint A implementation (single-file only).
+    Also supports relative paths (without 'root.' prefix).
     
     Args:
         node: JSONNode to process
@@ -183,10 +243,11 @@ def resolve_references(node: JSONNode) -> Tuple[JSONNode, Dict[str, int]]:
         """
         nonlocal stats
         
-        # Check if this is a reference string
-        if isinstance(n, str) and n.startswith('$ref:'):
-            # Parse reference
-            ref_pattern = r'^\$ref:([^:]+)(?::(\d+))?$'
+        # Check if this is a reference string (Sprint B: support multiple formats)
+        if isinstance(n, str) and (n.startswith('$ref:') or n.startswith('#/') or n.startswith('@')):
+            # Parse reference - support 3 formats (Sprint B Feature #4)
+            # $ref:path:line, $ref:path, #/path:line, #/path, @path:line, @path
+            ref_pattern = r'^(?:\$ref:|#/|@)([^:]+)(?::(\d+))?$'
             match = re.match(ref_pattern, n)
             
             if not match:
@@ -198,11 +259,21 @@ def resolve_references(node: JSONNode) -> Tuple[JSONNode, Dict[str, int]]:
             ref_path = match.group(1)
             ref_line = match.group(2)  # May be None
             
-            # Lookup value
+            # Try to resolve (check both absolute and relative paths)
+            resolved_value = None
+            
+            # First try exact path
             if ref_path in index:
-                referenced_value = index[ref_path]
+                resolved_value = index[ref_path]
+            # If not found and path doesn't start with 'root.', try adding it (relative path support)
+            elif not ref_path.startswith('root.'):
+                absolute_path = f'root.{ref_path}'
+                if absolute_path in index:
+                    resolved_value = index[absolute_path]
+            
+            if resolved_value is not None:
                 stats['resolved'] += 1
-                return referenced_value
+                return resolved_value
             else:
                 # Path not found
                 print(f"⚠️  Warning: Reference target not found: '{ref_path}' (line {ref_line}) at {path}")

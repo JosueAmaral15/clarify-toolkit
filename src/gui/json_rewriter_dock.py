@@ -13,9 +13,10 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import (
     QWidget, QGridLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
-    QSpinBox, QFileDialog, QMessageBox, QComboBox, QRadioButton
+    QSpinBox, QFileDialog, QMessageBox, QComboBox, QRadioButton, QDialog,
+    QVBoxLayout, QHBoxLayout, QDialogButtonBox, QGroupBox
 )
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 
 from .base_dock import BaseDock
 from ..utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
@@ -183,12 +184,22 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
     if hasattr(args, 'skip_no_siblings') and args.skip_no_siblings:
         obj, stats['no_siblings'] = rw.skip_keys_without_siblings(obj)
     
-    # Remove duplicate objects if requested (Task #52 - v2.9.27 + Sprint A v2.9.29)
+    # Remove duplicate objects if requested (Task #52 - v2.9.27 + Sprint A v2.9.29 + Sprint B Feature #4 v2.9.30)
     if hasattr(args, 'remove_duplicate_objects') and args.remove_duplicate_objects:
         # Sprint A v2.9.29: Use create_references() if use_references mode enabled
         if hasattr(args, 'use_references') and args.use_references:
-            # Use new reference resolver (Sprint A)
-            obj, ref_stats = rw.create_references(obj, mode='references', include_line_numbers=True)
+            # Use new reference resolver (Sprint A + Sprint B Feature #4)
+            format_type = getattr(args, 'reference_format', '$ref')
+            include_line_numbers = getattr(args, 'include_line_numbers_ref', True)
+            use_relative_paths = getattr(args, 'use_relative_paths', False)
+            
+            obj, ref_stats = rw.create_references(
+                obj, 
+                mode='references', 
+                include_line_numbers=include_line_numbers,
+                format_type=format_type,
+                use_relative_path=use_relative_paths
+            )
             stats['references_created'] = ref_stats.get('created', 0)
             stats['duplicate_objects'] = ref_stats.get('created', 0)  # For backward compatibility
         else:
@@ -358,6 +369,10 @@ class JsonRewriterDock(BaseDock):
         self.chk_resolve_refs.setToolTip("Expand $ref:path:line to actual values before processing")
         self.chk_resolve_refs.setChecked(False)
         
+        # Sprint B Feature #4: Reference Format Configuration (v2.9.30)
+        self.btn_configure_format = QPushButton("⚙️ Configure Format...")
+        self.btn_configure_format.setToolTip("Configure reference format style and options")
+        
         # Indent spinner
         self.lbl_indent = QLabel("Indent (<=0 compact):")
         self.spin_indent = QSpinBox()
@@ -437,8 +452,9 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.radio_delete_dups, 9, 1, 1, 2)
         g.addWidget(self.radio_use_refs, 9, 3, 1, 2)
         
-        # Row 10: Resolve references checkbox
-        g.addWidget(self.chk_resolve_refs, 10, 0, 1, 3)
+        # Row 10: Resolve references checkbox + Configure Format button (Sprint B Feature #4)
+        g.addWidget(self.chk_resolve_refs, 10, 0, 1, 2)
+        g.addWidget(self.btn_configure_format, 10, 2, 1, 2)
         
         # Row 11: Indent and run button
         g.addWidget(self.lbl_indent, 11, 0)
@@ -452,6 +468,7 @@ class JsonRewriterDock(BaseDock):
         self.btn_project_browse.clicked.connect(self._browse_project_dir)
         self.btn_run.clicked.connect(self._rewrite)
         self.btn_advanced_filters.clicked.connect(self._open_advanced_filters_dialog)
+        self.btn_configure_format.clicked.connect(self._open_format_config_dialog)
         
         # Sprint A v2.9.29: Save preferences when reference resolver options change
         self.radio_delete_dups.toggled.connect(self._save_preferences)
@@ -484,6 +501,101 @@ class JsonRewriterDock(BaseDock):
         )
         if d:
             self.ed_project_dir.setText(d)
+    
+    def _open_format_config_dialog(self) -> None:
+        """Open dialog to configure reference format (Sprint B Feature #4 - v2.9.30)."""
+        settings = QSettings("Clarify", "JsonRewriter")
+        
+        # Create dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Reference Format Configuration")
+        dialog.setMinimumWidth(500)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Active options group
+        active_group = QGroupBox("Format Options")
+        active_layout = QVBoxLayout()
+        
+        # Format dropdown
+        format_layout = QHBoxLayout()
+        format_layout.addWidget(QLabel("Reference format:"))
+        combo_format = QComboBox()
+        combo_format.addItems(["$ref: (Default)", "#/ (JSON Pointer)", "@ (Compact)"])
+        current_format = settings.value("reference_format", "$ref")
+        if current_format == "$ref":
+            combo_format.setCurrentIndex(0)
+        elif current_format == "#/":
+            combo_format.setCurrentIndex(1)
+        elif current_format == "@":
+            combo_format.setCurrentIndex(2)
+        format_layout.addWidget(combo_format)
+        active_layout.addLayout(format_layout)
+        
+        # Checkboxes
+        chk_line_numbers = QCheckBox("Include line numbers")
+        chk_line_numbers.setChecked(settings.value("include_line_numbers_ref", True, type=bool))
+        chk_line_numbers.setToolTip("Append :line_number to references (e.g., $ref:path:123)")
+        active_layout.addWidget(chk_line_numbers)
+        
+        chk_relative = QCheckBox("Use relative paths")
+        chk_relative.setChecked(settings.value("use_relative_paths", False, type=bool))
+        chk_relative.setToolTip("Remove 'root.' prefix from paths (e.g., users.admin instead of root.users.admin)")
+        active_layout.addWidget(chk_relative)
+        
+        # Preview label
+        preview_label = QLabel()
+        preview_label.setStyleSheet("background-color: #f0f0f0; padding: 8px; border: 1px solid #ccc; font-family: monospace;")
+        preview_label.setWordWrap(True)
+        
+        def update_preview():
+            fmt = ["$ref", "#/", "@"][combo_format.currentIndex()]
+            path = "users.admin" if chk_relative.isChecked() else "root.users.admin"
+            line = ":123" if chk_line_numbers.isChecked() else ""
+            example = f"{fmt}:{path}{line}" if fmt == "$ref" else f"{fmt}{path}{line}"
+            preview_label.setText(f"Example: <b>{example}</b>")
+        
+        combo_format.currentIndexChanged.connect(update_preview)
+        chk_line_numbers.toggled.connect(update_preview)
+        chk_relative.toggled.connect(update_preview)
+        update_preview()
+        
+        active_layout.addWidget(QLabel("Preview:"))
+        active_layout.addWidget(preview_label)
+        active_group.setLayout(active_layout)
+        layout.addWidget(active_group)
+        
+        # Future features group (grayed out)
+        future_group = QGroupBox("Cross-File References (Coming Soon)")
+        future_group.setEnabled(False)
+        future_layout = QVBoxLayout()
+        future_layout.addWidget(QCheckBox("Enable cross-file references"))
+        future_layout.addWidget(QCheckBox("Use absolute file paths"))
+        future_group.setLayout(future_layout)
+        layout.addWidget(future_group)
+        
+        # Buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | 
+                                     QDialogButtonBox.StandardButton.Cancel |
+                                     QDialogButtonBox.StandardButton.RestoreDefaults)
+        
+        def reset_defaults():
+            combo_format.setCurrentIndex(0)
+            chk_line_numbers.setChecked(True)
+            chk_relative.setChecked(False)
+            update_preview()
+        
+        button_box.button(QDialogButtonBox.StandardButton.RestoreDefaults).clicked.connect(reset_defaults)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        
+        # Show dialog and save if accepted
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            format_map = {0: "$ref", 1: "#/", 2: "@"}
+            settings.setValue("reference_format", format_map[combo_format.currentIndex()])
+            settings.setValue("include_line_numbers_ref", chk_line_numbers.isChecked())
+            settings.setValue("use_relative_paths", chk_relative.isChecked())
     
     def _open_advanced_filters_dialog(self) -> None:
         """Open dialog to configure advanced file filters (Sprint B Feature #1)."""
@@ -673,6 +785,10 @@ class JsonRewriterDock(BaseDock):
             # Sprint A v2.9.29: Reference Resolver
             resolve_references=self.chk_resolve_refs.isChecked(),
             use_references=self.radio_use_refs.isChecked(),
+            # Sprint B Feature #4 v2.9.30: Reference Format Configuration
+            reference_format=QSettings("Clarify", "JsonRewriter").value("reference_format", "$ref", type=str),
+            include_line_numbers_ref=QSettings("Clarify", "JsonRewriter").value("include_line_numbers_ref", True, type=bool),
+            use_relative_paths=QSettings("Clarify", "JsonRewriter").value("use_relative_paths", False, type=bool),
         )
         
         # Execute rewrite (Sprint B Feature #1: pass advanced conditions)
@@ -750,6 +866,10 @@ class JsonRewriterDock(BaseDock):
                 self.radio_delete_dups.setChecked(True)
             
             self.chk_resolve_refs.setChecked(settings.value("resolve_references", False, type=bool))
+        
+        # Load reference format settings (Sprint B Feature #4 v2.9.30)
+        # Note: These are loaded but applied in _rewrite() when calling create_references()
+        # Default values: reference_format="$ref", include_line_numbers_ref=True, use_relative_paths=False
         
         # Load advanced filters settings (Sprint B Feature #1)
         if hasattr(self, 'chk_apply_all_types'):
