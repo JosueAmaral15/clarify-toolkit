@@ -871,7 +871,27 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
 - **[X]** Ferramenta de busca pode incluir busca por nome de arquivo *(Já implementado - json_search_dock.py lines 98-101, 175-222: suporta wildcards, regex e prefix 'filename:')*
-- **[]** Para busca de arquivos/diretórios, ao invés de escrever ou buscar com ferramenta pobre, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
+- **[X]** **Task #50 - Advanced File Search (Sprint A - v2.9.25)**: Melhorar FileListDock com busca avançada de arquivos/diretórios *(Completo - 2025-01-09)*:
+  - **Sprint A (MVP Básico - COMPLETO)**:
+    * ✅ Regex em filenames (QLineEdit + QCheckBox "Enable Regex")
+    * ✅ Filtros size (min/max em bytes/KB/MB/GB com QComboBox)
+    * ✅ Filtros mtime (before/after date com QDateEdit)
+    * ✅ Filtros ext (múltiplas extensões comma-separated)
+    * ✅ Depth limit (max profundidade de recursão com QSpinBox 0-10)
+    * ✅ Exclude directories (5 checkboxes common: node_modules, .git, __pycache__, dist, build + custom field)
+    * ✅ Panel expansível/collapsible para filtros avançados (QGroupBox checkable)
+    * ✅ Presets (save/load queries com QSettings + export/import JSON)
+  - **Arquivos modificados**:
+    * `src/gui/file_list_dock.py` (+350 linhas): Adicionado painel de filtros avançados, métodos de preset, lógica de filtros
+  - **Arquivos criados**:
+    * `tests/test_advanced_file_search.py` (23 testes): Cobertura completa de regex, size, mtime, ext, depth, exclude, presets
+  - **Sprint B (Avançado - PENDENTE)**:
+    * ❌ Busca em múltiplos diretórios raiz simultaneamente
+    * ❌ Tree view mode (toggle Table ↔ Tree ou split view side-by-side)
+    * ❌ AND/OR conditions entre filtros (integração completa com Advanced Conditions do app.py)
+    * ❌ Visual query builder (drag-and-drop conditions)
+    * ❌ Saved searches com hotkeys (Ctrl+1, Ctrl+2, etc.)
+    * ❌ Export filtered results to multiple formats (JSON, XML, CSV)
 
 ---
 
@@ -959,9 +979,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 18 | 10 | 8 | 55.6% |
+| COULD HAVE | 18 | 11 | 7 | 61.1% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **107** | **87** | **20** | **81.3%** |
+| **TOTAL** | **107** | **88** | **19** | **82.2%** |
 
 ### Notas
 

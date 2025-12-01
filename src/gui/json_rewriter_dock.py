@@ -68,7 +68,7 @@ def format_removal_statistics(stats: dict) -> str:
 
 
 def cli_dedupe(args: argparse.Namespace):
-    \"\"\"Execute the dedupe/rewrite operation based on args.
+    """Execute the dedupe/rewrite operation based on args.
     
     Returns:
         tuple: (output_text, substitution_map, removal_stats) where:
