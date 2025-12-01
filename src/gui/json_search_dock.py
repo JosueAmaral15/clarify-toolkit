@@ -7,7 +7,7 @@ Provides UI for searching keys and values in JSON and TypeScript files.
 import os
 from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox, QComboBox, QHBoxLayout
 from ..gui.base_dock import StandardToolDock, ProcessorWorkerBase
-from ..json_search import ProjectIndexer, parse_composite_query, resolve_query, match_with_options
+from ..json_search import ProjectIndexer, parse_composite_query, resolve_query, match_with_options, resolve_query_with_mode
 
 
 class JsonSearchWorker(ProcessorWorkerBase):
@@ -40,20 +40,20 @@ class JsonSearchWorker(ProcessorWorkerBase):
                 except Exception as e:
                     self.emit_progress(f"✗ Error indexing {os.path.basename(file_path)}: {str(e)}")
             
-            # Search
+            # Search with mode support (Task #48 - v2.9.23)
             self.emit_progress("\n🔍 Searching...")
-            query = self.search_key if self.search_key else self.search_value
             
-            if not query:
+            if not self.search_key and not self.search_value:
                 self.emit_error("No search query provided")
                 return
             
-            # Use resolve_query to find matches
-            results = resolve_query(
+            # Use resolve_query_with_mode to search keys, values, or both
+            results = resolve_query_with_mode(
                 indexer.flat_index,
-                query,
+                self.search_key,
+                self.search_value,
+                self.search_mode,
                 self.case_sensitive,
-                False,  # whole_word
                 self.use_regex
             )
             
@@ -318,9 +318,14 @@ class JsonSearchDock(StandardToolDock):
                 file_path = result.get('file', 'unknown')
                 key = result.get('key', '')
                 value = result.get('value', '')
+                match_type = result.get('match_type', 'key')
+                
+                # Visual indicator (Task #48 - v2.9.23)
+                icon = "🔑" if match_type == "key" else "💎"
+                
                 self.append_result(
                     self.text_results,
-                    f"{i}. {os.path.basename(file_path)}: {key} = {value}"
+                    f"{i}. {icon} {os.path.basename(file_path)}: {key} = {value}"
                 )
             
             if len(results) > 100:

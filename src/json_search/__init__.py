@@ -24,7 +24,13 @@ Date: 2025-11-24
 from .flattener import flatten_object
 from .ts_extractor import extract_top_level_objects_from_ts, guess_line_number
 from .indexer import ProjectIndexer, FlatIndex
-from .query_parser import parse_composite_query, resolve_query, match_with_options
+from .query_parser import (
+    parse_composite_query,
+    resolve_query,
+    match_with_options,
+    resolve_query_by_value,
+    resolve_query_with_mode
+)
 
 __all__ = [
     'flatten_object',
@@ -35,4 +41,6 @@ __all__ = [
     'parse_composite_query',
     'resolve_query',
     'match_with_options',
+    'resolve_query_by_value',
+    'resolve_query_with_mode',
 ]

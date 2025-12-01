@@ -411,6 +411,74 @@ Total: 28 items removed
 
 ---
 
+#### Task #48 - JSON Value Search (v2.9.23)
+**Status**: ✅ Completa - 01/12/2025  
+**Arquivos Modificados**: `src/json_search/query_parser.py` (+110 linhas), `src/json_search/__init__.py` (+2 exports), `src/gui/json_search_dock.py` (+15 linhas)  
+**Arquivo de Teste**: `tests/test_json_value_search.py` (320 linhas, 20 testes - 100% passing)
+
+**Objetivo**: Adicionar capacidade de buscar valores JSON (além de chaves) no JSON Search, com suporte a 3 modos: Key only, Value only, Key and Value.
+
+**Componentes Implementados**:
+
+**1. resolve_query_by_value() - Busca por Valores**:
+- Busca em valores armazenados no flat_index
+- Suporta case-sensitive e regex
+- Converte valores para string (incluindo números, booleanos, None)
+- Retorna dicts com `{"key", "value", "file", "line", "match_type": "value"}`
+- Limita resultados a 200 por performance
+
+**2. resolve_query_with_mode() - Busca Unificada**:
+- **Modo "key"**: Busca apenas em chaves (comportamento original)
+- **Modo "value"**: Busca apenas em valores (NOVO)
+- **Modo "both"**: Busca em chaves OU valores (NOVO, default)
+- Normaliza resultados: `resolve_query()` retorna "path", converte para "key"
+- Deduplica resultados (mesma key + file + line)
+- Adiciona campo `match_type` para indicar origem do match
+
+**3. JsonSearchWorker Modificado**:
+- Substituído `resolve_query()` por `resolve_query_with_mode()`
+- Passa `search_key`, `search_value` e `search_mode` separadamente
+- Permite buscas combinadas: key="title" + value="Welcome"
+
+**4. Indicadores Visuais nos Resultados**:
+- 🔑 (key icon): Match encontrado em chave
+- 💎 (gem icon): Match encontrado em valor
+- Formato: `1. 🔑 en.json: pages.home.title = Welcome`
+
+**Casos de Uso**:
+```python
+# Buscar valores "Welcome"
+resolve_query_with_mode(flat, "", "Welcome", "value", False, False)
+# Resultado: [{"key": "pages.home.title", "value": "Welcome", "match_type": "value"}]
+
+# Buscar chaves "title" OU valores "Home"
+resolve_query_with_mode(flat, "title", "Home", "both", False, False)
+# Resultado: chaves com "title" + valores com "Home"
+
+# Buscar valores numéricos
+resolve_query_with_mode(flat, "", "25", "value", False, False)
+# Resultado: [{"key": "user.age", "value": 25, "match_type": "value"}]
+```
+
+**Testes**: 20 testes (3 classes), 100% passing em 0.25s
+- **TestResolveQueryByValue** (8 testes): case-sensitive, regex, numeric, boolean, None, partial match
+- **TestResolveQueryWithMode** (7 testes): 3 modos, deduplicação, regex, empty queries
+- **TestIntegration** (5 testes): workflows completos, edge cases, performance limit
+
+**Bugs Corrigidos Durante Testes**:
+1. ✅ `resolve_query()` retorna tupla `(exact, suggestions)` - normalizado para lista
+2. ✅ Campo "path" vs "key" - padronizado para "key"
+3. ✅ None não convertia para string - agora converte explicitamente
+4. ✅ Limit de 200 não aplicado - adicionado em `resolve_query_by_value()`
+5. ✅ Substring match em keys (expected: "title" encontra "subtitle") - teste ajustado
+
+**Padrões Aplicados**:
+- **Strategy** (GoF): Diferentes estratégias de busca (key/value/both)
+- **Template Method** (GoF): `resolve_query_with_mode()` define algoritmo
+- **Facade** (GoF): Interface unificada para subsistemas de busca
+
+---
+
 #### Task #47 - Editores JSON com Recursos Avançados (v2.9.17)
 **Status**: ✅ Completa - 30/11/2025
 
@@ -656,7 +724,7 @@ Total: 28 items removed
 - **[]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
 - **[]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação
-- **[]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também
+- **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
 - **[X]** Ferramenta de busca pode incluir busca por nome de arquivo *(Já implementado - json_search_dock.py lines 98-101, 175-222: suporta wildcards, regex e prefix 'filename:')*
 - **[]** Para busca de arquivos/diretórios, ao invés de escrever ou buscar com ferramenta pobre, incluir possibilidade de buscar com condições avançadas tanto arquivos quanto diretórios (ex: com regex e estrutura de condições), incluindo simultaneamente. Muito útil para encontrar arquivos/diretórios com mais precisão
 
@@ -695,6 +763,7 @@ Total: 28 items removed
 - **[]** Permitir usuário fazer macros e algoritmos com features da aplicação para utilidades mais complexas, com código Python ou programação em blocos
 - **[]** Quando usuário clicar em resultado de busca ou insert, aplicação deve abrir arquivo em editor próprio
 - **[]** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript). Esses algoritmos 
+- **[]** Fazer com que Clarify não apenas reconheça arquivos JSON, como também arquivos TOON, que é um novo conceito de armazenamento e reestruturação de dados;
 
 #### Calculator & Set Operations
 
@@ -745,9 +814,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 18 | 8 | 10 | 44.4% |
+| COULD HAVE | 18 | 9 | 9 | 50.0% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **107** | **85** | **22** | **79.4%** |
+| **TOTAL** | **107** | **86** | **21** | **80.4%** |
 
 ### Notas
 
