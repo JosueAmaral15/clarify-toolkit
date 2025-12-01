@@ -2,13 +2,18 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.2  
+**Versão**: 1.3  
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
 
+**Changelog v1.3**:
+- ✅ Reorganizada ordem das etapas: Verificação de Integração GUI e CLI agora vêm ANTES da Documentação
+- ✅ Nova ordem: Testes → Integração GUI → CLI → Documentação → Organizar → Commit
+- ✅ Lógica: Verificar integração antes de documentar garante que a documentação reflete o estado real
+
 **Changelog v1.2**:
-- ✅ Adicionada Etapa 10: Verificar integração com programa principal
-- ✅ Adicionada Etapa 11: Verificar implementação CLI com passagem de parâmetros
+- ✅ Adicionada Etapa 8: Verificar integração com programa principal
+- ✅ Adicionada Etapa 9: Verificar implementação CLI com passagem de parâmetros
 - ✅ Total de etapas: 10 → 12
 
 ---
@@ -31,10 +36,10 @@
 5. 🎯 Fazer sprints das tarefas mais simples
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
 7. 🧪 Fazer testes (100% cobertura)
-8. 📝 Preencher documentação
-9. 🧹 Organizar pasta raiz
-🔟 🔗 **Verificar integração com programa principal** (NOVO)
-1️⃣1️⃣ ⌨️ **Verificar implementação CLI** (NOVO)
+8. 🔗 **Verificar integração com programa principal**
+9. ⌨️ **Verificar implementação CLI**
+🔟 📝 Preencher documentação
+1️⃣1️⃣ 🧹 Organizar pasta raiz
 1️⃣2️⃣ 🚀 Fazer commit e push
 
 ### 1️⃣ **Ler a Documentação**
@@ -470,180 +475,8 @@ class ReferenceUpdater:
 
 ---
 
-### 8️⃣ **Preencher Nova Documentação**
-- **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
-- **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
-- **Atualizar estatísticas**: Percentual de conclusão do projeto
-
-**📋 Marcação de Tarefas em Arquivo de Requisitos**:
-
-**Regra Geral**:
-- Se existe arquivo de tarefas/requisitos (ex: `TASKS.md`, `TODO.md`, `requirements.md`):
-  - ✅ **Marcar tasks como completas** após implementação: `[ ]` → `[X]`
-  - ✅ **Atualizar estatísticas** (percentuais, contadores)
-  - ✅ **Adicionar notas de conclusão** (data, versão, descrição breve)
-  
-- Se **NÃO existe** arquivo de tarefas/requisitos:
-  - ❓ **Perguntar ao usuário** qual o local/path do arquivo
-  - ❓ **Perguntar sobre próximas tarefas e requisitos** caso não haja documento formal
-  - ❓ **Sugerir criação** de arquivo de controle de tarefas
-
-**Exemplo de Marcação (TASKS.md)**:
-```markdown
-## 🟢 COULD HAVE (Prioridade Baixa)
-
-### ✅ Tasks Concluídas
-
-#### Task #46 - Editor de Arquivos Integrado (v2.9.16)
-**Status**: ✅ Completa - 30/11/2025
-
-**Objetivo**: Implementar editor de texto integrado com diferenciação de escopo por cores.
-
-**Implementação**:
-1. ✅ EditorDock com QTextEdit e syntax highlighting
-2. ✅ Diferenciação de escopo por cores (HTML tags, JSON keys, etc.)
-3. ✅ Abrir/salvar arquivos (.txt, .json, .html, .tsx, .py)
-4. ✅ Integração com menu File → Open Editor
-
-**Arquivos Criados**:
-- `src/gui/editor_dock.py` (500+ linhas)
-- `tests/test_editor_dock.py` (15 testes)
-
-### 🔨 Tasks Pendentes
-- **[]** Próxima task não implementada...
-```
-
-**Estrutura Mínima Recomendada**:
-```markdown
-# Projeto - Tasks
-
-## Categorias
-- MUST HAVE: [X/Y completas] (Z%)
-- SHOULD HAVE: [X/Y completas] (Z%)
-- COULD HAVE: [X/Y completas] (Z%)
-- WOULD HAVE: [X/Y completas] (Z%)
-
-## Estatísticas
-- **TOTAL**: [X/Y completas] (Z%)
-```
-
-**Estrutura da Documentação de Versão**:
-```markdown
-# Clarify v2.9.X - [Nome Descritivo]
-
-**Data**: DD/MM/AAAA
-**Sprint**: X tasks em Y horas
-**Metodologia**: Protocolo Simplicidade 1
-
-## 📋 Objetivos da Sprint
-- Task #X: [descrição]
-- Task #Y: [descrição]
-
-## 🎯 Tasks Implementadas
-### Task #X: [Nome]
-- **Problema**: [descrição do problema original]
-- **Solução**: [como foi resolvido]
-- **Arquivos Modificados**: [lista]
-- **Testes**: [quantidade e status]
-
-## ✅ Qualidade (Protocolo Simplicidade 1)
-- ✅ Arquitetura Modular
-- ✅ Type Hints (100%)
-- ✅ Docstrings completas
-- ✅ Tratamento de erros
-- ✅ Testes (X passing)
-- ✅ Commits semânticos
-- ✅ Documentação completa
-- ✅ Código limpo (PEP8)
-
-## 📊 Estatísticas
-- TOTAL: X% completo (Y/Z tasks)
-- Commits: N pushed
-```
-
----
-
-### 9️⃣ **Organizar Pasta Raiz do Projeto**
-- **CRÍTICO**: Antes do commit e push, **organizar a pasta raiz**
-- Remover arquivos temporários, backups desnecessários
-- Verificar se todos os arquivos estão nos lugares corretos
-- Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
-- Garantir que `.gitignore` está atualizado
-
-**Checklist de Organização**:
-1. **Remoção de Arquivos Temporários**:
-   ```bash
-   # Remover backups antigos
-   rm -f *.backup_* *.bak *~
-   
-   # Limpar cache Python
-   find . -type d -name "__pycache__" -exec rm -rf {} +
-   find . -type f -name "*.pyc" -delete
-   find . -type f -name "*.pyo" -delete
-   ```
-
-2. **Verificação de Estrutura de Diretórios**:
-   ```
-   ✅ src/ - Código-fonte organizado por módulos
-   ✅ tests/ - Testes unitários espelhando src/
-   ✅ docs/ - Documentação atualizada
-   ✅ archive/ - Versões antigas (se necessário)
-   ❌ Raiz - Não deixar arquivos soltos (test.py, temp.txt, etc.)
-   ```
-
-3. **Validação de .gitignore**:
-   ```gitignore
-   # Python
-   __pycache__/
-   *.py[cod]
-   *$py.class
-   *.so
-   
-   # Backups
-   *.backup*
-   *.bak
-   *~
-   
-   # IDE
-   .vscode/
-   .idea/
-   
-   # Temporários
-   tmp/
-   temp/
-   *.tmp
-   ```
-
-4. **Git Status Clean**:
-   ```bash
-   git status
-   # Verificar se apenas arquivos relevantes estão staged
-   # Não commitar: __pycache__, .pyc, backups, temporários
-   ```
-
-**Exemplo Real (v2.9.15)**:
-```bash
-# ANTES (pasta bagunçada):
-├── src/
-├── apply_v2913_patches.py  ❌ temporário
-├── test_temp.py           ❌ teste descartável
-├── backup_old/            ❌ backup antigo
-├── __pycache__/           ❌ cache
-└── file.py.backup_v2913   ❌ backup desnecessário
-
-# DEPOIS (organizado):
-├── src/          ✅
-├── tests/        ✅
-├── docs/         ✅
-└── README.md     ✅
-```
-
-**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo.
-
----
-
-### 🔟 **Verificar Integração com Programa Principal**
-- **CRÍTICO**: Antes do commit, **verificar se os componentes estão integrados ao programa principal**
+### 8️⃣ **Verificar Integração com Programa Principal**
+- **CRÍTICO**: Antes da documentação, **verificar se os componentes estão integrados ao programa principal**
 - Não basta implementar o módulo/dock, ele precisa estar **acessível e funcional** no app
 - Verificar menu, imports, inicialização e conexões
 
@@ -762,7 +595,7 @@ class ReferenceUpdater:
 
 ---
 
-### 1️⃣1️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
+### 9️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
 - **CRÍTICO**: Verificar se a nova funcionalidade está disponível também via **CLI (Command Line Interface)**
 - Não basta implementar GUI, funcionalidades importantes devem ter **interface CLI** para automação
 - Verificar subcomandos, argumentos, help text e integração
@@ -959,6 +792,178 @@ clarify text2json data.csv --format csv --pretty -o output.json
 - Uso em **servidores sem GUI** (headless environments)
 - **Power users** preferem CLI para velocidade
 - Torna a ferramenta mais **profissional e versátil**
+
+---
+
+### 🔟 **Preencher Nova Documentação**
+- **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
+- **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
+- **Atualizar estatísticas**: Percentual de conclusão do projeto
+
+**📋 Marcação de Tarefas em Arquivo de Requisitos**:
+
+**Regra Geral**:
+- Se existe arquivo de tarefas/requisitos (ex: `TASKS.md`, `TODO.md`, `requirements.md`):
+  - ✅ **Marcar tasks como completas** após implementação: `[ ]` → `[X]`
+  - ✅ **Atualizar estatísticas** (percentuais, contadores)
+  - ✅ **Adicionar notas de conclusão** (data, versão, descrição breve)
+  
+- Se **NÃO existe** arquivo de tarefas/requisitos:
+  - ❓ **Perguntar ao usuário** qual o local/path do arquivo
+  - ❓ **Perguntar sobre próximas tarefas e requisitos** caso não haja documento formal
+  - ❓ **Sugerir criação** de arquivo de controle de tarefas
+
+**Exemplo de Marcação (TASKS.md)**:
+```markdown
+## 🟢 COULD HAVE (Prioridade Baixa)
+
+### ✅ Tasks Concluídas
+
+#### Task #46 - Editor de Arquivos Integrado (v2.9.16)
+**Status**: ✅ Completa - 30/11/2025
+
+**Objetivo**: Implementar editor de texto integrado com diferenciação de escopo por cores.
+
+**Implementação**:
+1. ✅ EditorDock com QTextEdit e syntax highlighting
+2. ✅ Diferenciação de escopo por cores (HTML tags, JSON keys, etc.)
+3. ✅ Abrir/salvar arquivos (.txt, .json, .html, .tsx, .py)
+4. ✅ Integração com menu File → Open Editor
+
+**Arquivos Criados**:
+- `src/gui/editor_dock.py` (500+ linhas)
+- `tests/test_editor_dock.py` (15 testes)
+
+### 🔨 Tasks Pendentes
+- **[]** Próxima task não implementada...
+```
+
+**Estrutura Mínima Recomendada**:
+```markdown
+# Projeto - Tasks
+
+## Categorias
+- MUST HAVE: [X/Y completas] (Z%)
+- SHOULD HAVE: [X/Y completas] (Z%)
+- COULD HAVE: [X/Y completas] (Z%)
+- WOULD HAVE: [X/Y completas] (Z%)
+
+## Estatísticas
+- **TOTAL**: [X/Y completas] (Z%)
+```
+
+**Estrutura da Documentação de Versão**:
+```markdown
+# Clarify v2.9.X - [Nome Descritivo]
+
+**Data**: DD/MM/AAAA
+**Sprint**: X tasks em Y horas
+**Metodologia**: Protocolo Simplicidade 1
+
+## 📋 Objetivos da Sprint
+- Task #X: [descrição]
+- Task #Y: [descrição]
+
+## 🎯 Tasks Implementadas
+### Task #X: [Nome]
+- **Problema**: [descrição do problema original]
+- **Solução**: [como foi resolvido]
+- **Arquivos Modificados**: [lista]
+- **Testes**: [quantidade e status]
+
+## ✅ Qualidade (Protocolo Simplicidade 1)
+- ✅ Arquitetura Modular
+- ✅ Type Hints (100%)
+- ✅ Docstrings completas
+- ✅ Tratamento de erros
+- ✅ Testes (X passing)
+- ✅ Commits semânticos
+- ✅ Documentação completa
+- ✅ Código limpo (PEP8)
+
+## 📊 Estatísticas
+- TOTAL: X% completo (Y/Z tasks)
+- Commits: N pushed
+```
+
+---
+
+### 9️⃣ **Organizar Pasta Raiz do Projeto**
+- **CRÍTICO**: Antes do commit e push, **organizar a pasta raiz**
+- Remover arquivos temporários, backups desnecessários
+- Verificar se todos os arquivos estão nos lugares corretos
+- Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
+- Garantir que `.gitignore` está atualizado
+
+**Checklist de Organização**:
+1. **Remoção de Arquivos Temporários**:
+   ```bash
+   # Remover backups antigos
+   rm -f *.backup_* *.bak *~
+   
+   # Limpar cache Python
+   find . -type d -name "__pycache__" -exec rm -rf {} +
+   find . -type f -name "*.pyc" -delete
+   find . -type f -name "*.pyo" -delete
+   ```
+
+2. **Verificação de Estrutura de Diretórios**:
+   ```
+   ✅ src/ - Código-fonte organizado por módulos
+   ✅ tests/ - Testes unitários espelhando src/
+   ✅ docs/ - Documentação atualizada
+   ✅ archive/ - Versões antigas (se necessário)
+   ❌ Raiz - Não deixar arquivos soltos (test.py, temp.txt, etc.)
+   ```
+
+3. **Validação de .gitignore**:
+   ```gitignore
+   # Python
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   *.so
+   
+   # Backups
+   *.backup*
+   *.bak
+   *~
+   
+   # IDE
+   .vscode/
+   .idea/
+   
+   # Temporários
+   tmp/
+   temp/
+   *.tmp
+   ```
+
+4. **Git Status Clean**:
+   ```bash
+   git status
+   # Verificar se apenas arquivos relevantes estão staged
+   # Não commitar: __pycache__, .pyc, backups, temporários
+   ```
+
+**Exemplo Real (v2.9.15)**:
+```bash
+# ANTES (pasta bagunçada):
+├── src/
+├── apply_v2913_patches.py  ❌ temporário
+├── test_temp.py           ❌ teste descartável
+├── backup_old/            ❌ backup antigo
+├── __pycache__/           ❌ cache
+└── file.py.backup_v2913   ❌ backup desnecessário
+
+# DEPOIS (organizado):
+├── src/          ✅
+├── tests/        ✅
+├── docs/         ✅
+└── README.md     ✅
+```
+
+**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo.
 
 ---
 
@@ -1219,7 +1224,7 @@ O Protocolo Simplicidade 1 é um **ciclo iterativo**:
 
 ---
 
-**Versão**: 1.2  
+**Versão**: 1.3  
 **Última atualização**: 01 de Dezembro de 2025  
 **Mantido por**: Josué Amaral  
 **Status**: ATIVO - Protocolo oficial do projeto Clarify
