@@ -4144,11 +4144,11 @@ if _PYSIDE:
             from .core.command_manager import CommandManager
             self.command_manager = CommandManager(max_history=10)
 
-            # Plugin loader
+            # Plugin loader (discover only, activate on user request via menu)
             from .plugin_loader import PluginLoader
             self.plugin_loader = PluginLoader(self)
             self.plugin_loader.discover_plugins()
-            self.plugin_loader.activate_plugins()
+            # Note: plugins are activated only when user clicks on Plugins menu
 
             # REST API (opcional)
             try:
