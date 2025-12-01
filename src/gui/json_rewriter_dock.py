@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QSettings
 
 from .base_dock import BaseDock
+from ..utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+from ..core.filters import Condition
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -47,7 +49,8 @@ def format_removal_statistics(stats: dict) -> str:
         'array_duplicates_consecutive': ('Removed consecutive duplicate array elements', 'array elements'),
         'array_duplicates_all': ('Removed all duplicate array elements', 'array elements'),
         'no_siblings': ('Skipped orphan object chains', 'object chains'),
-        'duplicate_objects': ('Removed duplicate objects', 'objects')
+        'duplicate_objects': ('Removed duplicate objects', 'objects'),
+        'advanced_filters_filtered': ('🔍 Filtered by Advanced Conditions', 'files')
     }
     
     # Omit operations with 0 count (Q5-B)
@@ -69,8 +72,14 @@ def format_removal_statistics(stats: dict) -> str:
     return result
 
 
-def cli_dedupe(args: argparse.Namespace):
+def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Condition]] = None, 
+               apply_all_types: bool = False):
     """Execute the dedupe/rewrite operation based on args.
+    
+    Args:
+        args: Command-line arguments (or GUI-generated args)
+        advanced_conditions: Optional list of Condition objects for filtering files (Sprint B Feature #1)
+        apply_all_types: If True, apply filters to all files; if False, auto-detect .json (Sprint B Feature #1)
     
     Returns:
         tuple: (output_text, substitution_map, removal_stats) where:
@@ -89,8 +98,32 @@ def cli_dedupe(args: argparse.Namespace):
         'duplicate_child': 0,
         'array_duplicates_consecutive': 0,
         'array_duplicates_all': 0,
-        'no_siblings': 0
+        'no_siblings': 0,
+        'advanced_filters_filtered': 0  # Sprint B Feature #1
     }
+    
+    # Apply advanced filters BEFORE processing (Sprint B Feature #1)
+    if advanced_conditions:
+        # Auto-detect JSON files unless apply_all_types is True
+        input_file = args.input
+        should_filter = apply_all_types or input_file.endswith(('.json', '.JSON'))
+        
+        if should_filter:
+            # Apply filters
+            filtered_files, filtered_out = apply_conditions_to_files(
+                [input_file],
+                advanced_conditions,
+                logic_op="AND",
+                enabled=True
+            )
+            
+            stats['advanced_filters_filtered'] = filtered_out
+            
+            # If file was filtered out, skip processing (Q6: process all if zero files pass)
+            # But since we're only checking single file here, if it's filtered out, we skip it
+            if not filtered_files:
+                # Return empty result (file was filtered out)
+                return "", {}, stats
     
     # Read input
     with open(args.input, 'r', encoding='utf-8') as f:
@@ -173,7 +206,7 @@ def cli_dedupe(args: argparse.Namespace):
         if not args.no_line_break:
             output_text = rw.collapse_blank_lines(output_text)
     else:
-        output_text = rw.dump_ts_obj(obj, indent=args.indent)
+        output_text = rw.dump_ts_obj(obj, indent=args.indent, level=0)
     
     # Write output
     out_path = args.output or args.input
@@ -291,6 +324,15 @@ class JsonRewriterDock(BaseDock):
         self.chk_is_file.setToolTip("Input path is a single file (unchecked for directory)")
         self.chk_is_file.setChecked(True)
         
+        # Sprint B Feature #1: Advanced Filters
+        self.btn_advanced_filters = QPushButton("🔍 Advanced Filters...")
+        self.btn_advanced_filters.setToolTip("Configure advanced file filters (filename, size, content patterns, etc.)")
+        self.chk_apply_all_types = QCheckBox("Apply to all file types")
+        self.chk_apply_all_types.setToolTip("Apply filters to all files, not just JSON (default: auto-detect .json)")
+        self.chk_apply_all_types.setChecked(False)
+        self.advanced_conditions: list[Condition] = []  # Storage for configured conditions
+        self.advanced_filters_enabled = False  # Whether filters are active
+        
         # Indent spinner
         self.lbl_indent = QLabel("Indent (<=0 compact):")
         self.spin_indent = QSpinBox()
@@ -355,10 +397,14 @@ class JsonRewriterDock(BaseDock):
         g.addWidget(self.spin_dup_threshold, 7, 3)
         g.addWidget(self.combo_dup_mode, 7, 4)
         
-        # Row 8: Indent and run button
-        g.addWidget(self.lbl_indent, 8, 0)
-        g.addWidget(self.spin_indent, 8, 1)
-        g.addWidget(self.btn_run, 8, 4)
+        # Row 8: Advanced Filters (Sprint B Feature #1)
+        g.addWidget(self.btn_advanced_filters, 8, 0, 1, 2)
+        g.addWidget(self.chk_apply_all_types, 8, 2, 1, 2)
+        
+        # Row 9: Indent and run button
+        g.addWidget(self.lbl_indent, 9, 0)
+        g.addWidget(self.spin_indent, 9, 1)
+        g.addWidget(self.btn_run, 9, 4)
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -366,7 +412,7 @@ class JsonRewriterDock(BaseDock):
         self.btn_out.clicked.connect(self._open_out)
         self.btn_project_browse.clicked.connect(self._browse_project_dir)
         self.btn_run.clicked.connect(self._rewrite)
-        self._setup_enter_key_execution(self.ed_in, self.ed_out)
+        self.btn_advanced_filters.clicked.connect(self._open_advanced_filters_dialog)
     
     # UI Helper Methods
     
@@ -394,6 +440,105 @@ class JsonRewriterDock(BaseDock):
         )
         if d:
             self.ed_project_dir.setText(d)
+    
+    def _open_advanced_filters_dialog(self) -> None:
+        """Open dialog to configure advanced file filters (Sprint B Feature #1)."""
+        from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QDialogButtonBox, QGroupBox
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Advanced File Filters")
+        dialog.setMinimumWidth(700)
+        dialog.setMinimumHeight(400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Info label
+        info = QLabel("Configure filters to apply BEFORE processing files.\nFilters use AND logic (all conditions must match).")
+        layout.addWidget(info)
+        
+        # Create 3 condition rows (same UI as AI Processor)
+        cond_group = QGroupBox("Filter Conditions")
+        cond_layout = QGridLayout()
+        
+        # Headers
+        cond_layout.addWidget(QLabel("Field"), 0, 0)
+        cond_layout.addWidget(QLabel("Operator"), 0, 1)
+        cond_layout.addWidget(QLabel("Value"), 0, 2)
+        cond_layout.addWidget(QLabel("Scope"), 0, 3)
+        cond_layout.addWidget(QLabel("Case"), 0, 4)
+        cond_layout.addWidget(QLabel("Regex"), 0, 5)
+        
+        # Create condition rows
+        cond_rows = []
+        for row in range(3):
+            combo_field = QComboBox()
+            combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+            
+            combo_op = QComboBox()
+            combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
+                              "starts with", "ends with", ">", "<", ">=", "<="])
+            
+            ed_value = QLineEdit()
+            ed_value.setPlaceholderText("Filter value")
+            
+            combo_scope = QComboBox()
+            combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
+                                 "custom", "tag", "specific-tag", "hierarchical"])
+            
+            chk_case = QCheckBox()
+            chk_case.setChecked(True)
+            
+            chk_regex = QCheckBox()
+            
+            grid_row = row + 1
+            cond_layout.addWidget(combo_field, grid_row, 0)
+            cond_layout.addWidget(combo_op, grid_row, 1)
+            cond_layout.addWidget(ed_value, grid_row, 2)
+            cond_layout.addWidget(combo_scope, grid_row, 3)
+            cond_layout.addWidget(chk_case, grid_row, 4)
+            cond_layout.addWidget(chk_regex, grid_row, 5)
+            
+            cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
+        
+        cond_group.setLayout(cond_layout)
+        layout.addWidget(cond_group)
+        
+        # Load existing conditions into UI
+        for i, cond in enumerate(self.advanced_conditions[:3]):  # Max 3 rows
+            if i < len(cond_rows):
+                combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex = cond_rows[i]
+                combo_field.setCurrentText(cond.field)
+                combo_op.setCurrentText(cond.operator)
+                ed_value.setText(cond.value)
+                combo_scope.setCurrentText(cond.scope_type)
+                chk_case.setChecked(cond.case_sensitive)
+                chk_regex.setChecked(cond.use_regex)
+        
+        # Buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        
+        # Show dialog and save conditions if accepted
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.advanced_conditions = get_conditions_from_ui(cond_rows)
+            self.advanced_filters_enabled = len(self.advanced_conditions) > 0
+            
+            # Feedback
+            if self.advanced_filters_enabled:
+                QMessageBox.information(
+                    self, 
+                    "Filters Configured", 
+                    f"✅ {len(self.advanced_conditions)} filter(s) configured.\n\n"
+                    "Filters will be applied BEFORE processing files."
+                )
+            else:
+                QMessageBox.information(
+                    self, 
+                    "Filters Cleared", 
+                    "❌ No filters configured. All files will be processed."
+                )
     
     # Core Processing
     
@@ -483,9 +628,13 @@ class JsonRewriterDock(BaseDock):
             duplicate_mode='reference' if self.combo_dup_mode.currentIndex() == 1 else 'remove',
         )
         
-        # Execute rewrite
+        # Execute rewrite (Sprint B Feature #1: pass advanced conditions)
         try:
-            output_text, substitution_map, removal_stats = cli_dedupe(ns)
+            output_text, substitution_map, removal_stats = cli_dedupe(
+                ns,
+                advanced_conditions=self.advanced_conditions if self.advanced_filters_enabled else None,
+                apply_all_types=self.chk_apply_all_types.isChecked()
+            )
             
             # Task #23: Update orphaned references in project (if enabled)
             if self.chk_update_refs.isChecked() and substitution_map:
@@ -535,7 +684,7 @@ class JsonRewriterDock(BaseDock):
             QMessageBox.critical(self, "Error", f"{str(e)}\n\n{traceback.format_exc()}")
     
     def _load_preferences(self) -> None:
-        """Load preferences from QSettings (Task #52)."""
+        """Load preferences from QSettings (Task #52 + Sprint B Feature #1)."""
         settings = QSettings("Clarify", "JsonRewriter")
         
         # Load duplicate objects settings
@@ -544,9 +693,35 @@ class JsonRewriterDock(BaseDock):
             self.chk_include_dup_arrays.setChecked(settings.value("include_duplicate_arrays", False, type=bool))
             self.spin_dup_threshold.setValue(settings.value("duplicate_threshold", 100, type=int))
             self.combo_dup_mode.setCurrentIndex(settings.value("duplicate_mode_index", 0, type=int))
+        
+        # Load advanced filters settings (Sprint B Feature #1)
+        if hasattr(self, 'chk_apply_all_types'):
+            self.chk_apply_all_types.setChecked(settings.value("advanced_filters_apply_all_types", False, type=bool))
+            self.advanced_filters_enabled = settings.value("advanced_filters_enabled", False, type=bool)
+            
+            # Load serialized conditions (JSON format)
+            import json
+            conditions_json = settings.value("advanced_filters_conditions", "[]", type=str)
+            try:
+                conditions_data = json.loads(conditions_json)
+                self.advanced_conditions = [
+                    Condition(
+                        field=c['field'],
+                        operator=c['operator'],
+                        value=c['value'],
+                        scope_type=c.get('scope_type', 'none'),
+                        scope_value=c.get('scope_value', ''),
+                        case_sensitive=c.get('case_sensitive', True),
+                        whole_word=c.get('whole_word', False),
+                        use_regex=c.get('use_regex', False)
+                    )
+                    for c in conditions_data
+                ]
+            except (json.JSONDecodeError, KeyError):
+                self.advanced_conditions = []
     
     def _save_preferences(self) -> None:
-        """Save preferences to QSettings (Task #52)."""
+        """Save preferences to QSettings (Task #52 + Sprint B Feature #1)."""
         settings = QSettings("Clarify", "JsonRewriter")
         
         # Save duplicate objects settings
@@ -554,6 +729,27 @@ class JsonRewriterDock(BaseDock):
         settings.setValue("include_duplicate_arrays", self.chk_include_dup_arrays.isChecked())
         settings.setValue("duplicate_threshold", self.spin_dup_threshold.value())
         settings.setValue("duplicate_mode_index", self.combo_dup_mode.currentIndex())
+        
+        # Save advanced filters settings (Sprint B Feature #1)
+        settings.setValue("advanced_filters_apply_all_types", self.chk_apply_all_types.isChecked())
+        settings.setValue("advanced_filters_enabled", self.advanced_filters_enabled)
+        
+        # Serialize conditions to JSON
+        import json
+        conditions_data = [
+            {
+                'field': c.field,
+                'operator': c.operator,
+                'value': c.value,
+                'scope_type': c.scope_type,
+                'scope_value': c.scope_value,
+                'case_sensitive': c.case_sensitive,
+                'whole_word': c.whole_word,
+                'use_regex': c.use_regex
+            }
+            for c in self.advanced_conditions
+        ]
+        settings.setValue("advanced_filters_conditions", json.dumps(conditions_data))
     
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""

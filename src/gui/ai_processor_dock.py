@@ -31,6 +31,7 @@ from ..ai_processor import (
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models
 )
 from ..core.filters import Condition, filter_files_by_conditions
+from ..utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
 
 
 class PathEntry(QWidget):
@@ -883,62 +884,21 @@ class AIProcessorDock(StandardToolDock):
     def _get_conditions(self) -> list[Condition]:
         """
         Build list of Condition objects from UI.
-        Skips empty rows (no field selected).
+        (Delegated to shared module for reusability)
         """
-        conditions = []
-        
-        for combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex in self.cond_rows:
-            field = combo_field.currentText().strip()
-            operator = combo_op.currentText().strip()
-            value = ed_value.text().strip()
-            scope_type = combo_scope.currentText().strip()
-            case_sensitive = chk_case.isChecked()
-            use_regex = chk_regex.isChecked()
-            
-            # Skip empty rows
-            if not field or not operator or not value:
-                continue
-            
-            # Create Condition object
-            cond = Condition(
-                field=field,
-                operator=operator,
-                value=value,
-                scope_type=scope_type,
-                scope_value="",  # Not used in AI Processor yet
-                case_sensitive=case_sensitive,
-                whole_word=False,  # Not exposed in UI yet
-                use_regex=use_regex
-            )
-            conditions.append(cond)
-        
-        return conditions
+        return get_conditions_from_ui(self.cond_rows)
     
     def _apply_advanced_conditions(self, files: list[str]) -> tuple[list[str], int]:
         """
         Apply advanced conditions to file list.
+        (Delegated to shared module for reusability)
         Returns: (filtered_files, num_filtered_out)
         """
-        # Check if advanced conditions are enabled
-        if not self.adv_cond_group.isChecked():
-            return files, 0
-        
-        # Get conditions from UI
         conditions = self._get_conditions()
-        
-        # If no valid conditions, return all files
-        if not conditions:
-            return files, 0
-        
-        # Get logic operator
         logic_op = self.combo_cond_logic.currentText()
+        enabled = self.adv_cond_group.isChecked()
         
-        # Apply filters
-        original_count = len(files)
-        filtered_files = filter_files_by_conditions(files, conditions, logic_op)
-        filtered_out = original_count - len(filtered_files)
-        
-        return filtered_files, filtered_out
+        return apply_conditions_to_files(files, conditions, logic_op, enabled)
     
     def _save_advanced_conditions_preferences(self):
         """Save advanced conditions state to QSettings."""

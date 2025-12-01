@@ -947,10 +947,25 @@ result = convert_text_to_json(text, "auto")
     * `src/gui/json_rewriter_dock.py` (+85 linhas): UI widgets, integration, persistence
     * `tests/test_remove_duplicate_objects.py` (+330 linhas, novo): 19 tests em 10 classes
     * `docs/v2.9.27-SPECIFICATION.md` (novo): Especificação técnica completa
-  - **Sprint B (Advanced Features - PENDENTE)**:
+  - **Sprint B Feature #1 (Advanced Conditions Integration - COMPLETO - 01/12/2025 - v2.9.28)**:
+    * ✅ Modularidade total: `src/utils/advanced_conditions.py` compartilhado entre AI Processor e JSON Rewriter
+    * ✅ Botão "🔍 Advanced Filters..." em JSON Rewriter (Row 8)
+    * ✅ Dialog com 3 condition rows (Field, Operator, Value, Scope, Case, Regex)
+    * ✅ Filtros aplicados ANTES de `remove_duplicate_objects()`
+    * ✅ Auto-detecção de arquivos `.json` (configurável com checkbox "Apply to all file types")
+    * ✅ QSettings persistence (3 valores: enabled, apply_all_types, conditions JSON)
+    * ✅ Feedback detalhado: MessageBox mostra "X files filtered, Y processed"
+    * ✅ AI Processor refatorado (delegado para módulo compartilhado)
+    * ✅ 11 unit tests (100% passing em 152.01s)
+  - **Arquivos Sprint B Feature #1**:
+    * `src/utils/advanced_conditions.py` (+112 linhas, NOVO): get_conditions_from_ui(), apply_conditions_to_files()
+    * `src/gui/ai_processor_dock.py` (~20 linhas): refatorado para usar módulo compartilhado
+    * `src/gui/json_rewriter_dock.py` (+150 linhas): botão, dialog, filtro em cli_dedupe(), QSettings
+    * `tests/test_advanced_conditions_integration.py` (+329 linhas, NOVO): 11 tests em 4 classes
+    * `docs/v2.9.28-SPECIFICATION.md` (NOVO): Especificação técnica completa Sprint B Feature #1
+  - **Sprint B Features Restantes (PENDENTE)**:
     * ❌ Performance options dialog (Worker thread / Sync / Batching com progress bar)
     * ❌ Visual threshold slider com preview em tempo real
-    * ❌ Integration com Advanced Conditions (filtrar arquivos antes de processar)
     * ❌ Detailed statistics dialog (table com Original Key | Kept Key | Similarity % | Line Numbers, export CSV)
     * ❌ Reference resolver (expand $ref: paths para valores reais)
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
@@ -1074,6 +1089,8 @@ def walk(v):
 | COULD HAVE | 18 | 13 | 5 | 72.2% |
 | WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
 | **TOTAL** | **107** | **90** | **17** | **84.1%** |
+
+**Última Atualização**: 01/12/2025 - Sprint B Feature #1 (v2.9.28: Advanced Conditions Integration)
 
 ### Notas
 
