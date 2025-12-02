@@ -12,21 +12,22 @@ Date: 2025/11/28
 Version: 2.9.4
 """
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QPalette, QColor
 from typing import Literal
+
+from PySide6.QtGui import QColor, QPalette
+from PySide6.QtWidgets import QApplication
 
 ThemeMode = Literal["system", "light", "dark"]
 
 
 class ThemeManager:
     """Manages application theming with light, dark, and system modes."""
-    
+
     @staticmethod
     def apply_theme(app: QApplication, mode: ThemeMode):
         """
         Apply the specified theme to the application.
-        
+
         Args:
             app: QApplication instance
             mode: "system", "light", or "dark"
@@ -37,22 +38,22 @@ class ThemeManager:
             ThemeManager._apply_dark_theme(app)
         else:  # system
             ThemeManager._apply_system_theme(app)
-    
+
     @staticmethod
     def _apply_system_theme(app: QApplication):
         """Apply system default theme (Fusion style with system palette)."""
         app.setStyle("Fusion")
         app.setPalette(app.style().standardPalette())
         app.setStyleSheet("")  # Clear custom styles
-    
+
     @staticmethod
     def _apply_light_theme(app: QApplication):
         """Apply light theme with clean, professional colors."""
         app.setStyle("Fusion")
-        
+
         # Create light palette
         palette = QPalette()
-        
+
         # Base colors
         palette.setColor(QPalette.Window, QColor(250, 250, 250))
         palette.setColor(QPalette.WindowText, QColor(30, 30, 30))
@@ -64,23 +65,23 @@ class ThemeManager:
         palette.setColor(QPalette.Button, QColor(240, 240, 240))
         palette.setColor(QPalette.ButtonText, QColor(30, 30, 30))
         palette.setColor(QPalette.BrightText, QColor(255, 255, 255))
-        
+
         # Highlight colors
         palette.setColor(QPalette.Highlight, QColor(0, 120, 215))
         palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
-        
+
         # Disabled colors
         palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(150, 150, 150))
         palette.setColor(QPalette.Disabled, QPalette.Text, QColor(150, 150, 150))
         palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(150, 150, 150))
         palette.setColor(QPalette.Disabled, QPalette.Highlight, QColor(200, 200, 200))
-        
+
         # Link colors
         palette.setColor(QPalette.Link, QColor(0, 100, 200))
         palette.setColor(QPalette.LinkVisited, QColor(150, 50, 150))
-        
+
         app.setPalette(palette)
-        
+
         # Apply stylesheet for additional styling
         stylesheet = """
             /* GroupBox styling */
@@ -252,15 +253,15 @@ class ThemeManager:
             }
         """
         app.setStyleSheet(stylesheet)
-    
+
     @staticmethod
     def _apply_dark_theme(app: QApplication):
         """Apply dark theme with modern, eye-friendly colors."""
         app.setStyle("Fusion")
-        
+
         # Create dark palette
         palette = QPalette()
-        
+
         # Base colors
         palette.setColor(QPalette.Window, QColor(45, 45, 48))
         palette.setColor(QPalette.WindowText, QColor(240, 240, 240))
@@ -272,23 +273,23 @@ class ThemeManager:
         palette.setColor(QPalette.Button, QColor(60, 60, 60))
         palette.setColor(QPalette.ButtonText, QColor(240, 240, 240))
         palette.setColor(QPalette.BrightText, QColor(255, 255, 255))
-        
+
         # Highlight colors
         palette.setColor(QPalette.Highlight, QColor(0, 122, 204))
         palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
-        
+
         # Disabled colors
         palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor(100, 100, 100))
         palette.setColor(QPalette.Disabled, QPalette.Text, QColor(100, 100, 100))
         palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(100, 100, 100))
         palette.setColor(QPalette.Disabled, QPalette.Highlight, QColor(70, 70, 70))
-        
+
         # Link colors
         palette.setColor(QPalette.Link, QColor(100, 180, 255))
         palette.setColor(QPalette.LinkVisited, QColor(200, 120, 200))
-        
+
         app.setPalette(palette)
-        
+
         # Apply stylesheet for additional styling
         stylesheet = """
             /* GroupBox styling */
