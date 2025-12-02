@@ -1,5 +1,106 @@
 # Changelog - Clarify Project
 
+## [2.9.37] - 2025-12-03
+
+### ♿ Accessibility Labels MVP (3 Priority Docks)
+
+#### New Feature: Screen Reader Support for Core Workflows
+
+##### Docks Enhanced
+- ✅ **JSON Translate Dock**: 22 accessible labels
+  - Input fields: Root path, dictionary file, variable name, delimiters, exclusion patterns
+  - Buttons: Browse root, browse dictionary, run translation, swap dictionaries, undo
+  - Checkboxes: Is file, backup, don't override, reverse translation, emit export, preserve uppercase
+  - Labels: Path, dictionary, variable, start/end delimiters, exclusions, statistics
+  
+- ✅ **JSON Rewriter Dock**: 42 accessible labels  
+  - File I/O: Input file, output file, browse buttons
+  - Core options: From TS/JS, emit export, join keys, eliminate duplicates, no blank lines
+  - Advanced filters: Exclude numeric, skip empty, avoid duplicate child, normalize escaping, convert arrays, skip no siblings
+  - Duplicate detection: Remove duplicates checkbox, include arrays, similarity threshold spinbox, detection mode combobox
+  - Reference management: Update refs checkbox, project directory input/browse, backup checkbox
+  - Array duplicates: Remove consecutive, remove all
+  - Case enforcement: Enforce case checkbox, case style combobox, validate checkbox
+  - Advanced: Advanced filters button, apply all types checkbox, is file checkbox
+  - Reference mode: Radio buttons (delete/use refs), resolve refs checkbox, configure format button
+  - Formatting: Indent spinbox, run button
+
+- ✅ **JSON Search Dock**: 16 accessible labels
+  - Search inputs: Search key, search value, filename filter
+  - Controls: Search mode combobox, search path input, browse button
+  - Options: Is file, case sensitive, use regex checkboxes, max results spinbox
+  - Action buttons: Run search, interrupt, save results, clear
+  - Results: TextArea with descriptive label
+
+##### Naming Convention
+**Format**: `"Dock Name - Widget Type - Purpose"`  
+**Examples**:
+- `"JSON Translate - Button - Run Translation"`
+- `"JSON Rewriter - Checkbox - Eliminate Duplicates"`
+- `"JSON Search - Input - Search Key"`
+
+**Widget Types**: Button, Input, Checkbox, ComboBox, SpinBox, RadioButton, Label, TextArea
+
+##### Implementation Strategy
+- **Incremental MVP**: Focused on 3 high-traffic docks (80 widgets) vs. all 21 GUI files (304 widgets)
+- **Method**: Added `_apply_accessibility()` method to each dock, called from `__init__()`
+- **API Used**: `AccessibilityManager.set_accessible_widget(widget, name, description)`
+- **Dependencies**: Builds on v2.9.35 AccessibilityManager infrastructure
+
+##### Quality & Testing
+- ✅ **13 Unit Tests**: 100% passing in 1.75s
+- ✅ **Code Formatting**: black + isort applied to all modified files
+- ✅ **Naming Consistency**: All labels follow strict 3-part convention (Dock - Type - Purpose)
+- ✅ **No Duplicates**: Test verifies unique accessible names across all 3 docks
+- ✅ **Description Quality**: Critical widgets have meaningful descriptions (not generic)
+- ✅ **Widget Count Validation**: 22 + 42 + 16 = 80 total accessible widgets
+
+##### Test Coverage
+1. **Individual Dock Tests**:
+   - All widgets have accessible names
+   - All widgets have descriptions
+   - No empty names
+   - Names are descriptive (not "Button 1", "Input 2")
+   
+2. **Cross-Dock Consistency Tests**:
+   - Naming convention consistency (3-part format)
+   - No duplicate names across docks
+   - Total widget count meets MVP target (≥74)
+
+3. **Widget Type Tests**:
+   - SpinBox names contain "SpinBox"
+   - ComboBox names contain "ComboBox"
+   - RadioButton names contain "RadioButton"
+   - Buttons created by base class are accessible
+
+##### Rationale for Incremental Approach
+- **User Impact**: Prioritizes 3 most-used docks for immediate accessibility improvement
+- **Sustainable Pace**: 80 widgets in single session vs. 304 widgets (reduces fatigue, maintains quality)
+- **Faster Feedback**: MVP allows real user testing with screen readers (NVDA/VoiceOver) sooner
+- **Reduced Risk**: Smaller scope easier to test, debug, and rollback if needed
+- **Future Sprints**: Remaining 18 GUI files (224 widgets) scheduled for v2.9.38-v2.9.40
+
+##### Future Work
+- **v2.9.38**: Apply labels to 6 more docks (~75 widgets): Editor, AI Processor, Case Converter, Set Operations, File List, Tutorials
+- **v2.9.39**: Apply labels to 6 specialized docks (~70 widgets): Text Extractor, Text to JSON, Placeholder Replacer, JSX Extractor
+- **v2.9.40**: Complete remaining 6 docks + dialogs (~79 widgets): Statistics, Shortcuts, Case Validator, Preferences, About
+
+##### Community Testing Needed
+- **Screen Reader Validation**: Test with NVDA (Windows), VoiceOver (macOS), Orca (Linux)
+- **Keyboard Navigation**: Verify Tab order is logical and focus indicators work
+- **Label Quality**: Confirm descriptions are clear and helpful for blind users
+- **Feedback**: Report unclear labels or missing descriptions to GitHub Issues
+
+##### Technical Details
+- **Files Modified**:
+  - `src/gui/json_translate_dock.py`: +130 LOC (accessibility method)
+  - `src/gui/json_rewriter_dock.py`: +240 LOC (accessibility method)
+  - `src/gui/json_search_dock.py`: +95 LOC (accessibility method)
+- **Test Suite**: `tests/test_accessibility_labels.py` (13 tests, 400+ LOC)
+- **Total LOC Added**: ~865 lines across 4 files
+
+---
+
 ## [2.9.36] - 2025-12-02
 
 ### 🌍 Internationalization (i18n) Expansion
