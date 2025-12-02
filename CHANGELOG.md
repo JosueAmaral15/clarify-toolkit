@@ -1,5 +1,63 @@
 # Changelog - Clarify Project
 
+## [2.9.36] - 2025-12-02
+
+### 🌍 Internationalization (i18n) Expansion
+
+#### New Feature: 5 Additional Language Translations
+
+##### Languages Added
+- ✅ **Spanish (ES)**: 240 translation keys
+- ✅ **French (FR)**: 240 translation keys  
+- ✅ **German (DE)**: 240 translation keys
+- ✅ **Chinese Simplified (ZH)**: 240 translation keys with CJK characters
+- ✅ **Japanese (JA)**: 240 translation keys with CJK characters
+
+##### Implementation
+- **Translation Files**: Created `src/i18n/{es,fr,de,zh,ja}.json`
+- **Total Languages**: 7 (EN, PT-BR, ES, FR, DE, ZH, JA)
+- **Total Translations**: 1,680 translation keys (240 keys × 7 languages)
+- **Character Encodings**: UTF-8 with proper CJK character support
+- **Metadata**: Each file includes `_comment` and `_translators` fields for community contribution tracking
+
+##### Translation Coverage
+- **Menu System**: File, Edit, Tools, View, Themes, Settings, Plugins, Help, About
+- **Search Interface**: Path, query, buttons, options, advanced conditions
+- **Tooltips**: Comprehensive help text for all UI elements
+- **Context Menus**: Copy, open file, select all operations
+- **Status Messages**: Completed, failed, paused, cancelled, running
+- **Shortcuts**: 74+ keyboard shortcut descriptions and categories
+- **Dialogs**: Preferences, transparency, shortcuts, OK/Cancel/Apply
+- **Error Messages**: File not found, invalid path, permission denied, invalid regex
+
+##### Quality & Testing
+- ✅ **14 Unit Tests**: 100% passing in 0.19s
+- ✅ **JSON Validation**: All files valid JSON with proper UTF-8 encoding
+- ✅ **Key Consistency**: All new languages have identical key structure (240 keys each)
+- ✅ **CJK Encoding**: Chinese and Japanese files verified with proper character rendering
+- ✅ **No Placeholders**: No TODO/FIXME/translation-needed markers
+- ✅ **Metadata Complete**: All files tagged with "Automated baseline translation - needs review"
+
+##### Community Contribution Path
+- **Baseline Strategy**: Functional translations for immediate use
+- **Improvement Path**: Documented in `_comment` field: "Community contributions welcome via GitHub"
+- **Native Speaker Review**: Translations marked as needing native speaker refinement
+- **Future Enhancement**: CONTRIBUTING.md will guide community translation improvements
+
+##### Technical Details
+- **Script Used**: `fix_translations.py` (66 missing keys added to all 5 languages)
+- **Test Suite**: `tests/test_i18n_expansion.py` (14 comprehensive tests)
+- **File Size**: ~7KB each (193 lines average)
+- **Dependencies**: None (pure JSON, no external libraries)
+
+##### MVP Rationale
+- **Availability > Perfection**: 7 functional languages immediately available vs 2 perfect languages
+- **User Impact**: International users can use Clarify in their language today
+- **Community Engagement**: Clear path for native speakers to improve translations
+- **Technical Validation**: All infrastructure tested with multiple character sets (Latin, CJK)
+
+---
+
 ## [2.9.35] - 2025-12-02
 
 ### ♿ Accessibility Features - MVP Release
