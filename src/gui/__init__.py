@@ -28,6 +28,7 @@ from .jsx_extractor_dock import JSXExtractorDock
 from .json_editor_tab import JsonEditorTab
 from .json_validator import JsonValidator
 from .set_operations_dock import SetOperationsDock
+from .shortcuts_dialog import ShortcutsDialog
 
 __all__ = [
     # Base classes
@@ -41,5 +42,7 @@ __all__ = [
     'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
     'EditorDock', 'TextToJsonDock', 'JSXExtractorDock', 'SetOperationsDock',
     # Editor components
-    'JsonEditorTab', 'JsonValidator'
+    'JsonEditorTab', 'JsonValidator',
+    # Dialogs
+    'ShortcutsDialog'
 ]

@@ -43,16 +43,6 @@ import json
 import argparse
 from typing import List, Dict, Any, Optional, Tuple, Iterable, Union
 
-# ----------------------------- Constants -------------------------------------
-
-# UI Constants
-MAX_SCROLL_HEIGHT = 150       # Maximum height (px) for paths scroll area
-SPLITTER_SIZES = [400, 600]   # Default splitter sizes (40% controls, 60% results)
-
-# Parser Constants
-ATTR_SCAN_WINDOW_SIZE = 500   # Characters to scan for attributes after opening tag
-MAX_PREVIEW_MATCHES = 50      # Maximum scope matches to show in preview dialog
-
 # ----------------------------- Utilities -------------------------------------
 
 JSONLike = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -79,12 +69,14 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
     (when drop_standard=True). If none exists, just [file_root].
     If drop_standard=False, return [file_root] + full stack.
     """
+    #print(f"drop_standard: {drop_standard}, stack: {stack}")
     if not drop_standard:
         
         return [file_root] + stack
 
     # find deepest custom tag from right to left
     for i in range(len(stack) - 1, -1, -1):
+        #print(f"stack[{i}]: {stack[i]}, not is_standard_tag({stack[i]}): {not is_standard_tag(stack[i])}")
         if not is_standard_tag(stack[i]):
             return [file_root] + stack[:i + 1]
     return [file_root]
@@ -168,6 +160,7 @@ def insert_nested(d: Dict[str, Any], keys: List[str], leaf_value: Any) -> None:
     Insert a value into nested dict creating intermediate dicts as needed.
     If an existing leaf is a dict and we set a value, we keep merging.
     """
+    #print(f"d: {d}, keys: {keys}, leaf_value: {leaf_value}")
     curr = d
     for k in keys[:-1]:
         if k not in curr or not isinstance(curr[k], dict):
@@ -180,6 +173,7 @@ def insert_nested(d: Dict[str, Any], keys: List[str], leaf_value: Any) -> None:
         curr[last].update(leaf_value)
     else:
         curr[last] = leaf_value
+    #print(f"curr: {curr}")
 
 def read_text(path: str) -> str:
     with open(path, "r", encoding="utf-8", errors="replace") as f:
@@ -630,6 +624,7 @@ class JSXParser:
 
     
     def parse(self, text: str, stack: List[str] = []) -> Iterable[Tuple[List[str], str, Optional[str], Optional[str]]]:
+        #print(f"DEBUG 697 parse | starting parse..., stack: {stack}")
         i = 0
         n = len(text)
         while i < n:
@@ -641,6 +636,7 @@ class JSXParser:
                         stack = stack[:j]
                         break
                 i = mclose.end()
+                #print(f"DEBUG 715 JSXParser.parse | tag: {tag}, stack: {stack}, i: {i}")
                 continue
 
             mopen = self.match_opening_tag(text, i)
@@ -651,6 +647,7 @@ class JSXParser:
                 have_close_tag = bool(re.findall(rf"</\s*({tag})\s*>", text))
                 stack.append(tag)
 
+                #print(f"DEBUG 715 JSXParser.parse | tag: {tag}, attrs_src: {attrs_src}, is_self: {is_self}, have_close_tag: {have_close_tag}, stack: {stack}")
                 
                 # =========================
                 # TAG-CONTENT MODE (UNCHECKED)
@@ -667,15 +664,19 @@ class JSXParser:
                             inner = text[mopen["end"]:span[0]] if span else ""
                             items = self._extract_non_tag_items(inner)
 
+                        #print(f"DEBUG 733 span: {span}, stack: {stack}, tag: {tag}, items: {items},")# inner: {inner}")
                         if inner and not self.no_standard:
+                            #print(f"DEBUG 743 parse | Starting a new recursive..., stack: {stack}, tag: {tag}")
                             for stack, tag, tag, item in self.parse(inner, stack):
                                 yield(stack, tag, tag, item)
+                        #print(f"DEBUG 739 parse | new recursive completed! stack: {stack}, tag: {tag}")
                         # Emit one row per item (text line or non-JSX expression)
                         # Emit a single row per tag with a single combined value
                         # Emit one row per item (text line or non-JSX expression)
                         for it in items:
                             new_item = it.strip()
                             if new_item and new_item not in self.items:
+                                #print(f"DEBUG 740 parse | it.strip()..., self.no_standard: {self.no_standard}, inner: {inner}")
                                 # key_for_path = tag (we'll keep tag as the key unless "drop standard" hides it)
                                 self.items.append(new_item)
                                 yield (list(stack), tag, tag, new_item)
@@ -733,6 +734,7 @@ class JSXParser:
                                 break
                             j = j2
 
+                #print(f"DEBUG 732 parse | stack: {stack}, tag: {tag}, key_matched: {key_matched}, value_text: {value_text}")
                 # emit one row for this opening/self tag (attribute mode)
                 yield (list(stack), tag, key_matched, value_text)
 
@@ -790,7 +792,7 @@ class GenericScopeParser:
                 node_name = mstart.groupdict().get("name", "scope")
                 stack.append(node_name)
                 # try to scan attributes right after start token (optional)
-                tail = text[mstart.end(): mstart.end()+ATTR_SCAN_WINDOW_SIZE]
+                tail = text[mstart.end(): mstart.end()+500]
                 found_value: Optional[str] = None
                 for rx in (self.ATTR_DQ_RE, self.ATTR_SQ_RE, self.ATTR_BRACE_STRING_RE, self.ATTR_BRACE_DQSTRING_RE):
                     am = rx.search(tail)
@@ -1141,6 +1143,7 @@ class Extractor:
         return True
     
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
+        #print("DEBUG 1420 Extractor.process_text | init")
         if self.mode == "jsx":
             parser = JSXParser(self.param, match_all=self.match_all, is_attribute_mode=self.is_attribute_mode, no_standard=self.no_standard)
         else:
@@ -1149,7 +1152,9 @@ class Extractor:
             parser = GenericScopeParser(self.param, self.start_regex, self.end_regex, match_all=self.match_all)
 
         out_lines, merged_json = [], {}
+        #print("DEBUG 1242 Extractor.process_text begin...")
         for stack, tag, key_matched, value in parser.parse(text, []):
+            #print(f"DEBUG 1326 process_text | tag: {tag}, key_matched: {key_matched}, value: {value}")
             # choose which key goes into the path
             #effective_key = key_matched if (self.match_all and key_matched) else self.param
             # Attribute mode: include the attribute key when requested
@@ -1157,15 +1162,18 @@ class Extractor:
             
             if self.only_strings:
                 is_only_strings = self.check_value_if_it_is_just_string(value)
+                #print(f"DEBUG 1432 process_text | is_only_strings: {is_only_strings}")
                 if not is_only_strings:
                     continue
             
             keys_to_avoid = None
             if self.avoid_keys:
                 keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
+                #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                 if self.avoid_keys_parameter == self.CONTAINS and any(list(filter(lambda x: x in key_matched or x in tag or x in value,keys_to_avoid))) or self.avoid_keys_parameter == self.EQUALS and any(list(filter(lambda x: x == key_matched or x == tag or x == value,keys_to_avoid))):
                     continue
             
+            #print(f"DEBUG 1169 process_text | continue tag: {tag}, key_matched: {key_matched}") 
             if self.is_attribute_mode:
                 # Skip when this tag doesn't have the attribute
                 
@@ -1178,13 +1186,16 @@ class Extractor:
                 if self.avoid_keys:
                     if not keys_to_avoid:
                         keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
+                    #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                     if self.avoid_keys_parameter == self.CONTAINS and list(filter(lambda x: any([x in token for token in tokens]), keys_to_avoid)) or self.avoid_keys_parameter == self.EQUALS and list(filter(lambda x: any([x == token for token in tokens]), keys_to_avoid)):
                         continue
+                #print(f"DEBUG 1178 Extractor.process_text | effective_key: {effective_key}, tokens: {tokens}")
                 if tokens:
                     out_lines.append(path_join(tokens))
                     if self.convert_to_json:
                         j = self._record_text_kv(tokens, value)
                         merged_json = self.deep_merge(merged_json, j)
+                        #print(f"DEBUG 1185 Extractor.process_text | j: {j}, merged_json: {merged_json}")
             else:
                 # TAG-CONTENT MODE
                 tag_name = tag
@@ -1198,6 +1209,7 @@ class Extractor:
                 if self.avoid_keys:
                     if not keys_to_avoid:
                         keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
+                    #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                     if self.avoid_keys_parameter == self.CONTAINS and list(filter(lambda x: any([x in token for token in tokens]), keys_to_avoid)) or self.avoid_keys_parameter == self.EQUALS and list(filter(lambda x: any([token == x for token in tokens]), keys_to_avoid)):
                         continue
                     
@@ -1216,6 +1228,7 @@ class Extractor:
                 else:
                     merged_json = self.prune_to_key(merged_json, self.param, -2)
         
+        #print(f"DEBUG 1449 Extractor.process_text | out_lines: {out_lines}, merged_json: {merged_json}")
         return out_lines, merged_json
 
     def json_to_js_literal(self, data, indent=2):
@@ -1231,6 +1244,7 @@ class Extractor:
             ancestor present in `stack`. If none exists, anchor at root.
         - If not dropping, keep the entire stack.
         """
+        #print(f"DEBUG 1391 _nearest_kept_ancestor_tokens | file_root_token: {file_root_token}, stack: {stack}")
         return kept_prefix(file_root_token, stack, drop_standard=self.no_standard)
 
     # def _nearest_kept_ancestor_tokens(self, file_root_token: str, stack: List[str]) -> List[str]:
@@ -1283,6 +1297,7 @@ class Extractor:
 
         file_patterns = self.file_extensions
         for fp in list_files(path, file_patterns):
+            #print(f"DEBUG 1518 Extractor | file_patterns: {fp}")
             try:
                 text = read_text(fp)
             except Exception as e:
@@ -1307,6 +1322,7 @@ class Extractor:
 
 
             lines, j = self.process_text(file_root, text)
+            #print(f"DEBUG 1518 Extractor | lines: {lines}, j: {j}")
             if lines:
                 all_lines.append(f"# File: {fp}")
                 all_lines.extend(lines)
@@ -1318,10 +1334,12 @@ class Extractor:
         json_text = None
         
         if self.convert_to_json:
+            #print(merged_json)
             if self.with_quotation_marks:
                 json_text = json.dumps(merged_json, ensure_ascii=False, indent=self.indentation)
             else:
                 json_text = self.json_to_js_literal(merged_json)
+        #print(result_text, json_text)
         return result_text, json_text
 
 
@@ -1367,118 +1385,40 @@ try:
     from PySide6.QtWidgets import (
         QApplication, QWidget, QMainWindow, QFileDialog, QVBoxLayout, QHBoxLayout,
         QLabel, QLineEdit, QPushButton, QPlainTextEdit, QCheckBox, QComboBox, QSpinBox,
-        QMessageBox, QTabWidget, QRadioButton, QButtonGroup, QSplitter, QScrollArea
+        QMessageBox, QTabWidget, QRadioButton, QButtonGroup
     )
     from PySide6.QtCore import Qt
     PYSIDE_OK = True
 except Exception:
     PYSIDE_OK = False
 
-class PathEntry(QWidget):
-    """Widget for a single path entry with browse, preview, and remove buttons."""
-    
-    def __init__(self, parent=None, on_remove=None):
-        super().__init__(parent)
-        self.on_remove = on_remove
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.ed_path = QLineEdit()
-        self.ed_path.setPlaceholderText("Path (file/dir)...")
-        layout.addWidget(self.ed_path, 1)
-        
-        self.btn_browse = QPushButton("Browse")
-        self.btn_browse.clicked.connect(self._browse)
-        layout.addWidget(self.btn_browse)
-        
-        self.chk_is_file = QCheckBox("Is File?")
-        layout.addWidget(self.chk_is_file)
-        
-        self.btn_remove = QPushButton("🗑️")
-        self.btn_remove.setMaximumWidth(40)
-        self.btn_remove.clicked.connect(self._remove_self)
-        layout.addWidget(self.btn_remove)
-    
-    def _browse(self):
-        path = self.ed_path.text().strip()
-        if not path or not os.path.exists(path):
-            if self.chk_is_file.isChecked():
-                file_path, _ = QFileDialog.getOpenFileName(self, "Select file")
-                if file_path:
-                    self.ed_path.setText(file_path)
-            else:
-                dir_path = QFileDialog.getExistingDirectory(self, "Select directory")
-                if dir_path:
-                    self.ed_path.setText(dir_path)
-        else:
-            if os.path.isfile(path):
-                file_path, _ = QFileDialog.getOpenFileName(self, "Select file", os.path.dirname(path))
-                if file_path:
-                    self.ed_path.setText(file_path)
-            else:
-                dir_path = QFileDialog.getExistingDirectory(self, "Select directory", path)
-                if dir_path:
-                    self.ed_path.setText(dir_path)
-    
-    def _remove_self(self):
-        if self.on_remove:
-            self.on_remove(self)
-    
-    def get_path(self):
-        return self.ed_path.text().strip()
-    
-    def is_file(self):
-        return self.chk_is_file.isChecked()
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Param → Path/JSON Extractor")
-        self.path_entries = []
         self._build_ui()
 
     def _build_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        
-        # Create splitter (vertical orientation: top controls, bottom results)
-        self.splitter = QSplitter(Qt.Vertical)
-        main_layout.addWidget(self.splitter)
-        
-        # Top panel: Controls
-        controls_widget = QWidget()
-        root = QVBoxLayout(controls_widget)
+        root = QVBoxLayout(central)
 
-        # Paths section with scroll area
-        paths_label = QLabel("Paths (files/directories):")
-        root.addWidget(paths_label)
-        
-        # Scroll area for multiple path entries
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setMaximumHeight(MAX_SCROLL_HEIGHT)
-        
-        self.paths_container = QWidget()
-        self.paths_layout = QVBoxLayout(self.paths_container)
-        self.paths_layout.setContentsMargins(0, 0, 0, 0)
-        scroll_area.setWidget(self.paths_container)
-        root.addWidget(scroll_area)
-        
-        # Add Path button
-        btn_add_path = QPushButton("➕ Add Path")
-        btn_add_path.clicked.connect(self._add_path_entry)
-        root.addWidget(btn_add_path)
-        
-        # Add initial path entry
-        self._add_path_entry()
+        # Path row
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Path (file/dir):"))
+        self.ed_path = QLineEdit()
+        btn_browse = QPushButton("Browse")
+        btn_browse.clicked.connect(self._browse)
+        self.is_file = QCheckBox("Is file?")
+        row1.addWidget(self.ed_path, 1)
+        row1.addWidget(btn_browse)
+        row1.addWidget(self.is_file)
+        root.addLayout(row1)
 
         # Param and mode
         row2 = QHBoxLayout()
         row2.addWidget(QLabel("Param/Attribute:"))
         self.ed_param = QLineEdit("")
-        self.ed_param.returnPressed.connect(lambda: self.ed_start.setFocus())
         row2.addWidget(self.ed_param)
         
         self.chk_is_attribute_mode = QCheckBox("Treat Param as ATTRIBUTE?")
@@ -1495,27 +1435,14 @@ class MainWindow(QMainWindow):
         row3 = QHBoxLayout()
         row3.addWidget(QLabel("Start delimiter (regex):"))
         self.ed_start = QLineEdit("<.*?>")  # example default
-        self.ed_start.returnPressed.connect(lambda: self.ed_end.setFocus())
         row3.addWidget(self.ed_start, 1)
         row3.addWidget(QLabel("End delimiter (regex):"))
         self.ed_end = QLineEdit("</.*?>")   # example default
-        self.ed_end.returnPressed.connect(lambda: self.ed_ext.setFocus())
         row3.addWidget(self.ed_end, 1)
-        
-        # Preview Scope button
-        self.btn_preview_scope = QPushButton("🔍 Preview Scope")
-        self.btn_preview_scope.clicked.connect(self._preview_scope)
-        row3.addWidget(self.btn_preview_scope)
-        
-        root.addLayout(row3)
-        
-        # Extensions row
-        row3b = QHBoxLayout()
-        row3b.addWidget(QLabel("Extensions (*.tsx *.jsx ...):"))
+        row3.addWidget(QLabel("Extensions (*.tsx *.jsx ...):"))
         self.ed_ext = QLineEdit(".tsx .jsx .js .ts")
-        self.ed_ext.returnPressed.connect(lambda: self.avoid_keys.setFocus())
-        row3b.addWidget(self.ed_ext, 1)
-        root.addLayout(row3b)
+        row3.addWidget(self.ed_ext, 1)
+        root.addLayout(row3)
 
         # Options
         row4 = QHBoxLayout()
@@ -1560,7 +1487,6 @@ class MainWindow(QMainWindow):
         row6 = QHBoxLayout()
         row6.addWidget(QLabel("Specify the keys and values to avoid (separate with commas): "))
         self.avoid_keys = QLineEdit("")
-        self.avoid_keys.returnPressed.connect(self._run)
         row6.addWidget(self.avoid_keys)
         root.addLayout(row6)
         
@@ -1590,13 +1516,6 @@ class MainWindow(QMainWindow):
         row8.addWidget(self.btn_save)
         root.addLayout(row8)
 
-        # Add controls widget to splitter
-        self.splitter.addWidget(controls_widget)
-        
-        # Bottom panel: Results
-        results_widget = QWidget()
-        results_layout = QVBoxLayout(results_widget)
-        
         # Output tabs
         self.tabs = QTabWidget()
         self.out_paths = QPlainTextEdit()
@@ -1605,60 +1524,15 @@ class MainWindow(QMainWindow):
         self.out_json.setReadOnly(True)
         self.tabs.addTab(self.out_paths, "Paths")
         self.tabs.addTab(self.out_json, "JSON")
-        results_layout.addWidget(self.tabs)
+        root.addWidget(self.tabs, 1)
         
         self.copy_all = QPushButton("Copy All")
         self.copy_all.clicked.connect(self._copy_all)
-        results_layout.addWidget(self.copy_all)
-        
-        # Add results widget to splitter
-        self.splitter.addWidget(results_widget)
-        
-        # Set initial splitter proportions (40% controls, 60% results)
-        self.splitter.setSizes(SPLITTER_SIZES)
+        root.addWidget(self.copy_all)
 
         # Initial hints
         self.cb_mode.currentTextChanged.connect(self._toggle_generic_fields)
         self._toggle_generic_fields(self.cb_mode.currentText())
-    
-    def _add_path_entry(self):
-        """Add a new path entry to the list."""
-        entry = PathEntry(on_remove=self._remove_path_entry)
-        self.path_entries.append(entry)
-        self.paths_layout.addWidget(entry)
-        # Focus on the new entry's path field
-        entry.ed_path.setFocus()
-    
-    def _remove_path_entry(self, entry):
-        """Remove a path entry from the list."""
-        if len(self.path_entries) <= 1:
-            QMessageBox.warning(self, "Cannot Remove", "At least one path entry must remain.")
-            return
-        
-        if entry in self.path_entries:
-            self.path_entries.remove(entry)
-            entry.deleteLater()
-    
-    def _get_all_paths(self):
-        """Get all paths from entries, filtering out empty ones and checking for duplicates."""
-        paths = []
-        seen = set()
-        
-        for entry in self.path_entries:
-            path = entry.get_path()
-            if not path:
-                continue
-            
-            # Normalize path for duplicate detection
-            norm_path = os.path.normpath(path)
-            if norm_path in seen:
-                QMessageBox.warning(self, "Duplicate Path", f"Path '{path}' is duplicated. Skipping duplicate.")
-                continue
-            
-            seen.add(norm_path)
-            paths.append((path, entry.is_file()))
-        
-        return paths
 
     def avoid_keys_option_changed(self, button, checked):
         if checked:
@@ -1700,124 +1574,45 @@ class MainWindow(QMainWindow):
         enable = (mode == "generic")
         self.ed_start.setEnabled(enable)
         self.ed_end.setEnabled(enable)
-        self.btn_preview_scope.setEnabled(enable)
-    
-    def _validate_regex(self, pattern: str, label: str) -> bool:
-        """Validate regex pattern and show error if invalid."""
-        if not pattern:
-            return True  # Empty is allowed (will use defaults)
+
+    def _browse(self):
         
-        try:
-            re.compile(pattern)
-            return True
-        except re.error as e:
-            QMessageBox.critical(
-                self, 
-                "Invalid Regex",
-                f"Invalid {label} regex pattern:\n{pattern}\n\nError: {e}"
-            )
-            return False
-    
-    def _preview_scope(self):
-        """Preview scope extraction with current regex patterns."""
-        mode = self.cb_mode.currentText()
-        if mode != "generic":
-            QMessageBox.information(self, "Preview Scope", "Scope preview is only available in 'generic' mode.")
-            return
-        
-        start = self.ed_start.text().strip()
-        end = self.ed_end.text().strip()
-        
-        if not start or not end:
-            QMessageBox.warning(self, "Missing Regex", "Please provide both start and end delimiter regex patterns.")
-            return
-        
-        # Validate regex patterns
-        if not self._validate_regex(start, "start delimiter"):
-            return
-        if not self._validate_regex(end, "end delimiter"):
-            return
-        
-        # Get first path to test
-        paths = self._get_all_paths()
-        if not paths:
-            QMessageBox.warning(self, "No Paths", "Please add at least one path to preview scope extraction.")
-            return
-        
-        test_path, _ = paths[0]
-        
-        try:
-            # Try to read and extract scopes
-            if os.path.isfile(test_path):
-                with open(test_path, "r", encoding="utf-8", errors="replace") as f:
-                    text = f.read()
-            else:
-                # If directory, get first file
-                files = list(list_files(test_path, None))
-                if not files:
-                    QMessageBox.warning(self, "No Files", f"No files found in directory: {test_path}")
-                    return
-                with open(files[0], "r", encoding="utf-8", errors="replace") as f:
-                    text = f.read()
-                test_path = files[0]
-            
-            # Extract matches
-            start_re = re.compile(start)
-            end_re = re.compile(end)
-            
-            matches = []
-            i = 0
-            depth = 0
-            while i < len(text):
-                m_start = start_re.search(text, i)
-                m_end = end_re.search(text, i)
-                
-                if m_start and (not m_end or m_start.start() < m_end.start()):
-                    matches.append(f"START at {m_start.start()}: {repr(m_start.group()[:50])}")
-                    depth += 1
-                    i = m_start.end()
-                elif m_end:
-                    matches.append(f"END at {m_end.start()}: {repr(m_end.group()[:50])}")
-                    depth -= 1
-                    i = m_end.end()
+        path = self.ed_path.text().strip()
+        if not path or not os.path.exists(path):
+            # ask choose either file or dir
+            if self.is_file.isChecked():
+                file_path, _ = QFileDialog.getOpenFileName(self, "Select file (or Cancel for directory)")
+                if file_path:
+                    self.ed_path.setText(file_path)
                 else:
-                    break
-                
-                if len(matches) >= MAX_PREVIEW_MATCHES:
-                    matches.append(f"... (truncated, more than {MAX_PREVIEW_MATCHES} matches)")
-                    break
-            
-            if not matches:
-                preview_text = f"No matches found in file:\n{test_path}\n\nStart pattern: {start}\nEnd pattern: {end}"
+                    dir_path = QFileDialog.getExistingDirectory(self, "Select directory")
+                    if dir_path:
+                        self.ed_path.setText(dir_path)
             else:
-                preview_text = f"Scope preview for file:\n{test_path}\n\n"
-                preview_text += f"Start pattern: {start}\n"
-                preview_text += f"End pattern: {end}\n"
-                preview_text += f"Total segments found: {len([m for m in matches if 'START' in m])}\n\n"
-                preview_text += "\n".join(matches)
-            
-            QMessageBox.information(self, "Scope Preview", preview_text)
-            
-        except Exception as e:
-            QMessageBox.critical(self, "Preview Error", f"Error previewing scope:\n{str(e)}")
+                dir_path = QFileDialog.getExistingDirectory(self, "Select directory")
+                if dir_path:
+                    self.ed_path.setText(dir_path)
+        else:
+            # if path exists, allow reselect
+            if os.path.isfile(path):
+                file_path, _ = QFileDialog.getOpenFileName(self, "Select file", os.path.dirname(path))
+                if file_path:
+                    self.ed_path.setText(file_path)
+            else:
+                dir_path = QFileDialog.getExistingDirectory(self, "Select directory", path)
+                if dir_path:
+                    self.ed_path.setText(dir_path)
 
     def _run(self):
         try:
-            paths = self._get_all_paths()
-            if not paths:
-                QMessageBox.warning(self, "Error", "Please provide at least one valid path.")
+            path = self.ed_path.text().strip()
+            if not path:
+                QMessageBox.warning(self, "Error", "Please provide a path (file or directory).")
                 return
             param = self.ed_param.text().strip() or ""
             mode = self.cb_mode.currentText()
             start = self.ed_start.text().strip() or None
             end = self.ed_end.text().strip() or None
-            
-            # Validate regex if in generic mode
-            if mode == "generic":
-                if start and not self._validate_regex(start, "start delimiter"):
-                    return
-                if end and not self._validate_regex(end, "end delimiter"):
-                    return
             include_key = self.chk_include_key.isChecked()
             include_value = self.chk_include_value.isChecked()
             no_std = self.chk_no_standard.isChecked()
@@ -1833,59 +1628,30 @@ class MainWindow(QMainWindow):
             is_attribute_mode = self.chk_is_attribute_mode.isChecked()
             exts = [e.strip() for e in self.ed_ext.text().split() if e.strip()]
 
-            # Process all paths and merge results
-            all_text_lines = []
-            all_merged_json = {}
-            
-            for path, is_file in paths:
-                extractor = Extractor(
-                    param=param,
-                    mode=mode,
-                    include_key=include_key,
-                    include_value=include_value,
-                    no_standard=no_std,
-                    convert_to_json=True,
-                    with_quotation_marks=with_quot_marks,
-                    only_strings=only_strings,
-                    indentation=indent,
-                    case_style=case_style,
-                    limit=limit,
-                    avoid_keys=avoid_keys,
-                    avoid_keys_parameter = self.avoid_keys_parameter_message,
-                    avoid_cut=avoid_cut,
-                    to_upper=upper,
-                    start_regex=start,
-                    end_regex=end,
-                    file_extensions=exts,
-                    is_attribute_mode=is_attribute_mode
-                )
-                
-                text_out, json_out = extractor.run(path)
-                
-                if text_out and text_out != "(no matches)":
-                    all_text_lines.append(f"### Path: {path} ###")
-                    all_text_lines.append(text_out)
-                    all_text_lines.append("")
-                
-                if json_out:
-                    try:
-                        path_json = json.loads(json_out)
-                        all_merged_json = extractor.deep_merge(all_merged_json, path_json)
-                    except:
-                        pass
-            
-            # Set outputs
-            final_text = "\n".join(all_text_lines) if all_text_lines else "(no matches)"
-            self.out_paths.setPlainText(final_text)
-            
-            if all_merged_json:
-                if with_quot_marks:
-                    final_json = json.dumps(all_merged_json, ensure_ascii=False, indent=indent)
-                else:
-                    final_json = extractor.json_to_js_literal(all_merged_json, indent=indent)
-                self.out_json.setPlainText(final_json)
-            else:
-                self.out_json.setPlainText("")
+            extractor = Extractor(
+                param=param,
+                mode=mode,
+                include_key=include_key,
+                include_value=include_value,
+                no_standard=no_std,
+                convert_to_json=True,
+                with_quotation_marks=with_quot_marks,
+                only_strings=only_strings,
+                indentation=indent,
+                case_style=case_style,
+                limit=limit,
+                avoid_keys=avoid_keys,
+                avoid_keys_parameter = self.avoid_keys_parameter_message,
+                avoid_cut=avoid_cut,
+                to_upper=upper,
+                start_regex=start,
+                end_regex=end,
+                file_extensions=exts,
+                is_attribute_mode=is_attribute_mode
+            )
+            text_out, json_out = extractor.run(path)
+            self.out_paths.setPlainText(text_out)
+            self.out_json.setPlainText(json_out or "")
 
         except Exception as e:
             QMessageBox.critical(self, "Run error", str(e))
@@ -1939,14 +1705,10 @@ def main(argv=None):
     extractor = Extractor(
         param=args.param,
         mode=args.mode,
-        avoid_keys="",  # CLI doesn't have avoid_keys yet
-        avoid_keys_parameter="equals",  # Default value
         include_key=args.include_key,
         include_value=args.include_value,
         no_standard=args.no_standard,
         convert_to_json=args.convert_to_json,
-        with_quotation_marks=False,  # CLI default: no quotes
-        only_strings=False,  # CLI default: all types
         indentation=args.indentation,
         case_style=args.case,
         limit=args.limit,

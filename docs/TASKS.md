@@ -2,9 +2,65 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/11/24
+**Last Update**: 2025/12/02
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+---
+
+## 🎉 v2.9.32 Released! + 50 Novas Recomendações
+
+**Data**: 02/12/2025  
+**Feature Completa**: JSON Set Operations (∩, ∪, −, ⊕)
+
+### ✅ O que foi entregue na v2.9.32
+- ✨ 4 operações de conjunto lógico com pipeline left-to-right
+- 🔒 Validação de segurança CWE-22 (path traversal)
+- 🎨 GUI completa + CLI robusto (argparse)
+- ✅ 50/50 testes unitários passing (100%)
+- 🏆 Pylint 9.38/10 (exceeds target)
+- 📖 Documentação completa (CHANGELOG + TASKS.md)
+- 🚀 Push to GitHub: commit fcb41bd + tag v2.9.32
+
+### 📋 +50 Novas Tasks Recomendadas (02/12/2025)
+
+Esta atualização adiciona **50 novas tarefas** ao roadmap, expandindo significativamente a visão de futuro do Clarify:
+
+#### 🔧 COULD HAVE (+18 tasks)
+1. **Melhorias de Set Operations** (7 tasks):
+   - Venn Diagram Visualizer, Diff Viewer, Statistics Dashboard
+   - Multi-format Export (CSV/Excel/YAML), Merge Results, Batch Operations
+   - History, Presets, Formula Builder
+
+2. **Calculator Integration** (2 tasks):
+   - Set Operations + Calculator memory slots
+   - Statistics sobre result sets
+
+3. **Quality Assurance** (4 tasks):
+   - GUI automated tests, Performance benchmarks, Code coverage, Load testing
+
+4. **UX & Accessibility** (6 tasks):
+   - Keyboard shortcuts comprehensivos, Dark mode, Accessibility features
+   - i18n expansion (ES/FR/DE/ZH/JA), Customizable layouts, Tooltips expansion
+
+5. **Documentation** (6 tasks):
+   - User Manual Wiki, Video tutorials, Recipe book
+   - API docs (Sphinx), Contributing guide, Changelog automation
+
+6. **Architecture & Maintenance** (6 tasks):
+   - Plugin system, Config management, Logging system
+   - Update checker, Error reporting, Database migrations
+
+#### 🚀 WOULD HAVE LATER (+32 tasks)
+- Advanced Features: IA tutorial assistant, TOON format, File as Database, Macro system
+- Cloud & Collaboration: Sync (Drive/Dropbox/OneDrive), version history
+- Modern Interfaces: Real-time JSON validation, GraphQL queries, Git integration
+- Innovation: AI pattern learning, block programming, algorithm generation
+
+### 📊 Impacto no Roadmap
+- **Antes**: 107 tasks total (84.1% completo)
+- **Agora**: 157 tasks total (57.3% completo)
+- **Conclusão**: Projeto tem roadmap robusto para próximos 12-18 meses
 
 ---
 
@@ -1047,8 +1103,58 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Adicionar opções de undo e redo para mudanças feitas (Command Pattern, Ctrl+Z/Ctrl+Y, 10 níveis) **(v2.9.8)**
 - **[X]** Traduzir aplicação para idiomas mais falados do mundo **(v2.9.10 - Task #24: Sistema i18n com EN/PT-BR)**
 
-#### Advanced Features
+#### Quality Assurance & Testing
 
+- **[]** GUI Automated Tests: Implementar testes automatizados para interface gráfica usando pytest-qt. Cobertura: interação com docks (click buttons, fill forms, verify results), workflows completos (open file → search → rewrite → save), integração entre módulos (Editor ↔ Set Operations ↔ Rewriter). Target: 50+ integration tests.
+- **[]** Performance Benchmarks: Criar suite de benchmarks para operações críticas usando arquivos JSON grandes (1MB, 10MB, 50MB). Métricas: tempo de processamento, uso de memória RAM, CPU usage. Operações testadas: set operations, JSON rewriter, search, text extractor. Armazenar resultados em `benchmarks/results.json` para comparação entre versões.
+- **[]** Code Coverage Reporting: Integrar pytest-cov no CI/CD com configuração em `.coveragerc`. Target: manter >90% coverage para módulos core (`src/set_operations.py`, `src/rewriter/`, `src/json_search/`). Gerar relatórios HTML automáticos em `htmlcov/`. Incluir badge de coverage no README.md.
+- **[]** Load Testing: Criar testes de carga para identificar limites do sistema. Cenários: processar 1000+ arquivos simultaneamente, set operations com 100+ arquivos, search em corpus de 10GB. Usar `multiprocessing` para simular múltiplos usuários. Documentar resultados em `docs/PERFORMANCE.md`.
+
+---
+
+#### UX & Accessibility
+
+- **[X] v2.9.33 (2025-12-02)** Comprehensive Keyboard Shortcuts: Mapear todas operações principais para atalhos de teclado. Global: `Ctrl+F` (search), `Ctrl+S` (save), `Ctrl+E` (editor), `Ctrl+Shift+S` (set operations), `Ctrl+Shift+R` (rewriter), `Ctrl+Shift+A` (AI processor). Navegação: `Ctrl+Tab` (next dock), `Ctrl+Shift+Tab` (previous dock), `F11` (fullscreen), `Ctrl+1-9` (jump to specific dock). **IMPLEMENTADO**: 45+ shortcuts, customização completa com dialog, detecção de conflitos, avisos de SO, navegação entre docks, help page (F1), i18n EN/PT-BR, 26 testes (100% passing).
+- **[]** Dark Mode Theme: Implementar tema escuro completo para reduzir fadiga visual. Usar QSS (Qt StyleSheets) com paleta: background (#1E1E1E), foreground (#D4D4D4), accent (#007ACC), borders (#3C3C3C). Toggle em: `View → Theme → Dark/Light/Auto (follow system)`. Salvar preferência em QSettings. Aplicar automaticamente a syntax highlighter do editor.
+- **[]** Accessibility Features: Adicionar suporte para leitores de tela (NVDA/JAWS) com labels ARIA em widgets. Implementar: navegação completa por teclado (tab order lógico), focus indicators visíveis (border azul 2px), texto alternativo para ícones, contraste WCAG AAA (ratio 7:1), tamanho de fonte ajustável (Ctrl+Scroll). Incluir opção "High Contrast Mode" em Settings.
+- **[]** Internationalization (i18n) Expansion: Expandir traduções além de EN/PT-BR. Adicionar: ES (Espanhol), FR (Francês), DE (Alemão), ZH (Chinês), JA (Japonês). Estrutura: `i18n/{locale}/app.json`. Usar sistema existente em `src/i18n/`. Permitir usuário contribuir traduções via GitHub (template em `CONTRIBUTING.md`).
+- **[]** Customizable UI Layout: Permitir usuário customizar layout dos docks. Funcionalidades: salvar/carregar layouts (workspace presets), dock position (left/right/top/bottom/floating), dock size persistence, tab order customizado. Incluir 3 layouts pré-configurados: "Compact" (mínimo), "Standard" (atual), "Advanced" (todos docks visíveis).
+- **[]** Tooltips Expansion: Adicionar tooltips descritivos em todos widgets. Formato: título bold + descrição + atalho (se houver). Exemplo: **Set Operations** | Perform logical operations (∩, ∪, −, ⊕) on JSON files | `Ctrl+Shift+S`. Incluir exemplos visuais em tooltips complexos (preview de resultado esperado).
+
+---
+
+#### Documentation & Developer Experience
+
+- **[]** User Manual Wiki: Criar wiki completo no GitHub com estrutura: Getting Started (instalação, first steps), Features (1 página por dock com screenshots), Tutorials (workflows comuns), FAQ (problemas conhecidos), Troubleshooting (errors e soluções). Formato Markdown com navegação lateral. Incluir search bar no wiki.
+- **[]** Video Tutorials Series: Produzir série de vídeos curtos (3-5 min cada) demonstrando features principais. Tópicos: Quick Start, JSON Rewriter Deep Dive, Set Operations Workflows, Advanced Search Techniques, AI Integration Guide. Hospedar no YouTube e linkar no README.md. Incluir timestamps e transcrições.
+- **[]** Recipe Book: Criar `docs/RECIPES.md` com casos de uso práticos. Formato: Problema → Solução passo-a-passo → Resultado esperado. Exemplos: "Como mesclar 2 arquivos de configuração?", "Como extrair apenas chaves com valor null?", "Como converter i18n de JSON para YAML?", "Como automatizar tradução com AI?". Incluir código CLI quando aplicável.
+- **[]** API Documentation: Gerar documentação completa da API pública usando Sphinx. Incluir: docstrings para todas funções/classes públicas, type hints completos, examples de uso programático, architecture diagrams (UML). Publicar em GitHub Pages em `https://josueamaral15.github.io/clarify/`. Auto-rebuild via GitHub Actions on push.
+- **[]** Contributing Guide: Criar `CONTRIBUTING.md` detalhado. Seções: Code of Conduct, How to Report Bugs (issue template), How to Suggest Features (feature request template), Development Setup (Python 3.12+, PySide6, pytest), Code Style (black, isort, pylint >9.0), Testing Requirements (coverage >90%), Pull Request Process (review checklist). Incluir badges no README.
+- **[]** Changelog Automation: Automatizar geração de CHANGELOG.md usando commits convencionais (Conventional Commits). Format: `type(scope): description`. Types: feat, fix, docs, style, refactor, test, chore. Tool: `git-cliff` ou `standard-version`. Gerar changelog automaticamente em release tags.
+
+---
+
+#### Architecture & Maintenance
+
+- **[]** Plugin System: Implementar sistema de plugins para extensões customizadas. Estrutura: `plugins/` folder com subfolders por plugin, cada plugin tem `plugin.json` (metadata) + `main.py` (entry point). API: registrar dock customizado, adicionar menu items, hook em events (file_opened, search_completed). Incluir 2 plugins exemplo: "Export to PostgreSQL", "Slack Notifications".
+- **[]** Configuration Management: Centralizar configurações em `config.yaml` (além de QSettings). Parâmetros: default directories, max file size, thread pool size, cache duration, AI model preferences, logging level. Incluir UI em `Settings → Advanced` para editar YAML visualmente. Validar schema com `jsonschema`.
+- **[]** Logging System: Implementar logging estruturado usando Python `logging` module. Levels: DEBUG (development), INFO (operations), WARNING (issues), ERROR (failures), CRITICAL (crashes). Output: `logs/clarify.log` (rotate daily, keep 30 days). Formato: `[2025-12-02 14:23:45] [INFO] [set_operations] Executed intersection on 3 files (124ms)`. Incluir "View Logs" em Help menu.
+- **[]** Update Checker: Adicionar verificador automático de atualizações. Na inicialização: verificar GitHub Releases API para versão mais recente, comparar com versão atual, exibir notificação se nova versão disponível. Incluir: link para changelog, botão "Download", checkbox "Don't show again for this version". Respeitar configuração "Check for updates" em Settings.
+- **[]** Error Reporting & Crash Handler: Implementar sistema de crash reporting. Capturar exceções não tratadas com `sys.excepthook`, gerar relatório com: stack trace, versão do app, OS info, últimas 50 linhas de log. Oferecer: "Send Report" (via GitHub Issue automaticamente), "Save Report" (local .txt), "Ignore". Anonimizar paths de arquivos do usuário.
+- **[]** Database Migration System: Criar sistema de migração para QSettings quando estrutura mudar entre versões. Pattern: `migrations/v{version}.py` com `migrate()` function. Exemplo: v2.9.32 → v2.9.33 move `set_operations/` para `operations/set/`. Executar migrations automaticamente no startup. Log em `migrations.log`.
+
+---
+
+#### Advanced Features & Long-term Goals
+
+- **[]** Integrar IA para assistente de tutoriais: Chatbot com Gemini Flash-1.5-8B (8192 tokens) ou Claude Haiku-4 (200k tokens) dentro do sistema de tutoriais. O chatbot responde perguntas sobre funcionalidades usando `docs/tutorials/index.json` como knowledge base. Incluir histórico de conversa e feedback de qualidade.
+- **[]** TOON format: adicionar possibilidade de trabalhar com múltiplos arquivos JSON (e TXT também) em formato hierárquico de texto aninhado (Tree Object-Oriented Notation) como `{1}["pages"]["home"]: "Homepage"` seria representado como `[1]: pages > home = "Homepage"`, incluindo busca por índices e atualização seletiva de campos. Operações: buscar objeto por ID/hierarquia, modificar valor mantendo TOON structure, converter TOON ↔ JSON, merge TOON files, validar sintaxe. Use case: gerenciar traduções distribuídas sem parsing JSON completo.
+- **[]** File as Database: adicionar possibilidade de realizar processamento SGBD-like em arquivos JSON onde arquivos JSON podem ser tratados como tabelas de banco de dados relacional, incluindo operações JOIN entre múltiplos arquivos, projeções de chaves específicas (SELECT), agregações (COUNT, SUM, AVG), e filtros complexos com sintaxe SQL-like. Use case: análise de dados JSON sem PostgreSQL/MongoDB.
+- **[]** Macro System: Sistema de macros com 2 interfaces (Python snippet e block programming visual). Python: executar código arbitrário em contexto sandbox com acesso controlado a API do Clarify (open_file, search_keys, rewrite_json). Visual: drag-and-drop de blocos (Load File → Filter Keys → Transform Values → Save Result). Incluir scheduler para executar macros periodicamente. Use case: automação de workflows repetitivos.
+- **[]** Cloud Sync & Collaboration: Adicionar sincronização em nuvem para configurações e presets. Suporte: Google Drive, Dropbox, OneDrive. Permitir: compartilhar operation presets com time, histórico versionado (Git-like diffs), comentários em configurações. Implementar conflict resolution (local vs remote changes). Use case: times distribuídos compartilhando workflows.
+- **[]** Real-time JSON Validation: Validar JSON em tempo real durante edição no EditorDock. Usar JSON Schema para validação customizada. Features: highlight de erros (red underline), auto-complete de chaves conhecidas, sugestões de valores baseados em schema, quick-fix actions (add missing required field). Integrar com `jsonschema` library.
+- **[]** GraphQL Query Interface: Adicionar interface para consultar arquivos JSON usando sintaxe GraphQL. Permitir: queries aninhadas, aliases, fragments, mutations (modificar JSON via query). Exemplo: `{ user { name posts { title } } }` retorna apenas campos solicitados. Use case: extrair dados complexos sem código Python.
+- **[]** Version Control Integration: Integrar com Git diretamente no app. Features: commit changes, view diff, create branches, merge conflicts resolution (visual merge tool), push/pull. Exibir status de arquivos (modified/staged/untracked) no File List. Incluir "Git" menu com operações comuns. Use case: gerenciar versionamento sem sair do Clarify.
 - **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos e low-code;
 - **[]** Incluir tutoriais de uso
 - **[]** Incluir busca com ajuda de inteligência artificial (da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F).
@@ -1066,7 +1172,30 @@ result = convert_text_to_json(text, "auto")
 
 - **[]** Calculator: Adicionar conceitos de calculadora como registrador de memória, adição, concatenação e recall de memória padrão com histórico de modificações. A ideia seria a seguinte: o registro de memória seria o resultado do processamento, por exemplo, de busca, do painel de resultado de buscas. A adição significa: adicione um resultado de busca com outro resultado de forma que estes se complementem, por exemplo, em ordem alfabética ou unindo resultados de um mesmo arquivo (quando é em formato de árvore) no painel de resultados. Concatenação iria concatenar um resultado a outro, colocando o segundo resultado debaixo do primeiro no painel de resultados. O recall de memória iria chamar resultados salvos e jogar no painel de resultados, como pesquisas pela palavra "span".
 - **[✅]** Set: Adicionar operações de conjunto lógico de arquivos JSON como interseção, diferença, união e diferença exclusiva. Incluir checkboxes para incluir chaves e/ou valores nesta operação de conjunto, em que, por exemplo, se for escolhida a intersecção entre arquivo A e arquivo B, ambos JSON, se tem valores equivalentes tanto em A quanto em B no sentido de chave e valor (title: "Tarefas de Casa"), no sentido de caminhos de chave e valor (t.pages.home.features.title, title: "Tarefas de Casa"), e somente no sentido de caminhos de chave (t.pages.home.features.title); **✅ Completa v2.9.32 - 02/12/2025**
-- **[]** Verificar se na pasta add existe alguma funcionalidade que ainda não foi implementada;
+- **[X]** Verificar se na pasta add existe alguma funcionalidade que ainda não foi implementada;
+
+---
+
+#### Melhorias de Set Operations (Pós v2.9.32)
+
+##### Visualização e Análise
+- **[]** Venn Diagram Visualizer: Adicionar diagrama de Venn interativo mostrando visualmente as interseções/uniões entre arquivos JSON. Usar QGraphicsView para renderizar círculos sobrepostos com contadores de elementos em cada seção. Permitir clique para ver detalhes dos elementos em cada região.
+- **[]** Diff Viewer Side-by-Side: Implementar visualização lado-a-lado (split view) das diferenças entre arquivos após operações de conjunto. Usar cores para destacar: verde (único em A), vermelho (único em B), amarelo (comum). Sincronizar scroll entre painéis.
+- **[]** Comparative Statistics Dashboard: Criar painel de estatísticas comparativas com métricas: % de overlap, unique keys por arquivo, profundidade média das estruturas, tamanho em bytes, contagem de valores por tipo (string/number/bool/null/array/object).
+
+##### Exportação e Integração
+- **[]** Multi-Format Export: Adicionar exportação de resultados em formatos CSV, Excel (XLSX), YAML e TOML. Incluir opções: flatten keys (dot notation), include metadata (operation type, timestamp, source files), column mapping customizável.
+- **[]** Merge Results to File: Permitir aplicar resultados de operação de volta aos arquivos originais. Modos: replace (sobrescrever arquivo), merge (combinar com conteúdo existente), new file (criar novo arquivo com sufixo _merged). Incluir preview antes de aplicar e opção de backup automático.
+- **[]** Batch Set Operations: Processar múltiplos grupos de arquivos em pipeline. Interface: adicionar grupos (A∩B, C∪D, E−F), definir ordem de execução, aplicar operações sequencialmente. Exibir progress bar com status de cada grupo.
+
+##### Histórico e Presets
+- **[]** Operation History: Implementar histórico de operações realizadas (últimas 50). Armazenar: timestamp, tipo de operação, arquivos envolvidos, modo de comparação, resultado (contagem de elementos). Permitir: visualizar resultados anteriores, re-executar operação, exportar histórico para JSON.
+- **[]** Operation Presets: Criar sistema de presets salvos. Permitir usuário salvar configurações frequentes: tipo de operação (∩/∪/−/⊕), modo de comparação (key_value/full_path_value/key_only), opções ativas, arquivos favoritos. Dropdown "Load Preset" no dock.
+- **[]** Formula Builder: Interface visual para construir operações complexas: (A ∩ B) ∪ (C − D). Drag-and-drop de arquivos em canvas, selecionar operadores entre eles, preview em tempo real do resultado. Salvar fórmulas como templates reutilizáveis.
+
+##### Calculator Integration (Expandir task existente)
+- **[]** Calculator + Set Operations Integration: Integrar resultados de Set Operations com Calculator. Memory slots para armazenar até 5 resultados de operações diferentes. Operações: Add (mesclar 2 resultados), Recall (chamar resultado salvo), Clear (limpar slot). Exibir preview de cada slot no painel lateral.
+- **[]** Set Statistics in Calculator: Adicionar estatísticas sobre result sets no Calculator: count (número de elementos), size (bytes), depth (profundidade máxima), key_types (distribuição de tipos). Permitir comparar estatísticas entre slots diferentes.
 
 ---
 
@@ -1206,11 +1335,19 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 18 | 13 | 5 | 72.2% |
-| WOULD HAVE LATER | 24 | 12 | 12 | 50.0% |
-| **TOTAL** | **107** | **90** | **17** | **84.1%** |
+| COULD HAVE | 36 | 13 | 23 | 36.1% |
+| WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
+| **TOTAL** | **157** | **90** | **67** | **57.3%** |
 
-**Última Atualização**: 02/12/2025 - Detailed Statistics Dialog Sprint B Feature #3 (v2.9.31)
+**Última Atualização**: 02/12/2025 - v2.9.32 Set Operations + Recomendações Pós-Release
+
+**Notas de Atualização**:
+- ✅ **v2.9.32 Completa**: JSON Set Operations implementada com sucesso
+- 📋 **+50 Novas Tasks Recomendadas**: Expansão significativa do roadmap
+  - **COULD HAVE**: +18 tasks (Set Operations enhancements, QA, UX/Accessibility, Documentation, Architecture)
+  - **WOULD HAVE LATER**: +32 tasks (Advanced features, Cloud sync, GraphQL, Git integration)
+- 🎯 **Foco Atual**: Completar 23 tasks pendentes de COULD HAVE (features de médio prazo)
+- 🚀 **Visão de Longo Prazo**: 44 tasks em WOULD HAVE LATER (inovações avançadas)
 
 ### Notas
 

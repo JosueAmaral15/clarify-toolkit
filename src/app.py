@@ -144,7 +144,7 @@ try:
     from PySide6.QtCore import (
         Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QByteArray, QAbstractListModel, QObject, QThread
         )
-    from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon, QPalette, QColor
+    from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon, QPalette, QColor, QShortcut, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
         QLabel, QLineEdit, QCheckBox, QPushButton, QSplitter, QListWidget, QListWidgetItem,
@@ -4140,6 +4140,11 @@ if _PYSIDE:
             from .settings_manager import get_settings
             self.settings = get_settings()
             
+            # Load custom shortcuts (v2.9.33)
+            from .shortcut_manager import ShortcutManager
+            custom_shortcuts = self.settings.get_custom_shortcuts()
+            ShortcutManager.load_custom_shortcuts(custom_shortcuts)
+            
             # Initialize Command Manager for Undo/Redo (Task #12 - v2.9.8)
             from .core.command_manager import CommandManager
             self.command_manager = CommandManager(max_history=10)
@@ -4492,6 +4497,7 @@ if _PYSIDE:
                 )
 
         def _build_menu(self):
+            from .shortcut_manager import ShortcutManager
             bar = self.menuBar()
 
             # File menu
@@ -4629,6 +4635,13 @@ if _PYSIDE:
             self.act_open_tutorials.setToolTip("Browse beginner and developer tutorials")
             m_help.addAction(self.act_open_tutorials)
             self.act_open_tutorials.triggered.connect(self._show_tutorials)
+            
+            # Keyboard Shortcuts Help (v2.9.33)
+            self.act_keyboard_shortcuts_help = QAction("Keyboard Shortcuts Help", self)
+            self.act_keyboard_shortcuts_help.setToolTip("View all available keyboard shortcuts")
+            self.act_keyboard_shortcuts_help.setShortcut("F1")
+            m_help.addAction(self.act_keyboard_shortcuts_help)
+            self.act_keyboard_shortcuts_help.triggered.connect(self._show_keyboard_shortcuts_help)
 
             # About menu
             m_about = bar.addMenu(tr("menu.about"))
@@ -4672,6 +4685,9 @@ if _PYSIDE:
             # About shortcut
             shortcut_about = QShortcut(ShortcutManager.get_key_sequence("about"), self)
             shortcut_about.activated.connect(self._about_dialog)
+            
+            # Apply all shortcuts to menu items with tooltips (v2.9.33)
+            self._apply_shortcuts_to_menu()
         
         def _apply_saved_settings(self):
             """Apply saved settings on startup."""
@@ -4892,28 +4908,146 @@ if _PYSIDE:
             self._build_menu()
         
         def _show_shortcuts(self):
-            """Show keyboard shortcuts dialog."""
+            """Show keyboard shortcuts customization dialog (v2.9.33)."""
+            from .gui import ShortcutsDialog
+            
+            dialog = ShortcutsDialog(self)
+            dialog.shortcuts_changed.connect(self._on_shortcuts_changed)
+            dialog.exec()
+        
+        def _show_keyboard_shortcuts_help(self):
+            """Show keyboard shortcuts help page (read-only view)."""
             from .shortcut_manager import ShortcutManager
-            from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QLineEdit, QLabel
             
             dialog = QDialog(self)
-            dialog.setWindowTitle("Keyboard Shortcuts")
-            dialog.setMinimumSize(600, 500)
+            dialog.setWindowTitle("Keyboard Shortcuts Reference")
+            dialog.setMinimumSize(700, 600)
             
             layout = QVBoxLayout()
             
+            # Search box
+            search_layout = QHBoxLayout()
+            search_label = QLabel("Search:")
+            search_box = QLineEdit()
+            search_box.setPlaceholderText("Type to filter shortcuts...")
+            search_layout.addWidget(search_label)
+            search_layout.addWidget(search_box)
+            layout.addLayout(search_layout)
+            
+            # Text view
             text_edit = QTextEdit()
             text_edit.setReadOnly(True)
             text_edit.setPlainText(ShortcutManager.format_shortcuts_table())
+            text_edit.setStyleSheet("font-family: monospace;")
+            layout.addWidget(text_edit)
+            
+            # Filter function
+            def filter_text():
+                search_text = search_box.text().lower()
+                full_text = ShortcutManager.format_shortcuts_table()
+                
+                if not search_text:
+                    text_edit.setPlainText(full_text)
+                    return
+                
+                # Filter lines containing search text
+                filtered_lines = []
+                for line in full_text.split('\n'):
+                    if search_text in line.lower():
+                        filtered_lines.append(line)
+                
+                text_edit.setPlainText('\n'.join(filtered_lines))
+            
+            search_box.textChanged.connect(filter_text)
+            
+            # Buttons
+            btn_layout = QHBoxLayout()
+            
+            customize_btn = QPushButton("Customize...")
+            customize_btn.setToolTip("Open shortcuts customization dialog")
+            customize_btn.clicked.connect(lambda: (dialog.close(), self._show_shortcuts()))
             
             close_btn = QPushButton("Close")
             close_btn.clicked.connect(dialog.accept)
             
-            layout.addWidget(text_edit)
-            layout.addWidget(close_btn)
+            btn_layout.addWidget(customize_btn)
+            btn_layout.addStretch()
+            btn_layout.addWidget(close_btn)
+            
+            layout.addLayout(btn_layout)
             
             dialog.setLayout(layout)
             dialog.exec()
+        
+        def _on_shortcuts_changed(self, new_custom_shortcuts: dict):
+            """Handle shortcuts changed from dialog (v2.9.33)."""
+            from .shortcut_manager import ShortcutManager
+            
+            # Update ShortcutManager
+            ShortcutManager.load_custom_shortcuts(new_custom_shortcuts)
+            
+            # Save to settings
+            self.settings.set_custom_shortcuts(new_custom_shortcuts)
+            
+            # Reapply shortcuts to all actions
+            self._apply_shortcuts_to_menu()
+            
+            # Show confirmation
+            QMessageBox.information(
+                self,
+                "Shortcuts Updated",
+                f"Keyboard shortcuts have been updated.\n\n"
+                f"{len(new_custom_shortcuts)} custom shortcut(s) active.\n\n"
+                "Restart may be required for some shortcuts to take effect."
+            )
+        
+        def _apply_shortcuts_to_menu(self):
+            """Apply shortcuts to all menu actions and update tooltips (v2.9.33)."""
+            from .shortcut_manager import ShortcutManager
+            
+            # Mapping: (action, shortcut_name, tooltip_description)
+            shortcuts_map = [
+                # File menu
+                (self.act_open_editor, "open_editor", "Open integrated file editor"),
+                
+                # Edit menu
+                (self.act_undo, "undo", "Undo last operation"),
+                (self.act_redo, "redo", "Redo last undone operation"),
+                
+                # Tools menu
+                (self.act_open_json_search, "open_json_search", "Search and filter JSON data"),
+                (self.act_open_rewriter, "open_json_rewriter", "Rewrite JSON structure"),
+                (self.act_open_set_operations, "open_set_operations", "Perform set operations on JSON"),
+                (self.act_open_ai_processor, "open_ai_processor", "Process JSON with AI"),
+                (self.act_open_case_converter, "open_case_converter", "Convert text case"),
+                (self.act_open_text_extractor, "open_text_extractor", "Extract text from files"),
+                (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON"),
+                (self.act_open_placeholder_replacer, "open_placeholder_replacer", "Replace placeholders in text"),
+                (self.act_open_translate, "open_translate", "Translate JSON content"),
+                (self.act_open_file_list, "open_file_list", "Manage file lists"),
+                (self.act_advanced_file_search, "advanced_file_search", "Advanced file search"),
+                
+                # View menu
+                (self.act_toggle_history, "toggle_history", "Show/hide operation history"),
+            ]
+            
+            # Add tutorials if available
+            if hasattr(self, 'act_open_tutorials'):
+                shortcuts_map.append((self.act_open_tutorials, "tutorials", "Browse tutorials"))
+            
+            # Apply shortcuts and tooltips
+            for action, shortcut_name, description in shortcuts_map:
+                # Apply shortcut
+                ShortcutManager.add_shortcut_to_action(action, shortcut_name)
+                
+                # Update tooltip with shortcut
+                shortcut = ShortcutManager.get_shortcut(shortcut_name)
+                if shortcut:
+                    tooltip = f"{description} ({shortcut})"
+                else:
+                    tooltip = description
+                action.setToolTip(tooltip)
         
         # Undo/Redo Methods (Task #12 - v2.9.8)
         
@@ -4983,6 +5117,233 @@ if _PYSIDE:
             if reply == QMessageBox.Yes:
                 self.settings.clear_recent_files()
                 QMessageBox.information(self, "Success", "Recent files cleared!")
+        
+        def keyPressEvent(self, event):
+            """Handle global keyboard shortcuts (v2.9.33)."""
+            from PySide6.QtCore import Qt
+            
+            key = event.key()
+            modifiers = event.modifiers()
+            
+            # Ctrl+Tab - Next dock (menu order)
+            if key == Qt.Key_Tab and modifiers == Qt.ControlModifier:
+                self._navigate_next_dock()
+                event.accept()
+                return
+            
+            # Ctrl+Shift+Tab - Previous dock (menu order)
+            elif key == Qt.Key_Tab and modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
+                self._navigate_prev_dock()
+                event.accept()
+                return
+            
+            # Ctrl+PageDown - Next dock (dynamic/creation order)
+            elif key == Qt.Key_PageDown and modifiers == Qt.ControlModifier:
+                self._navigate_next_dock_dynamic()
+                event.accept()
+                return
+            
+            # Ctrl+PageUp - Previous dock (dynamic/creation order)
+            elif key == Qt.Key_PageUp and modifiers == Qt.ControlModifier:
+                self._navigate_prev_dock_dynamic()
+                event.accept()
+                return
+            
+            # Ctrl+1-9 - Jump to specific dock
+            elif modifiers == Qt.ControlModifier:
+                if Qt.Key_1 <= key <= Qt.Key_9:
+                    dock_index = key - Qt.Key_1  # 0-based
+                    self._jump_to_dock(dock_index)
+                    event.accept()
+                    return
+            
+            # F11 - Fullscreen
+            elif key == Qt.Key_F11:
+                if self.isFullScreen():
+                    self.showNormal()
+                else:
+                    self.showFullScreen()
+                event.accept()
+                return
+            
+            # Pass to parent for default handling
+            super().keyPressEvent(event)
+        
+        def _get_all_docks(self):
+            """Get list of all QDockWidget instances (v2.9.33)."""
+            docks = []
+            for attr_name in dir(self):
+                if attr_name.startswith('dock_'):
+                    dock = getattr(self, attr_name, None)
+                    if dock and isinstance(dock, QDockWidget):
+                        docks.append(dock)
+            return docks
+        
+        def _get_visible_docks(self):
+            """Get list of visible QDockWidget instances (v2.9.33)."""
+            return [dock for dock in self._get_all_docks() if dock.isVisible()]
+        
+        def _get_dock_by_menu_order(self):
+            """Get docks in menu order (v2.9.33)."""
+            # Order matches Tools menu
+            ordered_names = [
+                'dock_json_search',      # 1
+                'dock_rewriter',         # 2
+                'dock_set_operations',   # 3
+                'dock_ai_processor',     # 4
+                'dock_case_converter',   # 5
+                'dock_text_extractor',   # 6
+                'dock_text_to_json',     # 7
+                'dock_placeholder_replacer',  # 8
+                'dock_translate',        # 9
+            ]
+            
+            docks = []
+            for name in ordered_names:
+                dock = getattr(self, name, None)
+                if dock and isinstance(dock, QDockWidget):
+                    docks.append(dock)
+            return docks
+        
+        def _navigate_next_dock(self):
+            """Navigate to next dock in menu order (v2.9.33)."""
+            visible_docks = self._get_visible_docks()
+            if not visible_docks:
+                return
+            
+            # Find current focused dock
+            focused_dock = None
+            for dock in visible_docks:
+                if dock.widget() and dock.widget().hasFocus():
+                    focused_dock = dock
+                    break
+            
+            # Get all docks in menu order
+            ordered_docks = self._get_dock_by_menu_order()
+            visible_ordered = [d for d in ordered_docks if d in visible_docks]
+            
+            if not visible_ordered:
+                return
+            
+            # Find next dock
+            if focused_dock and focused_dock in visible_ordered:
+                current_idx = visible_ordered.index(focused_dock)
+                next_idx = (current_idx + 1) % len(visible_ordered)
+                next_dock = visible_ordered[next_idx]
+            else:
+                # No dock focused, go to first
+                next_dock = visible_ordered[0]
+            
+            self._focus_dock(next_dock)
+        
+        def _navigate_prev_dock(self):
+            """Navigate to previous dock in menu order (v2.9.33)."""
+            visible_docks = self._get_visible_docks()
+            if not visible_docks:
+                return
+            
+            # Find current focused dock
+            focused_dock = None
+            for dock in visible_docks:
+                if dock.widget() and dock.widget().hasFocus():
+                    focused_dock = dock
+                    break
+            
+            # Get all docks in menu order
+            ordered_docks = self._get_dock_by_menu_order()
+            visible_ordered = [d for d in ordered_docks if d in visible_docks]
+            
+            if not visible_ordered:
+                return
+            
+            # Find previous dock
+            if focused_dock and focused_dock in visible_ordered:
+                current_idx = visible_ordered.index(focused_dock)
+                prev_idx = (current_idx - 1) % len(visible_ordered)
+                prev_dock = visible_ordered[prev_idx]
+            else:
+                # No dock focused, go to last
+                prev_dock = visible_ordered[-1]
+            
+            self._focus_dock(prev_dock)
+        
+        def _navigate_next_dock_dynamic(self):
+            """Navigate to next dock in creation order (v2.9.33)."""
+            visible_docks = self._get_visible_docks()
+            if not visible_docks:
+                return
+            
+            # Find current focused dock
+            focused_dock = None
+            for dock in visible_docks:
+                if dock.widget() and dock.widget().hasFocus():
+                    focused_dock = dock
+                    break
+            
+            # Find next dock
+            if focused_dock and focused_dock in visible_docks:
+                current_idx = visible_docks.index(focused_dock)
+                next_idx = (current_idx + 1) % len(visible_docks)
+                next_dock = visible_docks[next_idx]
+            else:
+                # No dock focused, go to first
+                next_dock = visible_docks[0]
+            
+            self._focus_dock(next_dock)
+        
+        def _navigate_prev_dock_dynamic(self):
+            """Navigate to previous dock in creation order (v2.9.33)."""
+            visible_docks = self._get_visible_docks()
+            if not visible_docks:
+                return
+            
+            # Find current focused dock
+            focused_dock = None
+            for dock in visible_docks:
+                if dock.widget() and dock.widget().hasFocus():
+                    focused_dock = dock
+                    break
+            
+            # Find previous dock
+            if focused_dock and focused_dock in visible_docks:
+                current_idx = visible_docks.index(focused_dock)
+                prev_idx = (current_idx - 1) % len(visible_docks)
+                prev_dock = visible_docks[prev_idx]
+            else:
+                # No dock focused, go to last
+                prev_dock = visible_docks[-1]
+            
+            self._focus_dock(prev_dock)
+        
+        def _jump_to_dock(self, dock_index: int):
+            """Jump to specific dock by index (0-based) (v2.9.33)."""
+            ordered_docks = self._get_dock_by_menu_order()
+            
+            if 0 <= dock_index < len(ordered_docks):
+                dock = ordered_docks[dock_index]
+                
+                # If dock is not visible, show it (Q10 answer: open if not open)
+                if not dock.isVisible():
+                    dock.show()
+                
+                self._focus_dock(dock)
+            # If dock doesn't exist, ignore silently (Q3 answer)
+        
+        def _focus_dock(self, dock: QDockWidget):
+            """Focus on a dock widget (v2.9.33)."""
+            if not dock or not dock.isVisible():
+                return
+            
+            # Raise the dock
+            dock.raise_()
+            dock.activateWindow()
+            
+            # Focus the widget inside
+            if dock.widget():
+                dock.widget().setFocus()
+            
+            # Update status bar
+            self.statusBar().showMessage(f"Focused: {dock.windowTitle()}", 2000)
         
         def closeEvent(self, event):
             """Handle window close event with thread cleanup (v2.7.0)."""

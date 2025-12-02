@@ -5,13 +5,13 @@
 Settings Manager for Clarify Application
 
 Handles persistent application settings like theme, language, recent files, etc.
-Sprint 8 - v1.1.0 Features
+v2.9.33 - Added keyboard shortcuts customization support
 """
 
 import json
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 
 class SettingsManager:
@@ -31,6 +31,7 @@ class SettingsManager:
         "ai_provider": "OpenAI (ChatGPT)",
         "remember_api_keys": False,  # For security, default False
         "default_extensions": ".txt,.py,.js,.ts,.jsx,.tsx",
+        "custom_shortcuts": {},  # v2.9.33 - Keyboard shortcuts customization
     }
     
     def __init__(self, config_file: Optional[str] = None):
@@ -107,6 +108,14 @@ class SettingsManager:
     def clear_recent_files(self) -> None:
         """Clear recent files list."""
         self.set("recent_files", [])
+    
+    def get_custom_shortcuts(self) -> Dict[str, str]:
+        """Get custom keyboard shortcuts (v2.9.33)."""
+        return self.get("custom_shortcuts", {})
+    
+    def set_custom_shortcuts(self, shortcuts: Dict[str, str]) -> None:
+        """Set custom keyboard shortcuts (v2.9.33)."""
+        self.set("custom_shortcuts", shortcuts)
     
     def reset_to_defaults(self) -> None:
         """Reset all settings to defaults."""
