@@ -83,12 +83,19 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
         apply_all_types: If True, apply filters to all files; if False, auto-detect .json (Sprint B Feature #1)
     
     Returns:
-        tuple: (output_text, substitution_map, removal_stats) where:
+        tuple: (output_text, substitution_map, removal_stats, detailed_stats) where:
             - output_text: processed file content
             - substitution_map: maps removed keys to replacements (Task #23)
             - removal_stats: dict with removal counters (Task v2.9.22)
+            - detailed_stats: list of DetailedStatEntry objects (Sprint B Feature #3 v2.9.31)
     """
     from .. import rewriter as rw
+    from ..rewriter.detailed_stats import get_global_collector
+    
+    # Enable detailed stats collection (Sprint B Feature #3)
+    collector = get_global_collector()
+    collector.clear()
+    collector.enable()
     
     # Initialize removal statistics counter
     stats = {
@@ -124,7 +131,8 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
             # But since we're only checking single file here, if it's filtered out, we skip it
             if not filtered_files:
                 # Return empty result (file was filtered out)
-                return "", {}, stats
+                collector.disable()
+                return "", {}, stats, []
     
     # Read input
     with open(args.input, 'r', encoding='utf-8') as f:
@@ -238,7 +246,11 @@ def cli_dedupe(args: argparse.Namespace, advanced_conditions: Optional[list[Cond
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write(output_text)
     
-    return output_text, substitution_map, stats
+    # Collect detailed stats and disable collector (Sprint B Feature #3)
+    detailed_stats = [entry.to_dict() for entry in collector.get_entries()]
+    collector.disable()
+    
+    return output_text, substitution_map, stats, detailed_stats
 
 
 class JsonRewriterDock(BaseDock):
@@ -791,9 +803,9 @@ class JsonRewriterDock(BaseDock):
             use_relative_paths=QSettings("Clarify", "JsonRewriter").value("use_relative_paths", False, type=bool),
         )
         
-        # Execute rewrite (Sprint B Feature #1: pass advanced conditions)
+        # Execute rewrite (Sprint B Feature #1: pass advanced conditions, Sprint B Feature #3: get detailed stats)
         try:
-            output_text, substitution_map, removal_stats = cli_dedupe(
+            output_text, substitution_map, removal_stats, detailed_stats = cli_dedupe(
                 ns,
                 advanced_conditions=self.advanced_conditions if self.advanced_filters_enabled else None,
                 apply_all_types=self.chk_apply_all_types.isChecked()
@@ -836,6 +848,20 @@ class JsonRewriterDock(BaseDock):
             stats_msg = format_removal_statistics(removal_stats)
             if stats_msg:
                 QMessageBox.information(self, "Done", f"Rewriter finished.\n\n{stats_msg}")
+                
+                # Sprint B Feature #3 (v2.9.31): Show detailed statistics dialog if there are stats
+                if detailed_stats:
+                    from .statistics_dialog import StatisticsDialog
+                    # Collect reference stats
+                    ref_stats = {
+                        'created': removal_stats.get('references_created', 0),
+                        'resolved': removal_stats.get('references_resolved', 0),
+                        'invalid': removal_stats.get('references_invalid', 0),
+                        'deleted': removal_stats.get('deleted', 0),
+                        'kept': removal_stats.get('kept', 0),
+                    }
+                    dialog = StatisticsDialog(detailed_stats, ref_stats, self)
+                    dialog.exec()
             else:
                 # Q5-C: Special message if nothing was removed
                 QMessageBox.information(self, "Done", "Rewriter finished.\n\nℹ️ No items were removed by any operation.")

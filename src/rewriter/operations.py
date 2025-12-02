@@ -2,33 +2,52 @@
 
 from typing import List, Dict, Optional, Set, Any, Tuple
 from .types import Obj, JSONNode, freeze
+from .detailed_stats import get_global_collector
 
 
-def dedupe(node: JSONNode) -> Tuple[JSONNode, int]:
+def dedupe(node: JSONNode, path: str = "root") -> Tuple[JSONNode, int]:
     """Remove duplicate (key, value) pairs in Obj nodes, recursively.
+    
+    Args:
+        node: JSON node to process
+        path: Current path in JSON tree (for detailed stats)
     
     Returns:
         Tuple of (processed_node, removed_count)
     """
     removed_count = 0
+    collector = get_global_collector()
     
     if isinstance(node, Obj):
         seen: Set = set()
+        seen_keys: Dict = {}  # sig -> (key, path) for detailed stats
         out = Obj()
         for k, v in node:
-            v2, child_removed = dedupe(v)
+            current_path = f"{path}.{k}"
+            v2, child_removed = dedupe(v, current_path)
             removed_count += child_removed
             sig = (k, freeze(v2))
             if sig in seen:
                 removed_count += 1
+                # Add detailed stat entry
+                kept_key_path = seen_keys.get(sig, ("", ""))[1]
+                collector.add_entry(
+                    operation="dedupe",
+                    original_key=current_path,
+                    kept_key=kept_key_path,
+                    similarity=100.0,
+                    line_numbers="",
+                    count=1
+                )
                 continue
             seen.add(sig)
+            seen_keys[sig] = (k, current_path)
             out.append((k, v2))
         return out, removed_count
     if isinstance(node, list):
         result = []
-        for x in node:
-            processed, child_removed = dedupe(x)
+        for i, x in enumerate(node):
+            processed, child_removed = dedupe(x, f"{path}[{i}]")
             removed_count += child_removed
             result.append(processed)
         return result, removed_count
