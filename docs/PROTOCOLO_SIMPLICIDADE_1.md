@@ -6,6 +6,16 @@
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
 
+**Changelog v1.7** (02/12/2025):
+- ✅ **[CRÍTICO]** Adicionada Etapa 8.5: Revisão de Código (ANTES dos testes)
+- ✅ 9 Critérios de Qualidade: Omissão, Ambiguidade, Fato Incorreto, Redundância, Inconsistência, Falta de Integração, Menor Coesão, Maior Acoplamento, Informação Estranha
+- ✅ Checklist completo de revisão (36 itens de verificação)
+- ✅ Ferramentas recomendadas (pylint, vulture, radon, black, isort)
+- ✅ Processo de revisão CLI e GUI detalhado
+- ✅ Exemplos práticos de problemas e correções
+- ✅ Integração com Etapa 9 (testar após revisar)
+- ✅ Total de etapas: 12 → 13 (8.5 adicionada entre 8 e 9)
+
 **Changelog v1.6**:
 - ✅ **[AVANÇADO]** Adicionada Etapa 9.2: Testes em Threads/Processos com Monitoramento
 - ✅ Execução de testes em processo separado (`multiprocessing.Process`)
@@ -52,7 +62,7 @@
 
 ---
 
-## 📋 Espinha Dorsal do Protocolo (12 Etapas)
+## 📋 Espinha Dorsal do Protocolo (13 Etapas)
 
 **Resumo Executivo**:
 1. 📚 Ler a documentação
@@ -63,6 +73,7 @@
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
 7. 🔗 **Verificar integração com programa principal**
 8. ⌨️ **Verificar implementação CLI**
+8.5. 🔍 **Revisão de Código (9 critérios de qualidade)**
 9. 🧪 Fazer testes (100% cobertura)
 🔟 🧹 Organizar pasta raiz
 1️⃣1️⃣ 📝 Preencher documentação
@@ -797,17 +808,196 @@ clarify text2json data.csv --format csv --pretty -o output.json
 
 ---
 
+#### 🔍 **Etapa 8.5 - Revisão de Código (ANTES DOS TESTES)**
+
+**Objetivo**: Detectar problemas de qualidade **ANTES** de criar testes, economizando tempo e garantindo que os testes validam código correto.
+
+**Critérios de Qualidade (8 Dimensões)**:
+
+1. **❌ Omissão** - Código incompleto ou funcionalidade faltando
+   - Falta de validação de entrada
+   - Falta de tratamento de erro
+   - Falta de cleanup/dispose de recursos
+   - Funcionalidade parcialmente implementada
+   - **Exemplo**: Método que não fecha arquivo aberto
+
+2. **🤔 Ambiguidade** - Código difícil de entender ou com múltiplas interpretações
+   - Nomes de variáveis genéricos (`data`, `temp`, `x`)
+   - Lógica complexa sem comentários
+   - Magic numbers sem constantes nomeadas
+   - **Exemplo**: `if x > 5 and y < 3: ...` (o que é 5 e 3?)
+
+3. **❗ Fato Incorreto** - Lógica errada ou comportamento inesperado
+   - Operador lógico errado (`and` vs `or`)
+   - Comparação invertida (`>` vs `<`)
+   - Off-by-one errors
+   - Cálculos matemáticos incorretos
+   - **Exemplo**: `if len(items) >= 0:` (sempre True)
+
+4. **♻️ Redundância** - Código duplicado ou desnecessário
+   - Código duplicado em múltiplos lugares
+   - Verificações redundantes
+   - Imports não utilizados
+   - Variáveis criadas mas não usadas
+   - **Exemplo**: Mesma validação repetida 5 vezes
+
+5. **⚠️ Inconsistência** - Padrões diferentes para mesma tarefa
+   - Mistura de convenções de nomenclatura
+   - Tratamento de erro inconsistente
+   - Formatação inconsistente
+   - **Exemplo**: Usar `camelCase` e `snake_case` no mesmo arquivo
+
+6. **🔗 Falta de Integração** - Componentes não conectados corretamente
+   - Função criada mas não chamada
+   - Botão GUI sem handler conectado
+   - Módulo importado mas não usado
+   - CLI definido mas não roteado
+   - **Exemplo**: Botão "Save" sem `.clicked.connect()`
+
+7. **🧩 Menor Coesão** - Classe/módulo fazendo coisas não relacionadas
+   - Classe com responsabilidades múltiplas
+   - Método fazendo muitas coisas diferentes
+   - Módulo misturando conceitos
+   - **Exemplo**: Classe `UserManager` que também faz logging e cache
+
+8. **🔗 Maior Acoplamento** - Dependências excessivas entre componentes
+   - Classe dependendo de muitas outras
+   - Imports circulares
+   - Dados globais compartilhados
+   - **Exemplo**: Classe GUI acessando diretamente banco de dados
+
+9. **🗑️ Informação Estranha** - Código não relacionado ao propósito
+   - Comentários desatualizados
+   - Código comentado sem razão
+   - Debug prints esquecidos
+   - TODOs antigos não resolvidos
+   - **Exemplo**: `print("DEBUG: aqui!")` no código de produção
+
+**Checklist de Revisão (Executar ANTES da Etapa 9)**:
+
+```markdown
+### Revisão de Código - [Nome da Feature]
+
+#### 1. Omissão ❌
+- [ ] Todas as validações de entrada implementadas?
+- [ ] Todos os erros tratados adequadamente?
+- [ ] Recursos (files, connections) fechados corretamente?
+- [ ] Funcionalidade 100% completa conforme especificação?
+
+#### 2. Ambiguidade 🤔
+- [ ] Nomes de variáveis claros e descritivos?
+- [ ] Lógica complexa comentada/documentada?
+- [ ] Magic numbers substituídos por constantes?
+- [ ] Código legível sem necessidade de debugger?
+
+#### 3. Fato Incorreto ❗
+- [ ] Operadores lógicos corretos (and/or)?
+- [ ] Comparações na direção certa (</>/==)?
+- [ ] Loops com condições corretas?
+- [ ] Cálculos verificados manualmente?
+
+#### 4. Redundância ♻️
+- [ ] Código duplicado eliminado ou extraído?
+- [ ] Imports não utilizados removidos?
+- [ ] Variáveis não usadas removidas?
+- [ ] Verificações redundantes eliminadas?
+
+#### 5. Inconsistência ⚠️
+- [ ] Nomenclatura consistente (snake_case em Python)?
+- [ ] Tratamento de erro padronizado?
+- [ ] Formatação consistente (usar formatter)?
+- [ ] Padrão de retorno consistente (tuple/dict)?
+
+#### 6. Falta de Integração 🔗
+- [ ] Funções criadas estão sendo chamadas?
+- [ ] Botões GUI conectados a handlers?
+- [ ] CLI subcomando roteado corretamente?
+- [ ] Módulo integrado no sistema principal?
+
+#### 7. Menor Coesão 🧩
+- [ ] Cada classe tem UMA responsabilidade clara?
+- [ ] Métodos fazem UMA coisa bem definida?
+- [ ] Módulos agrupam conceitos relacionados?
+- [ ] SRP (Single Responsibility Principle) respeitado?
+
+#### 8. Maior Acoplamento 🔗
+- [ ] Dependências minimizadas (Law of Demeter)?
+- [ ] Sem imports circulares?
+- [ ] Interfaces/abstrações usadas quando necessário?
+- [ ] Componentes podem ser testados isoladamente?
+
+#### 9. Informação Estranha 🗑️
+- [ ] Debug prints removidos?
+- [ ] Código comentado removido ou justificado?
+- [ ] Comentários atualizados e relevantes?
+- [ ] TODOs resolvidos ou documentados?
+```
+
+**Ferramentas Recomendadas**:
+```bash
+# Verificar imports não utilizados
+pylint --disable=all --enable=unused-import src/
+
+# Verificar código morto
+vulture src/ --min-confidence 80
+
+# Verificar complexidade (coesão baixa)
+radon cc src/ -a -nb
+
+# Verificar duplicação (redundância)
+pylint --disable=all --enable=duplicate-code src/
+
+# Formatação automática (inconsistência)
+black src/
+isort src/
+```
+
+**Processo Revisão CLI e GUI**:
+1. **Ler código linha por linha** (não assumir que está correto)
+2. **Aplicar checklist** para cada arquivo modificado
+3. **Corrigir problemas encontrados** antes de testar
+4. **Re-revisar código corrigido** (problemas podem introduzir novos problemas)
+5. **Documentar limitações conhecidas** (se houver)
+
+**Exemplo de Problema Real**:
+```python
+# ❌ ANTES (Ambiguidade + Fato Incorreto)
+def process(x, y):
+    if x > 5:  # o que significa 5?
+        return y * 2  # por que * 2?
+    return y
+
+# ✅ DEPOIS (Claro + Correto)
+MAX_RETRY_COUNT = 5
+def calculate_retry_delay(attempt: int, base_delay: float) -> float:
+    """Calculate exponential backoff delay for retry attempts."""
+    if attempt > MAX_RETRY_COUNT:
+        return base_delay * (2 ** MAX_RETRY_COUNT)  # Cap at max retries
+    return base_delay * (2 ** attempt)
+```
+
+**Por quê?**: 
+- Detectar problemas **antes** de criar testes (economiza tempo)
+- Garantir que testes validam **código correto**
+- Melhorar **qualidade geral** do código
+- Facilitar **manutenção futura**
+- Reduzir **bugs em produção**
+
+---
+
 ### 9️⃣ **Fazer Testes**
 - **Obrigatório**: Testes unitários para cada função pública
 - **Meta**: 100% de cobertura das funcionalidades implementadas
 - **Ferramentas**: `unittest` (nativo) ou `pytest`
 - **CRÍTICO**: Testar o sistema **após integração** (GUI + CLI integrados)
+- **IMPORTANTE**: Executar **APÓS Etapa 8.5** (Revisão de Código)
 
 **Categorias de Testes**:
 1. **Happy Path**: Casos normais de uso
 2. **Edge Cases**: Valores vazios, None, strings longas
 3. **Error Handling**: Exceções esperadas
 4. **Integration**: Fluxo completo (incluindo integração GUI/CLI)
+5. **Quality Validation**: Testes que validam ausência dos 9 problemas da Etapa 8.5
 
 **Exemplo Task #23**:
 ```python

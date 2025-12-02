@@ -43,6 +43,16 @@ import json
 import argparse
 from typing import List, Dict, Any, Optional, Tuple, Iterable, Union
 
+# ----------------------------- Constants -------------------------------------
+
+# UI Constants
+MAX_SCROLL_HEIGHT = 150       # Maximum height (px) for paths scroll area
+SPLITTER_SIZES = [400, 600]   # Default splitter sizes (40% controls, 60% results)
+
+# Parser Constants
+ATTR_SCAN_WINDOW_SIZE = 500   # Characters to scan for attributes after opening tag
+MAX_PREVIEW_MATCHES = 50      # Maximum scope matches to show in preview dialog
+
 # ----------------------------- Utilities -------------------------------------
 
 JSONLike = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -69,14 +79,12 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
     (when drop_standard=True). If none exists, just [file_root].
     If drop_standard=False, return [file_root] + full stack.
     """
-    #print(f"drop_standard: {drop_standard}, stack: {stack}")
     if not drop_standard:
         
         return [file_root] + stack
 
     # find deepest custom tag from right to left
     for i in range(len(stack) - 1, -1, -1):
-        #print(f"stack[{i}]: {stack[i]}, not is_standard_tag({stack[i]}): {not is_standard_tag(stack[i])}")
         if not is_standard_tag(stack[i]):
             return [file_root] + stack[:i + 1]
     return [file_root]
@@ -160,7 +168,6 @@ def insert_nested(d: Dict[str, Any], keys: List[str], leaf_value: Any) -> None:
     Insert a value into nested dict creating intermediate dicts as needed.
     If an existing leaf is a dict and we set a value, we keep merging.
     """
-    #print(f"d: {d}, keys: {keys}, leaf_value: {leaf_value}")
     curr = d
     for k in keys[:-1]:
         if k not in curr or not isinstance(curr[k], dict):
@@ -173,7 +180,6 @@ def insert_nested(d: Dict[str, Any], keys: List[str], leaf_value: Any) -> None:
         curr[last].update(leaf_value)
     else:
         curr[last] = leaf_value
-    #print(f"curr: {curr}")
 
 def read_text(path: str) -> str:
     with open(path, "r", encoding="utf-8", errors="replace") as f:
@@ -624,7 +630,6 @@ class JSXParser:
 
     
     def parse(self, text: str, stack: List[str] = []) -> Iterable[Tuple[List[str], str, Optional[str], Optional[str]]]:
-        #print(f"DEBUG 697 parse | starting parse..., stack: {stack}")
         i = 0
         n = len(text)
         while i < n:
@@ -636,7 +641,6 @@ class JSXParser:
                         stack = stack[:j]
                         break
                 i = mclose.end()
-                #print(f"DEBUG 715 JSXParser.parse | tag: {tag}, stack: {stack}, i: {i}")
                 continue
 
             mopen = self.match_opening_tag(text, i)
@@ -647,7 +651,6 @@ class JSXParser:
                 have_close_tag = bool(re.findall(rf"</\s*({tag})\s*>", text))
                 stack.append(tag)
 
-                #print(f"DEBUG 715 JSXParser.parse | tag: {tag}, attrs_src: {attrs_src}, is_self: {is_self}, have_close_tag: {have_close_tag}, stack: {stack}")
                 
                 # =========================
                 # TAG-CONTENT MODE (UNCHECKED)
@@ -664,19 +667,15 @@ class JSXParser:
                             inner = text[mopen["end"]:span[0]] if span else ""
                             items = self._extract_non_tag_items(inner)
 
-                        #print(f"DEBUG 733 span: {span}, stack: {stack}, tag: {tag}, items: {items},")# inner: {inner}")
                         if inner and not self.no_standard:
-                            #print(f"DEBUG 743 parse | Starting a new recursive..., stack: {stack}, tag: {tag}")
                             for stack, tag, tag, item in self.parse(inner, stack):
                                 yield(stack, tag, tag, item)
-                        #print(f"DEBUG 739 parse | new recursive completed! stack: {stack}, tag: {tag}")
                         # Emit one row per item (text line or non-JSX expression)
                         # Emit a single row per tag with a single combined value
                         # Emit one row per item (text line or non-JSX expression)
                         for it in items:
                             new_item = it.strip()
                             if new_item and new_item not in self.items:
-                                #print(f"DEBUG 740 parse | it.strip()..., self.no_standard: {self.no_standard}, inner: {inner}")
                                 # key_for_path = tag (we'll keep tag as the key unless "drop standard" hides it)
                                 self.items.append(new_item)
                                 yield (list(stack), tag, tag, new_item)
@@ -734,7 +733,6 @@ class JSXParser:
                                 break
                             j = j2
 
-                #print(f"DEBUG 732 parse | stack: {stack}, tag: {tag}, key_matched: {key_matched}, value_text: {value_text}")
                 # emit one row for this opening/self tag (attribute mode)
                 yield (list(stack), tag, key_matched, value_text)
 
@@ -792,7 +790,7 @@ class GenericScopeParser:
                 node_name = mstart.groupdict().get("name", "scope")
                 stack.append(node_name)
                 # try to scan attributes right after start token (optional)
-                tail = text[mstart.end(): mstart.end()+500]
+                tail = text[mstart.end(): mstart.end()+ATTR_SCAN_WINDOW_SIZE]
                 found_value: Optional[str] = None
                 for rx in (self.ATTR_DQ_RE, self.ATTR_SQ_RE, self.ATTR_BRACE_STRING_RE, self.ATTR_BRACE_DQSTRING_RE):
                     am = rx.search(tail)
@@ -1143,7 +1141,6 @@ class Extractor:
         return True
     
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
-        #print("DEBUG 1420 Extractor.process_text | init")
         if self.mode == "jsx":
             parser = JSXParser(self.param, match_all=self.match_all, is_attribute_mode=self.is_attribute_mode, no_standard=self.no_standard)
         else:
@@ -1152,9 +1149,7 @@ class Extractor:
             parser = GenericScopeParser(self.param, self.start_regex, self.end_regex, match_all=self.match_all)
 
         out_lines, merged_json = [], {}
-        #print("DEBUG 1242 Extractor.process_text begin...")
         for stack, tag, key_matched, value in parser.parse(text, []):
-            #print(f"DEBUG 1326 process_text | tag: {tag}, key_matched: {key_matched}, value: {value}")
             # choose which key goes into the path
             #effective_key = key_matched if (self.match_all and key_matched) else self.param
             # Attribute mode: include the attribute key when requested
@@ -1162,18 +1157,15 @@ class Extractor:
             
             if self.only_strings:
                 is_only_strings = self.check_value_if_it_is_just_string(value)
-                #print(f"DEBUG 1432 process_text | is_only_strings: {is_only_strings}")
                 if not is_only_strings:
                     continue
             
             keys_to_avoid = None
             if self.avoid_keys:
                 keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
-                #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                 if self.avoid_keys_parameter == self.CONTAINS and any(list(filter(lambda x: x in key_matched or x in tag or x in value,keys_to_avoid))) or self.avoid_keys_parameter == self.EQUALS and any(list(filter(lambda x: x == key_matched or x == tag or x == value,keys_to_avoid))):
                     continue
             
-            #print(f"DEBUG 1169 process_text | continue tag: {tag}, key_matched: {key_matched}") 
             if self.is_attribute_mode:
                 # Skip when this tag doesn't have the attribute
                 
@@ -1186,16 +1178,13 @@ class Extractor:
                 if self.avoid_keys:
                     if not keys_to_avoid:
                         keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
-                    #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                     if self.avoid_keys_parameter == self.CONTAINS and list(filter(lambda x: any([x in token for token in tokens]), keys_to_avoid)) or self.avoid_keys_parameter == self.EQUALS and list(filter(lambda x: any([x == token for token in tokens]), keys_to_avoid)):
                         continue
-                #print(f"DEBUG 1178 Extractor.process_text | effective_key: {effective_key}, tokens: {tokens}")
                 if tokens:
                     out_lines.append(path_join(tokens))
                     if self.convert_to_json:
                         j = self._record_text_kv(tokens, value)
                         merged_json = self.deep_merge(merged_json, j)
-                        #print(f"DEBUG 1185 Extractor.process_text | j: {j}, merged_json: {merged_json}")
             else:
                 # TAG-CONTENT MODE
                 tag_name = tag
@@ -1209,7 +1198,6 @@ class Extractor:
                 if self.avoid_keys:
                     if not keys_to_avoid:
                         keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
-                    #print(f"DEBUG 1165 process_text | keys_to_avoid: {keys_to_avoid}, key_matched in keys_to_avoid: {key_matched in keys_to_avoid}, tag in keys_to_avoid: {tag in keys_to_avoid}")
                     if self.avoid_keys_parameter == self.CONTAINS and list(filter(lambda x: any([x in token for token in tokens]), keys_to_avoid)) or self.avoid_keys_parameter == self.EQUALS and list(filter(lambda x: any([token == x for token in tokens]), keys_to_avoid)):
                         continue
                     
@@ -1228,7 +1216,6 @@ class Extractor:
                 else:
                     merged_json = self.prune_to_key(merged_json, self.param, -2)
         
-        #print(f"DEBUG 1449 Extractor.process_text | out_lines: {out_lines}, merged_json: {merged_json}")
         return out_lines, merged_json
 
     def json_to_js_literal(self, data, indent=2):
@@ -1244,7 +1231,6 @@ class Extractor:
             ancestor present in `stack`. If none exists, anchor at root.
         - If not dropping, keep the entire stack.
         """
-        #print(f"DEBUG 1391 _nearest_kept_ancestor_tokens | file_root_token: {file_root_token}, stack: {stack}")
         return kept_prefix(file_root_token, stack, drop_standard=self.no_standard)
 
     # def _nearest_kept_ancestor_tokens(self, file_root_token: str, stack: List[str]) -> List[str]:
@@ -1297,7 +1283,6 @@ class Extractor:
 
         file_patterns = self.file_extensions
         for fp in list_files(path, file_patterns):
-            #print(f"DEBUG 1518 Extractor | file_patterns: {fp}")
             try:
                 text = read_text(fp)
             except Exception as e:
@@ -1322,7 +1307,6 @@ class Extractor:
 
 
             lines, j = self.process_text(file_root, text)
-            #print(f"DEBUG 1518 Extractor | lines: {lines}, j: {j}")
             if lines:
                 all_lines.append(f"# File: {fp}")
                 all_lines.extend(lines)
@@ -1334,12 +1318,10 @@ class Extractor:
         json_text = None
         
         if self.convert_to_json:
-            #print(merged_json)
             if self.with_quotation_marks:
                 json_text = json.dumps(merged_json, ensure_ascii=False, indent=self.indentation)
             else:
                 json_text = self.json_to_js_literal(merged_json)
-        #print(result_text, json_text)
         return result_text, json_text
 
 
@@ -1476,7 +1458,7 @@ class MainWindow(QMainWindow):
         # Scroll area for multiple path entries
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setMaximumHeight(150)
+        scroll_area.setMaximumHeight(MAX_SCROLL_HEIGHT)
         
         self.paths_container = QWidget()
         self.paths_layout = QVBoxLayout(self.paths_container)
@@ -1633,7 +1615,7 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(results_widget)
         
         # Set initial splitter proportions (40% controls, 60% results)
-        self.splitter.setSizes([400, 600])
+        self.splitter.setSizes(SPLITTER_SIZES)
 
         # Initial hints
         self.cb_mode.currentTextChanged.connect(self._toggle_generic_fields)
@@ -1801,8 +1783,8 @@ class MainWindow(QMainWindow):
                 else:
                     break
                 
-                if len(matches) >= 50:  # Limit preview to 50 matches
-                    matches.append("... (truncated, more than 50 matches)")
+                if len(matches) >= MAX_PREVIEW_MATCHES:
+                    matches.append(f"... (truncated, more than {MAX_PREVIEW_MATCHES} matches)")
                     break
             
             if not matches:
@@ -1957,10 +1939,14 @@ def main(argv=None):
     extractor = Extractor(
         param=args.param,
         mode=args.mode,
+        avoid_keys="",  # CLI doesn't have avoid_keys yet
+        avoid_keys_parameter="equals",  # Default value
         include_key=args.include_key,
         include_value=args.include_value,
         no_standard=args.no_standard,
         convert_to_json=args.convert_to_json,
+        with_quotation_marks=False,  # CLI default: no quotes
+        only_strings=False,  # CLI default: all types
         indentation=args.indentation,
         case_style=args.case,
         limit=args.limit,
