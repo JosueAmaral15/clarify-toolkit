@@ -131,7 +131,7 @@ from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
     JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-    EditorDock, TextToJsonDock
+    EditorDock, TextToJsonDock, JSXExtractorDock
 )
 
 # ---------------------------------------------------------------------------
@@ -4246,6 +4246,12 @@ if _PYSIDE:
             self.addDockWidget(Qt.RightDockWidgetArea, self.dock_case_converter)
             self.dock_case_converter.hide()
         
+        def _open_jsx_extractor(self):
+            """Open JSX Parameter Extractor dock."""
+            self.dock_jsx_extractor = JSXExtractorDock(self)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_jsx_extractor)
+            self.dock_jsx_extractor.hide()
+        
         def _open_text_to_json(self):
             """Open Text to JSON Converter dock (Task #49 - v2.9.24)."""
             self.dock_text_to_json = TextToJsonDock(self)
@@ -4338,10 +4344,91 @@ if _PYSIDE:
             self.dock_case_converter.show()
         
         def _show_text_to_json(self):
-            """Show Text to JSON dock (create on-demand)."""
+            """Show converter selection dialog and open chosen dock."""
+            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QButtonGroup, QRadioButton
+            
+            # Create selection dialog
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Select Converter Type")
+            dialog.setModal(True)
+            dialog.setMinimumWidth(400)
+            
+            layout = QVBoxLayout(dialog)
+            
+            # Title
+            title_label = QLabel("<b>Choose the type of converter:</b>")
+            layout.addWidget(title_label)
+            
+            # Radio buttons
+            btn_group = QButtonGroup(dialog)
+            
+            radio_jsx = QRadioButton("JSX Parameter Extractor")
+            radio_jsx.setToolTip(
+                "Extract parameters and attributes from JSX/TSX files.\n"
+                "Scans React component files and generates hierarchical JSON."
+            )
+            radio_jsx.setChecked(True)  # Default
+            btn_group.addButton(radio_jsx)
+            layout.addWidget(radio_jsx)
+            
+            radio_text = QRadioButton("Text Format Converter")
+            radio_text.setToolTip(
+                "Convert text formats to JSON (CSV, YAML, INI, etc.).\n"
+                "Paste text and convert to JSON structure."
+            )
+            btn_group.addButton(radio_text)
+            layout.addWidget(radio_text)
+            
+            # Description labels
+            layout.addSpacing(10)
+            desc_jsx = QLabel(
+                "• <b>JSX Parameter Extractor:</b> For React/JSX/TSX files<br>"
+                "  Extract props, attributes, and tag content from components<br>"
+                "  Requires file or directory path"
+            )
+            desc_jsx.setWordWrap(True)
+            layout.addWidget(desc_jsx)
+            
+            layout.addSpacing(5)
+            desc_text = QLabel(
+                "• <b>Text Format Converter:</b> For text-based formats<br>"
+                "  Convert CSV, YAML, INI, TOML, etc. to JSON<br>"
+                "  Paste text directly into the converter"
+            )
+            desc_text.setWordWrap(True)
+            layout.addWidget(desc_text)
+            
+            # Buttons
+            layout.addSpacing(10)
+            btn_ok = QPushButton("Open")
+            btn_ok.setDefault(True)
+            btn_ok.clicked.connect(dialog.accept)
+            layout.addWidget(btn_ok)
+            
+            btn_cancel = QPushButton("Cancel")
+            btn_cancel.clicked.connect(dialog.reject)
+            layout.addWidget(btn_cancel)
+            
+            # Show dialog and handle result
+            if dialog.exec() == QDialog.Accepted:
+                if radio_jsx.isChecked():
+                    self._show_jsx_extractor()
+                else:
+                    self._show_text_format_converter()
+        
+        def _show_jsx_extractor(self):
+            """Show JSX Parameter Extractor dock (create on-demand)."""
+            if not hasattr(self, 'dock_jsx_extractor'):
+                self._open_jsx_extractor()
+            self.dock_jsx_extractor.show()
+            self.dock_jsx_extractor.raise_()
+        
+        def _show_text_format_converter(self):
+            """Show Text Format Converter dock (create on-demand)."""
             if not hasattr(self, 'dock_text_to_json'):
                 self._open_text_to_json()
             self.dock_text_to_json.show()
+            self.dock_text_to_json.raise_()
         
         def _show_file_list(self):
             """Show File List dock (create on-demand)."""

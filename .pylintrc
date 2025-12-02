@@ -1,0 +1,57 @@
+[MASTER]
+# Use multiple processes to speed up Pylint
+jobs=4
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+[MESSAGES CONTROL]
+# Disable specific warnings:
+# C0111: missing-docstring
+# C0103: invalid-name (allow short names like i, j, k)
+# R0913: too-many-arguments
+# R0902: too-many-instance-attributes
+# R0914: too-many-locals
+# R0915: too-many-statements
+# C0301: line-too-long (handled by black)
+# W0107: unnecessary-pass
+# R1705: no-else-return
+# R0912: too-many-branches
+# W0212: protected-access (allow _method calls)
+# C0302: too-many-lines
+disable=C0111,C0103,R0913,R0902,R0914,R0915,C0301,W0107,R1705,R0912,W0212,C0302
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Maximum number of lines in a module
+max-module-lines=2000
+
+[BASIC]
+# Good variable names which should always be accepted
+good-names=i,j,k,e,ex,Run,_,fp,fn,f,v,s,x,y,n,m,t,r,am,rx,j2,cb,ed,chk,btn
+
+# Regular expression matching correct variable names
+variable-rgx=[a-z_][a-z0-9_]{1,30}$
+
+# Regular expression matching correct constant names
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=10
+
+# Maximum number of attributes for a class
+max-attributes=15
+
+# Maximum number of boolean expressions in an if statement
+max-bool-expr=5
+
+[IMPORTS]
+# Allow wildcard imports from packages
+allow-wildcard-with-all=no
+
+[TYPECHECK]
+# List of class names for which member attributes should not be checked
+ignored-classes=PySide6.QtWidgets,PySide6.QtCore,PySide6.QtGui

@@ -1,0 +1,54 @@
+# Pre-commit hooks configuration for Clarify project
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Black: Python code formatter
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+        args: ['--line-length=120']
+        files: '^src/.*\.py$|^test_.*\.py$'
+
+  # isort: Import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=120']
+        files: '^src/.*\.py$|^test_.*\.py$'
+
+  # Pylint: Python linter
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          [
+            '--disable=C0111,C0103,R0913,R0902,R0914,R0915,C0301,W0107,R1705,R0912,W0212,C0302',
+            '--max-line-length=120',
+            '--good-names=i,j,k,e,ex,Run,_,fp,fn,f,v,s,x,y,n,m,t,r,am,rx,j2',
+          ]
+        files: '^src/.*\.py$'
+
+  # Trailing whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        files: '^src/.*\.py$|^docs/.*\.md$'
+      - id: end-of-file-fixer
+        files: '^src/.*\.py$'
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-json
+        files: '\.json$'
+      - id: mixed-line-ending
+        args: ['--fix=lf']

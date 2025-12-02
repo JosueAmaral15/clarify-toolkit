@@ -54,14 +54,29 @@
 - Indexação inteligente com dot-path notation
 - Suporte para arquivos grandes (>10MB)
 
-#### 📄 Text Extractor (ENHANCED)
-- **3 modos de extração**: JSX Attributes, Tag Content, Generic Scope
-- **4 estilos de normalização**: snake_case, camelCase, PascalCase, kebab-case
-- Smart truncation com word boundary awareness
-- Filtro de tags HTML padrão
-- Path building configurável (add key, add value)
-- Nested JSON output automático
-- TypeScript export support
+#### 🎯 JSX Parameter Extractor (NEW in v2.9.0)
+- **Extração inteligente de parâmetros** de arquivos JSX/TSX/React
+- **Dual-mode selection**: JSX Extractor (file-based) ou Text Converter (text-based)
+- **2 modos de parsing**: Attribute mode (key="value") e Tag-content mode (inner text)
+- **Path + "Is file?" checkbox**: Seleciona arquivo único ou diretório recursivo
+- **Filtros avançados**: 
+  - `only_strings`: Filtra apenas strings literais (sem expressões `{var}`)
+  - `avoid_keys`: Exclui chaves específicas (ex: className, data-testid)
+  - `no_standard`: Remove tags HTML padrão (div, span, p) do output
+- **Normalização configurável**: 
+  - 4 case styles (snake_case, camelCase, PascalCase, kebab-case)
+  - Smart truncation com limit + avoid_cut (word boundary awareness)
+  - Uppercase option
+- **Output hierárquico JSON**: Estrutura aninhada reflete componente tree
+- **Segurança**: Path traversal prevention, file extension validation
+- **Extensions filter**: .tsx, .jsx, .js, .ts (customizável)
+- **Generic mode**: Delimitadores regex customizados para outros formatos
+- Ver documentação completa em [docs/jsx-extractor-guide.md](docs/jsx-extractor-guide.md)
+
+#### 📄 Text Extractor (LEGACY)
+- **Modo texto básico**: Conversão simples de texto para JSON
+- Use o **JSX Parameter Extractor** para extração de arquivos React/JSX
+- Interface de seleção: escolha entre JSX Extractor ou Text Converter
 
 #### 🤖 AI Processor (ENHANCED)
 - **Integração com OpenAI** (ChatGPT) e Google Gemini

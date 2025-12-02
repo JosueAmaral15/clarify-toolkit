@@ -1,7 +1,7 @@
 [project]
 name = "clarify"
-version = "0.1.0"
-description = ""
+version = "2.9.0"
+description = "System Management JSON Files - JSX/TSX Parameter Extractor"
 authors = [
     {name = "Josué Amaral",email = "josueamaral15@gmail.com"}
 ]
@@ -11,7 +11,75 @@ dependencies = [
     "pyside6 (>=6.9.3,<7.0.0)"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "pylint>=3.0.0",
+    "isort>=5.0.0",
+    "pre-commit>=3.0.0",
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ['py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | old
+  | add
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = ["old", "add", ".venv", "venv", "build", "dist"]
+known_first_party = ["src"]
+known_third_party = ["PySide6"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.pylint.main]
+jobs = 4
+persistent = true
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "R0913",  # too-many-arguments
+    "R0902",  # too-many-instance-attributes
+    "R0914",  # too-many-locals
+    "R0915",  # too-many-statements
+    "C0301",  # line-too-long
+    "W0107",  # unnecessary-pass
+    "R1705",  # no-else-return
+    "R0912",  # too-many-branches
+    "W0212",  # protected-access
+    "C0302",  # too-many-lines
+]
+
+[tool.pylint.format]
+max-line-length = 120
+max-module-lines = 2000
+
+[tool.pylint.basic]
+good-names = ["i", "j", "k", "e", "ex", "Run", "_", "fp", "fn", "f", "v", "s", "x", "y", "n", "m", "t", "r", "am", "rx", "j2", "cb", "ed", "chk", "btn"]
+
+[tool.pylint.design]
+max-args = 10
+max-attributes = 15
+max-bool-expr = 5
