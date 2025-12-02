@@ -7,8 +7,8 @@ from mapping files (JSON or CSV).
 
 import os
 from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout
-from ..gui.base_dock import StandardToolDock
-from ..placeholder_replacer import (
+from .base_dock import StandardToolDock
+from src.placeholder_replacer import (
     parse_mapping_file, process_file, process_directory
 )
 

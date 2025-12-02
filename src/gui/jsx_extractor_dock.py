@@ -45,8 +45,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..extractors import GenericScopeParser, JSXParser
-from ..utils.normalization import (
+from src.extractors import GenericScopeParser, JSXParser
+from src.utils.normalization import (
     STANDARD_HTML_TAGS,
     is_standard_tag,
     kept_prefix,

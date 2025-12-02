@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..set_operations import difference, intersection, symmetric_difference, union
+from src.set_operations import difference, intersection, symmetric_difference, union
 from .base_dock import BaseDock
 
 

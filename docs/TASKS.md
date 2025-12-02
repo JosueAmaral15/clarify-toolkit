@@ -102,10 +102,11 @@ Esta atualização adiciona **50 novas tarefas** ao roadmap, expandindo signific
   - ✅ Funciona em combinação com outras condições (filename, path, ext, size, mtime, content)
   - ✅ Suporta busca em múltiplos níveis de aninhamento
   - **Data de conclusão**: 24 de Novembro de 2025
+- **[X]** Durante tradução JSON, preservar uppercase com parâmetro do usuário **(v2.9.8)**
 
 ### 🔨 Tasks Pendentes
 
-- **[X]** Durante tradução JSON, preservar uppercase com parâmetro do usuário **(v2.9.8)**
+*(Nenhuma task nesta categoria está pendente - 100% completa)*
 
 ---
 

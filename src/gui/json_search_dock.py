@@ -8,9 +8,9 @@ import os
 
 from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox
 
-from ..accessibility_manager import AccessibilityManager
-from ..gui.base_dock import ProcessorWorkerBase, StandardToolDock
-from ..json_search import (
+from src.accessibility_manager import AccessibilityManager
+from .base_dock import ProcessorWorkerBase, StandardToolDock
+from src.json_search import (
     ProjectIndexer,
     match_with_options,
     parse_composite_query,

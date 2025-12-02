@@ -8,8 +8,8 @@ snake_case, and kebab-case.
 import os
 from PySide6.QtWidgets import QGridLayout, QLabel, QComboBox, QLineEdit, QHBoxLayout
 from PySide6.QtCore import Qt
-from ..gui.base_dock import StandardToolDock, ProcessorWorkerBase
-from ..case_converter import convert_file, convert_string
+from .base_dock import StandardToolDock, ProcessorWorkerBase
+from src.case_converter import convert_file, convert_string
 
 
 class CaseConverterWorker(ProcessorWorkerBase):

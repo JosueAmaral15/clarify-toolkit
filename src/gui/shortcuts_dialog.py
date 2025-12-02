@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..shortcut_manager import ShortcutManager
+from src.shortcut_manager import ShortcutManager
 
 
 class ShortcutsDialog(QDialog):

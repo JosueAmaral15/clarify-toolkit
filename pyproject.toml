@@ -17,6 +17,10 @@ dev = [
     "pylint>=3.0.0",
     "isort>=5.0.0",
     "pre-commit>=3.0.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.2.0",
+    "pytest-qt>=4.3.0",
 ]
 
 [build-system]
@@ -83,3 +87,64 @@ good-names = ["i", "j", "k", "e", "ex", "Run", "_", "fp", "fn", "f", "v", "s", "
 max-args = 10
 max-attributes = 15
 max-bool-expr = 5
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--timeout=30",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/old/*",
+    "*/add/*",
+    "*/archive/*",
+    "*/.venv/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+    "pass",
+    "\\.\\.\\.",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"

@@ -1,5 +1,11 @@
 # Clarify - Advanced Text Processing & JSON Manipulation System
 
+[![CI](https://github.com/JosueAmaral15/clarify/actions/workflows/ci.yml/badge.svg)](https://github.com/JosueAmaral15/clarify/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/JosueAmaral15/clarify/branch/main/graph/badge.svg)](https://codecov.io/gh/JosueAmaral15/clarify)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![PySide6](https://img.shields.io/badge/PySide6-6.9.3+-green.svg)](https://pypi.org/project/PySide6/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ## 📋 Descrição
 
 **Clarify** é um sistema completo e modular para processamento de texto e manipulação de JSON, com interface gráfica (GUI) moderna e linha de comando (CLI) poderosa.

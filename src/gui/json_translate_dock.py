@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtWidgets import QCheckBox, QFileDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 
-from ..accessibility_manager import AccessibilityManager
-from ..utils import parse_exclusion_patterns, walk_files
+from src.accessibility_manager import AccessibilityManager
+from src.utils import parse_exclusion_patterns, walk_files
 from .base_dock import BaseDock
 
 # Type checking imports

@@ -32,9 +32,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..accessibility_manager import AccessibilityManager
-from ..core.filters import Condition
-from ..utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
+from src.accessibility_manager import AccessibilityManager
+from src.core.filters import Condition
+from src.utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
 from .base_dock import BaseDock
 
 # Type checking imports

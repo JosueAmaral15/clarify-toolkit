@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QGridLayout, QLabel, QLineEdit, QCheckBox, QComboBox, 
     QPushButton, QSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout
 )
-from ..gui.base_dock import StandardToolDock
+from .base_dock import StandardToolDock
 
 
 class TextExtractorDock(StandardToolDock):

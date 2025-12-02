@@ -1,0 +1,60 @@
+# Coverage.py configuration for Clarify project
+# https://coverage.readthedocs.io/en/latest/config.html
+
+[run]
+source = src
+branch = True
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */old/*
+    */add/*
+    */archive/*
+    */.venv/*
+    */venv/*
+    setup.py
+
+[report]
+# Target: maintain >90% coverage for core modules
+precision = 2
+show_missing = True
+skip_covered = False
+skip_empty = True
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    
+    # Debug-only code
+    def __repr__
+    def __str__
+    
+    # Defensive programming
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Non-runnable code
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Pass statements
+    pass
+    
+    # Ellipsis
+    \.\.\.
+
+[html]
+directory = htmlcov
+title = Clarify Code Coverage Report
+
+[xml]
+output = coverage.xml
+
+[json]
+output = coverage.json
+pretty_print = True
+show_contexts = True

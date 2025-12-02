@@ -22,16 +22,16 @@ from PySide6.QtWidgets import (
     QMessageBox
 )
 from PySide6.QtCore import Qt, QSettings
-from ..gui.base_dock import StandardToolDock, ProcessorWorkerBase
-from ..ai_processor import (
+from .base_dock import StandardToolDock, ProcessorWorkerBase
+from src.ai_processor import (
     OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS, 
     count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available, 
     is_claude_available, process_multiple_files, save_results, 
     list_files_recursive as ai_list_files, extract_between_markers,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models
 )
-from ..core.filters import Condition, filter_files_by_conditions
-from ..utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+from src.core.filters import Condition, filter_files_by_conditions
+from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
 
 
 class PathEntry(QWidget):
