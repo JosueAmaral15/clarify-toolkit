@@ -2,48 +2,87 @@
 
 Welcome to the Clarify documentation directory. All project documentation is organized here.
 
+**Last Reorganization**: December 2, 2025 - Grouped documentation by category
+
 ---
 
 ## 📂 Documentation Structure
 
+### 📋 Development Protocols (`protocolos/`)
+**Methodologies for professional incremental development**:
+- **PROTOCOLO_SIMPLICIDADE_1.md** - Base protocol (13 mandatory steps) - For prototypes/internal projects
+- **PROTOCOLO_SIMPLICIDADE_2.md** - Advanced protocol (23 steps: 13 mandatory + 10 optional) - For enterprise teams
+- **PROTOCOLO_SIMPLICIDADE_3.md** - Hybrid protocol (16 steps) - **For solo developers in production** ⭐
+
+### 📝 Version Specifications (`specifications/`)
+**Detailed specifications for each version release**:
+- **v2.9.X-SPECIFICATIONS.md** - Version specifications (v2.9.10 through v2.9.30)
+- **TASK_23_ORPHANED_KEYS_SPECIFICATION.md** - Orphaned keys feature specification
+
+### 🎯 Sprint Documentation (`sprints/`)
+**Sprint planning and summaries**:
+- **SPRINT9_PLAN.md** - Sprint 9 planning document
+- **SPRINT_7.2_SUMMARY.md** - Sprint 7.2 summary and results
+
+### 🗺️ Planning & Roadmaps (`plans/`)
+**Strategic planning, roadmaps, and project organization**:
+- **ROADMAP.md** - Project roadmap and future plans
+- **INTEGRATION_PLAN.md** - Integration planning document
+- **PROJECT_ORGANIZATION.md** - Documentation organization log
+- **REORGANIZATION.md** - v2.1.0 reorganization details
+- **REFACTORING_v3.0.0.md** - Refactoring plans for v3.0.0
+
+### 📚 User Guides & Manuals (`guides/`)
+**User documentation and system guides**:
+- **USER_MANUAL.md** - Complete user manual
+- **THEME_SYSTEM_GUIDE.md** - Theme system documentation
+- **LAUNCHERS.md** - GUI launcher scripts documentation
+- **LANGUAGE_ORGANIZATION_FIX.md** - Language organization guide
+
+### 📊 Reports & Analysis (`reports/`)
+**Bug reports, testing reports, and code analysis**:
+- **BUG_REPORT.md** - Bug reports
+- **BUG_FIX_REPORT.md** / **_PT.md** - Documentation inconsistency fixes
+- **CODE_BUG_REPORT.md** / **_PT.md** - Code bug analysis and fixes
+- **TESTING_REPORT.md** - Testing reports and results
+
 ### 🏗️ Architecture Documentation (`architecture/`)
-Project structure, design decisions, and entry points:
+**Project structure, design decisions, and entry points**:
 - **ARCHITECTURE.md** - Entry points explanation (clarify.py vs main.py)
 - **ARCHITECTURE_DIAGRAM.txt** - Visual architecture diagram
 - **STRUCTURE.txt** - Complete project structure tree
 
-### 📊 Analysis Reports (`reports/`)
-Bug reports and code analysis:
-- **BUG_FIX_REPORT.md** / **_PT.md** - Documentation inconsistency fixes
-- **CODE_BUG_REPORT.md** / **_PT.md** - Code bug analysis and fixes
+### ✨ Feature Additions (`add_features/`)
+**Documentation for new features and enhancements**:
+- Organized by feature category (AI, JSON processing, search, etc.)
+
+### 🎓 Tutorials (`tutorials/`)
+**Step-by-step tutorials and learning resources**:
+- **beginner/** - Tutorials for beginners
+- **developers/** - Advanced developer tutorials
+- **quickstart.md** - Quick start guide
+
+### 🇺🇸 English Documentation (`en/`)
+**Documentation in English**:
+- **README.md** - Navigation guide
+- Feature documentation, code reviews, migration checklists
+
+### 🇧🇷 Portuguese Documentation (`pt/`)
+**Documentação em português**:
+- **README.md** - Guia de navegação
+- **TASKS.md** - Roadmap de desenvolvimento
+- Documentação de features, revisões, migrações
 
 ### 📦 Historical Documentation (`archive/`)
-Obsolete or historical documentation:
+**Obsolete or historical documentation for reference**:
 - **LANGUAGE_FIX.md** - Language organization fix log
 - **project_structure.txt** - Old project structure reference
 
-### 🇺🇸 English Documentation (`en/`)
-Documentation in English:
-- **README.md** - Navigation guide
-- **TASKS.md** - Development roadmap (always in English)
-
-### 🇧🇷 Portuguese Documentation (`pt/`)
-Documentação em português:
-- **README.md** - Guia de navegação
-- **CODE_REVIEW_DETAILED.md** - Revisão detalhada do código
-- **CODE_REVIEW_FINAL.md** - Revisão final do código
-- **MIGRATION_COMPLETE.md** - Relatório de conclusão da migração
-- **MIGRATION_FINAL_STATUS.md** - Status final da migração
-- **MIGRATION_CHECKLIST.md** - Checklist de migração
-- **REORGANIZATION_STATUS.md** - Status da reorganização
-- **RENAMING.md** - Documentação de renomeação
-- **REVIEW_REPORT.md** - Relatório de revisão
-
-### 📄 Root Level Documentation
+### 📄 Root Level Files
 - **README.md** - This file (navigation index)
-- **REORGANIZATION.md** - v2.1.0 reorganization details
-- **LAUNCHERS.md** - GUI launcher scripts documentation
-- **PROJECT_ORGANIZATION.md** - Documentation organization log
+- **TASKS.md** - Main development tasks and roadmap
+- **ORIGINAL_TASKS.md** - Original task list for reference
+- **v2.9.10-ANTES-DEPOIS.md** - Before/after comparison
 
 ---
 
