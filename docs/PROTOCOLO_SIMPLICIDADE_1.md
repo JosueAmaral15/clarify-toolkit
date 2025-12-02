@@ -6,6 +6,15 @@
 **Última Atualização**: 01 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
 
+**Changelog v1.8** (02/12/2025):
+- ✅ **[REORGANIZAÇÃO]** Revisão de Código integrada nas etapas CLI e GUI
+- ✅ Etapa 7: Verificar Implementação CLI (inclui 9 critérios de qualidade)
+- ✅ Etapa 8: Verificar Implementação GUI (inclui 9 critérios de qualidade)
+- ✅ Etapa 9: Verificar Integração com Programa Principal (mantida como etapa separada)
+- ✅ 9 Critérios: Omissão, Ambiguidade, Fato Incorreto, Redundância, Inconsistência, Falta de Integração, Menor Coesão, Maior Acoplamento, Informação Estranha
+- ✅ Revisão integrada ao processo de verificação CLI/GUI
+- ✅ Total de etapas: 12 → 13 (adicionada verificação de integração após GUI)
+
 **Changelog v1.7** (02/12/2025):
 - ✅ **[CRÍTICO]** Adicionada Etapa 8.5: Revisão de Código (ANTES dos testes)
 - ✅ 9 Critérios de Qualidade: Omissão, Ambiguidade, Fato Incorreto, Redundância, Inconsistência, Falta de Integração, Menor Coesão, Maior Acoplamento, Informação Estranha
@@ -71,13 +80,13 @@
 4. 🔍 Analisar e estudar o projeto
 5. 🎯 Fazer sprints das tarefas mais simples
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
-7. 🔗 **Verificar integração com programa principal**
-8. ⌨️ **Verificar implementação CLI**
-8.5. 🔍 **Revisão de Código (9 critérios de qualidade)**
-9. 🧪 Fazer testes (100% cobertura)
-🔟 🧹 Organizar pasta raiz
-1️⃣1️⃣ 📝 Preencher documentação
-1️⃣2️⃣ 🚀 Fazer commit e push
+7. ⌨️ **Verificar Implementação CLI + Revisão de Código (9 critérios)**
+8. 🖥️ **Verificar Implementação GUI + Revisão de Código (9 critérios)**
+9. 🔗 **Verificar Integração com Programa Principal**
+🔟 🧪 Fazer testes (100% cobertura)
+1️⃣1️⃣ 🧹 Organizar pasta raiz
+1️⃣2️⃣ 📝 Preencher documentação
+1️⃣3️⃣ 🚀 Fazer commit e push
 
 ### 1️⃣ **Ler a Documentação**
 - Consultar `docs/TASKS.md` para entender o contexto do projeto
@@ -488,12 +497,13 @@ class ReferenceUpdater:
 
 ---
 
-### 7️⃣ **Verificar Integração com Programa Principal**
-- **CRÍTICO**: Antes dos testes, **verificar se os componentes estão integrados ao programa principal**
-- Não basta implementar o módulo/dock, ele precisa estar **acessível e funcional** no app
-- Verificar menu, imports, inicialização e conexões
+### 7️⃣ **Verificar Implementação CLI + Revisão de Código**
+- **CRÍTICO**: Verificar se a nova funcionalidade está disponível via **CLI (Command Line Interface)**
+- **IMPORTANTE**: Durante a verificação, aplicar os **9 Critérios de Qualidade** ao código CLI
+- Não basta implementar GUI, funcionalidades importantes devem ter **interface CLI** para automação
+- Verificar subcomandos, argumentos, help text, integração e qualidade do código
 
-**Checklist de Integração GUI**:
+**Checklist de Implementação CLI**:
 
 1. **Import Correto no app.py**:
    ```python
@@ -608,396 +618,393 @@ class ReferenceUpdater:
 
 ---
 
-### 8️⃣ **Verificar Implementação CLI com Passagem de Parâmetros**
-- **CRÍTICO**: Verificar se a nova funcionalidade está disponível também via **CLI (Command Line Interface)**
-- Não basta implementar GUI, funcionalidades importantes devem ter **interface CLI** para automação
-- Verificar subcomandos, argumentos, help text e integração
+### 8️⃣ **Verificar Implementação GUI + Revisão de Código**
+- **CRÍTICO**: Verificar se os componentes estão **integrados ao programa principal** e acessíveis
+- **IMPORTANTE**: Durante a verificação, aplicar os **9 Critérios de Qualidade** ao código GUI
+- Não basta implementar o módulo/dock, ele precisa estar **acessível e funcional** no app
+- Verificar menu, imports, inicialização, conexões e qualidade do código
 
-**Checklist de Implementação CLI**:
+**Parte A - Verificação Funcional GUI (Integração)**:
 
-1. **Subcomando Criado no Parser**:
+1. **Import Correto no app.py**:
    ```python
-   # No arquivo principal (ex: __main__.py, app.py, clarify.py)
-   def _build_cli_parser():
-       parser = argparse.ArgumentParser(description="Clarify - JSON Management System")
-       subparsers = parser.add_subparsers(dest='command')
-       
-       # Subcomandos existentes
-       parser_search = subparsers.add_parser('search', help='Search in files')
-       parser_replace = subparsers.add_parser('replace', help='Replace text')
-       
-       # ✅ NOVO subcomando para funcionalidade
-       parser_text2json = subparsers.add_parser(
-           'text2json',
-           help='Convert text to JSON format'
-       )
-   ```
-
-2. **Argumentos Definidos**:
-   ```python
-   # Argumentos obrigatórios e opcionais
-   parser_text2json.add_argument(
-       'input',
-       help='Input text file or - for stdin'
-   )
-   parser_text2json.add_argument(
-       '-f', '--format',
-       choices=['auto', 'key-value', 'csv', 'yaml', 'ini', 'toml', 'toon'],
-       default='auto',
-       help='Input format (default: auto-detect)'
-   )
-   parser_text2json.add_argument(
-       '-o', '--output',
-       help='Output JSON file (default: stdout)'
-   )
-   parser_text2json.add_argument(
-       '--no-infer-types',
-       action='store_true',
-       help='Keep all values as strings (disable type inference)'
-   )
-   parser_text2json.add_argument(
-       '--pretty',
-       action='store_true',
-       help='Pretty-print JSON output with indentation'
+   # ✅ Verificar se módulo foi importado
+   from .gui import (
+       CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
+       TextExtractorDock, AIProcessorDock, JsonTranslateDock,
+       JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
+       EditorDock, TextToJsonDock  # ← NOVO módulo deve estar aqui
    )
    ```
 
-3. **Handler Function Implementada**:
+2. **Export no __init__.py do Módulo**:
    ```python
-   def cli_text2json(args):
-       """Handle text2json CLI subcommand."""
-       from .text_to_json import convert_text_to_json
-       
-       # Ler input
-       if args.input == '-':
-           text = sys.stdin.read()
-       else:
-           with open(args.input, 'r', encoding='utf-8') as f:
-               text = f.read()
-       
-       # Converter
-       result = convert_text_to_json(
-           text,
-           format_type=args.format,
-           infer_types=not args.no_infer_types
-       )
-       
-       # Output
-       if args.pretty:
-           json_str = json.dumps(result, indent=2, ensure_ascii=False)
-       else:
-           json_str = json.dumps(result, ensure_ascii=False)
-       
-       if args.output:
-           with open(args.output, 'w', encoding='utf-8') as f:
-               f.write(json_str)
-           print(f"✓ Converted to {args.output}")
-       else:
-           print(json_str)
+   # src/gui/__init__.py
+   from .text_to_json_dock import TextToJsonDock
+   
+   __all__ = [
+       'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
+       'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
+       'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
+       'EditorDock', 'TextToJsonDock'  # ← NOVO módulo exportado
+   ]
    ```
 
-4. **Dispatcher/Router Atualizado**:
+3. **Menu Item Criado e Conectado**:
    ```python
-   def main():
-       parser = _build_cli_parser()
-       args = parser.parse_args()
-       
-       # Router para handlers
-       if args.command == 'search':
-           cli_search(args)
-       elif args.command == 'replace':
-           cli_replace(args)
-       elif args.command == 'text2json':  # ← NOVO
-           cli_text2json(args)
-       else:
-           # GUI mode
-           run_gui()
+   # Em _build_menu() ou similar
+   m_tools = bar.addMenu(tr("menu.tools"))
+   
+   # Criar QAction
+   self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
+   
+   # Adicionar ao menu
+   m_tools.addAction(self.act_open_text_to_json)
+   
+   # Conectar signal
+   self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
    ```
 
-5. **Help Text Documentado**:
+4. **Dock Inicializado no __init__() ou método de setup**:
    ```python
-   parser_text2json = subparsers.add_parser(
-       'text2json',
-       help='Convert structured text to JSON',
-       description='''
-       Convert various text formats to JSON:
-       - Key-Value pairs (name: value)
-       - CSV (comma-separated values)
-       - YAML-like format
-       - INI files
-       - TOML files
-       - TOON (Token-Oriented Object Notation)
-       - Auto-detect format
-       
-       Examples:
-         clarify text2json data.csv --format csv --pretty
-         clarify text2json config.ini -o output.json
-         echo "name: John\\nage: 30" | clarify text2json -
-       '''
-   )
+   # Em __init__() da MainWindow
+   def __init__(self):
+       super().__init__()
+       # ... outros docks ...
+       self._open_text_to_json()  # ← Inicializar dock
+   
+   def _open_text_to_json(self):
+       self.dock_text_to_json = TextToJsonDock(self)
+       self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
+       self.dock_text_to_json.hide()
    ```
 
-**Checklist de Validação CLI**:
-- ✅ **Subcomando existe**: `python -m clarify text2json --help` mostra ajuda
-- ✅ **Argumentos funcionam**: Flags obrigatórios e opcionais aceitos
-- ✅ **Help text completo**: Descrição, exemplos, opções documentadas
-- ✅ **Stdin/stdout suportado**: Aceita `-` para pipe/redirect
-- ✅ **Error handling**: Trata erros com mensagens claras (não traceback)
-- ✅ **Exit codes**: 0 para sucesso, 1 para erro
-- ✅ **Performance**: Funciona com arquivos grandes (>100MB)
+5. **Signals Conectados** (se aplicável):
+   ```python
+   # Conectar signals customizados
+   self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+   
+   def _load_json_from_converter(self, json_str: str):
+       """Callback para abrir JSON no editor"""
+       if not hasattr(self, 'dock_editor'):
+           self._open_editor()
+       self.dock_editor.load_json_string(json_str)
+       self.dock_editor.show()
+   ```
 
-**Exemplos de Uso CLI** (devem funcionar):
-```bash
-# Converter CSV para JSON
-clarify text2json data.csv --format csv --pretty -o output.json
+6. **Traduções i18n Adicionadas**:
+   ```json
+   // src/i18n/en.json
+   {
+     "menu.tools.text_to_json": "Text to JSON Converter"
+   }
+   
+   // src/i18n/pt_BR.json
+   {
+     "menu.tools.text_to_json": "Conversor de Texto para JSON"
+   }
+   ```
 
-# Usar stdin (pipe)
-cat config.ini | clarify text2json - --format ini
+**Checklist de Teste de Integração GUI**:
+- ✅ **Menu acessível**: Verificar se item aparece no menu Tools
+- ✅ **Dock abre**: Clicar no menu deve abrir o dock corretamente
+- ✅ **Funcionalidade básica**: Testar conversão simples
+- ✅ **Signals funcionam**: Testar integração com outros componentes (ex: Open in Editor)
+- ✅ **Sem erros no console**: Não deve haver ImportError, AttributeError, etc.
+- ✅ **Tradução funcionando**: Menu em PT-BR deve mostrar texto traduzido
 
-# Auto-detect formato
-clarify text2json input.txt --pretty
+**Parte B - Revisão de Qualidade do Código GUI (9 Critérios)**:
 
-# Converter YAML com type inference
-clarify text2json config.yaml --format yaml -o config.json
+Durante a verificação do GUI, aplicar simultaneamente os seguintes critérios:
 
-# Converter sem inferência de tipos
-clarify text2json data.txt --no-infer-types
-```
+1. **❌ Omissão** - Verificar se GUI está completo:
+   - [ ] Todos os widgets/controles necessários implementados?
+   - [ ] Tratamento de erros em handlers (ex: FileNotFoundError)?
+   - [ ] Cleanup de recursos (fechar arquivos, desconectar signals)?
+   - [ ] Feedback visual para operações longas (QProgressBar, cursor busy)?
 
-**Exemplo Real (Funcionalidades Existentes)**:
-```bash
-# ✅ CLI search (já implementado)
-clarify search ./src --query "foo" --include "*.py"
+2. **🤔 Ambiguidade** - GUI deve ser claro:
+   - [ ] Labels descritivos e claros?
+   - [ ] Tooltips informativos nos controles?
+   - [ ] Mensagens de erro descritivas (QMessageBox)?
+   - [ ] Nomes de métodos intuitivos (_on_button_clicked vs _handle)?
 
-# ✅ CLI replace (já implementado)
-clarify replace ./src --query "foo" --replacement "bar" --all
+3. **❗ Fato Incorreto** - Lógica GUI correta:
+   - [ ] Signals conectados aos slots corretos?
+   - [ ] Layouts corretos (QVBoxLayout, QHBoxLayout, QSplitter)?
+   - [ ] Enable/disable de controles conforme estado?
+   - [ ] Validação de entrada correta (QValidator)?
 
-# ✅ CLI dedupe (já implementado)
-clarify dedupe en.ts --from-ts --join-keys -o en2.ts
+4. **♻️ Redundância** - Evitar repetição no GUI:
+   - [ ] Widgets criados uma única vez?
+   - [ ] Validações centralizadas (não duplicadas)?
+   - [ ] Código de inicialização não repetido?
 
-# ❓ CLI text2json (NOVO - precisa implementar?)
-clarify text2json data.csv --format csv --pretty -o output.json
-```
+5. **⚠️ Inconsistência** - Padrão GUI consistente:
+   - [ ] Nomenclatura uniforme (ed_ para QLineEdit, btn_ para QPushButton)?
+   - [ ] Estilo de mensagens consistente?
+   - [ ] Layout spacing/margin consistente?
 
-**Quando NÃO Implementar CLI**:
-- ❌ Funcionalidades puramente visuais (syntax highlighting, color picker)
-- ❌ Docks de navegação/exploração (tutorials, file list)
-- ❌ Features interativas que requerem feedback em tempo real
-- ❌ Funcionalidades GUI-only explicitamente (preferences dialog)
+6. **🔗 Falta de Integração** - GUI conectado:
+   - [ ] Dock adicionado à MainWindow?
+   - [ ] Menu item conectado ao dock.show()?
+   - [ ] Signals customizados conectados?
+   - [ ] Import presente em app.py?
 
-**Quando IMPLEMENTAR CLI**:
-- ✅ Conversões de formato (text → JSON, case converter)
-- ✅ Processamento de arquivos (replace, translate, dedupe)
-- ✅ Extração/busca (search, extract keys, JSON query)
-- ✅ Validação (JSON validator, syntax check)
-- ✅ Batch operations (processar múltiplos arquivos)
+7. **🧩 Menor Coesão** - Dock focado:
+   - [ ] Dock faz apenas UI (não lógica de negócio)?
+   - [ ] Lógica complexa em módulo separado?
+   - [ ] Cada método tem responsabilidade única?
 
-**Perguntas para Validar CLI**:
-1. ❓ "A funcionalidade é útil para automação/scripts?"
-2. ❓ "Pode processar arquivos em batch?"
-3. ❓ "Seria útil em CI/CD pipelines?"
-4. ❓ "Pode ser usada sem interface gráfica?"
-5. ❓ "Se SIM para qualquer pergunta acima → Implementar CLI"
+8. **🔗 Maior Acoplamento** - GUI desacoplado:
+   - [ ] Dock não depende de implementação interna de outros docks?
+   - [ ] Comunicação via signals/slots (não chamadas diretas)?
+   - [ ] GUI testável independentemente (mock de lógica)?
 
-**Por quê?**: 
-- Permitir **automação** de tarefas repetitivas
-- Integração com **scripts** e **pipelines CI/CD**
-- Uso em **servidores sem GUI** (headless environments)
-- **Power users** preferem CLI para velocidade
-- Torna a ferramenta mais **profissional e versátil**
+9. **🗑️ Informação Estranha** - Código limpo:
+   - [ ] Sem print() debug esquecidos?
+   - [ ] Sem TODOs não resolvidos?
+   - [ ] Sem widgets não utilizados?
 
----
-
-#### 🔍 **Etapa 8.5 - Revisão de Código (ANTES DOS TESTES)**
-
-**Objetivo**: Detectar problemas de qualidade **ANTES** de criar testes, economizando tempo e garantindo que os testes validam código correto.
-
-**Critérios de Qualidade (8 Dimensões)**:
-
-1. **❌ Omissão** - Código incompleto ou funcionalidade faltando
-   - Falta de validação de entrada
-   - Falta de tratamento de erro
-   - Falta de cleanup/dispose de recursos
-   - Funcionalidade parcialmente implementada
-   - **Exemplo**: Método que não fecha arquivo aberto
-
-2. **🤔 Ambiguidade** - Código difícil de entender ou com múltiplas interpretações
-   - Nomes de variáveis genéricos (`data`, `temp`, `x`)
-   - Lógica complexa sem comentários
-   - Magic numbers sem constantes nomeadas
-   - **Exemplo**: `if x > 5 and y < 3: ...` (o que é 5 e 3?)
-
-3. **❗ Fato Incorreto** - Lógica errada ou comportamento inesperado
-   - Operador lógico errado (`and` vs `or`)
-   - Comparação invertida (`>` vs `<`)
-   - Off-by-one errors
-   - Cálculos matemáticos incorretos
-   - **Exemplo**: `if len(items) >= 0:` (sempre True)
-
-4. **♻️ Redundância** - Código duplicado ou desnecessário
-   - Código duplicado em múltiplos lugares
-   - Verificações redundantes
-   - Imports não utilizados
-   - Variáveis criadas mas não usadas
-   - **Exemplo**: Mesma validação repetida 5 vezes
-
-5. **⚠️ Inconsistência** - Padrões diferentes para mesma tarefa
-   - Mistura de convenções de nomenclatura
-   - Tratamento de erro inconsistente
-   - Formatação inconsistente
-   - **Exemplo**: Usar `camelCase` e `snake_case` no mesmo arquivo
-
-6. **🔗 Falta de Integração** - Componentes não conectados corretamente
-   - Função criada mas não chamada
-   - Botão GUI sem handler conectado
-   - Módulo importado mas não usado
-   - CLI definido mas não roteado
-   - **Exemplo**: Botão "Save" sem `.clicked.connect()`
-
-7. **🧩 Menor Coesão** - Classe/módulo fazendo coisas não relacionadas
-   - Classe com responsabilidades múltiplas
-   - Método fazendo muitas coisas diferentes
-   - Módulo misturando conceitos
-   - **Exemplo**: Classe `UserManager` que também faz logging e cache
-
-8. **🔗 Maior Acoplamento** - Dependências excessivas entre componentes
-   - Classe dependendo de muitas outras
-   - Imports circulares
-   - Dados globais compartilhados
-   - **Exemplo**: Classe GUI acessando diretamente banco de dados
-
-9. **🗑️ Informação Estranha** - Código não relacionado ao propósito
-   - Comentários desatualizados
-   - Código comentado sem razão
-   - Debug prints esquecidos
-   - TODOs antigos não resolvidos
-   - **Exemplo**: `print("DEBUG: aqui!")` no código de produção
-
-**Checklist de Revisão (Executar ANTES da Etapa 9)**:
-
-```markdown
-### Revisão de Código - [Nome da Feature]
-
-#### 1. Omissão ❌
-- [ ] Todas as validações de entrada implementadas?
-- [ ] Todos os erros tratados adequadamente?
-- [ ] Recursos (files, connections) fechados corretamente?
-- [ ] Funcionalidade 100% completa conforme especificação?
-
-#### 2. Ambiguidade 🤔
-- [ ] Nomes de variáveis claros e descritivos?
-- [ ] Lógica complexa comentada/documentada?
-- [ ] Magic numbers substituídos por constantes?
-- [ ] Código legível sem necessidade de debugger?
-
-#### 3. Fato Incorreto ❗
-- [ ] Operadores lógicos corretos (and/or)?
-- [ ] Comparações na direção certa (</>/==)?
-- [ ] Loops com condições corretas?
-- [ ] Cálculos verificados manualmente?
-
-#### 4. Redundância ♻️
-- [ ] Código duplicado eliminado ou extraído?
-- [ ] Imports não utilizados removidos?
-- [ ] Variáveis não usadas removidas?
-- [ ] Verificações redundantes eliminadas?
-
-#### 5. Inconsistência ⚠️
-- [ ] Nomenclatura consistente (snake_case em Python)?
-- [ ] Tratamento de erro padronizado?
-- [ ] Formatação consistente (usar formatter)?
-- [ ] Padrão de retorno consistente (tuple/dict)?
-
-#### 6. Falta de Integração 🔗
-- [ ] Funções criadas estão sendo chamadas?
-- [ ] Botões GUI conectados a handlers?
-- [ ] CLI subcomando roteado corretamente?
-- [ ] Módulo integrado no sistema principal?
-
-#### 7. Menor Coesão 🧩
-- [ ] Cada classe tem UMA responsabilidade clara?
-- [ ] Métodos fazem UMA coisa bem definida?
-- [ ] Módulos agrupam conceitos relacionados?
-- [ ] SRP (Single Responsibility Principle) respeitado?
-
-#### 8. Maior Acoplamento 🔗
-- [ ] Dependências minimizadas (Law of Demeter)?
-- [ ] Sem imports circulares?
-- [ ] Interfaces/abstrações usadas quando necessário?
-- [ ] Componentes podem ser testados isoladamente?
-
-#### 9. Informação Estranha 🗑️
-- [ ] Debug prints removidos?
-- [ ] Código comentado removido ou justificado?
-- [ ] Comentários atualizados e relevantes?
-- [ ] TODOs resolvidos ou documentados?
-```
-
-**Ferramentas Recomendadas**:
-```bash
-# Verificar imports não utilizados
-pylint --disable=all --enable=unused-import src/
-
-# Verificar código morto
-vulture src/ --min-confidence 80
-
-# Verificar complexidade (coesão baixa)
-radon cc src/ -a -nb
-
-# Verificar duplicação (redundância)
-pylint --disable=all --enable=duplicate-code src/
-
-# Formatação automática (inconsistência)
-black src/
-isort src/
-```
-
-**Processo Revisão CLI e GUI**:
-1. **Ler código linha por linha** (não assumir que está correto)
-2. **Aplicar checklist** para cada arquivo modificado
-3. **Corrigir problemas encontrados** antes de testar
-4. **Re-revisar código corrigido** (problemas podem introduzir novos problemas)
-5. **Documentar limitações conhecidas** (se houver)
-
-**Exemplo de Problema Real**:
+**Exemplo de Revisão GUI Aplicada**:
 ```python
-# ❌ ANTES (Ambiguidade + Fato Incorreto)
-def process(x, y):
-    if x > 5:  # o que significa 5?
-        return y * 2  # por que * 2?
-    return y
+# ❌ ANTES - Omissão, Ambiguidade, Maior Acoplamento
+class TextToJsonDock(QDockWidget):
+    def __init__(self):
+        self.btn = QPushButton("Convert")  # Label vago
+        self.btn.clicked.connect(self.convert)  # Sem tratamento de erro
+    
+    def convert(self):
+        data = open(self.ed_file.text()).read()  # Sem validação, sem fechar
+        json_str = my_convert(data)  # Lógica de negócio no GUI
+        print(json_str)  # Debug esquecido
 
-# ✅ DEPOIS (Claro + Correto)
-MAX_RETRY_COUNT = 5
-def calculate_retry_delay(attempt: int, base_delay: float) -> float:
-    """Calculate exponential backoff delay for retry attempts."""
-    if attempt > MAX_RETRY_COUNT:
-        return base_delay * (2 ** MAX_RETRY_COUNT)  # Cap at max retries
-    return base_delay * (2 ** attempt)
+# ✅ DEPOIS - Completo, Claro, Desacoplado
+class TextToJsonDock(BaseDock):
+    """Text to JSON Converter dock widget."""
+    
+    # Signal para comunicação
+    open_in_editor_requested = Signal(str)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._create_widgets()
+        self._setup_layout()
+        self._connect_signals()
+        
+        # Controller para lógica de negócio
+        self._converter = TextToJsonConverter()
+    
+    def _create_widgets(self):
+        """Create UI widgets."""
+        self.ed_file = QLineEdit()
+        self.ed_file.setPlaceholderText("Enter file path or paste text")
+        
+        self.btn_convert = QPushButton("Convert to JSON")
+        self.btn_convert.setToolTip("Convert text to JSON format")
+        
+        self.btn_open_editor = QPushButton("Open in Editor")
+        self.btn_open_editor.setEnabled(False)  # Disabled até converter
+    
+    def _connect_signals(self):
+        """Connect signals to slots."""
+        self.btn_convert.clicked.connect(self._on_convert_clicked)
+        self.btn_open_editor.clicked.connect(self._on_open_editor_clicked)
+    
+    def _on_convert_clicked(self):
+        """Handle convert button click."""
+        file_path = self.ed_file.text().strip()
+        
+        if not file_path:
+            QMessageBox.warning(self, "Empty Input", "Please enter a file path or text.")
+            return
+        
+        try:
+            # Ler arquivo com context manager (garante fechar)
+            if Path(file_path).exists():
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    text = f.read()
+            else:
+                text = file_path  # Tratar como texto direto
+            
+            # Converter usando controller (desacoplamento)
+            self._json_result = self._converter.convert(text)
+            
+            # Feedback visual
+            QMessageBox.information(self, "Success", "Conversion successful!")
+            self.btn_open_editor.setEnabled(True)
+        
+        except FileNotFoundError:
+            QMessageBox.critical(self, "File Not Found", f"File not found: {file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Conversion Error", f"Error: {str(e)}")
+    
+    def _on_open_editor_clicked(self):
+        """Handle open in editor button click."""
+        if hasattr(self, '_json_result'):
+            self.open_in_editor_requested.emit(self._json_result)  # Signal
 ```
 
-**Por quê?**: 
-- Detectar problemas **antes** de criar testes (economiza tempo)
-- Garantir que testes validam **código correto**
-- Melhorar **qualidade geral** do código
-- Facilitar **manutenção futura**
-- Reduzir **bugs em produção**
+**Ferramentas Recomendadas GUI**:
+```bash
+# Verificar imports Qt não utilizados
+grep -r "from PySide6" src/gui/ | cut -d: -f2 | sort | uniq
+
+# Verificar signals não conectados (manual review)
+grep -r "Signal(" src/gui/ | grep -v ".connect("
+
+# Verificar widgets não utilizados (manual review)
+grep -r "self\.\w\+ = Q" src/gui/
+
+# Verificar debug prints (CRÍTICO)
+grep -r "print(" src/gui/ --exclude="*_test.py"
+```
+
+**Perguntas para Validar GUI**:
+1. ❓ "O dock está completamente integrado no menu e MainWindow?"
+2. ❓ "Todos os signals estão conectados e funcionando?"
+3. ❓ "Há tratamento de erros com feedback visual (QMessageBox)?"
+4. ❓ "Lógica de negócio está separada do código GUI?"
+5. ❓ "Código está livre de debug prints e TODOs não resolvidos?"
+6. ❓ "Labels, tooltips e mensagens são claros e descritivos?"
+7. ❓ "Recursos (arquivos, conexões) são fechados corretamente?"
+
+**Exemplo Real (Task #49 - Text to JSON Converter)**:
+```python
+✅ Import: from .gui import TextToJsonDock
+✅ Export: __all__ = [..., 'TextToJsonDock']
+✅ Menu: self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
+✅ Init: self._open_text_to_json() chamado em __init__()
+✅ Signal: open_in_editor_requested.connect(self._load_json_from_converter)
+✅ i18n: EN "Text to JSON Converter", PT-BR "Conversor de Texto para JSON"
+✅ Revisão: Sem debug prints, tratamento de erros OK, lógica desacoplada
+✅ Teste: Menu abre dock, conversão funciona, signal para editor OK
+```
 
 ---
 
-### 9️⃣ **Fazer Testes**
+### 9️⃣ **Verificar Integração com Programa Principal**
+- **CRÍTICO**: Após implementar CLI e GUI, **verificar se tudo está integrado e funcionando no contexto do programa principal**
+- Não basta ter código funcionando isoladamente, precisa estar **acessível e operacional** no aplicativo
+- Verificar fluxo completo: menu → ação → resultado
+- Testar manualmente a funcionalidade no programa rodando
+
+**Checklist de Integração Completa**:
+
+1. **Teste de Fluxo Completo GUI**:
+   ```bash
+   # Iniciar aplicativo
+   python -m clarify --gui
+   
+   # Testar manualmente:
+   [ ] Menu item aparece corretamente?
+   [ ] Clicar no menu abre o dock?
+   [ ] Dock exibe todos os controles?
+   [ ] Funcionalidade básica funciona (conversão, busca, etc)?
+   [ ] Signals entre componentes funcionam (ex: "Open in Editor")?
+   [ ] Mensagens de erro aparecem quando apropriado?
+   [ ] Tradução i18n funciona (mudar idioma e verificar)?
+   ```
+
+2. **Teste de Fluxo Completo CLI**:
+   ```bash
+   # Testar help
+   python -m clarify text2json --help
+   
+   # Testar funcionalidade
+   python -m clarify text2json test.txt --pretty -o output.json
+   
+   # Testar pipes
+   echo "name: John" | python -m clarify text2json -
+   
+   # Verificar:
+   [ ] Help text aparece?
+   [ ] Argumentos são reconhecidos?
+   [ ] Funcionalidade executa sem erros?
+   [ ] Output está correto?
+   [ ] Exit codes corretos (0=success, 1=error)?
+   ```
+
+3. **Teste de Integração entre Componentes**:
+   ```bash
+   # Exemplo: Converter texto → Abrir no editor
+   [ ] Clicar em "Open in Editor" no Text to JSON Converter abre o Editor?
+   [ ] JSON é carregado corretamente no Editor?
+   [ ] Editor pode salvar o resultado?
+   
+   # Exemplo: Busca → Abrir arquivo
+   [ ] Clicar em resultado de busca abre arquivo correto?
+   [ ] Posição do cursor vai para linha correta?
+   ```
+
+4. **Teste de Robustez**:
+   ```bash
+   # Cenários de erro
+   [ ] Arquivo não encontrado exibe mensagem clara?
+   [ ] Input inválido é tratado graciosamente?
+   [ ] Operação cancelada não deixa estado inconsistente?
+   [ ] Recursos são liberados corretamente (arquivos fechados, memória)?
+   ```
+
+5. **Teste de Performance** (se aplicável):
+   ```bash
+   # Arquivos grandes
+   [ ] Processa arquivos >10MB sem travar?
+   [ ] Interface permanece responsiva durante operação longa?
+   [ ] Progress bar/feedback visual funciona?
+   [ ] Cancelamento funciona durante operação longa?
+   ```
+
+**Exemplo Real de Problema de Integração**:
+```python
+# ❌ PROBLEMA ENCONTRADO NA INTEGRAÇÃO:
+# Task #49 - Text to JSON Converter CLI
+# Problema: Extractor() estava sendo chamado sem 3 parâmetros obrigatórios
+
+# ANTES (quebrava na integração):
+def main():
+    if args.command == 'text2json':
+        extractor = Extractor()  # ❌ TypeError: missing 3 required arguments
+
+# DEPOIS (corrigido):
+def main():
+    if args.command == 'text2json':
+        extractor = Extractor(
+            avoid_keys="",
+            avoid_keys_parameter="equals",
+            with_quotation_marks=False
+        )  # ✅ Funciona!
+```
+
+**Perguntas para Validar Integração**:
+1. ❓ "O usuário final consegue acessar a funcionalidade facilmente?"
+2. ❓ "Todos os fluxos de uso funcionam end-to-end?"
+3. ❓ "Há algum erro ou warning no console durante uso normal?"
+4. ❓ "A funcionalidade está consistente com o resto do aplicativo?"
+5. ❓ "Documentação (help text, tooltips) está clara e correta?"
+
+**Por quê esta etapa é crítica?**:
+- ✅ Detecta problemas que testes unitários não pegam
+- ✅ Valida experiência real do usuário
+- ✅ Garante que todo o trabalho é realmente utilizável
+- ✅ Evita surpresas após commit (código testado ≠ código integrado)
+
+---
+
+### 🔟 **Fazer Testes**
 - **Obrigatório**: Testes unitários para cada função pública
 - **Meta**: 100% de cobertura das funcionalidades implementadas
 - **Ferramentas**: `unittest` (nativo) ou `pytest`
 - **CRÍTICO**: Testar o sistema **após integração** (GUI + CLI integrados)
-- **IMPORTANTE**: Executar **APÓS Etapa 8.5** (Revisão de Código)
+- **IMPORTANTE**: Executar **APÓS** revisão de código (Etapas 7 e 8)
 
 **Categorias de Testes**:
 1. **Happy Path**: Casos normais de uso
 2. **Edge Cases**: Valores vazios, None, strings longas
 3. **Error Handling**: Exceções esperadas
 4. **Integration**: Fluxo completo (incluindo integração GUI/CLI)
-5. **Quality Validation**: Testes que validam ausência dos 9 problemas da Etapa 8.5
+5. **Quality Validation**: Testes que validam ausência dos 9 problemas das Etapas 7 e 8
 
 **Exemplo Task #23**:
 ```python
@@ -1010,11 +1017,12 @@ def calculate_retry_delay(attempt: int, base_delay: float) -> float:
 # ... 12 testes no total (100% passing)
 ```
 
-**Por quê testar DEPOIS da integração?**:
+**Por quê testar DEPOIS da integração e revisão?**:
 - Garante que testes validam o **sistema integrado**, não componentes isolados
 - Detecta problemas de integração durante os testes
 - Valida que features realmente funcionam no contexto do aplicativo
 - Evita falsos positivos (testes passam mas feature não está acessível)
+- Código já foi revisado, então testes validam **código de qualidade**
 
 **Por quê?**: Garantir qualidade, evitar regressões, facilitar manutenção futura.
 
@@ -1075,71 +1083,11 @@ def calculate_retry_delay(attempt: int, base_delay: float) -> float:
    pytest tests/test_*.py --benchmark-only --timeout=30
    ```
 
-6. **🔄 Fallback para Testes Sem GUI**:
-   - Se testes GUI não executarem (timeout/travamento):
-     * Criar **unit tests isolados** (testar lógica sem widgets)
-     * Usar **mocks de widgets Qt** (`unittest.mock.Mock`)
-     * Testar apenas **CLI/backend** (sem interface gráfica)
-     * **Documentar limitação** no TASKS.md
+**Por quê?**: Evitar travamentos infinitos, proteger tempo de desenvolvimento, garantir testes confiáveis.
 
-7. **📋 Checklist de Segurança** (ANTES de Etapa 9):
-   ```
-   [ ] Timeout definido (--timeout=30)
-   [ ] Ambiente headless configurado (QT_QPA_PLATFORM=offscreen)
-   [ ] Dry-run executado (syntax + import + collect)
-   [ ] Tempo estimado calculado (< 5 min total esperado)
-   [ ] Plano B definido (mocks/skip GUI se necessário)
-   [ ] Monitoramento ativo (observar output em tempo real)
-   ```
+---
 
-**Exemplo de Teste Seguro**:
-```python
-# tests/test_file_list_dock.py
-import pytest
-from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QApplication
-
-@pytest.fixture(scope="module")
-def qapp():
-    """QApplication com timeout de segurança."""
-    app = QApplication.instance() or QApplication([])
-    yield app
-    app.quit()  # Garantir cleanup
-
-@pytest.mark.timeout(5)  # Timeout individual de 5s
-def test_regex_filter_safe(qapp):
-    """Teste com timeout individual."""
-    # ... teste aqui
-    pass
-
-# Mock para evitar dependências GUI
-@patch('PySide6.QtWidgets.QTableWidget')
-def test_filter_logic_no_gui(mock_table):
-    """Testar lógica sem criar widgets reais."""
-    # ... teste lógica isolada
-    pass
-```
-
-**Comandos Seguros (Copiar e Colar)**:
-```bash
-# Comando completo recomendado para testes GUI:
-QT_QPA_PLATFORM=offscreen timeout 5m pytest tests/test_gui_*.py -v --timeout=30 --tb=short | tee test_gui.log
-
-# Comando para testes backend (sem GUI):
-timeout 2m pytest tests/test_backend_*.py -v --timeout=10 --tb=short | tee test_backend.log
-```
-
-**Regras de Ouro**:
-- ⚠️ **NUNCA** executar testes GUI sem timeout
-- ⚠️ **NUNCA** assumir que teste vai terminar sozinho
-- ⚠️ **SEMPRE** usar ambiente headless para testes GUI
-- ⚠️ **SEMPRE** fazer dry-run antes de execução completa
-- ⚠️ **SEMPRE** documentar se testes GUI não rodarem (limitação aceitável)
-
-**Lições Aprendidas (Task #50)**:
-- ✅ 23 testes criados (530 linhas)
-- ❌ Não executados (travamento em loop infinito)
-- ✅ Sintaxe validada (`py_compile` OK)
+### 1️⃣1️⃣ **Organizar Pasta Raiz do Projeto**
 - ✅ Imports validados (módulo carrega sem erros)
 - 📝 **Limitação documentada**: Testes GUI requerem ambiente headless não configurado
 
@@ -1379,7 +1327,7 @@ python tests/run_tests_monitored.py
 
 ---
 
-### 🔟 **Organizar Pasta Raiz do Projeto**
+### 1️⃣1️⃣ **Organizar Pasta Raiz do Projeto**
 - **CRÍTICO**: Antes da documentação, **organizar a pasta raiz**
 - Remover arquivos temporários, backups desnecessários
 - Verificar se todos os arquivos estão nos lugares corretos
@@ -1425,7 +1373,7 @@ python tests/run_tests_monitored.py
 
 ---
 
-### 1️⃣1️⃣ **Preencher Nova Documentação**
+### 1️⃣2️⃣ **Preencher Nova Documentação**
 - **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
 - **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
@@ -1518,7 +1466,7 @@ python tests/run_tests_monitored.py
 
 ---
 
-### 1️⃣2️⃣ **Fazer Commit e Push**
+### 1️⃣3️⃣ **Fazer Commit e Push**
 - **Formato**: Conventional Commits (feat/fix/docs/refactor/test)
 - **Mensagem**: Descritiva, completa, com contexto
 - **Frequência**: 1 commit por task ou grupo lógico de mudanças
