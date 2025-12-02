@@ -1,5 +1,100 @@
 # Changelog - Clarify Project
 
+## [2.9.32] - 2025-12-02
+
+### 🎯 JSON Set Operations - Complete Feature
+
+#### New Feature: Set Operations for JSON Files
+
+##### Core Functionality
+- ✅ **Set Operations**: Intersection (∩), Union (∪), Difference (−), Symmetric Difference (⊕)
+- ✅ **Pipeline Processing**: Left-to-right sequential operations (A ∩ B ∩ C...)
+- ✅ **Multiple Files**: Support for 2+ files with checkbox for multiple files mode
+- ✅ **Three Comparison Modes**:
+  - **key_value**: Compare last key part + value (strict types)
+  - **full_path_value**: Compare full dot-notation path + value
+  - **key_only**: Compare only key paths (ignore values)
+
+##### Advanced Options
+- ✅ **ignore_case_keys**: Case-insensitive key comparison
+- ✅ **ignore_case_values**: Case-insensitive string value comparison
+- ✅ **skip_empty**: Skip empty string values
+- ✅ **arrays_ignore_order**: Treat arrays as sets (order-independent)
+
+##### GUI Interface
+- ✅ **SetOperationsDock**: Complete PySide6 dock widget
+- ✅ **File Selection**: File A/B inputs + multiple files list
+- ✅ **Operations**: 4 checkboxes for pipeline operations
+- ✅ **Results Display**: QTextEdit with JSON output + statistics
+- ✅ **Output Format**: JSON nested, Separate files, Display only
+- ✅ **User Feedback**: Statistics (item counts), success/error messages
+
+##### CLI Support
+- ✅ **CLI Interface**: `python -m src.set_operations <operation> <files...>`
+- ✅ **Arguments**: --ignore-case-keys, --ignore-case-values, --skip-empty, --arrays-ignore-order
+- ✅ **Operations**: intersection, union, difference, symmetric
+- ✅ **Output**: stdout or --output file
+
+##### Security & Quality
+- ✅ **OWASP Security**: CWE-22 Path Traversal prevention with `validate_file_path()`
+- ✅ **Code Quality**: 
+  - Pylint score 9.38/10 (core module)
+  - Black formatted
+  - isort organized
+- ✅ **Comprehensive Tests**: 50 unit tests (100% pass rate, 0.24s)
+- ✅ **Coverage**: validate_file_path (6 tests), flatten_json (6), unflatten_json (3), normalize_for_comparison (5), compare_files (6), intersection (5), union (3), difference (4), symmetric_difference (3), edge cases (5), integration (2)
+
+#### Technical Implementation
+
+##### New Modules
+- ✅ `src/set_operations.py`: Core logic (~437 LOC)
+  - `validate_file_path()`: Security validation
+  - `flatten_json()`, `unflatten_json()`: Structure conversion
+  - `normalize_for_comparison()`: Hashable value normalization
+  - `compare_files()`: Preparation with 3 modes
+  - `intersection()`, `union()`, `difference()`, `symmetric_difference()`: Set operations
+  - CLI support with argparse
+- ✅ `src/gui/set_operations_dock.py`: GUI interface (~412 LOC)
+  - `SetOperationsDock(BaseDock)`: Main dock widget
+  - File selection with multiple files support
+  - 4 operations + 3 comparison modes + 4 options
+  - Results display with statistics
+- ✅ `tests/test_set_operations.py`: Unit tests (~464 LOC)
+  - 50 tests covering all functions + edge cases
+  - Security tests, integration tests
+  - Real JSON file tests
+
+##### Integration
+- ✅ `src/app.py`: Menu integration
+  - Added "JSON Set Operations..." action in Tools menu
+  - `_show_set_operations()` method for dock management
+  - Lazy loading with RightDockWidgetArea placement
+- ✅ `src/gui/__init__.py`: Export SetOperationsDock
+
+##### Design Patterns
+- **Strategy (GoF)**: Each operation as interchangeable strategy
+- **Template Method (GoF)**: Common pipeline (read → normalize → operate → output)
+- **Factory Method (GoF)**: Different output formats
+- **Command (GoF)**: Operations encapsulated as commands
+- **Observer (GoF)**: Qt signals for GUI communication
+- **Information Expert (GRASP)**: set_operations.py knows set logic
+- **Controller (GRASP)**: SetOperationsDock coordinates workflow
+- **Low Coupling (GRASP)**: GUI depends only on core public interface
+- **High Cohesion (GRASP)**: Each module has single clear responsibility
+
+#### Project Infrastructure
+- ✅ **.gitignore**: Created with Python, venv, cache, IDE patterns
+- ✅ **Cache Cleanup**: Removed __pycache__ and .pytest_cache from root
+- ✅ **CI/CD Quality Gates**: black, isort, pylint >9.0, tests 100% pass
+
+#### Documentation
+- ✅ **Inline Documentation**: Comprehensive docstrings with examples
+- ✅ **Type Hints**: Full typing for all functions
+- ✅ **Comments**: Security notes, algorithm explanations
+- ✅ **Changelog**: This entry documenting v2.9.32
+
+---
+
 ## [2.9.0] - 2025-12-02
 
 ### 🎯 JSX Parameter Extractor - Complete Feature

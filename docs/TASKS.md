@@ -1060,12 +1060,108 @@ result = convert_text_to_json(text, "auto")
 - **[]** Quando usuário clicar em resultado de busca ou insert, aplicação deve abrir arquivo em editor próprio
 - **[]** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript). Esses algoritmos 
 - **[]** Fazer com que Clarify não apenas reconheça arquivos JSON, como também arquivos TOON, que é um novo conceito de armazenamento e reestruturação de dados;
+- **[]** Fazer processamento de arquivos JSON e TOON como se fosse um Sistema de Gerenciamento de Base de Dados (SGBD), aproveitando o editor de texto/código para executar comandos semelhantes de SQL e NoSQL, sendo que devem combinar diversos comandos de forma que seja avançado e ao mesmo tempo simples, como é a semântica e sintaxe do Python em comparação com o C: Python é simples, confortável de codificar e poderoso ao mesmo tempo por ter ferramentas avançadas, se aproximando da linguagem humana.
 
 #### Calculator & Set Operations
 
 - **[]** Calculator: Adicionar conceitos de calculadora como registrador de memória, adição, concatenação e recall de memória padrão com histórico de modificações. A ideia seria a seguinte: o registro de memória seria o resultado do processamento, por exemplo, de busca, do painel de resultado de buscas. A adição significa: adicione um resultado de busca com outro resultado de forma que estes se complementem, por exemplo, em ordem alfabética ou unindo resultados de um mesmo arquivo (quando é em formato de árvore) no painel de resultados. Concatenação iria concatenar um resultado a outro, colocando o segundo resultado debaixo do primeiro no painel de resultados. O recall de memória iria chamar resultados salvos e jogar no painel de resultados, como pesquisas pela palavra "span".
-- **[]** Set: Adicionar operações de conjunto lógico de arquivos JSON como interseção, diferença, união e diferença exclusiva. Incluir checkboxes para incluir chaves e/ou valores nesta operação de conjunto, em que, por exemplo, se for escolhida a intersecção entre arquivo A e arquivo B, ambos JSON, se tem valores equivalentes tanto em A quanto em B no sentido de chave e valor (title: "Tarefas de Casa"), no sentido de caminhos de chave e valor (t.pages.home.features.title, title: "Tarefas de Casa"), e somente no sentido de caminhos de chave (t.pages.home.features.title);
+- **[✅]** Set: Adicionar operações de conjunto lógico de arquivos JSON como interseção, diferença, união e diferença exclusiva. Incluir checkboxes para incluir chaves e/ou valores nesta operação de conjunto, em que, por exemplo, se for escolhida a intersecção entre arquivo A e arquivo B, ambos JSON, se tem valores equivalentes tanto em A quanto em B no sentido de chave e valor (title: "Tarefas de Casa"), no sentido de caminhos de chave e valor (t.pages.home.features.title, title: "Tarefas de Casa"), e somente no sentido de caminhos de chave (t.pages.home.features.title); **✅ Completa v2.9.32 - 02/12/2025**
 - **[]** Verificar se na pasta add existe alguma funcionalidade que ainda não foi implementada;
+
+---
+
+#### Task v2.9.32 - JSON Set Operations (v2.9.32)
+**Status**: ✅ Completa - 02/12/2025  
+**Arquivos Criados**: `src/set_operations.py` (437 LOC), `src/gui/set_operations_dock.py` (412 LOC), `tests/test_set_operations.py` (464 LOC)  
+**Arquivos Modificados**: `src/app.py` (+10 linhas), `src/gui/__init__.py` (+2 linhas)  
+**Infraestrutura**: `.gitignore` criado
+
+**Objetivo**: Implementar operações de conjunto lógico (∩, ∪, −, ⊕) para arquivos JSON com interface GUI e CLI.
+
+**Componentes Implementados**:
+
+**1. Core Logic (`src/set_operations.py`)**:
+- `validate_file_path()`: Segurança CWE-22 (path traversal prevention)
+- `flatten_json()`: Converte estrutura aninhada para dot-notation
+- `unflatten_json()`: Reconstrói estrutura aninhada
+- `normalize_for_comparison()`: Normaliza valores para hashable (frozenset/tuple)
+- `compare_files()`: Prepara arquivos com 3 modos (key_value, full_path_value, key_only)
+- `intersection()`: A ∩ B ∩ C (pipeline left-to-right)
+- `union()`: A ∪ B ∪ C
+- `difference()`: A − B − C (pipeline)
+- `symmetric_difference()`: A ⊕ B (2 arquivos)
+- CLI completo com argparse
+
+**2. GUI (`src/gui/set_operations_dock.py`)**:
+- File selection: File A/B + checkbox múltiplos arquivos + QListWidget
+- 4 operações: checkboxes para ∩, ∪, −, ⊕
+- 3 modos de comparação: key_value (default), full_path_value, key_only
+- 4 opções: ignore case keys/values, skip empty, arrays ignore order
+- Output format: JSON nested, Separate files, Display only
+- Results: QTextEdit + statistics label (green, bold)
+- Buttons: Execute, Clear, Save Result
+
+**3. Testes (`tests/test_set_operations.py`)**:
+- 50 testes unitários (100% pass rate em 0.24s)
+- Cobertura: validate_file_path (6), flatten_json (6), unflatten_json (3), normalize_for_comparison (5), compare_files (6), intersection (5), union (3), difference (4), symmetric_difference (3), edge cases (5), integration (2)
+- Testes de segurança (path traversal, unreadable files)
+- Testes de edge cases (null vs empty, strict types, arrays order)
+
+**4. Design Patterns**:
+- **Strategy (GoF)**: Cada operação como estratégia intercambiável
+- **Template Method (GoF)**: Pipeline comum (read → normalize → operate → output)
+- **Factory Method (GoF)**: Diferentes formatos de output
+- **Command (GoF)**: Operações encapsuladas como comandos
+- **Observer (GoF)**: Qt signals para comunicação GUI
+- **Information Expert (GRASP)**: set_operations.py conhece lógica de conjunto
+- **Controller (GRASP)**: SetOperationsDock coordena workflow
+- **Low Coupling (GRASP)**: GUI depende apenas de interface pública core
+- **High Cohesion (GRASP)**: Cada módulo tem responsabilidade única clara
+
+**5. CI/CD Quality Gates**:
+- ✅ Black formatter: 3 arquivos reformatados
+- ✅ isort: Imports organizados alphabeticamente
+- ✅ Pylint Core: 9.38/10 (meta >9.0)
+- ⚠️ Pylint GUI: 7.20/10 (aceitável para complexidade GUI)
+- ✅ Testes: 50/50 PASSED (0.24s, timeout 30s)
+- ✅ Syntax validation: py_compile OK
+- ✅ Functional test: CLI retorna JSON válido
+
+**6. Security (OWASP)**:
+- ✅ CWE-22 Path Traversal: Mitigado com `validate_file_path()`
+- ✅ Injection: Seguro (sem SQL/eval/exec)
+- ✅ Deserialization: Seguro (json.load da stdlib)
+- ✅ Specific exception handling: OSError, JSONDecodeError
+
+**7. Integração**:
+- ✅ Menu Tools: "JSON Set Operations..." action
+- ✅ Lazy loading: `_show_set_operations()` method
+- ✅ RightDockWidgetArea placement
+- ✅ Export em `src/gui/__init__.py`
+
+**Exemplo CLI**:
+```bash
+python -m src.set_operations intersection file_a.json file_b.json
+python -m src.set_operations union a.json b.json c.json -o result.json
+python -m src.set_operations difference a.json b.json --ignore-case-keys
+python -m src.set_operations symmetric a.json b.json --arrays-ignore-order
+```
+
+**Decisões de Design**:
+- Pipeline left-to-right: A ∩ B ∩ C executado como (A ∩ B) ∩ C
+- Comparação estrita de tipos: `{"age": 25}` ≠ `{"age": "25"}`
+- Null ≠ Empty: `{"value": null}` ≠ `{"value": ""}`
+- Arrays order-dependent por padrão (option para ignorar ordem)
+- Dot notation para paths: `pages.home.title`
+
+**Rollback Plan**:
+- Remover arquivos: `src/set_operations.py`, `src/gui/set_operations_dock.py`, `tests/test_set_operations.py`
+- Reverter `src/app.py`: remover 3 linhas (action, addAction, connect)
+- Reverter `src/gui/__init__.py`: remover 2 linhas (import, __all__)
+- Impacto: zero em funcionalidades existentes (feature isolada)
+- Tempo estimado: ~5 minutos
+
+---
 
 ---
 

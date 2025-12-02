@@ -27,6 +27,7 @@ from .text_to_json_dock import TextToJsonDock
 from .jsx_extractor_dock import JSXExtractorDock
 from .json_editor_tab import JsonEditorTab
 from .json_validator import JsonValidator
+from .set_operations_dock import SetOperationsDock
 
 __all__ = [
     # Base classes
@@ -38,7 +39,7 @@ __all__ = [
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
     'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
-    'EditorDock', 'TextToJsonDock', 'JSXExtractorDock',
+    'EditorDock', 'TextToJsonDock', 'JSXExtractorDock', 'SetOperationsDock',
     # Editor components
     'JsonEditorTab', 'JsonValidator'
 ]

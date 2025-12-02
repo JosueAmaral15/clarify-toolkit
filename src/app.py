@@ -4436,6 +4436,16 @@ if _PYSIDE:
                 self._open_file_list()
             self.dock_file_list.show()
         
+        def _show_set_operations(self):
+            """Show JSON Set Operations dock (v2.9.32)."""
+            if not hasattr(self, 'dock_set_operations') or self.dock_set_operations is None:
+                from .gui import SetOperationsDock
+                self.dock_set_operations = SetOperationsDock(self)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_set_operations)
+            
+            self.dock_set_operations.show()
+            self.dock_set_operations.raise_()
+        
         def _show_tutorials(self):
             """Show tutorials dock (Task #45 - v2.9.15)."""
             if not hasattr(self, 'dock_tutorials'):
@@ -4525,6 +4535,7 @@ if _PYSIDE:
             self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
             self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)  # Task #49 - v2.9.24
+            self.act_open_set_operations = QAction("JSON Set Operations...", self)  # v2.9.32
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
@@ -4536,6 +4547,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_json_search)
             m_tools.addAction(self.act_open_case_converter)
             m_tools.addAction(self.act_open_text_to_json)
+            m_tools.addAction(self.act_open_set_operations)
             m_tools.addSeparator()
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
@@ -4548,6 +4560,7 @@ if _PYSIDE:
             self.act_open_json_search.triggered.connect(self._show_json_search)
             self.act_open_case_converter.triggered.connect(self._show_case_converter)
             self.act_open_text_to_json.triggered.connect(self._show_text_to_json)
+            self.act_open_set_operations.triggered.connect(self._show_set_operations)
             self.act_open_file_list.triggered.connect(self._show_file_list)
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 
