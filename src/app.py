@@ -4178,6 +4178,9 @@ if _PYSIDE:
             self._build_menu()
             self._restore_prefs()
             self._apply_saved_settings()
+            
+            # Apply accessibility features (v2.9.35)
+            self._apply_accessibility()
 
             # Nice monospaced font for preview-ish widgets
             try:
@@ -5119,7 +5122,7 @@ if _PYSIDE:
                 QMessageBox.information(self, "Success", "Recent files cleared!")
         
         def keyPressEvent(self, event):
-            """Handle global keyboard shortcuts (v2.9.33)."""
+            """Handle global keyboard shortcuts (v2.9.33 + v2.9.35 accessibility)."""
             from PySide6.QtCore import Qt
             
             key = event.key()
@@ -5156,6 +5159,11 @@ if _PYSIDE:
                     self._jump_to_dock(dock_index)
                     event.accept()
                     return
+                # Ctrl+0 - Reset font size (v2.9.35)
+                elif key == Qt.Key_0:
+                    self._reset_font_size()
+                    event.accept()
+                    return
             
             # F11 - Fullscreen
             elif key == Qt.Key_F11:
@@ -5168,6 +5176,59 @@ if _PYSIDE:
             
             # Pass to parent for default handling
             super().keyPressEvent(event)
+        
+        def wheelEvent(self, event):
+            """Handle mouse wheel for font scaling (v2.9.35)."""
+            from PySide6.QtCore import Qt
+            
+            # Ctrl+Scroll - Font scaling
+            if event.modifiers() == Qt.ControlModifier:
+                from .accessibility_manager import AccessibilityManager
+                
+                if event.angleDelta().y() > 0:
+                    # Scroll up - increase font
+                    new_size = AccessibilityManager.increase_font_size(
+                        QApplication.instance(),
+                        self.settings.qsettings
+                    )
+                    self.statusBar().showMessage(f"Font size: {new_size}pt", 2000)
+                else:
+                    # Scroll down - decrease font
+                    new_size = AccessibilityManager.decrease_font_size(
+                        QApplication.instance(),
+                        self.settings.qsettings
+                    )
+                    self.statusBar().showMessage(f"Font size: {new_size}pt", 2000)
+                
+                event.accept()
+                return
+            
+            # Pass to parent for default handling
+            super().wheelEvent(event)
+        
+        def _reset_font_size(self):
+            """Reset font size to default (v2.9.35)."""
+            from .accessibility_manager import AccessibilityManager
+            
+            new_size = AccessibilityManager.reset_font_size(
+                QApplication.instance(),
+                self.settings.qsettings
+            )
+            self.statusBar().showMessage(f"Font size reset to {new_size}pt", 2000)
+        
+        def _apply_accessibility(self):
+            """Apply accessibility features (v2.9.35)."""
+            from .accessibility_manager import AccessibilityManager
+            
+            # Apply focus indicators globally
+            AccessibilityManager.apply_focus_indicators(QApplication.instance())
+            
+            # Enable screen reader support
+            AccessibilityManager.enable_screen_reader_support(QApplication.instance())
+            
+            # Load and apply saved font size
+            font_size = AccessibilityManager.get_font_size(self.settings.qsettings)
+            AccessibilityManager.apply_font_size(QApplication.instance(), font_size)
         
         def _get_all_docks(self):
             """Get list of all QDockWidget instances (v2.9.33)."""
