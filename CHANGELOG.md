@@ -1,5 +1,47 @@
 # Changelog - Clarify Project
 
+## [2.9.40.1] - 2025-12-03
+
+### 🐛 Hotfix: JSXExtractorDock Layout Fix
+
+#### Problema
+- **AttributeError em JSXExtractorDock**: Erro `'JSXExtractorDock' object has no attribute 'content_layout'` ao tentar abrir JSX Extractor como aba
+- **Causa**: JSXExtractorDock usava `self.content_layout` (não existe) ao invés de `self.layout` (herdado de BaseDock)
+
+#### Solução
+- **Arquivo**: `src/gui/jsx_extractor_dock.py`
+- **Correção**: Substituído todas as 4 ocorrências de `self.content_layout` por `self.layout` (linhas 323, 331-333)
+- **Validação**: App inicia sem erros, JSX Extractor abre corretamente como aba
+
+#### Esclarecimento: Advanced Conditions vs Advanced File Search
+
+**Confusão Reportada**: Usuário pensou que "Advanced Conditions" foi removido de Search/Replace e Insert
+
+**Realidade**:
+- ✅ **Advanced Conditions** (seção GUI com filtros) ESTÁ PRESENTE:
+  - `Search/Replace`: Linha ~2143 (`QGroupBox("Advanced conditions (when operating on a folder)")`)
+  - `Insert`: Linha ~2878 (mesma estrutura)
+  - **Features**: field/op/value filters, AND/OR logic, case sensitive, whole word, regex, scope, scope param
+  
+- ✅ **Advanced File Search** (feature diferente) TAMBÉM PRESENTE:
+  - Método `_show_advanced_file_search()` em MainWindow
+  - Dialog para busca avançada de arquivos com condições complexas
+
+**Não houve remoção** - são duas features distintas que sempre coexistiram:
+1. **Advanced Conditions**: Filtros na GUI de Search/Replace e Insert
+2. **Advanced File Search**: Dialog separado acessado via Tools menu
+
+#### Files Modified
+- `src/gui/jsx_extractor_dock.py`: 4 linhas (self.content_layout → self.layout)
+
+#### Validation
+- ✅ App inicia sem AttributeError
+- ✅ JSX Extractor abre como aba
+- ✅ Advanced Conditions presente em Search/Replace e Insert (nunca foi removido)
+- ✅ Advanced File Search presente no Tools menu
+
+---
+
 ## [2.9.40] - 2025-12-03
 
 ### 🔄 Tools as Tabs System

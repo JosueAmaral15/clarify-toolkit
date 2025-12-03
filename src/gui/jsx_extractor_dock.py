@@ -319,18 +319,18 @@ class JSXExtractorDock(BaseDock):
         row_buttons.addWidget(self.btn_clear)
         row_buttons.addStretch()
 
-        # Main layout
-        self.content_layout.addLayout(row_path)
-        self.content_layout.addLayout(row_param)
-        self.content_layout.addLayout(row_delim)
-        self.content_layout.addLayout(row_ext)
-        self.content_layout.addWidget(self.options_group)
-        self.content_layout.addWidget(self.norm_group)
-        self.content_layout.addWidget(self.json_group)
-        self.content_layout.addLayout(row_avoid)
-        self.content_layout.addLayout(row_buttons)
-        self.content_layout.addWidget(self.tabs, 1)
-        self.content_layout.addWidget(self.status_label)
+        # Main layout (fix v2.9.40.1 - use self.layout from BaseDock)
+        self.layout.addLayout(row_path)
+        self.layout.addLayout(row_param)
+        self.layout.addLayout(row_delim)
+        self.layout.addLayout(row_ext)
+        self.layout.addWidget(self.options_group)
+        self.layout.addWidget(self.norm_group)
+        self.layout.addWidget(self.json_group)
+        self.layout.addLayout(row_avoid)
+        self.layout.addLayout(row_buttons)
+        self.layout.addWidget(self.tabs, 1)
+        self.layout.addWidget(self.status_label)
 
     def _connect_signals(self) -> None:
         """Connect widget signals."""
