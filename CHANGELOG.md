@@ -1,5 +1,120 @@
 # Changelog - Clarify Project
 
+## [2.9.40.2] - 2025-12-03
+
+### 🐛 Hotfix: Window Sizing + Menu Accessibility
+
+#### Problemas Reportados
+
+**1. Window Sizing Regression (3 tools afetados)**
+- **Sintoma**: Ao abrir AI Processor, Text to JSON (JSX option), ou Set Operations, o botão de maximizar desaparecia e o conteúdo inferior da janela ficava inacessível (sem scroll, sem limite)
+- **Causa**: `TextToJsonDock.__init__()` linha 123 chamava `self.resize(500, 600)` que forçava o tamanho da janela pai quando o dock era usado como tab no QTabWidget
+
+**2. Fixed Tabs Inacessíveis**
+- **Sintoma**: Search/Replace (índice 0) e Insert (índice 1) podiam ser fechadas com X, mas não havia forma de reabri-las do menu Tools
+- **Causa**: Ausência de entradas no menu Tools para as tabs fixas
+
+**3. Protocolo Simplicidade 3 - Etapa 10 Incompleta**
+- **Gap Identificado**: Testes de v2.9.40 não verificaram cada tool individualmente (smoke test geral apenas)
+
+#### Solução Implementada
+
+**Código Modificado**:
+
+**1. Removed Window Resize Constraint** (`src/gui/text_to_json_dock.py`):
+```python
+# BEFORE (linha 123):
+self.resize(500, 600)
+
+# AFTER (v2.9.40.2):
+# Removed resize(500, 600) - caused window sizing issues when used as tab
+```
+
+**2. Added Menu Entries** (`src/app.py`):
+- **Menu Actions** (linhas ~4727-4728):
+  ```python
+  self.act_open_search_replace = QAction("Search / Replace", self)
+  self.act_open_insert = QAction("Insert", self)
+  ```
+  
+- **Menu Items** (linhas ~4740-4742):
+  ```python
+  m_tools.addAction(self.act_open_search_replace)
+  m_tools.addAction(self.act_open_insert)
+  m_tools.addSeparator()
+  ```
+
+- **Signal Connections** (linhas ~4757-4758):
+  ```python
+  self.act_open_search_replace.triggered.connect(self._show_search_replace)
+  self.act_open_insert.triggered.connect(self._show_insert)
+  ```
+
+**3. Implemented Reopen Methods** (`src/app.py` linhas ~4323-4344):
+```python
+def _show_search_replace(self):
+    """Show Search/Replace tab (v2.9.40.2 - reopen if closed)."""
+    if self.tabs.count() > 0 and self.tabs.tabText(0) == "Search / Replace":
+        self.tabs.setCurrentIndex(0)  # Already exists, just switch
+    else:
+        # Tab was closed, recreate at index 0
+        from .gui.search_replace_panel import SearchReplacePanel
+        self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
+        self.tabs.insertTab(0, self.tab_search, "Search / Replace")
+        self.tabs.setCurrentIndex(0)
+
+def _show_insert(self):
+    """Show Insert tab (v2.9.40.2 - reopen if closed)."""
+    expected_index = 1
+    if self.tabs.count() > expected_index and self.tabs.tabText(expected_index) == "Insert":
+        self.tabs.setCurrentIndex(expected_index)
+    else:
+        # Tab was closed, recreate at index 1
+        from .gui.insert_panel import InsertPanel
+        self.tab_insert = InsertPanel()
+        self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
+        self.tabs.setCurrentIndex(expected_index)
+```
+
+#### Validação (Protocolo Etapa 10 - Completo)
+
+**Teste Sistemático de 13 Tools**:
+
+**Tools com Window Sizing Issues**:
+- ✅ AI Processor: Botão maximizar presente, scroll completo funcional
+- ✅ Text to JSON (JSX): Botão maximizar presente, scroll completo funcional
+- ✅ Set Operations: Botão maximizar presente, scroll completo funcional
+
+**Fixed Tabs**:
+- ✅ Search/Replace: Fecha com X → Reabre via Tools menu (índice 0)
+- ✅ Insert: Fecha com X → Reabre via Tools menu (índice 1)
+
+**Regressão (outros 10 tools)**:
+- ✅ JSON Translate
+- ✅ JSON Rewriter
+- ✅ Text Extractor
+- ✅ Placeholder Replacer
+- ✅ JSON Search
+- ✅ Case Converter
+- ✅ File List
+- ✅ Advanced File Search
+- ✅ Editor
+- ✅ Tutorials
+
+**Protocolo Simplicidade 3 - Gap Resolvido**:
+- ✅ Etapa 10 (testes): Cada tool testado individualmente (não apenas smoke test)
+
+#### Files Modified
+- `src/gui/text_to_json_dock.py`: 1 linha (removido resize constraint)
+- `src/app.py`: 28 linhas (menu entries + reopen methods)
+
+#### Architecture Impact
+- **Pattern**: Factory Method mantido (lazy-loading)
+- **Breaking Change**: Nenhuma
+- **UX Improvement**: Fixed tabs agora recuperáveis do menu
+
+---
+
 ## [2.9.40.1] - 2025-12-03
 
 ### 🐛 Hotfix: JSXExtractorDock Layout Fix

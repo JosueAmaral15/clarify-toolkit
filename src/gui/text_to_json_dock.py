@@ -120,7 +120,7 @@ items[2]{id,name}:
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Format Templates")
-        self.resize(500, 600)
+        # Removed resize(500, 600) - v2.9.40.2: caused window sizing issues when used as tab
         self._setup_ui()
     
     def _setup_ui(self):

@@ -4319,6 +4319,32 @@ if _PYSIDE:
                 self.dock_history.hide()
         
         # Lazy-loading show methods for tools as tabs (v2.9.40)
+        
+        def _show_search_replace(self):
+            """Show Search/Replace tab (v2.9.40.2 - reopen if closed)."""
+            # Check if tab exists at index 0
+            if self.tabs.count() > 0 and self.tabs.tabText(0) == "Search / Replace":
+                self.tabs.setCurrentIndex(0)
+            else:
+                # Tab was closed, recreate at index 0
+                from .gui.search_replace_panel import SearchReplacePanel
+                self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
+                self.tabs.insertTab(0, self.tab_search, "Search / Replace")
+                self.tabs.setCurrentIndex(0)
+        
+        def _show_insert(self):
+            """Show Insert tab (v2.9.40.2 - reopen if closed)."""
+            # Check if tab exists at index 1
+            expected_index = 1
+            if self.tabs.count() > expected_index and self.tabs.tabText(expected_index) == "Insert":
+                self.tabs.setCurrentIndex(expected_index)
+            else:
+                # Tab was closed, recreate at index 1
+                from .gui.insert_panel import InsertPanel
+                self.tab_insert = InsertPanel()
+                self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
+                self.tabs.setCurrentIndex(expected_index)
+        
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
             if not hasattr(self, 'dock_translate'):
@@ -4722,6 +4748,9 @@ if _PYSIDE:
 
             # Tools menu
             m_tools = bar.addMenu(tr("menu.tools"))
+            # Fixed tabs accessibility (v2.9.40.2 - Task: menu for closed tabs)
+            self.act_open_search_replace = QAction("Search / Replace", self)
+            self.act_open_insert = QAction("Insert", self)
             self.act_open_translate = QAction(tr("menu.tools.json_translate"), self)
             self.act_open_rewriter = QAction(tr("menu.tools.json_rewriter"), self)
             self.act_open_text_extractor = QAction(tr("menu.tools.text_extractor"), self)
@@ -4734,6 +4763,9 @@ if _PYSIDE:
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
+            m_tools.addAction(self.act_open_search_replace)
+            m_tools.addAction(self.act_open_insert)
+            m_tools.addSeparator()
             m_tools.addAction(self.act_open_translate)
             m_tools.addAction(self.act_open_rewriter)
             m_tools.addAction(self.act_open_text_extractor)
@@ -4747,6 +4779,8 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
 
+            self.act_open_search_replace.triggered.connect(self._show_search_replace)
+            self.act_open_insert.triggered.connect(self._show_insert)
             self.act_open_translate.triggered.connect(self._show_translate)
             self.act_open_rewriter.triggered.connect(self._show_rewriter)
             self.act_open_text_extractor.triggered.connect(self._show_text_extractor)
