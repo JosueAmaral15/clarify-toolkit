@@ -1108,7 +1108,7 @@ result = convert_text_to_json(text, "auto")
 
 - **[]** GUI Automated Tests: Implementar testes automatizados para interface gráfica usando pytest-qt. Cobertura: interação com docks (click buttons, fill forms, verify results), workflows completos (open file → search → rewrite → save), integração entre módulos (Editor ↔ Set Operations ↔ Rewriter). Target: 50+ integration tests.
 - **[]** Performance Benchmarks: Criar suite de benchmarks para operações críticas usando arquivos JSON grandes (1MB, 10MB, 50MB). Métricas: tempo de processamento, uso de memória RAM, CPU usage. Operações testadas: set operations, JSON rewriter, search, text extractor. Armazenar resultados em `benchmarks/results.json` para comparação entre versões.
-- **[]** Code Coverage Reporting: Integrar pytest-cov no CI/CD com configuração em `.coveragerc`. Target: manter >90% coverage para módulos core (`src/set_operations.py`, `src/rewriter/`, `src/json_search/`). Gerar relatórios HTML automáticos em `htmlcov/`. Incluir badge de coverage no README.md.
+- **[X]** Code Coverage Reporting: Integrar pytest-cov no CI/CD com configuração em `.coveragerc`. Target: manter >90% coverage para módulos core (`src/set_operations.py`, `src/rewriter/`, `src/json_search/`). Gerar relatórios HTML automáticos em `htmlcov/`. Incluir badge de coverage no README.md. **(v2.9.38)**
 - **[]** Load Testing: Criar testes de carga para identificar limites do sistema. Cenários: processar 1000+ arquivos simultaneamente, set operations com 100+ arquivos, search em corpus de 10GB. Usar `multiprocessing` para simular múltiplos usuários. Documentar resultados em `docs/PERFORMANCE.md`.
 
 ---

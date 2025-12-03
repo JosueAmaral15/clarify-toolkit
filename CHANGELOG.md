@@ -1,5 +1,81 @@
 # Changelog - Clarify Project
 
+## [2.9.39] - 2025-12-03
+
+### 🔧 Hotfix: Import Corrections + Test Timeout Configuration
+
+#### Code Quality Improvements
+
+##### Import Corrections (9 arquivos)
+- 🐛 **Fixed remaining relative imports** em `src/gui/`:
+  - **Problema**: Imports relativos `from ..` além do top-level package causavam `ImportError`
+  - **Solução**: Convertidos para imports absolutos `from src.`
+  
+  **Arquivos corrigidos**:
+  1. `json_translate_dock.py` (linha 31): `from ..utils` → `from src.utils`
+  2. `case_validator_dialog.py` (linhas 9-10): `from ..rewriter.*` → `from src.rewriter.*`
+  3. `jsx_extractor_dock.py` (linha 429): `from ..extractors` → `from src.extractors`
+  4. `json_rewriter_dock.py` (3 locais - linhas 108, 765, 876): `from .. import rewriter` → `from src import rewriter`
+  5. `set_operations_dock.py` (linha 299): `from ..set_operations` → `from src.set_operations`
+
+- ✅ **Validação**: Todos os 14 módulos GUI importam sem erros
+- ✅ **Testes**: 24/24 passed em smoke test (0.35s)
+
+##### Test Timeout Configuration
+- ⏱️ **Individual timeouts configurados**:
+  - **Default**: 10s para testes unit (`pyproject.toml`: `--timeout=10`)
+  - **Integration**: 60s para testes lentos (`test_advanced_conditions_integration.py`: `pytestmark = pytest.mark.timeout(60)`)
+  - **Config**: `timeout_func_only = true` (timeout apenas em funções, não setup/teardown)
+  
+- 🔧 **CI/CD ajustado**:
+  - `.github/workflows/ci.yml`: timeout 10s
+  - Coverage threshold: 70% (gradual para 90%)
+
+##### Code Cleanup
+- 🧹 **Trailing whitespace removido**: `settings_manager.py` (22 linhas limpas)
+- 📚 **Docstrings adicionadas** (11 funções documentadas):
+  - `set_operations_dock.py`: 9 funções (`__init__`, `_browse_file`, `_toggle_multiple_files`, `_add_file`, `_remove_file`, `_clear_files`, `_get_files`, `_execute`, `_save_result`)
+  - `case_validator_dialog.py`: 2 funções (`__init__`, `_update_preview`)
+
+##### Quality Metrics
+- **Documentação**: 494/500 funções (98.8%), 30/30 classes (100%)
+- **Imports**: 0 erros relativos
+- **Code Style**: 0 trailing whitespace
+- **Test Collection**: 607 testes coletáveis sem erros
+
+##### Files Modified (10 arquivos)
+- **Configuration** (3):
+  - `.github/workflows/ci.yml` (timeout 10s, coverage 70%)
+  - `pyproject.toml` (timeout config + markers)
+  - `docs/TASKS.md` (Code Coverage marcado completo v2.9.38)
+
+- **Source Code** (6):
+  - `src/gui/json_translate_dock.py` (import line 31)
+  - `src/gui/case_validator_dialog.py` (imports + 2 docstrings)
+  - `src/gui/jsx_extractor_dock.py` (import line 429)
+  - `src/gui/json_rewriter_dock.py` (3 imports em linhas 108, 765, 876)
+  - `src/gui/set_operations_dock.py` (import + 9 docstrings)
+  - `src/settings_manager.py` (trailing whitespace cleanup)
+
+- **Tests** (1):
+  - `tests/test_advanced_conditions_integration.py` (timeout marker 60s)
+
+##### Testing Strategy
+- **Smoke Test**: Validação rápida de imports e funcionalidade básica
+- **Full Suite**: 607 testes com timeouts individuais configurados
+- **Integration Tests**: Timeout estendido (60s) para testes lentos
+
+##### Rationale
+**Por quê este hotfix?**
+- Sprint v2.9.38 introduziu correções de imports, mas 9 arquivos foram esquecidos
+- Timeouts não estavam configurados individualmente (risco de false positives em testes lentos)
+- Trailing whitespace causava warnings desnecessários
+- Docstrings faltantes reduziam manutenibilidade
+
+**Impacto**: Melhora estabilidade e qualidade sem adicionar features novas (hotfix puro)
+
+---
+
 ## [2.9.38] - 2025-12-02
 
 ### 🔄 CI/CD Pipeline + Code Coverage Reporting

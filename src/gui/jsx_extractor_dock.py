@@ -426,7 +426,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setStyleSheet("color: blue; font-style: italic;")
 
             # Import Extractor here to avoid circular imports
-            from ..extractors import Extractor
+            from src.extractors import Extractor
 
             # Create Extractor instance with all options
             extractor = Extractor(

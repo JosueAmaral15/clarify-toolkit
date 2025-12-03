@@ -45,6 +45,11 @@ class SetOperationsDock(BaseDock):
     """Dock widget for JSON set operations."""
 
     def __init__(self, parent=None):
+        """Initialize Set Operations dock.
+        
+        Args:
+            parent: Parent widget (optional)
+        """
         self.file_paths: List[str] = []
         super().__init__("JSON Set Operations", parent)
 
@@ -215,7 +220,11 @@ class SetOperationsDock(BaseDock):
         self.btn_save.clicked.connect(self._save_result)
 
     def _browse_file(self, target: str):
-        """Browse for JSON file."""
+        """Browse for JSON file.
+        
+        Args:
+            target: Target field ('a' or 'b')
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self, f"Select File {target.upper()}", "", "JSON Files (*.json);;All Files (*)"
         )
@@ -242,14 +251,14 @@ class SetOperationsDock(BaseDock):
                 self.list_files.addItem(self.ed_file_b.text())
 
     def _add_file(self):
-        """Add file to list."""
+        """Add file to multi-file list via file dialog."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Add JSON File", "", "JSON Files (*.json);;All Files (*)")
 
         if file_path:
             self.list_files.addItem(file_path)
 
     def _remove_file(self):
-        """Remove selected file from list."""
+        """Remove selected file from multi-file list."""
         current_row = self.list_files.currentRow()
         if current_row >= 0:
             self.list_files.takeItem(current_row)
@@ -259,7 +268,11 @@ class SetOperationsDock(BaseDock):
         self.list_files.clear()
 
     def _get_files(self) -> List[str]:
-        """Get list of files to process."""
+        """Get list of files to process.
+        
+        Returns:
+            List of file paths from either 2-file mode (File A/B) or multi-file list.
+        """
         if self.chk_multiple.isChecked():
             files = []
             for i in range(self.list_files.count()):
@@ -296,7 +309,7 @@ class SetOperationsDock(BaseDock):
 
         # Validate and load JSON files (Security: CWE-22)
         try:
-            from ..set_operations import validate_file_path
+            from src.set_operations import validate_file_path
 
             file_dicts = []
             for file_path in files:
@@ -378,7 +391,11 @@ class SetOperationsDock(BaseDock):
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
 
     def _save_result(self):
-        """Save results to file."""
+        """Save operation results to JSON file.
+        
+        Opens save dialog and writes current result from output area to file.
+        Shows success message with file path.
+        """
         if not self.txt_result.toPlainText():
             return
 

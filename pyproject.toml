@@ -98,12 +98,14 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
-    "--timeout=30",
+    "--timeout=10",
 ]
+timeout_func_only = true
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests (60s timeout)",
+    "unit: marks tests as unit tests (10s timeout)",
+    "timeout(seconds): set custom timeout for individual test",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",

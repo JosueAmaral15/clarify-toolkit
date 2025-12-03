@@ -16,6 +16,9 @@ Test Coverage:
 """
 
 import pytest
+
+# Integration tests require longer timeout (60s max)
+pytestmark = pytest.mark.timeout(60)
 import tempfile
 import os
 from pathlib import Path

@@ -105,8 +105,8 @@ def cli_dedupe(
             - removal_stats: dict with removal counters (Task v2.9.22)
             - detailed_stats: list of DetailedStatEntry objects (Sprint B Feature #3 v2.9.31)
     """
-    from .. import rewriter as rw
-    from ..rewriter.detailed_stats import get_global_collector
+    from src import rewriter as rw
+    from src.rewriter.detailed_stats import get_global_collector
 
     # Enable detailed stats collection (Sprint B Feature #3)
     collector = get_global_collector()
@@ -762,7 +762,7 @@ class JsonRewriterDock(BaseDock):
         if self.chk_enforce_case.isChecked() and self.chk_validate_case.isChecked():
             try:
                 # Read and parse input file
-                from .. import rewriter as rw
+                from src import rewriter as rw
 
                 with open(self.ed_in.text().strip(), "r", encoding="utf-8") as f:
                     text = f.read()
@@ -873,7 +873,7 @@ class JsonRewriterDock(BaseDock):
                     return
 
                 # Show preview dialog with substitutions
-                from .. import rewriter as rw
+                from src import rewriter as rw
 
                 results = rw.update_references_in_project(
                     project_dir, substitution_map, create_backup=self.chk_ref_backup.isChecked()

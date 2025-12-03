@@ -28,7 +28,7 @@ def load_translation_dict(dict_path: str) -> dict:
     """Load translation dictionary from JSON/TS file."""
     import json
 
-    from ..utils import load_ts_object
+    from src.utils import load_ts_object
 
     if dict_path.endswith((".ts", ".tsx", ".js", ".jsx")):
         return load_ts_object(dict_path)

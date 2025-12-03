@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from typing import List, Tuple
-from ..rewriter.types import JSONNode
-from ..rewriter.operations import enforce_consistent_case
+from src.rewriter.types import JSONNode
+from src.rewriter.operations import enforce_consistent_case
 import json
 
 
@@ -18,6 +18,12 @@ class CaseValidatorDialog(QDialog):
     """
     
     def __init__(self, node: JSONNode, parent=None):
+        """Initialize Case Validator Dialog.
+        
+        Args:
+            node: JSONNode object to validate and convert
+            parent: Parent widget (optional)
+        """
         super().__init__(parent)
         self.setWindowTitle("Case Conversion Validator")
         self.resize(900, 600)
@@ -110,7 +116,13 @@ class CaseValidatorDialog(QDialog):
         self._update_preview()
         
     def _update_preview(self):
-        """Update the preview based on selected case style."""
+        """Update the preview based on selected case style.
+        
+        Applies case conversion to original node and displays:
+        - Converted JSON preview
+        - Warnings list (if any)
+        - Statistics (keys changed, warnings count)
+        """
         case_map = {
             "camelCase": "camel",
             "PascalCase": "pascal",
