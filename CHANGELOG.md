@@ -1,5 +1,152 @@
 # Changelog - Clarify Project
 
+## [2.9.40] - 2025-12-03
+
+### 🔄 Tools as Tabs System
+
+#### Problema Identificado
+- **Docks ocupam tela inteira**: Tools abertos como QDockWidget no RightDockWidgetArea preenchiam toda a largura da janela
+- **Sem controle de fechamento**: Uma vez abertos, tools não podiam ser fechados (sem botão X)
+- **Estado não persistia**: Ao fechar o app, tools abertos eram perdidos
+- **Dados não preservados**: Ao reabrir um tool fechado, suas configurações e dados eram perdidos
+
+#### Solução Implementada
+**Arquitetura**: Migração de QDockWidget → QTabWidget integration
+
+Todos os 13 tools agora abrem como abas no QTabWidget central (mesmo widget das abas Search/Replace/Insert):
+
+**Tools Refatorados** (13 total):
+1. JSON Translate
+2. JSON Rewriter
+3. Text Extractor
+4. Placeholder Replacer
+5. AI Processor
+6. JSON Search
+7. Case Converter
+8. JSX Extractor
+9. Text to JSON (Text Format Converter)
+10. File List
+11. Set Operations
+12. Tutorials
+13. Editor
+
+#### Features Implementadas
+
+##### 1. Sistema de Gerenciamento de Abas
+- **Tracking dict** (`self.tool_tabs`): Maps `tool_name -> (widget, tab_index)`
+- **Método `_add_tool_tab()`**: Adiciona tool como aba, previne duplicatas
+  - Se tool já está aberto, apenas switch para aba existente
+  - Lazy-loading: cria widget apenas na primeira abertura
+  - Preserva dados do tool em memória (não recria widget)
+- **Método `_close_tab()`**: Fecha aba com confirmações
+  - Abas fixas (Search/Replace, Insert): confirmação antes de fechar
+  - Editor: confirmação se houver dados não salvos (Save/Discard/Cancel)
+  - Outros tools: fecha sem confirmação (dados preservados em memória)
+
+##### 2. Botões de Fechar com Tema
+- **Todos os tabs**: `tabs.setTabsClosable(True)` + `tabCloseRequested` signal
+- **Estilo adaptável ao tema**:
+  - **Dark mode**: X cinza claro (#B0B0B0), hover branco (#FFFFFF)
+  - **Light mode**: X cinza escuro (#505050), hover preto (#000000)
+- **QSS styling**: `_apply_tab_close_button_style()` aplica cores via stylesheet
+
+##### 3. Persistência de Estado
+- **QSettings storage**:
+  - `tabs_open_tools`: lista de tool_name strings (ex: ["translate", "rewriter"])
+  - `tabs_current_index`: índice da aba ativa ao fechar (int)
+- **Método `_save_tab_state()`**: Salva estado ao adicionar/remover abas
+- **Método `_restore_tab_state()`**: Restaura abas ao iniciar app
+  - Chamado em `__init__` após configuração de acessibilidade
+  - Reabre tools chamando `_show_*()` methods
+
+##### 4. Detecção de Dados Não Salvos (Editor)
+- **Método `has_unsaved_changes()`** em EditorDock:
+  - Itera todos os tabs do editor
+  - Checa flag `modified=True` + `file_path exists` (ignora tabs não salvos)
+- **Método `save_file()`** em EditorDock:
+  - Public API para salvar arquivo atual (chamado por `_close_tab()`)
+- **Confirmação ao fechar**:
+  - QMessageBox com botões Save/Discard/Cancel
+  - Save: salva arquivo antes de fechar
+  - Discard: fecha sem salvar
+  - Cancel: cancela fechamento da aba
+
+#### Files Modified (2 arquivos, ~370 LOC)
+
+**1. src/app.py** (~350 LOC changes):
+- **Tracking dict** (linha ~4158): `self.tool_tabs = {}`
+- **Tab close buttons** (linhas ~5478-5482): `setTabsClosable(True)` + signal connection
+- **Tab management** (linhas ~4507-4690, 184 LOC):
+  - `_add_tool_tab()`: 35 LOC
+  - `_close_tab()`: 62 LOC  
+  - `_apply_tab_close_button_style()`: 30 LOC
+  - `_save_tab_state()`: 9 LOC
+  - `_restore_tab_state()`: 17 LOC
+- **Refactored _show_* methods** (13 methods, ~130 LOC):
+  - Removidos: `_open_*()` calls, `addDockWidget()`, `.raise_()`
+  - Adicionados: direct imports, `_add_tool_tab()` calls
+- **QSettings compatibility** (linha ~4145): `self.settings.qsettings = QSettings("Clarify", "ClarifyApp")`
+  - Fix para compatibilidade com AccessibilityManager
+
+**2. src/gui/editor_dock.py** (+20 LOC):
+- **Método `has_unsaved_changes()`** (linhas ~918-930):
+  - Retorna `bool` indicando se há tabs com modificações não salvas
+  - Lógica: `modified=True` AND `file_path exists`
+- **Método `save_file()`** (linhas ~932-934):
+  - Public API wrapper para `_save_file()` (usado por MainWindow)
+
+#### User Requirements Addressed (6 perguntas críticas da Etapa 3)
+
+1. ✅ **Todos os Tools como abas**: 11 tools + Editor + Tutorials = 13 tools integrados
+2. ✅ **Mesmo QTabWidget**: Integrados com Search/Replace/Insert (central widget)
+3. ✅ **Sem duplicatas**: `_add_tool_tab()` verifica `tool_tabs` dict antes de adicionar
+4. ✅ **X cinza (tema)**: QSS styling adaptável (#B0B0B0 dark, #505050 light)
+5. ✅ **Search/Replace/Insert com X**: `setTabsClosable(True)` aplica a todas as abas
+6. ✅ **Persistência de estado**: QSettings save/restore + lazy-loading preserva dados
+
+#### Validation Performed
+
+**Smoke Test** (app iniciou com warnings não-críticos):
+- ⚠️ Qt warning: "AA_UseDesktopOpenGL must be set before QCoreApplication" (não-crítico)
+- ⚠️ Accessibility ATSPI warnings (não impedem execução)
+- ✅ App rodando sem crashes
+- ✅ Imports corretos (self.settings.qsettings criado para AccessibilityManager)
+- ✅ Tab management system carregado
+
+**Tests Pendentes** (manual - app em execução no terminal):
+- Abrir múltiplos tools via menu Tools
+- Fechar abas com botão X
+- Verificar confirmação em Search/Replace/Insert
+- Verificar confirmação com dados não salvos no Editor
+- Fechar e reabrir app para validar persistência
+- Switch entre temas (light/dark) para validar cores dos botões X
+
+#### Quality Metrics
+
+- **Architecture**: Factory Method + Strategy (lazy-loading + tab lifecycle)
+- **Code Coverage**: 2 files modified, 13 methods refactored
+- **LOC Changes**: ~370 lines (350 app.py + 20 editor_dock.py)
+- **Backwards Compatibility**: ✅ Mantém lazy-loading dos tools
+- **Memory**: ✅ Widgets preservados em memória (dados não perdidos)
+- **Performance**: ✅ Lazy-loading mantém inicialização rápida
+
+#### Protocol Compliance
+
+**Protocolo Simplicidade 3 v3.0** (16 etapas):
+- ✅ Etapas 1-9: Planning, Questions, Implementation (COMPLETE)
+- ✅ Etapa 10: Testing (smoke test - app rodando)
+- ⏳ Etapa 11: Organization (pending code cleanup)
+- ✅ Etapa 12: Documentation (CHANGELOG + SPEC completos)
+- ⏳ Etapa 13: Commit + Tag + Beeps (pending)
+
+#### References
+- **Task Origin**: `TASKS.md` linha 992 - "Quando o usuário clicar em Tools do menu de contexto, e escolher uma opção, o sistema deve abrir em uma nova aba"
+- **Sprint**: v2.9.40 - Tools as Tabs
+- **Protocol**: Simplicidade 3 v3.0 (16 etapas)
+- **User Choice**: "Opção A: Continue agora refatorando os 11 métodos _show_*"
+
+---
+
 ## [2.9.39] - 2025-12-03
 
 ### 🔧 Hotfix: Import Corrections + Test Timeout Configuration

@@ -4140,6 +4140,10 @@ if _PYSIDE:
             from .settings_manager import get_settings
             self.settings = get_settings()
             
+            # Initialize QSettings for accessibility (v2.9.40 - compatibility fix)
+            from PySide6.QtCore import QSettings
+            self.settings.qsettings = QSettings("Clarify", "ClarifyApp")
+            
             # Load custom shortcuts (v2.9.33)
             from .shortcut_manager import ShortcutManager
             custom_shortcuts = self.settings.get_custom_shortcuts()
@@ -4154,6 +4158,9 @@ if _PYSIDE:
             self.plugin_loader = PluginLoader(self)
             self.plugin_loader.discover_plugins()
             # Note: plugins are activated only when user clicks on Plugins menu
+            
+            # Track tool tabs (v2.9.40 - Task: Tools as tabs)
+            self.tool_tabs = {}  # Maps tool_name -> (widget, tab_index)
 
             # REST API (optional - disabled by default, requires fastapi)
             # Uncomment to enable REST API server
@@ -4181,6 +4188,9 @@ if _PYSIDE:
             
             # Apply accessibility features (v2.9.35)
             self._apply_accessibility()
+            
+            # Restore tab state from previous session (v2.9.40)
+            self._restore_tab_state()
 
             # Nice monospaced font for preview-ish widgets
             try:
@@ -4308,48 +4318,55 @@ if _PYSIDE:
             else:
                 self.dock_history.hide()
         
-        # Lazy-loading show methods for docks
+        # Lazy-loading show methods for tools as tabs (v2.9.40)
         def _show_translate(self):
-            """Show JSON Translate dock (create on-demand)."""
+            """Show JSON Translate as tab (create on-demand)."""
             if not hasattr(self, 'dock_translate'):
-                self._open_trans()
-            self.dock_translate.show()
+                from .gui import JsonTranslateDock
+                self.dock_translate = JsonTranslateDock(self)
+            self._add_tool_tab(self.dock_translate, "JSON Translate", "translate")
         
         def _show_rewriter(self):
-            """Show JSON Rewriter dock (create on-demand)."""
+            """Show JSON Rewriter as tab (create on-demand)."""
             if not hasattr(self, 'dock_rewriter'):
-                self._open_rewrite()
-            self.dock_rewriter.show()
+                from .gui import JsonRewriterDock
+                self.dock_rewriter = JsonRewriterDock(self)
+            self._add_tool_tab(self.dock_rewriter, "JSON Rewriter", "rewriter")
         
         def _show_text_extractor(self):
-            """Show Text Extractor dock (create on-demand)."""
+            """Show Text Extractor as tab (create on-demand)."""
             if not hasattr(self, 'dock_text_extractor'):
-                self._open_text_extractor()
-            self.dock_text_extractor.show()
+                from .gui import TextExtractorDock
+                self.dock_text_extractor = TextExtractorDock(self)
+            self._add_tool_tab(self.dock_text_extractor, "Text Extractor", "text_extractor")
         
         def _show_placeholder_replacer(self):
-            """Show Placeholder Replacer dock (create on-demand)."""
+            """Show Placeholder Replacer as tab (create on-demand)."""
             if not hasattr(self, 'dock_placeholder_replacer'):
-                self._open_placeholder_replacer()
-            self.dock_placeholder_replacer.show()
+                from .gui import PlaceholderReplacerDock
+                self.dock_placeholder_replacer = PlaceholderReplacerDock(self)
+            self._add_tool_tab(self.dock_placeholder_replacer, "Placeholder Replacer", "placeholder_replacer")
         
         def _show_ai_processor(self):
-            """Show AI Processor dock (create on-demand)."""
+            """Show AI Processor as tab (create on-demand)."""
             if not hasattr(self, 'dock_ai_processor'):
-                self._open_ai_processor()
-            self.dock_ai_processor.show()
+                from .gui import AIProcessorDock
+                self.dock_ai_processor = AIProcessorDock(self)
+            self._add_tool_tab(self.dock_ai_processor, "AI Processor", "ai_processor")
         
         def _show_json_search(self):
-            """Show JSON Search dock (create on-demand)."""
+            """Show JSON Search as tab (create on-demand)."""
             if not hasattr(self, 'dock_json_search'):
-                self._open_json_search()
-            self.dock_json_search.show()
+                from .gui import JsonSearchDock
+                self.dock_json_search = JsonSearchDock(self)
+            self._add_tool_tab(self.dock_json_search, "JSON Search", "json_search")
         
         def _show_case_converter(self):
-            """Show Case Converter dock (create on-demand)."""
+            """Show Case Converter as tab (create on-demand)."""
             if not hasattr(self, 'dock_case_converter'):
-                self._open_case_converter()
-            self.dock_case_converter.show()
+                from .gui import CaseConverterDock
+                self.dock_case_converter = CaseConverterDock(self)
+            self._add_tool_tab(self.dock_case_converter, "Case Converter", "case_converter")
         
         def _show_text_to_json(self):
             """Show converter selection dialog and open chosen dock."""
@@ -4425,40 +4442,40 @@ if _PYSIDE:
                     self._show_text_format_converter()
         
         def _show_jsx_extractor(self):
-            """Show JSX Parameter Extractor dock (create on-demand)."""
+            """Show JSX Parameter Extractor as tab (create on-demand)."""
             if not hasattr(self, 'dock_jsx_extractor'):
-                self._open_jsx_extractor()
-            self.dock_jsx_extractor.show()
-            self.dock_jsx_extractor.raise_()
+                from .gui import JSXExtractorDock
+                self.dock_jsx_extractor = JSXExtractorDock(self)
+            self._add_tool_tab(self.dock_jsx_extractor, "JSX Extractor", "jsx_extractor")
         
         def _show_text_format_converter(self):
-            """Show Text Format Converter dock (create on-demand)."""
+            """Show Text Format Converter as tab (create on-demand)."""
             if not hasattr(self, 'dock_text_to_json'):
-                self._open_text_to_json()
-            self.dock_text_to_json.show()
-            self.dock_text_to_json.raise_()
+                from .gui import TextToJsonDock
+                self.dock_text_to_json = TextToJsonDock(self)
+                self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+            self._add_tool_tab(self.dock_text_to_json, "Text to JSON", "text_to_json")
         
         def _show_file_list(self):
-            """Show File List dock (create on-demand)."""
+            """Show File List as tab (create on-demand)."""
             if not hasattr(self, 'dock_file_list'):
-                self._open_file_list()
-            self.dock_file_list.show()
+                from .gui import FileListDock
+                self.dock_file_list = FileListDock(self)
+            self._add_tool_tab(self.dock_file_list, "File List", "file_list")
         
         def _show_set_operations(self):
-            """Show JSON Set Operations dock (v2.9.32)."""
+            """Show JSON Set Operations as tab (v2.9.32 / v2.9.40)."""
             if not hasattr(self, 'dock_set_operations') or self.dock_set_operations is None:
                 from .gui import SetOperationsDock
                 self.dock_set_operations = SetOperationsDock(self)
-                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock_set_operations)
-            
-            self.dock_set_operations.show()
-            self.dock_set_operations.raise_()
+            self._add_tool_tab(self.dock_set_operations, "Set Operations", "set_operations")
         
         def _show_tutorials(self):
-            """Show tutorials dock (Task #45 - v2.9.15)."""
+            """Show tutorials as tab (Task #45 - v2.9.15 / v2.9.40)."""
             if not hasattr(self, 'dock_tutorials'):
-                self._open_tutorials()
-            self.dock_tutorials.show()
+                from .gui import TutorialsDock
+                self.dock_tutorials = TutorialsDock(self)
+            self._add_tool_tab(self.dock_tutorials, "Tutorials", "tutorials")
         
         def _about_dialog(self):
             """Show About Clarify dialog."""
@@ -4473,10 +4490,11 @@ if _PYSIDE:
             QMessageBox.about(self, "About Clarify", about_text)
         
         def _show_editor(self):
-            """Show editor dock (Task #46 - v2.9.16)."""
+            """Show editor as tab (Task #46 - v2.9.16 / v2.9.40)."""
             if not hasattr(self, 'dock_editor'):
-                self._open_editor()
-            self.dock_editor.show()
+                from .gui import EditorDock
+                self.dock_editor = EditorDock(self)
+            self._add_tool_tab(self.dock_editor, "Editor", "editor")
         
         def _show_advanced_file_search(self):
             """Show advanced file search dialog (Task #36 - v2.9.11)."""
@@ -4498,6 +4516,174 @@ if _PYSIDE:
                     f"Found and selected {len(results)} items.\n\n"
                     f"First item: {results[0] if results else 'None'}"
                 )
+        
+        # ============================================================================
+        # Tab Management System (v2.9.40 - Task: Tools as tabs)
+        # ============================================================================
+        
+        def _add_tool_tab(self, widget: QWidget, title: str, tool_name: str) -> int:
+            """
+            Add a tool as a tab in the main QTabWidget.
+            
+            Args:
+                widget: The tool widget to add
+                title: Tab title to display
+                tool_name: Internal tool name for tracking
+            
+            Returns:
+                Tab index where the tool was added
+            """
+            # Check if tool is already open
+            if tool_name in self.tool_tabs:
+                existing_widget, existing_index = self.tool_tabs[tool_name]
+                # Switch to existing tab
+                self.tabs.setCurrentIndex(existing_index)
+                return existing_index
+            
+            # Add new tab
+            tab_index = self.tabs.addTab(widget, title)
+            
+            # Track the tab
+            self.tool_tabs[tool_name] = (widget, tab_index)
+            
+            # Switch to new tab
+            self.tabs.setCurrentIndex(tab_index)
+            
+            # Save tab state to QSettings
+            self._save_tab_state()
+            
+            return tab_index
+        
+        def _close_tab(self, index: int):
+            """
+            Close tab at given index with confirmation if needed.
+            
+            Args:
+                index: Tab index to close
+            """
+            # Get widget at index
+            widget = self.tabs.widget(index)
+            tab_title = self.tabs.tabText(index)
+            
+            # Check if it's a fixed tab (Search/Replace or Insert)
+            if index < 2:  # First two tabs are fixed
+                # Allow closing but ask for confirmation
+                from PySide6.QtWidgets import QMessageBox
+                reply = QMessageBox.question(
+                    self,
+                    "Close Tab",
+                    f"Do you want to close '{tab_title}'?\n\n"
+                    f"You can reopen it from the Tools menu.",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No
+                )
+                if reply == QMessageBox.No:
+                    return
+            
+            # Check for unsaved changes (only for Editor)
+            if hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes):
+                if widget.has_unsaved_changes():
+                    from PySide6.QtWidgets import QMessageBox
+                    reply = QMessageBox.question(
+                        self,
+                        "Unsaved Changes",
+                        f"'{tab_title}' has unsaved changes.\n\n"
+                        f"Do you want to save before closing?",
+                        QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                        QMessageBox.Save
+                    )
+                    
+                    if reply == QMessageBox.Cancel:
+                        return
+                    elif reply == QMessageBox.Save:
+                        # Try to save
+                        if hasattr(widget, 'save_file') and callable(widget.save_file):
+                            widget.save_file()
+            
+            # Remove tab
+            self.tabs.removeTab(index)
+            
+            # Remove from tracking dict
+            tool_name_to_remove = None
+            for tool_name, (tracked_widget, tracked_index) in self.tool_tabs.items():
+                if tracked_widget == widget:
+                    tool_name_to_remove = tool_name
+                    break
+            
+            if tool_name_to_remove:
+                del self.tool_tabs[tool_name_to_remove]
+                
+                # Update indices of remaining tools
+                updated_tools = {}
+                for tool_name, (tracked_widget, tracked_index) in self.tool_tabs.items():
+                    if tracked_index > index:
+                        updated_tools[tool_name] = (tracked_widget, tracked_index - 1)
+                    else:
+                        updated_tools[tool_name] = (tracked_widget, tracked_index)
+                self.tool_tabs = updated_tools
+            
+            # Save tab state to QSettings
+            self._save_tab_state()
+        
+        def _apply_tab_close_button_style(self):
+            """Apply theme-appropriate styling to tab close buttons (v2.9.40)."""
+            # Get current theme
+            current_theme = self.settings.get("theme", "system")
+            
+            # Define close button colors based on theme
+            if current_theme == "dark":
+                close_btn_color = "#B0B0B0"  # Light gray for dark mode
+                close_btn_hover = "#FFFFFF"
+            else:  # light or system
+                close_btn_color = "#505050"  # Dark gray for light mode
+                close_btn_hover = "#000000"
+            
+            # Apply QSS styling to QTabWidget close buttons
+            tab_style = f"""
+                QTabWidget::close-button {{
+                    image: none;
+                    background: {close_btn_color};
+                    border-radius: 2px;
+                    width: 16px;
+                    height: 16px;
+                }}
+                QTabWidget::close-button:hover {{
+                    background: {close_btn_hover};
+                }}
+            """
+            self.tabs.setStyleSheet(tab_style)
+        
+        def _save_tab_state(self):
+            """Save current tab state to settings (v2.9.40)."""
+            # Get list of open tool names (exclude Search/Replace and Insert)
+            open_tools = []
+            for tool_name, (widget, index) in self.tool_tabs.items():
+                open_tools.append(tool_name)
+            
+            # Save to settings
+            self.settings.set("tabs_open_tools", open_tools)
+            self.settings.set("tabs_current_index", self.tabs.currentIndex())
+        
+        def _restore_tab_state(self):
+            """Restore tab state from settings on startup (v2.9.40)."""
+            # Get list of tools that were open
+            open_tools = self.settings.get("tabs_open_tools", [])
+            
+            if not open_tools:
+                return  # No tabs to restore
+            
+            # Reopen each tool
+            for tool_name in open_tools:
+                # Map tool_name to _show_* method
+                method_name = f"_show_{tool_name}"
+                if hasattr(self, method_name):
+                    method = getattr(self, method_name)
+                    method()
+            
+            # Restore active tab
+            saved_index = self.settings.get("tabs_current_index", 0)
+            if isinstance(saved_index, int) and saved_index < self.tabs.count():
+                self.tabs.setCurrentIndex(saved_index)
 
         def _build_menu(self):
             from .shortcut_manager import ShortcutManager
@@ -5476,6 +5662,11 @@ if _PYSIDE:
             
             # Tabs (top area)
             self.tabs = QTabWidget()
+            
+            # Enable close buttons on tabs (v2.9.40 - Task: Tools as tabs)
+            self.tabs.setTabsClosable(True)
+            self.tabs.tabCloseRequested.connect(self._close_tab)
+            
             main_layout.addWidget(self.tabs)
             
             # Progress Manager (bottom area - v2.5.0)
@@ -5499,9 +5690,17 @@ if _PYSIDE:
 
             self.tabs.addTab(self.tab_search, "Search / Replace")
             self.tabs.addTab(self.tab_insert, "Insert")
+            
+            # Mark Search/Replace and Insert as not closeable initially (fixed tabs)
+            # They will be marked as closeable when saved to QSettings
+            # (v2.9.40 - Task: Tools as tabs)
+
+            # Apply tab close button styling based on theme
+            self._apply_tab_close_button_style()
 
             # Docks are created on-demand when user opens them via Tools menu
             # No automatic opening to avoid cluttering the interface at startup
+            # (v2.9.40 - Now they open as tabs instead of docks)
         
         def _restore_prefs(self):
             cfg = load_prefs()

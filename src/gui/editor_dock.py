@@ -916,3 +916,22 @@ class EditorDock(BaseDock):
             self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
         else:
             QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")
+    
+    def has_unsaved_changes(self) -> bool:
+        """
+        Check if any tab has unsaved changes (v2.9.40).
+        
+        Returns:
+            True if any tab is modified and not saved, False otherwise
+        """
+        for i in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(i)
+            if hasattr(tab, 'modified') and tab.modified:
+                # Only consider real unsaved changes (file-backed tabs)
+                if hasattr(tab, 'file_path') and tab.file_path:
+                    return True
+        return False
+    
+    def save_file(self):
+        """Public API for saving current file (v2.9.40)."""
+        self._save_file()
