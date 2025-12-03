@@ -376,20 +376,20 @@ class AIProcessorDock(StandardToolDock):
             
             self.cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
         
-        # Add buttons: Add Condition and Clear All
-        btn_layout_cond = QHBoxLayout()
+        # Add buttons: Add Condition and Clear All (v2.9.40.3: store reference)
+        self.buttons_layout_ref = QHBoxLayout()
         btn_add_cond = QPushButton("➕ Add Condition")
         btn_add_cond.setToolTip("Add more condition rows (no limit)")
         btn_add_cond.clicked.connect(self._add_condition_row)
-        btn_layout_cond.addWidget(btn_add_cond)
+        self.buttons_layout_ref.addWidget(btn_add_cond)
         
         btn_clear_cond = QPushButton("🗑️ Clear All")
         btn_clear_cond.setToolTip("Clear all conditions")
         btn_clear_cond.clicked.connect(self._clear_all_conditions)
-        btn_layout_cond.addWidget(btn_clear_cond)
-        btn_layout_cond.addStretch()
+        self.buttons_layout_ref.addWidget(btn_clear_cond)
+        self.buttons_layout_ref.addStretch()
         
-        adv_cond_layout.addLayout(btn_layout_cond, 100, 0, 1, 6)  # Row 100 = at bottom
+        adv_cond_layout.addLayout(self.buttons_layout_ref, 5, 0, 1, 6)  # Will be moved by _add_condition_row
         
         adv_cond_group.setLayout(adv_cond_layout)
         controls_layout.addWidget(adv_cond_group)
@@ -870,6 +870,10 @@ class AIProcessorDock(StandardToolDock):
         
         # Increment next row
         self.next_cond_row += 1
+        
+        # Move buttons layout to new bottom position (v2.9.40.3)
+        self.adv_cond_grid.removeItem(self.buttons_layout_ref)
+        self.adv_cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 6)
     
     def _clear_all_conditions(self):
         """Clear all condition fields."""

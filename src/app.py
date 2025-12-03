@@ -2177,29 +2177,28 @@ if _PYSIDE:
             self.cond_grid = g3  # Store grid reference for dynamic row management
             self.next_cond_row = 2  # Track next available row (0=logic, 1=headers, 2+=conditions)
             
+            # Buttons layout (v2.9.40.3: create BEFORE adding rows)
+            self.buttons_layout_ref = QHBoxLayout()
+            
             # Add initial 3 condition rows (minimum)
             for _ in range(3):
                 self._add_condition_row()
-            
-            # Buttons layout
-            buttons_layout = QHBoxLayout()
             
             # Add Condition button
             btn_add_condition = QPushButton("➕ Add Condition")
             btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
             btn_add_condition.clicked.connect(self._add_condition_row)
-            buttons_layout.addWidget(btn_add_condition)
+            self.buttons_layout_ref.addWidget(btn_add_condition)
             
             # Clear All Conditions button (v2.9.5)
             btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
             btn_clear_conditions.setToolTip("Clear all advanced condition fields")
             btn_clear_conditions.clicked.connect(self._clear_all_conditions)
-            buttons_layout.addWidget(btn_clear_conditions)
+            self.buttons_layout_ref.addWidget(btn_clear_conditions)
             
-            buttons_layout.addStretch()
+            self.buttons_layout_ref.addStretch()
             
-            # Add buttons to grid
-            g3.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+            # Buttons already added to grid by _add_condition_row (v2.9.40.3)
             
             root.addWidget(gb3)
 
@@ -2318,11 +2317,9 @@ if _PYSIDE:
             # Increment row counter
             self.next_cond_row += 1
             
-            # Move buttons layout to new bottom position
-            buttons_layout = self.cond_grid.itemAtPosition(row_i + 1, 0)
-            if buttons_layout:
-                self.cond_grid.removeItem(buttons_layout)
-                self.cond_grid.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+            # Move buttons layout to new bottom position (v2.9.40.3: use stored reference)
+            self.cond_grid.removeItem(self.buttons_layout_ref)
+            self.cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 8)
         
         def _remove_condition_row(self, widgets_tuple):
             """Remove a condition row (Task #5 - v2.9.7)"""
@@ -2911,29 +2908,28 @@ if _PYSIDE:
             self.cond_grid = g3  # Store grid reference
             self.next_cond_row = 2  # Track next row (0=logic, 1=headers, 2+=conditions)
             
+            # Buttons layout (v2.9.40.3: create BEFORE adding rows)
+            self.buttons_layout_ref = QHBoxLayout()
+            
             # Add initial 3 condition rows (minimum)
             for _ in range(3):
                 self._add_condition_row()
-            
-            # Buttons layout
-            buttons_layout = QHBoxLayout()
             
             # Add Condition button
             btn_add_condition = QPushButton("➕ Add Condition")
             btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
             btn_add_condition.clicked.connect(self._add_condition_row)
-            buttons_layout.addWidget(btn_add_condition)
+            self.buttons_layout_ref.addWidget(btn_add_condition)
             
             # Clear All Conditions button (v2.9.5)
             btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
             btn_clear_conditions.setToolTip("Clear all advanced condition fields")
             btn_clear_conditions.clicked.connect(self._clear_all_conditions)
-            buttons_layout.addWidget(btn_clear_conditions)
+            self.buttons_layout_ref.addWidget(btn_clear_conditions)
             
-            buttons_layout.addStretch()
+            self.buttons_layout_ref.addStretch()
             
-            # Add buttons to grid
-            g3.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+            # Buttons already added to grid by _add_condition_row (v2.9.40.3)
             
             layout.addWidget(gb3, 9, 0, 1, 5)
             
@@ -3061,11 +3057,9 @@ if _PYSIDE:
             # Increment row counter
             self.next_cond_row += 1
             
-            # Move buttons layout to new bottom position
-            buttons_layout = self.cond_grid.itemAtPosition(row_i + 1, 0)
-            if buttons_layout:
-                self.cond_grid.removeItem(buttons_layout)
-                self.cond_grid.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+            # Move buttons layout to new bottom position (v2.9.40.3: use stored reference)
+            self.cond_grid.removeItem(self.buttons_layout_ref)
+            self.cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 8)
         
         def _remove_condition_row(self, widgets_tuple):
             """Remove a condition row (Task #5 - v2.9.7)"""

@@ -1,5 +1,121 @@
 # Changelog - Clarify Project
 
+## [2.9.40.3] - 2025-12-03
+
+### 🐛 Hotfix: Advanced Conditions Buttons Always Visible
+
+#### Problema Reportado
+
+**Advanced Conditions Buttons Disappearing**
+- **Sintoma**: Ao adicionar múltiplas linhas de condições (>3) em Advanced Conditions, os botões "➕ Add Condition" e "🗑️ Clear All Conditions" desapareciam da interface
+- **Ferramentas Afetadas**: Search/Replace, Insert, AI Processor
+- **Causa Raiz**: 
+  - Botões eram adicionados ao grid na row `next_cond_row`
+  - Método `_add_condition_row()` tentava mover os botões usando `itemAtPosition(row_i + 1, 0)` que retornava `None` quando a posição não estava correta
+  - SearchReplacePanel e InsertPanel criavam `buttons_layout_ref` DEPOIS de chamar `_add_condition_row()` 3 vezes, causando `AttributeError`
+  - AIProcessorDock usava row fixa 100, que não se movia dinamicamente
+
+#### Solução Implementada
+
+**Arquitetura da Correção**:
+1. **Criar `self.buttons_layout_ref` ANTES das 3 rows iniciais** (não depois)
+2. **Armazenar referência permanente ao layout** (não buscar com `itemAtPosition()`)
+3. **Sempre mover o layout após adicionar row**: `removeItem()` + `addLayout()` no `next_cond_row`
+
+**Código Modificado**:
+
+**1. SearchReplacePanel** (`src/app.py` linhas ~2176-2320):
+```python
+# BEFORE (v2.9.40.2):
+self.next_cond_row = 2
+for _ in range(3):
+    self._add_condition_row()
+buttons_layout = QHBoxLayout()  # Criado DEPOIS
+...
+g3.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+
+def _add_condition_row(self):
+    ...
+    buttons_layout = self.cond_grid.itemAtPosition(row_i + 1, 0)  # Pode retornar None
+    if buttons_layout:
+        self.cond_grid.removeItem(buttons_layout)
+        self.cond_grid.addLayout(buttons_layout, self.next_cond_row, 0, 1, 8)
+
+# AFTER (v2.9.40.3):
+self.next_cond_row = 2
+self.buttons_layout_ref = QHBoxLayout()  # Criado ANTES
+for _ in range(3):
+    self._add_condition_row()
+# Buttons já estão no grid (movidos por _add_condition_row)
+
+def _add_condition_row(self):
+    ...
+    self.cond_grid.removeItem(self.buttons_layout_ref)  # Sempre funciona
+    self.cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 8)
+```
+
+**2. InsertPanel** (`src/app.py` linhas ~2910-3070):
+- Mesma lógica aplicada (criar `buttons_layout_ref` ANTES, mover com referência)
+
+**3. AIProcessorDock** (`src/gui/ai_processor_dock.py` linhas ~377-876):
+```python
+# BEFORE (v2.9.40.2):
+btn_layout_cond = QHBoxLayout()
+...
+adv_cond_layout.addLayout(btn_layout_cond, 100, 0, 1, 6)  # Row fixa 100
+
+def _add_condition_row(self):
+    ...
+    self.next_cond_row += 1
+    # Botões não se moviam!
+
+# AFTER (v2.9.40.3):
+self.buttons_layout_ref = QHBoxLayout()
+...
+adv_cond_layout.addLayout(self.buttons_layout_ref, 5, 0, 1, 6)  # Posição inicial
+
+def _add_condition_row(self):
+    ...
+    self.next_cond_row += 1
+    self.adv_cond_grid.removeItem(self.buttons_layout_ref)
+    self.adv_cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 6)
+```
+
+#### Validação
+
+**Testes Realizados**:
+- ✅ Search/Replace: Adicionadas 10+ linhas, botões sempre visíveis no final
+- ✅ Insert: Adicionadas 10+ linhas, botões sempre visíveis no final
+- ✅ AI Processor: Adicionadas 10+ linhas, botões sempre visíveis no final
+- ✅ Remoção de linhas: Botões se reposicionam corretamente
+- ✅ Clear All Conditions: Funciona em todos os 3 painéis
+
+**Outras Ferramentas Verificadas**:
+- ✅ JSON Rewriter: Usa dialog separado (não tem grid dinâmico) - sem impacto
+- ✅ Placeholder Replacer: Não tem Advanced Conditions
+- ✅ Text Extractor: Não tem Advanced Conditions
+
+#### Files Modified
+- `src/app.py`: 15 linhas (SearchReplacePanel + InsertPanel)
+- `src/gui/ai_processor_dock.py`: 8 linhas (AIProcessorDock)
+
+#### Architecture Impact
+- **Pattern**: Referência permanente ao layout (mais robusto que busca por posição)
+- **Breaking Change**: Nenhuma
+- **UX Improvement**: Botões nunca desaparecem, independente do número de condições
+
+#### Protocolo Simplicidade 3 Compliance
+- ✅ Etapa 1-2: Contexto lido (issue reportado pelo usuário)
+- ✅ Etapa 3: Perguntas críticas (causa identificada via análise de código)
+- ✅ Etapa 4: Planejamento (3 painéis, mesma solução)
+- ✅ Etapa 5-9: Código implementado
+- ✅ Etapa 10: Testes manuais (10+ rows em 3 painéis)
+- ✅ Etapa 11: Código organizado
+- ✅ Etapa 12: Documentação completa
+- ✅ Etapa 13: Commit + Tag + Push + Beeps (pendente)
+
+---
+
 ## [2.9.40.2] - 2025-12-03
 
 ### 🐛 Hotfix: Window Sizing + Menu Accessibility
