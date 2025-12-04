@@ -1050,6 +1050,7 @@ result = convert_text_to_json(text, "auto")
     * ❌ **Reference Resolver Sprint B Remaining (Avançado - PENDENTE)**:
       - ❌ Cross-file references: NÃO IMPLEMENTAR (decisão do usuário)
 - **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
+- **[]** Inserir opção 'Salvar automaticamente' no menu Files do menu de contexto para salvar conteúdo em arquivos sem o usuário precisar clicar em salvar, quando estiver no editor de arquivos. Além disso, deve haver a opção de pertinência de conteúdo não salvo no aplicativo em abas não fechadas do editor de arquivos, e dentro do editor de arquivos (à parte das abas/guias principais dos tools) devem ter outras abas/guias.
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
 - **[X]** Ferramenta de busca pode incluir busca por nome de arquivo *(Já implementado - json_search_dock.py lines 98-101, 175-222: suporta wildcards, regex e prefix 'filename:')*
