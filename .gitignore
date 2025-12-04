@@ -1,7 +1,9 @@
-# Python
+# Python - Bytecode and Cache (Protocolo Simplicidade 3 - Etapa 11)
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
 *.so
 .Python
 build/
@@ -50,9 +52,10 @@ coverage.json
 # Logs
 *.log
 
-# Temporary files
+# Temporary files (Protocolo Simplicidade 3 - Etapa 11)
 *.tmp
 *.bak
+*.backup_*
 *.swp
 
 # OS
