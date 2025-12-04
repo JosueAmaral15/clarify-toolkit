@@ -38,7 +38,8 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
     QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
-    QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem
+    QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
+    QScrollArea, QFrame
 )
 from PySide6.QtGui import QFont
 
@@ -305,8 +306,14 @@ class TextToJsonDock(BaseDock):
         csv_layout.addWidget(self.csv_array_arrays_radio, 3, 1)
         self.csv_group.setLayout(csv_layout)
         
-        # Options section
-        options_layout = QVBoxLayout()
+        # Options section with scroll area
+        scroll_options = QScrollArea()
+        scroll_options.setWidgetResizable(True)
+        scroll_options.setFrameShape(QFrame.NoFrame)
+        scroll_options.setMaximumHeight(300)
+        
+        options_widget = QWidget()
+        options_layout = QVBoxLayout(options_widget)
         
         # Format row
         format_row = QHBoxLayout()
@@ -336,10 +343,13 @@ class TextToJsonDock(BaseDock):
         buttons_layout.addWidget(self.swap_btn, 2, 1)
         options_layout.addLayout(buttons_layout)
         
+        # Set scroll widget
+        scroll_options.setWidget(options_widget)
+        
         # Main layout
         self.layout.addWidget(self.input_label)
         self.layout.addWidget(self.input_text, 2)  # 2/5 space
-        self.layout.addLayout(options_layout)
+        self.layout.addWidget(scroll_options)
         self.layout.addWidget(self.output_label)
         self.layout.addWidget(self.output_text, 2)  # 2/5 space
         self.layout.addWidget(self.status_label)

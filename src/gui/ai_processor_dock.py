@@ -175,7 +175,11 @@ class AIProcessorDock(StandardToolDock):
         # Create splitter for resizable layout
         splitter = QSplitter(Qt.Vertical)
         
-        # Top widget for controls
+        # Top widget for controls with scroll
+        scroll_controls = QScrollArea()
+        scroll_controls.setWidgetResizable(True)
+        scroll_controls.setFrameShape(QFrame.NoFrame)
+        
         controls_widget = QWidget()
         controls_layout = QVBoxLayout(controls_widget)
         
@@ -431,8 +435,9 @@ class AIProcessorDock(StandardToolDock):
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
         
-        # Add controls to splitter
-        splitter.addWidget(controls_widget)
+        # Set scroll widget and add to splitter
+        scroll_controls.setWidget(controls_widget)
+        splitter.addWidget(scroll_controls)
         
         # Results panel in bottom part of splitter
         results_widget = QWidget()

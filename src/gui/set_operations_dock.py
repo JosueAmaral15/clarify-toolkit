@@ -33,8 +33,10 @@ from PySide6.QtWidgets import (
     QListWidget,
     QPushButton,
     QRadioButton,
+    QScrollArea,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.set_operations import difference, intersection, symmetric_difference, union
@@ -55,7 +57,13 @@ class SetOperationsDock(BaseDock):
 
     def _setup_ui(self):
         """Setup user interface components."""
-        main_layout = QVBoxLayout()
+        # Create scroll area for all controls
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(0)  # No frame
+        
+        scroll_widget = QWidget()
+        main_layout = QVBoxLayout(scroll_widget)
 
         # === File Selection Section ===
         file_group = QGroupBox("File Selection")
@@ -205,7 +213,10 @@ class SetOperationsDock(BaseDock):
         main_layout.addWidget(self.lbl_stats)
 
         main_layout.addStretch()
-        self.layout.addLayout(main_layout)
+        
+        # Set scroll widget and add to main layout
+        scroll.setWidget(scroll_widget)
+        self.layout.addWidget(scroll)
 
     def _connect_signals(self):
         """Connect UI signals to slots."""

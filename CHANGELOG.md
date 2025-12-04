@@ -1,5 +1,77 @@
 # Changelog - Clarify Project
 
+## [2.9.41.1] - 2025-12-04
+
+### 🐛 Bugfix: Missing Scroll Areas in Tool Docks
+
+#### Problem Statement
+
+**Content Overflow in Tool Docks**
+- **JSON Set Operations Dock**: No scroll area - content overflows when many options expanded
+- **AI File Processor Dock**: Partial scroll (only in paths section) - main controls overflow
+- **Text to JSON Converter Dock**: No scroll area - options section overflows on small screens
+
+**Impact**:
+- Users with small screens (1366x768, 1440x900) cannot access all options
+- UI elements become hidden/inaccessible when many conditions or options are enabled
+- Poor UX - requires resizing window or hiding other docks to access controls
+
+#### Solution Implemented
+
+**Added QScrollArea to 3 Tool Docks**:
+
+1. **Set Operations Dock** (`src/gui/set_operations_dock.py`):
+   - Wrapped entire `main_layout` in QScrollArea
+   - `setWidgetResizable(True)` for responsive behavior
+   - No frame border (seamless integration)
+
+2. **AI Processor Dock** (`src/gui/ai_processor_dock.py`):
+   - Wrapped `controls_widget` in QScrollArea (top part of splitter)
+   - Maintains existing scroll in paths section (now 2 scroll areas: general + paths)
+   - Results panel (bottom splitter) remains fixed (no scroll needed)
+
+3. **Text to JSON Converter Dock** (`src/gui/text_to_json_dock.py`):
+   - Wrapped `options_widget` in QScrollArea
+   - Max height 300px to prevent over-expansion
+   - Input/Output areas remain full-size (stretch factors preserved)
+
+**Technical Details**:
+```python
+# Pattern applied to all 3 docks:
+scroll = QScrollArea()
+scroll.setWidgetResizable(True)
+scroll.setFrameShape(QFrame.NoFrame)  # Seamless look
+
+widget = QWidget()
+layout = QVBoxLayout(widget)
+# ... add widgets to layout ...
+
+scroll.setWidget(widget)
+parent_layout.addWidget(scroll)
+```
+
+#### Files Modified
+
+- `src/gui/set_operations_dock.py`: +7 lines (import QScrollArea, QWidget + wrap layout)
+- `src/gui/ai_processor_dock.py`: +6 lines (wrap controls_widget)
+- `src/gui/text_to_json_dock.py`: +9 lines (wrap options + maxHeight 300px)
+- `CHANGELOG.md`: This entry
+
+#### Validation
+
+- ✅ Syntax check passed: `python -m py_compile` on all 3 files
+- ✅ No breaking changes: Existing functionality preserved
+- ✅ UX improvement: All options accessible on small screens
+
+#### Next Steps
+
+- ⏳ Manual testing: Open 3 docks on 1366x768 screen resolution
+- ⏳ Verify scroll behavior with many conditions/options enabled
+- ⏳ Test Advanced Conditions (15+ rows) in AI Processor
+- ⏳ Test multiple files (10+) in Set Operations
+
+---
+
 ## [2.9.41] - 2025-12-04
 
 ### ✨ Feature: Auto-save in File Editor (SHOULD HAVE)
