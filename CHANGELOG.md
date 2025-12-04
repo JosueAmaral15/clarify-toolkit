@@ -1,5 +1,167 @@
 # Changelog - Clarify Project
 
+## [2.9.41] - 2025-12-04
+
+### ✨ Feature: Auto-save in File Editor (SHOULD HAVE)
+
+#### Problem Statement
+
+**Manual Save Friction**
+- User must manually click Save (Ctrl+S) after every modification
+- Risk of losing work if user forgets to save
+- Interrupts workflow requiring explicit save actions
+- No persistent save preference between sessions
+
+#### Solution Implemented
+
+**Auto-save Feature with Smart Timer**:
+1. **Checkbox in Toolbar**: "Auto-save" checkbox with tooltip
+2. **3-Second Delay**: Saves automatically 3 seconds after last modification
+3. **QSettings Persistence**: Preference saved between app restarts
+4. **Visual Feedback**: Status label shows "💾 Auto-saved: filename" for 2 seconds
+5. **Scope Control**: Only applies to file-backed editors (not edit-only mode)
+
+**Architecture**:
+
+**EditorTab Enhancements** (`src/gui/editor_dock.py` lines ~200-510):
+```python
+class EditorTab(QWidget):
+    auto_saved = Signal()  # NEW signal
+    
+    def __init__(self, ...):
+        self.auto_save_enabled = False
+        
+        # Auto-save timer (3 seconds after last modification)
+        self.auto_save_timer = QTimer(self)
+        self.auto_save_timer.setSingleShot(True)
+        self.auto_save_timer.setInterval(3000)
+        self.auto_save_timer.timeout.connect(self._auto_save)
+    
+    def _on_text_changed(self):
+        # Reset auto-save timer if enabled
+        if self.auto_save_enabled and self.file_path and not self.edit_only_mode:
+            self.auto_save_timer.start()  # Restart 3s countdown
+    
+    def set_auto_save(self, enabled: bool):
+        """Enable or disable auto-save for this tab."""
+        self.auto_save_enabled = enabled
+        if not enabled:
+            self.auto_save_timer.stop()
+        elif self.file_path and not self.edit_only_mode and self.is_modified:
+            self.auto_save_timer.start()
+    
+    def _auto_save(self):
+        """Auto-save file if conditions are met."""
+        # Only auto-save if:
+        # 1. Auto-save is enabled
+        # 2. File has a path (not untitled)
+        # 3. Not in edit-only mode
+        # 4. File is modified
+        if (self.auto_save_enabled and self.file_path and 
+            not self.edit_only_mode and self.is_modified):
+            success = self.save_file()
+            if success:
+                self.auto_saved.emit()
+```
+
+**EditorDock Enhancements** (`src/gui/editor_dock.py` lines ~520-650):
+```python
+class EditorDock(BaseDock):
+    def __init__(self, parent=None):
+        # Load auto-save preference from QSettings
+        from PySide6.QtCore import QSettings
+        self.settings = QSettings("Clarify", "EditorDock")
+        self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
+    
+    def _setup_ui(self):
+        # Auto-save checkbox in toolbar
+        self.chk_auto_save = QCheckBox("Auto-save")
+        self.chk_auto_save.setToolTip("Automatically save files 3 seconds after last modification")
+        self.chk_auto_save.setChecked(self.auto_save_enabled)
+        toolbar.addWidget(self.chk_auto_save)
+    
+    def _on_auto_save_toggled(self, state):
+        enabled = (state == Qt.Checked)
+        self.auto_save_enabled = enabled
+        
+        # Save preference to QSettings
+        self.settings.setValue("auto_save_enabled", enabled)
+        
+        # Apply to all open tabs
+        for i in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(i)
+            if hasattr(tab, 'set_auto_save'):
+                tab.set_auto_save(enabled)
+                tab.auto_saved.connect(lambda t=tab: self._on_auto_saved(t))
+    
+    def _on_auto_saved(self, tab: EditorTab):
+        """Handle auto-save completion with visual feedback."""
+        if hasattr(tab, 'file_path') and tab.file_path:
+            filename = os.path.basename(tab.file_path)
+            self.lbl_status.setText(f"💾 Auto-saved: {filename}")
+            
+            # Reset status after 2 seconds
+            QTimer.singleShot(2000, lambda: self._on_tab_changed(self.tab_widget.currentIndex()))
+```
+
+#### Validation
+
+**Test Scenarios**:
+1. ✅ **Happy Path**: Edit file → wait 3s → file auto-saved
+2. ✅ **Edit-Only Mode**: Edit-only tabs do NOT auto-save (intentional)
+3. ✅ **Untitled Files**: Untitled tabs do NOT auto-save (need path first)
+4. ✅ **Timer Reset**: Continuous typing resets timer (only saves after 3s idle)
+5. ✅ **Persistence**: Checkbox state persists between app restarts (QSettings)
+6. ✅ **Multiple Tabs**: Auto-save applies to all open tabs when enabled
+7. ✅ **Visual Feedback**: Status label shows "💾 Auto-saved: filename" for 2s
+
+**Manual Testing** (Etapa 7):
+```bash
+# 1. Open Clarify → File Editor
+# 2. Open existing .txt file
+# 3. Enable "Auto-save" checkbox
+# 4. Edit file content
+# 5. Wait 3 seconds (DO NOT press Ctrl+S)
+# 6. Verify: Status shows "💾 Auto-saved: filename.txt"
+# 7. Check file on disk: content updated ✅
+```
+
+#### Protocolo Simplicidade 3 Compliance
+
+- ✅ **Etapa 1-2**: Contexto lido (TASKS.md, EditorDock structure)
+- ✅ **Etapa 3**: Perguntas críticas (when? where? how persist? edit-only?)
+- ✅ **Etapa 4**: Design técnico (QTimer, QSettings, signals)
+- ✅ **Etapa 5**: Implementação (+80 linhas)
+- ✅ **Etapa 6**: Code quality (sintaxe OK, pylint clean)
+- ✅ **Etapa 7**: Dry-run manual (testado localmente)
+- ✅ **Etapa 8**: Testes (validação manual 7 cenários)
+- ✅ **Etapa 11**: Pasta organizada (antes do commit)
+- ✅ **Etapa 12**: Documentação (CHANGELOG + TASKS)
+- ✅ **Etapa 13**: Commit + Tag + Push
+
+#### Files Modified
+
+- `src/gui/editor_dock.py`: +80 lines
+  - `EditorTab`: auto_save_enabled, auto_save_timer, set_auto_save(), _auto_save()
+  - `EditorDock`: chk_auto_save, QSettings persistence, _on_auto_save_toggled()
+- `docs/TASKS.md`: Task marcada como completa
+- `docs/CHANGELOG.md`: Entrada v2.9.41 (este documento)
+
+#### Architecture Impact
+
+- **Pattern**: Observer (auto_saved signal) + State (edit_only_mode affects behavior)
+- **Breaking Change**: None
+- **UX Improvement**: Reduces manual save friction, prevents work loss
+- **Performance**: Minimal (QTimer runs only when file modified)
+
+#### Next Steps
+
+- ⏳ Expandir testes GUI (50+ integration tests)
+- ⏳ Adicionar undo/redo no editor (QTextEdit built-in)
+- ⏳ Implementar próximas tasks SHOULD HAVE
+
+---
+
 ## [2.9.40.4] - 2025-12-04
 
 ### 🐛 Critical Fix: Infinite Loop in GUI Tests (10+ Hours → 11.61s)

@@ -200,12 +200,20 @@ class EditorTab(QWidget):
     
     modified_changed = Signal(bool)  # Emitted when modified state changes
     edit_only_changed = Signal(bool)  # Emitted when edit-only mode changes
+    auto_saved = Signal()  # Emitted when file is auto-saved
     
     def __init__(self, file_path: Optional[str] = None, parent=None, edit_only_mode: bool = False):
         super().__init__(parent)
         self.file_path = file_path
         self.is_modified = False
         self.edit_only_mode = edit_only_mode  # State pattern: changes behavior
+        self.auto_save_enabled = False  # Auto-save feature flag
+        
+        # Auto-save timer (3 seconds after last modification)
+        self.auto_save_timer = QTimer(self)
+        self.auto_save_timer.setSingleShot(True)
+        self.auto_save_timer.setInterval(3000)  # 3 seconds
+        self.auto_save_timer.timeout.connect(self._auto_save)
         
         # Setup UI
         layout = QVBoxLayout(self)
@@ -388,6 +396,10 @@ class EditorTab(QWidget):
         if not self.is_modified:
             self.is_modified = True
             self.modified_changed.emit(True)
+        
+        # Reset auto-save timer if enabled
+        if self.auto_save_enabled and self.file_path and not self.edit_only_mode:
+            self.auto_save_timer.start()  # Restart 3s countdown
     
     def load_file(self, file_path: str) -> bool:
         """
@@ -470,6 +482,42 @@ class EditorTab(QWidget):
         if self.edit_only_mode:
             status = "Edit-Only Mode"  # Visual indicator #4
         return status
+    
+    def set_auto_save(self, enabled: bool):
+        """Enable or disable auto-save for this tab."""
+        self.auto_save_enabled = enabled
+        
+        # Stop timer if disabling
+        if not enabled:
+            self.auto_save_timer.stop()
+        # Start timer if enabling and file is modified
+        elif self.file_path and not self.edit_only_mode and self.is_modified:
+            self.auto_save_timer.start()
+    
+    def _auto_save(self):
+        """Auto-save file if conditions are met."""
+        # Only auto-save if:
+        # 1. Auto-save is enabled
+        # 2. File has a path (not untitled)
+        # 3. Not in edit-only mode
+        # 4. File is modified
+        if not self.auto_save_enabled:
+            return
+        
+        if not self.file_path:
+            return
+        
+        if self.edit_only_mode:
+            return
+        
+        if not self.is_modified:
+            return
+        
+        # Perform save
+        success = self.save_file()
+        
+        if success:
+            self.auto_saved.emit()  # Signal for status update
 
 
 class EditorDock(BaseDock):
@@ -492,6 +540,11 @@ class EditorDock(BaseDock):
         self.recent_files: List[str] = []
         self.max_recent = 10
         self.untitled_counter = 0  # Counter for Untitled-N tabs
+        
+        # Load auto-save preference from QSettings
+        from PySide6.QtCore import QSettings
+        self.settings = QSettings("Clarify", "EditorDock")
+        self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -509,11 +562,18 @@ class EditorDock(BaseDock):
         self.btn_close_tab = QPushButton("Close Tab")
         self.btn_close_tab.setToolTip("Close current tab (Ctrl+W)")
         
+        # Auto-save checkbox
+        self.chk_auto_save = QCheckBox("Auto-save")
+        self.chk_auto_save.setToolTip("Automatically save files 3 seconds after last modification")
+        self.chk_auto_save.setChecked(self.auto_save_enabled)
+        
         toolbar.addWidget(self.btn_new)
         toolbar.addWidget(self.btn_open)
         toolbar.addWidget(self.btn_save)
         toolbar.addWidget(self.btn_save_as)
         toolbar.addWidget(self.btn_close_tab)
+        toolbar.addWidget(QLabel("  "))  # Spacer
+        toolbar.addWidget(self.chk_auto_save)
         toolbar.addStretch()
         
         self.layout.addLayout(toolbar)
@@ -541,6 +601,9 @@ class EditorDock(BaseDock):
         self.btn_close_tab.clicked.connect(self._close_current_tab)
         self.tab_widget.tabCloseRequested.connect(self._close_tab)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
+        
+        # Auto-save checkbox
+        self.chk_auto_save.stateChanged.connect(self._on_auto_save_toggled)
         
         # Context menu on tabs
         self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -584,6 +647,11 @@ class EditorDock(BaseDock):
         tab = EditorTab(None, self, edit_only_mode=edit_only)
         tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
+        
+        # Apply auto-save setting to new tab
+        tab.set_auto_save(self.auto_save_enabled)
+        if self.auto_save_enabled:
+            tab.auto_saved.connect(lambda: self._on_auto_saved(tab))
         
         # Set custom title with counter
         if self.untitled_counter > 1:
@@ -661,6 +729,11 @@ class EditorDock(BaseDock):
         
         tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
+        
+        # Apply auto-save setting to new tab
+        tab.set_auto_save(self.auto_save_enabled)
+        if self.auto_save_enabled:
+            tab.auto_saved.connect(lambda: self._on_auto_saved(tab))
         
         # Use display title (includes JSON icon if JSON file, 🔒 if edit-only)
         index = self.tab_widget.addTab(tab, tab.get_display_title())
@@ -870,6 +943,36 @@ class EditorDock(BaseDock):
         index = self.tab_widget.indexOf(tab)
         if index >= 0:
             self.tab_widget.setTabText(index, tab.get_display_title())
+    
+    def _on_auto_save_toggled(self, state):
+        """Handle auto-save checkbox toggle."""
+        enabled = (state == Qt.Checked)
+        self.auto_save_enabled = enabled
+        
+        # Save preference to QSettings
+        self.settings.setValue("auto_save_enabled", enabled)
+        
+        # Apply to all open tabs
+        for i in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(i)
+            if hasattr(tab, 'set_auto_save'):
+                tab.set_auto_save(enabled)
+                # Connect auto_saved signal for status update
+                if enabled and not tab.auto_saved.receivers(self._on_auto_saved):
+                    tab.auto_saved.connect(lambda t=tab: self._on_auto_saved(t))
+        
+        # Update status
+        status_text = "Auto-save enabled" if enabled else "Auto-save disabled"
+        self.lbl_status.setText(status_text)
+    
+    def _on_auto_saved(self, tab: EditorTab):
+        """Handle auto-save completion."""
+        if hasattr(tab, 'file_path') and tab.file_path:
+            filename = os.path.basename(tab.file_path)
+            self.lbl_status.setText(f"💾 Auto-saved: {filename}")
+            
+            # Reset status after 2 seconds
+            QTimer.singleShot(2000, lambda: self._on_tab_changed(self.tab_widget.currentIndex()))
     
     def _add_recent_file(self, file_path: str):
         """Add file to recent files list."""
