@@ -97,9 +97,12 @@ class CaseConverterDock(StandardToolDock):
             "Input path:",
             "File or directory to process"
         )
+        self.ed_path.setToolTip("Path to file or directory containing code to convert (supports .js, .ts, .jsx, .tsx, .py)")
         grid.addWidget(lbl, 2, 0)
         grid.addWidget(self.ed_path, 2, 1, 1, 2)
+        self.btn_browse.setToolTip("Browse for file or directory")
         grid.addWidget(self.btn_browse, 2, 3)
+        self.chk_is_file.setToolTip("Check if path is a file (unchecked for directory)")
         grid.addWidget(self.chk_is_file, 3, 0, 1, 2)
         
         # Extensions filter
@@ -107,6 +110,7 @@ class CaseConverterDock(StandardToolDock):
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setText(".js,.ts,.jsx,.tsx,.py")
         self.ed_extensions.setPlaceholderText("Comma-separated (e.g., .js,.py)")
+        self.ed_extensions.setToolTip("File extensions to process (comma-separated, e.g., .js,.ts,.py). Leave empty for all files.")
         grid.addWidget(self.ed_extensions, 3, 3)
         
         self.layout.addLayout(grid)

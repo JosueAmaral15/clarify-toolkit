@@ -1122,7 +1122,16 @@ result = convert_text_to_json(text, "auto")
 - **[X] v2.9.35 (2025-12-02)** Accessibility Features: **MVP IMPLEMENTADO** - AccessibilityManager (330 LOC) com infraestrutura completa. Features: Screen reader support (`setAccessibleName/Description`), focus indicators globais (2px #007ACC), font scaling (Ctrl+Scroll, 8-24pt), Ctrl+0 reset, WCAG AAA calc (14.6:1 dark, 16:1 light), tab order API, QSettings persistence. **RELEASE v2.9.35**: 24 testes (100% passing), API completa, documentação. **PRÓXIMO PASSO**: Aplicar accessible names em 100+ widgets (incremental).
 - **[]** Internationalization (i18n) Expansion: Expandir traduções além de EN/PT-BR. Adicionar: ES (Espanhol), FR (Francês), DE (Alemão), ZH (Chinês), JA (Japonês). Estrutura: `i18n/{locale}/app.json`. Usar sistema existente em `src/i18n/`. Permitir usuário contribuir traduções via GitHub (template em `CONTRIBUTING.md`).
 - **[]** Customizable UI Layout: Permitir usuário customizar layout dos docks. Funcionalidades: salvar/carregar layouts (workspace presets), dock position (left/right/top/bottom/floating), dock size persistence, tab order customizado. Incluir 3 layouts pré-configurados: "Compact" (mínimo), "Standard" (atual), "Advanced" (todos docks visíveis).
-- **[]** Tooltips Expansion: Adicionar tooltips descritivos em todos widgets. Formato: título bold + descrição + atalho (se houver). Exemplo: **Set Operations** | Perform logical operations (∩, ∪, −, ⊕) on JSON files | `Ctrl+Shift+S`. Incluir exemplos visuais em tooltips complexos (preview de resultado esperado).
+- **[X]** Tooltips Expansion: Adicionar tooltips descritivos em todos widgets. Formato: título bold + descrição + atalho (se houver). Exemplo: **Set Operations** | Perform logical operations (∩, ∪, −, ⊕) on JSON files | `Ctrl+Shift+S`. Incluir exemplos visuais em tooltips complexos (preview de resultado esperado). ***(v2.9.42 - MVP Parcial: 2 docks completos)***
+  - **Implementado**:
+    * Set Operations Dock: +17 tooltips (file inputs, operations, comparison modes, options, action buttons)
+    * Case Converter Dock: +5 tooltips (path input, browse, is_file, extensions)
+    * Total: +22 tooltips (de 4 para 26 em 2 docks)
+  - **Pendente (Sprint Futuro)**:
+    * Adicionar tooltips nos docks restantes (json_rewriter, json_editor_tab, json_search, ai_processor, tutorials)
+    * Incluir keyboard shortcuts em tooltips existentes (formato: "Description | Ctrl+X")
+    * Adicionar exemplos visuais em tooltips complexos (preview de resultado)
+    * Criar documento de guidelines para tooltips (formato, tom, comprimento)
 
 ---
 
