@@ -4185,6 +4185,9 @@ if _PYSIDE:
             
             # Restore tab state from previous session (v2.9.40)
             self._restore_tab_state()
+            
+            # Auto-check for updates on startup (v2.9.45)
+            self._auto_check_for_updates()
 
             # Nice monospaced font for preview-ish widgets
             try:
@@ -4508,6 +4511,112 @@ if _PYSIDE:
             <p>© 2025 Josue Amaral</p>
             """
             QMessageBox.about(self, "About Clarify", about_text)
+        
+        # Update Checker Methods (v2.9.45)
+        
+        def _auto_check_for_updates(self):
+            """
+            Auto-check for updates on startup if enabled (v2.9.45).
+            
+            Respects user preferences:
+            - update_checker/enabled (default: True)
+            - Skips if checked within 24h (cache)
+            - Silent operation (no errors shown)
+            """
+            # Check if auto-update is enabled
+            enabled = self.settings.qsettings.value("update_checker/enabled", True, type=bool)
+            if not enabled:
+                return
+            
+            # Perform check in background thread to avoid blocking startup
+            from PySide6.QtCore import QTimer
+            
+            # Delay check by 3 seconds to avoid slowing down startup
+            QTimer.singleShot(3000, self._perform_update_check)
+        
+        def _check_for_updates_manual(self):
+            """
+            Manual update check triggered from Help menu (v2.9.45).
+            
+            Forces fresh check (bypasses cache) and shows result message.
+            """
+            from .update_checker import check_for_updates
+            from . import __version__
+            
+            # Show progress message
+            self.statusBar().showMessage("Verificando atualizações...", 0)
+            
+            # Force fresh check
+            has_update, release_info = check_for_updates(__version__, force=True)
+            
+            if has_update and release_info:
+                # Check if user opted to skip this version
+                from .gui.update_notification import UpdateNotificationDialog
+                
+                if UpdateNotificationDialog.should_show_for_version(release_info['version']):
+                    self._show_update_dialog(release_info)
+                else:
+                    # User previously skipped this version
+                    from PySide6.QtWidgets import QMessageBox
+                    QMessageBox.information(
+                        self,
+                        "Atualização Disponível",
+                        f"Nova versão {release_info['version']} disponível, mas você optou por pular esta versão.\n\n"
+                        "Para ver novamente, limpe as preferências de atualização."
+                    )
+            else:
+                # No update or error
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "Sem Atualizações",
+                    f"Você está usando a versão mais recente do Clarify ({__version__})."
+                )
+            
+            self.statusBar().showMessage("Verificação de atualização concluída", 3000)
+        
+        def _perform_update_check(self):
+            """
+            Perform background update check (v2.9.45).
+            
+            Called by auto-check timer. Silent operation - only shows dialog if update found.
+            """
+            from .update_checker import check_for_updates
+            from . import __version__
+            
+            try:
+                has_update, release_info = check_for_updates(__version__, force=False)
+                
+                if has_update and release_info:
+                    # Check if user opted to skip this version
+                    from .gui.update_notification import UpdateNotificationDialog
+                    
+                    if UpdateNotificationDialog.should_show_for_version(release_info['version']):
+                        self._show_update_dialog(release_info)
+                    # else: silently skip (user previously opted out)
+                # else: no update or error - stay silent
+            
+            except Exception as e:
+                # Silent failure - don't bother user during startup
+                print(f"[Update Check] Failed silently: {e}")
+        
+        def _show_update_dialog(self, release_info: dict):
+            """
+            Show update notification dialog (v2.9.45).
+            
+            Args:
+                release_info: Dict with keys: version, url, changelog_url, body, published_at
+            """
+            from .gui.update_notification import show_update_notification
+            
+            show_update_notification(
+                parent=self,
+                latest_version=release_info.get('version', ''),
+                release_url=release_info.get('url', ''),
+                changelog_url=release_info.get('changelog_url', ''),
+                release_notes=release_info.get('body', ''),
+                published_at=release_info.get('published_at', '')
+            )
         
         def _show_editor(self):
             """Show editor as tab (Task #46 - v2.9.16 / v2.9.40)."""
@@ -4892,6 +5001,13 @@ if _PYSIDE:
             self.act_keyboard_shortcuts_help.setShortcut("F1")
             m_help.addAction(self.act_keyboard_shortcuts_help)
             self.act_keyboard_shortcuts_help.triggered.connect(self._show_keyboard_shortcuts_help)
+            
+            # Update Checker (v2.9.45)
+            m_help.addSeparator()
+            self.act_check_updates = QAction("🔄 Verificar Atualizações", self)
+            self.act_check_updates.setToolTip("Check for new Clarify versions from GitHub")
+            m_help.addAction(self.act_check_updates)
+            self.act_check_updates.triggered.connect(self._check_for_updates_manual)
 
             # About menu
             m_about = bar.addMenu(tr("menu.about"))
@@ -4997,9 +5113,15 @@ if _PYSIDE:
             chk_auto_save = QCheckBox("Auto-save settings")
             chk_auto_save.setChecked(self.settings.get("auto_save", True))
             
+            # Update checker preference (v2.9.45)
+            chk_check_updates = QCheckBox("Check for updates on startup")
+            chk_check_updates.setChecked(self.settings.qsettings.value("update_checker/enabled", True, type=bool))
+            chk_check_updates.setToolTip("Automatically check for new Clarify versions when app starts (checks at most once per 24 hours)")
+            
             general_layout.addWidget(chk_tooltips)
             general_layout.addWidget(chk_confirm_exit)
             general_layout.addWidget(chk_auto_save)
+            general_layout.addWidget(chk_check_updates)
             general_group.setLayout(general_layout)
             
             layout.addWidget(general_group)
@@ -5011,6 +5133,7 @@ if _PYSIDE:
                 chk_tooltips.isChecked(),
                 chk_confirm_exit.isChecked(),
                 chk_auto_save.isChecked(),
+                chk_check_updates.isChecked(),
                 dialog
             ))
             buttons.rejected.connect(dialog.reject)
@@ -5019,14 +5142,19 @@ if _PYSIDE:
             dialog.setLayout(layout)
             dialog.exec()
         
-        def _save_preferences(self, tooltips, confirm_exit, auto_save, dialog):
-            """Save preferences and close dialog."""
+        def _save_preferences(self, tooltips, confirm_exit, auto_save, check_updates, dialog):
+            """Save preferences and close dialog (v2.9.45: added check_updates)."""
             self.settings.update_multiple({
                 "show_tooltips": tooltips,
                 "confirm_on_exit": confirm_exit,
                 "auto_save": auto_save
             })
+            
+            # Save update checker preference to QSettings (v2.9.45)
+            self.settings.qsettings.setValue("update_checker/enabled", check_updates)
+            
             dialog.accept()
+            from PySide6.QtWidgets import QMessageBox
             QMessageBox.information(self, "Success", "Preferences saved successfully!")
         
         def _show_transparency_dialog(self):

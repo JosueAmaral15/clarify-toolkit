@@ -31,10 +31,10 @@ Usage:
 
 Author: Josué Amaral
 Date: 2025-11-23
-Version: 2.1.0
+Version: 2.9.44
 """
 
-__version__ = "2.1.0"
+__version__ = "2.9.44"
 __author__ = "Josué Amaral"
 __email__ = "josue.amaral@example.com"
 
