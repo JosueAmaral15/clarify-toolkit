@@ -4811,20 +4811,53 @@ if _PYSIDE:
             act_shortcuts = QAction(tr("menu.settings.shortcuts"), self)
             act_transparency = QAction(tr("menu.settings.transparency"), self)
             
-            # Language submenu (Task #24 - v2.9.10)
+            # Language submenu (Task #24 - v2.9.10, expanded v2.9.43)
             m_language = m_settings.addMenu(tr("menu.settings.language"))
+            
+            # Create language actions (7 languages: EN, PT-BR, ES, FR, DE, ZH, JA)
             self.act_lang_en = QAction("English", self, checkable=True)
             self.act_lang_pt = QAction("Português (Brasil)", self, checkable=True)
+            self.act_lang_es = QAction("Español", self, checkable=True)
+            self.act_lang_fr = QAction("Français", self, checkable=True)
+            self.act_lang_de = QAction("Deutsch", self, checkable=True)
+            self.act_lang_zh = QAction("中文 (简体)", self, checkable=True)  # Simplified Chinese
+            self.act_lang_ja = QAction("日本語", self, checkable=True)  # Japanese
+            
+            # Add all actions to menu
             m_language.addAction(self.act_lang_en)
             m_language.addAction(self.act_lang_pt)
+            m_language.addSeparator()
+            m_language.addAction(self.act_lang_es)
+            m_language.addAction(self.act_lang_fr)
+            m_language.addAction(self.act_lang_de)
+            m_language.addSeparator()
+            m_language.addAction(self.act_lang_zh)
+            m_language.addAction(self.act_lang_ja)
+            
+            # Connect actions to switch language
             self.act_lang_en.triggered.connect(lambda: self._switch_language("en"))
             self.act_lang_pt.triggered.connect(lambda: self._switch_language("pt_BR"))
-            # Set current language checked
+            self.act_lang_es.triggered.connect(lambda: self._switch_language("es"))
+            self.act_lang_fr.triggered.connect(lambda: self._switch_language("fr"))
+            self.act_lang_de.triggered.connect(lambda: self._switch_language("de"))
+            self.act_lang_zh.triggered.connect(lambda: self._switch_language("zh"))
+            self.act_lang_ja.triggered.connect(lambda: self._switch_language("ja"))
+            
+            # Set current language checked (support all 7 languages)
             current_lang = self.translator.current_language
-            if current_lang == "en":
-                self.act_lang_en.setChecked(True)
+            lang_action_map = {
+                "en": self.act_lang_en,
+                "pt_BR": self.act_lang_pt,
+                "es": self.act_lang_es,
+                "fr": self.act_lang_fr,
+                "de": self.act_lang_de,
+                "zh": self.act_lang_zh,
+                "ja": self.act_lang_ja
+            }
+            if current_lang in lang_action_map:
+                lang_action_map[current_lang].setChecked(True)
             else:
-                self.act_lang_pt.setChecked(True)
+                self.act_lang_en.setChecked(True)  # Fallback to English
             
             m_settings.addAction(act_preferences)
             m_settings.addAction(act_shortcuts)
@@ -5085,10 +5118,15 @@ if _PYSIDE:
             dialog.reject()
         
         def _switch_language(self, lang: str):
-            """Switch application language at runtime (Task #24 - v2.9.10)."""
-            # Update checkboxes
+            """Switch application language at runtime (Task #24 - v2.9.10, expanded v2.9.43)."""
+            # Update checkboxes for all 7 languages
             self.act_lang_en.setChecked(lang == "en")
             self.act_lang_pt.setChecked(lang == "pt_BR")
+            self.act_lang_es.setChecked(lang == "es")
+            self.act_lang_fr.setChecked(lang == "fr")
+            self.act_lang_de.setChecked(lang == "de")
+            self.act_lang_zh.setChecked(lang == "zh")
+            self.act_lang_ja.setChecked(lang == "ja")
             
             # Switch language
             switch_language(lang)

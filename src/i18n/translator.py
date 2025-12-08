@@ -47,13 +47,68 @@ class Translator(QObject):
         
         self._current_language: str = "en"  # Default to English
         self._translations: Dict[str, Dict[str, str]] = {}
-        self._available_languages = ["en", "pt_BR"]
+        self._available_languages = ["en", "pt_BR", "es", "fr", "de", "zh", "ja"]
         
-        # Load initial language (always English by default)
+        # Auto-detect system language or use saved preference
+        detected_lang = self._detect_system_locale()
+        if detected_lang in self._available_languages:
+            self._current_language = detected_lang
+        
+        # Load initial language
         self._load_language(self._current_language)
     
-    # Removed: Auto-detect system language (now defaults to English)
-    # User can manually switch to pt_BR via menu if desired
+    def _detect_system_locale(self) -> str:
+        """
+        Detect system language using QLocale.
+        
+        Returns:
+            Language code ('en', 'pt_BR', 'es', 'fr', 'de', 'zh', 'ja')
+            Falls back to 'en' if system language not supported.
+        """
+        try:
+            from PySide6.QtCore import QLocale
+            
+            # Get system locale (e.g., 'pt_BR', 'es_ES', 'fr_FR')
+            system_locale = QLocale.system().name()  # Returns format: 'en_US', 'pt_BR'
+            
+            # Map locale variants to our internal codes
+            locale_map = {
+                "en": "en",
+                "pt_BR": "pt_BR",
+                "pt_PT": "pt_BR",  # European Portuguese → Brazilian Portuguese
+                "es": "es",
+                "es_ES": "es",  # Spain Spanish
+                "es_MX": "es",  # Mexican Spanish
+                "es_AR": "es",  # Argentine Spanish
+                "fr": "fr",
+                "fr_FR": "fr",  # France French
+                "fr_CA": "fr",  # Canadian French
+                "de": "de",
+                "de_DE": "de",  # German German
+                "de_AT": "de",  # Austrian German
+                "de_CH": "de",  # Swiss German
+                "zh": "zh",
+                "zh_CN": "zh",  # Simplified Chinese
+                "zh_TW": "zh",  # Traditional Chinese (use same for now)
+                "ja": "ja",
+                "ja_JP": "ja",  # Japanese
+            }
+            
+            # Direct match
+            if system_locale in locale_map:
+                return locale_map[system_locale]
+            
+            # Try language code only (first 2 chars)
+            lang_code = system_locale[:2]
+            if lang_code in locale_map:
+                return locale_map[lang_code]
+            
+            # Fallback to English
+            return "en"
+        
+        except Exception as e:
+            print(f"Error detecting system locale: {e}")
+            return "en"
     
     def _load_language(self, lang: str) -> None:
         """Load translation file for the given language."""
@@ -142,7 +197,12 @@ class Translator(QObject):
         """Get human-readable language name."""
         names = {
             "en": "English",
-            "pt_BR": "Português (Brasil)"
+            "pt_BR": "Português (Brasil)",
+            "es": "Español",
+            "fr": "Français",
+            "de": "Deutsch",
+            "zh": "中文 (简体)",  # Simplified Chinese
+            "ja": "日本語"  # Japanese
         }
         return names.get(lang, lang)
 

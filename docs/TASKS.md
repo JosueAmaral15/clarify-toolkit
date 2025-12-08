@@ -1117,21 +1117,29 @@ result = convert_text_to_json(text, "auto")
 
 #### UX & Accessibility
 
+- **[X]** **i18n Expansion (ES/FR/DE/ZH/JA)** - Expandir traduções além de EN/PT-BR para alcance internacional. Adicionar 5 idiomas: Español (Espanha/Latam), Français, Deutsch, 中文 (Chinês Simplificado), 日本語 (Japonês). Estrutura: `i18n/{locale}/app.json`. Usar sistema existente em `src/i18n/`. Permitir usuário contribuir traduções via GitHub (template em `CONTRIBUTING.md`). Integrar com sistema de detecção automática de locale do sistema operacional. ***(v2.9.43 - 08/12/2025)***
+- **[]** **PRÓXIMA PRIORIDADE MÉDIA**: Recipe Book (docs/RECIPES.md) - Criar guia prático com casos de uso reais. Formato: Problema → Solução passo-a-passo → Resultado esperado. Incluir 15-20 recipes cobrindo: Set Operations (mesclar configs, diff entre versões), JSON Rewriter (limpar duplicatas, normalizar estrutura), JSON Search (encontrar chaves órfãs), AI Processing (refactoring assistido, tradução automática), Text Extractor (JSX para i18n). Cada recipe com screenshots, código exemplo CLI, e tempo estimado.
+- **[]** **PRÓXIMA PRIORIDADE MÉDIA**: Update Checker - Implementar verificador automático de atualizações. Na inicialização: verificar GitHub Releases API para versão mais recente, comparar com versão atual (`__version__` em `src/__init__.py`), exibir notificação não-intrusiva se nova versão disponível. Incluir: link direto para CHANGELOG.md, botão "Download" abrindo GitHub Releases, checkbox "Don't show again for this version" (salvo em QSettings). Respeitar configuração global "Check for updates" em Settings (default: enabled). Cachear resultado por 24h para evitar rate limit. Funcionalidade offline-friendly (não bloqueia se sem internet).
 - **[X] v2.9.33 (2025-12-02)** Comprehensive Keyboard Shortcuts: Mapear todas operações principais para atalhos de teclado. Global: `Ctrl+F` (search), `Ctrl+S` (save), `Ctrl+E` (editor), `Ctrl+Shift+S` (set operations), `Ctrl+Shift+R` (rewriter), `Ctrl+Shift+A` (AI processor). Navegação: `Ctrl+Tab` (next dock), `Ctrl+Shift+Tab` (previous dock), `F11` (fullscreen), `Ctrl+1-9` (jump to specific dock). **IMPLEMENTADO**: 45+ shortcuts, customização completa com dialog, detecção de conflitos, avisos de SO, navegação entre docks, help page (F1), i18n EN/PT-BR, 26 testes (100% passing).
 - **[X] v2.9.34 (2025-12-02)** Dark Mode Theme: **VALIDADO** - Feature já 100% implementada no codebase. ThemeManager (478 LOC) com suporte completo dark/light/system. Paleta: Dark (#1E1E1E background, #F0F0F0 text, #007ACC accent), Light (#FAFAFA background, #1E1E1E text, #0078D4 accent). Toggle em: `View → Themes → System/Light/Dark`. Persistência via QSettings. QSS inline (~100 linhas/tema). i18n EN/PT-BR completo. **RELEASE v2.9.34**: 14 testes unitários criados (100% passing), validação de acessibilidade (WCAG AA), documentação completa.
 - **[X] v2.9.35 (2025-12-02)** Accessibility Features: **MVP IMPLEMENTADO** - AccessibilityManager (330 LOC) com infraestrutura completa. Features: Screen reader support (`setAccessibleName/Description`), focus indicators globais (2px #007ACC), font scaling (Ctrl+Scroll, 8-24pt), Ctrl+0 reset, WCAG AAA calc (14.6:1 dark, 16:1 light), tab order API, QSettings persistence. **RELEASE v2.9.35**: 24 testes (100% passing), API completa, documentação. **PRÓXIMO PASSO**: Aplicar accessible names em 100+ widgets (incremental).
-- **[]** Internationalization (i18n) Expansion: Expandir traduções além de EN/PT-BR. Adicionar: ES (Espanhol), FR (Francês), DE (Alemão), ZH (Chinês), JA (Japonês). Estrutura: `i18n/{locale}/app.json`. Usar sistema existente em `src/i18n/`. Permitir usuário contribuir traduções via GitHub (template em `CONTRIBUTING.md`).
+- **[X]** Internationalization (i18n) Expansion: Expandir traduções além de EN/PT-BR. Adicionar: ES (Espanhol), FR (Francês), DE (Alemão), ZH (Chinês), JA (Japonês). Estrutura: `i18n/{locale}/app.json`. Usar sistema existente em `src/i18n/`. Permitir usuário contribuir traduções via GitHub (template em `CONTRIBUTING.md`). ***(v2.9.43)***
 - **[]** Customizable UI Layout: Permitir usuário customizar layout dos docks. Funcionalidades: salvar/carregar layouts (workspace presets), dock position (left/right/top/bottom/floating), dock size persistence, tab order customizado. Incluir 3 layouts pré-configurados: "Compact" (mínimo), "Standard" (atual), "Advanced" (todos docks visíveis).
 - **[X]** Tooltips Expansion: Adicionar tooltips descritivos em todos widgets. Formato: título bold + descrição + atalho (se houver). Exemplo: **Set Operations** | Perform logical operations (∩, ∪, −, ⊕) on JSON files | `Ctrl+Shift+S`. Incluir exemplos visuais em tooltips complexos (preview de resultado esperado). ***(v2.9.42 - MVP Parcial: 2 docks completos)***
-  - **Implementado**:
+  - **Implementado (v2.9.42 - Sprint MVP)**:
     * Set Operations Dock: +17 tooltips (file inputs, operations, comparison modes, options, action buttons)
     * Case Converter Dock: +5 tooltips (path input, browse, is_file, extensions)
     * Total: +22 tooltips (de 4 para 26 em 2 docks)
-  - **Pendente (Sprint Futuro)**:
-    * Adicionar tooltips nos docks restantes (json_rewriter, json_editor_tab, json_search, ai_processor, tutorials)
-    * Incluir keyboard shortcuts em tooltips existentes (formato: "Description | Ctrl+X")
-    * Adicionar exemplos visuais em tooltips complexos (preview de resultado)
-    * Criar documento de guidelines para tooltips (formato, tom, comprimento)
+  - **[]** **Sprint Futuro - Tooltips Expansion (Full Completion)**:
+    * **[]** Adicionar tooltips em JSON Rewriter Dock (~25 widgets): checkboxes (dedupe, join keys, eliminate duplicates, skip empty, avoid duplicate child keys, remove duplicate arrays, skip keys without siblings, remove duplicate objects), threshold slider, reference format options, advanced filters button
+    * **[]** Adicionar tooltips em JSON Editor Tab (~15 widgets): format buttons (2/4 spaces, minify), validate, search, collapse/expand, tree view nodes
+    * **[]** Adicionar tooltips em JSON Search Dock (~10 widgets): search mode (key/value/both), case sensitive, regex, file filters
+    * **[]** Adicionar tooltips em AI Processor Dock (~20 widgets): provider combo, model selection, API key, prompt, line-by-line mode, scope filters, advanced conditions
+    * **[]** Adicionar tooltips em Tutorials Dock (~8 widgets): tree navigation, search bar, beginner/developers categories
+    * **[]** Adicionar tooltips em JSON Translate Dock (~10 widgets adicionais): scope patterns, exclude patterns, emit export, preserve uppercase
+    * **[]** Incluir keyboard shortcuts em TODOS tooltips existentes (formato: "Description | Ctrl+X")
+    * **[]** Adicionar exemplos visuais em tooltips complexos (preview de resultado esperado como mini-screenshot ou ASCII art)
+    * **[]** Criar documento `docs/TOOLTIP_GUIDELINES.md` (formato padrão, tom, comprimento máximo 150 chars, quando usar exemplos, accessibility)
 
 ---
 
