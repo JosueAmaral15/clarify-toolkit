@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QGridLayout, QLabel, QComboBox, QLineEdit, QHBoxLa
 from PySide6.QtCore import Qt
 from .base_dock import StandardToolDock, ProcessorWorkerBase
 from src.case_converter import convert_file, convert_string
+from src.i18n import tooltip_tr
 
 
 class CaseConverterWorker(ProcessorWorkerBase):
@@ -77,7 +78,7 @@ class CaseConverterDock(StandardToolDock):
             "snake_case",
             "kebab-case"
         ])
-        self.combo_source.setToolTip("Original case style of your code (auto-detect recommended)")
+        self.combo_source.setToolTip(tooltip_tr("case.combo_source"))
         grid.addWidget(self.combo_source, 0, 1, 1, 3)
         
         # Target case style
@@ -89,7 +90,7 @@ class CaseConverterDock(StandardToolDock):
             "snake_case",
             "kebab-case"
         ])
-        self.combo_target.setToolTip("Desired case style for conversion (e.g., snake_case for Python)")
+        self.combo_target.setToolTip(tooltip_tr("case.combo_target"))
         grid.addWidget(self.combo_target, 1, 1, 1, 3)
         
         # File/directory input
@@ -97,12 +98,12 @@ class CaseConverterDock(StandardToolDock):
             "Input path:",
             "File or directory to process"
         )
-        self.ed_path.setToolTip("Path to file or directory containing code to convert (supports .js, .ts, .jsx, .tsx, .py)")
+        self.ed_path.setToolTip(tooltip_tr("case.ed_path"))
         grid.addWidget(lbl, 2, 0)
         grid.addWidget(self.ed_path, 2, 1, 1, 2)
-        self.btn_browse.setToolTip("Browse for file or directory")
+        self.btn_browse.setToolTip(tooltip_tr("case.btn_browse"))
         grid.addWidget(self.btn_browse, 2, 3)
-        self.chk_is_file.setToolTip("Check if path is a file (unchecked for directory)")
+        self.chk_is_file.setToolTip(tooltip_tr("case.chk_is_file"))
         grid.addWidget(self.chk_is_file, 3, 0, 1, 2)
         
         # Extensions filter
@@ -110,7 +111,7 @@ class CaseConverterDock(StandardToolDock):
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setText(".js,.ts,.jsx,.tsx,.py")
         self.ed_extensions.setPlaceholderText("Comma-separated (e.g., .js,.py)")
-        self.ed_extensions.setToolTip("File extensions to process (comma-separated, e.g., .js,.ts,.py). Leave empty for all files.")
+        self.ed_extensions.setToolTip(tooltip_tr("case.ed_extensions"))
         grid.addWidget(self.ed_extensions, 3, 3)
         
         self.layout.addLayout(grid)

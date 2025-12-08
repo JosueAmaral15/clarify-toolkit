@@ -16,6 +16,6 @@ Usage:
     switch_language("pt_BR")  # Runtime switch
 """
 
-from .translator import Translator, get_translator, switch_language, tr
+from .translator import Translator, get_translator, switch_language, tr, tooltip_tr
 
-__all__ = ['Translator', 'get_translator', 'switch_language', 'tr']
+__all__ = ['Translator', 'get_translator', 'switch_language', 'tr', 'tooltip_tr']

@@ -234,3 +234,38 @@ def tr(key: str, default: Optional[str] = None) -> str:
         print(tr("menu.file"))
     """
     return get_translator().get(key, default)
+
+
+def tooltip_tr(key: str, default: Optional[str] = None) -> str:
+    """
+    Shorthand for tooltip translations with 'tooltip.' prefix.
+    
+    This is a convenience function specifically for tooltip translations.
+    It automatically prepends 'tooltip.' to the key.
+    
+    Usage:
+        from src.i18n import tooltip_tr
+        widget.setToolTip(tooltip_tr("set_ops.file_a"))
+        # Equivalent to: tr("tooltip.set_ops.file_a")
+    
+    Args:
+        key: Tooltip key without 'tooltip.' prefix (e.g., 'set_ops.file_a')
+        default: Default value if key not found
+    
+    Returns:
+        Translated tooltip string
+    
+    Example:
+        # In Set Operations Dock:
+        self.ed_file_a.setToolTip(tooltip_tr("set_ops.file_a"))
+        
+        # In JSON file (src/i18n/en.json):
+        {
+            "tooltip": {
+                "set_ops": {
+                    "file_a": "First JSON file for set operation"
+                }
+            }
+        }
+    """
+    return get_translator().get(f"tooltip.{key}", default)

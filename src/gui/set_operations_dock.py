@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFrame,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -40,6 +41,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.set_operations import difference, intersection, symmetric_difference, union
+from src.i18n import tooltip_tr
 from .base_dock import BaseDock
 
 
@@ -60,7 +62,7 @@ class SetOperationsDock(BaseDock):
         # Create scroll area for all controls
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(0)  # No frame
+        scroll.setFrameShape(QFrame.Shape.NoFrame)  # No frame
         
         scroll_widget = QWidget()
         main_layout = QVBoxLayout(scroll_widget)
@@ -73,27 +75,27 @@ class SetOperationsDock(BaseDock):
         file_layout.addWidget(QLabel("File A:"), 0, 0)
         self.ed_file_a = QLineEdit()
         self.ed_file_a.setPlaceholderText("Select first JSON file...")
-        self.ed_file_a.setToolTip("First JSON file for comparison operations (intersection, union, difference)")
+        self.ed_file_a.setToolTip(tooltip_tr("set_ops.file_a"))
         file_layout.addWidget(self.ed_file_a, 0, 1)
         self.btn_browse_a = QPushButton("Browse...")
         self.btn_browse_a.setMaximumWidth(100)
-        self.btn_browse_a.setToolTip("Browse for first JSON file")
+        self.btn_browse_a.setToolTip(tooltip_tr("set_ops.btn_browse_a"))
         file_layout.addWidget(self.btn_browse_a, 0, 2)
 
         # File B
         file_layout.addWidget(QLabel("File B:"), 1, 0)
         self.ed_file_b = QLineEdit()
         self.ed_file_b.setPlaceholderText("Select second JSON file...")
-        self.ed_file_b.setToolTip("Second JSON file for comparison operations")
+        self.ed_file_b.setToolTip(tooltip_tr("set_ops.file_b"))
         file_layout.addWidget(self.ed_file_b, 1, 1)
         self.btn_browse_b = QPushButton("Browse...")
         self.btn_browse_b.setMaximumWidth(100)
-        self.btn_browse_b.setToolTip("Browse for second JSON file")
+        self.btn_browse_b.setToolTip(tooltip_tr("set_ops.btn_browse_b"))
         file_layout.addWidget(self.btn_browse_b, 1, 2)
 
         # Multiple files checkbox
         self.chk_multiple = QCheckBox("Multiple files (pipeline processing)")
-        self.chk_multiple.setToolTip("Enable to add more files for sequential operations")
+        self.chk_multiple.setToolTip(tooltip_tr("set_ops.chk_multiple"))
         file_layout.addWidget(self.chk_multiple, 2, 0, 1, 3)
 
         # File list (hidden by default)
@@ -105,13 +107,13 @@ class SetOperationsDock(BaseDock):
         # Buttons for file list
         file_btn_layout = QHBoxLayout()
         self.btn_add_file = QPushButton("+ Add File")
-        self.btn_add_file.setToolTip("Add more files to pipeline (operations applied sequentially left to right)")
+        self.btn_add_file.setToolTip(tooltip_tr("set_ops.btn_add_file"))
         self.btn_add_file.setVisible(False)
         self.btn_remove_file = QPushButton("- Remove Selected")
-        self.btn_remove_file.setToolTip("Remove selected file from pipeline")
+        self.btn_remove_file.setToolTip(tooltip_tr("set_ops.btn_remove_file"))
         self.btn_remove_file.setVisible(False)
         self.btn_clear_files = QPushButton("Clear All")
-        self.btn_clear_files.setToolTip("Clear all files from pipeline")
+        self.btn_clear_files.setToolTip(tooltip_tr("set_ops.btn_clear_files"))
         self.btn_clear_files.setVisible(False)
         file_btn_layout.addWidget(self.btn_add_file)
         file_btn_layout.addWidget(self.btn_remove_file)
@@ -128,13 +130,13 @@ class SetOperationsDock(BaseDock):
 
         ops_layout.addWidget(QLabel("Select operations to perform:"))
         self.chk_intersection = QCheckBox("∩ Intersection")
-        self.chk_intersection.setToolTip("∩ Intersection: Find items present in ALL files (A ∩ B ∩ C...)")
+        self.chk_intersection.setToolTip(tooltip_tr("set_ops.intersection"))
         self.chk_union = QCheckBox("∪ Union")
-        self.chk_union.setToolTip("∪ Union: Combine all unique items from ALL files (A ∪ B ∪ C...)")
+        self.chk_union.setToolTip(tooltip_tr("set_ops.union"))
         self.chk_difference = QCheckBox("− Difference")
-        self.chk_difference.setToolTip("− Difference: Items in first file NOT in others (A - B - C...)")
+        self.chk_difference.setToolTip(tooltip_tr("set_ops.difference"))
         self.chk_symmetric = QCheckBox("⊕ Symmetric Difference (2 files only)")
-        self.chk_symmetric.setToolTip("⊕ Symmetric Difference: Items in A or B but NOT in both (A ⊕ B). Works with 2 files only.")
+        self.chk_symmetric.setToolTip(tooltip_tr("set_ops.symmetric"))
 
         ops_layout.addWidget(self.chk_intersection)
         ops_layout.addWidget(self.chk_union)
@@ -150,11 +152,11 @@ class SetOperationsDock(BaseDock):
 
         self.radio_key_value = QRadioButton("Keys and values (strict types)")
         self.radio_key_value.setChecked(True)
-        self.radio_key_value.setToolTip("Compare keys + values with strict type checking (e.g., 1 ≠ '1', true ≠ 'true')")
+        self.radio_key_value.setToolTip(tooltip_tr("set_ops.radio_key_value"))
         self.radio_full_path = QRadioButton("Full path and values (dot notation)")
-        self.radio_full_path.setToolTip("Compare full paths + values using dot notation (e.g., 'user.name' vs 'name')")
+        self.radio_full_path.setToolTip(tooltip_tr("set_ops.radio_full_path"))
         self.radio_key_only = QRadioButton("Keys only (path)")
-        self.radio_key_only.setToolTip("Compare only key paths, ignore values (useful for structure comparison)")
+        self.radio_key_only.setToolTip(tooltip_tr("set_ops.radio_key_only"))
 
         self.comp_mode_group = QButtonGroup()
         self.comp_mode_group.addButton(self.radio_key_value)
@@ -173,13 +175,13 @@ class SetOperationsDock(BaseDock):
         opts_layout = QVBoxLayout()
 
         self.chk_ignore_case_keys = QCheckBox("Ignore case in keys")
-        self.chk_ignore_case_keys.setToolTip("Treat 'Name' and 'name' as identical keys (case-insensitive)")
+        self.chk_ignore_case_keys.setToolTip(tooltip_tr("set_ops.ignore_case_keys"))
         self.chk_ignore_case_values = QCheckBox("Ignore case in values")
-        self.chk_ignore_case_values.setToolTip("Treat 'Hello' and 'hello' as identical values (case-insensitive)")
+        self.chk_ignore_case_values.setToolTip(tooltip_tr("set_ops.ignore_case_values"))
         self.chk_skip_empty = QCheckBox("Skip empty values")
-        self.chk_skip_empty.setToolTip("Ignore null, empty strings (''), empty arrays ([]), and empty objects ({})")
+        self.chk_skip_empty.setToolTip(tooltip_tr("set_ops.skip_empty"))
         self.chk_arrays_ignore_order = QCheckBox("Arrays: ignore order")
-        self.chk_arrays_ignore_order.setToolTip("Treat [1,2,3] same as [3,2,1]")
+        self.chk_arrays_ignore_order.setToolTip(tooltip_tr("set_ops.arrays_ignore_order"))
 
         opts_layout.addWidget(self.chk_ignore_case_keys)
         opts_layout.addWidget(self.chk_ignore_case_values)
@@ -196,7 +198,7 @@ class SetOperationsDock(BaseDock):
         output_layout.addWidget(QLabel("Select output organization:"))
         self.combo_output = QComboBox()
         self.combo_output.addItems(["JSON nested (all operations)", "Separate files", "Display only (no save)"])
-        self.combo_output.setToolTip("JSON nested: single file with all results | Separate files: one file per operation | Display only: show in Results panel without saving")
+        self.combo_output.setToolTip(tooltip_tr("set_ops.combo_output"))
         output_layout.addWidget(self.combo_output)
 
         output_group.setLayout(output_layout)
@@ -206,7 +208,7 @@ class SetOperationsDock(BaseDock):
         btn_layout = QHBoxLayout()
         self.btn_execute = QPushButton("Execute")
         self.btn_execute.setMinimumHeight(35)
-        self.btn_execute.setToolTip("Execute selected set operations on provided JSON files")
+        self.btn_execute.setToolTip(tooltip_tr("set_ops.btn_execute"))
         self.btn_clear = QPushButton("Clear")
         self.btn_clear.setToolTip("Clear all inputs, file selections, and results")
         self.btn_save = QPushButton("Save Result")

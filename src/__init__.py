@@ -30,11 +30,11 @@ Usage:
     python clarify.py dedupe <file.ts> --join-keys
 
 Author: Josué Amaral
-Date: 2025-11-23
-Version: 2.9.44
+Date: 2025-12-08
+Version: 2.9.46
 """
 
-__version__ = "2.9.44"
+__version__ = "2.9.46"
 __author__ = "Josué Amaral"
 __email__ = "josue.amaral@example.com"
 
