@@ -1147,16 +1147,26 @@ result = convert_text_to_json(text, "auto")
     * ✅ PathEntry dinâmicos: ed_path, btn_browse, chk_is_file
     * ✅ Advanced Conditions: 6 widgets por linha (field, operator, value, scope, case, regex)
     * ✅ Testes atualizados: `test_ai_processor_dock_tooltips()` (8/9 passing, 1 skipped)
-  - **[]** **v2.9.49 - JSON Editor Components (Sprint Atual - 09/12/2025)**:
-    * ✅ **JsonEditorTab** (8 tooltips): 4 existentes atualizados com Ctrl+E, 4 novos (btn_collapse, btn_expand, editor QTextEdit, tree JsonTreeWidget, lbl_validation)
+  - **[X] v2.9.49 - JSON Editor Components (09/12/2025)**:
+    * ✅ **JsonEditorTab** (9 tooltips): 4 existentes atualizados com Ctrl+E, 5 novos (btn_collapse, btn_expand, editor QTextEdit, tree JsonTreeWidget, lbl_validation)
     * ✅ **EditorDock** (8 tooltips): 6 existentes atualizados com Ctrl+E, 2 novos (tab_widget, lbl_status)
     * ✅ **EditorTab** (4 tooltips): 3 existentes atualizados com Ctrl+E, 1 novo (editor QTextEdit)
-    * ✅ Total: 20 widgets com tooltips (JsonEditorTab: 8, EditorDock: 8, EditorTab: 4)
+    * ✅ Total: 20 widgets com tooltips (JsonEditorTab: 9, EditorDock: 8, EditorTab: 4)
     * ✅ Fix: Inicialização `auto_save_enabled` ANTES de `super().__init__()` em EditorDock
     * ✅ Testes atualizados: `test_json_editor_tab_tooltips()`, `test_editor_dock_tooltips()` (10/11 passing, 1 skipped)
+  - **[]** **v2.9.50 - JSON Search Dock (Sprint Atual - 09/12/2025)**:
+    * ✅ **13 tooltips totais**: 3 existentes atualizados (ed_search_key, ed_search_value, ed_filename) + 10 novos
+    * ✅ **Search inputs** (3): Adicionado `| Enter to search | Ctrl+E to open Editor` aos 3 inputs existentes
+    * ✅ **combo_mode** (1): "Search mode: 'Key only' finds keys, 'Value only' finds values, 'Both' requires match in key AND value"
+    * ✅ **Path widgets** (3): ed_path, btn_browse, chk_is_file com Ctrl+E
+    * ✅ **Options** (2): chk_case (case-sensitive com exemplo), chk_regex (regex patterns com exemplo)
+    * ✅ **spin_max** (1): Tooltip detalhado explicando 0 = unlimited, default 1000
+    * ✅ **Action buttons** (4): btn_search (Enter), btn_interrupt (Esc), btn_save_results (3 formatos), btn_clear
+    * ✅ **text_results** (1): Display com occurrence statistics
+    * ✅ **Esc shortcut**: Implementado `_setup_escape_key_interrupt()` para interrupt (QShortcut + Qt.Key_Escape)
+    * ✅ Testes atualizados: `test_json_search_dock_tooltips()` (11/12 passing, 1 skipped)
   - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
-    * **[]** v2.9.49 - JSON Editor Tab (~15 tooltips): format buttons (2/4 spaces, minify), validate, search, collapse/expand, tree view nodes
-    * **[]** v2.9.50 - JSON Search Dock (~10 tooltips): search mode (key/value/both), case sensitive, regex, file filters
+    * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
     * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
     * **[]** v2.9.52 - Tutorials Dock (~8 tooltips): tree navigation, search bar, beginner/developers categories
     * **[]** v2.9.53 - Tradução de todos tooltips novos (70 keys × 6 idiomas = 420 traduções PT-BR/ES/FR/DE/ZH/JA)

@@ -1,5 +1,126 @@
 # Changelog - Clarify Project
 
+## [2.9.50] - 2025-12-09
+
+### 🔍 JSON Search Dock - Tooltips Enhancement + Esc Shortcut (SHOULD HAVE)
+
+#### Problem Statement
+
+**JSON Search Dock Incomplete Tooltip Coverage**
+- **Search Inputs** (3 widgets):
+  - ed_search_key, ed_search_value, ed_filename tinham tooltips básicos SEM keyboard shortcuts
+  - Faltava mencionar `Enter` para executar search
+- **10 Widgets Sem Tooltips**:
+  - combo_mode (3 opções: Key and Value, Key only, Value only) - sem explicação
+  - ed_path, btn_browse, chk_is_file - sem orientação sobre path input
+  - chk_case, chk_regex - checkboxes sem exemplos de uso
+  - spin_max - sem explicação do comportamento especial (0 = unlimited)
+  - btn_search, btn_interrupt, btn_save_results, btn_clear - action buttons sem atalhos
+  - text_results - display sem contexto
+- **Esc Shortcut Ausente**:
+  - btn_interrupt não tinha keyboard shortcut (só mouse click)
+  - Impossível interromper search rapidamente via teclado
+
+**Impact**:
+- Usuários não sabiam que `Enter` executa search nos inputs
+- combo_mode confuso (diferença entre "Key and Value" vs "Both")
+- spin_max com valor especial 0 não documentado
+- Nenhum atalho para interrupt (workflow crítico em searches longas)
+
+#### Solution Implemented
+
+**13 Tooltips Completos + Esc Shortcut**:
+
+**1. Search Inputs (3 tooltips ATUALIZADOS)**:
+- `ed_search_key`: "Search for JSON keys using dot-path notation (e.g., 'user.profile.name') | Enter to search | Ctrl+E to open Editor"
+- `ed_search_value`: "Search for specific values in your JSON files (supports regex) | Enter to search | Ctrl+E to open Editor"
+- `ed_filename`: "Filter files by wildcards (*.config.ts), prefix (filename:en), or regex | Enter to search | Ctrl+E to open Editor"
+
+**2. Search Mode (1 tooltip NOVO)**:
+- `combo_mode`: "Search mode: 'Key only' finds keys, 'Value only' finds values, 'Both' requires match in key AND value | Ctrl+E to open Editor"
+
+**3. Path Widgets (3 tooltips NOVOS)**:
+- `ed_path`: "Path to JSON/TS file or directory to search | Ctrl+E to open Editor"
+- `btn_browse`: "Browse for file or directory to search | Ctrl+E to open Editor"
+- `chk_is_file`: "Check if search path is a single file (uncheck for directory) | Ctrl+E to open Editor"
+
+**4. Options (2 tooltips NOVOS)**:
+- `chk_case`: "Enable case-sensitive search matching (e.g., 'Home' ≠ 'home') | Ctrl+E to open Editor"
+- `chk_regex`: "Use regular expressions for search patterns (e.g., '^user.*name$') | Ctrl+E to open Editor"
+
+**5. Max Results (1 tooltip NOVO)**:
+- `spin_max`: "Maximum number of search results to display (set to 0 for unlimited, default 1000) | Ctrl+E to open Editor"
+
+**6. Action Buttons (4 tooltips NOVOS)**:
+- `btn_search`: "Execute search operation with current settings | Enter to search | Ctrl+E to open Editor"
+- `btn_interrupt`: "Stop currently running search operation | Esc to interrupt | Ctrl+E to open Editor"
+- `btn_save_results`: "Save search results to TXT file with format options (single file, grouped by source file, or grouped by query) | Ctrl+E to open Editor"
+- `btn_clear`: "Clear current search results display | Ctrl+E to open Editor"
+
+**7. Results Panel (1 tooltip NOVO)**:
+- `text_results`: "Search results display with file matches, keys, values, and occurrence statistics | Ctrl+E to open Editor"
+
+**8. Esc Keyboard Shortcut (NOVO)**:
+- Implementado método `_setup_escape_key_interrupt()` usando `QShortcut(QKeySequence(Qt.Key_Escape), self)`
+- Conecta Esc key ao método `_interrupt()` para interromper search em execução
+- Critical workflow: usuários podem abortar searches longas instantaneamente
+
+#### Technical Implementation
+
+**Files Modified**: 3 files
+- `src/gui/json_search_dock.py`: +13 tooltips (3 atualizados + 10 novos) + Esc shortcut (8 linhas)
+- `tests/test_tooltip_presence.py`: +54 linhas (novo test function `test_json_search_dock_tooltips()`)
+
+**Código do Esc Shortcut**:
+```python
+def _setup_escape_key_interrupt(self):
+    """Setup Esc key to interrupt search (v2.9.50)."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QShortcut, QKeySequence
+    
+    shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+    shortcut.activated.connect(self._interrupt)
+```
+
+**Testing**:
+- ✅ 11/12 pytest tests passing (1 skipped: focus handling in headless)
+- ✅ 13/13 JSON Search Dock widgets verified (100% coverage)
+- ✅ Format standards validated (` | ` separator, ≤150 chars, no HTML)
+- ✅ Overall coverage: 142/142 widgets (7 docks + JsonEditorTab) = 100%
+
+**Coverage Results** (test_tooltip_coverage_summary):
+- Set Operations: 21/21 widgets (100%)
+- Case Converter: 6/6 widgets (100%)
+- JSON Rewriter: 36/36 widgets (100%)
+- AI Processor: 38/38 widgets (100%)
+- Editor Dock: 8/8 widgets (100%)
+- JSON Editor Tab: 9/9 widgets (100%)
+- **JSON Search: 13/13 widgets (100%)** ✨ NEW
+- **Overall: 142/142 widgets (100%)** 🎯
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task selected (v2.9.50 JSON Search Dock - 13 widgets)
+- ✅ Etapa 3: 6 questions answered (tooltips existentes opção B, scope opção C, shortcuts opção B-C, combo_mode opção B, spin_max opção C, btn_save_results opção C)
+- ✅ Etapa 4-5: Analysis (13 tooltips + 1 keyboard shortcut)
+- ✅ Etapa 6: Implementation (multi_replace 11 operations)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (11/12 passing)
+- ✅ Etapa 9: Integration (Esc shortcut + Enter já existente)
+- ✅ Etapa 10-11: Documentation (TASKS.md updated, CHANGELOG.md)
+- ⏳ Etapa 12-13: Commit, tag v2.9.50, push (next step)
+
+**Lessons Learned**:
+- **Esc shortcut crítico** para interrupt em docks com operações longas (JSON Search, Set Operations, AI Processor)
+- **Enter shortcut** já funciona via `_setup_enter_key_execution()` (base_dock.py) - apenas documentar no tooltip
+- **combo_mode tooltips** devem incluir exemplos práticos (diferença "Key only" vs "Value only" vs "Both")
+- **spin_max com specialValueText** requer tooltip explicando comportamento especial (0 = "Unlimited")
+- **btn_save_results com dialog** merece tooltip detalhado mencionando 3 formatos (single, per-file, per-query)
+
+**Next Steps**:
+- v2.9.51: JSON Translate Dock tooltips (~10 widgets: scope patterns, exclude, emit export, preserve uppercase)
+- v2.9.52: Tutorials Dock tooltips (~8 widgets: tree navigation, search bar, beginner/developers categories)
+- v2.9.53: Tradução completa (90 keys × 6 idiomas = 540 translations PT-BR/ES/FR/DE/ZH/JA)
+- **COULD HAVE**: Adicionar Esc shortcut retroativamente em outros docks (Set Operations, AI Processor) para consistência
+
 ## [2.9.49] - 2025-12-09
 
 ### 📝 JSON Editor Components - Tooltips Enhancement (SHOULD HAVE)

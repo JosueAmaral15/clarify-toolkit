@@ -264,6 +264,46 @@ def test_editor_dock_tooltips(qtbot):
         print(f"✓ {name}: {tooltip[:60]}...")
 
 
+def test_json_search_dock_tooltips(qtbot):
+    """Verify JSON Search Dock has tooltips on all interactive widgets (v2.9.50)."""
+    from src.gui.json_search_dock import JsonSearchDock
+    
+    dock = JsonSearchDock()
+    qtbot.addWidget(dock)
+    
+    # Critical widgets (13 total: 3 existing updated + 10 new)
+    critical_widgets = [
+        # Search inputs (3)
+        (dock.ed_search_key, "ed_search_key"),
+        (dock.ed_search_value, "ed_search_value"),
+        (dock.ed_filename, "ed_filename"),
+        # Search mode (1)
+        (dock.combo_mode, "combo_mode"),
+        # Path widgets (3)
+        (dock.ed_path, "ed_path"),
+        (dock.btn_browse, "btn_browse"),
+        (dock.chk_is_file, "chk_is_file"),
+        # Options (2)
+        (dock.chk_case, "chk_case"),
+        (dock.chk_regex, "chk_regex"),
+        # Max results (1)
+        (dock.spin_max, "spin_max"),
+        # Action buttons (4)
+        (dock.btn_search, "btn_search"),
+        (dock.btn_interrupt, "btn_interrupt"),
+        (dock.btn_save_results, "btn_save_results"),
+        (dock.btn_clear, "btn_clear"),
+        # Results panel (1)
+        (dock.text_results, "text_results"),
+    ]
+    
+    for widget, name in critical_widgets:
+        tooltip = widget.toolTip()
+        assert tooltip != "", f"JSON Search Dock - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"JSON Search Dock - {name} tooltip too short: '{tooltip}'"
+        print(f"✓ {name}: {tooltip[:60]}...")
+
+
 def test_tooltip_format_standards(qtbot):
     """Verify tooltips follow format standards from TOOLTIP_GUIDELINES.md."""
     dock = SetOperationsDock()
@@ -285,12 +325,15 @@ def test_tooltip_format_standards(qtbot):
 
 def test_tooltip_length_limits(qtbot):
     """Verify English tooltips respect 150 character limit."""
+    from src.gui.json_search_dock import JsonSearchDock
+    
     docks = [
         SetOperationsDock(),
         CaseConverterDock(),
         JsonRewriterDock(),
         AIProcessorDock(),
         EditorDock(),
+        JsonSearchDock(),
     ]
     
     # Also test JsonEditorTab (not a dock)
@@ -359,12 +402,15 @@ def test_tooltip_keyboard_accessibility(qtbot):
 # Summary test
 def test_tooltip_coverage_summary(qtbot):
     """Summary: Count total tooltips and coverage percentage."""
+    from src.gui.json_search_dock import JsonSearchDock
+    
     docks = [
         ("Set Operations", SetOperationsDock()),
         ("Case Converter", CaseConverterDock()),
         ("JSON Rewriter", JsonRewriterDock()),
         ("AI Processor", AIProcessorDock()),
         ("Editor Dock", EditorDock()),
+        ("JSON Search", JsonSearchDock()),
     ]
     
     # Add JsonEditorTab separately (not a dock)
