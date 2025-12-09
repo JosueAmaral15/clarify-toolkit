@@ -123,6 +123,9 @@ class CaseConverterDock(StandardToolDock):
             ("Clear", self._clear)
         ]
         btn_layout = self.create_action_buttons(buttons)
+        self.btn_convert.setToolTip("Convert case in files with current settings | Enter to execute | Ctrl+C to open Case Converter")
+        self.btn_interrupt.setToolTip("Stop currently running conversion | Esc to interrupt | Ctrl+C to open Case Converter")
+        self.btn_clear.setToolTip("Clear conversion results | Ctrl+C to open Case Converter")
         self.btn_interrupt.setEnabled(False)
         self.layout.addLayout(btn_layout)
         
@@ -140,7 +143,16 @@ class CaseConverterDock(StandardToolDock):
         """Connect signals."""
         self.btn_browse.clicked.connect(self._browse)
         self._setup_enter_key_execution(self.ed_path, self.ed_extensions)
+        self._setup_escape_key_interrupt()
     
+    def _setup_escape_key_interrupt(self):
+        """Setup Esc key to interrupt case conversion (v2.9.50.1)."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QShortcut, QKeySequence
+        
+        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        shortcut.activated.connect(self._interrupt)
+
     def _browse(self):
         """Browse for file or directory."""
         self.browse_file_or_directory(

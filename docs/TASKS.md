@@ -1154,7 +1154,7 @@ result = convert_text_to_json(text, "auto")
     * ✅ Total: 20 widgets com tooltips (JsonEditorTab: 9, EditorDock: 8, EditorTab: 4)
     * ✅ Fix: Inicialização `auto_save_enabled` ANTES de `super().__init__()` em EditorDock
     * ✅ Testes atualizados: `test_json_editor_tab_tooltips()`, `test_editor_dock_tooltips()` (10/11 passing, 1 skipped)
-  - **[]** **v2.9.50 - JSON Search Dock (Sprint Atual - 09/12/2025)**:
+  - **[X] v2.9.50 - JSON Search Dock (09/12/2025)**:
     * ✅ **13 tooltips totais**: 3 existentes atualizados (ed_search_key, ed_search_value, ed_filename) + 10 novos
     * ✅ **Search inputs** (3): Adicionado `| Enter to search | Ctrl+E to open Editor` aos 3 inputs existentes
     * ✅ **combo_mode** (1): "Search mode: 'Key only' finds keys, 'Value only' finds values, 'Both' requires match in key AND value"
@@ -1165,6 +1165,11 @@ result = convert_text_to_json(text, "auto")
     * ✅ **text_results** (1): Display com occurrence statistics
     * ✅ **Esc shortcut**: Implementado `_setup_escape_key_interrupt()` para interrupt (QShortcut + Qt.Key_Escape)
     * ✅ Testes atualizados: `test_json_search_dock_tooltips()` (11/12 passing, 1 skipped)
+  - **[X] v2.9.50.1 - Esc Shortcut Retroativo (09/12/2025)**:
+    * ✅ **AI Processor Dock**: Implementado `_setup_escape_key_interrupt()` (tooltip já mencionava Esc desde v2.9.48)
+    * ✅ **Case Converter Dock**: Implementado `_setup_escape_key_interrupt()` + 3 novos tooltips (btn_convert, btn_interrupt, btn_clear)
+    * ✅ **Consistência**: Todos os 3 docks com interrupt agora têm Esc shortcut (JSON Search, AI Processor, Case Converter)
+    * ✅ Pattern: Método `_setup_escape_key_interrupt()` chamado em `_connect_signals()` usando QShortcut(Qt.Key_Escape)
   - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
     * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
     * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase

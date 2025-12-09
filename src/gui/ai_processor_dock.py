@@ -516,7 +516,25 @@ class AIProcessorDock(StandardToolDock):
     def _connect_signals(self):
         """Connect signals."""
         self._setup_enter_key_execution(self.ed_api_key, self.ed_extensions)
+        self._setup_escape_key_interrupt()
+        self._setup_escape_key_interrupt()
     
+    def _setup_escape_key_interrupt(self):
+        """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QShortcut, QKeySequence
+        
+        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        shortcut.activated.connect(self._interrupt)
+
+    def _setup_escape_key_interrupt(self):
+        """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QShortcut, QKeySequence
+        
+        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        shortcut.activated.connect(self._interrupt)
+
     def _load_models_cache(self):
         """Load models cache from file."""
         if not self.models_cache_file.exists():

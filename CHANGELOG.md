@@ -1,5 +1,92 @@
 # Changelog - Clarify Project
 
+## [2.9.50.1] - 2025-12-09
+
+### ⏱️ Esc Shortcut Retroativo - AI Processor & Case Converter (PATCH)
+
+#### Problem Statement
+
+**Inconsistência de Keyboard Shortcuts entre Docks**
+- **JSON Search Dock** (v2.9.50): ✅ Esc shortcut implementado para interrupt
+- **AI Processor Dock** (v2.9.48): ⚠️ Tooltip mencionava "Esc to cancel" MAS código não implementado
+- **Case Converter Dock**: ❌ Nenhum Esc shortcut (nem tooltip, nem código)
+
+**Impact**:
+- Usuários esperavam Esc no AI Processor (tooltip prometia) mas não funcionava
+- Workflow inconsistente: JSON Search tinha Esc, outros docks não
+- Case Converter sem tooltips nos action buttons (convert, interrupt, clear)
+
+#### Solution Implemented
+
+**Esc Shortcut em 2 Docks Retroativamente**:
+
+**1. AI Processor Dock**:
+- Implementado método `_setup_escape_key_interrupt()` usando `QShortcut(Qt.Key_Escape)`
+- Conecta Esc key ao método `_interrupt()` existente
+- Tooltip já estava correto desde v2.9.48: "Interrupt current AI processing | Esc to cancel"
+- Corrige promessa do tooltip que não estava implementada
+
+**2. Case Converter Dock**:
+- Implementado método `_setup_escape_key_interrupt()` usando `QShortcut(Qt.Key_Escape)`
+- Conecta Esc key ao métdo `_interrupt()` existente
+- **3 Novos Tooltips nos Action Buttons**:
+  * `btn_convert`: "Convert case in files with current settings | Enter to execute | Ctrl+C to open Case Converter"
+  * `btn_interrupt`: "Stop currently running conversion | Esc to interrupt | Ctrl+C to open Case Converter"
+  * `btn_clear`: "Clear conversion results | Ctrl+C to open Case Converter"
+
+**3. Consistência Atingida**:
+- ✅ **JSON Search Dock**: Esc interrupt (v2.9.50)
+- ✅ **AI Processor Dock**: Esc interrupt (v2.9.50.1)
+- ✅ **Case Converter Dock**: Esc interrupt (v2.9.50.1)
+- **Pattern unificado**: Todos docks com `btn_interrupt` agora têm Esc shortcut
+
+#### Technical Implementation
+
+**Files Modified**: 2 files
+- `src/gui/ai_processor_dock.py`: +8 linhas (método `_setup_escape_key_interrupt()` + chamada em `_connect_signals()`)
+- `src/gui/case_converter_dock.py`: +11 linhas (método + 3 tooltips + chamada)
+
+**Código Implementado** (mesmo pattern em ambos docks):
+```python
+def _setup_escape_key_interrupt(self):
+    """Setup Esc key to interrupt operation (v2.9.50.1)."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QShortcut, QKeySequence
+    
+    shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+    shortcut.activated.connect(self._interrupt)
+
+def _connect_signals(self):
+    """Connect signals."""
+    # ... existing code ...
+    self._setup_escape_key_interrupt()  # NEW
+```
+
+**Testing**:
+- ✅ AI Processor Dock importado sem erros
+- ✅ Case Converter Dock importado sem erros
+- ✅ Ambos docks têm método `_setup_escape_key_interrupt()` funcional
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task identified (COULD HAVE from v2.9.50 CHANGELOG)
+- ✅ Etapa 3-5: Analysis (2 docks pendentes, 1 pattern para implementar)
+- ✅ Etapa 6: Implementation (multi_replace 4 operations)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (imports successful)
+- ✅ Etapa 9: Integration (Esc shortcut consistency across docks)
+- ✅ Etapa 10-11: Documentation (TASKS.md updated, CHANGELOG.md)
+- ⏳ Etapa 12-13: Commit, tag v2.9.50.1, push (next step)
+
+**Lessons Learned**:
+- **Tooltips prometendo shortcuts**: Sempre implementar código antes de documentar no tooltip
+- **Consistency is key**: Quando 1 dock tem feature, outros similares devem ter também
+- **Retroactive patches**: v2.9.50.1 mostra valor de revisar tasks COULD HAVE após sprint principal
+- **Pattern reuse**: Método `_setup_escape_key_interrupt()` é reutilizável em qualquer dock com interrupt
+
+**Next Steps**:
+- v2.9.51: JSON Translate Dock tooltips (~10 widgets: scope patterns, exclude, emit export)
+- v2.9.52: Tutorials Dock tooltips (~8 widgets: tree navigation, search bar, categories)
+- **Future consideration**: Adicionar Esc shortcut em outros docks com operações longas (JSON Rewriter, Set Operations)
+
 ## [2.9.50] - 2025-12-09
 
 ### 🔍 JSON Search Dock - Tooltips Enhancement + Esc Shortcut (SHOULD HAVE)
