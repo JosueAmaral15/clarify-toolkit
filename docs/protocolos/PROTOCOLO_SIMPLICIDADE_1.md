@@ -2,9 +2,15 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.6  
-**Última Atualização**: 01 de Dezembro de 2025  
+**Versão**: 1.9  
+**Última Atualização**: 09 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v1.9** (09/12/2025):
+- ✅ **[ETAPA 3]** Adicionada recomendação para IA fornecer sugestões e palpites nas perguntas
+- ✅ Formato recomendado: "❓ Pergunta + 💡 Sugestão da IA + Opções A/B/C"
+- ✅ Rationale: Acelera decisões, reduz carga cognitiva, mantém consistência com código existente
+- ✅ Classificação: **OPCIONAL mas ALTAMENTE RECOMENDADO**
 
 **Changelog v1.8** (02/12/2025):
 - ✅ **[REORGANIZAÇÃO]** Revisão de Código integrada nas etapas CLI e GUI
@@ -124,6 +130,20 @@ Lista de tasks complexas restantes:
 - **CRÍTICO**: Nunca assumir ou adivinhar requisitos
 - Fazer **todas as perguntas necessárias** até sanar **100% das dúvidas**
 - Validar entendimento antes de começar a implementar
+- 🤖 **[NOVO v1.9]** A IA **PODE e É ALTAMENTE RECOMENDADA** fornecer **sugestões e palpites** de resposta para cada pergunta (opcional, mas incentivado)
+
+**Formato Recomendado de Perguntas com Sugestões**:
+```
+❓ Pergunta: "Como deve se comportar quando [cenário X]?"
+💡 Sugestão da IA: "Baseado no código existente, sugiro [opção A] porque [razão Y]."
+Opções: A) [opção A] | B) [opção B] | C) [opção C]
+```
+
+**Por Quê Sugestões da IA São Importantes**:
+- ✅ Acelera decisões quando o programador está indeciso
+- ✅ IA tem contexto do código existente e pode sugerir padrões consistentes
+- ✅ Reduz carga cognitiva do programador (ele apenas valida, não cria do zero)
+- ✅ Mantém qualidade: IA sugere baseado em boas práticas já implementadas
 
 **Categorias de Perguntas**:
 1. **Requisitos Funcionais**:

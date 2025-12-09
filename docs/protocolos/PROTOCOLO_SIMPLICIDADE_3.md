@@ -2,8 +2,8 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 02 de Dezembro de 2025  
-**Versão**: 3.0  
-**Última Atualização**: 02 de Dezembro de 2025  
+**Versão**: 3.1  
+**Última Atualização**: 09 de Dezembro de 2025  
 **Objetivo**: Metodologia híbrida para **solo developer** com aplicação em **produção**
 
 ---
@@ -102,6 +102,12 @@ Simplicidade 3 = Base Simplicidade 1 (13 etapas)
 - ❌ Aprendendo/experimentando → Use **Simplicidade 1**
 
 ---
+
+**Changelog v3.1** (09/12/2025):
+- ✅ **[ETAPA 3]** Adicionada recomendação para IA fornecer sugestões e palpites nas perguntas
+- ✅ Formato recomendado: "❓ Pergunta + 💡 Sugestão da IA + Opções A/B/C"
+- ✅ Rationale: Acelera decisões, reduz carga cognitiva, mantém consistência com código existente
+- ✅ Classificação: **OPCIONAL mas ALTAMENTE RECOMENDADO**
 
 **Changelog v3.0** (02/12/2025):
 - ✅ **[HÍBRIDO]** Criado Protocolo Simplicidade 3 para solo developer em produção
@@ -289,6 +295,20 @@ Prioridade = (Simplicidade × 2) + Dependências + (Impacto × 1.5) + Clareza + 
 - **CRÍTICO**: Nunca assumir ou adivinhar requisitos
 - Fazer **todas as perguntas necessárias** até sanar **100% das dúvidas**
 - Validar entendimento antes de começar a implementar
+- 🤖 **[NOVO v3.1]** A IA **PODE e É ALTAMENTE RECOMENDADA** fornecer **sugestões e palpites** de resposta para cada pergunta (opcional, mas incentivado)
+
+**Formato Recomendado de Perguntas com Sugestões**:
+```
+❓ Pergunta: "Como deve se comportar quando [cenário X]?"
+💡 Sugestão da IA: "Baseado no código existente, sugiro [opção A] porque [razão Y]."
+Opções: A) [opção A] | B) [opção B] | C) [opção C]
+```
+
+**Por Quê Sugestões da IA São Importantes**:
+- ✅ Acelera decisões quando o programador está indeciso
+- ✅ IA tem contexto do código existente e pode sugerir padrões consistentes
+- ✅ Reduz carga cognitiva do programador (ele apenas valida, não cria do zero)
+- ✅ Mantém qualidade: IA sugere baseado em boas práticas já implementadas
 
 **Categorias de Perguntas**:
 1. **Requisitos Funcionais**:

@@ -365,9 +365,10 @@ def test_tooltip_format_standards(qtbot):
 
 
 def test_tooltip_length_limits(qtbot):
-    """Verify English tooltips respect 150 character limit."""
+    """Verify tooltip descriptions respect the 150 character limit."""
     from src.gui.json_search_dock import JsonSearchDock
     from src.gui.json_translate_dock import JsonTranslateDock
+    from src.gui.tutorials_dock import TutorialsDock
     
     docks = [
         SetOperationsDock(),
@@ -377,6 +378,7 @@ def test_tooltip_length_limits(qtbot):
         EditorDock(),
         JsonSearchDock(),
         JsonTranslateDock(),
+        TutorialsDock(),
     ]
     
     # Also test JsonEditorTab (not a dock)
@@ -442,11 +444,36 @@ def test_tooltip_keyboard_accessibility(qtbot):
         print(f"✓ Keyboard accessible: {widget.objectName()}")
 
 
+def test_tutorials_dock_tooltips(qtbot):
+    """Test tooltips in Tutorials Dock (v2.9.52)."""
+    from src.gui.tutorials_dock import TutorialsDock
+    
+    dock = TutorialsDock()
+    qtbot.addWidget(dock)
+    
+    # Critical widgets (7 total)
+    critical_widgets = {
+        'search_input': dock.search_input,
+        'btn_search': dock.btn_search,
+        'btn_quick_start': dock.btn_quick_start,
+        'tree': dock.tree,
+        'title_label': dock.title_label,
+        'browser': dock.browser,
+        'status_label': dock.status_label,
+    }
+    
+    for widget_name, widget in critical_widgets.items():
+        tooltip = widget.toolTip()
+        assert tooltip, f"{widget_name} is missing a tooltip"
+        assert len(tooltip) > 10, f"{widget_name} tooltip is too short: {tooltip}"
+
+
 # Summary test
 def test_tooltip_coverage_summary(qtbot):
     """Summary: Count total tooltips and coverage percentage."""
     from src.gui.json_search_dock import JsonSearchDock
     from src.gui.json_translate_dock import JsonTranslateDock
+    from src.gui.tutorials_dock import TutorialsDock
     
     docks = [
         ("Set Operations", SetOperationsDock()),
@@ -456,6 +483,7 @@ def test_tooltip_coverage_summary(qtbot):
         ("Editor Dock", EditorDock()),
         ("JSON Search", JsonSearchDock()),
         ("JSON Translate", JsonTranslateDock()),
+        ("Tutorials", TutorialsDock()),
     ]
     
     # Add JsonEditorTab separately (not a dock)

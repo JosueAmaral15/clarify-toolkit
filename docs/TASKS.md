@@ -1179,10 +1179,17 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Stats & Buttons** (4): lbl_stats (real-time updates), btn_run (Enter + detalhado), btn_swap (workflows), btn_undo (requer backup)
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed de 6 inputs ao método `_run()`
     * ✅ Testes atualizados: `test_json_translate_dock_tooltips()` (12/13 passing, 1 skipped)
+  - **[X] v2.9.52 - Tutorials Dock (09/12/2025)**:
+    * ✅ **7 tooltips totais**: search_input, btn_search, btn_quick_start (atualizado), tree, title_label, browser, status_label
+    * ✅ **Search Bar** (3): search_input (keywords + Enter), btn_search (execute + Enter), btn_quick_start (5-minute intro) - todos com Ctrl+Shift+T
+    * ✅ **Tree Navigation** (1): tree com tooltip detalhado explicando Beginner/Developers → Basic/Advanced hierarchy + hover metadata
+    * ✅ **Content Display** (2): title_label (dynamic update), browser (rendering + navigation) - ambos com Ctrl+Shift+T
+    * ✅ **Status** (1): status_label explicando 4 estados (Ready, Loading, Search results, Error messages) + Ctrl+Shift+T
+    * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
+    * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
+    * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
   - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
-    * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
-    * **[]** v2.9.52 - Tutorials Dock (~8 tooltips): tree navigation, search bar, beginner/developers categories
-    * **[]** v2.9.53 - Tradução de todos tooltips novos (70 keys × 6 idiomas = 420 traduções PT-BR/ES/FR/DE/ZH/JA)
+    * **[]** v2.9.53 - Tradução de todos tooltips novos (90 keys × 6 idiomas = 540 traduções PT-BR/ES/FR/DE/ZH/JA)
 
 ---
 
