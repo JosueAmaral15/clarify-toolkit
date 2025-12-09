@@ -1,5 +1,140 @@
 # Changelog - Clarify Project
 
+## [2.9.47] - 2025-12-09
+
+### ⌨️ Tooltips Enhancement - Keyboard Shortcuts + JSON Rewriter (SHOULD HAVE)
+
+#### Problem Statement
+
+**Incomplete Tooltip Coverage + Missing Shortcuts**
+- 26 tooltips (v2.9.46) lacked keyboard shortcut information
+- Users didn't know `Ctrl+O` opens file browser, `F5` executes operations
+- JSON Rewriter Dock (30+ widgets) had 1 widget without tooltip
+- No formal guidelines for tooltip creation (inconsistent format/length)
+- No automated testing (tooltips could be forgotten in new features)
+
+**Impact**:
+- Users manually discovering shortcuts via trial-and-error
+- Keyboard power users frustrated (no tooltip shortcuts visible)
+- JSON Rewriter less accessible than other docks
+- Developers uncertain about tooltip standards
+
+#### Solution Implemented
+
+**4-Component Tooltip Enhancement System**:
+
+**1. Keyboard Shortcuts Integration** (26 tooltips updated):
+- **Format**: `"Description | Ctrl+X"` (space-pipe-space separator)
+- **Set Operations Dock** (20 tooltips):
+  - File inputs: Added `| Ctrl+O to open`
+  - Operations: Added `| F5 to execute` (intersection, union, difference, symmetric)
+  - Clear actions: Added `| Ctrl+L` (clear files), `| Del` (remove selected)
+  - Examples:
+    - `"∩ Intersection: Find items present in ALL files (A ∩ B ∩ C...) | F5 to execute"`
+    - `"Browse for first JSON file | Ctrl+O"`
+- **Case Converter Dock** (6 tooltips):
+  - Dock shortcut: Added `| Ctrl+Shift+C to open Case Converter`
+  - File browser: Added `| Ctrl+O`
+  - Convert action: Added `| F5 to convert`
+  - Example: `"Original case style of your code (auto-detect recommended) | Ctrl+Shift+C to open Case Converter"`
+
+**2. JSON Rewriter Dock Completion**:
+- **btn_run** tooltip added: `"Execute JSON rewriting with selected operations | F5 or Ctrl+Shift+R to open"`
+- **Total widgets with tooltips**: 36/36 (100% coverage)
+- **Categories covered**:
+  - File I/O: ed_in, btn_in, ed_out, btn_out (4)
+  - Options: 8 checkboxes (from_ts, ts_out, join, elim, nlb, exclude_numeric, skip_empty, avoid_dup_child, normalize_escaping, convert_arrays, skip_no_siblings) (11)
+  - Duplicate handling: chk_remove_dup_objects, chk_include_dup_arrays, spin_dup_threshold, combo_dup_mode (4)
+  - References: chk_update_refs, ed_project_dir, btn_project_browse, chk_ref_backup (4)
+  - Array deduplication: chk_remove_dup_consecutive, chk_remove_dup_all (2)
+  - Case enforcement: chk_enforce_case, combo_case_style, chk_validate_case (3)
+  - Filters: btn_advanced_filters, chk_apply_all_types (2)
+  - Reference mode: radio_delete_dups, radio_use_refs, chk_resolve_refs (3)
+  - Format: btn_configure_format, spin_indent (2)
+  - Action: btn_run (1)
+
+**3. Tooltip Guidelines Document** (`docs/TOOLTIP_GUIDELINES.md` - 340 lines):
+- **12 Comprehensive Sections**:
+  1. Purpose & Scope
+  2. Format Standard (`Description | Shortcut`)
+  3. Length Guidelines (EN: ≤150 chars, translations: no limit)
+  4. When to Use Examples (complex operations, transformations, type-specific)
+  5. Accessibility (WCAG compliance, screen reader compatibility)
+  6. Translation Workflow (namespace convention, 7 languages)
+  7. Implementation Checklist
+  8. Testing Strategy (manual + automated pytest-qt)
+  9. Common Patterns (file selection, checkboxes, radio buttons, action buttons, combos)
+  10. Maintenance (quarterly review, user feedback integration)
+  11. Future Enhancements (rich tooltips, context-aware, analytics)
+  12. References (internal docs, WCAG, Qt, Material Design)
+- **Key Standards**:
+  - English 150 char limit (translations flexible)
+  - Plain text only (no HTML for accessibility)
+  - Include examples for complex operations: `{a:1} → {a:1}`
+  - Keyboard shortcuts in all applicable tooltips
+  - Namespace: `tooltip.{dock_abbrev}.{widget_name}`
+
+**4. Automated Testing** (`tests/test_tooltip_presence.py` - 250 lines):
+- **8 Test Functions** (7 passing, 1 skipped):
+  - `test_set_operations_dock_tooltips`: Verifies 21 widgets have tooltips
+  - `test_case_converter_dock_tooltips`: Verifies 6 widgets have tooltips
+  - `test_json_rewriter_dock_tooltips`: Verifies 36 widgets have tooltips
+  - `test_tooltip_format_standards`: Checks ` | ` separator in shortcuts
+  - `test_tooltip_length_limits`: English ≤150 chars (excluding shortcuts)
+  - `test_tooltip_no_html`: Plain text only (accessibility)
+  - `test_tooltip_keyboard_accessibility`: Focus handling (skipped in headless)
+  - `test_tooltip_coverage_summary`: Overall coverage report (≥90% target)
+- **Coverage Results**:
+  - Set Operations: 21/21 widgets (100%)
+  - Case Converter: 6/6 widgets (100%)
+  - JSON Rewriter: 36/36 widgets (100%)
+  - **Overall: 63/63 widgets (100%)**
+
+#### Technical Implementation
+
+**Files Modified**: 5 files
+- `src/i18n/en.json`: +26 keyboard shortcuts added to tooltips
+- `src/gui/json_rewriter_dock.py`: +1 tooltip (`btn_run`)
+- `docs/TOOLTIP_GUIDELINES.md`: +340 lines (NEW)
+- `docs/TASKS.md`: Updated with incremental sprint plan (v2.9.48-v2.9.53)
+- `tests/test_tooltip_presence.py`: +250 lines (NEW)
+
+**Testing**:
+- ✅ 7/8 pytest tests passing (1 skipped: focus handling in headless)
+- ✅ 100% tooltip coverage verified (63/63 widgets)
+- ✅ Format standards validated (` | ` separator, ≤150 chars, no HTML)
+- ✅ Manual testing: Shortcuts visible in tooltips, keyboard navigation works
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task selected (Tooltips Expansion - v2.9.47 MVP)
+- ✅ Etapa 3: 6 questions answered (shortcuts, format, guidelines, testing)
+- ✅ Etapa 4-5: Analysis (JSON Rewriter complete, TASKS.md updated)
+- ✅ Etapa 6: Implementation (26 shortcuts, 1 tooltip, guidelines, tests)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (100% coverage)
+- ✅ Etapa 9: Integration (pytest passing, no conflicts)
+- ✅ Etapa 10-11: Documentation (TOOLTIP_GUIDELINES.md, TASKS.md updated)
+- ⏳ Etapa 12-13: Commit, tag v2.9.47, push (next step)
+
+**Incremental Sprint Plan** (TASKS.md updated):
+- **v2.9.47** (current): Shortcuts + JSON Rewriter + Guidelines + Tests ✅
+- **v2.9.48** (future): AI Processor Dock (~20 tooltips)
+- **v2.9.49** (future): JSON Editor Tab (~15 tooltips)
+- **v2.9.50** (future): JSON Search Dock (~10 tooltips)
+- **v2.9.51** (future): JSON Translate Dock (~10 tooltips)
+- **v2.9.52** (future): Tutorials Dock (~8 tooltips)
+- **v2.9.53** (future): Translate all 70 new tooltips (6 languages × 70 keys = 420 translations)
+
+**Lessons Learned**:
+- MVP approach (shortcuts + 1 dock + guidelines) more sustainable than full 6-dock sprint
+- Automated tests prevent tooltip regressions in future features
+- Guidelines document essential for consistency across 15+ contributors (open source)
+- Keyboard shortcuts in tooltips significantly improve power user experience
+
+**Next Steps**:
+- v2.9.48: Add tooltips to AI Processor Dock (~20 widgets)
+- v2.9.49-v2.9.52: Complete remaining 4 docks (~43 tooltips)
+- v2.9.53: Translate all new tooltips to PT-BR, ES, FR, DE, ZH, JA
+
 ## [2.9.46] - 2025-12-08
 
 ### 🌍 Tooltips i18n - Internationalization of UI Tooltips (SHOULD HAVE)

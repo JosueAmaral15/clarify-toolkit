@@ -423,6 +423,7 @@ class JsonRewriterDock(BaseDock):
 
         # Action button
         self.btn_run = QPushButton("Rewrite")
+        self.btn_run.setToolTip("Execute JSON rewriting with selected operations | F5 or Ctrl+Shift+R to open")
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""

@@ -1130,16 +1130,23 @@ result = convert_text_to_json(text, "auto")
     * Set Operations Dock: +17 tooltips (file inputs, operations, comparison modes, options, action buttons)
     * Case Converter Dock: +5 tooltips (path input, browse, is_file, extensions)
     * Total: +22 tooltips (de 4 para 26 em 2 docks)
-  - **[]** **Sprint Futuro - Tooltips Expansion (Full Completion)**:
-    * **[]** Adicionar tooltips em JSON Rewriter Dock (~25 widgets): checkboxes (dedupe, join keys, eliminate duplicates, skip empty, avoid duplicate child keys, remove duplicate arrays, skip keys without siblings, remove duplicate objects), threshold slider, reference format options, advanced filters button
-    * **[]** Adicionar tooltips em JSON Editor Tab (~15 widgets): format buttons (2/4 spaces, minify), validate, search, collapse/expand, tree view nodes
-    * **[]** Adicionar tooltips em JSON Search Dock (~10 widgets): search mode (key/value/both), case sensitive, regex, file filters
-    * **[]** Adicionar tooltips em AI Processor Dock (~20 widgets): provider combo, model selection, API key, prompt, line-by-line mode, scope filters, advanced conditions
-    * **[]** Adicionar tooltips em Tutorials Dock (~8 widgets): tree navigation, search bar, beginner/developers categories
-    * **[]** Adicionar tooltips em JSON Translate Dock (~10 widgets adicionais): scope patterns, exclude patterns, emit export, preserve uppercase
-    * **[]** Incluir keyboard shortcuts em TODOS tooltips existentes (formato: "Description | Ctrl+X")
-    * **[]** Adicionar exemplos visuais em tooltips complexos (preview de resultado esperado como mini-screenshot ou ASCII art)
-    * **[]** Criar documento `docs/TOOLTIP_GUIDELINES.md` (formato padrão, tom, comprimento máximo 150 chars, quando usar exemplos, accessibility)
+  - **[X] v2.9.46 - Tooltips i18n (08/12/2025)**:
+    * ✅ Criado `tooltip_tr()` helper function (namespace "tooltip.*")
+    * ✅ 182 traduções (26 keys × 7 idiomas: EN, PT-BR, ES, FR, DE, ZH, JA)
+    * ✅ Set Operations Dock: 20 tooltips internacionalizados
+    * ✅ Case Converter Dock: 6 tooltips internacionalizados
+  - **[]** **v2.9.47 - Keyboard Shortcuts + JSON Rewriter (Sprint Atual)**:
+    * **[]** Adicionar keyboard shortcuts aos 26 tooltips existentes (formato: "Description | Ctrl+X")
+    * **[]** Completar JSON Rewriter Dock tooltips faltantes (~5 widgets sem tooltip)
+    * **[]** Criar documento `docs/TOOLTIP_GUIDELINES.md` (formato padrão, tom, comprimento, accessibility)
+    * **[]** Automated tests (pytest-qt: verificar toolTip() != "" em todos widgets)
+  - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
+    * **[]** v2.9.48 - AI Processor Dock (~20 tooltips): provider combo, model selection, API key, prompt, line-by-line mode, scope filters, advanced conditions
+    * **[]** v2.9.49 - JSON Editor Tab (~15 tooltips): format buttons (2/4 spaces, minify), validate, search, collapse/expand, tree view nodes
+    * **[]** v2.9.50 - JSON Search Dock (~10 tooltips): search mode (key/value/both), case sensitive, regex, file filters
+    * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
+    * **[]** v2.9.52 - Tutorials Dock (~8 tooltips): tree navigation, search bar, beginner/developers categories
+    * **[]** v2.9.53 - Tradução de todos tooltips novos (70 keys × 6 idiomas = 420 traduções PT-BR/ES/FR/DE/ZH/JA)
 
 ---
 
