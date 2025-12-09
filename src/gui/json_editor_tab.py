@@ -376,20 +376,22 @@ class JsonEditorTab(QWidget):
         toolbar = QHBoxLayout()
         
         self.btn_format = QPushButton("Format JSON")
-        self.btn_format.setToolTip("Pretty print JSON with indentation")
+        self.btn_format.setToolTip("Pretty print JSON with indentation | Ctrl+E to open Editor")
         
         self.combo_indent = QComboBox()
         self.combo_indent.addItems(["2 spaces", "4 spaces", "Minify"])
-        self.combo_indent.setToolTip("Indentation style")
+        self.combo_indent.setToolTip("Indentation style (2/4 spaces or compact minified JSON) | Ctrl+E to open Editor")
         
         self.btn_validate = QPushButton("Validate")
-        self.btn_validate.setToolTip("Check JSON syntax")
+        self.btn_validate.setToolTip("Check JSON syntax and update validation status | Ctrl+E to open Editor")
         
         self.btn_search = QPushButton("Search")
-        self.btn_search.setToolTip("Search for key or value")
+        self.btn_search.setToolTip("Search for key or value in JSON tree | Ctrl+F to find | Ctrl+E to open Editor")
         
         self.btn_collapse = QPushButton("Collapse All")
+        self.btn_collapse.setToolTip("Collapse all nodes in JSON tree view | Ctrl+E to open Editor")
         self.btn_expand = QPushButton("Expand All")
+        self.btn_expand.setToolTip("Expand all nodes in JSON tree view | Ctrl+E to open Editor")
         
         toolbar.addWidget(self.btn_format)
         toolbar.addWidget(self.combo_indent)
@@ -412,12 +414,14 @@ class JsonEditorTab(QWidget):
         # Validation status
         self.lbl_validation = QLabel("✓ Valid JSON")
         self.lbl_validation.setStyleSheet("color: #6A9955; font-weight: bold;")
+        self.lbl_validation.setToolTip("JSON validation status (updates automatically on text change) | Ctrl+E to open Editor")
         editor_layout.addWidget(self.lbl_validation)
         
         # Text editor
         self.editor = QTextEdit()
         self.editor.setAcceptRichText(False)
         self.editor.setTabStopDistance(40)
+        self.editor.setToolTip("JSON text editor with syntax highlighting and real-time validation | Ctrl+S to save | Ctrl+E to open Editor")
         font = QFont("Courier New", 10)
         self.editor.setFont(font)
         editor_layout.addWidget(self.editor)
@@ -426,6 +430,7 @@ class JsonEditorTab(QWidget):
         
         # Right: Tree view
         self.tree = JsonTreeWidget()
+        self.tree.setToolTip("JSON tree structure for navigation (click nodes to jump to line in editor) | Ctrl+E to open Editor")
         splitter.addWidget(self.tree)
         
         # Set initial splitter sizes (70% editor, 30% tree)

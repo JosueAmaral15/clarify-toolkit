@@ -16,6 +16,8 @@ from src.gui.set_operations_dock import SetOperationsDock
 from src.gui.case_converter_dock import CaseConverterDock
 from src.gui.json_rewriter_dock import JsonRewriterDock
 from src.gui.ai_processor_dock import AIProcessorDock
+from src.gui.json_editor_tab import JsonEditorTab
+from src.gui.editor_dock import EditorDock
 
 
 def get_interactive_widgets(widget: QWidget) -> list[QWidget]:
@@ -208,6 +210,60 @@ def test_ai_processor_dock_tooltips(qtbot):
         print(f"✓ {name}: {tooltip[:60]}...")
 
 
+def test_json_editor_tab_tooltips(qtbot):
+    """Verify JSON Editor Tab has tooltips on all interactive widgets (v2.9.49)."""
+    tab = JsonEditorTab()
+    qtbot.addWidget(tab)
+    
+    # Critical widgets (8 total: 4 existing updated + 4 new)
+    critical_widgets = [
+        # Toolbar buttons (6)
+        (tab.btn_format, "btn_format"),
+        (tab.combo_indent, "combo_indent"),
+        (tab.btn_validate, "btn_validate"),
+        (tab.btn_search, "btn_search"),
+        (tab.btn_collapse, "btn_collapse"),
+        (tab.btn_expand, "btn_expand"),
+        # Editor & Tree (2)
+        (tab.editor, "editor"),
+        (tab.tree, "tree"),
+        # Validation label (1) - NEW in v2.9.49
+        (tab.lbl_validation, "lbl_validation"),
+    ]
+    
+    for widget, name in critical_widgets:
+        tooltip = widget.toolTip()
+        assert tooltip != "", f"JSON Editor Tab - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"JSON Editor Tab - {name} tooltip too short: '{tooltip}'"
+        print(f"✓ {name}: {tooltip[:60]}...")
+
+
+def test_editor_dock_tooltips(qtbot):
+    """Verify Editor Dock has tooltips on all interactive widgets (v2.9.49)."""
+    dock = EditorDock()
+    qtbot.addWidget(dock)
+    
+    # Critical widgets (8 total: 6 existing updated + 2 new)
+    critical_widgets = [
+        # Toolbar buttons (6)
+        (dock.btn_new, "btn_new"),
+        (dock.btn_open, "btn_open"),
+        (dock.btn_save, "btn_save"),
+        (dock.btn_save_as, "btn_save_as"),
+        (dock.btn_close_tab, "btn_close_tab"),
+        (dock.chk_auto_save, "chk_auto_save"),
+        # Tab widget & Status (2) - NEW in v2.9.49
+        (dock.tab_widget, "tab_widget"),
+        (dock.lbl_status, "lbl_status"),
+    ]
+    
+    for widget, name in critical_widgets:
+        tooltip = widget.toolTip()
+        assert tooltip != "", f"Editor Dock - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"Editor Dock - {name} tooltip too short: '{tooltip}'"
+        print(f"✓ {name}: {tooltip[:60]}...")
+
+
 def test_tooltip_format_standards(qtbot):
     """Verify tooltips follow format standards from TOOLTIP_GUIDELINES.md."""
     dock = SetOperationsDock()
@@ -234,7 +290,18 @@ def test_tooltip_length_limits(qtbot):
         CaseConverterDock(),
         JsonRewriterDock(),
         AIProcessorDock(),
+        EditorDock(),
     ]
+    
+    # Also test JsonEditorTab (not a dock)
+    tab = JsonEditorTab()
+    qtbot.addWidget(tab)
+    widgets_tab = get_interactive_widgets(tab)
+    for widget in widgets_tab:
+        tooltip = widget.toolTip()
+        if tooltip:
+            desc = tooltip.split(" | ")[0] if " | " in tooltip else tooltip
+            assert len(desc) <= 150, f"{widget.objectName()} tooltip too long ({len(desc)} chars): '{desc}'"
     
     for dock in docks:
         qtbot.addWidget(dock)
@@ -297,7 +364,18 @@ def test_tooltip_coverage_summary(qtbot):
         ("Case Converter", CaseConverterDock()),
         ("JSON Rewriter", JsonRewriterDock()),
         ("AI Processor", AIProcessorDock()),
+        ("Editor Dock", EditorDock()),
     ]
+    
+    # Add JsonEditorTab separately (not a dock)
+    json_editor_tab = JsonEditorTab()
+    qtbot.addWidget(json_editor_tab)
+    tab_widgets = get_interactive_widgets(json_editor_tab)
+    tab_with_tooltips = sum(1 for w in tab_widgets if w.toolTip() != "")
+    print(f"\nJSON Editor Tab:")
+    print(f"  Total widgets: {len(tab_widgets)}")
+    print(f"  With tooltips: {tab_with_tooltips}")
+    print(f"  Coverage: {(tab_with_tooltips / len(tab_widgets) * 100) if tab_widgets else 0:.1f}%")
     
     total_widgets = 0
     widgets_with_tooltips = 0

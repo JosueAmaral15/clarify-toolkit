@@ -226,6 +226,7 @@ class EditorTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setAcceptRichText(False)
         self.editor.setTabStopDistance(40)  # 4 spaces equivalent
+        self.editor.setToolTip("File editor with syntax highlighting (auto-save enabled if checkbox checked) | Ctrl+S to save | Ctrl+E to open Editor")
         self.editor.textChanged.connect(self._on_text_changed)
         
         # Monospace font
@@ -249,19 +250,19 @@ class EditorTab(QWidget):
         
         # Copy to Clipboard button
         self.btn_copy = QPushButton("📋 Copy")
-        self.btn_copy.setToolTip("Copy content to clipboard")
+        self.btn_copy.setToolTip("Copy content to clipboard | Ctrl+C | Ctrl+E to open Editor")
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         toolbar.addWidget(self.btn_copy)
         
         # Export to File button
         self.btn_export = QPushButton("💾 Export")
-        self.btn_export.setToolTip("Export content to file")
+        self.btn_export.setToolTip("Export content to file (Save As alternative for edit-only mode) | Ctrl+E to open Editor")
         self.btn_export.clicked.connect(self._export_to_file)
         toolbar.addWidget(self.btn_export)
         
         # Enable File Saving button (only visible in edit-only mode)
         self.btn_enable_saving = QPushButton("🔓 Enable Saving")
-        self.btn_enable_saving.setToolTip("Convert to file-backed editor")
+        self.btn_enable_saving.setToolTip("Convert to file-backed editor (exit sandbox mode) | Ctrl+Shift+E | Ctrl+E to open Editor")
         self.btn_enable_saving.clicked.connect(self._enable_file_saving)
         toolbar.addWidget(self.btn_enable_saving)
         
@@ -536,7 +537,7 @@ class EditorDock(BaseDock):
     """
     
     def __init__(self, parent=None):
-        super().__init__("File Editor", parent)
+        # Initialize attributes BEFORE super().__init__() which calls _setup_ui()
         self.recent_files: List[str] = []
         self.max_recent = 10
         self.untitled_counter = 0  # Counter for Untitled-N tabs
@@ -545,6 +546,9 @@ class EditorDock(BaseDock):
         from PySide6.QtCore import QSettings
         self.settings = QSettings("Clarify", "EditorDock")
         self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
+        
+        # NOW call super().__init__() which triggers _setup_ui()
+        super().__init__("File Editor", parent)
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -552,19 +556,19 @@ class EditorDock(BaseDock):
         toolbar = QHBoxLayout()
         
         self.btn_new = QPushButton("New")
-        self.btn_new.setToolTip("Create new file (Ctrl+N)")
+        self.btn_new.setToolTip("Create new file | Ctrl+N | Ctrl+E to open Editor")
         self.btn_open = QPushButton("Open...")
-        self.btn_open.setToolTip("Open existing file (Ctrl+O)")
+        self.btn_open.setToolTip("Open existing file | Ctrl+O | Ctrl+E to open Editor")
         self.btn_save = QPushButton("Save")
-        self.btn_save.setToolTip("Save current file (Ctrl+S)")
+        self.btn_save.setToolTip("Save current file | Ctrl+S | Ctrl+E to open Editor")
         self.btn_save_as = QPushButton("Save As...")
-        self.btn_save_as.setToolTip("Save current file with new name")
+        self.btn_save_as.setToolTip("Save current file with new name | Ctrl+Shift+S | Ctrl+E to open Editor")
         self.btn_close_tab = QPushButton("Close Tab")
-        self.btn_close_tab.setToolTip("Close current tab (Ctrl+W)")
+        self.btn_close_tab.setToolTip("Close current tab | Ctrl+W | Ctrl+E to open Editor")
         
         # Auto-save checkbox
         self.chk_auto_save = QCheckBox("Auto-save")
-        self.chk_auto_save.setToolTip("Automatically save files 3 seconds after last modification")
+        self.chk_auto_save.setToolTip("Automatically save files 3 seconds after last modification | Ctrl+E to open Editor")
         self.chk_auto_save.setChecked(self.auto_save_enabled)
         
         toolbar.addWidget(self.btn_new)
@@ -582,12 +586,14 @@ class EditorDock(BaseDock):
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
+        self.tab_widget.setToolTip("Tabbed file editor (click X to close, right-click for options) | Ctrl+Tab to switch | Ctrl+E to open Editor")
         self.layout.addWidget(self.tab_widget)
         
         # Status bar
         status_layout = QHBoxLayout()
         self.lbl_status = QLabel("Ready")
         self.lbl_status.setStyleSheet("color: #6A9955;")
+        self.lbl_status.setToolTip("Editor status (Ready/Saved/Modified/Auto-saved) | Ctrl+E to open Editor")
         status_layout.addWidget(self.lbl_status)
         status_layout.addStretch()
         self.layout.addLayout(status_layout)

@@ -1140,13 +1140,20 @@ result = convert_text_to_json(text, "auto")
     * ✅ Completar JSON Rewriter Dock tooltips faltantes (1 widget: btn_run)
     * ✅ Criar documento `docs/TOOLTIP_GUIDELINES.md` (12 seções, 340 linhas)
     * ✅ Automated tests (pytest-qt: 7/8 passing, ≥90% coverage)
-  - **[]** **v2.9.48 - AI Processor Dock (Sprint Atual - 09/12/2025)**:
+  - **[X] v2.9.48 - AI Processor Dock (09/12/2025)**:
     * ✅ Adicionar keyboard shortcuts aos 23 tooltips existentes (formato: "Description | Ctrl+Shift+A")
     * ✅ Adicionar 15 novos tooltips (ed_prompt, btn_add_path, spin_max_bytes, ed_extensions, scope filters, action buttons, stats labels, PathEntry widgets)
     * ✅ Total: 38 widgets com tooltips (23 existentes + 15 novos)
     * ✅ PathEntry dinâmicos: ed_path, btn_browse, chk_is_file
     * ✅ Advanced Conditions: 6 widgets por linha (field, operator, value, scope, case, regex)
     * ✅ Testes atualizados: `test_ai_processor_dock_tooltips()` (8/9 passing, 1 skipped)
+  - **[]** **v2.9.49 - JSON Editor Components (Sprint Atual - 09/12/2025)**:
+    * ✅ **JsonEditorTab** (8 tooltips): 4 existentes atualizados com Ctrl+E, 4 novos (btn_collapse, btn_expand, editor QTextEdit, tree JsonTreeWidget, lbl_validation)
+    * ✅ **EditorDock** (8 tooltips): 6 existentes atualizados com Ctrl+E, 2 novos (tab_widget, lbl_status)
+    * ✅ **EditorTab** (4 tooltips): 3 existentes atualizados com Ctrl+E, 1 novo (editor QTextEdit)
+    * ✅ Total: 20 widgets com tooltips (JsonEditorTab: 8, EditorDock: 8, EditorTab: 4)
+    * ✅ Fix: Inicialização `auto_save_enabled` ANTES de `super().__init__()` em EditorDock
+    * ✅ Testes atualizados: `test_json_editor_tab_tooltips()`, `test_editor_dock_tooltips()` (10/11 passing, 1 skipped)
   - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
     * **[]** v2.9.49 - JSON Editor Tab (~15 tooltips): format buttons (2/4 spaces, minify), validate, search, collapse/expand, tree view nodes
     * **[]** v2.9.50 - JSON Search Dock (~10 tooltips): search mode (key/value/both), case sensitive, regex, file filters

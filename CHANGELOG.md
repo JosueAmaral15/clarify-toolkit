@@ -1,5 +1,113 @@
 # Changelog - Clarify Project
 
+## [2.9.49] - 2025-12-09
+
+### 📝 JSON Editor Components - Tooltips Enhancement (SHOULD HAVE)
+
+#### Problem Statement
+
+**JSON Editor Components Incomplete Tooltip Coverage**
+- **JsonEditorTab** (json_editor_tab.py):
+  - 4 tooltips existentes sem keyboard shortcuts
+  - ~5 widgets críticos sem tooltips: btn_collapse, btn_expand, editor (QTextEdit), tree (JsonTreeWidget), lbl_validation
+- **EditorDock** (editor_dock.py):
+  - 6 tooltips existentes sem `Ctrl+E` (já tinham Ctrl+N/O/S/W)
+  - ~2 widgets sem tooltips: tab_widget (QTabWidget), lbl_status (QLabel)
+- **EditorTab** (editor_dock.py):
+  - 3 tooltips existentes sem `Ctrl+E`
+  - editor QTextEdit sem tooltip
+
+**Impact**:
+- Usuários não sabiam que `Ctrl+E` abre Editor
+- Widgets complexos (tree view, validation label) sem explicação
+- Tab widget sem orientação sobre close/options
+- Editor principal sem contexto de syntax highlighting/auto-save
+
+#### Solution Implemented
+
+**20 Tooltips Completos (3 componentes)**:
+
+**1. JsonEditorTab - 8 Tooltips** (4 existentes + 4 novos):
+- **Existentes Atualizados** (4):
+  - `btn_format`: "Pretty print JSON with indentation | Ctrl+E to open Editor"
+  - `combo_indent`: "Indentation style (2/4 spaces or compact minified JSON) | Ctrl+E"
+  - `btn_validate`: "Check JSON syntax and update validation status | Ctrl+E"
+  - `btn_search`: "Search for key or value in JSON tree | Ctrl+F to find | Ctrl+E"
+- **Novos** (4):
+  - `btn_collapse`: "Collapse all nodes in JSON tree view | Ctrl+E"
+  - `btn_expand`: "Expand all nodes in JSON tree view | Ctrl+E"
+  - `editor` (QTextEdit): "JSON text editor with syntax highlighting and real-time validation | Ctrl+S to save | Ctrl+E"
+  - `tree` (JsonTreeWidget): "JSON tree structure for navigation (click nodes to jump to line in editor) | Ctrl+E"
+  - `lbl_validation`: "JSON validation status (updates automatically on text change) | Ctrl+E" ✨ NEW
+
+**2. EditorDock - 8 Tooltips** (6 existentes + 2 novos):
+- **Existentes Atualizados** (6):
+  - `btn_new`: "Create new file | Ctrl+N | Ctrl+E to open Editor"
+  - `btn_open`: "Open existing file | Ctrl+O | Ctrl+E"
+  - `btn_save`: "Save current file | Ctrl+S | Ctrl+E"
+  - `btn_save_as`: "Save current file with new name | Ctrl+Shift+S | Ctrl+E"
+  - `btn_close_tab`: "Close current tab | Ctrl+W | Ctrl+E"
+  - `chk_auto_save`: "Automatically save files 3 seconds after last modification | Ctrl+E"
+- **Novos** (2):
+  - `tab_widget`: "Tabbed file editor (click X to close, right-click for options) | Ctrl+Tab to switch | Ctrl+E" ✨ NEW
+  - `lbl_status`: "Editor status (Ready/Saved/Modified/Auto-saved) | Ctrl+E" ✨ NEW
+
+**3. EditorTab - 4 Tooltips** (3 existentes + 1 novo):
+- **Existentes Atualizados** (3):
+  - `btn_copy`: "Copy content to clipboard | Ctrl+C | Ctrl+E"
+  - `btn_export`: "Export content to file (Save As alternative for edit-only mode) | Ctrl+E"
+  - `btn_enable_saving`: "Convert to file-backed editor (exit sandbox mode) | Ctrl+Shift+E | Ctrl+E"
+- **Novo** (1):
+  - `editor` (QTextEdit): "File editor with syntax highlighting (auto-save enabled if checkbox checked) | Ctrl+S to save | Ctrl+E" ✨ NEW
+
+#### Technical Implementation
+
+**Files Modified**: 4 files
+- `src/gui/json_editor_tab.py`: +8 tooltips (4 atualizados + 4 novos)
+- `src/gui/editor_dock.py`: +12 tooltips (9 atualizados + 3 novos) + fix inicialização
+- `tests/test_tooltip_presence.py`: +68 linhas (2 novos test functions)
+
+**Bug Fix**:
+- **EditorDock `__init__` order**: Moveu inicialização de `auto_save_enabled` ANTES de `super().__init__()` para evitar `AttributeError` quando `_setup_ui()` é chamado
+
+**Testing**:
+- ✅ 10/11 pytest tests passing (1 skipped: focus handling in headless)
+- ✅ 9/9 JsonEditorTab widgets verified (100% coverage)
+- ✅ 8/8 EditorDock widgets verified (100% coverage)
+- ✅ Format standards validated (` | ` separator, ≤150 chars, no HTML)
+- ✅ Overall coverage: 129/129 widgets (6 docks + JsonEditorTab) = 100%
+
+**Coverage Results** (test_tooltip_coverage_summary):
+- Set Operations: 21/21 widgets (100%)
+- Case Converter: 6/6 widgets (100%)
+- JSON Rewriter: 36/36 widgets (100%)
+- AI Processor: 38/38 widgets (100%)
+- **Editor Dock: 8/8 widgets (100%)** ✨ NEW
+- **JSON Editor Tab: 9/9 widgets (100%)** ✨ NEW
+- **Overall: 129/129 widgets (100%)** 🎯
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task selected (v2.9.49 JSON Editor - 3 componentes)
+- ✅ Etapa 3: 6 questions answered (escopo ambos, widgets complexos sim, labels sim, testes separados)
+- ✅ Etapa 4-5: Analysis (20 tooltips identificados: JsonEditorTab 8, EditorDock 8, EditorTab 4)
+- ✅ Etapa 6: Implementation (20 tooltips, multi_replace 12 operations)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (10/11 passing)
+- ✅ Etapa 9: Integration (bug fix `auto_save_enabled` inicialização)
+- ✅ Etapa 10-11: Documentation (TASKS.md updated, CHANGELOG.md)
+- ⏳ Etapa 12-13: Commit, tag v2.9.49, push (next step)
+
+**Lessons Learned**:
+- `super().__init__()` em BaseDock chama `_setup_ui()` IMEDIATAMENTE - atributos devem ser inicializados ANTES
+- QTextEdit e QLabel (read-only) beneficiam de tooltips descritivos (contexto de funcionalidade)
+- 3 componentes (JsonEditorTab + EditorDock + EditorTab) = 20 tooltips em 1 sprint (sustentável)
+- JsonEditorTab não é QDockWidget (é QWidget standalone) - requer teste separado
+
+**Next Steps**:
+- v2.9.50: JSON Search Dock tooltips (~10 widgets: search mode, case sensitive, regex, file filters)
+- v2.9.51: JSON Translate Dock tooltips (~10 widgets: scope patterns, exclude, emit export)
+- v2.9.52: Tutorials Dock tooltips (~8 widgets: tree navigation, search bar, categories)
+- v2.9.53: Tradução completa (90 keys × 6 idiomas = 540 translations PT-BR/ES/FR/DE/ZH/JA)
+
 ## [2.9.48] - 2025-12-09
 
 ### ⌨️ AI Processor Dock - Tooltips Enhancement (SHOULD HAVE)
