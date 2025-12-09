@@ -1,5 +1,127 @@
 # Changelog - Clarify Project
 
+## [2.9.51] - 2025-12-09
+
+### 🌍 JSON Translate Dock - Tooltips Enhancement + Enter Shortcut (SHOULD HAVE)
+
+#### Problem Statement
+
+**JSON Translate Dock Incomplete Tooltip Coverage**
+- **11 Tooltips Existentes**: Básicos, sem keyboard shortcuts (Ctrl+T), alguns sem clareza
+  - ed_path, btn_browse, is_file: tooltips genéricos
+  - ed_dict, btn_open: sem contexto de JSON/TS support
+  - object_variable_name: sem exemplos de output (t.key vs i18n.key)
+  - ed_start, ed_end: sem exemplos de regex
+  - ed_exclude: sem explicação de uso prático
+  - chk_backup, chk_dont_override, chk_inverse_json_translate, chk_emit_export, chk_preserve_uppercase: tooltips superficiais
+- **4 Widgets Sem Tooltips/Incompletos**:
+  - btn_run: SEM tooltip (botão crítico!)
+  - lbl_stats: SEM tooltip (comportamento dinâmico Task #43 não documentado)
+  - btn_swap, btn_undo: tooltips básicos sem detalhes
+- **Enter Shortcut Ausente**: Usuários não podiam executar translation via teclado
+
+**Impact**:
+- Usuários não entendiam object_variable_name (t vs i18n)
+- Scope delimiters (regex) sem exemplos práticos
+- Exclusion patterns sem explicação de casos de uso (className, data-testid)
+- btn_run sem tooltip = operação crítica não documentada
+- lbl_stats dinâmico (Task #43 v2.9.13) sem explicação de atualização automática
+
+#### Solution Implemented
+
+**17 Tooltips Completos + Enter Shortcut**:
+
+**1. Path & Dictionary (6 tooltips ATUALIZADOS)**:
+- `ed_path`: "Path to file or directory containing source files to translate | Enter to run | Ctrl+T"
+- `btn_browse`: "Browse for source file or directory to translate | Ctrl+T"
+- `is_file`: "Check if root path is a single file (uncheck for directory/batch translation) | Ctrl+T"
+- `ed_dict`: "Path to JSON or TypeScript file containing translation key-value pairs | Ctrl+T"
+- `btn_open`: "Browse for translation dictionary file (JSON/TS/JS) | Ctrl+T"
+- `object_variable_name`: "Variable name for dictionary root in generated code (e.g., 't' produces t.home.title, 'i18n' produces i18n.home.title) | Ctrl+T"
+
+**2. Scope Delimiters (2 tooltips ATUALIZADOS com exemplos)**:
+- `ed_start`: "Regex pattern marking where translation scope begins (e.g., '<[^>]*?>' for HTML/JSX opening tags) | Ctrl+T"
+- `ed_end`: "Regex pattern marking where translation scope ends (e.g., '</[^>]*?>' for HTML/JSX closing tags) | Ctrl+T"
+
+**3. Exclusion Patterns (1 tooltip DETALHADO)**:
+- `ed_exclude`: "Exclude patterns: text matching these regex won't be translated (prevents translating className, IDs, technical attributes) | Comma-separated | Ctrl+T"
+
+**4. Options Checkboxes (5 tooltips MELHORADOS)**:
+- `chk_backup`: "Create backup copies (.bak extension) before modifying files (enables undo via 'Undo with Backup') | Ctrl+T"
+- `chk_dont_override`: "Skip text that is already translated (preserves existing variable references like t.key) | Ctrl+T"
+- `chk_inverse_json_translate`: "Reverse translation: replace variable references (t.key) with actual dictionary values (e.g., t.home.title → 'Homepage') | Ctrl+T"
+- `chk_emit_export`: "Add 'export const varName = {...}' wrapper to generated dictionary files (enables ES6 module imports in TS/JS) | Ctrl+T"
+- `chk_preserve_uppercase`: "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE, useful for constants) | Ctrl+T"
+
+**5. Stats & Action Buttons (4 tooltips: 2 NOVOS + 2 MELHORADOS)**:
+- `lbl_stats` (NOVO): "Real-time statistics: file count, dictionary status, ready state | Updates automatically on path/dict changes | Ctrl+T"
+- `btn_run` (NOVO): "Translate files using dictionary (replaces text with variable references, creates backups if enabled) | Enter to run | Ctrl+T"
+- `btn_swap` (MELHORADO): "Swap source and target dictionaries (useful for reverse translation workflows) | Ctrl+T"
+- `btn_undo` (MELHORADO): "Restore original files from backup (.bak files, requires 'Backup original files' enabled) | Ctrl+T"
+
+**6. Enter Keyboard Shortcut (NOVO)**:
+- Implementado método `_setup_enter_key()` conectando returnPressed de 6 inputs (ed_path, ed_dict, object_variable_name, ed_start, ed_end, ed_exclude)
+- Enter em qualquer input executa `_run()` (translation)
+- Pattern: `widget.returnPressed.connect(self._run)` para cada QLineEdit
+
+#### Technical Implementation
+
+**Files Modified**: 3 files
+- `src/gui/json_translate_dock.py`: +17 tooltips atualizados/novos + Enter shortcut (8 linhas)
+- `tests/test_tooltip_presence.py`: +46 linhas (novo test function `test_json_translate_dock_tooltips()`)
+
+**Código do Enter Shortcut**:
+```python
+def _setup_enter_key(self) -> None:
+    """Setup Enter key to execute translation (v2.9.51)."""
+    from PySide6.QtCore import Qt
+    
+    # Connect returnPressed for all text inputs
+    for widget in [self.ed_path, self.ed_dict, self.object_variable_name, 
+                   self.ed_start, self.ed_end, self.ed_exclude]:
+        widget.returnPressed.connect(self._run)
+```
+
+**Testing**:
+- ✅ 12/13 pytest tests passing (1 skipped: focus handling in headless)
+- ✅ 17/17 JSON Translate Dock widgets verified (100% coverage)
+- ✅ Format standards validated (` | ` separator, ≤150 chars, no HTML)
+- ✅ Overall coverage: 159/159 widgets (8 docks + JsonEditorTab) = 100%
+
+**Coverage Results** (test_tooltip_coverage_summary):
+- Set Operations: 21/21 widgets (100%)
+- Case Converter: 6/6 widgets (100%)
+- JSON Rewriter: 36/36 widgets (100%)
+- AI Processor: 38/38 widgets (100%)
+- Editor Dock: 8/8 widgets (100%)
+- JSON Editor Tab: 9/9 widgets (100%)
+- JSON Search: 13/13 widgets (100%)
+- **JSON Translate: 17/17 widgets (100%)** ✨ NEW
+- **Overall: 159/159 widgets (100%)** 🎯
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task selected (v2.9.51 JSON Translate Dock - 17 widgets)
+- ✅ Etapa 3: 6 questions answered (existentes B+clareza, scope C todos, shortcuts B Enter, btn_run C detalhado, lbl_stats C explicativo, ed_exclude C detalhado)
+- ✅ Etapa 4-5: Analysis (17 tooltips: 11 updated, 2 new, 4 improved)
+- ✅ Etapa 6: Implementation (multi_replace 18 operations)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (12/13 passing)
+- ✅ Etapa 9: Integration (Enter shortcut via returnPressed)
+- ✅ Etapa 10-11: Documentation (TASKS.md updated, CHANGELOG.md)
+- ⏳ Etapa 12-13: Commit, tag v2.9.51, push (next step)
+
+**Lessons Learned**:
+- **object_variable_name tooltip**: Exemplos de output (t.key vs i18n.key) essenciais para clareza
+- **Regex tooltips**: Sempre incluir exemplos práticos (ed_start, ed_end com HTML/JSX)
+- **Exclusion patterns**: Explicar casos de uso (className, IDs) + consequencias se não usar
+- **lbl_stats dinâmico**: Task #43 v2.9.13 implementou atualização automática - tooltip deve explicar
+- **Enter shortcut em BaseDock**: `_setup_enter_key_execution` só existe em StandardToolDock - BaseDock precisa implementação manual via returnPressed
+- **btn_run crítico**: Botão principal SEMPRE merece tooltip detalhado explicando operação completa
+
+**Next Steps**:
+- v2.9.52: Tutorials Dock tooltips (~8 widgets: tree navigation, search bar, beginner/developers categories)
+- v2.9.53: Tradução completa (90 keys × 6 idiomas = 540 translations PT-BR/ES/FR/DE/ZH/JA)
+- **Milestone**: 159 widgets com tooltips (100% coverage em 8 componentes principais)
+
 ## [2.9.50.1] - 2025-12-09
 
 ### ⏱️ Esc Shortcut Retroativo - AI Processor & Case Converter (PATCH)

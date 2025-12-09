@@ -98,74 +98,76 @@ class JsonTranslateDock(BaseDock):
         # Root path section
         self.lbl_path = QLabel("Root path:")
         self.ed_path = QLineEdit()
-        self.ed_path.setToolTip("Select the file or directory to translate")
+        self.ed_path.setToolTip("Path to file or directory containing source files to translate | Enter to run | Ctrl+T to open Translate")
         self.btn_browse = QPushButton("Browse…")
-        self.btn_browse.setToolTip("Browse for file or directory")
+        self.btn_browse.setToolTip("Browse for source file or directory to translate | Ctrl+T to open Translate")
         self.is_file = QCheckBox("Is file?")
-        self.is_file.setToolTip("Check if root path is a file (unchecked for directory)")
+        self.is_file.setToolTip("Check if root path is a single file (uncheck for directory/batch translation) | Ctrl+T to open Translate")
 
         # Dictionary file section
         self.lbl_dict = QLabel("Dictionary file (JSON/TS):")
         self.ed_dict = QLineEdit()
-        self.ed_dict.setToolTip("JSON or TypeScript file containing translation dictionary")
+        self.ed_dict.setToolTip("Path to JSON or TypeScript file containing translation key-value pairs | Ctrl+T to open Translate")
         self.btn_open = QPushButton("Open…")
-        self.btn_open.setToolTip("Browse for dictionary file")
+        self.btn_open.setToolTip("Browse for translation dictionary file (JSON/TS/JS) | Ctrl+T to open Translate")
 
         # Variable name
         self.lbl_var = QLabel("First object variable name:")
         self.object_variable_name = QLineEdit()
         self.object_variable_name.setPlaceholderText("e.g. t")
-        self.object_variable_name.setToolTip("Variable name used in code to access translations (e.g., 't' for t.key)")
+        self.object_variable_name.setToolTip("Variable name for dictionary root in generated code (e.g., 't' produces t.home.title, 'i18n' produces i18n.home.title) | Ctrl+T to open Translate")
 
         # Scope delimiters
         self.lbl_start = QLabel("Start delimiter (regex):")
         self.ed_start = QLineEdit("<[^>]*?>")  # default: start of HTML/JSX tag
-        self.ed_start.setToolTip("Regex pattern marking where translation scope begins")
+        self.ed_start.setToolTip("Regex pattern marking where translation scope begins (e.g., '<[^>]*?>' for HTML/JSX opening tags) | Ctrl+T to open Translate")
         self.lbl_end = QLabel("End delimiter (regex):")
         self.ed_end = QLineEdit("</[^>]*?>")  # default: end tag
-        self.ed_end.setToolTip("Regex pattern marking where translation scope ends")
+        self.ed_end.setToolTip("Regex pattern marking where translation scope ends (e.g., '</[^>]*?>' for HTML/JSX closing tags) | Ctrl+T to open Translate")
 
         # Exclusion patterns
         self.lbl_exclude = QLabel("Do not translate\n(regex, comma-separated):")
         self.ed_exclude = QLineEdit()
         self.ed_exclude.setPlaceholderText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
         self.ed_exclude.setText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
-        self.ed_exclude.setToolTip("Comma-separated regex patterns for text that should not be translated")
+        self.ed_exclude.setToolTip("Exclude patterns: text matching these regex won't be translated (prevents translating className, IDs, technical attributes) | Comma-separated | Ctrl+T to open Translate")
 
         # Options
         self.chk_backup = QCheckBox("Backup original files\n(filename.bak)")
         self.chk_backup.setChecked(True)
-        self.chk_backup.setToolTip("Create backup files (.bak) before modifying originals")
+        self.chk_backup.setToolTip("Create backup copies (.bak extension) before modifying files (enables undo via 'Undo with Backup') | Ctrl+T to open Translate")
 
         self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
         self.chk_dont_override.setChecked(True)
-        self.chk_dont_override.setToolTip("Skip text that is already translated")
+        self.chk_dont_override.setToolTip("Skip text that is already translated (preserves existing variable references like t.key) | Ctrl+T to open Translate")
 
         self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate\nchanges (with dictionary)")
         self.chk_inverse_json_translate.setToolTip(
-            "Reverse translation: replace variable references with dictionary values"
+            "Reverse translation: replace variable references (t.key) with actual dictionary values (e.g., t.home.title → 'Homepage') | Ctrl+T to open Translate"
         )
 
         self.chk_emit_export = QCheckBox("Emit export const")
         self.chk_emit_export.setChecked(True)
-        self.chk_emit_export.setToolTip("Add 'export const varName = {...}' wrapper to output (TS/JS files)")
+        self.chk_emit_export.setToolTip("Add 'export const varName = {...}' wrapper to generated dictionary files (enables ES6 module imports in TS/JS) | Ctrl+T to open Translate")
 
         self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
         self.chk_preserve_uppercase.setToolTip(
-            "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE)"
+            "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE, useful for constants) | Ctrl+T to open Translate"
         )
 
         # Stats label (Task #43 - v2.9.13)
         self.lbl_stats = QLabel("Ready")
         self.lbl_stats.setStyleSheet("color: gray; font-style: italic;")
         self.lbl_stats.setWordWrap(True)
+        self.lbl_stats.setToolTip("Real-time statistics: file count, dictionary status, ready state | Updates automatically on path/dict changes | Ctrl+T to open Translate")
 
         # Action buttons (Task #10 - v2.9.8)
         self.btn_run = QPushButton("Run translation")
+        self.btn_run.setToolTip("Translate files using dictionary (replaces text with variable references, creates backups if enabled) | Enter to run | Ctrl+T to open Translate")
         self.btn_swap = QPushButton("Swap Dictionaries")
-        self.btn_swap.setToolTip("Swap source and target dictionaries (useful for reverse translation)")
+        self.btn_swap.setToolTip("Swap source and target dictionaries (useful for reverse translation workflows) | Ctrl+T to open Translate")
         self.btn_undo = QPushButton("Undo with Backup")
-        self.btn_undo.setToolTip("Restore original file from backup (.bak files)")
+        self.btn_undo.setToolTip("Restore original files from backup (.bak files, requires 'Backup original files' enabled) | Ctrl+T to open Translate")
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -234,6 +236,17 @@ class JsonTranslateDock(BaseDock):
         # Task #43 - v2.9.13: Update stats on path/dict changes
         self.ed_path.textChanged.connect(self._update_stats)
         self.ed_dict.textChanged.connect(self._update_stats)
+        # v2.9.51: Enter key executes translation
+        self._setup_enter_key()
+    
+    def _setup_enter_key(self) -> None:
+        """Setup Enter key to execute translation (v2.9.51)."""
+        from PySide6.QtCore import Qt
+        
+        # Connect returnPressed for all text inputs
+        for widget in [self.ed_path, self.ed_dict, self.object_variable_name, 
+                       self.ed_start, self.ed_end, self.ed_exclude]:
+            widget.returnPressed.connect(self._run)
 
     # UI Helper Methods
 

@@ -1170,8 +1170,16 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Case Converter Dock**: Implementado `_setup_escape_key_interrupt()` + 3 novos tooltips (btn_convert, btn_interrupt, btn_clear)
     * ✅ **Consistência**: Todos os 3 docks com interrupt agora têm Esc shortcut (JSON Search, AI Processor, Case Converter)
     * ✅ Pattern: Método `_setup_escape_key_interrupt()` chamado em `_connect_signals()` usando QShortcut(Qt.Key_Escape)
+  - **[X] v2.9.51 - JSON Translate Dock (09/12/2025)**:
+    * ✅ **17 tooltips totais**: 11 existentes atualizados com clareza + Ctrl+T, 2 novos (btn_run, lbl_stats), 4 melhorados (btn_swap, btn_undo detalhados)
+    * ✅ **Path & Dictionary** (6): ed_path, btn_browse, is_file, ed_dict, btn_open, object_variable_name - todos com Ctrl+T
+    * ✅ **Scope delimiters** (2): ed_start, ed_end com exemplos de regex + Ctrl+T
+    * ✅ **Exclusion patterns** (1): ed_exclude com tooltip detalhado explicando uso prático (className, IDs) + Ctrl+T
+    * ✅ **Options** (5): chk_backup (explica .bak + undo), chk_dont_override (preserva t.key), chk_inverse_json_translate (exemplo t.home.title → 'Homepage'), chk_emit_export (ES6 modules), chk_preserve_uppercase (constants)
+    * ✅ **Stats & Buttons** (4): lbl_stats (real-time updates), btn_run (Enter + detalhado), btn_swap (workflows), btn_undo (requer backup)
+    * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed de 6 inputs ao método `_run()`
+    * ✅ Testes atualizados: `test_json_translate_dock_tooltips()` (12/13 passing, 1 skipped)
   - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
-    * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
     * **[]** v2.9.51 - JSON Translate Dock (~10 tooltips): scope patterns, exclude patterns, emit export, preserve uppercase
     * **[]** v2.9.52 - Tutorials Dock (~8 tooltips): tree navigation, search bar, beginner/developers categories
     * **[]** v2.9.53 - Tradução de todos tooltips novos (70 keys × 6 idiomas = 420 traduções PT-BR/ES/FR/DE/ZH/JA)

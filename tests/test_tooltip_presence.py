@@ -304,6 +304,47 @@ def test_json_search_dock_tooltips(qtbot):
         print(f"✓ {name}: {tooltip[:60]}...")
 
 
+def test_json_translate_dock_tooltips(qtbot):
+    """Verify JSON Translate Dock has tooltips on all interactive widgets (v2.9.51)."""
+    from src.gui.json_translate_dock import JsonTranslateDock
+    
+    dock = JsonTranslateDock()
+    qtbot.addWidget(dock)
+    
+    # Critical widgets (17 total: 11 updated + 2 new + 4 improved)
+    critical_widgets = [
+        # Path & Dictionary (6)
+        (dock.ed_path, "ed_path"),
+        (dock.btn_browse, "btn_browse"),
+        (dock.is_file, "is_file"),
+        (dock.ed_dict, "ed_dict"),
+        (dock.btn_open, "btn_open"),
+        (dock.object_variable_name, "object_variable_name"),
+        # Scope delimiters (2)
+        (dock.ed_start, "ed_start"),
+        (dock.ed_end, "ed_end"),
+        # Exclusion patterns (1)
+        (dock.ed_exclude, "ed_exclude"),
+        # Options checkboxes (5)
+        (dock.chk_backup, "chk_backup"),
+        (dock.chk_dont_override, "chk_dont_override"),
+        (dock.chk_inverse_json_translate, "chk_inverse_json_translate"),
+        (dock.chk_emit_export, "chk_emit_export"),
+        (dock.chk_preserve_uppercase, "chk_preserve_uppercase"),
+        # Stats & Action buttons (4)
+        (dock.lbl_stats, "lbl_stats"),
+        (dock.btn_run, "btn_run"),
+        (dock.btn_swap, "btn_swap"),
+        (dock.btn_undo, "btn_undo"),
+    ]
+    
+    for widget, name in critical_widgets:
+        tooltip = widget.toolTip()
+        assert tooltip != "", f"JSON Translate Dock - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"JSON Translate Dock - {name} tooltip too short: '{tooltip}'"
+        print(f"✓ {name}: {tooltip[:60]}...")
+
+
 def test_tooltip_format_standards(qtbot):
     """Verify tooltips follow format standards from TOOLTIP_GUIDELINES.md."""
     dock = SetOperationsDock()
@@ -326,6 +367,7 @@ def test_tooltip_format_standards(qtbot):
 def test_tooltip_length_limits(qtbot):
     """Verify English tooltips respect 150 character limit."""
     from src.gui.json_search_dock import JsonSearchDock
+    from src.gui.json_translate_dock import JsonTranslateDock
     
     docks = [
         SetOperationsDock(),
@@ -334,6 +376,7 @@ def test_tooltip_length_limits(qtbot):
         AIProcessorDock(),
         EditorDock(),
         JsonSearchDock(),
+        JsonTranslateDock(),
     ]
     
     # Also test JsonEditorTab (not a dock)
@@ -403,6 +446,7 @@ def test_tooltip_keyboard_accessibility(qtbot):
 def test_tooltip_coverage_summary(qtbot):
     """Summary: Count total tooltips and coverage percentage."""
     from src.gui.json_search_dock import JsonSearchDock
+    from src.gui.json_translate_dock import JsonTranslateDock
     
     docks = [
         ("Set Operations", SetOperationsDock()),
@@ -411,6 +455,7 @@ def test_tooltip_coverage_summary(qtbot):
         ("AI Processor", AIProcessorDock()),
         ("Editor Dock", EditorDock()),
         ("JSON Search", JsonSearchDock()),
+        ("JSON Translate", JsonTranslateDock()),
     ]
     
     # Add JsonEditorTab separately (not a dock)
