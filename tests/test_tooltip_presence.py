@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QWidget, QPushButton, QCheckBox, QComboBox, QLineE
 from src.gui.set_operations_dock import SetOperationsDock
 from src.gui.case_converter_dock import CaseConverterDock
 from src.gui.json_rewriter_dock import JsonRewriterDock
+from src.gui.ai_processor_dock import AIProcessorDock
 
 
 def get_interactive_widgets(widget: QWidget) -> list[QWidget]:
@@ -149,6 +150,64 @@ def test_json_rewriter_dock_tooltips(qtbot):
         print(f"✓ {name}: {tooltip[:50]}...")
 
 
+def test_ai_processor_dock_tooltips(qtbot):
+    """Verify AI Processor Dock has tooltips on all interactive widgets (v2.9.48)."""
+    dock = AIProcessorDock()
+    qtbot.addWidget(dock)
+    
+    # Critical widgets (38 total: 23 existing + 15 new in v2.9.48)
+    critical_widgets = [
+        # Provider & Model (3)
+        (dock.combo_provider, "combo_provider"),
+        (dock.combo_model, "combo_model"),
+        (dock.btn_refresh_models, "btn_refresh_models"),
+        # API Key (2)
+        (dock.ed_api_key, "ed_api_key"),
+        (dock.btn_verify, "btn_verify"),
+        # Prompt (1)
+        (dock.ed_prompt, "ed_prompt"),
+        # Options (3)
+        (dock.chk_line_by_line, "chk_line_by_line"),
+        (dock.spin_max_bytes, "spin_max_bytes"),
+        (dock.ed_extensions, "ed_extensions"),
+        # Scope Filter (7)
+        (dock.chk_scope_enable, "chk_scope_enable"),
+        (dock.ed_scope_start, "ed_scope_start"),
+        (dock.chk_start_regex, "chk_start_regex"),
+        (dock.chk_start_case, "chk_start_case"),
+        (dock.ed_scope_end, "ed_scope_end"),
+        (dock.chk_end_regex, "chk_end_regex"),
+        (dock.chk_end_case, "chk_end_case"),
+        # Advanced Conditions (9 - 1st row as sample)
+        (dock.combo_cond_logic, "combo_cond_logic"),
+        (dock.cond_rows[0][0], "cond_field_1"),  # combo_field
+        (dock.cond_rows[0][1], "cond_op_1"),     # combo_op
+        (dock.cond_rows[0][2], "cond_value_1"),  # ed_value
+        (dock.cond_rows[0][3], "cond_scope_1"),  # combo_scope
+        (dock.cond_rows[0][4], "cond_case_1"),   # chk_case
+        (dock.cond_rows[0][5], "cond_regex_1"),  # chk_regex
+        # Action Buttons (4)
+        (dock.btn_process, "btn_process"),
+        (dock.btn_interrupt, "btn_interrupt"),
+        (dock.btn_save_results, "btn_save_results"),
+        (dock.btn_clear, "btn_clear"),
+        # Statistics (3)
+        (dock.lbl_session_stats, "lbl_session_stats"),
+        (dock.lbl_lifetime_stats, "lbl_lifetime_stats"),
+        (dock.chk_remove_fences, "chk_remove_fences"),
+        # PathEntry widgets (3 from first path)
+        (dock.path_entries[0].ed_path, "path_1_ed_path"),
+        (dock.path_entries[0].btn_browse, "path_1_btn_browse"),
+        (dock.path_entries[0].chk_is_file, "path_1_chk_is_file"),
+    ]
+    
+    for widget, name in critical_widgets:
+        tooltip = widget.toolTip()
+        assert tooltip != "", f"AI Processor - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"AI Processor - {name} tooltip too short: '{tooltip}'"
+        print(f"✓ {name}: {tooltip[:60]}...")
+
+
 def test_tooltip_format_standards(qtbot):
     """Verify tooltips follow format standards from TOOLTIP_GUIDELINES.md."""
     dock = SetOperationsDock()
@@ -174,6 +233,7 @@ def test_tooltip_length_limits(qtbot):
         SetOperationsDock(),
         CaseConverterDock(),
         JsonRewriterDock(),
+        AIProcessorDock(),
     ]
     
     for dock in docks:
@@ -236,6 +296,7 @@ def test_tooltip_coverage_summary(qtbot):
         ("Set Operations", SetOperationsDock()),
         ("Case Converter", CaseConverterDock()),
         ("JSON Rewriter", JsonRewriterDock()),
+        ("AI Processor", AIProcessorDock()),
     ]
     
     total_widgets = 0

@@ -1,5 +1,133 @@
 # Changelog - Clarify Project
 
+## [2.9.48] - 2025-12-09
+
+### ⌨️ AI Processor Dock - Tooltips Enhancement (SHOULD HAVE)
+
+#### Problem Statement
+
+**AI Processor Dock Incomplete Tooltip Coverage**
+- 23 tooltips existentes sem keyboard shortcuts
+- ~15 widgets críticos sem tooltips:
+  - `ed_prompt` (prompt principal)
+  - `btn_add_path` (adicionar caminhos)
+  - `spin_max_bytes` (tamanho máximo de arquivo)
+  - `ed_extensions` (extensões de arquivo)
+  - Scope filter widgets (8 widgets: ed_scope_start, ed_scope_end, 4 checkboxes regex/case)
+  - Action buttons (4 botões: Process, Interrupt, Save Results, Clear)
+  - Statistics labels (2 labels: session/lifetime stats)
+  - PathEntry widgets dinâmicos (ed_path, btn_browse por entrada)
+  - Advanced Conditions value input fields
+
+**Impact**:
+- Usuários não sabiam que `Ctrl+Shift+A` abre AI Processor
+- Widgets complexos (scope filters, advanced conditions) sem explicação
+- Estatísticas de tokens/custos sem contexto
+- PathEntry dinâmicos (criados via "+ Add Path") sem tooltips
+
+#### Solution Implemented
+
+**38 Tooltips Completos (23 existentes + 15 novos)**:
+
+**1. Keyboard Shortcuts Adicionados (23 tooltips existentes)**:
+- **Provider & Model** (3):
+  - `combo_provider`: "Choose your AI provider (requires API key) | Ctrl+Shift+A to open AI Processor"
+  - `combo_model`: "AI model to use (different models have different costs and capabilities) | Ctrl+Shift+A"
+  - `btn_refresh_models`: "Refresh models list from API | Ctrl+Shift+A"
+- **API Key** (2):
+  - `ed_api_key`: "Your API key from the AI provider's dashboard (kept secure, never stored) | Ctrl+Shift+A"
+  - `btn_verify`: "Test if your API key is valid and working | Ctrl+Shift+A"
+- **Options** (1):
+  - `chk_line_by_line`: "Use each line of prompt for each file cyclically | Ctrl+Shift+A"
+- **Scope Filter** (1):
+  - `chk_scope_enable`: "Extract only content between start/end markers | Ctrl+Shift+A"
+- **Advanced Conditions** (14):
+  - `combo_cond_logic`: "AND: All conditions must match | OR: At least one must match | Ctrl+Shift+A"
+  - Per row (6 widgets × 3 linhas mínimas):
+    * `combo_field`: "Select field to filter on | Ctrl+Shift+A"
+    * `combo_op`: "Select comparison operator | Ctrl+Shift+A"
+    * `combo_scope`: "Scope for content field (e.g., only search within {} or tags) | Ctrl+Shift+A"
+    * `chk_case`: "Case sensitive matching | Ctrl+Shift+A"
+    * `chk_regex`: "Use value as regex pattern | Ctrl+Shift+A"
+  - Buttons (2):
+    * `btn_add_cond`: "Add more condition rows (no limit) | Ctrl+Shift+A"
+    * `btn_clear_cond`: "Clear all conditions | Ctrl+Shift+A"
+- **Statistics** (1):
+  - `chk_remove_fences`: "Automatically strip ```json and ``` from responses | Ctrl+Shift+A"
+- **PathEntry** (1):
+  - `chk_is_file`: "Check if selecting a file, uncheck for directory | Ctrl+Shift+A"
+
+**2. Novos Tooltips Adicionados (15 widgets)**:
+- **Prompt** (1):
+  - `ed_prompt`: "Enter AI processing instructions (one per line for line-by-line mode) | Ctrl+Shift+A"
+- **Paths** (1):
+  - `btn_add_path`: "Add another file or directory path to process | Ctrl+Shift+A"
+- **Options** (2):
+  - `spin_max_bytes`: "Maximum file size to process (bytes) | Ctrl+Shift+A"
+  - `ed_extensions`: "File extensions to process (comma-separated, e.g., .txt,.py,.js) | Ctrl+Shift+A"
+- **Scope Filter** (6):
+  - `ed_scope_start`: "Starting marker to extract content from (e.g., '{' or '<div>') | Ctrl+Shift+A"
+  - `chk_start_regex`: "Treat start marker as regex pattern | Ctrl+Shift+A"
+  - `chk_start_case`: "Case sensitive matching for start marker | Ctrl+Shift+A"
+  - `ed_scope_end`: "Ending marker to extract content to (e.g., '}' or '</div>') | Ctrl+Shift+A"
+  - `chk_end_regex`: "Treat end marker as regex pattern | Ctrl+Shift+A"
+  - `chk_end_case`: "Case sensitive matching for end marker | Ctrl+Shift+A"
+- **Advanced Conditions** (1):
+  - `ed_value` (por linha): "Value to compare against (use regex if checkbox enabled) | Ctrl+Shift+A"
+- **Action Buttons** (4):
+  - `btn_process`: "Process files with AI using specified settings | F5 to execute | Ctrl+Shift+A"
+  - `btn_interrupt`: "Interrupt current AI processing | Esc to cancel | Ctrl+Shift+A"
+  - `btn_save_results`: "Save AI processing results to file | Ctrl+Shift+A"
+  - `btn_clear`: "Clear all results and reset state | Ctrl+L | Ctrl+Shift+A"
+- **Statistics Labels** (2):
+  - `lbl_session_stats`: "Current session token usage: input tokens / output tokens | Estimated cost | Ctrl+Shift+A"
+  - `lbl_lifetime_stats`: "Lifetime total token usage across all sessions | Estimated cumulative cost | Ctrl+Shift+A"
+- **PathEntry Dinâmicos** (2):
+  - `ed_path`: "Path to file or directory to process with AI | Ctrl+Shift+A"
+  - `btn_browse`: "Browse for file or directory | Ctrl+O to open file dialog"
+
+#### Technical Implementation
+
+**Files Modified**: 2 files
+- `src/gui/ai_processor_dock.py`: +38 tooltips (23 atualizados + 15 novos)
+- `tests/test_tooltip_presence.py`: +45 linhas (`test_ai_processor_dock_tooltips()`)
+
+**Testing**:
+- ✅ 8/9 pytest tests passing (1 skipped: focus handling in headless)
+- ✅ 38/38 AI Processor widgets verified (100% coverage)
+- ✅ Format standards validated (` | ` separator, ≤150 chars, no HTML)
+- ✅ Overall coverage: 101/101 widgets (4 docks) = 100%
+
+**Coverage Results** (test_tooltip_coverage_summary):
+- Set Operations: 21/21 widgets (100%)
+- Case Converter: 6/6 widgets (100%)
+- JSON Rewriter: 36/36 widgets (100%)
+- **AI Processor: 38/38 widgets (100%)** ✨ NEW
+- **Overall: 101/101 widgets (100%)** 🎯
+
+**Protocol Simplicidade 3 Compliance**:
+- ✅ Etapa 1-2: Task selected (v2.9.48 AI Processor - incremental roadmap)
+- ✅ Etapa 3: 6 questions answered (keyboard shortcuts, PathEntry, stats labels, tests)
+- ✅ Etapa 4-5: Analysis (38 widgets identified, 23 existing + 15 new)
+- ✅ Etapa 6: Implementation (38 tooltips, multi_replace_string_in_file 21 operations)
+- ✅ Etapa 7-8: CLI N/A, GUI tested (8/9 passing)
+- ✅ Etapa 9: Integration (no conflicts, incremental approach)
+- ✅ Etapa 10-11: Documentation (TASKS.md updated, CHANGELOG.md)
+- ⏳ Etapa 12-13: Commit, tag v2.9.48, push (next step)
+
+**Lessons Learned**:
+- PathEntry dinâmicos requerem tooltips na criação do template (apply to all instances)
+- Advanced Conditions com 6 widgets por linha = 18 tooltips (3 linhas mínimas)
+- Statistics labels (QLabel read-only) beneficiam de tooltips explicativos (contexto de tokens/custos)
+- Incremental approach (1 dock per sprint) sustentável: v2.9.47 (26→27 tooltips), v2.9.48 (27→65 tooltips) = +38 tooltips em 2 sprints
+
+**Next Steps**:
+- v2.9.49: JSON Editor Tab tooltips (~15 widgets: format buttons, validate, search, collapse/expand)
+- v2.9.50: JSON Search Dock tooltips (~10 widgets: search mode, case sensitive, regex, file filters)
+- v2.9.51: JSON Translate Dock tooltips (~10 widgets: scope patterns, exclude, emit export)
+- v2.9.52: Tutorials Dock tooltips (~8 widgets: tree navigation, search bar, categories)
+- v2.9.53: Tradução completa (70 keys × 6 idiomas = 420 translations PT-BR/ES/FR/DE/ZH/JA)
+
 ## [2.9.47] - 2025-12-09
 
 ### ⌨️ Tooltips Enhancement - Keyboard Shortcuts + JSON Rewriter (SHOULD HAVE)

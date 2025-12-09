@@ -52,15 +52,17 @@ class PathEntry(QWidget):
         # Path input
         self.ed_path = QLineEdit()
         self.ed_path.setPlaceholderText("Enter file or directory path")
+        self.ed_path.setToolTip("Path to file or directory to process with AI | Ctrl+Shift+A to open AI Processor")
         
         # Browse button
         self.btn_browse = QPushButton("Browse")
         self.btn_browse.setMaximumWidth(80)
+        self.btn_browse.setToolTip("Browse for file or directory | Ctrl+O to open file dialog")
         self.btn_browse.clicked.connect(self._browse)
         
         # Is file checkbox
         self.chk_is_file = QCheckBox("File")
-        self.chk_is_file.setToolTip("Check if selecting a file, uncheck for directory")
+        self.chk_is_file.setToolTip("Check if selecting a file, uncheck for directory | Ctrl+Shift+A to open AI Processor")
         
         # Remove button (disabled for first path)
         self.btn_remove = QPushButton("✕")
@@ -195,19 +197,19 @@ class AIProcessorDock(StandardToolDock):
             "Perplexity"
         ])
         self.combo_provider.currentIndexChanged.connect(self._on_provider_changed)
-        self.combo_provider.setToolTip("Choose your AI provider (requires API key)")
+        self.combo_provider.setToolTip("Choose your AI provider (requires API key) | Ctrl+Shift+A to open AI Processor")
         grid.addWidget(self.combo_provider, 0, 1, 1, 2)
         
         # Model selection
         grid.addWidget(QLabel("Model:"), 1, 0)
         self.combo_model = QComboBox()
-        self.combo_model.setToolTip("AI model to use (different models have different costs and capabilities)")
+        self.combo_model.setToolTip("AI model to use (different models have different costs and capabilities) | Ctrl+Shift+A to open AI Processor")
         grid.addWidget(self.combo_model, 1, 1, 1, 2)
         
         # Refresh models button
         self.btn_refresh_models = QPushButton("🔄")
         self.btn_refresh_models.setMaximumWidth(40)
-        self.btn_refresh_models.setToolTip("Refresh models list from API")
+        self.btn_refresh_models.setToolTip("Refresh models list from API | Ctrl+Shift+A to open AI Processor")
         self.btn_refresh_models.clicked.connect(self._refresh_models)
         grid.addWidget(self.btn_refresh_models, 1, 3)
         
@@ -216,10 +218,10 @@ class AIProcessorDock(StandardToolDock):
         self.ed_api_key = QLineEdit()
         self.ed_api_key.setEchoMode(QLineEdit.Password)
         self.ed_api_key.setPlaceholderText("Enter API key")
-        self.ed_api_key.setToolTip("Your API key from the AI provider's dashboard (kept secure, never stored)")
+        self.ed_api_key.setToolTip("Your API key from the AI provider's dashboard (kept secure, never stored) | Ctrl+Shift+A to open AI Processor")
         self.btn_verify = QPushButton("Verify")
         self.btn_verify.clicked.connect(self._verify_key)
-        self.btn_verify.setToolTip("Test if your API key is valid and working")
+        self.btn_verify.setToolTip("Test if your API key is valid and working | Ctrl+Shift+A to open AI Processor")
         grid.addWidget(self.ed_api_key, 2, 1, 1, 3)
         grid.addWidget(self.btn_verify, 2, 4)
         
@@ -227,6 +229,7 @@ class AIProcessorDock(StandardToolDock):
         grid.addWidget(QLabel("Prompt:"), 3, 0)
         self.ed_prompt = QTextEdit()
         self.ed_prompt.setPlaceholderText("Enter instructions for AI (e.g., 'Analyze this code and suggest improvements')")
+        self.ed_prompt.setToolTip("Enter AI processing instructions (one per line for line-by-line mode) | Ctrl+Shift+A to open AI Processor")
         self.ed_prompt.setMaximumHeight(100)
         grid.addWidget(self.ed_prompt, 3, 1, 1, 4)
         
@@ -251,6 +254,7 @@ class AIProcessorDock(StandardToolDock):
         
         # Add path button
         btn_add_path = QPushButton("+ Add Path")
+        btn_add_path.setToolTip("Add another file or directory path to process | Ctrl+Shift+A to open AI Processor")
         btn_add_path.clicked.connect(self._add_path_entry)
         btn_add_path.setMaximumWidth(120)
         paths_group_layout.addWidget(btn_add_path)
@@ -266,12 +270,13 @@ class AIProcessorDock(StandardToolDock):
         options_grid = QGridLayout()
         
         self.chk_line_by_line = QCheckBox("Line-by-line mode")
-        self.chk_line_by_line.setToolTip("Use each line of prompt for each file cyclically")
+        self.chk_line_by_line.setToolTip("Use each line of prompt for each file cyclically | Ctrl+Shift+A to open AI Processor")
         options_grid.addWidget(self.chk_line_by_line, 0, 0, 1, 2)
         
         lbl_max, self.spin_max_bytes = self.create_spinbox_input(
             "Max bytes:", 1000, 10000000, 1000000, 100000
         )
+        self.spin_max_bytes.setToolTip("Maximum file size to process (bytes) | Ctrl+Shift+A to open AI Processor")
         options_grid.addWidget(lbl_max, 1, 0)
         options_grid.addWidget(self.spin_max_bytes, 1, 1)
         
@@ -279,6 +284,7 @@ class AIProcessorDock(StandardToolDock):
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setText(".txt,.py,.js,.ts,.jsx,.tsx")
         self.ed_extensions.setPlaceholderText("Comma-separated (e.g., .txt,.py)")
+        self.ed_extensions.setToolTip("File extensions to process (comma-separated, e.g., .txt,.py,.js) | Ctrl+Shift+A to open AI Processor")
         options_grid.addWidget(self.ed_extensions, 1, 3, 1, 2)
         
         controls_layout.addLayout(options_grid)
@@ -288,26 +294,32 @@ class AIProcessorDock(StandardToolDock):
         scope_layout = QGridLayout()
         
         self.chk_scope_enable = QCheckBox("Enable")
-        self.chk_scope_enable.setToolTip("Extract only content between start/end markers")
+        self.chk_scope_enable.setToolTip("Extract only content between start/end markers | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.chk_scope_enable, 0, 0, 1, 2)
         
         scope_layout.addWidget(QLabel("Start:"), 1, 0)
         self.ed_scope_start = QLineEdit()
         self.ed_scope_start.setPlaceholderText("e.g., { or <div>")
+        self.ed_scope_start.setToolTip("Starting marker to extract content from (e.g., '{' or '<div>') | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.ed_scope_start, 1, 1, 1, 2)
         
         self.chk_start_regex = QCheckBox("Regex")
+        self.chk_start_regex.setToolTip("Treat start marker as regex pattern | Ctrl+Shift+A to open AI Processor")
         self.chk_start_case = QCheckBox("Case sensitive")
+        self.chk_start_case.setToolTip("Case sensitive matching for start marker | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.chk_start_regex, 1, 3)
         scope_layout.addWidget(self.chk_start_case, 1, 4)
         
         scope_layout.addWidget(QLabel("End:"), 2, 0)
         self.ed_scope_end = QLineEdit()
         self.ed_scope_end.setPlaceholderText("e.g., } or </div>")
+        self.ed_scope_end.setToolTip("Ending marker to extract content to (e.g., '}' or '</div>') | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.ed_scope_end, 2, 1, 1, 2)
         
         self.chk_end_regex = QCheckBox("Regex")
+        self.chk_end_regex.setToolTip("Treat end marker as regex pattern | Ctrl+Shift+A to open AI Processor")
         self.chk_end_case = QCheckBox("Case sensitive")
+        self.chk_end_case.setToolTip("Case sensitive matching for end marker | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.chk_end_regex, 2, 3)
         scope_layout.addWidget(self.chk_end_case, 2, 4)
         
@@ -318,14 +330,14 @@ class AIProcessorDock(StandardToolDock):
         adv_cond_group = QGroupBox("Advanced File Filters (Optional)")
         adv_cond_group.setCheckable(True)
         adv_cond_group.setChecked(False)
-        adv_cond_group.setToolTip("Filter files by filename, size, date, content patterns, etc.")
+        adv_cond_group.setToolTip("Filter files by filename, size, date, content patterns, etc. | Ctrl+Shift+A to open AI Processor")
         adv_cond_layout = QGridLayout()
         
         # Logic operator
         adv_cond_layout.addWidget(QLabel("Logic:"), 0, 0)
         self.combo_cond_logic = QComboBox()
         self.combo_cond_logic.addItems(["AND", "OR"])
-        self.combo_cond_logic.setToolTip("AND: All conditions must match | OR: At least one must match")
+        self.combo_cond_logic.setToolTip("AND: All conditions must match | OR: At least one must match | Ctrl+Shift+A to open AI Processor")
         adv_cond_layout.addWidget(self.combo_cond_logic, 0, 1, 1, 2)
         
         # Headers
@@ -342,32 +354,33 @@ class AIProcessorDock(StandardToolDock):
             # Field combo
             combo_field = QComboBox()
             combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-            combo_field.setToolTip("Select field to filter on")
+            combo_field.setToolTip("Select field to filter on | Ctrl+Shift+A to open AI Processor")
             
             # Operator combo
             combo_op = QComboBox()
             combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
                               "starts with", "ends with", ">", "<", ">=", "<="])
-            combo_op.setToolTip("Select comparison operator")
+            combo_op.setToolTip("Select comparison operator | Ctrl+Shift+A to open AI Processor")
             
             # Value input
             ed_value = QLineEdit()
             ed_value.setPlaceholderText("Filter value")
+            ed_value.setToolTip("Value to compare against (use regex if checkbox enabled) | Ctrl+Shift+A to open AI Processor")
             
             # Scope combo
             combo_scope = QComboBox()
             combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
                                  "custom", "tag", "specific-tag", "hierarchical"])
-            combo_scope.setToolTip("Scope for content field (e.g., only search within {} or tags)")
+            combo_scope.setToolTip("Scope for content field (e.g., only search within {} or tags) | Ctrl+Shift+A to open AI Processor")
             
             # Case sensitive checkbox
             chk_case = QCheckBox()
             chk_case.setChecked(True)
-            chk_case.setToolTip("Case sensitive matching")
+            chk_case.setToolTip("Case sensitive matching | Ctrl+Shift+A to open AI Processor")
             
             # Regex checkbox
             chk_regex = QCheckBox()
-            chk_regex.setToolTip("Use value as regex pattern")
+            chk_regex.setToolTip("Use value as regex pattern | Ctrl+Shift+A to open AI Processor")
             
             # Add to grid (row + 2 because of headers)
             grid_row = row + 2
@@ -383,12 +396,12 @@ class AIProcessorDock(StandardToolDock):
         # Add buttons: Add Condition and Clear All (v2.9.40.3: store reference)
         self.buttons_layout_ref = QHBoxLayout()
         btn_add_cond = QPushButton("➕ Add Condition")
-        btn_add_cond.setToolTip("Add more condition rows (no limit)")
+        btn_add_cond.setToolTip("Add more condition rows (no limit) | Ctrl+Shift+A to open AI Processor")
         btn_add_cond.clicked.connect(self._add_condition_row)
         self.buttons_layout_ref.addWidget(btn_add_cond)
         
         btn_clear_cond = QPushButton("🗑️ Clear All")
-        btn_clear_cond.setToolTip("Clear all conditions")
+        btn_clear_cond.setToolTip("Clear all conditions | Ctrl+Shift+A to open AI Processor")
         btn_clear_cond.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_cond)
         self.buttons_layout_ref.addStretch()
@@ -412,6 +425,13 @@ class AIProcessorDock(StandardToolDock):
         ]
         btn_layout = self.create_action_buttons(buttons)
         self.btn_interrupt.setEnabled(False)
+        
+        # Add tooltips to action buttons (v2.9.48)
+        self.btn_process.setToolTip("Process files with AI using specified settings | F5 to execute | Ctrl+Shift+A to open AI Processor")
+        self.btn_interrupt.setToolTip("Interrupt current AI processing | Esc to cancel | Ctrl+Shift+A to open AI Processor")
+        self.btn_save_results.setToolTip("Save AI processing results to file | Ctrl+Shift+A to open AI Processor")
+        self.btn_clear.setToolTip("Clear all results and reset state | Ctrl+L | Ctrl+Shift+A to open AI Processor")
+        
         controls_layout.addLayout(btn_layout)
         
         # Statistics panel
@@ -419,7 +439,9 @@ class AIProcessorDock(StandardToolDock):
         stats_layout = QGridLayout()
         
         self.lbl_session_stats = QLabel("Session: 0 in / 0 out | $0.00")
+        self.lbl_session_stats.setToolTip("Current session token usage: input tokens / output tokens | Estimated cost | Ctrl+Shift+A to open AI Processor")
         self.lbl_lifetime_stats = QLabel("Lifetime: 0 in / 0 out | $0.00")
+        self.lbl_lifetime_stats.setToolTip("Lifetime total token usage across all sessions | Estimated cumulative cost | Ctrl+Shift+A to open AI Processor")
         
         stats_layout.addWidget(QLabel("💬"), 0, 0)
         stats_layout.addWidget(self.lbl_session_stats, 0, 1)
@@ -429,7 +451,7 @@ class AIProcessorDock(StandardToolDock):
         # Code fence removal option
         self.chk_remove_fences = QCheckBox("Remove code fences (```) from output")
         self.chk_remove_fences.setChecked(True)
-        self.chk_remove_fences.setToolTip("Automatically strip ```json and ``` from responses")
+        self.chk_remove_fences.setToolTip("Automatically strip ```json and ``` from responses | Ctrl+Shift+A to open AI Processor")
         stats_layout.addWidget(self.chk_remove_fences, 2, 0, 1, 2)
         
         stats_group.setLayout(stats_layout)
