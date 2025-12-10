@@ -116,7 +116,7 @@ class TestSearchReplacePanelInitialization:
 class TestSearchReplacePanelOperations:
     """Test SearchReplacePanel search and replace operations."""
     
-    def test_search_button_toggles_state(self, qapp, mock_message_box):
+    def test_search_button_toggles_state(self, main_window):
         """Test that search button changes state during search."""
         # window created by fixture
         panel = main_window.search_panel
