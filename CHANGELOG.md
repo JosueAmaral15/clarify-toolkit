@@ -1,5 +1,35 @@
 # Changelog - Clarify Project
 
+## [2.9.62] - 2025-12-10
+
+### ⌨️ Keyboard Shortcuts Customization
+
+Implementação de sistema completo de customização de atalhos de teclado com interface gráfica, detecção de conflitos e import/export.
+
+**Features**:
+- ✅ Visual customizer dialog (800x600)
+- ✅ Conflict detection (app & OS shortcuts)
+- ✅ Import/export shortcuts (JSON format)
+- ✅ Category filtering (File, Edit, Tools, Navigation, View, Processing, Help)
+- ✅ Real-time search
+- ✅ Show conflicts only mode
+- ✅ Reset individual/all shortcuts
+- ✅ Color-coded status (red=conflict, yellow=modified, orange=OS conflict)
+
+**Files**:
+- `src/gui/shortcut_customizer.py` [NEW] - ShortcutCustomizerDialog (540 lines)
+- `tests/test_shortcut_customizer.py` [NEW] - Test suite (390 lines, 23 tests)
+- `docs/SHORTCUTS_CUSTOMIZATION.md` [NEW] - Documentation
+- `src/app.py` [MOD] - Integration (menu item + Ctrl+K Ctrl+S)
+
+**Tests**: 23/23 passing (100%) in 0.34s
+
+**Access**: Help → Customize Shortcuts... or `Ctrl+K Ctrl+S`
+
+**Protocol**: Simplicidade 3 v3.1 (COULD HAVE task #4/23)
+
+---
+
 ## [2.9.61] - 2025-12-10
 
 ### 🛡️ Error Handling & Crash Reporting - Automated Crash Handler

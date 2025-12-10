@@ -5020,6 +5020,13 @@ if _PYSIDE:
             m_help.addAction(self.act_keyboard_shortcuts_help)
             self.act_keyboard_shortcuts_help.triggered.connect(self._show_keyboard_shortcuts_help)
             
+            # Keyboard Shortcuts Customization (v2.9.62)
+            self.act_customize_shortcuts = QAction("Customize Shortcuts...", self)
+            self.act_customize_shortcuts.setToolTip("Customize keyboard shortcuts")
+            self.act_customize_shortcuts.setShortcut("Ctrl+K Ctrl+S")
+            m_help.addAction(self.act_customize_shortcuts)
+            self.act_customize_shortcuts.triggered.connect(self._customize_shortcuts)
+            
             # Update Checker (v2.9.45)
             m_help.addSeparator()
             self.act_check_updates = QAction("🔄 Verificar Atualizações", self)
@@ -5314,6 +5321,24 @@ if _PYSIDE:
             
             dialog = ShortcutsDialog(self)
             dialog.shortcuts_changed.connect(self._on_shortcuts_changed)
+            dialog.exec()
+        
+        def _customize_shortcuts(self):
+            """Show keyboard shortcuts customization dialog (v2.9.62)."""
+            from .gui.shortcut_customizer import ShortcutCustomizerDialog
+            from .shortcut_manager import ShortcutManager
+            
+            dialog = ShortcutCustomizerDialog(self)
+            
+            def on_shortcuts_changed(custom_shortcuts):
+                # Save to settings
+                self.settings.save_custom_shortcuts(custom_shortcuts)
+                # Apply to ShortcutManager
+                ShortcutManager.load_custom_shortcuts(custom_shortcuts)
+                # Log change
+                self.logger.info(f"Shortcuts customized: {len(custom_shortcuts)} modified")
+            
+            dialog.shortcutsChanged.connect(on_shortcuts_changed)
             dialog.exec()
         
         def _show_keyboard_shortcuts_help(self):
