@@ -73,6 +73,9 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tupl
 # Logging system
 from .utils.logger import get_logger
 
+# Error handling & crash reporting (v2.9.61)
+from .utils.error_handler import install_crash_handler
+
 # Core functionality: search, replace, insert, filtering
 from .core import (
     SearchOptions, preserve_case_like, replace_in_text,
@@ -4129,6 +4132,14 @@ if _PYSIDE:
             # Initialize logging system (v2.9.58)
             self.logger = get_logger("clarify.app.MainWindow")
             self.logger.info("Initializing Clarify application")
+            
+            # Initialize crash handler (v2.9.61)
+            # Install global exception handler with dialog
+            self.crash_handler = install_crash_handler(
+                show_dialog=True,
+                report_crashes=False  # Opt-in only
+            )
+            self.logger.info("Crash handler installed")
             
             # Initialize translator (Task #24 - v2.9.10)
             self.translator = get_translator()
