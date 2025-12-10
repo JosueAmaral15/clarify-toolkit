@@ -1,5 +1,29 @@
 # Changelog - Clarify Project
 
+## [2.9.63] - 2025-12-10
+
+### 📋 Project Templates System
+
+Sistema completo de templates de projeto para criação rápida de projetos pré-configurados.
+
+**Features**:
+- ✅ 5 built-in templates (JSON translation, text processing, JSON rewriter, AI processing, blank)
+- ✅ Template dialog UI (700x500)
+- ✅ Category system (web, data_science, other)
+- ✅ Custom template creation
+- ✅ Template persistence (~/.config/clarify/templates/)
+
+**Files**:
+- `src/template_manager.py` [NEW] - TemplateManager class (380 lines)
+- `src/gui/template_dialog.py` [NEW] - TemplateDialog UI (90 lines)
+- `src/app.py` [MODIFIED] - File menu integration (Ctrl+Shift+N)
+- `tests/test_template_manager.py` [NEW] - 5 tests (100% passing)
+- `docs/PROJECT_TEMPLATES.md` [NEW] - Documentation
+
+**Access**: File → New from Template... (Ctrl+Shift+N)
+
+---
+
 ## [2.9.62] - 2025-12-10
 
 ### ⌨️ Keyboard Shortcuts Customization

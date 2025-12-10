@@ -4838,6 +4838,15 @@ if _PYSIDE:
 
             # File menu
             m_file = bar.addMenu(tr("menu.file"))
+            
+            # New Project from Template (v2.9.63)
+            self.act_new_from_template = QAction("New from Template...", self)
+            self.act_new_from_template.setToolTip("Create project from template")
+            self.act_new_from_template.setShortcut("Ctrl+Shift+N")
+            m_file.addAction(self.act_new_from_template)
+            self.act_new_from_template.triggered.connect(self._new_from_template)
+            m_file.addSeparator()
+            
             self.act_open_editor = QAction(tr("menu.file.open_editor"), self)
             self.act_open_editor.setToolTip("Open integrated file editor")
             self.act_open_editor.setShortcut("Ctrl+E")
@@ -5321,6 +5330,13 @@ if _PYSIDE:
             
             dialog = ShortcutsDialog(self)
             dialog.shortcuts_changed.connect(self._on_shortcuts_changed)
+            dialog.exec()
+        
+        def _new_from_template(self):
+            """Create new project from template (v2.9.63)."""
+            from .gui.template_dialog import TemplateDialog
+            
+            dialog = TemplateDialog(self)
             dialog.exec()
         
         def _customize_shortcuts(self):
