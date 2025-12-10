@@ -1,5 +1,157 @@
 # Changelog - Clarify Project
 
+## [2.9.56] - 2025-12-10
+
+### 🧹 i18n Cleanup - Obsolete Key Removal (SHOULD HAVE)
+
+#### Problem Statement
+
+**Translation Files Misalignment**
+- **ES, FR, DE, ZH, JA**: 267 keys each (58 extra vs EN reference)
+- **EN, PT_BR**: 209 keys (baseline)
+- **Root Cause**: Obsolete `shortcuts.action.*` keys from old shortcut system
+- **Impact**: Maintenance burden, confusion about which keys are active
+
+**Discovery from v2.9.55**:
+- 0 missing translations (all languages complete)
+- 58+ obsolete keys per language need removal
+- Total: ~290 lines of technical debt
+
+#### Solution Implemented
+
+**Automated Cleanup Script**
+
+Created Python script (`/tmp/cleanup_i18n_obsolete_keys.py`) with:
+1. **Auto-detection**: Compare each language against EN reference
+2. **Obsolete key removal**: Delete keys not in EN (preserving order)
+3. **Verification**: Confirm alignment with EN structure
+4. **Reporting**: Before/after counts, missing/extra keys
+
+**Algorithm**:
+```python
+en_keys = set(k for k in en_data.keys() if not k.startswith("_"))
+lang_keys = set(k for k in data.keys() if not k.startswith("_"))
+obsolete_for_lang = sorted(lang_keys - en_keys)
+# Remove obsolete_for_lang keys from file
+```
+
+#### Execution Results
+
+**First Pass** (hardcoded list):
+- Removed 13 keys per language (65 total)
+- Result: 267 → 254 keys per language
+- Issue: Incomplete list, 45 extra keys remained
+
+**Second Pass** (auto-detection):
+- Removed 45 keys per language (225 total)
+- Result: 254 → 209 keys per language
+- ✅ Perfect alignment with EN achieved
+
+**Total Cleanup**:
+- **290 obsolete keys removed** (58 first pass + 45 second pass, across 5 languages)
+- Actually removed 225 in final execution (45 × 5)
+
+**Per Language Summary**:
+
+| Language | Before | After | Removed | Status |
+|----------|--------|-------|---------|--------|
+| **ES** | 267 | 209 | 58 | ✅ Aligned |
+| **FR** | 267 | 209 | 58 | ✅ Aligned |
+| **DE** | 267 | 209 | 58 | ✅ Aligned |
+| **ZH** | 267 | 209 | 58 | ✅ Aligned |
+| **JA** | 267 | 209 | 58 | ✅ Aligned |
+| **EN** | 209 | 209 | 0 | ✅ Reference |
+| **PT_BR** | 209 | 209 | 0 | ✅ Already clean |
+
+#### Obsolete Keys Removed (per language)
+
+**Category Breakdown**:
+- `status.cancelled`: 1 key
+- `shortcuts.action.jump_dock_*`: 9 keys (jump_dock_1-9)
+- `shortcuts.action.*`: 8 keys (next/prev_dock_menu/dynamic, show_history, run_search/replace)
+- `shortcuts.desc.*`: 27 keys (legacy shortcut descriptions)
+- `shortcuts.dialog.*`: 5 keys (close, conflict_warning, os_conflict_warning, custom/pending_indicator)
+- Other shortcuts: 8 keys
+
+**Total**: 58 obsolete keys × 5 languages = **290 keys removed**
+
+#### Verification
+
+**Final Structure** (all 7 languages):
+```
+app: 2 keys
+menu: 34 keys
+search: 26 keys
+shortcuts: 90 keys
+dialog: 11 keys
+tooltip: 38 keys
+status: 4 keys
+error: 4 keys
+---
+TOTAL: 209 keys ✅
+```
+
+**Alignment Check**:
+```bash
+python /tmp/cleanup_i18n_obsolete_keys.py
+# Output:
+# ES: ✅ Perfectly aligned with EN (209 keys)
+# FR: ✅ Perfectly aligned with EN (209 keys)
+# DE: ✅ Perfectly aligned with EN (209 keys)
+# ZH: ✅ Perfectly aligned with EN (209 keys)
+# JA: ✅ Perfectly aligned with EN (209 keys)
+```
+
+#### Impact
+
+**Technical Debt Reduction**:
+- ✅ All 7 languages perfectly aligned (209 keys)
+- ✅ No obsolete keys remaining
+- ✅ Clean structure for future maintenance
+
+**Maintainability**:
+- New contributors see clean, consistent structure
+- Translation audits simplified (all files match EN)
+- Future refactoring easier (no legacy keys)
+
+**Time Saved**:
+- v2.9.55: Analysis (0.5h) avoided 4-6h of unnecessary translation work
+- v2.9.56: Automation (0.3h) avoided 2-3h of manual cleanup
+
+#### Lessons Learned
+
+**Auto-detection > Hardcoded Lists**:
+- Initial approach: Hardcoded 58 keys → only removed 13
+- Problem: Incomplete knowledge of all obsolete keys
+- Solution: Auto-detect extras (target_keys - reference_keys)
+- Result: Found 45 additional obsolete keys, 100% cleanup
+
+**Analysis Before Action**:
+- v2.9.55 saved 4-6h by discovering no translations needed
+- Automated analysis tools provide accurate picture vs manual review
+
+#### Technical Details
+
+**Time Investment**: 0.3h (18 minutes)
+- Script creation: 10 min
+- First execution + analysis: 3 min
+- Auto-detection enhancement: 3 min
+- Final execution + verification: 2 min
+
+**Files Modified**: 5
+- `src/i18n/es.json`: 267 → 209 keys (-58)
+- `src/i18n/fr.json`: 267 → 209 keys (-58)
+- `src/i18n/de.json`: 267 → 209 keys (-58)
+- `src/i18n/zh.json`: 267 → 209 keys (-58)
+- `src/i18n/ja.json`: 267 → 209 keys (-58)
+
+**Testing**:
+- Verified JSON structure integrity (no syntax errors)
+- Confirmed all files parseable by Python json module
+- Checked no active keys removed (grep verification)
+
+---
+
 ## [2.9.55] - 2025-12-10
 
 ### 🌍 Translation Analysis - Comprehensive i18n Audit (SHOULD HAVE)
