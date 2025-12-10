@@ -1,0 +1,47 @@
+# Clarify Configuration File
+# Generated: 2025-12-10
+# Edit with care or use Settings → Advanced in the app
+
+# Application settings
+app:
+  theme: system  # system | light | dark
+  language: en   # en | pt-br | es | fr | de | zh | ja
+  max_recent_files: 10
+  confirm_on_exit: true
+  show_tooltips: true
+  auto_save: true
+  check_updates_on_startup: true
+
+# Logging configuration (integrates with v2.9.58 Logging System)
+logging:
+  level: INFO  # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  max_file_size_mb: 10
+  backup_count: 5
+  console_output: true
+
+# Performance settings
+performance:
+  thread_pool_size: 4
+  max_file_size_mb: 50
+  cache_duration_hours: 24
+  batch_size: 100
+
+# AI Provider settings
+ai:
+  default_provider: OpenAI  # OpenAI | Gemini
+  remember_api_keys: false  # Security: false by default
+  max_tokens: 4096
+  temperature: 0.7
+
+# Editor settings
+editor:
+  font_family: Consolas
+  font_size: 12
+  tab_width: 4
+  auto_save_interval_sec: 60
+  syntax_highlighting: true
+
+# Paths
+paths:
+  default_directory: ~
+  custom_extensions: .txt,.py,.js,.ts,.jsx,.tsx,.json
