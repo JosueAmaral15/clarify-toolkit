@@ -1,5 +1,242 @@
 # Changelog - Clarify Project
 
+## [2.9.58] - 2025-12-10
+
+### 📊 Logging System - Structured Logging with Rotation & Testing
+
+#### Problem Statement
+
+**Infrastructure Limitation**:
+- **No Centralized Logging**: Aplicação carecia de sistema estruturado para debugging e monitoramento
+- **Debugging Challenges**: Difícil rastrear problemas em produção sem logs persistentes
+- **No Historical Data**: Sem capacidade de análise de comportamento histórico da aplicação
+
+**Requirements**:
+- Sistema de logging centralizado com múltiplos níveis (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Rotação automática de arquivos para gerenciar espaço em disco
+- Saída colorida no console para desenvolvimento
+- Thread-safe para operações concorrentes
+- Configuração em runtime e via variáveis de ambiente
+- Documentação e testes abrangentes
+
+#### Solution Overview
+
+**Implementation - Logging System v2.9.58**:
+
+**Core Components**:
+1. **`src/utils/logger.py`** (330 lines):
+   - `ClarifyLogger` class (Singleton pattern)
+   - `ColoredFormatter` (ANSI codes para console)
+   - Module functions: `get_logger()`, `set_log_level()`, `get_log_file()`, `clear_all_logs()`
+   - Configuração: `CLARIFY_LOG_LEVEL` environment variable
+
+2. **File Rotation**:
+   - Max size: 10 MB por arquivo
+   - Backup count: 5 arquivos
+   - Location: `~/.clarify/logs/clarify.log`
+   - Handler: `RotatingFileHandler`
+
+3. **Log Levels & Formats**:
+   - DEBUG (Cyan), INFO (Green), WARNING (Yellow), ERROR (Red), CRITICAL (Magenta)
+   - Console: Colored with ANSI codes
+   - File: Plain text with timestamps
+
+**Integration**:
+- **`src/app.py`**: MainWindow logging integration
+  ```python
+  self.logger = get_logger("clarify.app.MainWindow")
+  self.logger.info("Initializing Clarify application")
+  ```
+
+**Testing**:
+- **`tests/test_logging_system.py`** (280 lines, 18 tests):
+  - TestClarifyLogger: 5 tests (singleton, initialization, logger creation)
+  - TestLoggerOutput: 3 tests (file writing, all levels, exceptions)
+  - TestLogRotation: 2 tests (file path, rotation settings)
+  - TestThreadSafety: 1 test (concurrent logging with 5 threads)
+  - TestModuleLevelFunctions: 3 tests (API functions)
+  - TestLogManagement: 1 test (clear logs)
+  - TestColoredFormatter: 2 tests (color formatting)
+  - TestEnvironmentConfiguration: 1 test (env vars)
+  - **Results**: ✅ 18/18 passing (0.23s) - 100%
+
+**Documentation**:
+- **`docs/LOGGING.md`** (550+ lines):
+  - Quick Start Guide
+  - Configuration (environment variables, runtime changes)
+  - Log File Management (location, rotation, clearing)
+  - Integration Examples (module-level, class-based, GUI)
+  - Best Practices (5 key recommendations)
+  - API Reference (functions, classes, constants)
+  - Troubleshooting Guide
+  - Complete code examples
+
+#### Technical Details
+
+**File Structure Changes**:
+```
+src/utils/logger.py              [NEW]  - Logging system implementation (330 lines)
+tests/test_logging_system.py     [NEW]  - Test suite (280 lines, 18 tests)
+docs/LOGGING.md                  [NEW]  - Documentation (550+ lines)
+src/app.py                       [MOD]  - Logger integration in MainWindow
+```
+
+**Logger Features**:
+- **Thread Safety**: Built-in logging module thread safety
+- **Automatic Directory Creation**: Creates `~/.clarify/logs/` if missing
+- **Dual Output**: File + colored console simultaneously
+- **Runtime Configuration**: Change log level without restart
+- **Exception Logging**: Full stack traces with `logger.exception()`
+- **Lazy Evaluation**: Log level filtering prevents unnecessary string formatting
+
+**Configuration Options**:
+
+1. **Environment Variable**:
+   ```bash
+   export CLARIFY_LOG_LEVEL=DEBUG
+   ```
+
+2. **Runtime API**:
+   ```python
+   from src.utils.logger import set_log_level
+   import logging
+   set_log_level(logging.DEBUG)
+   ```
+
+**Usage Examples**:
+
+1. **Basic Usage**:
+   ```python
+   from src.utils.logger import get_logger
+   logger = get_logger(__name__)
+   logger.info("Processing file: %s", filename)
+   ```
+
+2. **Exception Logging**:
+   ```python
+   try:
+       risky_operation()
+   except Exception as e:
+       logger.exception("Operation failed: %s", e)
+   ```
+
+3. **Clear Logs**:
+   ```python
+   from src.utils.logger import clear_all_logs
+   clear_all_logs()  # Remove all log files
+   ```
+
+#### Testing Results
+
+**Test Execution Summary**:
+```
+pytest tests/test_logging_system.py -v
+=================== 18 passed in 0.23s ===================
+
+✅ TestClarifyLogger (5/5):
+   - test_singleton_pattern
+   - test_logger_initialization
+   - test_get_logger
+   - test_default_log_level
+   - test_set_log_level
+
+✅ TestLoggerOutput (3/3):
+   - test_logger_writes_to_file
+   - test_all_log_levels
+   - test_exception_logging
+
+✅ TestLogRotation (2/2):
+   - test_log_file_path
+   - test_rotation_settings
+
+✅ TestThreadSafety (1/1):
+   - test_concurrent_logging
+
+✅ TestModuleLevelFunctions (3/3):
+   - test_get_logger_function
+   - test_set_log_level_function
+   - test_get_log_file_function
+
+✅ TestLogManagement (1/1):
+   - test_clear_logs_function
+
+✅ TestColoredFormatter (2/2):
+   - test_formatter_initialization
+   - test_colored_output_format
+
+✅ TestEnvironmentConfiguration (1/1):
+   - test_log_level_from_environment
+```
+
+**Demo Execution**:
+```bash
+python -m src.utils.logger
+# Output:
+# 2025-12-10 14:30:15 [INFO] Demo logger: This is an info message
+# 2025-12-10 14:30:15 [WARNING] Demo logger: This is a warning
+# 2025-12-10 14:30:15 [ERROR] Demo logger: This is an error
+# 2025-12-10 14:30:15 [CRITICAL] Demo logger: This is critical!
+# 2025-12-10 14:30:15 [ERROR] Demo logger: Testing exception logging
+# Traceback (most recent call last): ...
+# Log file location: /home/josue/.clarify/logs/clarify.log
+```
+
+#### Quality Assurance
+
+**Code Quality**:
+- ✅ Type hints throughout
+- ✅ Docstrings for all functions/classes
+- ✅ Thread-safe operations
+- ✅ Comprehensive error handling
+- ✅ Clean code structure (330 lines well-organized)
+
+**Test Coverage**:
+- ✅ 18 comprehensive tests (100% passing)
+- ✅ All core functionality tested
+- ✅ Thread safety validated (5 concurrent threads)
+- ✅ Exception handling verified
+- ✅ Environment configuration tested
+
+**Documentation Quality**:
+- ✅ 550+ lines comprehensive guide
+- ✅ Multiple integration examples
+- ✅ Best practices documented
+- ✅ API reference complete
+- ✅ Troubleshooting guide included
+
+#### Impact Assessment
+
+**Benefits**:
+- ✅ **Debugging**: Structured logs para identificar problemas rapidamente
+- ✅ **Monitoring**: Histórico persistente do comportamento da aplicação
+- ✅ **Performance**: Log level filtering evita overhead desnecessário
+- ✅ **Maintenance**: Rotação automática gerencia espaço em disco
+- ✅ **Development**: Saída colorida facilita debugging visual
+- ✅ **Production Ready**: Thread-safe e robusto
+
+**Next Steps**:
+- Expandir logging para outros módulos (json_translate_dock, text_to_json_dock, etc.)
+- Considerar integração com ferramentas de monitoring externas
+- Avaliar logging de métricas de performance
+
+#### Commits & Changes
+
+**Files Created**:
+- `src/utils/logger.py` - Logging system implementation (330 lines)
+- `tests/test_logging_system.py` - Test suite (280 lines)
+- `docs/LOGGING.md` - Comprehensive documentation (550+ lines)
+
+**Files Modified**:
+- `src/app.py` - Logger integration in MainWindow.__init__()
+
+**Test Results**:
+- 18 tests created
+- 18 tests passing (100%)
+- 0 tests failing
+- Execution time: 0.23s
+
+---
+
 ## [2.9.57] - 2025-12-10
 
 ### 🔧 Maintenance Sprint - Critical Fixes & Dependency Updates

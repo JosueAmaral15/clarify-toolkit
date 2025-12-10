@@ -1251,6 +1251,7 @@ result = convert_text_to_json(text, "auto")
       - 90 keys × 6 idiomas = 540 traduções
       - PT-BR, ES, FR, DE, ZH, JA
       - Estimativa: 4-6h (1 sprint extenso)
+    * **[]** Fornecer possibilidade de organização de arquivos em pastas ou diretórios, automaticamente, por contexto de conteúdo e nome de arquivo
 
 ---
 

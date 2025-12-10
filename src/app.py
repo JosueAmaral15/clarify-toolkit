@@ -70,6 +70,9 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tupl
 #  Import organized modules (eliminates code duplication)
 # ---------------------------------------------------------------------------
 
+# Logging system
+from .utils.logger import get_logger
+
 # Core functionality: search, replace, insert, filtering
 from .core import (
     SearchOptions, preserve_case_like, replace_in_text,
@@ -4122,6 +4125,10 @@ if _PYSIDE:
         def __init__(self, app: QApplication):
             super().__init__()
             self.app = app
+            
+            # Initialize logging system (v2.9.58)
+            self.logger = get_logger("clarify.app.MainWindow")
+            self.logger.info("Initializing Clarify application")
             
             # Initialize translator (Task #24 - v2.9.10)
             self.translator = get_translator()
