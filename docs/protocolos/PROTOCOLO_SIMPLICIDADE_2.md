@@ -2,9 +2,9 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 02 de Dezembro de 2025  
-**Baseado em**: Protocolo Simplicidade 1 v1.9  
-**Versão**: 2.1  
-**Última Atualização**: 09 de Dezembro de 2025  
+**Baseado em**: Protocolo Simplicidade 1 v2.0  
+**Versão**: 2.2  
+**Última Atualização**: 10 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional AVANÇADA para desenvolvimento incremental de qualidade com foco em segurança, performance e melhoria contínua
 
 **Diferenças do Simplicidade 1**:
@@ -18,6 +18,26 @@
 - ✅ **Retrospectivas de Sprint** (melhoria contínua)
 - ✅ **Code Review por Pares** (se houver equipe)
 - ✅ **Checklist de Acessibilidade** (GUI)
+
+---
+
+## 📊 Comparação dos 3 Protocolos
+
+| Aspecto | Simplicidade 1 | Simplicidade 2 | Simplicidade 3 |
+|---------|----------------|----------------|----------------|
+| **Etapas** | 13 obrigatórias | 13 obrig + 10 opc | 16 obrig + 3 opc |
+| **Cenário** | Protótipos/interno | **Equipes enterprise** | Solo em produção |
+| **Security** | ❌ Não | ✅ OWASP obrigatório | ✅ OWASP obrigatório |
+| **CI/CD** | ❌ Não | ✅ Obrigatório | ✅ Obrigatório |
+| **Rollback** | ❌ Não | ✅ Obrigatório | ✅ Obrigatório |
+| **Code Review** | ❌ Não | ✅ **Pares obrigatório** | ❌ Solo |
+| **Retrospectives** | ❌ Não | ✅ **Equipe formal** | ❌ Solo |
+| **Accessibility** | ❌ Não | ✅ WCAG 2.1 | ❌ Opcional |
+| **API Docs** | ❌ Não | ✅ Sphinx formal | ❌ Docstrings |
+| **Overhead** | Baixo | **Alto** | Médio |
+| **Produção** | ❌ Não recomendado | ✅ **Empresas** | ✅ Solo devs |
+| **Time/Task** | ~2-3h | ~4-6h | ~3-4h |
+| **Melhor Para** | Aprender, prototipar | Equipes grandes | Solo em produção |
 
 ---
 
@@ -40,20 +60,41 @@
 
 ### **Protocolo Simplicidade 2** (13 obrigatórias + 10 opcionais = 23 etapas)
 **Use para**:
-- ✅ Aplicações críticas de produção
-- ✅ Sistemas com dados sensíveis (LGPD, GDPR)
-- ✅ Features de alto impacto/risco
-- ✅ Projetos com equipes médias/grandes (>3 devs)
-- ✅ Bibliotecas/APIs públicas
-- ✅ Sistemas com requisitos de performance
-- ✅ Aplicações comerciais/enterprise
+- ✅ Aplicações **críticas de produção** com equipe
+- ✅ Sistemas com **dados sensíveis** (LGPD, GDPR, PCI-DSS)
+- ✅ Features de **alto impacto/risco**
+- ✅ Projetos com equipes **médias/grandes** (3+ devs)
+- ✅ **Bibliotecas/APIs públicas** com múltiplos usuários
+- ✅ Sistemas com **requisitos de performance** críticos
+- ✅ Aplicações **comerciais/enterprise**
+- ✅ Projetos com **conformidade regulatória** (ISO, SOC2)
+- ✅ Código que requer **auditoria externa**
 
 **Não use para**:
-- ❌ Prototipagem rápida (overhead desnecessário)
-- ❌ Scripts descartáveis
-- ❌ Projetos pessoais simples
+- ❌ **Prototipagem rápida** (overhead desnecessário)
+- ❌ Scripts **descartáveis** ou uso único
+- ❌ Projetos **pessoais simples**
+- ❌ **Solo developer** sem equipe → Use **Simplicidade 3** (menos overhead)
+- ❌ Apps **internos não-críticos** → Use **Simplicidade 1**
+
+**Rationale**: Simplicidade 2 tem **máxima qualidade e segurança** através de:
+- **Code Review por Pares**: Detecta bugs que desenvolvedor solo não vê
+- **Retrospectivas Formais**: Melhoria contínua em equipe
+- **ADR Formais**: Documentação de decisões arquiteturais para longo prazo
+- **Accessibility WCAG**: Conformidade legal para apps públicos
+- **API Docs Sphinx**: Documentação profissional para bibliotecas
+
+Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Para **solo developer**, esse overhead não compensa - use **Simplicidade 3** que mantém segurança de produção sem burocracia de equipe.
 
 ---
+
+**Changelog v2.2** (10/12/2025):
+- ✅ **[COMPLEMENTAÇÃO]** Adicionada tabela comparativa dos 3 protocolos (Simplicidade 1/2/3)
+- ✅ Expandida seção "🎯 Quando Usar Simplicidade 2?"
+- ✅ Critérios adicionais: Conformidade regulatória, auditoria externa, solo dev (use S3)
+- ✅ Rationale detalhado: Por quê code review/ADR/accessibility valem o overhead de 4-6h
+- ✅ Comparação: Simplicidade 2 vs 3 (equipe vs solo) com 12 aspectos analisados
+- ✅ Inspiração: Conceitos adaptados do Simplicidade 3 v3.1 (tabelas, critérios, rationale)
 
 **Changelog v2.1** (09/12/2025):
 - ✅ **[ETAPA 3]** Adicionada recomendação para IA fornecer sugestões e palpites nas perguntas

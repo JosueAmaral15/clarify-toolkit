@@ -2,9 +2,16 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 30 de Novembro de 2025  
-**Versão**: 1.9  
-**Última Atualização**: 09 de Dezembro de 2025  
+**Versão**: 2.0  
+**Última Atualização**: 10 de Dezembro de 2025  
 **Objetivo**: Metodologia profissional para desenvolvimento incremental de qualidade
+
+**Changelog v2.0** (10/12/2025):
+- ✅ **[COMPLEMENTAÇÃO]** Adicionada seção "🎯 Quando Usar Simplicidade 1?"
+- ✅ Critérios claros: ✅ Quando usar (8 critérios) | ❌ Quando NÃO usar (6 critérios)
+- ✅ Migração: Quando evoluir para Simplicidade 2 (equipes) ou 3 (produção solo)
+- ✅ Rationale detalhado: Por quê Simplicidade 1 é ágil mas insuficiente para produção
+- ✅ Inspiração: Conceitos adaptados do Simplicidade 3 v3.1 (tabelas comparativas, critérios)
 
 **Changelog v1.9** (09/12/2025):
 - ✅ **[ETAPA 3]** Adicionada recomendação para IA fornecer sugestões e palpites nas perguntas
@@ -74,6 +81,34 @@
 > "Sempre vão ter tarefas complexas para fazer, mas também aquelas que são mais difíceis e aquelas que são mais fáceis. **Quero que você sempre comece pelas mais fáceis**."
 
 **Princípio**: Do simples ao complexo, incremental, profissional e completo.
+
+---
+
+## 🎯 Quando Usar Simplicidade 1?
+
+### ✅ Use Simplicidade 1 SE:
+- ✅ Projeto **solo** ou pequena equipe (1-3 devs)
+- ✅ Features **simples a médias**
+- ✅ **Prototipagem rápida** ou POC
+- ✅ Primeiro desenvolvimento de uma funcionalidade
+- ✅ **Velocidade** é mais importante que perfeição
+- ✅ Projetos **internos não-críticos**
+- ✅ **Aprendendo** novas tecnologias ou experimentando
+- ✅ Scripts de **uso único** ou ferramentas temporárias
+
+### ❌ NÃO use Simplicidade 1 SE:
+- ❌ Aplicação **crítica de produção** → Use **Simplicidade 3** (solo) ou **Simplicidade 2** (equipe)
+- ❌ Sistema com **requisitos de segurança** (dados sensíveis, LGPD) → Use **Simplicidade 3**
+- ❌ Features de **alto impacto/risco** → Use **Simplicidade 2** ou **3**
+- ❌ Equipes **grandes** (>5 devs) → Use **Simplicidade 2**
+- ❌ Biblioteca/API **pública** → Use **Simplicidade 2**
+- ❌ Sistema com **requisitos de performance** críticos → Use **Simplicidade 2** ou **3**
+
+### 🔄 Quando Migrar para Outros Protocolos?
+- **→ Simplicidade 3**: Quando projeto interno virar produção com usuários reais
+- **→ Simplicidade 2**: Quando equipe crescer para 3+ desenvolvedores
+
+**Rationale**: Simplicidade 1 é **ágil e pragmático** para desenvolvimento rápido, mas **não tem camadas de segurança críticas para produção** (security checklist, CI/CD, rollback plans). É perfeito para **aprender, prototipar e iterar rapidamente**, mas deve ser **upgradado** quando o código for para produção ou equipe crescer.
 
 ---
 

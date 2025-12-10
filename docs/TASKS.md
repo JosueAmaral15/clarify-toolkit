@@ -1188,8 +1188,69 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
     * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
     * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
-  - **[]** **Sprints Futuras - Tooltips Expansion (Incremental por Dock)**:
-    * **[]** v2.9.53 - Tradução de todos tooltips novos (90 keys × 6 idiomas = 540 traduções PT-BR/ES/FR/DE/ZH/JA)
+  - **[X]** **v2.9.55 - Translation Analysis (10/12/2025 - ANÁLISE COMPLETA)**:
+    * **[X]** Análise automatizada executada: script Python comparando 7 arquivos i18n
+    * **[X]** EN (English): 209 keys ✅ COMPLETO
+    * **[X]** PT_BR (Português Brasil): 209 keys ✅ COMPLETO
+    * **[X]** ES/FR/DE/ZH/JA: 267 keys (209 corretos + 58 obsoletos)
+    * **[X]** Conclusão: NÃO há keys faltantes, apenas 58 keys obsoletos para remover
+    * **[X]** Próximo: v2.9.56 - i18n Cleanup (remover shortcuts antigos)
+  - **[X]** **v2.9.54 - Contributing Guide (10/12/2025 - CONCLUÍDO)**:
+    * **[X]** CONTRIBUTING.md aprimorado com seção "Development Protocols"
+    * **[X]** Performance Requirements adicionados (baselines v2.9.53)
+    * **[X]** GUI Safety Rules documentadas (Protocol 9.1)
+    * **[X]** Issue Templates criados: Bug Report, Feature Request, Translation Improvement
+    * **[X]** Development dependencies atualizadas (psutil, pytest-timeout)
+    * **[X]** PR Checklist expandido com novos requisitos
+  - **[X]** **v2.9.53 - Quality Assurance Sprint (10/12/2025 - CONCLUÍDO)**:
+    * **[X]** GUI Automated Tests - Basic Safety (5 testes, 5/5 passing em 1.83s)
+    * **[X]** Performance Benchmarks - JSON Processing (14 testes, 14/14 passing em 36.59s)
+      - Parsing stdlib: 1MB (0.022s, 85 MB/s) | 10MB (0.207s, 90 MB/s) | 50MB (1.262s, 75 MB/s)
+      - Rewriter: 1MB (0.051s, 36 MB/s, 2.3x overhead) | 10MB (0.490s, 38 MB/s, 2.4x) | 50MB (3.007s, 32 MB/s, 2.4x)
+      - Search: 7k (0.001s, 5M items/s) | 70k (0.010s, 6.7M items/s) | 350k (0.066s, 5.2M items/s)
+      - Write: 1MB (0.142s, 16 MB/s) | 10MB (1.496s, 15 MB/s) | 50MB (9.942s, 11 MB/s)
+      - Round-trip: 1MB (0.194s, write=81.6%) | 10MB (1.681s, write=84.7%)
+      - 🎯 **GARGALO**: Escrita JSON (11-16 MB/s), domina 81-84% do tempo total
+      - 💡 **INSIGHT**: Rewriter 2.4x mais lento (trade-off aceitável para preservação de duplicatas)
+    * **[X]** Load Testing - Stress & Scale (4 testes, 4/4 passing em 168.77s = 2min 48s)
+      - Many Small Files: 100 files (0.011s, 8.7k files/s) | 1000 files (0.081s, 12.3k files/s, 0.5 MB mem delta)
+      - Large Corpus: 1.09 GB processado em 68.862s (16.26 MB/s, 7M items, mem peak 469 MB, 2.39x efficiency)
+      - Concurrent Ops: 10 reads (52 MB/s) + 10 searches (6.2M items/s) + 5 writes (10.92 MB/s) = 13.976s total
+      - ✅ **ESTABILIDADE**: Memória estável (sem leaks), GC funcionando corretamente
+      - 🎯 **LIMITE**: Sistema pode processar 1GB+ sem crash (mem peak <500 MB)
+    * **ERRO CRÍTICO EVITADO**: Loop infinito em testes GUI sem timeout (violou Protocolo v1.5 Etapa 9.1)
+    * **Lição Aprendida**: SEMPRE usar @pytest.mark.timeout(5) + dry-run + QT_QPA_PLATFORM=offscreen
+  - **[]** **Roadmap de Sprints (Plano v2.9.53-55 - 09/12/2025)**:
+    * **[X]** v2.9.53 - Quality Assurance (COULD HAVE - Opção B) - ✅ CONCLUÍDO:
+      - ✅ GUI Automated Tests (5 testes, 5/5 passing em 1.83s)
+      - ✅ Performance Benchmarks (14 testes, 14/14 passing em 36.59s, baseline estabelecida)
+      - ✅ Load Testing (4 testes, 4/4 passing em 168.77s, 1GB+ processado sem crash)
+      - **Total**: 23 testes QA, 100% passing, ~3.5h de trabalho
+    * **[X]** v2.9.54 - Contributing Guide (COULD HAVE - Opção C) - ✅ CONCLUÍDO:
+      - ✅ CONTRIBUTING.md atualizado com Protocolos Simplicidade, QA requirements, performance baselines
+      - ✅ Issue templates criados: Bug Report, Feature Request, Translation Improvement
+      - ✅ Development setup atualizado (psutil, pytest-timeout)
+      - ✅ Performance requirements documentados (baselines v2.9.53)
+      - ✅ PR checklist expandido (protocolos, benchmarks, GUI safety)
+      - **Total**: ~1.5h de trabalho
+    * **[X]** v2.9.55 - Translation Analysis (SHOULD HAVE - Opção A) - ✅ ANÁLISE COMPLETA:
+      - ✅ Análise automatizada de 7 idiomas (EN, PT_BR, ES, FR, DE, ZH, JA)
+      - ✅ EN e PT_BR: **209 keys completos** ✅ (100% coverage)
+      - ✅ ES, FR, DE, ZH, JA: **267 keys** (209 corretos + **58 obsoletos** de shortcuts antigos)
+      - ❌ **Decisão**: NÃO adicionar novas traduções (EN/PT_BR já completos)
+      - 🧹 **Próximo sprint**: Remover 58 keys obsoletos dos 5 idiomas (limpeza técnica)
+      - 📊 **Achado**: Sistema tem 100% coverage em EN/PT_BR, demais idiomas precisam LIMPEZA não TRADUÇÃO
+      - **Total**: ~0.5h de análise
+      - Estimativa: 4-6h (3 sprints de 1.5-2h cada)
+    * **[]** v2.9.54 - Contributing Guide (COULD HAVE - Opção C):
+      - Criar CONTRIBUTING.md completo
+      - Code of Conduct, Bug Reports, Feature Requests
+      - Development Setup, Code Style, Testing, PR Process
+      - Estimativa: 2-3h (1 sprint)
+    * **[]** v2.9.55 - Tradução Completa (SHOULD HAVE - Opção A):
+      - 90 keys × 6 idiomas = 540 traduções
+      - PT-BR, ES, FR, DE, ZH, JA
+      - Estimativa: 4-6h (1 sprint extenso)
 
 ---
 

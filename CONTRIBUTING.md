@@ -74,7 +74,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Install development dependencies
-pip install pytest pytest-qt pytest-cov black isort pylint
+pip install pytest pytest-qt pytest-cov pytest-timeout black isort pylint psutil
 
 # 5. Run Clarify
 python -m src.app
@@ -238,6 +238,53 @@ To add a new language (e.g., Italian - `it`):
 
 ---
 
+## 📐 Development Protocols
+
+**Clarify uses structured development protocols** to ensure code quality and prevent common errors.
+
+### Available Protocols
+
+1. **Simplicidade 1** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_1.md`) - v2.0
+   - **For**: Solo developers, prototyping, internal non-critical projects
+   - **Features**: Fast iteration, minimal overhead
+   - **Steps**: 9 mandatory steps (requirements → testing → rollback)
+
+2. **Simplicidade 2** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_2.md`) - v2.2
+   - **For**: Teams (3+ developers), production systems requiring compliance
+   - **Features**: Code review, retrospectives, ADR, accessibility, API docs
+   - **Steps**: 16 mandatory + 3 optional steps
+   - **Overhead**: 4-6h per task (justified by quality gains)
+
+3. **Simplicidade 3** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_3.md`) - v3.1 ⭐
+   - **For**: Solo developer in production (most Clarify contributions)
+   - **Features**: Hybrid approach, AI suggestions, security without bureaucracy
+   - **Steps**: 16 mandatory + 3 optional steps
+   - **AI Integration**: Optional AI suggestions in Step 3 (questions to developer)
+
+### When to Use Each Protocol
+
+| Protocol | Best For | Example Scenarios |
+|----------|----------|------------------|
+| **Simplicidade 1** | Solo dev, non-critical | Personal scripts, POC, learning |
+| **Simplicidade 2** | Teams, compliance | Enterprise, regulated industries, large codebases |
+| **Simplicidade 3** | Solo dev, production | Open-source projects like Clarify ✅ |
+
+### Critical Protocol Rules (Simplicidade 3 - Step 9.1)
+
+**MANDATORY for GUI tests** (prevents infinite loops):
+
+1. ✅ `@pytest.mark.timeout(5)` on EVERY test function
+2. ✅ `QT_QPA_PLATFORM=offscreen` environment variable
+3. ✅ Dry-run first: `pytest --collect-only`
+4. ✅ Shell timeout: `timeout 30s pytest ...`
+5. ✅ NO complex workflows (only instantiation)
+6. ✅ NO I/O operations in tests
+7. ✅ NO signal triggering
+
+**Why**: These rules prevented a **critical infinite loop error** in v2.9.53 that wasted hours of development time.
+
+---
+
 ## 🎨 Code Style Guidelines
 
 ### Python Style
@@ -291,6 +338,27 @@ pylint src/ --rcfile=.pylintrc
 
 ## ✅ Testing Requirements
 
+### Test Categories
+
+Clarify has **3 types of QA tests** (as of v2.9.53):
+
+1. **GUI Safety Tests** (`tests/test_gui_safety_basic.py`)
+   - 5 tests, instantiation only
+   - MUST follow Protocol Simplicidade 3 - Step 9.1 (timeout protection)
+   - Example: `test_set_operations_dock_instantiation`
+
+2. **Performance Benchmarks** (`tests/test_performance_benchmarks.py`)
+   - 14 tests, baseline metrics established
+   - Parsing: 75-90 MB/s (stdlib), 32-38 MB/s (rewriter)
+   - Write: 11-16 MB/s (bottleneck)
+   - Search: 5-6M items/s
+
+3. **Load Tests** (`tests/test_load_testing.py`)
+   - 4 tests, stress & scale validation
+   - 1000+ files: 12.3k files/s
+   - 1GB+ corpus: 16.26 MB/s, memory peak <500 MB
+   - System validated up to 2-3 GB with 1 GB RAM
+
 ### Running Tests
 
 ```bash
@@ -300,8 +368,13 @@ pytest
 # Run with coverage
 pytest --cov=src --cov-report=html
 
-# Run specific test file
-pytest tests/test_translator.py
+# Run specific test category
+pytest tests/test_gui_safety_basic.py           # GUI tests
+pytest tests/test_performance_benchmarks.py     # Performance
+pytest tests/test_load_testing.py               # Load tests
+
+# Run GUI tests SAFELY (with timeout protection)
+QT_QPA_PLATFORM=offscreen timeout 30s pytest tests/test_gui_safety_basic.py -v
 
 # Run with verbose output
 pytest -v
@@ -311,6 +384,7 @@ pytest -v
 
 - **Minimum coverage**: 90% for core modules (`src/set_operations.py`, `src/rewriter/`, `src/json_search/`)
 - **Coverage report**: Generated in `htmlcov/index.html`
+- **Current status**: 23 QA tests, 100% passing (v2.9.53)
 
 ### Writing Tests
 
@@ -325,6 +399,43 @@ def test_translator_switch_language_updates_current():
     translator.switch_language("es")
     assert translator.current_language == "es"
 ```
+
+**For GUI tests**, ALWAYS follow Protocol Simplicidade 3 - Step 9.1:
+
+```python
+import pytest
+
+@pytest.mark.timeout(5)  # CRITICAL: Individual timeout
+def test_my_dock_instantiation(qtbot):
+    """Test safe instantiation of MyDock."""
+    from src.gui.my_dock import MyDock
+    
+    dock = MyDock()
+    qtbot.addWidget(dock)  # Ensures cleanup
+    
+    # NO heavy operations - just basic assertions
+    assert dock.windowTitle() == "My Dock"
+    assert dock.isVisible() is False
+```
+
+### Performance Requirements
+
+When modifying core operations, ensure performance doesn't degrade:
+
+| Operation | Baseline (v2.9.53) | Acceptable Range |
+|-----------|-------------------|------------------|
+| **JSON Parsing (stdlib)** | 75-90 MB/s | >70 MB/s |
+| **Rewriter Parsing** | 32-38 MB/s | >30 MB/s |
+| **JSON Search** | 5-6M items/s | >4M items/s |
+| **JSON Write** | 11-16 MB/s | >10 MB/s |
+| **Memory Peak (1GB corpus)** | <500 MB | <600 MB |
+
+**Run benchmarks before submitting PR**:
+```bash
+pytest tests/test_performance_benchmarks.py -v
+```
+
+If throughput drops >10%, explain why in PR description.
 
 ---
 
@@ -365,7 +476,11 @@ Brief description of changes
 
 ## Checklist
 - [ ] Code follows style guidelines (black, pylint >9.0)
+- [ ] Followed appropriate protocol (Simplicidade 1/2/3)
 - [ ] Docstrings added/updated
+- [ ] Tests added/updated (if applicable)
+- [ ] Performance benchmarks run (if core changes)
+- [ ] GUI tests follow Protocol 9.1 (timeout protection)
 - [ ] CHANGELOG.md updated
 - [ ] Screenshots added (if UI change)
 ```
