@@ -211,5 +211,19 @@
   "tooltip.case.ed_path": "Chemin vers un fichier ou un répertoire contenant le code à convertir. Supporte : Python, JavaScript, JSON, etc.",
   "tooltip.case.btn_browse": "Parcourir pour un fichier ou un répertoire",
   "tooltip.case.chk_is_file": "Activez si le chemin est un fichier unique. Désactivez pour traiter le répertoire de manière récursive.",
-  "tooltip.case.ed_extensions": "Extensions de fichier à traiter (séparées par des virgules). Exemples : .py,.js,.json (laissez vide pour TOUTES les extensions)"
+  "tooltip.case.ed_extensions": "Extensions de fichier à traiter (séparées par des virgules). Exemples : .py,.js,.json (laissez vide pour TOUTES les extensions)",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "Fichier JSON ou CSV avec mappages clé-valeur (ex: {\"nom\": \"Jean\", \"ville\": \"Paris\"}) | Enter pour exécuter",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "Parcourir fichier de mappage (format JSON ou CSV) | Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "Fichier ou répertoire contenant des espaces réservés à remplacer (ex: {t.nom}, {t.ville}) | Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "Parcourir fichier ou répertoire cible | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "Cocher si la cible est un seul fichier (décoché pour traitement par lot de répertoires)",
+  "tooltip.placeholder_replacer.chk_backup": "Créer des fichiers de sauvegarde .bak avant de modifier les originaux (recommandé pour la sécurité) | Activé par défaut",
+  "tooltip.placeholder_replacer.ed_root_var": "Nom de variable racine pour les espaces réservés (par défaut 't' génère {t.clé}). Changer pour formats personnalisés comme {app.clé}",
+  "tooltip.placeholder_replacer.ed_scope_start": "Regex optionnel pour marquer le début de la portée (ex: <script> pour remplacer uniquement dans les blocs JS). Laisser vide pour le fichier entier.",
+  "tooltip.placeholder_replacer.ed_scope_end": "Regex optionnel pour marquer la fin de la portée (ex: </script>). Doit être apparié avec le début de la portée. Laisser vide pour le fichier entier.",
+  "tooltip.placeholder_replacer.btn_preview": "Aperçu des remplacements sans modifier les fichiers (mode dry-run affiche les 2000 premiers caractères) | F6",
+  "tooltip.placeholder_replacer.btn_replace": "Exécuter les remplacements sur les fichiers cibles (crée des sauvegardes si activé) | Enter ou F5",
+  "tooltip.placeholder_replacer.btn_clear": "Effacer le panneau de résultats et réinitialiser le cache de mappage | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "Affiche les résultats du remplacement: nombre de fichiers, nombre d'espaces réservés et liste de fichiers modifiés"
 }

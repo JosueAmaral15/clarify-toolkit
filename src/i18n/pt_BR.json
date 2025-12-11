@@ -215,5 +215,19 @@
   "tooltip.case.ed_path": "Caminho para arquivo ou diretório contendo código para conversão. Suporta: Python, JavaScript, JSON, etc.",
   "tooltip.case.btn_browse": "Procurar arquivo ou diretório",
   "tooltip.case.chk_is_file": "Habilite se o caminho for um único arquivo. Desabilite para processar diretório recursivamente.",
-  "tooltip.case.ed_extensions": "Extensões de arquivo a processar (separadas por vírgula). Exemplos: .py,.js,.json (deixe vazio para TODAS as extensões)"
+  "tooltip.case.ed_extensions": "Extensões de arquivo a processar (separadas por vírgula). Exemplos: .py,.js,.json (deixe vazio para TODAS as extensões)",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "Arquivo JSON ou CSV com mapeamento chave-valor (ex: {\"nome\": \"João\", \"cidade\": \"SP\"}) | Enter para executar",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "Procurar arquivo de mapeamento (formato JSON ou CSV) | Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "Arquivo ou diretório contendo placeholders para substituir (ex: {t.nome}, {t.cidade}) | Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "Procurar arquivo ou diretório de destino | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "Marque se o destino for um único arquivo (desmarcado para processamento em lote de diretórios)",
+  "tooltip.placeholder_replacer.chk_backup": "Criar arquivos de backup .bak antes de modificar originais (recomendado para segurança) | Ativado por padrão",
+  "tooltip.placeholder_replacer.ed_root_var": "Nome da variável raiz para placeholders (padrão 't' gera {t.chave}). Altere para formatos customizados como {app.chave}",
+  "tooltip.placeholder_replacer.ed_scope_start": "Regex opcional para marcar início do escopo (ex: <script> para substituir apenas em blocos JS). Deixe vazio para arquivo inteiro.",
+  "tooltip.placeholder_replacer.ed_scope_end": "Regex opcional para marcar fim do escopo (ex: </script>). Deve parear com início do escopo. Deixe vazio para arquivo inteiro.",
+  "tooltip.placeholder_replacer.btn_preview": "Pré-visualizar substituições sem modificar arquivos (modo dry-run mostra primeiros 2000 caracteres) | F6",
+  "tooltip.placeholder_replacer.btn_replace": "Executar substituições nos arquivos de destino (cria backups se habilitado) | Enter ou F5",
+  "tooltip.placeholder_replacer.btn_clear": "Limpar painel de resultados e redefinir cache de mapeamento | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "Exibe resultados da substituição: contagem de arquivos, contagem de placeholders e lista de arquivos modificados"
 }

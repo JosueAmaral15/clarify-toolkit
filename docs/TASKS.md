@@ -976,7 +976,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir habilidade de abrir e ler arquivos, diferenciar escopo com temas de cores diferentes *(v2.9.16 - Task #46: EditorDock)*
 - **[X]** Incluir editores JSON como abas *(v2.9.17 - Task #47: JsonEditorTab com validação, tree view, search)*
 - **[X]** Possibilidade de mudanças feitas apenas no editor de texto do próprio Clarify, não mais em arquivos *(v2.9.18 - Task #5: Edit-Only Mode)*
-- **[]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
+- **[X]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
 - **[X]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI) *(v2.9.26 - Task #51: Advanced File Filters in AI Processor)*
@@ -989,7 +989,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios **(v2.9.6)**
 - **[]** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
 - **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
-- **[]** Quando o usuário clicar em Tools do menu de contexto, e escolher uma opção, o sistema deve abrir em uma nova aba, como ocorre com as abas Search/Replace e Insert. Todas essas abas devem ter um ícone de X vermelho, em que quando clicado, fecha a aba, tendo o usuário novamente clicar em uma das opções Tools para abrir uma aba.
+- **[X]** Quando o usuário clicar em Tools do menu de contexto, e escolher uma opção, o sistema deve abrir em uma nova aba, como ocorre com as abas Search/Replace e Insert. Todas essas abas devem ter um ícone de X vermelho, em que quando clicado, fecha a aba, tendo o usuário novamente clicar em uma das opções Tools para abrir uma aba.
 - **[X]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes nomes *(v2.9.27 - Task #52: Remove Duplicate Objects)*
   - **Sprint A (MVP - COMPLETO - 01/12/2025)**:
     * ✅ Novo checkbox "Remove duplicate objects" no JSON Rewriter
@@ -1190,6 +1190,16 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
     * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
     * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
+  - **[X] v2.9.65 - Placeholder Replacer Dock (11/12/2025)**:
+    * ✅ **13 tooltips totais**: 9 melhorados (removidas hardcoded strings) + 4 novos (btn_preview, btn_replace, btn_clear, text_results)
+    * ✅ **Mapping section** (2): ed_mapping (JSON/CSV com exemplos), btn_browse_mapping (Ctrl+O)
+    * ✅ **Target section** (3): ed_target (file/dir com placeholders), btn_browse_target (Ctrl+O), chk_is_file (single file vs directory)
+    * ✅ **Options** (4): chk_backup (.bak safety), ed_root_var (custom variable like {app.key}), ed_scope_start/end (regex boundaries)
+    * ✅ **Action buttons** (4): btn_preview (F6 dry-run), btn_replace (Enter/F5), btn_clear (Ctrl+L), text_results (display panel)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) com traduções contextualizadas
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (máx 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~45 minutos (reduzida de 1h por tooltips básicos já existirem)
   - **[X]** **v2.9.55 - Translation Analysis (10/12/2025 - ANÁLISE COMPLETA)**:
     * **[X]** Análise automatizada executada: script Python comparando 7 arquivos i18n
     * **[X]** EN (English): 209 keys ✅ COMPLETO

@@ -207,9 +207,23 @@
   "tooltip.set_ops.combo_output": "出力形式：構造化JSONまたはテキストリスト",
   "tooltip.set_ops.btn_execute": "提供されたファイルで選択した集合操作を実行",
   "tooltip.case.combo_source": "コードの元のケーシングスタイル（自動検出を推奨）。例：camelCase、snake_case、PascalCase",
-  "tooltip.case.combo_target": "変換先のケーシングスタイル。例：camelCase、snake_case、kebab-case、SCREAMING_SNAKE_CASE",
-  "tooltip.case.ed_path": "変換するコードを含むファイルまたはディレクトリへのパス。サポート：Python、JavaScript、JSONなど",
+  "tooltip.case.combo_target": "変換のターゲットケーシングスタイル。例：camelCase、snake_case、kebab-case、SCREAMING_SNAKE_CASE",
+  "tooltip.case.ed_path": "変換するコードを含むファイルまたはディレクトリのパス。サポート：Python、JavaScript、JSONなど",
   "tooltip.case.btn_browse": "ファイルまたはディレクトリを参照",
-  "tooltip.case.chk_is_file": "パスが単一ファイルの場合は有効にします。ディレクトリを再帰的に処理する場合は無効にします。",
-  "tooltip.case.ed_extensions": "処理するファイル拡張子（カンマ区切り）。例：.py,.js,.json（すべての拡張子の場合は空のままにします）"
+  "tooltip.case.chk_is_file": "パスが単一のファイルの場合は有効にします。ディレクトリを再帰的に処理するには無効にします。",
+  "tooltip.case.ed_extensions": "処理するファイル拡張子（カンマ区切り）。例：.py,.js,.json（すべての拡張子の場合は空のまま）",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "キーと値のマッピングを含むJSONまたはCSVファイル（例：{\"名前\": \"太郎\", \"都市\": \"東京\"}）| Enterで実行",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "マッピングファイルを参照（JSONまたはCSV形式）| Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "置き換えるプレースホルダーを含むファイルまたはディレクトリ（例：{t.名前}、{t.都市}）| Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "ターゲットファイルまたはディレクトリを参照 | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "ターゲットが単一のファイルの場合はチェック（ディレクトリのバッチ処理の場合はチェックを外す）",
+  "tooltip.placeholder_replacer.chk_backup": "元のファイルを変更する前に.bakバックアップファイルを作成（安全のため推奨）| デフォルトで有効",
+  "tooltip.placeholder_replacer.ed_root_var": "プレースホルダーのルート変数名（デフォルト't'は{t.キー}を生成）。{app.キー}のようなカスタム形式に変更",
+  "tooltip.placeholder_replacer.ed_scope_start": "スコープ開始をマークするオプションの正規表現（例：<script>はJSブロックでのみ置換）。ファイル全体の場合は空のまま。",
+  "tooltip.placeholder_replacer.ed_scope_end": "スコープ終了をマークするオプションの正規表現（例：</script>）。スコープ開始とペアにする必要があります。ファイル全体の場合は空のまま。",
+  "tooltip.placeholder_replacer.btn_preview": "ファイルを変更せずに置換をプレビュー（ドライランモードは最初の2000文字を表示）| F6",
+  "tooltip.placeholder_replacer.btn_replace": "ターゲットファイルで置換を実行（有効な場合はバックアップを作成）| EnterまたはF5",
+  "tooltip.placeholder_replacer.btn_clear": "結果パネルをクリアしてマッピングキャッシュをリセット | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "置換結果を表示：ファイル数、プレースホルダー数、変更されたファイルのリスト"
 }

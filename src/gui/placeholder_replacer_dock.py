@@ -11,6 +11,7 @@ from .base_dock import StandardToolDock
 from src.placeholder_replacer import (
     parse_mapping_file, process_file, process_directory
 )
+from src.i18n.translator import tooltip_tr
 
 
 class PlaceholderReplacerDock(StandardToolDock):
@@ -19,6 +20,7 @@ class PlaceholderReplacerDock(StandardToolDock):
     def __init__(self, parent=None) -> None:
         super().__init__("Placeholder Replacer", parent)
         self._mapping = {}
+        self._setup_tooltips()
     
     def _setup_ui(self) -> None:
         """Setup UI components."""
@@ -28,9 +30,7 @@ class PlaceholderReplacerDock(StandardToolDock):
         grid.addWidget(QLabel("Mapping file:"), 0, 0)
         self.ed_mapping = QLineEdit()
         self.ed_mapping.setPlaceholderText("JSON or CSV file with translations")
-        self.ed_mapping.setToolTip("Select a JSON or CSV file containing key-value mappings for placeholder replacement")
         self.btn_browse_mapping = QPushButton("Browse...")
-        self.btn_browse_mapping.setToolTip("Browse for a mapping file")
         grid.addWidget(self.ed_mapping, 0, 1, 1, 3)
         grid.addWidget(self.btn_browse_mapping, 0, 4)
         
@@ -39,16 +39,12 @@ class PlaceholderReplacerDock(StandardToolDock):
             "Target path:",
             "File or directory to process"
         )
-        self.ed_target.setToolTip("Select the file or directory containing placeholders to replace")
-        self.btn_browse_target.setToolTip("Browse for target file or directory")
-        self.chk_is_file.setToolTip("Check if target is a file (unchecked for directory)")
         grid.addWidget(lbl_target, 1, 0)
         grid.addWidget(self.ed_target, 1, 1, 1, 3)
         grid.addWidget(self.btn_browse_target, 1, 4)
         
         self.chk_backup = QCheckBox("Create backups (.bak)")
         self.chk_backup.setChecked(True)
-        self.chk_backup.setToolTip("Create .bak backup files before modifying originals")
         grid.addWidget(self.chk_is_file, 2, 0, 1, 2)
         grid.addWidget(self.chk_backup, 2, 2, 1, 2)
         
@@ -57,19 +53,16 @@ class PlaceholderReplacerDock(StandardToolDock):
         self.ed_root_var = QLineEdit()
         self.ed_root_var.setText("t")
         self.ed_root_var.setMaximumWidth(100)
-        self.ed_root_var.setToolTip("The root variable name for placeholders (e.g., 't' for {t.key})")
         grid.addWidget(self.ed_root_var, 3, 1)
         
         grid.addWidget(QLabel("Scope start (regex):"), 3, 2)
         self.ed_scope_start = QLineEdit()
         self.ed_scope_start.setPlaceholderText("Optional, e.g. <script>")
-        self.ed_scope_start.setToolTip("Optional regex pattern to mark where replacement scope starts")
         grid.addWidget(self.ed_scope_start, 3, 3, 1, 2)
         
         grid.addWidget(QLabel("Scope end (regex):"), 4, 2)
         self.ed_scope_end = QLineEdit()
         self.ed_scope_end.setPlaceholderText("Optional, e.g. </script>")
-        self.ed_scope_end.setToolTip("Optional regex pattern to mark where replacement scope ends")
         grid.addWidget(self.ed_scope_end, 4, 3, 1, 2)
         
         self.layout.addLayout(grid)
@@ -83,6 +76,11 @@ class PlaceholderReplacerDock(StandardToolDock):
         btn_layout = self.create_action_buttons(buttons)
         self.layout.addLayout(btn_layout)
         
+        # Store button references for tooltips
+        self.btn_preview = self.findChild(QPushButton, "Preview") or [btn for btn in self.findChildren(QPushButton) if btn.text() == "Preview"][0]
+        self.btn_replace = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Replace"][0]
+        self.btn_clear = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Clear"][0]
+        
         # Results panel
         lbl_results, self.text_results = self.create_results_panel()
         self.layout.addWidget(lbl_results)
@@ -92,6 +90,9 @@ class PlaceholderReplacerDock(StandardToolDock):
         editor_btn_layout = QHBoxLayout()
         self.add_open_in_editor_button(self.text_results, editor_btn_layout)
         self.layout.addLayout(editor_btn_layout)
+        
+        # Setup tooltips AFTER all widgets are created (v2.9.65)
+        self._apply_tooltips()
     
     def _connect_signals(self) -> None:
         """Connect signals."""
@@ -228,3 +229,60 @@ class PlaceholderReplacerDock(StandardToolDock):
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""
         self._replace()
+    
+    def _setup_tooltips(self) -> None:
+        """Setup internationalized tooltips for all widgets (v2.9.65)."""
+        # Note: This is called from __init__ but actual tooltip application
+        # happens in _apply_tooltips() after widgets are created in _setup_ui()
+        pass
+    
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips to all widgets (v2.9.65)."""
+        # Mapping file section
+        self.ed_mapping.setToolTip(
+            tooltip_tr("placeholder_replacer.ed_mapping")
+        )
+        self.btn_browse_mapping.setToolTip(
+            tooltip_tr("placeholder_replacer.btn_browse_mapping")
+        )
+        
+        # Target section
+        self.ed_target.setToolTip(
+            tooltip_tr("placeholder_replacer.ed_target")
+        )
+        self.btn_browse_target.setToolTip(
+            tooltip_tr("placeholder_replacer.btn_browse_target")
+        )
+        self.chk_is_file.setToolTip(
+            tooltip_tr("placeholder_replacer.chk_is_file")
+        )
+        
+        # Options section
+        self.chk_backup.setToolTip(
+            tooltip_tr("placeholder_replacer.chk_backup")
+        )
+        self.ed_root_var.setToolTip(
+            tooltip_tr("placeholder_replacer.ed_root_var")
+        )
+        self.ed_scope_start.setToolTip(
+            tooltip_tr("placeholder_replacer.ed_scope_start")
+        )
+        self.ed_scope_end.setToolTip(
+            tooltip_tr("placeholder_replacer.ed_scope_end")
+        )
+        
+        # Action buttons
+        self.btn_preview.setToolTip(
+            tooltip_tr("placeholder_replacer.btn_preview")
+        )
+        self.btn_replace.setToolTip(
+            tooltip_tr("placeholder_replacer.btn_replace")
+        )
+        self.btn_clear.setToolTip(
+            tooltip_tr("placeholder_replacer.btn_clear")
+        )
+        
+        # Results panel
+        self.text_results.setToolTip(
+            tooltip_tr("placeholder_replacer.text_results")
+        )

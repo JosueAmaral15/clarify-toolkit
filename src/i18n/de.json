@@ -211,5 +211,19 @@
   "tooltip.case.ed_path": "Pfad zu Datei oder Verzeichnis mit Code zur Konvertierung. Unterstützt: Python, JavaScript, JSON, etc.",
   "tooltip.case.btn_browse": "Nach Datei oder Verzeichnis suchen",
   "tooltip.case.chk_is_file": "Aktivieren, wenn der Pfad eine einzelne Datei ist. Deaktivieren für rekursive Verzeichnisverarbeitung.",
-  "tooltip.case.ed_extensions": "Zu verarbeitende Dateierweiterungen (durch Komma getrennt). Beispiele: .py,.js,.json (leer lassen für ALLE Erweiterungen)"
+  "tooltip.case.ed_extensions": "Zu verarbeitende Dateierweiterungen (durch Komma getrennt). Beispiele: .py,.js,.json (leer lassen für ALLE Erweiterungen)",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "JSON- oder CSV-Datei mit Schlüssel-Wert-Zuordnungen (z.B.: {\"name\": \"Hans\", \"stadt\": \"Berlin\"}) | Enter zum Ausführen",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "Nach Zuordnungsdatei suchen (JSON- oder CSV-Format) | Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "Datei oder Verzeichnis mit zu ersetzenden Platzhaltern (z.B.: {t.name}, {t.stadt}) | Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "Nach Zieldatei oder -verzeichnis suchen | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "Markieren, wenn Ziel eine einzelne Datei ist (deaktiviert für Stapelverarbeitung von Verzeichnissen)",
+  "tooltip.placeholder_replacer.chk_backup": ".bak Sicherungsdateien vor Änderung der Originale erstellen (empfohlen für Sicherheit) | Standardmäßig aktiviert",
+  "tooltip.placeholder_replacer.ed_root_var": "Stamm-Variablenname für Platzhalter (Standard 't' erzeugt {t.schlüssel}). Ändern für benutzerdefinierte Formate wie {app.schlüssel}",
+  "tooltip.placeholder_replacer.ed_scope_start": "Optionaler Regex zum Markieren des Geltungsbereichsbeginns (z.B.: <script> zum Ersetzen nur in JS-Blöcken). Leer lassen für gesamte Datei.",
+  "tooltip.placeholder_replacer.ed_scope_end": "Optionaler Regex zum Markieren des Geltungsbereichsendes (z.B.: </script>). Muss mit Geltungsbereichsbeginn gepaart werden. Leer lassen für gesamte Datei.",
+  "tooltip.placeholder_replacer.btn_preview": "Vorschau der Ersetzungen ohne Änderung der Dateien (Dry-Run-Modus zeigt erste 2000 Zeichen) | F6",
+  "tooltip.placeholder_replacer.btn_replace": "Ersetzungen in Zieldateien ausführen (erstellt Sicherungen, wenn aktiviert) | Enter oder F5",
+  "tooltip.placeholder_replacer.btn_clear": "Ergebnisbereich leeren und Zuordnungs-Cache zurücksetzen | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "Zeigt Ersetzungsergebnisse an: Dateianzahl, Platzhalteranzahl und Liste geänderter Dateien"
 }

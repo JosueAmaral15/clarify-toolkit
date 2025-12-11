@@ -216,5 +216,19 @@
   "tooltip.case.ed_path": "Path to file or directory containing code to convert (supports .js, .ts, .jsx, .tsx, .py) | Ctrl+O",
   "tooltip.case.btn_browse": "Browse for file or directory | Ctrl+O",
   "tooltip.case.chk_is_file": "Check if path is a file (unchecked for directory)",
-  "tooltip.case.ed_extensions": "File extensions to process (comma-separated, e.g., .js,.ts,.py). Leave empty for all files."
+  "tooltip.case.ed_extensions": "File extensions to process (comma-separated, e.g., .js,.ts,.py). Leave empty for all files.",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "JSON or CSV file with key-value mappings (e.g., {\"name\": \"John\", \"city\": \"NYC\"}) | Enter to execute",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "Browse for mapping file (JSON or CSV format) | Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "File or directory containing placeholders to replace (e.g., {t.name}, {t.city}) | Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "Browse for target file or directory | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "Check if target is a single file (unchecked for directory batch processing)",
+  "tooltip.placeholder_replacer.chk_backup": "Create .bak backup files before modifying originals (recommended for safety) | Enabled by default",
+  "tooltip.placeholder_replacer.ed_root_var": "Root variable name for placeholders (default 't' makes {t.key}). Change for custom formats like {app.key}",
+  "tooltip.placeholder_replacer.ed_scope_start": "Optional regex to mark scope start (e.g., <script> to only replace in JS blocks). Leave empty for entire file.",
+  "tooltip.placeholder_replacer.ed_scope_end": "Optional regex to mark scope end (e.g., </script>). Must pair with scope start. Leave empty for entire file.",
+  "tooltip.placeholder_replacer.btn_preview": "Preview replacements without modifying files (dry-run mode shows first 2000 chars) | F6",
+  "tooltip.placeholder_replacer.btn_replace": "Execute replacements on target files (creates backups if enabled) | Enter or F5",
+  "tooltip.placeholder_replacer.btn_clear": "Clear results panel and reset mapping cache | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "Displays replacement results: file count, placeholder count, and modified file list"
 }

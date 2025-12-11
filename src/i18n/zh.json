@@ -207,9 +207,23 @@
   "tooltip.set_ops.combo_output": "输出格式：结构化JSON或文本列表",
   "tooltip.set_ops.btn_execute": "使用提供的文件执行选定的集合操作",
   "tooltip.case.combo_source": "代码的原始大小写样式（建议自动检测）。示例：camelCase、snake_case、PascalCase",
-  "tooltip.case.combo_target": "要转换的目标大小写样式。示例：camelCase、snake_case、kebab-case、SCREAMING_SNAKE_CASE",
-  "tooltip.case.ed_path": "包含要转换代码的文件或目录的路径。支持：Python、JavaScript、JSON等",
+  "tooltip.case.combo_target": "转换的目标大小写样式。示例：camelCase、snake_case、kebab-case、SCREAMING_SNAKE_CASE",
+  "tooltip.case.ed_path": "包含要转换代码的文件或目录路径。支持：Python、JavaScript、JSON等",
   "tooltip.case.btn_browse": "浏览文件或目录",
-  "tooltip.case.chk_is_file": "如果路径是单个文件，请启用。禁用以递归处理目录。",
-  "tooltip.case.ed_extensions": "要处理的文件扩展名（逗号分隔）。示例：.py,.js,.json（留空表示所有扩展名）"
+  "tooltip.case.chk_is_file": "如果路径是单个文件则启用。禁用以递归处理目录。",
+  "tooltip.case.ed_extensions": "要处理的文件扩展名（逗号分隔）。示例：.py,.js,.json（留空表示所有扩展名）",
+  
+  "tooltip.placeholder_replacer.ed_mapping": "包含键值映射的JSON或CSV文件（例：{\"名称\": \"张三\", \"城市\": \"北京\"}）| Enter执行",
+  "tooltip.placeholder_replacer.btn_browse_mapping": "浏览映射文件（JSON或CSV格式）| Ctrl+O",
+  "tooltip.placeholder_replacer.ed_target": "包含要替换占位符的文件或目录（例：{t.名称}、{t.城市}）| Ctrl+O",
+  "tooltip.placeholder_replacer.btn_browse_target": "浏览目标文件或目录 | Ctrl+O",
+  "tooltip.placeholder_replacer.chk_is_file": "如果目标是单个文件则选中（取消选中用于目录批处理）",
+  "tooltip.placeholder_replacer.chk_backup": "修改原始文件前创建.bak备份文件（推荐安全起见）| 默认启用",
+  "tooltip.placeholder_replacer.ed_root_var": "占位符的根变量名（默认't'生成{t.键}）。更改为自定义格式如{app.键}",
+  "tooltip.placeholder_replacer.ed_scope_start": "可选正则表达式标记范围开始（例：<script>仅在JS块中替换）。留空表示整个文件。",
+  "tooltip.placeholder_replacer.ed_scope_end": "可选正则表达式标记范围结束（例：</script>）。必须与范围开始配对。留空表示整个文件。",
+  "tooltip.placeholder_replacer.btn_preview": "预览替换而不修改文件（试运行模式显示前2000个字符）| F6",
+  "tooltip.placeholder_replacer.btn_replace": "在目标文件上执行替换（如果启用则创建备份）| Enter或F5",
+  "tooltip.placeholder_replacer.btn_clear": "清除结果面板并重置映射缓存 | Ctrl+L",
+  "tooltip.placeholder_replacer.text_results": "显示替换结果：文件计数、占位符计数和修改文件列表"
 }
