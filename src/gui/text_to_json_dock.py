@@ -185,6 +185,7 @@ class TextToJsonDock(BaseDock):
         """Setup UI components."""
         self._create_widgets()
         self._create_layout()
+        self._apply_tooltips()  # v2.9.69
     
     def _create_widgets(self) -> None:
         """Create all widgets."""
@@ -209,7 +210,6 @@ class TextToJsonDock(BaseDock):
             "Java Properties",
             "TOON"
         ])
-        self.format_combo.setToolTip("Select input text format or use Auto-detect")
         
         # Type inference options
         self.type_group = QGroupBox("Type Inference")
@@ -243,39 +243,30 @@ class TextToJsonDock(BaseDock):
         
         self.live_preview_check = QCheckBox("Enable live preview (500ms delay)")
         self.live_preview_check.setChecked(False)
-        self.live_preview_check.setToolTip("Automatically convert as you type (with 500ms delay)")
         
         # Action buttons
         self.convert_btn = QPushButton("Convert")
-        self.convert_btn.setToolTip("Convert text to JSON (Ctrl+Enter)")
         self.convert_btn.clicked.connect(self._on_convert_clicked)
         
         self.templates_btn = QPushButton("Templates")
-        self.templates_btn.setToolTip("View format examples and templates")
         self.templates_btn.clicked.connect(self._on_templates_clicked)
         
         self.clear_btn = QPushButton("Clear")
-        self.clear_btn.setToolTip("Clear input and output")
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         
         self.validate_btn = QPushButton("Validate JSON")
-        self.validate_btn.setToolTip("Validate output JSON syntax")
         self.validate_btn.clicked.connect(self._on_validate_clicked)
         
         self.copy_btn = QPushButton("Copy Result")
-        self.copy_btn.setToolTip("Copy JSON to clipboard")
         self.copy_btn.clicked.connect(self._on_copy_clicked)
         
         self.open_editor_btn = QPushButton("Open in Editor")
-        self.open_editor_btn.setToolTip("Open result in main JSON editor")
         self.open_editor_btn.clicked.connect(self._on_open_editor_clicked)
         
         self.history_btn = QPushButton("History")
-        self.history_btn.setToolTip("View conversion history")
         self.history_btn.clicked.connect(self._on_history_clicked)
         
         self.swap_btn = QPushButton("Swap (JSON → Text)")
-        self.swap_btn.setToolTip("Convert JSON back to text format")
         self.swap_btn.clicked.connect(self._on_swap_clicked)
         
         # Output section
@@ -353,6 +344,42 @@ class TextToJsonDock(BaseDock):
         self.layout.addWidget(self.output_label)
         self.layout.addWidget(self.output_text, 2)  # 2/5 space
         self.layout.addWidget(self.status_label)
+    
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips (v2.9.69)."""
+        # Format section
+        self.format_combo.setToolTip(tooltip_tr("text_to_json.format_combo"))
+        
+        # Type inference section
+        self.type_auto_radio.setToolTip(tooltip_tr("text_to_json.type_auto_radio"))
+        self.type_string_radio.setToolTip(tooltip_tr("text_to_json.type_string_radio"))
+        
+        # CSV options section
+        self.csv_header_check.setToolTip(tooltip_tr("text_to_json.csv_header_check"))
+        self.csv_separator_combo.setToolTip(tooltip_tr("text_to_json.csv_separator_combo"))
+        self.csv_array_objects_radio.setToolTip(tooltip_tr("text_to_json.csv_array_objects_radio"))
+        self.csv_array_arrays_radio.setToolTip(tooltip_tr("text_to_json.csv_array_arrays_radio"))
+        
+        # General options section
+        self.pretty_print_check.setToolTip(tooltip_tr("text_to_json.pretty_print_check"))
+        self.live_preview_check.setToolTip(tooltip_tr("text_to_json.live_preview_check"))
+        
+        # Action buttons section
+        self.convert_btn.setToolTip(tooltip_tr("text_to_json.convert_btn"))
+        self.templates_btn.setToolTip(tooltip_tr("text_to_json.templates_btn"))
+        self.clear_btn.setToolTip(tooltip_tr("text_to_json.clear_btn"))
+        self.validate_btn.setToolTip(tooltip_tr("text_to_json.validate_btn"))
+        self.copy_btn.setToolTip(tooltip_tr("text_to_json.copy_btn"))
+        self.open_editor_btn.setToolTip(tooltip_tr("text_to_json.open_editor_btn"))
+        self.history_btn.setToolTip(tooltip_tr("text_to_json.history_btn"))
+        self.swap_btn.setToolTip(tooltip_tr("text_to_json.swap_btn"))
+        
+        # Input/Output section
+        self.input_text.setToolTip(tooltip_tr("text_to_json.input_text"))
+        self.output_text.setToolTip(tooltip_tr("text_to_json.output_text"))
+        
+        # Status section
+        self.status_label.setToolTip(tooltip_tr("text_to_json.status_label"))
     
     def _on_input_changed(self) -> None:
         """Handle input text changes for live preview."""

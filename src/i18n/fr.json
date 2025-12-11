@@ -291,5 +291,26 @@
   "tooltip.history.tree_history": "Historique des opérations: affiche horodatage, type (Recherche/Remplacer/Insérer/Traduire/Réécrire), détails et nombre de fichiers",
   "tooltip.history.btn_clear": "Supprimer toutes les entrées d'historique et réinitialiser le journal des opérations | Ctrl+Shift+Del",
   "tooltip.history.btn_export": "Exporter l'historique vers fichier texte pour sauvegarde ou révision | Ctrl+Shift+E",
-  "tooltip.history.btn_refresh": "Actualiser l'affichage de l'historique pour montrer les dernières opérations | F5"
+  "tooltip.history.btn_refresh": "Actualiser l'affichage de l'historique pour montrer les dernières opérations | F5",
+  
+  "tooltip.text_to_json.format_combo": "Sélectionner format de texte d'entrée ou utiliser Auto-détection pour identifier automatiquement",
+  "tooltip.text_to_json.type_auto_radio": "Détecter et convertir automatiquement les types de données (int, float, bool, null)",
+  "tooltip.text_to_json.type_string_radio": "Garder toutes les valeurs comme chaînes sans conversion de type",
+  "tooltip.text_to_json.csv_header_check": "Traiter première ligne CSV comme en-têtes de colonne (crée objets avec clés nommées)",
+  "tooltip.text_to_json.csv_separator_combo": "Choisir séparateur de champs CSV: virgule, point-virgule ou caractère tabulation",
+  "tooltip.text_to_json.csv_array_objects_radio": "Sortie CSV comme tableau d'objets avec clés nommées des en-têtes",
+  "tooltip.text_to_json.csv_array_arrays_radio": "Sortie CSV comme tableau de tableaux (listes imbriquées sans clés)",
+  "tooltip.text_to_json.pretty_print_check": "Formater sortie JSON avec indentation pour meilleure lisibilité",
+  "tooltip.text_to_json.live_preview_check": "Convertir automatiquement pendant la frappe avec délai de 500ms (debounced)",
+  "tooltip.text_to_json.convert_btn": "Convertir texte d'entrée en JSON en utilisant format et options sélectionnés | Ctrl+Enter",
+  "tooltip.text_to_json.templates_btn": "Voir modèles d'exemple pour chaque format pris en charge avec données d'exemple",
+  "tooltip.text_to_json.clear_btn": "Effacer les deux zones de texte d'entrée et de sortie",
+  "tooltip.text_to_json.validate_btn": "Vérifier si la sortie est une syntaxe JSON valide et signaler les erreurs",
+  "tooltip.text_to_json.copy_btn": "Copier sortie JSON dans le presse-papiers pour utilisation dans autres applications",
+  "tooltip.text_to_json.open_editor_btn": "Ouvrir résultat de conversion dans éditeur JSON principal pour édition supplémentaire",
+  "tooltip.text_to_json.history_btn": "Voir historique des conversions avec horodatage et format utilisé",
+  "tooltip.text_to_json.swap_btn": "Conversion inverse: convertir JSON en format de texte original",
+  "tooltip.text_to_json.input_text": "Coller ou taper texte à convertir: prend en charge 10 formats incluant YAML, INI, CSV, TOML",
+  "tooltip.text_to_json.output_text": "Résultat de conversion JSON: validé et formaté selon options sélectionnées",
+  "tooltip.text_to_json.status_label": "Messages d'état: affiche succès de conversion, erreurs et temps d'opération"
 }

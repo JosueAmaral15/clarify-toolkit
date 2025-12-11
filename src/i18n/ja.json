@@ -291,5 +291,26 @@
   "tooltip.history.tree_history": "操作履歴:タイムスタンプ、タイプ(検索/置換/挿入/翻訳/書き換え)、詳細、ファイル数を表示",
   "tooltip.history.btn_clear": "すべての履歴エントリを削除して操作ログをリセット | Ctrl+Shift+Del",
   "tooltip.history.btn_export": "履歴をテキストファイルにエクスポートしてバックアップまたはレビュー | Ctrl+Shift+E",
-  "tooltip.history.btn_refresh": "履歴表示を更新して最新の操作を表示 | F5"
+  "tooltip.history.btn_refresh": "履歴表示を更新して最新の操作を表示 | F5",
+  
+  "tooltip.text_to_json.format_combo": "入力テキスト形式を選択するか、自動検出を使用して自動的に識別",
+  "tooltip.text_to_json.type_auto_radio": "データ型を自動検出して変換(int、float、bool、null)",
+  "tooltip.text_to_json.type_string_radio": "型変換せずにすべての値を文字列として保持",
+  "tooltip.text_to_json.csv_header_check": "CSV最初の行を列ヘッダーとして扱う(名前付きキーを持つオブジェクトを作成)",
+  "tooltip.text_to_json.csv_separator_combo": "CSVフィールド区切り文字を選択:カンマ、セミコロン、またはタブ文字",
+  "tooltip.text_to_json.csv_array_objects_radio": "CSVをヘッダーから名前付きキーを持つオブジェクトの配列として出力",
+  "tooltip.text_to_json.csv_array_arrays_radio": "CSVをキーなしのネストされたリストの配列として出力",
+  "tooltip.text_to_json.pretty_print_check": "読みやすくするためにインデント付きでJSON出力をフォーマット",
+  "tooltip.text_to_json.live_preview_check": "入力時に500msの遅延で自動変換(デバウンス)",
+  "tooltip.text_to_json.convert_btn": "選択した形式とオプションを使用して入力テキストをJSONに変換 | Ctrl+Enter",
+  "tooltip.text_to_json.templates_btn": "サポートされている各形式のサンプルデータ付きテンプレート例を表示",
+  "tooltip.text_to_json.clear_btn": "入力と出力の両方のテキストエリアをクリア",
+  "tooltip.text_to_json.validate_btn": "出力が有効なJSON構文かどうかを確認してエラーを報告",
+  "tooltip.text_to_json.copy_btn": "他のアプリケーションで使用するためにJSON出力をクリップボードにコピー",
+  "tooltip.text_to_json.open_editor_btn": "さらなる編集のためにメインJSONエディタで変換結果を開く",
+  "tooltip.text_to_json.history_btn": "タイムスタンプと使用された形式を含む変換履歴を表示",
+  "tooltip.text_to_json.swap_btn": "逆変換:JSONを元のテキスト形式に戻す",
+  "tooltip.text_to_json.input_text": "変換するテキストを貼り付けまたは入力:YAML、INI、CSV、TOMLを含む10形式をサポート",
+  "tooltip.text_to_json.output_text": "JSON変換結果:選択したオプションに従って検証およびフォーマット",
+  "tooltip.text_to_json.status_label": "ステータスメッセージ:変換の成功、エラー、操作時間を表示"
 }

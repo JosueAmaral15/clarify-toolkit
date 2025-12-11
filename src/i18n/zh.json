@@ -291,5 +291,26 @@
   "tooltip.history.tree_history": "操作历史:显示时间戳、类型(搜索/替换/插入/翻译/重写)、详细信息和文件计数",
   "tooltip.history.btn_clear": "删除所有历史条目并重置操作日志 | Ctrl+Shift+Del",
   "tooltip.history.btn_export": "将历史导出到文本文件以备份或查看 | Ctrl+Shift+E",
-  "tooltip.history.btn_refresh": "刷新历史显示以显示最新操作 | F5"
+  "tooltip.history.btn_refresh": "刷新历史显示以显示最新操作 | F5",
+  
+  "tooltip.text_to_json.format_combo": "选择输入文本格式或使用自动检测自动识别格式",
+  "tooltip.text_to_json.type_auto_radio": "自动检测并转换数据类型(int、float、bool、null)",
+  "tooltip.text_to_json.type_string_radio": "将所有值保留为字符串而不进行类型转换",
+  "tooltip.text_to_json.csv_header_check": "将CSV第一行视为列标题(创建具有命名键的对象)",
+  "tooltip.text_to_json.csv_separator_combo": "选择CSV字段分隔符:逗号、分号或制表符",
+  "tooltip.text_to_json.csv_array_objects_radio": "将CSV输出为具有标题命名键的对象数组",
+  "tooltip.text_to_json.csv_array_arrays_radio": "将CSV输出为数组的数组(无键的嵌套列表)",
+  "tooltip.text_to_json.pretty_print_check": "使用缩进格式化JSON输出以提高可读性",
+  "tooltip.text_to_json.live_preview_check": "输入时自动转换,延迟500毫秒(防抖)",
+  "tooltip.text_to_json.convert_btn": "使用所选格式和选项将输入文本转换为JSON | Ctrl+Enter",
+  "tooltip.text_to_json.templates_btn": "查看每种支持格式的示例模板及样本数据",
+  "tooltip.text_to_json.clear_btn": "清除输入和输出文本区域",
+  "tooltip.text_to_json.validate_btn": "检查输出是否为有效JSON语法并报告错误",
+  "tooltip.text_to_json.copy_btn": "将JSON输出复制到剪贴板以在其他应用程序中使用",
+  "tooltip.text_to_json.open_editor_btn": "在主JSON编辑器中打开转换结果以进行进一步编辑",
+  "tooltip.text_to_json.history_btn": "查看转换历史及时间戳和使用的格式",
+  "tooltip.text_to_json.swap_btn": "反向转换:将JSON转换回原始文本格式",
+  "tooltip.text_to_json.input_text": "粘贴或输入要转换的文本:支持10种格式,包括YAML、INI、CSV、TOML",
+  "tooltip.text_to_json.output_text": "JSON转换结果:根据所选选项验证和格式化",
+  "tooltip.text_to_json.status_label": "状态消息:显示转换成功、错误和操作时间"
 }

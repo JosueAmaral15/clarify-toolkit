@@ -295,5 +295,26 @@
   "tooltip.history.tree_history": "Histórico de operações: mostra timestamp, tipo (Busca/Substituir/Inserir/Traduzir/Reescrever), detalhes e contagem de arquivos",
   "tooltip.history.btn_clear": "Remover todas as entradas do histórico e resetar log de operações | Ctrl+Shift+Del",
   "tooltip.history.btn_export": "Exportar histórico para arquivo de texto para backup ou revisão | Ctrl+Shift+E",
-  "tooltip.history.btn_refresh": "Atualizar exibição do histórico para mostrar últimas operações | F5"
+  "tooltip.history.btn_refresh": "Atualizar exibição do histórico para mostrar últimas operações | F5",
+  
+  "tooltip.text_to_json.format_combo": "Selecionar formato do texto de entrada ou usar Auto-detectar para identificar automaticamente",
+  "tooltip.text_to_json.type_auto_radio": "Detectar e converter automaticamente tipos de dados (int, float, bool, null)",
+  "tooltip.text_to_json.type_string_radio": "Manter todos os valores como strings sem conversão de tipo",
+  "tooltip.text_to_json.csv_header_check": "Tratar primeira linha CSV como cabeçalhos de coluna (cria objetos com chaves nomeadas)",
+  "tooltip.text_to_json.csv_separator_combo": "Escolher separador de campos CSV: vírgula, ponto e vírgula ou caractere tab",
+  "tooltip.text_to_json.csv_array_objects_radio": "Saída CSV como array de objetos com chaves nomeadas dos cabeçalhos",
+  "tooltip.text_to_json.csv_array_arrays_radio": "Saída CSV como array de arrays (listas aninhadas sem chaves)",
+  "tooltip.text_to_json.pretty_print_check": "Formatar saída JSON com indentação para melhor legibilidade",
+  "tooltip.text_to_json.live_preview_check": "Converter automaticamente enquanto digita com atraso de 500ms (debounced)",
+  "tooltip.text_to_json.convert_btn": "Converter texto de entrada para JSON usando formato e opções selecionadas | Ctrl+Enter",
+  "tooltip.text_to_json.templates_btn": "Ver templates de exemplo para cada formato suportado com dados de amostra",
+  "tooltip.text_to_json.clear_btn": "Limpar ambas as áreas de texto de entrada e saída",
+  "tooltip.text_to_json.validate_btn": "Verificar se a saída é JSON válido e reportar erros",
+  "tooltip.text_to_json.copy_btn": "Copiar saída JSON para área de transferência para uso em outras aplicações",
+  "tooltip.text_to_json.open_editor_btn": "Abrir resultado da conversão no editor JSON principal para edição adicional",
+  "tooltip.text_to_json.history_btn": "Ver histórico de conversões com timestamps e formato usado",
+  "tooltip.text_to_json.swap_btn": "Conversão reversa: converter JSON de volta para formato de texto original",
+  "tooltip.text_to_json.input_text": "Colar ou digitar texto para converter: suporta 10 formatos incluindo YAML, INI, CSV, TOML",
+  "tooltip.text_to_json.output_text": "Resultado da conversão JSON: validado e formatado de acordo com opções selecionadas",
+  "tooltip.text_to_json.status_label": "Mensagens de status: mostra sucesso da conversão, erros e tempo da operação"
 }

@@ -1200,6 +1200,20 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~15 minutos (dock mais simples, apenas 5 widgets)
     * **Progresso**: Tooltips Expansion - 6/15 docks (40.0%)
+  - **[X] v2.9.69 - Text to JSON Dock (11/12/2025)**:
+    * ✅ **21 tooltips totais**: 10 melhorados (removidas hardcoded strings) + 11 novos
+    * ✅ **Format** (1): format_combo (10 formats: Auto-detect/Key-Value/List/CSV/Python Dict/YAML/INI/TOML/Java Properties/TOON)
+    * ✅ **Type Inference** (2): type_auto_radio (int/float/bool/null), type_string_radio (all as strings)
+    * ✅ **CSV Options** (4): csv_header_check (first row as header), csv_separator_combo (comma/semicolon/tab), csv_array_objects_radio (objects with keys), csv_array_arrays_radio (nested arrays)
+    * ✅ **General Options** (2): pretty_print_check (indentation), live_preview_check (500ms debounce)
+    * ✅ **Action Buttons** (8): convert_btn (Ctrl+Enter), templates_btn (view examples), clear_btn (clear I/O), validate_btn (check JSON), copy_btn (clipboard), open_editor_btn (main editor), history_btn (conversions), swap_btn (JSON→Text)
+    * ✅ **Input/Output** (2): input_text (10 formats support), output_text (validated JSON)
+    * ✅ **Status** (1): status_label (success/errors/timing)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 147 traduções (21×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~35 minutos (dock complexo: 10 format types + templates dialog + live preview + swap bidirectional)
+    * **Progresso**: Tooltips Expansion - 7/15 docks (46.7%)
   - **[X] v2.9.67 - File List Dock (11/12/2025)**:
     * ✅ **32 tooltips totais**: 19 melhorados (removidas hardcoded strings) + 13 novos
     * ✅ **Directory** (3): ed_directory (path input), btn_browse (Ctrl+O), btn_recent (recent dirs dropdown)
