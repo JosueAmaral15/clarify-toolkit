@@ -1214,6 +1214,24 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~35 minutos (dock complexo: 10 format types + templates dialog + live preview + swap bidirectional)
     * **Progresso**: Tooltips Expansion - 7/15 docks (46.7%)
+  - **[X] v2.9.70 - JSX Extractor Dock (11/12/2025)**:
+    * ✅ **28 tooltips totais**: 20 melhorados (removidas hardcoded strings) + 8 novos
+    * ✅ **Path** (3): ed_path (file/dir input), btn_browse (browse), is_file (toggle)
+    * ✅ **Param & Mode** (3): ed_param (param name), chk_is_attribute_mode (attribute vs content), cb_mode (jsx/generic)
+    * ✅ **Generic Delimiters** (2): ed_start (start regex), ed_end (end regex)
+    * ✅ **Extensions** (1): ed_ext (space-separated .tsx .jsx .js .ts)
+    * ✅ **Extraction Options** (5): chk_include_key (key in path), chk_include_value (value token), chk_no_standard (drop HTML tags), chk_only_strings (literals only), chk_include_quotation_marks (keep quotes)
+    * ✅ **Normalization** (4): cb_case (snake/camel/pascal/kebab), chk_upper (UPPERCASE), ed_limit (char limit), chk_avoid_cut (smart truncate)
+    * ✅ **JSON Options** (1): spin_indent (0-8 spaces)
+    * ✅ **Avoid Keys** (2): avoid_keys (comma-separated), cb_avoid_mode (contains/equals)
+    * ✅ **Action Buttons** (4): btn_run (extract), btn_save (save outputs), btn_copy (clipboard), btn_clear (clear)
+    * ✅ **Output** (2): out_paths (hierarchical paths), out_json (JSON structure)
+    * ✅ **Status** (1): status_label (files scanned, params extracted, timing)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 196 traduções (28×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~40 minutos (dock altamente complexo: JSX/Generic modes + hierarchical paths + normalization engine + avoid keys filter)
+    * **Progresso**: Tooltips Expansion - 8/15 docks (53.3%)
   - **[X] v2.9.67 - File List Dock (11/12/2025)**:
     * ✅ **32 tooltips totais**: 19 melhorados (removidas hardcoded strings) + 13 novos
     * ✅ **Directory** (3): ed_directory (path input), btn_browse (Ctrl+O), btn_recent (recent dirs dropdown)

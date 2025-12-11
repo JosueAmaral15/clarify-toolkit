@@ -54,6 +54,7 @@ from src.utils.normalization import (
     path_join,
     smart_truncate,
 )
+from src.i18n.translator import tooltip_tr
 from .base_dock import BaseDock
 
 # Type checking imports
@@ -76,6 +77,7 @@ class JSXExtractorDock(BaseDock):
         """Setup UI components."""
         self._create_widgets()
         self._create_layout()
+        self._apply_tooltips()  # v2.9.70
         self._connect_signals()
 
     def _validate_path_security(self, path: str, operation: str = "access") -> Optional[str]:
@@ -117,27 +119,20 @@ class JSXExtractorDock(BaseDock):
         self.ed_path.setPlaceholderText("Select a file or directory...")
 
         self.btn_browse = QPushButton("Browse")
-        self.btn_browse.setToolTip("Browse for file or directory")
 
         self.is_file = QCheckBox("Is file?")
-        self.is_file.setToolTip("Check if path is a file, uncheck for directory")
 
         # Param and mode section
         self.param_label = QLabel("Param/Attribute:")
         self.ed_param = QLineEdit("")
         self.ed_param.setPlaceholderText("Leave empty or * to match all")
-        self.ed_param.setToolTip("Parameter/attribute name to extract (empty = all)")
 
         self.chk_is_attribute_mode = QCheckBox("Treat Param as ATTRIBUTE?")
-        self.chk_is_attribute_mode.setToolTip(
-            "CHECKED = Extract attribute values (key='value')\n" "UNCHECKED = Extract tag content"
-        )
         self.chk_is_attribute_mode.setChecked(True)  # Default: attribute mode
 
         self.mode_label = QLabel("Mode:")
         self.cb_mode = QComboBox()
         self.cb_mode.addItems(["jsx", "generic"])
-        self.cb_mode.setToolTip("JSX mode for React files, Generic for custom delimiters")
 
         # Generic delimiters (only for generic mode)
         self.start_label = QLabel("Start delimiter (regex):")
@@ -151,30 +146,24 @@ class JSXExtractorDock(BaseDock):
         # Extensions
         self.ext_label = QLabel("Extensions:")
         self.ed_ext = QLineEdit(".tsx .jsx .js .ts")
-        self.ed_ext.setToolTip("File extensions to scan (space-separated)")
 
         # Options group
         self.options_group = QGroupBox("Extraction Options")
 
         self.chk_include_key = QCheckBox("Include key")
         self.chk_include_key.setChecked(True)
-        self.chk_include_key.setToolTip("Include parameter key in the path")
 
         self.chk_include_value = QCheckBox("Include value")
         self.chk_include_value.setChecked(False)
-        self.chk_include_value.setToolTip("Append normalized value token to path")
 
         self.chk_no_standard = QCheckBox("Drop standard HTML tags")
         self.chk_no_standard.setChecked(False)
-        self.chk_no_standard.setToolTip("Remove standard HTML tags from path hierarchy")
 
         self.chk_only_strings = QCheckBox("Only strings")
         self.chk_only_strings.setChecked(False)
-        self.chk_only_strings.setToolTip("Only extract literal string values (no variables/expressions)")
 
         self.chk_include_quotation_marks = QCheckBox("Include quotation marks")
         self.chk_include_quotation_marks.setChecked(False)
-        self.chk_include_quotation_marks.setToolTip("Keep quotes in JSON output")
 
         # Normalization options
         self.norm_group = QGroupBox("Token Normalization")
@@ -182,7 +171,6 @@ class JSXExtractorDock(BaseDock):
         self.case_label = QLabel("Case style:")
         self.cb_case = QComboBox()
         self.cb_case.addItems(["snake", "camel", "pascal", "kebab"])
-        self.cb_case.setToolTip("Case conversion for value tokens")
 
         self.chk_upper = QCheckBox("Uppercase token")
         self.chk_upper.setChecked(False)
@@ -190,11 +178,9 @@ class JSXExtractorDock(BaseDock):
         self.limit_label = QLabel("Limit:")
         self.ed_limit = QLineEdit("all")
         self.ed_limit.setPlaceholderText("all or number")
-        self.ed_limit.setToolTip("Character limit for value tokens ('all' = no limit)")
 
         self.chk_avoid_cut = QCheckBox("Avoid cut")
         self.chk_avoid_cut.setChecked(False)
-        self.chk_avoid_cut.setToolTip("Avoid cutting in the middle of a word")
 
         # JSON options
         self.json_group = QGroupBox("JSON Options")
@@ -208,25 +194,19 @@ class JSXExtractorDock(BaseDock):
         self.avoid_label = QLabel("Avoid keys (comma-separated):")
         self.avoid_keys = QLineEdit("")
         self.avoid_keys.setPlaceholderText("e.g., className,key,ref")
-        self.avoid_keys.setToolTip("Keys to exclude from extraction")
 
         self.avoid_keys_mode_label = QLabel("Avoid mode:")
         self.cb_avoid_mode = QComboBox()
         self.cb_avoid_mode.addItems(["contains", "equals"])
-        self.cb_avoid_mode.setToolTip("'contains' = partial match, 'equals' = exact match")
 
         # Action buttons
         self.btn_run = QPushButton("Extract")
-        self.btn_run.setToolTip("Extract parameters from selected files")
 
         self.btn_save = QPushButton("Save Outputs")
-        self.btn_save.setToolTip("Save paths and JSON to files")
 
         self.btn_copy = QPushButton("Copy All")
-        self.btn_copy.setToolTip("Copy filtered output to clipboard")
 
         self.btn_clear = QPushButton("Clear")
-        self.btn_clear.setToolTip("Clear all outputs")
 
         # Output tabs
         self.tabs = QTabWidget()
@@ -340,6 +320,58 @@ class JSXExtractorDock(BaseDock):
         self.btn_copy.clicked.connect(self._on_copy)
         self.btn_clear.clicked.connect(self._on_clear)
         self.cb_mode.currentTextChanged.connect(self._on_mode_changed)
+
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips (v2.9.70)."""
+        # Path section
+        self.ed_path.setToolTip(tooltip_tr("jsx_extractor.ed_path"))
+        self.btn_browse.setToolTip(tooltip_tr("jsx_extractor.btn_browse"))
+        self.is_file.setToolTip(tooltip_tr("jsx_extractor.is_file"))
+        
+        # Param and mode section
+        self.ed_param.setToolTip(tooltip_tr("jsx_extractor.ed_param"))
+        self.chk_is_attribute_mode.setToolTip(tooltip_tr("jsx_extractor.chk_is_attribute_mode"))
+        self.cb_mode.setToolTip(tooltip_tr("jsx_extractor.cb_mode"))
+        
+        # Generic delimiters
+        self.ed_start.setToolTip(tooltip_tr("jsx_extractor.ed_start"))
+        self.ed_end.setToolTip(tooltip_tr("jsx_extractor.ed_end"))
+        
+        # Extensions
+        self.ed_ext.setToolTip(tooltip_tr("jsx_extractor.ed_ext"))
+        
+        # Extraction options
+        self.chk_include_key.setToolTip(tooltip_tr("jsx_extractor.chk_include_key"))
+        self.chk_include_value.setToolTip(tooltip_tr("jsx_extractor.chk_include_value"))
+        self.chk_no_standard.setToolTip(tooltip_tr("jsx_extractor.chk_no_standard"))
+        self.chk_only_strings.setToolTip(tooltip_tr("jsx_extractor.chk_only_strings"))
+        self.chk_include_quotation_marks.setToolTip(tooltip_tr("jsx_extractor.chk_include_quotation_marks"))
+        
+        # Normalization options
+        self.cb_case.setToolTip(tooltip_tr("jsx_extractor.cb_case"))
+        self.chk_upper.setToolTip(tooltip_tr("jsx_extractor.chk_upper"))
+        self.ed_limit.setToolTip(tooltip_tr("jsx_extractor.ed_limit"))
+        self.chk_avoid_cut.setToolTip(tooltip_tr("jsx_extractor.chk_avoid_cut"))
+        
+        # JSON options
+        self.spin_indent.setToolTip(tooltip_tr("jsx_extractor.spin_indent"))
+        
+        # Avoid keys
+        self.avoid_keys.setToolTip(tooltip_tr("jsx_extractor.avoid_keys"))
+        self.cb_avoid_mode.setToolTip(tooltip_tr("jsx_extractor.cb_avoid_mode"))
+        
+        # Action buttons
+        self.btn_run.setToolTip(tooltip_tr("jsx_extractor.btn_run"))
+        self.btn_save.setToolTip(tooltip_tr("jsx_extractor.btn_save"))
+        self.btn_copy.setToolTip(tooltip_tr("jsx_extractor.btn_copy"))
+        self.btn_clear.setToolTip(tooltip_tr("jsx_extractor.btn_clear"))
+        
+        # Output tabs
+        self.out_paths.setToolTip(tooltip_tr("jsx_extractor.out_paths"))
+        self.out_json.setToolTip(tooltip_tr("jsx_extractor.out_json"))
+        
+        # Status
+        self.status_label.setToolTip(tooltip_tr("jsx_extractor.status_label"))
 
     def _on_mode_changed(self, mode: str) -> None:
         """Enable/disable generic delimiter fields based on mode."""
