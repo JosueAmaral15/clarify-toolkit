@@ -1190,6 +1190,25 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
     * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
     * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
+  - **[X] v2.9.67 - File List Dock (11/12/2025)**:
+    * ✅ **32 tooltips totais**: 19 melhorados (removidas hardcoded strings) + 13 novos
+    * ✅ **Directory** (3): ed_directory (path input), btn_browse (Ctrl+O), btn_recent (recent dirs dropdown)
+    * ✅ **Basic Options** (4): chk_all (show hidden -a), chk_long (long format -l), chk_human (human-readable -h), chk_recursive (recursive -R)
+    * ✅ **Advanced Filters Group** (1): grp_advanced (toggle collapsible panel)
+    * ✅ **Regex Filter** (2): ed_regex (pattern input), chk_regex_enabled (enable toggle)
+    * ✅ **Size Filters** (4): ed_size_min/max (numeric inputs), cmb_size_min/max_unit (B/KB/MB/GB selectors)
+    * ✅ **Modified Time Filters** (4): dte_mtime_after/before (date pickers), chk_mtime_after/before_enabled (enable toggles)
+    * ✅ **Extensions & Depth** (2): ed_extensions (comma-separated list), spn_depth (max recursion 0-10)
+    * ✅ **Exclude Directories** (6): chk_exclude_node_modules/git/pycache/dist/build (common excludes), ed_exclude_custom (custom patterns)
+    * ✅ **Presets** (5): cmb_presets (dropdown), btn_save/load/export/import_preset (CRUD operations)
+    * ✅ **Quick Filter** (1): ed_quick_filter (instant table search)
+    * ✅ **Actions** (2): btn_list (Execute Enter/F5), btn_export (CSV export Ctrl+E)
+    * ✅ **Results** (2): table (sortable results), lbl_stats (stats summary)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 224 traduções (32×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~55 minutos (39% mais widgets que v2.9.66, alta complexidade: advanced filters panel com presets system)
+    * **Progresso**: Tooltips Expansion - 5/15 docks (33.3%)
   - **[X] v2.9.66 - Text Extractor Dock (11/12/2025)**:
     * ✅ **23 tooltips totais**: 4 melhorados (combo_mode, combo_case, chk_exclude_numeric, chk_skip_empty removidas hardcoded) + 19 novos
     * ✅ **Input/Output** (5): ed_input (HTML/JSX file/dir Ctrl+O), btn_browse_input (Ctrl+O), chk_is_file (single vs directory), ed_output (JSON/TS Ctrl+S), btn_browse_output (Ctrl+S)

@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSettings, QDate
 from PySide6.QtGui import QAction
 from .base_dock import BaseDock
+from src.i18n.translator import tooltip_tr
 
 
 class FileListDock(BaseDock):
@@ -59,6 +60,7 @@ class FileListDock(BaseDock):
         self._create_layout()
         self._setup_context_menu()  # Task #40 - v2.9.13
         self._load_preset_list()  # Task #50 - Sprint A
+        self._apply_tooltips()  # v2.9.67
     
     def _create_widgets(self):
         """Create UI widgets."""
@@ -74,19 +76,15 @@ class FileListDock(BaseDock):
         
         # Options
         self.chk_all = QCheckBox("Show hidden files (-a)")
-        self.chk_all.setToolTip("Show all files including hidden (dotfiles)")
         self.chk_all.setChecked(getattr(self, 'chk_all_state', False))  # Task #42
         
         self.chk_long = QCheckBox("Long format (-l)")
-        self.chk_long.setToolTip("Show detailed information (permissions, size, modified)")
         self.chk_long.setChecked(getattr(self, 'chk_long_state', True))  # Task #42
         
         self.chk_human = QCheckBox("Human-readable sizes (-h)")
-        self.chk_human.setToolTip("Show sizes in KB, MB, GB instead of bytes")
         self.chk_human.setChecked(getattr(self, 'chk_human_state', True))  # Task #42
         
         self.chk_recursive = QCheckBox("Recursive (-R)")
-        self.chk_recursive.setToolTip("List subdirectories recursively")
         self.chk_recursive.setChecked(getattr(self, 'chk_recursive_state', False))  # Task #42
         
         # Advanced Filters Panel (Task #50 - v2.9.25) - Collapsible
@@ -127,7 +125,6 @@ class FileListDock(BaseDock):
         self.grp_advanced = QGroupBox("Advanced Filters")
         self.grp_advanced.setCheckable(True)
         self.grp_advanced.setChecked(False)  # Initially collapsed
-        self.grp_advanced.setToolTip("Toggle advanced file filtering options")
         
         # Grid layout for filters
         grid = QGridLayout()
@@ -137,18 +134,15 @@ class FileListDock(BaseDock):
         grid.addWidget(QLabel("Regex Pattern:"), 0, 0)
         self.ed_regex = QLineEdit()
         self.ed_regex.setPlaceholderText("e.g., ^test_.*\\.py$")
-        self.ed_regex.setToolTip("Regular expression pattern for filename matching")
         grid.addWidget(self.ed_regex, 0, 1, 1, 2)
         
         self.chk_regex_enabled = QCheckBox("Enable Regex")
-        self.chk_regex_enabled.setToolTip("Enable regex pattern matching instead of substring")
         grid.addWidget(self.chk_regex_enabled, 0, 3)
         
         # Row 1: Size filter (min)
         grid.addWidget(QLabel("Size Min:"), 1, 0)
         self.ed_size_min = QLineEdit()
         self.ed_size_min.setPlaceholderText("0")
-        self.ed_size_min.setToolTip("Minimum file size (leave empty for no limit)")
         self.ed_size_min.setMaximumWidth(100)
         grid.addWidget(self.ed_size_min, 1, 1)
         
@@ -162,7 +156,6 @@ class FileListDock(BaseDock):
         grid.addWidget(QLabel("Size Max:"), 2, 0)
         self.ed_size_max = QLineEdit()
         self.ed_size_max.setPlaceholderText("∞")
-        self.ed_size_max.setToolTip("Maximum file size (leave empty for no limit)")
         self.ed_size_max.setMaximumWidth(100)
         grid.addWidget(self.ed_size_max, 2, 1)
         
@@ -178,7 +171,6 @@ class FileListDock(BaseDock):
         self.dte_mtime_after.setCalendarPopup(True)
         self.dte_mtime_after.setSpecialValueText("No limit")
         self.dte_mtime_after.setDate(QDate(2000, 1, 1))  # Default: year 2000
-        self.dte_mtime_after.setToolTip("Show files modified after this date (inclusive)")
         grid.addWidget(self.dte_mtime_after, 3, 1, 1, 2)
         
         self.chk_mtime_after_enabled = QCheckBox("Enable")
@@ -190,7 +182,6 @@ class FileListDock(BaseDock):
         self.dte_mtime_before.setCalendarPopup(True)
         self.dte_mtime_before.setSpecialValueText("No limit")
         self.dte_mtime_before.setDate(QDate.currentDate())
-        self.dte_mtime_before.setToolTip("Show files modified before this date (inclusive)")
         grid.addWidget(self.dte_mtime_before, 4, 1, 1, 2)
         
         self.chk_mtime_before_enabled = QCheckBox("Enable")
@@ -200,7 +191,6 @@ class FileListDock(BaseDock):
         grid.addWidget(QLabel("Extensions:"), 5, 0)
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setPlaceholderText("e.g., py,js,txt")
-        self.ed_extensions.setToolTip("Comma-separated list of extensions (without dots)")
         grid.addWidget(self.ed_extensions, 5, 1, 1, 3)
         
         # Row 6: Depth limit
@@ -210,7 +200,6 @@ class FileListDock(BaseDock):
         self.spn_depth.setMaximum(10)
         self.spn_depth.setValue(0)
         self.spn_depth.setSpecialValueText("Unlimited")
-        self.spn_depth.setToolTip("Maximum recursion depth (0 = unlimited)")
         self.spn_depth.setMaximumWidth(100)
         grid.addWidget(self.spn_depth, 6, 1)
         
@@ -243,7 +232,6 @@ class FileListDock(BaseDock):
         grid.addWidget(QLabel("Custom:"), 9, 0)
         self.ed_exclude_custom = QLineEdit()
         self.ed_exclude_custom.setPlaceholderText("e.g., temp,cache,*.tmp")
-        self.ed_exclude_custom.setToolTip("Comma-separated custom exclude patterns")
         grid.addWidget(self.ed_exclude_custom, 9, 1, 1, 3)
         
         # Row 10: Presets
@@ -251,35 +239,92 @@ class FileListDock(BaseDock):
         
         self.cmb_presets = QComboBox()
         self.cmb_presets.addItem("-- No Preset --")
-        self.cmb_presets.setToolTip("Select a saved preset")
         self.cmb_presets.currentIndexChanged.connect(self._load_preset_from_combo)
         grid.addWidget(self.cmb_presets, 10, 1, 1, 2)
         
         # Preset buttons
         preset_buttons_layout = QHBoxLayout()
         self.btn_save_preset = QPushButton("Save")
-        self.btn_save_preset.setToolTip("Save current filters as a new preset")
         self.btn_save_preset.clicked.connect(self._save_preset)
         preset_buttons_layout.addWidget(self.btn_save_preset)
         
         self.btn_load_preset = QPushButton("Load")
-        self.btn_load_preset.setToolTip("Load selected preset")
         self.btn_load_preset.clicked.connect(self._load_preset)
         preset_buttons_layout.addWidget(self.btn_load_preset)
         
         self.btn_export_preset = QPushButton("Export")
-        self.btn_export_preset.setToolTip("Export preset to JSON file")
         self.btn_export_preset.clicked.connect(self._export_preset)
         preset_buttons_layout.addWidget(self.btn_export_preset)
         
         self.btn_import_preset = QPushButton("Import")
-        self.btn_import_preset.setToolTip("Import preset from JSON file")
         self.btn_import_preset.clicked.connect(self._import_preset)
         preset_buttons_layout.addWidget(self.btn_import_preset)
         
         grid.addLayout(preset_buttons_layout, 11, 0, 1, 4)
         
         self.grp_advanced.setLayout(grid)
+    
+    def _apply_tooltips(self):
+        """Apply internationalized tooltips to all widgets (v2.9.67)."""
+        # Directory section
+        self.ed_directory.setToolTip(tooltip_tr("file_list.ed_directory"))
+        self.btn_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
+        self.btn_recent.setToolTip(tooltip_tr("file_list.btn_recent"))
+        
+        # Basic options
+        self.chk_all.setToolTip(tooltip_tr("file_list.chk_all"))
+        self.chk_long.setToolTip(tooltip_tr("file_list.chk_long"))
+        self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
+        self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
+        
+        # Advanced filters group
+        self.grp_advanced.setToolTip(tooltip_tr("file_list.grp_advanced"))
+        
+        # Regex filter
+        self.ed_regex.setToolTip(tooltip_tr("file_list.ed_regex"))
+        self.chk_regex_enabled.setToolTip(tooltip_tr("file_list.chk_regex_enabled"))
+        
+        # Size filters
+        self.ed_size_min.setToolTip(tooltip_tr("file_list.ed_size_min"))
+        self.cmb_size_min_unit.setToolTip(tooltip_tr("file_list.cmb_size_min_unit"))
+        self.ed_size_max.setToolTip(tooltip_tr("file_list.ed_size_max"))
+        self.cmb_size_max_unit.setToolTip(tooltip_tr("file_list.cmb_size_max_unit"))
+        
+        # Modified time filters
+        self.dte_mtime_after.setToolTip(tooltip_tr("file_list.dte_mtime_after"))
+        self.chk_mtime_after_enabled.setToolTip(tooltip_tr("file_list.chk_mtime_after_enabled"))
+        self.dte_mtime_before.setToolTip(tooltip_tr("file_list.dte_mtime_before"))
+        self.chk_mtime_before_enabled.setToolTip(tooltip_tr("file_list.chk_mtime_before_enabled"))
+        
+        # Extensions and depth
+        self.ed_extensions.setToolTip(tooltip_tr("file_list.ed_extensions"))
+        self.spn_depth.setToolTip(tooltip_tr("file_list.spn_depth"))
+        
+        # Exclude directories
+        self.chk_exclude_node_modules.setToolTip(tooltip_tr("file_list.chk_exclude_node_modules"))
+        self.chk_exclude_git.setToolTip(tooltip_tr("file_list.chk_exclude_git"))
+        self.chk_exclude_pycache.setToolTip(tooltip_tr("file_list.chk_exclude_pycache"))
+        self.chk_exclude_dist.setToolTip(tooltip_tr("file_list.chk_exclude_dist"))
+        self.chk_exclude_build.setToolTip(tooltip_tr("file_list.chk_exclude_build"))
+        self.ed_exclude_custom.setToolTip(tooltip_tr("file_list.ed_exclude_custom"))
+        
+        # Presets
+        self.cmb_presets.setToolTip(tooltip_tr("file_list.cmb_presets"))
+        self.btn_save_preset.setToolTip(tooltip_tr("file_list.btn_save_preset"))
+        self.btn_load_preset.setToolTip(tooltip_tr("file_list.btn_load_preset"))
+        self.btn_export_preset.setToolTip(tooltip_tr("file_list.btn_export_preset"))
+        self.btn_import_preset.setToolTip(tooltip_tr("file_list.btn_import_preset"))
+        
+        # Quick filter
+        self.ed_quick_filter.setToolTip(tooltip_tr("file_list.ed_quick_filter"))
+        
+        # Action buttons
+        self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
+        self.btn_export.setToolTip(tooltip_tr("file_list.btn_export"))
+        
+        # Results
+        self.table.setToolTip(tooltip_tr("file_list.table"))
+        self.lbl_stats.setToolTip(tooltip_tr("file_list.lbl_stats"))
     
     def _create_layout(self):
         """Create layout."""
