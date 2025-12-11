@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QPushButton, QSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout
 )
 from .base_dock import StandardToolDock
+from src.i18n.translator import tooltip_tr
 
 
 class TextExtractorDock(StandardToolDock):
@@ -66,9 +67,6 @@ class TextExtractorDock(StandardToolDock):
         grid.addWidget(QLabel("Extraction mode:"), 2, 0)
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(["JSX Attributes", "Tag Content", "Generic Scope"])
-        self.combo_mode.setToolTip("JSX Attributes: Extract label=\"text\" patterns\n"
-                                   "Tag Content: Extract <tag>text</tag> content\n"
-                                   "Generic Scope: Extract all quoted strings")
         grid.addWidget(self.combo_mode, 2, 1)
         
         # Parameter/Tag name
@@ -80,12 +78,11 @@ class TextExtractorDock(StandardToolDock):
         # Normalization options
         grid.addWidget(QLabel("Case style:"), 3, 0)
         self.combo_case = QComboBox()
+        # Normalization options
+        grid.addWidget(QLabel("Case style:"), 3, 0)
+        self.combo_case = QComboBox()
         self.combo_case.addItems(["snake_case", "camelCase", "PascalCase", "kebab-case"])
-        self.combo_case.setToolTip("How to format extracted keys: snake_case (Python), camelCase (JS), PascalCase (components), kebab-case (CSS)")
         grid.addWidget(self.combo_case, 3, 1)
-        
-        grid.addWidget(QLabel("Truncate at:"), 3, 2)
-        self.ed_limit = QLineEdit("all")
         self.ed_limit.setPlaceholderText("chars or 'all'")
         grid.addWidget(self.ed_limit, 3, 3)
         
@@ -125,13 +122,11 @@ class TextExtractorDock(StandardToolDock):
         self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
         self.chk_skip_empty = QCheckBox("Skip empty values")
         self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
+        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
+        self.chk_skip_empty = QCheckBox("Skip empty values")
         
         options_layout.addWidget(self.chk_exclude_numeric, 3, 0)
         options_layout.addWidget(self.chk_skip_empty, 3, 1)
-        
-        options_group.setLayout(options_layout)
-        
-        self.layout.addLayout(grid)
         self.layout.addWidget(options_group)
         
         # Action buttons
@@ -153,15 +148,61 @@ class TextExtractorDock(StandardToolDock):
         self.layout.addLayout(editor_btn_layout)
     
     def _connect_signals(self):
-        """Connect signals."""
-        self.btn_browse_input.clicked.connect(self._browse_input)
-        self.btn_browse_output.clicked.connect(self._browse_output)
+        # Open in Editor button (Task #6 - v2.9.19)
+        editor_btn_layout = QHBoxLayout()
+        self.add_open_in_editor_button(self.text_results, editor_btn_layout)
+        self.layout.addLayout(editor_btn_layout)
         
+        # Store button references for tooltips (v2.9.66)
+        self.btn_extract = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Extract"][0]
+        self.btn_clear = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Clear"][0]
+        
+        # Setup tooltips AFTER all widgets are created (v2.9.66)
+        self._apply_tooltips()
         # Enable Enter key execution on input fields
         self._setup_enter_key_execution(self.ed_input, self.ed_param, self.ed_limit)
-    
     def _execute_action(self):
         """Execute extraction when Enter is pressed."""
+        self._extract()
+    
+    def _apply_tooltips(self):
+        """Apply internationalized tooltips to all widgets (v2.9.66)."""
+        # Input/Output section
+        self.ed_input.setToolTip(tooltip_tr("text_extractor.ed_input"))
+        self.btn_browse_input.setToolTip(tooltip_tr("text_extractor.btn_browse_input"))
+        self.chk_is_file.setToolTip(tooltip_tr("text_extractor.chk_is_file"))
+        self.ed_output.setToolTip(tooltip_tr("text_extractor.ed_output"))
+        self.btn_browse_output.setToolTip(tooltip_tr("text_extractor.btn_browse_output"))
+        
+        # Extraction mode section
+        self.combo_mode.setToolTip(tooltip_tr("text_extractor.combo_mode"))
+        self.ed_param.setToolTip(tooltip_tr("text_extractor.ed_param"))
+        
+        # Normalization section
+        self.combo_case.setToolTip(tooltip_tr("text_extractor.combo_case"))
+        self.ed_limit.setToolTip(tooltip_tr("text_extractor.ed_limit"))
+        
+        # Advanced options (11 checkboxes)
+        self.chk_uppercase.setToolTip(tooltip_tr("text_extractor.chk_uppercase"))
+        self.chk_avoid_cut.setToolTip(tooltip_tr("text_extractor.chk_avoid_cut"))
+        self.chk_drop_standard.setToolTip(tooltip_tr("text_extractor.chk_drop_standard"))
+        self.chk_add_key.setToolTip(tooltip_tr("text_extractor.chk_add_key"))
+        self.chk_add_value.setToolTip(tooltip_tr("text_extractor.chk_add_value"))
+        self.chk_nested_json.setToolTip(tooltip_tr("text_extractor.chk_nested_json"))
+        self.chk_ts_export.setToolTip(tooltip_tr("text_extractor.chk_ts_export"))
+        self.chk_only_strings.setToolTip(tooltip_tr("text_extractor.chk_only_strings"))
+        self.chk_exclude_numeric.setToolTip(tooltip_tr("text_extractor.chk_exclude_numeric"))
+        self.chk_skip_empty.setToolTip(tooltip_tr("text_extractor.chk_skip_empty"))
+        
+        # Action buttons
+        self.btn_extract.setToolTip(tooltip_tr("text_extractor.btn_extract"))
+        self.btn_clear.setToolTip(tooltip_tr("text_extractor.btn_clear"))
+        
+        # Results panel
+        self.text_results.setToolTip(tooltip_tr("text_extractor.text_results"))
+    
+    def _on_enter_pressed(self):
+        """Handle action when Enter is pressed."""
         self._extract()
     
     def _browse_input(self):

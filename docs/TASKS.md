@@ -1190,6 +1190,19 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
     * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
     * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
+  - **[X] v2.9.66 - Text Extractor Dock (11/12/2025)**:
+    * ✅ **23 tooltips totais**: 4 melhorados (combo_mode, combo_case, chk_exclude_numeric, chk_skip_empty removidas hardcoded) + 19 novos
+    * ✅ **Input/Output** (5): ed_input (HTML/JSX file/dir Ctrl+O), btn_browse_input (Ctrl+O), chk_is_file (single vs directory), ed_output (JSON/TS Ctrl+S), btn_browse_output (Ctrl+S)
+    * ✅ **Extraction** (2): combo_mode (3 modes: JSX Attributes/Tag Content/Generic Scope), ed_param (specific or all params)
+    * ✅ **Normalization** (2): combo_case (4 styles: snake/camel/pascal/kebab), ed_limit (smart truncation at word boundaries)
+    * ✅ **Advanced Options** (10 checkboxes): chk_uppercase (CONST style), chk_avoid_cut (word boundaries), chk_drop_standard (filter HTML), chk_add_key/value (hierarchical paths), chk_nested_json (nested vs flat), chk_ts_export (ES6 export), chk_only_strings/exclude_numeric/skip_empty (filtering)
+    * ✅ **Actions** (2): btn_extract (Enter/F5 execute), btn_clear (Ctrl+L)
+    * ✅ **Results** (1): text_results (stats display: files processed, keys extracted, output path)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 161 traduções (23×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~50 minutos (77% mais widgets que v2.9.65, 10 checkboxes com descrições técnicas complexas)
+    * **Progresso**: Tooltips Expansion - 4/15 docks (26.7%)
   - **[X] v2.9.65 - Placeholder Replacer Dock (11/12/2025)**:
     * ✅ **13 tooltips totais**: 9 melhorados (removidas hardcoded strings) + 4 novos (btn_preview, btn_replace, btn_clear, text_results)
     * ✅ **Mapping section** (2): ed_mapping (JSON/CSV com exemplos), btn_browse_mapping (Ctrl+O)
