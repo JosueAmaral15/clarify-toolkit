@@ -1105,6 +1105,8 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
 - **[X]** Adicionar opções de undo e redo para mudanças feitas (Command Pattern, Ctrl+Z/Ctrl+Y, 10 níveis) **(v2.9.8)**
 - **[X]** Traduzir aplicação para idiomas mais falados do mundo **(v2.9.10 - Task #24: Sistema i18n com EN/PT-BR)**
+- **[]** No AI Processor (Open AI Processor), para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, deve haver um grupo específico que pode com um checkbox ser habilitado ou não pelo usuário: um campo de quantidade de bytes à direita uma seleção (dropdown) de medida de bytes (KB, MB, GB, etc) para favorecer a experiência de usuário durante a modificação, por exemplo, multiplicando com 1000, multiplicando com 2 elevado a 3 ou fazendo deslocamento à esquerda dependendo da medida. Além disso, mais à direita deve ter um botão de máximo de tokens (maximum tokens) para facilitar os cortes do arquivo na edição inteligente de arquivos com inteligência artificial. Quando o botão é clicado, a sessão de quantidade de bytes é atualmente atualizada para o máximo de bytes conforme o máximo de tokens dependendo do modelo. E, ao lado direito, com campo de porcentagem que varia de 1% a 99% de bytes conforme o máximo de tokens permitidos. Como alternativa, à direita deve haver um outro campo numérico para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, podendo com um radio button ser uma alternativa em relação à especificação de bytes. Um outro botão de max tokens para essa quantidade de cortes explícita do arquivo (enviar partes do arquivo a cada requisição) deve ser colocada com um campo para especificar a porcentagem desejada ou esperada que atualiza o campo de quantidade de cortes.
+- **[]** Incluir tool de tradução rápida (somente para txt ou arquivos cujo conteúdo é ASCII) e outro tool de tradução avançada para outros idiomas (em que se pode traduzir outros formatos de arquivo visual como docx e pdf, mas com mais opções), em que se utiliza os recursos do AI Processor para fatiar o arquivo em partes até o máximo de tokens possível (99% do token) a fim de traduzir de um idioma para outro idioma aquele arquivo, podendo ser salvo em outro arquivo ou em outro lugar à escolha do usuário. Por exemplo, traduzir de inglês para português, tendo como principal API o Gemini Flash.
 
 #### Quality Assurance & Testing
 
@@ -1270,7 +1272,14 @@ result = convert_text_to_json(text, "auto")
 
 - **[]** Plugin System: Implementar sistema de plugins para extensões customizadas. Estrutura: `plugins/` folder com subfolders por plugin, cada plugin tem `plugin.json` (metadata) + `main.py` (entry point). API: registrar dock customizado, adicionar menu items, hook em events (file_opened, search_completed). Incluir 2 plugins exemplo: "Export to PostgreSQL", "Slack Notifications".
 - **[]** Configuration Management: Centralizar configurações em `config.yaml` (além de QSettings). Parâmetros: default directories, max file size, thread pool size, cache duration, AI model preferences, logging level. Incluir UI em `Settings → Advanced` para editar YAML visualmente. Validar schema com `jsonschema`.
-- **[]** Logging System: Implementar logging estruturado usando Python `logging` module. Levels: DEBUG (development), INFO (operations), WARNING (issues), ERROR (failures), CRITICAL (crashes). Output: `logs/clarify.log` (rotate daily, keep 30 days). Formato: `[2025-12-02 14:23:45] [INFO] [set_operations] Executed intersection on 3 files (124ms)`. Incluir "View Logs" em Help menu.
+- **[X]** **v2.9.64 - Logging System Integration (11/12/2025 - CONCLUÍDO)**:
+  * **[X]** Sistema de logging já existente desde v2.9.58 (`src/utils/logger.py`, 330 LOC)
+  * **[X]** Features: 5 níveis (DEBUG/INFO/WARNING/ERROR/CRITICAL), RotatingFileHandler (10MB, 5 backups), colored console
+  * **[X]** Path: `~/.clarify/logs/clarify.log`
+  * **[X]** API: `get_logger(__name__)`, `set_log_level()`, `clear_all_logs()`
+  * **[X]** Help menu → "View Logs" (abre arquivo em editor padrão do OS)
+  * **[X]** Smoke test: Compilação OK, menu integrado
+  * **Sprint v2.9.64**: Apenas GUI integration (~50 LOC), 30 minutos
 - **[]** Update Checker: Adicionar verificador automático de atualizações. Na inicialização: verificar GitHub Releases API para versão mais recente, comparar com versão atual, exibir notificação se nova versão disponível. Incluir: link para changelog, botão "Download", checkbox "Don't show again for this version". Respeitar configuração "Check for updates" em Settings.
 - **[]** Error Reporting & Crash Handler: Implementar sistema de crash reporting. Capturar exceções não tratadas com `sys.excepthook`, gerar relatório com: stack trace, versão do app, OS info, últimas 50 linhas de log. Oferecer: "Send Report" (via GitHub Issue automaticamente), "Save Report" (local .txt), "Ignore". Anonimizar paths de arquivos do usuário.
 - **[]** Database Migration System: Criar sistema de migração para QSettings quando estrutura mudar entre versões. Pattern: `migrations/v{version}.py` com `migrate()` function. Exemplo: v2.9.32 → v2.9.33 move `set_operations/` para `operations/set/`. Executar migrations automaticamente no startup. Log em `migrations.log`.
@@ -1467,9 +1476,9 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 13 | 23 | 36.1% |
+| COULD HAVE | 36 | 14 | 22 | 38.9% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **90** | **67** | **57.3%** |
+| **TOTAL** | **157** | **91** | **66** | **58.0%** |
 
 **Última Atualização**: 02/12/2025 - v2.9.32 Set Operations + Recomendações Pós-Release
 

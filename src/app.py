@@ -4523,12 +4523,61 @@ if _PYSIDE:
             from PySide6.QtWidgets import QMessageBox
             about_text = """<h2>Clarify</h2>
             <p><b>Text Processing Tool</b></p>
-            <p>Version: 2.9.29 (Reference Resolver Sprint A)</p>
+            <p>Version: 2.9.64 (Logging System Integration)</p>
             <p>A powerful tool for JSON processing, translation, AI integration, and more.</p>
             <p><a href="https://github.com/JosueAmaral15/clarify">GitHub Repository</a></p>
             <p>© 2025 Josue Amaral</p>
             """
             QMessageBox.about(self, "About Clarify", about_text)
+        
+        def _view_logs(self):
+            """
+            Open log file in default text editor (v2.9.64).
+            
+            Uses system default application to open the log file for viewing.
+            Falls back to showing path if opening fails.
+            """
+            from .utils.logger import get_log_file
+            from PySide6.QtWidgets import QMessageBox
+            import subprocess
+            import platform
+            
+            log_file = get_log_file()
+            
+            if not log_file.exists():
+                QMessageBox.warning(
+                    self,
+                    "No Logs Found",
+                    f"Log file does not exist yet:\n{log_file}\n\n"
+                    "Logs will be created when the application performs operations."
+                )
+                return
+            
+            # Open log file in default application
+            try:
+                system = platform.system()
+                if system == "Linux":
+                    subprocess.run(["xdg-open", str(log_file)], check=False)
+                elif system == "Darwin":  # macOS
+                    subprocess.run(["open", str(log_file)], check=False)
+                elif system == "Windows":
+                    os.startfile(str(log_file))
+                else:
+                    # Fallback: show path
+                    QMessageBox.information(
+                        self,
+                        "Log File Location",
+                        f"Log file path:\n{log_file}\n\n"
+                        "Please open it manually in your text editor."
+                    )
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    "Error Opening Logs",
+                    f"Failed to open log file:\n{log_file}\n\n"
+                    f"Error: {e}\n\n"
+                    "You can open it manually."
+                )
         
         # Update Checker Methods (v2.9.45)
         
@@ -5036,8 +5085,15 @@ if _PYSIDE:
             m_help.addAction(self.act_customize_shortcuts)
             self.act_customize_shortcuts.triggered.connect(self._customize_shortcuts)
             
-            # Update Checker (v2.9.45)
             m_help.addSeparator()
+            
+            # View Logs (v2.9.64 - Logging System Integration)
+            self.act_view_logs = QAction("📄 View Logs", self)
+            self.act_view_logs.setToolTip("Open log files in default editor")
+            m_help.addAction(self.act_view_logs)
+            self.act_view_logs.triggered.connect(self._view_logs)
+            
+            # Update Checker (v2.9.45)
             self.act_check_updates = QAction("🔄 Verificar Atualizações", self)
             self.act_check_updates.setToolTip("Check for new Clarify versions from GitHub")
             m_help.addAction(self.act_check_updates)

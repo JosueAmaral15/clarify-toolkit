@@ -1,5 +1,33 @@
 # Changelog - Clarify Project
 
+## [2.9.64] - 2025-12-11
+
+### 📄 Logging System Integration
+
+Integração GUI do sistema de logging já existente desde v2.9.58. Adiciona menu Help → "View Logs" para visualizar logs no editor padrão do OS.
+
+**Background**: Sistema completo de logging já implementado em v2.9.58 (`src/utils/logger.py`, 330 LOC) com RotatingFileHandler, 5 níveis (DEBUG/INFO/WARNING/ERROR/CRITICAL), colored console output. Este sprint apenas adiciona integração GUI que faltava.
+
+**Features**:
+- ✅ Menu Help → "📄 View Logs"
+- ✅ Cross-platform file opening (Linux: xdg-open, macOS: open, Windows: startfile)
+- ✅ Error handling (file not found, open failure)
+- ✅ Informative dialogs for edge cases
+- ✅ Fallback: show file path if opening fails
+
+**Files**:
+- `src/app.py` [MODIFIED] - Added menu item + _view_logs() method (~50 LOC)
+- `docs/v2.9.64-SPECIFICATION.md` [NEW] - Technical specification
+- `docs/TASKS.md` [UPDATED] - Marked Logging System complete
+
+**Access**: Help → View Logs  
+**Log Location**: `~/.clarify/logs/clarify.log`
+
+**Sprint Details**: 30 minutes, ~50 LOC (GUI integration only)  
+**Progress**: COULD HAVE 14/36 (38.9%), TOTAL 91/157 (58.0%)
+
+---
+
 ## [2.9.63] - 2025-12-10
 
 ### 📋 Project Templates System
