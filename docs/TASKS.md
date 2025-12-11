@@ -1214,6 +1214,22 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~35 minutos (dock complexo: 10 format types + templates dialog + live preview + swap bidirectional)
     * **Progresso**: Tooltips Expansion - 7/15 docks (46.7%)
+  - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
+    * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
+    * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)
+    * ✅ **AI Configuration** (6): combo_provider (OpenAI/Gemini/Claude/Perplexity), combo_model (cost/capability), btn_refresh_models (24h cache), ed_api_key (secure API key), btn_verify (test key), ed_prompt (AI instructions)
+    * ✅ **Processing Options** (3): chk_line_by_line (cyclic prompts), spin_max_bytes (file size limit), ed_extensions (comma-separated .txt,.py,.js)
+    * ✅ **Scope Extraction** (7): chk_scope_enable (extract markers), ed_scope_start (start marker { or <div>), chk_start_regex (regex pattern), chk_start_case (case sensitive), ed_scope_end (end marker } or </div>), chk_end_regex (regex pattern), chk_end_case (case sensitive)
+    * ✅ **Advanced Conditions** (1): combo_cond_logic (AND/OR logic)
+    * ✅ **Action Buttons** (4): btn_process (F5 execute), btn_interrupt (Esc stop), btn_save_results (save output), btn_clear (Ctrl+L clear)
+    * ✅ **Statistics** (2): lbl_session_stats (tokens in/out + cost), lbl_lifetime_stats (total usage cumulative)
+    * ✅ **Output Options** (1): chk_remove_fences (strip ```json fences)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 189 traduções (27×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * ✅ **Otimização**: Python script para remoção em massa de 21 tooltips hardcoded (vs multi_replace manual)
+    * **Sprint**: ~45 minutos (dock maior e mais complexo: 1099 linhas, AI features, scope extraction, statistics)
+    * **Progresso**: Tooltips Expansion - 9/15 docks (60.0%)
   - **[X] v2.9.70 - JSX Extractor Dock (11/12/2025)**:
     * ✅ **28 tooltips totais**: 20 melhorados (removidas hardcoded strings) + 8 novos
     * ✅ **Path** (3): ed_path (file/dir input), btn_browse (browse), is_file (toggle)

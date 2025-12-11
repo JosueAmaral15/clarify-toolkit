@@ -32,6 +32,7 @@ from src.ai_processor import (
 )
 from src.core.filters import Condition, filter_files_by_conditions
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+from src.i18n.translator import tooltip_tr
 
 
 class PathEntry(QWidget):
@@ -52,17 +53,14 @@ class PathEntry(QWidget):
         # Path input
         self.ed_path = QLineEdit()
         self.ed_path.setPlaceholderText("Enter file or directory path")
-        self.ed_path.setToolTip("Path to file or directory to process with AI | Ctrl+Shift+A to open AI Processor")
         
         # Browse button
         self.btn_browse = QPushButton("Browse")
         self.btn_browse.setMaximumWidth(80)
-        self.btn_browse.setToolTip("Browse for file or directory | Ctrl+O to open file dialog")
         self.btn_browse.clicked.connect(self._browse)
         
         # Is file checkbox
         self.chk_is_file = QCheckBox("File")
-        self.chk_is_file.setToolTip("Check if selecting a file, uncheck for directory | Ctrl+Shift+A to open AI Processor")
         
         # Remove button (disabled for first path)
         self.btn_remove = QPushButton("✕")
@@ -254,7 +252,6 @@ class AIProcessorDock(StandardToolDock):
         
         # Add path button
         btn_add_path = QPushButton("+ Add Path")
-        btn_add_path.setToolTip("Add another file or directory path to process | Ctrl+Shift+A to open AI Processor")
         btn_add_path.clicked.connect(self._add_path_entry)
         btn_add_path.setMaximumWidth(120)
         paths_group_layout.addWidget(btn_add_path)
@@ -330,7 +327,6 @@ class AIProcessorDock(StandardToolDock):
         adv_cond_group = QGroupBox("Advanced File Filters (Optional)")
         adv_cond_group.setCheckable(True)
         adv_cond_group.setChecked(False)
-        adv_cond_group.setToolTip("Filter files by filename, size, date, content patterns, etc. | Ctrl+Shift+A to open AI Processor")
         adv_cond_layout = QGridLayout()
         
         # Logic operator
@@ -354,14 +350,10 @@ class AIProcessorDock(StandardToolDock):
             # Field combo
             combo_field = QComboBox()
             combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-            combo_field.setToolTip("Select field to filter on | Ctrl+Shift+A to open AI Processor")
-            
             # Operator combo
             combo_op = QComboBox()
             combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
                               "starts with", "ends with", ">", "<", ">=", "<="])
-            combo_op.setToolTip("Select comparison operator | Ctrl+Shift+A to open AI Processor")
-            
             # Value input
             ed_value = QLineEdit()
             ed_value.setPlaceholderText("Filter value")
@@ -376,12 +368,8 @@ class AIProcessorDock(StandardToolDock):
             # Case sensitive checkbox
             chk_case = QCheckBox()
             chk_case.setChecked(True)
-            chk_case.setToolTip("Case sensitive matching | Ctrl+Shift+A to open AI Processor")
-            
             # Regex checkbox
             chk_regex = QCheckBox()
-            chk_regex.setToolTip("Use value as regex pattern | Ctrl+Shift+A to open AI Processor")
-            
             # Add to grid (row + 2 because of headers)
             grid_row = row + 2
             adv_cond_layout.addWidget(combo_field, grid_row, 0)
@@ -401,7 +389,6 @@ class AIProcessorDock(StandardToolDock):
         self.buttons_layout_ref.addWidget(btn_add_cond)
         
         btn_clear_cond = QPushButton("🗑️ Clear All")
-        btn_clear_cond.setToolTip("Clear all conditions | Ctrl+Shift+A to open AI Processor")
         btn_clear_cond.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_cond)
         self.buttons_layout_ref.addStretch()
@@ -482,6 +469,9 @@ class AIProcessorDock(StandardToolDock):
         # Add splitter to main layout
         self.layout.addWidget(splitter)
         
+        # Apply tooltips (v2.9.71)
+        self._apply_tooltips()
+        
         # Update stats display
         self._update_stats_display()
         
@@ -490,6 +480,52 @@ class AIProcessorDock(StandardToolDock):
         
         # Load advanced conditions preferences (Task #51 - v2.9.26)
         self._load_advanced_conditions_preferences()
+    
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips (v2.9.71)."""
+        # Path entries (will be applied to each PathEntry dynamically)
+        for path_entry in self.path_entries:
+            path_entry.ed_path.setToolTip(tooltip_tr("ai_processor.ed_path"))
+            path_entry.btn_browse.setToolTip(tooltip_tr("ai_processor.btn_browse"))
+            path_entry.chk_is_file.setToolTip(tooltip_tr("ai_processor.chk_is_file"))
+        
+        # AI Configuration
+        self.combo_provider.setToolTip(tooltip_tr("ai_processor.combo_provider"))
+        self.combo_model.setToolTip(tooltip_tr("ai_processor.combo_model"))
+        self.btn_refresh_models.setToolTip(tooltip_tr("ai_processor.btn_refresh_models"))
+        self.ed_api_key.setToolTip(tooltip_tr("ai_processor.ed_api_key"))
+        self.btn_verify.setToolTip(tooltip_tr("ai_processor.btn_verify"))
+        self.ed_prompt.setToolTip(tooltip_tr("ai_processor.ed_prompt"))
+        
+        # Processing Options
+        self.chk_line_by_line.setToolTip(tooltip_tr("ai_processor.chk_line_by_line"))
+        self.spin_max_bytes.setToolTip(tooltip_tr("ai_processor.spin_max_bytes"))
+        self.ed_extensions.setToolTip(tooltip_tr("ai_processor.ed_extensions"))
+        
+        # Scope Extraction
+        self.chk_scope_enable.setToolTip(tooltip_tr("ai_processor.chk_scope_enable"))
+        self.ed_scope_start.setToolTip(tooltip_tr("ai_processor.ed_scope_start"))
+        self.chk_start_regex.setToolTip(tooltip_tr("ai_processor.chk_start_regex"))
+        self.chk_start_case.setToolTip(tooltip_tr("ai_processor.chk_start_case"))
+        self.ed_scope_end.setToolTip(tooltip_tr("ai_processor.ed_scope_end"))
+        self.chk_end_regex.setToolTip(tooltip_tr("ai_processor.chk_end_regex"))
+        self.chk_end_case.setToolTip(tooltip_tr("ai_processor.chk_end_case"))
+        
+        # Advanced Conditions
+        self.combo_cond_logic.setToolTip(tooltip_tr("ai_processor.combo_cond_logic"))
+        
+        # Action Buttons
+        self.btn_process.setToolTip(tooltip_tr("ai_processor.btn_process"))
+        self.btn_interrupt.setToolTip(tooltip_tr("ai_processor.btn_interrupt"))
+        self.btn_save_results.setToolTip(tooltip_tr("ai_processor.btn_save_results"))
+        self.btn_clear.setToolTip(tooltip_tr("ai_processor.btn_clear"))
+        
+        # Statistics
+        self.lbl_session_stats.setToolTip(tooltip_tr("ai_processor.lbl_session_stats"))
+        self.lbl_lifetime_stats.setToolTip(tooltip_tr("ai_processor.lbl_lifetime_stats"))
+        
+        # Output Options
+        self.chk_remove_fences.setToolTip(tooltip_tr("ai_processor.chk_remove_fences"))
     
     def _add_path_entry(self):
         """Add a new path entry."""
@@ -880,28 +916,18 @@ class AIProcessorDock(StandardToolDock):
         # Create widgets
         combo_field = QComboBox()
         combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
-        combo_field.setToolTip("Select field to filter on")
-        
         combo_op = QComboBox()
         combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
                           "starts with", "ends with", ">", "<", ">=", "<="])
-        combo_op.setToolTip("Select comparison operator")
-        
         ed_value = QLineEdit()
         ed_value.setPlaceholderText("Filter value")
         
         combo_scope = QComboBox()
         combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
                              "custom", "tag", "specific-tag", "hierarchical"])
-        combo_scope.setToolTip("Scope for content field")
-        
         chk_case = QCheckBox()
         chk_case.setChecked(True)
-        chk_case.setToolTip("Case sensitive matching")
-        
         chk_regex = QCheckBox()
-        chk_regex.setToolTip("Use value as regex pattern")
-        
         # Add to grid
         self.adv_cond_grid.addWidget(combo_field, row_num, 0)
         self.adv_cond_grid.addWidget(combo_op, row_num, 1)

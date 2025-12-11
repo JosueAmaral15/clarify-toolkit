@@ -1,7 +1,6 @@
 {
   "app.title": "Clarify - Sistema de gerenciamento de arquivos JSON",
   "app.version": "v2.9.10",
-  
   "menu.file": "Arquivo",
   "menu.file.open_editor": "Abrir Editor",
   "menu.file.exit": "Sair",
@@ -35,7 +34,6 @@
   "menu.help.tutorials": "Tutoriais",
   "menu.about": "Sobre",
   "menu.about.clarify": "Sobre o Clarify",
-  
   "search.path": "Caminho",
   "search.browse": "Procurar...",
   "search.is_file": "Arquivo Único",
@@ -62,7 +60,6 @@
   "search.add_condition": "Adicionar Condição",
   "search.clear_conditions": "Limpar Condições",
   "search.save_results": "Salvar Resultados",
-  
   "tooltip.path": "Digite o caminho do diretório ou arquivo para buscar",
   "tooltip.browse": "Abrir navegador de arquivos para selecionar um diretório ou arquivo",
   "tooltip.is_file": "Marque esta opção se deseja processar um único arquivo em vez de um diretório",
@@ -88,18 +85,15 @@
   "tooltip.pause_resume": "Pausar/Retomar tarefa",
   "tooltip.expand": "Expandir para visualização detalhada",
   "tooltip.close": "Fechar barra de progresso",
-  
   "context.copy": "📋 Copiar",
   "context.copy_all": "📋 Copiar Todos os Resultados",
   "context.select_all": "✅ Selecionar Todos",
   "context.open_file": "📂 Abrir Arquivo",
   "context.open_all": "📂 Abrir Todos os Arquivos",
-  
   "status.completed": "✓ Concluído",
   "status.failed": "✖ Falhou",
   "status.paused": "⏸ Pausado",
   "status.running": "Executando...",
-  
   "dialog.preferences": "Preferências",
   "dialog.transparency": "Transparência da Janela",
   "dialog.shortcuts": "Atalhos de Teclado",
@@ -109,12 +103,10 @@
   "dialog.close": "Fechar",
   "dialog.yes": "Sim",
   "dialog.no": "Não",
-  
   "error.file_not_found": "Arquivo não encontrado",
   "error.invalid_path": "Caminho inválido",
   "error.permission_denied": "Permissão negada",
   "error.invalid_regex": "Expressão regular inválida",
-  
   "shortcuts.dialog.title": "Atalhos de Teclado",
   "shortcuts.dialog.category": "Categoria",
   "shortcuts.dialog.action": "Ação",
@@ -216,7 +208,6 @@
   "tooltip.case.btn_browse": "Procurar arquivo ou diretório",
   "tooltip.case.chk_is_file": "Habilite se o caminho for um único arquivo. Desabilite para processar diretório recursivamente.",
   "tooltip.case.ed_extensions": "Extensões de arquivo a processar (separadas por vírgula). Exemplos: .py,.js,.json (deixe vazio para TODAS as extensões)",
-  
   "tooltip.placeholder_replacer.ed_mapping": "Arquivo JSON ou CSV com mapeamento chave-valor (ex: {\"nome\": \"João\", \"cidade\": \"SP\"}) | Enter para executar",
   "tooltip.placeholder_replacer.btn_browse_mapping": "Procurar arquivo de mapeamento (formato JSON ou CSV) | Ctrl+O",
   "tooltip.placeholder_replacer.ed_target": "Arquivo ou diretório contendo placeholders para substituir (ex: {t.nome}, {t.cidade}) | Ctrl+O",
@@ -230,7 +221,6 @@
   "tooltip.placeholder_replacer.btn_replace": "Executar substituições nos arquivos de destino (cria backups se habilitado) | Enter ou F5",
   "tooltip.placeholder_replacer.btn_clear": "Limpar painel de resultados e redefinir cache de mapeamento | Ctrl+L",
   "tooltip.placeholder_replacer.text_results": "Exibe resultados da substituição: contagem de arquivos, contagem de placeholders e lista de arquivos modificados",
-  
   "tooltip.text_extractor.ed_input": "Arquivo ou diretório HTML/JSX para extrair texto (suporta .html, .jsx, .tsx) | Ctrl+O",
   "tooltip.text_extractor.btn_browse_input": "Procurar arquivo ou diretório de entrada | Ctrl+O",
   "tooltip.text_extractor.chk_is_file": "Marque se a entrada for um único arquivo (desmarcado para processamento em lote de diretórios)",
@@ -253,7 +243,6 @@
   "tooltip.text_extractor.btn_extract": "Extrair texto de arquivos HTML/JSX e gerar saída JSON | Enter ou F5",
   "tooltip.text_extractor.btn_clear": "Limpar painel de resultados | Ctrl+L",
   "tooltip.text_extractor.text_results": "Exibe resultados da extração: contagem de arquivos processados, contagem de chaves extraídas e caminho do arquivo de saída",
-  
   "tooltip.file_list.ed_directory": "Caminho do diretório para listar arquivos (suporta caminhos absolutos e relativos)",
   "tooltip.file_list.btn_browse": "Procurar diretório para listar | Ctrl+O",
   "tooltip.file_list.btn_recent": "Mostrar diretórios acessados recentemente para seleção rápida",
@@ -290,13 +279,11 @@
   "tooltip.file_list.btn_export": "Exportar tabela de resultados atual para arquivo CSV | Ctrl+E",
   "tooltip.file_list.table": "Resultados da listagem: clique nos cabeçalhos para ordenar, clique direito nas linhas para menu contextual",
   "tooltip.file_list.lbl_stats": "Resumo estatístico: total de arquivos encontrados, contagem filtrada e profundidade do diretório",
-  
   "tooltip.history.lbl_header": "Registro de operações recentes: exibe últimas 10 operações com timestamps e detalhes",
   "tooltip.history.tree_history": "Histórico de operações: mostra timestamp, tipo (Busca/Substituir/Inserir/Traduzir/Reescrever), detalhes e contagem de arquivos",
   "tooltip.history.btn_clear": "Remover todas as entradas do histórico e resetar log de operações | Ctrl+Shift+Del",
   "tooltip.history.btn_export": "Exportar histórico para arquivo de texto para backup ou revisão | Ctrl+Shift+E",
   "tooltip.history.btn_refresh": "Atualizar exibição do histórico para mostrar últimas operações | F5",
-  
   "tooltip.text_to_json.format_combo": "Selecionar formato do texto de entrada ou usar Auto-detectar para identificar automaticamente",
   "tooltip.text_to_json.type_auto_radio": "Detectar e converter automaticamente tipos de dados (int, float, bool, null)",
   "tooltip.text_to_json.type_string_radio": "Manter todos os valores como strings sem conversão de tipo",
@@ -317,7 +304,6 @@
   "tooltip.text_to_json.input_text": "Colar ou digitar texto para converter: suporta 10 formatos incluindo YAML, INI, CSV, TOML",
   "tooltip.text_to_json.output_text": "Resultado da conversão JSON: validado e formatado de acordo com opções selecionadas",
   "tooltip.text_to_json.status_label": "Mensagens de status: mostra sucesso da conversão, erros e tempo da operação",
-  
   "tooltip.jsx_extractor.ed_path": "Inserir caminho de arquivo ou diretório para escanear arquivos JSX/TSX",
   "tooltip.jsx_extractor.btn_browse": "Navegar por arquivo ou diretório para extrair parâmetros",
   "tooltip.jsx_extractor.is_file": "Marcar se caminho é arquivo único, desmarcar para escaneamento de diretório",
@@ -345,5 +331,32 @@
   "tooltip.jsx_extractor.btn_clear": "Limpar todas as áreas de saída e resetar status",
   "tooltip.jsx_extractor.out_paths": "Caminhos hierárquicos extraídos de componentes JSX e atributos",
   "tooltip.jsx_extractor.out_json": "Estrutura JSON gerada dos parâmetros extraídos com aninhamento",
-  "tooltip.jsx_extractor.status_label": "Mensagens de status: arquivos escaneados, parâmetros extraídos, tempo de operação"
+  "tooltip.jsx_extractor.status_label": "Mensagens de status: arquivos escaneados, parâmetros extraídos, tempo de operação",
+  "tooltip.ai_processor.ed_path": "Caminho para arquivo ou diretório para processar com IA | Ctrl+Shift+A",
+  "tooltip.ai_processor.btn_browse": "Navegar por arquivo ou diretório | Ctrl+O",
+  "tooltip.ai_processor.chk_is_file": "Marcar se selecionando arquivo, desmarcar para diretório",
+  "tooltip.ai_processor.combo_provider": "Escolher provedor de IA: OpenAI, Gemini, Claude ou Perplexity (requer chave API)",
+  "tooltip.ai_processor.combo_model": "Modelo de IA para usar (modelos diferentes têm custos e capacidades diferentes)",
+  "tooltip.ai_processor.btn_refresh_models": "Atualizar lista de modelos da API (cache 24h)",
+  "tooltip.ai_processor.ed_api_key": "Sua chave API do dashboard do provedor (mantida segura, nunca armazenada)",
+  "tooltip.ai_processor.btn_verify": "Testar se sua chave API é válida e funcionando",
+  "tooltip.ai_processor.ed_prompt": "Inserir instruções de processamento da IA (uma por linha para modo linha por linha)",
+  "tooltip.ai_processor.chk_line_by_line": "Usar cada linha do prompt para cada arquivo ciclicamente",
+  "tooltip.ai_processor.spin_max_bytes": "Tamanho máximo de arquivo para processar em bytes",
+  "tooltip.ai_processor.ed_extensions": "Extensões de arquivo para processar, separadas por vírgula (ex: .txt,.py,.js)",
+  "tooltip.ai_processor.chk_scope_enable": "Extrair apenas conteúdo entre marcadores início/fim antes do processamento de IA",
+  "tooltip.ai_processor.ed_scope_start": "Marcador inicial para extrair conteúdo (ex: '{' ou '<div>')",
+  "tooltip.ai_processor.chk_start_regex": "Tratar marcador inicial como padrão regex",
+  "tooltip.ai_processor.chk_start_case": "Correspondência sensível a maiúsculas para marcador inicial",
+  "tooltip.ai_processor.ed_scope_end": "Marcador final para extrair conteúdo (ex: '}' ou '</div>')",
+  "tooltip.ai_processor.chk_end_regex": "Tratar marcador final como padrão regex",
+  "tooltip.ai_processor.chk_end_case": "Correspondência sensível a maiúsculas para marcador final",
+  "tooltip.ai_processor.combo_cond_logic": "AND: Todas condições devem corresponder | OR: Pelo menos uma deve corresponder",
+  "tooltip.ai_processor.btn_process": "Processar arquivos com IA usando configurações especificadas | F5",
+  "tooltip.ai_processor.btn_interrupt": "Interromper processamento de IA atual | Esc",
+  "tooltip.ai_processor.btn_save_results": "Salvar resultados do processamento de IA em arquivo",
+  "tooltip.ai_processor.btn_clear": "Limpar todos os resultados e resetar estado | Ctrl+L",
+  "tooltip.ai_processor.lbl_session_stats": "Uso de tokens da sessão atual: tokens de entrada / tokens de saída | Custo estimado",
+  "tooltip.ai_processor.lbl_lifetime_stats": "Uso total de tokens vitalício em todas as sessões | Custo cumulativo estimado",
+  "tooltip.ai_processor.chk_remove_fences": "Remover automaticamente cercas de código ```json e ``` das respostas da IA"
 }
