@@ -374,5 +374,20 @@
   "tooltip.ai_processor.btn_clear": "Clear all results and reset state | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "Current session token usage: input tokens / output tokens | Estimated cost",
   "tooltip.ai_processor.lbl_lifetime_stats": "Lifetime total token usage across all sessions | Estimated cumulative cost",
-  "tooltip.ai_processor.chk_remove_fences": "Automatically strip ```json and ``` code fences from AI responses"
+  "tooltip.ai_processor.chk_remove_fences": "Automatically strip ```json and ``` code fences from AI responses",
+  "tooltip.json_search.ed_search_key": "Search for JSON keys using dot-path notation (e.g., 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "Search for specific values in JSON files (supports regex) | Enter",
+  "tooltip.json_search.ed_filename": "Filter files by wildcards (*.config.ts), prefix (filename:en), or regex | Enter",
+  "tooltip.json_search.combo_mode": "Search mode: 'Key only', 'Value only', or 'Both' (AND logic)",
+  "tooltip.json_search.ed_path": "Path to JSON/TS file or directory to search",
+  "tooltip.json_search.btn_browse": "Browse for file or directory to search | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "Check if path is a single file (uncheck for directory)",
+  "tooltip.json_search.chk_case": "Enable case-sensitive search matching (e.g., 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "Use regular expressions for search patterns (e.g., '^user.*name$')",
+  "tooltip.json_search.spin_max": "Maximum number of results to display (0 = unlimited, default 1000)",
+  "tooltip.json_search.btn_search": "Execute search operation with current settings | Enter or F5",
+  "tooltip.json_search.btn_interrupt": "Stop currently running search operation | Esc",
+  "tooltip.json_search.btn_save_results": "Save search results to TXT file (single, per file, or per query)",
+  "tooltip.json_search.btn_clear": "Clear current search results display | Ctrl+L",
+  "tooltip.json_search.text_results": "Search results: file matches, keys, values, and occurrence statistics"
 }

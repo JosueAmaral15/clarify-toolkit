@@ -362,5 +362,20 @@
   "tooltip.ai_processor.btn_clear": "Effacer tous résultats et réinitialiser état | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "Utilisation de jetons session actuelle: jetons entrée / jetons sortie | Coût estimé",
   "tooltip.ai_processor.lbl_lifetime_stats": "Utilisation totale de jetons sur toutes sessions | Coût cumulatif estimé",
-  "tooltip.ai_processor.chk_remove_fences": "Supprimer automatiquement clôtures de code ```json et ``` des réponses IA"
+  "tooltip.ai_processor.chk_remove_fences": "Supprimer automatiquement clôtures de code ```json et ``` des réponses IA",
+  "tooltip.json_search.ed_search_key": "Rechercher clés JSON avec notation point (ex: 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "Rechercher valeurs spécifiques dans fichiers JSON (supporte regex) | Enter",
+  "tooltip.json_search.ed_filename": "Filtrer fichiers par jokers (*.config.ts), préfixe (filename:en) ou regex | Enter",
+  "tooltip.json_search.combo_mode": "Mode recherche: 'Clé seulement', 'Valeur seulement' ou 'Les deux' (logique AND)",
+  "tooltip.json_search.ed_path": "Chemin vers fichier ou répertoire JSON/TS à rechercher",
+  "tooltip.json_search.btn_browse": "Parcourir fichier ou répertoire à rechercher | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "Cocher si chemin est fichier unique (décocher pour répertoire)",
+  "tooltip.json_search.chk_case": "Activer correspondance de recherche sensible à la casse (ex: 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "Utiliser expressions régulières pour motifs de recherche (ex: '^user.*name$')",
+  "tooltip.json_search.spin_max": "Nombre maximum de résultats à afficher (0 = illimité, défaut 1000)",
+  "tooltip.json_search.btn_search": "Exécuter opération de recherche avec paramètres actuels | Enter ou F5",
+  "tooltip.json_search.btn_interrupt": "Arrêter opération de recherche en cours | Esc",
+  "tooltip.json_search.btn_save_results": "Sauvegarder résultats de recherche dans fichier TXT (unique, par fichier ou par requête)",
+  "tooltip.json_search.btn_clear": "Effacer affichage des résultats de recherche actuels | Ctrl+L",
+  "tooltip.json_search.text_results": "Résultats de recherche: correspondances de fichier, clés, valeurs et statistiques"
 }

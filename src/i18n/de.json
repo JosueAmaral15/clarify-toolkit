@@ -362,5 +362,20 @@
   "tooltip.ai_processor.btn_clear": "Alle Ergebnisse löschen und Zustand zurücksetzen | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "Aktuelle Sitzungs-Token-Nutzung: Eingabe-Token / Ausgabe-Token | Geschätzte Kosten",
   "tooltip.ai_processor.lbl_lifetime_stats": "Lebenslange Gesamt-Token-Nutzung über alle Sitzungen | Geschätzte kumulative Kosten",
-  "tooltip.ai_processor.chk_remove_fences": "Automatisch ```json und ``` Code-Zäune aus KI-Antworten entfernen"
+  "tooltip.ai_processor.chk_remove_fences": "Automatisch ```json und ``` Code-Zäune aus KI-Antworten entfernen",
+  "tooltip.json_search.ed_search_key": "JSON-Schlüssel mit Punktnotation suchen (z.B. 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "Spezifische Werte in JSON-Dateien suchen (unterstützt Regex) | Enter",
+  "tooltip.json_search.ed_filename": "Dateien nach Wildcards (*.config.ts), Präfix (filename:en) oder Regex filtern | Enter",
+  "tooltip.json_search.combo_mode": "Suchmodus: 'Nur Schlüssel', 'Nur Wert' oder 'Beide' (AND-Logik)",
+  "tooltip.json_search.ed_path": "Pfad zu JSON/TS-Datei oder -Verzeichnis zum Suchen",
+  "tooltip.json_search.btn_browse": "Nach Datei oder Verzeichnis zum Suchen suchen | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "Aktivieren wenn Pfad einzelne Datei ist (deaktivieren für Verzeichnis)",
+  "tooltip.json_search.chk_case": "Groß-/Kleinschreibung bei Suche beachten (z.B. 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "Reguläre Ausdrücke für Suchmuster verwenden (z.B. '^user.*name$')",
+  "tooltip.json_search.spin_max": "Maximale Anzahl anzuzeigender Ergebnisse (0 = unbegrenzt, Standard 1000)",
+  "tooltip.json_search.btn_search": "Suchvorgang mit aktuellen Einstellungen ausführen | Enter oder F5",
+  "tooltip.json_search.btn_interrupt": "Laufenden Suchvorgang stoppen | Esc",
+  "tooltip.json_search.btn_save_results": "Suchergebnisse in TXT-Datei speichern (einzeln, pro Datei oder pro Abfrage)",
+  "tooltip.json_search.btn_clear": "Aktuelle Suchergebnisanzeige löschen | Ctrl+L",
+  "tooltip.json_search.text_results": "Suchergebnisse: Dateiübereinstimmungen, Schlüssel, Werte und Statistiken"
 }

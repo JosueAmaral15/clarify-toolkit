@@ -9,6 +9,7 @@ import os
 from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox
 
 from src.accessibility_manager import AccessibilityManager
+from src.i18n.translator import tooltip_tr
 from .base_dock import ProcessorWorkerBase, StandardToolDock
 from src.json_search import (
     ProjectIndexer,
@@ -94,45 +95,36 @@ class JsonSearchDock(StandardToolDock):
         grid.addWidget(QLabel("Search key:"), 0, 0)
         self.ed_search_key = QLineEdit()
         self.ed_search_key.setPlaceholderText("e.g., 'home.title' or leave empty")
-        self.ed_search_key.setToolTip("Search for JSON keys using dot-path notation (e.g., 'user.profile.name') | Enter to search | Ctrl+E to open Editor")
         grid.addWidget(self.ed_search_key, 0, 1, 1, 3)
 
         grid.addWidget(QLabel("Search value:"), 1, 0)
         self.ed_search_value = QLineEdit()
         self.ed_search_value.setPlaceholderText("e.g., 'Welcome' or leave empty")
-        self.ed_search_value.setToolTip("Search for specific values in your JSON files (supports regex) | Enter to search | Ctrl+E to open Editor")
         grid.addWidget(self.ed_search_value, 1, 1, 1, 3)
 
         # Filename filter (NEW - Task #6)
         grid.addWidget(QLabel("Filename filter:"), 2, 0)
         self.ed_filename = QLineEdit()
         self.ed_filename.setPlaceholderText("e.g., '*.config.ts' or 'filename:en' or leave empty")
-        self.ed_filename.setToolTip("Filter files by wildcards (*.config.ts), prefix (filename:en), or regex | Enter to search | Ctrl+E to open Editor")
         grid.addWidget(self.ed_filename, 2, 1, 1, 3)
 
         # Search mode
         grid.addWidget(QLabel("Search mode:"), 3, 0)
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(["Key and Value", "Key only", "Value only"])
-        self.combo_mode.setToolTip("Search mode: 'Key only' finds keys, 'Value only' finds values, 'Both' requires match in key AND value | Ctrl+E to open Editor")
         grid.addWidget(self.combo_mode, 3, 1, 1, 3)
 
         # File/directory input
         lbl_path, self.ed_path, self.btn_browse, self.chk_is_file = self.create_file_input(
             "Search path:", "File or directory to search"
         )
-        self.ed_path.setToolTip("Path to JSON/TS file or directory to search | Ctrl+E to open Editor")
-        self.btn_browse.setToolTip("Browse for file or directory to search | Ctrl+E to open Editor")
-        self.chk_is_file.setToolTip("Check if search path is a single file (uncheck for directory) | Ctrl+E to open Editor")
         grid.addWidget(lbl_path, 4, 0)
         grid.addWidget(self.ed_path, 4, 1, 1, 2)
         grid.addWidget(self.btn_browse, 4, 3)
 
         # Options
         self.chk_case = QCheckBox("Case sensitive")
-        self.chk_case.setToolTip("Enable case-sensitive search matching (e.g., 'Home' ≠ 'home') | Ctrl+E to open Editor")
         self.chk_regex = QCheckBox("Use regex")
-        self.chk_regex.setToolTip("Use regular expressions for search patterns (e.g., '^user.*name$') | Ctrl+E to open Editor")
         grid.addWidget(self.chk_is_file, 5, 0)
         grid.addWidget(self.chk_case, 5, 1)
         grid.addWidget(self.chk_regex, 5, 2)
@@ -143,7 +135,6 @@ class JsonSearchDock(StandardToolDock):
         self.spin_max.setRange(0, 10000)
         self.spin_max.setValue(1000)
         self.spin_max.setSpecialValueText("Unlimited")
-        self.spin_max.setToolTip("Maximum number of search results to display (set to 0 for unlimited, default 1000) | Ctrl+E to open Editor")
         grid.addWidget(self.spin_max, 5, 4)
 
         self.layout.addLayout(grid)
@@ -156,17 +147,12 @@ class JsonSearchDock(StandardToolDock):
             ("Clear", self._clear),
         ]
         btn_layout = self.create_action_buttons(buttons)
-        self.btn_search.setToolTip("Execute search operation with current settings | Enter to search | Ctrl+E to open Editor")
-        self.btn_interrupt.setToolTip("Stop currently running search operation | Esc to interrupt | Ctrl+E to open Editor")
-        self.btn_save_results.setToolTip("Save search results to TXT file with format options (single file, grouped by source file, or grouped by query) | Ctrl+E to open Editor")
-        self.btn_clear.setToolTip("Clear current search results display | Ctrl+E to open Editor")
         self.btn_interrupt.setEnabled(False)
         self.btn_save_results.setEnabled(False)  # Disable until we have results
         self.layout.addLayout(btn_layout)
 
         # Results panel
         lbl_results, self.text_results = self.create_results_panel()
-        self.text_results.setToolTip("Search results display with file matches, keys, values, and occurrence statistics | Ctrl+E to open Editor")
         self.layout.addWidget(lbl_results)
         self.layout.addWidget(self.text_results)
 
@@ -174,6 +160,9 @@ class JsonSearchDock(StandardToolDock):
         editor_btn_layout = QHBoxLayout()
         self.add_open_in_editor_button(self.text_results, editor_btn_layout)
         self.layout.addLayout(editor_btn_layout)
+
+        # Apply tooltips (v2.9.72)
+        self._apply_tooltips()
 
     def _connect_signals(self):
         """Connect signals."""
@@ -188,6 +177,37 @@ class JsonSearchDock(StandardToolDock):
         
         shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
+
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips (v2.9.72)."""
+        # Search inputs (3)
+        self.ed_search_key.setToolTip(tooltip_tr("json_search.ed_search_key"))
+        self.ed_search_value.setToolTip(tooltip_tr("json_search.ed_search_value"))
+        self.ed_filename.setToolTip(tooltip_tr("json_search.ed_filename"))
+        
+        # Search mode (1)
+        self.combo_mode.setToolTip(tooltip_tr("json_search.combo_mode"))
+        
+        # Path inputs (3)
+        self.ed_path.setToolTip(tooltip_tr("json_search.ed_path"))
+        self.btn_browse.setToolTip(tooltip_tr("json_search.btn_browse"))
+        self.chk_is_file.setToolTip(tooltip_tr("json_search.chk_is_file"))
+        
+        # Options (2)
+        self.chk_case.setToolTip(tooltip_tr("json_search.chk_case"))
+        self.chk_regex.setToolTip(tooltip_tr("json_search.chk_regex"))
+        
+        # Max results (1)
+        self.spin_max.setToolTip(tooltip_tr("json_search.spin_max"))
+        
+        # Action buttons (4)
+        self.btn_search.setToolTip(tooltip_tr("json_search.btn_search"))
+        self.btn_interrupt.setToolTip(tooltip_tr("json_search.btn_interrupt"))
+        self.btn_save_results.setToolTip(tooltip_tr("json_search.btn_save_results"))
+        self.btn_clear.setToolTip(tooltip_tr("json_search.btn_clear"))
+        
+        # Results panel (1)
+        self.text_results.setToolTip(tooltip_tr("json_search.text_results"))
 
     def _browse(self):
         """Browse for file or directory."""
@@ -381,13 +401,11 @@ class JsonSearchDock(StandardToolDock):
         self.radio_group = QButtonGroup(dialog)
 
         radio_single = QRadioButton("Single file (all results in one TXT)")
-        radio_single.setToolTip("Save all results to a single text file")
         radio_single.setChecked(True)
         self.radio_group.addButton(radio_single, 0)
         layout.addWidget(radio_single)
 
         radio_per_file = QRadioButton("Per original file (one result file per source)")
-        radio_per_file.setToolTip("Create one result file for each source file that had matches")
         self.radio_group.addButton(radio_per_file, 1)
         layout.addWidget(radio_per_file)
 

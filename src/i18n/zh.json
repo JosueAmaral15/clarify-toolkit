@@ -362,5 +362,20 @@
   "tooltip.ai_processor.btn_clear": "清除所有结果并重置状态 | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "当前会话令牌使用量:输入令牌/输出令牌 | 估计成本",
   "tooltip.ai_processor.lbl_lifetime_stats": "所有会话的终身总令牌使用量 | 估计累积成本",
-  "tooltip.ai_processor.chk_remove_fences": "自动从AI响应中删除```json和```代码围栏"
+  "tooltip.ai_processor.chk_remove_fences": "自动从AI响应中删除```json和```代码围栏",
+  "tooltip.json_search.ed_search_key": "使用点路径表示法搜索JSON键 (例: 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "在JSON文件中搜索特定值 (支持正则表达式) | Enter",
+  "tooltip.json_search.ed_filename": "通过通配符(*.config.ts)、前缀(filename:en)或正则表达式过滤文件 | Enter",
+  "tooltip.json_search.combo_mode": "搜索模式:'仅键'、'仅值'或'两者'(AND逻辑)",
+  "tooltip.json_search.ed_path": "要搜索的JSON/TS文件或目录路径",
+  "tooltip.json_search.btn_browse": "浏览要搜索的文件或目录 | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "如果路径是单个文件则勾选(目录则取消勾选)",
+  "tooltip.json_search.chk_case": "启用区分大小写的搜索匹配 (例: 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "使用正则表达式进行搜索模式 (例: '^user.*name$')",
+  "tooltip.json_search.spin_max": "显示的最大结果数量 (0 = 无限制,默认1000)",
+  "tooltip.json_search.btn_search": "使用当前设置执行搜索操作 | Enter或F5",
+  "tooltip.json_search.btn_interrupt": "停止当前运行的搜索操作 | Esc",
+  "tooltip.json_search.btn_save_results": "将搜索结果保存到TXT文件(单个、按文件或按查询)",
+  "tooltip.json_search.btn_clear": "清除当前搜索结果显示 | Ctrl+L",
+  "tooltip.json_search.text_results": "搜索结果:文件匹配、键、值和出现统计"
 }

@@ -362,5 +362,20 @@
   "tooltip.ai_processor.btn_clear": "Limpiar todos los resultados y restablecer estado | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "Uso de tokens de sesión actual: tokens de entrada / tokens de salida | Costo estimado",
   "tooltip.ai_processor.lbl_lifetime_stats": "Uso total de tokens de por vida en todas las sesiones | Costo acumulado estimado",
-  "tooltip.ai_processor.chk_remove_fences": "Quitar automáticamente cercas de código ```json y ``` de respuestas de IA"
+  "tooltip.ai_processor.chk_remove_fences": "Quitar automáticamente cercas de código ```json y ``` de respuestas de IA",
+  "tooltip.json_search.ed_search_key": "Buscar claves JSON usando notación de punto (ej: 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "Buscar valores específicos en archivos JSON (admite regex) | Enter",
+  "tooltip.json_search.ed_filename": "Filtrar archivos por comodines (*.config.ts), prefijo (filename:en) o regex | Enter",
+  "tooltip.json_search.combo_mode": "Modo de búsqueda: 'Solo clave', 'Solo valor' o 'Ambos' (lógica AND)",
+  "tooltip.json_search.ed_path": "Ruta a archivo o directorio JSON/TS para buscar",
+  "tooltip.json_search.btn_browse": "Navegar por archivo o directorio para buscar | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "Marcar si ruta es archivo único (desmarcar para directorio)",
+  "tooltip.json_search.chk_case": "Habilitar coincidencia de búsqueda sensible a mayúsculas (ej: 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "Usar expresiones regulares para patrones de búsqueda (ej: '^user.*name$')",
+  "tooltip.json_search.spin_max": "Número máximo de resultados para mostrar (0 = ilimitado, predeterminado 1000)",
+  "tooltip.json_search.btn_search": "Ejecutar operación de búsqueda con configuración actual | Enter o F5",
+  "tooltip.json_search.btn_interrupt": "Detener operación de búsqueda en ejecución | Esc",
+  "tooltip.json_search.btn_save_results": "Guardar resultados de búsqueda en archivo TXT (único, por archivo o por consulta)",
+  "tooltip.json_search.btn_clear": "Limpiar visualización de resultados de búsqueda actual | Ctrl+L",
+  "tooltip.json_search.text_results": "Resultados de búsqueda: coincidencias de archivo, claves, valores y estadísticas"
 }

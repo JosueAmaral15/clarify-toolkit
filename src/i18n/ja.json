@@ -362,5 +362,20 @@
   "tooltip.ai_processor.btn_clear": "すべての結果をクリアして状態をリセット | Ctrl+L",
   "tooltip.ai_processor.lbl_session_stats": "現在のセッションのトークン使用量:入力トークン/出力トークン | 推定コスト",
   "tooltip.ai_processor.lbl_lifetime_stats": "すべてのセッションにわたる生涯トークン使用量合計 | 推定累積コスト",
-  "tooltip.ai_processor.chk_remove_fences": "AI応答から```jsonと```コードフェンスを自動的に削除"
+  "tooltip.ai_processor.chk_remove_fences": "AI応答から```jsonと```コードフェンスを自動的に削除",
+  "tooltip.json_search.ed_search_key": "ドット表記でJSONキーを検索 (例: 'user.profile.name') | Enter",
+  "tooltip.json_search.ed_search_value": "JSONファイル内の特定の値を検索 (正規表現対応) | Enter",
+  "tooltip.json_search.ed_filename": "ワイルドカード(*.config.ts)、プレフィックス(filename:en)、正規表現でファイルをフィルター | Enter",
+  "tooltip.json_search.combo_mode": "検索モード:'キーのみ'、'値のみ'、'両方'(AND論理)",
+  "tooltip.json_search.ed_path": "検索するJSON/TSファイルまたはディレクトリのパス",
+  "tooltip.json_search.btn_browse": "検索するファイルまたはディレクトリを参照 | Ctrl+O",
+  "tooltip.json_search.chk_is_file": "パスが単一ファイルの場合はチェック(ディレクトリの場合はチェック解除)",
+  "tooltip.json_search.chk_case": "大文字小文字を区別する検索マッチングを有効化 (例: 'Home' ≠ 'home')",
+  "tooltip.json_search.chk_regex": "検索パターンに正規表現を使用 (例: '^user.*name$')",
+  "tooltip.json_search.spin_max": "表示する最大結果数 (0 = 無制限、デフォルト1000)",
+  "tooltip.json_search.btn_search": "現在の設定で検索操作を実行 | EnterまたはF5",
+  "tooltip.json_search.btn_interrupt": "実行中の検索操作を停止 | Esc",
+  "tooltip.json_search.btn_save_results": "検索結果をTXTファイルに保存(単一、ファイルごと、クエリごと)",
+  "tooltip.json_search.btn_clear": "現在の検索結果表示をクリア | Ctrl+L",
+  "tooltip.json_search.text_results": "検索結果:ファイル一致、キー、値、出現統計"
 }

@@ -1214,6 +1214,20 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~35 minutos (dock complexo: 10 format types + templates dialog + live preview + swap bidirectional)
     * **Progresso**: Tooltips Expansion - 7/15 docks (46.7%)
+  - **[X] v2.9.72 - JSON Search Dock (12/12/2025)**:
+    * ✅ **15 tooltips totais**: 15 melhorados (removidas hardcoded strings)
+    * ✅ **Search Inputs** (3): ed_search_key (dot-path notation), ed_search_value (regex support), ed_filename (wildcards/prefix/regex)
+    * ✅ **Search Mode** (1): combo_mode (Key only/Value only/Both with AND logic)
+    * ✅ **Path Inputs** (3): ed_path (JSON/TS file or dir), btn_browse (Ctrl+O), chk_is_file (file vs directory)
+    * ✅ **Options** (2): chk_case (case-sensitive), chk_regex (regex patterns)
+    * ✅ **Max Results** (1): spin_max (0-10000, unlimited option)
+    * ✅ **Action Buttons** (4): btn_search (Enter/F5 execute), btn_interrupt (Esc stop), btn_save_results (TXT export), btn_clear (Ctrl+L clear)
+    * ✅ **Results Panel** (1): text_results (matches + statistics)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 105 traduções (15×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~25 minutos (dock médio: 647 linhas, search engine com filename filter, save options dialog)
+    * **Progresso**: Tooltips Expansion - 10/15 docks (66.7%)
   - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
     * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
     * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)
