@@ -285,5 +285,11 @@
   "tooltip.file_list.btn_list": "現在のオプションとフィルタでファイルリストを実行 | EnterまたはF5",
   "tooltip.file_list.btn_export": "現在の結果テーブルをCSVファイルにエクスポート | Ctrl+E",
   "tooltip.file_list.table": "リスト結果:ヘッダークリックでソート、行を右クリックでコンテキストメニュー",
-  "tooltip.file_list.lbl_stats": "統計概要:見つかったファイルの合計、フィルタ済み数、ディレクトリ深度"
+  "tooltip.file_list.lbl_stats": "統計概要:見つかったファイルの合計、フィルタ済み数、ディレクトリ深度",
+  
+  "tooltip.history.lbl_header": "最近の操作ログ:タイムスタンプと詳細付きで最後の10操作を表示",
+  "tooltip.history.tree_history": "操作履歴:タイムスタンプ、タイプ(検索/置換/挿入/翻訳/書き換え)、詳細、ファイル数を表示",
+  "tooltip.history.btn_clear": "すべての履歴エントリを削除して操作ログをリセット | Ctrl+Shift+Del",
+  "tooltip.history.btn_export": "履歴をテキストファイルにエクスポートしてバックアップまたはレビュー | Ctrl+Shift+E",
+  "tooltip.history.btn_refresh": "履歴表示を更新して最新の操作を表示 | F5"
 }

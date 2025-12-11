@@ -285,5 +285,11 @@
   "tooltip.file_list.btn_list": "使用当前选项和过滤器执行文件列表 | Enter或F5",
   "tooltip.file_list.btn_export": "将当前结果表导出到CSV文件 | Ctrl+E",
   "tooltip.file_list.table": "列表结果:点击标题排序,右键点击行显示上下文菜单",
-  "tooltip.file_list.lbl_stats": "统计摘要:找到的总文件数、过滤计数和目录深度"
+  "tooltip.file_list.lbl_stats": "统计摘要:找到的总文件数、过滤计数和目录深度",
+  
+  "tooltip.history.lbl_header": "最近操作记录:显示最后10个操作及时间戳和详细信息",
+  "tooltip.history.tree_history": "操作历史:显示时间戳、类型(搜索/替换/插入/翻译/重写)、详细信息和文件计数",
+  "tooltip.history.btn_clear": "删除所有历史条目并重置操作日志 | Ctrl+Shift+Del",
+  "tooltip.history.btn_export": "将历史导出到文本文件以备份或查看 | Ctrl+Shift+E",
+  "tooltip.history.btn_refresh": "刷新历史显示以显示最新操作 | F5"
 }

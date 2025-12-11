@@ -290,5 +290,11 @@
   "tooltip.file_list.btn_list": "Execute file listing with current options and filters | Enter or F5",
   "tooltip.file_list.btn_export": "Export current results table to CSV file | Ctrl+E",
   "tooltip.file_list.table": "File listing results: click headers to sort, right-click rows for context menu",
-  "tooltip.file_list.lbl_stats": "Statistics summary: total files found, filtered count, and directory depth"
+  "tooltip.file_list.lbl_stats": "Statistics summary: total files found, filtered count, and directory depth",
+  
+  "tooltip.history.lbl_header": "Recent operations log: displays last 10 operations with timestamps and details",
+  "tooltip.history.tree_history": "Operation history: shows timestamp, type (Search/Replace/Insert/Translate/Rewrite), details, and files count",
+  "tooltip.history.btn_clear": "Remove all history entries and reset operation log | Ctrl+Shift+Del",
+  "tooltip.history.btn_export": "Export history to text file for backup or review | Ctrl+Shift+E",
+  "tooltip.history.btn_refresh": "Refresh history display to show latest operations | F5"
 }

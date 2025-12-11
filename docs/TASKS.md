@@ -1190,6 +1190,16 @@ result = convert_text_to_json(text, "auto")
     * ✅ **Enter shortcut**: Implementado `_setup_enter_key()` conectando returnPressed do search_input ao `_perform_search()`
     * ✅ Testes atualizados: `test_tutorials_dock_tooltips()` (13/14 passing, 1 skipped - 92.9%)
     * ✅ **Protocolos atualizados**: Simplicidade 1 v1.9, Simplicidade 2 v2.1, Simplicidade 3 v3.1 com recomendação de sugestões da IA nas perguntas (Etapa 3)
+  - **[X] v2.9.68 - History Dock (11/12/2025)**:
+    * ✅ **5 tooltips totais**: 3 melhorados (btn_clear, btn_export, btn_refresh removidas hardcoded) + 2 novos (lbl_header, tree_history)
+    * ✅ **Header** (1): lbl_header (recent operations log description)
+    * ✅ **Tree Widget** (1): tree_history (operation history with timestamp, type, details, files count)
+    * ✅ **Action Buttons** (3): btn_clear (remove all Ctrl+Shift+Del), btn_export (export to text Ctrl+Shift+E), btn_refresh (refresh display F5)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 35 traduções (5×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~15 minutos (dock mais simples, apenas 5 widgets)
+    * **Progresso**: Tooltips Expansion - 6/15 docks (40.0%)
   - **[X] v2.9.67 - File List Dock (11/12/2025)**:
     * ✅ **32 tooltips totais**: 19 melhorados (removidas hardcoded strings) + 13 novos
     * ✅ **Directory** (3): ed_directory (path input), btn_browse (Ctrl+O), btn_recent (recent dirs dropdown)

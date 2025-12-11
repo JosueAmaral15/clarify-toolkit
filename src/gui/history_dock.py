@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QLabel, QFileDialog, QMessageBox
 )
 from .base_dock import BaseDock
+from src.i18n.translator import tooltip_tr
 
 
 class HistoryDock(BaseDock):
@@ -52,6 +53,7 @@ class HistoryDock(BaseDock):
         """Setup UI components."""
         self._create_widgets()
         self._create_layout()
+        self._apply_tooltips()  # v2.9.68
     
     def _create_widgets(self) -> None:
         """Create all widgets for the history dock."""
@@ -71,11 +73,8 @@ class HistoryDock(BaseDock):
         
         # Action buttons
         self.btn_clear = QPushButton("Clear History")
-        self.btn_clear.setToolTip("Remove all history entries")
         self.btn_export = QPushButton("Export...")
-        self.btn_export.setToolTip("Export history to text file")
         self.btn_refresh = QPushButton("Refresh")
-        self.btn_refresh.setToolTip("Refresh history display")
     
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -93,6 +92,19 @@ class HistoryDock(BaseDock):
         main_layout.addLayout(btn_layout)
         
         self.main_widget.setLayout(main_layout)
+    
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips to all widgets (v2.9.68)."""
+        # Header
+        self.lbl_header.setToolTip(tooltip_tr("history.lbl_header"))
+        
+        # Tree widget
+        self.tree_history.setToolTip(tooltip_tr("history.tree_history"))
+        
+        # Action buttons
+        self.btn_clear.setToolTip(tooltip_tr("history.btn_clear"))
+        self.btn_export.setToolTip(tooltip_tr("history.btn_export"))
+        self.btn_refresh.setToolTip(tooltip_tr("history.btn_refresh"))
     
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""

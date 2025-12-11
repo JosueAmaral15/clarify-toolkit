@@ -285,5 +285,11 @@
   "tooltip.file_list.btn_list": "Ejecutar listado de archivos con opciones y filtros actuales | Enter o F5",
   "tooltip.file_list.btn_export": "Exportar tabla de resultados actual a archivo CSV | Ctrl+E",
   "tooltip.file_list.table": "Resultados del listado: clic en encabezados para ordenar, clic derecho en filas para menú contextual",
-  "tooltip.file_list.lbl_stats": "Resumen estadístico: total de archivos encontrados, recuento filtrado y profundidad del directorio"
+  "tooltip.file_list.lbl_stats": "Resumen estadístico: total de archivos encontrados, recuento filtrado y profundidad del directorio",
+  
+  "tooltip.history.lbl_header": "Registro de operaciones recientes: muestra últimas 10 operaciones con marcas de tiempo y detalles",
+  "tooltip.history.tree_history": "Historial de operaciones: muestra marca de tiempo, tipo (Buscar/Reemplazar/Insertar/Traducir/Reescribir), detalles y recuento de archivos",
+  "tooltip.history.btn_clear": "Eliminar todas las entradas del historial y restablecer registro de operaciones | Ctrl+Shift+Del",
+  "tooltip.history.btn_export": "Exportar historial a archivo de texto para respaldo o revisión | Ctrl+Shift+E",
+  "tooltip.history.btn_refresh": "Actualizar visualización del historial para mostrar últimas operaciones | F5"
 }

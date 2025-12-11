@@ -285,5 +285,11 @@
   "tooltip.file_list.btn_list": "Dateiauflistung mit aktuellen Optionen und Filtern ausführen | Enter oder F5",
   "tooltip.file_list.btn_export": "Aktuelle Ergebnistabelle in CSV-Datei exportieren | Ctrl+E",
   "tooltip.file_list.table": "Auflistungsergebnisse: Klick auf Kopfzeilen zum Sortieren, Rechtsklick auf Zeilen für Kontextmenü",
-  "tooltip.file_list.lbl_stats": "Statistikzusammenfassung: Gesamtzahl gefundener Dateien, gefilterte Anzahl und Verzeichnistiefe"
+  "tooltip.file_list.lbl_stats": "Statistikzusammenfassung: Gesamtzahl gefundener Dateien, gefilterte Anzahl und Verzeichnistiefe",
+  
+  "tooltip.history.lbl_header": "Protokoll der letzten Operationen: zeigt letzte 10 Operationen mit Zeitstempeln und Details",
+  "tooltip.history.tree_history": "Operationsverlauf: zeigt Zeitstempel, Typ (Suchen/Ersetzen/Einfügen/Übersetzen/Umschreiben), Details und Dateianzahl",
+  "tooltip.history.btn_clear": "Alle Verlaufseinträge entfernen und Operationsprotokoll zurücksetzen | Ctrl+Shift+Del",
+  "tooltip.history.btn_export": "Verlauf in Textdatei exportieren zur Sicherung oder Überprüfung | Ctrl+Shift+E",
+  "tooltip.history.btn_refresh": "Verlaufsanzeige aktualisieren um neueste Operationen anzuzeigen | F5"
 }
