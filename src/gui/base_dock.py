@@ -15,6 +15,8 @@ from typing import Optional, Callable, List
 import os
 import re
 
+from src.i18n.translator import tooltip_tr
+
 
 def parse_extensions_to_globs(extensions_text: str) -> List[str]:
     """
@@ -118,13 +120,7 @@ class FileInputMixin:
         label = QLabel("Extensions:")
         line_edit = QLineEdit(default_extensions)
         line_edit.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
-        line_edit.setToolTip(
-            "Filter files by extensions. Examples:\n"
-            "  .py          - Only Python files\n"
-            "  .jsx,.tsx    - React files\n"
-            "  .js,.ts      - JavaScript/TypeScript\n"
-            "Leave empty to include all file types"
-        )
+        line_edit.setToolTip(tooltip_tr("base.extension_filter"))
         return label, line_edit
     
     def browse_file_or_directory(
@@ -419,7 +415,7 @@ class ResultsOutputMixin:
             Created button instance
         """
         btn_open = QPushButton(button_text)
-        btn_open.setToolTip("Open results in editor (edit-only mode)")
+        btn_open.setToolTip(tooltip_tr("base.btn_open_editor"))
         btn_open.clicked.connect(lambda: self._open_results_in_editor(text_edit))
         layout.addWidget(btn_open)
         return btn_open

@@ -451,5 +451,7 @@
   "tooltip.editor.editor": "Éditeur de fichier avec coloration syntaxique (auto-enregistrement activé si case cochée) | Ctrl+S pour enregistrer | Ctrl+E pour ouvrir l'Éditeur",
   "tooltip.editor.btn_copy": "Copier le contenu dans le presse-papiers | Ctrl+C | Ctrl+E pour ouvrir l'Éditeur",
   "tooltip.editor.btn_export": "Exporter le contenu vers un fichier (alternative à Enregistrer sous pour mode édition seule) | Ctrl+E pour ouvrir l'Éditeur",
-  "tooltip.editor.btn_enable_saving": "Convertir en éditeur avec fichier (quitter le mode bac à sable) | Ctrl+Shift+E | Ctrl+E pour ouvrir l'Éditeur"
+  "tooltip.editor.btn_enable_saving": "Convertir en éditeur avec fichier (quitter le mode bac à sable) | Ctrl+Shift+E | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.base.extension_filter": "Filtrer les fichiers par extensions (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Laisser vide pour tous les types",
+  "tooltip.base.btn_open_editor": "Ouvrir les résultats dans l'éditeur (mode édition seule pour voir/copier sans opérations de fichier)"
 }

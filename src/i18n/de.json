@@ -451,5 +451,7 @@
   "tooltip.editor.editor": "Datei-Editor mit Syntaxhervorhebung (Auto-Speichern aktiviert, wenn Checkbox markiert) | Strg+S zum Speichern | Strg+E zum Öffnen des Editors",
   "tooltip.editor.btn_copy": "Inhalt in Zwischenablage kopieren | Strg+C | Strg+E zum Öffnen des Editors",
   "tooltip.editor.btn_export": "Inhalt in Datei exportieren (Alternative zu Speichern unter für Nur-Bearbeiten-Modus) | Strg+E zum Öffnen des Editors",
-  "tooltip.editor.btn_enable_saving": "Zu dateigestütztem Editor konvertieren (Sandbox-Modus verlassen) | Strg+Umschalt+E | Strg+E zum Öffnen des Editors"
+  "tooltip.editor.btn_enable_saving": "Zu dateigestütztem Editor konvertieren (Sandbox-Modus verlassen) | Strg+Umschalt+E | Strg+E zum Öffnen des Editors",
+  "tooltip.base.extension_filter": "Dateien nach Erweiterungen filtern (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Leer lassen für alle Typen",
+  "tooltip.base.btn_open_editor": "Ergebnisse im Editor öffnen (Nur-Bearbeiten-Modus zum Anzeigen/Kopieren ohne Dateioperationen)"
 }

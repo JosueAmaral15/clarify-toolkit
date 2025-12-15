@@ -451,5 +451,7 @@
   "tooltip.editor.editor": "Editor de archivo con resaltado de sintaxis (auto-guardar habilitado si checkbox marcado) | Ctrl+S para guardar | Ctrl+E para abrir Editor",
   "tooltip.editor.btn_copy": "Copiar contenido al portapapeles | Ctrl+C | Ctrl+E para abrir Editor",
   "tooltip.editor.btn_export": "Exportar contenido a archivo (alternativa a Guardar Como para modo solo edición) | Ctrl+E para abrir Editor",
-  "tooltip.editor.btn_enable_saving": "Convertir a editor con respaldo de archivo (salir del modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor"
+  "tooltip.editor.btn_enable_saving": "Convertir a editor con respaldo de archivo (salir del modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor",
+  "tooltip.base.extension_filter": "Filtrar archivos por extensiones (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Dejar vacío para todos los tipos",
+  "tooltip.base.btn_open_editor": "Abrir resultados en editor (modo solo edición para ver/copiar sin operaciones de archivo)"
 }

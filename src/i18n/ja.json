@@ -451,5 +451,7 @@
   "tooltip.editor.editor": "構文ハイライト付きファイルエディタ（チェックボックスがオンの場合、自動保存が有効） | Ctrl+S で保存 | Ctrl+E でエディタを開く",
   "tooltip.editor.btn_copy": "内容をクリップボードにコピー | Ctrl+C | Ctrl+E でエディタを開く",
   "tooltip.editor.btn_export": "内容をファイルにエクスポート（編集専用モードの名前を付けて保存の代替） | Ctrl+E でエディタを開く",
-  "tooltip.editor.btn_enable_saving": "ファイルベースのエディタに変換（サンドボックスモードを終了） | Ctrl+Shift+E | Ctrl+E でエディタを開く"
+  "tooltip.editor.btn_enable_saving": "ファイルベースのエディタに変換（サンドボックスモードを終了） | Ctrl+Shift+E | Ctrl+E でエディタを開く",
+  "tooltip.base.extension_filter": "拡張子でファイルをフィルタ（.py = Python、.jsx/.tsx = React、.js/.ts = JS/TS）| すべてのタイプは空のままにする",
+  "tooltip.base.btn_open_editor": "エディタで結果を開く（ファイル操作なしで表示/コピーするための編集専用モード）"
 }

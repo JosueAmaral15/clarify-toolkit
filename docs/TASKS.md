@@ -1292,6 +1292,15 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~25 minutos (dock complexo: 1047 linhas, 2 classes - EditorDock + EditorTab, syntax highlighter, auto-save, edit-only mode)
     * **Progresso**: Tooltips Expansion - 14/15 docks (93.3%)
+  - **[X] v2.9.77 - Base Dock (15/12/2025)**:
+    * ✅ **2 tooltips totais**: 2 melhorados em métodos auxiliares (mixins/factories)
+    * ✅ **FileInputMixin** (1): extension_filter (filter files by .py, .jsx/.tsx, .js/.ts extensions)
+    * ✅ **ResultsDisplayMixin** (1): btn_open_editor (open results in editor edit-only mode)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 14 traduções (2×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~15 minutos (classe base: 592 linhas, mixins reutilizáveis, métodos auxiliares)
+    * **Progresso**: Tooltips Expansion - 15/15 docks (100.0%) ✅ **CAMPANHA COMPLETA!**
   - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
     * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
     * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)

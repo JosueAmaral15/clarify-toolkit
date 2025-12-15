@@ -451,5 +451,7 @@
   "tooltip.editor.editor": "带语法高亮的文件编辑器（选中复选框时启用自动保存） | Ctrl+S 保存 | Ctrl+E 打开编辑器",
   "tooltip.editor.btn_copy": "将内容复制到剪贴板 | Ctrl+C | Ctrl+E 打开编辑器",
   "tooltip.editor.btn_export": "将内容导出到文件（仅编辑模式的另存为替代方案） | Ctrl+E 打开编辑器",
-  "tooltip.editor.btn_enable_saving": "转换为文件支持的编辑器（退出沙盒模式） | Ctrl+Shift+E | Ctrl+E 打开编辑器"
+  "tooltip.editor.btn_enable_saving": "转换为文件支持的编辑器（退出沙盒模式） | Ctrl+Shift+E | Ctrl+E 打开编辑器",
+  "tooltip.base.extension_filter": "按扩展名过滤文件（.py = Python，.jsx/.tsx = React，.js/.ts = JS/TS）| 留空表示所有类型",
+  "tooltip.base.btn_open_editor": "在编辑器中打开结果（仅编辑模式用于查看/复制而不进行文件操作）"
 }
