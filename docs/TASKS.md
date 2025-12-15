@@ -1268,6 +1268,17 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~50 minutos (dock mais complexo: 1243 linhas, 37 widgets, advanced filters, reference resolver, case enforcement, duplicate detection)
     * **Progresso**: Tooltips Expansion - 12/15 docks (80.0%)
+  - **[X] v2.9.75 - Tutorials Dock (15/12/2025)**:
+    * ✅ **7 tooltips totais**: 7 melhorados (removidas hardcoded strings)
+    * ✅ **Search Bar** (3): search_input (keyword search Enter), btn_search (execute search Enter), btn_quick_start (5-min intro)
+    * ✅ **Tree Navigation** (1): tree (Beginner/Developers → Basic/Advanced hierarchy)
+    * ✅ **Browser Section** (2): title_label (current tutorial title), browser (rendered HTML tutorial with links)
+    * ✅ **Status Bar** (1): status_label (Ready/Loading/Search results/Errors)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 49 traduções (7×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~20 minutos (dock simples: 442 linhas, 7 widgets, markdown rendering, tree navigation)
+    * **Progresso**: Tooltips Expansion - 13/15 docks (86.7%)
   - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
     * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
     * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)

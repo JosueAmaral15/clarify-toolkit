@@ -432,5 +432,12 @@
   "tooltip.json_rewriter.chk_resolve_refs": "処理前に $ref:path:line を実際の値に展開 | Ctrl+Shift+R でリライターを開く",
   "tooltip.json_rewriter.btn_configure_format": "参照フォーマットスタイルとオプションを構成 | Ctrl+Shift+R でリライターを開く",
   "tooltip.json_rewriter.spin_indent": "インデントのスペース数（0 または負数でコンパクト出力） | Ctrl+Shift+R でリライターを開く",
-  "tooltip.json_rewriter.btn_run": "選択した操作で JSON リライトを実行 | F5 または Ctrl+Shift+R で開く"
+  "tooltip.json_rewriter.btn_run": "選択した操作で JSON リライトを実行 | F5 または Ctrl+Shift+R で開く",
+  "tooltip.tutorials.search_input": "タイトル、説明、タグのキーワードでチュートリアルを検索 | Enterで検索 | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_search": "キーワードに一致するチュートリアルの検索を実行 | Enterで検索 | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_quick_start": "クイックスタートガイドを開く（Clarifyのコア機能の5分間の紹介） | Ctrl+Shift+T",
+  "tooltip.tutorials.tree": "初心者/開発者→基本/上級に整理されたチュートリアルを参照 | アイテムをクリックしてチュートリアルを開く | Ctrl+Shift+T",
+  "tooltip.tutorials.title_label": "現在のチュートリアルのタイトル（ツリーからチュートリアルを開くと更新されます） | Ctrl+Shift+T",
+  "tooltip.tutorials.browser": "HTMLスタイル、コードブロック、クリック可能なリンクを含むレンダリングされたチュートリアル | .mdリンクをクリックしてチュートリアル間を移動 | Ctrl+Shift+T",
+  "tooltip.tutorials.status_label": "操作ステータス：準備完了（アイドル）、読み込み中（チュートリアルを開く）、検索結果（一致が見つかりました）、エラーメッセージ | Ctrl+Shift+T"
 }

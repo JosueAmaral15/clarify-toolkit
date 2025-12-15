@@ -432,5 +432,12 @@
   "tooltip.json_rewriter.chk_resolve_refs": "Développer $ref:chemin:ligne en valeurs réelles avant traiter | Ctrl+Shift+R pour ouvrir Réécriture",
   "tooltip.json_rewriter.btn_configure_format": "Configurer style et options format référence | Ctrl+Shift+R pour ouvrir Réécriture",
   "tooltip.json_rewriter.spin_indent": "Nombre espaces pour indentation (0 ou négatif pour sortie compacte) | Ctrl+Shift+R pour ouvrir Réécriture",
-  "tooltip.json_rewriter.btn_run": "Exécuter réécriture JSON avec opérations sélectionnées | F5 ou Ctrl+Shift+R pour ouvrir"
+  "tooltip.json_rewriter.btn_run": "Exécuter réécriture JSON avec opérations sélectionnées | F5 ou Ctrl+Shift+R pour ouvrir",
+  "tooltip.tutorials.search_input": "Rechercher des tutoriels par mots-clés dans les titres, descriptions et balises | Entrée pour rechercher | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_search": "Exécuter la recherche de tutoriels correspondant aux mots-clés | Entrée pour rechercher | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_quick_start": "Ouvrir le Guide de Démarrage Rapide (introduction de 5 minutes aux fonctionnalités principales de Clarify) | Ctrl+Shift+T",
+  "tooltip.tutorials.tree": "Parcourir les tutoriels organisés en Débutant/Développeurs → Basique/Avancé | Cliquez sur les éléments pour ouvrir les tutoriels | Ctrl+Shift+T",
+  "tooltip.tutorials.title_label": "Titre du tutoriel actuel (se met à jour lorsque vous ouvrez un tutoriel de l'arborescence) | Ctrl+Shift+T",
+  "tooltip.tutorials.browser": "Tutoriel rendu avec style HTML, blocs de code et liens cliquables | Cliquez sur les liens .md pour naviguer entre les tutoriels | Ctrl+Shift+T",
+  "tooltip.tutorials.status_label": "État de l'opération : Prêt (inactif), Chargement (ouverture du tutoriel), Résultats de recherche (correspondances trouvées), Messages d'erreur | Ctrl+Shift+T"
 }

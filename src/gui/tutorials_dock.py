@@ -21,6 +21,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont, QIcon
 
+from src.i18n.translator import tooltip_tr
+
 
 class TutorialsDock(QDockWidget):
     """
@@ -55,6 +57,9 @@ class TutorialsDock(QDockWidget):
         
         # Signals
         self._connect_signals()
+        
+        # Apply tooltips
+        self._apply_tooltips()
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -67,18 +72,8 @@ class TutorialsDock(QDockWidget):
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("🔍 Search tutorials...")
-        self.search_input.setToolTip(
-            "Search tutorials by keywords in titles, descriptions, and tags | "
-            "Enter to search | Ctrl+Shift+T"
-        )
         self.btn_search = QPushButton("Search")
-        self.btn_search.setToolTip(
-            "Execute search for tutorials matching keywords | Enter to search | Ctrl+Shift+T"
-        )
         self.btn_quick_start = QPushButton("⚡ Quick Start")
-        self.btn_quick_start.setToolTip(
-            "Open Quick Start Guide (5-minute introduction to Clarify's core features) | Ctrl+Shift+T"
-        )
         
         search_layout.addWidget(self.search_input, 1)
         search_layout.addWidget(self.btn_search)
@@ -92,10 +87,6 @@ class TutorialsDock(QDockWidget):
         self.tree = QTreeWidget()
         self.tree.setHeaderLabel("📂 Browse Tutorials")
         self.tree.setMaximumWidth(300)
-        self.tree.setToolTip(
-            "Browse tutorials organized in Beginner/Developers → Basic/Advanced hierarchy | "
-            "Click items to open tutorials | Hover over tutorials to see time estimates and difficulty | Ctrl+Shift+T"
-        )
         splitter.addWidget(self.tree)
         
         # Right: Markdown Browser
@@ -106,19 +97,12 @@ class TutorialsDock(QDockWidget):
         # Tutorial title label
         self.title_label = QLabel("<h3>Welcome to Clarify Tutorials</h3>")
         self.title_label.setWordWrap(True)
-        self.title_label.setToolTip(
-            "Current tutorial title (updates when you open a tutorial from the tree) | Ctrl+Shift+T"
-        )
         browser_layout.addWidget(self.title_label)
         
         # Text browser for markdown
         self.browser = QTextBrowser()
         self.browser.setOpenExternalLinks(True)  # Open external links in system browser
         self.browser.setOpenLinks(False)  # Handle internal links ourselves
-        self.browser.setToolTip(
-            "Rendered tutorial with HTML styling, code blocks, and clickable links | "
-            "Click .md links to navigate between tutorials | Ctrl+Shift+T"
-        )
         browser_layout.addWidget(self.browser)
         
         splitter.addWidget(browser_widget)
@@ -129,15 +113,28 @@ class TutorialsDock(QDockWidget):
         # === Status Bar ===
         status_layout = QHBoxLayout()
         self.status_label = QLabel("Ready")
-        self.status_label.setToolTip(
-            "Operation status: Ready (idle), Loading (opening tutorial), "
-            "Search results (number of matches found), Error messages (file not found, load failures) | Ctrl+Shift+T"
-        )
         status_layout.addWidget(self.status_label)
         layout.addLayout(status_layout)
         
         # Load welcome message
         self._show_welcome()
+    
+    def _apply_tooltips(self):
+        """Apply internationalized tooltips to all widgets."""
+        # Search Bar
+        self.search_input.setToolTip(tooltip_tr("tutorials.search_input"))
+        self.btn_search.setToolTip(tooltip_tr("tutorials.btn_search"))
+        self.btn_quick_start.setToolTip(tooltip_tr("tutorials.btn_quick_start"))
+        
+        # Tree Navigation
+        self.tree.setToolTip(tooltip_tr("tutorials.tree"))
+        
+        # Browser Section
+        self.title_label.setToolTip(tooltip_tr("tutorials.title_label"))
+        self.browser.setToolTip(tooltip_tr("tutorials.browser"))
+        
+        # Status Bar
+        self.status_label.setToolTip(tooltip_tr("tutorials.status_label"))
     
     def _connect_signals(self):
         """Connect signals to slots."""

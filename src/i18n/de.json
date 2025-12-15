@@ -432,5 +432,12 @@
   "tooltip.json_rewriter.chk_resolve_refs": "$ref:pfad:zeile zu tatsächlichen Werten erweitern vor Verarbeitung | Ctrl+Shift+R zum Öffnen Umschreiber",
   "tooltip.json_rewriter.btn_configure_format": "Referenzformatstil und Optionen konfigurieren | Ctrl+Shift+R zum Öffnen Umschreiber",
   "tooltip.json_rewriter.spin_indent": "Anzahl Leerzeichen für Einrückung (0 oder negativ für kompakte Ausgabe) | Ctrl+Shift+R zum Öffnen Umschreiber",
-  "tooltip.json_rewriter.btn_run": "JSON Umschreibung mit ausgewählten Operationen ausführen | F5 oder Ctrl+Shift+R zum Öffnen"
+  "tooltip.json_rewriter.btn_run": "JSON Umschreibung mit ausgewählten Operationen ausführen | F5 oder Ctrl+Shift+R zum Öffnen",
+  "tooltip.tutorials.search_input": "Tutorials nach Schlüsselwörtern in Titeln, Beschreibungen und Tags durchsuchen | Enter zum Suchen | Strg+Umschalt+T",
+  "tooltip.tutorials.btn_search": "Suche nach Tutorials ausführen, die den Schlüsselwörtern entsprechen | Enter zum Suchen | Strg+Umschalt+T",
+  "tooltip.tutorials.btn_quick_start": "Schnellstartanleitung öffnen (5-minütige Einführung in die Hauptfunktionen von Clarify) | Strg+Umschalt+T",
+  "tooltip.tutorials.tree": "Tutorials durchsuchen, organisiert in Anfänger/Entwickler → Grundlegend/Fortgeschritten | Auf Elemente klicken, um Tutorials zu öffnen | Strg+Umschalt+T",
+  "tooltip.tutorials.title_label": "Aktueller Tutorial-Titel (wird aktualisiert, wenn Sie ein Tutorial aus dem Baum öffnen) | Strg+Umschalt+T",
+  "tooltip.tutorials.browser": "Gerendertes Tutorial mit HTML-Styling, Code-Blöcken und anklickbaren Links | Auf .md-Links klicken, um zwischen Tutorials zu navigieren | Strg+Umschalt+T",
+  "tooltip.tutorials.status_label": "Betriebsstatus: Bereit (untätig), Laden (Tutorial öffnen), Suchergebnisse (Übereinstimmungen gefunden), Fehlermeldungen | Strg+Umschalt+T"
 }

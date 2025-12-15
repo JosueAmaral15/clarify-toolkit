@@ -446,5 +446,13 @@
   "tooltip.json_rewriter.chk_resolve_refs": "Expand $ref:path:line to actual values before processing | Ctrl+Shift+R to open Rewriter",
   "tooltip.json_rewriter.btn_configure_format": "Configure reference format style and options | Ctrl+Shift+R to open Rewriter",
   "tooltip.json_rewriter.spin_indent": "Number of spaces for indentation (0 or negative for compact output) | Ctrl+Shift+R to open Rewriter",
-  "tooltip.json_rewriter.btn_run": "Execute JSON rewriting with selected operations | F5 or Ctrl+Shift+R to open"
+  "tooltip.json_rewriter.btn_run": "Execute JSON rewriting with selected operations | F5 or Ctrl+Shift+R to open",
+  
+  "tooltip.tutorials.search_input": "Search tutorials by keywords in titles, descriptions, and tags | Enter to search | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_search": "Execute search for tutorials matching keywords | Enter to search | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_quick_start": "Open Quick Start Guide (5-minute introduction to Clarify's core features) | Ctrl+Shift+T",
+  "tooltip.tutorials.tree": "Browse tutorials organized in Beginner/Developers → Basic/Advanced hierarchy | Click items to open tutorials | Ctrl+Shift+T",
+  "tooltip.tutorials.title_label": "Current tutorial title (updates when you open a tutorial from the tree) | Ctrl+Shift+T",
+  "tooltip.tutorials.browser": "Rendered tutorial with HTML styling, code blocks, and clickable links | Click .md links to navigate between tutorials | Ctrl+Shift+T",
+  "tooltip.tutorials.status_label": "Operation status: Ready (idle), Loading (opening tutorial), Search results (matches found), Error messages | Ctrl+Shift+T"
 }

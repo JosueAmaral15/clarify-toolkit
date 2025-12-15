@@ -432,5 +432,12 @@
   "tooltip.json_rewriter.chk_resolve_refs": "处理前将 $ref:path:line 展开为实际值 | Ctrl+Shift+R 打开重写器",
   "tooltip.json_rewriter.btn_configure_format": "配置引用格式样式和选项 | Ctrl+Shift+R 打开重写器",
   "tooltip.json_rewriter.spin_indent": "缩进空格数（0 或负数用于紧凑输出） | Ctrl+Shift+R 打开重写器",
-  "tooltip.json_rewriter.btn_run": "使用选定操作执行 JSON 重写 | F5 或 Ctrl+Shift+R 打开"
+  "tooltip.json_rewriter.btn_run": "使用选定操作执行 JSON 重写 | F5 或 Ctrl+Shift+R 打开",
+  "tooltip.tutorials.search_input": "通过标题、描述和标签中的关键词搜索教程 | 回车搜索 | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_search": "执行匹配关键词的教程搜索 | 回车搜索 | Ctrl+Shift+T",
+  "tooltip.tutorials.btn_quick_start": "打开快速入门指南（5分钟介绍Clarify的核心功能） | Ctrl+Shift+T",
+  "tooltip.tutorials.tree": "浏览按初学者/开发者→基础/高级组织的教程 | 点击项目打开教程 | Ctrl+Shift+T",
+  "tooltip.tutorials.title_label": "当前教程标题（从树中打开教程时更新） | Ctrl+Shift+T",
+  "tooltip.tutorials.browser": "具有HTML样式、代码块和可点击链接的渲染教程 | 点击.md链接在教程间导航 | Ctrl+Shift+T",
+  "tooltip.tutorials.status_label": "操作状态：就绪（空闲）、加载中（打开教程）、搜索结果（找到匹配项）、错误消息 | Ctrl+Shift+T"
 }
