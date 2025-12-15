@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 
 from src.accessibility_manager import AccessibilityManager
 from src.core.filters import Condition
+from src.i18n.translator import tooltip_tr
 from src.utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
 from .base_dock import BaseDock
 
@@ -287,114 +288,66 @@ class JsonRewriterDock(BaseDock):
         """Setup UI components."""
         self._create_widgets()
         self._create_layout()
+        self._apply_tooltips()
 
     def _create_widgets(self) -> None:
         """Create all widgets for the rewriter dock."""
         # Input file section
         self.lbl_in = QLabel("Input file:")
         self.ed_in = QLineEdit()
-        self.ed_in.setToolTip("JSON, TypeScript, or JavaScript file to rewrite")
         self.btn_in = QPushButton("Open…")
-        self.btn_in.setToolTip("Browse for input file")
 
         # Output file section
         self.lbl_out = QLabel("Output file (optional):")
         self.ed_out = QLineEdit()
-        self.ed_out.setToolTip("Optional output file path (defaults to input file if empty)")
         self.btn_out = QPushButton("Save as…")
-        self.btn_out.setToolTip("Browse for output file")
 
         # Options checkboxes
         self.chk_from_ts = QCheckBox("From TS/JS (preserve file)")
-        self.chk_from_ts.setToolTip("Parse as TypeScript/JavaScript and preserve format")
         self.chk_ts_out = QCheckBox("Emit export default …;")
-        self.chk_ts_out.setToolTip("Add 'export default' statement to output")
         self.chk_join = QCheckBox("Join keys")
-        self.chk_join.setToolTip("Join nested keys into single level (e.g., a.b.c)")
         self.chk_elim = QCheckBox("Eliminate duplicates")
-        self.chk_elim.setToolTip("Remove duplicate keys, keeping the last occurrence")
         self.chk_nlb = QCheckBox("No blank lines")
-        self.chk_nlb.setToolTip("Remove blank lines from output")
         self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
-        self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
         self.chk_skip_empty = QCheckBox("Skip empty values")
-        self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
         self.chk_avoid_dup_child = QCheckBox("Avoid duplicate child keys")
-        self.chk_avoid_dup_child.setToolTip(
-            "Merge parent.child.child -> parent.child (e.g., t.pages.home.home -> t.pages.home)"
-        )
         self.chk_normalize_escaping = QCheckBox("Normalize escaping")
-        self.chk_normalize_escaping.setToolTip(
-            "Auto-detect excessive escaping (\\\\\\' or more) and normalize to \\' (Task #22)"
-        )
         self.chk_convert_arrays = QCheckBox("Convert arrays to objects")
-        self.chk_convert_arrays.setToolTip("Convert string arrays to objects with generated keys (Task #21)")
         self.chk_skip_no_siblings = QCheckBox("Skip keys without siblings")
-        self.chk_skip_no_siblings.setToolTip(
-            "Remove serial hierarchies (chains) where keys don't have siblings (Task #35)"
-        )
 
         # Task #52 - Remove duplicate objects
         self.chk_remove_dup_objects = QCheckBox("Remove duplicate objects")
-        self.chk_remove_dup_objects.setToolTip(
-            "Remove objects with identical or similar values, keeping the first occurrence (smallest line number)"
-        )
         self.chk_include_dup_arrays = QCheckBox("Include arrays")
-        self.chk_include_dup_arrays.setToolTip("Also check arrays for duplicates (only when all elements match)")
         self.lbl_dup_threshold = QLabel("Similarity:")
         self.spin_dup_threshold = QSpinBox()
         self.spin_dup_threshold.setRange(50, 100)
         self.spin_dup_threshold.setValue(100)
         self.spin_dup_threshold.setSuffix("%")
-        self.spin_dup_threshold.setToolTip(
-            "Minimum similarity percentage (100% = exact match only, 80% = allow 20% field differences)"
-        )
         self.combo_dup_mode = QComboBox()
         self.combo_dup_mode.addItems(["Remove (default)", "Reference ($ref)"])
-        self.combo_dup_mode.setToolTip("Remove: delete duplicates | Reference: replace with $ref:path to original")
 
         # Task #23 - Update orphaned references
         self.chk_update_refs = QCheckBox("Update references in project")
-        self.chk_update_refs.setToolTip(
-            "Update orphaned translation references (t.key.path) in .tsx/.jsx files after eliminating duplicates (Task #23)"
-        )
         self.ed_project_dir = QLineEdit()
-        self.ed_project_dir.setToolTip("Project directory containing .tsx/.jsx/.ts/.js files to update")
         self.btn_project_browse = QPushButton("Browse…")
-        self.btn_project_browse.setToolTip("Browse for project directory")
         self.chk_ref_backup = QCheckBox("Create backups")
-        self.chk_ref_backup.setToolTip("Create .bak files before modifying references")
         self.chk_ref_backup.setChecked(True)
 
         self.chk_remove_dup_consecutive = QCheckBox("Remove consecutive duplicates")
-        self.chk_remove_dup_consecutive.setToolTip(
-            "Remove only consecutive duplicates in arrays: ['a','a','b'] → ['a','b']"
-        )
         self.chk_remove_dup_all = QCheckBox("Remove all duplicates")
-        self.chk_remove_dup_all.setToolTip("Remove all duplicates in arrays (set behavior): ['a','b','a'] → ['a','b']")
         self.chk_enforce_case = QCheckBox("Enforce consistent case")
-        self.chk_enforce_case.setToolTip(
-            "Automatically convert all keys to consistent case style (warns on inconsistencies)"
-        )
         self.chk_enforce_case.setChecked(True)  # Applied automatically
         self.combo_case_style = QComboBox()
         self.combo_case_style.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
         self.combo_case_style.setCurrentIndex(0)  # Default: camelCase
-        self.combo_case_style.setToolTip("Target case style for key conversion")
         self.chk_validate_case = QCheckBox("Validate case before applying")
-        self.chk_validate_case.setToolTip(
-            "Show preview dialog with before/after comparison before applying case conversion"
-        )
         self.chk_validate_case.setChecked(False)  # Optional validation
         self.chk_is_file = QCheckBox("Is file")
-        self.chk_is_file.setToolTip("Input path is a single file (unchecked for directory)")
         self.chk_is_file.setChecked(True)
 
         # Sprint B Feature #1: Advanced Filters
         self.btn_advanced_filters = QPushButton("🔍 Advanced Filters...")
-        self.btn_advanced_filters.setToolTip("Configure advanced file filters (filename, size, content patterns, etc.)")
         self.chk_apply_all_types = QCheckBox("Apply to all file types")
-        self.chk_apply_all_types.setToolTip("Apply filters to all files, not just JSON (default: auto-detect .json)")
         self.chk_apply_all_types.setChecked(False)
         self.advanced_conditions: list[Condition] = []  # Storage for configured conditions
         self.advanced_filters_enabled = False  # Whether filters are active
@@ -402,28 +355,22 @@ class JsonRewriterDock(BaseDock):
         # Sprint A Feature: Reference Resolver (v2.9.29)
         self.lbl_ref_mode = QLabel("Duplicate handling:")
         self.radio_delete_dups = QRadioButton("Delete duplicates")
-        self.radio_delete_dups.setToolTip("Remove duplicate objects (default behavior)")
         self.radio_delete_dups.setChecked(True)  # Default mode
         self.radio_use_refs = QRadioButton("Use references ($ref)")
-        self.radio_use_refs.setToolTip("Replace duplicates with $ref:path:line references")
         self.chk_resolve_refs = QCheckBox("Resolve existing references")
-        self.chk_resolve_refs.setToolTip("Expand $ref:path:line to actual values before processing")
         self.chk_resolve_refs.setChecked(False)
 
         # Sprint B Feature #4: Reference Format Configuration (v2.9.30)
         self.btn_configure_format = QPushButton("⚙️ Configure Format...")
-        self.btn_configure_format.setToolTip("Configure reference format style and options")
 
         # Indent spinner
         self.lbl_indent = QLabel("Indent (<=0 compact):")
         self.spin_indent = QSpinBox()
         self.spin_indent.setRange(-1, 16)
         self.spin_indent.setValue(2)
-        self.spin_indent.setToolTip("Number of spaces for indentation (0 or negative for compact output)")
 
         # Action button
         self.btn_run = QPushButton("Rewrite")
-        self.btn_run.setToolTip("Execute JSON rewriting with selected operations | F5 or Ctrl+Shift+R to open")
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -516,6 +463,46 @@ class JsonRewriterDock(BaseDock):
         self.radio_delete_dups.toggled.connect(self._save_preferences)
         self.radio_use_refs.toggled.connect(self._save_preferences)
         self.chk_resolve_refs.toggled.connect(self._save_preferences)
+
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips to all widgets (v2.9.74)."""
+        self.ed_in.setToolTip(tooltip_tr("json_rewriter.ed_in"))
+        self.btn_in.setToolTip(tooltip_tr("json_rewriter.btn_in"))
+        self.ed_out.setToolTip(tooltip_tr("json_rewriter.ed_out"))
+        self.btn_out.setToolTip(tooltip_tr("json_rewriter.btn_out"))
+        self.chk_from_ts.setToolTip(tooltip_tr("json_rewriter.chk_from_ts"))
+        self.chk_ts_out.setToolTip(tooltip_tr("json_rewriter.chk_ts_out"))
+        self.chk_join.setToolTip(tooltip_tr("json_rewriter.chk_join"))
+        self.chk_elim.setToolTip(tooltip_tr("json_rewriter.chk_elim"))
+        self.chk_nlb.setToolTip(tooltip_tr("json_rewriter.chk_nlb"))
+        self.chk_exclude_numeric.setToolTip(tooltip_tr("json_rewriter.chk_exclude_numeric"))
+        self.chk_skip_empty.setToolTip(tooltip_tr("json_rewriter.chk_skip_empty"))
+        self.chk_avoid_dup_child.setToolTip(tooltip_tr("json_rewriter.chk_avoid_dup_child"))
+        self.chk_normalize_escaping.setToolTip(tooltip_tr("json_rewriter.chk_normalize_escaping"))
+        self.chk_convert_arrays.setToolTip(tooltip_tr("json_rewriter.chk_convert_arrays"))
+        self.chk_skip_no_siblings.setToolTip(tooltip_tr("json_rewriter.chk_skip_no_siblings"))
+        self.chk_remove_dup_objects.setToolTip(tooltip_tr("json_rewriter.chk_remove_dup_objects"))
+        self.chk_include_dup_arrays.setToolTip(tooltip_tr("json_rewriter.chk_include_dup_arrays"))
+        self.spin_dup_threshold.setToolTip(tooltip_tr("json_rewriter.spin_dup_threshold"))
+        self.combo_dup_mode.setToolTip(tooltip_tr("json_rewriter.combo_dup_mode"))
+        self.chk_update_refs.setToolTip(tooltip_tr("json_rewriter.chk_update_refs"))
+        self.ed_project_dir.setToolTip(tooltip_tr("json_rewriter.ed_project_dir"))
+        self.btn_project_browse.setToolTip(tooltip_tr("json_rewriter.btn_project_browse"))
+        self.chk_ref_backup.setToolTip(tooltip_tr("json_rewriter.chk_ref_backup"))
+        self.chk_remove_dup_consecutive.setToolTip(tooltip_tr("json_rewriter.chk_remove_dup_consecutive"))
+        self.chk_remove_dup_all.setToolTip(tooltip_tr("json_rewriter.chk_remove_dup_all"))
+        self.chk_enforce_case.setToolTip(tooltip_tr("json_rewriter.chk_enforce_case"))
+        self.combo_case_style.setToolTip(tooltip_tr("json_rewriter.combo_case_style"))
+        self.chk_validate_case.setToolTip(tooltip_tr("json_rewriter.chk_validate_case"))
+        self.chk_is_file.setToolTip(tooltip_tr("json_rewriter.chk_is_file"))
+        self.btn_advanced_filters.setToolTip(tooltip_tr("json_rewriter.btn_advanced_filters"))
+        self.chk_apply_all_types.setToolTip(tooltip_tr("json_rewriter.chk_apply_all_types"))
+        self.radio_delete_dups.setToolTip(tooltip_tr("json_rewriter.radio_delete_dups"))
+        self.radio_use_refs.setToolTip(tooltip_tr("json_rewriter.radio_use_refs"))
+        self.chk_resolve_refs.setToolTip(tooltip_tr("json_rewriter.chk_resolve_refs"))
+        self.btn_configure_format.setToolTip(tooltip_tr("json_rewriter.btn_configure_format"))
+        self.spin_indent.setToolTip(tooltip_tr("json_rewriter.spin_indent"))
+        self.btn_run.setToolTip(tooltip_tr("json_rewriter.btn_run"))
 
     # UI Helper Methods
 
