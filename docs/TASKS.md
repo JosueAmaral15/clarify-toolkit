@@ -1279,6 +1279,19 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~20 minutos (dock simples: 442 linhas, 7 widgets, markdown rendering, tree navigation)
     * **Progresso**: Tooltips Expansion - 13/15 docks (86.7%)
+  - **[X] v2.9.76 - Editor Dock (15/12/2025)**:
+    * ✅ **12 tooltips totais**: 12 melhorados (8 EditorDock + 4 EditorTab, removidas hardcoded strings)
+    * ✅ **Toolbar Buttons** (5): btn_new (Ctrl+N), btn_open (Ctrl+O), btn_save (Ctrl+S), btn_save_as (Ctrl+Shift+S), btn_close_tab (Ctrl+W)
+    * ✅ **Auto-save Option** (1): chk_auto_save (3-second delay after modification)
+    * ✅ **Tab Widget** (1): tab_widget (tabbed interface with close button)
+    * ✅ **Status Label** (1): lbl_status (Ready/Saved/Modified/Auto-saved)
+    * ✅ **EditorTab - Text Editor** (1): editor (syntax highlighting with auto-save)
+    * ✅ **EditorTab - Toolbar** (3): btn_copy (clipboard), btn_export (save as), btn_enable_saving (exit sandbox)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 84 traduções (12×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~25 minutos (dock complexo: 1047 linhas, 2 classes - EditorDock + EditorTab, syntax highlighter, auto-save, edit-only mode)
+    * **Progresso**: Tooltips Expansion - 14/15 docks (93.3%)
   - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
     * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
     * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)

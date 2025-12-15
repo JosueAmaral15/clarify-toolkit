@@ -439,5 +439,17 @@
   "tooltip.tutorials.tree": "浏览按初学者/开发者→基础/高级组织的教程 | 点击项目打开教程 | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "当前教程标题（从树中打开教程时更新） | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "具有HTML样式、代码块和可点击链接的渲染教程 | 点击.md链接在教程间导航 | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "操作状态：就绪（空闲）、加载中（打开教程）、搜索结果（找到匹配项）、错误消息 | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "操作状态：就绪（空闲）、加载中（打开教程）、搜索结果（找到匹配项）、错误消息 | Ctrl+Shift+T",
+  "tooltip.editor.btn_new": "创建新文件 | Ctrl+N | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_open": "打开现有文件 | Ctrl+O | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_save": "保存当前文件 | Ctrl+S | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_save_as": "用新名称保存当前文件 | Ctrl+Shift+S | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_close_tab": "关闭当前选项卡 | Ctrl+W | Ctrl+E 打开编辑器",
+  "tooltip.editor.chk_auto_save": "最后修改后3秒自动保存文件 | Ctrl+E 打开编辑器",
+  "tooltip.editor.tab_widget": "选项卡式文件编辑器（点击X关闭，右键单击查看选项） | Ctrl+Tab 切换 | Ctrl+E 打开编辑器",
+  "tooltip.editor.lbl_status": "编辑器状态（就绪/已保存/已修改/自动保存） | Ctrl+E 打开编辑器",
+  "tooltip.editor.editor": "带语法高亮的文件编辑器（选中复选框时启用自动保存） | Ctrl+S 保存 | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_copy": "将内容复制到剪贴板 | Ctrl+C | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_export": "将内容导出到文件（仅编辑模式的另存为替代方案） | Ctrl+E 打开编辑器",
+  "tooltip.editor.btn_enable_saving": "转换为文件支持的编辑器（退出沙盒模式） | Ctrl+Shift+E | Ctrl+E 打开编辑器"
 }

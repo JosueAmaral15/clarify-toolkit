@@ -454,5 +454,18 @@
   "tooltip.tutorials.tree": "Browse tutorials organized in Beginner/Developers → Basic/Advanced hierarchy | Click items to open tutorials | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "Current tutorial title (updates when you open a tutorial from the tree) | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "Rendered tutorial with HTML styling, code blocks, and clickable links | Click .md links to navigate between tutorials | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "Operation status: Ready (idle), Loading (opening tutorial), Search results (matches found), Error messages | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "Operation status: Ready (idle), Loading (opening tutorial), Search results (matches found), Error messages | Ctrl+Shift+T",
+  
+  "tooltip.editor.btn_new": "Create new file | Ctrl+N | Ctrl+E to open Editor",
+  "tooltip.editor.btn_open": "Open existing file | Ctrl+O | Ctrl+E to open Editor",
+  "tooltip.editor.btn_save": "Save current file | Ctrl+S | Ctrl+E to open Editor",
+  "tooltip.editor.btn_save_as": "Save current file with new name | Ctrl+Shift+S | Ctrl+E to open Editor",
+  "tooltip.editor.btn_close_tab": "Close current tab | Ctrl+W | Ctrl+E to open Editor",
+  "tooltip.editor.chk_auto_save": "Automatically save files 3 seconds after last modification | Ctrl+E to open Editor",
+  "tooltip.editor.tab_widget": "Tabbed file editor (click X to close, right-click for options) | Ctrl+Tab to switch | Ctrl+E to open Editor",
+  "tooltip.editor.lbl_status": "Editor status (Ready/Saved/Modified/Auto-saved) | Ctrl+E to open Editor",
+  "tooltip.editor.editor": "File editor with syntax highlighting (auto-save enabled if checkbox checked) | Ctrl+S to save | Ctrl+E to open Editor",
+  "tooltip.editor.btn_copy": "Copy content to clipboard | Ctrl+C | Ctrl+E to open Editor",
+  "tooltip.editor.btn_export": "Export content to file (Save As alternative for edit-only mode) | Ctrl+E to open Editor",
+  "tooltip.editor.btn_enable_saving": "Convert to file-backed editor (exit sandbox mode) | Ctrl+Shift+E | Ctrl+E to open Editor"
 }

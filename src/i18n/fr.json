@@ -439,5 +439,17 @@
   "tooltip.tutorials.tree": "Parcourir les tutoriels organisés en Débutant/Développeurs → Basique/Avancé | Cliquez sur les éléments pour ouvrir les tutoriels | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "Titre du tutoriel actuel (se met à jour lorsque vous ouvrez un tutoriel de l'arborescence) | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "Tutoriel rendu avec style HTML, blocs de code et liens cliquables | Cliquez sur les liens .md pour naviguer entre les tutoriels | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "État de l'opération : Prêt (inactif), Chargement (ouverture du tutoriel), Résultats de recherche (correspondances trouvées), Messages d'erreur | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "État de l'opération : Prêt (inactif), Chargement (ouverture du tutoriel), Résultats de recherche (correspondances trouvées), Messages d'erreur | Ctrl+Shift+T",
+  "tooltip.editor.btn_new": "Créer un nouveau fichier | Ctrl+N | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_open": "Ouvrir un fichier existant | Ctrl+O | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_save": "Enregistrer le fichier actuel | Ctrl+S | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_save_as": "Enregistrer le fichier actuel sous un nouveau nom | Ctrl+Shift+S | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_close_tab": "Fermer l'onglet actuel | Ctrl+W | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.chk_auto_save": "Enregistrer automatiquement les fichiers 3 secondes après la dernière modification | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.tab_widget": "Éditeur de fichiers à onglets (cliquez sur X pour fermer, clic droit pour les options) | Ctrl+Tab pour basculer | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.lbl_status": "État de l'éditeur (Prêt/Enregistré/Modifié/Auto-enregistré) | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.editor": "Éditeur de fichier avec coloration syntaxique (auto-enregistrement activé si case cochée) | Ctrl+S pour enregistrer | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_copy": "Copier le contenu dans le presse-papiers | Ctrl+C | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_export": "Exporter le contenu vers un fichier (alternative à Enregistrer sous pour mode édition seule) | Ctrl+E pour ouvrir l'Éditeur",
+  "tooltip.editor.btn_enable_saving": "Convertir en éditeur avec fichier (quitter le mode bac à sable) | Ctrl+Shift+E | Ctrl+E pour ouvrir l'Éditeur"
 }

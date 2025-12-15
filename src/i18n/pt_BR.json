@@ -438,5 +438,18 @@
   "tooltip.tutorials.tree": "Navegar tutoriais organizados em Iniciante/Desenvolvedores → Básico/Avançado | Clique em itens para abrir tutoriais | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "Título do tutorial atual (atualiza quando você abre um tutorial da árvore) | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "Tutorial renderizado com estilização HTML, blocos de código e links clicáveis | Clique em links .md para navegar entre tutoriais | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "Status da operação: Pronto (ocioso), Carregando (abrindo tutorial), Resultados de busca (correspondências encontradas), Mensagens de erro | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "Status da operação: Pronto (ocioso), Carregando (abrindo tutorial), Resultados de busca (correspondências encontradas), Mensagens de erro | Ctrl+Shift+T",
+  
+  "tooltip.editor.btn_new": "Criar novo arquivo | Ctrl+N | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_open": "Abrir arquivo existente | Ctrl+O | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_save": "Salvar arquivo atual | Ctrl+S | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_save_as": "Salvar arquivo atual com novo nome | Ctrl+Shift+S | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_close_tab": "Fechar aba atual | Ctrl+W | Ctrl+E para abrir Editor",
+  "tooltip.editor.chk_auto_save": "Salvar arquivos automaticamente 3 segundos após última modificação | Ctrl+E para abrir Editor",
+  "tooltip.editor.tab_widget": "Editor de arquivos com abas (clique no X para fechar, clique direito para opções) | Ctrl+Tab para alternar | Ctrl+E para abrir Editor",
+  "tooltip.editor.lbl_status": "Status do editor (Pronto/Salvo/Modificado/Auto-salvo) | Ctrl+E para abrir Editor",
+  "tooltip.editor.editor": "Editor de arquivo com destaque de sintaxe (auto-salvar habilitado se checkbox marcado) | Ctrl+S para salvar | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_copy": "Copiar conteúdo para área de transferência | Ctrl+C | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_export": "Exportar conteúdo para arquivo (alternativa ao Salvar Como para modo somente edição) | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_enable_saving": "Converter para editor com arquivo (sair do modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor"
 }

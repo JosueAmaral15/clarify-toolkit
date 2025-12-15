@@ -35,6 +35,7 @@ from PySide6.QtGui import (
 
 from .base_dock import BaseDock
 from .json_editor_tab import JsonEditorTab
+from src.i18n.translator import tooltip_tr
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
@@ -226,7 +227,6 @@ class EditorTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setAcceptRichText(False)
         self.editor.setTabStopDistance(40)  # 4 spaces equivalent
-        self.editor.setToolTip("File editor with syntax highlighting (auto-save enabled if checkbox checked) | Ctrl+S to save | Ctrl+E to open Editor")
         self.editor.textChanged.connect(self._on_text_changed)
         
         # Monospace font
@@ -242,6 +242,19 @@ class EditorTab(QWidget):
         self.highlighter = None
         if file_path:
             self._setup_highlighter()
+        
+        # Apply tooltips
+        self._apply_tab_tooltips()
+    
+    def _apply_tab_tooltips(self):
+        """Apply internationalized tooltips to EditorTab widgets."""
+        # Text Editor
+        self.editor.setToolTip(tooltip_tr("editor.editor"))
+        
+        # Toolbar Buttons
+        self.btn_copy.setToolTip(tooltip_tr("editor.btn_copy"))
+        self.btn_export.setToolTip(tooltip_tr("editor.btn_export"))
+        self.btn_enable_saving.setToolTip(tooltip_tr("editor.btn_enable_saving"))
     
     def _setup_toolbar(self):
         """Setup toolbar with edit-only mode buttons."""
@@ -250,19 +263,16 @@ class EditorTab(QWidget):
         
         # Copy to Clipboard button
         self.btn_copy = QPushButton("📋 Copy")
-        self.btn_copy.setToolTip("Copy content to clipboard | Ctrl+C | Ctrl+E to open Editor")
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         toolbar.addWidget(self.btn_copy)
         
         # Export to File button
         self.btn_export = QPushButton("💾 Export")
-        self.btn_export.setToolTip("Export content to file (Save As alternative for edit-only mode) | Ctrl+E to open Editor")
         self.btn_export.clicked.connect(self._export_to_file)
         toolbar.addWidget(self.btn_export)
         
         # Enable File Saving button (only visible in edit-only mode)
         self.btn_enable_saving = QPushButton("🔓 Enable Saving")
-        self.btn_enable_saving.setToolTip("Convert to file-backed editor (exit sandbox mode) | Ctrl+Shift+E | Ctrl+E to open Editor")
         self.btn_enable_saving.clicked.connect(self._enable_file_saving)
         toolbar.addWidget(self.btn_enable_saving)
         
@@ -556,19 +566,13 @@ class EditorDock(BaseDock):
         toolbar = QHBoxLayout()
         
         self.btn_new = QPushButton("New")
-        self.btn_new.setToolTip("Create new file | Ctrl+N | Ctrl+E to open Editor")
         self.btn_open = QPushButton("Open...")
-        self.btn_open.setToolTip("Open existing file | Ctrl+O | Ctrl+E to open Editor")
         self.btn_save = QPushButton("Save")
-        self.btn_save.setToolTip("Save current file | Ctrl+S | Ctrl+E to open Editor")
         self.btn_save_as = QPushButton("Save As...")
-        self.btn_save_as.setToolTip("Save current file with new name | Ctrl+Shift+S | Ctrl+E to open Editor")
         self.btn_close_tab = QPushButton("Close Tab")
-        self.btn_close_tab.setToolTip("Close current tab | Ctrl+W | Ctrl+E to open Editor")
         
         # Auto-save checkbox
         self.chk_auto_save = QCheckBox("Auto-save")
-        self.chk_auto_save.setToolTip("Automatically save files 3 seconds after last modification | Ctrl+E to open Editor")
         self.chk_auto_save.setChecked(self.auto_save_enabled)
         
         toolbar.addWidget(self.btn_new)
@@ -586,17 +590,36 @@ class EditorDock(BaseDock):
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
-        self.tab_widget.setToolTip("Tabbed file editor (click X to close, right-click for options) | Ctrl+Tab to switch | Ctrl+E to open Editor")
         self.layout.addWidget(self.tab_widget)
         
         # Status bar
         status_layout = QHBoxLayout()
         self.lbl_status = QLabel("Ready")
         self.lbl_status.setStyleSheet("color: #6A9955;")
-        self.lbl_status.setToolTip("Editor status (Ready/Saved/Modified/Auto-saved) | Ctrl+E to open Editor")
         status_layout.addWidget(self.lbl_status)
         status_layout.addStretch()
         self.layout.addLayout(status_layout)
+        
+        # Apply tooltips
+        self._apply_tooltips()
+    
+    def _apply_tooltips(self):
+        """Apply internationalized tooltips to all widgets."""
+        # Toolbar Buttons
+        self.btn_new.setToolTip(tooltip_tr("editor.btn_new"))
+        self.btn_open.setToolTip(tooltip_tr("editor.btn_open"))
+        self.btn_save.setToolTip(tooltip_tr("editor.btn_save"))
+        self.btn_save_as.setToolTip(tooltip_tr("editor.btn_save_as"))
+        self.btn_close_tab.setToolTip(tooltip_tr("editor.btn_close_tab"))
+        
+        # Auto-save Option
+        self.chk_auto_save.setToolTip(tooltip_tr("editor.chk_auto_save"))
+        
+        # Tab Widget
+        self.tab_widget.setToolTip(tooltip_tr("editor.tab_widget"))
+        
+        # Status Label
+        self.lbl_status.setToolTip(tooltip_tr("editor.lbl_status"))
     
     def _connect_signals(self):
         """Connect widget signals."""

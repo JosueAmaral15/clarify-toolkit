@@ -439,5 +439,17 @@
   "tooltip.tutorials.tree": "初心者/開発者→基本/上級に整理されたチュートリアルを参照 | アイテムをクリックしてチュートリアルを開く | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "現在のチュートリアルのタイトル（ツリーからチュートリアルを開くと更新されます） | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "HTMLスタイル、コードブロック、クリック可能なリンクを含むレンダリングされたチュートリアル | .mdリンクをクリックしてチュートリアル間を移動 | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "操作ステータス：準備完了（アイドル）、読み込み中（チュートリアルを開く）、検索結果（一致が見つかりました）、エラーメッセージ | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "操作ステータス：準備完了（アイドル）、読み込み中（チュートリアルを開く）、検索結果（一致が見つかりました）、エラーメッセージ | Ctrl+Shift+T",
+  "tooltip.editor.btn_new": "新しいファイルを作成 | Ctrl+N | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_open": "既存のファイルを開く | Ctrl+O | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_save": "現在のファイルを保存 | Ctrl+S | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_save_as": "現在のファイルを新しい名前で保存 | Ctrl+Shift+S | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_close_tab": "現在のタブを閉じる | Ctrl+W | Ctrl+E でエディタを開く",
+  "tooltip.editor.chk_auto_save": "最後の変更後3秒でファイルを自動保存 | Ctrl+E でエディタを開く",
+  "tooltip.editor.tab_widget": "タブ付きファイルエディタ（Xをクリックして閉じる、右クリックでオプション） | Ctrl+Tab で切り替え | Ctrl+E でエディタを開く",
+  "tooltip.editor.lbl_status": "エディタのステータス（準備完了/保存済み/変更済み/自動保存） | Ctrl+E でエディタを開く",
+  "tooltip.editor.editor": "構文ハイライト付きファイルエディタ（チェックボックスがオンの場合、自動保存が有効） | Ctrl+S で保存 | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_copy": "内容をクリップボードにコピー | Ctrl+C | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_export": "内容をファイルにエクスポート（編集専用モードの名前を付けて保存の代替） | Ctrl+E でエディタを開く",
+  "tooltip.editor.btn_enable_saving": "ファイルベースのエディタに変換（サンドボックスモードを終了） | Ctrl+Shift+E | Ctrl+E でエディタを開く"
 }

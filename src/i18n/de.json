@@ -439,5 +439,17 @@
   "tooltip.tutorials.tree": "Tutorials durchsuchen, organisiert in Anfänger/Entwickler → Grundlegend/Fortgeschritten | Auf Elemente klicken, um Tutorials zu öffnen | Strg+Umschalt+T",
   "tooltip.tutorials.title_label": "Aktueller Tutorial-Titel (wird aktualisiert, wenn Sie ein Tutorial aus dem Baum öffnen) | Strg+Umschalt+T",
   "tooltip.tutorials.browser": "Gerendertes Tutorial mit HTML-Styling, Code-Blöcken und anklickbaren Links | Auf .md-Links klicken, um zwischen Tutorials zu navigieren | Strg+Umschalt+T",
-  "tooltip.tutorials.status_label": "Betriebsstatus: Bereit (untätig), Laden (Tutorial öffnen), Suchergebnisse (Übereinstimmungen gefunden), Fehlermeldungen | Strg+Umschalt+T"
+  "tooltip.tutorials.status_label": "Betriebsstatus: Bereit (untätig), Laden (Tutorial öffnen), Suchergebnisse (Übereinstimmungen gefunden), Fehlermeldungen | Strg+Umschalt+T",
+  "tooltip.editor.btn_new": "Neue Datei erstellen | Strg+N | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_open": "Vorhandene Datei öffnen | Strg+O | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_save": "Aktuelle Datei speichern | Strg+S | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_save_as": "Aktuelle Datei mit neuem Namen speichern | Strg+Umschalt+S | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_close_tab": "Aktuellen Tab schließen | Strg+W | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.chk_auto_save": "Dateien automatisch 3 Sekunden nach letzter Änderung speichern | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.tab_widget": "Datei-Editor mit Registerkarten (X zum Schließen klicken, Rechtsklick für Optionen) | Strg+Tab zum Wechseln | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.lbl_status": "Editor-Status (Bereit/Gespeichert/Geändert/Auto-gespeichert) | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.editor": "Datei-Editor mit Syntaxhervorhebung (Auto-Speichern aktiviert, wenn Checkbox markiert) | Strg+S zum Speichern | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_copy": "Inhalt in Zwischenablage kopieren | Strg+C | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_export": "Inhalt in Datei exportieren (Alternative zu Speichern unter für Nur-Bearbeiten-Modus) | Strg+E zum Öffnen des Editors",
+  "tooltip.editor.btn_enable_saving": "Zu dateigestütztem Editor konvertieren (Sandbox-Modus verlassen) | Strg+Umschalt+E | Strg+E zum Öffnen des Editors"
 }

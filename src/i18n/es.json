@@ -439,5 +439,17 @@
   "tooltip.tutorials.tree": "Explorar tutoriales organizados en Principiante/Desarrolladores → Básico/Avanzado | Haga clic en elementos para abrir tutoriales | Ctrl+Shift+T",
   "tooltip.tutorials.title_label": "Título del tutorial actual (se actualiza cuando abre un tutorial del árbol) | Ctrl+Shift+T",
   "tooltip.tutorials.browser": "Tutorial renderizado con estilo HTML, bloques de código y enlaces clicables | Haga clic en enlaces .md para navegar entre tutoriales | Ctrl+Shift+T",
-  "tooltip.tutorials.status_label": "Estado de la operación: Listo (inactivo), Cargando (abriendo tutorial), Resultados de búsqueda (coincidencias encontradas), Mensajes de error | Ctrl+Shift+T"
+  "tooltip.tutorials.status_label": "Estado de la operación: Listo (inactivo), Cargando (abriendo tutorial), Resultados de búsqueda (coincidencias encontradas), Mensajes de error | Ctrl+Shift+T",
+  "tooltip.editor.btn_new": "Crear nuevo archivo | Ctrl+N | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_open": "Abrir archivo existente | Ctrl+O | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_save": "Guardar archivo actual | Ctrl+S | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_save_as": "Guardar archivo actual con nuevo nombre | Ctrl+Shift+S | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_close_tab": "Cerrar pestaña actual | Ctrl+W | Ctrl+E para abrir Editor",
+  "tooltip.editor.chk_auto_save": "Guardar archivos automáticamente 3 segundos después de última modificación | Ctrl+E para abrir Editor",
+  "tooltip.editor.tab_widget": "Editor de archivos con pestañas (haga clic en X para cerrar, clic derecho para opciones) | Ctrl+Tab para cambiar | Ctrl+E para abrir Editor",
+  "tooltip.editor.lbl_status": "Estado del editor (Listo/Guardado/Modificado/Auto-guardado) | Ctrl+E para abrir Editor",
+  "tooltip.editor.editor": "Editor de archivo con resaltado de sintaxis (auto-guardar habilitado si checkbox marcado) | Ctrl+S para guardar | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_copy": "Copiar contenido al portapapeles | Ctrl+C | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_export": "Exportar contenido a archivo (alternativa a Guardar Como para modo solo edición) | Ctrl+E para abrir Editor",
+  "tooltip.editor.btn_enable_saving": "Convertir a editor con respaldo de archivo (salir del modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor"
 }
