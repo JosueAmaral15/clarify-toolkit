@@ -377,5 +377,24 @@
   "tooltip.json_search.btn_interrupt": "Laufenden Suchvorgang stoppen | Esc",
   "tooltip.json_search.btn_save_results": "Suchergebnisse in TXT-Datei speichern (einzeln, pro Datei oder pro Abfrage)",
   "tooltip.json_search.btn_clear": "Aktuelle Suchergebnisanzeige löschen | Ctrl+L",
-  "tooltip.json_search.text_results": "Suchergebnisse: Dateiübereinstimmungen, Schlüssel, Werte und Statistiken"
+  "tooltip.json_search.text_results": "Suchergebnisse: Dateiübereinstimmungen, Schlüssel, Werte und Statistiken",
+
+  "tooltip.json_translate.ed_path": "Pfad zu Datei oder Verzeichnis mit Quelldateien zum Übersetzen | Enter zum Ausführen | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.btn_browse": "Nach Quelldatei oder Verzeichnis zum Übersetzen suchen | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.is_file": "Markieren wenn Stammpfad eine einzelne Datei ist (abwählen für Verzeichnis/Stapelübersetzung) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.ed_dict": "Pfad zu JSON oder TypeScript Datei mit Übersetzungsschlüssel-Wert-Paaren | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.btn_open": "Nach Übersetzungswörterbuchdatei suchen (JSON/TS/JS) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.object_variable_name": "Variablenname für Wörterbuchwurzel im generierten Code (z.B. 't' erzeugt t.home.title, 'i18n' erzeugt i18n.home.title) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.ed_start": "Regex-Muster das markiert wo Übersetzungsbereich beginnt (z.B. '<[^>]*?>' für HTML/JSX Eröffnungs-Tags) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.ed_end": "Regex-Muster das markiert wo Übersetzungsbereich endet (z.B. '</[^>]*?>' für HTML/JSX Abschluss-Tags) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.ed_exclude": "Ausschlussmuster: Text der diesen Regex entspricht wird nicht übersetzt (verhindert Übersetzung von className, IDs, technischen Attributen) | Komma-getrennt | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.chk_backup": "Sicherungskopien erstellen (.bak Erweiterung) vor Dateiänderungen (aktiviert Rückgängigmachen via 'Mit Sicherung Rückgängigmachen') | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.chk_dont_override": "Bereits übersetzten Text überspringen (bewahrt bestehende Variablenreferenzen wie t.key) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.chk_inverse_json_translate": "Umgekehrte Übersetzung: Variablenreferenzen (t.key) durch tatsächliche Wörterbuchwerte ersetzen (z.B. t.home.title → 'Startseite') | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.chk_emit_export": "Wrapper 'export const varName = {...}' zu generierten Wörterbuchdateien hinzufügen (aktiviert ES6 Modulimporte in TS/JS) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.chk_preserve_uppercase": "Schlüssel die bereits GROßBUCHSTABEN sind beibehalten (z.B. HOME_TITLE bleibt HOME_TITLE, nützlich für Konstanten) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.lbl_stats": "Echtzeit-Statistiken: Dateianzahl, Wörterbuchstatus, Bereitschaftsstatus | Aktualisiert automatisch bei Pfad/Dict Änderungen | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.btn_run": "Dateien mit Wörterbuch übersetzen (ersetzt Text durch Variablenreferenzen, erstellt Sicherungen falls aktiviert) | Enter zum Ausführen | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.btn_swap": "Quell- und Zielwörterbücher tauschen (nützlich für umgekehrte Übersetzungsabläufe) | Ctrl+T zum Öffnen Übersetzen",
+  "tooltip.json_translate.btn_undo": "Originaldateien aus Sicherung wiederherstellen (Dateien .bak, erfordert 'Originaldateien sichern' aktiviert) | Ctrl+T zum Öffnen Übersetzen"
 }

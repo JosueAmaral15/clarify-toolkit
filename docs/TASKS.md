@@ -106,9 +106,15 @@ Esta atualização adiciona **50 novas tarefas** ao roadmap, expandindo signific
 
 ### 🔨 Tasks Pendentes
 
-*(Nenhuma task nesta categoria está pendente - 100% completa)*
-
----
+[] resolver o seguinte problema: 
+Traceback (most recent call last):
+  File "~/Documents/Informática/Programação/programming workspace/System Management JSON Files - Clarify project/clarify/src/app.py", line 4990, in <lambda>
+    a.triggered.connect(lambda _, x=a: self._apply_theme_action(x))
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/Documents/Informática/Programação/programming workspace/System Management JSON Files - Clarify project/clarify/src/app.py", line 5120, in _apply_theme_action
+    m_themes = bar.addMenu("Themes")
+               ^^^
+NameError: name 'bar' is not defined
 
 ## 🟡 SHOULD HAVE (Prioridade Média)
 
@@ -198,6 +204,7 @@ Esta atualização adiciona **50 novas tarefas** ao roadmap, expandindo signific
   - Tabela sortable com exportação CSV
 - **[X]** Keyboard shortcut para Advanced File Search: Ctrl+Shift+F **(v2.9.12 - Task #37)**
 - **[X]** Quick filter no File List: filtro rápido por filename sem re-executar busca **(v2.9.12 - Task #39)**
+- **[]** Incluir no Clarify a possibilidade de modificação ou manipulação de estrutura de dados TOON e BSON ao invés de somente JSON;
 
 ---
 
@@ -1228,6 +1235,21 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * **Sprint**: ~25 minutos (dock médio: 647 linhas, search engine com filename filter, save options dialog)
     * **Progresso**: Tooltips Expansion - 10/15 docks (66.7%)
+  - **[X] v2.9.73 - JSON Translate Dock (12/12/2025)**:
+    * ✅ **17 tooltips totais**: 17 melhorados (removidas hardcoded strings)
+    * ✅ **Path Inputs** (3): ed_path (file/dir input Enter), btn_browse (Ctrl+T), is_file (single file vs directory)
+    * ✅ **Dictionary** (2): ed_dict (JSON/TS dictionary path), btn_open (browse dictionary file)
+    * ✅ **Variable Name** (1): object_variable_name (root variable like 't' or 'i18n')
+    * ✅ **Scope Delimiters** (2): ed_start (start regex like '<[^>]*?>'), ed_end (end regex like '</[^>]*?>')
+    * ✅ **Exclusion Patterns** (1): ed_exclude (comma-separated regex to skip translation)
+    * ✅ **Options** (5): chk_backup (create .bak files), chk_dont_override (skip existing translations), chk_inverse_json_translate (reverse translation), chk_emit_export (add ES6 export wrapper), chk_preserve_uppercase (keep UPPERCASE keys)
+    * ✅ **Statistics** (1): lbl_stats (real-time file count and dictionary status)
+    * ✅ **Action Buttons** (3): btn_run (translate files Enter), btn_swap (swap dictionaries), btn_undo (restore from backup)
+    * ✅ **i18n completo**: 7 idiomas (EN, PT-BR, ES, FR, DE, ZH, JA) - 119 traduções (17×7)
+    * ✅ **Formato**: "Description | Shortcut" seguindo TOOLTIP_GUIDELINES.md (max 150 chars EN)
+    * ✅ Smoke test: py_compile OK, 7 JSON válidos
+    * **Sprint**: ~40 minutos (dock complexo: translation engine com scope filtering, backup system, reverse translation)
+    * **Progresso**: Tooltips Expansion - 11/15 docks (73.3%)
   - **[X] v2.9.71 - AI Processor Dock (12/12/2025)**:
     * ✅ **27 tooltips totais**: 24 melhorados (removidas hardcoded strings via bulk script) + 3 novos (PathEntry)
     * ✅ **PathEntry** (3): ed_path (file/dir input Ctrl+Shift+A), btn_browse (Ctrl+O), chk_is_file (file vs directory)

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QCheckBox, QFileDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 
 from src.accessibility_manager import AccessibilityManager
+from src.i18n.translator import tooltip_tr
 from src.utils import parse_exclusion_patterns, walk_files
 from .base_dock import BaseDock
 
@@ -92,54 +93,44 @@ class JsonTranslateDock(BaseDock):
         """Setup UI components."""
         self._create_widgets()
         self._create_layout()
+        self._apply_tooltips()
 
     def _create_widgets(self) -> None:
         """Create all widgets for the translate dock."""
         # Root path section
         self.lbl_path = QLabel("Root path:")
         self.ed_path = QLineEdit()
-        self.ed_path.setToolTip("Path to file or directory containing source files to translate | Enter to run | Ctrl+T to open Translate")
         self.btn_browse = QPushButton("Browse…")
-        self.btn_browse.setToolTip("Browse for source file or directory to translate | Ctrl+T to open Translate")
         self.is_file = QCheckBox("Is file?")
-        self.is_file.setToolTip("Check if root path is a single file (uncheck for directory/batch translation) | Ctrl+T to open Translate")
 
         # Dictionary file section
         self.lbl_dict = QLabel("Dictionary file (JSON/TS):")
         self.ed_dict = QLineEdit()
-        self.ed_dict.setToolTip("Path to JSON or TypeScript file containing translation key-value pairs | Ctrl+T to open Translate")
         self.btn_open = QPushButton("Open…")
-        self.btn_open.setToolTip("Browse for translation dictionary file (JSON/TS/JS) | Ctrl+T to open Translate")
 
         # Variable name
         self.lbl_var = QLabel("First object variable name:")
         self.object_variable_name = QLineEdit()
         self.object_variable_name.setPlaceholderText("e.g. t")
-        self.object_variable_name.setToolTip("Variable name for dictionary root in generated code (e.g., 't' produces t.home.title, 'i18n' produces i18n.home.title) | Ctrl+T to open Translate")
 
         # Scope delimiters
         self.lbl_start = QLabel("Start delimiter (regex):")
         self.ed_start = QLineEdit("<[^>]*?>")  # default: start of HTML/JSX tag
-        self.ed_start.setToolTip("Regex pattern marking where translation scope begins (e.g., '<[^>]*?>' for HTML/JSX opening tags) | Ctrl+T to open Translate")
         self.lbl_end = QLabel("End delimiter (regex):")
         self.ed_end = QLineEdit("</[^>]*?>")  # default: end tag
-        self.ed_end.setToolTip("Regex pattern marking where translation scope ends (e.g., '</[^>]*?>' for HTML/JSX closing tags) | Ctrl+T to open Translate")
 
         # Exclusion patterns
         self.lbl_exclude = QLabel("Do not translate\n(regex, comma-separated):")
         self.ed_exclude = QLineEdit()
         self.ed_exclude.setPlaceholderText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
         self.ed_exclude.setText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
-        self.ed_exclude.setToolTip("Exclude patterns: text matching these regex won't be translated (prevents translating className, IDs, technical attributes) | Comma-separated | Ctrl+T to open Translate")
 
         # Options
         self.chk_backup = QCheckBox("Backup original files\n(filename.bak)")
         self.chk_backup.setChecked(True)
-        self.chk_backup.setToolTip("Create backup copies (.bak extension) before modifying files (enables undo via 'Undo with Backup') | Ctrl+T to open Translate")
 
         self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
         self.chk_dont_override.setChecked(True)
-        self.chk_dont_override.setToolTip("Skip text that is already translated (preserves existing variable references like t.key) | Ctrl+T to open Translate")
 
         self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate\nchanges (with dictionary)")
         self.chk_inverse_json_translate.setToolTip(
@@ -148,7 +139,6 @@ class JsonTranslateDock(BaseDock):
 
         self.chk_emit_export = QCheckBox("Emit export const")
         self.chk_emit_export.setChecked(True)
-        self.chk_emit_export.setToolTip("Add 'export const varName = {...}' wrapper to generated dictionary files (enables ES6 module imports in TS/JS) | Ctrl+T to open Translate")
 
         self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
         self.chk_preserve_uppercase.setToolTip(
@@ -159,15 +149,11 @@ class JsonTranslateDock(BaseDock):
         self.lbl_stats = QLabel("Ready")
         self.lbl_stats.setStyleSheet("color: gray; font-style: italic;")
         self.lbl_stats.setWordWrap(True)
-        self.lbl_stats.setToolTip("Real-time statistics: file count, dictionary status, ready state | Updates automatically on path/dict changes | Ctrl+T to open Translate")
 
         # Action buttons (Task #10 - v2.9.8)
         self.btn_run = QPushButton("Run translation")
-        self.btn_run.setToolTip("Translate files using dictionary (replaces text with variable references, creates backups if enabled) | Enter to run | Ctrl+T to open Translate")
         self.btn_swap = QPushButton("Swap Dictionaries")
-        self.btn_swap.setToolTip("Swap source and target dictionaries (useful for reverse translation workflows) | Ctrl+T to open Translate")
         self.btn_undo = QPushButton("Undo with Backup")
-        self.btn_undo.setToolTip("Restore original files from backup (.bak files, requires 'Backup original files' enabled) | Ctrl+T to open Translate")
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -247,6 +233,27 @@ class JsonTranslateDock(BaseDock):
         for widget in [self.ed_path, self.ed_dict, self.object_variable_name, 
                        self.ed_start, self.ed_end, self.ed_exclude]:
             widget.returnPressed.connect(self._run)
+
+    def _apply_tooltips(self) -> None:
+        """Apply internationalized tooltips to all widgets."""
+        self.ed_path.setToolTip(tooltip_tr("json_translate.ed_path"))
+        self.btn_browse.setToolTip(tooltip_tr("json_translate.btn_browse"))
+        self.is_file.setToolTip(tooltip_tr("json_translate.is_file"))
+        self.ed_dict.setToolTip(tooltip_tr("json_translate.ed_dict"))
+        self.btn_open.setToolTip(tooltip_tr("json_translate.btn_open"))
+        self.object_variable_name.setToolTip(tooltip_tr("json_translate.object_variable_name"))
+        self.ed_start.setToolTip(tooltip_tr("json_translate.ed_start"))
+        self.ed_end.setToolTip(tooltip_tr("json_translate.ed_end"))
+        self.ed_exclude.setToolTip(tooltip_tr("json_translate.ed_exclude"))
+        self.chk_backup.setToolTip(tooltip_tr("json_translate.chk_backup"))
+        self.chk_dont_override.setToolTip(tooltip_tr("json_translate.chk_dont_override"))
+        self.chk_inverse_json_translate.setToolTip(tooltip_tr("json_translate.chk_inverse_json_translate"))
+        self.chk_emit_export.setToolTip(tooltip_tr("json_translate.chk_emit_export"))
+        self.chk_preserve_uppercase.setToolTip(tooltip_tr("json_translate.chk_preserve_uppercase"))
+        self.lbl_stats.setToolTip(tooltip_tr("json_translate.lbl_stats"))
+        self.btn_run.setToolTip(tooltip_tr("json_translate.btn_run"))
+        self.btn_swap.setToolTip(tooltip_tr("json_translate.btn_swap"))
+        self.btn_undo.setToolTip(tooltip_tr("json_translate.btn_undo"))
 
     # UI Helper Methods
 

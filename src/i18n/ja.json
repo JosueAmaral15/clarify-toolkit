@@ -377,5 +377,24 @@
   "tooltip.json_search.btn_interrupt": "実行中の検索操作を停止 | Esc",
   "tooltip.json_search.btn_save_results": "検索結果をTXTファイルに保存(単一、ファイルごと、クエリごと)",
   "tooltip.json_search.btn_clear": "現在の検索結果表示をクリア | Ctrl+L",
-  "tooltip.json_search.text_results": "検索結果:ファイル一致、キー、値、出現統計"
+  "tooltip.json_search.text_results": "検索結果:ファイル一致、キー、値、出現統計",
+
+  "tooltip.json_translate.ed_path": "翻訳するソースファイルを含むファイルまたはディレクトリへのパス | Enter で実行 | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.btn_browse": "翻訳するソースファイルまたはディレクトリを参照 | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.is_file": "ルートパスが単一ファイルである場合にチェック（ディレクトリ/バッチ翻訳の場合はチェック解除） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.ed_dict": "翻訳キーと値のペアを含む JSON または TypeScript ファイルへのパス | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.btn_open": "翻訳辞書ファイル（JSON/TS/JS）を参照 | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.object_variable_name": "生成されたコード内の辞書ルートの変数名（例: 't' は t.home.title を生成、'i18n' は i18n.home.title を生成） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.ed_start": "翻訳範囲の開始位置をマークする正規表現パターン（例: '<[^>]*?>' は HTML/JSX 開始タグ用） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.ed_end": "翻訳範囲の終了位置をマークする正規表現パターン（例: '</[^>]*?>' は HTML/JSX 終了タグ用） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.ed_exclude": "除外パターン:これらの正規表現に一致するテキストは翻訳されません（className、ID、技術属性の翻訳を防ぐ） | カンマ区切り | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.chk_backup": "ファイルを変更する前にバックアップコピーを作成（.bak 拡張子）（'バックアップで元に戻す' による元に戻すを有効化） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.chk_dont_override": "既に翻訳されているテキストをスキップ（t.key のような既存の変数参照を保持） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.chk_inverse_json_translate": "逆翻訳:変数参照（t.key）を辞書の実際の値で置き換え（例: t.home.title → 'ホームページ'） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.chk_emit_export": "生成された辞書ファイルに 'export const varName = {...}' ラッパーを追加（TS/JS で ES6 モジュールインポートを有効化） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.chk_preserve_uppercase": "既に大文字のキーを保持（例: HOME_TITLE は HOME_TITLE のまま、定数に有用） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.lbl_stats": "リアルタイム統計:ファイル数、辞書ステータス、準備完了ステータス | パス/辞書の変更時に自動更新 | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.btn_run": "辞書を使用してファイルを翻訳（テキストを変数参照で置き換え、有効化時はバックアップを作成） | Enter で実行 | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.btn_swap": "ソースとターゲットの辞書を交換（逆翻訳ワークフローに有用） | Ctrl+T で翻訳を開く",
+  "tooltip.json_translate.btn_undo": "バックアップから元のファイルを復元（.bak ファイル、'元のファイルをバックアップ' が有効化されている必要があります） | Ctrl+T で翻訳を開く"
 }

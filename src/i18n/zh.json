@@ -377,5 +377,24 @@
   "tooltip.json_search.btn_interrupt": "停止当前运行的搜索操作 | Esc",
   "tooltip.json_search.btn_save_results": "将搜索结果保存到TXT文件(单个、按文件或按查询)",
   "tooltip.json_search.btn_clear": "清除当前搜索结果显示 | Ctrl+L",
-  "tooltip.json_search.text_results": "搜索结果:文件匹配、键、值和出现统计"
+  "tooltip.json_search.text_results": "搜索结果:文件匹配、键、值和出现统计",
+
+  "tooltip.json_translate.ed_path": "包含要翻译源文件的文件或目录路径 | Enter 执行 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.btn_browse": "浏览要翻译的源文件或目录 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.is_file": "检查根路径是否为单个文件（取消选中用于目录/批量翻译） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.ed_dict": "包含翻译键值对的 JSON 或 TypeScript 文件路径 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.btn_open": "浏览翻译词典文件（JSON/TS/JS） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.object_variable_name": "生成代码中词典根的变量名（例如 't' 生成 t.home.title，'i18n' 生成 i18n.home.title） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.ed_start": "标记翻译范围开始位置的正则表达式模式（例如 '<[^>]*?>' 用于 HTML/JSX 开始标签） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.ed_end": "标记翻译范围结束位置的正则表达式模式（例如 '</[^>]*?>' 用于 HTML/JSX 结束标签） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.ed_exclude": "排除模式:匹配这些正则表达式的文本不会被翻译（防止翻译 className、ID、技术属性） | 逗号分隔 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.chk_backup": "修改文件前创建备份副本（.bak 扩展名）（通过'使用备份撤销'启用撤销） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.chk_dont_override": "跳过已翻译的文本（保留现有的变量引用如 t.key） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.chk_inverse_json_translate": "反向翻译:用词典实际值替换变量引用（t.key）（例如 t.home.title → '主页'） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.chk_emit_export": "为生成的词典文件添加 'export const varName = {...}' 包装器（在 TS/JS 中启用 ES6 模块导入） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.chk_preserve_uppercase": "保留已为大写的键（例如 HOME_TITLE 保持 HOME_TITLE，对常量有用） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.lbl_stats": "实时统计:文件计数、词典状态、就绪状态 | 路径/词典更改时自动更新 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.btn_run": "使用词典翻译文件（用变量引用替换文本，启用时创建备份） | Enter 执行 | Ctrl+T 打开翻译",
+  "tooltip.json_translate.btn_swap": "交换源和目标词典（对反向翻译工作流有用） | Ctrl+T 打开翻译",
+  "tooltip.json_translate.btn_undo": "从备份恢复原始文件（.bak 文件，需要启用'备份原始文件'） | Ctrl+T 打开翻译"
 }

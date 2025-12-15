@@ -389,5 +389,24 @@
   "tooltip.json_search.btn_interrupt": "Stop currently running search operation | Esc",
   "tooltip.json_search.btn_save_results": "Save search results to TXT file (single, per file, or per query)",
   "tooltip.json_search.btn_clear": "Clear current search results display | Ctrl+L",
-  "tooltip.json_search.text_results": "Search results: file matches, keys, values, and occurrence statistics"
+  "tooltip.json_search.text_results": "Search results: file matches, keys, values, and occurrence statistics",
+
+  "tooltip.json_translate.ed_path": "Path to file or directory containing source files to translate | Enter to run | Ctrl+T to open Translate",
+  "tooltip.json_translate.btn_browse": "Browse for source file or directory to translate | Ctrl+T to open Translate",
+  "tooltip.json_translate.is_file": "Check if root path is a single file (uncheck for directory/batch translation) | Ctrl+T to open Translate",
+  "tooltip.json_translate.ed_dict": "Path to JSON or TypeScript file containing translation key-value pairs | Ctrl+T to open Translate",
+  "tooltip.json_translate.btn_open": "Browse for translation dictionary file (JSON/TS/JS) | Ctrl+T to open Translate",
+  "tooltip.json_translate.object_variable_name": "Variable name for dictionary root in generated code (e.g., 't' produces t.home.title, 'i18n' produces i18n.home.title) | Ctrl+T to open Translate",
+  "tooltip.json_translate.ed_start": "Regex pattern marking where translation scope begins (e.g., '<[^>]*?>' for HTML/JSX opening tags) | Ctrl+T to open Translate",
+  "tooltip.json_translate.ed_end": "Regex pattern marking where translation scope ends (e.g., '</[^>]*?>' for HTML/JSX closing tags) | Ctrl+T to open Translate",
+  "tooltip.json_translate.ed_exclude": "Exclude patterns: text matching these regex won't be translated (prevents translating className, IDs, technical attributes) | Comma-separated | Ctrl+T to open Translate",
+  "tooltip.json_translate.chk_backup": "Create backup copies (.bak extension) before modifying files (enables undo via 'Undo with Backup') | Ctrl+T to open Translate",
+  "tooltip.json_translate.chk_dont_override": "Skip text that is already translated (preserves existing variable references like t.key) | Ctrl+T to open Translate",
+  "tooltip.json_translate.chk_inverse_json_translate": "Reverse translation: replace variable references (t.key) with actual dictionary values (e.g., t.home.title → 'Homepage') | Ctrl+T to open Translate",
+  "tooltip.json_translate.chk_emit_export": "Add 'export const varName = {...}' wrapper to generated dictionary files (enables ES6 module imports in TS/JS) | Ctrl+T to open Translate",
+  "tooltip.json_translate.chk_preserve_uppercase": "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE, useful for constants) | Ctrl+T to open Translate",
+  "tooltip.json_translate.lbl_stats": "Real-time statistics: file count, dictionary status, ready state | Updates automatically on path/dict changes | Ctrl+T to open Translate",
+  "tooltip.json_translate.btn_run": "Translate files using dictionary (replaces text with variable references, creates backups if enabled) | Enter to run | Ctrl+T to open Translate",
+  "tooltip.json_translate.btn_swap": "Swap source and target dictionaries (useful for reverse translation workflows) | Ctrl+T to open Translate",
+  "tooltip.json_translate.btn_undo": "Restore original files from backup (.bak files, requires 'Backup original files' enabled) | Ctrl+T to open Translate"
 }

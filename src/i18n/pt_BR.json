@@ -373,5 +373,24 @@
   "tooltip.json_search.btn_interrupt": "Parar operação de busca em execução | Esc",
   "tooltip.json_search.btn_save_results": "Salvar resultados de busca em arquivo TXT (único, por arquivo ou por consulta)",
   "tooltip.json_search.btn_clear": "Limpar exibição de resultados de busca atual | Ctrl+L",
-  "tooltip.json_search.text_results": "Resultados da busca: correspondências de arquivo, chaves, valores e estatísticas"
+  "tooltip.json_search.text_results": "Resultados da busca: correspondências de arquivo, chaves, valores e estatísticas",
+
+  "tooltip.json_translate.ed_path": "Caminho para arquivo ou diretório contendo arquivos fonte para traduzir | Enter para executar | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.btn_browse": "Navegar para arquivo fonte ou diretório para traduzir | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.is_file": "Marcar se o caminho raiz é um único arquivo (desmarcar para diretório/tradução em lote) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.ed_dict": "Caminho para arquivo JSON ou TypeScript contendo pares chave-valor de tradução | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.btn_open": "Navegar para arquivo de dicionário de tradução (JSON/TS/JS) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.object_variable_name": "Nome da variável para raiz do dicionário no código gerado (ex: 't' produz t.home.title, 'i18n' produz i18n.home.title) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.ed_start": "Padrão regex marcando onde o escopo de tradução começa (ex: '<[^>]*?>' para tags de abertura HTML/JSX) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.ed_end": "Padrão regex marcando onde o escopo de tradução termina (ex: '</[^>]*?>' para tags de fechamento HTML/JSX) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.ed_exclude": "Padrões de exclusão: texto correspondendo a estes regex não será traduzido (previne tradução de className, IDs, atributos técnicos) | Separado por vírgula | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.chk_backup": "Criar cópias de backup (.bak extensão) antes de modificar arquivos (habilita desfazer via 'Desfazer com Backup') | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.chk_dont_override": "Pular texto que já está traduzido (preserva referências de variável existentes como t.key) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.chk_inverse_json_translate": "Tradução reversa: substituir referências de variável (t.key) pelos valores reais do dicionário (ex: t.home.title → 'Página Inicial') | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.chk_emit_export": "Adicionar wrapper 'export const varName = {...}' aos arquivos de dicionário gerados (habilita importações de módulo ES6 em TS/JS) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.chk_preserve_uppercase": "Preservar chaves que já estão em MAIÚSCULO (ex: HOME_TITLE permanece HOME_TITLE, útil para constantes) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.lbl_stats": "Estatísticas em tempo real: contagem de arquivos, status do dicionário, estado pronto | Atualiza automaticamente nas mudanças de caminho/dict | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.btn_run": "Traduzir arquivos usando dicionário (substitui texto por referências de variável, cria backups se habilitado) | Enter para executar | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.btn_swap": "Trocar dicionários fonte e alvo (útil para fluxos de trabalho de tradução reversa) | Ctrl+T para abrir Traduzir",
+  "tooltip.json_translate.btn_undo": "Restaurar arquivos originais do backup (arquivos .bak, requer 'Backup de arquivos originais' habilitado) | Ctrl+T para abrir Traduzir"
 }
