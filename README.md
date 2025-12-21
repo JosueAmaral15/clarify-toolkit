@@ -9,6 +9,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Pylint](https://img.shields.io/badge/pylint-9.0+-green.svg)](https://pylint.pycqa.org/)
 [![i18n](https://img.shields.io/badge/i18n-7%20languages-blue.svg)](src/i18n/)
+[![API Docs](https://img.shields.io/badge/API-docs-blue.svg)](https://josueamaral15.github.io/clarify/)
 
 ## 📋 Descrição
 
@@ -161,6 +162,7 @@ Complete documentation for users:
 
 For contributors and developers:
 
+- **[📚 API Documentation](https://josueamaral15.github.io/clarify/)** - Complete API reference (Sphinx)
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - How to contribute to Clarify
 - **[📝 Changelog](CHANGELOG.md)** - Version history and changes
 - **[📋 Project Structure](PROJECT_STRUCTURE.md)** - Codebase organization
