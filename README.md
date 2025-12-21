@@ -144,7 +144,31 @@
 - Salvamento de resultados em arquivo único
 - Suporte para múltiplas extensões de arquivo
 
-## 📁 Estrutura do Projeto
+## � Documentação
+
+### 📚 User Manual (Wiki)
+
+Complete documentation for users:
+
+- **[📖 Wiki Home](docs/wiki/README.md)** - Documentation index and navigation
+- **[🚀 Quick Start Guide](docs/wiki/quick-start-guide.md)** - 5-minute tutorial to get started
+- **[📋 Features Overview](docs/wiki/features-overview.md)** - Complete feature documentation
+- **[❓ FAQ](docs/wiki/faq.md)** - Frequently asked questions
+- **[🔧 Troubleshooting](docs/wiki/troubleshooting.md)** - Common problems and solutions
+- **[⌨️ Keyboard Shortcuts](docs/wiki/keyboard-shortcuts.md)** - Complete shortcut reference
+
+### 👨‍💻 Developer Documentation
+
+For contributors and developers:
+
+- **[🤝 Contributing Guide](CONTRIBUTING.md)** - How to contribute to Clarify
+- **[📝 Changelog](CHANGELOG.md)** - Version history and changes
+- **[📋 Project Structure](PROJECT_STRUCTURE.md)** - Codebase organization
+- **[🎯 Tasks & Roadmap](docs/TASKS.md)** - Development tasks and priorities
+
+---
+
+## �📁 Estrutura do Projeto
 
 ```
 clarify/
