@@ -8,12 +8,19 @@ Author: Josué Amaral
 Date: 21/12/2024
 """
 
+from __future__ import annotations
+
 import time
 import multiprocessing
 from multiprocessing import Process, Queue, Event
 from dataclasses import dataclass
-from typing import Callable, List, Any, Optional
+from typing import Callable, List, Any, Optional, TYPE_CHECKING
 from pathlib import Path
+
+if TYPE_CHECKING:
+    from multiprocessing.synchronize import Event as EventType
+else:
+    EventType = Event
 
 from .metrics_collector import MetricsCollector, LoadTestAnalysis
 from .report_generator import ReportGenerator
@@ -52,7 +59,7 @@ class Worker(Process):
         worker_id: int,
         task_queue: Queue,
         metrics_queue: Queue,
-        stop_event: Event
+        stop_event: EventType  # type: ignore
     ):
         super().__init__()
         self.worker_id = worker_id
@@ -141,7 +148,7 @@ class LoadRunner:
         self.workers: List[Worker] = []
         self.task_queue: Optional[Queue] = None
         self.metrics_queue: Optional[Queue] = None
-        self.stop_event: Optional[Event] = None
+        self.stop_event: Optional[EventType] = None  # type: ignore
         self.metrics_collector: Optional[MetricsCollector] = None
     
     def run_scenario(

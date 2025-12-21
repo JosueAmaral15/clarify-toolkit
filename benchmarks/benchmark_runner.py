@@ -13,6 +13,7 @@ import time
 import gc
 import psutil
 import tracemalloc
+import traceback
 from dataclasses import dataclass, asdict
 from typing import Callable, Dict, List, Any, Optional
 from datetime import datetime

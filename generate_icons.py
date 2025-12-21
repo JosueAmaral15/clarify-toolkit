@@ -8,14 +8,34 @@ Date: December 21, 2025
 """
 
 import os
+import sys
 from pathlib import Path
-import cairosvg
-from PIL import Image
+
+try:
+    import cairosvg  # type: ignore
+    HAS_CAIROSVG = True
+except ImportError:
+    HAS_CAIROSVG = False
+
+try:
+    from PIL import Image  # type: ignore
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+
 import io
 
 
 def generate_icons():
     """Generate PNG and ICO icons from SVG source."""
+    if not HAS_CAIROSVG:
+        print("❌ cairosvg not installed. Run: pip install cairosvg")
+        sys.exit(1)
+    
+    if not HAS_PIL:
+        print("❌ Pillow not installed. Run: pip install Pillow")
+        sys.exit(1)
+    
     # Paths
     base_dir = Path(__file__).parent
     svg_path = base_dir / "assets" / "icons" / "icon.svg"
