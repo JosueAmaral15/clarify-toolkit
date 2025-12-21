@@ -1,0 +1,82 @@
+{
+  "v2.9.81": {
+    "timestamp": "2025-12-21T11:58:28.718076",
+    "benchmarks": {
+      "set_union_1MB": {
+        "name": "set_union_1MB",
+        "size": "1.0MB",
+        "avg_time": 2.148,
+        "avg_memory_mb": 11.6,
+        "avg_cpu_percent": 0.0,
+        "runs": [
+          {
+            "elapsed_time": 2.1477969830011716,
+            "memory_peak_mb": 11.596151351928711,
+            "cpu_percent": 0.0,
+            "timestamp": "2025-12-21T11:58:28.718076"
+          }
+        ]
+      },
+      "set_intersection_1MB": {
+        "name": "set_intersection_1MB",
+        "size": "1.0MB",
+        "avg_time": 2.418,
+        "avg_memory_mb": 11.5,
+        "avg_cpu_percent": 5.0,
+        "runs": [
+          {
+            "elapsed_time": 2.41804092899838,
+            "memory_peak_mb": 11.538773536682129,
+            "cpu_percent": 4.95,
+            "timestamp": "2025-12-21T11:58:31.404932"
+          }
+        ]
+      },
+      "rewriter_dedupe_1MB": {
+        "name": "rewriter_dedupe_1MB",
+        "size": "1.0MB",
+        "avg_time": 0.0,
+        "avg_memory_mb": 0.0,
+        "avg_cpu_percent": 0.0,
+        "runs": [
+          {
+            "elapsed_time": 1.2632001016754657e-05,
+            "memory_peak_mb": 0.04224967956542969,
+            "cpu_percent": 0.0,
+            "timestamp": "2025-12-21T11:58:31.633265"
+          }
+        ]
+      },
+      "search_flatten_1MB": {
+        "name": "search_flatten_1MB",
+        "size": "1.0MB",
+        "avg_time": 1.704,
+        "avg_memory_mb": 36.9,
+        "avg_cpu_percent": 0.0,
+        "runs": [
+          {
+            "elapsed_time": 1.7039136919993325,
+            "memory_peak_mb": 36.87308692932129,
+            "cpu_percent": 0.0,
+            "timestamp": "2025-12-21T11:58:33.575940"
+          }
+        ]
+      },
+      "extract_html_1MB": {
+        "name": "extract_html_1MB",
+        "size": "1.0MB",
+        "avg_time": 0.0,
+        "avg_memory_mb": 0.0,
+        "avg_cpu_percent": 5.0,
+        "runs": [
+          {
+            "elapsed_time": 0.00018298100258107297,
+            "memory_peak_mb": 0.04228782653808594,
+            "cpu_percent": 5.0,
+            "timestamp": "2025-12-21T11:58:33.803439"
+          }
+        ]
+      }
+    }
+  }
+}

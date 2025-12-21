@@ -1,5 +1,63 @@
 # Changelog - Clarify Project
 
+## [2.9.83] - 2024-12-21
+
+### 🔧 Benchmark System - Complete (5/5 Categories)
+
+Expansão do sistema de benchmarks (v2.9.81) para incluir todas as categorias planejadas. Sistema completo de medição de performance cobrindo todos os componentes principais do projeto.
+
+**New Benchmarks**:
+- ✅ **JSON Rewriter**: Operações de normalização e deduplicação
+  - `dedupe`: Deduplicação de arrays com 30% duplicatas
+  - Testa: 1MB, 5MB, 10MB arrays
+  - Métricas: Tempo, memória, eficiência de remoção
+- ✅ **JSON Search**: Operações de busca e indexação
+  - `flatten_object`: Achatamento de estruturas aninhadas (depth=5)
+  - Testa: 1MB, 5MB nested JSON
+  - Métricas: Tempo de flatten, memória alocada
+- ✅ **Text Extractor**: Parsing de HTML/JSX
+  - `extract_from_file`: Extração de atributos de arquivos HTML
+  - Testa: 1MB HTML gerado dinamicamente
+  - Métricas: Tempo de parsing, estruturas extraídas
+
+**Testing**:
+- ✅ Todas as 5 categorias funcionais:
+  - Converters (JSON↔TOON↔BSON)
+  - Set Operations (Union, Intersection)
+  - **Rewriter (Dedupe)** ← NOVO
+  - **Search (Flatten)** ← NOVO
+  - **Extractor (HTML Parse)** ← NOVO
+- ✅ CLI atualizado: `python -m benchmarks.run --operations all|converter|set|rewriter|search|extractor`
+- ✅ Geração automática de dados de teste (arrays com duplicatas, nested JSON, HTML)
+- ✅ Try/except para módulos opcionais (fallback graceful)
+
+**Resultados** (1MB test):
+```
+[1/5] set_union_1MB         → 2.1s, 11.6MB RAM
+[2/5] set_intersection_1MB  → 2.4s, 11.5MB RAM
+[3/5] rewriter_dedupe_1MB   → 0.0s, 0.0MB RAM
+[4/5] search_flatten_1MB    → 1.7s, 36.9MB RAM
+[5/5] extract_html_1MB      → 0.0s, 0.0MB RAM
+```
+
+**Files Modified**:
+- `benchmarks/run.py`: +3 setup functions, updated CLI
+  - `setup_rewriter_benchmarks()`
+  - `setup_search_benchmarks()`
+  - `setup_extractor_benchmarks()`
+- `benchmarks/generators.py`: (unchanged - já tinha funções necessárias)
+
+**Commands**:
+```bash
+# Run all benchmarks
+python -m benchmarks.run --operations all
+
+# Run specific category
+python -m benchmarks.run --operations rewriter --sizes 1,5,10
+```
+
+---
+
 ## [2.9.82] - 2024-12-21
 
 ### 🔥 Load Testing System (COULD HAVE)

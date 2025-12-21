@@ -5,8 +5,8 @@ Entry point for executing performance benchmarks.
 Usage: python -m benchmarks.run [--sizes 1,10] [--operations set,search]
 
 Author: Clarify Project
-Version: 2.9.81
-Date: 2025-12-21
+Version: 2.9.83
+Date: 2024-12-21
 """
 
 import argparse
@@ -19,16 +19,44 @@ from .benchmark_runner import BenchmarkRunner
 from .generators import (
     generate_json_data,
     generate_nested_json,
-    generate_array_with_duplicates
+    generate_array_with_duplicates,
+    generate_html_content
 )
 
 # Import operations to benchmark
-from src.converters import FormatConverter, Format
-from src.set_operations import SetOperations
+try:
+    from src.converters import FormatConverter, Format
+    HAS_CONVERTERS = True
+except ImportError:
+    HAS_CONVERTERS = False
+
+from src import set_operations
+
+try:
+    from src.rewriter import operations as rewriter_ops
+    HAS_REWRITER = True
+except ImportError:
+    HAS_REWRITER = False
+
+try:
+    from src.json_search import flatten_object, ProjectIndexer
+    HAS_SEARCH = True
+except ImportError:
+    HAS_SEARCH = False
+
+try:
+    from src.text_extractor import extract_from_file
+    HAS_EXTRACTOR = True
+except ImportError:
+    HAS_EXTRACTOR = False
 
 
 def setup_converter_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
     """Register TOON/BSON converter benchmarks."""
+    if not HAS_CONVERTERS:
+        print("⚠️  Skipping converter benchmarks (converters not available)")
+        return
+    
     for size_mb in sizes:
         data = generate_json_data(size_mb)
         
@@ -62,7 +90,7 @@ def setup_set_operations_benchmarks(runner: BenchmarkRunner, sizes: List[float])
         # Union
         runner.register(
             name=f"set_union_{int(size_mb)}MB",
-            func=SetOperations.union,
+            func=set_operations.union,
             args=([data1, data2],),
             size_label=f"{size_mb}MB"
         )
@@ -70,10 +98,82 @@ def setup_set_operations_benchmarks(runner: BenchmarkRunner, sizes: List[float])
         # Intersection
         runner.register(
             name=f"set_intersection_{int(size_mb)}MB",
-            func=SetOperations.intersection,
+            func=set_operations.intersection,
             args=([data1, data2],),
             size_label=f"{size_mb}MB"
         )
+
+
+def setup_rewriter_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
+    """Register JSON rewriter benchmarks."""
+    if not HAS_REWRITER:
+        print("⚠️  Skipping rewriter benchmarks (rewriter not available)")
+        return
+    
+    for size_mb in sizes:
+        # Generate data with duplicates for dedupe benchmark
+        data_with_dupes = generate_array_with_duplicates(
+            size=int(size_mb * 1000),
+            duplicate_ratio=0.3
+        )
+        
+        # Deduplicate
+        runner.register(
+            name=f"rewriter_dedupe_{int(size_mb)}MB",
+            func=rewriter_ops.dedupe,
+            args=({"items": data_with_dupes},),
+            size_label=f"{size_mb}MB"
+        )
+
+
+def setup_search_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
+    """Register JSON search benchmarks."""
+    if not HAS_SEARCH:
+        print("⚠️  Skipping search benchmarks (json_search not available)")
+        return
+    
+    for size_mb in sizes:
+        # Generate nested data for search
+        data = generate_nested_json(depth=5, breadth=int(size_mb * 10))
+        
+        # Flatten (prepare for search)
+        runner.register(
+            name=f"search_flatten_{int(size_mb)}MB",
+            func=flatten_object,
+            args=(data,),
+            size_label=f"{size_mb}MB"
+        )
+
+
+def setup_extractor_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
+    """Register text extractor benchmarks."""
+    if not HAS_EXTRACTOR:
+        print("⚠️  Skipping extractor benchmarks (text_extractor not available)")
+        return
+    
+    import tempfile
+    from pathlib import Path as PathLib
+    
+    for size_mb in sizes:
+        # Generate HTML content
+        html_content = generate_html_content(size_mb)
+        
+        # Create temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+            f.write(html_content)
+            temp_path = f.name
+        
+        try:
+            # Extract from HTML
+            runner.register(
+                name=f"extract_html_{int(size_mb)}MB",
+                func=lambda p=temp_path: extract_from_file(p, param_name=None),
+                args=(),
+                size_label=f"{size_mb}MB"
+            )
+        finally:
+            # Cleanup temp file
+            PathLib(temp_path).unlink(missing_ok=True)
 
 
 def main():
@@ -101,7 +201,7 @@ Examples:
         '--operations',
         type=str,
         default='all',
-        choices=['all', 'converter', 'set'],
+        choices=['all', 'converter', 'set', 'rewriter', 'search', 'extractor'],
         help='Which operations to benchmark (default: all)'
     )
     
@@ -147,6 +247,15 @@ Examples:
     
     if args.operations in ['all', 'set']:
         setup_set_operations_benchmarks(runner, sizes)
+    
+    if args.operations in ['all', 'rewriter']:
+        setup_rewriter_benchmarks(runner, sizes)
+    
+    if args.operations in ['all', 'search']:
+        setup_search_benchmarks(runner, sizes)
+    
+    if args.operations in ['all', 'extractor']:
+        setup_extractor_benchmarks(runner, sizes)
     
     # Run benchmarks
     results = runner.run_all()
