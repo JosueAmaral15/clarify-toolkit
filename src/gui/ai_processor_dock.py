@@ -28,7 +28,8 @@ from src.ai_processor import (
     count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available, 
     is_claude_available, process_multiple_files, save_results, 
     list_files_recursive as ai_list_files, extract_between_markers,
-    list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models
+    list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models,
+    preview_template, has_templates
 )
 from src.core.filters import Condition, filter_files_by_conditions
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
@@ -105,7 +106,8 @@ class AIProcessorWorker(ProcessorWorkerBase):
     def __init__(self, files, prompt, client, max_bytes, line_by_line,
                  scope_filter_enabled=False, scope_start="", scope_end="",
                  scope_start_regex=False, scope_start_case=False,
-                 scope_end_regex=False, scope_end_case=False):
+                 scope_end_regex=False, scope_end_case=False,
+                 template_enabled=False):
         super().__init__()
         self.files = files
         self.prompt = prompt
@@ -119,6 +121,7 @@ class AIProcessorWorker(ProcessorWorkerBase):
         self.scope_start_case = scope_start_case
         self.scope_end_regex = scope_end_regex
         self.scope_end_case = scope_end_case
+        self.template_enabled = template_enabled
     
     def run(self):
         try:
@@ -136,7 +139,8 @@ class AIProcessorWorker(ProcessorWorkerBase):
                 scope_start_regex=self.scope_start_regex,
                 scope_start_case=self.scope_start_case,
                 scope_end_regex=self.scope_end_regex,
-                scope_end_case=self.scope_end_case
+                scope_end_case=self.scope_end_case,
+                template_enabled=self.template_enabled
             )
             self.emit_success(responses)
         except Exception as e:
@@ -440,6 +444,28 @@ class AIProcessorDock(StandardToolDock):
         self.chk_remove_fences.setChecked(True)
         self.chk_remove_fences.setToolTip("Automatically strip ```json and ``` from responses | Ctrl+Shift+A to open AI Processor")
         stats_layout.addWidget(self.chk_remove_fences, 2, 0, 1, 2)
+        
+        # Template variables option (v2.9.79 - Dynamic Templates)
+        self.chk_enable_templates = QCheckBox("Enable template variables {{...}}")
+        self.chk_enable_templates.setChecked(False)
+        self.chk_enable_templates.setToolTip(
+            "Enable dynamic variables in prompts:\n"
+            "• {{count}} - File index (0-based)\n"
+            "• {{count+N}} - Arithmetic (e.g., {{count+1}} for 1-based)\n"
+            "• {{filename}} - Current file name\n"
+            "• {{filepath}} - Full file path\n"
+            "• {{total}} - Total number of files\n\n"
+            "Example: 'Process chapter {{count+1}} of {{total}}: {{filename}}'\n"
+            "→ 'Process chapter 1 of 10: chapter1.txt' (for first file)"
+        )
+        stats_layout.addWidget(self.chk_enable_templates, 3, 0, 1, 2)
+        
+        # Template preview button
+        self.btn_preview_template = QPushButton("👁️ Preview")
+        self.btn_preview_template.setToolTip("Preview how first prompt will look with template variables expanded")
+        self.btn_preview_template.clicked.connect(self._preview_template)
+        self.btn_preview_template.setMaximumWidth(100)
+        stats_layout.addWidget(self.btn_preview_template, 4, 0, 1, 2)
         
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
@@ -801,7 +827,8 @@ class AIProcessorDock(StandardToolDock):
                 scope_start_regex=self.chk_start_regex.isChecked(),
                 scope_start_case=self.chk_start_case.isChecked(),
                 scope_end_regex=self.chk_end_regex.isChecked(),
-                scope_end_case=self.chk_end_case.isChecked()
+                scope_end_case=self.chk_end_case.isChecked(),
+                template_enabled=self.chk_enable_templates.isChecked()
             )
             self.worker.progress.connect(self._on_progress)
             self.worker.finished_ok.connect(self._on_finished)
@@ -1121,4 +1148,54 @@ class AIProcessorDock(StandardToolDock):
         # This will match from the first ``` to the nearest closing ```
         text = re.sub(r'```[\w]*?\n(.+?)\n```', r'\1', stripped, flags=re.DOTALL)
         
-        return text.strip()
+        return text
+    
+    def _preview_template(self):
+        """Preview template rendering for first file (v2.9.79)."""
+        prompt = self.ed_prompt.toPlainText().strip()
+        
+        if not prompt:
+            self.show_warning("No Prompt", "Please enter a prompt to preview")
+            return
+        
+        if not self.chk_enable_templates.isChecked():
+            QMessageBox.information(
+                self,
+                "Templates Disabled",
+                "Template variables are currently disabled.\n\n"
+                "Enable the 'Enable template variables {{...}}' checkbox to use this feature."
+            )
+            return
+        
+        if not has_templates(prompt):
+            QMessageBox.information(
+                self,
+                "No Templates Found",
+                "Your prompt doesn't contain any template variables like {{count}}, {{filename}}, etc.\n\n"
+                "Example templates:\n"
+                "• {{count}} - File index (0-based)\n"
+                "• {{count+1}} - 1-based index\n"
+                "• {{filename}} - Current file name\n"
+                "• {{total}} - Total files"
+            )
+            return
+        
+        # Get files to determine total count
+        try:
+            files = self._get_files()
+            total_files = len(files)
+        except:
+            total_files = 5  # Default for preview
+        
+        # Generate preview
+        preview_text = preview_template(prompt, total_files)
+        
+        # Show in message box
+        QMessageBox.information(
+            self,
+            "Template Preview",
+            f"Original prompt:\n{prompt}\n\n"
+            f"{'='*50}\n\n"
+            f"{preview_text}\n\n"
+            f"(Showing how first file will be processed out of {total_files} total files)"
+        ).strip()

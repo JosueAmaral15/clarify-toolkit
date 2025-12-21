@@ -8,6 +8,7 @@ import os
 import re
 from typing import List, Optional, Callable
 from pathlib import Path
+from .template_engine import render_prompt, has_templates
 
 
 def extract_between_markers(
@@ -162,7 +163,10 @@ def process_file(
     scope_start_regex: bool = False,
     scope_start_case: bool = False,
     scope_end_regex: bool = False,
-    scope_end_case: bool = False
+    scope_end_case: bool = False,
+    template_enabled: bool = False,
+    file_index: int = 0,
+    total_files: int = 1
 ) -> str:
     """
     Process a single file with AI.
@@ -180,10 +184,17 @@ def process_file(
         scope_start_case: Case sensitive start
         scope_end_regex: Treat end as regex
         scope_end_case: Case sensitive end
+        template_enabled: Enable template variable substitution ({{count}}, {{filename}}, etc.)
+        file_index: Current file index (0-based) for templates
+        total_files: Total number of files for templates
     
     Returns:
         AI response
     """
+    # Apply template rendering if enabled
+    if template_enabled and has_templates(prompt):
+        prompt = render_prompt(prompt, file_index, total_files, file_path)
+    
     if progress_callback:
         progress_callback(f"Reading {os.path.basename(file_path)}...")
     
@@ -228,7 +239,8 @@ def process_multiple_files(
     scope_start_regex: bool = False,
     scope_start_case: bool = False,
     scope_end_regex: bool = False,
-    scope_end_case: bool = False
+    scope_end_case: bool = False,
+    template_enabled: bool = False
 ) -> List[str]:
     """
     Process multiple files with AI.
@@ -248,12 +260,14 @@ def process_multiple_files(
         scope_start_case: Case sensitive start
         scope_end_regex: Treat end as regex
         scope_end_case: Case sensitive end
+        template_enabled: Enable template variable substitution ({{count}}, {{filename}}, etc.)
     
     Returns:
         List of AI responses (one per file)
     """
     responses = []
     prompt_lines = prompt.splitlines() if line_by_line else []
+    total_files = len(file_paths)
     
     for i, file_path in enumerate(file_paths):
         # Check for interrupt
@@ -276,7 +290,8 @@ def process_multiple_files(
             file_path, current_prompt, client, max_bytes, progress_callback,
             scope_filter_enabled, scope_start, scope_end,
             scope_start_regex, scope_start_case,
-            scope_end_regex, scope_end_case
+            scope_end_regex, scope_end_case,
+            template_enabled, i, total_files
         )
         responses.append(response)
         

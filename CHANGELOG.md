@@ -1,5 +1,69 @@
 # Changelog - Clarify Project
 
+## [2.9.79] - 2025-12-21
+
+### ✨ Dynamic Template Variables in AI Processor (COULD HAVE)
+
+Sistema de templates dinâmicos permitindo uso de variáveis reservadas como `{{count}}`, `{{filename}}`, `{{total}}` com suporte a operações aritméticas em prompts do AI Processor.
+
+**Features**:
+- ✅ Variáveis suportadas: `{{count}}`, `{{filename}}`, `{{filepath}}`, `{{total}}`
+- ✅ Aritmética: `{{count+1}}`, `{{count-5}}`, `{{count*2}}`, `{{count/2}}`
+- ✅ Checkbox GUI "Enable template variables {{...}}"
+- ✅ Botão "👁️ Preview" para visualizar primeiro prompt expandido
+- ✅ Tratamento de erros: undefined vars, divisão por zero
+- ✅ Compatível com line-by-line mode
+- ✅ 100% backward compatible (opt-in)
+- ✅ Tooltip explicativo com exemplos
+
+**Files**:
+- `src/ai_processor/template_engine.py` [NEW] - Engine core (275 LOC)
+- `src/ai_processor/processor.py` [MODIFIED] - Integration (+40 LOC)
+- `src/ai_processor/__init__.py` [MODIFIED] - Exports (+5 LOC)
+- `src/gui/ai_processor_dock.py` [MODIFIED] - GUI controls (+70 LOC)
+- `tests/test_template_engine.py` [NEW] - 27 tests (265 LOC)
+- `docs/specifications/v2.9.79-SPECIFICATION.md` [NEW] - Full specification
+
+**Security (OWASP)**:
+- ✅ Whitelist operators only (`+`, `-`, `*`, `/`)
+- ✅ No `eval()` or `exec()` (safe arithmetic)
+- ✅ Division by zero protected
+- ✅ Undefined variables handled gracefully
+- ✅ CVE scan clean
+
+**Testing**:
+- ✅ 27 tests (100% passing in 1.94s)
+- ✅ Coverage: variables, arithmetic, errors, edge cases, integration
+- ✅ Test categories: 6 classes, 100% green
+
+**Use Cases**:
+```
+Template: "Process chapter {{count+1}} of {{total}}: {{filename}}"
+Result:   "Process chapter 1 of 10: chapter1.txt" (file #0)
+
+Template: "[{{count+1}}/{{total}}] Analyzing {{filename}}..."
+Result:   "[5/20] Analyzing data_2024_Q4.json..." (file #4)
+```
+
+**Architecture**:
+- Pattern Strategy: Different substitution strategies per variable type
+- Pattern Template Method: `_substitute()` defines algorithm
+- Pattern Facade: `render_prompt()` simplifies API
+- Regex: `r'\{\{([^}]+)\}\}'` for variable matching
+
+**Access**: 
+- GUI: AI Processor → Statistics → ☑ Enable template variables {{...}}
+- API: `from src.ai_processor import render_prompt, has_templates`
+
+**Limitations**:
+- Integer division only (no floats)
+- Single operator per expression (e.g., `{{count+1}}`, not `{{count*2+1}}`)
+- Built-in variables only (no custom user variables)
+
+**Sprint**: 3.5 hours | ~660 LOC | Protocolo Simplicidade 3 (12/13 etapas)
+
+---
+
 ## [2.9.78] - 2025-12-21
 
 ### 🌐 Google Translate Integration
