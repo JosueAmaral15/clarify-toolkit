@@ -5,6 +5,10 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.9.3+-green.svg)](https://pypi.org/project/PySide6/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Pylint](https://img.shields.io/badge/pylint-9.0+-green.svg)](https://pylint.pycqa.org/)
+[![i18n](https://img.shields.io/badge/i18n-7%20languages-blue.svg)](src/i18n/)
 
 ## 📋 Descrição
 

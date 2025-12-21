@@ -1,5 +1,110 @@
 # Changelog - Clarify Project
 
+## [2.9.85] - 2024-12-21
+
+### 📚 Contributing Guide & GitHub Templates (WOULD HAVE - Documentation)
+
+Sistema completo de contribuição para open-source estabelecido com guias profissionais, issue templates e pull request template. Facilita onboarding de novos contribuidores e padroniza processo de colaboração.
+
+**Features**:
+- ✅ **CONTRIBUTING.md** (já existente - mantido):
+  - Code of Conduct com standards claros
+  - Bug reporting guidelines com checklist
+  - Feature request process detalhado
+  - Development setup (Python 3.12+, PySide6, pytest)
+  - Code style guidelines (black, isort, pylint >9.0)
+  - Testing requirements (coverage >90%)
+  - Pull request process com review checklist
+  - i18n contribution guide (7 idiomas suportados)
+  - Development protocols (Simplicidade 1/2/3)
+  - Translation workflow (fork, edit, PR)
+  
+- ✅ **GitHub Issue Templates** (`.github/ISSUE_TEMPLATE/`):
+  - `bug_report.md`: Template estruturado para bugs
+    * Environment info (OS, Python, Clarify version)
+    * Steps to reproduce, expected/actual behavior
+    * Screenshots, logs, additional context
+  - `feature_request.md`: Template para sugestões de features
+    * Problem statement, proposed solution
+    * Use cases, priority, impact assessment
+    * Mockups/wireframes (opcional)
+  - `translation_improvement.md`: Template específico para i18n
+    * Language selection (7 idiomas)
+    * Key/value table, context, native speaker status
+  - `documentation.md`: Template para melhorias de docs
+    * Documentation type, file/location
+    * Current issue, proposed improvement
+  - `config.yml`: Configuração de issue templates
+    * Links para GitHub Discussions
+    * Link para docs/
+    * Security vulnerability reporting
+  
+- ✅ **Pull Request Template** (`.github/PULL_REQUEST_TEMPLATE.md`):
+  - Description, related issues
+  - Type of change (bug fix, feature, docs, refactor, i18n)
+  - Testing checklist (tests pass, coverage, manual testing)
+  - Code quality checklist (style, protocol, self-review)
+  - Documentation checklist (docstrings, CHANGELOG, TASKS)
+  - i18n checklist (7 languages, naming convention)
+  - Performance impact table (if applicable)
+  - Reviewer notes section
+  
+- ✅ **README.md Badges** (atualizado):
+  - CI/CD status badge
+  - Code coverage badge (codecov)
+  - Python version (3.12+)
+  - PySide6 version (6.9.3+)
+  - License (MIT)
+  - ✨ **NEW**: PRs Welcome badge → links para CONTRIBUTING.md
+  - ✨ **NEW**: Code style: black badge
+  - ✨ **NEW**: Pylint score badge (9.0+)
+  - ✨ **NEW**: i18n badge (7 languages)
+
+**Impact**:
+- **Onboarding**: Reduz tempo de setup para novos contribuidores
+- **Quality**: Padroniza processo de contribuição
+- **Community**: Facilita colaboração open-source
+- **Profissional**: Eleva percepção de qualidade do projeto
+
+**Usage**:
+```bash
+# Novo contribuidor:
+1. Ler CONTRIBUTING.md → Entende processo completo
+2. Criar issue com template → Contexto completo desde início
+3. Fork & implementar → Segue guidelines claros
+4. PR com template → Review process eficiente
+
+# Maintainer:
+1. Issues bem formatados → Triagem rápida
+2. PRs com checklist → Review sistemático
+3. Templates garantem qualidade → Menos retrabalho
+```
+
+**Files Created**:
+- `.github/ISSUE_TEMPLATE/documentation.md`: Template para docs (novo)
+- `.github/ISSUE_TEMPLATE/config.yml`: Configuração de templates (novo)
+- `.github/PULL_REQUEST_TEMPLATE.md`: Template PR completo (novo)
+
+**Files Modified**:
+- `CONTRIBUTING.md`: Mantido (já estava completo - 506 linhas)
+- `README.md`: +4 badges (PRs Welcome, black, pylint, i18n)
+- `.github/ISSUE_TEMPLATE/bug_report.md`: Já existia (mantido)
+- `.github/ISSUE_TEMPLATE/feature_request.md`: Já existia (mantido)
+- `.github/ISSUE_TEMPLATE/translation_improvement.md`: Já existia (mantido)
+
+**Technical Details**:
+- Badges shields.io: `https://img.shields.io/badge/...`
+- Issue templates: YAML frontmatter + Markdown
+- PR template: Pure Markdown com emojis e checkboxes
+- No código Python necessário (pura documentação)
+
+**Referências**:
+- Conventional Commits: https://www.conventionalcommits.org/
+- GitHub Issue Templates: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests
+- Code of Conduct: Open Source Guide
+
+---
+
 ## [2.9.84] - 2024-12-21
 
 ### 🎨 Customizable UI Layout (COULD HAVE - MVP)

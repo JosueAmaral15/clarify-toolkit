@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/JosueAmaral15/clarify/discussions
+    about: Ask questions, share ideas, or show off your Clarify workflows
+  - name: 📖 Documentation
+    url: https://github.com/JosueAmaral15/clarify/tree/main/docs
+    about: Read guides, tutorials, and development protocols
+  - name: 🐛 Security Vulnerability
+    url: https://github.com/JosueAmaral15/clarify/security/advisories
+    about: Report a security vulnerability (private disclosure)
