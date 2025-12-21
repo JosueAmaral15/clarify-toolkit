@@ -204,7 +204,15 @@ NameError: name 'bar' is not defined
   - Tabela sortable com exportação CSV
 - **[X]** Keyboard shortcut para Advanced File Search: Ctrl+Shift+F **(v2.9.12 - Task #37)**
 - **[X]** Quick filter no File List: filtro rápido por filename sem re-executar busca **(v2.9.12 - Task #39)**
-- **[]** Incluir no Clarify a possibilidade de modificação ou manipulação de estrutura de dados TOON e BSON ao invés de somente JSON;
+- **[X]** Incluir no Clarify a possibilidade de modificação ou manipulação de estrutura de dados TOON e BSON ao invés de somente JSON **(v2.9.80 - 21/12/2025)**
+  - ✅ TOON (Token-Oriented Object Notation): 30-60% token reduction para LLMs
+  - ✅ BSON (Binary JSON): Formato MongoDB-compatível
+  - ✅ Conversores bidirecionais: JSON↔TOON↔BSON (6 direções)
+  - ✅ Libraries: toon-llm (davidpirogov), pymongo 4.15.5
+  - ✅ API Facade: FormatConverter.convert(data, from, to)
+  - ✅ File operations: convert_file(), batch_convert()
+  - ✅ Auto format detection
+  - ✅ 43 testes (100% passing)
 
 ---
 

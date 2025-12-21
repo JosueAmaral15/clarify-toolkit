@@ -1,5 +1,127 @@
 # Changelog - Clarify Project
 
+## [2.9.80] - 2025-12-21
+
+### 🔄 TOON & BSON File Format Support (COULD HAVE)
+
+Sistema completo de conversão entre JSON, TOON (Token-Oriented Object Notation) e BSON (Binary JSON), permitindo redução de 30-60% de tokens em prompts LLM e integração com MongoDB.
+
+**Features**:
+- ✅ **TOON Format**: Token-Oriented Object Notation (LLM-optimized)
+  - 30-60% token reduction vs JSON
+  - Sintaxe indentada tabular: `users[2]: id,name,role`
+  - File extension: `.toon`, Media type: `text/toon`
+- ✅ **BSON Format**: Binary JSON (MongoDB)
+  - Formato binário MongoDB-compatível
+  - File extension: `.bson`
+  - Extended JSON support (ObjectId, Date, etc.)
+- ✅ **Full Conversion Graph**: 6 direções bidirecionais
+  - JSON ↔ TOON (direto)
+  - JSON ↔ BSON (direto)
+  - TOON ↔ BSON (indireto via JSON)
+- ✅ **Format Detection**: Auto-detect JSON/TOON/BSON
+- ✅ **Roundtrip Validation**: 100% lossless conversions
+- ✅ **Batch Conversion**: Processar diretórios inteiros
+- ✅ **File I/O**: Ler/escrever .json/.toon/.bson
+- ✅ **Unicode Support**: Caracteres especiais preservados
+
+**Libraries**:
+- ✅ `toon-llm==0.5+` (davidpirogov/toon-llm) - TOON encoder/decoder
+- ✅ `pymongo==4.15.5` (includes native bson module)
+- ⚠️ **Security Warning**: DO NOT use standalone `bson` from PyPI (incompatible)
+
+**Files Created** (7 arquivos, ~1200 LOC):
+- `src/converters/__init__.py` [NEW] - Module exports + Format enum (100 LOC)
+- `src/converters/toon.py` [NEW] - ToonAdapter wrapper (320 LOC)
+- `src/converters/bson.py` [NEW] - BsonAdapter wrapper (280 LOC)
+- `src/converters/strategies.py` [NEW] - 6 converter strategies (250 LOC)
+- `src/converters/factory.py` [NEW] - ConverterFactory (120 LOC)
+- `src/converters/format_converter.py` [NEW] - Main facade (350 LOC)
+- `tests/test_converters.py` [NEW] - 43 comprehensive tests (420 LOC)
+- `docs/specifications/v2.9.80-SPECIFICATION.md` [NEW] - Full specification
+
+**Testing**:
+- ✅ **43 tests** (100% passing in 1.61s)
+- ✅ Test categories:
+  - TOON Adapter: 10 tests (encode, decode, validation, roundtrip)
+  - BSON Adapter: 8 tests (encode, decode, validation, roundtrip)
+  - Format Converter: 12 tests (full graph 6 directions)
+  - File Conversion: 5 tests (file I/O, batch, auto-detection)
+  - Error Handling: 5 tests (malformed data, validation)
+  - Unicode: 3 tests (special chars, emoji)
+- ✅ Coverage: All conversion paths, edge cases, error scenarios
+
+**Architecture**:
+- **Strategy Pattern**: 6 converter classes (JsonToToonConverter, etc.)
+- **Factory Pattern**: ConverterFactory for (source, target) → Converter
+- **Adapter Pattern**: ToonAdapter/BsonAdapter wrap external libs
+- **Facade Pattern**: FormatConverter simplifies API
+- **GRASP Principles**: Low coupling, high cohesion
+
+**TOON Format Examples**:
+```toon
+# Simple object
+name: Alice
+age: 30
+
+# Array (tabular - most compact)
+users[2]:
+  id,name,role
+  1,Alice,admin
+  2,Bob,user
+
+# Nested structures
+config:
+  debug: true
+  hosts[2]: localhost,127.0.0.1
+```
+
+**API Usage**:
+```python
+from src.converters import FormatConverter, Format
+
+# Single conversion
+json_str = '{"name": "Alice", "age": 30}'
+toon_str = FormatConverter.convert(json_str, Format.JSON, Format.TOON)
+
+# File conversion
+FormatConverter.convert_file('data.json', 'data.toon')
+
+# Batch conversion
+stats = FormatConverter.batch_convert(
+    'json_files/', 'toon_files/', Format.JSON, Format.TOON
+)
+
+# Format detection
+fmt = FormatConverter.detect_format(data)  # Auto-detect
+
+# Roundtrip validation
+is_lossless = FormatConverter.validate_roundtrip(data, Format.JSON, Format.TOON)
+```
+
+**Token Reduction Example**:
+```python
+data = {"users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]}
+
+# JSON (compact): {"users":[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]}
+# TOON (tabular): users[2]:\n  id,name\n  1,Alice\n  2,Bob
+
+# Result: ~40% token reduction for LLM prompts
+```
+
+**Security (OWASP)**:
+- ✅ **CVE Scan**: toon-llm (0 advisories), pymongo (no known CVEs)
+- ✅ **Input Validation**: Type checking, format validation
+- ✅ **Error Handling**: Graceful failures, detailed error messages
+- ✅ **Safe Libraries**: Official MongoDB driver (pymongo)
+- ⚠️ **Warning**: Standalone `bson` package is INCOMPATIBLE - use pymongo's bson
+
+**References**:
+- TOON Format: https://toonformat.dev | https://en.wikipedia.org/wiki/Token-Oriented_Object_Notation
+- BSON Spec: http://bsonspec.org/
+- toon-llm: https://github.com/davidpirogov/toon-llm
+- pymongo: https://pymongo.readthedocs.io/
+
 ## [2.9.79] - 2025-12-21
 
 ### ✨ Dynamic Template Variables in AI Processor (COULD HAVE)
