@@ -492,6 +492,114 @@ Brief description of changes
 3. **Feedback**: Address review comments
 4. **Merge**: Once approved, maintainer will merge
 
+### Commit Message Format
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `style`: Code style (formatting, missing semicolons, etc.)
+- `refactor`: Code restructuring without behavior change
+- `test`: Adding/updating tests
+- `chore`: Maintenance tasks (dependencies, build config)
+
+**Examples:**
+```
+feat(ai-processor): add Gemini Flash 2.0 model support
+
+Integrates Google's new Gemini Flash 2.0 model with improved
+context window (1M tokens) and faster response times.
+
+Closes #234
+```
+
+```
+fix(rewriter): prevent data loss with nested objects
+
+Fixed critical bug where nested objects were incorrectly
+flattened during deduplication process.
+
+Fixes #189
+```
+
+---
+
+## 📝 Changelog Automation
+
+Clarify uses **automated changelog generation** from git commits following Conventional Commits format.
+
+### Using the Changelog Script
+
+**Generate changelog for unreleased commits:**
+```bash
+# Automatic mode (since last CHANGELOG.md update)
+python scripts/generate_changelog.py --auto-since
+
+# Manual mode (last 20 commits)
+python scripts/generate_changelog.py
+
+# Since specific commit/tag
+python scripts/generate_changelog.py --since="c3f5782"
+
+# For new version release
+python scripts/generate_changelog.py --auto-since --version="2.9.86"
+```
+
+**Script Features:**
+- ✅ Parses Conventional Commits (feat, fix, docs, refactor, test, chore, perf, style)
+- ✅ Groups by commit type with emojis (✨ Features, 🐛 Bug Fixes, etc.)
+- ✅ Includes commit hash, scope, and body
+- ✅ Auto-inserts at top of CHANGELOG.md
+- ✅ Supports custom version and output file
+
+**Best Practices:**
+1. Write clear, descriptive commit messages following Conventional Commits
+2. Use `--auto-since` for releases to include all commits since last changelog update
+3. Review generated output before committing
+4. Include breaking changes in commit footer: `BREAKING CHANGE: ...`
+
+**Example Workflow:**
+```bash
+# 1. Make changes and commit with conventional format
+git add .
+git commit -m "feat(layout): add custom layout presets"
+
+# 2. Generate changelog before release
+python scripts/generate_changelog.py --auto-since --version="2.9.86"
+
+# 3. Review CHANGELOG.md
+git diff CHANGELOG.md
+
+# 4. Commit changelog
+git add CHANGELOG.md
+git commit -m "docs(changelog): add v2.9.86 release notes"
+```
+
+**Alternative: git-cliff**
+
+For advanced users, `cliff.toml` configuration is provided for [git-cliff](https://git-cliff.org/):
+
+```bash
+# Install git-cliff (optional)
+cargo install git-cliff
+
+# Generate changelog
+git-cliff --output CHANGELOG.md
+
+# For specific range
+git-cliff --tag 2.9.86 v2.9.85..HEAD
+```
+
 ---
 
 ## 🙏 Thank You!

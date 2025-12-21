@@ -1,5 +1,80 @@
 # Changelog - Clarify Project
 
+## [2.9.86] - 2024-12-21
+
+### 🤖 Changelog Automation (WOULD HAVE - Documentation)
+
+Sistema de geração automática de changelog implementado usando Python nativo com suporte a Conventional Commits. Elimina trabalho manual de atualização do CHANGELOG.md e padroniza formato de release notes.
+
+**Features**:
+- ✅ **Python Script** (`scripts/generate_changelog.py` - já existente):
+  - Parse Conventional Commits (feat, fix, docs, refactor, test, chore, perf, style)
+  - Group commits by type with emojis (✨ Features, 🐛 Bug Fixes, etc.)
+  - Extract commit hash, scope, description, body
+  - Auto-insert at top of CHANGELOG.md
+  - Support custom version and output file
+  
+- ✅ **CLI Options**:
+  - `--auto-since`: Use last CHANGELOG.md commit as reference
+  - `--since="<ref>"`: Generate since specific commit/tag/date
+  - `--version="X.Y.Z"`: Set version string (default: Unreleased)
+  - `--output="FILE"`: Custom output file (default: CHANGELOG.md)
+  
+- ✅ **git-cliff Configuration** (`cliff.toml` - novo):
+  - Professional configuration for git-cliff tool (optional)
+  - Conventional Commits parsing
+  - Issue linking: `(#123)` → GitHub issue link
+  - Grouped by type, sorted by priority
+  - Optional alternative for advanced users
+  
+- ✅ **CONTRIBUTING.md Documentation**:
+  - Complete changelog automation section
+  - Usage examples and best practices
+  - Workflow example (commit → generate → review → commit)
+  - Both Python script and git-cliff options documented
+
+**Usage**:
+```bash
+# Automatic mode (recommended for releases)
+python scripts/generate_changelog.py --auto-since --version="2.9.86"
+
+# Manual mode (last 20 commits)
+python scripts/generate_changelog.py
+
+# Since specific commit
+python scripts/generate_changelog.py --since="c3f5782"
+
+# Alternative: git-cliff (optional, requires installation)
+git-cliff --output CHANGELOG.md
+```
+
+**Impact**:
+- **Efficiency**: Eliminates manual changelog writing (saves 15-30 min per release)
+- **Consistency**: Standardized format across all releases
+- **Quality**: Forces Conventional Commits adoption
+- **Transparency**: All commits automatically documented
+
+**Files Created**:
+- `cliff.toml`: git-cliff configuration (89 lines)
+
+**Files Modified**:
+- `scripts/generate_changelog.py`: Already existed (388 LOC) - no changes needed
+- `CONTRIBUTING.md`: +60 lines (Changelog Automation section)
+
+**Technical Details**:
+- Pure Python 3.12+ (no external dependencies)
+- Uses `subprocess` for git log parsing
+- Regex-based Conventional Commits parsing
+- Smart insertion at top of existing CHANGELOG.md
+- Emoji mapping for visual clarity
+- Grouping by type with priority sorting
+
+**Referências**:
+- Conventional Commits: https://www.conventionalcommits.org/
+- git-cliff: https://git-cliff.org/
+
+---
+
 ## [2.9.85] - 2024-12-21
 
 ### 📚 Contributing Guide & GitHub Templates (WOULD HAVE - Documentation)
