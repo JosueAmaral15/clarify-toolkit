@@ -1,5 +1,61 @@
 # Changelog - Clarify Project
 
+## [2.9.78] - 2025-12-21
+
+### 🌐 Google Translate Integration
+
+Integração completa com Google Translate (web scraping gratuito) com suporte a 7 idiomas, cache local e interfaces CLI + GUI.
+
+**Features**:
+- ✅ Google Translate API (web scraping sem custo)
+- ✅ Suporte a 7 idiomas: EN, PT-BR, ES, FR, DE, ZH, JA
+- ✅ Cache local com retry mechanism (3 tentativas)
+- ✅ Rate limiting (0.5s entre requisições)
+- ✅ Auto-detect de idioma de origem
+- ✅ CLI: `python -m src gtranslate --text "..." --source en --target pt`
+- ✅ GUI: Tools → Google Translate (dock com progress bar)
+- ✅ Chunking automático para textos longos (>5000 chars)
+- ✅ Tradução de arquivos .txt com preservação de estrutura
+
+**Files**:
+- `src/translation/google_translate.py` [NEW] - API core (288 LOC)
+- `src/gui/google_translate_dock.py` [NEW] - GUI dock (492 LOC)
+- `src/app.py` [MODIFIED] - CLI subcommand + menu integration (~143 LOC)
+- `tests/test_google_translate.py` [NEW] - 16 tests API
+- `tests/test_google_translate_dock.py` [NEW] - 16 tests GUI
+- `assets/icons/google_translate_icon.*` [NEW] - SVG + PNG + ICO formats
+- `docs/specifications/v2.9.78-SPECIFICATION.md` [NEW] - Full specification
+
+**Security (OWASP)**:
+- ✅ CVE-2025-68146 fixed (filelock 3.20.0 → 3.20.1)
+- ✅ Bandit clean (1 false positive suppressed)
+- ✅ Input validation (CLI + GUI)
+- ✅ HTTPS only (googleapis.com)
+
+**Testing**:
+- ✅ 32 tests (100% passing in 8.67s)
+- ✅ 5 test categories: Happy Path, Edge Cases, Error Handling, Integration, Quality
+- ✅ Timeout configured (10s/test, 30s global)
+- ✅ ~95% coverage estimation
+
+**Architecture**:
+- Pattern Strategy: API separation from interfaces
+- Pattern Observer: Qt Signals for async communication
+- Worker Thread: `TranslationWorker` for non-blocking UI
+- Module isolation: translation/ directory
+
+**Access**: 
+- GUI: Tools → Google Translate
+- CLI: `python -m src gtranslate --help`
+
+**Cache**: `~/.clarify/translate_cache/translations.json`
+
+**Sprint Details**: ~4 hours, ~1,300 LOC (API + GUI + CLI + tests)  
+**Metodologia**: Protocolo Simplicidade 3 (Solo Developer em Produção)  
+**Progress**: COULD HAVE 15/36 (41.7%), TOTAL 92/157 (58.6%)
+
+---
+
 ## [2.9.64] - 2025-12-11
 
 ### 📄 Logging System Integration

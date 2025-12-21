@@ -52,11 +52,29 @@ clarify/
 │   ├── test_ai/                 # AI processor tests
 │   ├── test_placeholder/        # Placeholder tests
 │   ├── test_*.py                # Individual test files
-│   └── test_*.json              # Test data
+│   ├── test_*.json              # Test data
+│   ├── test_component.tsx       # JSX test component
+│   ├── test_jsx_extractor.py    # JSX extractor tests
+│   └── test_removal_counter.json # Test removal counter
 │
 ├── docs/                         # Documentation
 │   ├── TASKS.md                 # Programming tasks
+│   ├── specifications/          # Version specifications
+│   │   └── v2.9.36-SPECIFICATION.md
+│   ├── plans/                   # Project planning
+│   │   └── SPRINTS_REQUISITE_TO_CHATGPT.md
 │   └── architecture/            # Architecture docs
+│
+├── scripts/                      # Utility scripts
+│   ├── generate_changelog.py    # Changelog automation
+│   └── ci_quality_check.sh      # CI quality checks
+│
+├── config/                       # Configuration files
+│   └── config.yaml.example      # Example configuration
+│
+├── launchers/                    # Application launchers
+│   ├── clarify_gui.sh           # Launch script (Linux/Mac)
+│   └── clarify_gui.bat          # Launch script (Windows)
 │
 ├── add/                          # Reference implementations (INTEGRATED)
 │   ├── searchJSON/              # → Integrated in JsonSearchDock
@@ -76,9 +94,7 @@ clarify/
 ├── CHANGELOG.md                 # Version history
 ├── PROJECT_STRUCTURE.md         # This file
 ├── main.py                      # Entry point (legacy)
-├── clarify.py                   # Entry point (legacy)
-├── clarify_gui.sh               # Launch script (Linux/Mac)
-└── clarify_gui.bat              # Launch script (Windows)
+└── clarify.py                   # Entry point (main)
 ```
 
 ## 🏗️ Architecture Overview
@@ -124,8 +140,8 @@ python -m src.app
 # or
 python clarify.py
 # or
-./clarify_gui.sh  # Linux/Mac
-clarify_gui.bat   # Windows
+./launchers/clarify_gui.sh  # Linux/Mac
+launchers/clarify_gui.bat   # Windows
 ```
 
 ### CLI Mode

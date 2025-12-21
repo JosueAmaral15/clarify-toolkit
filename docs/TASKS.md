@@ -984,7 +984,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir editores JSON como abas *(v2.9.17 - Task #47: JsonEditorTab com validação, tree view, search)*
 - **[X]** Possibilidade de mudanças feitas apenas no editor de texto do próprio Clarify, não mais em arquivos *(v2.9.18 - Task #5: Edit-Only Mode)*
 - **[X]** Adicionar novo painel 'Smart file editing - AI' com o 'ChatGPT File Processor', ou seja, processamento de arquivos com inteligências artificiais;
-- **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
+- **[X]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's *(v2.9.78 - Google Translate Integration)*
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
 - **[X]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI) *(v2.9.26 - Task #51: Advanced File Filters in AI Processor)*
 - **[]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON

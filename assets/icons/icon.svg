@@ -1,0 +1,27 @@
+<!-- Clarify Project Icon - SVG -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main background -->
+  <circle cx="50" cy="50" r="45" fill="url(#bg)" stroke="#2D1B69" stroke-width="2"/>
+  
+  <!-- Magnifying glass (search/clarify concept) -->
+  <circle cx="38" cy="38" r="18" fill="none" stroke="white" stroke-width="4"/>
+  <line x1="52" y1="52" x2="68" y2="68" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- JSON data brackets inside magnifying glass -->
+  <text x="29" y="45" font-family="monospace" font-size="12" font-weight="bold" fill="white">{</text>
+  <text x="43" y="45" font-family="monospace" font-size="12" font-weight="bold" fill="white">}</text>
+  
+  <!-- Small data dots to represent structured data -->
+  <circle cx="35" cy="32" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="41" cy="32" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="35" cy="42" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="41" cy="42" r="1.5" fill="white" opacity="0.8"/>
+</svg>

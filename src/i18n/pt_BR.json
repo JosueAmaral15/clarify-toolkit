@@ -16,8 +16,7 @@
   "menu.tools.ai_processor": "Abrir Processador de Arquivos IA",
   "menu.tools.json_search": "Abrir Busca JSON",
   "menu.tools.case_converter": "Abrir Conversor de Case",
-  "menu.tools.text_to_json": "Conversor de Texto para JSON",
-  "menu.view": "Visualizar",
+  "menu.tools.text_to_json": "Conversor de Texto para JSON",  "menu.tools.google_translate": "Google Tradutor",  "menu.view": "Visualizar",
   "menu.view.history": "Histórico",
   "menu.themes": "Temas",
   "menu.themes.system": "Sistema",
@@ -454,5 +453,13 @@
   "tooltip.editor.btn_enable_saving": "Converter para editor com arquivo (sair do modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor",
   
   "tooltip.base.extension_filter": "Filtrar arquivos por extensões (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Deixe vazio para todos os tipos",
-  "tooltip.base.btn_open_editor": "Abrir resultados no editor (modo somente edição para visualizar/copiar sem operações de arquivo)"
+  "tooltip.base.btn_open_editor": "Abrir resultados no editor (modo somente edição para visualizar/copiar sem operações de arquivo)",
+  
+  "tooltip.google_translate.from_lang": "Idioma de origem para tradução. 'Auto-detectar' identificará o idioma automaticamente.",
+  "tooltip.google_translate.to_lang": "Idioma de destino para tradução. Padrão é Português (PT).",
+  "tooltip.google_translate.file_mode": "Habilite para traduzir arquivos de texto completos ao invés de entrada manual.",
+  "tooltip.google_translate.input_text": "Digite ou cole o texto para traduzir. Suporta até 5000 caracteres por bloco.",
+  "tooltip.google_translate.translate_btn": "Iniciar tradução usando Google Translate (serviço web gratuito) | Enter",
+  "tooltip.google_translate.copy_result": "Copiar resultado da tradução para área de transferência | Ctrl+C",
+  "tooltip.google_translate.clear_btn": "Limpar áreas de entrada e saída de texto | Ctrl+L"
 }

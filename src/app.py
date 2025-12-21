@@ -1049,6 +1049,51 @@ def cli_translate(args: argparse.Namespace) -> int:
     print(f"\nChanged files: {changed}")
     return 0
 
+def cli_gtranslate(args: argparse.Namespace) -> int:
+    """Google Translate CLI command"""
+    from .translation.google_translate import GoogleTranslateAPI
+    
+    translator = GoogleTranslateAPI()
+    
+    # Handle text or file input
+    if hasattr(args, 'text') and args.text:
+        text = args.text
+    elif hasattr(args, 'file') and args.file:
+        try:
+            with open(args.file, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except Exception as e:
+            print(f"[ERROR] Could not read file {args.file}: {e}", file=sys.stderr)
+            return 1
+    else:
+        print("[ERROR] No text or file specified", file=sys.stderr)
+        return 1
+    
+    # Get source and target languages
+    source = getattr(args, 'source', 'auto')
+    target = getattr(args, 'target', 'pt')
+    
+    try:
+        result_obj = translator.translate_text(text, from_lang=source, to_lang=target)
+        result = result_obj.translated_text
+        
+        # Handle output
+        if hasattr(args, 'output') and args.output:
+            try:
+                with open(args.output, 'w', encoding='utf-8') as f:
+                    f.write(result)
+                print(f"Translation saved to {args.output}")
+            except Exception as e:
+                print(f"[ERROR] Could not write to {args.output}: {e}", file=sys.stderr)
+                return 1
+        else:
+            print(result)
+        
+        return 0
+    except Exception as e:
+        print(f"[ERROR] Translation failed: {e}", file=sys.stderr)
+        return 1
+
 def cli_dedupe(args: argparse.Namespace) -> int:
     raw = read_text(args.input)
     indent = None if args.indent is not None and args.indent <= 0 else args.indent
@@ -4217,6 +4262,33 @@ if _PYSIDE:
                 pass
         
         def _build_icon(self):
+            """Load application icon from assets directory."""
+            try:
+                from pathlib import Path
+                
+                # Try to load the new SVG icon first
+                icon_path = Path(__file__).parent.parent / "assets" / "icons" / "icon.svg"
+                if icon_path.exists():
+                    icon = QIcon(str(icon_path))
+                    self.setWindowIcon(icon)
+                    return
+                
+                # Fallback to PNG if SVG not supported
+                icon_path = Path(__file__).parent.parent / "assets" / "icons" / "icon.png"
+                if icon_path.exists():
+                    icon = QIcon(str(icon_path))
+                    self.setWindowIcon(icon)
+                    return
+                
+                # Final fallback to embedded base64 icon (legacy)
+                self._build_icon_fallback()
+                
+            except Exception as exc:
+                print(f"Error loading icon from assets: {exc}")
+                self._build_icon_fallback()
+        
+        def _build_icon_fallback(self):
+            """Fallback icon loading using base64 (legacy)."""
             self.ICON_BASE_64 = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAD40lEQVR4nO2bv07cMBzHv3HSgzu6sB/qTFk6FfUB+gCor4FUqVIXJCYkhiJVQuI1EN07dKyuLJUQYka6vUt7R6+J3eFwznFsx0ns5HLcd7kj/hN/P/7ZTnw4QIFe7O6zojzLrPu7UWBK1yZ23bgsHQjlRZV5xhiArjAJEAR5ayoImQtq4xSMMTCazCGwJYcQzM0HJJx/BiSXRQQR6WtioJSCJgloEuNhOvPSXl/a7PdAwggkDEEIgW60p1ezvc9AE4oknmE6+eu7rV7VH2wgjHogYRYCjwICrK55AJhO/iKJZ6AJhTiHcc+5AULp6pjnSiFQmksLxN5njCKJY0x+TxptYFMaPB8gjKLMxJiJAMYYaBI33rCmRJP4cTlfKAXAl7plm+3Hp2Nn5R+ms8Vy/ihhGWQ5OiZtX+7j17tRrcbZipsYHg1Ll5G1eKCbrwhESrWqfPtyP/PZlGyjwZhP8mh4EFJLNt1kJADmaKgyXNJVgDGK5N8Mkz8P2symHi+CsP31u77s2zfp97ImhkfD0mV2P71MV4JSAAA1BJ15k2mdbq53rPOKUVAGQi0AQBaCyrzKuNjLZfLLxmwmQlOZwdYmwme9egAA/dgXzYimrw5vlfUcXOwZy4tmqq4CXgCoJDdeZ1onDkOs5+Z6p5RxWePTcTMAeKN5r5c1zyVGhFynC3kBYGNeDnWuoryuIcgA8tslJSVPYLKhg4s9rXldugpKlRXFRrUBcKnGvMm4LDGv+N1l+KtUawiI4VnHfNl71ZHzIaCSa/M+5QVAl1QZgC78ffU+D33Xk+E6AtpuQNtaA2i7AW1rDcBFJeLMX/UlqC1VBuBrWdLJx5sh4GkIdCkKnAGweaMr0tXhbePwagGQh0EdCGJeuZyv8AccRoAJggmEKp3XcXJ27n2O8bIjBNTfEjs5O0+vfX71enl3hAD1ilDlpUhlHgA+/PxRo3Vm5SJg48u3XCZb+rotccB+W5zXozJ9/PG9VTtMKtwUrQMA0D8XVIHoA4IMQPvjqO+9OFG6X4aOkR8OJ2fnTiKBSxsBLgBUmcFV95UhANUjwXoIuIoAGwg291JBAMqDaA2Ai/pcQGhkV9iXXI59rk4B8KHOAZCjoG5UlP4foWWQy6HQuQhwrTWAzF+KUxYrJ8mjAEB9zGTVNPe48EnEhICEbbSpMW32e+lRGq7MEFj1CCBhlPMY3d+N0sdh1QGjsmpqm7ys+oMNkDDMeLy/GwXa5wDT5kbXlJ4bIvkOjoA5CVcHJZcNVtGhKcO5wdU9Nmd5bjAAeZwxSRhiK4pW5uBkJrvq4pM9OivqSR+eFtV1EEXH5/8DsBV3DcmuUHgAAAAASUVORK5CYII="
             try:
                 # 2. Decode Base64 string to bytes
@@ -4323,6 +4395,12 @@ if _PYSIDE:
                 self.addDockWidget(Qt.RightDockWidgetArea, self.dock_editor)
                 self.dock_editor.hide()
         
+        def _open_google_translate(self):
+            """Open Google Translate dock."""
+            self.dock_google_translate = GoogleTranslateDock(self)
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_google_translate)
+            self.dock_google_translate.hide()
+        
         def _toggle_history(self, checked: bool):
             """Toggle history dock visibility."""
             if not hasattr(self, 'dock_history'):
@@ -4408,6 +4486,13 @@ if _PYSIDE:
                 from .gui import CaseConverterDock
                 self.dock_case_converter = CaseConverterDock(self)
             self._add_tool_tab(self.dock_case_converter, "Case Converter", "case_converter")
+        
+        def _show_google_translate(self):
+            """Show Google Translate as tab (create on-demand)."""
+            if not hasattr(self, 'dock_google_translate'):
+                from .gui import GoogleTranslateDock
+                self.dock_google_translate = GoogleTranslateDock(self)
+            self._add_tool_tab(self.dock_google_translate, "Google Translate", "google_translate")
         
         def _show_text_to_json(self):
             """Show converter selection dialog and open chosen dock."""
@@ -4938,6 +5023,7 @@ if _PYSIDE:
             self.act_open_json_search = QAction(tr("menu.tools.json_search"), self)
             self.act_open_case_converter = QAction(tr("menu.tools.case_converter"), self)
             self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)  # Task #49 - v2.9.24
+            self.act_open_google_translate = QAction(tr("menu.tools.google_translate"), self)  # Task: Google Translate - v2.9.78
             self.act_open_set_operations = QAction("JSON Set Operations...", self)  # v2.9.32
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
@@ -4953,6 +5039,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_json_search)
             m_tools.addAction(self.act_open_case_converter)
             m_tools.addAction(self.act_open_text_to_json)
+            m_tools.addAction(self.act_open_google_translate)
             m_tools.addAction(self.act_open_set_operations)
             m_tools.addSeparator()
             m_tools.addAction(self.act_open_file_list)
@@ -4968,6 +5055,7 @@ if _PYSIDE:
             self.act_open_json_search.triggered.connect(self._show_json_search)
             self.act_open_case_converter.triggered.connect(self._show_case_converter)
             self.act_open_text_to_json.triggered.connect(self._show_text_to_json)
+            self.act_open_google_translate.triggered.connect(self._show_google_translate)
             self.act_open_set_operations.triggered.connect(self._show_set_operations)
             self.act_open_file_list.triggered.connect(self._show_file_list)
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
@@ -6090,6 +6178,16 @@ def build_parser() -> argparse.ArgumentParser:
     pt.add_argument("--inverse", action="store_true", help="Inverse mode: {t.path} → text")
     pt.set_defaults(func=cli_translate)
 
+    # gtranslate (Google Translate)
+    pg = sub.add_parser("gtranslate", help="Translate text using Google Translate")
+    group = pg.add_mutually_exclusive_group(required=True)
+    group.add_argument("-t", "--text", help="Text to translate")
+    group.add_argument("-f", "--file", help="File to translate")
+    pg.add_argument("-s", "--source", default="auto", help="Source language (default: auto)")
+    pg.add_argument("-T", "--target", default="pt", help="Target language (default: pt)")
+    pg.add_argument("-o", "--output", help="Output file (default: stdout)")
+    pg.set_defaults(func=cli_gtranslate)
+
     # dedupe
     pd = sub.add_parser("dedupe", help="JSON/TS rewriter (dedupe/join/eliminate)")
     pd.add_argument("input")
@@ -6110,7 +6208,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
 
     # If a subcommand is present, run as CLI-only.
-    if argv and argv[0] in {"search","replace","insert","translate","dedupe"}:
+    if argv and argv[0] in {"search","replace","insert","translate","gtranslate","dedupe"}:
         args = parser.parse_args(argv)
         return args.func(args)
 

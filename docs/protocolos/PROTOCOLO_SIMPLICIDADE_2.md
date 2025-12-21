@@ -106,7 +106,7 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 - ✅ **[NOVO PROTOCOLO]** Criado Protocolo Simplicidade 2 baseado em Simplicidade 1 v1.8
 - ✅ **Etapa 2.5**: Matriz de Decisão para escolha objetiva de tarefas (ALTA PRIORIDADE)
 - ✅ **Etapa 6.5**: Checklist de Segurança - OWASP Top 10 (ALTA PRIORIDADE)
-- ✅ **Etapa 6.6**: Gerar Documentação de API (Sphinx/pdoc)
+- ✅ **Etapa 6.7**: Gerar Documentação de API (Sphinx/pdoc)
 - ✅ **Etapa 8.5**: Checklist de Acessibilidade - WCAG 2.1
 - ✅ **Etapa 9.5**: Code Review por Pares (Pull Request)
 - ✅ **Etapa 10.5**: Profiling e Otimização (features críticas)
@@ -158,7 +158,7 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 - ✅ Dry-run obrigatório antes de executar testes (syntax + import + collect)
 - ✅ Checklist de segurança com 6 itens obrigatórios
 - ✅ Regras de ouro e comandos seguros documentados
-- ✅ Lições aprendidas do Task #50 (loop infinito >1h)
+- ✅ Lições aprendidas do Task Example (loop infinito >1h)
 
 **Changelog v1.4**:
 - ✅ Reorganizada ordem final: Implementar → Integrar GUI → CLI → Testar → Organizar → Documentar → Commit
@@ -186,7 +186,651 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 
 ---
 
-## 📋 Espinha Dorsal do Protocolo (23 Etapas: 13 Obrigatórias + 10 Opcionais)
+## ⚠️ Regra de Ouro: Prioridade Absoluta para Erros no Workspace
+
+> **CRÍTICO PARA IAs**: Antes de implementar novas funcionalidades ou continuar com tarefas, **todos os erros no workspace devem ser corrigidos POR VOCÊ (IA)**.
+
+### 🤖 Esta Regra é Para Assistentes de IA
+
+**Se você é uma IA (Cursor, GitHub Copilot, etc.):**
+- ✅ **VOCÊ DEVE** corrigir todos os erros existentes ANTES de implementar novas funcionalidades
+- ✅ **VOCÊ DEVE** resolver problemas de forma proativa, não esperar que humanos os corrijam
+- ✅ **VOCÊ DEVE** tratar a correção de erros como prioridade máxima
+- ✅ **VOCÊ DEVE** limpar o workspace antes de adicionar novo código
+
+**Esta regra NÃO significa:**
+- ❌ Que desenvolvedores humanos devem parar de implementar quando existem erros
+- ❌ Que o projeto não pode avançar enquanto houver erros
+- ❌ Que humanos precisam corrigir os erros manualmente
+
+### 🚨 Tipos de Erros que Bloqueiam o Desenvolvimento
+
+Considere a existência de erros no workspace (visíveis na aba "Problemas" do IDE) como **indesejável e bloqueante**. Caso aconteça alguma ocorrência dos seguintes tipos de erro, a **correção é prioridade absoluta** antes de continuar:
+
+1. **❌ Problemas de Sintaxe**
+   - Erros de parsing do código
+   - Parênteses, chaves ou colchetes não fechados
+   - Indentação incorreta (Python)
+   - Ponto-e-vírgula faltando (JavaScript, C, Java)
+
+2. **❌ Inconsistências de Código**
+   - Variáveis declaradas mas não utilizadas
+   - Imports não utilizados ou faltantes
+   - Código morto (unreachable code)
+   - Type mismatches (TypeScript, Python com type hints)
+
+3. **❌ Omissões Inesperadas**
+   - Funções declaradas mas não implementadas
+   - Parâmetros obrigatórios faltando
+   - Return statements ausentes quando esperados
+   - Documentação obrigatória faltando
+
+4. **❌ Fatos Incorretos**
+   - Referências a variáveis inexistentes
+   - Chamadas de funções com número errado de argumentos
+   - Acesso a propriedades inexistentes
+   - Imports de módulos inexistentes
+
+5. **❌ Ambiguidades**
+   - Warnings de type checking
+   - Possíveis null/undefined references
+   - Shadowing de variáveis
+   - Conversões de tipo implícitas perigosas
+
+6. **❌ Arquivos Faltosos**
+   - Dependências não instaladas
+   - Módulos importados mas não encontrados
+   - Arquivos de configuração ausentes
+   - Assets referenciados mas inexistentes
+
+7. **❌ Falhas de Execução**
+   - Build failures
+   - Compilation errors
+   - Testes falhando
+   - Linter errors (quando configurado)
+
+### ✅ Quando Pode Continuar
+
+**SOMENTE** continue com o desenvolvimento de novas funcionalidades quando:
+
+- ✅ **Zero erros** na aba "Problemas" do workspace
+- ✅ **Todos os builds** completam com sucesso
+- ✅ **Todos os testes** passam (se já existentes)
+- ✅ **Linter/formatter** não reporta erros críticos
+- ✅ **Type checker** não reporta erros (se aplicável)
+
+### 📋 Checklist Antes de Cada Tarefa
+
+```markdown
+Antes de iniciar qualquer tarefa nova:
+
+[ ] Verificar aba "Problemas" do IDE (0 erros)
+[ ] Executar build do projeto (sucesso)
+[ ] Executar testes existentes (todos passando)
+[ ] Executar linter/formatter (sem erros críticos)
+[ ] Verificar imports e dependências (todas resolvidas)
+[ ] Confirmar que código está em estado limpo (commitável)
+```
+
+### ⏱️ Tempo Estimado para Correção
+
+- **Erros de Sintaxe**: ~2-5 minutos por erro
+- **Imports/Dependências**: ~5-10 minutos
+- **Type Errors**: ~5-15 minutos por erro
+- **Testes Falhando**: ~10-30 minutos (depende da complexidade)
+
+**Regra Prática**: Se você tem >10 erros no workspace, **dedique 1-2 horas** para limpar tudo antes de prosseguir.
+
+### 🎯 Rationale
+
+**Por quê esta regra é crítica?**
+
+1. **Prevenção de Cascata**: Um erro não corrigido pode gerar 10 novos erros
+2. **Qualidade do Código**: Código com erros = dívida técnica imediata
+3. **Confiabilidade**: Funcionalidades novas em cima de código quebrado = bugs garantidos
+4. **Produtividade**: Corrigir erros antigos + novos é mais demorado que corrigir só os antigos
+5. **Profissionalismo**: Código limpo e sem erros é requisito mínimo
+
+**Mensagem para IAs**: 
+> "Até que os erros não sejam sanados POR VOCÊ (IA), as tarefas e as funcionalidades não podem continuar sendo implementadas POR VOCÊ (IA). Corrija os erros primeiro, depois continue com a implementação."
+
+---
+
+## 🌐 Idioma do Código: Nomenclatura de Variáveis e Comentários
+
+> **IMPORTANTE PARA IAs**: A escolha do idioma para nomes de variáveis e comentários deve ser definida logo no início do projeto, preferencialmente na primeira sessão de interação com o programador.
+
+### 📋 Regra Padrão
+
+**Por padrão**, ao programar com inteligência artificial:
+- ✅ **Nomes de variáveis**: Devem estar em **português**
+- ✅ **Comentários**: Devem estar em **português**
+- ✅ **Docstrings**: Devem estar em **português**
+
+**Justificativa**: Facilita a compreensão e manutenção do código para desenvolvedores que falam português como língua nativa, mantendo consistência com a documentação e comunicação do projeto.
+
+### 🤔 Pergunta Obrigatória na Primeira Sessão
+
+**A IA DEVE perguntar ao programador no primeiro momento (ou durante a primeira sessão)**:
+
+```
+❓ Preferências de Idioma para o Código
+
+Para manter consistência no projeto, preciso definir o idioma padrão 
+para nomes de variáveis e comentários no código:
+
+💡 Sugestão: Português (recomendado para projetos nacionais)
+
+Opções:
+A) 🇧🇷 Português - Variáveis e comentários em português (PADRÃO)
+B) 🇺🇸 Inglês - Variáveis e comentários em inglês
+C) 🌍 Misto - Variáveis em inglês, comentários em português
+D) ⚙️ Personalizado - Especificar preferência customizada
+
+Qual sua preferência?
+```
+
+### ✅ Opções Disponíveis
+
+#### Opção A: 🇧🇷 Português (PADRÃO RECOMENDADO)
+```python
+# ✅ Exemplo em Português
+def calcular_preco_total(itens: List[Item]) -> float:
+    """
+    Calcula o preço total de uma lista de itens.
+    
+    Args:
+        itens: Lista de itens a serem somados
+        
+    Returns:
+        Preço total com impostos incluídos
+    """
+    preco_subtotal = sum(item.preco for item in itens)
+    taxa_imposto = 0.15
+    preco_final = preco_subtotal * (1 + taxa_imposto)
+    return preco_final
+```
+
+#### Opção B: 🇺🇸 Inglês
+```python
+# ✅ Exemplo em Inglês
+def calculate_total_price(items: List[Item]) -> float:
+    """
+    Calculates the total price of a list of items.
+    
+    Args:
+        items: List of items to be summed
+        
+    Returns:
+        Total price with taxes included
+    """
+    subtotal_price = sum(item.price for item in items)
+    tax_rate = 0.15
+    final_price = subtotal_price * (1 + tax_rate)
+    return final_price
+```
+
+#### Opção C: 🌍 Misto (Variáveis em Inglês, Comentários em Português)
+```python
+# ✅ Exemplo Misto
+def calculate_total_price(items: List[Item]) -> float:
+    """
+    Calcula o preço total de uma lista de itens.
+    
+    Args:
+        items: Lista de itens a serem somados
+        
+    Returns:
+        Preço total com impostos incluídos
+    """
+    subtotal_price = sum(item.price for item in items)
+    tax_rate = 0.15  # Taxa de imposto de 15%
+    final_price = subtotal_price * (1 + tax_rate)
+    return final_price
+```
+
+### 📝 Registrar a Preferência
+
+Após a resposta do programador, a IA deve:
+
+1. **Registrar a preferência** em um local visível (ex: README.md, CONTRIBUTING.md)
+2. **Aplicar consistentemente** em todo o código gerado
+3. **Lembrar da preferência** em sessões futuras do mesmo projeto
+
+**Exemplo de Registro no README.md**:
+```markdown
+## 🌐 Convenções de Código
+
+- **Idioma do Código**: Português
+- **Variáveis**: Nomes em português (ex: `usuario_ativo`, `calcular_total`)
+- **Comentários**: Em português
+- **Documentação**: Em português
+```
+
+### 🔄 Alteração de Preferência
+
+O programador pode solicitar mudança de idioma a qualquer momento:
+- ✅ "Mude para inglês a partir de agora"
+- ✅ "Prefiro comentários em português, mas variáveis em inglês"
+- ✅ "Use inglês apenas para APIs públicas"
+
+**A IA deve confirmar a mudança** e atualizar a documentação de convenções.
+
+### ⚠️ Exceções Comuns
+
+Independente da escolha do idioma, **mantenha em inglês**:
+- ✅ Nomes de bibliotecas e frameworks (ex: `import pandas`, `from flask import`)
+- ✅ Palavras-chave da linguagem (ex: `def`, `class`, `if`, `for`)
+- ✅ Nomes de APIs públicas (se o código for distribuído internacionalmente)
+- ✅ Termos técnicos sem tradução adequada (ex: `callback`, `payload`, `refactoring`)
+
+### 🎯 Rationale
+
+**Por quê perguntar ao programador?**
+
+1. **Contexto do Projeto**: Projetos nacionais vs. internacionais têm necessidades diferentes
+2. **Equipe**: Time brasileiro pode preferir português; time internacional precisa inglês
+3. **Legibilidade**: Código é lido mais vezes do que escrito - deve ser claro para quem mantém
+4. **Consistência**: Definir padrão no início evita mistura confusa de idiomas
+5. **Profissionalismo**: Demonstra atenção aos detalhes e respeito pelas preferências do desenvolvedor
+
+**Por quê Português como padrão?**
+
+Para projetos brasileiros/portugueses:
+- ✅ Desenvolvedores leem e entendem mais rápido
+- ✅ Facilita onboarding de novos membros do time
+- ✅ Documentação e código no mesmo idioma = menos tradução mental
+- ✅ Variáveis representam conceitos de negócio em português
+
+**Quando preferir Inglês?**
+
+- 🌍 Projeto open-source internacional
+- 🌍 Equipe multicultural
+- 🌍 Produto voltado para mercado global
+- 🌍 Biblioteca/framework para distribuição pública
+
+---
+
+## 📧 Meios de Contato para Feedback do Usuário
+
+> **IMPORTANTE PARA IAs**: Durante a primeira sessão de interação com o programador, a inteligência artificial deve perguntar se o desenvolvedor gostaria de incluir meios de contato no projeto para que os usuários possam fornecer feedback aos responsáveis.
+
+### 📋 Contexto e Propósito
+
+Projetos de software se beneficiam enormemente de feedback direto dos usuários. Comentários, sugestões, críticas, reclamações, elogios e opiniões são fundamentais para a evolução e melhoria contínua do projeto.
+
+### 🤔 Pergunta Obrigatória na Primeira Sessão
+
+**A IA DEVE perguntar ao programador no primeiro momento (ou durante a primeira sessão)**:
+
+```
+❓ Meios de Contato para Feedback do Usuário
+
+Gostaria de incluir meios de contato no projeto para que os usuários
+possam enviar feedback (comentários, sugestões, críticas, reclamações,
+elogios e opiniões)?
+
+💡 Sugestão: Sim (recomendado para projetos com usuários finais)
+
+Opções:
+A) ✅ Sim, incluir email para feedback (PADRÃO RECOMENDADO)
+B) ✅ Sim, incluir GitHub Issues (para projetos open-source)
+C) ✅ Sim, incluir formulário de contato na aplicação
+D) ✅ Sim, incluir múltiplos canais (email + issues + formulário)
+E) ❌ Não, não incluir meios de contato
+
+Qual sua preferência?
+```
+
+### ✅ Opções Disponíveis
+
+#### Opção A: ✅ Email para Feedback (PADRÃO RECOMENDADO)
+
+**O que incluir**:
+- Email de contato dedicado para feedback
+- Todos os tipos de feedback são bem-vindos:
+  - 💬 Comentários gerais
+  - 💡 Sugestões de melhorias
+  - 🐛 Críticas construtivas
+  - 😞 Reclamações sobre problemas
+  - 🎉 Elogios e reconhecimento
+  - 📝 Opiniões sobre funcionalidades
+
+**Onde documentar**:
+```markdown
+## 📧 Feedback e Contato
+
+Sua opinião é muito importante para nós! Envie seus comentários, 
+sugestões, críticas, reclamações, elogios e opiniões para:
+
+**Email**: feedback@seuprojeto.com
+
+Todos os feedbacks são lidos e considerados para melhorias futuras.
+```
+
+**Exemplo de implementação (README.md)**:
+```markdown
+## 📮 Feedback
+
+Adoraríamos ouvir sua opinião! Envie seus comentários, sugestões, 
+críticas, reclamações, elogios e opiniões para:
+
+- **Email**: contato@meuprojeto.com.br
+- **Resposta**: Normalmente respondemos em até 48 horas
+
+Seu feedback nos ajuda a melhorar continuamente!
+```
+
+#### Opção B: ✅ GitHub Issues
+
+**Para projetos open-source**:
+```markdown
+## 🐛 Reportar Problemas ou Dar Feedback
+
+Use as [GitHub Issues](https://github.com/seu-usuario/seu-projeto/issues) para:
+
+- 🐛 Reportar bugs
+- 💡 Sugerir novas funcionalidades
+- 💬 Compartilhar feedback geral
+- ❓ Fazer perguntas
+
+**Templates disponíveis**:
+- Bug Report
+- Feature Request  
+- Feedback Geral
+```
+
+#### Opção C: ✅ Formulário de Contato na Aplicação
+
+**Para aplicações web/desktop**:
+- Adicionar seção "Feedback" ou "Contato" na interface
+- Formulário com campos:
+  - Nome (opcional)
+  - Email (para resposta)
+  - Tipo: Comentário | Sugestão | Crítica | Reclamação | Elogio | Opinião
+  - Mensagem
+- Envio via email ou salvo em banco de dados
+
+**Exemplo de implementação (GUI)**:
+```python
+# Menu: Help → Send Feedback
+class FeedbackDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Enviar Feedback")
+        
+        # Tipo de feedback
+        self.tipo_combo = QComboBox()
+        self.tipo_combo.addItems([
+            "💬 Comentário",
+            "💡 Sugestão",
+            "🐛 Crítica/Bug",
+            "😞 Reclamação",
+            "🎉 Elogio",
+            "📝 Opinião"
+        ])
+        
+        # Email (opcional)
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("seu@email.com (opcional)")
+        
+        # Mensagem
+        self.message_text = QTextEdit()
+        self.message_text.setPlaceholderText(
+            "Compartilhe seus comentários, sugestões, críticas, "
+            "reclamações, elogios ou opiniões..."
+        )
+        
+        # Botão enviar
+        self.send_button = QPushButton("Enviar Feedback")
+        self.send_button.clicked.connect(self.send_feedback)
+```
+
+#### Opção D: ✅ Múltiplos Canais
+
+**Combinar várias opções**:
+```markdown
+## 📞 Entre em Contato
+
+Valorizamos seu feedback! Você pode nos contatar por:
+
+### 📧 Email
+- **Feedback Geral**: feedback@projeto.com
+- **Suporte Técnico**: suporte@projeto.com
+- Respondemos em até 48 horas
+
+### 💬 GitHub Issues
+- Reportar bugs: [Issues](https://github.com/user/projeto/issues)
+- Sugerir funcionalidades: [Discussions](https://github.com/user/projeto/discussions)
+
+### 🌐 Formulário de Contato
+- Acesse: Menu → Ajuda → Enviar Feedback
+- Ou: https://projeto.com/contato
+
+### 📱 Redes Sociais
+- Twitter: [@seuprojeto](https://twitter.com/seuprojeto)
+- Discord: [Comunidade](https://discord.gg/seuprojeto)
+```
+
+#### Opção E: ❌ Não Incluir
+
+**Quando escolher esta opção**:
+- ⚠️ Projetos pessoais/internos sem usuários externos
+- ⚠️ Protótipos descartáveis
+- ⚠️ Scripts de uso único
+
+**Consequência**: Usuários não terão canal direto para feedback, o que pode limitar a evolução do projeto.
+
+### 📝 Registrar a Preferência
+
+Após a resposta do programador, a IA deve:
+
+1. **Adicionar seção de contato/feedback** no README.md
+2. **Criar arquivo CONTATO.md** (se necessário) com detalhes
+3. **Implementar formulário** (se aplicação com interface)
+4. **Documentar** em CONTRIBUTING.md (para projetos open-source)
+
+**Exemplo de registro (README.md)**:
+```markdown
+## 📬 Feedback e Contato
+
+Este projeto valoriza feedback dos usuários! 
+
+- **Email**: feedback@projeto.com
+- **Tipos de feedback bem-vindos**: Comentários, sugestões, críticas, 
+  reclamações, elogios e opiniões
+- **Tempo de resposta**: Até 48 horas úteis
+
+Seu feedback é essencial para melhorarmos continuamente!
+```
+
+### 🎯 Rationale
+
+**Por quê perguntar sobre meios de contato?**
+
+1. **Melhoria Contínua**: Feedback direto ajuda a identificar problemas e oportunidades
+2. **Engajamento**: Usuários que podem dar feedback se sentem mais conectados ao projeto
+3. **Qualidade**: Críticas e sugestões melhoram a qualidade do software
+4. **Priorização**: Feedback ajuda a entender o que é mais importante para os usuários
+5. **Reconhecimento**: Elogios motivam a equipe de desenvolvimento
+6. **Transparência**: Canal aberto demonstra compromisso com os usuários
+
+**Por quê Email como padrão?**
+
+Para projetos com usuários:
+- ✅ **Universal**: Todo mundo tem email
+- ✅ **Simples**: Não requer conta ou cadastro adicional
+- ✅ **Direto**: Comunicação privada e pessoal
+- ✅ **Consolidado**: Todos os tipos de feedback em um único canal
+- ✅ **Rastreável**: Histórico completo de comunicações
+- ✅ **Profissional**: Canal formal e adequado para qualquer tipo de feedback
+
+**Quando preferir outras opções?**
+
+- 🌍 **GitHub Issues**: Projetos open-source (transparência pública)
+- 🌍 **Formulário**: Apps com muitos usuários (organização e categorização)
+- 🌍 **Múltiplos canais**: Projetos grandes (diferentes públicos, diferentes necessidades)
+- 🌍 **Nenhum**: Projetos internos/pessoais sem usuários externos
+
+### ⚠️ Considerações Importantes
+
+**Gestão de Feedback**:
+- ✅ Definir quem responderá aos feedbacks (responsável)
+- ✅ Estabelecer tempo de resposta esperado (SLA)
+- ✅ Criar processo para triagem e priorização
+- ✅ Documentar feedbacks relevantes (issues, backlog)
+- ✅ Agradecer sempre, mesmo para críticas
+
+**Privacidade**:
+- ✅ Informar como dados de contato serão usados
+- ✅ Não compartilhar emails sem permissão
+- ✅ Conformidade com LGPD/GDPR se aplicável
+
+**Exemplo de boas práticas**:
+```markdown
+## 📧 Política de Feedback
+
+**Comprometemos-nos a**:
+- ✅ Responder todos os feedbacks em até 48 horas úteis
+- ✅ Tratar todas as opiniões com respeito
+- ✅ Considerar seriamente críticas e sugestões
+- ✅ Manter privacidade dos dados de contato (LGPD)
+- ✅ Agradecer contribuições construtivas
+
+**Você pode esperar**:
+- Resposta personalizada (não automática)
+- Atualizações sobre sugestões implementadas
+- Reconhecimento em changelogs (se desejar)
+```
+
+---
+
+## 📊 Divisão Recursiva de Tarefas Complexas
+
+> **IMPORTANTE**: Se a tarefa for muito longa ou complexa, e houver limites de tempo ou comprimento de resposta, a inteligência artificial deve dividir a tarefa em partes menores, recursivamente, até conseguir uma tarefa que possa fornecer uma resposta satisfatória e de acordo com o limite de resposta determinado.
+
+### 🔄 Estratégia de Divisão (Enterprise)
+
+**Quando Aplicar** (Protocolo Simplicidade 2):
+- ✅ Tarefa estimada em >6 horas (divide em 3+ sprints)
+- ✅ Feature enterprise com múltiplos stakeholders
+- ✅ Resposta muito longa (>1500 linhas de código)
+- ✅ Múltiplas funcionalidades interdependentes
+- ✅ Requer code review por pares em cada fase
+- ✅ Risco de timeout ou limite de resposta
+
+**Como Dividir** (Recursivamente com ADRs):
+
+1. **Nível 1 - Épicos (2-4 semanas)**:
+   ```
+   Épico: "Sistema de Pagamentos Enterprise"
+   ↓ Dividir em:
+   ├── Sprint 1: Integração Stripe (6h)
+   ├── Sprint 2: Webhooks e notificações (6h)
+   ├── Sprint 3: Dashboard de transações (8h)
+   ├── Sprint 4: Auditoria e compliance (6h)
+   └── Sprint 5: Rollback e recovery (4h)
+   
+   Cada sprint → ADR documentado
+   Cada sprint → Code review por pares
+   Cada sprint → Deploy incremental
+   ```
+
+2. **Nível 2 - Sprints (4-8 horas)**:
+   ```
+   Sprint 1: Integração Stripe
+   ↓ Dividir em:
+   ├── Task 1.1: Setup API keys + secrets (1h)
+   ├── Task 1.2: Checkout session endpoint (2h)
+   ├── Task 1.3: Webhook receiver (2h)
+   └── Task 1.4: Testes + Security checklist (1h)
+   
+   Cada task → Quality gates (CI/CD)
+   ```
+
+3. **Nível 3 - Tasks (<4 horas)** (se ainda muito grande):
+   ```
+   Task 1.2: Checkout session endpoint
+   ↓ Dividir em:
+   ├── Subtask 1.2.1: Schema de Order (30min)
+   ├── Subtask 1.2.2: Validação de input (30min)
+   ├── Subtask 1.2.3: Criação de session Stripe (1h)
+   ├── Subtask 1.2.4: Logging e monitoring (30min)
+   └── Subtask 1.2.5: Testes unitários (1h)
+   ```
+
+**Critério de Parada**:
+- ⏱️ Tarefa pode ser completada em <4 horas (vs <3h no Simplicidade 1)
+- 📝 Resposta cabe em limite razoável (<1000 linhas)
+- ✅ Escopo claro, com critérios de aceitação definidos
+- 🧪 Pode ser testada isoladamente
+- 👥 Pode ser revisada por pares em <1h
+- 🔒 Security checklist pode ser aplicado isoladamente
+- 🤖 CI/CD pode validar isoladamente
+
+**Princípios de Divisão Enterprise**:
+1. **Independência**: Cada subtarefa deve ser deployável independentemente
+2. **Coesão**: Subtarefas relacionadas devem estar próximas na sequência
+3. **Valor Incremental**: Cada subtarefa deve adicionar valor mensurável
+4. **Testabilidade**: Cada subtarefa deve ter 100% cobertura de testes
+5. **Reversibilidade**: Cada subtarefa deve ter rollback plan (se crítica)
+6. **Documentação**: Cada sprint deve ter ADR se houver decisão arquitetural
+7. **Revisabilidade**: Cada subtarefa deve ter diff pequeno para code review
+
+**Exemplo Prático Enterprise**:
+```markdown
+❌ RUIM - Épico muito grande (60h):
+[ ] Implementar plataforma completa de e-commerce
+
+✅ BOM - Dividido em épicos e sprints:
+
+Épico 1 - Catálogo de Produtos (2 semanas):
+├── Sprint 1.1 (6h): CRUD produtos + categorias
+│   ├── ADR-001: Escolha de PostgreSQL
+│   └── Rollback plan: N/A (não-crítico)
+├── Sprint 1.2 (6h): Busca e filtros
+│   └── ADR-002: ElasticSearch vs PostgreSQL full-text
+└── Sprint 1.3 (4h): Upload de imagens (S3)
+    └── Rollback plan: Reverter para storage local
+
+Épico 2 - Carrinho de Compras (1 semana):
+├── Sprint 2.1 (6h): Session-based cart
+│   ├── ADR-003: Redis para sessions
+│   └── Security checklist: Session fixation, CSRF
+└── Sprint 2.2 (4h): Persistência e checkout
+    └── Rollback plan: Fallback para in-memory
+
+Épico 3 - Pagamentos (2 semanas):
+├── Sprint 3.1 (6h): Integração Stripe
+│   ├── ADR-004: Stripe vs PayPal
+│   ├── Security checklist: PCI-DSS compliance
+│   └── Rollback plan: CRÍTICO (feature flag)
+├── Sprint 3.2 (6h): Webhooks
+│   └── Security checklist: Webhook validation
+└── Sprint 3.3 (4h): Dashboard transações
+    └── Rollback plan: N/A (apenas visualização)
+
+Cada Sprint:
+- Code review por 2 pares
+- CI/CD quality gates (80% coverage)
+- Security scan (bandit + pip-audit)
+- Deploy staging → produção
+```
+
+**Matriz de Decisão para Dividir**:
+Use Matriz de Decisão (Etapa 2.5) quando há múltiplas formas de dividir:
+
+| Divisão | Complexidade | Risco | Valor | Independência | **Score** |
+|---------|--------------|-------|-------|---------------|-----------|
+| **Por funcionalidade** | 3 | 2 | 5 | 5 | **23** 🟢 |
+| Por camada (backend/frontend) | 2 | 4 | 3 | 2 | **17** 🟡 |
+| Por equipe | 4 | 3 | 2 | 3 | **18** 🟡 |
+
+**Por quê?**: Dividir tarefas enterprise garante entregas incrementais com valor, facilita code review, permite rollback granular, e mantém velocity estável em equipes grandes.
+
+---
+
+## 📋 Espinha Dorsal do Protocolo (24 Etapas: 14 Obrigatórias + 10 Opcionais)
 
 ### **Etapas Obrigatórias** (Protocolo Simplicidade 1):
 1. 📚 Ler a documentação
@@ -195,6 +839,7 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 4. 🔍 Analisar e estudar o projeto
 5. 🎯 Fazer sprints das tarefas mais simples
 6. 💻 Implementar com arquitetura profissional (GoF + GRASP)
+   - 6.6 🎨 **Ícones do Projeto** (OBRIGATÓRIO)
 7. ⌨️ Verificar Implementação CLI + Revisão de Código (9 critérios)
 8. 🖥️ Verificar Implementação GUI + Revisão de Código (9 critérios)
 9. 🔗 Verificar Integração com Programa Principal
@@ -206,7 +851,7 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 ### **Etapas Opcionais Avançadas** (Simplicidade 2):
 **2.5** 🎯 Matriz de Decisão (escolha objetiva) - **ALTA PRIORIDADE**  
 **6.5** 🔒 Checklist de Segurança (OWASP) - **ALTA PRIORIDADE**  
-**6.6** 📚 Gerar Documentação de API  
+**6.7** 📚 Gerar Documentação de API  
 **8.5** ♿ Checklist de Acessibilidade (WCAG)  
 **9.5** 👥 Code Review por Pares  
 **10.5** ⚡ Profiling e Otimização  
@@ -216,12 +861,28 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 **13.5** 🔄 Retrospectiva de Sprint
 
 ### 1️⃣ **Ler a Documentação**
-- Consultar `docs/TASKS.md` para entender o contexto do projeto
+- Consultar `TASKS.md` (ou arquivo equivalente definido pelo usuário) para ver as tarefas pendentes
+- Consultar `docs/REQUIREMENTS.md` para entender o contexto do projeto
 - Revisar especificações anteriores (`v2.9.X-SPECIFICATIONS.md`)
 - Entender dependências e arquitetura existente
 - Verificar exemplos em `tests/files/` quando aplicável
 
-**Por quê?**: Evitar retrabalho e garantir coerência com o código existente.
+**📋 Sobre o Arquivo de Tarefas**:
+
+O arquivo `TASKS.md` é o **arquivo padrão** para gerenciar tarefas do projeto, mas você pode usar qualquer arquivo no formato ASCII (`.txt`, `.md`, etc.) conforme sua preferência.
+
+**Requisitos do Arquivo de Tarefas**:
+- ✅ **Formato ASCII obrigatório**: `.md`, `.txt` ou similar (legível como texto plano)
+- ❌ **NÃO aceito**: `.docx`, `.pdf`, ou formatos binários
+- 📍 **Localização**: Raiz do projeto ou em `docs/` (ex: `TASKS.md`, `TODO.md`, `requirements.md`)
+- 🔄 **Alternativo**: Se preferir outro nome/localização, especifique no início do projeto
+
+**Se não existir arquivo de tarefas**:
+1. A IA deve perguntar ao usuário: "Qual arquivo você usa para gerenciar tarefas?" 
+2. Se não houver, sugerir criação do `TASKS.md` padrão
+3. Confirmar localização e nome do arquivo com o usuário
+
+**Por quê?**: Evitar retrabalho e garantir coerência com o código existente. O arquivo de tarefas centraliza o planejamento e progresso do projeto.
 
 ---
 
@@ -240,7 +901,7 @@ Porém, esse rigor tem **custo**: ~4-6h por task vs ~2-3h no Simplicidade 1. Par
 **Exemplo Real**:
 ```
 Lista de tasks complexas restantes:
-[ ] Editor de texto integrado (MUITO COMPLEXO - 50h)
+[ ] Complex Feature Example (MUITO COMPLEXO - 50h)
 [ ] Busca com IA semântica (COMPLEXO - 20h)
 [ ] Tooltip preview em hover (SIMPLES - 30min) ✅ COMEÇAR POR AQUI!
 ```
@@ -298,7 +959,7 @@ Pontuação Mínima: 0 pontos
 | Task | Simpl<br>(0-5) | Dep<br>(0-5) | Imp<br>(0-5) | Clar<br>(0-5) | Risc<br>(0-5) | **Score** | **Decisão** |
 |------|---------------|--------------|--------------|---------------|---------------|-----------|-------------|
 | **Tooltip Preview** | 5 | 5 | 3 | 5 | 5 | **33.5** 🟢 | **1º - COMEÇAR AQUI** |
-| **Orphaned Keys** | 3 | 4 | 4 | 5 | 4 | **26.0** 🟡 | 2º |
+| **Feature** | 3 | 4 | 4 | 5 | 4 | **26.0** 🟡 | 2º |
 | **Editor Integrado** | 1 | 2 | 5 | 4 | 2 | **20.5** 🟡 | 3º |
 | **IA Semântica** | 0 | 1 | 4 | 2 | 1 | **10.0** 🟠 | 4º - Deixar por último |
 
@@ -384,7 +1045,7 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
    - "Minha solução proposta é [Y]. Faz sentido?"
    - "Posso começar ou há algo que esqueci?"
 
-**Exemplo Real (Task #23)**:
+**Exemplo Real (Task Example)**:
 ```
 ❓ "Pegar primeiras N palavras (quantas? 3-5?)?"
 ✅ Resposta: "Default pode ser 30 caracteres"
@@ -398,6 +1059,52 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
 
 **Por quê?**: Economiza tempo, evita retrabalho, garante que a solução atende exatamente o que foi pedido.
 
+#### 🌐 **Pesquisas Online: Quando a IA Tem Muitas Dúvidas ou Dificuldades**
+
+> **IMPORTANTE PARA IAs**: Se você está com **muitas dúvidas** sobre como resolver um determinado problema, ou tem **dificuldades significativas** para resolver esse mesmo problema, **lembre-se de que você pode efetuar pesquisas online**.
+
+**Quando Realizar Pesquisas Online**:
+- ✅ Quando há dúvidas técnicas complexas que não consegue resolver sozinho
+- ✅ Quando encontra um problema crítico que não tem solução óbvia no código existente
+- ✅ Quando precisa entender como implementar algo completamente novo
+- ✅ Quando há um erro ou bug difícil de diagnosticar
+- ✅ Quando precisa de exemplos práticos de implementação
+
+**Onde Pesquisar** (em ordem de prioridade):
+1. **📚 Documentação Oficial do GitHub de Projetos Relacionados**:
+   - Repositórios similares ou que resolvem problemas parecidos
+   - Issues e Pull Requests que discutem problemas similares
+   - Wiki e documentação técnica de projetos open source relacionados
+
+2. **📖 Plataformas de Documentação Online**:
+   - Documentação oficial das bibliotecas e frameworks usados no projeto
+   - Tutoriais e guias técnicos especializados
+   - Blogs técnicos e artigos de desenvolvedores experientes
+
+3. **💬 Plataformas de Perguntas e Respostas**:
+   - **StackOverflow**: Principal plataforma para dúvidas de programação
+   - **GitHub Discussions**: Para questões específicas de projetos
+   - Outras comunidades técnicas relevantes para a tecnologia do projeto
+
+**Por Quê Pesquisas Online São Importantes**:
+- ✅ **Economiza tempo**: Problemas complexos já podem ter soluções documentadas
+- ✅ **Melhores práticas**: Aprenda com implementações já validadas pela comunidade
+- ✅ **Evita reinventar a roda**: Muitos problemas já foram resolvidos por outros desenvolvedores
+- ✅ **Reduz erros**: Soluções testadas e aprovadas pela comunidade têm menos bugs
+- ✅ **Atualização**: Descubra as abordagens mais modernas e eficientes
+
+**Exemplo de Fluxo com Pesquisa Online**:
+```
+1. ❓ Tentei implementar [funcionalidade X] mas encontrei [problema Y]
+2. 🔍 Pesquisei no GitHub: "similar implementation [funcionalidade X]"
+3. 📚 Encontrei 3 projetos similares que resolvem isso de formas diferentes
+4. 💡 Analisei os exemplos e identifiquei a abordagem mais adequada para nosso contexto
+5. ✅ Implementei baseado nas melhores práticas encontradas
+6. 📝 Documentei a fonte da solução para referência futura
+```
+
+**⚠️ Importante**: Sempre cite as fontes consultadas na documentação do projeto para referência futura e rastreabilidade.
+
 ---
 
 ### 4️⃣ **Analisar e Estudar o Projeto**
@@ -409,8 +1116,8 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
 
 **Checklist de Análise**:
 1. **Leitura de Documentação**:
-   - `docs/TASKS.md` - Contexto geral do projeto
-   - `docs/vX.X.X-SPECIFICATIONS.md` - Especificações de versões anteriores
+   - `docs/REQUIREMENTS.md` - Contexto geral do projeto
+   - `docs/SPECIFICATIONS.md` - Especificações de versões anteriores
    - `README.md` - Visão geral e instruções de uso
    - Docstrings de módulos relacionados
 
@@ -432,9 +1139,9 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
    - Há testes que precisam ser atualizados?
    - A API pública será mantida?
 
-**Exemplo Real (Task #45 - Tutorials)**:
+**Exemplo Real (Task Example - Tutorials)**:
 ```
-✅ Analisado: Outros docks (JsonTranslateDock, JsonRewriterDock)
+✅ Analisado: Outros docks (ComponentA, ComponentB)
 ✅ Identificado: Padrão BaseDock com FileInputMixin
 ✅ Verificado: QTreeWidget + QTextBrowser para navegação
 ✅ Estudado: Como outros módulos fazem markdown → HTML
@@ -450,12 +1157,20 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
 ### 5️⃣ **Fazer Sprints das Tarefas Mais Simples**
 - Agrupar 2-4 tarefas relacionadas em um sprint
 - Estimar tempo total: **máximo 3-4 horas** por sprint
-- Manter foco: **uma sprint = uma versão (ex: v2.9.14)**
+- Manter foco: **uma sprint = uma versão (ex: vX.Y.Z)**
+
+**⚠️ Importante - Divisão de Tarefas em Subtasks**:
+> Tarefas devem ser divididas em partes menores **somente se realmente necessário**, isto é:
+> - ✅ Quando há **maior probabilidade de estourar o tempo máximo** (>4h)
+> - ✅ Quando há **maior possibilidade da resposta ser muito longa** (implementação complexa)
+> - ❌ **NÃO dividir** se a tarefa é razoavelmente simples e cabe no limite de tempo
+> 
+> Esta decisão deve ser feita pela **inteligência artificial responsável pela programação** do projeto, baseada na complexidade real da tarefa.
 
 **Estrutura de Sprint**:
 ```
-Sprint v2.9.14 (Exemplo Task #23):
-├── Task #23: Orphaned Keys Update (3h estimado)
+Sprint vX.Y.Z (Exemplo Task Example):
+├── Task Example: Feature Update (3h estimado)
 │   ├── Subtask 1: Fazer perguntas ao programador (15min)
 │   ├── Subtask 2: extract_all_keys_from_obj() (45min)
 │   ├── Subtask 3: build_substitution_map_by_value() (45min)
@@ -584,8 +1299,8 @@ class SnakeCaseStrategy(CaseStrategy):
 class ProcessorFactory:
     @staticmethod
     def create(type: str) -> Processor:
-        if type == "json":
-            return JSONProcessor()
+        if type == "data":
+            return DATAProcessor()
         elif type == "ts":
             return TypeScriptProcessor()
 ```
@@ -616,7 +1331,7 @@ class ReplaceCommand:
 1. **Information Expert**: Atribua responsabilidade a quem tem a informação
 ```python
 # ✅ BOM: Dictionary tem a info, então tem o método
-class TranslationDictionary:
+class DataStore:
     def __init__(self, data: dict):
         self._data = data
     
@@ -632,7 +1347,7 @@ def get_value_from_dict(dict_data, key_path):
 2. **Creator**: Classe A cria B se A contém/agrega B
 ```python
 # ✅ BOM: RewriterDock cria seus próprios widgets
-class JsonRewriterDock(BaseDock):
+class ComponentB(BaseDock):
     def __init__(self):
         self._create_widgets()  # Creator pattern
         self._setup_layout()
@@ -865,9 +1580,9 @@ return render_template('hello.html', name=user_name)  # Jinja2 escapa automatica
 import pickle
 data = pickle.loads(user_data)  # Code execution!
 
-# ✅ SEGURO - JSON (não executa código)
-import json
-data = json.loads(user_data)
+# ✅ SEGURO - DATA (não executa código)
+import data
+data = data.loads(user_data)
 ```
 
 **9. 📦 Using Components with Known Vulnerabilities**
@@ -950,7 +1665,7 @@ def login(username, password):
 ```bash
 # Análise estática de segurança
 pip install bandit
-bandit -r src/ -f json -o security-report.json
+bandit -r src/ -f data -o security-report.data
 
 # Verificar vulnerabilidades em dependências
 pip install pip-audit
@@ -1071,8 +1786,8 @@ def build_substitution_map_by_value(
     """
     Build substitution map matching keys by their VALUES (not names).
     
-    This function compares translation values between old and new JSON files
-    to detect orphaned keys that need updating. It ignores key names and
+    This function compares translation values between old and new DATA files
+    to detect feature that need updating. It ignores key names and
     focuses solely on value equality.
     
     Args:
@@ -1106,15 +1821,15 @@ def build_substitution_map_by_value(
         - Parent keys are not matched (only leaf values)
     
     See Also:
-        - extract_all_keys_from_obj: Extract keys from JSON/Obj
+        - extract_all_keys_from_obj: Extract keys from DATA/Obj
         - apply_substitutions_to_file: Apply map to TSX files
     
     References:
-        - Task #23: Orphaned Keys Update System
-        - TASK_23_ORPHANED_KEYS_SPECIFICATION.md
+        - Task Example: Feature Update System
+        - FEATURE_SPEC.md
     
     Version:
-        Added in v2.9.14
+        Added in vX.Y.Z
     """
     # Implementation...
 ```
@@ -1150,6 +1865,377 @@ def build_substitution_map_by_value(
 
 ---
 
+### 6️⃣.6️⃣ **Ícones do Projeto** [OBRIGATÓRIO]
+
+> **CRÍTICO PARA IAs**: Todo projeto deve incluir ícones adequados para garantir profissionalismo e identidade visual.
+
+**Quando Aplicar**: Durante a implementação (Etapa 6), após definir a estrutura básica do projeto.
+
+#### 📋 Requisito Obrigatório
+
+A inteligência artificial **DEVE** produzir ou fazer download de um ícone para o projeto, seja:
+- 🌐 Site/Aplicação Web
+- 💻 Programa Desktop
+- 📱 Aplicativo Mobile
+- 🔧 Ferramenta/Utilitário
+
+#### 🎨 Formatos de Ícone por Tecnologia
+
+**Aplicações Web**:
+- ✅ **favicon.ico** (16x16, 32x32, 48x48 px) - Compatibilidade universal
+- ✅ **icon.svg** - Vetorial, escalável, moderno
+- ✅ **icon-192.png** e **icon-512.png** - PWA/Android
+- ✅ **apple-touch-icon.png** (180x180 px) - iOS
+
+**Aplicações Desktop**:
+- ✅ **icon.png** (256x256, 512x512 px) - Linux
+- ✅ **icon.ico** (múltiplos tamanhos) - Windows
+- ✅ **icon.icns** - macOS
+
+**Aplicações Mobile**:
+- ✅ **icon.png** (1024x1024 px) - iOS App Store
+- ✅ **ic_launcher.png** (múltiplas densidades) - Android
+- ✅ **adaptive-icon.xml** - Android adaptativo
+
+#### 📁 Estrutura de Pastas (OBRIGATÓRIO)
+
+Os ícones **DEVEM** ser organizados em uma pasta dedicada:
+
+```
+projeto/
+├── assets/              # ✅ PREFERIDO (padrão para todos)
+│   ├── icons/
+│   │   ├── favicon.ico
+│   │   ├── icon.svg
+│   │   ├── icon-192.png
+│   │   ├── icon-512.png
+│   │   └── apple-touch-icon.png
+│   └── ...
+│
+# OU alternativas conforme tecnologia:
+├── public/              # ✅ React, Vue, Next.js
+│   ├── favicon.ico
+│   └── icons/
+├── static/              # ✅ Flask, Django, Svelte
+│   └── icons/
+├── src/assets/          # ✅ Angular, Ionic
+│   └── icons/
+├── resources/           # ✅ Electron, Tauri
+│   └── icons/
+└── res/                 # ✅ Android nativo
+    └── drawable/
+```
+
+**Regra de Ouro**: Sempre usar uma pasta específica para ícones, nunca arquivos soltos na raiz do projeto.
+
+#### 🔧 Como Obter/Criar Ícones
+
+A IA deve seguir esta ordem de prioridade:
+
+1. **Perguntar ao Programador** (SEMPRE primeiro):
+   ```
+   ❓ Você já tem um ícone para o projeto?
+   
+   Opções:
+   A) ✅ Sim, tenho (forneça o caminho/arquivo)
+   B) 🎨 Não, crie um ícone simples para mim
+   C) 🔍 Não, baixe um ícone gratuito adequado
+   D) ⏭️ Pular por enquanto (não recomendado)
+   ```
+
+2. **Se A (Usuário fornece)**:
+   - Validar formato e tamanho
+   - Converter para formatos necessários (usar ferramentas como `convert`, `sharp`, `imagemagick`)
+   - Organizar na pasta correta
+
+3. **Se B (IA cria ícone simples)**:
+   - Criar ícone SVG vetorial com iniciais do projeto
+   - Exportar para formatos necessários (PNG, ICO)
+   - Usar cores da identidade do projeto (se definidas)
+
+4. **Se C (IA baixa ícone)**:
+   - Usar fontes gratuitas e sem copyright:
+     - ✅ [Heroicons](https://heroicons.com/) (MIT License)
+     - ✅ [Lucide Icons](https://lucide.dev/) (ISC License)
+     - ✅ [Tabler Icons](https://tabler-icons.io/) (MIT License)
+     - ✅ [Iconoir](https://iconoir.com/) (MIT License)
+   - Verificar licença antes de usar
+   - Documentar fonte no README
+
+5. **Se D (Pular)**:
+   - ⚠️ Avisar que projeto ficará sem identidade visual
+   - Adicionar task no TASKS.md para futuro: `[ ] Criar ícone do projeto`
+
+#### 🎨 Exemplo de Ícone SVG Simples (Gerado pela IA)
+
+```svg
+<!-- assets/icons/icon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#4F46E5"/>
+  <text x="50" y="65" font-family="Arial, sans-serif" font-size="48" 
+        font-weight="bold" fill="white" text-anchor="middle">MP</text>
+</svg>
+```
+
+#### 🔨 Ferramentas para Conversão de Ícones
+
+**Python** (recomendado para automação):
+```bash
+# Instalar Pillow
+pip install Pillow
+
+# Converter SVG para PNG (via cairosvg)
+pip install cairosvg
+python -c "import cairosvg; cairosvg.svg2png(url='icon.svg', write_to='icon.png', output_width=512)"
+
+# Criar ICO com múltiplos tamanhos
+from PIL import Image
+img = Image.open('icon.png')
+img.save('favicon.ico', format='ICO', sizes=[(16,16), (32,32), (48,48)])
+```
+
+**Node.js** (projetos web):
+```bash
+# Instalar sharp
+npm install sharp
+
+# Script de conversão
+node -e "
+const sharp = require('sharp');
+sharp('icon.svg').resize(192, 192).toFile('icon-192.png');
+sharp('icon.svg').resize(512, 512).toFile('icon-512.png');
+"
+```
+
+**ImageMagick** (universal):
+```bash
+# Converter SVG para PNG
+convert icon.svg -resize 192x192 icon-192.png
+
+# Criar favicon.ico
+convert icon.png -define icon:auto-resize=16,32,48 favicon.ico
+```
+
+#### 🗂️ Integração com o Projeto
+
+**HTML (Web)**:
+```html
+<!-- index.html -->
+<head>
+  <!-- Favicon básico -->
+  <link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico">
+  
+  <!-- SVG moderno (preferido) -->
+  <link rel="icon" type="image/svg+xml" href="/assets/icons/icon.svg">
+  
+  <!-- PNG para diferentes tamanhos -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+  
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  
+  <!-- Android Chrome -->
+  <link rel="manifest" href="/manifest.json">
+</head>
+```
+
+**manifest.json (PWA)**:
+```json
+{
+  "name": "Meu Projeto",
+  "short_name": "MP",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+**Python (Desktop - PyQt/Tkinter)**:
+```python
+# PyQt6
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication
+
+app = QApplication([])
+app.setWindowIcon(QIcon('assets/icons/icon.png'))
+
+# Tkinter
+import tkinter as tk
+root = tk.Tk()
+root.iconbitmap('assets/icons/icon.ico')  # Windows
+# ou
+root.iconphoto(True, tk.PhotoImage(file='assets/icons/icon.png'))  # Linux/Mac
+```
+
+**Electron (Desktop)**:
+```javascript
+// main.js
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+
+const win = new BrowserWindow({
+  icon: path.join(__dirname, 'resources/icons/icon.png')
+});
+```
+
+**React Native (Mobile)**:
+```
+// android/app/src/main/res/
+mipmap-hdpi/ic_launcher.png      (72x72)
+mipmap-mdpi/ic_launcher.png      (48x48)
+mipmap-xhdpi/ic_launcher.png     (96x96)
+mipmap-xxhdpi/ic_launcher.png    (144x144)
+mipmap-xxxhdpi/ic_launcher.png   (192x192)
+
+// ios/ProjectName/Images.xcassets/AppIcon.appiconset/
+// Configurado via Xcode ou Contents.json
+```
+
+#### ⏰ Melhor Momento para Adicionar Ícones
+
+**Recomendação**: **Durante Etapa 6 (Implementação)**, preferencialmente:
+
+1. **Início do Projeto** (✅ IDEAL):
+   - Ao criar estrutura inicial de pastas
+   - Antes do primeiro commit
+   - Facilita identidade visual desde o início
+
+2. **MVP/Protótipo** (✅ BOM):
+   - Após funcionalidades básicas funcionarem
+   - Antes de mostrar para usuários/clientes
+   - Garante profissionalismo mínimo
+
+3. **Antes de Produção** (⚠️ ACEITÁVEL):
+   - Durante preparação para deploy
+   - Antes de publicar (App Store, Play Store, web)
+   - Mínimo necessário, mas atrasado
+
+4. **❌ NUNCA**: Deixar para "depois" sem data definida
+
+#### 📋 Checklist de Ícones (Validação)
+
+```markdown
+## Checklist de Ícones - Projeto [Nome]
+
+### Ícones Criados
+- [ ] Ícone principal criado/obtido (fonte: [especificar])
+- [ ] Licença verificada (se baixado de fonte externa)
+- [ ] Formato vetorial disponível (SVG) ou fonte PNG de alta qualidade
+
+### Formatos Necessários
+- [ ] **favicon.ico** (16x16, 32x32, 48x48 px)
+- [ ] **icon.svg** (vetorial)
+- [ ] **icon-192.png** (192x192 px) - PWA
+- [ ] **icon-512.png** (512x512 px) - PWA
+- [ ] **apple-touch-icon.png** (180x180 px) - iOS
+- [ ] Outros formatos específicos da tecnologia
+
+### Organização
+- [ ] Pasta `assets/icons/` criada
+- [ ] Todos os ícones organizados na pasta correta
+- [ ] Nenhum ícone solto na raiz do projeto
+
+### Integração
+- [ ] Ícone referenciado no HTML/código principal
+- [ ] manifest.json atualizado (se PWA)
+- [ ] Testado em navegador/aplicativo (ícone aparece)
+- [ ] Documentado no README (se ícone de terceiros)
+
+### Qualidade
+- [ ] Ícone tem boa resolução (não pixelado)
+- [ ] Cores adequadas ao projeto
+- [ ] Visível em fundos claros E escuros (se aplicável)
+- [ ] Reconhecível em tamanhos pequenos (16x16)
+```
+
+#### 🎯 Rationale: Por Quê Ícones São Obrigatórios
+
+1. **Profissionalismo**: Projetos sem ícone parecem incompletos/amadores
+2. **Identidade Visual**: Usuários reconhecem o app pelo ícone (branding)
+3. **Experiência do Usuário**: Ícone ajuda a localizar o app entre várias abas/janelas
+4. **Requisitos de Plataforma**: App stores (iOS/Android) EXIGEM ícones
+5. **PWA**: Navegadores solicitam ícones para instalação
+6. **Organização**: Facilita encontrar e gerenciar assets visuais
+7. **Rastreabilidade**: Documentar fonte garante conformidade de licença
+
+#### 🚨 Erros Comuns a Evitar
+
+❌ **Não Fazer**:
+- Deixar ícone na raiz do projeto (ex: `favicon.ico` solto)
+- Usar ícone de baixa resolução (pixelado quando ampliado)
+- Esquecer de referenciar no HTML/código
+- Usar ícone com copyright sem permissão
+- Criar apenas um tamanho (navegadores precisam de múltiplos)
+
+✅ **Fazer**:
+- Organizar em pasta dedicada (`assets/icons/`)
+- Gerar múltiplos tamanhos (16, 32, 192, 512 px)
+- Validar que ícone aparece corretamente
+- Documentar fonte se ícone de terceiros
+- Usar formato vetorial (SVG) quando possível
+
+#### 📚 Recursos Úteis
+
+**Geradores de Ícone Online** (gratuitos):
+- [Favicon.io](https://favicon.io/) - Gera favicon de texto/imagem/emoji
+- [RealFaviconGenerator](https://realfavicongenerator.net/) - Gera todos os formatos
+- [Favicon Generator](https://www.favicon-generator.org/) - Simples e rápido
+
+**Bancos de Ícones Gratuitos**:
+- [Heroicons](https://heroicons.com/) - MIT License
+- [Lucide Icons](https://lucide.dev/) - ISC License
+- [Tabler Icons](https://tabler-icons.io/) - MIT License
+- [Iconoir](https://iconoir.com/) - MIT License
+- [Bootstrap Icons](https://icons.getbootstrap.com/) - MIT License
+
+**Ferramentas de Conversão**:
+- [ImageMagick](https://imagemagick.org/) - CLI universal
+- [Pillow (Python)](https://pillow.readthedocs.io/) - Biblioteca de imagens
+- [Sharp (Node.js)](https://sharp.pixelplumbing.com/) - Alto desempenho
+
+#### 📝 Exemplo de Documentação no README
+
+```markdown
+## 🎨 Ícone do Projeto
+
+**Fonte**: Criado pela IA usando iniciais do projeto  
+**Licença**: Livre para uso (gerado para este projeto)  
+**Localização**: `assets/icons/`
+
+### Formatos Disponíveis
+- `icon.svg` - Vetorial (preferido)
+- `favicon.ico` - Navegadores (16, 32, 48 px)
+- `icon-192.png` - PWA/Android
+- `icon-512.png` - PWA/Android
+- `apple-touch-icon.png` - iOS
+
+### Cores
+- Principal: `#4F46E5` (Azul Índigo)
+- Texto: `#FFFFFF` (Branco)
+```
+
+#### ⏱️ Tempo Estimado
+
+- **Criar ícone simples (IA)**: 5-10 minutos
+- **Baixar e adaptar ícone**: 10-15 minutos
+- **Converter para formatos necessários**: 5-10 minutos
+- **Integrar no projeto**: 5-10 minutos
+- **TOTAL**: 15-30 minutos
+
+**Investimento pequeno, impacto grande na percepção de qualidade do projeto.**
+
+---
+
 ### 7️⃣ **Verificar Implementação CLI + Revisão de Código**
 - **CRÍTICO**: Verificar se a nova funcionalidade está disponível via **CLI (Command Line Interface)**
 - **IMPORTANTE**: Durante a verificação, aplicar os **9 Critérios de Qualidade** ao código CLI
@@ -1162,23 +2248,23 @@ def build_substitution_map_by_value(
    ```python
    # ✅ Verificar se módulo foi importado
    from .gui import (
-       CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
-       TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-       JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-       EditorDock, TextToJsonDock  # ← NOVO módulo deve estar aqui
+       ComponentJ, ComponentK, ComponentI,
+       ComponentC, ComponentD, ComponentA,
+       ComponentB, ComponentF, ComponentG, ComponentH,
+       ComponentE, NewComponent  # ← NOVO módulo deve estar aqui
    )
    ```
 
 2. **Export no __init__.py do Módulo**:
    ```python
    # src/gui/__init__.py
-   from .text_to_json_dock import TextToJsonDock
+   from .text_to_data_dock import NewComponent
    
    __all__ = [
-       'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
-       'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
-       'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
-       'EditorDock', 'TextToJsonDock'  # ← NOVO módulo exportado
+       'ComponentJ', 'ComponentK', 'ComponentI',
+       'ComponentC', 'ComponentD', 'ComponentA',
+       'ComponentB', 'ComponentF', 'ComponentG', 'ComponentH',
+       'ComponentE', 'NewComponent'  # ← NOVO módulo exportado
    ]
    ```
 
@@ -1188,13 +2274,13 @@ def build_substitution_map_by_value(
    m_tools = bar.addMenu(tr("menu.tools"))
    
    # Criar QAction
-   self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
+   self.act_open_new_component = QAction(tr("menu.tools.text_to_data"), self)
    
    # Adicionar ao menu
-   m_tools.addAction(self.act_open_text_to_json)
+   m_tools.addAction(self.act_open_new_component)
    
    # Conectar signal
-   self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
+   self.act_open_new_component.triggered.connect(lambda: self.dock_new_component.show())
    ```
 
 4. **Dock Inicializado no __init__() ou método de setup**:
@@ -1203,38 +2289,38 @@ def build_substitution_map_by_value(
    def __init__(self):
        super().__init__()
        # ... outros docks ...
-       self._open_text_to_json()  # ← Inicializar dock
+       self._open_new_component()  # ← Inicializar dock
    
-   def _open_text_to_json(self):
-       self.dock_text_to_json = TextToJsonDock(self)
-       self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
-       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
-       self.dock_text_to_json.hide()
+   def _open_new_component(self):
+       self.dock_new_component = NewComponent(self)
+       self.dock_new_component.open_in_other_component_requested.connect(self._load_data_from_source)
+       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_new_component)
+       self.dock_new_component.hide()
    ```
 
 5. **Signals Conectados** (se aplicável):
    ```python
    # Conectar signals customizados
-   self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+   self.dock_new_component.open_in_other_component_requested.connect(self._load_data_from_source)
    
-   def _load_json_from_converter(self, json_str: str):
-       """Callback para abrir JSON no editor"""
-       if not hasattr(self, 'dock_editor'):
-           self._open_editor()
-       self.dock_editor.load_json_string(json_str)
-       self.dock_editor.show()
+   def _load_data_from_source(self, data_str: str):
+       """Callback para abrir DATA no editor"""
+       if not hasattr(self, 'component_viewer'):
+           self._open_component()
+       self.component_viewer.load_data_string(data_str)
+       self.component_viewer.show()
    ```
 
 6. **Traduções i18n Adicionadas**:
-   ```json
-   // src/i18n/en.json
+   ```data
+   // src/i18n/en.data
    {
-     "menu.tools.text_to_json": "Text to JSON Converter"
+     "menu.tools.text_to_data": "Text to DATA Converter"
    }
    
-   // src/i18n/pt_BR.json
+   // src/i18n/pt_BR.data
    {
-     "menu.tools.text_to_json": "Conversor de Texto para JSON"
+     "menu.tools.text_to_data": "Conversor de Texto para DATA"
    }
    ```
 
@@ -1246,14 +2332,14 @@ def build_substitution_map_by_value(
 - ✅ **Sem erros no console**: Não deve haver ImportError, AttributeError, etc.
 - ✅ **Tradução funcionando**: Menu em PT-BR deve mostrar texto traduzido
 
-**Exemplo Real (Task #49 - Text to JSON Converter)**:
+**Exemplo Real (Task Example - Text to DATA Converter)**:
 ```python
-✅ Import: from .gui import TextToJsonDock
-✅ Export: __all__ = [..., 'TextToJsonDock']
-✅ Menu: self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
-✅ Init: self._open_text_to_json() chamado em __init__()
-✅ Signal: open_in_editor_requested.connect(self._load_json_from_converter)
-✅ i18n: EN "Text to JSON Converter", PT-BR "Conversor de Texto para JSON"
+✅ Import: from .gui import NewComponent
+✅ Export: __all__ = [..., 'NewComponent']
+✅ Menu: self.act_open_new_component = QAction(tr("menu.tools.text_to_data"), self)
+✅ Init: self._open_new_component() chamado em __init__()
+✅ Signal: open_in_other_component_requested.connect(self._load_data_from_source)
+✅ i18n: EN "Text to DATA Converter", PT-BR "Conversor de Texto para DATA"
 ✅ Teste: Menu abre dock, conversão funciona, signal para editor OK
 ```
 
@@ -1283,23 +2369,23 @@ def build_substitution_map_by_value(
    ```python
    # ✅ Verificar se módulo foi importado
    from .gui import (
-       CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
-       TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-       JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-       EditorDock, TextToJsonDock  # ← NOVO módulo deve estar aqui
+       ComponentJ, ComponentK, ComponentI,
+       ComponentC, ComponentD, ComponentA,
+       ComponentB, ComponentF, ComponentG, ComponentH,
+       ComponentE, NewComponent  # ← NOVO módulo deve estar aqui
    )
    ```
 
 2. **Export no __init__.py do Módulo**:
    ```python
    # src/gui/__init__.py
-   from .text_to_json_dock import TextToJsonDock
+   from .text_to_data_dock import NewComponent
    
    __all__ = [
-       'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
-       'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
-       'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
-       'EditorDock', 'TextToJsonDock'  # ← NOVO módulo exportado
+       'ComponentJ', 'ComponentK', 'ComponentI',
+       'ComponentC', 'ComponentD', 'ComponentA',
+       'ComponentB', 'ComponentF', 'ComponentG', 'ComponentH',
+       'ComponentE', 'NewComponent'  # ← NOVO módulo exportado
    ]
    ```
 
@@ -1309,13 +2395,13 @@ def build_substitution_map_by_value(
    m_tools = bar.addMenu(tr("menu.tools"))
    
    # Criar QAction
-   self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)
+   self.act_open_new_component = QAction(tr("menu.tools.text_to_data"), self)
    
    # Adicionar ao menu
-   m_tools.addAction(self.act_open_text_to_json)
+   m_tools.addAction(self.act_open_new_component)
    
    # Conectar signal
-   self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
+   self.act_open_new_component.triggered.connect(lambda: self.dock_new_component.show())
    ```
 
 4. **Dock Inicializado no __init__() ou método de setup**:
@@ -1324,38 +2410,38 @@ def build_substitution_map_by_value(
    def __init__(self):
        super().__init__()
        # ... outros docks ...
-       self._open_text_to_json()  # ← Inicializar dock
+       self._open_new_component()  # ← Inicializar dock
    
-   def _open_text_to_json(self):
-       self.dock_text_to_json = TextToJsonDock(self)
-       self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
-       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
-       self.dock_text_to_json.hide()
+   def _open_new_component(self):
+       self.dock_new_component = NewComponent(self)
+       self.dock_new_component.open_in_other_component_requested.connect(self._load_data_from_source)
+       self.addDockWidget(Qt.RightDockWidgetArea, self.dock_new_component)
+       self.dock_new_component.hide()
    ```
 
 5. **Signals Conectados** (se aplicável):
    ```python
    # Conectar signals customizados
-   self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+   self.dock_new_component.open_in_other_component_requested.connect(self._load_data_from_source)
    
-   def _load_json_from_converter(self, json_str: str):
-       """Callback para abrir JSON no editor"""
-       if not hasattr(self, 'dock_editor'):
-           self._open_editor()
-       self.dock_editor.load_json_string(json_str)
-       self.dock_editor.show()
+   def _load_data_from_source(self, data_str: str):
+       """Callback para abrir DATA no editor"""
+       if not hasattr(self, 'component_viewer'):
+           self._open_component()
+       self.component_viewer.load_data_string(data_str)
+       self.component_viewer.show()
    ```
 
 6. **Traduções i18n Adicionadas**:
-   ```json
-   // src/i18n/en.json
+   ```data
+   // src/i18n/en.data
    {
-     "menu.tools.text_to_json": "Text to JSON Converter"
+     "menu.tools.text_to_data": "Text to DATA Converter"
    }
    
-   // src/i18n/pt_BR.json
+   // src/i18n/pt_BR.data
    {
-     "menu.tools.text_to_json": "Conversor de Texto para JSON"
+     "menu.tools.text_to_data": "Conversor de Texto para DATA"
    }
    ```
 
@@ -1423,22 +2509,22 @@ Durante a verificação do GUI, aplicar simultaneamente os seguintes critérios:
 **Exemplo de Revisão GUI Aplicada**:
 ```python
 # ❌ ANTES - Omissão, Ambiguidade, Maior Acoplamento
-class TextToJsonDock(QDockWidget):
+class NewComponent(QDockWidget):
     def __init__(self):
         self.btn = QPushButton("Convert")  # Label vago
         self.btn.clicked.connect(self.convert)  # Sem tratamento de erro
     
     def convert(self):
         data = open(self.ed_file.text()).read()  # Sem validação, sem fechar
-        json_str = my_convert(data)  # Lógica de negócio no GUI
-        print(json_str)  # Debug esquecido
+        data_str = my_convert(data)  # Lógica de negócio no GUI
+        print(data_str)  # Debug esquecido
 
 # ✅ DEPOIS - Completo, Claro, Desacoplado
-class TextToJsonDock(BaseDock):
-    """Text to JSON Converter dock widget."""
+class NewComponent(BaseDock):
+    """Text to DATA Converter dock widget."""
     
     # Signal para comunicação
-    open_in_editor_requested = Signal(str)
+    open_in_other_component_requested = Signal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1454,16 +2540,16 @@ class TextToJsonDock(BaseDock):
         self.ed_file = QLineEdit()
         self.ed_file.setPlaceholderText("Enter file path or paste text")
         
-        self.btn_convert = QPushButton("Convert to JSON")
-        self.btn_convert.setToolTip("Convert text to JSON format")
+        self.btn_convert = QPushButton("Convert to DATA")
+        self.btn_convert.setToolTip("Convert text to DATA format")
         
-        self.btn_open_editor = QPushButton("Open in Editor")
-        self.btn_open_editor.setEnabled(False)  # Disabled até converter
+        self.btn_open_component = QPushButton("Open in Editor")
+        self.btn_open_component.setEnabled(False)  # Disabled até converter
     
     def _connect_signals(self):
         """Connect signals to slots."""
         self.btn_convert.clicked.connect(self._on_convert_clicked)
-        self.btn_open_editor.clicked.connect(self._on_open_editor_clicked)
+        self.btn_open_component.clicked.connect(self._on_open_component_clicked)
     
     def _on_convert_clicked(self):
         """Handle convert button click."""
@@ -1482,21 +2568,21 @@ class TextToJsonDock(BaseDock):
                 text = file_path  # Tratar como texto direto
             
             # Converter usando controller (desacoplamento)
-            self._json_result = self._converter.convert(text)
+            self._data_result = self._converter.convert(text)
             
             # Feedback visual
             QMessageBox.information(self, "Success", "Conversion successful!")
-            self.btn_open_editor.setEnabled(True)
+            self.btn_open_component.setEnabled(True)
         
         except FileNotFoundError:
             QMessageBox.critical(self, "File Not Found", f"File not found: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "Conversion Error", f"Error: {str(e)}")
     
-    def _on_open_editor_clicked(self):
+    def _on_open_component_clicked(self):
         """Handle open in editor button click."""
-        if hasattr(self, '_json_result'):
-            self.open_in_editor_requested.emit(self._json_result)  # Signal
+        if hasattr(self, '_data_result'):
+            self.open_in_other_component_requested.emit(self._data_result)  # Signal
 ```
 
 **Ferramentas Recomendadas GUI**:
@@ -1523,14 +2609,14 @@ grep -r "print(" src/gui/ --exclude="*_test.py"
 6. ❓ "Labels, tooltips e mensagens são claros e descritivos?"
 7. ❓ "Recursos (arquivos, conexões) são fechados corretamente?"
 
-**Exemplo Real (Task #49 - Text to JSON Converter)**:
+**Exemplo Real (Task Example - Text to DATA Converter)**:
 ```python
-✅ Import: from .gui import TextToJsonDock
-✅ Export: __all__ = [..., 'TextToJsonDock']
-✅ Menu: self.act_open_text_to_json.triggered.connect(lambda: self.dock_text_to_json.show())
-✅ Init: self._open_text_to_json() chamado em __init__()
-✅ Signal: open_in_editor_requested.connect(self._load_json_from_converter)
-✅ i18n: EN "Text to JSON Converter", PT-BR "Conversor de Texto para JSON"
+✅ Import: from .gui import NewComponent
+✅ Export: __all__ = [..., 'NewComponent']
+✅ Menu: self.act_open_new_component.triggered.connect(lambda: self.dock_new_component.show())
+✅ Init: self._open_new_component() chamado em __init__()
+✅ Signal: open_in_other_component_requested.connect(self._load_data_from_source)
+✅ i18n: EN "Text to DATA Converter", PT-BR "Conversor de Texto para DATA"
 ✅ Revisão: Sem debug prints, tratamento de erros OK, lógica desacoplada
 ✅ Teste: Menu abre dock, conversão funciona, signal para editor OK
 ```
@@ -1701,13 +2787,13 @@ pa11y http://localhost:8000
 
 ```python
 class AccessibleConverterDock(QDockWidget):
-    """Accessible text to JSON converter with WCAG 2.1 Level AA compliance."""
+    """Accessible text to DATA converter with WCAG 2.1 Level AA compliance."""
     
     def __init__(self, parent=None):
-        super().__init__("Text to JSON Converter", parent)
-        self.setAccessibleName("Text to JSON Converter Dock")
+        super().__init__("Text to DATA Converter", parent)
+        self.setAccessibleName("Text to DATA Converter Dock")
         self.setAccessibleDescription(
-            "Convert structured text files to JSON format with preview"
+            "Convert structured text files to DATA format with preview"
         )
         self._create_accessible_widgets()
         self._setup_shortcuts()
@@ -1722,12 +2808,12 @@ class AccessibleConverterDock(QDockWidget):
         self.lbl_input.setBuddy(self.ed_input)  # Alt+I foca no input
         
         # Botão com tooltip e shortcut
-        self.btn_convert = QPushButton("&Convert to JSON")
+        self.btn_convert = QPushButton("&Convert to DATA")
         self.btn_convert.setAccessibleName("Convert button")
         self.btn_convert.setAccessibleDescription(
-            "Convert input file to JSON format. Shortcut: Ctrl+Enter"
+            "Convert input file to DATA format. Shortcut: Ctrl+Enter"
         )
-        self.btn_convert.setToolTip("Convert text to JSON (Ctrl+Enter)")
+        self.btn_convert.setToolTip("Convert text to DATA (Ctrl+Enter)")
         self.btn_convert.setShortcut(QKeySequence("Ctrl+Return"))
         
         # Indicador de foco
@@ -1743,12 +2829,12 @@ class AccessibleConverterDock(QDockWidget):
         self.group_options = QGroupBox("Conversion &Options")
         self.group_options.setAccessibleName("Conversion options group")
         
-        self.chk_pretty = QCheckBox("&Pretty print JSON")
+        self.chk_pretty = QCheckBox("&Pretty print DATA")
         self.chk_pretty.setAccessibleName("Pretty print option")
         self.chk_pretty.setAccessibleDescription(
-            "Format JSON with indentation for readability"
+            "Format DATA with indentation for readability"
         )
-        self.chk_pretty.setToolTip("Format JSON with indentation")
+        self.chk_pretty.setToolTip("Format DATA with indentation")
         
         # Alto contraste para status
         self.lbl_status = QLabel("Ready")
@@ -1777,7 +2863,7 @@ class AccessibleConverterDock(QDockWidget):
         """Show accessible help dialog."""
         QMessageBox.information(
             self,
-            "Text to JSON Converter - Help",
+            "Text to DATA Converter - Help",
             "<h3>Keyboard Shortcuts</h3>"
             "<ul>"
             "<li><b>Ctrl+Enter</b>: Convert file</li>"
@@ -1811,7 +2897,7 @@ class AccessibleConverterDock(QDockWidget):
 1. **Teste de Fluxo Completo GUI**:
    ```bash
    # Iniciar aplicativo
-   python -m clarify --gui
+   python -m app --gui
    
    # Testar manualmente:
    [ ] Menu item aparece corretamente?
@@ -1826,13 +2912,13 @@ class AccessibleConverterDock(QDockWidget):
 2. **Teste de Fluxo Completo CLI**:
    ```bash
    # Testar help
-   python -m clarify text2json --help
+   python -m app convert --help
    
    # Testar funcionalidade
-   python -m clarify text2json test.txt --pretty -o output.json
+   python -m app convert test.txt --pretty -o output.data
    
    # Testar pipes
-   echo "name: John" | python -m clarify text2json -
+   echo "name: John" | python -m app convert -
    
    # Verificar:
    [ ] Help text aparece?
@@ -1845,8 +2931,8 @@ class AccessibleConverterDock(QDockWidget):
 3. **Teste de Integração entre Componentes**:
    ```bash
    # Exemplo: Converter texto → Abrir no editor
-   [ ] Clicar em "Open in Editor" no Text to JSON Converter abre o Editor?
-   [ ] JSON é carregado corretamente no Editor?
+   [ ] Clicar em "Open in Editor" no Text to DATA Converter abre o Editor?
+   [ ] DATA é carregado corretamente no Editor?
    [ ] Editor pode salvar o resultado?
    
    # Exemplo: Busca → Abrir arquivo
@@ -1875,17 +2961,17 @@ class AccessibleConverterDock(QDockWidget):
 **Exemplo Real de Problema de Integração**:
 ```python
 # ❌ PROBLEMA ENCONTRADO NA INTEGRAÇÃO:
-# Task #49 - Text to JSON Converter CLI
+# Task Example - Text to DATA Converter CLI
 # Problema: Extractor() estava sendo chamado sem 3 parâmetros obrigatórios
 
 # ANTES (quebrava na integração):
 def main():
-    if args.command == 'text2json':
+    if args.command == 'convert':
         extractor = Extractor()  # ❌ TypeError: missing 3 required arguments
 
 # DEPOIS (corrigido):
 def main():
-    if args.command == 'text2json':
+    if args.command == 'convert':
         extractor = Extractor(
             avoid_keys="",
             avoid_keys_parameter="equals",
@@ -1931,7 +3017,7 @@ git checkout -b feature/task-42-add-export
 
 # 2. Implementar e commitar
 git add clarify_patched.py
-git commit -m "Add CSV export feature (Task #42)"
+git commit -m "Add CSV export feature (Task Example)"
 
 # 3. Push e criar PR
 git push origin feature/task-42-add-export
@@ -1946,7 +3032,7 @@ git push origin feature/task-42-add-export
 
 ```markdown
 ## Descrição
-Implementa exportação CSV para Task #42 do Protocolo Simplicidade.
+Implementa exportação CSV para Task Example do Protocolo Simplicidade.
 
 ## Tipo de Mudança
 - [x] Nova feature
@@ -1955,7 +3041,7 @@ Implementa exportação CSV para Task #42 do Protocolo Simplicidade.
 - [ ] Documentação
 
 ## Checklist Protocolo Simplicidade
-- [x] Etapa 1: Task definida e selecionada (Task #42)
+- [x] Etapa 1: Task definida e selecionada (Task Example)
 - [x] Etapa 2: Dividida em subtasks
 - [x] Etapa 6: Código implementado
 - [x] Etapa 7: Code review manual (auto-review)
@@ -2062,7 +3148,7 @@ def export_to_csv(self, filename):
 
 ```bash
 # GitHub CLI - Criar PR via terminal
-gh pr create --title "Add CSV export" --body "Implements Task #42"
+gh pr create --title "Add CSV export" --body "Implements Task Example"
 
 # Revisar PR localmente
 gh pr checkout 123
@@ -2165,7 +3251,7 @@ review_metrics = {
 4. **Integration**: Fluxo completo (incluindo integração GUI/CLI)
 5. **Quality Validation**: Testes que validam ausência dos 9 problemas das Etapas 7 e 8
 
-**Exemplo Task #23**:
+**Exemplo Task Example**:
 ```python
 ✅ test_extract_from_dict_simple()
 ✅ test_extract_from_obj_type()
@@ -2189,7 +3275,7 @@ review_metrics = {
 
 #### 🛡️ **Etapa 9.1 - Segurança em Testes (CRÍTICO)**
 
-**Problema Identificado** (Task #50 - 01/12/2025):
+**Problema Identificado** (Task Example - 01/12/2025):
 - Testes GUI travaram em **loop infinito** por >1 hora sem timeout
 - Nenhuma detecção automática de deadlock ou travamento
 - Testes aguardavam display X11 inexistente (ambiente headless)
@@ -2318,9 +3404,9 @@ from memory_profiler import profile
 
 @profile
 def load_large_file(filepath):
-    """Load and process large JSON file."""
+    """Load and process large DATA file."""
     with open(filepath, 'r') as f:
-        data = json.load(f)  # Carrega tudo na memória
+        data = data.load(f)  # Carrega tudo na memória
     
     # Processar...
     results = []
@@ -2526,7 +3612,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-json
+      - id: check-data
       - id: check-added-large-files
         args: ['--maxkb=500']
   
@@ -2695,10 +3781,10 @@ security:bandit:
   image: python:3.11
   script:
     - pip install bandit
-    - bandit -r clarify_patched.py -f json -o bandit-report.json
+    - bandit -r clarify_patched.py -f data -o bandit-report.data
   artifacts:
     reports:
-      sast: bandit-report.json
+      sast: bandit-report.data
   allow_failure: false
 
 deploy:production:
@@ -2716,7 +3802,7 @@ deploy:production:
 ```python
 # Script para gerar relatório de qualidade
 import subprocess
-import json
+import data
 
 def run_quality_checks():
     """Executa quality gates e gera relatório."""
@@ -2728,11 +3814,11 @@ def run_quality_checks():
     
     # 1. Code Coverage
     cov = subprocess.run(
-        ["pytest", "--cov=.", "--cov-report=json"],
+        ["pytest", "--cov=.", "--cov-report=data"],
         capture_output=True
     )
-    with open("coverage.json") as f:
-        results["checks"]["coverage"] = json.load(f)["totals"]["percent_covered"]
+    with open("coverage.data") as f:
+        results["checks"]["coverage"] = data.load(f)["totals"]["percent_covered"]
     
     # 2. Linting Score
     flake8 = subprocess.run(
@@ -2744,15 +3830,15 @@ def run_quality_checks():
     
     # 3. Security Issues
     bandit = subprocess.run(
-        ["bandit", "-r", ".", "-f", "json"],
+        ["bandit", "-r", ".", "-f", "data"],
         capture_output=True
     )
-    bandit_data = json.loads(bandit.stdout)
+    bandit_data = data.loads(bandit.stdout)
     results["checks"]["security_issues"] = len(bandit_data["results"])
     
     # 4. Type Coverage (MyPy)
     mypy = subprocess.run(
-        ["mypy", "clarify_patched.py", "--json-report", ".mypy"],
+        ["mypy", "clarify_patched.py", "--data-report", ".mypy"],
         capture_output=True
     )
     # Parse MyPy report...
@@ -2778,7 +3864,7 @@ def run_quality_checks():
 # Integrar com CI
 if __name__ == "__main__":
     results = run_quality_checks()
-    print(json.dumps(results, indent=2))
+    print(data.dumps(results, indent=2))
     
     if not results["passed"]:
         print("\n❌ Quality gates FAILED!")
@@ -3050,7 +4136,8 @@ python tests/run_tests_monitored.py
 ---
 
 ### 1️⃣1️⃣ **Organizar Pasta Raiz do Projeto**
-- **CRÍTICO**: Antes da documentação, **organizar a pasta raiz**
+- **CRÍTICO**: Antes da documentação e do commit, **organizar a pasta raiz recursivamente**
+- **OBRIGATÓRIO**: Arquivos devem estar organizados nas pastas corretas antes do commit
 - Remover arquivos temporários, backups desnecessários
 - Verificar se todos os arquivos estão nos lugares corretos
 - Limpar cache e arquivos gerados (`__pycache__`, `.pyc`)
@@ -3068,30 +4155,71 @@ python tests/run_tests_monitored.py
    find . -type f -name "*.pyo" -delete
    ```
 
-2. **Verificação de Estrutura de Diretórios**:
+2. **Verificação de Estrutura de Diretórios (OBRIGATÓRIO)**:
    - `src/` - código-fonte
-   - `tests/` - testes unitários
-   - `docs/` - documentação
+   - `tests/` - **TODOS os arquivos de teste** (obrigatório)
+   - `docs/` - **TODOS os documentos e arquivos markdown** (obrigatório)
    - Arquivos raiz organizados (README, setup.py, etc.)
 
-**Exemplo**:
-```bash
-# ANTES (pasta bagunçada):
-├── src/
-├── apply_v2913_patches.py  ❌ temporário
-├── test_temp.py           ❌ teste descartável
-├── backup_old/            ❌ backup antigo
-├── __pycache__/           ❌ cache
-└── file.py.backup_v2913   ❌ backup desnecessário
+3. **Organização Recursiva Obrigatória**:
+   
+   **⚠️ REGRA FUNDAMENTAL**: 
+   > Antes do commit, os arquivos devem ser organizados nas pastas recursivamente. Isto é **obrigatório** para manter o ambiente limpo e organizado.
 
-# DEPOIS (organizado):
-├── src/          ✅
-├── tests/        ✅
-├── docs/         ✅
-└── README.md     ✅
+   **Regras Específicas por Tipo de Arquivo**:
+   
+   a) **Arquivos de Teste** → `tests/`
+      - ✅ `test_*.py`, `*_test.py` → `tests/`
+      - ✅ Estrutura de testes deve espelhar estrutura do código
+      - ✅ Exemplo: `tests/unit/`, `tests/integration/`, `tests/fixtures/`
+   
+   b) **Documentos e Markdown** → `docs/`
+      - ✅ Todos arquivos `.md` (exceto README.md raiz) → `docs/`
+      - ✅ Arquivos de documentação → `docs/`
+      - ✅ **Organização recursiva dentro de `docs/`**:
+        - `docs/api/` - Documentação de API
+        - `docs/tutorials/` - Tutoriais
+        - `docs/architecture/` - Decisões arquiteturais (ADRs)
+        - `docs/user-guide/` - Guias de usuário
+        - `docs/dev-guide/` - Guias de desenvolvimento
+        - `docs/adr/` - Architecture Decision Records (ver Etapa 11.5)
+      - ✅ Criar subpastas que identificam contexto dos arquivos
+   
+   c) **Código-Fonte** → `src/` ou pasta apropriada
+      - ✅ Organizar por módulos/features
+      - ✅ Exemplo: `src/core/`, `src/utils/`, `src/api/`
+
+**Exemplo Completo**:
+```bash
+# ANTES (pasta desorganizada):
+├── src/
+├── test_utils.py              ❌ teste fora de tests/
+├── API_DOCS.md                ❌ doc fora de docs/
+├── tutorial.md                ❌ doc fora de docs/
+├── apply_v2913_patches.py     ❌ temporário
+├── test_temp.py               ❌ teste temporário
+├── backup_old/                ❌ backup antigo
+├── __pycache__/               ❌ cache
+└── file.py.backup_v2913       ❌ backup desnecessário
+
+# DEPOIS (organizado recursivamente):
+├── src/
+│   ├── core/
+│   └── utils/
+├── tests/                     ✅ TODOS os testes
+│   ├── unit/
+│   │   └── test_utils.py     ✅ teste movido
+│   └── integration/
+├── docs/                      ✅ TODOS os documentos
+│   ├── api/
+│   │   └── API_DOCS.md       ✅ doc movido
+│   ├── tutorials/
+│   │   └── tutorial.md       ✅ doc movido
+│   └── adr/                   ✅ ADRs organizados
+└── README.md                  ✅ README raiz mantido
 ```
 
-**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo. Documentar o estado **limpo** do projeto.
+**Por quê?**: Manter repositório limpo, evitar commits de lixo, facilitar navegação, profissionalismo, organização recursiva garante escalabilidade. Documentar o estado **limpo** e **organizado** do projeto.
 
 ---
 
@@ -3126,7 +4254,7 @@ ADR (Architecture Decision Record) documenta **por quê** decisões importantes 
 ✅ **ACEITO** - 2024-01-15
 
 ## Contexto
-O projeto Clarify precisa de interface gráfica (GUI) para gerenciar tarefas além da CLI existente.
+O projeto precisa de interface gráfica (GUI) para gerenciar tarefas além da CLI existente.
 
 **Requisitos**:
 - Cross-platform (Linux, Windows, macOS)
@@ -3179,7 +4307,7 @@ Escolhemos **PyQt6** para a implementação da GUI.
 ## Referências
 - [PyQt6 Documentation](https://www.riverbankcomputing.com/static/Docs/PyQt6/)
 - [Qt6 Documentation](https://doc.qt.io/qt-6/)
-- Task #23: "Add GUI with docking support"
+- Task Example: "Add GUI with docking support"
 
 ## Notas
 Se no futuro precisarmos de licença mais permissiva (MIT/Apache), considerar:
@@ -3200,7 +4328,7 @@ clarify/
 ├── docs/
 │   ├── adr/
 │   │   ├── 001-choice-of-pyqt6.md
-│   │   ├── 002-json-storage-format.md
+│   │   ├── 002-data-storage-format.md
 │   │   ├── 003-simplicity-protocol-versioning.md
 │   │   └── README.md  (Índice de ADRs)
 │   ├── PROTOCOLO_SIMPLICIDADE_1.md
@@ -3219,7 +4347,7 @@ clarify/
 - [ADR-003](003-simplicity-protocol-versioning.md): Versionamento Protocolo Simplicidade ✅ ACEITO
 
 ## Superseded Decisions
-- [ADR-002](002-json-storage-format.md): JSON como formato de armazenamento ⚠️ SUPERSEDED
+- [ADR-002](002-data-storage-format.md): DATA como formato de armazenamento ⚠️ SUPERSEDED
   - Substituído por SQLite em ADR-004 (2024-02-01)
 
 ## Rejected Decisions
@@ -3227,7 +4355,7 @@ clarify/
 
 ## Proposed (Pendente Discussão)
 - ADR-005: Implementar suporte a plugins
-- ADR-006: Migrar de JSON para SQLite
+- ADR-006: Migrar de DATA para SQLite
 
 ---
 
@@ -3241,7 +4369,7 @@ ADRs são numerados sequencialmente: 001, 002, 003, etc.
 **Exemplo de ADR Superseded**:
 
 ```markdown
-# ADR-002: JSON como Formato de Armazenamento
+# ADR-002: DATA como Formato de Armazenamento
 
 ## Status
 ⚠️ **SUPERSEDED** por [ADR-004](004-migrate-to-sqlite.md) em 2024-02-01
@@ -3250,17 +4378,17 @@ ADRs são numerados sequencialmente: 001, 002, 003, etc.
 (contexto original...)
 
 ## Decisão
-Usar JSON para persistência de tasks.
+Usar DATA para persistência de tasks.
 
 ## Consequências
 
 ### Por quê foi supersedido?
-JSON funcionou bem para até ~500 tasks, mas performance degradou significativamente:
+DATA funcionou bem para até ~500 tasks, mas performance degradou significativamente:
 - Tempo de leitura: 2.5s para 1000 tasks (inaceitável)
 - Concorrência: Não suporta múltiplas janelas simultâneas
 - Queries: Difícil filtrar/buscar sem carregar tudo
 
-**Solução**: Migrar para SQLite (ADR-004) mantendo JSON como export opcional.
+**Solução**: Migrar para SQLite (ADR-004) mantendo DATA como export opcional.
 
 ---
 **Autor**: Josué  
@@ -3281,7 +4409,7 @@ adr new "Implement caching layer"
 adr list
 
 # Supersede ADR antigo
-adr new -s 2 "Migrate from JSON to SQLite"
+adr new -s 2 "Migrate from DATA to SQLite"
 # Cria ADR novo e marca #2 como superseded
 
 # Gerar visualização
@@ -3293,7 +4421,7 @@ adr generate graph > adr-graph.svg
 ```python
 # ✅ MERECE ADR - Decisão impactante
 """
-Decidimos usar SQLite em vez de JSON.
+Decidimos usar SQLite em vez de DATA.
 Impacto:
 - Muda persistência de dados (migração necessária)
 - Afeta performance (10x mais rápido)
@@ -3349,7 +4477,7 @@ Rationale:
 ## PR #145: Implement SQLite storage
 
 ### Descrição
-Migra persistência de JSON para SQLite (Task #67).
+Migra persistência de DATA para SQLite (Task Example).
 
 ### Architecture Decision
 Este PR implementa **ADR-004: Migrate to SQLite**.
@@ -3362,12 +4490,12 @@ Este PR implementa **ADR-004: Migrate to SQLite**.
 
 **Riscos Mitigados**:
 - Migração automática no primeiro uso (v2.0.0)
-- Backup automático do JSON antes de migrar
+- Backup automático do DATA antes de migrar
 - Rollback disponível se migração falhar
 
 ### Ver ADR
 - [ADR-004: Migrate to SQLite](docs/adr/004-migrate-to-sqlite.md)
-- Supersedes ADR-002 (JSON storage)
+- Supersedes ADR-002 (DATA storage)
 
 ### Checklist
 - [x] ADR criado e commitado
@@ -3387,37 +4515,414 @@ Este PR implementa **ADR-004: Migrate to SQLite**.
 
 ### 1️⃣2️⃣ **Preencher Nova Documentação**
 - **Atualizar arquivo de tarefas/requisitos**: Marcar tasks como `[X]` completas
-- **Criar vX.X.X-SPECIFICATIONS.md**: Documento detalhado da versão
+- **Criar SPECIFICATIONS.md**: Documento detalhado da versão
 - **Atualizar estatísticas**: Percentual de conclusão do projeto
+- **🤖 [OPCIONAL] Gerenciar recomendações de novas tarefas pela IA**
 
-**📋 Marcação de Tarefas em Arquivo de Requisitos**:
+---
+
+### ⚠️ **REQUISITO OBRIGATÓRIO: Documentação Completa de Todas as Implementações da IA**
+
+> **CRÍTICO PARA IAs**: Tudo aquilo que a inteligência artificial faz no projeto, em cada ciclo de implementação, em cada código, cada funcionalidade implementada, **DEVE SER DOCUMENTADO NA PASTA `docs/` COMO REQUISITO OBRIGATÓRIO** para demarcar as novas funcionalidades e novos comportamentos.
+
+#### **🤖 Regra de Ouro para Assistentes de IA**
+
+**Se você é uma IA implementando código:**
+- ✅ **VOCÊ DEVE** documentar TODAS as implementações que realizar em cada ciclo
+- ✅ **VOCÊ DEVE** criar/atualizar arquivos na pasta `docs/` para cada funcionalidade nova
+- ✅ **VOCÊ DEVE** descrever TODOS os comportamentos novos implementados
+- ✅ **VOCÊ DEVE** marcar claramente o que foi adicionado, modificado ou removido
+- ✅ **VOCÊ DEVE** incluir exemplos de uso das novas funcionalidades
+- ✅ **VOCÊ DEVE** documentar decisões técnicas e arquiteturais tomadas
+
+#### **📝 O Que Deve Ser Documentado (OBRIGATÓRIO)**
+
+Para **CADA ciclo de implementação**, a IA deve documentar na pasta `docs/`:
+
+1. **Funcionalidades Implementadas**:
+   - Nome e descrição detalhada de cada nova funcionalidade
+   - Propósito e casos de uso
+   - Comportamento esperado e edge cases
+
+2. **Código Criado/Modificado**:
+   - Arquivos novos criados (path completo + descrição)
+   - Arquivos modificados (path + o que foi alterado)
+   - Funções/classes principais adicionadas ou modificadas
+
+3. **Arquitetura e Decisões Técnicas**:
+   - Padrões de design aplicados (GoF, GRASP)
+   - Estrutura de módulos e suas responsabilidades
+   - Decisões arquiteturais e suas justificativas
+   - **[SIMPLICIDADE 2]** ADRs formais (Architecture Decision Records) quando aplicável
+
+4. **Comportamentos e Integrações**:
+   - Como a funcionalidade interage com o resto do sistema
+   - Dependências criadas ou modificadas
+   - Fluxos de dados e controle
+
+5. **Testes Implementados**:
+   - Quantidade e tipos de testes criados
+   - Cenários de teste cobertos
+   - Cobertura de testes alcançada
+
+6. **Exemplos de Uso**:
+   - Como utilizar a nova funcionalidade
+   - Exemplos de código (CLI, API, GUI)
+   - Casos de uso práticos
+
+7. **[SIMPLICIDADE 2] Documentação Enterprise Adicional**:
+   - Documentação de API (Sphinx/pdoc) para bibliotecas públicas
+   - Checklist de segurança OWASP preenchido
+   - Checklist de acessibilidade WCAG (para GUI)
+   - Resultados de profiling (para features críticas)
+   - Planos de rollback documentados
+
+#### **📂 Estrutura Obrigatória de Documentação (Simplicidade 2)**
+
+A pasta `docs/` deve conter no mínimo:
+
+```
+docs/
+├── REQUIREMENTS.md          # Lista de tarefas e requisitos (atualizado a cada ciclo)
+├── vX.Y.Z-SPECIFICATIONS.md # Especificações detalhadas da versão atual
+├── CHANGELOG.md             # Histórico de mudanças (o que foi implementado e quando)
+├── ARCHITECTURE.md          # Decisões arquiteturais e estrutura do projeto
+├── ADR/                     # Architecture Decision Records (Simplicidade 2)
+│   ├── ADR-001-[decisao].md
+│   └── ADR-002-[decisao].md
+├── SECURITY.md              # Checklist OWASP e vulnerabilidades mitigadas
+├── API/                     # Documentação de API (se aplicável)
+│   └── api-reference.html   # Gerado por Sphinx/pdoc
+└── [feature]-GUIDE.md       # Guias específicos para funcionalidades complexas
+```
+
+**Criação Automática**:
+- Se a pasta `docs/` não existe, ela **DEVE SER CRIADA AUTOMATICAMENTE** pela IA
+- Se um arquivo de documentação não existe, ele **DEVE SER CRIADO** pela IA no primeiro ciclo
+- Todos os arquivos devem ser atualizados **A CADA CICLO** de implementação
+
+#### **📋 Template Mínimo para SPECIFICATIONS.md (Simplicidade 2)**
+
+Cada arquivo de especificações de versão deve conter no mínimo:
+
+```markdown
+# [Nome do Projeto] vX.Y.Z - [Nome Descritivo]
+
+**Data**: DD/MM/AAAA
+**Sprint**: X tasks em Y horas
+**Metodologia**: Protocolo Simplicidade 2
+**Code Review**: [Aprovado por: Nome/Equipe]
+
+## 📋 Objetivos da Sprint
+- Task #X: [descrição]
+- Task #Y: [descrição]
+
+## 🎯 Funcionalidades Implementadas
+
+### Task #X: [Nome da Funcionalidade]
+**Problema Original**:
+- [Descrição do problema ou necessidade]
+
+**Solução Implementada**:
+- ✅ [Feature/função 1]: [descrição detalhada]
+- ✅ [Feature/função 2]: [descrição detalhada]
+
+**Comportamentos Novos**:
+- [Comportamento 1]: [como funciona]
+- [Comportamento 2]: [como funciona]
+
+**Arquitetura**:
+- Padrão [X] aplicado: [justificativa]
+- Módulos criados: [lista com responsabilidades]
+- ADR criado: `ADR-XXX-[nome].md` (se aplicável)
+
+**Arquivos Criados/Modificados**:
+- `path/to/file.py` (+XXX linhas) - [descrição]
+- `path/to/test.py` (NOVO) - [descrição]
+
+**Testes**:
+- XX unit tests (YY passing)
+- Cenários cobertos: [lista]
+- Cobertura: ZZ%
+
+**Segurança (OWASP)**:
+- [ ] A01: Broken Access Control - [Status/Mitigação]
+- [ ] A02: Cryptographic Failures - [Status/Mitigação]
+- [ ] A03: Injection - [Status/Mitigação]
+- (ver SECURITY.md para checklist completo)
+
+**Performance** (se feature crítica):
+- Profiling realizado: [ferramenta]
+- Gargalos identificados: [lista]
+- Otimizações aplicadas: [lista]
+
+**Exemplo de Uso**:
+```python
+# Exemplo prático de como usar a funcionalidade
+```
+
+## ✅ Qualidade (Protocolo Simplicidade 2)
+- ✅ Arquitetura Modular
+- ✅ Type Hints (100%)
+- ✅ Docstrings completas
+- ✅ Tratamento de erros
+- ✅ Testes (X passing, Y% coverage)
+- ✅ Code Review aprovado
+- ✅ CI/CD quality gates passing
+- ✅ Security checklist completo
+- ✅ Commits semânticos
+- ✅ **Documentação completa na pasta docs/**
+- ✅ Código limpo (PEP8/ESLint/etc)
+- ✅ Rollback plan documentado (se crítico)
+
+## 📊 Estatísticas
+- TOTAL: X% completo (Y/Z tasks)
+- Commits: N pushed
+- Code Review: Aprovado em DD/MM/AAAA
+```
+
+#### **🔍 Validação da Documentação (Simplicidade 2)**
+
+Antes de finalizar cada ciclo (Etapa 13 - Commit), a IA **DEVE VERIFICAR**:
+
+- [ ] ✅ Pasta `docs/` existe e está atualizada
+- [ ] ✅ Arquivo SPECIFICATIONS.md criado/atualizado para este ciclo
+- [ ] ✅ TODAS as funcionalidades implementadas estão documentadas
+- [ ] ✅ TODOS os comportamentos novos estão descritos
+- [ ] ✅ TODOS os arquivos criados/modificados estão listados
+- [ ] ✅ Decisões técnicas e arquiteturais estão justificadas
+- [ ] ✅ ADRs criados para decisões arquiteturais importantes
+- [ ] ✅ Exemplos de uso estão incluídos
+- [ ] ✅ Testes estão documentados
+- [ ] ✅ Checklist de segurança OWASP está completo (em SECURITY.md)
+- [ ] ✅ Resultados de profiling documentados (se aplicável)
+- [ ] ✅ Documentação de API gerada (se biblioteca pública)
+- [ ] ✅ Code review aprovado e documentado
+
+**Se algum item não estiver completo, a IA NÃO DEVE prosseguir para o commit** até completar a documentação.
+
+#### **📌 Rationale: Por Quê Este Requisito é OBRIGATÓRIO**
+
+1. **Rastreabilidade**: Permite entender TUDO que foi implementado ao longo do tempo
+2. **Manutenibilidade**: Facilita manutenção futura (pelo mesmo dev ou outros)
+3. **Conhecimento Organizacional**: Preserva decisões e contexto do projeto
+4. **Onboarding**: Novos desenvolvedores/IAs entendem rapidamente o sistema
+5. **Auditoria**: Possibilita revisão e validação de implementações (crítico para enterprise)
+6. **Continuidade**: Garante que funcionalidades não sejam esquecidas ou perdidas
+7. **Profissionalismo**: Projetos sérios têm documentação completa e atualizada
+8. **Conformidade**: Facilita auditorias de segurança, compliance (ISO, SOC2, etc.)
+9. **Colaboração em Equipe**: Essencial para equipes grandes e distribuídas
+10. **Gestão de Mudanças**: Documenta o porquê de cada decisão técnica (ADRs)
+
+**Este requisito transforma a pasta `docs/` em um histórico vivo e completo de tudo que foi implementado no projeto, essencial para ambientes enterprise.**
+
+---
+
+**📋 Gerenciamento do TASKS.md**:
 
 **Regra Geral**:
 - Se existe arquivo de tarefas/requisitos (ex: `TASKS.md`, `TODO.md`, `requirements.md`):
   - ✅ **Marcar tasks como completas** após implementação: `[ ]` → `[X]`
   - ✅ **Atualizar estatísticas** (percentuais, contadores)
   - ✅ **Adicionar notas de conclusão** (data, versão, descrição breve)
+  - 🤖 **[OPCIONAL] Adicionar novas tarefas recomendadas pela IA** (ver detalhes em PROTOCOLO_SIMPLICIDADE_1.md - Etapa 12)
   
 - Se **NÃO existe** arquivo de tarefas/requisitos:
   - ❓ **Perguntar ao usuário** qual o local/path do arquivo
   - ❓ **Perguntar sobre próximas tarefas e requisitos** caso não haja documento formal
-  - ❓ **Sugerir criação** de arquivo de controle de tarefas
+  - ❓ **Sugerir criação** de `TASKS.md` como arquivo padrão
 
-**Exemplo de Marcação (TASKS.md)**:
+---
+
+### 📊 **Legenda de Classificação de Tarefas (Simplicidade 2)**
+
+**Objetivo**: Padronizar a classificação e priorização de tarefas para facilitar a organização pela IA, comunicação entre equipe e compreensão entre diferentes sistemas de inteligência artificial.
+
+**Nota para Simplicidade 2**: Em ambientes enterprise com equipes grandes, a classificação de tarefas deve ser **integrada com a Matriz de Decisão (Etapa 2.5)** para garantir escolhas objetivas e rastreáveis.
+
+#### **Status da Tarefa**
+
+- 🔴 **Not Started** (Não Iniciada) - Aguardando início, sem trabalho realizado
+- 🟡 **In Progress** (Em Progresso) - Desenvolvimento ativo, trabalho em andamento
+- 🟢 **Done** (Concluída) - Implementada, testada, revisada por pares e finalizada
+- 🔵 **Blocked** (Bloqueada) - Impedida por dependência externa ou problema técnico
+
+#### **Complexidade da Tarefa**
+
+- 🟢 **Simples** (0-1h) - Baixo risco, poucas dependências, escopo claro
+- 🟡 **Média** (1-2h) - Risco médio, algumas integrações, pode requerer testes adicionais
+- 🔴 **Complexa** (>2h) - Alto risco, muitas dependências, escopo aberto ou ambíguo
+
+#### **Priorização MoSCoW**
+
+- 🔴 **Must Have** - Crítico para o funcionamento do sistema, bloqueante para release
+- 🟡 **Should Have** - Importante mas não bloqueante, pode ser adiado se necessário
+- 🟢 **Could Have** - Desejável se houver tempo, baixa prioridade
+- ⚪ **Won't Have** (Later) - Explicitamente fora do escopo atual, para versões futuras
+
+#### **Integração com Matriz de Decisão (Simplicidade 2)**
+
+A Matriz de Decisão (Etapa 2.5) fornece scoring numérico (0-35 pontos) complementar aos indicadores visuais:
+
+```markdown
+## Sprint v3.2 - Backlog Priorizado
+
+### 🔴 MUST HAVE
+
+| Task | Status | Complex. | Score | Ordem |
+|------|--------|----------|-------|-------|
+| #42 Auth 2FA | 🔴 | 🔴 | 25.0 | 3º |
+| #43 Rate Limiting | 🔴 | 🟡 | 28.5 | 2º |
+| #44 Logging | 🔴 | 🟢 | 33.5 | 1º ⭐ COMEÇAR AQUI |
+
+**Justificativa**: Task #44 tem maior score (33.5) apesar de ser Must Have como as outras.
+Começar por ela reduz riscos e permite time se aquecer antes das tasks complexas.
+```
+
+**Combinando Matriz de Decisão + Classificação Visual**:
+1. Use **Matriz de Decisão** para scoring objetivo (5 critérios numéricos)
+2. Use **Indicadores Visuais** (🔴🟡🟢🔵) para status rápido no backlog
+3. Use **MoSCoW** para definir escopo de releases
+4. Use **Complexidade** para balancear sprints (não só tarefas difíceis)
+
+#### **Frameworks Avançados de Priorização**
+
+Para equipes enterprise que precisam justificar decisões para stakeholders:
+
+##### **Matriz RICE** (Quantitativa)
+
+`Score RICE = (Reach × Impact × Confidence) / Effort`
+
+Útil para:
+- ✅ Decisões de product management com múltiplas features competindo
+- ✅ Apresentações para C-level (dados objetivos)
+- ✅ Planejamento de roadmap de longo prazo
+
+**Exemplo Enterprise**:
+```markdown
+| Feature | Reach | Impact | Conf. | Effort | RICE | Decisão |
+|---------|-------|--------|-------|--------|------|---------|
+| SSO Integration | 5000 | 3 | 80% | 80h | 150 | Q1 2024 |
+| Dashboard v2 | 2000 | 2 | 100% | 40h | 100 | Q2 2024 |
+| Dark Mode | 8000 | 0.5 | 100% | 20h | 200 | Q1 2024 ⭐ |
+
+Decisão: Priorizar Dark Mode (RICE=200) antes de SSO (RICE=150)
+Razão: Maior alcance com menor esforço, apesar de impacto individual menor
+```
+
+##### **Matriz de Eisenhower** (Urgência × Importância)
+
+Útil para:
+- ✅ Gestão de incidentes e crises
+- ✅ Priorização em contextos com muitas "urgências"
+- ✅ Identificar tarefas que devem ser delegadas ou automatizadas
+
+**Adaptação para Equipes**:
+- **Q1 (Urgente + Importante)**: Time sênior / Tech leads
+- **Q2 (Não Urgente + Importante)**: Time pleno, planejado
+- **Q3 (Urgente + Não Importante)**: Delegar para júnior ou automatizar
+- **Q4 (Não Urgente + Não Importante)**: Eliminar ou backlog muito distante
+
+#### **Exemplo Completo Simplicidade 2**
+
+```markdown
+# TASKS.md - Sprint v4.1 (Enterprise Team)
+
+## 📊 Legenda
+- **Status**: 🔴 Not Started | 🟡 In Progress | 🟢 Done | 🔵 Blocked
+- **Complexidade**: 🟢 Simples (0-1h) | 🟡 Média (1-2h) | 🔴 Complexa (>2h)
+- **MoSCoW**: 🔴 Must | 🟡 Should | 🟢 Could | ⚪ Won't
+
+## 📊 Estatísticas
+- Progresso: 65% (26/40 tarefas)
+- Velocity: 12 story points/sprint
+- Bugs Abertos: 3 (1 crítico, 2 médios)
+
+## 🔴 MUST HAVE - Release v4.1
+
+### Prioridade Alta (Matriz Score > 25)
+- 🔴🟢 [ ] #101 Adicionar rate limiting (Score: 33.5) ⭐ INICIAR
+  - **Assignee**: @maria (Backend Lead)
+  - **Revisão**: @joao (Security Review obrigatório)
+  - **Estimativa**: 3h
+  - **Dependências**: Nenhuma
+  
+- 🟡🟡 [ ] #102 Implementar circuit breaker (Score: 28.0, 60% completo)
+  - **Assignee**: @pedro (Pleno)
+  - **Revisão**: @maria (Code Review)
+  - **Estimativa**: 5h (2h restantes)
+  - **Blocker Resolvido**: ✅ Biblioteca atualizada para v3.2
+
+### Prioridade Média (Matriz Score 15-25)
+- 🔵🔴 [ ] #103 Migrar para Kubernetes (Score: 22.0, BLOQUEADO)
+  - **Assignee**: @infra-team
+  - **Blocker**: Aguardando aprovação orçamento DevOps
+  - **Estimativa**: 16h
+  - **Fallback**: Manter Docker Swarm por mais 1 sprint
+
+## 🟡 SHOULD HAVE - Release v4.2
+- 🔴🟡 [ ] #104 Adicionar métricas Prometheus (Score: 26.5)
+- 🔴🟢 [ ] #105 Tooltips de ajuda (Score: 30.0)
+
+## 🟢 COULD HAVE - Backlog
+- 🔴🟡 [ ] #106 Dark mode (RICE: 200, alta prioridade no backlog)
+
+---
+**Próxima Retrospectiva**: Sexta 15h (validar recomendações da IA)
+```
+
+#### **Recomendações para IA em Contexto Enterprise**
+
+**Ao classificar tarefas para equipes (Simplicidade 2), a IA deve**:
+1. ✅ **Considerar Code Review**: Tasks complexas precisam de revisor sênior disponível
+2. ✅ **Balancear carga de trabalho**: Não alocar todas tasks complexas para mesma pessoa
+3. ✅ **Respeitar dependências de equipe**: Backend antes de Frontend em integrações
+4. ✅ **Documentar decisões**: Usar ADR (Etapa 11.5) para escolhas arquiteturais importantes
+5. ✅ **Comunicar blockers**: Marcar 🔵 e notificar time imediatamente
+6. ✅ **Integrar com Matriz de Decisão**: Scoring + indicadores visuais complementares
+7. ✅ **Validar com stakeholders**: Features MUST HAVE confirmadas em Sprint Planning
+
+**Diferenças Simplicidade 2 vs 1**:
+- **S2**: Matriz de Decisão (scoring numérico) é **OBRIGATÓRIA** quando 3+ tasks competem
+- **S2**: Status deve refletir **code review** (não marcar Done sem aprovação de pares)
+- **S2**: Recomendações da IA validadas em **Retrospectiva de Sprint** (Etapa 13.5)
+- **S2**: Complexidade inclui **tempo de review** e **teste de aceitação**
+
+---
+
+**🤖 Recomendações de Tarefas pela IA**:
+Para equipes enterprise (Simplicidade 2), as recomendações da IA devem ser **revisadas em retrospectivas de sprint** (Etapa 13.5) antes de serem adicionadas ao TASKS.md. Isso garante consenso da equipe e alinhamento com stakeholders.
+
+📘 **Detalhes completos da funcionalidade de recomendações**: Ver `PROTOCOLO_SIMPLICIDADE_1.md` - Etapa 12 - Seção "Recomendações de Tarefas pela IA"
+
+**📁 Localização do Arquivo TASKS.md**:
+- **Preferência padrão**: O arquivo `TASKS.md`, quando produzido, deve ser colocado em `docs/TASKS.md`
+- **Criar pasta docs/**: Se a pasta `docs/` não existe no projeto, ela deve ser criada automaticamente
+- **Flexibilidade**: O usuário ou programador pode optar por colocar em outro local se preferir
+- **Exemplo de criação**:
+  ```bash
+  # Criar pasta docs se não existir
+  mkdir -p docs
+  
+  # Criar ou atualizar TASKS.md
+  echo "# Tasks" > docs/TASKS.md
+  ```
+
+**Exemplo de Marcação (REQUIREMENTS.md)**:
 ```markdown
 ## 🟢 COULD HAVE (Prioridade Baixa)
 
 ### ✅ Tasks Concluídas
 
-#### Task #46 - Editor de Arquivos Integrado (v2.9.16)
+#### Task Example - Editor de Arquivos Integrado (vX.Y.Z)
 **Status**: ✅ Completa - 30/11/2025
 
 **Objetivo**: Implementar editor de texto integrado com diferenciação de escopo por cores.
 
 **Implementação**:
-1. ✅ EditorDock com QTextEdit e syntax highlighting
-2. ✅ Diferenciação de escopo por cores (HTML tags, JSON keys, etc.)
-3. ✅ Abrir/salvar arquivos (.txt, .json, .html, .tsx, .py)
+1. ✅ ComponentE com QTextEdit e syntax highlighting
+2. ✅ Diferenciação de escopo por cores (HTML tags, DATA keys, etc.)
+3. ✅ Abrir/salvar arquivos (.txt, .data, .html, .tsx, .py)
 4. ✅ Integração com menu File → Open Editor
 
 **Arquivos Criados**:
@@ -3503,10 +5008,10 @@ Plano documentado para **reverter** uma mudança se algo der errado em produçã
 **Template de Rollback Plan**:
 
 ```markdown
-# Rollback Plan - Task #67: Migração para SQLite
+# Rollback Plan - Task Example: Migração para SQLite
 
 ## Resumo da Mudança
-**Feature**: Migração de JSON para SQLite storage  
+**Feature**: Migração de DATA para SQLite storage  
 **Versão**: v2.0.0 → v1.9.x  
 **Impacto**: ALTO - Altera formato de persistência  
 **Risco**: MÉDIO - Migração de dados pode falhar  
@@ -3542,10 +5047,10 @@ NÃO executar rollback SE:
    cp ~/.config/clarify/clarify.log /tmp/clarify-rollback-logs.txt
    ```
 
-3. **Verificar backup JSON disponível**:
+3. **Verificar backup DATA disponível**:
    ```bash
-   # Confirmar que JSON backup existe (criado na migração)
-   ls -lh ~/.config/clarify/tasks.json.backup
+   # Confirmar que DATA backup existe (criado na migração)
+   ls -lh ~/.config/clarify/tasks.data.backup
    # Deve mostrar arquivo criado durante migração para v2.0.0
    ```
 
@@ -3559,10 +5064,10 @@ NÃO executar rollback SE:
    pip install clarify==1.9.5 --force-reinstall
    ```
 
-2. **Restaurar dados do backup JSON**:
+2. **Restaurar dados do backup DATA**:
    ```bash
-   # Copiar backup JSON de volta
-   cp ~/.config/clarify/tasks.json.backup ~/.config/clarify/tasks.json
+   # Copiar backup DATA de volta
+   cp ~/.config/clarify/tasks.data.backup ~/.config/clarify/tasks.data
    
    # Remover SQLite database (v1.9.5 não usa)
    rm ~/.config/clarify/clarify.db
@@ -3570,12 +5075,12 @@ NÃO executar rollback SE:
 
 3. **Verificar integridade dos dados**:
    ```bash
-   # Validar JSON não está corrompido
-   python -c "import json; json.load(open('~/.config/clarify/tasks.json'))"
+   # Validar DATA não está corrompido
+   python -c "import data; data.load(open('~/.config/clarify/tasks.data'))"
    # Deve completar sem erro
    
    # Contar tasks
-   python -c "import json; data = json.load(open('~/.config/clarify/tasks.json')); print(f'{len(data[\"tasks\"])} tasks restored')"
+   python -c "import data; data = data.load(open('~/.config/clarify/tasks.data')); print(f'{len(data[\"tasks\"])} tasks restored')"
    ```
 
 4. **Reiniciar aplicação**:
@@ -3632,7 +5137,7 @@ NÃO executar rollback SE:
    pip install clarify==1.9.5 --force-reinstall
    ```
    
-   Dados preservados via backup automático JSON.
+   Dados preservados via backup automático DATA.
    
    **Próximos Passos**:
    - Root cause analysis da falha de migração
@@ -3652,7 +5157,7 @@ NÃO executar rollback SE:
    - 15:30 UTC: Rollback completo
    
    ## Root Cause
-   - Migração SQLite falhou para arquivos JSON > 5MB
+   - Migração SQLite falhou para arquivos DATA > 5MB
    - Causa: Timeout de 30s insuficiente para tasks complexas
    - Afetou ~12% usuários (heavy users com >500 tasks)
    
@@ -3676,7 +5181,7 @@ NÃO executar rollback SE:
 - **TOTAL**: ~20 minutos (downtime esperado)
 
 ## Dependências Externas
-- ✅ Backup JSON criado automaticamente na migração
+- ✅ Backup DATA criado automaticamente na migração
 - ✅ Git tags de versões anteriores disponíveis
 - ❌ Não depende de serviços externos (DB, APIs)
 
@@ -3684,16 +5189,16 @@ NÃO executar rollback SE:
 - **Alto Risco**: Tasks criadas/editadas após deploy v2.0.0 (não existem no backup)
 - **Baixo Risco**: Tasks existentes antes de v2.0.0 (preservadas no backup)
 
-**Mitigação**: Exportar SQLite → JSON antes de rollback para preservar mudanças recentes.
+**Mitigação**: Exportar SQLite → DATA antes de rollback para preservar mudanças recentes.
 
 ```bash
 # Script de export antes de rollback
 python -c "
-import sqlite3, json
+import sqlite3, data
 conn = sqlite3.connect('~/.config/clarify/clarify.db')
 cursor = conn.execute('SELECT * FROM tasks')
 tasks = [dict(zip([col[0] for col in cursor.description], row)) for row in cursor.fetchall()]
-json.dump({'tasks': tasks}, open('rollback-export.json', 'w'), indent=2)
+data.dump({'tasks': tasks}, open('rollback-export.data', 'w'), indent=2)
 "
 # Usuários podem manualmente mesclar mudanças depois
 ```
@@ -3725,13 +5230,13 @@ class Config:
         if self.SQLITE_STORAGE_ENABLED:
             return SQLiteStorage()
         else:
-            return JSONStorage()  # Fallback seguro
+            return DATAStorage()  # Fallback seguro
 
 # Em caso de problema, desabilitar remotely:
 # export CLARIFY_SQLITE_ENABLED=false
 # Ou via config file / dashboard admin
 
-# Usuários automaticamente voltam para JSON sem reinstalar
+# Usuários automaticamente voltam para DATA sem reinstalar
 ```
 
 **Reversible Migrations**:
@@ -3740,34 +5245,34 @@ class Config:
 # Migrations devem ser reversíveis
 
 class MigrationV2:
-    """Migration from JSON to SQLite - REVERSIBLE."""
+    """Migration from DATA to SQLite - REVERSIBLE."""
     
     def up(self):
-        """Migrate JSON → SQLite."""
-        # 1. Criar backup JSON
-        shutil.copy("tasks.json", "tasks.json.backup")
+        """Migrate DATA → SQLite."""
+        # 1. Criar backup DATA
+        shutil.copy("tasks.data", "tasks.data.backup")
         
         # 2. Criar SQLite schema
         self._create_sqlite_schema()
         
         # 3. Migrar dados
-        self._migrate_json_to_sqlite()
+        self._migrate_data_to_sqlite()
         
-        # 4. NÃO deletar JSON (manter para rollback)
-        # os.remove("tasks.json")  ❌ NUNCA fazer isso
+        # 4. NÃO deletar DATA (manter para rollback)
+        # os.remove("tasks.data")  ❌ NUNCA fazer isso
     
     def down(self):
-        """Rollback SQLite → JSON."""
-        if not os.path.exists("tasks.json.backup"):
-            raise RollbackError("Backup JSON not found - cannot rollback!")
+        """Rollback SQLite → DATA."""
+        if not os.path.exists("tasks.data.backup"):
+            raise RollbackError("Backup DATA not found - cannot rollback!")
         
         # 1. Restaurar backup
-        shutil.copy("tasks.json.backup", "tasks.json")
+        shutil.copy("tasks.data.backup", "tasks.data")
         
         # 2. Remover SQLite
         os.remove("clarify.db")
         
-        print("✅ Rollback completo - usando JSON storage")
+        print("✅ Rollback completo - usando DATA storage")
 ```
 
 **Checklist de Rollback Plan**:
@@ -3805,9 +5310,32 @@ class MigrationV2:
 ---
 
 ### 1️⃣3️⃣ **Fazer Commit e Push**
-- **Formato**: Conventional Commits (feat/fix/docs/refactor/test)
+- **Formato**: Conventional Commits (OBRIGATÓRIO)
+- **Idioma**: Todas as mensagens de commit devem ser **EXCLUSIVAMENTE EM INGLÊS** (requisito obrigatório)
 - **Mensagem**: Descritiva, completa, com contexto
 - **Frequência**: 1 commit por task ou grupo lógico de mudanças
+
+**Tipos de Commit Padronizados** (OBRIGATÓRIOS):
+- `feat`: Indica uma nova feature
+  - Exemplo: `git commit -m "feat: add Header component"`
+- `fix`: Indica uma correção de bug
+  - Exemplo: `git commit -m "fix: remove wrong prop in Header"`
+- `refactor`: Indica uma refatoração de código
+  - Exemplo: `git commit -m "refactor: add title in Header"`
+- `test`: Indica alterações em testes
+  - Exemplo: `git commit -m "test: add test in title Header"`
+- `style`: Indica alterações de estilo/formatação
+  - Exemplo: `git commit -m "style: add Header title background"`
+- `docs`: Indica alteração na documentação
+  - Exemplo: `git commit -m "docs: add get started in readme"`
+- `chore`: Indica alteração de ambiente de desenvolvimento
+  - Exemplo: `git commit -m "chore: change eslint rules"`
+- `build`: Indica alteração de dependências
+  - Exemplo: `git commit -m "build: add sass"`
+- `revert`: Indica reversão de commit anterior
+  - Exemplo: `git commit -m "revert: back to adc1234 commit"`
+
+⚠️ **IMPORTANTE**: Todas as mensagens de commit devem ser escritas **EXCLUSIVAMENTE EM INGLÊS**!
 
 **Estrutura de Commit Message**:
 ```
@@ -3831,7 +5359,7 @@ class MigrationV2:
 - [arquivo1.py] (+X linhas)
 - [arquivo2.py] (~Y linhas)
 - [tests/test_X.py] (NOVO - Z linhas)
-- [docs/TASKS.md] (estatísticas atualizadas)
+- [docs/REQUIREMENTS.md] (estatísticas atualizadas)
 
 <ESTATÍSTICAS ATUALIZADAS>:
 - [CATEGORIA]: X → Y completas (A% → B%)
@@ -3844,13 +5372,13 @@ Refs: [documentação relacionada]
 Closes: Task #X (vX.X.X)
 ```
 
-**Exemplo Real** (Task #23):
+**Exemplo Real** (Task Example):
 ```bash
-git add src/ tests/ docs/TASKS.md
-git commit -m "feat: completar Task #23 - Orphaned Keys Update System (v2.9.14)
+git add src/ tests/ docs/REQUIREMENTS.md
+git commit -m "feat: completar Task Example - Feature Update System (vX.Y.Z)
 
 PROBLEMA ORIGINAL:
-- Implementação v2.9.10 usava string_similarity() (ERRADO)
+- Implementação vX.Y.Z usava string_similarity() (ERRADO)
 - Não detectava valores duplicados, apenas similaridade de nomes
 ...
 
@@ -3860,7 +5388,7 @@ PROBLEMA ORIGINAL:
    - Retorna Dict[str, str] (path → value)
 ...
 
-Closes: Task #23 (v2.9.14)"
+Closes: Task Example (vX.Y.Z)"
 
 git push
 ```
@@ -3879,25 +5407,25 @@ Toda implementação deve cumprir **100% destes critérios**:
 | 4 | **Tratamento de Erros** | Try/except com mensagens claras | `except Exception as e:` |
 | 5 | **Testes** | Unitários + integração (100% coverage) | `tests/test_*.py` passing |
 | 6 | **Commits Semânticos** | Conventional Commits | `feat:`, `fix:`, `docs:` |
-| 7 | **Documentação** | TASKS.md + vX.X.X-SPECIFICATIONS.md | Atualizado e completo |
+| 7 | **Documentação** | REQUIREMENTS.md + SPECIFICATIONS.md | Atualizado e completo |
 | 8 | **Código Limpo** | PEP8, nomes semânticos, DRY | Funções < 50 linhas |
 
 ---
 
-## 📊 Aplicação Prática: Task #23 (Exemplo Completo)
+## 📊 Aplicação Prática: Task Example (Exemplo Completo)
 
 ### Situação Inicial
 ```markdown
 Tasks pendentes na categoria SHOULD HAVE:
-[ ] Editor de texto integrado (MUITO COMPLEXO)
+[ ] Complex Feature Example (MUITO COMPLEXO)
 [ ] Busca com IA semântica (MUITO COMPLEXO)
-[⚠️] Orphaned Keys Update (PARCIAL - mais simples!) ✅ ESCOLHIDA
+[⚠️] Feature Update (PARCIAL - mais simples!) ✅ ESCOLHIDA
 [ ] Google Translate API integration (COMPLEXO)
 ```
 
 ### Sprint Planejada
 ```
-v2.9.14: Completar Task #23
+vX.Y.Z: Completar Task Example
 Estimativa: 3-4 horas
 Complexidade: MÉDIA (mais simples que as outras)
 ```
@@ -3905,11 +5433,11 @@ Complexidade: MÉDIA (mais simples que as outras)
 ### Execução (Protocolo Simplicidade 1)
 
 **1. Ler Documentação** ✅
-- Lido: `docs/TASK_23_ORPHANED_KEYS_SPECIFICATION.md` (662 linhas)
+- Lido: `docs/FEATURE_SPEC.md` (662 linhas)
 - Entendido: problema de string similarity vs. value equality
 
 **2. Escolher Tarefa Simples** ✅
-- Task #23 é **mais simples** que editor de texto ou IA
+- Task Example é **mais simples** que editor de texto ou IA
 - Escopo claro: 2 funções principais + integração
 
 **3. Fazer Perguntas** ✅
@@ -3954,8 +5482,8 @@ Resultado: 12/12 passing (100%)
 **7. Documentação** ✅
 ```
 Arquivos criados/atualizados:
-- docs/TASKS.md (Task #23 marcada [X])
-- docs/TASK_23_ORPHANED_KEYS_SPECIFICATION.md (já existia)
+- docs/REQUIREMENTS.md (Task Example marcada [X])
+- docs/FEATURE_SPEC.md (já existia)
 - tests/test_reference_updater.py (NOVO - 350 linhas)
 Estatísticas: 59.6% → 60.6% (63 tasks completas)
 ```
@@ -3968,7 +5496,7 @@ Status: pushed para GitHub ✅
 ```
 
 ### Resultado Final
-✅ **Task #23 100% completa**  
+✅ **Task Example 100% completa**  
 ✅ **Protocolo Simplicidade 1: 10/10 etapas cumpridas** (v1.1 - 10 etapas)  
 ✅ **Tempo real: ~3h (dentro da estimativa)**  
 ✅ **Zero bugs detectados**  
@@ -3981,7 +5509,7 @@ Status: pushed para GitHub ✅
 ## 🎓 Lições Aprendidas
 
 ### ✅ O Que Funciona
-1. **Escolher o mais simples**: Task #23 era mais fácil que editor de texto
+1. **Escolher o mais simples**: Task Example era mais fácil que editor de texto
 2. **Incrementalidade**: Função auxiliar → principal → integração
 3. **Testes primeiro**: Detectou 2 ajustes necessários antes de commitar
 4. **Documentação completa**: Facilita manutenção futura
@@ -4001,18 +5529,18 @@ Status: pushed para GitHub ✅
 
 4. **Não fazer commits genéricos**
    - ❌ `git commit -m "updates"`
-   - ✅ `git commit -m "feat: Task #23 com VALUE EQUALITY (60 linhas)"`
+   - ✅ `git commit -m "feat: Task Example com VALUE EQUALITY (60 linhas)"`
 
 ---
 
 ## 📚 Referências
 
-- **TASKS.md**: Lista completa de tarefas do projeto
-- **v2.9.10-ANTES-DEPOIS.md**: Primeiro exemplo do protocolo
-- **v2.9.11-SPECIFICATIONS.md**: Sprint com 3 tasks simples
-- **v2.9.12-SPECIFICATIONS.md**: Iterações rápidas
-- **v2.9.13-SPECIFICATIONS.md**: 4 melhorias de UX
-- **TASK_23_ORPHANED_KEYS_SPECIFICATION.md**: Exemplo de documentação detalhada
+- **REQUIREMENTS.md**: Lista completa de tarefas do projeto
+- **vX.Y.Z-COMPARISON.md**: Primeiro exemplo do protocolo
+- **vX.Y.Z-SPECIFICATIONS.md**: Sprint com 3 tasks simples
+- **vX.Y.Z-SPECIFICATIONS.md**: Iterações rápidas
+- **vX.Y.Z-SPECIFICATIONS.md**: 4 melhorias de UX
+- **FEATURE_SPEC.md**: Exemplo de documentação detalhada
 
 ---
 
@@ -4119,7 +5647,7 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 
 ### 3. Pair Programming em Features Complexas
 **Impacto**: ALTO  
-**O que funcionou**: Migração SQLite (Task #67) feita em pair = zero retrabalho.  
+**O que funcionou**: Migração SQLite (Task Example) feita em pair = zero retrabalho.  
 **Evidência**: PR aprovado first-time, nenhuma mudança solicitada.  
 **Ação**: Usar pair programming para tasks com risco > MÉDIO.
 
@@ -4133,17 +5661,17 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 **Evidência**: 8 tasks × 30min = 4 horas gastas em testes manuais.  
 **Root Cause**: Falta de testes automatizados para GUI.  
 **Ação**: 
-- [ ] Implementar pytest-qt para testes GUI automatizados (Task #89)
-- [ ] Criar smoke test suite que roda em CI (Task #90)
+- [ ] Implementar pytest-qt para testes GUI automatizados (Task Example)
+- [ ] Criar smoke test suite que roda em CI (Task Example)
 - **Owner**: Josué | **Deadline**: Sprint #6
 
-### 2. Scope Creep em Task #67
+### 2. Scope Creep em Task Example
 **Impacto**: MÉDIO  
 **Problema**: Task "Migrar para SQLite" cresceu de 8 SP → 13 SP durante sprint.  
 **Evidência**: Task levou 3 dias em vez de 2 dias estimados.  
 **Root Cause**: Subestimamos complexidade de migration + rollback plan.  
 **Ação**:
-- [ ] Adicionar buffer de 25% em estimativas de tasks "primeira vez" (Task #91)
+- [ ] Adicionar buffer de 25% em estimativas de tasks "primeira vez" (Task Example)
 - [ ] Dividir épicos grandes em tasks menores (<5 SP cada)
 - **Owner**: Alice | **Deadline**: Próximo planning
 
@@ -4153,7 +5681,7 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 **Evidência**: ADR-004 commitado 2 dias após merge do PR #145.  
 **Root Cause**: Esquecemos de incluir ADR no checklist do PR.  
 **Ação**:
-- [ ] Atualizar PR template para incluir "ADR criado?" (Task #92)
+- [ ] Atualizar PR template para incluir "ADR criado?" (Task Example)
 - [ ] Pre-commit hook para checar se docs/adr/ foi modificado quando src/ muda
 - **Owner**: Josué | **Deadline**: Sprint #6
 
@@ -4267,14 +5795,14 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 ## 📊 Esta Semana
 
 ### Completei
-- ✅ Task #67: Migração SQLite (13 SP)
-- ✅ Task #68: Rollback plan (3 SP)
-- ✅ Task #70: ADR documentation (2 SP)
+- ✅ Task Example: Migração SQLite (13 SP)
+- ✅ Task Example: Rollback plan (3 SP)
+- ✅ Task Example: ADR documentation (2 SP)
 
 **Total**: 18 SP (meta: 20 SP) - 90% 👍
 
 ### Não Completei
-- ❌ Task #69: GUI performance otimization (5 SP)
+- ❌ Task Example: GUI performance otimization (5 SP)
   - **Por quê**: Subestimei complexidade, precisa mais pesquisa
 
 ## 💭 Reflexão
@@ -4286,7 +5814,7 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 
 ### O que não funcionou
 1. **Tarde com reuniões** - Zero código após 15h, muito context switch
-2. **Não usei Protocolo Simplicidade completo** - Pulei testes em Task #70 (ADR) e depois tive que voltar corrigir
+2. **Não usei Protocolo Simplicidade completo** - Pulei testes em Task Example (ADR) e depois tive que voltar corrigir
 3. **Procrastinei performance optimization** - Tarefa difícil, fiquei adiando
 
 ### O que vou tentar
@@ -4304,7 +5832,7 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 ## 🎯 Próxima Semana
 
 **Focos**:
-1. Completar Task #69 (performance) - PRIMEIRA coisa segunda-feira
+1. Completar Task Example (performance) - PRIMEIRA coisa segunda-feira
 2. Seguir protocolo 100% - sem pular etapas
 3. Manter time-blocking 9-13h deep work
 
@@ -4337,7 +5865,505 @@ Reunião (ou documento, se solo) ao final de cada sprint/milestone para refletir
 
 ---
 
-**Versão**: 2.0  
-**Última atualização**: 20 de Janeiro de 2024  
+## 💡 Boas Práticas de Programação para IAs
+
+> **Esta seção contém recomendações específicas para melhorar a qualidade do código gerado por inteligências artificiais.**
+
+### 1. 📖 **Código Legível e Autodocumentado**
+
+**Por quê importante**: IAs devem produzir código que humanos possam entender e manter facilmente.
+
+**Práticas**:
+- ✅ **Nomes descritivos**: Use nomes que explicam o propósito
+  ```python
+  # ❌ RUIM
+  def proc(d, x):
+      return d[x] if x in d else None
+  
+  # ✅ BOM
+  def get_user_preference(preferences_dict, preference_key):
+      """Retorna preferência do usuário ou None se não existir."""
+      return preferences_dict.get(preference_key)
+  ```
+
+- ✅ **Funções pequenas e focadas**: Uma função = uma responsabilidade
+  ```python
+  # ❌ RUIM - Função faz múltiplas coisas
+  def process_user_data(user):
+      # valida
+      # transforma
+      # salva no banco
+      # envia email
+      # registra log
+      pass  # 150 linhas
+  
+  # ✅ BOM - Funções especializadas
+  def validate_user_data(user): pass
+  def transform_user_data(user): pass
+  def save_user_to_database(user): pass
+  def send_welcome_email(user): pass
+  def log_user_registration(user): pass
+  ```
+
+- ✅ **Evitar "números mágicos"**: Use constantes nomeadas
+  ```python
+  # ❌ RUIM
+  if user.age > 18 and balance < 1000:
+      apply_fee(balance * 0.05)
+  
+  # ✅ BOM
+  MINIMUM_ADULT_AGE = 18
+  BALANCE_THRESHOLD = 1000
+  SERVICE_FEE_RATE = 0.05
+  
+  if user.age > MINIMUM_ADULT_AGE and balance < BALANCE_THRESHOLD:
+      apply_fee(balance * SERVICE_FEE_RATE)
+  ```
+
+### 2. 🎯 **Convenções de Nomenclatura Consistentes**
+
+**Por quê importante**: Consistência facilita navegação e compreensão do código.
+
+**Práticas por linguagem**:
+
+**Python**:
+- ✅ `snake_case` para funções e variáveis
+- ✅ `PascalCase` para classes
+- ✅ `SCREAMING_SNAKE_CASE` para constantes
+- ✅ `_private_method` para métodos privados
+
+**JavaScript/TypeScript**:
+- ✅ `camelCase` para funções e variáveis
+- ✅ `PascalCase` para classes e componentes
+- ✅ `SCREAMING_SNAKE_CASE` para constantes
+- ✅ `_privateMethod` ou `#privateField` para privados
+
+**Convenções gerais**:
+- ✅ Verbos para funções: `get_user()`, `calculate_total()`, `validate_input()`
+- ✅ Substantivos para classes: `UserManager`, `PaymentProcessor`
+- ✅ Booleanos com prefixos: `is_valid`, `has_permission`, `can_edit`
+
+### 3. 🛡️ **Tratamento de Erros Robusto**
+
+**Por quê importante**: Código em produção deve lidar graciosamente com falhas.
+
+**Práticas**:
+- ✅ **Sempre validar entrada**:
+  ```python
+  def divide(a, b):
+      if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+          raise TypeError("Argumentos devem ser números")
+      if b == 0:
+          raise ValueError("Divisor não pode ser zero")
+      return a / b
+  ```
+
+- ✅ **Usar exceções específicas**:
+  ```python
+  # ❌ RUIM - Exceção genérica
+  try:
+      process_payment(amount)
+  except Exception as e:
+      print("Erro")
+  
+  # ✅ BOM - Exceções específicas
+  try:
+      process_payment(amount)
+  except PaymentDeclinedError as e:
+      notify_user("Pagamento recusado")
+  except InsufficientFundsError as e:
+      notify_user("Saldo insuficiente")
+  except NetworkError as e:
+      retry_payment(amount)
+  ```
+
+- ✅ **Logging adequado**:
+  ```python
+  import logging
+  
+  try:
+      result = risky_operation()
+  except Exception as e:
+      logging.error(f"Falha em risky_operation: {e}", exc_info=True)
+      raise  # Re-raise para permitir handling em nível superior
+  ```
+
+### 4. 🧪 **Estratégias de Teste Eficazes**
+
+**Por quê importante**: Testes garantem que o código funciona e continua funcionando.
+
+**Práticas**:
+- ✅ **Testes unitários para lógica de negócio**:
+  ```python
+  def test_calculate_discount():
+      # Arrange
+      original_price = 100
+      discount_rate = 0.2
+      
+      # Act
+      final_price = calculate_discount(original_price, discount_rate)
+      
+      # Assert
+      assert final_price == 80
+  ```
+
+- ✅ **Testar edge cases**:
+  ```python
+  def test_edge_cases():
+      assert calculate_discount(0, 0.5) == 0  # Preço zero
+      assert calculate_discount(100, 0) == 100  # Desconto zero
+      assert calculate_discount(100, 1.0) == 0  # Desconto 100%
+      
+      with pytest.raises(ValueError):
+          calculate_discount(100, -0.1)  # Desconto negativo
+      
+      with pytest.raises(ValueError):
+          calculate_discount(-100, 0.1)  # Preço negativo
+  ```
+
+- ✅ **Mocks para dependências externas**:
+  ```python
+  from unittest.mock import Mock, patch
+  
+  def test_send_notification():
+      with patch('email_service.send') as mock_send:
+          notify_user("user@example.com", "Test message")
+          mock_send.assert_called_once()
+  ```
+
+### 5. 🔒 **Segurança em Primeiro Lugar**
+
+**Por quê importante**: Vulnerabilidades podem ter consequências graves.
+
+**Práticas**:
+- ✅ **Nunca confiar em input do usuário**:
+  ```python
+  # ❌ RUIM - SQL Injection
+  query = f"SELECT * FROM users WHERE id = {user_id}"
+  
+  # ✅ BOM - Parametrização
+  query = "SELECT * FROM users WHERE id = ?"
+  cursor.execute(query, (user_id,))
+  ```
+
+- ✅ **Secrets em variáveis de ambiente**:
+  ```python
+  # ❌ RUIM
+  API_KEY = "sk-1234567890abcdef"  # Hardcoded
+  
+  # ✅ BOM
+  import os
+  API_KEY = os.getenv('API_KEY')
+  if not API_KEY:
+      raise ValueError("API_KEY não configurada")
+  ```
+
+- ✅ **Sanitizar output para prevenir XSS**:
+  ```python
+  from html import escape
+  
+  # ❌ RUIM
+  html = f"<div>Hello {user_name}</div>"
+  
+  # ✅ BOM
+  html = f"<div>Hello {escape(user_name)}</div>"
+  ```
+
+### 6. ⚡ **Otimização de Performance**
+
+**Por quê importante**: Código lento = usuários insatisfeitos.
+
+**Práticas**:
+- ✅ **Escolher estrutura de dados correta**:
+  ```python
+  # ❌ RUIM - Busca em lista O(n)
+  if user_id in user_list:  # 1000 comparações
+      # ...
+  
+  # ✅ BOM - Busca em set O(1)
+  if user_id in user_set:  # 1 comparação
+      # ...
+  ```
+
+- ✅ **Evitar loops desnecessários**:
+  ```python
+  # ❌ RUIM - Loop duplo O(n²)
+  for item in list1:
+      for item2 in list2:
+          if item == item2:
+              # ...
+  
+  # ✅ BOM - Set intersection O(n)
+  common_items = set(list1) & set(list2)
+  for item in common_items:
+      # ...
+  ```
+
+- ✅ **Lazy loading quando apropriado**:
+  ```python
+  # ❌ RUIM - Carrega tudo na memória
+  all_users = User.objects.all()  # 1 milhão de registros
+  for user in all_users:
+      process(user)
+  
+  # ✅ BOM - Iterator que carrega sob demanda
+  for user in User.objects.iterator():
+      process(user)
+  ```
+
+### 7. 📝 **Documentação Clara e Útil**
+
+**Por quê importante**: Código é lido muito mais vezes do que é escrito.
+
+**Práticas**:
+- ✅ **Docstrings completos**:
+  ```python
+  def calculate_shipping(weight, distance, express=False):
+      """
+      Calcula o custo de envio baseado em peso e distância.
+      
+      Args:
+          weight (float): Peso do pacote em kg
+          distance (float): Distância em km
+          express (bool): Se True, usa envio expresso (default: False)
+      
+      Returns:
+          float: Custo de envio em reais
+      
+      Raises:
+          ValueError: Se peso ou distância for negativo
+      
+      Examples:
+          >>> calculate_shipping(2.5, 100)
+          25.0
+          >>> calculate_shipping(2.5, 100, express=True)
+          37.5
+      """
+      if weight < 0 or distance < 0:
+          raise ValueError("Peso e distância devem ser positivos")
+      
+      base_cost = weight * distance * 0.1
+      return base_cost * 1.5 if express else base_cost
+  ```
+
+- ✅ **Comentários explicam "por quê", não "o quê"**:
+  ```python
+  # ❌ RUIM - Comenta o óbvio
+  x = x + 1  # Incrementa x
+  
+  # ✅ BOM - Explica o motivo
+  # Incrementa o contador para incluir o elemento atual na contagem
+  # pois o range() exclui o último elemento
+  x = x + 1
+  ```
+
+- ✅ **README com exemplos práticos**:
+  ```markdown
+  # Como usar
+  
+  ## Instalação
+  ```bash
+  pip install mypackage
+  ```
+  
+  ## Exemplo básico
+  ```python
+  from mypackage import Calculator
+  
+  calc = Calculator()
+  result = calc.add(2, 3)
+  print(result)  # Output: 5
+  ```
+  ```
+
+### 8. 🏗️ **Organização e Modularidade**
+
+**Por quê importante**: Código organizado é mais fácil de manter e escalar.
+
+**Práticas**:
+- ✅ **Separação de responsabilidades**:
+  ```
+  project/
+  ├── models/       # Estruturas de dados
+  ├── services/     # Lógica de negócio
+  ├── controllers/  # Coordenação de fluxo
+  ├── views/        # Interface com usuário
+  ├── utils/        # Funções auxiliares
+  └── tests/        # Testes automatizados
+  ```
+
+- ✅ **DRY (Don't Repeat Yourself)**:
+  ```python
+  # ❌ RUIM - Código duplicado
+  def process_order_a():
+      validate()
+      calculate()
+      save()
+  
+  def process_order_b():
+      validate()
+      calculate()
+      save()
+  
+  # ✅ BOM - Código reutilizado
+  def process_order_common():
+      validate()
+      calculate()
+      save()
+  
+  def process_order_a():
+      process_order_common()
+      # lógica específica A
+  
+  def process_order_b():
+      process_order_common()
+      # lógica específica B
+  ```
+
+- ✅ **Princípio da responsabilidade única**:
+  ```python
+  # ❌ RUIM - Classe faz muitas coisas
+  class User:
+      def __init__(self): pass
+      def save_to_database(self): pass
+      def send_email(self): pass
+      def generate_pdf_report(self): pass
+  
+  # ✅ BOM - Classes especializadas
+  class User:
+      def __init__(self): pass
+  
+  class UserRepository:
+      def save(self, user): pass
+  
+  class EmailService:
+      def send(self, to, message): pass
+  
+  class ReportGenerator:
+      def generate_pdf(self, user): pass
+  ```
+
+### 9. 🔄 **Controle de Versão Efetivo**
+
+**Por quê importante**: Histórico limpo facilita debugging e colaboração.
+
+**Práticas**:
+- ✅ **Commits atômicos e descritivos**:
+  ```bash
+  # ❌ RUIM
+  git commit -m "fixes"
+  git commit -m "updates"
+  
+  # ✅ BOM
+  git commit -m "feat: adiciona validação de email no formulário de cadastro"
+  git commit -m "fix: corrige cálculo de desconto para valores acima de R$ 1000"
+  ```
+
+- ✅ **Branches para features**:
+  ```bash
+  # Criar branch para nova funcionalidade
+  git checkout -b feature/user-authentication
+  
+  # Desenvolver e commitar
+  git commit -m "feat: implementa login com JWT"
+  
+  # Merge após review
+  git checkout main
+  git merge feature/user-authentication
+  ```
+
+- ✅ **.gitignore apropriado**:
+  ```gitignore
+  # Python
+  __pycache__/
+  *.pyc
+  .env
+  venv/
+  
+  # JavaScript
+  node_modules/
+  dist/
+  .env.local
+  
+  # IDEs
+  .vscode/
+  .idea/
+  *.swp
+  
+  # OS
+  .DS_Store
+  Thumbs.db
+  ```
+
+### 10. 📦 **Gerenciamento de Dependências**
+
+**Por quê importante**: Dependências mal gerenciadas causam problemas de compatibilidade.
+
+**Práticas**:
+- ✅ **Fixar versões**:
+  ```
+  # ❌ RUIM - requirements.txt
+  flask
+  requests
+  
+  # ✅ BOM - requirements.txt
+  flask==2.3.2
+  requests==2.31.0
+  ```
+
+- ✅ **Usar ambientes virtuais**:
+  ```bash
+  # Python
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  
+  # Node.js
+  npm install  # Usa package-lock.json
+  ```
+
+- ✅ **Verificar vulnerabilidades**:
+  ```bash
+  # Python
+  pip install pip-audit
+  pip-audit
+  
+  # Node.js
+  npm audit
+  npm audit fix
+  ```
+
+### 🎯 **Checklist Rápido para IAs**
+
+Antes de gerar/commitar código, verificar:
+
+- [ ] Nomes são descritivos e seguem convenções da linguagem?
+- [ ] Funções têm responsabilidade única e são pequenas?
+- [ ] Há tratamento de erros para casos excepcionais?
+- [ ] Código está testado (unitários + edge cases)?
+- [ ] Não há vulnerabilidades de segurança óbvias?
+- [ ] Performance é aceitável (sem algoritmos O(n²) desnecessários)?
+- [ ] Há documentação (docstrings, comentários úteis)?
+- [ ] Código está organizado em módulos lógicos?
+- [ ] Commits são descritivos (conventional commits)?
+- [ ] Dependências estão com versões fixadas?
+
+### 📚 **Recursos Adicionais**
+
+- **Clean Code** (Robert C. Martin) - Princípios de código limpo
+- **SOLID Principles** - Orientação a objetos bem feita
+- **Design Patterns** (GoF) - Soluções comuns para problemas comuns
+- **OWASP Top 10** - Principais vulnerabilidades de segurança
+- **PEP 8** (Python) - Guia de estilo Python
+- **Google Style Guides** - Guias de estilo por linguagem
+
+---
+
+**Releia este documento antes de cada sprint!**
+
+---
+
+**Versão**: 2.3  
+**Última atualização**: 16 de Dezembro de 2025  
 **Mantido por**: Josué Amaral  
 **Status**: ATIVO - Protocolo avançado para projetos críticos/enterprise
