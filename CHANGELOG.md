@@ -1,5 +1,120 @@
 # Changelog - Clarify Project
 
+## [2.9.89] - 2024-12-21
+
+### 🐛 Error Reporting System (COULD HAVE - UX)
+
+Sistema integrado de report de erros com GitHub Issues, permitindo usuários reportarem bugs facilmente com 1 click. Captura exceptions não tratadas, coleta system info, e pré-preenche GitHub Issues para facilitar debug.
+
+**Features**:
+- ✅ **Global Exception Handler** (`src/utils/error_reporter.py` - 220 linhas):
+  - Captura todas exceptions não tratadas via `sys.excepthook`
+  - Formata exception info (type, message, traceback, timestamp, location)
+  - Logging automático com full context
+  - Coleta system info (OS, Python, Clarify version, PySide6, architecture)
+  - Geração de GitHub Issue URL com query params (pre-filled)
+  - Settings integration: enable/disable, include system info, auto-open GitHub
+  - Singleton pattern com `get_error_reporter()`
+  
+- ✅ **Error Report Dialog** (`src/gui/error_report_dialog.py` - 280 linhas):
+  - Modal QDialog com 4 seções:
+    * **Error Summary**: Type, message, location (auto-filled)
+    * **Steps to Reproduce**: User input com placeholder guide
+    * **Expected vs Actual Behavior**: 2 text edits para context
+    * **Checkbox**: "Don't show again" (disable error reporting)
+  - 4 action buttons:
+    * 🐛 **Send to GitHub**: Abre browser com issue pre-filled
+    * 📋 **Copy to Clipboard**: Copia error info formatado
+    * 💾 **Save Log**: Salva full error log em arquivo .log
+    * **Close**: Fecha dialog e salva preferences
+  - Professional UI: Header com emoji, GroupBoxes, tooltips
+  - Modal behavior com raise/activate
+  
+- ✅ **App.py Integration** (MainWindow):
+  - Instala error reporter no `__init__` (logo após logging)
+  - Cria ErrorReportDialog instance
+  - Liga reporter.dialog = dialog (para UI callback)
+  - Settings menu: **Advanced → Error Reporting** submenu:
+    * ✅ "Enable Error Reporting" (default: ON)
+    * ✅ "Include System Info" (default: ON)
+    * ✅ "Auto-open GitHub Issues" (default: OFF)
+  - 3 callback methods: `_toggle_error_reporting`, `_toggle_system_info`, `_toggle_auto_github`
+  - QSettings persistence (Clarify/Clarify, error_reporting/*)
+
+**Usage**:
+```python
+# Error occurs anywhere in app
+raise ValueError("Something went wrong")
+
+# → Global handler captures
+# → ErrorReportDialog shows modal
+# → User fills context (optional)
+# → Clicks "Send to GitHub"
+# → Browser opens with pre-filled issue:
+#    Title: [Bug] ValueError: Something went wrong
+#    Body: Markdown formatted with traceback, system info, steps
+#    Labels: bug, needs-triage
+# → User submits issue (authenticated in GitHub)
+```
+
+**GitHub Issue URL Format**:
+```
+https://github.com/JosueAmaral15/clarify/issues/new?
+  title=[Bug] {type}: {message}
+  &body={markdown_formatted}
+  &labels=bug,needs-triage
+```
+
+**System Info Collected**:
+- OS: platform.system(), platform.release()
+- Python: platform.python_version()
+- Clarify: app_version (2.9.89)
+- PySide6: PySide6.__version__
+- Architecture: platform.machine()
+- Platform: platform.platform()
+
+**Settings Location**:
+- Linux: `~/.config/Clarify/`
+- macOS: `~/Library/Preferences/com.clarify/`
+- Windows: `%APPDATA%\Clarify\`
+
+**Content Quality**:
+- Professional error dialog UI (clean, organized, tooltips)
+- 3 action options (GitHub, clipboard, save file)
+- User-friendly: clear labels, placeholders, instructions
+- Opt-out: "Don't show again" checkbox
+- Safety: Never sends data automatically (user click required)
+- Privacy: System info optional (toggle in settings)
+
+**Impact**:
+- **UX**: Usuários reportam bugs com 1 click (vs manual GitHub login + write issue)
+- **Quality**: Mais reports = mais bugs identificados e corrigidos
+- **Debug**: System info e traceback completo facilitam reprodução
+- **Community**: Reduce friction para contribuir com bug reports
+- **Transparency**: User sempre em controle (opt-in, opt-out, clear actions)
+
+**Files Created**:
+- `src/utils/error_reporter.py`: Global exception handler (220 lines)
+- `src/gui/error_report_dialog.py`: Error report UI dialog (280 lines)
+
+**Files Modified**:
+- `src/app.py`: +40 lines (error reporter integration, menu, callbacks)
+
+**Technical Details**:
+- Python 3.12+ (sys.excepthook, type hints)
+- PySide6 QDialog, QSettings, QMessageBox
+- webbrowser module (open GitHub)
+- pyperclip module (clipboard copy)
+- urllib.parse (URL encoding)
+- Logging integration (logger.error)
+- Singleton pattern (global _error_reporter)
+
+**Referências**:
+- GitHub Issues API: https://github.com/JosueAmaral15/clarify/issues/new
+- Python sys.excepthook: https://docs.python.org/3/library/sys.html#sys.excepthook
+
+---
+
 ## [2.9.88] - 2024-12-21
 
 ### 📚 API Documentation with Sphinx (WOULD HAVE - Documentation)

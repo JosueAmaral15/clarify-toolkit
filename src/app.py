@@ -4178,6 +4178,14 @@ if _PYSIDE:
             self.logger = get_logger("clarify.app.MainWindow")
             self.logger.info("Initializing Clarify application")
             
+            # Initialize error reporter (v2.9.89)
+            from .utils.error_reporter import install_error_reporter
+            from .gui.error_report_dialog import ErrorReportDialog
+            self.error_reporter = install_error_reporter(app_version="2.9.89")
+            self.error_dialog = ErrorReportDialog(self)
+            self.error_reporter.dialog = self.error_dialog
+            self.logger.info("Error reporter installed")
+            
             # Initialize crash handler (v2.9.61)
             # Install global exception handler with dialog
             self.crash_handler = install_crash_handler(
@@ -5168,6 +5176,28 @@ if _PYSIDE:
             m_settings.addAction(act_shortcuts)
             m_settings.addAction(act_transparency)
             m_settings.addSeparator()
+            
+            # Advanced submenu (v2.9.89)
+            m_advanced = m_settings.addMenu("Advanced")
+            
+            # Error Reporting submenu
+            m_error_reporting = m_advanced.addMenu("Error Reporting")
+            self.act_error_reporting_toggle = QAction("Enable Error Reporting", self, checkable=True)
+            self.act_error_reporting_toggle.setChecked(self.settings.qsettings.value("error_reporting/enabled", True, type=bool))
+            self.act_error_reporting_toggle.triggered.connect(self._toggle_error_reporting)
+            m_error_reporting.addAction(self.act_error_reporting_toggle)
+            
+            self.act_system_info_toggle = QAction("Include System Info", self, checkable=True)
+            self.act_system_info_toggle.setChecked(self.settings.qsettings.value("error_reporting/include_system_info", True, type=bool))
+            self.act_system_info_toggle.triggered.connect(self._toggle_system_info)
+            m_error_reporting.addAction(self.act_system_info_toggle)
+            
+            self.act_auto_github_toggle = QAction("Auto-open GitHub Issues", self, checkable=True)
+            self.act_auto_github_toggle.setChecked(self.settings.qsettings.value("error_reporting/auto_open_github", False, type=bool))
+            self.act_auto_github_toggle.triggered.connect(self._toggle_auto_github)
+            m_error_reporting.addAction(self.act_auto_github_toggle)
+            
+            m_settings.addSeparator()
             act_clear_recent = QAction(tr("menu.settings.clear_recent"), self)
             m_settings.addAction(act_clear_recent)
             act_preferences.triggered.connect(self._show_preferences)
@@ -5471,6 +5501,24 @@ if _PYSIDE:
             
             # Save preference
             self.settings.update("language", lang)
+        
+        def _toggle_error_reporting(self, checked: bool):
+            """Toggle error reporting on/off (v2.9.89)."""
+            self.settings.qsettings.setValue("error_reporting/enabled", checked)
+            status = "enabled" if checked else "disabled"
+            QMessageBox.information(
+                self,
+                "Error Reporting",
+                f"Error reporting has been {status}."
+            )
+        
+        def _toggle_system_info(self, checked: bool):
+            """Toggle system info inclusion in error reports (v2.9.89)."""
+            self.settings.qsettings.setValue("error_reporting/include_system_info", checked)
+        
+        def _toggle_auto_github(self, checked: bool):
+            """Toggle auto-open GitHub Issues on error (v2.9.89)."""
+            self.settings.qsettings.setValue("error_reporting/auto_open_github", checked)
         
         def _on_language_changed(self, lang: str):
             """Called when language changes - retranslate all UI (Task #24 - v2.9.10)."""
