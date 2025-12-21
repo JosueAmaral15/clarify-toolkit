@@ -1,5 +1,67 @@
 # Changelog - Clarify Project
 
+## [2.9.84] - 2024-12-21
+
+### 🎨 Customizable UI Layout (COULD HAVE - MVP)
+
+Sistema de layouts customizáveis permite que usuários salvem/carreguem diferentes configurações de docks. Implementado seguindo abordagem MVP com 3 presets pré-configurados.
+
+**Features**:
+- ✅ **LayoutManager Class** (`src/layout_manager.py` - 293 LOC):
+  - Save/load layout completo (dock positions, sizes, visibility)
+  - Persistência via QSettings (grupo "Layouts/")
+  - Restauração automática do último layout usado
+  - API simples: `save_layout()`, `load_layout()`, `apply_preset()`
+  
+- ✅ **3 Presets Pré-configurados**:
+  - **Compact**: Minimalista (só Editor visível)
+  - **Standard**: Equilibrado (Editor + Search + Replace + Rewriter)
+  - **Advanced**: Completo (todos os docks visíveis)
+  
+- ✅ **Integração com Menu View**:
+  - Submenu `View → Layouts`
+  - Ações: Compact, Standard, Advanced
+  - `Save Current Layout...`: Salvar layout customizado com nome
+  - `Manage Layouts...`: Dialog para gerenciar layouts salvos
+  
+- ✅ **i18n Completo (7 idiomas)**:
+  - EN, PT-BR, ES, FR, DE, ZH, JA
+  - Chaves: `menu.view.layouts.*`
+  
+- ✅ **Testing**: 14 unit tests (14/14 passing em 3.55s)
+  - Initialization, dock registration, save/load
+  - 3 presets (Compact/Standard/Advanced)
+  - Custom layout management, delete, reset
+
+**Usage**:
+```python
+# Aplicar preset
+View → Layouts → Compact/Standard/Advanced
+
+# Salvar layout customizado
+View → Layouts → Save Current Layout...
+
+# Gerenciar layouts salvos
+View → Layouts → Manage Layouts...
+```
+
+**Files Created**:
+- `src/layout_manager.py`: LayoutManager class (293 LOC)
+- `tests/test_layout_manager.py`: 14 unit tests
+
+**Files Modified**:
+- `src/app.py`: +150 LOC (LayoutManager integration, menu, methods)
+- `src/i18n/*.json`: +6 keys × 7 idiomas = 42 traduções
+
+**Technical Details**:
+- Uses QMainWindow.saveGeometry/restoreGeometry
+- Uses QMainWindow.saveState/restoreState  
+- QSettings persistence: `Clarify/ClarifyApp/Layouts/{name}`
+- Dock visibility tracked individually per layout
+- LastLayout preference auto-restores on startup
+
+---
+
 ## [2.9.83] - 2024-12-21
 
 ### 🔧 Benchmark System - Complete (5/5 Categories)

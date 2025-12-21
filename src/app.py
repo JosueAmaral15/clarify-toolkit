@@ -4236,12 +4236,23 @@ if _PYSIDE:
             #     self.cloud_sync.login()
             # except Exception as e:
             #     print(f"[Cloud Sync] Not initialized: {e}")
+            
+            # Initialize Layout Manager (v2.9.84)
+            from .layout_manager import LayoutManager
+            self.layout_manager = LayoutManager(self)
+            self.logger.info("LayoutManager initialized")
 
             self._build_icon()
             self._build_ui()
             self._build_menu()
             self._restore_prefs()
             self._apply_saved_settings()
+            
+            # Register docks with LayoutManager (v2.9.84)
+            self._register_docks_with_layout_manager()
+            
+            # Restore last layout (v2.9.84)
+            self.layout_manager.restore_last_layout()
             
             # Apply accessibility features (v2.9.35)
             self._apply_accessibility()
@@ -5066,6 +5077,27 @@ if _PYSIDE:
             self.act_toggle_history.setToolTip("Show/hide operation history panel")
             self.act_toggle_history.triggered.connect(self._toggle_history)
             m_view.addAction(self.act_toggle_history)
+            
+            # Layouts submenu (v2.9.84)
+            m_layouts = m_view.addMenu(tr("menu.view.layouts"))
+            self.act_layout_compact = QAction(tr("menu.view.layouts.compact"), self)
+            self.act_layout_standard = QAction(tr("menu.view.layouts.standard"), self)
+            self.act_layout_advanced = QAction(tr("menu.view.layouts.advanced"), self)
+            m_layouts.addAction(self.act_layout_compact)
+            m_layouts.addAction(self.act_layout_standard)
+            m_layouts.addAction(self.act_layout_advanced)
+            m_layouts.addSeparator()
+            self.act_layout_save = QAction(tr("menu.view.layouts.save"), self)
+            self.act_layout_manage = QAction(tr("menu.view.layouts.manage"), self)
+            m_layouts.addAction(self.act_layout_save)
+            m_layouts.addAction(self.act_layout_manage)
+            
+            # Connect layout actions
+            self.act_layout_compact.triggered.connect(lambda: self.layout_manager.apply_preset("Compact"))
+            self.act_layout_standard.triggered.connect(lambda: self.layout_manager.apply_preset("Standard"))
+            self.act_layout_advanced.triggered.connect(lambda: self.layout_manager.apply_preset("Advanced"))
+            self.act_layout_save.triggered.connect(self._save_current_layout)
+            self.act_layout_manage.triggered.connect(self._manage_layouts)
 
             # Themes menu
             m_themes = bar.addMenu(tr("menu.themes"))
@@ -5474,6 +5506,138 @@ if _PYSIDE:
             
             dialog = ShortcutsDialog(self)
             dialog.shortcuts_changed.connect(self._on_shortcuts_changed)
+            dialog.exec()
+        
+        def _register_docks_with_layout_manager(self):
+            """
+            Register all dock widgets with the LayoutManager (v2.9.84).
+            
+            Called after _build_ui() to register all docks.
+            """
+            # Register main docks
+            dock_mapping = {
+                "editor": getattr(self, "editor_dock", None),
+                "search": getattr(self, "search_panel", None),
+                "replace": getattr(self, "replace_panel", None),
+                "insert": getattr(self, "insert_panel", None),
+                "set_operations": getattr(self, "set_operations_dock", None),
+                "rewriter": getattr(self, "rewriter_dock", None),
+                "translate": getattr(self, "translate_dock", None),
+                "ai_processor": getattr(self, "ai_processor_dock", None),
+                "case_converter": getattr(self, "case_converter_dock", None),
+                "json_search": getattr(self, "json_search_dock", None),
+            }
+            
+            # Register only existing docks
+            for dock_name, dock_widget in dock_mapping.items():
+                if dock_widget is not None:
+                    self.layout_manager.register_dock(dock_name, dock_widget)
+            
+            self.logger.info(f"Registered {len([d for d in dock_mapping.values() if d])} docks with LayoutManager")
+        
+        def _save_current_layout(self):
+            """Save current layout with a custom name (v2.9.84)."""
+            from PySide6.QtWidgets import QInputDialog
+            
+            layout_name, ok = QInputDialog.getText(
+                self,
+                tr("menu.view.layouts.save"),
+                "Enter layout name:",
+                text="My Custom Layout"
+            )
+            
+            if ok and layout_name.strip():
+                self.layout_manager.save_layout(layout_name.strip())
+                self.logger.info(f"Layout saved: {layout_name}")
+                
+                # Show confirmation
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "Layout Saved",
+                    f"Layout '{layout_name}' has been saved successfully."
+                )
+        
+        def _manage_layouts(self):
+            """Show layout management dialog (v2.9.84)."""
+            from PySide6.QtWidgets import (
+                QDialog, QVBoxLayout, QHBoxLayout, QListWidget, 
+                QPushButton, QMessageBox, QLabel
+            )
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Manage Layouts")
+            dialog.setMinimumSize(500, 400)
+            
+            layout = QVBoxLayout()
+            
+            # Label
+            label = QLabel("Saved layouts (custom layouts only):")
+            layout.addWidget(label)
+            
+            # List widget
+            list_widget = QListWidget()
+            custom_layouts = self.layout_manager.get_saved_layouts()
+            list_widget.addItems(custom_layouts)
+            layout.addWidget(list_widget)
+            
+            # Buttons
+            btn_layout = QHBoxLayout()
+            btn_load = QPushButton("Load")
+            btn_delete = QPushButton("Delete")
+            btn_reset = QPushButton("Reset to Defaults")
+            btn_close = QPushButton("Close")
+            
+            btn_layout.addWidget(btn_load)
+            btn_layout.addWidget(btn_delete)
+            btn_layout.addWidget(btn_reset)
+            btn_layout.addStretch()
+            btn_layout.addWidget(btn_close)
+            
+            layout.addLayout(btn_layout)
+            dialog.setLayout(layout)
+            
+            # Connect buttons
+            def load_selected():
+                current_item = list_widget.currentItem()
+                if current_item:
+                    layout_name = current_item.text()
+                    if self.layout_manager.load_layout(layout_name):
+                        QMessageBox.information(dialog, "Success", f"Layout '{layout_name}' loaded.")
+                        dialog.accept()
+            
+            def delete_selected():
+                current_item = list_widget.currentItem()
+                if current_item:
+                    layout_name = current_item.text()
+                    reply = QMessageBox.question(
+                        dialog,
+                        "Confirm Delete",
+                        f"Are you sure you want to delete layout '{layout_name}'?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply == QMessageBox.Yes:
+                        self.layout_manager.delete_layout(layout_name)
+                        list_widget.takeItem(list_widget.row(current_item))
+            
+            def reset_all():
+                reply = QMessageBox.question(
+                    dialog,
+                    "Confirm Reset",
+                    "This will delete all custom layouts and restore Standard preset. Continue?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self.layout_manager.reset_to_defaults()
+                    list_widget.clear()
+                    QMessageBox.information(dialog, "Reset Complete", "Layouts reset to defaults.")
+                    dialog.accept()
+            
+            btn_load.clicked.connect(load_selected)
+            btn_delete.clicked.connect(delete_selected)
+            btn_reset.clicked.connect(reset_all)
+            btn_close.clicked.connect(dialog.accept)
+            
             dialog.exec()
         
         def _new_from_template(self):
