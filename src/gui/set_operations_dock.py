@@ -214,10 +214,14 @@ class SetOperationsDock(BaseDock):
         self.btn_save = QPushButton("Save Result")
         self.btn_save.setToolTip("Save operation results to JSON file (enabled after successful execution)")
         self.btn_save.setEnabled(False)
+        self.btn_export = QPushButton("Export...")
+        self.btn_export.setToolTip("Export results to CSV, Excel, YAML, or TOML (v2.9.93)")
+        self.btn_export.setEnabled(False)
 
         btn_layout.addWidget(self.btn_execute)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_save)
+        btn_layout.addWidget(self.btn_export)
         btn_layout.addStretch()
 
         main_layout.addLayout(btn_layout)
@@ -252,6 +256,7 @@ class SetOperationsDock(BaseDock):
         self.btn_execute.clicked.connect(self._execute)
         self.btn_clear.clicked.connect(self._clear_all)
         self.btn_save.clicked.connect(self._save_result)
+        self.btn_export.clicked.connect(self._export_result)
 
     def _browse_file(self, target: str):
         """Browse for JSON file.
@@ -419,8 +424,9 @@ class SetOperationsDock(BaseDock):
         # Display statistics
         self.lbl_stats.setText("\n".join(stats_lines))
 
-        # Enable save button
+        # Enable save and export buttons
         self.btn_save.setEnabled(True)
+        self.btn_export.setEnabled(True)
 
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
 
@@ -442,6 +448,63 @@ class SetOperationsDock(BaseDock):
                 self.show_info("Success", f"Results saved to:\n{file_path}")
             except Exception as e:
                 self.show_error("Error Saving", str(e))
+    
+    def _export_result(self):
+        """Export results to multiple formats (v2.9.93)."""
+        if not hasattr(self, 'result_data') or not self.result_data:
+            self.show_warning("No Data", "No results to export. Please execute an operation first.")
+            return
+        
+        from pathlib import Path
+        from PySide6.QtWidgets import QFileDialog
+        from ..export_manager import ExportManager
+        
+        # Format filter
+        filter_str = "CSV Files (*.csv);;Excel Files (*.xlsx);;YAML Files (*.yaml);;TOML Files (*.toml);;JSON Files (*.json)"
+        
+        # Open save dialog
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Results",
+            "",
+            filter_str
+        )
+        
+        if not file_path:
+            return  # User cancelled
+        
+        try:
+            # Determine format from filter
+            format_map = {
+                "CSV Files (*.csv)": "csv",
+                "Excel Files (*.xlsx)": "xlsx",
+                "YAML Files (*.yaml)": "yaml",
+                "TOML Files (*.toml)": "toml",
+                "JSON Files (*.json)": "json"
+            }
+            
+            export_format = format_map.get(selected_filter, "json")
+            
+            # Ensure correct extension
+            path = Path(file_path)
+            if not path.suffix:
+                path = path.with_suffix(f".{export_format}")
+            
+            # Export
+            ExportManager.export(
+                data=self.result_data,
+                output_path=path,
+                format=export_format,
+                flatten=True,  # Flatten for CSV/Excel/TOML
+                include_metadata=True  # Add timestamp + operation type
+            )
+            
+            self.show_info("Export Successful", f"Results exported to:\n{path}")
+        
+        except ImportError as e:
+            self.show_error("Export Failed", f"Missing dependency:\n{e}\n\nInstall with: pip install openpyxl tomli-w")
+        except Exception as e:
+            self.show_error("Export Failed", str(e))
 
     def _clear_all(self):
         """Clear all inputs and results."""
@@ -451,6 +514,7 @@ class SetOperationsDock(BaseDock):
         self.txt_result.clear()
         self.lbl_stats.clear()
         self.btn_save.setEnabled(False)
+        self.btn_export.setEnabled(False)
 
         # Reset checkboxes
         self.chk_intersection.setChecked(False)
