@@ -1478,7 +1478,7 @@ result = convert_text_to_json(text, "auto")
   * **Sprint v2.9.64**: Apenas GUI integration (~50 LOC), 30 minutos
 - **[]** Update Checker: Adicionar verificador automático de atualizações. Na inicialização: verificar GitHub Releases API para versão mais recente, comparar com versão atual, exibir notificação se nova versão disponível. Incluir: link para changelog, botão "Download", checkbox "Don't show again for this version". Respeitar configuração "Check for updates" em Settings.
 - **[]** Error Reporting & Crash Handler: Implementar sistema de crash reporting. Capturar exceções não tratadas com `sys.excepthook`, gerar relatório com: stack trace, versão do app, OS info, últimas 50 linhas de log. Oferecer: "Send Report" (via GitHub Issue automaticamente), "Save Report" (local .txt), "Ignore". Anonimizar paths de arquivos do usuário.
-- **[]** Database Migration System: Criar sistema de migração para QSettings quando estrutura mudar entre versões. Pattern: `migrations/v{version}.py` com `migrate()` function. Exemplo: v2.9.32 → v2.9.33 move `set_operations/` para `operations/set/`. Executar migrations automaticamente no startup. Log em `migrations.log`.
+- **[X]** **v2.9.91 - Database Migration System (22/12/2024 - CONCLUÍDO)**: Sistema automático de migração para QSettings e config.yaml quando estrutura mudar entre versões (~380 linhas totais). **Backend** (`src/migration_manager.py`, 280 lines): MigrationManager singleton, auto-detecção de versão (QSettings > config.yaml > 0.0.0), discovery de migrations em `migrations/*.py`, fail-safe com backup automático (QSettings export JSON + config.yaml.backup), logging para `~/.clarify/logs/migrations.log` (RotatingFileHandler 5MB, 3 backups), sem rollback (usa backups para recovery manual). **Base Class** (`src/migrations/base.py`, 50 lines): Migration ABC com version attr, migrate_qsettings(settings) → bool, migrate_config(config) → dict, métodos opcionais (no-op default). **Example Migration** (`src/migrations/v2_9_91.py`, 50 lines): Primeira migration estabelece version tracking, adiciona app.version field em config.yaml, baseline para futuras migrations. **App Integration** (`src/app.py`, +6 lines, ~4197): Executa `run_migrations()` ANTES de carregar config/settings no __init__, graceful failure (log warning, continua com versão atual). **Migration Pattern**: `migrations/v{major}_{minor}_{patch}.py` com classe MigrationV{version}(Migration), auto-discovered e executadas em ordem de versão crescente. **Version Tracking**: Salvo em QSettings (app/version) + config.yaml (app.version), precedência QSettings > config.yaml. **Backup Strategy**: Automático antes de cada migration batch, QSettings exportado para JSON, config.yaml usa .backup existente do ConfigManager. **Impact**: Previne quebra de configs de usuários entre versões, migração transparente no startup, seguro com backups, extensível para futuras mudanças estruturais. **Score Matriz**: 24.5 pontos (Simplicidade 4, Impacto 3, Clareza 4). **Commit**: 11f132c "feat: database migration system (v2.9.91)".
 
 ---
 
@@ -1672,11 +1672,11 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 15 | 21 | 41.7% |
+| COULD HAVE | 36 | 16 | 20 | 44.4% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **92** | **65** | **58.6%** |
+| **TOTAL** | **157** | **93** | **64** | **59.2%** |
 
-**Última Atualização**: 22/12/2025 - v2.9.90 Configuration Management
+**Última Atualização**: 22/12/2025 - v2.9.91 Database Migration System
 
 **Notas de Atualização**:
 - ✅ **v2.9.32 Completa**: JSON Set Operations implementada com sucesso
