@@ -43,6 +43,8 @@ from PySide6.QtWidgets import (
 from src.set_operations import difference, intersection, symmetric_difference, union
 from src.i18n import tooltip_tr
 from .base_dock import BaseDock
+from ..history_manager import HistoryManager
+from .history_dialog import HistoryDialog
 
 
 class SetOperationsDock(BaseDock):
@@ -55,6 +57,7 @@ class SetOperationsDock(BaseDock):
             parent: Parent widget (optional)
         """
         self.file_paths: List[str] = []
+        self.history_manager = HistoryManager()
         super().__init__("JSON Set Operations", parent)
 
     def _setup_ui(self):
@@ -217,11 +220,15 @@ class SetOperationsDock(BaseDock):
         self.btn_export = QPushButton("Export...")
         self.btn_export.setToolTip("Export results to CSV, Excel, YAML, or TOML (v2.9.93)")
         self.btn_export.setEnabled(False)
+        
+        self.btn_history = QPushButton("📜 History")
+        self.btn_history.setToolTip("View operation history (v2.9.94)")
 
         btn_layout.addWidget(self.btn_execute)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
+        btn_layout.addWidget(self.btn_history)
         btn_layout.addStretch()
 
         main_layout.addLayout(btn_layout)
@@ -257,6 +264,7 @@ class SetOperationsDock(BaseDock):
         self.btn_clear.clicked.connect(self._clear_all)
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
+        self.btn_history.clicked.connect(self._show_history)
 
     def _browse_file(self, target: str):
         """Browse for JSON file.
@@ -424,6 +432,31 @@ class SetOperationsDock(BaseDock):
         # Display statistics
         self.lbl_stats.setText("\n".join(stats_lines))
 
+        # Store result data for export
+        self.result_data = results
+
+        # Save to history (v2.9.94)
+        try:
+            # Determine primary operation (first checked)
+            operation_type = "⊕"  # Default symmetric diff
+            if self.chk_intersection.isChecked():
+                operation_type = "∩"
+            elif self.chk_union.isChecked():
+                operation_type = "∪"
+            elif self.chk_difference.isChecked():
+                operation_type = "−"
+            
+            self.history_manager.add_operation(
+                operation_type=operation_type,
+                file1=files[0],
+                file2=files[1] if len(files) > 1 else files[0],
+                comparison_mode=comparison_mode,
+                result_count=sum(len(r.get(list(r.keys())[0], [])) for r in results.values()),
+                result_data=results
+            )
+        except Exception as e:
+            print(f"Warning: Failed to save operation to history: {e}")
+
         # Enable save and export buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
@@ -521,3 +554,55 @@ class SetOperationsDock(BaseDock):
         self.chk_union.setChecked(False)
         self.chk_difference.setChecked(False)
         self.chk_symmetric.setChecked(False)
+
+    def _show_history(self):
+        """Show operation history dialog (v2.9.94)."""
+        dialog = HistoryDialog(self.history_manager, self)
+        
+        # Connect re-execute signal
+        dialog.re_execute_requested.connect(self._re_execute_from_history)
+        
+        dialog.exec()
+    
+    def _re_execute_from_history(self, entry: dict):
+        """
+        Re-execute operation from history.
+        
+        Args:
+            entry: History entry with operation data
+        """
+        try:
+            # Set files
+            self.ed_file_a.setText(entry["file1"])
+            self.ed_file_b.setText(entry["file2"])
+            
+            # Set comparison mode
+            if entry["comparison_mode"] == "full_path_value":
+                self.radio_full_path.setChecked(True)
+            elif entry["comparison_mode"] == "key_only":
+                self.radio_key_only.setChecked(True)
+            else:
+                self.radio_key_value.setChecked(True)
+            
+            # Set operation type
+            op_map = {
+                "∩": self.chk_intersection,
+                "∪": self.chk_union,
+                "−": self.chk_difference,
+                "⊕": self.chk_symmetric
+            }
+            
+            # Uncheck all first
+            for chk in op_map.values():
+                chk.setChecked(False)
+            
+            # Check the one from history
+            if entry["operation_type"] in op_map:
+                op_map[entry["operation_type"]].setChecked(True)
+            
+            # Execute
+            self._execute()
+            
+        except Exception as e:
+            self.show_error("Re-execute Error", f"Failed to re-execute operation:\n{e}")
+
