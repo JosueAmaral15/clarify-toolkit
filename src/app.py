@@ -5177,8 +5177,15 @@ if _PYSIDE:
             m_settings.addAction(act_transparency)
             m_settings.addSeparator()
             
-            # Advanced submenu (v2.9.89)
+            # Advanced submenu (v2.9.89, expanded v2.9.90)
             m_advanced = m_settings.addMenu("Advanced")
+            
+            # Configuration File Editor (v2.9.90)
+            self.act_config_editor = QAction("⚙️ Configuration File...", self)
+            self.act_config_editor.setToolTip("Edit config.yaml with visual editor")
+            self.act_config_editor.triggered.connect(self._show_config_editor)
+            m_advanced.addAction(self.act_config_editor)
+            m_advanced.addSeparator()
             
             # Error Reporting submenu
             m_error_reporting = m_advanced.addMenu("Error Reporting")
@@ -5519,6 +5526,12 @@ if _PYSIDE:
         def _toggle_auto_github(self, checked: bool):
             """Toggle auto-open GitHub Issues on error (v2.9.89)."""
             self.settings.qsettings.setValue("error_reporting/auto_open_github", checked)
+        
+        def _show_config_editor(self):
+            """Show Configuration File Editor dialog (v2.9.90)."""
+            from .gui.config_editor_dialog import ConfigEditorDialog
+            dialog = ConfigEditorDialog(self)
+            dialog.exec()
         
         def _on_language_changed(self, lang: str):
             """Called when language changes - retranslate all UI (Task #24 - v2.9.10)."""
