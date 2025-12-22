@@ -62,8 +62,21 @@ else
 fi
 echo ""
 
-# 5. Functional tests
-echo "🧪 Step 5/5: Running functional tests..."
+# 5. Code Coverage (pytest + coverage)
+echo "📊 Step 5/6: Running Code Coverage Analysis..."
+if python -m pytest tests/ --cov=src --cov-report=term --cov-report=html --cov-report=xml --cov-fail-under=80 2>&1 | tee /tmp/coverage_output.txt; then
+    COVERAGE_PERCENT=$(grep "TOTAL" /tmp/coverage_output.txt | awk '{print $NF}' | sed 's/%//')
+    echo -e "${GREEN}✅ Coverage: ${COVERAGE_PERCENT}% (threshold: 80%)${NC}"
+    echo "📁 HTML report generated at: htmlcov/index.html"
+else
+    echo -e "${RED}❌ Coverage below 80% threshold or tests failed${NC}"
+    echo "Run 'pytest tests/ --cov=src --cov-report=html' for detailed report"
+    exit 1
+fi
+echo ""
+
+# 6. Functional tests
+echo "🧪 Step 6/6: Running functional tests..."
 if python test_jsx_extractor.py 2>&1 | grep -q "🎉 ALL TESTS PASSED"; then
     echo -e "${GREEN}✅ Tests: All functional tests passed${NC}"
 else
@@ -77,5 +90,7 @@ echo ""
 echo "=========================================="
 echo -e "${GREEN}✅ All Quality Gates Passed!${NC}"
 echo "=========================================="
+echo "📊 Coverage: ${COVERAGE_PERCENT}%"
+echo "📁 HTML Report: htmlcov/index.html"
 echo "Code is ready for commit 🚀"
 echo ""

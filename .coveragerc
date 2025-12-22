@@ -16,11 +16,17 @@ omit =
     setup.py
 
 [report]
+# Target coverage percentage (fail if below this)
+fail_under = 80
+
 # Target: maintain >90% coverage for core modules
 precision = 2
 show_missing = True
 skip_covered = False
 skip_empty = True
+
+# Sort results by name
+sort = Name
 
 # Exclude lines from coverage
 exclude_lines =
