@@ -45,6 +45,8 @@ from src.i18n import tooltip_tr
 from .base_dock import BaseDock
 from ..history_manager import HistoryManager
 from .history_dialog import HistoryDialog
+from ..presets_manager import PresetsManager
+from .presets_dialog import PresetsDialog
 
 
 class SetOperationsDock(BaseDock):
@@ -58,6 +60,7 @@ class SetOperationsDock(BaseDock):
         """
         self.file_paths: List[str] = []
         self.history_manager = HistoryManager()
+        self.presets_manager = PresetsManager()
         super().__init__("JSON Set Operations", parent)
 
     def _setup_ui(self):
@@ -212,6 +215,10 @@ class SetOperationsDock(BaseDock):
         self.btn_execute = QPushButton("Execute")
         self.btn_execute.setMinimumHeight(35)
         self.btn_execute.setToolTip(tooltip_tr("set_ops.btn_execute"))
+        
+        self.btn_save_preset = QPushButton("💾 Save Preset")
+        self.btn_save_preset.setToolTip("Save current configuration as preset (v2.9.95)")
+        
         self.btn_clear = QPushButton("Clear")
         self.btn_clear.setToolTip("Clear all inputs, file selections, and results")
         self.btn_save = QPushButton("Save Result")
@@ -223,12 +230,17 @@ class SetOperationsDock(BaseDock):
         
         self.btn_history = QPushButton("📜 History")
         self.btn_history.setToolTip("View operation history (v2.9.94)")
+        
+        self.btn_presets = QPushButton("📋 Presets")
+        self.btn_presets.setToolTip("Manage operation presets (v2.9.95)")
 
         btn_layout.addWidget(self.btn_execute)
+        btn_layout.addWidget(self.btn_save_preset)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
         btn_layout.addWidget(self.btn_history)
+        btn_layout.addWidget(self.btn_presets)
         btn_layout.addStretch()
 
         main_layout.addLayout(btn_layout)
@@ -261,10 +273,12 @@ class SetOperationsDock(BaseDock):
         self.btn_remove_file.clicked.connect(self._remove_file)
         self.btn_clear_files.clicked.connect(self._clear_files)
         self.btn_execute.clicked.connect(self._execute)
+        self.btn_save_preset.clicked.connect(self._save_current_as_preset)
         self.btn_clear.clicked.connect(self._clear_all)
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
         self.btn_history.clicked.connect(self._show_history)
+        self.btn_presets.clicked.connect(self._show_presets)
 
     def _browse_file(self, target: str):
         """Browse for JSON file.
@@ -605,4 +619,140 @@ class SetOperationsDock(BaseDock):
             
         except Exception as e:
             self.show_error("Re-execute Error", f"Failed to re-execute operation:\n{e}")
+    
+    def _show_presets(self):
+        """Show operation presets dialog (v2.9.95)."""
+        dialog = PresetsDialog(self.presets_manager, self)
+        
+        # Connect preset load signal
+        dialog.preset_load_requested.connect(self._load_preset)
+        
+        dialog.exec()
+    
+    def _load_preset(self, preset: dict):
+        """
+        Load preset into current configuration.
+        
+        Args:
+            preset: Preset data dictionary
+        """
+        try:
+            # Set comparison mode
+            if preset.get("comparison_mode") == "full_path_value":
+                self.radio_full_path.setChecked(True)
+            elif preset.get("comparison_mode") == "key_only":
+                self.radio_key_only.setChecked(True)
+            else:
+                self.radio_key_value.setChecked(True)
+            
+            # Set operation type
+            op_map = {
+                "∩": self.chk_intersection,
+                "∪": self.chk_union,
+                "−": self.chk_difference,
+                "⊕": self.chk_symmetric
+            }
+            
+            # Uncheck all first
+            for chk in op_map.values():
+                chk.setChecked(False)
+            
+            # Check the one from preset
+            if preset.get("operation_type") in op_map:
+                op_map[preset["operation_type"]].setChecked(True)
+            
+            # Set options
+            self.chk_ignore_case_keys.setChecked(preset.get("ignore_case_keys", False))
+            self.chk_ignore_case_values.setChecked(preset.get("ignore_case_values", False))
+            self.chk_skip_empty.setChecked(preset.get("skip_empty", True))
+            self.chk_arrays_ignore_order.setChecked(preset.get("arrays_ignore_order", False))
+            
+            # Load favorite files if any
+            favorite_files = preset.get("favorite_files", [])
+            if favorite_files and len(favorite_files) >= 2:
+                self.ed_file_a.setText(favorite_files[0])
+                self.ed_file_b.setText(favorite_files[1])
+            
+            self.show_info("Preset Loaded", f"Loaded preset: {preset.get('name', 'Unnamed')}")
+            
+        except Exception as e:
+            self.show_error("Load Preset Error", f"Failed to load preset:\n{e}")
+    
+    def _save_current_as_preset(self):
+        """Save current configuration as a new preset."""
+        from PySide6.QtWidgets import QInputDialog
+        
+        # Solicita nome do preset
+        name, ok = QInputDialog.getText(
+            self,
+            "Save Preset",
+            "Enter preset name:"
+        )
+        
+        if not ok or not name.strip():
+            return
+        
+        name = name.strip()
+        
+        # Verifica se nome já existe
+        if self.presets_manager.get_preset(name):
+            from PySide6.QtWidgets import QMessageBox
+            reply = QMessageBox.question(
+                self,
+                "Preset Exists",
+                f"A preset named '{name}' already exists.\nOverwrite it?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply == QMessageBox.No:
+                return
+        
+        try:
+            # Determina operação selecionada
+            operation_type = "⊕"  # Default
+            if self.chk_intersection.isChecked():
+                operation_type = "∩"
+            elif self.chk_union.isChecked():
+                operation_type = "∪"
+            elif self.chk_difference.isChecked():
+                operation_type = "−"
+            
+            # Determina comparison mode
+            comparison_mode = "key_value"
+            if self.radio_full_path.isChecked():
+                comparison_mode = "full_path_value"
+            elif self.radio_key_only.isChecked():
+                comparison_mode = "key_only"
+            
+            # Coleta arquivos atuais (favorite files)
+            favorite_files = []
+            if self.ed_file_a.text():
+                favorite_files.append(self.ed_file_a.text())
+            if self.ed_file_b.text():
+                favorite_files.append(self.ed_file_b.text())
+            
+            # Cria preset
+            preset = self.presets_manager.create_preset_from_current(
+                name=name,
+                operation_type=operation_type,
+                comparison_mode=comparison_mode,
+                ignore_case_keys=self.chk_ignore_case_keys.isChecked(),
+                ignore_case_values=self.chk_ignore_case_values.isChecked(),
+                skip_empty=self.chk_skip_empty.isChecked(),
+                arrays_ignore_order=self.chk_arrays_ignore_order.isChecked(),
+                favorite_files=favorite_files
+            )
+            
+            # Salva
+            success = self.presets_manager.save_preset(preset)
+            
+            if success:
+                self.show_info("Preset Saved", f"Preset '{name}' saved successfully!")
+            else:
+                self.show_error("Save Error", "Failed to save preset.")
+        
+        except Exception as e:
+            self.show_error("Save Preset Error", f"Failed to save preset:\n{e}")
+
 
