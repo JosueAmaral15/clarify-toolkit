@@ -74,10 +74,12 @@ class TutorialsDock(QDockWidget):
         self.search_input.setPlaceholderText("🔍 Search tutorials...")
         self.btn_search = QPushButton("Search")
         self.btn_quick_start = QPushButton("⚡ Quick Start")
+        self.btn_ai_assistant = QPushButton("💬 Ask AI")
         
         search_layout.addWidget(self.search_input, 1)
         search_layout.addWidget(self.btn_search)
         search_layout.addWidget(self.btn_quick_start)
+        search_layout.addWidget(self.btn_ai_assistant)
         layout.addLayout(search_layout)
         
         # === Splitter: Tree + Browser ===
@@ -141,6 +143,7 @@ class TutorialsDock(QDockWidget):
         self.tree.itemClicked.connect(self._on_tree_item_clicked)
         self.btn_search.clicked.connect(self._perform_search)
         self.btn_quick_start.clicked.connect(self._open_quick_start)
+        self.btn_ai_assistant.clicked.connect(self._open_ai_assistant)
         self.browser.anchorClicked.connect(self._on_link_clicked)
         self._setup_enter_key()
     
@@ -378,6 +381,18 @@ class TutorialsDock(QDockWidget):
         """Open Quick Start guide."""
         quickstart_path = "quickstart.md"
         self._open_tutorial(quickstart_path)
+    
+    def _open_ai_assistant(self):
+        """Open AI Tutorial Assistant dialog (v2.9.92)."""
+        from .tutorial_assistant_dialog import TutorialAssistantDialog
+        from ..settings_manager import SettingsManager
+        
+        # Get Gemini API key from settings
+        settings = SettingsManager()
+        api_key = settings.get_value('ai_processor/gemini_api_key', '')
+        
+        dialog = TutorialAssistantDialog(self, api_key=api_key)
+        dialog.show()
     
     def _perform_search(self):
         """Search tutorials by keywords."""

@@ -4628,6 +4628,18 @@ if _PYSIDE:
                 self.dock_tutorials = TutorialsDock(self)
             self._add_tool_tab(self.dock_tutorials, "Tutorials", "tutorials")
         
+        def _show_ai_assistant(self):
+            """Show AI Tutorial Assistant dialog (v2.9.92)."""
+            from .gui.tutorial_assistant_dialog import TutorialAssistantDialog
+            from .settings_manager import SettingsManager
+            
+            # Get Gemini API key from settings
+            settings = SettingsManager()
+            api_key = settings.get_value('ai_processor/gemini_api_key', '')
+            
+            dialog = TutorialAssistantDialog(self, api_key=api_key)
+            dialog.show()
+        
         def _about_dialog(self):
             """Show About Clarify dialog."""
             from PySide6.QtWidgets import QMessageBox
@@ -5233,6 +5245,12 @@ if _PYSIDE:
             self.act_open_tutorials.setToolTip("Browse beginner and developer tutorials")
             m_help.addAction(self.act_open_tutorials)
             self.act_open_tutorials.triggered.connect(self._show_tutorials)
+            
+            # AI Tutorial Assistant (v2.9.92)
+            self.act_ai_assistant = QAction("AI Tutorial Assistant", self)
+            self.act_ai_assistant.setToolTip("Ask AI about Clarify tutorials")
+            m_help.addAction(self.act_ai_assistant)
+            self.act_ai_assistant.triggered.connect(self._show_ai_assistant)
             
             # Keyboard Shortcuts Help (v2.9.33)
             self.act_keyboard_shortcuts_help = QAction("Keyboard Shortcuts Help", self)
