@@ -4619,7 +4619,26 @@ if _PYSIDE:
             if not hasattr(self, 'dock_set_operations') or self.dock_set_operations is None:
                 from .gui import SetOperationsDock
                 self.dock_set_operations = SetOperationsDock(self)
+                
+                # Connect to Calculator if exists (v2.9.98)
+                if hasattr(self, 'dock_calculator') and self.dock_calculator:
+                    self.dock_set_operations.store_in_calculator_requested.connect(
+                        self.dock_calculator.store_result
+                    )
             self._add_tool_tab(self.dock_set_operations, "Set Operations", "set_operations")
+        
+        def _show_calculator(self):
+            """Show Calculator Memory as tab (v2.9.98)."""
+            if not hasattr(self, 'dock_calculator') or self.dock_calculator is None:
+                from .gui.calculator_dock import CalculatorDock
+                self.dock_calculator = CalculatorDock(self)
+                
+                # Connect to Set Operations if exists (v2.9.98)
+                if hasattr(self, 'dock_set_operations') and self.dock_set_operations:
+                    self.dock_set_operations.store_in_calculator_requested.connect(
+                        self.dock_calculator.store_result
+                    )
+            self._add_tool_tab(self.dock_calculator, "Calculator", "calculator")
         
         def _show_tutorials(self):
             """Show tutorials as tab (Task #45 - v2.9.15 / v2.9.40)."""
@@ -5062,6 +5081,7 @@ if _PYSIDE:
             self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)  # Task #49 - v2.9.24
             self.act_open_google_translate = QAction(tr("menu.tools.google_translate"), self)  # Task: Google Translate - v2.9.78
             self.act_open_set_operations = QAction("JSON Set Operations...", self)  # v2.9.32
+            self.act_open_calculator = QAction("🧮 Calculator Memory...", self)  # v2.9.98
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
             self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
@@ -5078,6 +5098,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_text_to_json)
             m_tools.addAction(self.act_open_google_translate)
             m_tools.addAction(self.act_open_set_operations)
+            m_tools.addAction(self.act_open_calculator)
             m_tools.addSeparator()
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
@@ -5094,6 +5115,7 @@ if _PYSIDE:
             self.act_open_text_to_json.triggered.connect(self._show_text_to_json)
             self.act_open_google_translate.triggered.connect(self._show_google_translate)
             self.act_open_set_operations.triggered.connect(self._show_set_operations)
+            self.act_open_calculator.triggered.connect(self._show_calculator)
             self.act_open_file_list.triggered.connect(self._show_file_list)
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 

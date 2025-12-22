@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from PySide6.QtCore import Signal
 
 from src.set_operations import difference, intersection, symmetric_difference, union
 from src.i18n import tooltip_tr
@@ -51,6 +52,9 @@ from .presets_dialog import PresetsDialog
 
 class SetOperationsDock(BaseDock):
     """Dock widget for JSON set operations."""
+    
+    # Signal emitted when user wants to store result in Calculator (v2.9.98)
+    store_in_calculator_requested = Signal(object, str)  # (data, source)
 
     def __init__(self, parent=None):
         """Initialize Set Operations dock.
@@ -228,6 +232,10 @@ class SetOperationsDock(BaseDock):
         self.btn_export.setToolTip("Export results to CSV, Excel, YAML, or TOML (v2.9.93)")
         self.btn_export.setEnabled(False)
         
+        self.btn_store_calc = QPushButton("🧮 Store in Calculator")
+        self.btn_store_calc.setToolTip("Store result in Calculator memory slot (v2.9.98)")
+        self.btn_store_calc.setEnabled(False)
+        
         self.btn_history = QPushButton("📜 History")
         self.btn_history.setToolTip("View operation history (v2.9.94)")
         
@@ -239,6 +247,7 @@ class SetOperationsDock(BaseDock):
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
+        btn_layout.addWidget(self.btn_store_calc)
         btn_layout.addWidget(self.btn_history)
         btn_layout.addWidget(self.btn_presets)
         btn_layout.addStretch()
@@ -285,6 +294,7 @@ class SetOperationsDock(BaseDock):
         self.btn_clear.clicked.connect(self._clear_all)
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
+        self.btn_store_calc.clicked.connect(self._store_in_calculator)
         self.btn_history.clicked.connect(self._show_history)
         self.btn_presets.clicked.connect(self._show_presets)
 
@@ -507,9 +517,10 @@ class SetOperationsDock(BaseDock):
             print(f"Warning: Failed to calculate statistics: {e}")
             self.txt_statistics.setVisible(False)
 
-        # Enable save and export buttons
+        # Enable save, export, and calculator buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
+        self.btn_store_calc.setEnabled(True)
 
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
 
@@ -588,6 +599,34 @@ class SetOperationsDock(BaseDock):
             self.show_error("Export Failed", f"Missing dependency:\n{e}\n\nInstall with: pip install openpyxl tomli-w")
         except Exception as e:
             self.show_error("Export Failed", str(e))
+    
+    def _store_in_calculator(self):
+        """Store result in Calculator memory slot (v2.9.98)."""
+        if not hasattr(self, 'result_data') or not self.result_data:
+            self.show_warning("No Data", "No results to store. Please execute an operation first.")
+            return
+        
+        # Determine operation source description
+        operation = "Unknown"
+        if self.rad_intersection.isChecked():
+            operation = "Intersection (∩)"
+        elif self.rad_union.isChecked():
+            operation = "Union (∪)"
+        elif self.rad_difference.isChecked():
+            operation = "Difference (−)"
+        elif self.rad_symmetric_diff.isChecked():
+            operation = "Symmetric Difference (⊕)"
+        
+        # Get file names for source description
+        file_a = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
+        file_b = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        
+        source = f"Set Operations: {operation} ({file_a}, {file_b})"
+        
+        # Emit signal for Calculator to handle
+        self.store_in_calculator_requested.emit(self.result_data, source)
+        
+        self.show_info("Stored", f"Result sent to Calculator\nSource: {source}")
 
     def _clear_all(self):
         """Clear all inputs and results."""
@@ -600,6 +639,7 @@ class SetOperationsDock(BaseDock):
         self.txt_statistics.setVisible(False)
         self.btn_save.setEnabled(False)
         self.btn_export.setEnabled(False)
+        self.btn_store_calc.setEnabled(False)
 
         # Reset checkboxes
         self.chk_intersection.setChecked(False)
