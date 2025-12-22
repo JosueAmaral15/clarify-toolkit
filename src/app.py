@@ -4194,6 +4194,12 @@ if _PYSIDE:
             )
             self.logger.info("Crash handler installed")
             
+            # Run database migrations BEFORE loading config/settings (v2.9.91)
+            from .migration_manager import run_migrations
+            migrations_ok = run_migrations()
+            if not migrations_ok:
+                self.logger.warning("Migrations failed, continuing with current version")
+            
             # Initialize translator (Task #24 - v2.9.10)
             self.translator = get_translator()
             self.translator.languageChanged.connect(self._on_language_changed)
