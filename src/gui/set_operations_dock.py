@@ -257,6 +257,14 @@ class SetOperationsDock(BaseDock):
         self.lbl_stats.setWordWrap(True)
         self.lbl_stats.setStyleSheet("color: #6A9955; font-weight: bold;")
         main_layout.addWidget(self.lbl_stats)
+        
+        # === Comparative Statistics Dashboard (v2.9.96) ===
+        self.txt_statistics = QTextEdit()
+        self.txt_statistics.setReadOnly(True)
+        self.txt_statistics.setMaximumHeight(300)
+        self.txt_statistics.setStyleSheet("font-family: 'Courier New', monospace; font-size: 10pt;")
+        self.txt_statistics.setVisible(False)  # Hidden by default
+        main_layout.addWidget(self.txt_statistics)
 
         main_layout.addStretch()
         
@@ -471,6 +479,34 @@ class SetOperationsDock(BaseDock):
         except Exception as e:
             print(f"Warning: Failed to save operation to history: {e}")
 
+        # Calculate comparative statistics (v2.9.96)
+        try:
+            from ..statistics_manager import StatisticsManager
+            
+            # Calculate stats for each file
+            file1_stats = StatisticsManager.calculate_statistics(file_dicts[0])
+            file2_stats = StatisticsManager.calculate_statistics(file_dicts[1] if len(file_dicts) > 1 else file_dicts[0])
+            
+            # Calculate stats for result
+            result_count = sum(len(r.get(list(r.keys())[0], [])) for r in results.values())
+            result_stats = StatisticsManager.calculate_statistics(results)
+            
+            # Calculate overlap percentage
+            overlap_pct = StatisticsManager.calculate_overlap_percentage(file1_stats, file2_stats, result_count)
+            
+            # Format comparative statistics
+            stats_text = StatisticsManager.format_comparative_statistics(
+                file1_stats, file2_stats, result_stats, overlap_pct
+            )
+            
+            # Display in statistics area
+            self.txt_statistics.setText(stats_text)
+            self.txt_statistics.setVisible(True)
+            
+        except Exception as e:
+            print(f"Warning: Failed to calculate statistics: {e}")
+            self.txt_statistics.setVisible(False)
+
         # Enable save and export buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
@@ -560,6 +596,8 @@ class SetOperationsDock(BaseDock):
         self.list_files.clear()
         self.txt_result.clear()
         self.lbl_stats.clear()
+        self.txt_statistics.clear()
+        self.txt_statistics.setVisible(False)
         self.btn_save.setEnabled(False)
         self.btn_export.setEnabled(False)
 
