@@ -1524,7 +1524,7 @@ result = convert_text_to_json(text, "auto")
 - **[]** Batch Set Operations: Processar múltiplos grupos de arquivos em pipeline. Interface: adicionar grupos (A∩B, C∪D, E−F), definir ordem de execução, aplicar operações sequencialmente. Exibir progress bar com status de cada grupo.
 
 ##### Histórico e Presets
-- **[]** Operation History: Implementar histórico de operações realizadas (últimas 50). Armazenar: timestamp, tipo de operação, arquivos envolvidos, modo de comparação, resultado (contagem de elementos). Permitir: visualizar resultados anteriores, re-executar operação, exportar histórico para JSON.
+- **[X]** **v2.9.94 - Operation History (22/12/2024 - CONCLUÍDO)**: Sistema de histórico de operações executadas (~410 linhas totais). **Backend** (`src/history_manager.py`, 180 lines): HistoryManager class singleton, QSettings storage (last 50 operations max), add_operation() (salva timestamp/op_type/files/comparison_mode/result_count/result_data), get_history() (retorna lista completa), get_entry(index) (operação específica), clear_history(), export_history(filepath) (JSON com metadata), format_entry_display() (format para QListWidget). **GUI** (`src/gui/history_dialog.py`, 230 lines): HistoryDialog non-modal, QListWidget exibindo operações (most recent first), info label "Last 50 operations", QTextEdit details (timestamp/files/mode/results), 4 botões (🔄 Re-execute, 📤 Export History, 🗑️ Clear All, Close), re_execute_requested signal para SetOperationsDock, validação de files existence antes re-execute, confirmation dialog antes clear. **Integration** (`src/gui/set_operations_dock.py`, +80 lines): HistoryManager instance em __init__, _execute() modificado para salvar em history após success (primary operation type + result count), 📜 History button adicionado no btn_layout, _show_history() method (abre HistoryDialog + conecta signal), _re_execute_from_history(entry) method (set files/mode/operation + auto-execute). **Features**: Persistent storage (QSettings), last 50 operations (FIFO), display format "[DD/MM/YYYY HH:MM:SS] file1 op file2 (mode) → N results", re-execute com files validation, export JSON com total_operations metadata, clear com confirmation, double-click para re-execute. **Architecture**: Backend (HistoryManager singleton) + GUI (HistoryDialog non-modal) + Integration (SetOperationsDock connect signal). **Patterns**: Singleton (HistoryManager única instância), Observer (Qt signal re_execute_requested), Template Method (format_entry_display). **Use Cases**: "Ver histórico de operações", "Re-executar operação anterior", "Exportar histórico para análise", "Limpar histórico antigo". **Score Matriz**: 30.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Clareza 5, Urgência 3). **Time**: ~2h30 (Sprint A 180L + Sprint B 230L). **Commit**: cf05288 "feat: operation history for Set Operations (v2.9.94)".
 - **[]** Operation Presets: Criar sistema de presets salvos. Permitir usuário salvar configurações frequentes: tipo de operação (∩/∪/−/⊕), modo de comparação (key_value/full_path_value/key_only), opções ativas, arquivos favoritos. Dropdown "Load Preset" no dock.
 - **[]** Formula Builder: Interface visual para construir operações complexas: (A ∩ B) ∪ (C − D). Drag-and-drop de arquivos em canvas, selecionar operadores entre eles, preview em tempo real do resultado. Salvar fórmulas como templates reutilizáveis.
 
@@ -1670,11 +1670,11 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 18 | 18 | 50.0% |
+| COULD HAVE | 36 | 19 | 17 | 52.8% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **95** | **62** | **60.5%** |
+| **TOTAL** | **157** | **96** | **61** | **61.1%** |
 
-**Última Atualização**: 22/12/2025 - v2.9.93 Multi-Format Export
+**Última Atualização**: 22/12/2025 - v2.9.94 Operation History
 
 **Notas de Atualização**:
 - ✅ **v2.9.32 Completa**: JSON Set Operations implementada com sucesso
