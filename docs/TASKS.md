@@ -1466,7 +1466,7 @@ result = convert_text_to_json(text, "auto")
 #### Architecture & Maintenance
 
 - **[]** Plugin System: Implementar sistema de plugins para extensões customizadas. Estrutura: `plugins/` folder com subfolders por plugin, cada plugin tem `plugin.json` (metadata) + `main.py` (entry point). API: registrar dock customizado, adicionar menu items, hook em events (file_opened, search_completed). Incluir 2 plugins exemplo: "Export to PostgreSQL", "Slack Notifications".
-- **[]** Configuration Management: Centralizar configurações em `config.yaml` (além de QSettings). Parâmetros: default directories, max file size, thread pool size, cache duration, AI model preferences, logging level. Incluir UI em `Settings → Advanced` para editar YAML visualmente. Validar schema com `jsonschema`.
+- **[X]** **v2.9.90 - Configuration Management (22/12/2024 - CONCLUÍDO)**: Sistema híbrido de gerenciamento de configurações com GUI visual (~580 linhas totais). **Dependencies** (`pyproject.toml`, +2 packages): `pyyaml>=6.0.0`, `jsonschema>=4.0.0` (instalados no venv Python 3.12.10). **Backend** (`src/config_manager.py`, 548 lines, v2.9.60): ConfigManager class singleton, YAML storage (~/.config/clarify/config.yaml), JSON Schema validation, migration de QSettings/JSON/ConfigParser, backup automático, thread-safe, CLI --config arg support. **GUI** (`src/gui/config_editor_dialog.py`, 280 lines, NEW): QDialog modal com YAML editor (QTextEdit Consolas 10pt), validação real-time (jsonschema), preview antes de salvar, reset to defaults, hot reload indicator (mostra quais settings requerem restart: thread_pool_size, max_file_size_mb, logging), backup em .backup file. **App Integration** (`src/app.py`, +10 lines): Menu Settings → Advanced → Configuration File... (⚙️ ícone), lazy loading dialog, method _show_config_editor(). **Config Structure** (8 seções): app (theme, language, auto_save), logging (level, file size, backups), performance (threads, cache, batch), ai (provider, tokens, temp), editor (font, tabs, syntax), paths (default dir, extensions). **Precedence**: CLI args > config.yaml > hardcoded defaults. **Location**: Linux/macOS: ~/.config/clarify/config.yaml, Windows: %APPDATA%\Clarify\config.yaml. **Hot Reload**: Parcial (theme, language, logging level aplicados imediatamente; threads, file size requer restart). **Impact**: Centraliza configurações, facilita customização avançada, backup safety, validação previne configs inválidas, hot reload reduz downtime. **Score Matriz**: 26.0 pontos (Simplicidade 3, Impacto 4, Clareza 4). **Commit**: c71d4a1 "feat: configuration management GUI editor (v2.9.90)".
 - **[X]** **v2.9.89 - Error Reporting System (21/12/2024 - CONCLUÍDO)**: Sistema integrado de report de erros com GitHub Issues (~500 linhas totais). **Global Exception Handler** (`src/utils/error_reporter.py`, 220 lines): Captura exceptions via sys.excepthook, formata info (type/message/traceback/timestamp/location), logging automático, coleta system info (OS/Python/Clarify/PySide6/arch), gera GitHub Issue URL pre-filled, settings integration (enable/disable/system_info/auto_github), singleton pattern. **Error Report Dialog** (`src/gui/error_report_dialog.py`, 280 lines): Modal QDialog com 4 seções (Error Summary auto-filled, Steps to Reproduce user input, Expected vs Actual, Don't show checkbox), 4 buttons (🐛 Send to GitHub, 📋 Copy, 💾 Save Log, Close), professional UI (emoji header, GroupBoxes, tooltips). **App Integration** (`src/app.py`, +40 lines): Instala reporter no __init__, Settings menu Advanced → Error Reporting (3 toggles: Enable, Include System Info, Auto-open GitHub), 3 callbacks, QSettings persistence. **Impact**: UX com 1-click bug reports, mais reports = mais bugs corrigidos, debug facilitado com system info + traceback, reduce friction para community contributions, user sempre em controle (opt-in/out).
 - **[X]** **v2.9.64 - Logging System Integration (11/12/2025 - CONCLUÍDO)**:
   * **[X]** Sistema de logging já existente desde v2.9.58 (`src/utils/logger.py`, 330 LOC)
@@ -1672,11 +1672,11 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 14 | 22 | 38.9% |
+| COULD HAVE | 36 | 15 | 21 | 41.7% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **91** | **66** | **58.0%** |
+| **TOTAL** | **157** | **92** | **65** | **58.6%** |
 
-**Última Atualização**: 02/12/2025 - v2.9.32 Set Operations + Recomendações Pós-Release
+**Última Atualização**: 22/12/2025 - v2.9.90 Configuration Management
 
 **Notas de Atualização**:
 - ✅ **v2.9.32 Completa**: JSON Set Operations implementada com sucesso
