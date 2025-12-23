@@ -245,6 +245,9 @@ class SetOperationsDock(BaseDock):
         self.btn_store_calc.setToolTip("Store result in Calculator memory slot (v2.9.98)")
         self.btn_store_calc.setEnabled(False)
         
+        self.btn_batch = QPushButton("📋 Batch Operations")
+        self.btn_batch.setToolTip("Create and execute batch jobs with multiple operations (v2.9.102)")
+        
         self.btn_history = QPushButton("📜 History")
         self.btn_history.setToolTip("View operation history (v2.9.94)")
         
@@ -259,6 +262,7 @@ class SetOperationsDock(BaseDock):
         btn_layout.addWidget(self.btn_view_diff)
         btn_layout.addWidget(self.btn_merge)
         btn_layout.addWidget(self.btn_store_calc)
+        btn_layout.addWidget(self.btn_batch)
         btn_layout.addWidget(self.btn_history)
         btn_layout.addWidget(self.btn_presets)
         btn_layout.addStretch()
@@ -308,6 +312,7 @@ class SetOperationsDock(BaseDock):
         self.btn_view_diff.clicked.connect(self._view_diff)
         self.btn_merge.clicked.connect(self._merge_to_file)
         self.btn_store_calc.clicked.connect(self._store_in_calculator)
+        self.btn_batch.clicked.connect(self._show_batch_dialog)
         self.btn_history.clicked.connect(self._show_history)
         self.btn_presets.clicked.connect(self._show_presets)
 
@@ -995,3 +1000,16 @@ class SetOperationsDock(BaseDock):
                 f"Failed to receive data from Calculator:\n{str(e)}"
             )
 
+    def _show_batch_dialog(self):
+        """Show batch operations dialog (v2.9.102)."""
+        from .batch_dialog import BatchDialog
+        
+        # Get default files if set
+        default_files = {}
+        if self.ed_file_a.text():
+            default_files['a'] = self.ed_file_a.text()
+        if self.ed_file_b.text():
+            default_files['b'] = self.ed_file_b.text()
+        
+        dialog = BatchDialog(self, default_files=default_files if default_files else None)
+        dialog.exec()
