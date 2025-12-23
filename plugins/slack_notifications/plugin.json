@@ -1,0 +1,12 @@
+{
+  "id": "slack_notifications",
+  "name": "Slack Notifications",
+  "version": "1.0.0",
+  "description": "Send notifications to Slack channels when operations complete",
+  "author": "Clarify Team",
+  "entry_point": "main.py",
+  "dependencies": [
+    "requests"
+  ],
+  "enabled": true
+}

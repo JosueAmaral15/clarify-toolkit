@@ -1,0 +1,12 @@
+{
+  "id": "export_to_postgresql",
+  "name": "Export to PostgreSQL",
+  "version": "1.0.0",
+  "description": "Export JSON data directly to PostgreSQL database tables",
+  "author": "Clarify Team",
+  "entry_point": "main.py",
+  "dependencies": [
+    "psycopg2-binary"
+  ],
+  "enabled": true
+}

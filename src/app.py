@@ -4224,11 +4224,15 @@ if _PYSIDE:
             from .core.command_manager import CommandManager
             self.command_manager = CommandManager(max_history=10)
 
-            # Plugin loader (discover only, activate on user request via menu)
+            # Plugin System (v2.9.109 - Enhanced with metadata and events)
             from .plugin_loader import PluginLoader
             self.plugin_loader = PluginLoader(self)
-            self.plugin_loader.discover_plugins()
-            # Note: plugins are activated only when user clicks on Plugins menu
+            discovered = self.plugin_loader.discover_plugins()
+            print(f"[PluginSystem] Discovered {len(discovered)} plugin(s)")
+            
+            # Auto-activate enabled plugins
+            activated = self.plugin_loader.activate_all_plugins()
+            print(f"[PluginSystem] Activated {activated} plugin(s)")
             
             # Track tool tabs (v2.9.40 - Task: Tools as tabs)
             self.tool_tabs = {}  # Maps tool_name -> (widget, tab_index)
@@ -4732,6 +4736,136 @@ if _PYSIDE:
                     f"Error: {e}\n\n"
                     "You can open it manually."
                 )
+        
+        # Plugin System Methods (v2.9.109)
+        
+        def _show_plugin_manager(self):
+            """
+            Show plugin manager dialog (v2.9.109).
+            
+            Lists all discovered plugins with:
+            - Name, version, author, description
+            - Enable/disable toggle
+            - Dependencies list
+            """
+            from PySide6.QtWidgets import (
+                QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+                QTableWidget, QTableWidgetItem, QPushButton,
+                QHeaderView, QCheckBox, QMessageBox
+            )
+            from PySide6.QtCore import Qt
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Plugin Manager - Clarify")
+            dialog.setMinimumSize(700, 400)
+            
+            layout = QVBoxLayout()
+            
+            # Header
+            lbl_header = QLabel("Manage installed plugins")
+            lbl_header.setStyleSheet("font-size: 14pt; font-weight: bold;")
+            layout.addWidget(lbl_header)
+            
+            # Plugin table
+            table = QTableWidget()
+            table.setColumnCount(5)
+            table.setHorizontalHeaderLabels(["Enabled", "Name", "Version", "Author", "Description"])
+            table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+            table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)
+            
+            metadata_list = self.plugin_loader.get_all_metadata()
+            table.setRowCount(len(metadata_list))
+            
+            for row, metadata in enumerate(metadata_list):
+                # Checkbox for enabled/disabled
+                chk = QCheckBox()
+                chk.setChecked(metadata.enabled)
+                chk.stateChanged.connect(
+                    lambda state, pid=metadata.id: self._toggle_plugin(pid, state == Qt.Checked)
+                )
+                table.setCellWidget(row, 0, chk)
+                
+                # Name
+                table.setItem(row, 1, QTableWidgetItem(metadata.name))
+                
+                # Version
+                table.setItem(row, 2, QTableWidgetItem(metadata.version))
+                
+                # Author
+                table.setItem(row, 3, QTableWidgetItem(metadata.author))
+                
+                # Description
+                table.setItem(row, 4, QTableWidgetItem(metadata.description))
+            
+            layout.addWidget(table)
+            
+            # Info label
+            lbl_info = QLabel(
+                f"📦 {len(metadata_list)} plugin(s) discovered | "
+                f"{len([m for m in metadata_list if m.enabled])} enabled"
+            )
+            layout.addWidget(lbl_info)
+            
+            # Buttons
+            btn_layout = QHBoxLayout()
+            btn_refresh = QPushButton("🔄 Refresh")
+            btn_refresh.clicked.connect(lambda: self._refresh_plugins(dialog))
+            btn_close = QPushButton("✅ Close")
+            btn_close.clicked.connect(dialog.accept)
+            
+            btn_layout.addWidget(btn_refresh)
+            btn_layout.addStretch()
+            btn_layout.addWidget(btn_close)
+            
+            layout.addLayout(btn_layout)
+            dialog.setLayout(layout)
+            dialog.exec()
+        
+        def _toggle_plugin(self, plugin_id: str, enabled: bool):
+            """
+            Toggle plugin enabled state (v2.9.109).
+            
+            Args:
+                plugin_id: Plugin identifier
+                enabled: Enable (True) or disable (False)
+            """
+            self.plugin_loader.enable_plugin(plugin_id, enabled)
+            
+            if enabled:
+                # Activate plugin
+                success = self.plugin_loader.activate_plugin(plugin_id)
+                if success:
+                    self.statusBar().showMessage(f"Plugin '{plugin_id}' activated", 3000)
+                else:
+                    self.statusBar().showMessage(f"Failed to activate plugin '{plugin_id}'", 5000)
+            else:
+                # Deactivate plugin
+                self.plugin_loader.deactivate_plugin(plugin_id)
+                self.statusBar().showMessage(f"Plugin '{plugin_id}' disabled", 3000)
+        
+        def _refresh_plugins(self, dialog):
+            """
+            Refresh plugins list (v2.9.109).
+            
+            Args:
+                dialog: Plugin manager dialog to close and reopen
+            """
+            dialog.close()
+            self.plugin_loader.discover_plugins()
+            activated = self.plugin_loader.activate_all_plugins()
+            self.statusBar().showMessage(f"Refreshed plugins: {activated} activated", 3000)
+            self._show_plugin_manager()
+        
+        def _emit_plugin_event(self, event_name: str, data: dict):
+            """
+            Emit event to all active plugins (v2.9.109).
+            
+            Args:
+                event_name: Event identifier
+                data: Event data dictionary
+            """
+            if hasattr(self, 'plugin_loader'):
+                self.plugin_loader.emit_event(event_name, data)
         
         # Update Checker Methods (v2.9.45)
         
@@ -5274,13 +5408,35 @@ if _PYSIDE:
             act_clear_recent.triggered.connect(self._clear_recent_files)
             
 
-            # Plugins menu
+            # Plugins menu (v2.9.109 - Enhanced Plugin System)
             m_plugins = bar.addMenu(tr("menu.plugins"))
-            for plugin in getattr(self, "plugin_loader", []).plugins:
-                act = QAction(f"{plugin.name}", self)
-                act.setToolTip(plugin.description)
-                act.triggered.connect(lambda _, p=plugin: p.activate(self))
-                m_plugins.addAction(act)
+            
+            # Plugin Manager submenu
+            self.act_plugin_manager = QAction("🔌 Plugin Manager...", self)
+            self.act_plugin_manager.setToolTip("Manage installed plugins")
+            self.act_plugin_manager.setStatusTip("View, enable, disable, and configure plugins")
+            m_plugins.addAction(self.act_plugin_manager)
+            self.act_plugin_manager.triggered.connect(self._show_plugin_manager)
+            
+            m_plugins.addSeparator()
+            
+            # Installed plugins (dynamic menu based on discovered plugins)
+            if hasattr(self, "plugin_loader"):
+                metadata_list = self.plugin_loader.get_all_metadata()
+                if metadata_list:
+                    for metadata in metadata_list:
+                        status = "✅" if metadata.enabled else "❌"
+                        act = QAction(f"{status} {metadata.name}", self)
+                        act.setToolTip(f"{metadata.description}\nv{metadata.version} by {metadata.author}")
+                        act.setStatusTip(f"Toggle {metadata.name} plugin")
+                        act.setCheckable(True)
+                        act.setChecked(metadata.enabled)
+                        act.triggered.connect(lambda checked, pid=metadata.id: self._toggle_plugin(pid, checked))
+                        m_plugins.addAction(act)
+                else:
+                    act_no_plugins = QAction("No plugins installed", self)
+                    act_no_plugins.setEnabled(False)
+                    m_plugins.addAction(act_no_plugins)
 
             # Help menu (Task #45 - v2.9.15)
             m_help = bar.addMenu(tr("menu.help"))
