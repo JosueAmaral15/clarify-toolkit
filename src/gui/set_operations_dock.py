@@ -232,6 +232,10 @@ class SetOperationsDock(BaseDock):
         self.btn_export.setToolTip("Export results to CSV, Excel, YAML, or TOML (v2.9.93)")
         self.btn_export.setEnabled(False)
         
+        self.btn_view_diff = QPushButton("🔍 View Diff")
+        self.btn_view_diff.setToolTip("View side-by-side diff between files (v2.9.99)")
+        self.btn_view_diff.setEnabled(False)
+        
         self.btn_store_calc = QPushButton("🧮 Store in Calculator")
         self.btn_store_calc.setToolTip("Store result in Calculator memory slot (v2.9.98)")
         self.btn_store_calc.setEnabled(False)
@@ -247,6 +251,7 @@ class SetOperationsDock(BaseDock):
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
+        btn_layout.addWidget(self.btn_view_diff)
         btn_layout.addWidget(self.btn_store_calc)
         btn_layout.addWidget(self.btn_history)
         btn_layout.addWidget(self.btn_presets)
@@ -294,6 +299,7 @@ class SetOperationsDock(BaseDock):
         self.btn_clear.clicked.connect(self._clear_all)
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
+        self.btn_view_diff.clicked.connect(self._view_diff)
         self.btn_store_calc.clicked.connect(self._store_in_calculator)
         self.btn_history.clicked.connect(self._show_history)
         self.btn_presets.clicked.connect(self._show_presets)
@@ -403,6 +409,11 @@ class SetOperationsDock(BaseDock):
 
                 with open(file_path, "r", encoding="utf-8") as f:
                     file_dicts.append(json.load(f))
+            
+            # Store original data for diff viewer (v2.9.99)
+            self.file_a_data = file_dicts[0] if len(file_dicts) > 0 else {}
+            self.file_b_data = file_dicts[1] if len(file_dicts) > 1 else {}
+            
         except Exception as e:
             self.show_error("Error Loading Files", str(e))
             return
@@ -517,9 +528,10 @@ class SetOperationsDock(BaseDock):
             print(f"Warning: Failed to calculate statistics: {e}")
             self.txt_statistics.setVisible(False)
 
-        # Enable save, export, and calculator buttons
+        # Enable save, export, diff viewer, and calculator buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
+        self.btn_view_diff.setEnabled(True)
         self.btn_store_calc.setEnabled(True)
 
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
@@ -627,6 +639,36 @@ class SetOperationsDock(BaseDock):
         self.store_in_calculator_requested.emit(self.result_data, source)
         
         self.show_info("Stored", f"Result sent to Calculator\nSource: {source}")
+    
+    def _view_diff(self):
+        """Open diff viewer dialog for side-by-side comparison (v2.9.99)."""
+        if not hasattr(self, 'file_a_data') or not hasattr(self, 'file_b_data'):
+            self.show_warning("No Data", "No input files to compare. Execute operation first.")
+            return
+        
+        from .diff_viewer_dialog import DiffViewerDialog
+        
+        # Get file names
+        file_a_name = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
+        file_b_name = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        
+        # Get current comparison mode
+        comparison_mode = "key_value"
+        if self.radio_full_path.isChecked():
+            comparison_mode = "full_path_value"
+        elif self.radio_key_only.isChecked():
+            comparison_mode = "key_only"
+        
+        dialog = DiffViewerDialog(
+            self.file_a_data,
+            self.file_b_data,
+            file_a_name,
+            file_b_name,
+            comparison_mode,
+            self
+        )
+        dialog.exec()
+
 
     def _clear_all(self):
         """Clear all inputs and results."""
@@ -639,6 +681,7 @@ class SetOperationsDock(BaseDock):
         self.txt_statistics.setVisible(False)
         self.btn_save.setEnabled(False)
         self.btn_export.setEnabled(False)
+        self.btn_view_diff.setEnabled(False)
         self.btn_store_calc.setEnabled(False)
 
         # Reset checkboxes
