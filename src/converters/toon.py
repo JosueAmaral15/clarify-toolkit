@@ -29,11 +29,13 @@ try:
     from toon import encode as toon_encode
     from toon import decode as toon_decode
     from toon.utils import EncodeOptions, DecodeOptions
-except ImportError as e:
-    raise ImportError(
-        "toon-llm library not installed. "
-        "Install with: pip install toon-llm"
-    ) from e
+    TOON_AVAILABLE = True
+except ImportError:
+    TOON_AVAILABLE = False
+    toon_encode = None
+    toon_decode = None
+    EncodeOptions = None
+    DecodeOptions = None
 
 from . import ValidationError, ConversionError
 
@@ -85,6 +87,12 @@ class ToonAdapter:
             name: Alice
             age: 30
         """
+        if not TOON_AVAILABLE:
+            raise ImportError(
+                "toon-llm library not installed. "
+                "Install with: pip install toon-llm"
+            )
+        
         if not isinstance(data, (dict, list)):
             raise ValidationError(
                 f"Input must be dict or list, got {type(data).__name__}"
@@ -129,6 +137,12 @@ class ToonAdapter:
             >>> print(data)
             {'name': 'Alice', 'age': 30}
         """
+        if not TOON_AVAILABLE:
+            raise ImportError(
+                "toon-llm library not installed. "
+                "Install with: pip install toon-llm"
+            )
+        
         if not isinstance(toon_string, str):
             raise ValidationError(
                 f"Input must be string, got {type(toon_string).__name__}"

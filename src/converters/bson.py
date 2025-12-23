@@ -25,13 +25,15 @@ try:
     from bson import BSON
     from bson.errors import InvalidBSON
     from bson.json_util import dumps as bson_dumps, loads as bson_loads
-except ImportError as e:
-    raise ImportError(
-        "pymongo library not installed (includes bson module). "
-        "Install with: pip install pymongo\n"
-        "WARNING: Do NOT install standalone 'bson' package from PyPI - "
-        "it is incompatible with pymongo!"
-    ) from e
+    BSON_AVAILABLE = True
+except ImportError:
+    BSON_AVAILABLE = False
+    bson_encode = None
+    bson_decode = None
+    BSON = None
+    InvalidBSON = None
+    bson_dumps = None
+    bson_loads = None
 
 from . import ValidationError, ConversionError
 
@@ -69,6 +71,14 @@ class BsonAdapter:
             >>> isinstance(bson_bytes, bytes)
             True
         """
+        if not BSON_AVAILABLE:
+            raise ImportError(
+                "pymongo library not installed (includes bson module). "
+                "Install with: pip install pymongo\n"
+                "WARNING: Do NOT install standalone 'bson' package from PyPI - "
+                "it is incompatible with pymongo!"
+            )
+        
         if not isinstance(data, (dict, list)):
             raise ValidationError(
                 f"Input must be dict or list, got {type(data).__name__}"
@@ -114,6 +124,14 @@ class BsonAdapter:
             >>> data["test"]
             'data'
         """
+        if not BSON_AVAILABLE:
+            raise ImportError(
+                "pymongo library not installed (includes bson module). "
+                "Install with: pip install pymongo\n"
+                "WARNING: Do NOT install standalone 'bson' package from PyPI - "
+                "it is incompatible with pymongo!"
+            )
+        
         if not isinstance(bson_data, bytes):
             raise ValidationError(
                 f"Input must be bytes, got {type(bson_data).__name__}"
