@@ -1,0 +1,503 @@
+"""
+Formula Builder Dock Widget
+Visual interface for building complex set operation formulas.
+
+Author: Josué Amaral
+Date: 2025/12/23
+Version: 2.9.108
+"""
+
+from PySide6.QtWidgets import (
+    QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+    QLabel, QTreeWidget, QTreeWidgetItem, QMessageBox, QInputDialog,
+    QLineEdit, QComboBox, QTextEdit, QSplitter, QGroupBox, QFileDialog
+)
+from PySide6.QtCore import Qt, Signal
+from src.formula_manager import Formula, FormulaStep, FormulaManager, FormulaExecutor
+from src.i18n.translator import get_translator
+import json
+
+tr = get_translator().get
+
+
+class AddStepDialog(QWidget):
+    """Dialog for adding/editing a formula step."""
+    
+    def __init__(self, parent=None, step: FormulaStep = None):
+        """
+        Initialize AddStepDialog.
+        
+        Args:
+            parent: Parent widget
+            step: FormulaStep to edit (None for new step)
+        """
+        super().__init__(parent)
+        self.step = step
+        self.setWindowTitle("Add Formula Step" if not step else "Edit Formula Step")
+        self.setMinimumWidth(500)
+        self._init_ui()
+        
+        if step:
+            self._load_step(step)
+    
+    def _init_ui(self):
+        """Initialize UI components."""
+        layout = QVBoxLayout()
+        
+        # Operation selection
+        op_layout = QHBoxLayout()
+        op_layout.addWidget(QLabel("Operation:"))
+        self.combo_operation = QComboBox()
+        self.combo_operation.addItems(['∩ Intersection', '∪ Union', '− Difference', '⊕ Symmetric'])
+        op_layout.addWidget(self.combo_operation)
+        layout.addLayout(op_layout)
+        
+        # Input A
+        layout.addWidget(QLabel("Input A:"))
+        input_a_layout = QHBoxLayout()
+        self.combo_input_a = QComboBox()
+        self.combo_input_a.addItems(['file_path', 'previous', 'slot_a', 'slot_b', 'r1', 'r2', 'r3'])
+        input_a_layout.addWidget(self.combo_input_a)
+        self.ed_file_a = QLineEdit()
+        self.ed_file_a.setPlaceholderText("File path (if file_path selected)")
+        input_a_layout.addWidget(self.ed_file_a)
+        self.btn_browse_a = QPushButton("Browse...")
+        self.btn_browse_a.clicked.connect(self._browse_file_a)
+        input_a_layout.addWidget(self.btn_browse_a)
+        layout.addLayout(input_a_layout)
+        
+        # Input B
+        layout.addWidget(QLabel("Input B:"))
+        input_b_layout = QHBoxLayout()
+        self.combo_input_b = QComboBox()
+        self.combo_input_b.addItems(['file_path', 'previous', 'slot_a', 'slot_b', 'r1', 'r2', 'r3'])
+        input_b_layout.addWidget(self.combo_input_b)
+        self.ed_file_b = QLineEdit()
+        self.ed_file_b.setPlaceholderText("File path (if file_path selected)")
+        input_b_layout.addWidget(self.ed_file_b)
+        self.btn_browse_b = QPushButton("Browse...")
+        self.btn_browse_b.clicked.connect(self._browse_file_b)
+        input_b_layout.addWidget(self.btn_browse_b)
+        layout.addLayout(input_b_layout)
+        
+        # Output variable
+        output_layout = QHBoxLayout()
+        output_layout.addWidget(QLabel("Output Variable:"))
+        self.ed_output = QLineEdit()
+        self.ed_output.setPlaceholderText("e.g., r1, result1, temp")
+        output_layout.addWidget(self.ed_output)
+        layout.addLayout(output_layout)
+        
+        # Comparison mode
+        mode_layout = QHBoxLayout()
+        mode_layout.addWidget(QLabel("Comparison Mode:"))
+        self.combo_mode = QComboBox()
+        self.combo_mode.addItems(['key_value', 'full_path_value', 'key_only'])
+        mode_layout.addWidget(self.combo_mode)
+        layout.addLayout(mode_layout)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        self.btn_ok = QPushButton("OK")
+        self.btn_ok.clicked.connect(self.accept)
+        btn_layout.addWidget(self.btn_ok)
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel.clicked.connect(self.close)
+        btn_layout.addWidget(self.btn_cancel)
+        layout.addLayout(btn_layout)
+        
+        self.setLayout(layout)
+    
+    def _browse_file_a(self):
+        """Browse for File A."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select File A", "", "JSON Files (*.json)"
+        )
+        if file_path:
+            self.ed_file_a.setText(file_path)
+    
+    def _browse_file_b(self):
+        """Browse for File B."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select File B", "", "JSON Files (*.json)"
+        )
+        if file_path:
+            self.ed_file_b.setText(file_path)
+    
+    def _load_step(self, step: FormulaStep):
+        """Load step data into UI."""
+        # Operation
+        op_map = {'∩': 0, '∪': 1, '−': 2, '⊕': 3}
+        self.combo_operation.setCurrentIndex(op_map.get(step.operation, 0))
+        
+        # Inputs
+        self.combo_input_a.setCurrentText(step.input_a)
+        self.combo_input_b.setCurrentText(step.input_b)
+        self.ed_file_a.setText(step.file_a_path)
+        self.ed_file_b.setText(step.file_b_path)
+        
+        # Output
+        self.ed_output.setText(step.output_variable)
+        
+        # Mode
+        self.combo_mode.setCurrentText(step.comparison_mode)
+    
+    def accept(self):
+        """Accept dialog and create/update step."""
+        # Get operation symbol
+        op_text = self.combo_operation.currentText()
+        operation = op_text[0]  # First char is symbol
+        
+        # Validation
+        output_var = self.ed_output.text().strip()
+        if not output_var:
+            QMessageBox.warning(self, "Validation Error", "Output variable is required")
+            return
+        
+        # Create step
+        self.result_step = FormulaStep(
+            operation=operation,
+            input_a=self.combo_input_a.currentText(),
+            input_b=self.combo_input_b.currentText(),
+            file_a_path=self.ed_file_a.text().strip(),
+            file_b_path=self.ed_file_b.text().strip(),
+            output_variable=output_var,
+            comparison_mode=self.combo_mode.currentText()
+        )
+        
+        self.close()
+    
+    def get_step(self) -> FormulaStep:
+        """Get created/edited step."""
+        return getattr(self, 'result_step', None)
+
+
+class FormulaDock(QDockWidget):
+    """Formula Builder dock widget."""
+    
+    formula_executed = Signal(dict)  # Signal for integration
+    
+    def __init__(self, parent=None):
+        """Initialize FormulaDock."""
+        super().__init__("Formula Builder", parent)
+        
+        self.formula_manager = FormulaManager()
+        self.formula_executor = FormulaExecutor()
+        self.current_formula = Formula("New Formula")
+        
+        self._init_ui()
+        self._connect_signals()
+    
+    def _init_ui(self):
+        """Initialize UI components."""
+        main_widget = QWidget()
+        layout = QVBoxLayout()
+        
+        # Formula name
+        name_layout = QHBoxLayout()
+        name_layout.addWidget(QLabel("Formula Name:"))
+        self.ed_formula_name = QLineEdit()
+        self.ed_formula_name.setPlaceholderText("Enter formula name")
+        name_layout.addWidget(self.ed_formula_name)
+        layout.addLayout(name_layout)
+        
+        # Splitter: Steps tree | Formula preview
+        splitter = QSplitter(Qt.Horizontal)
+        
+        # Left: Steps tree
+        left_widget = QWidget()
+        left_layout = QVBoxLayout()
+        
+        left_layout.addWidget(QLabel("Formula Steps:"))
+        self.tree_steps = QTreeWidget()
+        self.tree_steps.setHeaderLabels(['Step', 'Expression'])
+        self.tree_steps.setColumnWidth(0, 80)
+        left_layout.addWidget(self.tree_steps)
+        
+        # Step management buttons
+        step_btn_layout = QHBoxLayout()
+        self.btn_add_step = QPushButton("➕ Add Step")
+        step_btn_layout.addWidget(self.btn_add_step)
+        self.btn_edit_step = QPushButton("✏️ Edit")
+        step_btn_layout.addWidget(self.btn_edit_step)
+        self.btn_remove_step = QPushButton("🗑️ Remove")
+        step_btn_layout.addWidget(self.btn_remove_step)
+        self.btn_move_up = QPushButton("⬆️ Up")
+        step_btn_layout.addWidget(self.btn_move_up)
+        self.btn_move_down = QPushButton("⬇️ Down")
+        step_btn_layout.addWidget(self.btn_move_down)
+        left_layout.addLayout(step_btn_layout)
+        
+        left_widget.setLayout(left_layout)
+        splitter.addWidget(left_widget)
+        
+        # Right: Formula preview
+        right_widget = QWidget()
+        right_layout = QVBoxLayout()
+        
+        right_layout.addWidget(QLabel("Formula Preview:"))
+        self.text_preview = QTextEdit()
+        self.text_preview.setReadOnly(True)
+        self.text_preview.setMaximumHeight(150)
+        right_layout.addWidget(self.text_preview)
+        
+        # Execution result
+        result_group = QGroupBox("Execution Result")
+        result_layout = QVBoxLayout()
+        self.lbl_result_status = QLabel("Status: Not executed")
+        result_layout.addWidget(self.lbl_result_status)
+        self.text_result = QTextEdit()
+        self.text_result.setReadOnly(True)
+        self.text_result.setMaximumHeight(200)
+        result_layout.addWidget(self.text_result)
+        result_group.setLayout(result_layout)
+        right_layout.addWidget(result_group)
+        
+        right_widget.setLayout(right_layout)
+        splitter.addWidget(right_widget)
+        
+        splitter.setSizes([300, 400])
+        layout.addWidget(splitter)
+        
+        # Action buttons
+        action_layout = QHBoxLayout()
+        self.btn_execute = QPushButton("▶️ Execute Formula")
+        self.btn_execute.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
+        action_layout.addWidget(self.btn_execute)
+        
+        self.btn_save_template = QPushButton("💾 Save Template")
+        action_layout.addWidget(self.btn_save_template)
+        
+        self.btn_load_template = QPushButton("📂 Load Template")
+        action_layout.addWidget(self.btn_load_template)
+        
+        self.btn_clear = QPushButton("🗑️ Clear All")
+        action_layout.addWidget(self.btn_clear)
+        
+        layout.addLayout(action_layout)
+        
+        main_widget.setLayout(layout)
+        self.setWidget(main_widget)
+    
+    def _connect_signals(self):
+        """Connect signals to slots."""
+        self.btn_add_step.clicked.connect(self._add_step)
+        self.btn_edit_step.clicked.connect(self._edit_step)
+        self.btn_remove_step.clicked.connect(self._remove_step)
+        self.btn_move_up.clicked.connect(self._move_step_up)
+        self.btn_move_down.clicked.connect(self._move_step_down)
+        self.btn_execute.clicked.connect(self._execute_formula)
+        self.btn_save_template.clicked.connect(self._save_template)
+        self.btn_load_template.clicked.connect(self._load_template)
+        self.btn_clear.clicked.connect(self._clear_all)
+        self.ed_formula_name.textChanged.connect(self._update_preview)
+    
+    def _add_step(self):
+        """Add new step to formula."""
+        dialog = AddStepDialog(self)
+        dialog.setWindowModality(Qt.ApplicationModal)
+        dialog.show()
+        dialog.accepted = lambda: self._on_step_added(dialog)
+    
+    def _on_step_added(self, dialog: AddStepDialog):
+        """Handle step added."""
+        step = dialog.get_step()
+        if step:
+            self.current_formula.add_step(step)
+            self._refresh_tree()
+            self._update_preview()
+    
+    def _edit_step(self):
+        """Edit selected step."""
+        current_item = self.tree_steps.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, "No Selection", "Please select a step to edit")
+            return
+        
+        index = self.tree_steps.indexOfTopLevelItem(current_item)
+        if 0 <= index < len(self.current_formula.steps):
+            step = self.current_formula.steps[index]
+            dialog = AddStepDialog(self, step)
+            dialog.setWindowModality(Qt.ApplicationModal)
+            dialog.show()
+            dialog.accepted = lambda: self._on_step_edited(dialog, index)
+    
+    def _on_step_edited(self, dialog: AddStepDialog, index: int):
+        """Handle step edited."""
+        step = dialog.get_step()
+        if step:
+            self.current_formula.steps[index] = step
+            self._refresh_tree()
+            self._update_preview()
+    
+    def _remove_step(self):
+        """Remove selected step."""
+        current_item = self.tree_steps.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, "No Selection", "Please select a step to remove")
+            return
+        
+        index = self.tree_steps.indexOfTopLevelItem(current_item)
+        reply = QMessageBox.question(
+            self, "Confirm Remove",
+            f"Remove step {index + 1}?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            self.current_formula.remove_step(index)
+            self._refresh_tree()
+            self._update_preview()
+    
+    def _move_step_up(self):
+        """Move selected step up."""
+        current_item = self.tree_steps.currentItem()
+        if not current_item:
+            return
+        
+        index = self.tree_steps.indexOfTopLevelItem(current_item)
+        if index > 0:
+            steps = self.current_formula.steps
+            steps[index], steps[index - 1] = steps[index - 1], steps[index]
+            self._refresh_tree()
+            self._update_preview()
+            self.tree_steps.setCurrentItem(self.tree_steps.topLevelItem(index - 1))
+    
+    def _move_step_down(self):
+        """Move selected step down."""
+        current_item = self.tree_steps.currentItem()
+        if not current_item:
+            return
+        
+        index = self.tree_steps.indexOfTopLevelItem(current_item)
+        if index < len(self.current_formula.steps) - 1:
+            steps = self.current_formula.steps
+            steps[index], steps[index + 1] = steps[index + 1], steps[index]
+            self._refresh_tree()
+            self._update_preview()
+            self.tree_steps.setCurrentItem(self.tree_steps.topLevelItem(index + 1))
+    
+    def _refresh_tree(self):
+        """Refresh steps tree widget."""
+        self.tree_steps.clear()
+        
+        for i, step in enumerate(self.current_formula.steps, 1):
+            item = QTreeWidgetItem([f"Step {i}", step.get_display_text()])
+            self.tree_steps.addTopLevelItem(item)
+    
+    def _update_preview(self):
+        """Update formula preview text."""
+        name = self.ed_formula_name.text() or "Unnamed Formula"
+        self.current_formula.name = name
+        
+        formula_text = self.current_formula.get_formula_text()
+        if formula_text:
+            self.text_preview.setPlainText(f"Formula: {name}\n\n{formula_text}")
+        else:
+            self.text_preview.setPlainText("No steps added yet. Click 'Add Step' to begin.")
+    
+    def _execute_formula(self):
+        """Execute current formula."""
+        if not self.current_formula.steps:
+            QMessageBox.warning(self, "Empty Formula", "Add at least one step before executing")
+            return
+        
+        # Get file paths from steps
+        initial_files = {}
+        for i, step in enumerate(self.current_formula.steps):
+            if step.input_a == 'file_path' and step.file_a_path:
+                initial_files[f'file_a_{i}'] = step.file_a_path
+            if step.input_b == 'file_path' and step.file_b_path:
+                initial_files[f'file_b_{i}'] = step.file_b_path
+        
+        # Execute
+        self.lbl_result_status.setText("Status: Executing...")
+        self.lbl_result_status.setStyleSheet("color: orange;")
+        
+        result = self.formula_executor.execute(self.current_formula, initial_files)
+        
+        if result['success']:
+            self.lbl_result_status.setText(f"✅ Success! {result.get('steps_executed', 0)} steps executed")
+            self.lbl_result_status.setStyleSheet("color: green; font-weight: bold;")
+            
+            # Display result
+            result_json = json.dumps(result['result'], indent=2, ensure_ascii=False)
+            self.text_result.setPlainText(
+                f"Final Result ({len(result['result'])} keys):\n\n{result_json[:2000]}"
+            )
+            
+            # Emit signal for integration
+            self.formula_executed.emit(result)
+        else:
+            self.lbl_result_status.setText(f"❌ Error at step {result.get('step', '?')}")
+            self.lbl_result_status.setStyleSheet("color: red; font-weight: bold;")
+            self.text_result.setPlainText(f"Error: {result.get('error', 'Unknown error')}")
+    
+    def _save_template(self):
+        """Save current formula as template."""
+        if not self.current_formula.steps:
+            QMessageBox.warning(self, "Empty Formula", "Add at least one step before saving")
+            return
+        
+        name = self.ed_formula_name.text().strip()
+        if not name:
+            name, ok = QInputDialog.getText(
+                self, "Save Template", "Enter formula name:"
+            )
+            if not ok or not name:
+                return
+        
+        self.current_formula.name = name
+        
+        # Ask for description
+        description, ok = QInputDialog.getMultiLineText(
+            self, "Save Template", "Description (optional):",
+            self.current_formula.description
+        )
+        if ok:
+            self.current_formula.description = description
+        
+        self.formula_manager.save_formula(self.current_formula)
+        QMessageBox.information(self, "Success", f"Formula '{name}' saved successfully!")
+    
+    def _load_template(self):
+        """Load formula template."""
+        formulas = self.formula_manager.get_formulas()
+        
+        if not formulas:
+            QMessageBox.information(self, "No Templates", "No saved templates found")
+            return
+        
+        # Show selection dialog
+        names = [f.name for f in formulas]
+        name, ok = QInputDialog.getItem(
+            self, "Load Template", "Select formula:", names, 0, False
+        )
+        
+        if ok and name:
+            formula = self.formula_manager.get_formula(name)
+            if formula:
+                self.current_formula = formula
+                self.ed_formula_name.setText(formula.name)
+                self._refresh_tree()
+                self._update_preview()
+                QMessageBox.information(self, "Success", f"Formula '{name}' loaded!")
+    
+    def _clear_all(self):
+        """Clear all steps and reset formula."""
+        if self.current_formula.steps:
+            reply = QMessageBox.question(
+                self, "Confirm Clear",
+                "Clear all steps?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply != QMessageBox.Yes:
+                return
+        
+        self.current_formula = Formula("New Formula")
+        self.ed_formula_name.clear()
+        self._refresh_tree()
+        self._update_preview()
+        self.text_result.clear()
+        self.lbl_result_status.setText("Status: Not executed")
+        self.lbl_result_status.setStyleSheet("")

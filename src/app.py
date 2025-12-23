@@ -4646,6 +4646,13 @@ if _PYSIDE:
                     )
             self._add_tool_tab(self.dock_calculator, "Calculator", "calculator")
         
+        def _show_formula_builder(self):
+            """Show Formula Builder as tab (v2.9.108)."""
+            if not hasattr(self, 'dock_formula_builder') or self.dock_formula_builder is None:
+                from .gui import FormulaDock
+                self.dock_formula_builder = FormulaDock(self)
+            self._add_tool_tab(self.dock_formula_builder, "Formula Builder", "formula_builder")
+        
         def _show_tutorials(self):
             """Show tutorials as tab (Task #45 - v2.9.15 / v2.9.40)."""
             if not hasattr(self, 'dock_tutorials'):
@@ -5090,6 +5097,8 @@ if _PYSIDE:
             self.act_open_set_operations.setStatusTip("Perform intersection, union, difference on JSON files (v2.9.32)")
             self.act_open_calculator = QAction("🧮 Calculator Memory...", self)  # v2.9.98
             self.act_open_calculator.setStatusTip("Store and recall JSON data in 5 memory slots (v2.9.98)")
+            self.act_open_formula_builder = QAction("📐 Formula Builder...", self)  # v2.9.108
+            self.act_open_formula_builder.setStatusTip("Build complex formulas with multiple operations (v2.9.108)")
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
             self.act_open_file_list.setStatusTip("Generate directory listings with filters (ls-like functionality)")
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
@@ -5109,6 +5118,7 @@ if _PYSIDE:
             m_tools.addAction(self.act_open_google_translate)
             m_tools.addAction(self.act_open_set_operations)
             m_tools.addAction(self.act_open_calculator)
+            m_tools.addAction(self.act_open_formula_builder)
             m_tools.addSeparator()
             m_tools.addAction(self.act_open_file_list)
             m_tools.addAction(self.act_advanced_file_search)
@@ -5126,6 +5136,7 @@ if _PYSIDE:
             self.act_open_google_translate.triggered.connect(self._show_google_translate)
             self.act_open_set_operations.triggered.connect(self._show_set_operations)
             self.act_open_calculator.triggered.connect(self._show_calculator)
+            self.act_open_formula_builder.triggered.connect(self._show_formula_builder)
             self.act_open_file_list.triggered.connect(self._show_file_list)
             self.act_advanced_file_search.triggered.connect(self._show_advanced_file_search)
 

@@ -30,6 +30,7 @@ from .json_validator import JsonValidator
 from .set_operations_dock import SetOperationsDock
 from .shortcuts_dialog import ShortcutsDialog
 from .google_translate_dock import GoogleTranslateDock
+from .formula_dock import FormulaDock
 
 __all__ = [
     # Base classes
@@ -42,7 +43,7 @@ __all__ = [
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
     'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'TutorialsDock',
     'EditorDock', 'TextToJsonDock', 'JSXExtractorDock', 'SetOperationsDock',
-    'GoogleTranslateDock',
+    'GoogleTranslateDock', 'FormulaDock',
     # Editor components
     'JsonEditorTab', 'JsonValidator',
     # Dialogs
