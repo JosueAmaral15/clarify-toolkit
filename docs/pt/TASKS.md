@@ -139,7 +139,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's;
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
 - **[]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI)
-- **[]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON
+- **[X]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON (v2.9.110)
 - **[]** Possibilidade de mudanças feitas apenas no editor de texto do próprio Clarify, não mais em arquivos
 - **[]** Adicionar feature onde resultado pode ser reutilizado no editor de texto do Clarify
 

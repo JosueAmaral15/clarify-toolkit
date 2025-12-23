@@ -34,6 +34,9 @@ from src.ai_processor import (
 from src.core.filters import Condition, filter_files_by_conditions
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
 from src.i18n.translator import tooltip_tr
+from src.gui.panels import SearchReplacePanel, InsertPanel
+from src.core.search_replace import replace_in_text, compile
+from src.core.insert import insert_at_line
 
 
 class PathEntry(QWidget):
@@ -469,6 +472,16 @@ class AIProcessorDock(StandardToolDock):
         
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
+        
+        # Search/Replace Panel (v2.9.110)
+        self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
+        self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
+        controls_layout.addWidget(self.search_replace_panel)
+        
+        # Insert Panel (v2.9.110)
+        self.insert_panel = InsertPanel(self, "ai_processor_insert")
+        self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
+        controls_layout.addWidget(self.insert_panel)
         
         # Set scroll widget and add to splitter
         scroll_controls.setWidget(controls_widget)
@@ -929,6 +942,72 @@ class AIProcessorDock(StandardToolDock):
         self.session_input_tokens = 0
         self.session_output_tokens = 0
         self._update_stats_display()
+    
+    def _handle_replace_in_results(self, needle, replacement, options, preserve_case, count):
+        """
+        Handle search/replace in results text (v2.9.110).
+        
+        Pattern: Command (GoF)
+        Args:
+            needle: Search text
+            replacement: Replacement text
+            options: SearchOptions (case_sensitive, whole_word, regex)
+            preserve_case: Preserve case pattern
+            count: Number of replacements (0 = all)
+        """
+        content = self.text_results.toPlainText()
+        if not content:
+            self.show_warning("No Results", "No results to process. Run AI processor first.")
+            return
+        
+        try:
+            # Compile pattern
+            pattern = compile(needle, options)
+            
+            # Execute replacement
+            new_content, num_replaced = replace_in_text(
+                content, pattern, replacement, preserve_case, count or 0
+            )
+            
+            # Update results
+            self.text_results.setPlainText(new_content)
+            
+            # Show feedback
+            self.show_message(
+                "Replace Complete",
+                f"Replaced {num_replaced} occurrence(s) of '{needle}' with '{replacement}'"
+            )
+            
+        except Exception as e:
+            self.show_error("Replace Error", f"Error during replacement:\n\n{str(e)}")
+    
+    def _handle_insert_in_prompt(self, line_no, text, mode):
+        """
+        Handle insert in prompt text (v2.9.110).
+        
+        Pattern: Command (GoF)
+        Args:
+            line_no: Target line number (1-based)
+            text: Text to insert
+            mode: Insertion mode (LEFT, RIGHT, REPLACE, INSERT_ABOVE, INSERT_BELOW)
+        """
+        content = self.ed_prompt.toPlainText()
+        
+        try:
+            # Execute insertion
+            new_content = insert_at_line(content, line_no, text, mode)
+            
+            # Update prompt
+            self.ed_prompt.setPlainText(new_content)
+            
+            # Show feedback
+            self.show_message(
+                "Insert Complete",
+                f"Inserted text at line {line_no} using {mode} mode"
+            )
+            
+        except Exception as e:
+            self.show_error("Insert Error", f"Error during insertion:\n\n{str(e)}")
     
     def _execute_action(self):
         """Execute the main action when ENTER is pressed."""

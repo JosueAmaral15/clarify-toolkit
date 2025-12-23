@@ -34,6 +34,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont, QColor, QTextCursor, QTextCharFormat, QPalette
 
 from .json_validator import JsonValidator, ValidationResult
+from src.gui.panels import InsertPanel
+from src.core.insert import insert_at_line
 
 
 class JsonTreeWidget(QTreeWidget):
@@ -401,7 +403,18 @@ class JsonEditorTab(QWidget):
         toolbar.addWidget(self.btn_expand)
         toolbar.addStretch()
         
+        # Insert Panel button (v2.9.110)
+        self.btn_insert_panel = QPushButton("📝 Insert")
+        self.btn_insert_panel.setToolTip("Open Insert Panel to insert text at specific lines")
+        toolbar.addWidget(self.btn_insert_panel)
+        
         layout.addLayout(toolbar)
+        
+        # Insert Panel (v2.9.110 - collapsible below toolbar)
+        self.insert_panel = InsertPanel(self, "json_editor_insert")
+        self.insert_panel.insert_requested.connect(self._handle_insert)
+        self.insert_panel.setVisible(False)  # Hidden by default
+        layout.addWidget(self.insert_panel)
         
         # Splitter: Editor (70%) | Tree View (30%)
         splitter = QSplitter(Qt.Horizontal)
@@ -448,6 +461,8 @@ class JsonEditorTab(QWidget):
         self.editor.textChanged.connect(self._on_text_changed)
         self.validation_timer.timeout.connect(self._validate)
         self.tree.node_clicked.connect(self._jump_to_line)
+        
+        self.btn_insert_panel.clicked.connect(self._toggle_insert_panel)
         
         self.btn_format.clicked.connect(self._format_json)
         self.btn_validate.clicked.connect(self._validate)
@@ -522,6 +537,61 @@ class JsonEditorTab(QWidget):
             cursor.movePosition(QTextCursor.Down)
         self.editor.setTextCursor(cursor)
         self.editor.setFocus()
+    
+    def _toggle_insert_panel(self):
+        """Toggle Insert Panel visibility (v2.9.110)."""
+        if self.insert_panel.isVisible():
+            self.insert_panel.setVisible(False)
+            self.btn_insert_panel.setText("📝 Insert")
+        else:
+            self.insert_panel.setVisible(True)
+            self.btn_insert_panel.setText("✕ Close Insert")
+            # Set line number to current cursor position
+            cursor = self.editor.textCursor()
+            block_number = cursor.blockNumber() + 1  # 1-based
+            self.insert_panel.set_line_number(block_number)
+    
+    def _handle_insert(self, line_no, text, mode):
+        """
+        Handle insert in editor text (v2.9.110).
+        
+        Pattern: Command (GoF)
+        Args:
+            line_no: Target line number (1-based)
+            text: Text to insert
+            mode: Insertion mode (LEFT, RIGHT, REPLACE, INSERT_ABOVE, INSERT_BELOW)
+        """
+        content = self.editor.toPlainText()
+        
+        try:
+            # Execute insertion
+            new_content = insert_at_line(content, line_no, text, mode)
+            
+            # Update editor
+            self.editor.blockSignals(True)
+            self.editor.setPlainText(new_content)
+            self.editor.blockSignals(False)
+            
+            # Mark as modified
+            self._on_text_changed()
+            
+            # Hide panel
+            self.insert_panel.setVisible(False)
+            self.btn_insert_panel.setText("📝 Insert")
+            
+            # Show feedback
+            QMessageBox.information(
+                self,
+                "Insert Complete",
+                f"Inserted text at line {line_no} using {mode} mode"
+            )
+            
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Insert Error",
+                f"Error during insertion:\n\n{str(e)}"
+            )
     
     def load_file(self, file_path: str) -> bool:
         """Load JSON file into editor."""

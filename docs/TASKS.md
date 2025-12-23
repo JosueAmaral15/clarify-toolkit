@@ -995,7 +995,7 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Incluir habilidade de conectar ao Google Translate e realizar operações de tradução online no programa por meio de API's *(v2.9.78 - Google Translate Integration)*
 - **[X]** Incluir Gemini na lista de IAs a serem usadas *(v3.0.0 - AI File Processor com suporte OpenAI e Gemini)*
 - **[X]** Adicionar opções avançadas condicionais também no painel Smart Edit File (AI) *(v2.9.26 - Task #51: Advanced File Filters in AI Processor)*
-- **[]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON
+- **[X]** Incluir todas features de Search/Replace e Insert no Smart Edit File (AI) e editores JSON (v2.9.110)
 - **[X]** Adicionar feature onde resultado pode ser reutilizado no editor de texto do Clarify *(v2.9.19 - Task #6: Open in Editor from Results)*
 
 #### JSON Advanced Features
