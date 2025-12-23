@@ -238,6 +238,10 @@ class SetOperationsDock(BaseDock):
         self.btn_view_diff.setToolTip("View side-by-side diff between files (v2.9.99)")
         self.btn_view_diff.setEnabled(False)
         
+        self.btn_view_venn = QPushButton("📊 View Venn")
+        self.btn_view_venn.setToolTip("View Venn diagram showing key/value intersections (v2.9.107)")
+        self.btn_view_venn.setEnabled(False)
+        
         self.btn_merge = QPushButton("📥 Merge to File")
         self.btn_merge.setToolTip("Merge results back to original file (v2.9.100)")
         self.btn_merge.setEnabled(False)
@@ -261,6 +265,7 @@ class SetOperationsDock(BaseDock):
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
         btn_layout.addWidget(self.btn_view_diff)
+        btn_layout.addWidget(self.btn_view_venn)
         btn_layout.addWidget(self.btn_merge)
         btn_layout.addWidget(self.btn_store_calc)
         btn_layout.addWidget(self.btn_batch)
@@ -311,6 +316,7 @@ class SetOperationsDock(BaseDock):
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
         self.btn_view_diff.clicked.connect(self._view_diff)
+        self.btn_view_venn.clicked.connect(self._view_venn)
         self.btn_merge.clicked.connect(self._merge_to_file)
         self.btn_store_calc.clicked.connect(self._store_in_calculator)
         self.btn_batch.clicked.connect(self._show_batch_dialog)
@@ -636,10 +642,11 @@ class SetOperationsDock(BaseDock):
             print(f"Warning: Failed to calculate statistics: {e}")
             self.txt_statistics.setVisible(False)
 
-        # Enable save, export, diff viewer, merge, and calculator buttons
+        # Enable save, export, diff viewer, venn diagram, merge, and calculator buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
         self.btn_view_diff.setEnabled(True)
+        self.btn_view_venn.setEnabled(True)
         self.btn_merge.setEnabled(True)
         self.btn_store_calc.setEnabled(True)
 
@@ -778,6 +785,35 @@ class SetOperationsDock(BaseDock):
         )
         dialog.exec()
     
+    def _view_venn(self):
+        """Open Venn diagram viewer for interactive visualization (v2.9.107)."""
+        if not hasattr(self, 'file_a_data') or not hasattr(self, 'file_b_data'):
+            self.show_warning("No Data", "No input files to compare. Execute operation first.")
+            return
+        
+        from .venn_diagram_dialog import VennDiagramDialog
+        
+        # Get file names
+        file_a_name = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
+        file_b_name = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        
+        # Get current comparison mode
+        comparison_mode = "key_value"
+        if self.radio_full_path.isChecked():
+            comparison_mode = "full_path_value"
+        elif self.radio_key_only.isChecked():
+            comparison_mode = "key_only"
+        
+        dialog = VennDiagramDialog(
+            self.file_a_data,
+            self.file_b_data,
+            file_a_name,
+            file_b_name,
+            comparison_mode,
+            self
+        )
+        dialog.exec()
+    
     def _merge_to_file(self):
         """Merge results back to original file (v2.9.100)."""
         if not hasattr(self, 'result_data') or not self.result_data:
@@ -856,6 +892,7 @@ class SetOperationsDock(BaseDock):
         self.btn_save.setEnabled(False)
         self.btn_export.setEnabled(False)
         self.btn_view_diff.setEnabled(False)
+        self.btn_view_venn.setEnabled(False)
         self.btn_merge.setEnabled(False)
         self.btn_store_calc.setEnabled(False)
 
