@@ -236,6 +236,10 @@ class SetOperationsDock(BaseDock):
         self.btn_view_diff.setToolTip("View side-by-side diff between files (v2.9.99)")
         self.btn_view_diff.setEnabled(False)
         
+        self.btn_merge = QPushButton("📥 Merge to File")
+        self.btn_merge.setToolTip("Merge results back to original file (v2.9.100)")
+        self.btn_merge.setEnabled(False)
+        
         self.btn_store_calc = QPushButton("🧮 Store in Calculator")
         self.btn_store_calc.setToolTip("Store result in Calculator memory slot (v2.9.98)")
         self.btn_store_calc.setEnabled(False)
@@ -252,6 +256,7 @@ class SetOperationsDock(BaseDock):
         btn_layout.addWidget(self.btn_save)
         btn_layout.addWidget(self.btn_export)
         btn_layout.addWidget(self.btn_view_diff)
+        btn_layout.addWidget(self.btn_merge)
         btn_layout.addWidget(self.btn_store_calc)
         btn_layout.addWidget(self.btn_history)
         btn_layout.addWidget(self.btn_presets)
@@ -300,6 +305,7 @@ class SetOperationsDock(BaseDock):
         self.btn_save.clicked.connect(self._save_result)
         self.btn_export.clicked.connect(self._export_result)
         self.btn_view_diff.clicked.connect(self._view_diff)
+        self.btn_merge.clicked.connect(self._merge_to_file)
         self.btn_store_calc.clicked.connect(self._store_in_calculator)
         self.btn_history.clicked.connect(self._show_history)
         self.btn_presets.clicked.connect(self._show_presets)
@@ -528,10 +534,11 @@ class SetOperationsDock(BaseDock):
             print(f"Warning: Failed to calculate statistics: {e}")
             self.txt_statistics.setVisible(False)
 
-        # Enable save, export, diff viewer, and calculator buttons
+        # Enable save, export, diff viewer, merge, and calculator buttons
         self.btn_save.setEnabled(True)
         self.btn_export.setEnabled(True)
         self.btn_view_diff.setEnabled(True)
+        self.btn_merge.setEnabled(True)
         self.btn_store_calc.setEnabled(True)
 
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
@@ -668,6 +675,71 @@ class SetOperationsDock(BaseDock):
             self
         )
         dialog.exec()
+    
+    def _merge_to_file(self):
+        """Merge results back to original file (v2.9.100)."""
+        if not hasattr(self, 'result_data') or not self.result_data:
+            self.show_warning("No Data", "No results to merge. Execute operation first.")
+            return
+        
+        # Get file A path (default merge target)
+        file_a_path = self.ed_file_a.text()
+        if not file_a_path or not os.path.exists(file_a_path):
+            self.show_warning("No File", "No valid file selected to merge into.")
+            return
+        
+        from .merge_config_dialog import MergeConfigDialog
+        from .merge_preview_dialog import MergePreviewDialog
+        from ..merge_manager import MergeManager
+        
+        # Step 1: Configure merge
+        config_dialog = MergeConfigDialog(file_a_path, self)
+        if config_dialog.exec() != QDialog.Accepted:
+            return
+        
+        mode, file_path, auto_backup, max_backups = config_dialog.get_config()
+        
+        # Step 2: Simulate merge and show preview
+        merge_manager = MergeManager(max_backups=max_backups, auto_backup=auto_backup)
+        
+        success, merged_data, message = merge_manager.simulate_merge(
+            file_path, self.result_data, mode
+        )
+        
+        if not success:
+            self.show_error("Simulation Error", message)
+            return
+        
+        # Load original data for preview
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                original_data = json.load(f)
+        except Exception as e:
+            self.show_error("Load Error", f"Failed to load original file:\n{e}")
+            return
+        
+        # Show preview dialog
+        preview_dialog = MergePreviewDialog(
+            original_data,
+            self.result_data,
+            merged_data,
+            mode,
+            file_path,
+            self
+        )
+        
+        if preview_dialog.exec() != QDialog.Accepted or not preview_dialog.is_approved():
+            return
+        
+        # Step 3: Apply merge
+        success, message, output_path = merge_manager.merge_to_file(
+            file_path, self.result_data, mode, backup=auto_backup
+        )
+        
+        if success:
+            self.show_info("Merge Complete", message)
+        else:
+            self.show_error("Merge Error", message)
 
 
     def _clear_all(self):
@@ -682,6 +754,7 @@ class SetOperationsDock(BaseDock):
         self.btn_save.setEnabled(False)
         self.btn_export.setEnabled(False)
         self.btn_view_diff.setEnabled(False)
+        self.btn_merge.setEnabled(False)
         self.btn_store_calc.setEnabled(False)
 
         # Reset checkboxes
