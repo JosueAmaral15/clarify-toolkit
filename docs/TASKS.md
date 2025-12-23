@@ -1521,7 +1521,7 @@ result = convert_text_to_json(text, "auto")
 
 ##### Exportação e Integração
 - **[X]** **v2.9.93 - Multi-Format Export (22/12/2024 - CONCLUÍDO)**: Sistema de exportação multi-formato para resultados de Set Operations (~340 linhas totais). **Backend** (`src/export_manager.py`, 290 lines): ExportManager class com 5 exporters (CSV flat key-value, Excel XLSX com formatação/cores/auto-width via openpyxl, YAML nested via pyyaml, TOML flattened dot notation via tomli-w opcional, JSON pretty-print), flatten_dict() helper (converte a.b.c em dot notation), add_metadata() (timestamp + operation type + tool version). **GUI Integration** (`src/gui/set_operations_dock.py`, +50 lines): Botão "Export..." ao lado de "Save Result", QFileDialog com format filter (CSV/Excel/YAML/TOML/JSON), auto-detect format de selected filter, enable/disable com result availability, error handling user-friendly com guidance "pip install openpyxl tomli-w". **Dependencies** (`pyproject.toml`): openpyxl>=3.1.0 adicionado, pyyaml já instalado (v2.9.90), tomli-w opcional (graceful fallback se ausente). **Features**: Flatten nested JSON para formatos tabulares, include metadata (exported_at, operation, Clarify v2.9.93), format auto-detection de extensão, graceful degradation (missing libs mostram error dialog). **Architecture**: Backend (ExportManager strategy pattern) + GUI (1 button + dialog). **Patterns**: Strategy (format-specific exporters), Factory (export() dispatcher), Template Method (add_metadata). **Use Cases**: "Exportar intersecção para Excel", "Análise CSV no spreadsheet", "Share YAML config com time". **Score Matriz**: 28.5 pontos (Simplicidade 4, Dependências 4, Valor 3, Clareza 5, Urgência 3). **Time**: ~2h30 (Sprint A 290L + Sprint B 50L). **Commit**: d47ba50 "feat: multi-format export for Set Operations (v2.9.93)".
-- **[]** Merge Results to File: Permitir aplicar resultados de operação de volta aos arquivos originais. Modos: replace (sobrescrever arquivo), merge (combinar com conteúdo existente), new file (criar novo arquivo com sufixo _merged). Incluir preview antes de aplicar e opção de backup automático.
+- **[X]** **v2.9.100 - Merge Results to File (23/12/2025 - CONCLUÍDO)**: Sistema de merge de resultados de volta aos arquivos originais (~883 linhas totais). **Backend** (`src/merge_manager.py`, 373 lines): MergeManager class com 3 modos (replace sobrescrever completo, merge deep merge recursivo, new_file criar _merged suffix), merge_to_file() (aplica merge ao disco com validações), simulate_merge() (preview sem writes para dialog), _merge_recursive() (deep merge: result keys overwrite original, preserva original-only keys, arrays replace, nested dicts recursivo), _backup_file() (cria .bak com timestamp YYYY-MM-DD_HHMMSS), _rotate_backups() (mantém max_backups arquivos, deleta oldest), _validate_permissions() (os.access W_OK check), _write_json_file() (pretty-print indent 2), _get_new_file_path() (gera data_merged.json com counter se exists). **Frontend** (`src/gui/merge_config_dialog.py`, 176 lines): MergeConfigDialog com mode selection (3 radios: Replace/Merge/New File com labels explicativos coloridos), file picker (browse button), backup options (auto-backup checkbox default True, max_backups spinner 1-20 default 5), validation (file exists check, no-backup warning para replace mode). **Frontend** (`src/gui/merge_preview_dialog.py`, 334 lines): MergePreviewDialog com 3-panel layout QSplitter (Original | Result | Merged side-by-side), DiffHighlighter(QSyntaxHighlighter) (green #c8f7c5 added, red #ffcccb removed, yellow #ffffcc modified line-by-line), summary statistics (keys count + lines count change), color legend (visual samples), export HTML button (save preview com cores preserved), _calculate_diff() (line-by-line comparison), user_approved flag (confirmation required). **Integration** (`src/gui/set_operations_dock.py`, +68 lines): btn_merge QPushButton "📥 Merge to File" após View Diff, _merge_to_file() method (workflow: MergeConfigDialog → simulate_merge → MergePreviewDialog → merge_to_file), enable/disable com result availability, imports MergeManager/Dialogs. **Features**: 3 merge modes (replace/merge/new_file), automatic backups (.bak rotation max 5), preview obrigatório antes apply (3-panel diff view), diff highlighting colors (added/removed/modified), security validations (permissions + JSON syntax), deep merge strategy (result priority, preserves original-only), export preview HTML, confirmation dialogs (no-backup warning, apply confirmation). **Architecture**: Backend (MergeManager strategy) + Frontend (2 dialogs: config + preview) + Integration (Set Operations btn_merge + workflow). **Patterns**: Strategy (3 merge modes), Template Method (merge_to_file workflow: validate → backup → merge → write), Observer (Qt dialog signals), Decorator (DiffHighlighter syntax highlighting). **Use Cases**: "Aplicar intersection result de volta a config.json", "Merge union preservando keys originais", "Criar arquivo novo com merged data (safest)", "Preview mudanças antes overwrite production file". **Score Matriz**: 21.0 pontos (Simplicidade 3, Dependências 4, Valor 3, Clareza 4, Urgência 3). **Time**: ~3h (Sprint A 373L + Sprint B 510L). **Commit**: f7e549c "feat: merge results to file for Set Operations (v2.9.100)".
 - **[]** Batch Set Operations: Processar múltiplos grupos de arquivos em pipeline. Interface: adicionar grupos (A∩B, C∪D, E−F), definir ordem de execução, aplicar operações sequencialmente. Exibir progress bar com status de cada grupo.
 
 ##### Histórico e Presets
@@ -1672,18 +1672,18 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 24 | 12 | 66.7% |
+| COULD HAVE | 36 | 25 | 11 | 69.4% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **101** | **56** | **64.3%** |
+| **TOTAL** | **157** | **102** | **55** | **65.0%** |
 
-**Última Atualização**: 23/12/2025 - v2.9.99 Diff Viewer Side-by-Side
+**Última Atualização**: 23/12/2025 - v2.9.100 Merge Results to File
 
 **Notas de Atualização**:
-- ✅ **v2.9.99 Completa**: Diff Viewer Side-by-Side implementado com sucesso (~605 LOC)
-- 📊 **Milestone**: 101/157 tasks completas (64.3%), COULD HAVE 24/36 (66.7%)
-- 🎯 **Progress**: +10 tasks completadas nas últimas 2 sessões (v2.9.90-99)
-- 📈 **COULD HAVE**: 63.9% → 66.7% (+2.8% improvement)
-- 🚀 **Próximos Alvos**: 12 tasks COULD HAVE pendentes + 44 WOULD HAVE LATER
+- ✅ **v2.9.100 Completa**: Merge Results to File implementado com sucesso (~883 LOC)
+- 📊 **Milestone**: 102/157 tasks completas (65.0%), COULD HAVE 25/36 (69.4%)
+- 🎯 **Progress**: +11 tasks completadas nas últimas 3 sessões (v2.9.90-100)
+- 📈 **COULD HAVE**: 63.9% → 69.4% (+5.5% improvement)
+- 🚀 **Próximos Alvos**: 11 tasks COULD HAVE pendentes + 44 WOULD HAVE LATER
 
 ### Notas
 
