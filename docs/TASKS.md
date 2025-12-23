@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/23 - v2.9.105 i18n Expansion (Discovery)
+**Last Update**: 2025/12/23 - v2.9.106 Diff Viewer (Discovery)
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -1547,6 +1547,8 @@ result = convert_text_to_json(text, "auto")
 
 - **[X]** **v2.9.105 - i18n Expansion ES/FR/DE/ZH/JA (v2.9.10 - CONCLUÍDO)**: 5 novos idiomas implementados (~2310 linhas traduções). **Discovery** (23/12/2025): Auditoria pré-implementation revelou v2.9.105 JÁ COMPLETO desde v2.9.10 (Task #24). **Arquivos existentes**: es.json, fr.json, de.json, zh.json, ja.json (462 linhas cada = mesmo tamanho pt_BR/en). **Traduções completas**: ~200 strings por idioma (app.title, menus, docks, tooltips, errors) totalmente traduzidas em Spanish, French, German, Simplified Chinese, Japanese. **Sistema i18n**: translator.py lista `_available_languages = ["en", "pt_BR", "es", "fr", "de", "zh", "ja"]`, _detect_system_locale() auto-detect OS language com locale_map (es_ES→es, fr_FR→fr, de_DE→de, zh_CN→zh, ja_JP→ja), languageChanged Signal para UI updates, runtime switching via switch_language(). **UI Language menu**: app.py linhas 5177-5198 implementado em v2.9.10 (Task #24, expanded v2.9.43), Settings > Language > [English, Português (BR), separator, Español, Français, Deutsch, separator, 中文, 日本語], act_lang_XX.triggered conectado a _switch_language(). **Features**: Lazy loading (carrega JSON on-demand), runtime switching (sem restart), signal-based updates (MainWindow.retranslate()), auto-detect system locale, fallback to English se string faltante, locale variant mapping (pt_PT→pt_BR, es_MX→es). **Architecture**: Singleton Translator class (QObject), JSON translation files em src/i18n/, tr() shorthand para get_translator().get(), tooltip_tr() especializado para tooltips. **Patterns**: Singleton (Translator instance única), Observer (languageChanged Signal), Lazy Loading (JSON carregado on-demand), Strategy (locale_map variants). **Use Cases**: "User selects Settings > Language > Español → UI atualiza para Spanish instantaneamente", "OS em pt_PT auto-detected → mapeia para pt_BR translations", "Missing translation 'new.key' → fallback to English gracefully". **Time**: ~0h (Discovery salvou ~3-4h tradução, task já completa v2.9.10). **Version**: v2.9.10 (Task #24 - 02/12/2025).
 
+- **[X]** **v2.9.106 - Diff Viewer Side-by-Side (v2.9.99 - CONCLUÍDO)**: Visualizador de diferenças com split view para Set Operations (~605 linhas totais). **Discovery** (23/12/2025): Auditoria pré-implementation revelou v2.9.106 JÁ COMPLETO em v2.9.99 (23/12/2025). **Arquivos existentes**: src/diff_analyzer.py (235 lines), src/gui/diff_viewer_dialog.py (291 lines), integration em set_operations_dock.py (70 lines). **Backend DiffAnalyzer**: analyze(data_a, data_b, comparison_mode) categoriza em 4 grupos (only_in_a verde, only_in_b vermelho, common amarelo, modified laranja), _flatten_dict() converte nested para dot-notation recursivo, _values_equal() comparação mode-aware (key_value/full_path_value/key_only), format_diff_summary() text ASCII counts, export_diff_html() inline CSS side-by-side. **Frontend DiffViewerDialog**: JsonSyntaxHighlighter(QSyntaxHighlighter) com 4 cores backgrounds (#c8f7c5 green A, #ffcccb red B, #ffffcc yellow common, #ffd9b3 orange modified), QSplitter split view (File A | File B), synchronized scrolling (valueChanged signals vertical scrollbars), summary QGroupBox counts, legend color samples, export HTML button. **Integration**: btn_view_diff "🔍 View Diff" em set_operations_dock.py, _view_diff() method abre dialog com file_a_data + file_b_data, stores original data em _execute() antes flatten, enable/disable logic (True após execute, False em clear). **Features**: Split view synchronized scrolling, color highlighting 4 categories, summary statistics, legend visual guide, export HTML preserves colors, comparison mode support (3 modes), natural workflow Execute → Results → Diff → Export. **Architecture**: Backend (DiffAnalyzer categorization) + Frontend (JsonSyntaxHighlighter + QSplitter) + Integration (Set Operations stores original). **Patterns**: Strategy (diff 4 categories), Observer (Qt signals), Template Method (format methods), Decorator (JsonSyntaxHighlighter colors), Model-View (DiffAnalyzer ↔ Dialog). **Use Cases**: "Comparar 2 configs migration", "Ver keys adicionados/removidos", "Exportar diff documentação", "Identificar mudanças versions JSON". **Time**: ~0h (Discovery, task já completa v2.9.99 mesmo dia). **Commit**: 1d72493 "feat: diff viewer side-by-side for Set Operations (v2.9.99)".
+
 ---
 
 #### Task v2.9.32 - JSON Set Operations (v2.9.32)
@@ -1686,18 +1688,18 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 30 | 6 | 83.3% |
+| COULD HAVE | 36 | 31 | 5 | 86.1% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **107** | **50** | **68.2%** |
+| **TOTAL** | **157** | **108** | **49** | **68.8%** |
 
-**Última Atualização**: 23/12/2025 - v2.9.105 i18n Expansion (Discovery)
+**Última Atualização**: 23/12/2025 - v2.9.106 Diff Viewer (Discovery)
 
 **Notas de Atualização**:
-- ✅ **v2.9.105 Discovery**: i18n Expansion JÁ COMPLETO em v2.9.10 - 5 idiomas (ES/FR/DE/ZH/JA) já existentes com 462 linhas cada
-- 📊 **Milestone**: 107/157 tasks completas (68.2%), COULD HAVE 30/36 (83.3%)
-- 🎯 **Progress**: +16 tasks completadas (v2.9.90-105 Discovery) em extended session
-- 📈 **COULD HAVE**: 63.9% → 83.3% (+19.4% improvement) - Milestone 80% alcançado!
-- 🚀 **Próximos Alvos**: 6 tasks COULD HAVE pendentes (Advanced Search, GUI Tests, Benchmarks, Venn Diagram, Load Testing, Formula Builder) + 44 WOULD HAVE LATER
+- ✅ **v2.9.106 Discovery**: Diff Viewer Side-by-Side JÁ COMPLETO em v2.9.99 (23/12/2025 mesmo dia)
+- 📊 **Milestone**: 108/157 tasks completas (68.8%), COULD HAVE 31/36 (86.1%)
+- 🎯 **Progress**: +17 tasks (v2.9.90-106, 2 Discoveries) em extended session
+- 📈 **COULD HAVE**: 63.9% → 86.1% (+22.2% improvement) - Milestone 85% alcançado!
+- 🚀 **Próximos Alvos**: 5 tasks COULD HAVE pendentes (Formula Builder, Venn Diagram, Advanced Search AI Processor, Advanced Translator, SQL/NoSQL Query) + 44 WOULD HAVE LATER
 
 
 ### Notas
