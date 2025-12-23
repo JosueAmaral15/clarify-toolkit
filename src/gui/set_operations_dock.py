@@ -44,6 +44,7 @@ from PySide6.QtCore import Signal
 
 from src.set_operations import difference, intersection, symmetric_difference, union
 from src.i18n import tooltip_tr
+from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
 from ..history_manager import HistoryManager
 from .history_dialog import HistoryDialog
@@ -315,6 +316,101 @@ class SetOperationsDock(BaseDock):
         self.btn_batch.clicked.connect(self._show_batch_dialog)
         self.btn_history.clicked.connect(self._show_history)
         self.btn_presets.clicked.connect(self._show_presets)
+        
+        # Apply accessibility labels (v2.9.104)
+        self._apply_accessibility()
+    
+    def _apply_accessibility(self):
+        """Apply accessibility labels to widgets (v2.9.104)."""
+        # File selection
+        AccessibilityManager.set_accessible_widget(
+            self.ed_file_a, "Set Operations - Input - File A",
+            "First JSON file for set operations"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_browse_a, "Set Operations - Button - Browse File A",
+            "Browse and select first JSON file"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.ed_file_b, "Set Operations - Input - File B",
+            "Second JSON file for set operations"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_browse_b, "Set Operations - Button - Browse File B",
+            "Browse and select second JSON file"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_multiple, "Set Operations - Checkbox - Multiple Files",
+            "Enable pipeline processing with multiple files (left-to-right)"
+        )
+        
+        # Operations
+        AccessibilityManager.set_accessible_widget(
+            self.chk_intersection, "Set Operations - Checkbox - Intersection",
+            "Calculate intersection (common keys between files)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_union, "Set Operations - Checkbox - Union",
+            "Calculate union (all keys from all files)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_difference, "Set Operations - Checkbox - Difference",
+            "Calculate difference (keys in A not in B)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_symmetric, "Set Operations - Checkbox - Symmetric Difference",
+            "Calculate symmetric difference (keys in A or B but not both)"
+        )
+        
+        # Comparison modes
+        AccessibilityManager.set_accessible_widget(
+            self.radio_key_value, "Set Operations - Radio - Key Value Mode",
+            "Compare keys and values with strict types"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.radio_full_path, "Set Operations - Radio - Full Path Mode",
+            "Compare full paths using dot notation (deep nested)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.radio_key_only, "Set Operations - Radio - Key Only Mode",
+            "Compare only keys ignoring values"
+        )
+        
+        # Advanced options
+        AccessibilityManager.set_accessible_widget(
+            self.chk_ignore_case_keys, "Set Operations - Checkbox - Ignore Case Keys",
+            "Treat 'Name' and 'name' as identical keys"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_ignore_case_values, "Set Operations - Checkbox - Ignore Case Values",
+            "Treat 'Hello' and 'hello' as identical values"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.chk_skip_empty, "Set Operations - Checkbox - Skip Empty",
+            "Skip null, empty string, empty array, empty object values"
+        )
+        
+        # Action buttons
+        AccessibilityManager.set_accessible_widget(
+            self.btn_execute, "Set Operations - Button - Execute",
+            "Execute selected operations on files (Ctrl+Enter)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_save, "Set Operations - Button - Save Result",
+            "Save result to JSON file"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_store_calc, "Set Operations - Button - Store in Calculator",
+            "Store result in Calculator memory slot"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_batch, "Set Operations - Button - Batch Operations",
+            "Open Batch Operations dialog for pipeline workflows (v2.9.102)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_history, "Set Operations - Button - History",
+            "View execution history with re-run capability"
+        )
 
     def _browse_file(self, target: str):
         """Browse for JSON file.

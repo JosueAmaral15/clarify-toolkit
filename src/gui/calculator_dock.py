@@ -17,6 +17,7 @@ from PySide6.QtGui import QFont
 from ..calculator_memory import CalculatorMemory
 from ..statistics_manager import StatisticsManager
 from ..calculator_operations import CalculatorOperations
+from ..accessibility_manager import AccessibilityManager
 from .recall_dialog import RecallDialog
 from .operation_preview_dialog import OperationPreviewDialog
 
@@ -243,6 +244,81 @@ class CalculatorDock(QWidget):
         self.btn_clear_all.clicked.connect(self._clear_all_slots)
         self.btn_clear_all.setStyleSheet("background-color: #dc3545; color: white;")
         layout.addWidget(self.btn_clear_all)
+        
+        # Apply accessibility labels (v2.9.104)
+        self._apply_accessibility()
+    
+    def _apply_accessibility(self):
+        """Apply accessibility labels to all widgets (v2.9.104)."""
+        # Memory table
+        AccessibilityManager.set_accessible_widget(
+            self.table, "Calculator - Table - Memory Slots", 
+            "Table showing 5 memory slots with statistics (count, size, depth, keys, types)"
+        )
+        
+        # Slot actions group
+        AccessibilityManager.set_accessible_widget(
+            self.combo_slot, "Calculator - Combo - Select Slot",
+            "Select memory slot (A, B, C, D, or E) for action"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_recall, "Calculator - Button - Recall Slot",
+            "Load and view data stored in selected memory slot"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_view, "Calculator - Button - View Details",
+            "View detailed statistics for selected slot (count, size, depth, keys, types)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_clear, "Calculator - Button - Clear Slot",
+            "Clear selected memory slot (confirm before delete)"
+        )
+        
+        # Comparison group
+        AccessibilityManager.set_accessible_widget(
+            self.combo_compare1, "Calculator - Combo - Compare Slot 1",
+            "Select first memory slot for comparison"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.combo_compare2, "Calculator - Combo - Compare Slot 2",
+            "Select second memory slot for comparison"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_compare, "Calculator - Button - Compare Slots",
+            "Compare statistics between two memory slots (shows differences)"
+        )
+        
+        # Operations group (v2.9.101)
+        AccessibilityManager.set_accessible_widget(
+            self.combo_op_slot1, "Calculator - Combo - Operation Slot 1",
+            "Select first memory slot for operation (must contain data)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.combo_op_slot2, "Calculator - Combo - Operation Slot 2",
+            "Select second memory slot for operation (must contain data)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_add, "Calculator - Button - Add Operation",
+            "Add (deep merge) two memory slots using JSON merge algorithm"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_intersection, "Calculator - Button - Intersection Operation",
+            "Calculate intersection (common keys) between two slots"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_union, "Calculator - Button - Union Operation",
+            "Calculate union (all keys) between two slots (slot 2 overwrites slot 1)"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_difference, "Calculator - Button - Difference Operation",
+            "Calculate difference (keys only in slot 1, not in slot 2)"
+        )
+        
+        # Clear all button
+        AccessibilityManager.set_accessible_widget(
+            self.btn_clear_all, "Calculator - Button - Clear All Slots",
+            "Clear all 5 memory slots (confirm before delete all)"
+        )
     
     def _refresh_table(self):
         """Refresh statistics table with current slot data."""

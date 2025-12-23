@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QIcon
 from ..batch_manager import BatchJob, BatchStep, BatchExecutor, BatchHistory
+from ..accessibility_manager import AccessibilityManager
 import os
 
 
