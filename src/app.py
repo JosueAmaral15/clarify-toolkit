@@ -150,7 +150,7 @@ try:
     from PySide6.QtCore import (
         Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QByteArray, QAbstractListModel, QObject, QThread
         )
-    from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon, QPalette, QColor, QShortcut, QKeySequence
+    from PySide6.QtGui import QAction, QActionGroup, QFontDatabase, QPixmap, QIcon, QPalette, QColor, QShortcut, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
         QLabel, QLineEdit, QCheckBox, QPushButton, QSplitter, QListWidget, QListWidgetItem,
@@ -1696,13 +1696,20 @@ if _PYSIDE:
         error = Signal(str)  # Error messages
 
         def __init__(self, pattern_text: str, iter_files_fn, search_options_factory, 
-                     is_multi_query: bool = False, multi_query_processor=None):
+                     is_multi_query: bool = False, multi_query_processor=None,
+                     search_mode: str = "content_only", filename_pattern: str = None):
+            """
+            v2.9.112: Added search_mode and filename_pattern parameters.
+            search_mode can be: "filename_only", "content_only", or "both"
+            """
             super().__init__()
             self.pattern_text = pattern_text
             self.iter_files_fn = iter_files_fn
             self.search_options_factory = search_options_factory
             self.is_multi_query = is_multi_query  # v2.8.0
             self.multi_query_processor = multi_query_processor  # v2.8.0
+            self.search_mode = search_mode  # v2.9.112
+            self.filename_pattern = filename_pattern  # v2.9.112
             self._cancel = False
             self._paused = False  # NEW - v2.5.0+
 
@@ -1719,13 +1726,27 @@ if _PYSIDE:
 
         def run(self):
             """Executa o processamento pesado fora da GUI thread com progresso detalhado e pausar/retomar (v2.5.0+).
-            v2.8.0: Suporte para multi-query search."""
+            v2.8.0: Suporte para multi-query search.
+            v2.9.112: Suporte para pesquisa por nome de arquivo, conteúdo ou ambos."""
             import time
+            import fnmatch
+            import os
             
             matches: Dict[str, List[Tuple[int, int, str]]] = {}
             
             # Collect all files first to know total count
             files_to_process = list(self.iter_files_fn())
+            
+            # v2.9.112: Filter by filename pattern if needed
+            if self.search_mode in ("filename_only", "both") and self.filename_pattern:
+                filtered_files = []
+                for p in files_to_process:
+                    filename = os.path.basename(p)
+                    # Support simple wildcards like *.py, test_*, etc.
+                    if fnmatch.fnmatch(filename, self.filename_pattern):
+                        filtered_files.append(p)
+                files_to_process = filtered_files
+            
             total_files = len(files_to_process)
             
             for idx, p in enumerate(files_to_process, 1):
@@ -1742,6 +1763,13 @@ if _PYSIDE:
                     self.progress.emit(p)  # Legacy signal for backward compatibility
                     self.progress_detailed.emit(idx, total_files, p)
                     
+                    # v2.9.112: Handle filename-only search mode
+                    if self.search_mode == "filename_only":
+                        # Just list the file with a placeholder match
+                        matches[p] = [(0, 0, f"Matched file: {os.path.basename(p)}")]
+                        continue
+                    
+                    # For content search or both modes, read and search file content
                     text = read_text(p)
                     lst: List[Tuple[int, int, str]] = []
                     
@@ -2147,14 +2175,31 @@ if _PYSIDE:
             root.addLayout(row)
             root.addWidget(self.ed_exc)
 
-            # Search field + toggles
+            # Search field + toggles (v2.9.112 - split into file name and file content)
             gb = QGroupBox("Search")
             g = QGridLayout(gb)
-            g.addWidget(QLabel("Query:"), 0, 0)
+            
+            # File name query field
+            g.addWidget(QLabel("File name query:"), 0, 0)
+            self.ed_filename_query = QLineEdit()
+            self.ed_filename_query.setPlaceholderText("Search in file names (e.g., test_*.py)")
+            self.ed_filename_query.setToolTip("Search pattern for file names\n"
+                                             "Leave empty to search all files\n"
+                                             "Example: test_*.py, *config*, etc.")
+            g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
+            
+            # File content query field
+            g.addWidget(QLabel("File content query:"), 1, 0)
             self.ed_query = QPlainTextEdit()
             self.ed_query.setMinimumHeight(30)
             self.ed_query.setMaximumHeight(150)
-            self.ed_query.setToolTip("Enter the text pattern to search for in files\nResizable: drag bottom edge to adjust height")
+            self.ed_query.setPlaceholderText("Search in file contents")
+            self.ed_query.setToolTip("Enter the text pattern to search for in file contents\n"
+                                   "Leave empty to list files matching name pattern only\n"
+                                   "Resizable: drag bottom edge to adjust height")
+            g.addWidget(self.ed_query, 1, 1, 1, 3)
+            
+            # Checkboxes
             self.chk_case = QCheckBox("Case sensitive")
             self.chk_case.setToolTip("Match exact case (A ≠ a)")
             self.chk_word = QCheckBox("Whole word")
@@ -2168,13 +2213,18 @@ if _PYSIDE:
                                            "- Empty lines are ignored\n"
                                            "(Query field is now always multi-line capable)")
             self.btn_search = QPushButton("Search/Cancel")
-            self.btn_search.setToolTip("Start search operation or cancel if already running")
-            g.addWidget(self.ed_query, 0, 1, 1, 3)
-            g.addWidget(self.chk_case, 1, 0)
-            g.addWidget(self.chk_word, 1, 1)
-            g.addWidget(self.chk_regex, 1, 2)
-            g.addWidget(self.chk_multi_query, 1, 3)  # v2.8.0
-            g.addWidget(self.btn_search, 2, 3)  # Moved to row 2
+            self.btn_search.setToolTip("Start search operation or cancel if already running\n"
+                                      "Search logic:\n"
+                                      "- Both empty: no search\n"
+                                      "- Only file name: list matching files\n"
+                                      "- Only content: search content in all files\n"
+                                      "- Both filled: search content in matching files")
+            
+            g.addWidget(self.chk_case, 2, 0)
+            g.addWidget(self.chk_word, 2, 1)
+            g.addWidget(self.chk_regex, 2, 2)
+            g.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
+            g.addWidget(self.btn_search, 3, 3)  # Moved to row 3
             
             root.addWidget(gb)
 
@@ -2528,12 +2578,36 @@ if _PYSIDE:
                 
                 self.results.print_message("Loading...")
                 
+                # v2.9.112: Get file name and content queries
+                filename_query = self.ed_filename_query.text().strip()
+                content_query = self.ed_query.toPlainText().strip()
+                
+                # Validate: at least one field must be filled
+                if not filename_query and not content_query:
+                    QMessageBox.warning(
+                        self,
+                        "No Query",
+                        "Please enter at least one search query:\n"
+                        "- File name query: to search file names\n"
+                        "- File content query: to search file contents\n"
+                        "- Both: to search content in matching files"
+                    )
+                    self.results.print_message("Search cancelled: no query provided")
+                    return
+                
+                # Determine search mode
+                search_mode = "both"  # Default
+                if filename_query and not content_query:
+                    search_mode = "filename_only"
+                elif content_query and not filename_query:
+                    search_mode = "content_only"
+                
                 # Get query text (v2.8.0 - support multi-query)
                 is_multi_query = self.chk_multi_query.isChecked() and hasattr(self, 'ed_query_multi')
                 if is_multi_query:
                     query_text = self.ed_query_multi.toPlainText()
                 else:
-                    query_text = self.ed_query.text()
+                    query_text = content_query
                 
                 # v2.8.0: Prepare multi-query processor or single pattern
                 pattern_text = None
@@ -2566,12 +2640,16 @@ if _PYSIDE:
                         self.done.emit({})
                         return
                 else:
-                    # Single query mode - compile pattern
-                    try:
-                        pattern_text = SearchOptions(self.chk_case.isChecked(),
-                            self.chk_word.isChecked(),
-                            self.chk_regex.isChecked()).compile(query_text)
-                    except Exception as e:
+                    # Single query mode - compile pattern (only if content_query exists)
+                    if search_mode != "filename_only":
+                        try:
+                            pattern_text = SearchOptions(self.chk_case.isChecked(),
+                                self.chk_word.isChecked(),
+                                self.chk_regex.isChecked()).compile(query_text)
+                        except Exception as e:
+                            self.error.emit(f"Invalid pattern: {e}")
+                            self.done.emit({})
+                            return
                         self.error.emit(f"Invalid pattern: {e}")
                         self.done.emit({})
                         return
@@ -2607,14 +2685,16 @@ if _PYSIDE:
                         task_label
                     )
                 
-                # Create thread and worker (v2.8.0 - multi-query support)
+                # Create thread and worker (v2.8.0 - multi-query support, v2.9.112 - filename search)
                 self._search_thread = QThread(self)
                 self._search_worker = SearchWorker(
                     pattern_text=pattern_text,
                     iter_files_fn=self._iter_files,
                     search_options_factory=lambda a,b,c: SearchOptions(a,b,c),
                     is_multi_query=is_multi_query,
-                    multi_query_processor=multi_query_processor
+                    multi_query_processor=multi_query_processor,
+                    search_mode=search_mode,
+                    filename_pattern=filename_query if filename_query else None
                 )
                 self._search_worker.moveToThread(self._search_thread)
                 
@@ -4272,11 +4352,21 @@ if _PYSIDE:
             # Restore last layout (v2.9.84)
             self.layout_manager.restore_last_layout()
             
+            # Force UI update to ensure widgets are properly rendered (fix for invisible widgets on startup)
+            self.updateGeometry()
+            QApplication.processEvents()
+            
             # Apply accessibility features (v2.9.35)
             self._apply_accessibility()
             
             # Restore tab state from previous session (v2.9.40)
             self._restore_tab_state()
+            
+            # Force initialization of all tabs to prevent lazy rendering issues
+            # Qt doesn't render widgets in non-visible tabs until they're activated
+            # This causes invisible widgets bug - force show all tabs once
+            # Must be called AFTER _restore_tab_state() to initialize all tabs including restored ones
+            self._initialize_all_tabs()
             
             # Auto-check for updates on startup (v2.9.45)
             self._auto_check_for_updates()
@@ -4448,8 +4538,7 @@ if _PYSIDE:
             if self.tabs.count() > 0 and self.tabs.tabText(0) == "Search / Replace":
                 self.tabs.setCurrentIndex(0)
             else:
-                # Tab was closed, recreate at index 0
-                from .gui.search_replace_panel import SearchReplacePanel
+                # Tab was closed, recreate at index 0 using internal SearchReplacePanel class
                 self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
                 self.tabs.insertTab(0, self.tab_search, "Search / Replace")
                 self.tabs.setCurrentIndex(0)
@@ -5109,6 +5198,46 @@ if _PYSIDE:
             # Save tab state to QSettings
             self._save_tab_state()
         
+        def _initialize_all_tabs(self):
+            """
+            Force initialization of all tabs to prevent lazy rendering issues.
+            
+            Qt uses lazy rendering - widgets in non-visible tabs are not rendered
+            until the tab is activated. This causes invisible widgets on startup.
+            Solution: Temporarily activate each tab to force rendering, then restore.
+            
+            Reference: Common Qt issue with QTabWidget lazy initialization
+            """
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            # Store current tab index
+            original_index = self.tabs.currentIndex()
+            tab_count = self.tabs.count()
+            
+            logger.info(f"Initializing all tabs - Count: {tab_count}, Current: {original_index}")
+            
+            # Activate each tab briefly to force widget rendering
+            for i in range(tab_count):
+                tab_name = self.tabs.tabText(i)
+                logger.info(f"  Activating tab {i}: '{tab_name}'")
+                self.tabs.setCurrentIndex(i)
+                # Force immediate processing of events to ensure rendering
+                QApplication.processEvents()
+                
+                # Also force geometry update on the widget
+                widget = self.tabs.widget(i)
+                if widget:
+                    widget.updateGeometry()
+                    widget.update()
+                    logger.info(f"    Widget updated: {widget.__class__.__name__}")
+            
+            # Restore original tab
+            logger.info(f"Restoring original tab: {original_index}")
+            self.tabs.setCurrentIndex(original_index)
+            QApplication.processEvents()
+            logger.info("Tab initialization complete")
+        
         def _apply_tab_close_button_style(self):
             """Apply theme-appropriate styling to tab close buttons (v2.9.40)."""
             # Get current theme
@@ -5138,18 +5267,43 @@ if _PYSIDE:
             self.tabs.setStyleSheet(tab_style)
         
         def _save_tab_state(self):
-            """Save current tab state to settings (v2.9.40)."""
+            """Save current tab state to settings (v2.9.40).
+            v2.9.112: Don't save fixed tabs (Search/Replace, Insert) - only save if they're still open."""
             # Get list of open tool names (exclude Search/Replace and Insert)
             open_tools = []
             for tool_name, (widget, index) in self.tool_tabs.items():
                 open_tools.append(tool_name)
             
+            # Check if fixed tabs are still open (v2.9.112)
+            fixed_tabs_open = {
+                "search_replace": self.tabs.count() > 0 and self.tabs.widget(0) == self.tab_search,
+                "insert": self.tabs.count() > 1 and self.tabs.widget(1) == self.tab_insert
+            }
+            
             # Save to settings
             self.settings.set("tabs_open_tools", open_tools)
+            self.settings.set("tabs_fixed_open", fixed_tabs_open)  # Track if fixed tabs are open
             self.settings.set("tabs_current_index", self.tabs.currentIndex())
         
         def _restore_tab_state(self):
-            """Restore tab state from settings on startup (v2.9.40)."""
+            """Restore tab state from settings on startup (v2.9.40).
+            v2.9.112: Don't restore fixed tabs if they were closed."""
+            # Check if fixed tabs should be restored (v2.9.112)
+            fixed_tabs_open = self.settings.get("tabs_fixed_open", {"search_replace": True, "insert": True})
+            
+            # Remove fixed tabs if they were closed in previous session
+            if not fixed_tabs_open.get("search_replace", True):
+                # Remove Search/Replace tab (index 0)
+                if self.tabs.count() > 0 and self.tabs.widget(0) == self.tab_search:
+                    self.tabs.removeTab(0)
+            
+            if not fixed_tabs_open.get("insert", True):
+                # Remove Insert tab (check current index since Search/Replace might be removed)
+                for i in range(self.tabs.count()):
+                    if self.tabs.widget(i) == self.tab_insert:
+                        self.tabs.removeTab(i)
+                        break
+            
             # Get list of tools that were open
             open_tools = self.settings.get("tabs_open_tools", [])
             
@@ -5165,9 +5319,25 @@ if _PYSIDE:
                     method()
             
             # Restore active tab
+            import logging
+            logger = logging.getLogger(__name__)
+            
             saved_index = self.settings.get("tabs_current_index", 0)
-            if isinstance(saved_index, int) and saved_index < self.tabs.count():
+            current_count = self.tabs.count()
+            
+            logger.info(f"Restoring tab state - Saved index: {saved_index}, Tab count: {current_count}")
+            
+            # Validate saved index - if tab was closed, default to first available tab
+            if isinstance(saved_index, int) and 0 <= saved_index < current_count:
+                logger.info(f"  Setting tab to saved index: {saved_index}")
                 self.tabs.setCurrentIndex(saved_index)
+            else:
+                # Saved tab no longer exists, activate first tab if any
+                if current_count > 0:
+                    logger.warning(f"  Saved index {saved_index} invalid! Defaulting to tab 0")
+                    self.tabs.setCurrentIndex(0)
+                else:
+                    logger.warning(f"  No tabs available to activate")
 
         def _build_menu(self):
             from .shortcut_manager import ShortcutManager
@@ -5322,6 +5492,10 @@ if _PYSIDE:
             # Language submenu (Task #24 - v2.9.10, expanded v2.9.43)
             m_language = m_settings.addMenu(tr("menu.settings.language"))
             
+            # Create QActionGroup for radio button behavior (only one language selected at a time)
+            lang_action_group = QActionGroup(self)
+            lang_action_group.setExclusive(True)
+            
             # Create language actions (7 languages: EN, PT-BR, ES, FR, DE, ZH, JA)
             self.act_lang_en = QAction("English", self, checkable=True)
             self.act_lang_pt = QAction("Português (Brasil)", self, checkable=True)
@@ -5330,6 +5504,15 @@ if _PYSIDE:
             self.act_lang_de = QAction("Deutsch", self, checkable=True)
             self.act_lang_zh = QAction("中文 (简体)", self, checkable=True)  # Simplified Chinese
             self.act_lang_ja = QAction("日本語", self, checkable=True)  # Japanese
+            
+            # Add actions to action group (radio button behavior)
+            lang_action_group.addAction(self.act_lang_en)
+            lang_action_group.addAction(self.act_lang_pt)
+            lang_action_group.addAction(self.act_lang_es)
+            lang_action_group.addAction(self.act_lang_fr)
+            lang_action_group.addAction(self.act_lang_de)
+            lang_action_group.addAction(self.act_lang_zh)
+            lang_action_group.addAction(self.act_lang_ja)
             
             # Add all actions to menu
             m_language.addAction(self.act_lang_en)
@@ -5720,17 +5903,16 @@ if _PYSIDE:
         
         def _switch_language(self, lang: str):
             """Switch application language at runtime (Task #24 - v2.9.10, expanded v2.9.43)."""
-            # Update checkboxes for all 7 languages
-            self.act_lang_en.setChecked(lang == "en")
-            self.act_lang_pt.setChecked(lang == "pt_BR")
-            self.act_lang_es.setChecked(lang == "es")
-            self.act_lang_fr.setChecked(lang == "fr")
-            self.act_lang_de.setChecked(lang == "de")
-            self.act_lang_zh.setChecked(lang == "zh")
-            self.act_lang_ja.setChecked(lang == "ja")
+            # QActionGroup handles radio button behavior automatically - no need to setChecked
+            # Just switch language and save preference
+            
+            print(f"[Language] Switching to: {lang}")
+            print(f"[Language] Current language before switch: {self.translator.current_language}")
             
             # Switch language
             switch_language(lang)
+            
+            print(f"[Language] Current language after switch: {self.translator.current_language}")
             
             # Save preference
             self.settings.update("language", lang)
@@ -5821,6 +6003,12 @@ if _PYSIDE:
                     self.layout_manager.register_dock(dock_name, dock_widget)
             
             self.logger.info(f"Registered {len([d for d in dock_mapping.values() if d])} docks with LayoutManager")
+            
+            # Force update of all registered docks to ensure proper rendering
+            for dock_widget in dock_mapping.values():
+                if dock_widget is not None:
+                    dock_widget.update()
+                    dock_widget.repaint()
         
         def _save_current_layout(self):
             """Save current layout with a custom name (v2.9.84)."""
@@ -6524,11 +6712,15 @@ if _PYSIDE:
             # Set main container as central widget
             self.setCentralWidget(main_container)
             
+            # Force central widget to be visible and updated
+            main_container.setVisible(True)
+            main_container.update()
+            
             # Status bar (Sprint 8 - v1.1.0)
             self.statusbar = self.statusBar()
             self.statusbar.showMessage("Ready", 3000)
 
-            # Create panels and pass progress_manager reference
+            # Create panels and pass progress_manager reference (using internal classes)
             self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
             self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
             
@@ -6673,6 +6865,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     win = MainWindow(app)
     win.resize(1200, 400)
     win.show()
+    
+    # Force immediate rendering of all widgets (fix for invisible widgets on startup)
+    win.repaint()
+    app.processEvents()
+    
     return app.exec()
 
 

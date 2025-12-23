@@ -78,11 +78,12 @@ class TextExtractorDock(StandardToolDock):
         # Normalization options
         grid.addWidget(QLabel("Case style:"), 3, 0)
         self.combo_case = QComboBox()
-        # Normalization options
-        grid.addWidget(QLabel("Case style:"), 3, 0)
-        self.combo_case = QComboBox()
         self.combo_case.addItems(["snake_case", "camelCase", "PascalCase", "kebab-case"])
         grid.addWidget(self.combo_case, 3, 1)
+        
+        # Character limit
+        grid.addWidget(QLabel("Char limit:"), 3, 2)
+        self.ed_limit = QLineEdit("all")
         self.ed_limit.setPlaceholderText("chars or 'all'")
         grid.addWidget(self.ed_limit, 3, 3)
         
