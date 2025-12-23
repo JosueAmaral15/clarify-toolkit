@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/23 - v2.9.106 Diff Viewer (Discovery)
+**Last Update**: 2025/12/23 - v2.9.107 Venn Diagram Visualizer
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -1549,6 +1549,8 @@ result = convert_text_to_json(text, "auto")
 
 - **[X]** **v2.9.106 - Diff Viewer Side-by-Side (v2.9.99 - CONCLUÍDO)**: Visualizador de diferenças com split view para Set Operations (~605 linhas totais). **Discovery** (23/12/2025): Auditoria pré-implementation revelou v2.9.106 JÁ COMPLETO em v2.9.99 (23/12/2025). **Arquivos existentes**: src/diff_analyzer.py (235 lines), src/gui/diff_viewer_dialog.py (291 lines), integration em set_operations_dock.py (70 lines). **Backend DiffAnalyzer**: analyze(data_a, data_b, comparison_mode) categoriza em 4 grupos (only_in_a verde, only_in_b vermelho, common amarelo, modified laranja), _flatten_dict() converte nested para dot-notation recursivo, _values_equal() comparação mode-aware (key_value/full_path_value/key_only), format_diff_summary() text ASCII counts, export_diff_html() inline CSS side-by-side. **Frontend DiffViewerDialog**: JsonSyntaxHighlighter(QSyntaxHighlighter) com 4 cores backgrounds (#c8f7c5 green A, #ffcccb red B, #ffffcc yellow common, #ffd9b3 orange modified), QSplitter split view (File A | File B), synchronized scrolling (valueChanged signals vertical scrollbars), summary QGroupBox counts, legend color samples, export HTML button. **Integration**: btn_view_diff "🔍 View Diff" em set_operations_dock.py, _view_diff() method abre dialog com file_a_data + file_b_data, stores original data em _execute() antes flatten, enable/disable logic (True após execute, False em clear). **Features**: Split view synchronized scrolling, color highlighting 4 categories, summary statistics, legend visual guide, export HTML preserves colors, comparison mode support (3 modes), natural workflow Execute → Results → Diff → Export. **Architecture**: Backend (DiffAnalyzer categorization) + Frontend (JsonSyntaxHighlighter + QSplitter) + Integration (Set Operations stores original). **Patterns**: Strategy (diff 4 categories), Observer (Qt signals), Template Method (format methods), Decorator (JsonSyntaxHighlighter colors), Model-View (DiffAnalyzer ↔ Dialog). **Use Cases**: "Comparar 2 configs migration", "Ver keys adicionados/removidos", "Exportar diff documentação", "Identificar mudanças versions JSON". **Time**: ~0h (Discovery, task já completa v2.9.99 mesmo dia). **Commit**: 1d72493 "feat: diff viewer side-by-side for Set Operations (v2.9.99)".
 
+- **[X]** **v2.9.107 - Venn Diagram Visualizer (23/12/2025 - CONCLUÍDO)**: Diagrama de Venn interativo para visualizar operações de conjunto (~645 linhas totais). **Backend** (`src/venn_diagram_generator.py`, 267 lines): VennDiagramGenerator class, generate(diff_result, file_a_name, file_b_name, comparison_mode) (3 regiões: only_a keys exclusivos A + modified, only_b keys exclusivos B + modified, intersection keys+valores idênticos, calcula counts + percentages), get_region_details(venn_data, region, diff_result) (retorna list[(key, value)] para display), format_summary() (human-readable text summary), export_svg() (exporta SVG com 2 círculos + labels + counts). **Frontend** (`src/gui/venn_diagram_dialog.py`, 331 lines): InteractiveCircle(QGraphicsEllipseItem) (região clicável com hover highlight blue, cursor PointingHandCursor, click → parent_dialog.show_region_details()), VennDiagramDialog(QDialog) (QGraphicsView + QGraphicsScene, 2 círculos overlap 40px radius 100px, QSplitter horizontal 60/40 diagram/details, details panel com QListWidget keys + QTextEdit value preview JSON formatted, legend color samples green/red/yellow, export SVG button), _draw_venn_diagram() (desenha 2 círculos + intersection circle center overlap, labels file names, counts em cada região fontSize 20 bold), show_region_details(region) (popula list_keys + current_details dict para value preview), _on_key_selected() (JSON.dumps value indent 2 no QTextEdit). **Integration** (`src/gui/set_operations_dock.py`, +47 lines): btn_view_venn QPushButton "📊 View Venn" após View Diff, _view_venn() method (abre VennDiagramDialog com file_a_data + file_b_data + file names + comparison_mode), enable/disable logic (True após execute, False em clear), reusa DiffAnalyzer.analyze() para categorização. **Features**: 2-circle Venn diagram QGraphicsView, click regions view keys+values list, color-coded regions (green only A, red only B, yellow intersection), statistics counts + percentages, value preview JSON formatted, export SVG, comparison mode support (key_value/full_path_value/key_only), considers KEYS + VALUES (não apenas keys) para JSON/TOON/BSON, modified keys aparecem em both A e B regions (valores diferentes). **Architecture**: Backend (VennDiagramGenerator reusa DiffAnalyzer) + Frontend (InteractiveCircle clickable + VennDiagramDialog QGraphicsView) + Integration (Set Operations btn_view_venn + _view_venn). **Patterns**: Strategy (3 region types), Observer (Qt signals click), Model-View (VennDiagramGenerator ↔ Dialog), Composite (QGraphicsScene items), Decorator (InteractiveCircle hover). **Use Cases**: "Visualizar interseção entre 2 configs", "Click região ver quais keys pertencem", "Identificar keys modificados entre versions", "Exportar Venn diagram SVG documentação", "Ver percentual overlap entre JSONs". **Score Matriz**: 17.0 pontos (Simplicidade 3, Dependências 4, Valor 3, Coerência 4, Urgência 3). **Time**: ~2h30 (Sprint A 267L + Sprint B 331L + Integration 47L). **Commit**: 232a95c "feat: Venn Diagram Visualizer for Set Operations (v2.9.107)".
+
 ---
 
 #### Task v2.9.32 - JSON Set Operations (v2.9.32)
@@ -1688,18 +1690,18 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 31 | 5 | 86.1% |
+| COULD HAVE | 36 | 32 | 4 | 88.9% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **108** | **49** | **68.8%** |
+| **TOTAL** | **157** | **109** | **48** | **69.4%** |
 
-**Última Atualização**: 23/12/2025 - v2.9.106 Diff Viewer (Discovery)
+**Última Atualização**: 23/12/2025 - v2.9.107 Venn Diagram Visualizer
 
 **Notas de Atualização**:
-- ✅ **v2.9.106 Discovery**: Diff Viewer Side-by-Side JÁ COMPLETO em v2.9.99 (23/12/2025 mesmo dia)
-- 📊 **Milestone**: 108/157 tasks completas (68.8%), COULD HAVE 31/36 (86.1%)
-- 🎯 **Progress**: +17 tasks (v2.9.90-106, 2 Discoveries) em extended session
-- 📈 **COULD HAVE**: 63.9% → 86.1% (+22.2% improvement) - Milestone 85% alcançado!
-- 🚀 **Próximos Alvos**: 5 tasks COULD HAVE pendentes (Formula Builder, Venn Diagram, Advanced Search AI Processor, Advanced Translator, SQL/NoSQL Query) + 44 WOULD HAVE LATER
+- ✅ **v2.9.107 Implementado**: Venn Diagram Visualizer - 2-circle interactive diagram com QGraphicsView (645 LOC)
+- 📊 **Milestone**: 109/157 tasks completas (69.4%), COULD HAVE 32/36 (88.9%)
+- 🎯 **Progress**: +18 tasks (v2.9.90-107, 2 Discoveries + 1 Implementation) em extended session
+- 📈 **COULD HAVE**: 63.9% → 88.9% (+25.0% improvement) - Próximo de 90%!
+- 🚀 **Próximos Alvos**: 4 tasks COULD HAVE pendentes (Formula Builder, Advanced Search AI Processor, Advanced Translator, SQL/NoSQL Query) + 44 WOULD HAVE LATER
 
 
 ### Notas
