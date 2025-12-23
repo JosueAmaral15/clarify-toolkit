@@ -4628,15 +4628,21 @@ if _PYSIDE:
             self._add_tool_tab(self.dock_set_operations, "Set Operations", "set_operations")
         
         def _show_calculator(self):
-            """Show Calculator Memory as tab (v2.9.98)."""
+            """Show Calculator Memory as tab (v2.9.98/v2.9.101)."""
             if not hasattr(self, 'dock_calculator') or self.dock_calculator is None:
                 from .gui.calculator_dock import CalculatorDock
                 self.dock_calculator = CalculatorDock(self)
                 
                 # Connect to Set Operations if exists (v2.9.98)
                 if hasattr(self, 'dock_set_operations') and self.dock_set_operations:
+                    # Bi-directional connection (v2.9.98 + v2.9.101)
+                    # Set Operations → Calculator (store result)
                     self.dock_set_operations.store_in_calculator_requested.connect(
                         self.dock_calculator.store_result
+                    )
+                    # Calculator → Set Operations (send data to File A)
+                    self.dock_calculator.send_to_set_operations.connect(
+                        self.dock_set_operations.receive_calculator_data
                     )
             self._add_tool_tab(self.dock_calculator, "Calculator", "calculator")
         

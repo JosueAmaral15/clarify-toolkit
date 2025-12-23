@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
     QComboBox,
+    QDialog,
     QFileDialog,
     QFrame,
     QGridLayout,
@@ -948,5 +949,49 @@ class SetOperationsDock(BaseDock):
         
         except Exception as e:
             self.show_error("Save Preset Error", f"Failed to save preset:\n{e}")
-
+    
+    def receive_calculator_data(self, data: dict, source_description: str):
+        """
+        Receive data from Calculator Memory and populate File A.
+        
+        Integration method for v2.9.101 Calculator + Set Operations.
+        
+        Args:
+            data: JSON data from Calculator Memory slot
+            source_description: Source description (e.g., "Calculator Memory Slot A")
+        """
+        try:
+            # Save data to temporary file
+            import tempfile
+            
+            # Create temp file with descriptive name
+            temp_dir = tempfile.gettempdir()
+            temp_filename = f"calculator_slot_data_{source_description.split()[-1]}.json"
+            temp_path = os.path.join(temp_dir, temp_filename)
+            
+            # Write data to temp file
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            # Populate File A with temp file path
+            self.ed_file_a.setText(temp_path)
+            self.file_a_path = temp_path
+            
+            # Show success message
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.information(
+                self,
+                "Data Received from Calculator",
+                f"Data from {source_description} loaded into File A.\n\n"
+                f"Temporary file: {temp_path}\n\n"
+                f"You can now select File B and execute operations."
+            )
+            
+        except Exception as e:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "Integration Error",
+                f"Failed to receive data from Calculator:\n{str(e)}"
+            )
 

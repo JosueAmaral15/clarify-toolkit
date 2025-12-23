@@ -16,6 +16,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 from ..calculator_memory import CalculatorMemory
 from ..statistics_manager import StatisticsManager
+from ..calculator_operations import CalculatorOperations
+from .recall_dialog import RecallDialog
+from .operation_preview_dialog import OperationPreviewDialog
 
 
 class CompareDialog(QDialog):
@@ -91,9 +94,13 @@ class CalculatorDock(QWidget):
     # Signal emitted when recalling data from slot (for integration)
     data_recalled = Signal(object)  # Emits JSON data
     
+    # Signal emitted when sending data to Set Operations (for integration)
+    send_to_set_operations = Signal(dict, str)  # (data, source_description)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.memory = CalculatorMemory()
+        self.operations = CalculatorOperations()
         self._init_ui()
         self._refresh_table()
     
@@ -183,6 +190,53 @@ class CalculatorDock(QWidget):
         
         layout.addWidget(compare_group)
         
+        # Operations group (v2.9.101)
+        operations_group = QGroupBox("Memory Operations")
+        operations_layout = QVBoxLayout(operations_group)
+        
+        # Slot selectors row
+        selectors_layout = QHBoxLayout()
+        
+        selectors_layout.addWidget(QLabel("Slot 1:"))
+        self.combo_op_slot1 = QComboBox()
+        self.combo_op_slot1.addItems(CalculatorMemory.SLOT_NAMES)
+        selectors_layout.addWidget(self.combo_op_slot1)
+        
+        selectors_layout.addWidget(QLabel("Slot 2:"))
+        self.combo_op_slot2 = QComboBox()
+        self.combo_op_slot2.addItems(CalculatorMemory.SLOT_NAMES)
+        self.combo_op_slot2.setCurrentIndex(1)  # Default to B
+        selectors_layout.addWidget(self.combo_op_slot2)
+        
+        operations_layout.addLayout(selectors_layout)
+        
+        # Operation buttons row
+        op_buttons_layout = QHBoxLayout()
+        
+        self.btn_add = QPushButton("➕ Add (Merge)")
+        self.btn_add.setToolTip("Deep merge: Slot 1 + Slot 2 (v2.9.100 merge logic)")
+        self.btn_add.clicked.connect(lambda: self._execute_operation('add'))
+        op_buttons_layout.addWidget(self.btn_add)
+        
+        self.btn_intersection = QPushButton("∩ Intersection")
+        self.btn_intersection.setToolTip("Common keys: Slot 1 ∩ Slot 2")
+        self.btn_intersection.clicked.connect(lambda: self._execute_operation('intersection'))
+        op_buttons_layout.addWidget(self.btn_intersection)
+        
+        self.btn_union = QPushButton("∪ Union")
+        self.btn_union.setToolTip("All keys: Slot 1 ∪ Slot 2")
+        self.btn_union.clicked.connect(lambda: self._execute_operation('union'))
+        op_buttons_layout.addWidget(self.btn_union)
+        
+        self.btn_difference = QPushButton("− Difference")
+        self.btn_difference.setToolTip("Keys only in Slot 1: Slot 1 − Slot 2")
+        self.btn_difference.clicked.connect(lambda: self._execute_operation('difference'))
+        op_buttons_layout.addWidget(self.btn_difference)
+        
+        operations_layout.addLayout(op_buttons_layout)
+        
+        layout.addWidget(operations_group)
+        
         # Clear all button
         self.btn_clear_all = QPushButton("🗑️ Clear All Slots")
         self.btn_clear_all.setToolTip("Clear all memory slots")
@@ -264,26 +318,32 @@ class CalculatorDock(QWidget):
         return success
     
     def _recall_slot(self):
-        """Recall data from selected slot."""
+        """Recall data from selected slot (v2.9.101 enhanced with RecallDialog)."""
         slot_name = self.combo_slot.currentText()
         
         if self.memory.is_slot_empty(slot_name):
             QMessageBox.information(self, "Empty Slot", f"Slot {slot_name} is empty")
             return
         
-        data = self.memory.recall_result(slot_name)
         slot_info = self.memory.get_slot_info(slot_name)
         
-        # Emit signal for integration with other docks
-        self.data_recalled.emit(data)
-        
-        QMessageBox.information(
-            self,
-            "Recalled",
-            f"Data from slot {slot_name} recalled\n"
-            f"Source: {slot_info['source']}\n"
-            f"Timestamp: {slot_info['timestamp']}"
+        # Open RecallDialog with Export/Copy/Send options
+        dialog = RecallDialog(
+            slot_name=slot_name,
+            slot_data=slot_info['data'],
+            slot_stats=slot_info['stats'],
+            source=slot_info['source'],
+            timestamp=slot_info['timestamp'],
+            parent=self
         )
+        
+        # Connect send_to_set_operations signal
+        dialog.send_to_set_operations.connect(self._handle_send_to_set_operations)
+        
+        dialog.exec()
+        
+        # Emit legacy signal for backward compatibility
+        self.data_recalled.emit(slot_info['data'])
     
     def _view_details(self):
         """View detailed statistics for selected slot."""
@@ -376,3 +436,88 @@ class CalculatorDock(QWidget):
         if comparison:
             dialog = CompareDialog(comparison, self)
             dialog.exec()
+    
+    def _execute_operation(self, operation: str):
+        """Execute operation between two slots (v2.9.101)."""
+        slot1 = self.combo_op_slot1.currentText()
+        slot2 = self.combo_op_slot2.currentText()
+        
+        # Validate selection
+        if slot1 == slot2:
+            QMessageBox.warning(self, "Invalid Selection", "Please select two different slots")
+            return
+        
+        # Get slot data
+        data1 = self.memory.recall_result(slot1)
+        data2 = self.memory.recall_result(slot2)
+        
+        # Validate data
+        valid, error_msg = self.operations.validate_operation_data(data1, data2)
+        if not valid:
+            QMessageBox.warning(self, "Operation Failed", error_msg)
+            return
+        
+        # Execute operation
+        if operation == 'add':
+            success, result, message = self.operations.add(data1, data2)
+        elif operation == 'intersection':
+            success, result, message = self.operations.intersection(data1, data2, comparison_mode='key_value')
+        elif operation == 'union':
+            success, result, message = self.operations.union(data1, data2, comparison_mode='key_value')
+        elif operation == 'difference':
+            success, result, message = self.operations.difference(data1, data2, comparison_mode='key_value')
+        else:
+            QMessageBox.critical(self, "Error", f"Unknown operation: {operation}")
+            return
+        
+        if not success:
+            QMessageBox.critical(self, "Operation Failed", message)
+            return
+        
+        # Calculate statistics for result
+        result_stats = StatisticsManager.calculate_statistics(result)
+        
+        # Get available slots for storage
+        available_slots = [s for s in CalculatorMemory.SLOT_NAMES if self.memory.is_slot_empty(s)]
+        
+        # Get operation description
+        operation_desc = self.operations.get_operation_description(operation, slot1, slot2)
+        
+        # Show preview dialog
+        preview_dialog = OperationPreviewDialog(
+            operation_desc=operation_desc,
+            result_data=result,
+            result_stats=result_stats,
+            message=message,
+            available_slots=available_slots,
+            parent=self
+        )
+        
+        preview_dialog.exec()
+        
+        # Check if user wants to store result
+        store, target_slot = preview_dialog.get_storage_info()
+        
+        if store and target_slot:
+            # Store result in selected slot
+            source = f"Operation: {operation_desc}"
+            success = self.memory.store_result(target_slot, result, source)
+            
+            if success:
+                self._refresh_table()
+                QMessageBox.information(
+                    self,
+                    "Stored",
+                    f"Operation result stored in Slot {target_slot}\n\n{message}"
+                )
+            else:
+                QMessageBox.critical(
+                    self,
+                    "Storage Failed",
+                    f"Failed to store result in Slot {target_slot}"
+                )
+    
+    def _handle_send_to_set_operations(self, data: dict, slot_name: str):
+        """Handle send to Set Operations signal from RecallDialog."""
+        source_description = f"Calculator Memory Slot {slot_name}"
+        self.send_to_set_operations.emit(data, source_description)
