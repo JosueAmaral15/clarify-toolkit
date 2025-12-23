@@ -11,5 +11,6 @@ Pattern: Composite (GoF)
 
 from .search_replace_panel import SearchReplacePanel
 from .insert_panel import InsertPanel
+from .regex_insert_panel import RegexInsertPanel
 
-__all__ = ['SearchReplacePanel', 'InsertPanel']
+__all__ = ['SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel']

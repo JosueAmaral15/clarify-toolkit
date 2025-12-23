@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont, QColor, QTextCursor, QTextCharFormat, QPalette
 
 from .json_validator import JsonValidator, ValidationResult
-from src.gui.panels import InsertPanel
+from src.gui.panels import InsertPanel, RegexInsertPanel
 from src.core.insert import insert_at_line
 
 
@@ -408,6 +408,11 @@ class JsonEditorTab(QWidget):
         self.btn_insert_panel.setToolTip("Open Insert Panel to insert text at specific lines")
         toolbar.addWidget(self.btn_insert_panel)
         
+        # Regex Insert Panel button (v2.9.111)
+        self.btn_regex_insert = QPushButton("🎯 Regex Insert")
+        self.btn_regex_insert.setToolTip("Open Regex Insert Panel (capture values and insert using memory registers)")
+        toolbar.addWidget(self.btn_regex_insert)
+        
         layout.addLayout(toolbar)
         
         # Insert Panel (v2.9.110 - collapsible below toolbar)
@@ -415,6 +420,12 @@ class JsonEditorTab(QWidget):
         self.insert_panel.insert_requested.connect(self._handle_insert)
         self.insert_panel.setVisible(False)  # Hidden by default
         layout.addWidget(self.insert_panel)
+        
+        # Regex Insert Panel (v2.9.111 - collapsible below toolbar)
+        self.regex_insert_panel = RegexInsertPanel(self, "json_editor_regex_insert")
+        self.regex_insert_panel.insert_requested.connect(self._handle_regex_insert)
+        self.regex_insert_panel.setVisible(False)  # Hidden by default
+        layout.addWidget(self.regex_insert_panel)
         
         # Splitter: Editor (70%) | Tree View (30%)
         splitter = QSplitter(Qt.Horizontal)
@@ -457,6 +468,7 @@ class JsonEditorTab(QWidget):
         self.highlighter = SyntaxHighlighter(self.editor.document(), "json")
     
     def _connect_signals(self):
+        self.btn_regex_insert.clicked.connect(self._toggle_regex_insert_panel)
         """Connect signals."""
         self.editor.textChanged.connect(self._on_text_changed)
         self.validation_timer.timeout.connect(self._validate)
@@ -592,6 +604,267 @@ class JsonEditorTab(QWidget):
                 "Insert Error",
                 f"Error during insertion:\n\n{str(e)}"
             )
+    
+    def _toggle_regex_insert_panel(self):
+        """Toggle Regex Insert Panel visibility (v2.9.111)."""
+        if self.regex_insert_panel.isVisible():
+            self.regex_insert_panel.setVisible(False)
+            self.btn_regex_insert.setText("🎯 Regex Insert")
+        else:
+            # Hide other panels
+            self.insert_panel.setVisible(False)
+            self.btn_insert_panel.setText("📝 Insert")
+            
+            # Show regex panel
+            self.regex_insert_panel.setVisible(True)
+            self.btn_regex_insert.setText("✕ Close Regex Insert")
+            
+            # Set source text for regex capture
+            self.regex_insert_panel.set_source_text(self.editor.toPlainText())
+    
+    def _handle_regex_insert(self, target_key, new_key, new_value, position):
+        """
+        Handle regex insert in JSON (v2.9.111).
+        
+        Advanced JSON manipulation:
+        - Finds target_key in JSON
+        - Inserts new key/value based on position
+        - Maintains JSON structure and formatting
+        
+        Args:
+            target_key: Existing JSON key to target
+            new_key: New key name
+            new_value: New value (already processed with registers)
+            position: "Inside (as child)", "Before (sibling)", "After (sibling)"
+        """
+        content = self.editor.toPlainText()
+        
+        try:
+            # Parse JSON to validate
+            json_obj = json.loads(content)
+            
+            # Find target key in JSON
+            target_found, target_path = self._find_key_in_json(json_obj, target_key)
+            
+            if not target_found:
+                QMessageBox.warning(
+                    self,
+                    "Target Not Found",
+                    f"Key '{target_key}' not found in JSON.\n\n"
+                    f"Available keys: {', '.join(self._get_all_keys(json_obj)[:10])}"
+                )
+                return
+            
+            # Insert based on position
+            if "Inside" in position:
+                # Insert as child of target key
+                new_json = self._insert_inside(json_obj, target_path, new_key, new_value)
+            elif "Before" in position:
+                # Insert before target key (sibling)
+                new_json = self._insert_before(json_obj, target_path, new_key, new_value)
+            else:  # "After"
+                # Insert after target key (sibling)
+                new_json = self._insert_after(json_obj, target_path, new_key, new_value)
+            
+            # Format and update editor
+            formatted = json.dumps(new_json, indent=2, ensure_ascii=False)
+            self.editor.blockSignals(True)
+            self.editor.setPlainText(formatted)
+            self.editor.blockSignals(False)
+            
+            # Mark as modified
+            self._on_text_changed()
+            
+            # Hide panel
+            self.regex_insert_panel.setVisible(False)
+            self.btn_regex_insert.setText("🎯 Regex Insert")
+            
+            # Show feedback
+            QMessageBox.information(
+                self,
+                "Regex Insert Complete",
+                f"Inserted '{new_key}': '{new_value}' {position.lower()} '{target_key}'"
+            )
+            
+        except json.JSONDecodeError as e:
+            QMessageBox.critical(
+                self,
+                "JSON Error",
+                f"Invalid JSON, cannot insert:\n\n{str(e)}"
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Insert Error",
+                f"Error during regex insertion:\n\n{str(e)}"
+            )
+    
+    def _find_key_in_json(self, obj, key, path=None):
+        """
+        Find key in JSON recursively.
+        
+        Returns:
+            Tuple of (found: bool, path: list)
+        """
+        if path is None:
+            path = []
+        
+        if isinstance(obj, dict):
+            if key in obj:
+                return (True, path + [key])
+            
+            for k, v in obj.items():
+                found, found_path = self._find_key_in_json(v, key, path + [k])
+                if found:
+                    return (found, found_path)
+        
+        elif isinstance(obj, list):
+            for i, item in enumerate(obj):
+                found, found_path = self._find_key_in_json(item, key, path + [i])
+                if found:
+                    return (found, found_path)
+        
+        return (False, [])
+    
+    def _get_all_keys(self, obj, keys=None):
+        """Get all keys in JSON recursively."""
+        if keys is None:
+            keys = []
+        
+        if isinstance(obj, dict):
+            keys.extend(obj.keys())
+            for v in obj.values():
+                self._get_all_keys(v, keys)
+        elif isinstance(obj, list):
+            for item in obj:
+                self._get_all_keys(item, keys)
+        
+        return keys
+    
+    def _insert_inside(self, obj, path, new_key, new_value):
+        """Insert as child of target key."""
+        # Navigate to target
+        target = obj
+        for key in path:
+            target = target[key]
+        
+        # Ensure target is dict
+        if not isinstance(target, dict):
+            raise ValueError(f"Target '{path[-1]}' is not an object, cannot insert inside")
+        
+        # Insert new key
+        target[new_key] = self._parse_value(new_value)
+        return obj
+    
+    def _insert_before(self, obj, path, new_key, new_value):
+        """Insert before target key (sibling)."""
+        if len(path) < 2:
+            # Root level insert
+            new_obj = {new_key: self._parse_value(new_value)}
+            new_obj.update(obj)
+            return new_obj
+        
+        # Navigate to parent
+        parent = obj
+        for key in path[:-1]:
+            parent = parent[key]
+        
+        target_key = path[-1]
+        
+        # Rebuild dict with new key before target
+        if isinstance(parent, dict):
+            new_parent = {}
+            for k, v in parent.items():
+                if k == target_key:
+                    new_parent[new_key] = self._parse_value(new_value)
+                new_parent[k] = v
+            
+            # Update parent reference
+            if len(path) == 1:
+                return new_parent
+            else:
+                # Navigate and update
+                temp = obj
+                for key in path[:-2]:
+                    temp = temp[key]
+                temp[path[-2]] = new_parent
+        
+        return obj
+    
+    def _insert_after(self, obj, path, new_key, new_value):
+        """Insert after target key (sibling)."""
+        if len(path) < 2:
+            # Root level insert
+            obj[new_key] = self._parse_value(new_value)
+            return obj
+        
+        # Navigate to parent
+        parent = obj
+        for key in path[:-1]:
+            parent = parent[key]
+        
+        target_key = path[-1]
+        
+        # Rebuild dict with new key after target
+        if isinstance(parent, dict):
+            new_parent = {}
+            for k, v in parent.items():
+                new_parent[k] = v
+                if k == target_key:
+                    new_parent[new_key] = self._parse_value(new_value)
+            
+            # Update parent reference
+            if len(path) == 1:
+                return new_parent
+            else:
+                temp = obj
+                for key in path[:-2]:
+                    temp = temp[key]
+                temp[path[-2]] = new_parent
+        
+        return obj
+    
+    def _parse_value(self, value_str: str):
+        """
+        Parse value string to appropriate JSON type.
+        
+        Attempts to parse as:
+        1. JSON (for objects/arrays)
+        2. Number
+        3. Boolean
+        4. Null
+        5. String (default)
+        """
+        value_str = value_str.strip()
+        
+        # Try JSON parse (objects, arrays, etc.)
+        if value_str.startswith('{') or value_str.startswith('['):
+            try:
+                return json.loads(value_str)
+            except:
+                pass
+        
+        # Try number
+        try:
+            if '.' in value_str:
+                return float(value_str)
+            else:
+                return int(value_str)
+        except:
+            pass
+        
+        # Try boolean
+        if value_str.lower() == 'true':
+            return True
+        if value_str.lower() == 'false':
+            return False
+        
+        # Try null
+        if value_str.lower() == 'null':
+            return None
+        
+        # Default to string
+        return value_str
     
     def load_file(self, file_path: str) -> bool:
         """Load JSON file into editor."""

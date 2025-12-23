@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
     QGroupBox, QMessageBox
 )
 
-from src.core.search_replace import SearchOptions, compile, replace_in_text
+from src.core.search_replace import SearchOptions, replace_in_text
 
 
 class SearchReplacePanel(QWidget):

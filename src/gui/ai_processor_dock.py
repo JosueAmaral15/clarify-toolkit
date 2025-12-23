@@ -35,7 +35,7 @@ from src.core.filters import Condition, filter_files_by_conditions
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
 from src.i18n.translator import tooltip_tr
 from src.gui.panels import SearchReplacePanel, InsertPanel
-from src.core.search_replace import replace_in_text, compile
+from src.core.search_replace import replace_in_text, SearchOptions
 from src.core.insert import insert_at_line
 
 
