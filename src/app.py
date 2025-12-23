@@ -5087,9 +5087,13 @@ if _PYSIDE:
             self.act_open_text_to_json = QAction(tr("menu.tools.text_to_json"), self)  # Task #49 - v2.9.24
             self.act_open_google_translate = QAction(tr("menu.tools.google_translate"), self)  # Task: Google Translate - v2.9.78
             self.act_open_set_operations = QAction("JSON Set Operations...", self)  # v2.9.32
+            self.act_open_set_operations.setStatusTip("Perform intersection, union, difference on JSON files (v2.9.32)")
             self.act_open_calculator = QAction("🧮 Calculator Memory...", self)  # v2.9.98
+            self.act_open_calculator.setStatusTip("Store and recall JSON data in 5 memory slots (v2.9.98)")
             self.act_open_file_list = QAction("File List...", self)  # Task #33 - v2.9.11
+            self.act_open_file_list.setStatusTip("Generate directory listings with filters (ls-like functionality)")
             self.act_advanced_file_search = QAction("Advanced File Search...", self)  # Task #36 - v2.9.11
+            self.act_advanced_file_search.setStatusTip("Search files with advanced conditions (regex, size, date filters)")
             self.act_advanced_file_search.setShortcut("Ctrl+Shift+F")  # Task #37 - v2.9.12
             m_tools.addAction(self.act_open_search_replace)
             m_tools.addAction(self.act_open_insert)
@@ -5277,12 +5281,14 @@ if _PYSIDE:
             # AI Tutorial Assistant (v2.9.92)
             self.act_ai_assistant = QAction("AI Tutorial Assistant", self)
             self.act_ai_assistant.setToolTip("Ask AI about Clarify tutorials")
+            self.act_ai_assistant.setStatusTip("Chat with AI assistant for Clarify tutorials and troubleshooting (requires API key)")
             m_help.addAction(self.act_ai_assistant)
             self.act_ai_assistant.triggered.connect(self._show_ai_assistant)
             
             # Keyboard Shortcuts Help (v2.9.33)
             self.act_keyboard_shortcuts_help = QAction("Keyboard Shortcuts Help", self)
             self.act_keyboard_shortcuts_help.setToolTip("View all available keyboard shortcuts")
+            self.act_keyboard_shortcuts_help.setStatusTip("View complete list of keyboard shortcuts organized by category")
             self.act_keyboard_shortcuts_help.setShortcut("F1")
             m_help.addAction(self.act_keyboard_shortcuts_help)
             self.act_keyboard_shortcuts_help.triggered.connect(self._show_keyboard_shortcuts_help)
@@ -5290,6 +5296,7 @@ if _PYSIDE:
             # Keyboard Shortcuts Customization (v2.9.62)
             self.act_customize_shortcuts = QAction("Customize Shortcuts...", self)
             self.act_customize_shortcuts.setToolTip("Customize keyboard shortcuts")
+            self.act_customize_shortcuts.setStatusTip("Customize keyboard shortcuts for all actions and save custom profiles")
             self.act_customize_shortcuts.setShortcut("Ctrl+K Ctrl+S")
             m_help.addAction(self.act_customize_shortcuts)
             self.act_customize_shortcuts.triggered.connect(self._customize_shortcuts)
