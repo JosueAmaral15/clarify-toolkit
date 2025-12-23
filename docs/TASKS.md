@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/23 - v2.9.104 Accessibility Features
+**Last Update**: 2025/12/23 - v2.9.105 i18n Expansion (Discovery)
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -1545,6 +1545,8 @@ result = convert_text_to_json(text, "auto")
 
 - **[X]** **v2.9.104 - Accessibility Features - ARIA Labels (23/12/2025 - CONCLUÍDO)**: Adicionar ARIA labels para screen readers nos docks principais (~36 labels total). **Auditoria** (17 docks verificados): grep_search revelou apenas 3 docks JÁ TEM accessibility (json_rewriter_dock 43, json_translate_dock 25, json_search_dock 16), 14 docks SEM labels (82% dos docks). **Decisão pragmática** (Protocolo Simplicidade 3): Focar em docks mais usados (~80/20 principle) ao invés de todos os 14 docks (450+ labels). **Implementation calculator_dock.py** (+16 ARIA labels): Memory table "5 memory slots with statistics", combo_slot "Select slot A/B/C/D/E", btn_recall "Load and view data stored", btn_view "View detailed statistics", btn_clear "Clear slot confirm before delete", combo_compare1/2 "Select slots for comparison", btn_compare "Compare statistics shows differences", combo_op_slot1/2 "Select slots for operation", btn_add "Add deep merge JSON", btn_intersection "Calculate ∩ common keys", btn_union "Calculate ∪ all keys", btn_difference "Calculate − keys only in A", btn_clear_all "Clear all 5 slots confirm". **Implementation set_operations_dock.py** (+20 ARIA labels): ed_file_a/btn_browse_a "First JSON file for operations", ed_file_b/btn_browse_b "Second JSON file", chk_multiple "Enable pipeline left-to-right", chk_intersection "Calculate ∩ common keys", chk_union "Calculate ∪ all keys", chk_difference "Calculate − keys in A not B", chk_symmetric "Calculate ⊕ XOR", radio_key_value "Compare keys+values strict types", radio_full_path "Compare full paths dot notation", radio_key_only "Compare only keys ignore values", chk_ignore_case_keys "Treat Name=name", chk_ignore_case_values "Treat Hello=hello", chk_skip_empty "Skip null/empty", btn_execute "Execute operations Ctrl+Enter", btn_save "Save result to JSON", btn_store_calc "Store in Calculator", btn_batch "Open Batch Dialog v2.9.102", btn_history "View history re-run". **Features**: AccessibilityManager.set_accessible_widget() aplicado em todos widgets principais, screen reader support (NVDA/JAWS/Orca), naming pattern "Dock - Type - Name" + detailed description, focus em docks mais usados (Calculator v2.9.98 + Set Operations v2.9.32). **Architecture**: Reuses accessibility_manager.py (v2.9.35) 331 LOC já existente, _apply_accessibility() method chamado em _init_ui()/_connect_signals(), consistent naming convention cross-docks. **Patterns**: Information Hiding (descriptions on-demand), Consistency (same format all widgets), Progressive Enhancement (complementa tooltips v2.9.103), Pragmatism (2/17 docks = 12% coverage ~80% user interactions). **Use Cases**: "Screen reader: Calculator - Button - Recall Slot: Load and view data stored in selected memory slot", "Screen reader: Set Operations - Checkbox - Intersection: Calculate intersection common keys between files", "Tab navigation widgets accessible names visible". **Score Matriz**: 19.0 pontos (Simplicidade 4, Dependências 4, Valor 4, Coerência 4, Urgência 3). **Time**: ~2h (Auditoria 15min + Implementation 1h + Tests 15min + Commit 30min). **Commit**: 4649c9b "feat: Accessibility Features - ARIA labels in Calculator and Set Operations (v2.9.104)".
 
+- **[X]** **v2.9.105 - i18n Expansion ES/FR/DE/ZH/JA (v2.9.10 - CONCLUÍDO)**: 5 novos idiomas implementados (~2310 linhas traduções). **Discovery** (23/12/2025): Auditoria pré-implementation revelou v2.9.105 JÁ COMPLETO desde v2.9.10 (Task #24). **Arquivos existentes**: es.json, fr.json, de.json, zh.json, ja.json (462 linhas cada = mesmo tamanho pt_BR/en). **Traduções completas**: ~200 strings por idioma (app.title, menus, docks, tooltips, errors) totalmente traduzidas em Spanish, French, German, Simplified Chinese, Japanese. **Sistema i18n**: translator.py lista `_available_languages = ["en", "pt_BR", "es", "fr", "de", "zh", "ja"]`, _detect_system_locale() auto-detect OS language com locale_map (es_ES→es, fr_FR→fr, de_DE→de, zh_CN→zh, ja_JP→ja), languageChanged Signal para UI updates, runtime switching via switch_language(). **UI Language menu**: app.py linhas 5177-5198 implementado em v2.9.10 (Task #24, expanded v2.9.43), Settings > Language > [English, Português (BR), separator, Español, Français, Deutsch, separator, 中文, 日本語], act_lang_XX.triggered conectado a _switch_language(). **Features**: Lazy loading (carrega JSON on-demand), runtime switching (sem restart), signal-based updates (MainWindow.retranslate()), auto-detect system locale, fallback to English se string faltante, locale variant mapping (pt_PT→pt_BR, es_MX→es). **Architecture**: Singleton Translator class (QObject), JSON translation files em src/i18n/, tr() shorthand para get_translator().get(), tooltip_tr() especializado para tooltips. **Patterns**: Singleton (Translator instance única), Observer (languageChanged Signal), Lazy Loading (JSON carregado on-demand), Strategy (locale_map variants). **Use Cases**: "User selects Settings > Language > Español → UI atualiza para Spanish instantaneamente", "OS em pt_PT auto-detected → mapeia para pt_BR translations", "Missing translation 'new.key' → fallback to English gracefully". **Time**: ~0h (Discovery salvou ~3-4h tradução, task já completa v2.9.10). **Version**: v2.9.10 (Task #24 - 02/12/2025).
+
 ---
 
 #### Task v2.9.32 - JSON Set Operations (v2.9.32)
@@ -1684,18 +1686,18 @@ def walk(v):
 |-----------|-------|-----------|-----------|------------|
 | MUST HAVE | 12 | 12 | 0 | 100.0% |
 | SHOULD HAVE | 53 | 53 | 0 | 100.0% |
-| COULD HAVE | 36 | 27 | 9 | 75.0% |
+| COULD HAVE | 36 | 30 | 6 | 83.3% |
 | WOULD HAVE LATER | 56 | 12 | 44 | 21.4% |
-| **TOTAL** | **157** | **104** | **53** | **66.2%** |
+| **TOTAL** | **157** | **107** | **50** | **68.2%** |
 
-**Última Atualização**: 23/12/2025 - v2.9.102 Batch Set Operations
+**Última Atualização**: 23/12/2025 - v2.9.105 i18n Expansion (Discovery)
 
 **Notas de Atualização**:
-- ✅ **v2.9.104 Completa**: Accessibility Features - 36 ARIA labels (Calculator + Set Operations)
-- 📊 **Milestone**: 106/157 tasks completas (67.5%), COULD HAVE 29/36 (80.6%)
-- 🎯 **Progress**: +15 tasks completadas nas últimas 5 sessões (v2.9.90-104)
-- 📈 **COULD HAVE**: 63.9% → 80.6% (+16.7% improvement)
-- 🚀 **Próximos Alvos**: 7 tasks COULD HAVE pendentes + 44 WOULD HAVE LATER
+- ✅ **v2.9.105 Discovery**: i18n Expansion JÁ COMPLETO em v2.9.10 - 5 idiomas (ES/FR/DE/ZH/JA) já existentes com 462 linhas cada
+- 📊 **Milestone**: 107/157 tasks completas (68.2%), COULD HAVE 30/36 (83.3%)
+- 🎯 **Progress**: +16 tasks completadas (v2.9.90-105 Discovery) em extended session
+- 📈 **COULD HAVE**: 63.9% → 83.3% (+19.4% improvement) - Milestone 80% alcançado!
+- 🚀 **Próximos Alvos**: 6 tasks COULD HAVE pendentes (Advanced Search, GUI Tests, Benchmarks, Venn Diagram, Load Testing, Formula Builder) + 44 WOULD HAVE LATER
 
 
 ### Notas
