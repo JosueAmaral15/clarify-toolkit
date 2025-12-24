@@ -12,6 +12,7 @@ from .preset_manager import PresetManager
 from .file_list_table_manager import FileListTableManager
 from .syntax_highlighter import SyntaxHighlighter
 from .editor_tab import EditorTab
+from .json_tree_widget import JsonTreeWidget
 
 __all__ = [
     'PathEntry',
@@ -21,5 +22,6 @@ __all__ = [
     'PresetManager',
     'FileListTableManager',
     'SyntaxHighlighter',
-    'EditorTab'
+    'EditorTab',
+    'JsonTreeWidget'
 ]
