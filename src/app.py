@@ -4551,8 +4551,8 @@ if _PYSIDE:
                 self.tabs.setCurrentIndex(expected_index)
             else:
                 # Tab was closed, recreate at index 1
-                from .gui.insert_panel import InsertPanel
-                self.tab_insert = InsertPanel()
+                # InsertPanel is an internal class defined in this file, no import needed
+                self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
                 self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
                 self.tabs.setCurrentIndex(expected_index)
         
