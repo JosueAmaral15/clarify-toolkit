@@ -1391,59 +1391,43 @@ if _PYSIDE:
         
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
-            if not hasattr(self, 'dock_translate'):
-                from .gui import JsonTranslateDock
-                self.dock_translate = JsonTranslateDock(self)
-            self._add_tool_tab(self.dock_translate, "JSON Translate", "translate")
+            from .gui.tab_manager import TabManager
+            TabManager.show_translate(self)
         
         def _show_rewriter(self):
             """Show JSON Rewriter as tab (create on-demand)."""
-            if not hasattr(self, 'dock_rewriter'):
-                from .gui import JsonRewriterDock
-                self.dock_rewriter = JsonRewriterDock(self)
-            self._add_tool_tab(self.dock_rewriter, "JSON Rewriter", "rewriter")
+            from .gui.tab_manager import TabManager
+            TabManager.show_rewriter(self)
         
         def _show_text_extractor(self):
             """Show Text Extractor as tab (create on-demand)."""
-            if not hasattr(self, 'dock_text_extractor'):
-                from .gui import TextExtractorDock
-                self.dock_text_extractor = TextExtractorDock(self)
-            self._add_tool_tab(self.dock_text_extractor, "Text Extractor", "text_extractor")
+            from .gui.tab_manager import TabManager
+            TabManager.show_text_extractor(self)
         
         def _show_placeholder_replacer(self):
             """Show Placeholder Replacer as tab (create on-demand)."""
-            if not hasattr(self, 'dock_placeholder_replacer'):
-                from .gui import PlaceholderReplacerDock
-                self.dock_placeholder_replacer = PlaceholderReplacerDock(self)
-            self._add_tool_tab(self.dock_placeholder_replacer, "Placeholder Replacer", "placeholder_replacer")
+            from .gui.tab_manager import TabManager
+            TabManager.show_placeholder_replacer(self)
         
         def _show_ai_processor(self):
             """Show AI Processor as tab (create on-demand)."""
-            if not hasattr(self, 'dock_ai_processor'):
-                from .gui import AIProcessorDock
-                self.dock_ai_processor = AIProcessorDock(self)
-            self._add_tool_tab(self.dock_ai_processor, "AI Processor", "ai_processor")
+            from .gui.tab_manager import TabManager
+            TabManager.show_ai_processor(self)
         
         def _show_json_search(self):
             """Show JSON Search as tab (create on-demand)."""
-            if not hasattr(self, 'dock_json_search'):
-                from .gui import JsonSearchDock
-                self.dock_json_search = JsonSearchDock(self)
-            self._add_tool_tab(self.dock_json_search, "JSON Search", "json_search")
+            from .gui.tab_manager import TabManager
+            TabManager.show_json_search(self)
         
         def _show_case_converter(self):
             """Show Case Converter as tab (create on-demand)."""
-            if not hasattr(self, 'dock_case_converter'):
-                from .gui import CaseConverterDock
-                self.dock_case_converter = CaseConverterDock(self)
-            self._add_tool_tab(self.dock_case_converter, "Case Converter", "case_converter")
+            from .gui.tab_manager import TabManager
+            TabManager.show_case_converter(self)
         
         def _show_google_translate(self):
             """Show Google Translate as tab (create on-demand)."""
-            if not hasattr(self, 'dock_google_translate'):
-                from .gui import GoogleTranslateDock
-                self.dock_google_translate = GoogleTranslateDock(self)
-            self._add_tool_tab(self.dock_google_translate, "Google Translate", "google_translate")
+            from .gui.tab_manager import TabManager
+            TabManager.show_google_translate(self)
         
         def _show_text_to_json(self):
             """Show converter selection dialog and open chosen dock."""
@@ -1520,10 +1504,8 @@ if _PYSIDE:
         
         def _show_jsx_extractor(self):
             """Show JSX Parameter Extractor as tab (create on-demand)."""
-            if not hasattr(self, 'dock_jsx_extractor'):
-                from .gui import JSXExtractorDock
-                self.dock_jsx_extractor = JSXExtractorDock(self)
-            self._add_tool_tab(self.dock_jsx_extractor, "JSX Extractor", "jsx_extractor")
+            from .gui.tab_manager import TabManager
+            TabManager.show_jsx_extractor(self)
         
         def _show_text_format_converter(self):
             """Show Text Format Converter as tab (create on-demand)."""
@@ -1535,10 +1517,8 @@ if _PYSIDE:
         
         def _show_file_list(self):
             """Show File List as tab (create on-demand)."""
-            if not hasattr(self, 'dock_file_list'):
-                from .gui import FileListDock
-                self.dock_file_list = FileListDock(self)
-            self._add_tool_tab(self.dock_file_list, "File List", "file_list")
+            from .gui.tab_manager import TabManager
+            TabManager.show_file_list(self)
         
         def _show_set_operations(self):
             """Show JSON Set Operations as tab (v2.9.32 / v2.9.40)."""
@@ -1581,10 +1561,8 @@ if _PYSIDE:
         
         def _show_tutorials(self):
             """Show tutorials as tab (Task #45 - v2.9.15 / v2.9.40)."""
-            if not hasattr(self, 'dock_tutorials'):
-                from .gui import TutorialsDock
-                self.dock_tutorials = TutorialsDock(self)
-            self._add_tool_tab(self.dock_tutorials, "Tutorials", "tutorials")
+            from .gui.tab_manager import TabManager
+            TabManager.show_tutorials(self)
         
         def _show_ai_assistant(self):
             """Show AI Tutorial Assistant dialog (v2.9.92)."""
