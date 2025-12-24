@@ -2,269 +2,762 @@
 # -*- coding: utf-8 -*-
 
 """
-Insert Panel - Reusable Component
+Insert Panel Module
+-------------------
+Provides the main insert interface panel for Clarify.
 
-Provides UI for inserting text at specific lines with 5 modes:
-- LEFT: Insert text at beginning of line
-- RIGHT: Append text at end of line
-- REPLACE: Replace entire line
-- INSERT_ABOVE: Insert new line above target
-- INSERT_BELOW: Insert new line below target
+This module contains the InsertPanel class which implements:
+  - File/directory path selection and browsing
+  - Extension filtering and glob patterns (include/exclude)
+  - Line lookup functionality with search query support
+  - Manual line number specification
+  - Multiple insertion modes (left, right, replace, insert-above, insert-below)
+  - Advanced conditional filtering (filename, path, ext, size, mtime, content)
+  - Dynamic condition rows with AND/OR logic operators
+  - Live search preview with match highlighting
+  - Integrated progress tracking and cancellation
+  - Results display with save to file capability
+  - Sort results alphabetically option
 
-Pattern: Composite (GoF) + Observer (signals)
-- Reusable component
-- Signal-based communication
-- QSettings persistence
-
-Integration:
-- Can be added to any dock/editor
-- Emits insert_requested signal with parameters
-- Parent handles actual insertion logic
+Author: Josué Amaral
+Date: 2025
 """
 
 from __future__ import annotations
-from typing import Optional
+import os
+import re
+import sys
+from typing import List, Tuple, Dict, Optional
 
-from PySide6.QtCore import Qt, Signal, QSettings
+# PySide6 imports
+from PySide6.QtCore import Qt, Signal, QThread, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QTextEdit, QSpinBox,
-    QComboBox, QGroupBox, QMessageBox
+    QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox, QSpinBox,
+    QPlainTextEdit, QGroupBox, QSplitter, QScrollArea,
+    QFileDialog, QMessageBox
 )
 
-from src.core.insert import InsertMode, insert_at_line
+# Core functionality
+from ...core import (
+    SearchOptions, Condition, filter_files_by_conditions,
+    InsertMode, insert_at_line
+)
+
+# Utilities
+from ...utils import (
+    walk_files, read_text, write_text
+)
+
+# Components from this package
+from .results_tree import ResultsTree
+from .search_worker import SearchWorker
+
+# Progress management
+from ..progress import OperationHistory
+
+# Thread management
+from ...ui import thread_manager, FeatureType, ProcessingModal
 
 
 class InsertPanel(QWidget):
-    """
-    Reusable insert panel widget.
-    
-    Signals:
-        insert_requested(line_no, text, mode)
-    
-    Features:
-    - Line number selection (1-based)
-    - Multi-line text input
-    - 5 insertion modes
-    - QSettings persistence
-    - Quick mode buttons
-    
-    Usage:
-        panel = InsertPanel()
-        panel.insert_requested.connect(self._handle_insert)
-        layout.addWidget(panel)
-    """
-    
-    # Signal emitted when insert is requested
-    # Parameters: (line_no: int, text: str, mode: str)
-    insert_requested = Signal(int, str, str)
-    
-    def __init__(self, parent=None, settings_prefix: str = "insert"):
-        """
-        Initialize insert panel.
-        
-        Args:
-            parent: Parent widget
-            settings_prefix: QSettings key prefix for persistence
-        """
+    request_status = Signal(str)
+
+    def __init__(self, parent=None, progress_manager=None):
         super().__init__(parent)
-        self.settings_prefix = settings_prefix
-        self.settings = QSettings("Clarify", "Clarify")
+        layout = QGridLayout(self)
+        self.processing_search = False
+        self.progress_manager = progress_manager
+        self._current_task_id = None
+        self._current_progress_widget = None
+        self._processing_modal = None  # Modal de progresso (v2.7.0)
         
-        self._setup_ui()
-        self._load_settings()
+        layout.addWidget(QLabel("Root path:"), 0, 0)
+        self.ed_path = QLineEdit()
+        self.ed_path.setToolTip("Enter the directory path or file path for insertion")
+        self.btn_browse = QPushButton("Browse…")
+        self.btn_browse.setToolTip("Open file browser to select a directory or file")
+        layout.addWidget(self.ed_path, 0, 1, 1, 3)
+        layout.addWidget(self.btn_browse, 0, 4)
+        
+        self.is_file = QCheckBox("Is File?")
+        self.is_file.setToolTip("Check this if you want to process a single file instead of a directory")
+        layout.addWidget(self.is_file, 1, 0)
+        
+        # Extension filter (v2.9.0, v2.9.1 - optional)
+        self.chk_use_ext_filter = QCheckBox("Use extension filter")
+        self.chk_use_ext_filter.setChecked(True)
+        self.chk_use_ext_filter.setToolTip("Enable simple extension filtering")
+        layout.addWidget(self.chk_use_ext_filter, 2, 0)
+        layout.addWidget(QLabel("Extensions:"), 2, 1)
+        self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
+        self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
+        self.ed_extensions.setToolTip("Filter files by extensions")
+        layout.addWidget(self.ed_extensions, 2, 2, 1, 3)
+        
+        # Sort results option (v2.9.5)
+        self.chk_sort_results = QCheckBox("Sort results alphabetically")
+        self.chk_sort_results.setChecked(False)
+        self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
+        layout.addWidget(self.chk_sort_results, 2, 5)
+        
+        layout.addWidget(QLabel("Include globs (advanced):"), 3, 0)
+        self.ed_inc = QLineEdit()
+        self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/**")
+        self.ed_inc.setToolTip("Advanced glob patterns to include specific files")
+        layout.addWidget(self.ed_inc, 3, 1, 1, 4)
+
+        layout.addWidget(QLabel("Exclude globs:"), 4, 0)
+        self.ed_exc = QLineEdit("node_modules;dist;build;.git")
+        self.ed_exc.setToolTip("Glob patterns to exclude folders/files")
+        layout.addWidget(self.ed_exc, 4, 1, 1, 4)
+
+        # Search/Lookup section (new feature)
+        gb_lookup = QGroupBox("Line Lookup (optional - leave empty to use line number)")
+        g_lookup = QGridLayout(gb_lookup)
+        g_lookup.addWidget(QLabel("Search query:"), 0, 0)
+        self.ed_query = QLineEdit()
+        self.ed_query.setPlaceholderText("Enter text to search for line position")
+        self.ed_query.setToolTip("Search for text to determine insertion position dynamically")
+        g_lookup.addWidget(self.ed_query, 0, 1, 1, 3)
+        
+        self.chk_lookup_case = QCheckBox("Case sensitive")
+        self.chk_lookup_case.setToolTip("Match exact case in lookup query")
+        self.chk_lookup_word = QCheckBox("Whole word")
+        self.chk_lookup_word.setToolTip("Match only complete words in lookup")
+        self.chk_lookup_regex = QCheckBox("Regex")
+        self.chk_lookup_regex.setToolTip("Treat lookup query as a regular expression")
+        g_lookup.addWidget(self.chk_lookup_case, 1, 0)
+        g_lookup.addWidget(self.chk_lookup_word, 1, 1)
+        g_lookup.addWidget(self.chk_lookup_regex, 1, 2)
+        
+        self.cb_lookup_occurrence = QComboBox()
+        self.cb_lookup_occurrence.addItems(["First", "Last", "All"])
+        self.cb_lookup_occurrence.setToolTip("Which occurrence to use for insertion")
+        g_lookup.addWidget(QLabel("Occurrence:"), 1, 3)
+        g_lookup.addWidget(self.cb_lookup_occurrence, 1, 4)
+        layout.addWidget(gb_lookup, 5, 0, 1, 5)
+
+        layout.addWidget(QLabel("Line number (1-based):"), 6, 0)
+        self.spin_line = QSpinBox(); self.spin_line.setRange(1, 10_000_000); self.spin_line.setValue(1)
+        self.spin_line.setToolTip("Manual line number (used only if search query is empty)")
+        layout.addWidget(self.spin_line, 6, 1)
+
+        layout.addWidget(QLabel("Insert text:"), 7, 0)
+        self.ed_text = QPlainTextEdit()
+        self.ed_text.setMinimumHeight(60)
+        self.ed_text.setMaximumHeight(200)
+        self.ed_text.setToolTip("Enter the text content to insert into files\nResizable: drag bottom edge to adjust height")
+        layout.addWidget(self.ed_text, 7, 1, 1, 4)
+
+        layout.addWidget(QLabel("Mode:"), 8, 0)
+        self.cb_mode = QComboBox()
+        self.cb_mode.addItems([InsertMode.LEFT, InsertMode.RIGHT, InsertMode.REPLACE,
+                               InsertMode.INSERT_ABOVE, InsertMode.INSERT_BELOW])
+        self.cb_mode.setToolTip("Choose insertion mode:\n  left: Insert before line\n  right: Insert after line\n  replace: Replace line\n  insert-above: Add new line above\n  insert-below: Add new line below")
+        layout.addWidget(self.cb_mode, 8, 1)
+
+        self._debounce_timer = QTimer(self)
+        self._debounce_timer.setSingleShot(True)
+        self._debounce_timer.setInterval(300)
+        self._debounce_timer.timeout.connect(self._start_search_threaded)
+        
+        # Advanced conditions (same as Search/Replace, including `content`)
+        gb3 = QGroupBox("Advanced conditions (folder mode)")
+        g3 = QGridLayout(gb3)
+        
+        # Add AND/OR selector at the top
+        lbl_logic = QLabel("Logic Operator:")
+        self.combo_logic_op = QComboBox()
+        self.combo_logic_op.addItems(["AND", "OR"])
+        self.combo_logic_op.setToolTip("AND: All conditions must match\nOR: At least one condition must match")
+        self.combo_logic_op.currentTextChanged.connect(self._schedule_live_refresh)
+        logic_layout = QHBoxLayout()
+        logic_layout.addWidget(lbl_logic)
+        logic_layout.addWidget(self.combo_logic_op)
+        logic_layout.addStretch()
+        g3.addLayout(logic_layout, 0, 0, 1, 8)
+        
+        # Add headers (now starting from row 1)
+        g3.addWidget(QLabel("Field"), 1, 0)
+        g3.addWidget(QLabel("Operator"), 1, 1)
+        g3.addWidget(QLabel("Value"), 1, 2)
+        g3.addWidget(QLabel("Scope"), 1, 3)
+        g3.addWidget(QLabel("Scope Param"), 1, 4)
+        g3.addWidget(QLabel("Case"), 1, 5)
+        g3.addWidget(QLabel("Word"), 1, 6)
+        g3.addWidget(QLabel("Regex"), 1, 7)
+        
+        # Dynamic condition rows (Task #5 - v2.9.7) - same as SearchReplacePanel
+        self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]] = []
+        self.cond_grid = g3  # Store grid reference
+        self.next_cond_row = 2  # Track next row (0=logic, 1=headers, 2+=conditions)
+        
+        # Buttons layout (v2.9.40.3: create BEFORE adding rows)
+        self.buttons_layout_ref = QHBoxLayout()
+        
+        # Add initial 3 condition rows (minimum)
+        for _ in range(3):
+            self._add_condition_row()
+        
+        # Add Condition button
+        btn_add_condition = QPushButton("➕ Add Condition")
+        btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
+        btn_add_condition.clicked.connect(self._add_condition_row)
+        self.buttons_layout_ref.addWidget(btn_add_condition)
+        
+        # Clear All Conditions button (v2.9.5)
+        btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
+        btn_clear_conditions.setToolTip("Clear all advanced condition fields")
+        btn_clear_conditions.clicked.connect(self._clear_all_conditions)
+        self.buttons_layout_ref.addWidget(btn_clear_conditions)
+        
+        self.buttons_layout_ref.addStretch()
+        
+        # Buttons already added to grid by _add_condition_row (v2.9.40.3)
+        
+        layout.addWidget(gb3, 9, 0, 1, 5)
+        
+        self.btn_apply = QPushButton("Apply to files")
+        self.btn_apply.setToolTip("Execute insertion operation on all matching files")
+        layout.addWidget(self.btn_apply, 10, 4)
+
+        # Results on the right
+        self.results = ResultsTree()
+        
+        # Results panel with save button
+        results_layout = QVBoxLayout()
+        results_header = QHBoxLayout()
+        results_label = QLabel("Match Results")
+        results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
+        self.btn_save_results = QPushButton("💾 Save Results")
+        self.btn_save_results.setToolTip("Save all match results to a text file")
+        self.btn_save_results.clicked.connect(self._save_results)
+        results_header.addWidget(results_label)
+        results_header.addStretch()
+        results_header.addWidget(self.btn_save_results)
+        results_layout.addLayout(results_header)
+        results_layout.addWidget(self.results)
+        
+        # Status bar at bottom showing position info (v2.5.1)
+        self.results_status = QLabel("")
+        self.results_status.setStyleSheet("padding: 4px; background-color: #f0f0f0; color: #333; font-size: 10pt;")
+        self.results_status.setMinimumHeight(25)
+        results_layout.addWidget(self.results_status)
+        
+        # Connect status label to results tree
+        self.results.set_status_label(self.results_status)
+        
+        results_widget = QWidget()
+        results_widget.setLayout(results_layout)
+        
+        # Wrap left panel in scroll area (v2.9.5)
+        left_widget = QWidget()
+        left_widget.setLayout(layout)
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(left_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
+        splitter = QSplitter()
+        splitter.addWidget(scroll_area)
+        splitter.addWidget(results_widget)
+        splitter.setSizes([500, 800])
+
+        wroot = QVBoxLayout(self)
+        wroot.setContentsMargins(0, 0, 0, 0)
+        wroot.addWidget(splitter)
+        
+        self.is_file.stateChanged.connect(self.change_advanced_conditions)
+        self.btn_browse.clicked.connect(self._browse)
+        self.btn_apply.clicked.connect(self._apply)
+
+    def change_advanced_conditions(self):
+        self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
     
-    def _setup_ui(self):
-        """Setup UI components."""
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+    def _add_condition_row(self):
+        """Add a new dynamic condition row (Task #5 - v2.9.7)"""
+        row_i = self.next_cond_row
         
-        # Group box
-        group = QGroupBox("Insert Text")
-        group_layout = QVBoxLayout()
+        # Create widgets
+        cb_field = QComboBox()
+        cb_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
+        cb_field.currentTextChanged.connect(self._schedule_live_refresh)
         
-        # Line number input
-        line_layout = QHBoxLayout()
-        line_layout.addWidget(QLabel("Line:"))
-        self.spin_line = QSpinBox()
-        self.spin_line.setMinimum(1)
-        self.spin_line.setMaximum(999999)
-        self.spin_line.setValue(1)
-        self.spin_line.setToolTip("Target line number (1-based)")
-        self.spin_line.setMaximumWidth(100)
-        line_layout.addWidget(self.spin_line)
+        cb_op = QComboBox()
+        cb_op.addItems(["", "contains", "not contains", "equals", "not equals",
+                       "starts with", "ends with", ">", "<", ">=", "<="])
+        cb_op.currentTextChanged.connect(self._schedule_live_refresh)
         
-        line_layout.addWidget(QLabel("Mode:"))
-        self.combo_mode = QComboBox()
-        self.combo_mode.addItems([
-            InsertMode.LEFT,
-            InsertMode.RIGHT,
-            InsertMode.REPLACE,
-            InsertMode.INSERT_ABOVE,
-            InsertMode.INSERT_BELOW
-        ])
-        self.combo_mode.setToolTip(
-            "Insertion modes:\n"
-            "• LEFT: Insert at line start\n"
-            "• RIGHT: Append at line end\n"
-            "• REPLACE: Replace entire line\n"
-            "• INSERT_ABOVE: New line above\n"
-            "• INSERT_BELOW: New line below"
+        ed_val = QLineEdit()
+        ed_val.textChanged.connect(self._schedule_live_refresh)
+        
+        cb_scope = QComboBox()
+        cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
+        cb_scope.currentTextChanged.connect(self._schedule_live_refresh)
+        
+        ed_scope_val = QLineEdit()
+        ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
+        ed_scope_val.textChanged.connect(self._schedule_live_refresh)
+        
+        # Checkboxes for matching options
+        chk_case = QCheckBox()
+        chk_case.setChecked(True)  # Default: case sensitive
+        chk_case.setToolTip("Case sensitive")
+        chk_case.stateChanged.connect(self._schedule_live_refresh)
+        
+        chk_word = QCheckBox()
+        chk_word.setToolTip("Match whole word")
+        chk_word.stateChanged.connect(self._schedule_live_refresh)
+        
+        chk_regex = QCheckBox()
+        chk_regex.setToolTip("Use regular expression")
+        chk_regex.stateChanged.connect(self._schedule_live_refresh)
+        
+        # Remove button (X)
+        btn_remove = QPushButton("✖")
+        btn_remove.setFixedWidth(30)
+        btn_remove.setToolTip("Remove this condition row")
+        btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
+        
+        # Add widgets to grid
+        self.cond_grid.addWidget(cb_field, row_i, 0)
+        self.cond_grid.addWidget(cb_op, row_i, 1)
+        self.cond_grid.addWidget(ed_val, row_i, 2)
+        self.cond_grid.addWidget(cb_scope, row_i, 3)
+        self.cond_grid.addWidget(ed_scope_val, row_i, 4)
+        self.cond_grid.addWidget(chk_case, row_i, 5)
+        self.cond_grid.addWidget(chk_word, row_i, 6)
+        self.cond_grid.addWidget(chk_regex, row_i, 7)
+        self.cond_grid.addWidget(btn_remove, row_i, 8)
+        
+        # Store reference
+        widgets_tuple = (cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex, btn_remove)
+        self.cond_list.append(widgets_tuple)
+        
+        # Connect remove button
+        btn_remove.clicked.connect(lambda: self._remove_condition_row(widgets_tuple))
+        
+        # Increment row counter
+        self.next_cond_row += 1
+        
+        # Move buttons layout to new bottom position (v2.9.40.3: use stored reference)
+        self.cond_grid.removeItem(self.buttons_layout_ref)
+        self.cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 8)
+    
+    def _remove_condition_row(self, widgets_tuple):
+        """Remove a condition row (Task #5 - v2.9.7)"""
+        # Enforce minimum of 3 rows
+        if len(self.cond_list) <= 3:
+            QMessageBox.warning(self, "Cannot Remove", 
+                              "Minimum of 3 condition rows required.\nClear the fields instead.")
+            return
+        
+        # Remove from list
+        if widgets_tuple in self.cond_list:
+            self.cond_list.remove(widgets_tuple)
+        
+        # Remove widgets from grid and delete them
+        for widget in widgets_tuple:
+            self.cond_grid.removeWidget(widget)
+            widget.deleteLater()
+    
+    def _clear_all_conditions(self):
+        """Clear all advanced condition fields (v2.9.5, updated v2.9.7)"""
+        # Reset logic operator to AND
+        self.combo_logic_op.setCurrentIndex(0)
+        
+        # Clear all condition rows (updated for v2.9.7 - tuple now has 9 elements)
+        for widgets in self.cond_list:
+            cb_field, cb_op, ed_val, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
+            cb_field.setCurrentIndex(0)  # Reset to empty
+            cb_op.setCurrentIndex(0)     # Reset to empty
+            ed_val.clear()               # Clear value
+            cb_scope.setCurrentIndex(0)  # Reset to "none"
+            ed_scope_val.clear()         # Clear scope param
+            chk_case.setChecked(True)    # Default: case sensitive
+            chk_word.setChecked(False)   # Default: not whole word
+            chk_regex.setChecked(False)  # Default: not regex
+
+    def _browse(self):
+        if self.is_file.isChecked():
+            path, _ = QFileDialog.getOpenFileName(self, "Select dictionary", "", "JSON/TS (*.json *.ts *.tsx *.js *.jsx);;All (*)")
+            #self.enable_buttons(False, include_buttons = False)
+        else:
+            path = QFileDialog.getExistingDirectory(self, "Select folder (or cancel and type a file)")
+            #self.enable_buttons(True, include_buttons = False)
+        
+        if path:
+            self.ed_path.setText(path)
+
+    # def _files(self) -> List[str]: # version 1
+    #     path = self.ed_path.text().strip()
+    #     inc = [g.strip() for g in re.split(r"[;,]", self.ed_inc.text()) if g.strip()]
+    #     exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
+    #     files = walk_files(path, inc, exc)
+    #     return list(files)
+    
+    def _conds(self) -> tuple[List[Condition], str]:
+        """Return conditions and logic operator (AND/OR) - updated for v2.9.7"""
+        out: List[Condition] = []
+        if not self.is_file.isChecked():
+            for widgets in self.cond_list:
+                cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
+                f = cb_field.currentText().strip()
+                o = cb_op.currentText().strip()
+                v = ed.text().strip()
+                scope_type = cb_scope.currentText().strip()
+                scope_val = ed_scope_val.text().strip()
+                case_sensitive = chk_case.isChecked()
+                whole_word = chk_word.isChecked()
+                use_regex = chk_regex.isChecked()
+                if f and o and v:
+                    out.append(Condition(f, o, v, scope_type, scope_val, case_sensitive, whole_word, use_regex))
+        logic_op = self.combo_logic_op.currentText()
+        return out, logic_op
+    
+    def enable_buttons(self,state, include_buttons=True, include_advanced_conditions = True):
+        if include_buttons:
+            self.btn_browse.setEnabled(state)
+            
+        if include_advanced_conditions:
+            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+                cb_field.setEnabled(state)
+                cb_op.setEnabled(state)
+                ed.setEnabled(state)
+                ed.setReadOnly(not state)
+                cb_scope.setEnabled(state)
+                ed_scope_val.setEnabled(state)
+                ed_scope_val.setReadOnly(not state)
+                chk_case.setEnabled(state)
+                chk_word.setEnabled(state)
+                chk_regex.setEnabled(state)
+        
+    def reset_advanced_conditions(self):
+        for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            cb_field.clear()
+            cb_op.setCurrentIndex(0)
+            ed.setCurrentIndex(0)
+            cb_scope.setCurrentIndex(0)
+            ed_scope_val.clear()
+            chk_case.setChecked(True)
+            chk_word.setChecked(False)
+            chk_regex.setChecked(False)
+    
+    def _iter_files(self) -> List[str]:
+        path = self.ed_path.text().strip()
+        
+        # v2.9.0, v2.9.1: Handle extension filter (optional)
+        use_ext_filter = self.chk_use_ext_filter.isChecked()
+        extensions_text = self.ed_extensions.text().strip() if use_ext_filter else ""
+        ed_inc_text = self.ed_inc.text().strip()
+        
+        # Build include globs from extensions if enabled and provided
+        if use_ext_filter and extensions_text:
+            extensions = [ext.strip() for ext in re.split(r"[;,]", extensions_text) if ext.strip()]
+            extensions = [ext if ext.startswith('.') else f'.{ext}' for ext in extensions]
+            ext_globs = [f"*{ext}" for ext in extensions]
+            
+            if ed_inc_text:
+                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+                inc.extend(ext_globs)
+            else:
+                inc = ext_globs
+        else:
+            if ed_inc_text:
+                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+            else:
+                inc = ["*.*"]
+            
+        exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
+        files = list(walk_files(path, inc, exc))
+        return filter_files_by_conditions(files, self._conds())
+
+    def _schedule_live_refresh(self):
+        if not self._conds():  # only trigger if there's at least 1 valid rule
+            return
+        # Only do live preview when path is a directory:
+        p = self.ed_path.text().strip()
+        if not p or os.path.isfile(p):
+            return
+        self._debounce_timer.start()
+    
+    def _start_search_threaded(self):
+        if not self.processing_search:
+            words = "|".join([ed.text().strip() for k, n, ed in self.cond_list if ed.text().strip()])
+            if words:
+                self.results.print_message("Loading...")
+                
+                try:
+                    pattern_text = SearchOptions(False, False, True).compile(rf"(?:{words})")
+                except Exception as e:
+                    self.error.emit(f"Invalid pattern: {e}")
+                    self.done.emit({})
+                    return
+                
+                # Create progress bar (v2.5.0)
+                if self.progress_manager:
+                    import uuid
+                    self._current_task_id = f"insert_search_{uuid.uuid4().hex[:8]}"
+                    self._current_progress_widget = self.progress_manager.add_task(
+                        self._current_task_id,
+                        f"Match Search: {words[:30]}"
+                    )
+                
+                # Create thread and worker
+                self._search_thread = QThread(self)
+                self._search_worker = SearchWorker(
+                    pattern_text=pattern_text,
+                    iter_files_fn=self._iter_files,
+                    search_options_factory=lambda a,b,c: SearchOptions(a,b,c)
+                )
+                self._search_worker.moveToThread(self._search_thread)
+
+                # Connections
+                self._search_thread.started.connect(self._search_worker.run)
+                self._search_worker.done.connect(self._on_search_done)
+                self._search_worker.progress.connect(self._on_search_progress)
+                self._search_worker.progress_detailed.connect(self._on_search_progress_detailed)  # v2.5.0
+                self._search_worker.error.connect(self._on_search_error)
+
+                # Connect cancel and pause from progress bar to worker (v2.5.0+)
+                if self._current_progress_widget:
+                    self._current_progress_widget.cancel_requested.connect(
+                        lambda _: self._search_worker.cancel()
+                    )
+                    self._current_progress_widget.pause_requested.connect(
+                        lambda _, paused: self._search_worker.pause() if paused else self._search_worker.resume()
+                    )
+
+                # Cleanup
+                self._search_worker.done.connect(self._search_thread.quit)
+                self._search_worker.done.connect(self._search_worker.deleteLater)
+                self._search_thread.finished.connect(self._search_thread.deleteLater)
+
+                self._search_thread.start()
+                self.enable_buttons(False)
+                self.processing_search = True
+        else:
+            self._search_worker.cancel()
+            self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+            self.processing_search = False
+
+    def _on_search_progress(self, current_path: str):
+        """Legacy progress handler."""
+        pass
+
+    def _on_search_progress_detailed(self, current: int, total: int, message: str):
+        """New detailed progress handler (v2.5.0)."""
+        if self._current_progress_widget:
+            self._current_progress_widget.update_progress(current, total, message)
+            self._current_progress_widget.add_log(f"Processing: {message}")
+
+    def _on_search_error(self, msg: str):
+        """Handle search errors."""
+        if self._current_progress_widget:
+            self._current_progress_widget.add_log(f"ERROR: {msg}")
+        print(msg)
+
+    def _on_search_done(self, matches: dict):
+        """Handle search completion with history tracking (v2.5.0+)."""
+        sort_results = self.chk_sort_results.isChecked()
+        self.results.populate(matches, sort_results)
+        self.enable_buttons(True, include_advanced_conditions = True if not self.is_file.isChecked() else False)
+        self.processing_search = False
+        
+        # Mark progress as complete (v2.5.0)
+        if self._current_progress_widget:
+            self._current_progress_widget.set_complete(success=True)
+            self._current_progress_widget.add_log(f"Search completed: {len(matches)} files with matches")
+        
+        # Save to history (NEW - v2.5.0+)
+        try:
+            history = OperationHistory()
+            history.add_operation("insert_search", {
+                "path": self.ed_path.text(),
+                "files_matched": len(matches),
+                "total_matches": sum(len(items) for items in matches.values())
+            })
+        except Exception as e:
+            print(f"Failed to save history: {e}")
+    
+    # def _do_search(self):
+    #     try:
+    #         patt = SearchOptions(False,
+    #                              False,
+    #                              False).compile(self.ed_text.toPlainText())
+    #     except ValueError as e:
+    #         QMessageBox.critical(self, "Invalid pattern", str(e)); return
+        
+    #     matches: Dict[str, List[Tuple[int,int,str]]] = {}
+    #     for p in self._iter_files():
+    #         print(f"TESTE {p}")
+    #         try:
+    #             text = read_text(p)
+    #             lst: List[Tuple[int,int,str]] = []
+    #             for m in patt.finditer(text):
+    #                 line = text.count("\n", 0, m.start()) + 1
+    #                 col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
+    #                 snippet = text.splitlines()[line-1]
+    #                 lst.append((line, col, snippet))
+    #             if lst:
+    #                 matches[p] = lst
+    #         except Exception as e:
+    #             print(f"[WARN] {p}: {e}", file=sys.stderr)
+    #     self.results.populate(matches)
+    
+    def _files(self) -> List[str]:
+        path = self.ed_path.text().strip()
+        inc = [g.strip() for g in re.split(r"[;,]", self.ed_inc.text()) if g.strip()]
+        exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
+        files = list(walk_files(path, inc, exc))
+        return filter_files_by_conditions(files, self._conds())
+    
+    def _find_line_by_query(self, text: str, query: str) -> List[int]:
+        """
+        Find line numbers matching the query.
+        Returns list of 1-based line numbers.
+        """
+        if not query:
+            return []
+        
+        case_sensitive = self.chk_lookup_case.isChecked()
+        whole_word = self.chk_lookup_word.isChecked()
+        use_regex = self.chk_lookup_regex.isChecked()
+        
+        lines = text.splitlines()
+        matches = []
+        
+        for i, line in enumerate(lines, start=1):
+            if self._line_matches_query(line, query, case_sensitive, whole_word, use_regex):
+                matches.append(i)
+        
+        return matches
+    
+    def _line_matches_query(self, line: str, query: str, case_sensitive: bool, 
+                             whole_word: bool, use_regex: bool) -> bool:
+        """
+        Check if a line matches the query with given options.
+        """
+        try:
+            if use_regex:
+                flags = 0 if case_sensitive else re.IGNORECASE
+                pattern = query
+                if whole_word:
+                    pattern = r'\b' + pattern + r'\b'
+                return bool(re.search(pattern, line, flags))
+            else:
+                search_line = line if case_sensitive else line.lower()
+                search_query = query if case_sensitive else query.lower()
+                
+                if whole_word:
+                    pattern = r'\b' + re.escape(search_query) + r'\b'
+                    flags = 0 if case_sensitive else re.IGNORECASE
+                    return bool(re.search(pattern, line, flags))
+                else:
+                    return search_query in search_line
+        except re.error:
+            return False
+
+    def _apply(self):
+        query = self.ed_query.toPlainText().strip()
+        manual_line = self.spin_line.value()
+        insert_text = self.ed_text.toPlainText()
+        mode = self.cb_mode.currentText()
+        occurrence = self.cb_lookup_occurrence.currentText()
+        
+        count = 0
+        skipped = 0
+        
+        for p in self._files():
+            try:
+                old = read_text(p)
+                
+                # Determine line number(s) to use
+                if query:
+                    # Use lookup/search mode
+                    line_matches = self._find_line_by_query(old, query)
+                    
+                    if not line_matches:
+                        skipped += 1
+                        continue
+                    
+                    # Determine which occurrence to use
+                    if occurrence == "First":
+                        target_lines = [line_matches[0]]
+                    elif occurrence == "Last":
+                        target_lines = [line_matches[-1]]
+                    else:  # "All"
+                        target_lines = line_matches
+                else:
+                    # Use manual line number
+                    target_lines = [manual_line]
+                
+                # Apply insertion to each target line
+                new = old
+                # When applying to multiple lines, process from bottom to top
+                # to avoid line number shifts
+                for line in sorted(target_lines, reverse=True):
+                    new = insert_at_line(new, line, insert_text, mode)
+                
+                if new != old:
+                    write_text(p, new)
+                    count += 1
+            except Exception as e:
+                print(f"[WARN] {p}: {e}", file=sys.stderr)
+                skipped += 1
+        
+        msg = f"Modified files: {count}"
+        if skipped > 0:
+            msg += f"\nSkipped files (no match): {skipped}"
+        if query:
+            msg += f"\n\nUsed search query: '{query}'"
+            msg += f"\nOccurrence mode: {occurrence}"
+        else:
+            msg += f"\n\nUsed line number: {manual_line}"
+        
+        QMessageBox.information(self, "Insert", msg)
+        self._start_search_threaded()
+    
+    def _save_results(self):
+        """Save match results to a text file."""
+        matches_data = self.results.get_matches_data()
+        
+        if not matches_data:
+            QMessageBox.information(self, "No Results", 
+                "No match results to save. Advanced conditions must be set to see preview results.")
+            return
+        
+        # Ask user for file location
+        default_filename = "clarify_insert_matches.txt"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Save Match Results", 
+            default_filename,
+            "Text Files (*.txt);;All Files (*)"
         )
-        line_layout.addWidget(self.combo_mode)
-        line_layout.addStretch()
         
-        group_layout.addLayout(line_layout)
-        
-        # Text input
-        group_layout.addWidget(QLabel("Text:"))
-        self.text_insert = QTextEdit()
-        self.text_insert.setPlaceholderText("Enter text to insert (supports multi-line)...")
-        self.text_insert.setMaximumHeight(80)
-        self.text_insert.setToolTip("Text to insert (can be multi-line)")
-        group_layout.addWidget(self.text_insert)
-        
-        # Quick mode buttons
-        quick_layout = QHBoxLayout()
-        quick_layout.addWidget(QLabel("Quick:"))
-        
-        self.btn_left = QPushButton("← Left")
-        self.btn_left.setToolTip("Insert at line start (LEFT mode)")
-        self.btn_left.clicked.connect(lambda: self._quick_insert(InsertMode.LEFT))
-        quick_layout.addWidget(self.btn_left)
-        
-        self.btn_right = QPushButton("Right →")
-        self.btn_right.setToolTip("Append at line end (RIGHT mode)")
-        self.btn_right.clicked.connect(lambda: self._quick_insert(InsertMode.RIGHT))
-        quick_layout.addWidget(self.btn_right)
-        
-        self.btn_replace = QPushButton("🔄 Replace")
-        self.btn_replace.setToolTip("Replace entire line (REPLACE mode)")
-        self.btn_replace.clicked.connect(lambda: self._quick_insert(InsertMode.REPLACE))
-        quick_layout.addWidget(self.btn_replace)
-        
-        quick_layout.addStretch()
-        group_layout.addLayout(quick_layout)
-        
-        # Main action buttons
-        btn_layout = QHBoxLayout()
-        self.btn_insert = QPushButton("📝 Insert")
-        self.btn_insert.setToolTip("Execute insertion with selected mode")
-        self.btn_insert.clicked.connect(self._execute_insert)
-        btn_layout.addWidget(self.btn_insert)
-        
-        self.btn_preview = QPushButton("👁️ Preview")
-        self.btn_preview.setToolTip("Preview how text will be inserted")
-        self.btn_preview.clicked.connect(self._preview_insert)
-        btn_layout.addWidget(self.btn_preview)
-        
-        btn_layout.addStretch()
-        group_layout.addLayout(btn_layout)
-        
-        group.setLayout(group_layout)
-        layout.addWidget(group)
-    
-    def _execute_insert(self):
-        """Execute insert operation - emits signal."""
-        line_no = self.spin_line.value()
-        text = self.text_insert.toPlainText().strip()
-        
-        if not text:
-            QMessageBox.warning(self, "Empty Text", "Please enter text to insert.")
-            return
-        
-        mode = self.combo_mode.currentText()
-        
-        # Save settings
-        self._save_settings()
-        
-        # Emit signal for parent to handle
-        self.insert_requested.emit(line_no, text, mode)
-    
-    def _quick_insert(self, mode: str):
-        """Quick insert with specific mode."""
-        self.combo_mode.setCurrentText(mode)
-        self._execute_insert()
-    
-    def _preview_insert(self):
-        """Preview how text will be inserted."""
-        line_no = self.spin_line.value()
-        text = self.text_insert.toPlainText().strip()
-        mode = self.combo_mode.currentText()
-        
-        if not text:
-            QMessageBox.warning(self, "Empty Text", "Please enter text to insert.")
-            return
-        
-        # Create sample content for preview
-        sample_content = "Line 1\nLine 2\nLine 3\nLine 4\nLine 5"
+        if not file_path:
+            return  # User cancelled
         
         try:
-            result = insert_at_line(sample_content, line_no, text, mode)
-            QMessageBox.information(
-                self,
-                f"Preview: {mode} at Line {line_no}",
-                f"Sample content BEFORE:\n{sample_content}\n\n"
-                f"Sample content AFTER:\n{result}\n\n"
-                f"Text inserted: '{text}'"
-            )
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Preview Error",
-                f"Error during preview:\n\n{str(e)}"
-            )
-    
-    def _save_settings(self):
-        """Save current options to QSettings."""
-        self.settings.setValue(f"{self.settings_prefix}/line", 
-                              self.spin_line.value())
-        self.settings.setValue(f"{self.settings_prefix}/mode", 
-                              self.combo_mode.currentText())
-        self.settings.setValue(f"{self.settings_prefix}/last_text", 
-                              self.text_insert.toPlainText())
-    
-    def _load_settings(self):
-        """Load saved options from QSettings."""
-        self.spin_line.setValue(
-            self.settings.value(f"{self.settings_prefix}/line", 1, int)
-        )
-        mode = self.settings.value(f"{self.settings_prefix}/mode", 
-                                   InsertMode.REPLACE, str)
-        index = self.combo_mode.findText(mode)
-        if index >= 0:
-            self.combo_mode.setCurrentIndex(index)
+            # Export matches to text
+            text_content = self.results.export_to_text()
+            
+            # Write to file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(text_content)
+            
+            total_files = len(matches_data)
+            total_matches = sum(len(items) for items in matches_data.values())
+            
+            QMessageBox.information(self, "Results Saved", 
+                f"Match results saved successfully!\n\n"
+                f"File: {file_path}\n"
+                f"Total files: {total_files}\n"
+                f"Total matches: {total_matches}")
         
-        self.text_insert.setPlainText(
-            self.settings.value(f"{self.settings_prefix}/last_text", "", str)
-        )
-    
-    def get_line_number(self) -> int:
-        """Get target line number."""
-        return self.spin_line.value()
-    
-    def get_text(self) -> str:
-        """Get insertion text."""
-        return self.text_insert.toPlainText().strip()
-    
-    def get_mode(self) -> str:
-        """Get insertion mode."""
-        return self.combo_mode.currentText()
-    
-    def set_line_number(self, line: int):
-        """Set target line number."""
-        self.spin_line.setValue(line)
-    
-    def set_text(self, text: str):
-        """Set insertion text."""
-        self.text_insert.setPlainText(text)
-    
-    def set_mode(self, mode: str):
-        """Set insertion mode."""
-        index = self.combo_mode.findText(mode)
-        if index >= 0:
-            self.combo_mode.setCurrentIndex(index)
-    
-    def clear_text(self):
-        """Clear text input."""
-        self.text_insert.clear()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", 
+                f"Failed to save results:\n{str(e)}")
