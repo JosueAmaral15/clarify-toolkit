@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QCheckBox, QFileDialog, QGridLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 
 from src.accessibility_manager import AccessibilityManager
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 from src.utils import parse_exclusion_patterns, walk_files
 from .base_dock import BaseDock
 
@@ -98,62 +98,62 @@ class JsonTranslateDock(BaseDock):
     def _create_widgets(self) -> None:
         """Create all widgets for the translate dock."""
         # Root path section
-        self.lbl_path = QLabel("Root path:")
+        self.lbl_path = QLabel(tr("json_translate.lbl_path"))
         self.ed_path = QLineEdit()
-        self.btn_browse = QPushButton("Browse…")
-        self.is_file = QCheckBox("Is file?")
+        self.btn_browse = QPushButton(tr("json_translate.btn_browse"))
+        self.is_file = QCheckBox(tr("json_translate.is_file"))
 
         # Dictionary file section
-        self.lbl_dict = QLabel("Dictionary file (JSON/TS):")
+        self.lbl_dict = QLabel(tr("json_translate.lbl_dict"))
         self.ed_dict = QLineEdit()
-        self.btn_open = QPushButton("Open…")
+        self.btn_open = QPushButton(tr("json_translate.btn_open"))
 
         # Variable name
-        self.lbl_var = QLabel("First object variable name:")
+        self.lbl_var = QLabel(tr("json_translate.lbl_var"))
         self.object_variable_name = QLineEdit()
-        self.object_variable_name.setPlaceholderText("e.g. t")
+        self.object_variable_name.setPlaceholderText(tr("json_translate.placeholder_var"))
 
         # Scope delimiters
-        self.lbl_start = QLabel("Start delimiter (regex):")
+        self.lbl_start = QLabel(tr("json_translate.lbl_start"))
         self.ed_start = QLineEdit("<[^>]*?>")  # default: start of HTML/JSX tag
-        self.lbl_end = QLabel("End delimiter (regex):")
+        self.lbl_end = QLabel(tr("json_translate.lbl_end"))
         self.ed_end = QLineEdit("</[^>]*?>")  # default: end tag
 
         # Exclusion patterns
-        self.lbl_exclude = QLabel("Do not translate\n(regex, comma-separated):")
+        self.lbl_exclude = QLabel(tr("json_translate.lbl_exclude"))
         self.ed_exclude = QLineEdit()
-        self.ed_exclude.setPlaceholderText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
+        self.ed_exclude.setPlaceholderText(tr("json_translate.placeholder_exclude"))
         self.ed_exclude.setText(r'className="[^"]*", data-testid="[^"]*", id="[^"]*"')
 
         # Options
-        self.chk_backup = QCheckBox("Backup original files\n(filename.bak)")
+        self.chk_backup = QCheckBox(tr("json_translate.chk_backup"))
         self.chk_backup.setChecked(True)
 
-        self.chk_dont_override = QCheckBox("Don't override\nexisting translations")
+        self.chk_dont_override = QCheckBox(tr("json_translate.chk_dont_override"))
         self.chk_dont_override.setChecked(True)
 
-        self.chk_inverse_json_translate = QCheckBox("Reverse JSON Translate\nchanges (with dictionary)")
+        self.chk_inverse_json_translate = QCheckBox(tr("json_translate.chk_inverse"))
         self.chk_inverse_json_translate.setToolTip(
             "Reverse translation: replace variable references (t.key) with actual dictionary values (e.g., t.home.title → 'Homepage') | Ctrl+T to open Translate"
         )
 
-        self.chk_emit_export = QCheckBox("Emit export const")
+        self.chk_emit_export = QCheckBox(tr("json_translate.chk_emit_export"))
         self.chk_emit_export.setChecked(True)
 
-        self.chk_preserve_uppercase = QCheckBox("Preserve uppercase keys")
+        self.chk_preserve_uppercase = QCheckBox(tr("json_translate.chk_preserve_uppercase"))
         self.chk_preserve_uppercase.setToolTip(
             "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE, useful for constants) | Ctrl+T to open Translate"
         )
 
         # Stats label (Task #43 - v2.9.13)
-        self.lbl_stats = QLabel("Ready")
+        self.lbl_stats = QLabel(tr("json_translate.lbl_stats_ready"))
         self.lbl_stats.setStyleSheet("color: gray; font-style: italic;")
         self.lbl_stats.setWordWrap(True)
 
         # Action buttons (Task #10 - v2.9.8)
-        self.btn_run = QPushButton("Run translation")
-        self.btn_swap = QPushButton("Swap Dictionaries")
-        self.btn_undo = QPushButton("Undo with Backup")
+        self.btn_run = QPushButton(tr("json_translate.btn_run"))
+        self.btn_swap = QPushButton(tr("json_translate.btn_swap"))
+        self.btn_undo = QPushButton(tr("json_translate.btn_undo"))
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -260,15 +260,15 @@ class JsonTranslateDock(BaseDock):
     def _browse_root(self) -> None:
         """Browse for root path (file or directory)."""
         if self.is_file.isChecked():
-            path, _ = QFileDialog.getOpenFileName(self, "Select file (or Cancel to pick a folder)")
+            path, _ = QFileDialog.getOpenFileName(self, tr("json_translate.dialog_select_file"))
             if path:
                 self.ed_path.setText(path)
         else:
-            folder = QFileDialog.getExistingDirectory(self, "Select folder")
+            folder = QFileDialog.getExistingDirectory(self, tr("json_translate.dialog_select_folder"))
 
     def _browse_dict(self) -> None:
         """Browse for dictionary file."""
-        path, _ = QFileDialog.getOpenFileName(self, "Dictionary file", "", "JSON/TS (*.json *.ts *.js);;All files (*)")
+        path, _ = QFileDialog.getOpenFileName(self, tr("json_translate.dialog_dict_file"), "", "JSON/TS (*.json *.ts *.js);;All files (*)")
         if path:
             self.ed_dict.setText(path)
 
@@ -278,7 +278,7 @@ class JsonTranslateDock(BaseDock):
         dict_path = self.ed_dict.text().strip()
 
         if not path and not dict_path:
-            self.lbl_stats.setText("Ready")
+            self.lbl_stats.setText(tr("json_translate.lbl_stats_ready"))
             return
 
         file_count = 0
@@ -309,12 +309,14 @@ class JsonTranslateDock(BaseDock):
         if file_count > 0 or translation_count > 0:
             parts = []
             if file_count > 0:
-                parts.append(f"{file_count} file{'s' if file_count != 1 else ''} to process")
+                file_str = tr("json_translate.stats_files" if file_count == 1 else "json_translate.stats_files_plural")
+                parts.append(f"{file_count} {file_str} {tr('json_translate.stats_to_process')}")
             if translation_count > 0:
-                parts.append(f"{translation_count} translation{'s' if translation_count != 1 else ''} available")
+                trans_str = tr("json_translate.stats_translations" if translation_count == 1 else "json_translate.stats_translations_plural")
+                parts.append(f"{translation_count} {trans_str} {tr('json_translate.stats_available')}")
             self.lbl_stats.setText(" | ".join(parts))
         else:
-            self.lbl_stats.setText("Ready")
+            self.lbl_stats.setText(tr("json_translate.lbl_stats_ready"))
 
             # Core Processing
             self.ed_dict.setText(path)
@@ -337,14 +339,14 @@ class JsonTranslateDock(BaseDock):
 
         # Validation
         if not path or not dpath:
-            QMessageBox.warning(self, "Missing", "Select path and dictionary file.")
+            QMessageBox.warning(self, tr("json_translate.error_missing"), tr("json_translate.error_missing_msg"))
             return
 
         # Load dictionary
         try:
             dictionary = load_translation_dict(dpath)
         except Exception as e:
-            QMessageBox.critical(self, "Dictionary error", str(e))
+            QMessageBox.critical(self, tr("json_translate.error_dict"), str(e))
             return
 
         # Parse exclusion patterns
@@ -380,10 +382,10 @@ class JsonTranslateDock(BaseDock):
                 errors.append(f"{p}: {err}")
 
         # Display results
-        msg = f"Modified files: {changed}"
+        msg = f"{tr('json_translate.result_modified')} {changed}"
         if errors:
-            msg += f"\nErrors: {len(errors)}\n" + "\n".join(errors[:5])  # show first 5
-        QMessageBox.information(self, "Translate", msg)
+            msg += f"\n{tr('json_translate.result_errors')} {len(errors)}\n" + "\n".join(errors[:5])  # show first 5
+        QMessageBox.information(self, tr("json_translate.dialog_translate"), msg)
 
     def _swap_dictionaries(self) -> None:
         """
@@ -394,17 +396,12 @@ class JsonTranslateDock(BaseDock):
         # Toggle inverse checkbox to reverse translation direction
         self.chk_inverse_json_translate.setChecked(not self.chk_inverse_json_translate.isChecked())
 
-        status = "enabled" if self.chk_inverse_json_translate.isChecked() else "disabled"
+        status = tr("json_translate.swap_enabled") if self.chk_inverse_json_translate.isChecked() else tr("json_translate.swap_disabled")
+        msg = tr("json_translate.swap_msg").replace("{status}", status)
         QMessageBox.information(
             self,
-            "Swap Dictionaries",
-            f"Reverse translation mode {status}.\n\n"
-            "When enabled:\n"
-            "• Replaces {t.key} placeholders with dictionary values\n"
-            "• Converts code back to original text\n\n"
-            "When disabled:\n"
-            "• Replaces text with {t.key} placeholders\n"
-            "• Normal forward translation",
+            tr("json_translate.swap_title"),
+            msg,
         )
 
     def _undo_translation(self) -> None:
@@ -415,7 +412,7 @@ class JsonTranslateDock(BaseDock):
         path = self.ed_path.text().strip()
 
         if not path:
-            QMessageBox.warning(self, "Missing", "Select a path first.")
+            QMessageBox.warning(self, tr("json_translate.undo_missing"), tr("json_translate.undo_missing_msg"))
             return
 
         # Find .bak files
@@ -437,17 +434,15 @@ class JsonTranslateDock(BaseDock):
                             backup_files.append((backup_path, original_path))
 
         if not backup_files:
-            QMessageBox.warning(self, "No Backups", "No backup files (.bak) found in the selected path.")
+            QMessageBox.warning(self, tr("json_translate.undo_no_backups"), tr("json_translate.undo_no_backups_msg"))
             return
 
         # Confirm restoration
+        confirm_msg = tr("json_translate.undo_confirm_msg").replace("{count}", str(len(backup_files)))
         reply = QMessageBox.question(
             self,
-            "Confirm Restoration",
-            f"Found {len(backup_files)} backup file(s).\n\n"
-            "This will restore original files from backups.\n"
-            "Current files will be overwritten!\n\n"
-            "Continue?",
+            tr("json_translate.undo_confirm_title"),
+            confirm_msg,
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -469,11 +464,12 @@ class JsonTranslateDock(BaseDock):
                 errors.append(f"{os.path.basename(original_path)}: {str(e)}")
 
         # Show results
-        msg = f"Restored {restored} file(s) from backup."
+        msg = tr("json_translate.undo_complete_msg").replace("{count}", str(restored))
         if errors:
-            msg += f"\n\nErrors ({len(errors)}):\n" + "\n".join(errors[:5])
+            error_header = tr("json_translate.undo_errors").replace("{count}", str(len(errors)))
+            msg += f"\n\n{error_header}\n" + "\n".join(errors[:5])
 
-        QMessageBox.information(self, "Restoration Complete", msg)
+        QMessageBox.information(self, tr("json_translate.undo_complete_title"), msg)
 
     def _execute_action(self) -> None:
         """Execute the main action when ENTER is pressed."""
