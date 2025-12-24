@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal
 
 from src.core.set_operation_executor import SetOperationExecutor
+from src.core.result_exporter import ResultExporter
 from src.i18n import tooltip_tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
@@ -314,80 +315,50 @@ class SetOperationsDock(BaseDock):
         self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
 
     def _save_result(self):
-        """Save operation results to JSON file.
-        
-        Opens save dialog and writes current result from output area to file.
-        Shows success message with file path.
-        """
-        if not self.txt_result.toPlainText():
+        """Save operation results to JSON file."""
+        data = self.txt_result.toPlainText()
+        if not data:
             return
 
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Results", "", "JSON Files (*.json)")
 
         if file_path:
-            try:
-                with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(self.txt_result.toPlainText())
-                self.show_info("Success", f"Results saved to:\n{file_path}")
-            except Exception as e:
-                self.show_error("Error Saving", str(e))
+            success, message = ResultExporter.save_json(data, file_path)
+            if success:
+                self.show_info("Success", message)
+            else:
+                self.show_error("Error Saving", message)
     
     def _export_result(self):
         """Export results to multiple formats (v2.9.93)."""
-        if not hasattr(self, 'result_data') or not self.result_data:
-            self.show_warning("No Data", "No results to export. Please execute an operation first.")
+        # Validate data
+        is_valid, error = ResultExporter.validate_export_data(
+            self.result_data if hasattr(self, 'result_data') else None
+        )
+        if not is_valid:
+            self.show_warning("No Data", error)
             return
-        
-        from pathlib import Path
-        from PySide6.QtWidgets import QFileDialog
-        from ..export_manager import ExportManager
-        
-        # Format filter
-        filter_str = "CSV Files (*.csv);;Excel Files (*.xlsx);;YAML Files (*.yaml);;TOML Files (*.toml);;JSON Files (*.json)"
         
         # Open save dialog
         file_path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Results",
             "",
-            filter_str
+            ResultExporter.FORMAT_FILTER
         )
         
         if not file_path:
             return  # User cancelled
         
-        try:
-            # Determine format from filter
-            format_map = {
-                "CSV Files (*.csv)": "csv",
-                "Excel Files (*.xlsx)": "xlsx",
-                "YAML Files (*.yaml)": "yaml",
-                "TOML Files (*.toml)": "toml",
-                "JSON Files (*.json)": "json"
-            }
-            
-            export_format = format_map.get(selected_filter, "json")
-            
-            # Ensure correct extension
-            path = Path(file_path)
-            if not path.suffix:
-                path = path.with_suffix(f".{export_format}")
-            
-            # Export
-            ExportManager.export(
-                data=self.result_data,
-                output_path=path,
-                format=export_format,
-                flatten=True,  # Flatten for CSV/Excel/TOML
-                include_metadata=True  # Add timestamp + operation type
-            )
-            
-            self.show_info("Export Successful", f"Results exported to:\n{path}")
+        # Export
+        success, message = ResultExporter.export_multi_format(
+            self.result_data, file_path, selected_filter
+        )
         
-        except ImportError as e:
-            self.show_error("Export Failed", f"Missing dependency:\n{e}\n\nInstall with: pip install openpyxl tomli-w")
-        except Exception as e:
-            self.show_error("Export Failed", str(e))
+        if success:
+            self.show_info("Export Successful", message)
+        else:
+            self.show_error("Export Failed", message)
     
     def _store_in_calculator(self):
         """Store result in Calculator memory slot (v2.9.98)."""
