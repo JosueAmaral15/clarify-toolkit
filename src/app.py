@@ -4542,6 +4542,10 @@ if _PYSIDE:
                 self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
                 self.tabs.insertTab(0, self.tab_search, "Search / Replace")
                 self.tabs.setCurrentIndex(0)
+                # Force widget rendering (fix invisible widgets bug)
+                QApplication.processEvents()
+                self.tab_search.updateGeometry()
+                self.tab_search.update()
         
         def _show_insert(self):
             """Show Insert tab (v2.9.40.2 - reopen if closed)."""
@@ -4555,6 +4559,10 @@ if _PYSIDE:
                 self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
                 self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
                 self.tabs.setCurrentIndex(expected_index)
+                # Force widget rendering (fix invisible widgets bug)
+                QApplication.processEvents()
+                self.tab_insert.updateGeometry()
+                self.tab_insert.update()
         
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
