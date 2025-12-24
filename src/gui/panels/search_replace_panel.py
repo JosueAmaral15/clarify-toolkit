@@ -67,6 +67,9 @@ class SearchReplacePanel(QWidget):
     Now with integrated progress bar system (v2.5.0).
     """
     request_preview = Signal(dict)   # emits {"matches": {path: [(line,col,snip), ...], ...}}
+    # Signal for external consumers (e.g., ai_processor_dock, json_editor_tab)
+    # Parameters: (file_name_query, file_content_query, replacement, options, preserve_case, count)
+    replace_requested = Signal(str, str, str, object, bool, int)
 
     def __init__(self, parent=None, progress_manager=None):
         super().__init__(parent)

@@ -364,15 +364,17 @@ class AIProcessorDock(StandardToolDock):
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
         
-        # Search/Replace Panel (v2.9.110)
-        self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
-        self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
-        controls_layout.addWidget(self.search_replace_panel)
+        # Search/Replace Panel (v2.9.110) - TEMPORARILY DISABLED (needs proper integration)
+        # TODO: Implement proper signal emission in SearchReplacePanel for external consumers
+        # self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
+        # self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
+        # controls_layout.addWidget(self.search_replace_panel)
         
-        # Insert Panel (v2.9.110)
-        self.insert_panel = InsertPanel(self, "ai_processor_insert")
-        self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
-        controls_layout.addWidget(self.insert_panel)
+        # Insert Panel (v2.9.110) - TEMPORARILY DISABLED (needs proper integration)
+        # TODO: Implement proper signal emission in InsertPanel for external consumers
+        # self.insert_panel = InsertPanel(self, "ai_processor_insert")
+        # self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
+        # controls_layout.addWidget(self.insert_panel)
         
         # Set scroll widget and add to splitter
         scroll_controls.setWidget(controls_widget)

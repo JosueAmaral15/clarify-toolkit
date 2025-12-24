@@ -62,6 +62,9 @@ from ...ui import thread_manager, FeatureType, ProcessingModal
 
 class InsertPanel(QWidget):
     request_status = Signal(str)
+    # Signal for external consumers (e.g., ai_processor_dock, json_editor_tab)
+    # Parameters: (line_no, text, mode)
+    insert_requested = Signal(int, str, str)
 
     def __init__(self, parent=None, progress_manager=None):
         super().__init__(parent)
