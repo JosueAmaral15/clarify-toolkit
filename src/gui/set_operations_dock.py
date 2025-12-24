@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal
 
-from src.set_operations import difference, intersection, symmetric_difference, union
+from src.core.set_operation_executor import SetOperationExecutor
 from src.i18n import tooltip_tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
@@ -222,116 +222,59 @@ class SetOperationsDock(BaseDock):
     def _execute(self):
         """Execute set operations."""
         files = self.file_selector.get_files()
-
-        # Validate inputs
-        if len(files) < 2:
-            self.show_error("Error", "Please select at least 2 JSON files.")
-            return
-
-        # Check at least one operation selected
         operations = self.operation_options.get_selected_operations()
-        if not operations:
-            self.show_error("Error", "Please select at least one operation.")
-            return
-
-        # Validate and load JSON files (Security: CWE-22)
-        try:
-            from src.set_operations import validate_file_path
-
-            file_dicts = []
-            for file_path in files:
-                # Security validation
-                if not validate_file_path(file_path):
-                    self.show_error(
-                        "Security Error",
-                        f"Invalid or insecure file path:\n{file_path}\n\n"
-                        "File must exist, be readable, and have .json extension.",
-                    )
-                    return
-
-                with open(file_path, "r", encoding="utf-8") as f:
-                    file_dicts.append(json.load(f))
-            
-            # Store original data for diff viewer (v2.9.99)
-            self.file_a_data = file_dicts[0] if len(file_dicts) > 0 else {}
-            self.file_b_data = file_dicts[1] if len(file_dicts) > 1 else {}
-            
-        except Exception as e:
-            self.show_error("Error Loading Files", str(e))
-            return
-
-        # Get options from widget
-        comparison_mode = self.operation_options.get_comparison_mode()
-        # Convert mode for backwards compatibility with set_operations module
-        if comparison_mode == "full_path":
-            comparison_mode = "full_path_value"
         
-        options = {
-            "comparison_mode": comparison_mode,
-            **self.operation_options.get_options()
-        }
-
-        # Execute operations
-        results = {}
-        stats_lines = []
-
-        try:
-            if '∩' in operations:
-                result = intersection(file_dicts, **options)
-                results["intersection"] = result
-                count = len(result.get("intersection", []))
-                stats_lines.append(f"✓ Intersection: {count} items")
-
-            if '∪' in operations:
-                result = union(file_dicts, **options)
-                results["union"] = result
-                count = len(result.get("union", []))
-                stats_lines.append(f"✓ Union: {count} items")
-
-            if self.chk_difference.isChecked():
-                result = difference(file_dicts, **options)
-                results["difference"] = result
-                count = len(result.get("difference", []))
-                stats_lines.append(f"✓ Difference: {count} items")
-
-            if self.chk_symmetric.isChecked():
-                if len(file_dicts) != 2:
-                    self.show_warning("Warning", "Symmetric difference only works with 2 files. Using first 2.")
-                result = symmetric_difference(file_dicts[0], file_dicts[1], **options)
-                results["symmetric_difference"] = result
-                count = len(result.get("symmetric_difference", []))
-                stats_lines.append(f"✓ Symmetric Difference: {count} items")
-
-        except Exception as e:
-            self.show_error("Error Executing Operations", str(e))
+        # Validate and load files
+        success, file_dicts, error = SetOperationExecutor.validate_and_load_files(files)
+        if not success:
+            self.show_error("Error", error)
             return
-
+        
+        # Execute operations
+        comparison_mode = self.operation_options.get_comparison_mode()
+        options = self.operation_options.get_options()
+        
+        exec_result = SetOperationExecutor.execute_operations(
+            file_dicts, operations, comparison_mode, options
+        )
+        
+        if not exec_result.success:
+            self.show_error("Error", exec_result.error)
+            return
+        
+        # Store data for diff viewer and other features
+        self.file_a_data = exec_result.file_a_data
+        self.file_b_data = exec_result.file_b_data
+        self.result_data = exec_result.results
+        
         # Display results
-        output_text = json.dumps(results, indent=2, ensure_ascii=False)
+        output_text = SetOperationExecutor.format_results_json(exec_result.results)
         self.txt_result.setText(output_text)
-
+        
         # Display statistics
-        self.lbl_stats.setText("\n".join(stats_lines))
-
-        # Store result data for export
-        self.result_data = results
-
+        self.lbl_stats.setText("\n".join(exec_result.stats_lines))
+        
         # Save to history (v2.9.94)
         try:
-            # Get primary operation (first in list)
             operation_type = operations[0] if operations else "∩"
+            result_count = SetOperationExecutor.calculate_result_count(exec_result.results)
+            
+            # Convert comparison mode for history storage
+            history_comparison_mode = comparison_mode
+            if comparison_mode == "full_path":
+                history_comparison_mode = "full_path_value"
             
             self.history_manager.add_operation(
                 operation_type=operation_type,
                 file1=files[0],
                 file2=files[1] if len(files) > 1 else files[0],
-                comparison_mode=comparison_mode,
-                result_count=sum(len(r.get(list(r.keys())[0], [])) for r in results.values()),
-                result_data=results
+                comparison_mode=history_comparison_mode,
+                result_count=result_count,
+                result_data=exec_result.results
             )
         except Exception as e:
             print(f"Warning: Failed to save operation to history: {e}")
-
+        
         # Calculate comparative statistics (v2.9.96)
         try:
             from ..statistics_manager import StatisticsManager
@@ -341,8 +284,8 @@ class SetOperationsDock(BaseDock):
             file2_stats = StatisticsManager.calculate_statistics(file_dicts[1] if len(file_dicts) > 1 else file_dicts[0])
             
             # Calculate stats for result
-            result_count = sum(len(r.get(list(r.keys())[0], [])) for r in results.values())
-            result_stats = StatisticsManager.calculate_statistics(results)
+            result_count = SetOperationExecutor.calculate_result_count(exec_result.results)
+            result_stats = StatisticsManager.calculate_statistics(exec_result.results)
             
             # Calculate overlap percentage
             overlap_pct = StatisticsManager.calculate_overlap_percentage(file1_stats, file2_stats, result_count)
