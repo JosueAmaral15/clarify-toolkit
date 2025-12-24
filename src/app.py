@@ -5708,8 +5708,31 @@ if _PYSIDE:
             shortcut_about = QShortcut(ShortcutManager.get_key_sequence("about"), self)
             shortcut_about.activated.connect(self._about_dialog)
             
+            # Tab navigation shortcuts (v2.9.113)
+            shortcut_next_tab = QShortcut(QKeySequence("Ctrl+PgDown"), self)
+            shortcut_next_tab.activated.connect(self._next_tab)
+            
+            shortcut_prev_tab = QShortcut(QKeySequence("Ctrl+PgUp"), self)
+            shortcut_prev_tab.activated.connect(self._previous_tab)
+            
             # Apply all shortcuts to menu items with tooltips (v2.9.33)
             self._apply_shortcuts_to_menu()
+        
+        def _next_tab(self):
+            """Switch to next tab (Ctrl+PgDown) - v2.9.113."""
+            current = self.tabs.currentIndex()
+            total = self.tabs.count()
+            if total > 0:
+                next_index = (current + 1) % total
+                self.tabs.setCurrentIndex(next_index)
+        
+        def _previous_tab(self):
+            """Switch to previous tab (Ctrl+PgUp) - v2.9.113."""
+            current = self.tabs.currentIndex()
+            total = self.tabs.count()
+            if total > 0:
+                prev_index = (current - 1) % total
+                self.tabs.setCurrentIndex(prev_index)
         
         def _apply_saved_settings(self):
             """Apply saved settings on startup."""
