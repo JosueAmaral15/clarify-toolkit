@@ -45,6 +45,7 @@ from PySide6.QtGui import QFont
 
 from .base_dock import BaseDock
 from src.text_to_json import convert_text_to_json, detect_format
+from src.i18n.translator import tooltip_tr
 
 # Type checking imports
 if TYPE_CHECKING:

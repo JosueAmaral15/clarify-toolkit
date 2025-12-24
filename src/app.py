@@ -137,7 +137,7 @@ from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
     JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-    EditorDock, TextToJsonDock, JSXExtractorDock
+    EditorDock, TextToJsonDock, JSXExtractorDock, DockFactory
 )
 
 # Progress Management: widgets for displaying task progress (v2.9.114 - Phase 1.1)
@@ -1264,54 +1264,36 @@ if _PYSIDE:
             self.setWindowIcon(icon)
         
         def _open_trans(self):
-            self.dock_translate = JsonTranslateDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_translate)
-            self.dock_translate.hide()
-            # dock.show()
+            DockFactory.create_json_translate_dock(self)
 
         def _open_rewrite(self):
-            self.dock_rewriter = JsonRewriterDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_rewriter)
-            self.dock_rewriter.hide()
-            #dock.show()
+            DockFactory.create_json_rewriter_dock(self)
 
         def _open_text_extractor(self):
-            self.dock_text_extractor = TextExtractorDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_extractor)
-            self.dock_text_extractor.hide()
+            DockFactory.create_text_extractor_dock(self)
         
         def _open_placeholder_replacer(self):
-            self.dock_placeholder_replacer = PlaceholderReplacerDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_placeholder_replacer)
-            self.dock_placeholder_replacer.hide()
+            DockFactory.create_placeholder_replacer_dock(self)
         
         def _open_ai_processor(self):
-            self.dock_ai_processor = AIProcessorDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_ai_processor)
-            self.dock_ai_processor.hide()
+            DockFactory.create_ai_processor_dock(self)
 
         def _open_json_search(self):
-            self.dock_json_search = JsonSearchDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_json_search)
-            self.dock_json_search.hide()
+            DockFactory.create_json_search_dock(self)
 
         def _open_case_converter(self):
-            self.dock_case_converter = CaseConverterDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_case_converter)
-            self.dock_case_converter.hide()
+            DockFactory.create_case_converter_dock(self)
         
         def _open_jsx_extractor(self):
             """Open JSX Parameter Extractor dock."""
-            self.dock_jsx_extractor = JSXExtractorDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_jsx_extractor)
-            self.dock_jsx_extractor.hide()
+            DockFactory.create_jsx_extractor_dock(self)
         
         def _open_text_to_json(self):
             """Open Text to JSON Converter dock (Task #49 - v2.9.24)."""
-            self.dock_text_to_json = TextToJsonDock(self)
-            self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_text_to_json)
-            self.dock_text_to_json.hide()
+            signal_connections = {
+                'open_in_editor_requested': self._load_json_from_converter
+            }
+            DockFactory.create_text_to_json_dock(self, signal_connections=signal_connections)
         
         def _load_json_from_converter(self, json_str: str):
             """Load JSON from text converter into main editor."""
@@ -1322,33 +1304,20 @@ if _PYSIDE:
         
         def _open_file_list(self):
             """Open File List dock (Task #33 - v2.9.11)."""
-            self.dock_file_list = FileListDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_file_list)
-            self.dock_file_list.hide()
+            DockFactory.create_file_list_dock(self)
 
         def _open_history(self):
-            if not hasattr(self, 'dock_history'):
-                self.dock_history = HistoryDock(self, max_entries=10)
-                self.addDockWidget(Qt.BottomDockWidgetArea, self.dock_history)
-                self.dock_history.hide()
+            DockFactory.create_history_dock(self)
         
         def _open_tutorials(self):
-            if not hasattr(self, 'dock_tutorials'):
-                self.dock_tutorials = TutorialsDock(self)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.dock_tutorials)
-                self.dock_tutorials.hide()
+            DockFactory.create_tutorials_dock(self)
         
         def _open_editor(self):
-            if not hasattr(self, 'dock_editor'):
-                self.dock_editor = EditorDock(self)
-                self.addDockWidget(Qt.RightDockWidgetArea, self.dock_editor)
-                self.dock_editor.hide()
+            DockFactory.create_editor_dock(self)
         
         def _open_google_translate(self):
             """Open Google Translate dock."""
-            self.dock_google_translate = GoogleTranslateDock(self)
-            self.addDockWidget(Qt.RightDockWidgetArea, self.dock_google_translate)
-            self.dock_google_translate.hide()
+            DockFactory.create_google_translate_dock(self)
         
         def _toggle_history(self, checked: bool):
             """Toggle history dock visibility."""

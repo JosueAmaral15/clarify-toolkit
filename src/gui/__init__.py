@@ -11,6 +11,9 @@ from .base_dock import (
     OptionsGroupMixin, ValidationMixin
 )
 
+# Dock Factory (v2.9.114 - Phase 3.3)
+from .dock_factory import DockFactory
+
 # Tool docks
 from .case_converter_dock import CaseConverterDock
 from .placeholder_replacer_dock import PlaceholderReplacerDock
@@ -38,6 +41,8 @@ __all__ = [
     # Mixins
     'FileInputMixin', 'ResultsOutputMixin', 'ActionButtonsMixin',
     'OptionsGroupMixin', 'ValidationMixin',
+    # Dock Factory (Phase 3.3)
+    'DockFactory',
     # Tool docks
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
