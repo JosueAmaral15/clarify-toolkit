@@ -14,6 +14,9 @@ from .base_dock import (
 # Dock Factory (v2.9.114 - Phase 3.3)
 from .dock_factory import DockFactory
 
+# Menu Builder (v2.9.114 - Phase 3.4)
+from .menu_builder import MenuBuilder
+
 # Tool docks
 from .case_converter_dock import CaseConverterDock
 from .placeholder_replacer_dock import PlaceholderReplacerDock
@@ -43,6 +46,8 @@ __all__ = [
     'OptionsGroupMixin', 'ValidationMixin',
     # Dock Factory (Phase 3.3)
     'DockFactory',
+    # Menu Builder (Phase 3.4)
+    'MenuBuilder',
     # Tool docks
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
