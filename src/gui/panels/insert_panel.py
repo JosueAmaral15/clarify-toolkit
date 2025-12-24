@@ -293,8 +293,8 @@ class InsertPanel(QWidget):
         try:
             # Get values from UI
             line_no = self.spin_line.value()
-            text = self.text_insert.toPlainText().strip()
-            mode = self.combo_mode.currentText()
+            text = self.ed_text.toPlainText().strip()
+            mode = self.cb_mode.currentText()
             
             # Validation
             if not text:
