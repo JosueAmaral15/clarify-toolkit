@@ -147,7 +147,7 @@ class WindowSettings:
             event: QCloseEvent
         """
         from PySide6.QtWidgets import QMessageBox
-        from ..utils.thread_manager import thread_manager
+        from ..ui import thread_manager
         
         # Check if there are any active threads
         active_threads = thread_manager.get_active_threads()
