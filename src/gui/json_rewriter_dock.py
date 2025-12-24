@@ -36,57 +36,12 @@ from src.accessibility_manager import AccessibilityManager
 from src.core.filters import Condition
 from src.i18n.translator import tooltip_tr
 from src.utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
+from src.utils import format_removal_statistics
 from .base_dock import BaseDock
 
 # Type checking imports
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget as QWidgetType
-
-
-def format_removal_statistics(stats: dict) -> str:
-    """
-    Format removal statistics for display.
-
-    Args:
-        stats: Dictionary with removal counters
-
-    Returns:
-        Formatted string or empty string if nothing was removed
-    """
-    lines = []
-    total = 0
-
-    # Map operation keys to display labels (Q4: specific terms)
-    labels = {
-        "dedupe": ("Removed duplicate key-value pairs", "key-value pairs"),
-        "eliminate": ("Eliminated duplicate values", "values"),
-        "numeric_keys": ("Excluded numeric keys", "keys"),
-        "empty_values": ("Skipped empty key-value pairs", "key-value pairs"),
-        "duplicate_child": ("Avoided duplicate child hierarchies", "object hierarchies"),
-        "array_duplicates_consecutive": ("Removed consecutive duplicate array elements", "array elements"),
-        "array_duplicates_all": ("Removed all duplicate array elements", "array elements"),
-        "no_siblings": ("Skipped orphan object chains", "object chains"),
-        "duplicate_objects": ("Removed duplicate objects", "objects"),
-        "advanced_filters_filtered": ("🔍 Filtered by Advanced Conditions", "files"),
-    }
-
-    # Omit operations with 0 count (Q5-B)
-    for key, (label, unit) in labels.items():
-        count = stats.get(key, 0)
-        if count > 0:
-            lines.append(f"• {label}: {count} {unit}")
-            total += count
-
-    # If nothing was removed, return empty (Q5-C handled in caller)
-    if total == 0:
-        return ""
-
-    # Format final message
-    result = "✂️ Removal Statistics:\n"
-    result += "\n".join(lines)
-    result += f"\n\nTotal: {total} items removed"
-
-    return result
 
 
 def cli_dedupe(
