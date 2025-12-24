@@ -2926,57 +2926,9 @@ if _PYSIDE:
             WindowSettings.handle_close_event(self, event)
 
         def _build_ui(self):
-            # Main container widget with vertical layout
-            main_container = QWidget()
-            main_layout = QVBoxLayout(main_container)
-            main_layout.setContentsMargins(0, 0, 0, 0)
-            main_layout.setSpacing(0)
-            
-            # Tabs (top area)
-            self.tabs = QTabWidget()
-            
-            # Enable close buttons on tabs (v2.9.40 - Task: Tools as tabs)
-            self.tabs.setTabsClosable(True)
-            self.tabs.tabCloseRequested.connect(self._close_tab)
-            
-            main_layout.addWidget(self.tabs)
-            
-            # Progress Manager (bottom area - v2.5.0)
-            self.progress_manager = ProgressManager(self)
-            main_layout.addWidget(self.progress_manager)
-            
-            # Set main container as central widget
-            self.setCentralWidget(main_container)
-            
-            # Force central widget to be visible and updated
-            main_container.setVisible(True)
-            main_container.update()
-            
-            # Status bar (Sprint 8 - v1.1.0)
-            self.statusbar = self.statusBar()
-            self.statusbar.showMessage("Ready", 3000)
-
-            # Create panels and pass progress_manager reference (using internal classes)
-            self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
-            self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
-            
-            # Aliases for backward compatibility
-            self.search_panel = self.tab_search
-            self.insert_panel = self.tab_insert
-
-            self.tabs.addTab(self.tab_search, "Search / Replace")
-            self.tabs.addTab(self.tab_insert, "Insert")
-            
-            # Mark Search/Replace and Insert as not closeable initially (fixed tabs)
-            # They will be marked as closeable when saved to QSettings
-            # (v2.9.40 - Task: Tools as tabs)
-
-            # Apply tab close button styling based on theme
-            self._apply_tab_close_button_style()
-
-            # Docks are created on-demand when user opens them via Tools menu
-            # No automatic opening to avoid cluttering the interface at startup
-            # (v2.9.40 - Now they open as tabs instead of docks)
+            """Build UI using UIBuilder (Phase 3.9)."""
+            from .gui.ui_builder import UIBuilder
+            UIBuilder.build_all(self)
         
         def _restore_prefs(self):
             """Restore preferences using WindowSettings (v2.9.114 - Phase 3.5)."""

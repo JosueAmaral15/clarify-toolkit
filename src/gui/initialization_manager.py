@@ -38,8 +38,8 @@ class InitializationManager:
         Args:
             main_window: MainWindow instance
         """
-        from ..utils.logging_config import get_logger
-        from ..utils.crash_handler import install_crash_handler
+        from ..utils.logger import get_logger
+        from ..utils.error_handler import install_crash_handler
         from ..utils.error_reporter import install_error_reporter
         from ..gui.error_report_dialog import ErrorReportDialog
         

@@ -35,20 +35,20 @@ class WindowSettings:
         Args:
             main_window: MainWindow instance
         """
-        from ..theme_manager import apply_theme
+        from ..theme_manager import ThemeManager
         from PySide6.QtWidgets import QApplication
         
         # Apply saved theme
         theme_mode = main_window.settings.get("theme", "system")
         if theme_mode == "light":
             main_window.act_theme_light.setChecked(True)
-            apply_theme(QApplication.instance(), "light")
+            ThemeManager.apply_theme(QApplication.instance(), "light")
         elif theme_mode == "dark":
             main_window.act_theme_dark.setChecked(True)
-            apply_theme(QApplication.instance(), "dark")
+            ThemeManager.apply_theme(QApplication.instance(), "dark")
         else:
             main_window.act_theme_system.setChecked(True)
-            apply_theme(QApplication.instance(), "system")
+            ThemeManager.apply_theme(QApplication.instance(), "system")
         
         # Apply saved transparency (Task #18 - v2.9.9)
         saved_opacity = int(main_window.settings.get("window_opacity", 100))
@@ -79,7 +79,7 @@ class WindowSettings:
             main_window: MainWindow instance
         """
         from ..translators import load_translation_dict  # Import from helpers
-        from ..theme_manager import apply_theme
+        from ..theme_manager import ThemeManager
         from PySide6.QtWidgets import QApplication
         
         # Note: load_prefs is now in translators.json_translate_helpers
@@ -106,7 +106,7 @@ class WindowSettings:
             main_window.act_theme_dark.setChecked(True)
         else:
             main_window.act_theme_system.setChecked(True)
-        apply_theme(QApplication.instance(), mode)
+        ThemeManager.apply_theme(QApplication.instance(), mode)
     
     @staticmethod
     def save_geometry(main_window) -> None:
