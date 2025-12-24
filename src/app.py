@@ -137,7 +137,7 @@ from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
     JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
-    EditorDock, TextToJsonDock, JSXExtractorDock, DockFactory, MenuBuilder
+    EditorDock, TextToJsonDock, JSXExtractorDock, DockFactory, MenuBuilder, WindowSettings
 )
 
 # Progress Management: widgets for displaying task progress (v2.9.114 - Phase 1.1)
@@ -2205,31 +2205,8 @@ if _PYSIDE:
                 self.tabs.setCurrentIndex(prev_index)
         
         def _apply_saved_settings(self):
-            """Apply saved settings on startup."""
-            # Apply saved theme
-            theme_mode = self.settings.get("theme", "system")
-            if theme_mode == "light":
-                self.act_theme_light.setChecked(True)
-                apply_theme(QApplication.instance(), "light")
-            elif theme_mode == "dark":
-                self.act_theme_dark.setChecked(True)
-                apply_theme(QApplication.instance(), "dark")
-            else:
-                self.act_theme_system.setChecked(True)
-                apply_theme(QApplication.instance(), "system")
-            
-            # Apply saved transparency (Task #18 - v2.9.9)
-            saved_opacity = int(self.settings.get("window_opacity", 100))
-            opacity = saved_opacity / 100.0
-            self.setWindowOpacity(opacity)
-            
-            # Apply to all existing docks
-            dock_names = ['dock_translate', 'dock_rewriter', 'dock_text_extractor',
-                         'dock_placeholder_replacer', 'dock_ai_processor',
-                         'dock_json_search', 'dock_case_converter', 'dock_history']
-            for dock_name in dock_names:
-                if hasattr(self, dock_name):
-                    getattr(self, dock_name).setWindowOpacity(opacity)
+            """Apply saved settings using WindowSettings (v2.9.114 - Phase 3.5)."""
+            WindowSettings.apply_saved_settings(self)
         
         def get_current_json(self):
             """Get current JSON data (placeholder for plugin integration)."""
@@ -3122,65 +3099,8 @@ if _PYSIDE:
             self.statusBar().showMessage(f"Focused: {dock.windowTitle()}", 2000)
         
         def closeEvent(self, event):
-            """Handle window close event with thread cleanup (v2.7.0)."""
-            # Check if there are any active threads
-            active_threads = thread_manager.get_active_threads()
-            has_active_threads = any(count > 0 for count in active_threads.values())
-            
-            if has_active_threads:
-                # Warn user about active threads
-                reply = QMessageBox.warning(
-                    self,
-                    "Active Processing",
-                    "There are still active operations running:\n\n" + 
-                    "\n".join([f"- {feature.value}: {count} active" 
-                              for feature, count in active_threads.items() if count > 0]) +
-                    "\n\nDo you want to cancel all operations and exit?",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                
-                if reply == QMessageBox.No:
-                    event.ignore()
-                    return
-                
-                # User confirmed, wait for threads to finish
-                self.statusBar().showMessage("Canceling active operations...")
-                if not thread_manager.wait_all_threads(timeout_ms=5000):
-                    # Some threads didn't finish in time
-                    reply = QMessageBox.critical(
-                        self,
-                        "Force Close",
-                        "Some operations did not finish in time.\n\n"
-                        "Force close application? (may cause data loss)",
-                        QMessageBox.Yes | QMessageBox.No
-                    )
-                    
-                    if reply == QMessageBox.No:
-                        event.ignore()
-                        return
-                    
-                    # Force cleanup
-                    thread_manager.force_cleanup()
-            
-            # Normal exit confirmation
-            if self.settings.get("confirm_on_exit", True):
-                reply = QMessageBox.question(
-                    self,
-                    "Exit Clarify",
-                    "Are you sure you want to exit?",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                
-                if reply == QMessageBox.Yes:
-                    # Save window geometry
-                    self.settings.set("window_geometry", self.saveGeometry().toHex().data().decode())
-                    event.accept()
-                else:
-                    event.ignore()
-            else:
-                # Save window geometry
-                self.settings.set("window_geometry", self.saveGeometry().toHex().data().decode())
-                event.accept()
+            """Handle window close event using WindowSettings (v2.9.114 - Phase 3.5)."""
+            WindowSettings.handle_close_event(self, event)
 
         def _build_ui(self):
             # Main container widget with vertical layout
@@ -3236,15 +3156,8 @@ if _PYSIDE:
             # (v2.9.40 - Now they open as tabs instead of docks)
         
         def _restore_prefs(self):
-            cfg = load_prefs()
-            mode = cfg.get("THEME", "mode", fallback="system")
-            if mode == "light":
-                self.act_theme_light.setChecked(True)
-            elif mode == "dark":
-                self.act_theme_dark.setChecked(True)
-            else:
-                self.act_theme_system.setChecked(True)
-            apply_theme(QApplication.instance(), mode)
+            """Restore preferences using WindowSettings (v2.9.114 - Phase 3.5)."""
+            WindowSettings.restore_prefs(self)
             
         
 # =============================================================================

@@ -17,6 +17,9 @@ from .dock_factory import DockFactory
 # Menu Builder (v2.9.114 - Phase 3.4)
 from .menu_builder import MenuBuilder
 
+# Window Settings (v2.9.114 - Phase 3.5)
+from .window_settings import WindowSettings
+
 # Tool docks
 from .case_converter_dock import CaseConverterDock
 from .placeholder_replacer_dock import PlaceholderReplacerDock
@@ -48,6 +51,8 @@ __all__ = [
     'DockFactory',
     # Menu Builder (Phase 3.4)
     'MenuBuilder',
+    # Window Settings (Phase 3.5)
+    'WindowSettings',
     # Tool docks
     'CaseConverterDock', 'PlaceholderReplacerDock', 'JsonSearchDock',
     'TextExtractorDock', 'AIProcessorDock', 'JsonTranslateDock',
