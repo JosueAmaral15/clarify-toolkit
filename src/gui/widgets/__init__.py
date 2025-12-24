@@ -10,6 +10,7 @@ from .operation_options_widget import OperationOptionsWidget
 from .file_filter_panel import FileFilterPanel
 from .preset_manager import PresetManager
 from .file_list_table_manager import FileListTableManager
+from .syntax_highlighter import SyntaxHighlighter
 
 __all__ = [
     'PathEntry', 
@@ -17,5 +18,6 @@ __all__ = [
     'OperationOptionsWidget', 
     'FileFilterPanel', 
     'PresetManager',
-    'FileListTableManager'
+    'FileListTableManager',
+    'SyntaxHighlighter'
 ]
