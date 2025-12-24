@@ -21,9 +21,6 @@ import os
 from typing import Any, Dict, List
 
 from PySide6.QtWidgets import (
-    QButtonGroup,
-    QCheckBox,
-    QComboBox,
     QDialog,
     QFileDialog,
     QFrame,
@@ -34,7 +31,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QPushButton,
-    QRadioButton,
     QScrollArea,
     QTextEdit,
     QVBoxLayout,
@@ -46,7 +42,7 @@ from src.set_operations import difference, intersection, symmetric_difference, u
 from src.i18n import tooltip_tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
-from .widgets import FileSelectionWidget
+from .widgets import FileSelectionWidget, OperationOptionsWidget
 from ..history_manager import HistoryManager
 from .history_dialog import HistoryDialog
 from ..presets_manager import PresetsManager
@@ -86,85 +82,9 @@ class SetOperationsDock(BaseDock):
         )
         main_layout.addWidget(self.file_selector)
 
-        # === Operations Section ===
-        ops_group = QGroupBox("Operations (Pipeline: Left → Right)")
-        ops_layout = QVBoxLayout()
-
-        ops_layout.addWidget(QLabel("Select operations to perform:"))
-        self.chk_intersection = QCheckBox("∩ Intersection")
-        self.chk_intersection.setToolTip(tooltip_tr("set_ops.intersection"))
-        self.chk_union = QCheckBox("∪ Union")
-        self.chk_union.setToolTip(tooltip_tr("set_ops.union"))
-        self.chk_difference = QCheckBox("− Difference")
-        self.chk_difference.setToolTip(tooltip_tr("set_ops.difference"))
-        self.chk_symmetric = QCheckBox("⊕ Symmetric Difference (2 files only)")
-        self.chk_symmetric.setToolTip(tooltip_tr("set_ops.symmetric"))
-
-        ops_layout.addWidget(self.chk_intersection)
-        ops_layout.addWidget(self.chk_union)
-        ops_layout.addWidget(self.chk_difference)
-        ops_layout.addWidget(self.chk_symmetric)
-
-        ops_group.setLayout(ops_layout)
-        main_layout.addWidget(ops_group)
-
-        # === Comparison Mode Section ===
-        comp_group = QGroupBox("Comparison Mode")
-        comp_layout = QVBoxLayout()
-
-        self.radio_key_value = QRadioButton("Keys and values (strict types)")
-        self.radio_key_value.setChecked(True)
-        self.radio_key_value.setToolTip(tooltip_tr("set_ops.radio_key_value"))
-        self.radio_full_path = QRadioButton("Full path and values (dot notation)")
-        self.radio_full_path.setToolTip(tooltip_tr("set_ops.radio_full_path"))
-        self.radio_key_only = QRadioButton("Keys only (path)")
-        self.radio_key_only.setToolTip(tooltip_tr("set_ops.radio_key_only"))
-
-        self.comp_mode_group = QButtonGroup()
-        self.comp_mode_group.addButton(self.radio_key_value)
-        self.comp_mode_group.addButton(self.radio_full_path)
-        self.comp_mode_group.addButton(self.radio_key_only)
-
-        comp_layout.addWidget(self.radio_key_value)
-        comp_layout.addWidget(self.radio_full_path)
-        comp_layout.addWidget(self.radio_key_only)
-
-        comp_group.setLayout(comp_layout)
-        main_layout.addWidget(comp_group)
-
-        # === Options Section ===
-        opts_group = QGroupBox("Options")
-        opts_layout = QVBoxLayout()
-
-        self.chk_ignore_case_keys = QCheckBox("Ignore case in keys")
-        self.chk_ignore_case_keys.setToolTip(tooltip_tr("set_ops.ignore_case_keys"))
-        self.chk_ignore_case_values = QCheckBox("Ignore case in values")
-        self.chk_ignore_case_values.setToolTip(tooltip_tr("set_ops.ignore_case_values"))
-        self.chk_skip_empty = QCheckBox("Skip empty values")
-        self.chk_skip_empty.setToolTip(tooltip_tr("set_ops.skip_empty"))
-        self.chk_arrays_ignore_order = QCheckBox("Arrays: ignore order")
-        self.chk_arrays_ignore_order.setToolTip(tooltip_tr("set_ops.arrays_ignore_order"))
-
-        opts_layout.addWidget(self.chk_ignore_case_keys)
-        opts_layout.addWidget(self.chk_ignore_case_values)
-        opts_layout.addWidget(self.chk_skip_empty)
-        opts_layout.addWidget(self.chk_arrays_ignore_order)
-
-        opts_group.setLayout(opts_layout)
-        main_layout.addWidget(opts_group)
-
-        # === Output Format Section ===
-        output_group = QGroupBox("Output Format")
-        output_layout = QVBoxLayout()
-
-        output_layout.addWidget(QLabel("Select output organization:"))
-        self.combo_output = QComboBox()
-        self.combo_output.addItems(["JSON nested (all operations)", "Separate files", "Display only (no save)"])
-        self.combo_output.setToolTip(tooltip_tr("set_ops.combo_output"))
-        output_layout.addWidget(self.combo_output)
-
-        output_group.setLayout(output_layout)
-        main_layout.addWidget(output_group)
+        # === Operation Options Section ===
+        self.operation_options = OperationOptionsWidget()
+        main_layout.addWidget(self.operation_options)
 
         # === Action Buttons ===
         btn_layout = QHBoxLayout()
@@ -275,53 +195,7 @@ class SetOperationsDock(BaseDock):
     
     def _apply_accessibility(self):
         """Apply accessibility labels to widgets (v2.9.104)."""
-        # File selection accessibility is handled by FileSelectionWidget
-        
-        # Operations
-        AccessibilityManager.set_accessible_widget(
-            self.chk_intersection, "Set Operations - Checkbox - Intersection",
-            "Calculate intersection (common keys between files)"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_union, "Set Operations - Checkbox - Union",
-            "Calculate union (all keys from all files)"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_difference, "Set Operations - Checkbox - Difference",
-            "Calculate difference (keys in A not in B)"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_symmetric, "Set Operations - Checkbox - Symmetric Difference",
-            "Calculate symmetric difference (keys in A or B but not both)"
-        )
-        
-        # Comparison modes
-        AccessibilityManager.set_accessible_widget(
-            self.radio_key_value, "Set Operations - Radio - Key Value Mode",
-            "Compare keys and values with strict types"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.radio_full_path, "Set Operations - Radio - Full Path Mode",
-            "Compare full paths using dot notation (deep nested)"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.radio_key_only, "Set Operations - Radio - Key Only Mode",
-            "Compare only keys ignoring values"
-        )
-        
-        # Advanced options
-        AccessibilityManager.set_accessible_widget(
-            self.chk_ignore_case_keys, "Set Operations - Checkbox - Ignore Case Keys",
-            "Treat 'Name' and 'name' as identical keys"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_ignore_case_values, "Set Operations - Checkbox - Ignore Case Values",
-            "Treat 'Hello' and 'hello' as identical values"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_skip_empty, "Set Operations - Checkbox - Skip Empty",
-            "Skip null, empty string, empty array, empty object values"
-        )
+        # File selection and operation options accessibility are handled by their widgets
         
         # Action buttons
         AccessibilityManager.set_accessible_widget(
@@ -355,14 +229,8 @@ class SetOperationsDock(BaseDock):
             return
 
         # Check at least one operation selected
-        if not any(
-            [
-                self.chk_intersection.isChecked(),
-                self.chk_union.isChecked(),
-                self.chk_difference.isChecked(),
-                self.chk_symmetric.isChecked(),
-            ]
-        ):
+        operations = self.operation_options.get_selected_operations()
+        if not operations:
             self.show_error("Error", "Please select at least one operation.")
             return
 
@@ -392,19 +260,15 @@ class SetOperationsDock(BaseDock):
             self.show_error("Error Loading Files", str(e))
             return
 
-        # Get options
-        comparison_mode = "key_value"
-        if self.radio_full_path.isChecked():
+        # Get options from widget
+        comparison_mode = self.operation_options.get_comparison_mode()
+        # Convert mode for backwards compatibility with set_operations module
+        if comparison_mode == "full_path":
             comparison_mode = "full_path_value"
-        elif self.radio_key_only.isChecked():
-            comparison_mode = "key_only"
-
+        
         options = {
             "comparison_mode": comparison_mode,
-            "ignore_case_keys": self.chk_ignore_case_keys.isChecked(),
-            "ignore_case_values": self.chk_ignore_case_values.isChecked(),
-            "skip_empty": self.chk_skip_empty.isChecked(),
-            "arrays_ignore_order": self.chk_arrays_ignore_order.isChecked(),
+            **self.operation_options.get_options()
         }
 
         # Execute operations
@@ -412,13 +276,13 @@ class SetOperationsDock(BaseDock):
         stats_lines = []
 
         try:
-            if self.chk_intersection.isChecked():
+            if '∩' in operations:
                 result = intersection(file_dicts, **options)
                 results["intersection"] = result
                 count = len(result.get("intersection", []))
                 stats_lines.append(f"✓ Intersection: {count} items")
 
-            if self.chk_union.isChecked():
+            if '∪' in operations:
                 result = union(file_dicts, **options)
                 results["union"] = result
                 count = len(result.get("union", []))
@@ -454,14 +318,8 @@ class SetOperationsDock(BaseDock):
 
         # Save to history (v2.9.94)
         try:
-            # Determine primary operation (first checked)
-            operation_type = "⊕"  # Default symmetric diff
-            if self.chk_intersection.isChecked():
-                operation_type = "∩"
-            elif self.chk_union.isChecked():
-                operation_type = "∪"
-            elif self.chk_difference.isChecked():
-                operation_type = "−"
+            # Get primary operation (first in list)
+            operation_type = operations[0] if operations else "∩"
             
             self.history_manager.add_operation(
                 operation_type=operation_type,
@@ -595,19 +453,19 @@ class SetOperationsDock(BaseDock):
             return
         
         # Determine operation source description
-        operation = "Unknown"
-        if self.rad_intersection.isChecked():
-            operation = "Intersection (∩)"
-        elif self.rad_union.isChecked():
-            operation = "Union (∪)"
-        elif self.rad_difference.isChecked():
-            operation = "Difference (−)"
-        elif self.rad_symmetric_diff.isChecked():
-            operation = "Symmetric Difference (⊕)"
+        operations = self.operation_options.get_selected_operations()
+        operation_names = {
+            '∩': 'Intersection (∩)',
+            '∪': 'Union (∪)',
+            '−': 'Difference (−)',
+            '⊕': 'Symmetric Difference (⊕)'
+        }
+        operation = operation_names.get(operations[0], "Unknown") if operations else "Unknown"
         
         # Get file names for source description
-        file_a = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
-        file_b = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        files = self.file_selector.get_files()
+        file_a = os.path.basename(files[0]) if files else "File A"
+        file_b = os.path.basename(files[1]) if len(files) > 1 else "File B"
         
         source = f"Set Operations: {operation} ({file_a}, {file_b})"
         
@@ -625,15 +483,14 @@ class SetOperationsDock(BaseDock):
         from .diff_viewer_dialog import DiffViewerDialog
         
         # Get file names
-        file_a_name = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
-        file_b_name = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        files = self.file_selector.get_files()
+        file_a_name = os.path.basename(files[0]) if files else "File A"
+        file_b_name = os.path.basename(files[1]) if len(files) > 1 else "File B"
         
         # Get current comparison mode
-        comparison_mode = "key_value"
-        if self.radio_full_path.isChecked():
-            comparison_mode = "full_path_value"
-        elif self.radio_key_only.isChecked():
-            comparison_mode = "key_only"
+        comparison_mode = self.operation_options.get_comparison_mode()
+        if comparison_mode == "full_path":
+            comparison_mode = "full_path_value"  # Adapt for dialog
         
         dialog = DiffViewerDialog(
             self.file_a_data,
@@ -654,15 +511,14 @@ class SetOperationsDock(BaseDock):
         from .venn_diagram_dialog import VennDiagramDialog
         
         # Get file names
-        file_a_name = os.path.basename(self.ed_file_a.text()) if self.ed_file_a.text() else "File A"
-        file_b_name = os.path.basename(self.ed_file_b.text()) if self.ed_file_b.text() else "File B"
+        files = self.file_selector.get_files()
+        file_a_name = os.path.basename(files[0]) if files else "File A"
+        file_b_name = os.path.basename(files[1]) if len(files) > 1 else "File B"
         
         # Get current comparison mode
-        comparison_mode = "key_value"
-        if self.radio_full_path.isChecked():
-            comparison_mode = "full_path_value"
-        elif self.radio_key_only.isChecked():
-            comparison_mode = "key_only"
+        comparison_mode = self.operation_options.get_comparison_mode()
+        if comparison_mode == "full_path":
+            comparison_mode = "full_path_value"  # Adapt for dialog
         
         dialog = VennDiagramDialog(
             self.file_a_data,
@@ -681,7 +537,8 @@ class SetOperationsDock(BaseDock):
             return
         
         # Get file A path (default merge target)
-        file_a_path = self.ed_file_a.text()
+        files = self.file_selector.get_files()
+        file_a_path = files[0] if files else ""
         if not file_a_path or not os.path.exists(file_a_path):
             self.show_warning("No File", "No valid file selected to merge into.")
             return
@@ -743,6 +600,7 @@ class SetOperationsDock(BaseDock):
     def _clear_all(self):
         """Clear all inputs and results."""
         self.file_selector.clear()
+        self.operation_options.clear()
         self.txt_result.clear()
         self.lbl_stats.clear()
         self.txt_statistics.clear()
@@ -753,12 +611,6 @@ class SetOperationsDock(BaseDock):
         self.btn_view_venn.setEnabled(False)
         self.btn_merge.setEnabled(False)
         self.btn_store_calc.setEnabled(False)
-
-        # Reset checkboxes
-        self.chk_intersection.setChecked(False)
-        self.chk_union.setChecked(False)
-        self.chk_difference.setChecked(False)
-        self.chk_symmetric.setChecked(False)
 
     def _show_history(self):
         """Show operation history dialog (v2.9.94)."""
@@ -778,32 +630,17 @@ class SetOperationsDock(BaseDock):
         """
         try:
             # Set files
-            self.ed_file_a.setText(entry["file1"])
-            self.ed_file_b.setText(entry["file2"])
+            files = [entry["file1"], entry["file2"]]
+            self.file_selector.set_files(files)
             
-            # Set comparison mode
-            if entry["comparison_mode"] == "full_path_value":
-                self.radio_full_path.setChecked(True)
-            elif entry["comparison_mode"] == "key_only":
-                self.radio_key_only.setChecked(True)
-            else:
-                self.radio_key_value.setChecked(True)
-            
-            # Set operation type
-            op_map = {
-                "∩": self.chk_intersection,
-                "∪": self.chk_union,
-                "−": self.chk_difference,
-                "⊕": self.chk_symmetric
+            # Set configuration using operation_options widget
+            config = {
+                'operations': [entry["operation_type"]],
+                'comparison_mode': entry["comparison_mode"].replace('_value', ''),  # Convert full_path_value -> full_path
+                'options': {},
+                'output_format': 'nested'
             }
-            
-            # Uncheck all first
-            for chk in op_map.values():
-                chk.setChecked(False)
-            
-            # Check the one from history
-            if entry["operation_type"] in op_map:
-                op_map[entry["operation_type"]].setChecked(True)
+            self.operation_options.set_configuration(config)
             
             # Execute
             self._execute()
@@ -828,35 +665,21 @@ class SetOperationsDock(BaseDock):
             preset: Preset data dictionary
         """
         try:
-            # Set comparison mode
-            if preset.get("comparison_mode") == "full_path_value":
-                self.radio_full_path.setChecked(True)
-            elif preset.get("comparison_mode") == "key_only":
-                self.radio_key_only.setChecked(True)
-            else:
-                self.radio_key_value.setChecked(True)
-            
-            # Set operation type
-            op_map = {
-                "∩": self.chk_intersection,
-                "∪": self.chk_union,
-                "−": self.chk_difference,
-                "⊕": self.chk_symmetric
+            # Create configuration dictionary for operation_options
+            config = {
+                'operations': [preset.get('operation_type', '∩')],
+                'comparison_mode': preset.get('comparison_mode', 'key_value').replace('_value', ''),
+                'options': {
+                    'ignore_case_keys': preset.get('ignore_case_keys', False),
+                    'ignore_case_values': preset.get('ignore_case_values', False),
+                    'skip_empty': preset.get('skip_empty', True),
+                    'arrays_ignore_order': preset.get('arrays_ignore_order', False)
+                },
+                'output_format': 'nested'
             }
             
-            # Uncheck all first
-            for chk in op_map.values():
-                chk.setChecked(False)
-            
-            # Check the one from preset
-            if preset.get("operation_type") in op_map:
-                op_map[preset["operation_type"]].setChecked(True)
-            
-            # Set options
-            self.chk_ignore_case_keys.setChecked(preset.get("ignore_case_keys", False))
-            self.chk_ignore_case_values.setChecked(preset.get("ignore_case_values", False))
-            self.chk_skip_empty.setChecked(preset.get("skip_empty", True))
-            self.chk_arrays_ignore_order.setChecked(preset.get("arrays_ignore_order", False))
+            # Load configuration into widget
+            self.operation_options.set_configuration(config)
             
             # Load favorite files if any
             favorite_files = preset.get("favorite_files", [])
@@ -899,21 +722,15 @@ class SetOperationsDock(BaseDock):
                 return
         
         try:
-            # Determina operação selecionada
-            operation_type = "⊕"  # Default
-            if self.chk_intersection.isChecked():
-                operation_type = "∩"
-            elif self.chk_union.isChecked():
-                operation_type = "∪"
-            elif self.chk_difference.isChecked():
-                operation_type = "−"
+            # Get configuration from widgets
+            operations = self.operation_options.get_selected_operations()
+            operation_type = operations[0] if operations else "∩"
             
-            # Determina comparison mode
-            comparison_mode = "key_value"
-            if self.radio_full_path.isChecked():
-                comparison_mode = "full_path_value"
-            elif self.radio_key_only.isChecked():
-                comparison_mode = "key_only"
+            comparison_mode = self.operation_options.get_comparison_mode()
+            if comparison_mode == "full_path":
+                comparison_mode = "full_path_value"  # Convert for storage
+            
+            options = self.operation_options.get_options()
             
             # Coleta arquivos atuais (favorite files)
             favorite_files = self.file_selector.get_files()
@@ -923,10 +740,10 @@ class SetOperationsDock(BaseDock):
                 name=name,
                 operation_type=operation_type,
                 comparison_mode=comparison_mode,
-                ignore_case_keys=self.chk_ignore_case_keys.isChecked(),
-                ignore_case_values=self.chk_ignore_case_values.isChecked(),
-                skip_empty=self.chk_skip_empty.isChecked(),
-                arrays_ignore_order=self.chk_arrays_ignore_order.isChecked(),
+                ignore_case_keys=options['ignore_case_keys'],
+                ignore_case_values=options['ignore_case_values'],
+                skip_empty=options['skip_empty'],
+                arrays_ignore_order=options['arrays_ignore_order'],
                 favorite_files=favorite_files
             )
             
