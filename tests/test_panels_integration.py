@@ -79,11 +79,11 @@ class TestSearchReplacePanel:
         """Test replace_requested signal emission."""
         signal_received = []
         
-        def on_replace(needle, replacement, options, preserve_case, count):
-            signal_received.append((needle, replacement, options, preserve_case, count))
+        def on_replace(file_name_query, file_content_query, replacement, options, preserve_case, count):
+            signal_received.append((file_name_query, file_content_query, replacement, options, preserve_case, count))
         
         search_replace_panel.replace_requested.connect(on_replace)
-        search_replace_panel.set_needle("foo")
+        search_replace_panel.set_file_content_query("foo")
         search_replace_panel.set_replacement("bar")
         
         # Simulate button click
@@ -91,18 +91,20 @@ class TestSearchReplacePanel:
             search_replace_panel.btn_replace.click()
         
         assert len(signal_received) == 1
-        needle, replacement, options, preserve_case, count = signal_received[0]
-        assert needle == "foo"
+        file_name_query, file_content_query, replacement, options, preserve_case, count = signal_received[0]
+        assert file_content_query == "foo"
         assert replacement == "bar"
         assert isinstance(options, SearchOptions)
     
     def test_clear_inputs(self, search_replace_panel):
         """Test clearing input fields."""
-        search_replace_panel.set_needle("test")
+        search_replace_panel.set_file_name_query("test")
+        search_replace_panel.set_file_content_query("foo")
         search_replace_panel.set_replacement("replaced")
         search_replace_panel.clear_inputs()
         
-        assert search_replace_panel.get_needle() == ""
+        assert search_replace_panel.get_file_name_query() == ""
+        assert search_replace_panel.get_file_content_query() == ""
         assert search_replace_panel.get_replacement() == ""
 
 

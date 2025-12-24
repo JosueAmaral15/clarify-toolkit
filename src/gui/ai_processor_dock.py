@@ -943,18 +943,22 @@ class AIProcessorDock(StandardToolDock):
         self.session_output_tokens = 0
         self._update_stats_display()
     
-    def _handle_replace_in_results(self, needle, replacement, options, preserve_case, count):
+    def _handle_replace_in_results(self, file_name_query, file_content_query, replacement, 
+                                   options, preserve_case, count):
         """
         Handle search/replace in results text (v2.9.110).
         
         Pattern: Command (GoF)
         Args:
-            needle: Search text
+            file_name_query: File name search pattern (not used in text results)
+            file_content_query: File content search text
             replacement: Replacement text
             options: SearchOptions (case_sensitive, whole_word, regex)
             preserve_case: Preserve case pattern
             count: Number of replacements (0 = all)
         """
+        # For results text, only file_content_query is used
+        needle = file_content_query if file_content_query else file_name_query
         content = self.text_results.toPlainText()
         if not content:
             self.show_warning("No Results", "No results to process. Run AI processor first.")
