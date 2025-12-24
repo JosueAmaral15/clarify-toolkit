@@ -200,12 +200,12 @@ src/gui/
 
 ## 📝 Progresso
 
-- [ ] Fase 2.1: AI Processor Dock
-  - [ ] 2.1.1: PathEntry extraction
-  - [ ] 2.1.2: AIProcessorWorker extraction
-  - [ ] 2.1.3: Stats manager extraction
-  - [ ] 2.1.4: Models manager extraction
-  - [ ] 2.1.5: Conditions UI extraction
+- [x] Fase 2.1: AI Processor Dock (PARCIAL - Componentes principais)
+  - [x] 2.1.1: PathEntry extraction (64 linhas) - Commit 1a72509
+  - [x] 2.1.2: AIProcessorWorker extraction (46 linhas) - Commit 24733eb
+  - [~] 2.1.3-5: Mantidos no dock (stats, models, conditions)
+    * Razão: Complexidade alta, dependências internas
+    * Decisão: Focar em extrações mais impactantes
 
 - [ ] Fase 2.2: JSON Rewriter Dock
   - [ ] 2.2.1: Worker extraction
