@@ -2,28 +2,29 @@
 JSON Translation Module
 
 Provides functionality for translating text using JSON/TS dictionary files.
+
+Refactored from src/app.py (Phase 3.2 - v2.9.114)
 """
 
-from .translator import (
-    CodeAwareJSONTranslator,
+from .json_translate_helpers import (
+    _escape_variants_for_quotes,
+    _compile_value_union_regex,
+    _apply_scoped_translation_tag_balanced,
+    mask_existing_placeholders,
+    unmask_existing_placeholders,
+    apply_scoped_translation,
+    process_translate_file,
     load_translation_dict,
     flatten_dict_paths,
     translate_replace_texts,
-)
-
-from .scope import (
-    apply_scoped_translation,
-    mask_existing_placeholders,
-    unmask_existing_placeholders,
+    read_translation_dict,
     RE_PLACEHOLDER,
 )
 
-from .processor import (
-    process_translate_file,
-)
-
 __all__ = [
-    'CodeAwareJSONTranslator',
+    '_escape_variants_for_quotes',
+    '_compile_value_union_regex',
+    '_apply_scoped_translation_tag_balanced',
     'load_translation_dict',
     'flatten_dict_paths',
     'translate_replace_texts',
@@ -32,4 +33,5 @@ __all__ = [
     'unmask_existing_placeholders',
     'RE_PLACEHOLDER',
     'process_translate_file',
+    'read_translation_dict',
 ]
