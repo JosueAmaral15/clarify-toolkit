@@ -364,17 +364,37 @@ class AIProcessorDock(StandardToolDock):
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
         
-        # Search/Replace Panel (v2.9.110) - TEMPORARILY DISABLED (needs proper integration)
-        # TODO: Implement proper signal emission in SearchReplacePanel for external consumers
-        # self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
-        # self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
-        # controls_layout.addWidget(self.search_replace_panel)
+        # Search/Replace Panel (v2.9.110 - Re-enabled with emit methods)
+        search_replace_group = QGroupBox("Search/Replace in Results")
+        search_replace_layout = QVBoxLayout()
+        self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
+        self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
+        search_replace_layout.addWidget(self.search_replace_panel)
         
-        # Insert Panel (v2.9.110) - TEMPORARILY DISABLED (needs proper integration)
-        # TODO: Implement proper signal emission in InsertPanel for external consumers
-        # self.insert_panel = InsertPanel(self, "ai_processor_insert")
-        # self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
-        # controls_layout.addWidget(self.insert_panel)
+        # Add button to trigger replace signal
+        btn_replace_results = QPushButton("Apply Replace to Results")
+        btn_replace_results.setToolTip("Apply search/replace configuration to AI processing results")
+        btn_replace_results.clicked.connect(self.search_replace_panel.emit_replace_request)
+        search_replace_layout.addWidget(btn_replace_results)
+        
+        search_replace_group.setLayout(search_replace_layout)
+        controls_layout.addWidget(search_replace_group)
+        
+        # Insert Panel (v2.9.110 - Re-enabled with emit methods)
+        insert_group = QGroupBox("Insert in Prompt")
+        insert_layout = QVBoxLayout()
+        self.insert_panel = InsertPanel(self, "ai_processor_insert")
+        self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
+        insert_layout.addWidget(self.insert_panel)
+        
+        # Add button to trigger insert signal
+        btn_insert_prompt = QPushButton("Apply Insert to Prompt")
+        btn_insert_prompt.setToolTip("Apply insert configuration to AI prompt text")
+        btn_insert_prompt.clicked.connect(self.insert_panel.emit_insert_request)
+        insert_layout.addWidget(btn_insert_prompt)
+        
+        insert_group.setLayout(insert_layout)
+        controls_layout.addWidget(insert_group)
         
         # Set scroll widget and add to splitter
         scroll_controls.setWidget(controls_widget)

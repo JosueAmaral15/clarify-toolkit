@@ -318,6 +318,52 @@ class SearchReplacePanel(QWidget):
     def change_advanced_conditions(self):
         self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)
     
+    def emit_replace_request(self):
+        """
+        Public method to emit replace_requested signal with current panel state.
+        
+        Useful for external consumers (e.g., ai_processor_dock, json_editor_tab)
+        that want to perform replace operations on their own content using
+        this panel's search/replace configuration.
+        
+        Returns:
+            bool: True if signal was emitted, False if validation failed
+        """
+        try:
+            # Get values from UI
+            file_name_query = self.ed_filename_query.text().strip()
+            file_content_query = self.ed_query.toPlainText().strip()
+            replacement = self.ed_repl.toPlainText().strip()
+            
+            # Validation
+            if not file_content_query and not file_name_query:
+                return False
+            
+            # Build SearchOptions
+            options = SearchOptions(
+                case_sensitive=self.chk_case.isChecked(),
+                whole_word=self.chk_word.isChecked(),
+                regex=self.chk_regex.isChecked()
+            )
+            
+            preserve_case = self.chk_preserve.isChecked()
+            count = 0  # 0 = replace all
+            
+            # Emit signal
+            self.replace_requested.emit(
+                file_name_query,
+                file_content_query,
+                replacement,
+                options,
+                preserve_case,
+                count
+            )
+            return True
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to emit replace_requested: {e}")
+            return False
+    
     def _add_condition_row(self):
         """Add a new dynamic condition row (Task #5 - v2.9.7)"""
         row_i = self.next_cond_row
