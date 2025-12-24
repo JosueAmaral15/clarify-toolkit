@@ -146,6 +146,9 @@ from .gui.progress import (
     ProgressManager, OperationHistory
 )
 
+# Search/Replace Panels: worker and components (v2.9.114 - Phase 1.2)
+from .gui.panels import SearchWorker
+
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
 # ---------------------------------------------------------------------------
@@ -1205,8 +1208,8 @@ def build_file_list(root: str, include_globs: List[str], exclude_globs: List[str
 # =============================================================================
 
 if _PYSIDE:
-
-    class SearchWorker(QObject):
+    
+    class ResultsTree(QTreeWidget):
         # Signals with enhanced progress tracking (v2.5.0+)
         progress = Signal(str)  # Current file being processed
         progress_detailed = Signal(int, int, str)  # (current, total, message) for progress bar
