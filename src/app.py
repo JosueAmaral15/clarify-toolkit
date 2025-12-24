@@ -1082,102 +1082,10 @@ if _PYSIDE:
     class MainWindow(QMainWindow):
         def __init__(self, app: QApplication):
             super().__init__()
-            self.app = app
             
-            # Initialize logging system (v2.9.58)
-            self.logger = get_logger("clarify.app.MainWindow")
-            self.logger.info("Initializing Clarify application")
-            
-            # Initialize error reporter (v2.9.89)
-            from .utils.error_reporter import install_error_reporter
-            from .gui.error_report_dialog import ErrorReportDialog
-            self.error_reporter = install_error_reporter(app_version="2.9.89")
-            self.error_dialog = ErrorReportDialog(self)
-            self.error_reporter.dialog = self.error_dialog
-            self.logger.info("Error reporter installed")
-            
-            # Initialize crash handler (v2.9.61)
-            # Install global exception handler with dialog
-            self.crash_handler = install_crash_handler(
-                show_dialog=True,
-                report_crashes=False  # Opt-in only
-            )
-            self.logger.info("Crash handler installed")
-            
-            # Run database migrations BEFORE loading config/settings (v2.9.91)
-            from .migration_manager import run_migrations
-            migrations_ok = run_migrations()
-            if not migrations_ok:
-                self.logger.warning("Migrations failed, continuing with current version")
-            
-            # Initialize translator (Task #24 - v2.9.10)
-            self.translator = get_translator()
-            self.translator.languageChanged.connect(self._on_language_changed)
-            
-            self.setWindowTitle(tr("app.title"))
-            #self.resize(1080, 720)
-
-            # Initialize settings manager
-            from .settings_manager import get_settings
-            self.settings = get_settings()
-            
-            # Initialize QSettings for accessibility (v2.9.40 - compatibility fix)
-            from PySide6.QtCore import QSettings
-            self.settings.qsettings = QSettings("Clarify", "ClarifyApp")
-            
-            # Load custom shortcuts (v2.9.33)
-            from .shortcut_manager import ShortcutManager
-            custom_shortcuts = self.settings.get_custom_shortcuts()
-            ShortcutManager.load_custom_shortcuts(custom_shortcuts)
-            
-            # Initialize Command Manager for Undo/Redo (Task #12 - v2.9.8)
-            from .core.command_manager import CommandManager
-            self.command_manager = CommandManager(max_history=10)
-
-            # Plugin System (v2.9.109 - Enhanced with metadata and events)
-            from .plugin_loader import PluginLoader
-            self.plugin_loader = PluginLoader(self)
-            discovered = self.plugin_loader.discover_plugins()
-            print(f"[PluginSystem] Discovered {len(discovered)} plugin(s)")
-            
-            # Auto-activate enabled plugins
-            activated = self.plugin_loader.activate_all_plugins()
-            print(f"[PluginSystem] Activated {activated} plugin(s)")
-            
-            # Track tool tabs (v2.9.40 - Task: Tools as tabs)
-            self.tool_tabs = {}  # Maps tool_name -> (widget, tab_index)
-
-            # REST API (optional - disabled by default, requires fastapi)
-            # Uncomment to enable REST API server
-            # try:
-            #     from .rest_api import ClarifyAPI
-            #     self.rest_api = ClarifyAPI(self)
-            #     self.rest_api.start()
-            # except Exception as e:
-            #     print(f"[REST API] Not initialized: {e}")
-
-            # Cloud sync (optional - disabled by default, dummy implementation)
-            # Uncomment to enable cloud sync
-            # try:
-            #     from .cloud_sync import DummyProvider
-            #     self.cloud_sync = DummyProvider()
-            #     self.cloud_sync.login()
-            # except Exception as e:
-            #     print(f"[Cloud Sync] Not initialized: {e}")
-            
-            # Initialize Layout Manager (v2.9.84)
-            from .layout_manager import LayoutManager
-            self.layout_manager = LayoutManager(self)
-            self.logger.info("LayoutManager initialized")
-
-            self._build_icon()
-            self._build_ui()
-            self._build_menu()
-            self._restore_prefs()
-            self._apply_saved_settings()
-            
-            # Register docks with LayoutManager (v2.9.84)
-            self._register_docks_with_layout_manager()
+            # Initialize all core systems using InitializationManager (Phase 3.7)
+            from .gui.initialization_manager import InitializationManager
+            InitializationManager.initialize_all(self, app)
             
             # Restore last layout (v2.9.84)
             self.layout_manager.restore_last_layout()
