@@ -312,7 +312,7 @@ class SetOperationsDock(BaseDock):
         self.btn_merge.setEnabled(True)
         self.btn_store_calc.setEnabled(True)
 
-        self.show_info("Success", f"Operations completed!\n\n{chr(10).join(stats_lines)}")
+        self.show_info("Success", f"Operations completed!\n\n{stats_text if 'stats_text' in locals() else 'Statistics calculated successfully.'}")
 
     def _save_result(self):
         """Save operation results to JSON file."""

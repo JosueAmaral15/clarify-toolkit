@@ -306,7 +306,7 @@ def process_translate_file(path: str,
     # Define transformation function
     def transform_chunk(chunk: str) -> str:
         # Import here to avoid circular dependency
-        from ..translators.code_aware_translator import CodeAwareJSONTranslator
+        from ..processors.code_aware_translator import CodeAwareJSONTranslator
         tr = CodeAwareJSONTranslator(dictionary, root_name=root_alias)
         if inverse:
             return tr.translate_refs_to_text(chunk)
@@ -400,7 +400,7 @@ def translate_replace_texts(content: str,
     Returns:
         Translated content
     """
-    from ..translators.code_aware_translator import CodeAwareJSONTranslator
+    from ..processors.code_aware_translator import CodeAwareJSONTranslator
     tr = CodeAwareJSONTranslator(dictionary, root_name=root_name)
     if inverse:
         return tr.translate_refs_to_text(content)
