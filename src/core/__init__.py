@@ -4,10 +4,16 @@ from .search_replace import SearchOptions, preserve_case_like, replace_in_text
 from .insert import InsertMode, insert_at_line
 from .filters import Condition, filter_files_by_conditions, OPS, extract_scope_content
 from .rewriter_cli import cli_dedupe
+from .file_list_executor import FileListExecutor, FileInfo, ListResult
+from .set_operation_executor import SetOperationExecutor
+from .result_exporter import ResultExporter
 
 __all__ = [
     'SearchOptions', 'preserve_case_like', 'replace_in_text',
     'InsertMode', 'insert_at_line',
     'Condition', 'filter_files_by_conditions', 'OPS', 'extract_scope_content',
-    'cli_dedupe'
+    'cli_dedupe',
+    'FileListExecutor', 'FileInfo', 'ListResult',
+    'SetOperationExecutor',
+    'ResultExporter'
 ]
