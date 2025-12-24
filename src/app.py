@@ -146,8 +146,11 @@ from .gui.progress import (
     ProgressManager, OperationHistory
 )
 
-# Search/Replace Panels: worker and components (v2.9.114 - Phase 1.2)
-from .gui.panels import SearchWorker, ResultsTree, MatchPanel, MatchListModel
+# Search/Replace/Insert Panels: worker and components (v2.9.114 - Phase 1.2 & 1.3)
+from .gui.panels import (
+    SearchWorker, ResultsTree, MatchPanel, MatchListModel,
+    SearchReplacePanel, InsertPanel
+)
 
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
