@@ -1,0 +1,957 @@
+"""
+File List Dock (Task #33 - v2.9.11, Task #50 - v2.9.25)
+
+Dock panel for listing files with ls/dir-like parameters.
+Displays detailed file information in a sortable table.
+
+v2.9.25 Enhancements (Task #50 - Sprint A):
+- Advanced filters panel (collapsible)
+- Regex filename matching
+- Size filters (min/max with units)
+- MTime filters (before/after dates)
+- Extension filters (comma-separated)
+- Depth limit (max recursion depth)
+- Exclude directories (checkboxes + custom)
+- Presets system (save/load/export/import)
+"""
+
+import os
+from datetime import datetime
+from typing import List, Optional, Dict, Any
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QCheckBox, QFileDialog, QMessageBox
+)
+from PySide6.QtCore import Qt, QSettings
+from .base_dock import BaseDock
+from .widgets import FileFilterPanel, PresetManager, FileListTableManager
+from src.core import FileListExecutor, FileInfo, ListResult
+from src.i18n.translator import tooltip_tr
+
+
+class FileListDock(BaseDock):
+    """
+    Dock widget for listing files with ls/dir parameters.
+    
+    Features:
+    - Browse directory selection
+    - ls/dir parameters: -la (all+long), -lh (human readable), -R (recursive)
+    - Output table: Name, Size, Modified, Permissions
+    - Sort/filter capabilities
+    - Export to CSV
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__("File List", parent)
+        self.settings = QSettings("Clarify", "FileList")  # Task #42 - v2.9.13
+        self._load_preferences()  # Task #42
+    
+    def _setup_ui(self):
+        """Setup UI components."""
+        self._create_widgets()
+        self._create_layout()
+        self._setup_context_menu()  # Task #40 - v2.9.13
+        self._load_preset_list()  # Task #50 - Sprint A
+        self._apply_tooltips()  # v2.9.67
+    
+    def _create_widgets(self):
+        """Create UI widgets."""
+        # Directory input
+        self.ed_directory = QLineEdit()
+        self.ed_directory.setPlaceholderText("Directory to list...")
+        self.btn_browse = QPushButton("Browse...")
+        self.btn_browse.clicked.connect(self._browse_directory)
+        
+        # Recent directories menu button (Task #42 - v2.9.13)
+        self.btn_recent = QPushButton("Recent ▼")
+        self.btn_recent.clicked.connect(self._show_recent_menu)
+        
+        # Options
+        self.chk_all = QCheckBox("Show hidden files (-a)")
+        self.chk_all.setChecked(getattr(self, 'chk_all_state', False))  # Task #42
+        
+        self.chk_long = QCheckBox("Long format (-l)")
+        self.chk_long.setChecked(getattr(self, 'chk_long_state', True))  # Task #42
+        
+        self.chk_human = QCheckBox("Human-readable sizes (-h)")
+        self.chk_human.setChecked(getattr(self, 'chk_human_state', True))  # Task #42
+        
+        self.chk_recursive = QCheckBox("Recursive (-R)")
+        self.chk_recursive.setChecked(getattr(self, 'chk_recursive_state', False))  # Task #42
+        
+        # Advanced Filters Panel (Task #50 - v2.9.25) - Collapsible
+        self._create_advanced_filters_panel()
+        
+        # List button
+        self.btn_list = QPushButton("List Files")
+        self.btn_list.clicked.connect(self._list_files)
+        
+        # Quick filter (Task #39 - v2.9.12)
+        self.ed_quick_filter = QLineEdit()
+        self.ed_quick_filter.setPlaceholderText("Quick filter by filename...")
+        self.ed_quick_filter.textChanged.connect(self._apply_quick_filter)
+        
+        # Results table
+        self.table = QTableWidget()
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels([
+            "Name", "Size", "Modified", "Permissions", "Path"
+        ])
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)  # Task #40 - Multi-select
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)  # Task #40
+        self.table.setSortingEnabled(True)
+        
+        # Stats label
+        self.lbl_stats = QLabel("No files listed")
+        
+        # Export button
+        self.btn_export = QPushButton("Export to CSV...")
+        self.btn_export.clicked.connect(self._export_csv)
+    
+    def _create_advanced_filters_panel(self):
+        """Create advanced filters panel (Task #50 - Sprint A)."""
+        # Collapsible group box
+        self.grp_advanced = QGroupBox("Advanced Filters")
+        self.grp_advanced.setCheckable(True)
+        self.grp_advanced.setChecked(False)  # Initially collapsed
+        
+        # Grid layout for filters
+        grid = QGridLayout()
+        grid.setSpacing(8)
+        
+        # Row 0: Regex filter
+        grid.addWidget(QLabel("Regex Pattern:"), 0, 0)
+        self.ed_regex = QLineEdit()
+        self.ed_regex.setPlaceholderText("e.g., ^test_.*\\.py$")
+        grid.addWidget(self.ed_regex, 0, 1, 1, 2)
+        
+        self.chk_regex_enabled = QCheckBox("Enable Regex")
+        grid.addWidget(self.chk_regex_enabled, 0, 3)
+        
+        # Row 1: Size filter (min)
+        grid.addWidget(QLabel("Size Min:"), 1, 0)
+        self.ed_size_min = QLineEdit()
+        self.ed_size_min.setPlaceholderText("0")
+        self.ed_size_min.setMaximumWidth(100)
+        grid.addWidget(self.ed_size_min, 1, 1)
+        
+        self.cmb_size_min_unit = QComboBox()
+        self.cmb_size_min_unit.addItems(["B", "KB", "MB", "GB"])
+        self.cmb_size_min_unit.setCurrentText("KB")
+        self.cmb_size_min_unit.setMaximumWidth(70)
+        grid.addWidget(self.cmb_size_min_unit, 1, 2)
+        
+        # Row 2: Size filter (max)
+        grid.addWidget(QLabel("Size Max:"), 2, 0)
+        self.ed_size_max = QLineEdit()
+        self.ed_size_max.setPlaceholderText("∞")
+        self.ed_size_max.setMaximumWidth(100)
+        grid.addWidget(self.ed_size_max, 2, 1)
+        
+        self.cmb_size_max_unit = QComboBox()
+        self.cmb_size_max_unit.addItems(["B", "KB", "MB", "GB"])
+        self.cmb_size_max_unit.setCurrentText("MB")
+        self.cmb_size_max_unit.setMaximumWidth(70)
+        grid.addWidget(self.cmb_size_max_unit, 2, 2)
+        
+        # Row 3: Modified time (after)
+        grid.addWidget(QLabel("Modified After:"), 3, 0)
+        self.dte_mtime_after = QDateEdit()
+        self.dte_mtime_after.setCalendarPopup(True)
+        self.dte_mtime_after.setSpecialValueText("No limit")
+        self.dte_mtime_after.setDate(QDate(2000, 1, 1))  # Default: year 2000
+        grid.addWidget(self.dte_mtime_after, 3, 1, 1, 2)
+        
+        self.chk_mtime_after_enabled = QCheckBox("Enable")
+        grid.addWidget(self.chk_mtime_after_enabled, 3, 3)
+        
+        # Row 4: Modified time (before)
+        grid.addWidget(QLabel("Modified Before:"), 4, 0)
+        self.dte_mtime_before = QDateEdit()
+        self.dte_mtime_before.setCalendarPopup(True)
+        self.dte_mtime_before.setSpecialValueText("No limit")
+        self.dte_mtime_before.setDate(QDate.currentDate())
+        grid.addWidget(self.dte_mtime_before, 4, 1, 1, 2)
+        
+        self.chk_mtime_before_enabled = QCheckBox("Enable")
+        grid.addWidget(self.chk_mtime_before_enabled, 4, 3)
+        
+        # Row 5: Extensions filter
+        grid.addWidget(QLabel("Extensions:"), 5, 0)
+        self.ed_extensions = QLineEdit()
+        self.ed_extensions.setPlaceholderText("e.g., py,js,txt")
+        grid.addWidget(self.ed_extensions, 5, 1, 1, 3)
+        
+        # Row 6: Depth limit
+        grid.addWidget(QLabel("Max Depth:"), 6, 0)
+        self.spn_depth = QSpinBox()
+        self.spn_depth.setMinimum(0)
+        self.spn_depth.setMaximum(10)
+        self.spn_depth.setValue(0)
+        self.spn_depth.setSpecialValueText("Unlimited")
+        self.spn_depth.setMaximumWidth(100)
+        grid.addWidget(self.spn_depth, 6, 1)
+        
+        # Row 7-8: Exclude directories
+        grid.addWidget(QLabel("Exclude Dirs:"), 7, 0)
+        
+        # Common excludes (checkboxes)
+        exclude_layout = QVBoxLayout()
+        self.chk_exclude_node_modules = QCheckBox("node_modules")
+        self.chk_exclude_git = QCheckBox(".git")
+        self.chk_exclude_pycache = QCheckBox("__pycache__")
+        self.chk_exclude_dist = QCheckBox("dist")
+        self.chk_exclude_build = QCheckBox("build")
+        
+        # Default: check common excludes
+        self.chk_exclude_node_modules.setChecked(True)
+        self.chk_exclude_git.setChecked(True)
+        self.chk_exclude_pycache.setChecked(True)
+        
+        exclude_layout.addWidget(self.chk_exclude_node_modules)
+        exclude_layout.addWidget(self.chk_exclude_git)
+        exclude_layout.addWidget(self.chk_exclude_pycache)
+        exclude_layout.addWidget(self.chk_exclude_dist)
+        exclude_layout.addWidget(self.chk_exclude_build)
+        exclude_layout.addStretch()
+        
+        grid.addLayout(exclude_layout, 7, 1, 2, 2)
+        
+        # Custom exclude patterns
+        grid.addWidget(QLabel("Custom:"), 9, 0)
+        self.ed_exclude_custom = QLineEdit()
+        self.ed_exclude_custom.setPlaceholderText("e.g., temp,cache,*.tmp")
+        grid.addWidget(self.ed_exclude_custom, 9, 1, 1, 3)
+        
+        # Row 10: Presets
+        grid.addWidget(QLabel("Presets:"), 10, 0)
+        
+        self.cmb_presets = QComboBox()
+        self.cmb_presets.addItem("-- No Preset --")
+        self.cmb_presets.currentIndexChanged.connect(self._load_preset_from_combo)
+        grid.addWidget(self.cmb_presets, 10, 1, 1, 2)
+        
+        # Preset buttons
+        preset_buttons_layout = QHBoxLayout()
+        self.btn_save_preset = QPushButton("Save")
+        self.btn_save_preset.clicked.connect(self._save_preset)
+        preset_buttons_layout.addWidget(self.btn_save_preset)
+        
+        self.btn_load_preset = QPushButton("Load")
+        self.btn_load_preset.clicked.connect(self._load_preset)
+        preset_buttons_layout.addWidget(self.btn_load_preset)
+        
+        self.btn_export_preset = QPushButton("Export")
+        self.btn_export_preset.clicked.connect(self._export_preset)
+        preset_buttons_layout.addWidget(self.btn_export_preset)
+        
+        self.btn_import_preset = QPushButton("Import")
+        self.btn_import_preset.clicked.connect(self._import_preset)
+        preset_buttons_layout.addWidget(self.btn_import_preset)
+        
+        grid.addLayout(preset_buttons_layout, 11, 0, 1, 4)
+        
+        self.grp_advanced.setLayout(grid)
+    
+    def _apply_tooltips(self):
+        """Apply internationalized tooltips to all widgets (v2.9.67)."""
+        # Directory section
+        self.ed_directory.setToolTip(tooltip_tr("file_list.ed_directory"))
+        self.btn_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
+        self.btn_recent.setToolTip(tooltip_tr("file_list.btn_recent"))
+        
+        # Basic options
+        self.chk_all.setToolTip(tooltip_tr("file_list.chk_all"))
+        self.chk_long.setToolTip(tooltip_tr("file_list.chk_long"))
+        self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
+        self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
+        
+        # Advanced filters group
+        self.grp_advanced.setToolTip(tooltip_tr("file_list.grp_advanced"))
+        
+        # Regex filter
+        self.ed_regex.setToolTip(tooltip_tr("file_list.ed_regex"))
+        self.chk_regex_enabled.setToolTip(tooltip_tr("file_list.chk_regex_enabled"))
+        
+        # Size filters
+        self.ed_size_min.setToolTip(tooltip_tr("file_list.ed_size_min"))
+        self.cmb_size_min_unit.setToolTip(tooltip_tr("file_list.cmb_size_min_unit"))
+        self.ed_size_max.setToolTip(tooltip_tr("file_list.ed_size_max"))
+        self.cmb_size_max_unit.setToolTip(tooltip_tr("file_list.cmb_size_max_unit"))
+        
+        # Modified time filters
+        self.dte_mtime_after.setToolTip(tooltip_tr("file_list.dte_mtime_after"))
+        self.chk_mtime_after_enabled.setToolTip(tooltip_tr("file_list.chk_mtime_after_enabled"))
+        self.dte_mtime_before.setToolTip(tooltip_tr("file_list.dte_mtime_before"))
+        self.chk_mtime_before_enabled.setToolTip(tooltip_tr("file_list.chk_mtime_before_enabled"))
+        
+        # Extensions and depth
+        self.ed_extensions.setToolTip(tooltip_tr("file_list.ed_extensions"))
+        self.spn_depth.setToolTip(tooltip_tr("file_list.spn_depth"))
+        
+        # Exclude directories
+        self.chk_exclude_node_modules.setToolTip(tooltip_tr("file_list.chk_exclude_node_modules"))
+        self.chk_exclude_git.setToolTip(tooltip_tr("file_list.chk_exclude_git"))
+        self.chk_exclude_pycache.setToolTip(tooltip_tr("file_list.chk_exclude_pycache"))
+        self.chk_exclude_dist.setToolTip(tooltip_tr("file_list.chk_exclude_dist"))
+        self.chk_exclude_build.setToolTip(tooltip_tr("file_list.chk_exclude_build"))
+        self.ed_exclude_custom.setToolTip(tooltip_tr("file_list.ed_exclude_custom"))
+        
+        # Presets
+        self.cmb_presets.setToolTip(tooltip_tr("file_list.cmb_presets"))
+        self.btn_save_preset.setToolTip(tooltip_tr("file_list.btn_save_preset"))
+        self.btn_load_preset.setToolTip(tooltip_tr("file_list.btn_load_preset"))
+        self.btn_export_preset.setToolTip(tooltip_tr("file_list.btn_export_preset"))
+        self.btn_import_preset.setToolTip(tooltip_tr("file_list.btn_import_preset"))
+        
+        # Quick filter
+        self.ed_quick_filter.setToolTip(tooltip_tr("file_list.ed_quick_filter"))
+        
+        # Action buttons
+        self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
+        self.btn_export.setToolTip(tooltip_tr("file_list.btn_export"))
+        
+        # Results
+        self.table.setToolTip(tooltip_tr("file_list.table"))
+        self.lbl_stats.setToolTip(tooltip_tr("file_list.lbl_stats"))
+    
+    def _create_layout(self):
+        """Create layout."""
+        layout = QVBoxLayout()
+        
+        # Directory selection
+        dir_layout = QHBoxLayout()
+        dir_layout.addWidget(QLabel("Directory:"))
+        dir_layout.addWidget(self.ed_directory)
+        dir_layout.addWidget(self.btn_browse)
+        dir_layout.addWidget(self.btn_recent)  # Task #42 - v2.9.13
+        layout.addLayout(dir_layout)
+        
+        # Options
+        opts_layout = QHBoxLayout()
+        opts_layout.addWidget(self.chk_all)
+        opts_layout.addWidget(self.chk_long)
+        opts_layout.addWidget(self.chk_human)
+        opts_layout.addWidget(self.chk_recursive)
+        opts_layout.addStretch()
+        layout.addLayout(opts_layout)
+        
+        # Advanced filters panel (Task #50 - v2.9.25)
+        layout.addWidget(self.grp_advanced)
+        
+        # List button
+        layout.addWidget(self.btn_list)
+        
+        # Quick filter
+        layout.addWidget(self.ed_quick_filter)
+        
+        # Table
+        layout.addWidget(self.table)
+        
+        # Stats
+        layout.addWidget(self.lbl_stats)
+        
+        # Export
+        layout.addWidget(self.btn_export)
+        
+        self.setLayout(layout)
+    
+    def _browse_directory(self):
+        """Browse for directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory",
+            self.ed_directory.text() or os.getcwd(),
+            QFileDialog.Option.ShowDirsOnly
+        )
+        if directory:
+            self.ed_directory.setText(directory)
+    
+    def _apply_quick_filter(self, text: str):
+        """Apply quick filter to visible rows (Task #39 - v2.9.12)."""
+        text = text.lower()
+        for row in range(self.table.rowCount()):
+            name_item = self.table.item(row, 0)
+            if name_item:
+                name = name_item.text().lower()
+                self.table.setRowHidden(row, text not in name)
+    
+    def _setup_context_menu(self):
+        """Setup context menu for table (Task #40 - v2.9.13)."""
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+    
+    def _show_context_menu(self, position):
+        """Show context menu at position (Task #40 - v2.9.13)."""
+        selected_rows = set(item.row() for item in self.table.selectedItems())
+        if not selected_rows:
+            return
+        
+        menu = QMenu(self)
+        
+        if len(selected_rows) == 1:
+            action_text = "Open in File Manager"
+        else:
+            action_text = f"Open {len(selected_rows)} Locations in File Manager"
+        
+        action_open = QAction(action_text, self)
+        action_open.triggered.connect(self._open_in_file_manager)
+        menu.addAction(action_open)
+        
+        menu.exec(self.table.viewport().mapToGlobal(position))
+    
+    def _open_in_file_manager(self):
+        """Open selected file(s) location in file manager (Task #40 - v2.9.13)."""
+        selected_rows = sorted(set(item.row() for item in self.table.selectedItems()))
+        
+        for row in selected_rows:
+            path_item = self.table.item(row, 4)  # Path column
+            if path_item:
+                filepath = path_item.text()
+                directory = os.path.dirname(filepath) if os.path.isfile(filepath) else filepath
+                
+                # Open file manager based on OS
+                system = platform.system()
+                try:
+                    if system == "Windows":
+                        os.startfile(directory)
+                    elif system == "Darwin":  # macOS
+                        subprocess.run(["open", directory])
+                    else:  # Linux
+                        subprocess.run(["xdg-open", directory])
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Could not open file manager: {e}")
+                    break
+    
+    def _load_preferences(self):
+        """Load saved preferences (Task #42 - v2.9.13)."""
+        # Load checkbox states
+        self.chk_all_state = self.settings.value("show_hidden", False, type=bool)
+        self.chk_long_state = self.settings.value("long_format", True, type=bool)
+        self.chk_human_state = self.settings.value("human_readable", True, type=bool)
+        self.chk_recursive_state = self.settings.value("recursive", False, type=bool)
+        
+        # Load recent directories
+        self.recent_dirs = self.settings.value("recent_directories", [], type=list)
+        if not isinstance(self.recent_dirs, list):
+            self.recent_dirs = []
+    
+    def _save_preferences(self):
+        """Save current preferences (Task #42 - v2.9.13)."""
+        self.settings.setValue("show_hidden", self.chk_all.isChecked())
+        self.settings.setValue("long_format", self.chk_long.isChecked())
+        self.settings.setValue("human_readable", self.chk_human.isChecked())
+        self.settings.setValue("recursive", self.chk_recursive.isChecked())
+        self.settings.setValue("recent_directories", self.recent_dirs)
+    
+    def _add_to_recent(self, directory: str):
+        """Add directory to recent list (Task #42 - v2.9.13)."""
+        if directory in self.recent_dirs:
+            self.recent_dirs.remove(directory)
+        self.recent_dirs.insert(0, directory)
+        self.recent_dirs = self.recent_dirs[:10]  # Keep last 10
+        self._save_preferences()
+    
+    def _list_files(self):
+        """List files with selected options."""
+        directory = self.ed_directory.text().strip()
+        
+        if not directory:
+            QMessageBox.warning(self, "Missing", "Please select a directory.")
+            return
+        
+        if not os.path.isdir(directory):
+            QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            return
+        
+        # Save to recent directories (Task #42 - v2.9.13)
+        self._add_to_recent(directory)
+        
+        # Get options
+        show_hidden = self.chk_all.isChecked()
+        long_format = self.chk_long.isChecked()
+        human_readable = self.chk_human.isChecked()
+        recursive = self.chk_recursive.isChecked()
+        
+        # Clear table
+        self.table.setRowCount(0)
+        self.table.setSortingEnabled(False)
+        
+        # Collect files
+        files = self._collect_files(directory, show_hidden, recursive)
+        
+        # Populate table
+        total_size = 0
+        for filepath in files:
+            try:
+                st = os.stat(filepath)
+            except (PermissionError, FileNotFoundError):
+                continue
+            
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            
+            # Name
+            name = os.path.basename(filepath)
+            if os.path.isdir(filepath):
+                name += "/"
+            self.table.setItem(row, 0, QTableWidgetItem(name))
+            
+            # Size
+            if os.path.isfile(filepath):
+                size = st.st_size
+                total_size += size
+                if human_readable:
+                    size_str = self._human_readable_size(size)
+                else:
+                    size_str = str(size)
+            else:
+                size_str = "-"
+            size_item = QTableWidgetItem(size_str)
+            size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.table.setItem(row, 1, size_item)
+            
+            # Modified
+            mtime = datetime.fromtimestamp(st.st_mtime)
+            mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+            self.table.setItem(row, 2, QTableWidgetItem(mtime_str))
+            
+            # Permissions
+            if long_format:
+                perms = self._format_permissions(st.st_mode)
+                owner = self._get_owner(st.st_uid)
+                group = self._get_group(st.st_gid)
+                perms_str = f"{perms} {owner}:{group}"
+            else:
+                perms_str = self._format_permissions(st.st_mode)
+            self.table.setItem(row, 3, QTableWidgetItem(perms_str))
+            
+            # Path
+            self.table.setItem(row, 4, QTableWidgetItem(filepath))
+        
+        self.table.setSortingEnabled(True)
+        
+        # Save preferences after listing (Task #42 - v2.9.13)
+        self._save_preferences()
+        
+        # Update stats
+        count = self.table.rowCount()
+        if human_readable:
+            total_str = self._human_readable_size(total_size)
+        else:
+            total_str = f"{total_size} bytes"
+        self.lbl_stats.setText(f"Listed {count} items | Total size: {total_str}")
+    
+    def _collect_files(self, directory: str, show_hidden: bool, recursive: bool, depth: int = 0) -> List[str]:
+        """Collect files from directory with advanced filtering (Task #50)."""
+        files = []
+        
+        try:
+            entries = os.listdir(directory)
+        except PermissionError:
+            return files
+        
+        for entry in sorted(entries):
+            # Skip hidden files if not showing all
+            if not show_hidden and entry.startswith('.'):
+                continue
+            
+            filepath = os.path.join(directory, entry)
+            
+            # Check if directory should be excluded (Task #50 - Sprint A)
+            if os.path.isdir(filepath) and self._should_exclude_directory(entry):
+                continue
+            
+            # Apply advanced filters (Task #50 - Sprint A)
+            if os.path.isfile(filepath):
+                if self._matches_advanced_filters(filepath, entry, depth):
+                    files.append(filepath)
+            else:
+                files.append(filepath)  # Always include directories
+            
+            # Recurse into subdirectories
+            if recursive and os.path.isdir(filepath):
+                files.extend(self._collect_files(filepath, show_hidden, True, depth + 1))
+        
+        return files
+    
+    def _human_readable_size(self, size: int) -> str:
+        """Convert size to human-readable format."""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} PB"
+    
+    def _format_permissions(self, mode: int) -> str:
+        """Format permissions string (Unix-style)."""
+        perms = ''
+        
+        # File type
+        if stat.S_ISDIR(mode):
+            perms += 'd'
+        elif stat.S_ISLNK(mode):
+            perms += 'l'
+        else:
+            perms += '-'
+        
+        # Owner permissions
+        perms += 'r' if mode & stat.S_IRUSR else '-'
+        perms += 'w' if mode & stat.S_IWUSR else '-'
+        perms += 'x' if mode & stat.S_IXUSR else '-'
+        
+        # Group permissions
+        perms += 'r' if mode & stat.S_IRGRP else '-'
+        perms += 'w' if mode & stat.S_IWGRP else '-'
+        perms += 'x' if mode & stat.S_IXGRP else '-'
+        
+        # Other permissions
+        perms += 'r' if mode & stat.S_IROTH else '-'
+        perms += 'w' if mode & stat.S_IWOTH else '-'
+        perms += 'x' if mode & stat.S_IXOTH else '-'
+        
+        return perms
+    
+    def _get_owner(self, uid: int) -> str:
+        """Get owner name from UID."""
+        try:
+            return pwd.getpwuid(uid).pw_name
+        except (KeyError, AttributeError):
+            return str(uid)
+    
+    def _get_group(self, gid: int) -> str:
+        """Get group name from GID."""
+        try:
+            return grp.getgrgid(gid).gr_name
+        except (KeyError, AttributeError):
+            return str(gid)
+    
+    def _export_csv(self):
+        """Export table to CSV file."""
+        if self.table.rowCount() == 0:
+            QMessageBox.information(self, "No Data", "No files to export.")
+            return
+        
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export File List",
+            "file_list.csv",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                # Header
+                f.write("Name,Size,Modified,Permissions,Path\n")
+                
+                # Data
+                for row in range(self.table.rowCount()):
+                    items = []
+                    for col in range(5):
+                        item = self.table.item(row, col)
+                        text = item.text() if item else ""
+                        # Escape commas
+                        text = text.replace('"', '""')
+                        items.append(f'"{text}"')
+                    f.write(",".join(items) + "\n")
+            
+            QMessageBox.information(
+                self,
+                "Export Complete",
+                f"File list exported to:\n{filepath}"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+    
+    def _show_recent_menu(self):
+        """Show recent directories menu (Task #42 - v2.9.13)."""
+        if not self.recent_dirs:
+            QMessageBox.information(self, "No Recent Directories", "No recent directories saved yet.")
+            return
+        
+        menu = QMenu(self)
+        for directory in self.recent_dirs:
+            action = QAction(directory, self)
+            action.triggered.connect(lambda checked, d=directory: self.ed_directory.setText(d))
+            menu.addAction(action)
+        
+        menu.addSeparator()
+        clear_action = QAction("Clear Recent", self)
+        clear_action.triggered.connect(self._clear_recent)
+        menu.addAction(clear_action)
+        
+        menu.exec(self.btn_recent.mapToGlobal(self.btn_recent.rect().bottomLeft()))
+    
+    def _clear_recent(self):
+        """Clear recent directories list (Task #42 - v2.9.13)."""
+        self.recent_dirs = []
+        self._save_preferences()
+        QMessageBox.information(self, "Cleared", "Recent directories list cleared.")
+    
+    # === Advanced Filters Methods (Task #50 - Sprint A) ===
+    
+    def _get_current_filters(self) -> Dict[str, Any]:
+        """Get current advanced filter settings."""
+        return {
+            'regex_pattern': self.ed_regex.text(),
+            'regex_enabled': self.chk_regex_enabled.isChecked(),
+            'size_min': self.ed_size_min.text(),
+            'size_min_unit': self.cmb_size_min_unit.currentText(),
+            'size_max': self.ed_size_max.text(),
+            'size_max_unit': self.cmb_size_max_unit.currentText(),
+            'mtime_after': self.dte_mtime_after.date().toString('yyyy-MM-dd'),
+            'mtime_after_enabled': self.chk_mtime_after_enabled.isChecked(),
+            'mtime_before': self.dte_mtime_before.date().toString('yyyy-MM-dd'),
+            'mtime_before_enabled': self.chk_mtime_before_enabled.isChecked(),
+            'extensions': self.ed_extensions.text(),
+            'max_depth': self.spn_depth.value(),
+            'exclude_node_modules': self.chk_exclude_node_modules.isChecked(),
+            'exclude_git': self.chk_exclude_git.isChecked(),
+            'exclude_pycache': self.chk_exclude_pycache.isChecked(),
+            'exclude_dist': self.chk_exclude_dist.isChecked(),
+            'exclude_build': self.chk_exclude_build.isChecked(),
+            'exclude_custom': self.ed_exclude_custom.text()
+        }
+    
+    def _apply_filters_to_widgets(self, filters: Dict[str, Any]):
+        """Apply filter settings to widgets."""
+        self.ed_regex.setText(filters.get('regex_pattern', ''))
+        self.chk_regex_enabled.setChecked(filters.get('regex_enabled', False))
+        self.ed_size_min.setText(filters.get('size_min', ''))
+        self.cmb_size_min_unit.setCurrentText(filters.get('size_min_unit', 'KB'))
+        self.ed_size_max.setText(filters.get('size_max', ''))
+        self.cmb_size_max_unit.setCurrentText(filters.get('size_max_unit', 'MB'))
+        
+        # Parse dates
+        mtime_after = QDate.fromString(filters.get('mtime_after', '2000-01-01'), 'yyyy-MM-dd')
+        self.dte_mtime_after.setDate(mtime_after if mtime_after.isValid() else QDate(2000, 1, 1))
+        self.chk_mtime_after_enabled.setChecked(filters.get('mtime_after_enabled', False))
+        
+        mtime_before = QDate.fromString(filters.get('mtime_before', QDate.currentDate().toString('yyyy-MM-dd')), 'yyyy-MM-dd')
+        self.dte_mtime_before.setDate(mtime_before if mtime_before.isValid() else QDate.currentDate())
+        self.chk_mtime_before_enabled.setChecked(filters.get('mtime_before_enabled', False))
+        
+        self.ed_extensions.setText(filters.get('extensions', ''))
+        self.spn_depth.setValue(filters.get('max_depth', 0))
+        self.chk_exclude_node_modules.setChecked(filters.get('exclude_node_modules', True))
+        self.chk_exclude_git.setChecked(filters.get('exclude_git', True))
+        self.chk_exclude_pycache.setChecked(filters.get('exclude_pycache', True))
+        self.chk_exclude_dist.setChecked(filters.get('exclude_dist', False))
+        self.chk_exclude_build.setChecked(filters.get('exclude_build', False))
+        self.ed_exclude_custom.setText(filters.get('exclude_custom', ''))
+    
+    def _save_preset(self):
+        """Save current filters as a preset."""
+        from PySide6.QtWidgets import QInputDialog
+        
+        preset_name, ok = QInputDialog.getText(self, "Save Preset", "Enter preset name:")
+        if not ok or not preset_name.strip():
+            return
+        
+        preset_name = preset_name.strip()
+        filters = self._get_current_filters()
+        
+        # Save to QSettings
+        settings = QSettings("Clarify", "FileListDock")
+        settings.beginGroup("Presets")
+        settings.setValue(preset_name, json.dumps(filters))
+        settings.endGroup()
+        
+        # Update combo box
+        self._load_preset_list()
+        self.cmb_presets.setCurrentText(preset_name)
+        
+        QMessageBox.information(self, "Saved", f"Preset '{preset_name}' saved successfully!")
+    
+    def _load_preset(self):
+        """Load selected preset."""
+        preset_name = self.cmb_presets.currentText()
+        if preset_name == "-- No Preset --":
+            QMessageBox.information(self, "No Preset", "Please select a preset to load.")
+            return
+        
+        settings = QSettings("Clarify", "FileListDock")
+        settings.beginGroup("Presets")
+        preset_data = settings.value(preset_name, "")
+        settings.endGroup()
+        
+        if not preset_data:
+            QMessageBox.warning(self, "Load Failed", f"Preset '{preset_name}' not found.")
+            return
+        
+        try:
+            filters = json.loads(preset_data)
+            self._apply_filters_to_widgets(filters)
+            QMessageBox.information(self, "Loaded", f"Preset '{preset_name}' loaded successfully!")
+        except json.JSONDecodeError as e:
+            QMessageBox.critical(self, "Load Failed", f"Invalid preset data: {e}")
+    
+    def _load_preset_from_combo(self):
+        """Auto-load preset when combo box selection changes."""
+        if self.cmb_presets.currentText() != "-- No Preset --":
+            self._load_preset()
+    
+    def _export_preset(self):
+        """Export current filters to JSON file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Preset", "", "JSON Files (*.json)"
+        )
+        if not file_path:
+            return
+        
+        filters = self._get_current_filters()
+        try:
+            with open(file_path, 'w') as f:
+                json.dump(filters, f, indent=2)
+            QMessageBox.information(self, "Exported", f"Preset exported to:\n{file_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+    
+    def _import_preset(self):
+        """Import preset from JSON file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Import Preset", "", "JSON Files (*.json)"
+        )
+        if not file_path:
+            return
+        
+        try:
+            with open(file_path, 'r') as f:
+                filters = json.load(f)
+            
+            self._apply_filters_to_widgets(filters)
+            
+            # Ask if user wants to save as new preset
+            from PySide6.QtWidgets import QInputDialog
+            reply = QMessageBox.question(
+                self, "Save Preset?",
+                "Do you want to save this as a new preset?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                preset_name, ok = QInputDialog.getText(self, "Save Preset", "Enter preset name:")
+                if ok and preset_name.strip():
+                    settings = QSettings("Clarify", "FileListDock")
+                    settings.beginGroup("Presets")
+                    settings.setValue(preset_name.strip(), json.dumps(filters))
+                    settings.endGroup()
+                    self._load_preset_list()
+                    self.cmb_presets.setCurrentText(preset_name.strip())
+            
+            QMessageBox.information(self, "Imported", "Preset imported successfully!")
+        except Exception as e:
+            QMessageBox.critical(self, "Import Failed", f"Failed to import: {e}")
+    
+    def _load_preset_list(self):
+        """Load preset names into combo box."""
+        settings = QSettings("Clarify", "FileListDock")
+        settings.beginGroup("Presets")
+        preset_names = settings.childKeys()
+        settings.endGroup()
+        
+        self.cmb_presets.clear()
+        self.cmb_presets.addItem("-- No Preset --")
+        self.cmb_presets.addItems(preset_names)
+    
+    def _matches_advanced_filters(self, filepath: str, filename: str, depth: int) -> bool:
+        """Check if file matches all advanced filter criteria."""
+        if not self.grp_advanced.isChecked():
+            return True  # Advanced filters disabled
+        
+        # Regex filter
+        if self.chk_regex_enabled.isChecked() and self.ed_regex.text():
+            try:
+                if not re.search(self.ed_regex.text(), filename):
+                    return False
+            except re.error:
+                pass  # Invalid regex, ignore
+        
+        # Size filter
+        try:
+            file_size = os.path.getsize(filepath)
+            
+            # Min size
+            if self.ed_size_min.text():
+                min_size = float(self.ed_size_min.text())
+                unit = self.cmb_size_min_unit.currentText()
+                min_bytes = min_size * {'B': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3}[unit]
+                if file_size < min_bytes:
+                    return False
+            
+            # Max size
+            if self.ed_size_max.text():
+                max_size = float(self.ed_size_max.text())
+                unit = self.cmb_size_max_unit.currentText()
+                max_bytes = max_size * {'B': 1, 'KB': 1024, 'MB': 1024**2, 'GB': 1024**3}[unit]
+                if file_size > max_bytes:
+                    return False
+        except (ValueError, OSError):
+            pass
+        
+        # MTime filter
+        try:
+            mtime = datetime.fromtimestamp(os.path.getmtime(filepath)).date()
+            
+            if self.chk_mtime_after_enabled.isChecked():
+                after_date = self.dte_mtime_after.date().toPython()
+                if mtime < after_date:
+                    return False
+            
+            if self.chk_mtime_before_enabled.isChecked():
+                before_date = self.dte_mtime_before.date().toPython()
+                if mtime > before_date:
+                    return False
+        except OSError:
+            pass
+        
+        # Extension filter
+        if self.ed_extensions.text():
+            extensions = [ext.strip().lower() for ext in self.ed_extensions.text().split(',')]
+            file_ext = os.path.splitext(filename)[1].lstrip('.').lower()
+            if file_ext not in extensions:
+                return False
+        
+        # Depth filter
+        max_depth = self.spn_depth.value()
+        if max_depth > 0 and depth > max_depth:
+            return False
+        
+        return True
+    
+    def _should_exclude_directory(self, dirname: str) -> bool:
+        """Check if directory should be excluded."""
+        if not self.grp_advanced.isChecked():
+            return False
+        
+        # Check common excludes
+        if self.chk_exclude_node_modules.isChecked() and dirname == "node_modules":
+            return True
+        if self.chk_exclude_git.isChecked() and dirname == ".git":
+            return True
+        if self.chk_exclude_pycache.isChecked() and dirname == "__pycache__":
+            return True
+        if self.chk_exclude_dist.isChecked() and dirname == "dist":
+            return True
+        if self.chk_exclude_build.isChecked() and dirname == "build":
+            return True
+        
+        # Check custom patterns
+        if self.ed_exclude_custom.text():
+            patterns = [p.strip() for p in self.ed_exclude_custom.text().split(',')]
+            for pattern in patterns:
+                if pattern.startswith('*'):
+                    if dirname.endswith(pattern[1:]):
+                        return True
+                elif pattern.endswith('*'):
+                    if dirname.startswith(pattern[:-1]):
+                        return True
+                elif pattern == dirname:
+                    return True
+        
+        return False
