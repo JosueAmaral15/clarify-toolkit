@@ -147,7 +147,7 @@ from .gui.progress import (
 )
 
 # Search/Replace Panels: worker and components (v2.9.114 - Phase 1.2)
-from .gui.panels import SearchWorker, ResultsTree
+from .gui.panels import SearchWorker, ResultsTree, MatchPanel, MatchListModel
 
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
@@ -543,72 +543,6 @@ def process_translate_file(path: str,
 # =============================== Match Model/Panel ===============================
 # Only define GUI classes if PySide6 is available
 if _PYSIDE:
-    class MatchListModel(QAbstractListModel):
-        def __init__(self, items: List[str] = None):
-            super().__init__()
-            self.items = items or []
-
-        def data(self, index: QModelIndex, role=Qt.DisplayRole):
-            if role == Qt.DisplayRole:
-                return self.items[index.row()]
-            return None
-
-        def rowCount(self, parent=QModelIndex()):
-            return len(self.items)
-
-        def set_items(self, items: List[str]):
-            self.beginResetModel()
-            self.items = list(items)
-            self.endResetModel()
-
-    class MatchPanel(QWidget):
-        """
-        Shared 'Match results' panel used by both Search/Replace and Insert tabs.
-        """
-        def __init__(self, parent=None):
-            super().__init__(parent)
-            v = QVBoxLayout(self)
-            top = QHBoxLayout()
-            self.lbl_count = QLabel("Matches: 0")
-            self.btn_refresh = QPushButton("Refresh")
-            self.btn_open_dir = QPushButton("Open Folder…")
-            top.addWidget(self.lbl_count)
-            top.addStretch(1)
-            top.addWidget(self.btn_refresh)
-            top.addWidget(self.btn_open_dir)
-            v.addLayout(top)
-
-            self.model = MatchListModel([])
-            self.view = QListView()
-            self.view.setModel(self.model)
-            v.addWidget(self.view, 1)
-
-            self.current_root: Optional[str] = None
-            self.btn_open_dir.clicked.connect(self._open_dir_for_selected)
-
-        def set_results(self, root: str, files: List[str]):
-            self.current_root = root
-            self.model.set_items(files)
-            self.lbl_count.setText(f"Matches: {len(files)}")
-
-        def selected_path(self) -> Optional[str]:
-            idxs = self.view.selectedIndexes()
-            if not idxs:
-                return None
-            return self.model.items[idxs[0].row()]
-
-        def _open_dir_for_selected(self):
-            path = self.selected_path()
-            if not path:
-                QMessageBox.information(self, "Open", "Select a file in the list.")
-                return
-            # Open in OS file manager
-            if sys.platform.startswith("darwin"):
-                os.system(f'open -R "{path}"')
-            elif os.name == "nt":
-                os.system(f'explorer /select,"{path}"')
-            else:
-                os.system(f'xdg-open "{os.path.dirname(path)}"')
             
 # =============================================================================
 #                        SEARCH / REPLACE CORE (CLI + GUI)
