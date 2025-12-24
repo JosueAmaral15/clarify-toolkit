@@ -46,6 +46,7 @@ from src.set_operations import difference, intersection, symmetric_difference, u
 from src.i18n import tooltip_tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
+from .widgets import FileSelectionWidget
 from ..history_manager import HistoryManager
 from .history_dialog import HistoryDialog
 from ..presets_manager import PresetsManager
@@ -64,7 +65,6 @@ class SetOperationsDock(BaseDock):
         Args:
             parent: Parent widget (optional)
         """
-        self.file_paths: List[str] = []
         self.history_manager = HistoryManager()
         self.presets_manager = PresetsManager()
         super().__init__("JSON Set Operations", parent)
@@ -80,61 +80,11 @@ class SetOperationsDock(BaseDock):
         main_layout = QVBoxLayout(scroll_widget)
 
         # === File Selection Section ===
-        file_group = QGroupBox("File Selection")
-        file_layout = QGridLayout()
-
-        # File A
-        file_layout.addWidget(QLabel("File A:"), 0, 0)
-        self.ed_file_a = QLineEdit()
-        self.ed_file_a.setPlaceholderText("Select first JSON file...")
-        self.ed_file_a.setToolTip(tooltip_tr("set_ops.file_a"))
-        file_layout.addWidget(self.ed_file_a, 0, 1)
-        self.btn_browse_a = QPushButton("Browse...")
-        self.btn_browse_a.setMaximumWidth(100)
-        self.btn_browse_a.setToolTip(tooltip_tr("set_ops.btn_browse_a"))
-        file_layout.addWidget(self.btn_browse_a, 0, 2)
-
-        # File B
-        file_layout.addWidget(QLabel("File B:"), 1, 0)
-        self.ed_file_b = QLineEdit()
-        self.ed_file_b.setPlaceholderText("Select second JSON file...")
-        self.ed_file_b.setToolTip(tooltip_tr("set_ops.file_b"))
-        file_layout.addWidget(self.ed_file_b, 1, 1)
-        self.btn_browse_b = QPushButton("Browse...")
-        self.btn_browse_b.setMaximumWidth(100)
-        self.btn_browse_b.setToolTip(tooltip_tr("set_ops.btn_browse_b"))
-        file_layout.addWidget(self.btn_browse_b, 1, 2)
-
-        # Multiple files checkbox
-        self.chk_multiple = QCheckBox("Multiple files (pipeline processing)")
-        self.chk_multiple.setToolTip(tooltip_tr("set_ops.chk_multiple"))
-        file_layout.addWidget(self.chk_multiple, 2, 0, 1, 3)
-
-        # File list (hidden by default)
-        self.list_files = QListWidget()
-        self.list_files.setMaximumHeight(100)
-        self.list_files.setVisible(False)
-        file_layout.addWidget(self.list_files, 3, 0, 1, 3)
-
-        # Buttons for file list
-        file_btn_layout = QHBoxLayout()
-        self.btn_add_file = QPushButton("+ Add File")
-        self.btn_add_file.setToolTip(tooltip_tr("set_ops.btn_add_file"))
-        self.btn_add_file.setVisible(False)
-        self.btn_remove_file = QPushButton("- Remove Selected")
-        self.btn_remove_file.setToolTip(tooltip_tr("set_ops.btn_remove_file"))
-        self.btn_remove_file.setVisible(False)
-        self.btn_clear_files = QPushButton("Clear All")
-        self.btn_clear_files.setToolTip(tooltip_tr("set_ops.btn_clear_files"))
-        self.btn_clear_files.setVisible(False)
-        file_btn_layout.addWidget(self.btn_add_file)
-        file_btn_layout.addWidget(self.btn_remove_file)
-        file_btn_layout.addWidget(self.btn_clear_files)
-        file_btn_layout.addStretch()
-        file_layout.addLayout(file_btn_layout, 4, 0, 1, 3)
-
-        file_group.setLayout(file_layout)
-        main_layout.addWidget(file_group)
+        self.file_selector = FileSelectionWidget(
+            title="File Selection",
+            file_filter="JSON Files (*.json);;All Files (*)"
+        )
+        main_layout.addWidget(self.file_selector)
 
         # === Operations Section ===
         ops_group = QGroupBox("Operations (Pipeline: Left → Right)")
@@ -304,12 +254,9 @@ class SetOperationsDock(BaseDock):
 
     def _connect_signals(self):
         """Connect UI signals to slots."""
-        self.btn_browse_a.clicked.connect(lambda: self._browse_file("a"))
-        self.btn_browse_b.clicked.connect(lambda: self._browse_file("b"))
-        self.chk_multiple.toggled.connect(self._toggle_multiple_files)
-        self.btn_add_file.clicked.connect(self._add_file)
-        self.btn_remove_file.clicked.connect(self._remove_file)
-        self.btn_clear_files.clicked.connect(self._clear_files)
+        # File selection widget signals (handled internally)
+        # No need to connect file selection signals manually
+        
         self.btn_execute.clicked.connect(self._execute)
         self.btn_save_preset.clicked.connect(self._save_current_as_preset)
         self.btn_clear.clicked.connect(self._clear_all)
@@ -328,27 +275,7 @@ class SetOperationsDock(BaseDock):
     
     def _apply_accessibility(self):
         """Apply accessibility labels to widgets (v2.9.104)."""
-        # File selection
-        AccessibilityManager.set_accessible_widget(
-            self.ed_file_a, "Set Operations - Input - File A",
-            "First JSON file for set operations"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.btn_browse_a, "Set Operations - Button - Browse File A",
-            "Browse and select first JSON file"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.ed_file_b, "Set Operations - Input - File B",
-            "Second JSON file for set operations"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.btn_browse_b, "Set Operations - Button - Browse File B",
-            "Browse and select second JSON file"
-        )
-        AccessibilityManager.set_accessible_widget(
-            self.chk_multiple, "Set Operations - Checkbox - Multiple Files",
-            "Enable pipeline processing with multiple files (left-to-right)"
-        )
+        # File selection accessibility is handled by FileSelectionWidget
         
         # Operations
         AccessibilityManager.set_accessible_widget(
@@ -418,76 +345,9 @@ class SetOperationsDock(BaseDock):
             "View execution history with re-run capability"
         )
 
-    def _browse_file(self, target: str):
-        """Browse for JSON file.
-        
-        Args:
-            target: Target field ('a' or 'b')
-        """
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, f"Select File {target.upper()}", "", "JSON Files (*.json);;All Files (*)"
-        )
-
-        if file_path:
-            if target == "a":
-                self.ed_file_a.setText(file_path)
-            else:
-                self.ed_file_b.setText(file_path)
-
-    def _toggle_multiple_files(self, checked: bool):
-        """Toggle multiple files mode."""
-        self.list_files.setVisible(checked)
-        self.btn_add_file.setVisible(checked)
-        self.btn_remove_file.setVisible(checked)
-        self.btn_clear_files.setVisible(checked)
-
-        if checked:
-            # Populate list with File A and B if they exist
-            self.list_files.clear()
-            if self.ed_file_a.text():
-                self.list_files.addItem(self.ed_file_a.text())
-            if self.ed_file_b.text():
-                self.list_files.addItem(self.ed_file_b.text())
-
-    def _add_file(self):
-        """Add file to multi-file list via file dialog."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Add JSON File", "", "JSON Files (*.json);;All Files (*)")
-
-        if file_path:
-            self.list_files.addItem(file_path)
-
-    def _remove_file(self):
-        """Remove selected file from multi-file list."""
-        current_row = self.list_files.currentRow()
-        if current_row >= 0:
-            self.list_files.takeItem(current_row)
-
-    def _clear_files(self):
-        """Clear file list."""
-        self.list_files.clear()
-
-    def _get_files(self) -> List[str]:
-        """Get list of files to process.
-        
-        Returns:
-            List of file paths from either 2-file mode (File A/B) or multi-file list.
-        """
-        if self.chk_multiple.isChecked():
-            files = []
-            for i in range(self.list_files.count()):
-                files.append(self.list_files.item(i).text())
-            return files
-        else:
-            files = []
-            if self.ed_file_a.text():
-                files.append(self.ed_file_a.text())
-            if self.ed_file_b.text():
-                files.append(self.ed_file_b.text())
-            return files
-
     def _execute(self):
         """Execute set operations."""
-        files = self._get_files()
+        files = self.file_selector.get_files()
 
         # Validate inputs
         if len(files) < 2:
@@ -882,9 +742,7 @@ class SetOperationsDock(BaseDock):
 
     def _clear_all(self):
         """Clear all inputs and results."""
-        self.ed_file_a.clear()
-        self.ed_file_b.clear()
-        self.list_files.clear()
+        self.file_selector.clear()
         self.txt_result.clear()
         self.lbl_stats.clear()
         self.txt_statistics.clear()
@@ -1002,9 +860,8 @@ class SetOperationsDock(BaseDock):
             
             # Load favorite files if any
             favorite_files = preset.get("favorite_files", [])
-            if favorite_files and len(favorite_files) >= 2:
-                self.ed_file_a.setText(favorite_files[0])
-                self.ed_file_b.setText(favorite_files[1])
+            if favorite_files:
+                self.file_selector.set_files(favorite_files)
             
             self.show_info("Preset Loaded", f"Loaded preset: {preset.get('name', 'Unnamed')}")
             
@@ -1059,11 +916,7 @@ class SetOperationsDock(BaseDock):
                 comparison_mode = "key_only"
             
             # Coleta arquivos atuais (favorite files)
-            favorite_files = []
-            if self.ed_file_a.text():
-                favorite_files.append(self.ed_file_a.text())
-            if self.ed_file_b.text():
-                favorite_files.append(self.ed_file_b.text())
+            favorite_files = self.file_selector.get_files()
             
             # Cria preset
             preset = self.presets_manager.create_preset_from_current(
