@@ -9,5 +9,13 @@ from .file_selection_widget import FileSelectionWidget
 from .operation_options_widget import OperationOptionsWidget
 from .file_filter_panel import FileFilterPanel
 from .preset_manager import PresetManager
+from .file_list_table_manager import FileListTableManager
 
-__all__ = ['PathEntry', 'FileSelectionWidget', 'OperationOptionsWidget', 'FileFilterPanel', 'PresetManager']
+__all__ = [
+    'PathEntry', 
+    'FileSelectionWidget', 
+    'OperationOptionsWidget', 
+    'FileFilterPanel', 
+    'PresetManager',
+    'FileListTableManager'
+]
