@@ -467,5 +467,46 @@
   "tooltip.google_translate.input_text": "Digite ou cole o texto para traduzir. Suporta até 5000 caracteres por bloco.",
   "tooltip.google_translate.translate_btn": "Iniciar tradução usando Google Translate (serviço web gratuito) | Enter",
   "tooltip.google_translate.copy_result": "Copiar resultado da tradução para área de transferência | Ctrl+C",
-  "tooltip.google_translate.clear_btn": "Limpar áreas de entrada e saída de texto | Ctrl+L"
+  "tooltip.google_translate.clear_btn": "Limpar áreas de entrada e saída de texto | Ctrl+L",
+  
+  "dialog.preferences.title": "Preferências",
+  "dialog.preferences.general": "Geral",
+  "dialog.preferences.show_tooltips": "Mostrar dicas de ferramentas",
+  "dialog.preferences.confirm_exit": "Confirmar antes de sair",
+  "dialog.preferences.auto_save": "Salvar configurações automaticamente",
+  "dialog.preferences.check_updates": "Verificar atualizações ao iniciar",
+  "dialog.preferences.success": "Preferências salvas com sucesso",
+  
+  "dialog.transparency.title": "Transparência da Janela",
+  "dialog.transparency.level": "Nível de Transparência",
+  
+  "dialog.plugin_manager.title": "Gerenciador de Plugins - Clarify",
+  "dialog.plugin_manager.description": "Gerenciar plugins instalados",
+  "dialog.plugin_manager.refresh": "🔄 Atualizar",
+  "dialog.plugin_manager.close": "✅ Fechar",
+  "dialog.plugin_manager.refreshed": "Plugins Atualizados",
+  "dialog.plugin_manager.activation_failed": "Falha na Ativação",
+  
+  "dialog.layout_manager.title": "Gerenciar Layouts",
+  "dialog.layout_manager.saved_layouts": "Layouts salvos (apenas layouts personalizados):",
+  "dialog.layout_manager.load": "Carregar",
+  "dialog.layout_manager.delete": "Excluir",
+  "dialog.layout_manager.reset": "Restaurar Padrões",
+  "dialog.layout_manager.confirm_delete": "Confirmar Exclusão",
+  "dialog.layout_manager.confirm_reset": "Confirmar Restauração",
+  "dialog.layout_manager.reset_complete": "Restauração Concluída",
+  "dialog.layout_manager.success": "Layout carregado com sucesso",
+  "dialog.layout_manager.close": "Fechar",
+  
+  "common.success": "Sucesso",
+  "common.error": "Erro",
+  "common.warning": "Aviso",
+  "common.ok": "OK",
+  "common.cancel": "Cancelar",
+  "common.yes": "Sim",
+  "common.no": "Não",
+  "common.close": "Fechar",
+  "common.save": "Salvar",
+  "common.delete": "Excluir",
+  "common.load": "Carregar"
 }

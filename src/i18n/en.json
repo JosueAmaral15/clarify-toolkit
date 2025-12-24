@@ -490,5 +490,46 @@
   "tooltip.editor.btn_enable_saving": "Convert to file-backed editor (exit sandbox mode) | Ctrl+Shift+E | Ctrl+E to open Editor",
   
   "tooltip.base.extension_filter": "Filter files by extensions (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Leave empty for all types",
-  "tooltip.base.btn_open_editor": "Open results in editor (edit-only mode for viewing/copying without file operations)"
+  "tooltip.base.btn_open_editor": "Open results in editor (edit-only mode for viewing/copying without file operations)",
+  
+  "dialog.preferences.title": "Preferences",
+  "dialog.preferences.general": "General",
+  "dialog.preferences.show_tooltips": "Show tooltips",
+  "dialog.preferences.confirm_exit": "Confirm before exit",
+  "dialog.preferences.auto_save": "Auto-save settings",
+  "dialog.preferences.check_updates": "Check for updates on startup",
+  "dialog.preferences.success": "Preferences saved successfully",
+  
+  "dialog.transparency.title": "Window Transparency",
+  "dialog.transparency.level": "Transparency Level",
+  
+  "dialog.plugin_manager.title": "Plugin Manager - Clarify",
+  "dialog.plugin_manager.description": "Manage installed plugins",
+  "dialog.plugin_manager.refresh": "🔄 Refresh",
+  "dialog.plugin_manager.close": "✅ Close",
+  "dialog.plugin_manager.refreshed": "Plugins Refreshed",
+  "dialog.plugin_manager.activation_failed": "Activation Failed",
+  
+  "dialog.layout_manager.title": "Manage Layouts",
+  "dialog.layout_manager.saved_layouts": "Saved layouts (custom layouts only):",
+  "dialog.layout_manager.load": "Load",
+  "dialog.layout_manager.delete": "Delete",
+  "dialog.layout_manager.reset": "Reset to Defaults",
+  "dialog.layout_manager.confirm_delete": "Confirm Delete",
+  "dialog.layout_manager.confirm_reset": "Confirm Reset",
+  "dialog.layout_manager.reset_complete": "Reset Complete",
+  "dialog.layout_manager.success": "Layout loaded successfully",
+  "dialog.layout_manager.close": "Close",
+  
+  "common.success": "Success",
+  "common.error": "Error",
+  "common.warning": "Warning",
+  "common.ok": "OK",
+  "common.cancel": "Cancel",
+  "common.yes": "Yes",
+  "common.no": "No",
+  "common.close": "Close",
+  "common.save": "Save",
+  "common.delete": "Delete",
+  "common.load": "Load"
 }
