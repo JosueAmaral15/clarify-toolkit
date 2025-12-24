@@ -1255,7 +1255,7 @@ if _PYSIDE:
             print(f"[Language] Current language after switch: {self.translator.current_language}")
             
             # Save preference
-            self.settings.update("language", lang)
+            self.settings.set("language", lang)
         
         def _toggle_error_reporting(self, checked: bool):
             """Toggle error reporting on/off (v2.9.89)."""

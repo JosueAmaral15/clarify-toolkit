@@ -112,7 +112,7 @@ class TransparencyDialog(QDialog):
     def _save_and_close(self):
         """Save transparency setting and close dialog."""
         value = self.opacity_slider.value()
-        self.settings.update("window_opacity", value)
+        self.settings.set("window_opacity", value)
         self.accept()
     
     def _cancel_and_close(self):
