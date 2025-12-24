@@ -13,5 +13,6 @@ from .search_replace_panel import SearchReplacePanel
 from .insert_panel import InsertPanel
 from .regex_insert_panel import RegexInsertPanel
 from .search_worker import SearchWorker
+from .results_tree import ResultsTree
 
-__all__ = ['SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel', 'SearchWorker']
+__all__ = ['SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel', 'SearchWorker', 'ResultsTree']
