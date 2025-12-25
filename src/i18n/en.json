@@ -1024,5 +1024,13 @@
   "google_translate.status_failed": "✗ Translation failed",
   "google_translate.status_cancelled": "Translation cancelled",
   "google_translate.btn_copied": "✓ Copied!",
-  "google_translate.cache_na": "Cache: N/A"
+  "google_translate.cache_na": "Cache: N/A",
+  "tutorials.placeholder_search": "🔍 Search tutorials...",
+  "tutorials.btn_search": "Search",
+  "tutorials.btn_quick_start": "⚡ Quick Start",
+  "tutorials.btn_ai_assistant": "💬 Ask AI",
+  "tutorials.title_welcome": "<h3>Welcome to Clarify Tutorials</h3>",
+  "tutorials.status_ready": "Ready",
+  "tutorials.status_index_not_found": "⚠️ index.json not found",
+  "tutorials.status_enter_keywords": "⚠️ Enter search keywords"
 }

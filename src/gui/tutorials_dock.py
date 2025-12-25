@@ -71,10 +71,10 @@ class TutorialsDock(QDockWidget):
         # === Search Bar ===
         search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍 Search tutorials...")
-        self.btn_search = QPushButton("Search")
-        self.btn_quick_start = QPushButton("⚡ Quick Start")
-        self.btn_ai_assistant = QPushButton("💬 Ask AI")
+        self.search_input.setPlaceholderText(tr("tutorials.placeholder_search"))
+        self.btn_search = QPushButton(tr("tutorials.btn_search"))
+        self.btn_quick_start = QPushButton(tr("tutorials.btn_quick_start"))
+        self.btn_ai_assistant = QPushButton(tr("tutorials.btn_ai_assistant"))
         
         search_layout.addWidget(self.search_input, 1)
         search_layout.addWidget(self.btn_search)
@@ -97,7 +97,7 @@ class TutorialsDock(QDockWidget):
         browser_layout.setContentsMargins(0, 0, 0, 0)
         
         # Tutorial title label
-        self.title_label = QLabel("<h3>Welcome to Clarify Tutorials</h3>")
+        self.title_label = QLabel(tr("tutorials.title_welcome"))
         self.title_label.setWordWrap(True)
         browser_layout.addWidget(self.title_label)
         
@@ -114,7 +114,7 @@ class TutorialsDock(QDockWidget):
         
         # === Status Bar ===
         status_layout = QHBoxLayout()
-        self.status_label = QLabel("Ready")
+        self.status_label = QLabel(tr("tutorials.status_ready"))
         status_layout.addWidget(self.status_label)
         layout.addLayout(status_layout)
         
@@ -154,7 +154,7 @@ class TutorialsDock(QDockWidget):
     def _load_index(self):
         """Load tutorials index from index.json."""
         if not self.index_path.exists():
-            self.status_label.setText("⚠️ index.json not found")
+            self.status_label.setText(tr("tutorials.status_index_not_found"))
             return
         
         try:
@@ -399,7 +399,7 @@ class TutorialsDock(QDockWidget):
         query = self.search_input.text().strip().lower()
         
         if not query:
-            self.status_label.setText("⚠️ Enter search keywords")
+            self.status_label.setText(tr("tutorials.status_enter_keywords"))
             return
         
         # Search in tutorials index

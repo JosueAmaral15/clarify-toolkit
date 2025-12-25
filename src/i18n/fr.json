@@ -993,5 +993,13 @@
   "google_translate.status_failed": "✗ Échec de la traduction",
   "google_translate.status_cancelled": "Traduction annulée",
   "google_translate.btn_copied": "✓ Copié!",
-  "google_translate.cache_na": "Cache: N/A"
+  "google_translate.cache_na": "Cache: N/A",
+  "tutorials.placeholder_search": "🔍 Rechercher des tutoriels...",
+  "tutorials.btn_search": "Rechercher",
+  "tutorials.btn_quick_start": "⚡ Démarrage Rapide",
+  "tutorials.btn_ai_assistant": "💬 Demander à l'IA",
+  "tutorials.title_welcome": "<h3>Bienvenue dans les Tutoriels Clarify</h3>",
+  "tutorials.status_ready": "Prêt",
+  "tutorials.status_index_not_found": "⚠️ index.json non trouvé",
+  "tutorials.status_enter_keywords": "⚠️ Entrez des mots-clés de recherche"
 }

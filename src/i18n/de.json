@@ -993,5 +993,13 @@
   "google_translate.status_failed": "✗ Übersetzung fehlgeschlagen",
   "google_translate.status_cancelled": "Übersetzung abgebrochen",
   "google_translate.btn_copied": "✓ Kopiert!",
-  "google_translate.cache_na": "Cache: N/V"
+  "google_translate.cache_na": "Cache: N/V",
+  "tutorials.placeholder_search": "🔍 Tutorials durchsuchen...",
+  "tutorials.btn_search": "Suchen",
+  "tutorials.btn_quick_start": "⚡ Schnellstart",
+  "tutorials.btn_ai_assistant": "💬 KI fragen",
+  "tutorials.title_welcome": "<h3>Willkommen zu den Clarify-Tutorials</h3>",
+  "tutorials.status_ready": "Bereit",
+  "tutorials.status_index_not_found": "⚠️ index.json nicht gefunden",
+  "tutorials.status_enter_keywords": "⚠️ Suchwörter eingeben"
 }

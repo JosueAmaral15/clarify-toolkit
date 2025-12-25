@@ -1030,5 +1030,13 @@
   "google_translate.status_failed": "✗ 翻译失败",
   "google_translate.status_cancelled": "翻译已取消",
   "google_translate.btn_copied": "✓ 已复制！",
-  "google_translate.cache_na": "缓存: N/A"
+  "google_translate.cache_na": "缓存: N/A",
+  "tutorials.placeholder_search": "🔍 搜索教程...",
+  "tutorials.btn_search": "搜索",
+  "tutorials.btn_quick_start": "⚡ 快速开始",
+  "tutorials.btn_ai_assistant": "💬 问 AI",
+  "tutorials.title_welcome": "<h3>欢迎来到 Clarify 教程</h3>",
+  "tutorials.status_ready": "就绪",
+  "tutorials.status_index_not_found": "⚠️ 找不到 index.json",
+  "tutorials.status_enter_keywords": "⚠️ 输入搜索关键字"
 }

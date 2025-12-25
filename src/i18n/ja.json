@@ -993,5 +993,13 @@
   "google_translate.status_failed": "✗ 翻訳失敗",
   "google_translate.status_cancelled": "翻訳がキャンセルされました",
   "google_translate.btn_copied": "✓ コピーしました!",
-  "google_translate.cache_na": "キャッシュ: N/A"
+  "google_translate.cache_na": "キャッシュ: N/A",
+  "tutorials.placeholder_search": "🔍 チュートリアルを検索...",
+  "tutorials.btn_search": "検索",
+  "tutorials.btn_quick_start": "⚡ クイックスタート",
+  "tutorials.btn_ai_assistant": "💬 AIに質問",
+  "tutorials.title_welcome": "<h3>Clarifyチュートリアルへようこそ</h3>",
+  "tutorials.status_ready": "準備完了",
+  "tutorials.status_index_not_found": "⚠️ index.jsonが見つかりません",
+  "tutorials.status_enter_keywords": "⚠️ 検索キーワードを入力"
 }
