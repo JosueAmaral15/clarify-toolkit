@@ -162,8 +162,8 @@ class MenuBuilder:
         main_window.act_open_google_translate.triggered.connect(main_window._show_google_translate)
         main_window.act_open_set_operations.triggered.connect(main_window._show_set_operations)
         main_window.act_open_calculator.triggered.connect(main_window._show_calculator)
-        main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_buil
-        main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)der)
+        main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_builder)
+        main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
     
     @staticmethod
