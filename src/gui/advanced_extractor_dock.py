@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QCheckBox, QMessageBox,
     QFileDialog, QSpinBox, QComboBox, QTabWidget, QPlainTextEdit,
-    QRadioButton, QButtonGroup, QApplication
+    QRadioButton, QButtonGroup, QApplication, QMenu
 )
 from PySide6.QtGui import QIcon, QAction
 from typing import Optional, List, Tuple, Dict, Any

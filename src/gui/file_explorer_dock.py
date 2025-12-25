@@ -18,7 +18,7 @@ from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
-    QComboBox, QDialog, QDialogButtonBox
+    QComboBox, QDialog, QDialogButtonBox, QAbstractItemView
 )
 from PySide6.QtCore import Qt, QSettings, QDate
 from PySide6.QtGui import QAction
@@ -283,9 +283,9 @@ class FileExplorerDock(BaseDock):
         
         # Enable multi-selection if in selection mode (NEW)
         if self.dialog_mode and hasattr(self, 'chk_selection_mode') and self.chk_selection_mode.isChecked():
-            self.table_manager.table.setSelectionMode(self.table_manager.table.MultiSelection)
+            self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
         else:
-            self.table_manager.table.setSelectionMode(self.table_manager.table.SingleSelection)
+            self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)
         
         # Populate table
         self.table_manager.populate(files_data, human_readable=human_readable)
