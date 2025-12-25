@@ -33,7 +33,7 @@ class AddStepDialog(QWidget):
         """
         super().__init__(parent)
         self.step = step
-        self.setWindowTitle("Add Formula Step" if not step else "Edit Formula Step")
+        self.setWindowTitle(tr("formula.dialog_add_title") if not step else tr("formula.dialog_edit_title"))
         self.setMinimumWidth(500)
         self._init_ui()
         
@@ -46,51 +46,51 @@ class AddStepDialog(QWidget):
         
         # Operation selection
         op_layout = QHBoxLayout()
-        op_layout.addWidget(QLabel("Operation:"))
+        op_layout.addWidget(QLabel(tr("formula.lbl_operation")))
         self.combo_operation = QComboBox()
         self.combo_operation.addItems(['∩ Intersection', '∪ Union', '− Difference', '⊕ Symmetric'])
         op_layout.addWidget(self.combo_operation)
         layout.addLayout(op_layout)
         
         # Input A
-        layout.addWidget(QLabel("Input A:"))
+        layout.addWidget(QLabel(tr("formula.lbl_input_a")))
         input_a_layout = QHBoxLayout()
         self.combo_input_a = QComboBox()
         self.combo_input_a.addItems(['file_path', 'previous', 'slot_a', 'slot_b', 'r1', 'r2', 'r3'])
         input_a_layout.addWidget(self.combo_input_a)
         self.ed_file_a = QLineEdit()
-        self.ed_file_a.setPlaceholderText("File path (if file_path selected)")
+        self.ed_file_a.setPlaceholderText(tr("formula.placeholder_file_a"))
         input_a_layout.addWidget(self.ed_file_a)
-        self.btn_browse_a = QPushButton("Browse...")
+        self.btn_browse_a = QPushButton(tr("formula.btn_browse"))
         self.btn_browse_a.clicked.connect(self._browse_file_a)
         input_a_layout.addWidget(self.btn_browse_a)
         layout.addLayout(input_a_layout)
         
         # Input B
-        layout.addWidget(QLabel("Input B:"))
+        layout.addWidget(QLabel(tr("formula.lbl_input_b")))
         input_b_layout = QHBoxLayout()
         self.combo_input_b = QComboBox()
         self.combo_input_b.addItems(['file_path', 'previous', 'slot_a', 'slot_b', 'r1', 'r2', 'r3'])
         input_b_layout.addWidget(self.combo_input_b)
         self.ed_file_b = QLineEdit()
-        self.ed_file_b.setPlaceholderText("File path (if file_path selected)")
+        self.ed_file_b.setPlaceholderText(tr("formula.placeholder_file_b"))
         input_b_layout.addWidget(self.ed_file_b)
-        self.btn_browse_b = QPushButton("Browse...")
+        self.btn_browse_b = QPushButton(tr("formula.btn_browse"))
         self.btn_browse_b.clicked.connect(self._browse_file_b)
         input_b_layout.addWidget(self.btn_browse_b)
         layout.addLayout(input_b_layout)
         
         # Output variable
         output_layout = QHBoxLayout()
-        output_layout.addWidget(QLabel("Output Variable:"))
+        output_layout.addWidget(QLabel(tr("formula.lbl_output_var")))
         self.ed_output = QLineEdit()
-        self.ed_output.setPlaceholderText("e.g., r1, result1, temp")
+        self.ed_output.setPlaceholderText(tr("formula.placeholder_output"))
         output_layout.addWidget(self.ed_output)
         layout.addLayout(output_layout)
         
         # Comparison mode
         mode_layout = QHBoxLayout()
-        mode_layout.addWidget(QLabel("Comparison Mode:"))
+        mode_layout.addWidget(QLabel(tr("formula.lbl_comparison_mode")))
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(['key_value', 'full_path_value', 'key_only'])
         mode_layout.addWidget(self.combo_mode)
@@ -98,10 +98,10 @@ class AddStepDialog(QWidget):
         
         # Buttons
         btn_layout = QHBoxLayout()
-        self.btn_ok = QPushButton("OK")
+        self.btn_ok = QPushButton(tr("formula.btn_ok"))
         self.btn_ok.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_ok)
-        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel = QPushButton(tr("formula.btn_cancel"))
         self.btn_cancel.clicked.connect(self.close)
         btn_layout.addWidget(self.btn_cancel)
         layout.addLayout(btn_layout)
@@ -195,9 +195,9 @@ class FormulaDock(QDockWidget):
         
         # Formula name
         name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Formula Name:"))
+        name_layout.addWidget(QLabel(tr("formula.lbl_formula_name")))
         self.ed_formula_name = QLineEdit()
-        self.ed_formula_name.setPlaceholderText("Enter formula name")
+        self.ed_formula_name.setPlaceholderText(tr("formula.placeholder_name"))
         name_layout.addWidget(self.ed_formula_name)
         layout.addLayout(name_layout)
         
@@ -208,7 +208,7 @@ class FormulaDock(QDockWidget):
         left_widget = QWidget()
         left_layout = QVBoxLayout()
         
-        left_layout.addWidget(QLabel("Formula Steps:"))
+        left_layout.addWidget(QLabel(tr("formula.lbl_formula_steps")))
         self.tree_steps = QTreeWidget()
         self.tree_steps.setHeaderLabels(['Step', 'Expression'])
         self.tree_steps.setColumnWidth(0, 80)
@@ -216,15 +216,15 @@ class FormulaDock(QDockWidget):
         
         # Step management buttons
         step_btn_layout = QHBoxLayout()
-        self.btn_add_step = QPushButton("➕ Add Step")
+        self.btn_add_step = QPushButton(tr("formula.btn_add_step"))
         step_btn_layout.addWidget(self.btn_add_step)
-        self.btn_edit_step = QPushButton("✏️ Edit")
+        self.btn_edit_step = QPushButton(tr("formula.btn_edit"))
         step_btn_layout.addWidget(self.btn_edit_step)
-        self.btn_remove_step = QPushButton("🗑️ Remove")
+        self.btn_remove_step = QPushButton(tr("formula.btn_remove"))
         step_btn_layout.addWidget(self.btn_remove_step)
-        self.btn_move_up = QPushButton("⬆️ Up")
+        self.btn_move_up = QPushButton(tr("formula.btn_up"))
         step_btn_layout.addWidget(self.btn_move_up)
-        self.btn_move_down = QPushButton("⬇️ Down")
+        self.btn_move_down = QPushButton(tr("formula.btn_down"))
         step_btn_layout.addWidget(self.btn_move_down)
         left_layout.addLayout(step_btn_layout)
         
@@ -235,16 +235,16 @@ class FormulaDock(QDockWidget):
         right_widget = QWidget()
         right_layout = QVBoxLayout()
         
-        right_layout.addWidget(QLabel("Formula Preview:"))
+        right_layout.addWidget(QLabel(tr("formula.lbl_preview")))
         self.text_preview = QTextEdit()
         self.text_preview.setReadOnly(True)
         self.text_preview.setMaximumHeight(150)
         right_layout.addWidget(self.text_preview)
         
         # Execution result
-        result_group = QGroupBox("Execution Result")
+        result_group = QGroupBox(tr("formula.group_result"))
         result_layout = QVBoxLayout()
-        self.lbl_result_status = QLabel("Status: Not executed")
+        self.lbl_result_status = QLabel(tr("formula.status_not_executed"))
         result_layout.addWidget(self.lbl_result_status)
         self.text_result = QTextEdit()
         self.text_result.setReadOnly(True)
@@ -261,17 +261,17 @@ class FormulaDock(QDockWidget):
         
         # Action buttons
         action_layout = QHBoxLayout()
-        self.btn_execute = QPushButton("▶️ Execute Formula")
+        self.btn_execute = QPushButton(tr("formula.btn_execute"))
         self.btn_execute.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
         action_layout.addWidget(self.btn_execute)
         
-        self.btn_save_template = QPushButton("💾 Save Template")
+        self.btn_save_template = QPushButton(tr("formula.btn_save_template"))
         action_layout.addWidget(self.btn_save_template)
         
-        self.btn_load_template = QPushButton("📂 Load Template")
+        self.btn_load_template = QPushButton(tr("formula.btn_load_template"))
         action_layout.addWidget(self.btn_load_template)
         
-        self.btn_clear = QPushButton("🗑️ Clear All")
+        self.btn_clear = QPushButton(tr("formula.btn_clear_all"))
         action_layout.addWidget(self.btn_clear)
         
         layout.addLayout(action_layout)
@@ -411,7 +411,7 @@ class FormulaDock(QDockWidget):
                 initial_files[f'file_b_{i}'] = step.file_b_path
         
         # Execute
-        self.lbl_result_status.setText("Status: Executing...")
+        self.lbl_result_status.setText(tr("formula.status_executing"))
         self.lbl_result_status.setStyleSheet("color: orange;")
         
         result = self.formula_executor.execute(self.current_formula, initial_files)
@@ -499,5 +499,5 @@ class FormulaDock(QDockWidget):
         self._refresh_tree()
         self._update_preview()
         self.text_result.clear()
-        self.lbl_result_status.setText("Status: Not executed")
+        self.lbl_result_status.setText(tr("formula.status_not_executed"))
         self.lbl_result_status.setStyleSheet("")
