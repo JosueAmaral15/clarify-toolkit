@@ -41,6 +41,7 @@ from PySide6.QtCore import Signal
 from src.core.set_operation_executor import SetOperationExecutor
 from src.core.result_exporter import ResultExporter
 from src.i18n import tooltip_tr
+from src.i18n.translator import tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
 from .widgets import FileSelectionWidget, OperationOptionsWidget
@@ -64,7 +65,7 @@ class SetOperationsDock(BaseDock):
         """
         self.history_manager = HistoryManager()
         self.presets_manager = PresetsManager()
-        super().__init__("JSON Set Operations", parent)
+        super().__init__(tr("set_operations.title"), parent)
 
     def _setup_ui(self):
         """Setup user interface components."""
@@ -89,45 +90,45 @@ class SetOperationsDock(BaseDock):
 
         # === Action Buttons ===
         btn_layout = QHBoxLayout()
-        self.btn_execute = QPushButton("Execute")
+        self.btn_execute = QPushButton(tr("set_operations.btn_execute"))
         self.btn_execute.setMinimumHeight(35)
         self.btn_execute.setToolTip(tooltip_tr("set_ops.btn_execute"))
         
-        self.btn_save_preset = QPushButton("💾 Save Preset")
+        self.btn_save_preset = QPushButton(tr("set_operations.btn_save_preset"))
         self.btn_save_preset.setToolTip("Save current configuration as preset (v2.9.95)")
         
-        self.btn_clear = QPushButton("Clear")
+        self.btn_clear = QPushButton(tr("set_operations.btn_clear"))
         self.btn_clear.setToolTip("Clear all inputs, file selections, and results")
-        self.btn_save = QPushButton("Save Result")
+        self.btn_save = QPushButton(tr("set_operations.btn_save"))
         self.btn_save.setToolTip("Save operation results to JSON file (enabled after successful execution)")
         self.btn_save.setEnabled(False)
-        self.btn_export = QPushButton("Export...")
+        self.btn_export = QPushButton(tr("set_operations.btn_export"))
         self.btn_export.setToolTip("Export results to CSV, Excel, YAML, or TOML (v2.9.93)")
         self.btn_export.setEnabled(False)
         
-        self.btn_view_diff = QPushButton("🔍 View Diff")
+        self.btn_view_diff = QPushButton(tr("set_operations.btn_view_diff"))
         self.btn_view_diff.setToolTip("View side-by-side diff between files (v2.9.99)")
         self.btn_view_diff.setEnabled(False)
         
-        self.btn_view_venn = QPushButton("📊 View Venn")
+        self.btn_view_venn = QPushButton(tr("set_operations.btn_view_venn"))
         self.btn_view_venn.setToolTip("View Venn diagram showing key/value intersections (v2.9.107)")
         self.btn_view_venn.setEnabled(False)
         
-        self.btn_merge = QPushButton("📥 Merge to File")
+        self.btn_merge = QPushButton(tr("set_operations.btn_merge"))
         self.btn_merge.setToolTip("Merge results back to original file (v2.9.100)")
         self.btn_merge.setEnabled(False)
         
-        self.btn_store_calc = QPushButton("🧮 Store in Calculator")
+        self.btn_store_calc = QPushButton(tr("set_operations.btn_store_calc"))
         self.btn_store_calc.setToolTip("Store result in Calculator memory slot (v2.9.98)")
         self.btn_store_calc.setEnabled(False)
         
-        self.btn_batch = QPushButton("📋 Batch Operations")
+        self.btn_batch = QPushButton(tr("set_operations.btn_batch"))
         self.btn_batch.setToolTip("Create and execute batch jobs with multiple operations (v2.9.102)")
         
-        self.btn_history = QPushButton("📜 History")
+        self.btn_history = QPushButton(tr("set_operations.btn_history"))
         self.btn_history.setToolTip("View operation history (v2.9.94)")
         
-        self.btn_presets = QPushButton("📋 Presets")
+        self.btn_presets = QPushButton(tr("set_operations.btn_presets"))
         self.btn_presets.setToolTip("Manage operation presets (v2.9.95)")
 
         btn_layout.addWidget(self.btn_execute)
@@ -147,7 +148,7 @@ class SetOperationsDock(BaseDock):
         main_layout.addLayout(btn_layout)
 
         # === Results Section ===
-        main_layout.addWidget(QLabel("Results:"))
+        main_layout.addWidget(QLabel(tr("set_operations.lbl_results")))
         self.txt_result = QTextEdit()
         self.txt_result.setReadOnly(True)
         self.txt_result.setMinimumHeight(200)
@@ -228,7 +229,7 @@ class SetOperationsDock(BaseDock):
         # Validate and load files
         success, file_dicts, error = SetOperationExecutor.validate_and_load_files(files)
         if not success:
-            self.show_error("Error", error)
+            self.show_error(tr("set_operations.error_title"), error)
             return
         
         # Execute operations
@@ -240,7 +241,7 @@ class SetOperationsDock(BaseDock):
         )
         
         if not exec_result.success:
-            self.show_error("Error", exec_result.error)
+            self.show_error(tr("set_operations.error_title"), exec_result.error)
             return
         
         # Store data for diff viewer and other features
@@ -312,7 +313,7 @@ class SetOperationsDock(BaseDock):
         self.btn_merge.setEnabled(True)
         self.btn_store_calc.setEnabled(True)
 
-        self.show_info("Success", f"Operations completed!\n\n{stats_text if 'stats_text' in locals() else 'Statistics calculated successfully.'}")
+        self.show_info(tr("set_operations.success_title"), tr("set_operations.success_message").replace("{stats}", stats_text if 'stats_text' in locals() else 'Statistics calculated successfully.'))
 
     def _save_result(self):
         """Save operation results to JSON file."""
@@ -325,9 +326,9 @@ class SetOperationsDock(BaseDock):
         if file_path:
             success, message = ResultExporter.save_json(data, file_path)
             if success:
-                self.show_info("Success", message)
+                self.show_info(tr("set_operations.success_title"), message)
             else:
-                self.show_error("Error Saving", message)
+                self.show_error(tr("set_operations.error_saving_title"), message)
     
     def _export_result(self):
         """Export results to multiple formats (v2.9.93)."""
@@ -336,7 +337,7 @@ class SetOperationsDock(BaseDock):
             self.result_data if hasattr(self, 'result_data') else None
         )
         if not is_valid:
-            self.show_warning("No Data", error)
+            self.show_warning(tr("set_operations.warning_no_data_title"), error)
             return
         
         # Open save dialog
