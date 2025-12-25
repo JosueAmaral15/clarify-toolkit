@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from src.i18n.translator import tr
 
 try:
     from src.config_manager import get_config
@@ -59,13 +60,13 @@ class ConfigEditorDialog(QDialog):
         
     def _setup_ui(self):
         """Setup dialog UI."""
-        self.setWindowTitle("Configuration Editor")
+        self.setWindowTitle(tr("config_editor.title"))
         self.setMinimumSize(700, 600)
         
         layout = QVBoxLayout(self)
         
         # Header
-        header = QLabel("📝 Editar config.yaml")
+        header = QLabel(tr("config_editor.header"))
         header_font = QFont()
         header_font.setPointSize(14)
         header_font.setBold(True)
@@ -81,7 +82,7 @@ class ConfigEditorDialog(QDialog):
         layout.addWidget(instructions)
         
         # Editor groupbox
-        editor_group = QGroupBox("YAML Configuration")
+        editor_group = QGroupBox(tr("config_editor.group_editor"))
         editor_layout = QVBoxLayout()
         
         # YAML text editor
@@ -105,19 +106,19 @@ class ConfigEditorDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         
-        self.btn_preview = QPushButton("👁️ Preview")
+        self.btn_preview = QPushButton(tr("config_editor.btn_preview"))
         self.btn_preview.setToolTip("Validar YAML antes de salvar")
         self.btn_preview.clicked.connect(self._preview_config)
         
-        self.btn_reset = QPushButton("🔄 Reset to Defaults")
+        self.btn_reset = QPushButton(tr("config_editor.btn_reset"))
         self.btn_reset.setToolTip("Restaurar configurações padrão")
         self.btn_reset.clicked.connect(self._reset_to_defaults)
         
-        self.btn_save = QPushButton("💾 Save")
+        self.btn_save = QPushButton(tr("config_editor.btn_save"))
         self.btn_save.setToolTip("Salvar configurações (cria backup)")
         self.btn_save.clicked.connect(self._save_config)
         
-        self.btn_cancel = QPushButton("❌ Cancel")
+        self.btn_cancel = QPushButton(tr("config_editor.btn_cancel"))
         self.btn_cancel.clicked.connect(self.reject)
         
         button_layout.addWidget(self.btn_preview)

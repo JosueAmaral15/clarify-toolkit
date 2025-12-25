@@ -1140,5 +1140,12 @@
   "presets_dialog.btn_load": "✅ 加载预设",
   "presets_dialog.btn_rename": "✏️ 重命名",
   "presets_dialog.btn_delete": "🗑️ 删除",
-  "presets_dialog.btn_close": "关闭"
+  "presets_dialog.btn_close": "关闭",
+  "config_editor.title": "配置编辑器",
+  "config_editor.header": "📝 编辑 config.yaml",
+  "config_editor.group_editor": "YAML配置",
+  "config_editor.btn_preview": "👁️ 预览",
+  "config_editor.btn_reset": "🔄 恢复默认值",
+  "config_editor.btn_save": "💾 保存",
+  "config_editor.btn_cancel": "❌ 取消"
 }

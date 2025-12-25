@@ -1111,5 +1111,12 @@
   "presets_dialog.btn_load": "✅ Carregar Predefinição",
   "presets_dialog.btn_rename": "✏️ Renomear",
   "presets_dialog.btn_delete": "🗑️ Excluir",
-  "presets_dialog.btn_close": "Fechar"
+  "presets_dialog.btn_close": "Fechar",
+  "config_editor.title": "Editor de Configuração",
+  "config_editor.header": "📝 Editar config.yaml",
+  "config_editor.group_editor": "Configuração YAML",
+  "config_editor.btn_preview": "👁️ Visualizar",
+  "config_editor.btn_reset": "🔄 Restaurar Padrões",
+  "config_editor.btn_save": "💾 Salvar",
+  "config_editor.btn_cancel": "❌ Cancelar"
 }
