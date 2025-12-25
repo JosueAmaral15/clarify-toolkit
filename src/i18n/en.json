@@ -1169,5 +1169,20 @@
   "template_dialog.lbl_target_dir": "Target Directory:",
   "template_dialog.btn_browse": "Browse...",
   "template_dialog.btn_create": "Create Project",
-  "template_dialog.btn_close": "Close"
+  "template_dialog.btn_close": "Close",
+  "shortcut_customizer.title": "Customize Keyboard Shortcuts",
+  "shortcut_customizer.lbl_category": "Category:",
+  "shortcut_customizer.lbl_search": "Search:",
+  "shortcut_customizer.chk_conflicts": "Show conflicts only",
+  "shortcut_customizer.group_import_export": "Import/Export",
+  "shortcut_customizer.btn_import": "Import...",
+  "shortcut_customizer.btn_export": "Export...",
+  "shortcut_customizer.btn_reset_all": "Reset All to Default",
+  "shortcut_customizer.btn_reset_selected": "Reset Selected",
+  "shortcut_customizer.btn_ok": "OK",
+  "shortcut_customizer.btn_cancel": "Cancel",
+  "shortcut_customizer.lbl_new_shortcut": "New shortcut:",
+  "shortcut_customizer.btn_clear": "Clear",
+  "shortcut_customizer.btn_dialog_ok": "OK",
+  "shortcut_customizer.btn_dialog_cancel": "Cancel"
 }

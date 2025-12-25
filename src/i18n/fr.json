@@ -1138,5 +1138,20 @@
   "template_dialog.lbl_target_dir": "Répertoire Cible:",
   "template_dialog.btn_browse": "Parcourir...",
   "template_dialog.btn_create": "Créer le Projet",
-  "template_dialog.btn_close": "Fermer"
+  "template_dialog.btn_close": "Fermer",
+  "shortcut_customizer.title": "Personnaliser les Raccourcis Clavier",
+  "shortcut_customizer.lbl_category": "Catégorie:",
+  "shortcut_customizer.lbl_search": "Rechercher:",
+  "shortcut_customizer.chk_conflicts": "Afficher uniquement les conflits",
+  "shortcut_customizer.group_import_export": "Importer/Exporter",
+  "shortcut_customizer.btn_import": "Importer...",
+  "shortcut_customizer.btn_export": "Exporter...",
+  "shortcut_customizer.btn_reset_all": "Réinitialiser Tout par Défaut",
+  "shortcut_customizer.btn_reset_selected": "Réinitialiser Sélectionné",
+  "shortcut_customizer.btn_ok": "OK",
+  "shortcut_customizer.btn_cancel": "Annuler",
+  "shortcut_customizer.lbl_new_shortcut": "Nouveau raccourci:",
+  "shortcut_customizer.btn_clear": "Effacer",
+  "shortcut_customizer.btn_dialog_ok": "OK",
+  "shortcut_customizer.btn_dialog_cancel": "Annuler"
 }

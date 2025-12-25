@@ -1138,5 +1138,20 @@
   "template_dialog.lbl_target_dir": "ターゲットディレクトリ:",
   "template_dialog.btn_browse": "参照...",
   "template_dialog.btn_create": "プロジェクトを作成",
-  "template_dialog.btn_close": "閉じる"
+  "template_dialog.btn_close": "閉じる",
+  "shortcut_customizer.title": "キーボードショートカットをカスタマイズ",
+  "shortcut_customizer.lbl_category": "カテゴリ:",
+  "shortcut_customizer.lbl_search": "検索:",
+  "shortcut_customizer.chk_conflicts": "競合のみ表示",
+  "shortcut_customizer.group_import_export": "インポート/エクスポート",
+  "shortcut_customizer.btn_import": "インポート...",
+  "shortcut_customizer.btn_export": "エクスポート...",
+  "shortcut_customizer.btn_reset_all": "すべてをデフォルトにリセット",
+  "shortcut_customizer.btn_reset_selected": "選択したものをリセット",
+  "shortcut_customizer.btn_ok": "OK",
+  "shortcut_customizer.btn_cancel": "キャンセル",
+  "shortcut_customizer.lbl_new_shortcut": "新しいショートカット:",
+  "shortcut_customizer.btn_clear": "クリア",
+  "shortcut_customizer.btn_dialog_ok": "OK",
+  "shortcut_customizer.btn_dialog_cancel": "キャンセル"
 }

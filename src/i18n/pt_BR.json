@@ -1146,5 +1146,20 @@
   "template_dialog.lbl_target_dir": "Diretório de Destino:",
   "template_dialog.btn_browse": "Procurar...",
   "template_dialog.btn_create": "Criar Projeto",
-  "template_dialog.btn_close": "Fechar"
+  "template_dialog.btn_close": "Fechar",
+  "shortcut_customizer.title": "Personalizar Atalhos de Teclado",
+  "shortcut_customizer.lbl_category": "Categoria:",
+  "shortcut_customizer.lbl_search": "Pesquisar:",
+  "shortcut_customizer.chk_conflicts": "Mostrar apenas conflitos",
+  "shortcut_customizer.group_import_export": "Importar/Exportar",
+  "shortcut_customizer.btn_import": "Importar...",
+  "shortcut_customizer.btn_export": "Exportar...",
+  "shortcut_customizer.btn_reset_all": "Restaurar Todos ao Padrão",
+  "shortcut_customizer.btn_reset_selected": "Restaurar Selecionado",
+  "shortcut_customizer.btn_ok": "OK",
+  "shortcut_customizer.btn_cancel": "Cancelar",
+  "shortcut_customizer.lbl_new_shortcut": "Novo atalho:",
+  "shortcut_customizer.btn_clear": "Limpar",
+  "shortcut_customizer.btn_dialog_ok": "OK",
+  "shortcut_customizer.btn_dialog_cancel": "Cancelar"
 }

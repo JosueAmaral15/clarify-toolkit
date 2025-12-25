@@ -1138,5 +1138,20 @@
   "template_dialog.lbl_target_dir": "Zielverzeichnis:",
   "template_dialog.btn_browse": "Durchsuchen...",
   "template_dialog.btn_create": "Projekt erstellen",
-  "template_dialog.btn_close": "Schließen"
+  "template_dialog.btn_close": "Schließen",
+  "shortcut_customizer.title": "Tastaturbefehle anpassen",
+  "shortcut_customizer.lbl_category": "Kategorie:",
+  "shortcut_customizer.lbl_search": "Suchen:",
+  "shortcut_customizer.chk_conflicts": "Nur Konflikte anzeigen",
+  "shortcut_customizer.group_import_export": "Importieren/Exportieren",
+  "shortcut_customizer.btn_import": "Importieren...",
+  "shortcut_customizer.btn_export": "Exportieren...",
+  "shortcut_customizer.btn_reset_all": "Alle auf Standard zurücksetzen",
+  "shortcut_customizer.btn_reset_selected": "Ausgewählte zurücksetzen",
+  "shortcut_customizer.btn_ok": "OK",
+  "shortcut_customizer.btn_cancel": "Abbrechen",
+  "shortcut_customizer.lbl_new_shortcut": "Neuer Kurzbefehl:",
+  "shortcut_customizer.btn_clear": "Löschen",
+  "shortcut_customizer.btn_dialog_ok": "OK",
+  "shortcut_customizer.btn_dialog_cancel": "Abbrechen"
 }

@@ -1175,5 +1175,20 @@
   "template_dialog.lbl_target_dir": "目标目录:",
   "template_dialog.btn_browse": "浏览...",
   "template_dialog.btn_create": "创建项目",
-  "template_dialog.btn_close": "关闭"
+  "template_dialog.btn_close": "关闭",
+  "shortcut_customizer.title": "自定义键盘快捷键",
+  "shortcut_customizer.lbl_category": "类别:",
+  "shortcut_customizer.lbl_search": "搜索:",
+  "shortcut_customizer.chk_conflicts": "仅显示冲突",
+  "shortcut_customizer.group_import_export": "导入/导出",
+  "shortcut_customizer.btn_import": "导入...",
+  "shortcut_customizer.btn_export": "导出...",
+  "shortcut_customizer.btn_reset_all": "全部重置为默认",
+  "shortcut_customizer.btn_reset_selected": "重置选中项",
+  "shortcut_customizer.btn_ok": "确定",
+  "shortcut_customizer.btn_cancel": "取消",
+  "shortcut_customizer.lbl_new_shortcut": "新快捷键:",
+  "shortcut_customizer.btn_clear": "清除",
+  "shortcut_customizer.btn_dialog_ok": "确定",
+  "shortcut_customizer.btn_dialog_cancel": "取消"
 }

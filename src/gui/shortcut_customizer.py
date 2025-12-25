@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QKeySequence, QKeyEvent
+from src.i18n.translator import tr
 
 from ..shortcut_manager import ShortcutManager
 
@@ -94,7 +95,7 @@ class ShortcutCustomizerDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Customize Keyboard Shortcuts")
+        self.setWindowTitle(tr("shortcut_customizer.title"))
         self.resize(800, 600)
         
         # Store modified shortcuts
@@ -122,7 +123,7 @@ class ShortcutCustomizerDialog(QDialog):
         # Filter and search
         filter_layout = QHBoxLayout()
         
-        filter_layout.addWidget(QLabel("Category:"))
+        filter_layout.addWidget(QLabel(tr("shortcut_customizer.lbl_category")))
         self.category_filter = QComboBox()
         self.category_filter.addItems([
             "All", "File", "Edit", "Tools", "Navigation", "View", "Processing", "Help"
@@ -130,13 +131,13 @@ class ShortcutCustomizerDialog(QDialog):
         self.category_filter.currentTextChanged.connect(self._filter_shortcuts)
         filter_layout.addWidget(self.category_filter)
         
-        filter_layout.addWidget(QLabel("Search:"))
+        filter_layout.addWidget(QLabel(tr("shortcut_customizer.lbl_search")))
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search actions...")
         self.search_box.textChanged.connect(self._filter_shortcuts)
         filter_layout.addWidget(self.search_box, 1)
         
-        self.show_conflicts_only = QCheckBox("Show conflicts only")
+        self.show_conflicts_only = QCheckBox(tr("shortcut_customizer.chk_conflicts"))
         self.show_conflicts_only.stateChanged.connect(self._filter_shortcuts)
         filter_layout.addWidget(self.show_conflicts_only)
         
@@ -164,14 +165,14 @@ class ShortcutCustomizerDialog(QDialog):
         buttons_layout = QHBoxLayout()
         
         # Import/Export group
-        import_export_group = QGroupBox("Import/Export")
+        import_export_group = QGroupBox(tr("shortcut_customizer.group_import_export"))
         import_export_layout = QHBoxLayout(import_export_group)
         
-        self.import_btn = QPushButton("Import...")
+        self.import_btn = QPushButton(tr("shortcut_customizer.btn_import"))
         self.import_btn.clicked.connect(self._import_shortcuts)
         import_export_layout.addWidget(self.import_btn)
         
-        self.export_btn = QPushButton("Export...")
+        self.export_btn = QPushButton(tr("shortcut_customizer.btn_export"))
         self.export_btn.clicked.connect(self._export_shortcuts)
         import_export_layout.addWidget(self.export_btn)
         
@@ -180,20 +181,20 @@ class ShortcutCustomizerDialog(QDialog):
         buttons_layout.addStretch()
         
         # Reset buttons
-        self.reset_all_btn = QPushButton("Reset All to Default")
+        self.reset_all_btn = QPushButton(tr("shortcut_customizer.btn_reset_all"))
         self.reset_all_btn.clicked.connect(self._reset_all_shortcuts)
         buttons_layout.addWidget(self.reset_all_btn)
         
-        self.reset_selected_btn = QPushButton("Reset Selected")
+        self.reset_selected_btn = QPushButton(tr("shortcut_customizer.btn_reset_selected"))
         self.reset_selected_btn.clicked.connect(self._reset_selected_shortcut)
         buttons_layout.addWidget(self.reset_selected_btn)
         
         # OK/Cancel
-        self.ok_btn = QPushButton("OK")
+        self.ok_btn = QPushButton(tr("shortcut_customizer.btn_ok"))
         self.ok_btn.clicked.connect(self.accept)
         buttons_layout.addWidget(self.ok_btn)
         
-        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn = QPushButton(tr("shortcut_customizer.btn_cancel"))
         self.cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_btn)
         
@@ -308,7 +309,7 @@ class ShortcutCustomizerDialog(QDialog):
         key_edit = KeySequenceEdit(dialog)
         if current_custom:
             key_edit.setText(current_custom)
-        layout.addWidget(QLabel("New shortcut:"))
+        layout.addWidget(QLabel(tr("shortcut_customizer.lbl_new_shortcut")))
         layout.addWidget(key_edit)
         
         # Conflict warning
@@ -343,17 +344,17 @@ class ShortcutCustomizerDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
         
-        clear_btn = QPushButton("Clear")
+        clear_btn = QPushButton(tr("shortcut_customizer.btn_clear"))
         clear_btn.clicked.connect(key_edit.clear_sequence)
         btn_layout.addWidget(clear_btn)
         
         btn_layout.addStretch()
         
-        ok_btn = QPushButton("OK")
+        ok_btn = QPushButton(tr("shortcut_customizer.btn_dialog_ok"))
         ok_btn.clicked.connect(dialog.accept)
         btn_layout.addWidget(ok_btn)
         
-        cancel_btn = QPushButton("Cancel")
+        cancel_btn = QPushButton(tr("shortcut_customizer.btn_dialog_cancel"))
         cancel_btn.clicked.connect(dialog.reject)
         btn_layout.addWidget(cancel_btn)
         
