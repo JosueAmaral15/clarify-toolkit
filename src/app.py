@@ -916,10 +916,6 @@ if _PYSIDE:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
             self._add_tool_tab(self.dock_editor, "Editor", "editor")
-                    "Search Complete",
-                    f"Found and selected {len(results)} items.\n\n"
-                    f"First item: {results[0] if results else 'None'}"
-                )
         
         # ============================================================================
         # Tab Management System (v2.9.40 - Task: Tools as tabs)
