@@ -134,6 +134,8 @@
   "dialog.close": "关闭",
   "dialog.yes": "是",
   "dialog.no": "否",
+  "dialog.unsaved_title": "未保存的更改",
+  "dialog.unsaved_message": "'{tab_title}' 有未保存的更改。\n\n关闭前要保存吗?",
   "error.file_not_found": "文件未找到",
   "error.invalid_path": "无效路径",
   "error.permission_denied": "权限被拒绝",

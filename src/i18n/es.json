@@ -134,6 +134,8 @@
   "dialog.close": "Cerrar",
   "dialog.yes": "Sí",
   "dialog.no": "No",
+  "dialog.unsaved_title": "Cambios No Guardados",
+  "dialog.unsaved_message": "'{tab_title}' tiene cambios no guardados.\n\n¿Desea guardar antes de cerrar?",
   "error.file_not_found": "Archivo no encontrado",
   "error.invalid_path": "Ruta inválida",
   "error.permission_denied": "Permiso denegado",

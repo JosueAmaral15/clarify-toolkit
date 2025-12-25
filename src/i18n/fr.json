@@ -134,6 +134,8 @@
   "dialog.close": "Fermer",
   "dialog.yes": "Oui",
   "dialog.no": "Non",
+  "dialog.unsaved_title": "Modifications Non Enregistrées",
+  "dialog.unsaved_message": "'{tab_title}' a des modifications non enregistrées.\n\nVoulez-vous enregistrer avant de fermer?",
   "error.file_not_found": "Fichier introuvable",
   "error.invalid_path": "Chemin invalide",
   "error.permission_denied": "Permission refusée",

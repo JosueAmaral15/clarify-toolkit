@@ -134,6 +134,8 @@
   "dialog.close": "Schließen",
   "dialog.yes": "Ja",
   "dialog.no": "Nein",
+  "dialog.unsaved_title": "Nicht Gespeicherte Änderungen",
+  "dialog.unsaved_message": "'{tab_title}' hat nicht gespeicherte Änderungen.\n\nMöchten Sie vor dem Schließen speichern?",
   "error.file_not_found": "Datei nicht gefunden",
   "error.invalid_path": "Ungültiger Pfad",
   "error.permission_denied": "Zugriff verweigert",

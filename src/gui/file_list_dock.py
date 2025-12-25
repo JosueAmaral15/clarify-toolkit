@@ -23,7 +23,7 @@ from PySide6.QtGui import QAction
 from .base_dock import BaseDock
 from .widgets import FileFilterPanel, PresetManager, FileListTableManager
 from src.core import FileListExecutor, FileInfo, ListResult
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class FileListDock(BaseDock):

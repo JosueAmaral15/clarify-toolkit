@@ -129,6 +129,8 @@
   "dialog.close": "Close",
   "dialog.yes": "Yes",
   "dialog.no": "No",
+  "dialog.unsaved_title": "Unsaved Changes",
+  "dialog.unsaved_message": "'{tab_title}' has unsaved changes.\n\nDo you want to save before closing?",
   
   "error.file_not_found": "File not found",
   "error.invalid_path": "Invalid path",

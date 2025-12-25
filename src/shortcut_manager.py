@@ -71,6 +71,7 @@ class ShortcutManager:
         "zoom_in": ("Ctrl++", "Zoom in"),
         "zoom_out": ("Ctrl+-", "Zoom out"),
         "reset_zoom": ("Ctrl+0", "Reset zoom"),
+        "horizontal_scroll": ("Ctrl+Shift+Scroll", "Horizontal scroll"),
         
         # Processing
         "process": ("F5", "Process/Run"),
@@ -230,7 +231,7 @@ class ShortcutManager:
             "Navigation": ["next_dock", "prev_dock", "next_dock_dynamic", "prev_dock_dynamic",
                           "jump_dock_1", "jump_dock_2", "jump_dock_3", "jump_dock_4", "jump_dock_5",
                           "jump_dock_6", "jump_dock_7", "jump_dock_8", "jump_dock_9"],
-            "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom"],
+            "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom", "horizontal_scroll"],
             "Processing": ["process", "interrupt", "clear"],
             "Help": ["help", "keyboard_shortcuts", "tutorials", "about"],
         }
@@ -254,7 +255,7 @@ class ShortcutManager:
             "Navigation": ["next_dock", "prev_dock", "next_dock_dynamic", "prev_dock_dynamic",
                           "jump_dock_1", "jump_dock_2", "jump_dock_3", "jump_dock_4", "jump_dock_5",
                           "jump_dock_6", "jump_dock_7", "jump_dock_8", "jump_dock_9"],
-            "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom"],
+            "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom", "horizontal_scroll"],
             "Processing": ["process", "interrupt", "clear"],
             "Help": ["help", "keyboard_shortcuts", "tutorials", "about"],
         }

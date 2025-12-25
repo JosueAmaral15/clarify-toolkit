@@ -986,30 +986,14 @@ if _PYSIDE:
             widget = self.tabs.widget(index)
             tab_title = self.tabs.tabText(index)
             
-            # Check if it's a fixed tab (Search/Replace or Insert)
-            if index < 2:  # First two tabs are fixed
-                # Allow closing but ask for confirmation
-                from PySide6.QtWidgets import QMessageBox
-                reply = QMessageBox.question(
-                    self,
-                    "Close Tab",
-                    f"Do you want to close '{tab_title}'?\n\n"
-                    f"You can reopen it from the Tools menu.",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
-                )
-                if reply == QMessageBox.No:
-                    return
-            
             # Check for unsaved changes (only for Editor)
             if hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes):
                 if widget.has_unsaved_changes():
                     from PySide6.QtWidgets import QMessageBox
                     reply = QMessageBox.question(
                         self,
-                        "Unsaved Changes",
-                        f"'{tab_title}' has unsaved changes.\n\n"
-                        f"Do you want to save before closing?",
+                        tr("dialog.unsaved_title"),
+                        tr("dialog.unsaved_message", tab_title=tab_title),
                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
                         QMessageBox.Save
                     )
@@ -1663,11 +1647,38 @@ if _PYSIDE:
             super().keyPressEvent(event)
         
         def wheelEvent(self, event):
-            """Handle mouse wheel for font scaling (v2.9.35)."""
+            """Handle mouse wheel for font scaling (v2.9.35) and horizontal scroll (v2.9.101)."""
             from PySide6.QtCore import Qt
             
+            # Ctrl+Shift+Scroll - Horizontal scroll
+            if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
+                # Get widget under mouse
+                widget = QApplication.widgetAt(event.globalPosition().toPoint())
+                if widget:
+                    # Find scrollable parent (QTextEdit, QTableWidget, etc.)
+                    scrollable = widget
+                    while scrollable and not hasattr(scrollable, 'horizontalScrollBar'):
+                        scrollable = scrollable.parentWidget()
+                    
+                    if scrollable and hasattr(scrollable, 'horizontalScrollBar'):
+                        scrollbar = scrollable.horizontalScrollBar()
+                        if scrollbar and scrollbar.isVisible():
+                            # Scroll horizontally
+                            delta = event.angleDelta().y()  # Use vertical wheel movement
+                            step = scrollbar.singleStep() * 3  # Scroll 3 steps at a time
+                            
+                            if delta > 0:
+                                # Scroll left
+                                scrollbar.setValue(scrollbar.value() - step)
+                            else:
+                                # Scroll right
+                                scrollbar.setValue(scrollbar.value() + step)
+                            
+                            event.accept()
+                            return
+            
             # Ctrl+Scroll - Font scaling
-            if event.modifiers() == Qt.ControlModifier:
+            elif event.modifiers() == Qt.ControlModifier:
                 from .accessibility_manager import AccessibilityManager
                 
                 if event.angleDelta().y() > 0:

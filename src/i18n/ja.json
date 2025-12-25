@@ -134,6 +134,8 @@
   "dialog.close": "閉じる",
   "dialog.yes": "はい",
   "dialog.no": "いいえ",
+  "dialog.unsaved_title": "未保存の変更",
+  "dialog.unsaved_message": "'{tab_title}' には未保存の変更があります。\n\n閉じる前に保存しますか?",
   "error.file_not_found": "ファイルが見つかりません",
   "error.invalid_path": "無効なパス",
   "error.permission_denied": "アクセスが拒否されました",

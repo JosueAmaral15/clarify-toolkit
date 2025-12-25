@@ -108,6 +108,8 @@
   "dialog.close": "Fechar",
   "dialog.yes": "Sim",
   "dialog.no": "Não",
+  "dialog.unsaved_title": "Alterações Não Salvas",
+  "dialog.unsaved_message": "'{tab_title}' possui alterações não salvas.\n\nDeseja salvar antes de fechar?",
   "error.file_not_found": "Arquivo não encontrado",
   "error.invalid_path": "Caminho inválido",
   "error.permission_denied": "Permissão negada",

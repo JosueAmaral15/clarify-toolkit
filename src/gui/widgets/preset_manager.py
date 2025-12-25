@@ -270,6 +270,9 @@ class PresetManager(QWidget):
         settings.endGroup()
         
         current_text = self.cmb_presets.currentText()
+        
+        # Block signals to prevent premature load_preset() call before set_callbacks()
+        self.cmb_presets.blockSignals(True)
         self.cmb_presets.clear()
         self.cmb_presets.addItem("-- No Preset --")
         self.cmb_presets.addItems(sorted(preset_names))
@@ -277,6 +280,9 @@ class PresetManager(QWidget):
         # Restore previous selection if still exists
         if current_text in preset_names:
             self.cmb_presets.setCurrentText(current_text)
+        
+        # Re-enable signals
+        self.cmb_presets.blockSignals(False)
     
     def _on_preset_selected(self):
         """Handle preset selection change."""
