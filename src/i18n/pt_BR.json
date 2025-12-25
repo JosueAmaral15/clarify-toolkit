@@ -1059,5 +1059,12 @@
   "ai_processor.group_search_replace": "Buscar/Substituir nos Resultados",
   "ai_processor.btn_apply_replace": "Aplicar Substituição aos Resultados",
   "ai_processor.group_insert": "Inserir no Prompt",
-  "ai_processor.btn_apply_insert": "Aplicar Inserção ao Prompt"
+  "ai_processor.btn_apply_insert": "Aplicar Inserção ao Prompt",
+  "dialog.preferences.title": "Preferências",
+  "dialog.preferences.general": "Geral",
+  "dialog.preferences.show_tooltips": "Mostrar dicas",
+  "dialog.preferences.confirm_exit": "Confirmar antes de sair",
+  "dialog.preferences.auto_save": "Salvar automaticamente",
+  "dialog.preferences.check_updates": "Verificar atualizações ao iniciar",
+  "dialog.preferences.success": "Preferências salvas com sucesso!"
 }

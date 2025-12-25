@@ -1051,5 +1051,12 @@
   "ai_processor.group_search_replace": "結果内で検索/置換",
   "ai_processor.btn_apply_replace": "結果に置換を適用",
   "ai_processor.group_insert": "プロンプトに挿入",
-  "ai_processor.btn_apply_insert": "プロンプトに挿入を適用"
+  "ai_processor.btn_apply_insert": "プロンプトに挿入を適用",
+  "dialog.preferences.title": "環境設定",
+  "dialog.preferences.general": "一般",
+  "dialog.preferences.show_tooltips": "ツールチップを表示",
+  "dialog.preferences.confirm_exit": "終了前に確認",
+  "dialog.preferences.auto_save": "自動保存",
+  "dialog.preferences.check_updates": "起動時に更新を確認",
+  "dialog.preferences.success": "環境設定を保存しました！"
 }

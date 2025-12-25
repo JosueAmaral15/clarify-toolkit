@@ -1082,5 +1082,12 @@
   "ai_processor.group_search_replace": "Search/Replace in Results",
   "ai_processor.btn_apply_replace": "Apply Replace to Results",
   "ai_processor.group_insert": "Insert in Prompt",
-  "ai_processor.btn_apply_insert": "Apply Insert to Prompt"
+  "ai_processor.btn_apply_insert": "Apply Insert to Prompt",
+  "dialog.preferences.title": "Preferences",
+  "dialog.preferences.general": "General",
+  "dialog.preferences.show_tooltips": "Show tooltips",
+  "dialog.preferences.confirm_exit": "Confirm before exit",
+  "dialog.preferences.auto_save": "Auto-save settings",
+  "dialog.preferences.check_updates": "Check for updates on startup",
+  "dialog.preferences.success": "Preferences saved successfully!"
 }

@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QCheckBox, QGroupBox,
     QDialogButtonBox, QMessageBox
 )
+from src.i18n.translator import tr
 
 
 class PreferencesDialog(QDialog):
@@ -35,29 +36,29 @@ class PreferencesDialog(QDialog):
     
     def _build_ui(self):
         """Build the dialog UI."""
-        self.setWindowTitle("Preferences")
+        self.setWindowTitle(tr("dialog.preferences.title"))
         self.setMinimumWidth(400)
         
         layout = QVBoxLayout()
         
         # General settings group
-        general_group = QGroupBox("General")
+        general_group = QGroupBox(tr("dialog.preferences.general"))
         general_layout = QVBoxLayout()
         
         # Tooltips checkbox
-        self.chk_tooltips = QCheckBox("Show tooltips")
+        self.chk_tooltips = QCheckBox(tr("dialog.preferences.show_tooltips"))
         self.chk_tooltips.setChecked(self.settings.get("show_tooltips", True))
         
         # Confirm exit checkbox
-        self.chk_confirm_exit = QCheckBox("Confirm before exit")
+        self.chk_confirm_exit = QCheckBox(tr("dialog.preferences.confirm_exit"))
         self.chk_confirm_exit.setChecked(self.settings.get("confirm_on_exit", True))
         
         # Auto-save checkbox
-        self.chk_auto_save = QCheckBox("Auto-save settings")
+        self.chk_auto_save = QCheckBox(tr("dialog.preferences.auto_save"))
         self.chk_auto_save.setChecked(self.settings.get("auto_save", True))
         
         # Update checker preference (v2.9.45)
-        self.chk_check_updates = QCheckBox("Check for updates on startup")
+        self.chk_check_updates = QCheckBox(tr("dialog.preferences.check_updates"))
         self.chk_check_updates.setChecked(
             self.settings.qsettings.value("update_checker/enabled", True, type=bool)
         )
@@ -101,8 +102,8 @@ class PreferencesDialog(QDialog):
         self.accept()
         QMessageBox.information(
             self.parent(),
-            "Success",
-            "Preferences saved successfully!"
+            tr("dialog.preferences.title"),
+            tr("dialog.preferences.success")
         )
     
     @staticmethod

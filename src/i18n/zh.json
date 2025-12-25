@@ -1088,5 +1088,12 @@
   "ai_processor.group_search_replace": "在结果中搜索/替换",
   "ai_processor.btn_apply_replace": "将替换应用到结果",
   "ai_processor.group_insert": "插入提示词",
-  "ai_processor.btn_apply_insert": "将插入应用到提示词"
+  "ai_processor.btn_apply_insert": "将插入应用到提示词",
+  "dialog.preferences.title": "首选项",
+  "dialog.preferences.general": "常规",
+  "dialog.preferences.show_tooltips": "显示工具提示",
+  "dialog.preferences.confirm_exit": "退出前确认",
+  "dialog.preferences.auto_save": "自动保存",
+  "dialog.preferences.check_updates": "启动时检查更新",
+  "dialog.preferences.success": "首选项保存成功！"
 }
