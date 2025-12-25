@@ -353,7 +353,7 @@ class SetOperationsDock(BaseDock):
         
         # Export
         success, message = ResultExporter.export_multi_format(
-            self.result_data, file_path, selected_filter
+            self.result_data, file_path, selected_filter, parent_widget=self
         )
         
         if success:

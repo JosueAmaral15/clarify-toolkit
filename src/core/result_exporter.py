@@ -18,7 +18,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import QWidget
 
 
 class ResultExporter:
@@ -62,7 +65,8 @@ class ResultExporter:
     def export_multi_format(
         data: Dict[str, Any],
         file_path: str,
-        selected_filter: str
+        selected_filter: str,
+        parent_widget: 'QWidget' | None = None
     ) -> Tuple[bool, str]:
         """
         Export results to multiple formats.
@@ -71,6 +75,7 @@ class ResultExporter:
             data: Result data dictionary
             file_path: Target file path
             selected_filter: Selected format filter from dialog
+            parent_widget: Parent widget for progress modal (optional)
             
         Returns:
             Tuple of (success, message)
@@ -95,7 +100,8 @@ class ResultExporter:
                 output_path=path,
                 format=export_format,
                 flatten=True,  # Flatten for CSV/Excel/TOML
-                include_metadata=True  # Add timestamp + operation type
+                include_metadata=True,  # Add timestamp + operation type
+                parent_widget=parent_widget  # Pass parent for progress modal
             )
             
             return True, f"Results exported to:\n{path}"

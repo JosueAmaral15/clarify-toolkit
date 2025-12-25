@@ -8,7 +8,10 @@ import csv
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PySide6.QtWidgets import QWidget
 
 try:
     import openpyxl  # type: ignore[import-not-found]  # Optional dependency
@@ -100,7 +103,8 @@ class ExportManager:
         data: Dict,
         output_path: Path,
         flatten: bool = True,
-        include_metadata: bool = True
+        include_metadata: bool = True,
+        parent_widget: Optional['QWidget'] = None
     ) -> None:
         """
         Export to CSV format.
@@ -110,29 +114,44 @@ class ExportManager:
             output_path: Output file path
             flatten: Flatten nested keys with dot notation
             include_metadata: Add export metadata
+            parent_widget: Parent widget for progress modal (optional)
         """
-        if include_metadata:
-            data = ExportManager.add_metadata(data, "export")
-        
-        if flatten:
-            data = ExportManager.flatten_dict(data)
-        
-        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Key', 'Value'])
+        modal = None
+        try:
+            # Show minimal processing modal if parent provided
+            if parent_widget:
+                from .ui import MinimalProcessingModal
+                from PySide6.QtWidgets import QApplication
+                modal = MinimalProcessingModal("Exporting to CSV...", parent_widget)
+                modal.show()
+                QApplication.processEvents()
             
-            for key, value in data.items():
-                # Handle complex values
-                if isinstance(value, (dict, list)):
-                    value = json.dumps(value, ensure_ascii=False)
-                writer.writerow([key, value])
+            if include_metadata:
+                data = ExportManager.add_metadata(data, "export")
+            
+            if flatten:
+                data = ExportManager.flatten_dict(data)
+            
+            with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['Key', 'Value'])
+                
+                for key, value in data.items():
+                    # Handle complex values
+                    if isinstance(value, (dict, list)):
+                        value = json.dumps(value, ensure_ascii=False)
+                    writer.writerow([key, value])
+        finally:
+            if modal:
+                modal.close()
     
     @staticmethod
     def export_to_excel(
         data: Dict,
         output_path: Path,
         flatten: bool = True,
-        include_metadata: bool = True
+        include_metadata: bool = True,
+        parent_widget: Optional['QWidget'] = None
     ) -> None:
         """
         Export to Excel (XLSX) format with formatting.
@@ -142,6 +161,7 @@ class ExportManager:
             output_path: Output file path
             flatten: Flatten nested keys with dot notation
             include_metadata: Add export metadata
+            parent_widget: Parent widget for progress modal (optional)
             
         Raises:
             ImportError: If openpyxl not installed
@@ -149,52 +169,66 @@ class ExportManager:
         if not _EXCEL_AVAILABLE:
             raise ImportError("openpyxl is required for Excel export. Install with: pip install openpyxl")
         
-        if include_metadata:
-            data = ExportManager.add_metadata(data, "export")
-        
-        if flatten:
-            data = ExportManager.flatten_dict(data)
-        
-        # Create workbook
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Export"
-        
-        # Header formatting
-        header_font = Font(bold=True, size=12)
-        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-        
-        # Write headers
-        ws['A1'] = 'Key'
-        ws['B1'] = 'Value'
-        ws['A1'].font = header_font
-        ws['B1'].font = header_font
-        ws['A1'].fill = header_fill
-        ws['B1'].fill = header_fill
-        
-        # Write data
-        row = 2
-        for key, value in data.items():
-            # Handle complex values
-            if isinstance(value, (dict, list)):
-                value = json.dumps(value, ensure_ascii=False)
+        modal = None
+        try:
+            # Show minimal processing modal if parent provided
+            if parent_widget:
+                from .ui import MinimalProcessingModal
+                from PySide6.QtWidgets import QApplication
+                modal = MinimalProcessingModal("Exporting to Excel...", parent_widget)
+                modal.show()
+                QApplication.processEvents()
             
-            ws[f'A{row}'] = key
-            ws[f'B{row}'] = value
-            row += 1
-        
-        # Auto-adjust column widths
-        ws.column_dimensions['A'].width = 50
-        ws.column_dimensions['B'].width = 80
-        
-        # Save
-        wb.save(output_path)
+            if include_metadata:
+                data = ExportManager.add_metadata(data, "export")
+            
+            if flatten:
+                data = ExportManager.flatten_dict(data)
+            
+            # Create workbook
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Export"
+            
+            # Header formatting
+            header_font = Font(bold=True, size=12)
+            header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+            
+            # Write headers
+            ws['A1'] = 'Key'
+            ws['B1'] = 'Value'
+            ws['A1'].font = header_font
+            ws['B1'].font = header_font
+            ws['A1'].fill = header_fill
+            ws['B1'].fill = header_fill
+            
+            # Write data
+            row = 2
+            for key, value in data.items():
+                # Handle complex values
+                if isinstance(value, (dict, list)):
+                    value = json.dumps(value, ensure_ascii=False)
+                
+                ws[f'A{row}'] = key
+                ws[f'B{row}'] = value
+                row += 1
+            
+            # Auto-adjust column widths
+            ws.column_dimensions['A'].width = 50
+            ws.column_dimensions['B'].width = 80
+            
+            # Save
+            wb.save(output_path)
+        finally:
+            if modal:
+                modal.close()
     
     @staticmethod
     def export_to_yaml(
         data: Dict,
         output_path: Path,
-        include_metadata: bool = True
+        include_metadata: bool = True,
+        parent_widget: Optional['QWidget'] = None
     ) -> None:
         """
         Export to YAML format.
@@ -203,6 +237,7 @@ class ExportManager:
             data: Dictionary to export
             output_path: Output file path
             include_metadata: Add export metadata
+            parent_widget: Parent widget for progress modal (optional)
             
         Raises:
             ImportError: If pyyaml not installed
@@ -210,18 +245,32 @@ class ExportManager:
         if not _YAML_AVAILABLE:
             raise ImportError("pyyaml is required for YAML export. Install with: pip install pyyaml")
         
-        if include_metadata:
-            data = ExportManager.add_metadata(data, "export")
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        modal = None
+        try:
+            # Show minimal processing modal if parent provided
+            if parent_widget:
+                from .ui import MinimalProcessingModal
+                from PySide6.QtWidgets import QApplication
+                modal = MinimalProcessingModal("Exporting to YAML...", parent_widget)
+                modal.show()
+                QApplication.processEvents()
+            
+            if include_metadata:
+                data = ExportManager.add_metadata(data, "export")
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        finally:
+            if modal:
+                modal.close()
     
     @staticmethod
     def export_to_toml(
         data: Dict,
         output_path: Path,
         flatten: bool = True,
-        include_metadata: bool = True
+        include_metadata: bool = True,
+        parent_widget: Optional['QWidget'] = None
     ) -> None:
         """
         Export to TOML format.
@@ -231,6 +280,7 @@ class ExportManager:
             output_path: Output file path
             flatten: Flatten nested keys (TOML doesn't support deep nesting well)
             include_metadata: Add export metadata
+            parent_widget: Parent widget for progress modal (optional)
             
         Raises:
             ImportError: If tomli-w not installed
@@ -238,14 +288,27 @@ class ExportManager:
         if not _TOML_AVAILABLE:
             raise ImportError("tomli-w is required for TOML export. Install with: pip install tomli-w")
         
-        if include_metadata:
-            data = ExportManager.add_metadata(data, "export")
-        
-        if flatten:
-            data = ExportManager.flatten_dict(data)
-        
-        with open(output_path, 'wb') as f:
-            tomli_w.dump(data, f)
+        modal = None
+        try:
+            # Show minimal processing modal if parent provided
+            if parent_widget:
+                from .ui import MinimalProcessingModal
+                from PySide6.QtWidgets import QApplication
+                modal = MinimalProcessingModal("Exporting to TOML...", parent_widget)
+                modal.show()
+                QApplication.processEvents()
+            
+            if include_metadata:
+                data = ExportManager.add_metadata(data, "export")
+            
+            if flatten:
+                data = ExportManager.flatten_dict(data)
+            
+            with open(output_path, 'wb') as f:
+                tomli_w.dump(data, f)
+        finally:
+            if modal:
+                modal.close()
     
     @staticmethod
     def export_to_json(
@@ -275,7 +338,8 @@ class ExportManager:
         output_path: Path,
         format: str = 'json',
         flatten: bool = True,
-        include_metadata: bool = True
+        include_metadata: bool = True,
+        parent_widget: Optional['QWidget'] = None
     ) -> None:
         """
         Main export function - delegates to format-specific exporters.
@@ -286,6 +350,7 @@ class ExportManager:
             format: Export format ('csv', 'excel', 'yaml', 'toml', 'json')
             flatten: Flatten nested keys (for CSV/Excel/TOML)
             include_metadata: Add export metadata
+            parent_widget: Parent widget for progress modal (optional)
             
         Raises:
             ValueError: If format is unsupported
@@ -306,10 +371,12 @@ class ExportManager:
         if not exporter:
             raise ValueError(f"Unsupported format: {format}. Supported: {', '.join(exporters.keys())}")
         
-        # Call appropriate exporter
-        if format in ['csv', 'excel', 'xlsx', 'toml']:
-            exporter(data, output_path, flatten=flatten, include_metadata=include_metadata)
+        # Call appropriate exporter with parent_widget
+        if format in ['csv', 'excel', 'xlsx']:
+            exporter(data, output_path, flatten=flatten, include_metadata=include_metadata, parent_widget=parent_widget)
+        elif format == 'toml':
+            exporter(data, output_path, flatten=flatten, include_metadata=include_metadata, parent_widget=parent_widget)
         elif format in ['yaml', 'yml']:
-            exporter(data, output_path, include_metadata=include_metadata)
+            exporter(data, output_path, include_metadata=include_metadata, parent_widget=parent_widget)
         else:  # json
             exporter(data, output_path, include_metadata=include_metadata)
