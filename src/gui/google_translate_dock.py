@@ -145,32 +145,32 @@ class GoogleTranslateDock(BaseDock):
     def _create_widgets(self):
         """Create UI widgets."""
         # Language selection
-        self.lbl_from_lang = QLabel("From:")
+        self.lbl_from_lang = QLabel(tr("google_translate.lbl_from_lang"))
         self.combo_from_lang = QComboBox()
         self.combo_from_lang.addItem("Auto-detect", "auto")
         for code, name in GoogleTranslateAPI.LANGUAGES.items():
             self.combo_from_lang.addItem(f"{name} ({code.upper()})", code)
         
-        self.lbl_to_lang = QLabel("To:")
+        self.lbl_to_lang = QLabel(tr("google_translate.lbl_to_lang"))
         self.combo_to_lang = QComboBox()
         for code, name in GoogleTranslateAPI.LANGUAGES.items():
             self.combo_to_lang.addItem(f"{name} ({code.upper()})", code)
         
         # Input type selection
-        self.chk_file_mode = QCheckBox("Translate file instead of text")
+        self.chk_file_mode = QCheckBox(tr("google_translate.chk_file_mode"))
         
         # File input (hidden by default)
-        self.lbl_file = QLabel("File:")
+        self.lbl_file = QLabel(tr("google_translate.lbl_file"))
         self.ed_file_path = QComboBox()
         self.ed_file_path.setEditable(True)
-        self.btn_browse_file = QPushButton("Browse...")
+        self.btn_browse_file = QPushButton(tr("google_translate.btn_browse"))
         self.btn_browse_file.setMaximumWidth(100)
         
         # Text input/output widgets
         # Input panel
-        self.lbl_input = QLabel("Input Text:")
+        self.lbl_input = QLabel(tr("google_translate.lbl_input"))
         self.text_input = QPlainTextEdit()
-        self.text_input.setPlaceholderText("Enter text to translate or select a file...")
+        self.text_input.setPlaceholderText(tr("google_translate.placeholder_input"))
         self.text_input.setMinimumHeight(150)
         
         # Set monospace font for better text editing
@@ -178,28 +178,28 @@ class GoogleTranslateDock(BaseDock):
         self.text_input.setFont(font)
         
         # Output panel
-        self.lbl_output = QLabel("Translation Result:")
+        self.lbl_output = QLabel(tr("google_translate.lbl_output"))
         self.text_output = QPlainTextEdit()
         self.text_output.setReadOnly(True)
         self.text_output.setMinimumHeight(150)
         self.text_output.setFont(font)
         
         # Action buttons
-        self.btn_translate = QPushButton("🌐 Translate")
+        self.btn_translate = QPushButton(tr("google_translate.btn_translate"))
         self.btn_translate.setMinimumHeight(35)
         
-        self.btn_copy_result = QPushButton("📋 Copy Result")
+        self.btn_copy_result = QPushButton(tr("google_translate.btn_copy_result"))
         self.btn_copy_result.setEnabled(False)
         
-        self.btn_clear = QPushButton("🗑️ Clear")
-        self.btn_cancel = QPushButton("⏹️ Cancel")
+        self.btn_clear = QPushButton(tr("google_translate.btn_clear"))
+        self.btn_cancel = QPushButton(tr("google_translate.btn_cancel"))
         self.btn_cancel.setEnabled(False)
         
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         
-        self.lbl_status = QLabel("Ready to translate")
+        self.lbl_status = QLabel(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
         
         # Cache info
@@ -257,7 +257,7 @@ class GoogleTranslateDock(BaseDock):
         
         # File input widgets (initially hidden)
         self.file_widgets = [self.lbl_file, self.ed_file_path, self.btn_browse_file]
-        file_group = QGroupBox("File Selection")
+        file_group = QGroupBox(tr("google_translate.group_file_selection"))
         file_group.setLayout(file_layout)
         self.layout.addWidget(file_group)
         file_group.setVisible(False)
@@ -326,13 +326,13 @@ class GoogleTranslateDock(BaseDock):
         self.file_group.setVisible(enabled)
         
         if enabled:
-            self.text_input.setPlaceholderText("File content will appear here after browsing...")
+            self.text_input.setPlaceholderText(tr("google_translate.placeholder_file_content"))
             self.text_input.setReadOnly(True)
-            self.lbl_input.setText("File Content (Preview):")
+            self.lbl_input.setText(tr("google_translate.lbl_file_content"))
         else:
-            self.text_input.setPlaceholderText("Enter text to translate...")
+            self.text_input.setPlaceholderText(tr("google_translate.placeholder_text"))
             self.text_input.setReadOnly(False)
-            self.lbl_input.setText("Input Text:")
+            self.lbl_input.setText(tr("google_translate.lbl_input"))
     
     def _browse_file(self):
         """Browse for text file to translate."""
@@ -403,7 +403,7 @@ class GoogleTranslateDock(BaseDock):
         self.btn_cancel.setEnabled(True)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
-        self.lbl_status.setText("Starting translation...")
+        self.lbl_status.setText(tr("google_translate.status_starting"))
         self.text_output.clear()
         
         # Create and start worker
@@ -427,12 +427,12 @@ class GoogleTranslateDock(BaseDock):
         if success:
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
-            self.lbl_status.setText("✓ Translation completed successfully!")
+            self.lbl_status.setText(tr("google_translate.status_completed"))
             self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         else:
             self.text_output.setPlainText(f"Translation failed: {error}")
             self.btn_copy_result.setEnabled(False)
-            self.lbl_status.setText("✗ Translation failed")
+            self.lbl_status.setText(tr("google_translate.status_failed"))
             self.lbl_status.setStyleSheet("color: #EF4444; font-weight: bold;")
         
         # Update cache info
@@ -467,16 +467,13 @@ class GoogleTranslateDock(BaseDock):
                 
             # Visual feedback
             original_text = self.btn_copy_result.text()
-            self.btn_copy_result.setText("✓ Copied!")
+            self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
-    
-    def _clear(self):
-        """Clear input and output."""
         self.text_input.clear()
         self.text_output.clear()
         self.ed_file_path.clearEditText()
         self.btn_copy_result.setEnabled(False)
-        self.lbl_status.setText("Ready to translate")
+        self.lbl_status.setText(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
     
     def _update_cache_info(self):
@@ -489,4 +486,4 @@ class GoogleTranslateDock(BaseDock):
             self.lbl_cache_info.setText(f"Cache: {entries} translations, {size_kb:.1f} KB")
             self.lbl_cache_info.setStyleSheet("color: #888; font-size: 10px;")
         except Exception:
-            self.lbl_cache_info.setText("Cache: N/A")
+            self.lbl_cache_info.setText(tr("google_translate.cache_na"))
