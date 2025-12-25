@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QPushButton, QSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout
 )
 from .base_dock import StandardToolDock
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class TextExtractorDock(StandardToolDock):
@@ -40,7 +40,7 @@ class TextExtractorDock(StandardToolDock):
     """
     
     def __init__(self, parent=None):
-        super().__init__("Advanced Text to JSON Extractor", parent)
+        super().__init__(tr("text_extractor.title"), parent)
     
     def _setup_ui(self):
         """Setup UI components with advanced options."""
@@ -56,54 +56,54 @@ class TextExtractorDock(StandardToolDock):
         grid.addWidget(self.btn_browse_input, 0, 3)
         
         # Output file
-        grid.addWidget(QLabel("Output file:"), 1, 0)
+        grid.addWidget(QLabel(tr("text_extractor.lbl_output")), 1, 0)
         self.ed_output = QLineEdit()
-        self.ed_output.setPlaceholderText("Output JSON/TS file")
-        self.btn_browse_output = QPushButton("Browse...")
+        self.ed_output.setPlaceholderText(tr("text_extractor.placeholder_output"))
+        self.btn_browse_output = QPushButton(tr("text_extractor.btn_browse"))
         grid.addWidget(self.ed_output, 1, 1, 1, 2)
         grid.addWidget(self.btn_browse_output, 1, 3)
         
         # Extraction mode
-        grid.addWidget(QLabel("Extraction mode:"), 2, 0)
+        grid.addWidget(QLabel(tr("text_extractor.lbl_mode")), 2, 0)
         self.combo_mode = QComboBox()
-        self.combo_mode.addItems(["JSX Attributes", "Tag Content", "Generic Scope"])
+        self.combo_mode.addItems([tr("text_extractor.mode_jsx"), tr("text_extractor.mode_tag"), tr("text_extractor.mode_generic")])
         grid.addWidget(self.combo_mode, 2, 1)
         
         # Parameter/Tag name
-        grid.addWidget(QLabel("Parameter/Tag:"), 2, 2)
+        grid.addWidget(QLabel(tr("text_extractor.lbl_param")), 2, 2)
         self.ed_param = QLineEdit()
-        self.ed_param.setPlaceholderText("e.g., label, title (empty = all)")
+        self.ed_param.setPlaceholderText(tr("text_extractor.placeholder_param"))
         grid.addWidget(self.ed_param, 2, 3)
         
         # Normalization options
-        grid.addWidget(QLabel("Case style:"), 3, 0)
+        grid.addWidget(QLabel(tr("text_extractor.lbl_case")), 3, 0)
         self.combo_case = QComboBox()
         self.combo_case.addItems(["snake_case", "camelCase", "PascalCase", "kebab-case"])
         grid.addWidget(self.combo_case, 3, 1)
         
         # Character limit
-        grid.addWidget(QLabel("Char limit:"), 3, 2)
+        grid.addWidget(QLabel(tr("text_extractor.lbl_limit")), 3, 2)
         self.ed_limit = QLineEdit("all")
-        self.ed_limit.setPlaceholderText("chars or 'all'")
+        self.ed_limit.setPlaceholderText(tr("text_extractor.placeholder_limit"))
         grid.addWidget(self.ed_limit, 3, 3)
         
         # Advanced options group
-        options_group = QGroupBox("Advanced Options")
+        options_group = QGroupBox(tr("text_extractor.group_advanced"))
         options_layout = QGridLayout()
         
-        self.chk_uppercase = QCheckBox("UPPERCASE")
-        self.chk_avoid_cut = QCheckBox("Avoid word cut")
+        self.chk_uppercase = QCheckBox(tr("text_extractor.chk_uppercase"))
+        self.chk_avoid_cut = QCheckBox(tr("text_extractor.chk_avoid_cut"))
         self.chk_avoid_cut.setChecked(True)
-        self.chk_drop_standard = QCheckBox("Drop standard HTML")
+        self.chk_drop_standard = QCheckBox(tr("text_extractor.chk_drop_standard"))
         self.chk_drop_standard.setChecked(True)
         
         options_layout.addWidget(self.chk_uppercase, 0, 0)
         options_layout.addWidget(self.chk_avoid_cut, 0, 1)
         options_layout.addWidget(self.chk_drop_standard, 0, 2)
         
-        self.chk_add_key = QCheckBox("Add key to path")
-        self.chk_add_value = QCheckBox("Add value to path")
-        self.chk_nested_json = QCheckBox("Nested JSON output")
+        self.chk_add_key = QCheckBox(tr("text_extractor.chk_add_key"))
+        self.chk_add_value = QCheckBox(tr("text_extractor.chk_add_value"))
+        self.chk_nested_json = QCheckBox(tr("text_extractor.chk_nested_json"))
         self.chk_nested_json.setChecked(True)
         
         options_layout.addWidget(self.chk_add_key, 1, 0)
@@ -111,20 +111,20 @@ class TextExtractorDock(StandardToolDock):
         options_layout.addWidget(self.chk_nested_json, 1, 2)
         
         self.chk_is_file.setChecked(False)
-        self.chk_ts_export = QCheckBox("TypeScript export")
-        self.chk_only_strings = QCheckBox("Only string literals")
+        self.chk_ts_export = QCheckBox(tr("text_extractor.chk_ts_export"))
+        self.chk_only_strings = QCheckBox(tr("text_extractor.chk_only_strings"))
         self.chk_only_strings.setChecked(True)
         
         options_layout.addWidget(self.chk_is_file, 2, 0)
         options_layout.addWidget(self.chk_ts_export, 2, 1)
         options_layout.addWidget(self.chk_only_strings, 2, 2)
         
-        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
+        self.chk_exclude_numeric = QCheckBox(tr("text_extractor.chk_exclude_numeric"))
         self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
-        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_skip_empty = QCheckBox(tr("text_extractor.chk_skip_empty"))
         self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
-        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
-        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_exclude_numeric = QCheckBox(tr("text_extractor.chk_exclude_numeric"))
+        self.chk_skip_empty = QCheckBox(tr("text_extractor.chk_skip_empty"))
         
         options_layout.addWidget(self.chk_exclude_numeric, 3, 0)
         options_layout.addWidget(self.chk_skip_empty, 3, 1)
@@ -296,13 +296,13 @@ class TextExtractorDock(StandardToolDock):
                 preview = preview[:800] + "\n  ...(truncated)..."
             self.append_result(self.text_results, f"Preview:\n{preview}")
             
-            self.show_info("Success", f"Extraction complete!\n\nFiles: {files_processed}\nKeys: {total_keys}\nSaved to: {output_path}")
+            self.show_info(tr("text_extractor.success_title"), tr("text_extractor.success_message").replace("{files}", str(files_processed)).replace("{keys}", str(total_keys)).replace("{path}", output_path))
             
         except Exception as e:
             import traceback
             self.append_result(self.text_results, f"\n❌ Error: {str(e)}\n")
             self.append_result(self.text_results, traceback.format_exc())
-            self.show_error("Extraction Error", str(e))
+            self.show_error(tr("text_extractor.error_title"), str(e))
     
     def _clear(self):
         """Clear results."""
