@@ -15,7 +15,7 @@ from typing import Optional, Callable, List
 import os
 import re
 
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 def parse_extensions_to_globs(extensions_text: str) -> List[str]:
@@ -95,12 +95,12 @@ class FileInputMixin:
         line_edit = QLineEdit()
         line_edit.setPlaceholderText(placeholder)
         
-        browse_btn = QPushButton("Browse...")
+        browse_btn = QPushButton(tr("base.btn_browse"))
         browse_btn.setMaximumWidth(100)
         
         is_file_chk = None
         if with_is_file_checkbox:
-            is_file_chk = QCheckBox("Is file")
+            is_file_chk = QCheckBox(tr("base.chk_is_file"))
         
         return label, line_edit, browse_btn, is_file_chk
     
@@ -117,9 +117,9 @@ class FileInputMixin:
         Returns:
             tuple: (label, line_edit)
         """
-        label = QLabel("Extensions:")
+        label = QLabel(tr("base.lbl_extensions"))
         line_edit = QLineEdit(default_extensions)
-        line_edit.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
+        line_edit.setPlaceholderText(tr("base.placeholder_extensions"))
         line_edit.setToolTip(tooltip_tr("base.extension_filter"))
         return label, line_edit
     
@@ -128,9 +128,12 @@ class FileInputMixin:
         line_edit: QLineEdit,
         is_file: bool,
         file_filter: str = "All files (*)",
-        title: str = "Select file or directory"
+        title: str = None
     ) -> None:
         """Browse for file or directory and set line edit."""
+        if title is None:
+            title = tr("base.browse_title")
+        
         if is_file:
             path, _ = QFileDialog.getOpenFileName(self, title, "", file_filter)
         else:
@@ -175,13 +178,16 @@ class ProcessorWorkerBase(QThread):
 class ResultsOutputMixin:
     """Mixin for results output panel with search functionality."""
     
-    def create_results_panel(self, label_text: str = "Results:") -> tuple[QLabel, QTextEdit]:
+    def create_results_panel(self, label_text: str = None) -> tuple[QLabel, QTextEdit]:
         """
         Create results output panel with search bar and 'Open in Editor' functionality.
         
         Returns:
             tuple: (label, text_edit)
         """
+        if label_text is None:
+            label_text = tr("base.lbl_results")
+        
         label = QLabel(label_text)
         text_edit = QTextEdit()
         text_edit.setReadOnly(True)
@@ -204,7 +210,7 @@ class ResultsOutputMixin:
         from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton
         
         dialog = QDialog(text_edit)
-        dialog.setWindowTitle("Search in Results")
+        dialog.setWindowTitle(tr("base.search_title"))
         dialog.setMinimumWidth(400)
         
         layout = QVBoxLayout()
@@ -212,15 +218,15 @@ class ResultsOutputMixin:
         # Search input
         search_layout = QHBoxLayout()
         search_input = QLineEdit()
-        search_input.setPlaceholderText("Enter search term...")
-        search_layout.addWidget(QLabel("Find:"))
+        search_input.setPlaceholderText(tr("base.placeholder_search"))
+        search_layout.addWidget(QLabel(tr("base.lbl_find")))
         search_layout.addWidget(search_input)
         
         # Buttons
         btn_layout = QHBoxLayout()
-        btn_find_next = QPushButton("Find Next")
-        btn_find_prev = QPushButton("Find Previous")
-        btn_close = QPushButton("Close")
+        btn_find_next = QPushButton(tr("base.btn_find_next"))
+        btn_find_prev = QPushButton(tr("base.btn_find_prev"))
+        btn_close = QPushButton(tr("base.btn_close"))
         
         btn_layout.addWidget(btn_find_next)
         btn_layout.addWidget(btn_find_prev)
@@ -268,13 +274,13 @@ class ResultsOutputMixin:
         menu = QMenu(text_edit)
         
         # Add "Open in Editor" action
-        open_action = menu.addAction("📝 Open in Editor")
+        open_action = menu.addAction(tr("base.menu_open_editor"))
         open_action.triggered.connect(lambda: self._open_results_in_editor(text_edit))
         
         # Show standard context menu items
         menu.addSeparator()
-        menu.addAction("Copy", text_edit.copy)
-        menu.addAction("Select All", text_edit.selectAll)
+        menu.addAction(tr("base.menu_copy"), text_edit.copy)
+        menu.addAction(tr("base.menu_select_all"), text_edit.selectAll)
         
         # Show menu at cursor position
         menu.exec_(text_edit.mapToGlobal(pos))
@@ -294,8 +300,8 @@ class ResultsOutputMixin:
         if not content or not content.strip():
             QMessageBox.information(
                 self,
-                "No Results",
-                "Results panel is empty. Nothing to open in editor."
+                tr("base.no_results_title"),
+                tr("base.no_results_msg")
             )
             return
         
@@ -322,12 +328,12 @@ class ResultsOutputMixin:
                 
                 # Update status
                 if hasattr(self, 'lbl_status'):
-                    self.lbl_status.setText(f"Opened results in editor (edit-only mode)")
+                    self.lbl_status.setText(tr("base.status_opened_editor"))
             else:
                 QMessageBox.warning(
                     self,
-                    "Editor Not Found",
-                    "Could not find Editor dock. Please ensure Editor is available."
+                    tr("base.editor_not_found_title"),
+                    tr("base.editor_not_found_msg")
                 )
                 # Clean up temp file if editor not found
                 os.unlink(temp_path)
@@ -335,8 +341,8 @@ class ResultsOutputMixin:
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Error",
-                f"Failed to open results in editor:\n{str(e)}"
+                tr("base.error_title"),
+                tr("base.error_open_editor").replace("{error}", str(e))
             )
     
     def _detect_content_extension(self, content: str) -> str:
@@ -401,7 +407,7 @@ class ResultsOutputMixin:
         self,
         text_edit: QTextEdit,
         layout: QVBoxLayout | QHBoxLayout,
-        button_text: str = "📝 Open in Editor"
+        button_text: str = None
     ) -> QPushButton:
         """
         Add 'Open in Editor' button to layout (Task #6 - v2.9.19).
@@ -414,6 +420,9 @@ class ResultsOutputMixin:
         Returns:
             Created button instance
         """
+        if button_text is None:
+            button_text = tr("base.menu_open_editor")
+        
         btn_open = QPushButton(button_text)
         btn_open.setToolTip(tooltip_tr("base.btn_open_editor"))
         btn_open.clicked.connect(lambda: self._open_results_in_editor(text_edit))
