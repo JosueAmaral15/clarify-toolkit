@@ -1105,5 +1105,11 @@
   "statistics_dialog.btn_export": "Exportar ▼",
   "statistics_dialog.btn_close": "Cerrar",
   "statistics_dialog.lbl_search": "Buscar:",
-  "statistics_dialog.lbl_filter": "Filtrar por Operación:"
+  "statistics_dialog.lbl_filter": "Filtrar por Operación:",
+  "presets_dialog.title": "Ajustes Preestablecidos de Operación",
+  "presets_dialog.group_details": "Detalles del Ajuste",
+  "presets_dialog.btn_load": "✅ Cargar Ajuste",
+  "presets_dialog.btn_rename": "✏️ Renombrar",
+  "presets_dialog.btn_delete": "🗑️ Eliminar",
+  "presets_dialog.btn_close": "Cerrar"
 }

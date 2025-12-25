@@ -1097,5 +1097,11 @@
   "statistics_dialog.btn_export": "エクスポート ▼",
   "statistics_dialog.btn_close": "閉じる",
   "statistics_dialog.lbl_search": "検索:",
-  "statistics_dialog.lbl_filter": "操作でフィルター:"
+  "statistics_dialog.lbl_filter": "操作でフィルター:",
+  "presets_dialog.title": "操作プリセット",
+  "presets_dialog.group_details": "プリセット詳細",
+  "presets_dialog.btn_load": "✅ プリセットを読み込む",
+  "presets_dialog.btn_rename": "✏️ 名前を変更",
+  "presets_dialog.btn_delete": "🗑️ 削除",
+  "presets_dialog.btn_close": "閉じる"
 }

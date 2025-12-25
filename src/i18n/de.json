@@ -1097,5 +1097,11 @@
   "statistics_dialog.btn_export": "Exportieren ▼",
   "statistics_dialog.btn_close": "Schließen",
   "statistics_dialog.lbl_search": "Suchen:",
-  "statistics_dialog.lbl_filter": "Nach Operation filtern:"
+  "statistics_dialog.lbl_filter": "Nach Operation filtern:",
+  "presets_dialog.title": "Operationsvoreinstellungen",
+  "presets_dialog.group_details": "Voreinstellungsdetails",
+  "presets_dialog.btn_load": "✅ Voreinstellung laden",
+  "presets_dialog.btn_rename": "✏️ Umbenennen",
+  "presets_dialog.btn_delete": "🗑️ Löschen",
+  "presets_dialog.btn_close": "Schließen"
 }

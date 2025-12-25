@@ -1105,5 +1105,11 @@
   "statistics_dialog.btn_export": "Exportar ▼",
   "statistics_dialog.btn_close": "Fechar",
   "statistics_dialog.lbl_search": "Pesquisar:",
-  "statistics_dialog.lbl_filter": "Filtrar por Operação:"
+  "statistics_dialog.lbl_filter": "Filtrar por Operação:",
+  "presets_dialog.title": "Predefinições de Operação",
+  "presets_dialog.group_details": "Detalhes da Predefinição",
+  "presets_dialog.btn_load": "✅ Carregar Predefinição",
+  "presets_dialog.btn_rename": "✏️ Renomear",
+  "presets_dialog.btn_delete": "🗑️ Excluir",
+  "presets_dialog.btn_close": "Fechar"
 }

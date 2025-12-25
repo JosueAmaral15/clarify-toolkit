@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from typing import Optional, Dict, Any
+from src.i18n.translator import tr
 
 
 class PresetsDialog(QDialog):
@@ -27,7 +28,7 @@ class PresetsDialog(QDialog):
         """
         super().__init__(parent)
         self.presets_manager = presets_manager
-        self.setWindowTitle("Operation Presets")
+        self.setWindowTitle(tr("presets_dialog.title"))
         self.resize(700, 500)
         
         self._setup_ui()
@@ -52,7 +53,7 @@ class PresetsDialog(QDialog):
         layout.addWidget(self.list_widget)
         
         # Área de detalhes
-        details_group = QGroupBox("Preset Details")
+        details_group = QGroupBox(tr("presets_dialog.group_details"))
         details_layout = QVBoxLayout(details_group)
         
         self.details_text = QTextEdit()
@@ -65,19 +66,19 @@ class PresetsDialog(QDialog):
         # Botões de ação
         buttons_layout = QHBoxLayout()
         
-        self.btn_load = QPushButton("✅ Load Preset")
+        self.btn_load = QPushButton(tr("presets_dialog.btn_load"))
         self.btn_load.setToolTip("Load selected preset into Set Operations")
         self.btn_load.clicked.connect(self._on_load_clicked)
         self.btn_load.setEnabled(False)
         buttons_layout.addWidget(self.btn_load)
         
-        self.btn_rename = QPushButton("✏️ Rename")
+        self.btn_rename = QPushButton(tr("presets_dialog.btn_rename"))
         self.btn_rename.setToolTip("Rename selected preset")
         self.btn_rename.clicked.connect(self._on_rename_clicked)
         self.btn_rename.setEnabled(False)
         buttons_layout.addWidget(self.btn_rename)
         
-        self.btn_delete = QPushButton("🗑️ Delete")
+        self.btn_delete = QPushButton(tr("presets_dialog.btn_delete"))
         self.btn_delete.setToolTip("Delete selected preset")
         self.btn_delete.clicked.connect(self._on_delete_clicked)
         self.btn_delete.setEnabled(False)
@@ -85,7 +86,7 @@ class PresetsDialog(QDialog):
         
         buttons_layout.addStretch()
         
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("presets_dialog.btn_close"))
         self.btn_close.clicked.connect(self.accept)
         buttons_layout.addWidget(self.btn_close)
         

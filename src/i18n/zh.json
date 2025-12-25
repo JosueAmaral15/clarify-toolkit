@@ -1134,5 +1134,11 @@
   "statistics_dialog.btn_export": "导出 ▼",
   "statistics_dialog.btn_close": "关闭",
   "statistics_dialog.lbl_search": "搜索:",
-  "statistics_dialog.lbl_filter": "按操作过滤:"
+  "statistics_dialog.lbl_filter": "按操作过滤:",
+  "presets_dialog.title": "操作预设",
+  "presets_dialog.group_details": "预设详情",
+  "presets_dialog.btn_load": "✅ 加载预设",
+  "presets_dialog.btn_rename": "✏️ 重命名",
+  "presets_dialog.btn_delete": "🗑️ 删除",
+  "presets_dialog.btn_close": "关闭"
 }

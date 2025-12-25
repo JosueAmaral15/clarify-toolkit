@@ -1097,5 +1097,11 @@
   "statistics_dialog.btn_export": "Exporter ▼",
   "statistics_dialog.btn_close": "Fermer",
   "statistics_dialog.lbl_search": "Rechercher:",
-  "statistics_dialog.lbl_filter": "Filtrer par Opération:"
+  "statistics_dialog.lbl_filter": "Filtrer par Opération:",
+  "presets_dialog.title": "Préréglages d'Opération",
+  "presets_dialog.group_details": "Détails du Préréglage",
+  "presets_dialog.btn_load": "✅ Charger Préréglage",
+  "presets_dialog.btn_rename": "✏️ Renommer",
+  "presets_dialog.btn_delete": "🗑️ Supprimer",
+  "presets_dialog.btn_close": "Fermer"
 }
