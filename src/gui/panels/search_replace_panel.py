@@ -475,7 +475,7 @@ class SearchReplacePanel(QWidget):
         """Return conditions and logic operator (AND/OR)"""
         out: List[Condition] = []
         if not self.is_file.isChecked():
-            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex, btn_remove in self.cond_list:
                 f = cb_field.currentText().strip()
                 o = cb_op.currentText().strip()
                 v = ed.text().strip()
@@ -557,7 +557,7 @@ class SearchReplacePanel(QWidget):
             self.btn_replace_all.setEnabled(state)
         
         if include_advanced_conditions:
-            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex, btn_remove in self.cond_list:
                 cb_field.setEnabled(state)
                 cb_op.setEnabled(state)
                 ed.setEnabled(state)
