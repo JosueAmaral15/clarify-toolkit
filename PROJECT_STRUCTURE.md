@@ -8,13 +8,20 @@ clarify/
 │   ├── gui/                      # Modular GUI components (NEW ARCHITECTURE)
 │   │   ├── __init__.py          # Exports all docks
 │   │   ├── base_dock.py         # Base classes & mixins (295 lines)
-│   │   ├── ai_processor_dock.py      # AI processing with OpenAI/Gemini (456 lines)
-│   │   ├── case_converter_dock.py    # Case style conversion (223 lines)
-│   │   ├── json_rewriter_dock.py     # JSON deduplication & formatting (188 lines)
-│   │   ├── json_search_dock.py       # JSON/TS key/value search (250 lines)
-│   │   ├── json_translate_dock.py    # Text translation with dict (267 lines)
-│   │   ├── placeholder_replacer_dock.py  # Batch placeholder replacement (209 lines)
-│   │   └── text_extractor_dock.py    # JSX/HTML text extraction (480 lines)
+│   │   ├── dock_factory.py      # Factory for creating docks
+│   │   ├── menu_builder.py      # Menu construction logic
+│   │   ├── advanced_extractor_dock.py   # Advanced parameter extraction (v2.9.115 - 700 lines)
+│   │   ├── ai_processor_dock.py         # AI processing with OpenAI/Gemini (456 lines)
+│   │   ├── case_converter_dock.py       # Case style conversion (223 lines)
+│   │   ├── file_explorer_dock.py        # File exploration & search (v2.9.115)
+│   │   ├── json_rewriter_dock.py        # JSON deduplication & formatting (188 lines)
+│   │   ├── json_search_dock.py          # JSON/TS key/value search (250 lines)
+│   │   ├── json_translate_dock.py       # Text translation with dict (267 lines)
+│   │   ├── placeholder_replacer_dock.py # Batch placeholder replacement (209 lines)
+│   │   └── text_extractor_dock.py       # JSX/HTML text extraction (480 lines)
+│   │
+│   ├── extractors/               # Extraction engines (NEW - v2.9.115)
+│   │   └── advanced_extractor.py # Advanced parameter extraction core (708 lines)
 │   │
 │   ├── ai_processor/             # AI client implementations
 │   │   ├── openai_client.py
@@ -35,12 +42,14 @@ clarify/
 │   │   └── json_translator.py
 │   │
 │   ├── core/                     # Core utilities
-│   │   └── file_walker.py
+│   │   ├── file_walker.py
+│   │   └── file_list_executor.py # File listing logic
 │   │
 │   ├── cli/                      # CLI commands
 │   │   └── commands.py
 │   │
 │   ├── utils/                    # Utility functions
+│   │   └── error_reporter.py    # Error reporting system
 │   │
 │   ├── app.py                    # Main application (3606 lines)
 │   ├── case_converter.py         # Case conversion logic
@@ -51,19 +60,49 @@ clarify/
 ├── tests/                        # All test files
 │   ├── test_ai/                 # AI processor tests
 │   ├── test_placeholder/        # Placeholder tests
+│   ├── test_advanced_extractor.py    # Advanced Extractor tests (v2.9.115 - 24 tests)
+│   ├── test_docks_factory_pytest.py  # Factory tests (v2.9.115 - pytest)
+│   ├── test_load_tests.py            # Load testing system tests
 │   ├── test_*.py                # Individual test files
 │   ├── test_*.json              # Test data
 │   ├── test_component.tsx       # JSX test component
-│   ├── test_jsx_extractor.py    # JSX extractor tests
-│   └── test_removal_counter.json # Test removal counter
+│   └── test_jsx_extractor.py    # JSX extractor tests
+│
+├── benchmarks/                   # Performance benchmarking (v2.9.115)
+│   ├── __init__.py
+│   ├── __main__.py              # Module entry point
+│   ├── README.md                # Comprehensive docs (600 lines)
+│   ├── run.py                   # CLI runner with scenarios
+│   ├── generators.py            # Test data generators
+│   ├── metrics_collector.py     # Metrics collection
+│   ├── benchmark_runner.py      # Execution engine
+│   └── results.json             # Latest results
+│
+├── load_tests/                   # Load testing system (v2.9.82)
+│   ├── __init__.py
+│   ├── __main__.py              # Module entry point
+│   ├── run.py                   # CLI runner
+│   ├── scenarios.py             # Load test scenarios
+│   ├── metrics_collector.py     # Metrics collection
+│   ├── report_generator.py      # Report generation
+│   └── load_runner.py           # Execution engine
 │
 ├── docs/                         # Documentation
+│   ├── INTEGRATION_SUMMARY.md   # Orphaned code integration summary (v2.9.115)
+│   ├── ADVANCED_EXTRACTOR_INTEGRATION.md  # Sprint 2 analysis (v2.9.115)
+│   ├── ORPHANED_CODE_INTEGRATION_PLAN.md  # Integration plan
 │   ├── TASKS.md                 # Programming tasks
 │   ├── specifications/          # Version specifications
-│   │   └── v2.9.36-SPECIFICATION.md
+│   │   ├── v2.9.36-SPECIFICATION.md
+│   │   ├── v2.9.82-SPECIFICATION.md  # Load testing
+│   │   └── v2.9.115-SPECIFICATION.md # Advanced Extractor
 │   ├── plans/                   # Project planning
 │   │   └── SPRINTS_REQUISITE_TO_CHATGPT.md
 │   └── architecture/            # Architecture docs
+│
+├── .github/                      # GitHub configuration
+│   └── workflows/
+│       └── benchmarks.yml       # CI/CD for benchmarks (v2.9.115)
 │
 ├── scripts/                      # Utility scripts
 │   ├── generate_changelog.py    # Changelog automation
@@ -76,14 +115,10 @@ clarify/
 │   ├── clarify_gui.sh           # Launch script (Linux/Mac)
 │   └── clarify_gui.bat          # Launch script (Windows)
 │
-├── add/                          # Reference implementations (INTEGRATED)
-│   ├── searchJSON/              # → Integrated in JsonSearchDock
-│   ├── translator_gui/          # → Integrated in JsonTranslateDock
-│   ├── JSON_case_converter/     # → Integrated in CaseConverterDock
-│   ├── converting text to JSON/ # → Integrated in TextExtractorDock
-│   └── requisite_to_ChatGPT/    # → Integrated in AIProcessorDock
-│
-├── archive/                      # Old versions (DEPRECATED)
+├── archive/                      # Archived code (DEPRECATED)
+│   ├── add/                     # Orphaned code (INTEGRATED v2.9.115)
+│   │   ├── main.py              # → Advanced Extractor (Sprint 2)
+│   │   └── README.md            # Integration summary
 │   └── old/
 │       ├── clarify.py
 │       └── clarify_patched.py
