@@ -11,14 +11,14 @@ from .base_dock import StandardToolDock
 from src.placeholder_replacer import (
     parse_mapping_file, process_file, process_directory
 )
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class PlaceholderReplacerDock(StandardToolDock):
     """Dock widget for placeholder replacement tool."""
     
     def __init__(self, parent=None) -> None:
-        super().__init__("Placeholder Replacer", parent)
+        super().__init__(tr("placeholder_replacer.title"), parent)
         self._mapping = {}
         self._setup_tooltips()
     
@@ -27,10 +27,10 @@ class PlaceholderReplacerDock(StandardToolDock):
         grid = QGridLayout()
         
         # Mapping file section
-        grid.addWidget(QLabel("Mapping file:"), 0, 0)
+        grid.addWidget(QLabel(tr("placeholder_replacer.lbl_mapping")), 0, 0)
         self.ed_mapping = QLineEdit()
-        self.ed_mapping.setPlaceholderText("JSON or CSV file with translations")
-        self.btn_browse_mapping = QPushButton("Browse...")
+        self.ed_mapping.setPlaceholderText(tr("placeholder_replacer.placeholder_mapping"))
+        self.btn_browse_mapping = QPushButton(tr("placeholder_replacer.btn_browse"))
         grid.addWidget(self.ed_mapping, 0, 1, 1, 3)
         grid.addWidget(self.btn_browse_mapping, 0, 4)
         
@@ -43,43 +43,46 @@ class PlaceholderReplacerDock(StandardToolDock):
         grid.addWidget(self.ed_target, 1, 1, 1, 3)
         grid.addWidget(self.btn_browse_target, 1, 4)
         
-        self.chk_backup = QCheckBox("Create backups (.bak)")
+        self.chk_backup = QCheckBox(tr("placeholder_replacer.chk_backup"))
         self.chk_backup.setChecked(True)
         grid.addWidget(self.chk_is_file, 2, 0, 1, 2)
         grid.addWidget(self.chk_backup, 2, 2, 1, 2)
         
         # Options section
-        grid.addWidget(QLabel("Root variable:"), 3, 0)
+        grid.addWidget(QLabel(tr("placeholder_replacer.lbl_root_var")), 3, 0)
         self.ed_root_var = QLineEdit()
         self.ed_root_var.setText("t")
         self.ed_root_var.setMaximumWidth(100)
         grid.addWidget(self.ed_root_var, 3, 1)
         
-        grid.addWidget(QLabel("Scope start (regex):"), 3, 2)
+        grid.addWidget(QLabel(tr("placeholder_replacer.lbl_scope_start")), 3, 2)
         self.ed_scope_start = QLineEdit()
-        self.ed_scope_start.setPlaceholderText("Optional, e.g. <script>")
+        self.ed_scope_start.setPlaceholderText(tr("placeholder_replacer.placeholder_scope_start"))
         grid.addWidget(self.ed_scope_start, 3, 3, 1, 2)
         
-        grid.addWidget(QLabel("Scope end (regex):"), 4, 2)
+        grid.addWidget(QLabel(tr("placeholder_replacer.lbl_scope_end")), 4, 2)
         self.ed_scope_end = QLineEdit()
-        self.ed_scope_end.setPlaceholderText("Optional, e.g. </script>")
+        self.ed_scope_end.setPlaceholderText(tr("placeholder_replacer.placeholder_scope_end"))
         grid.addWidget(self.ed_scope_end, 4, 3, 1, 2)
         
         self.layout.addLayout(grid)
         
         # Action buttons
         buttons = [
-            ("Preview", self._preview),
-            ("Replace", self._replace),
-            ("Clear", self._clear)
+            (tr("placeholder_replacer.btn_preview"), self._preview),
+            (tr("placeholder_replacer.btn_replace"), self._replace),
+            (tr("placeholder_replacer.btn_clear"), self._clear)
         ]
         btn_layout = self.create_action_buttons(buttons)
         self.layout.addLayout(btn_layout)
         
         # Store button references for tooltips
-        self.btn_preview = self.findChild(QPushButton, "Preview") or [btn for btn in self.findChildren(QPushButton) if btn.text() == "Preview"][0]
-        self.btn_replace = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Replace"][0]
-        self.btn_clear = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Clear"][0]
+        preview_text = tr("placeholder_replacer.btn_preview")
+        replace_text = tr("placeholder_replacer.btn_replace")
+        clear_text = tr("placeholder_replacer.btn_clear")
+        self.btn_preview = [btn for btn in self.findChildren(QPushButton) if btn.text() == preview_text][0]
+        self.btn_replace = [btn for btn in self.findChildren(QPushButton) if btn.text() == replace_text][0]
+        self.btn_clear = [btn for btn in self.findChildren(QPushButton) if btn.text() == clear_text][0]
         
         # Results panel
         lbl_results, self.text_results = self.create_results_panel()
@@ -107,7 +110,7 @@ class PlaceholderReplacerDock(StandardToolDock):
         """Browse for mapping file."""
         from PySide6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select mapping file", "",
+            self, tr("placeholder_replacer.browse_mapping_title"), "",
             "Mapping files (*.json *.csv);;All (*)"
         )
         if path:
@@ -135,19 +138,19 @@ class PlaceholderReplacerDock(StandardToolDock):
                 f"✓ Loaded {len(self._mapping)} mappings from {os.path.basename(mapping_file)}\n"
             )
         except Exception as e:
-            self.show_error("Error", f"Failed to load mapping file:\n{str(e)}")
+            self.show_error(tr("common.error"), tr("placeholder_replacer.error_load_mapping").replace("{error}", str(e)))
             self._mapping = {}
     
     def _process(self, dry_run: bool = False) -> None:
         """Process files with or without dry-run."""
         target = self.ed_target.text().strip()
         if not target:
-            self.show_warning("No Target", "Please select a file or directory.")
+            self.show_warning(tr("common.warning"), tr("placeholder_replacer.warning_no_target"))
             return
         
         if not self._mapping:
-            if not self.ed_mapping.text().strip():
-                self.show_warning("No Mapping", "Please select a mapping file.")
+            if self.ed_mapping.text():
+                self.show_warning(tr("common.warning"), tr("placeholder_replacer.warning_no_mapping"))
                 return
             self._load_mapping()
             if not self._mapping:
@@ -208,10 +211,10 @@ class PlaceholderReplacerDock(StandardToolDock):
                         self.append_result(self.text_results, f"  {rel_path}: {count} replacements")
             
             if not dry_run:
-                self.show_info("Success", "Replacement completed!")
+                self.show_info(tr("common.success"), tr("placeholder_replacer.success_replacement"))
             
         except Exception as e:
-            self.show_error("Error", f"Processing failed:\n{str(e)}")
+            self.show_error(tr("common.error"), tr("placeholder_replacer.error_processing").replace("{error}", str(e)))
     
     def _preview(self) -> None:
         """Preview replacements without making changes."""
