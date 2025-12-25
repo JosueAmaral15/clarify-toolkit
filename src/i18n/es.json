@@ -1172,5 +1172,12 @@
   "merge_preview.group_merged": "Después de Fusión (Vista Previa)",
   "merge_preview.btn_save": "💾 Guardar Vista Previa",
   "merge_preview.btn_apply": "✓ Aplicar Fusión",
-  "merge_preview.btn_cancel": "Cancelar"
+  "merge_preview.btn_cancel": "Cancelar",
+  "operation_preview.title": "Vista Previa del Resultado de la Operación",
+  "operation_preview.group_stats": "Estadísticas del Resultado",
+  "operation_preview.lbl_preview": "<b>Vista Previa de los Datos</b> (formato JSON):",
+  "operation_preview.group_storage": "Opciones de Almacenamiento",
+  "operation_preview.lbl_store_slot": "Almacenar resultado en ranura:",
+  "operation_preview.btn_store": "💾 Guardar Resultado",
+  "operation_preview.btn_discard": "Descartar"
 }

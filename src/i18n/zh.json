@@ -1201,5 +1201,12 @@
   "merge_preview.group_merged": "合并后（预览）",
   "merge_preview.btn_save": "💾 保存预览",
   "merge_preview.btn_apply": "✓ 应用合并",
-  "merge_preview.btn_cancel": "取消"
+  "merge_preview.btn_cancel": "取消",
+  "operation_preview.title": "操作结果预览",
+  "operation_preview.group_stats": "结果统计",
+  "operation_preview.lbl_preview": "<b>结果数据预览</b> (JSON格式):",
+  "operation_preview.group_storage": "存储选项",
+  "operation_preview.lbl_store_slot": "将结果存储在槽位:",
+  "operation_preview.btn_store": "💾 存储结果",
+  "operation_preview.btn_discard": "丢弃"
 }

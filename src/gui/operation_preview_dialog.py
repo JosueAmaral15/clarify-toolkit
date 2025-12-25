@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                 QMessageBox)
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from src.i18n.translator import tr
 import json
 
 
@@ -54,7 +55,7 @@ class OperationPreviewDialog(QDialog):
         self.store_result = False
         self.target_slot = None
         
-        self.setWindowTitle("Operation Result Preview")
+        self.setWindowTitle(tr("operation_preview.title"))
         self.resize(700, 550)
         
         self._init_ui()
@@ -74,7 +75,7 @@ class OperationPreviewDialog(QDialog):
         layout.addWidget(message_label)
         
         # Statistics summary
-        stats_group = QGroupBox("Result Statistics")
+        stats_group = QGroupBox(tr("operation_preview.group_stats"))
         stats_layout = QVBoxLayout()
         
         stats_text = self._format_stats_summary()
@@ -86,7 +87,7 @@ class OperationPreviewDialog(QDialog):
         layout.addWidget(stats_group)
         
         # Result preview
-        preview_label = QLabel("<b>Result Data Preview</b> (JSON formatted):")
+        preview_label = QLabel(tr("operation_preview.lbl_preview"))
         layout.addWidget(preview_label)
         
         self.data_preview = QTextEdit()
@@ -103,10 +104,10 @@ class OperationPreviewDialog(QDialog):
         layout.addWidget(self.data_preview)
         
         # Storage options
-        storage_group = QGroupBox("Storage Options")
+        storage_group = QGroupBox(tr("operation_preview.group_storage"))
         storage_layout = QHBoxLayout()
         
-        storage_label = QLabel("Store result in slot:")
+        storage_label = QLabel(tr("operation_preview.lbl_store_slot"))
         storage_layout.addWidget(storage_label)
         
         self.slot_combo = QComboBox()
@@ -128,7 +129,7 @@ class OperationPreviewDialog(QDialog):
         btn_layout.addStretch()
         
         # Store button
-        self.btn_store = QPushButton("💾 Store Result")
+        self.btn_store = QPushButton(tr("operation_preview.btn_store"))
         self.btn_store.setStyleSheet("background-color: #0e639c; color: white;")
         self.btn_store.setToolTip("Store result in selected slot")
         self.btn_store.clicked.connect(self._store_result)
@@ -136,7 +137,7 @@ class OperationPreviewDialog(QDialog):
         btn_layout.addWidget(self.btn_store)
         
         # Discard button
-        self.btn_discard = QPushButton("Discard")
+        self.btn_discard = QPushButton(tr("operation_preview.btn_discard"))
         self.btn_discard.setToolTip("Close without storing")
         self.btn_discard.clicked.connect(self.reject)
         btn_layout.addWidget(self.btn_discard)

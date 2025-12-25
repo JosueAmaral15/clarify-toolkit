@@ -1172,5 +1172,12 @@
   "merge_preview.group_merged": "Após Mesclagem (Pré-visualização)",
   "merge_preview.btn_save": "💾 Salvar Pré-visualização",
   "merge_preview.btn_apply": "✓ Aplicar Mesclagem",
-  "merge_preview.btn_cancel": "Cancelar"
+  "merge_preview.btn_cancel": "Cancelar",
+  "operation_preview.title": "Pré-visualização do Resultado da Operação",
+  "operation_preview.group_stats": "Estatísticas do Resultado",
+  "operation_preview.lbl_preview": "<b>Pré-visualização dos Dados</b> (formatado JSON):",
+  "operation_preview.group_storage": "Opções de Armazenamento",
+  "operation_preview.lbl_store_slot": "Armazenar resultado no slot:",
+  "operation_preview.btn_store": "💾 Armazenar Resultado",
+  "operation_preview.btn_discard": "Descartar"
 }

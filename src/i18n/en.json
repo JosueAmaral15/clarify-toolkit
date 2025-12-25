@@ -1195,5 +1195,12 @@
   "merge_preview.group_merged": "After Merge (Preview)",
   "merge_preview.btn_save": "💾 Save Preview",
   "merge_preview.btn_apply": "✓ Apply Merge",
-  "merge_preview.btn_cancel": "Cancel"
+  "merge_preview.btn_cancel": "Cancel",
+  "operation_preview.title": "Operation Result Preview",
+  "operation_preview.group_stats": "Result Statistics",
+  "operation_preview.lbl_preview": "<b>Result Data Preview</b> (JSON formatted):",
+  "operation_preview.group_storage": "Storage Options",
+  "operation_preview.lbl_store_slot": "Store result in slot:",
+  "operation_preview.btn_store": "💾 Store Result",
+  "operation_preview.btn_discard": "Discard"
 }

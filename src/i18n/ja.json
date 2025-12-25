@@ -1164,5 +1164,12 @@
   "merge_preview.group_merged": "マージ後（プレビュー）",
   "merge_preview.btn_save": "💾 プレビューを保存",
   "merge_preview.btn_apply": "✓ マージを適用",
-  "merge_preview.btn_cancel": "キャンセル"
+  "merge_preview.btn_cancel": "キャンセル",
+  "operation_preview.title": "操作結果プレビュー",
+  "operation_preview.group_stats": "結果統計",
+  "operation_preview.lbl_preview": "<b>結果データプレビュー</b> (JSON形式):",
+  "operation_preview.group_storage": "ストレージオプション",
+  "operation_preview.lbl_store_slot": "スロットに結果を保存:",
+  "operation_preview.btn_store": "💾 結果を保存",
+  "operation_preview.btn_discard": "破棄"
 }

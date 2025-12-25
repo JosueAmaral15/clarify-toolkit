@@ -1164,5 +1164,12 @@
   "merge_preview.group_merged": "Nach Zusammenführung (Vorschau)",
   "merge_preview.btn_save": "💾 Vorschau speichern",
   "merge_preview.btn_apply": "✓ Zusammenführung anwenden",
-  "merge_preview.btn_cancel": "Abbrechen"
+  "merge_preview.btn_cancel": "Abbrechen",
+  "operation_preview.title": "Operationsergebnis-Vorschau",
+  "operation_preview.group_stats": "Ergebnisstatistiken",
+  "operation_preview.lbl_preview": "<b>Ergebnisdaten-Vorschau</b> (JSON formatiert):",
+  "operation_preview.group_storage": "Speicheroptionen",
+  "operation_preview.lbl_store_slot": "Ergebnis im Slot speichern:",
+  "operation_preview.btn_store": "💾 Ergebnis speichern",
+  "operation_preview.btn_discard": "Verwerfen"
 }
