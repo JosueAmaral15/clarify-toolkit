@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
 from src.accessibility_manager import AccessibilityManager
 from src.core.filters import Condition
 from src.core import cli_dedupe
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 from src.utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
 from src.utils import format_removal_statistics
 from .base_dock import BaseDock
@@ -61,7 +61,7 @@ class JsonRewriterDock(BaseDock):
     """
 
     def __init__(self, parent: QWidgetType | None = None):
-        super().__init__("JSON Rewriter", parent)
+        super().__init__(tr("json_rewriter.title"), parent)
         self._load_preferences()
         self._apply_accessibility()
 
@@ -74,84 +74,84 @@ class JsonRewriterDock(BaseDock):
     def _create_widgets(self) -> None:
         """Create all widgets for the rewriter dock."""
         # Input file section
-        self.lbl_in = QLabel("Input file:")
+        self.lbl_in = QLabel(tr("json_rewriter.lbl_in"))
         self.ed_in = QLineEdit()
-        self.btn_in = QPushButton("Open…")
+        self.btn_in = QPushButton(tr("json_rewriter.btn_open"))
 
         # Output file section
-        self.lbl_out = QLabel("Output file (optional):")
+        self.lbl_out = QLabel(tr("json_rewriter.lbl_out"))
         self.ed_out = QLineEdit()
-        self.btn_out = QPushButton("Save as…")
+        self.btn_out = QPushButton(tr("json_rewriter.btn_save_as"))
 
         # Options checkboxes
-        self.chk_from_ts = QCheckBox("From TS/JS (preserve file)")
-        self.chk_ts_out = QCheckBox("Emit export default …;")
-        self.chk_join = QCheckBox("Join keys")
-        self.chk_elim = QCheckBox("Eliminate duplicates")
-        self.chk_nlb = QCheckBox("No blank lines")
-        self.chk_exclude_numeric = QCheckBox("Exclude numeric keys")
-        self.chk_skip_empty = QCheckBox("Skip empty values")
-        self.chk_avoid_dup_child = QCheckBox("Avoid duplicate child keys")
-        self.chk_normalize_escaping = QCheckBox("Normalize escaping")
-        self.chk_convert_arrays = QCheckBox("Convert arrays to objects")
-        self.chk_skip_no_siblings = QCheckBox("Skip keys without siblings")
+        self.chk_from_ts = QCheckBox(tr("json_rewriter.chk_from_ts"))
+        self.chk_ts_out = QCheckBox(tr("json_rewriter.chk_ts_out"))
+        self.chk_join = QCheckBox(tr("json_rewriter.chk_join"))
+        self.chk_elim = QCheckBox(tr("json_rewriter.chk_elim"))
+        self.chk_nlb = QCheckBox(tr("json_rewriter.chk_nlb"))
+        self.chk_exclude_numeric = QCheckBox(tr("json_rewriter.chk_exclude_numeric"))
+        self.chk_skip_empty = QCheckBox(tr("json_rewriter.chk_skip_empty"))
+        self.chk_avoid_dup_child = QCheckBox(tr("json_rewriter.chk_avoid_dup_child"))
+        self.chk_normalize_escaping = QCheckBox(tr("json_rewriter.chk_normalize_escaping"))
+        self.chk_convert_arrays = QCheckBox(tr("json_rewriter.chk_convert_arrays"))
+        self.chk_skip_no_siblings = QCheckBox(tr("json_rewriter.chk_skip_no_siblings"))
 
         # Task #52 - Remove duplicate objects
-        self.chk_remove_dup_objects = QCheckBox("Remove duplicate objects")
-        self.chk_include_dup_arrays = QCheckBox("Include arrays")
-        self.lbl_dup_threshold = QLabel("Similarity:")
+        self.chk_remove_dup_objects = QCheckBox(tr("json_rewriter.chk_remove_dup_objects"))
+        self.chk_include_dup_arrays = QCheckBox(tr("json_rewriter.chk_include_dup_arrays"))
+        self.lbl_dup_threshold = QLabel(tr("json_rewriter.lbl_dup_threshold"))
         self.spin_dup_threshold = QSpinBox()
         self.spin_dup_threshold.setRange(50, 100)
         self.spin_dup_threshold.setValue(100)
         self.spin_dup_threshold.setSuffix("%")
         self.combo_dup_mode = QComboBox()
-        self.combo_dup_mode.addItems(["Remove (default)", "Reference ($ref)"])
+        self.combo_dup_mode.addItems([tr("json_rewriter.combo_dup_remove"), tr("json_rewriter.combo_dup_ref")])
 
         # Task #23 - Update orphaned references
-        self.chk_update_refs = QCheckBox("Update references in project")
+        self.chk_update_refs = QCheckBox(tr("json_rewriter.chk_update_refs"))
         self.ed_project_dir = QLineEdit()
-        self.btn_project_browse = QPushButton("Browse…")
-        self.chk_ref_backup = QCheckBox("Create backups")
+        self.btn_project_browse = QPushButton(tr("json_rewriter.btn_browse"))
+        self.chk_ref_backup = QCheckBox(tr("json_rewriter.chk_ref_backup"))
         self.chk_ref_backup.setChecked(True)
 
-        self.chk_remove_dup_consecutive = QCheckBox("Remove consecutive duplicates")
-        self.chk_remove_dup_all = QCheckBox("Remove all duplicates")
-        self.chk_enforce_case = QCheckBox("Enforce consistent case")
+        self.chk_remove_dup_consecutive = QCheckBox(tr("json_rewriter.chk_remove_dup_consecutive"))
+        self.chk_remove_dup_all = QCheckBox(tr("json_rewriter.chk_remove_dup_all"))
+        self.chk_enforce_case = QCheckBox(tr("json_rewriter.chk_enforce_case"))
         self.chk_enforce_case.setChecked(True)  # Applied automatically
         self.combo_case_style = QComboBox()
         self.combo_case_style.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
         self.combo_case_style.setCurrentIndex(0)  # Default: camelCase
-        self.chk_validate_case = QCheckBox("Validate case before applying")
+        self.chk_validate_case = QCheckBox(tr("json_rewriter.chk_validate_case"))
         self.chk_validate_case.setChecked(False)  # Optional validation
-        self.chk_is_file = QCheckBox("Is file")
+        self.chk_is_file = QCheckBox(tr("json_rewriter.chk_is_file"))
         self.chk_is_file.setChecked(True)
 
         # Sprint B Feature #1: Advanced Filters
-        self.btn_advanced_filters = QPushButton("🔍 Advanced Filters...")
-        self.chk_apply_all_types = QCheckBox("Apply to all file types")
+        self.btn_advanced_filters = QPushButton(tr("json_rewriter.btn_advanced_filters"))
+        self.chk_apply_all_types = QCheckBox(tr("json_rewriter.chk_apply_all_types"))
         self.chk_apply_all_types.setChecked(False)
         self.advanced_conditions: list[Condition] = []  # Storage for configured conditions
         self.advanced_filters_enabled = False  # Whether filters are active
 
         # Sprint A Feature: Reference Resolver (v2.9.29)
-        self.lbl_ref_mode = QLabel("Duplicate handling:")
-        self.radio_delete_dups = QRadioButton("Delete duplicates")
+        self.lbl_ref_mode = QLabel(tr("json_rewriter.lbl_ref_mode"))
+        self.radio_delete_dups = QRadioButton(tr("json_rewriter.radio_delete_dups"))
         self.radio_delete_dups.setChecked(True)  # Default mode
-        self.radio_use_refs = QRadioButton("Use references ($ref)")
-        self.chk_resolve_refs = QCheckBox("Resolve existing references")
+        self.radio_use_refs = QRadioButton(tr("json_rewriter.radio_use_refs"))
+        self.chk_resolve_refs = QCheckBox(tr("json_rewriter.chk_resolve_refs"))
         self.chk_resolve_refs.setChecked(False)
 
         # Sprint B Feature #4: Reference Format Configuration (v2.9.30)
-        self.btn_configure_format = QPushButton("⚙️ Configure Format...")
+        self.btn_configure_format = QPushButton(tr("json_rewriter.btn_configure_format"))
 
         # Indent spinner
-        self.lbl_indent = QLabel("Indent (<=0 compact):")
+        self.lbl_indent = QLabel(tr("json_rewriter.lbl_indent"))
         self.spin_indent = QSpinBox()
         self.spin_indent.setRange(-1, 16)
         self.spin_indent.setValue(2)
 
         # Action button
-        self.btn_run = QPushButton("Rewrite")
+        self.btn_run = QPushButton(tr("json_rewriter.btn_run"))
 
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
@@ -202,7 +202,7 @@ class JsonRewriterDock(BaseDock):
 
         # Row 6: Enforce consistent case
         g.addWidget(self.chk_enforce_case, 6, 0, 1, 2)
-        g.addWidget(QLabel("Case style:"), 6, 2)
+        g.addWidget(QLabel(tr("json_rewriter.lbl_case_style")), 6, 2)
         g.addWidget(self.combo_case_style, 6, 3)
         g.addWidget(self.chk_validate_case, 6, 4)
 
