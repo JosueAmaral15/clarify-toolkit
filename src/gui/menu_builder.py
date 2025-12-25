@@ -49,6 +49,7 @@ class MenuBuilder:
         from PySide6.QtGui import QAction
         
         m_file = bar.addMenu(tr("menu.file"))
+        m_file.setObjectName("m_file")  # For plugin access
         
         # New Project from Template (v2.9.63)
         main_window.act_new_from_template = QAction("New from Template...", main_window)

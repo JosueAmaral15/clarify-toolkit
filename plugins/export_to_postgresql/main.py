@@ -136,13 +136,28 @@ class ExportToPostgreSQLPlugin(PluginBase):
         """Register plugin menu item."""
         self.app = app
         
-        # Add menu item: File -> Export to PostgreSQL
-        self.add_menu_item(
-            app,
-            menu_path="File",
-            text="📊 Export to PostgreSQL...",
-            callback=self._show_export_dialog
-        )
+        # Add menu item directly to File menu using reference
+        # Avoid text-based lookup to prevent i18n issues
+        file_menu = None
+        for action in app.menuBar().actions():
+            menu = action.menu()
+            if menu and menu.objectName() == "m_file":
+                file_menu = menu
+                break
+        
+        if not file_menu:
+            # Fallback: find by trying first menu (usually File)
+            file_menu = app.menuBar().actions()[0].menu() if app.menuBar().actions() else None
+        
+        if file_menu:
+            # Add separator before export options
+            file_menu.addSeparator()
+            # Create and add action
+            from PySide6.QtGui import QAction
+            action = QAction("📊 Export to PostgreSQL...", app)
+            action.triggered.connect(self._show_export_dialog)
+            file_menu.addAction(action)
+            self._registered_actions.append(action)
     
     def _show_export_dialog(self):
         """Show PostgreSQL export configuration dialog."""
