@@ -16,7 +16,8 @@ Version: 2.9.109
 """
 
 from typing import Any, Dict, Optional, Callable
-from PySide6.QtWidgets import QAction, QDockWidget, QMenu
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QDockWidget, QMenu
 from PySide6.QtCore import QSettings
 
 

@@ -1913,6 +1913,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("\nPySide6 is not installed; install it or use the CLI subcommands.", file=sys.stderr)
         return 2
 
+    # Set Qt attributes before creating QApplication
+    from PySide6.QtCore import Qt
+    QApplication.setAttribute(Qt.AA_UseDesktopOpenGL, True)
+    
     app = QApplication(sys.argv)
     win = MainWindow(app)
     win.resize(1200, 400)

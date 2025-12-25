@@ -137,7 +137,12 @@ class UpdateChecker:
                     'body': data.get('body', '')
                 }
         
-        except (URLError, HTTPError, json.JSONDecodeError, TimeoutError) as e:
+        except HTTPError as e:
+            # 404 means no releases published yet - don't spam console
+            if e.code != 404:
+                print(f"Failed to fetch release info: HTTP {e.code}")
+            return None
+        except (URLError, json.JSONDecodeError, TimeoutError) as e:
             print(f"Failed to fetch release info: {e}")
             return None
     
