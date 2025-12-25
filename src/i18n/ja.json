@@ -463,14 +463,6 @@
   "tooltip.base.extension_filter": "拡張子でファイルをフィルタ（.py = Python、.jsx/.tsx = React、.js/.ts = JS/TS）| すべてのタイプは空のままにする",
   "tooltip.base.btn_open_editor": "エディタで結果を開く（ファイル操作なしで表示/コピーするための編集専用モード）",
   
-  "dialog.preferences.title": "設定",
-  "dialog.preferences.general": "一般",
-  "dialog.preferences.show_tooltips": "ツールチップを表示",
-  "dialog.preferences.confirm_exit": "終了前に確認",
-  "dialog.preferences.auto_save": "設定を自動保存",
-  "dialog.preferences.check_updates": "起動時に更新を確認",
-  "dialog.preferences.success": "設定が正常に保存されました",
-  
   "dialog.transparency.title": "ウィンドウの透明度",
   "dialog.transparency.level": "透明度レベル",
   

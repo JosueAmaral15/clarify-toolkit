@@ -136,7 +136,7 @@ from .ai_processor import (
 from .gui import (
     CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
     TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock, HistoryDock, FileListDock, TutorialsDock,
+    JsonRewriterDock, HistoryDock, FileListDock, FileExplorerDock, TutorialsDock,
     EditorDock, TextToJsonDock, JSXExtractorDock, DockFactory, MenuBuilder, WindowSettings
 )
 
@@ -517,6 +517,10 @@ if _PYSIDE:
         def _open_file_list(self):
             """Open File List dock (Task #33 - v2.9.11)."""
             DockFactory.create_file_list_dock(self)
+        
+        def _open_file_explorer(self):
+            """Open File Explorer dock (unified File List + Advanced Search - v2.9.115)."""
+            DockFactory.create_file_explorer_dock(self)
 
         def _open_history(self):
             DockFactory.create_history_dock(self)
@@ -668,6 +672,11 @@ if _PYSIDE:
             """Show File List as tab (create on-demand)."""
             from .gui.tab_manager import TabManager
             TabManager.show_file_list(self)
+        
+        def _show_file_explorer(self):
+            """Show File Explorer as tab (unified File List + Advanced Search - v2.9.115)."""
+            from .gui.tab_manager import TabManager
+            TabManager.show_file_explorer(self)
         
         def _show_set_operations(self):
             """Show JSON Set Operations as tab (v2.9.32 / v2.9.40)."""

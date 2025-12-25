@@ -9,6 +9,7 @@ import os
 from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox
 
 from src.accessibility_manager import AccessibilityManager
+from src.ai_processor.processor import list_files_recursive
 from src.i18n.translator import tooltip_tr, tr
 from .base_dock import ProcessorWorkerBase, StandardToolDock
 from src.json_search import (

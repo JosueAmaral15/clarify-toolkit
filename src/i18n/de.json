@@ -463,14 +463,6 @@
   "tooltip.base.extension_filter": "Dateien nach Erweiterungen filtern (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Leer lassen für alle Typen",
   "tooltip.base.btn_open_editor": "Ergebnisse im Editor öffnen (Nur-Bearbeiten-Modus zum Anzeigen/Kopieren ohne Dateioperationen)",
   
-  "dialog.preferences.title": "Einstellungen",
-  "dialog.preferences.general": "Allgemein",
-  "dialog.preferences.show_tooltips": "Tooltips anzeigen",
-  "dialog.preferences.confirm_exit": "Bestätigung vor Beenden",
-  "dialog.preferences.auto_save": "Einstellungen automatisch speichern",
-  "dialog.preferences.check_updates": "Beim Start nach Updates suchen",
-  "dialog.preferences.success": "Einstellungen erfolgreich gespeichert",
-  
   "dialog.transparency.title": "Fenstertransparenz",
   "dialog.transparency.level": "Transparenzstufe",
   

@@ -41,9 +41,9 @@ class FileListDock(BaseDock):
     """
     
     def __init__(self, parent=None):
-        super().__init__("File List", parent)
         self.settings = QSettings("Clarify", "FileList")
         self._load_preferences()
+        super().__init__("File List", parent)
     
     def _setup_ui(self):
         """Setup UI components."""
@@ -106,15 +106,13 @@ class FileListDock(BaseDock):
     
     def _create_layout(self):
         """Create layout."""
-        layout = QVBoxLayout()
-        
         # Directory selection
         dir_layout = QHBoxLayout()
         dir_layout.addWidget(QLabel(tr("file_list.lbl_directory")))
         dir_layout.addWidget(self.ed_directory)
         dir_layout.addWidget(self.btn_browse)
         dir_layout.addWidget(self.btn_recent)
-        layout.addLayout(dir_layout)
+        self.layout.addLayout(dir_layout)
         
         # Options
         opts_layout = QHBoxLayout()
@@ -123,21 +121,19 @@ class FileListDock(BaseDock):
         opts_layout.addWidget(self.chk_human)
         opts_layout.addWidget(self.chk_recursive)
         opts_layout.addStretch()
-        layout.addLayout(opts_layout)
+        self.layout.addLayout(opts_layout)
         
         # List button
-        layout.addWidget(self.btn_list)
+        self.layout.addWidget(self.btn_list)
         
         # Advanced filters panel
-        layout.addWidget(self.filter_panel)
+        self.layout.addWidget(self.filter_panel)
         
         # Preset manager
-        layout.addWidget(self.preset_manager)
+        self.layout.addWidget(self.preset_manager)
         
         # Table manager
-        layout.addWidget(self.table_manager)
-        
-        self.setLayout(layout)
+        self.layout.addWidget(self.table_manager)
     
     def _browse_directory(self):
         """Browse for directory."""

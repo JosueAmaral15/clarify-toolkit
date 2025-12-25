@@ -199,6 +199,14 @@ class DockFactory:
         )
     
     @staticmethod
+    def create_file_explorer_dock(main_window: 'QMainWindow') -> 'QDockWidget':
+        """Create File Explorer dock (unified File List + Advanced Search)."""
+        from ..gui import FileExplorerDock
+        return DockFactory.create_dock(
+            main_window, FileExplorerDock, 'dock_file_explorer'
+        )
+    
+    @staticmethod
     def create_history_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create History dock (lazy initialization with special handling)."""
         from ..gui import HistoryDock

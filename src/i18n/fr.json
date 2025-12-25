@@ -463,14 +463,6 @@
   "tooltip.base.extension_filter": "Filtrer les fichiers par extensions (.py = Python, .jsx/.tsx = React, .js/.ts = JS/TS) | Laisser vide pour tous les types",
   "tooltip.base.btn_open_editor": "Ouvrir les résultats dans l'éditeur (mode édition seule pour visualiser/copier sans opérations de fichier)",
   
-  "dialog.preferences.title": "Préférences",
-  "dialog.preferences.general": "Général",
-  "dialog.preferences.show_tooltips": "Afficher les infobulles",
-  "dialog.preferences.confirm_exit": "Confirmer avant de quitter",
-  "dialog.preferences.auto_save": "Enregistrer automatiquement les paramètres",
-  "dialog.preferences.check_updates": "Vérifier les mises à jour au démarrage",
-  "dialog.preferences.success": "Préférences enregistrées avec succès",
-  
   "dialog.transparency.title": "Transparence de la Fenêtre",
   "dialog.transparency.level": "Niveau de Transparence",
   
