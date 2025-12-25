@@ -1659,9 +1659,10 @@ if _PYSIDE:
                             else:
                                 # Scroll right
                                 scrollbar.setValue(scrollbar.value() + step)
-                            
-                            event.accept()
-                            return
+                
+                # Consume event completely - prevent vertical scroll when Shift is pressed
+                event.accept()
+                return
             
             # Ctrl+Scroll - Font scaling
             elif event.modifiers() == Qt.ControlModifier:
