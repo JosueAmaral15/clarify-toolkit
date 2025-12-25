@@ -1090,5 +1090,12 @@
   "batch_dialog.btn_load_batch": "📂 Batch laden",
   "batch_dialog.btn_execute": "▶️ Batch ausführen",
   "batch_dialog.btn_cancel_exec": "⏹️ Abbrechen",
-  "batch_dialog.btn_close": "Schließen"
+  "batch_dialog.btn_close": "Schließen",
+  "statistics_dialog.title": "Detaillierte Statistiken",
+  "statistics_dialog.tab_removal": "Entfernungsoperationen",
+  "statistics_dialog.tab_reference": "Referenzstatistiken",
+  "statistics_dialog.btn_export": "Exportieren ▼",
+  "statistics_dialog.btn_close": "Schließen",
+  "statistics_dialog.lbl_search": "Suchen:",
+  "statistics_dialog.lbl_filter": "Nach Operation filtern:"
 }

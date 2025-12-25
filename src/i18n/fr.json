@@ -1090,5 +1090,12 @@
   "batch_dialog.btn_load_batch": "📂 Charger Lot",
   "batch_dialog.btn_execute": "▶️ Exécuter Lot",
   "batch_dialog.btn_cancel_exec": "⏹️ Annuler",
-  "batch_dialog.btn_close": "Fermer"
+  "batch_dialog.btn_close": "Fermer",
+  "statistics_dialog.title": "Statistiques Détaillées",
+  "statistics_dialog.tab_removal": "Opérations de Suppression",
+  "statistics_dialog.tab_reference": "Statistiques de Référence",
+  "statistics_dialog.btn_export": "Exporter ▼",
+  "statistics_dialog.btn_close": "Fermer",
+  "statistics_dialog.lbl_search": "Rechercher:",
+  "statistics_dialog.lbl_filter": "Filtrer par Opération:"
 }

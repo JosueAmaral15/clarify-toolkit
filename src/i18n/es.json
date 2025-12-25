@@ -1098,5 +1098,12 @@
   "batch_dialog.btn_load_batch": "📂 Cargar Lote",
   "batch_dialog.btn_execute": "▶️ Ejecutar Lote",
   "batch_dialog.btn_cancel_exec": "⏹️ Cancelar",
-  "batch_dialog.btn_close": "Cerrar"
+  "batch_dialog.btn_close": "Cerrar",
+  "statistics_dialog.title": "Estadísticas Detalladas",
+  "statistics_dialog.tab_removal": "Operaciones de Eliminación",
+  "statistics_dialog.tab_reference": "Estadísticas de Referencia",
+  "statistics_dialog.btn_export": "Exportar ▼",
+  "statistics_dialog.btn_close": "Cerrar",
+  "statistics_dialog.lbl_search": "Buscar:",
+  "statistics_dialog.lbl_filter": "Filtrar por Operación:"
 }

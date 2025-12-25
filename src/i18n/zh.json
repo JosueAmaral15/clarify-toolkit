@@ -1127,5 +1127,12 @@
   "batch_dialog.btn_load_batch": "📂 加载批处理",
   "batch_dialog.btn_execute": "▶️ 执行批处理",
   "batch_dialog.btn_cancel_exec": "⏹️ 取消",
-  "batch_dialog.btn_close": "关闭"
+  "batch_dialog.btn_close": "关闭",
+  "statistics_dialog.title": "详细统计",
+  "statistics_dialog.tab_removal": "删除操作",
+  "statistics_dialog.tab_reference": "参考统计",
+  "statistics_dialog.btn_export": "导出 ▼",
+  "statistics_dialog.btn_close": "关闭",
+  "statistics_dialog.lbl_search": "搜索:",
+  "statistics_dialog.lbl_filter": "按操作过滤:"
 }

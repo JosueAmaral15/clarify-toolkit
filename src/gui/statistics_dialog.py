@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QMenu, QFileDialog, QMessageBox
 )
 from PySide6.QtCore import Qt
+from src.i18n.translator import tr
 from typing import List, Dict, Any
 import csv
 import json
@@ -33,7 +34,7 @@ class StatisticsDialog(QDialog):
         super().__init__(parent)
         self.removal_stats = removal_stats
         self.reference_stats = reference_stats
-        self.setWindowTitle("Detailed Statistics")
+        self.setWindowTitle(tr("statistics_dialog.title"))
         self.setMinimumSize(900, 600)
         
         self._init_ui()
@@ -48,11 +49,11 @@ class StatisticsDialog(QDialog):
         
         # Tab 1: Removal Operations
         self.removal_tab = self._create_removal_tab()
-        self.tabs.addTab(self.removal_tab, "Removal Operations")
+        self.tabs.addTab(self.removal_tab, tr("statistics_dialog.tab_removal"))
         
         # Tab 2: Reference Stats
         self.reference_tab = self._create_reference_tab()
-        self.tabs.addTab(self.reference_tab, "Reference Statistics")
+        self.tabs.addTab(self.reference_tab, tr("statistics_dialog.tab_reference"))
         
         layout.addWidget(self.tabs)
         
@@ -60,14 +61,14 @@ class StatisticsDialog(QDialog):
         button_layout = QHBoxLayout()
         
         # Export button with dropdown menu
-        self.btn_export = QPushButton("Export ▼")
+        self.btn_export = QPushButton(tr("statistics_dialog.btn_export"))
         self.export_menu = QMenu()
         self.export_menu.addAction("Export CSV", self._export_csv)
         self.export_menu.addAction("Export JSON", self._export_json)
         self.export_menu.addAction("Export Excel", self._export_excel)
         self.btn_export.setMenu(self.export_menu)
         
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr("statistics_dialog.btn_close"))
         btn_close.clicked.connect(self.accept)
         
         button_layout.addWidget(self.btn_export)
@@ -86,7 +87,7 @@ class StatisticsDialog(QDialog):
         
         # Search box
         search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Search:"))
+        search_layout.addWidget(QLabel(tr("statistics_dialog.lbl_search")))
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Type to filter results...")
         self.search_box.textChanged.connect(self._filter_removal_table)
@@ -95,7 +96,7 @@ class StatisticsDialog(QDialog):
         
         # Column filter
         filter_layout = QHBoxLayout()
-        filter_layout.addWidget(QLabel("Filter by Operation:"))
+        filter_layout.addWidget(QLabel(tr("statistics_dialog.lbl_filter")))
         self.operation_filter = QComboBox()
         self.operation_filter.addItem("All Operations")
         self.operation_filter.currentTextChanged.connect(self._filter_removal_table)

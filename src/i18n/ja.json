@@ -1090,5 +1090,12 @@
   "batch_dialog.btn_load_batch": "📂 バッチを読み込む",
   "batch_dialog.btn_execute": "▶️ バッチを実行",
   "batch_dialog.btn_cancel_exec": "⏹️ キャンセル",
-  "batch_dialog.btn_close": "閉じる"
+  "batch_dialog.btn_close": "閉じる",
+  "statistics_dialog.title": "詳細統計",
+  "statistics_dialog.tab_removal": "削除操作",
+  "statistics_dialog.tab_reference": "参照統計",
+  "statistics_dialog.btn_export": "エクスポート ▼",
+  "statistics_dialog.btn_close": "閉じる",
+  "statistics_dialog.lbl_search": "検索:",
+  "statistics_dialog.lbl_filter": "操作でフィルター:"
 }

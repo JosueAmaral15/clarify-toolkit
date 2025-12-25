@@ -1121,5 +1121,12 @@
   "batch_dialog.btn_load_batch": "📂 Load Batch",
   "batch_dialog.btn_execute": "▶️ Execute Batch",
   "batch_dialog.btn_cancel_exec": "⏹️ Cancel",
-  "batch_dialog.btn_close": "Close"
+  "batch_dialog.btn_close": "Close",
+  "statistics_dialog.title": "Detailed Statistics",
+  "statistics_dialog.tab_removal": "Removal Operations",
+  "statistics_dialog.tab_reference": "Reference Statistics",
+  "statistics_dialog.btn_export": "Export ▼",
+  "statistics_dialog.btn_close": "Close",
+  "statistics_dialog.lbl_search": "Search:",
+  "statistics_dialog.lbl_filter": "Filter by Operation:"
 }
