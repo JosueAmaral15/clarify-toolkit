@@ -655,5 +655,13 @@
   "merge_config.file_not_found_title": "ファイルが見つかりません",
   "merge_config.file_not_found_msg": "ターゲットファイルが存在しません:\n{file}",
   "merge_config.no_backup_title": "バックアップなし",
-  "merge_config.no_backup_msg": "バックアップなしで置換モードを選択しました。\n元のファイルが永久に上書きされます。\n\nバックアップなしで続行しますか？"
+  "merge_config.no_backup_msg": "バックアップなしで置換モードを選択しました。\n元のファイルが永久に上書きされます。\n\nバックアップなしで続行しますか？",
+  "converter_selection.title": "コンバータータイプを選択",
+  "converter_selection.header": "<b>コンバーターの種類を選択してください:</b>",
+  "converter_selection.radio_jsx": "JSXパラメーター抽出ツール",
+  "converter_selection.radio_text": "テキストフォーマットコンバーター",
+  "converter_selection.desc_jsx": "• <b>JSXパラメーター抽出ツール:</b> React/JSX/TSXファイル用<br>  コンポーネントからprops、属性、タグコンテンツを抽出<br>  ファイルまたはディレクトリパスが必要",
+  "converter_selection.desc_text": "• <b>テキストフォーマットコンバーター:</b> テキストベースのフォーマット用<br>  CSV、YAML、INI、TOMLなどをJSONに変換<br>  コンバーターに直接テキストを貼り付け",
+  "converter_selection.btn_open": "開く",
+  "converter_selection.btn_cancel": "キャンセル"
 }

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton,
     QButtonGroup, QRadioButton
 )
+from src.i18n.translator import tr
 
 
 class ConverterSelectionDialog(QDialog):
@@ -27,7 +28,7 @@ class ConverterSelectionDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Select Converter Type")
+        self.setWindowTitle(tr("converter_selection.title"))
         self.setModal(True)
         self.setMinimumWidth(400)
         
@@ -39,13 +40,13 @@ class ConverterSelectionDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Title
-        title_label = QLabel("<b>Choose the type of converter:</b>")
+        title_label = QLabel(tr("converter_selection.header"))
         layout.addWidget(title_label)
         
         # Radio buttons
         self.btn_group = QButtonGroup(self)
         
-        self.radio_jsx = QRadioButton("JSX Parameter Extractor")
+        self.radio_jsx = QRadioButton(tr("converter_selection.radio_jsx"))
         self.radio_jsx.setToolTip(
             "Extract parameters and attributes from JSX/TSX files.\n"
             "Scans React component files and generates hierarchical JSON."
@@ -54,7 +55,7 @@ class ConverterSelectionDialog(QDialog):
         self.btn_group.addButton(self.radio_jsx)
         layout.addWidget(self.radio_jsx)
         
-        self.radio_text = QRadioButton("Text Format Converter")
+        self.radio_text = QRadioButton(tr("converter_selection.radio_text"))
         self.radio_text.setToolTip(
             "Convert text formats to JSON (CSV, YAML, INI, etc.).\n"
             "Paste text and convert to JSON structure."
@@ -64,31 +65,23 @@ class ConverterSelectionDialog(QDialog):
         
         # Description labels
         layout.addSpacing(10)
-        desc_jsx = QLabel(
-            "• <b>JSX Parameter Extractor:</b> For React/JSX/TSX files<br>"
-            "  Extract props, attributes, and tag content from components<br>"
-            "  Requires file or directory path"
-        )
+        desc_jsx = QLabel(tr("converter_selection.desc_jsx"))
         desc_jsx.setWordWrap(True)
         layout.addWidget(desc_jsx)
         
         layout.addSpacing(5)
-        desc_text = QLabel(
-            "• <b>Text Format Converter:</b> For text-based formats<br>"
-            "  Convert CSV, YAML, INI, TOML, etc. to JSON<br>"
-            "  Paste text directly into the converter"
-        )
+        desc_text = QLabel(tr("converter_selection.desc_text"))
         desc_text.setWordWrap(True)
         layout.addWidget(desc_text)
         
         # Buttons
         layout.addSpacing(10)
-        btn_ok = QPushButton("Open")
+        btn_ok = QPushButton(tr("converter_selection.btn_open"))
         btn_ok.setDefault(True)
         btn_ok.clicked.connect(self.accept)
         layout.addWidget(btn_ok)
         
-        btn_cancel = QPushButton("Cancel")
+        btn_cancel = QPushButton(tr("converter_selection.btn_cancel"))
         btn_cancel.clicked.connect(self.reject)
         layout.addWidget(btn_cancel)
     

@@ -655,5 +655,13 @@
   "merge_config.file_not_found_title": "Fichier Non Trouvé",
   "merge_config.file_not_found_msg": "Le fichier cible n'existe pas:\n{file}",
   "merge_config.no_backup_title": "Pas de Sauvegarde",
-  "merge_config.no_backup_msg": "Vous avez sélectionné le mode Remplacer sans sauvegarde.\nLe fichier original sera définitivement écrasé.\n\nContinuer sans sauvegarde?"
+  "merge_config.no_backup_msg": "Vous avez sélectionné le mode Remplacer sans sauvegarde.\nLe fichier original sera définitivement écrasé.\n\nContinuer sans sauvegarde?",
+  "converter_selection.title": "Sélectionner le Type de Convertisseur",
+  "converter_selection.header": "<b>Choisissez le type de convertisseur:</b>",
+  "converter_selection.radio_jsx": "Extracteur de Paramètres JSX",
+  "converter_selection.radio_text": "Convertisseur de Format de Texte",
+  "converter_selection.desc_jsx": "• <b>Extracteur de Paramètres JSX:</b> Pour les fichiers React/JSX/TSX<br>  Extrait les props, attributs et contenu des balises des composants<br>  Nécessite un chemin de fichier ou de répertoire",
+  "converter_selection.desc_text": "• <b>Convertisseur de Format de Texte:</b> Pour les formats basés sur du texte<br>  Convertit CSV, YAML, INI, TOML, etc. en JSON<br>  Collez le texte directement dans le convertisseur",
+  "converter_selection.btn_open": "Ouvrir",
+  "converter_selection.btn_cancel": "Annuler"
 }

@@ -655,5 +655,13 @@
   "merge_config.file_not_found_title": "未找到文件",
   "merge_config.file_not_found_msg": "目标文件不存在:\n{file}",
   "merge_config.no_backup_title": "没有备份",
-  "merge_config.no_backup_msg": "您选择了不备份的替换模式。\n原始文件将被永久覆盖。\n\n继续不备份？"
+  "merge_config.no_backup_msg": "您选择了不备份的替换模式。\n原始文件将被永久覆盖。\n\n继续不备份？",
+  "converter_selection.title": "选择转换器类型",
+  "converter_selection.header": "<b>选择转换器的类型:</b>",
+  "converter_selection.radio_jsx": "JSX参数提取器",
+  "converter_selection.radio_text": "文本格式转换器",
+  "converter_selection.desc_jsx": "• <b>JSX参数提取器:</b> 用于React/JSX/TSX文件<br>  从组件中提取props、属性和标签内容<br>  需要文件或目录路径",
+  "converter_selection.desc_text": "• <b>文本格式转换器:</b> 用于基于文本的格式<br>  将CSV、YAML、INI、TOML等转换为JSON<br>  直接将文本粘贴到转换器中",
+  "converter_selection.btn_open": "打开",
+  "converter_selection.btn_cancel": "取消"
 }
