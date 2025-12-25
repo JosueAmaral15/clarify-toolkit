@@ -63,13 +63,9 @@ class FileExplorerDock(BaseDock):
         self.settings = QSettings("Clarify", "FileExplorer")
         self._load_preferences()
         
-        if dialog_mode:
-            # Initialize as QDialog instead of BaseDock
-            super().__init__("File Explorer", parent)
-            self.setWindowModality(Qt.ApplicationModal)
-        else:
-            # Normal dock behavior
-            super().__init__("File Explorer", parent)
+        # Always initialize as BaseDock (QDockWidget)
+        # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
+        super().__init__("File Explorer", parent)
     
     def _setup_ui(self):
         """Setup UI components."""
