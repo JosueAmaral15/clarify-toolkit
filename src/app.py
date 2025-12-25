@@ -830,42 +830,43 @@ if _PYSIDE:
             """
             Manual update check triggered from Help menu (v2.9.45).
             
-            Forces fresh check (bypasses cache) and shows result message.
+            Forces fresh check (bypasses cache) and shows result with ManualCheckDialog.
             """
             from .update_checker import check_for_updates
             from . import __version__
+            from .gui.update_notification_dialog import ManualCheckDialog
+            from PySide6.QtCore import QTimer
             
-            # Show progress message
-            self.statusBar().showMessage("Verificando atualizações...", 0)
+            # Create and show dialog
+            dialog = ManualCheckDialog(self)
+            dialog.show_checking()
+            
+            # Process events to show dialog
+            from PySide6.QtWidgets import QApplication
+            QApplication.processEvents()
             
             # Force fresh check
             has_update, release_info = check_for_updates(__version__, force=True)
             
+            # Build result dict
+            result = {
+                "success": True,
+                "current_version": __version__,
+                "update_available": has_update
+            }
+            
             if has_update and release_info:
+                result["latest_version"] = release_info.get('version', 'Unknown')
+                
                 # Check if user opted to skip this version
-                from .gui.update_notification import UpdateNotificationDialog
+                from .gui.update_notification_dialog import UpdateNotificationDialog
                 
                 if UpdateNotificationDialog.should_show_for_version(release_info['version']):
-                    self._show_update_dialog(release_info)
-                else:
-                    # User previously skipped this version
-                    from PySide6.QtWidgets import QMessageBox
-                    QMessageBox.information(
-                        self,
-                        "Atualização Disponível",
-                        f"Nova versão {release_info['version']} disponível, mas você optou por pular esta versão.\n\n"
-                        "Para ver novamente, limpe as preferências de atualização."
-                    )
-            else:
-                # No update or error
-                from PySide6.QtWidgets import QMessageBox
-                QMessageBox.information(
-                    self,
-                    "Sem Atualizações",
-                    f"Você está usando a versão mais recente do Clarify ({__version__})."
-                )
+                    # Show update dialog after a brief delay
+                    QTimer.singleShot(1000, lambda: self._show_update_dialog(release_info))
             
-            self.statusBar().showMessage("Verificação de atualização concluída", 3000)
+            # Show result in manual check dialog
+            dialog.show_result(result)
         
         def _perform_update_check(self):
             """
