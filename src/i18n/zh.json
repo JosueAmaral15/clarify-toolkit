@@ -890,5 +890,16 @@
   "text_to_json.history_dialog_title": "转换历史记录",
   "text_to_json.history_lbl_double_click": "双击加载：",
   "text_to_json.info_swap_title": "交换功能",
-  "text_to_json.info_swap_msg": "JSON到文本的转换将在未来版本中实现。"
+  "text_to_json.info_swap_msg": "JSON到文本的转换将在未来版本中实现。",
+  "editor.btn_new": "新建",
+  "editor.btn_open": "打开...",
+  "editor.btn_save": "保存",
+  "editor.btn_save_as": "另存为...",
+  "editor.btn_close_tab": "关闭标签",
+  "editor.chk_auto_save": "自动保存",
+  "editor.lbl_status_ready": "就绪",
+  "editor.dialog_open_title": "打开文件",
+  "editor.chk_edit_only": "以仅编辑模式打开 (不修改文件)",
+  "editor.dialog_close_edit_title": "关闭仅编辑标签",
+  "editor.status_copied": "内容已复制到剪贴板"
 }

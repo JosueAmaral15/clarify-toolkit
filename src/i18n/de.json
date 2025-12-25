@@ -890,5 +890,16 @@
   "text_to_json.history_dialog_title": "Konvertierungsverlauf",
   "text_to_json.history_lbl_double_click": "Doppelklicken zum Laden:",
   "text_to_json.info_swap_title": "Tauschfunktion",
-  "text_to_json.info_swap_msg": "JSON-zu-Text-Konvertierung wird in einer zukünftigen Version implementiert."
+  "text_to_json.info_swap_msg": "JSON-zu-Text-Konvertierung wird in einer zukünftigen Version implementiert.",
+  "editor.btn_new": "Neu",
+  "editor.btn_open": "Öffnen...",
+  "editor.btn_save": "Speichern",
+  "editor.btn_save_as": "Speichern unter...",
+  "editor.btn_close_tab": "Tab schließen",
+  "editor.chk_auto_save": "Automatisch speichern",
+  "editor.lbl_status_ready": "Bereit",
+  "editor.dialog_open_title": "Datei öffnen",
+  "editor.chk_edit_only": "Im Nur-Bearbeiten-Modus öffnen (keine Dateiänderungen)",
+  "editor.dialog_close_edit_title": "Nur-Bearbeiten-Tab schließen",
+  "editor.status_copied": "Inhalt in die Zwischenablage kopiert"
 }

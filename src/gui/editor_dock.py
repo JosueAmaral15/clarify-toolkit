@@ -40,7 +40,7 @@ from PySide6.QtGui import (
 from .base_dock import BaseDock
 from .json_editor_tab import JsonEditorTab
 from .widgets import SyntaxHighlighter, EditorTab
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class EditorDock(BaseDock):
@@ -77,14 +77,14 @@ class EditorDock(BaseDock):
         # Toolbar
         toolbar = QHBoxLayout()
         
-        self.btn_new = QPushButton("New")
-        self.btn_open = QPushButton("Open...")
-        self.btn_save = QPushButton("Save")
-        self.btn_save_as = QPushButton("Save As...")
-        self.btn_close_tab = QPushButton("Close Tab")
+        self.btn_new = QPushButton(tr("editor.btn_new"))
+        self.btn_open = QPushButton(tr("editor.btn_open"))
+        self.btn_save = QPushButton(tr("editor.btn_save"))
+        self.btn_save_as = QPushButton(tr("editor.btn_save_as"))
+        self.btn_close_tab = QPushButton(tr("editor.btn_close_tab"))
         
         # Auto-save checkbox
-        self.chk_auto_save = QCheckBox("Auto-save")
+        self.chk_auto_save = QCheckBox(tr("editor.chk_auto_save"))
         self.chk_auto_save.setChecked(self.auto_save_enabled)
         
         toolbar.addWidget(self.btn_new)
@@ -106,7 +106,7 @@ class EditorDock(BaseDock):
         
         # Status bar
         status_layout = QHBoxLayout()
-        self.lbl_status = QLabel("Ready")
+        self.lbl_status = QLabel(tr("editor.lbl_status_ready"))
         self.lbl_status.setStyleSheet("color: #6A9955;")
         status_layout.addWidget(self.lbl_status)
         status_layout.addStretch()
@@ -222,7 +222,7 @@ class EditorDock(BaseDock):
         """Open existing file with optional edit-only mode."""
         # Create custom dialog with edit-only checkbox
         dialog = QFileDialog(self)
-        dialog.setWindowTitle("Open File")
+        dialog.setWindowTitle(tr("editor.dialog_open_title"))
         dialog.setNameFilters([
             "All Files (*)",
             "JSON Files (*.json)",
@@ -236,7 +236,7 @@ class EditorDock(BaseDock):
         dialog.setFileMode(QFileDialog.ExistingFile)
         
         # Add checkbox for edit-only mode
-        chk_edit_only = QCheckBox("Open in Edit-Only Mode (no file changes)")
+        chk_edit_only = QCheckBox(tr("editor.chk_edit_only"))
         dialog.layout().addWidget(chk_edit_only)
         
         if not dialog.exec_():
@@ -395,7 +395,7 @@ class EditorDock(BaseDock):
             # Special handling for edit-only tabs (requirement #6)
             if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
                 msg = QMessageBox(self)
-                msg.setWindowTitle("Close Edit-Only Tab")
+                msg.setWindowTitle(tr("editor.dialog_close_edit_title"))
                 msg.setText(f"'{tab.get_tab_title()}' has unsaved changes.")
                 msg.setInformativeText("What would you like to do?")
                 
@@ -418,7 +418,7 @@ class EditorDock(BaseDock):
                     # Copy to clipboard
                     clipboard = QApplication.clipboard()
                     clipboard.setText(tab.editor.toPlainText())
-                    self.lbl_status.setText("Content copied to clipboard")
+                    self.lbl_status.setText(tr("editor.status_copied"))
                 elif clicked == btn_cancel:
                     return
                 # btn_discard falls through to remove tab
@@ -476,7 +476,7 @@ class EditorDock(BaseDock):
             else:
                 self.lbl_status.setText(f"{editor_type}{mode_text}: {tab.get_tab_title()}")
         else:
-            self.lbl_status.setText("Ready")
+            self.lbl_status.setText(tr("editor.lbl_status_ready"))
             self.lbl_status.setStyleSheet("color: #6A9955;")
     
     def _update_tab_title(self, tab: EditorTab):

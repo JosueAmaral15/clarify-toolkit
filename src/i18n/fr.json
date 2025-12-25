@@ -890,5 +890,16 @@
   "text_to_json.history_dialog_title": "Historique des Conversions",
   "text_to_json.history_lbl_double_click": "Double-cliquez pour charger:",
   "text_to_json.info_swap_title": "Fonction d'Échange",
-  "text_to_json.info_swap_msg": "La conversion de JSON en texte sera implémentée dans une version future."
+  "text_to_json.info_swap_msg": "La conversion de JSON en texte sera implémentée dans une version future.",
+  "editor.btn_new": "Nouveau",
+  "editor.btn_open": "Ouvrir...",
+  "editor.btn_save": "Enregistrer",
+  "editor.btn_save_as": "Enregistrer sous...",
+  "editor.btn_close_tab": "Fermer l'Onglet",
+  "editor.chk_auto_save": "Sauvegarde automatique",
+  "editor.lbl_status_ready": "Prêt",
+  "editor.dialog_open_title": "Ouvrir un Fichier",
+  "editor.chk_edit_only": "Ouvrir en Mode Édition Seule (aucune modification de fichier)",
+  "editor.dialog_close_edit_title": "Fermer l'Onglet Édition Seule",
+  "editor.status_copied": "Contenu copié dans le presse-papiers"
 }
