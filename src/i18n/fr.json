@@ -621,5 +621,18 @@
   "base.editor_not_found_msg": "Impossible de trouver le dock de l'éditeur. Veuillez vous assurer que l'éditeur est disponible.",
   "base.error_title": "Erreur",
   "base.error_open_editor": "Échec de l'ouverture des résultats dans l'éditeur:\n{error}",
-  "base.status_opened_editor": "Résultats ouverts dans l'éditeur (mode édition seule)"
+  "base.status_opened_editor": "Résultats ouverts dans l'éditeur (mode édition seule)",
+  "case_validator.title": "Validateur de Conversion de Casse",
+  "case_validator.header": "Examiner les Changements de Conversion de Casse",
+  "case_validator.target_case": "Style de Casse Cible:",
+  "case_validator.before": "Avant (Original):",
+  "case_validator.after": "Après (Converti):",
+  "case_validator.detected_changes": "Changements Détectés:",
+  "case_validator.btn_cancel": "Annuler",
+  "case_validator.btn_apply": "Appliquer les Changements",
+  "case_validator.total_changes": "Total de changements: {count}",
+  "case_validator.more_changes": "... et {count} changements supplémentaires",
+  "case_validator.no_changes": "Aucun changement détecté. Les clés sont déjà dans le style de casse cible.",
+  "case_validator.error_display_original": "Erreur d'affichage de l'original: {error}",
+  "case_validator.error_display_converted": "Erreur d'affichage du converti: {error}"
 }

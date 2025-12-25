@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 from typing import List, Tuple
 from src.rewriter.types import JSONNode
 from src.rewriter.operations import enforce_consistent_case
+from src.i18n.translator import tr
 import json
 
 
@@ -25,7 +26,7 @@ class CaseValidatorDialog(QDialog):
             parent: Parent widget (optional)
         """
         super().__init__(parent)
-        self.setWindowTitle("Case Conversion Validator")
+        self.setWindowTitle(tr("case_validator.title"))
         self.resize(900, 600)
         
         self.original_node = node
@@ -39,13 +40,13 @@ class CaseValidatorDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Title
-        title = QLabel("Review Case Conversion Changes")
+        title = QLabel(tr("case_validator.header"))
         title.setStyleSheet("font-size: 14pt; font-weight: bold; padding: 10px;")
         layout.addWidget(title)
         
         # Case style selector
         selector_layout = QHBoxLayout()
-        selector_layout.addWidget(QLabel("Target Case Style:"))
+        selector_layout.addWidget(QLabel(tr("case_validator.target_case")))
         
         self.combo_case = QComboBox()
         self.combo_case.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
@@ -60,7 +61,7 @@ class CaseValidatorDialog(QDialog):
         
         # Before panel
         before_layout = QVBoxLayout()
-        before_label = QLabel("Before (Original):")
+        before_label = QLabel(tr("case_validator.before"))
         before_label.setStyleSheet("font-weight: bold; color: #e74c3c;")
         before_layout.addWidget(before_label)
         
@@ -73,7 +74,7 @@ class CaseValidatorDialog(QDialog):
         
         # After panel
         after_layout = QVBoxLayout()
-        after_label = QLabel("After (Converted):")
+        after_label = QLabel(tr("case_validator.after"))
         after_label.setStyleSheet("font-weight: bold; color: #27ae60;")
         after_layout.addWidget(after_label)
         
@@ -87,7 +88,7 @@ class CaseValidatorDialog(QDialog):
         layout.addLayout(comparison_layout)
         
         # Warnings panel
-        warnings_label = QLabel("Detected Changes:")
+        warnings_label = QLabel(tr("case_validator.detected_changes"))
         warnings_label.setStyleSheet("font-weight: bold; margin-top: 10px;")
         layout.addWidget(warnings_label)
         
@@ -101,11 +102,11 @@ class CaseValidatorDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel = QPushButton(tr("case_validator.btn_cancel"))
         self.btn_cancel.clicked.connect(self.reject)
         btn_layout.addWidget(self.btn_cancel)
         
-        self.btn_apply = QPushButton("Apply Changes")
+        self.btn_apply = QPushButton(tr("case_validator.btn_apply"))
         self.btn_apply.setStyleSheet("background-color: #27ae60; color: white; font-weight: bold; padding: 8px 16px;")
         self.btn_apply.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_apply)
@@ -145,24 +146,24 @@ class CaseValidatorDialog(QDialog):
             before_json = json.dumps(self.original_node, indent=2, ensure_ascii=False)
             self.text_before.setPlainText(before_json)
         except Exception as e:
-            self.text_before.setPlainText(f"Error displaying original: {e}")
+            self.text_before.setPlainText(tr("case_validator.error_display_original").replace("{error}", str(e)))
         
         # Display after
         try:
             after_json = json.dumps(self.converted_node, indent=2, ensure_ascii=False)
             self.text_after.setPlainText(after_json)
         except Exception as e:
-            self.text_after.setPlainText(f"Error displaying converted: {e}")
+            self.text_after.setPlainText(tr("case_validator.error_display_converted").replace("{error}", str(e)))
         
         # Display warnings
         if self.warnings:
-            warnings_text = f"Total changes: {len(self.warnings)}\n\n"
+            warnings_text = tr("case_validator.total_changes").replace("{count}", str(len(self.warnings))) + "\n\n"
             warnings_text += "\n".join(f"• {w}" for w in self.warnings[:50])  # Limit to 50 for performance
             if len(self.warnings) > 50:
-                warnings_text += f"\n\n... and {len(self.warnings) - 50} more changes"
+                warnings_text += "\n\n" + tr("case_validator.more_changes").replace("{count}", str(len(self.warnings) - 50))
             self.text_warnings.setPlainText(warnings_text)
         else:
-            self.text_warnings.setPlainText("No changes detected. Keys are already in the target case style.")
+            self.text_warnings.setPlainText(tr("case_validator.no_changes"))
             self.btn_apply.setEnabled(False)
         
     def get_result(self) -> Tuple[bool, JSONNode, List[str]]:

@@ -621,5 +621,18 @@
   "base.editor_not_found_msg": "エディタドックが見つかりませんでした。エディタが利用可能であることを確認してください。",
   "base.error_title": "エラー",
   "base.error_open_editor": "エディタで結果を開けませんでした:\n{error}",
-  "base.status_opened_editor": "エディタで結果を開きました（編集専用モード）"
+  "base.status_opened_editor": "エディタで結果を開きました（編集専用モード）",
+  "case_validator.title": "ケース変換検証ツール",
+  "case_validator.header": "ケース変換の変更を確認",
+  "case_validator.target_case": "ターゲットケーススタイル:",
+  "case_validator.before": "変換前（オリジナル）:",
+  "case_validator.after": "変換後（変換済み）:",
+  "case_validator.detected_changes": "検出された変更:",
+  "case_validator.btn_cancel": "キャンセル",
+  "case_validator.btn_apply": "変更を適用",
+  "case_validator.total_changes": "合計変更: {count}",
+  "case_validator.more_changes": "... さらに{count}件の変更",
+  "case_validator.no_changes": "変更は検出されませんでした。キーはすでにターゲットケーススタイルです。",
+  "case_validator.error_display_original": "オリジナルの表示エラー: {error}",
+  "case_validator.error_display_converted": "変換済みの表示エラー: {error}"
 }

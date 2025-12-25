@@ -629,5 +629,18 @@
   "base.editor_not_found_msg": "No se pudo encontrar el dock del Editor. Asegúrese de que el Editor esté disponible.",
   "base.error_title": "Error",
   "base.error_open_editor": "Error al abrir resultados en el editor:\n{error}",
-  "base.status_opened_editor": "Resultados abiertos en el editor (modo solo edición)"
+  "base.status_opened_editor": "Resultados abiertos en el editor (modo solo edición)",
+  "case_validator.title": "Validador de Conversión de Caso",
+  "case_validator.header": "Revisar Cambios de Conversión de Caso",
+  "case_validator.target_case": "Estilo de Caso Objetivo:",
+  "case_validator.before": "Antes (Original):",
+  "case_validator.after": "Después (Convertido):",
+  "case_validator.detected_changes": "Cambios Detectados:",
+  "case_validator.btn_cancel": "Cancelar",
+  "case_validator.btn_apply": "Aplicar Cambios",
+  "case_validator.total_changes": "Total de cambios: {count}",
+  "case_validator.more_changes": "... y {count} cambios más",
+  "case_validator.no_changes": "No se detectaron cambios. Las claves ya están en el estilo de caso objetivo.",
+  "case_validator.error_display_original": "Error al mostrar original: {error}",
+  "case_validator.error_display_converted": "Error al mostrar convertido: {error}"
 }

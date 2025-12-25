@@ -621,5 +621,18 @@
   "base.editor_not_found_msg": "无法找到编辑器停靠窗口。请确保编辑器可用。",
   "base.error_title": "错误",
   "base.error_open_editor": "无法在编辑器中打开结果:\n{error}",
-  "base.status_opened_editor": "已在编辑器中打开结果（仅编辑模式）"
+  "base.status_opened_editor": "已在编辑器中打开结果（仅编辑模式）",
+  "case_validator.title": "大小写转换验证器",
+  "case_validator.header": "审查大小写转换更改",
+  "case_validator.target_case": "目标大小写样式:",
+  "case_validator.before": "转换前（原始）:",
+  "case_validator.after": "转换后（已转换）:",
+  "case_validator.detected_changes": "检测到的更改:",
+  "case_validator.btn_cancel": "取消",
+  "case_validator.btn_apply": "应用更改",
+  "case_validator.total_changes": "总更改: {count}",
+  "case_validator.more_changes": "... 还有{count}项更改",
+  "case_validator.no_changes": "未检测到更改。键已处于目标大小写样式。",
+  "case_validator.error_display_original": "显示原始内容错误: {error}",
+  "case_validator.error_display_converted": "显示转换内容错误: {error}"
 }

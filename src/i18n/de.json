@@ -621,5 +621,18 @@
   "base.editor_not_found_msg": "Editor-Dock konnte nicht gefunden werden. Bitte stellen Sie sicher, dass der Editor verfügbar ist.",
   "base.error_title": "Fehler",
   "base.error_open_editor": "Fehler beim Öffnen der Ergebnisse im Editor:\n{error}",
-  "base.status_opened_editor": "Ergebnisse im Editor geöffnet (Nur-Bearbeitungsmodus)"
+  "base.status_opened_editor": "Ergebnisse im Editor geöffnet (Nur-Bearbeitungsmodus)",
+  "case_validator.title": "Groß-/Kleinschreibung-Konverter-Validator",
+  "case_validator.header": "Änderungen der Groß-/Kleinschreibung überprüfen",
+  "case_validator.target_case": "Ziel-Schreibstil:",
+  "case_validator.before": "Vorher (Original):",
+  "case_validator.after": "Nachher (Konvertiert):",
+  "case_validator.detected_changes": "Erkannte Änderungen:",
+  "case_validator.btn_cancel": "Abbrechen",
+  "case_validator.btn_apply": "Änderungen anwenden",
+  "case_validator.total_changes": "Gesamtänderungen: {count}",
+  "case_validator.more_changes": "... und {count} weitere Änderungen",
+  "case_validator.no_changes": "Keine Änderungen erkannt. Schlüssel sind bereits im Zielschreibstil.",
+  "case_validator.error_display_original": "Fehler beim Anzeigen des Originals: {error}",
+  "case_validator.error_display_converted": "Fehler beim Anzeigen der Konvertierung: {error}"
 }
