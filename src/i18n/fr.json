@@ -1153,5 +1153,16 @@
   "shortcut_customizer.lbl_new_shortcut": "Nouveau raccourci:",
   "shortcut_customizer.btn_clear": "Effacer",
   "shortcut_customizer.btn_dialog_ok": "OK",
-  "shortcut_customizer.btn_dialog_cancel": "Annuler"
+  "shortcut_customizer.btn_dialog_cancel": "Annuler",
+  "merge_preview.title": "Aperçu de Fusion - v2.9.100",
+  "merge_preview.lbl_legend": "<b>Légende:</b>",
+  "merge_preview.lbl_added": "Ajouté",
+  "merge_preview.lbl_removed": "Supprimé",
+  "merge_preview.lbl_modified": "Modifié",
+  "merge_preview.group_original": "Fichier Original",
+  "merge_preview.group_result": "Résultat des Opérations d'Ensemble",
+  "merge_preview.group_merged": "Après Fusion (Aperçu)",
+  "merge_preview.btn_save": "💾 Enregistrer l'Aperçu",
+  "merge_preview.btn_apply": "✓ Appliquer la Fusion",
+  "merge_preview.btn_cancel": "Annuler"
 }

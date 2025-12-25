@@ -1190,5 +1190,16 @@
   "shortcut_customizer.lbl_new_shortcut": "新快捷键:",
   "shortcut_customizer.btn_clear": "清除",
   "shortcut_customizer.btn_dialog_ok": "确定",
-  "shortcut_customizer.btn_dialog_cancel": "取消"
+  "shortcut_customizer.btn_dialog_cancel": "取消",
+  "merge_preview.title": "合并预览 - v2.9.100",
+  "merge_preview.lbl_legend": "<b>图例:</b>",
+  "merge_preview.lbl_added": "已添加",
+  "merge_preview.lbl_removed": "已移除",
+  "merge_preview.lbl_modified": "已修改",
+  "merge_preview.group_original": "原始文件",
+  "merge_preview.group_result": "集合操作结果",
+  "merge_preview.group_merged": "合并后（预览）",
+  "merge_preview.btn_save": "💾 保存预览",
+  "merge_preview.btn_apply": "✓ 应用合并",
+  "merge_preview.btn_cancel": "取消"
 }

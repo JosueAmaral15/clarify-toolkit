@@ -1153,5 +1153,16 @@
   "shortcut_customizer.lbl_new_shortcut": "Neuer Kurzbefehl:",
   "shortcut_customizer.btn_clear": "Löschen",
   "shortcut_customizer.btn_dialog_ok": "OK",
-  "shortcut_customizer.btn_dialog_cancel": "Abbrechen"
+  "shortcut_customizer.btn_dialog_cancel": "Abbrechen",
+  "merge_preview.title": "Zusammenführungs-Vorschau - v2.9.100",
+  "merge_preview.lbl_legend": "<b>Legende:</b>",
+  "merge_preview.lbl_added": "Hinzugefügt",
+  "merge_preview.lbl_removed": "Entfernt",
+  "merge_preview.lbl_modified": "Geändert",
+  "merge_preview.group_original": "Originaldatei",
+  "merge_preview.group_result": "Mengenoperations-Ergebnis",
+  "merge_preview.group_merged": "Nach Zusammenführung (Vorschau)",
+  "merge_preview.btn_save": "💾 Vorschau speichern",
+  "merge_preview.btn_apply": "✓ Zusammenführung anwenden",
+  "merge_preview.btn_cancel": "Abbrechen"
 }

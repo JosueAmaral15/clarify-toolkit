@@ -1153,5 +1153,16 @@
   "shortcut_customizer.lbl_new_shortcut": "新しいショートカット:",
   "shortcut_customizer.btn_clear": "クリア",
   "shortcut_customizer.btn_dialog_ok": "OK",
-  "shortcut_customizer.btn_dialog_cancel": "キャンセル"
+  "shortcut_customizer.btn_dialog_cancel": "キャンセル",
+  "merge_preview.title": "マージプレビュー - v2.9.100",
+  "merge_preview.lbl_legend": "<b>凡例:</b>",
+  "merge_preview.lbl_added": "追加済み",
+  "merge_preview.lbl_removed": "削除済み",
+  "merge_preview.lbl_modified": "変更済み",
+  "merge_preview.group_original": "元のファイル",
+  "merge_preview.group_result": "集合演算結果",
+  "merge_preview.group_merged": "マージ後（プレビュー）",
+  "merge_preview.btn_save": "💾 プレビューを保存",
+  "merge_preview.btn_apply": "✓ マージを適用",
+  "merge_preview.btn_cancel": "キャンセル"
 }

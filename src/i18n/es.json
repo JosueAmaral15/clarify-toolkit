@@ -1161,5 +1161,16 @@
   "shortcut_customizer.lbl_new_shortcut": "Nuevo atajo:",
   "shortcut_customizer.btn_clear": "Limpiar",
   "shortcut_customizer.btn_dialog_ok": "Aceptar",
-  "shortcut_customizer.btn_dialog_cancel": "Cancelar"
+  "shortcut_customizer.btn_dialog_cancel": "Cancelar",
+  "merge_preview.title": "Vista Previa de Fusión - v2.9.100",
+  "merge_preview.lbl_legend": "<b>Leyenda:</b>",
+  "merge_preview.lbl_added": "Agregado",
+  "merge_preview.lbl_removed": "Eliminado",
+  "merge_preview.lbl_modified": "Modificado",
+  "merge_preview.group_original": "Archivo Original",
+  "merge_preview.group_result": "Resultado de Operaciones de Conjunto",
+  "merge_preview.group_merged": "Después de Fusión (Vista Previa)",
+  "merge_preview.btn_save": "💾 Guardar Vista Previa",
+  "merge_preview.btn_apply": "✓ Aplicar Fusión",
+  "merge_preview.btn_cancel": "Cancelar"
 }

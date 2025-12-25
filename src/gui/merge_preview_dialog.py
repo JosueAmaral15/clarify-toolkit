@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
+from src.i18n.translator import tr
 
 
 class DiffHighlighter(QSyntaxHighlighter):
@@ -98,7 +99,7 @@ class MergePreviewDialog(QDialog):
         self.file_path = file_path
         self.user_approved = False
         
-        self.setWindowTitle("Merge Preview - v2.9.100")
+        self.setWindowTitle(tr("merge_preview.title"))
         self.setMinimumSize(1000, 700)
         self.setModal(True)
         
@@ -126,15 +127,15 @@ class MergePreviewDialog(QDialog):
         
         # === Color Legend ===
         legend_layout = QHBoxLayout()
-        legend_layout.addWidget(QLabel("<b>Legend:</b>"))
+        legend_layout.addWidget(QLabel(tr("merge_preview.lbl_legend")))
         
-        legend_added = QLabel("Added")
+        legend_added = QLabel(tr("merge_preview.lbl_added"))
         legend_added.setStyleSheet("background-color: #c8f7c5; padding: 2px 8px; border: 1px solid #4CAF50;")
         
-        legend_removed = QLabel("Removed")
+        legend_removed = QLabel(tr("merge_preview.lbl_removed"))
         legend_removed.setStyleSheet("background-color: #ffcccb; padding: 2px 8px; border: 1px solid #F44336;")
         
-        legend_modified = QLabel("Modified")
+        legend_modified = QLabel(tr("merge_preview.lbl_modified"))
         legend_modified.setStyleSheet("background-color: #ffffcc; padding: 2px 8px; border: 1px solid #FFC107;")
         
         legend_layout.addWidget(legend_added)
@@ -147,7 +148,7 @@ class MergePreviewDialog(QDialog):
         splitter = QSplitter(Qt.Horizontal)
         
         # Original panel
-        original_group = QGroupBox("Original File")
+        original_group = QGroupBox(tr("merge_preview.group_original"))
         original_layout = QVBoxLayout()
         self.text_original = QTextEdit()
         self.text_original.setReadOnly(True)
@@ -157,7 +158,7 @@ class MergePreviewDialog(QDialog):
         splitter.addWidget(original_group)
         
         # Result panel
-        result_group = QGroupBox("Set Operations Result")
+        result_group = QGroupBox(tr("merge_preview.group_result"))
         result_layout = QVBoxLayout()
         self.text_result = QTextEdit()
         self.text_result.setReadOnly(True)
@@ -167,7 +168,7 @@ class MergePreviewDialog(QDialog):
         splitter.addWidget(result_group)
         
         # Merged panel
-        merged_group = QGroupBox("After Merge (Preview)")
+        merged_group = QGroupBox(tr("merge_preview.group_merged"))
         merged_layout = QVBoxLayout()
         self.text_merged = QTextEdit()
         self.text_merged.setReadOnly(True)
@@ -187,19 +188,19 @@ class MergePreviewDialog(QDialog):
         # === Action Buttons ===
         button_layout = QHBoxLayout()
         
-        btn_export = QPushButton("💾 Save Preview")
+        btn_export = QPushButton(tr("merge_preview.btn_save"))
         btn_export.setToolTip("Save preview to HTML file")
         btn_export.clicked.connect(self._export_preview)
         
         button_layout.addWidget(btn_export)
         button_layout.addStretch()
         
-        self.btn_apply = QPushButton("✓ Apply Merge")
+        self.btn_apply = QPushButton(tr("merge_preview.btn_apply"))
         self.btn_apply.setToolTip("Apply merge operation to file")
         self.btn_apply.clicked.connect(self._apply_merge)
         self.btn_apply.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
         
-        btn_cancel = QPushButton("Cancel")
+        btn_cancel = QPushButton(tr("merge_preview.btn_cancel"))
         btn_cancel.setToolTip("Cancel merge operation")
         btn_cancel.clicked.connect(self.reject)
         

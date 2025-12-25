@@ -1184,5 +1184,16 @@
   "shortcut_customizer.lbl_new_shortcut": "New shortcut:",
   "shortcut_customizer.btn_clear": "Clear",
   "shortcut_customizer.btn_dialog_ok": "OK",
-  "shortcut_customizer.btn_dialog_cancel": "Cancel"
+  "shortcut_customizer.btn_dialog_cancel": "Cancel",
+  "merge_preview.title": "Merge Preview - v2.9.100",
+  "merge_preview.lbl_legend": "<b>Legend:</b>",
+  "merge_preview.lbl_added": "Added",
+  "merge_preview.lbl_removed": "Removed",
+  "merge_preview.lbl_modified": "Modified",
+  "merge_preview.group_original": "Original File",
+  "merge_preview.group_result": "Set Operations Result",
+  "merge_preview.group_merged": "After Merge (Preview)",
+  "merge_preview.btn_save": "💾 Save Preview",
+  "merge_preview.btn_apply": "✓ Apply Merge",
+  "merge_preview.btn_cancel": "Cancel"
 }

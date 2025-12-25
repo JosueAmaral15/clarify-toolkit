@@ -1161,5 +1161,16 @@
   "shortcut_customizer.lbl_new_shortcut": "Novo atalho:",
   "shortcut_customizer.btn_clear": "Limpar",
   "shortcut_customizer.btn_dialog_ok": "OK",
-  "shortcut_customizer.btn_dialog_cancel": "Cancelar"
+  "shortcut_customizer.btn_dialog_cancel": "Cancelar",
+  "merge_preview.title": "Pré-visualização de Mesclagem - v2.9.100",
+  "merge_preview.lbl_legend": "<b>Legenda:</b>",
+  "merge_preview.lbl_added": "Adicionado",
+  "merge_preview.lbl_removed": "Removido",
+  "merge_preview.lbl_modified": "Modificado",
+  "merge_preview.group_original": "Arquivo Original",
+  "merge_preview.group_result": "Resultado de Operações de Conjunto",
+  "merge_preview.group_merged": "Após Mesclagem (Pré-visualização)",
+  "merge_preview.btn_save": "💾 Salvar Pré-visualização",
+  "merge_preview.btn_apply": "✓ Aplicar Mesclagem",
+  "merge_preview.btn_cancel": "Cancelar"
 }
