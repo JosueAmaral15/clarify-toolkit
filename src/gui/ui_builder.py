@@ -88,8 +88,7 @@ class UIBuilder:
             progress_manager=main_window.progress_manager
         )
         
-        # Aliases for backward compatibility
-        main_window.search_panel = main_window.tab_search
+        # Alias for backward compatibility (only insert_panel, search uses tab_search)
         main_window.insert_panel = main_window.tab_insert
         
         # Add to tabs

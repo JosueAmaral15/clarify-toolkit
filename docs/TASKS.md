@@ -2,9 +2,87 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/23 - v2.9.108 Formula Builder
+**Last Update**: 2025/12/25 - v2.9.116 Search/Replace → File Explorer Integration
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+---
+
+## 🚧 EM PROGRESSO - v2.9.116: Integração Search/Replace → File Explorer
+
+**Data Início**: 25/12/2025  
+**Estimativa**: 6-8 horas  
+**Documento Completo**: [INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md](../INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md)
+
+### Status Geral
+- ✅ **Fase 1: Planejamento** (30 min) - COMPLETO
+  - ✅ Análise comparativa dos dois tools
+  - ✅ Design UI com collapsible sections
+  - ✅ Arquitetura definida (componentes + executor unificado)
+- 🔄 **Fase 2: Componentes** (1h) - EM ANDAMENTO
+  - ✅ Extrair widgets reutilizáveis (search_widgets.py criado)
+  - ⏳ Criar FileExplorerExecutor unificado
+- ⏳ **Fase 3: Refatoração** (2h)
+- ⏳ **Fase 4: Lógica** (1.5h)
+- ⏳ **Fase 5: UI/UX** (1h)
+- ⏳ **Fase 6: Testes** (1h)
+- ⏳ **Fase 7: Documentação** (30 min)
+- ⏳ **Fase 8: Deploy** (30 min)
+
+### Tarefas Fase 2 (Componentes)
+- [x] **2.1**: Criar `src/gui/widgets/search_widgets.py` ✅
+  - [x] Extrair `FileNameQueryPanel` (filename pattern + clear)
+  - [x] Extrair `ContentQueryPanel` (multi-line editor)
+  - [x] Extrair `SearchOptionsPanel` (case, word, regex)
+  - [x] Extrair `ReplacePanel` (editor + preserve case + buttons)
+  - [x] Extrair `ConditionsGrid` (dynamic rows + AND/OR) - estrutura base
+- [ ] **2.2**: Criar `src/core/file_explorer_executor.py`
+  - [ ] Merge `FileListExecutor.list_files()`
+  - [ ] Merge `SearchWorker.search_content()`
+  - [ ] Merge `SearchWorker.replace_content()`
+  - [ ] Integrate `filter_files_by_conditions()`
+
+### Tarefas Fase 3 (Refatoração)
+- [ ] **3.1**: Atualizar `file_explorer_dock.py` (2h)
+  - [ ] Adicionar collapsible sections com QGroupBox
+  - [ ] Integrar widgets extraídos
+  - [ ] Conectar sinais dos novos componentes
+  - [ ] Adicionar lógica de collapse/expand
+  - [ ] Remover código duplicado do file_list
+
+### Tarefas Fase 4 (Lógica)
+- [ ] **4.1**: Implementar busca unificada (1h)
+  - [ ] List + Search + Replace em um único pipeline
+  - [ ] Aplicar condições avançadas a todos os modos
+  - [ ] Progress tracking unificado
+- [ ] **4.2**: Testes unitários novos componentes (30 min)
+
+### Tarefas Fase 5 (UI/UX)
+- [ ] **5.1**: Polimento visual (30 min)
+  - [ ] Icons para cada seção (📁🔍⚙️🎯💾)
+  - [ ] Tooltips descritivos
+  - [ ] Keyboard shortcuts
+- [ ] **5.2**: Responsividade (30 min)
+  - [ ] QScrollArea para overflow vertical
+  - [ ] Salvar estado collapse/expand
+
+### Tarefas Fase 6 (Testes)
+- [ ] **6.1**: Testes de integração (1h)
+  - [ ] Browse + Search + Replace workflow completo
+  - [ ] Condições avançadas com operadores AND/OR
+  - [ ] Export CSV com resultados filtrados
+
+### Tarefas Fase 7 (Documentação)
+- [ ] **7.1**: Atualizar docs (30 min)
+  - [ ] README.md - nova feature
+  - [ ] CHANGELOG.md - v2.9.116
+  - [ ] Capturas de tela
+
+### Tarefas Fase 8 (Deploy)
+- [ ] **8.1**: Release (30 min)
+  - [ ] Git commit + tag v2.9.116
+  - [ ] GitHub release notes
+  - [ ] Deprecation notices para search_replace_panel.py
 
 ---
 

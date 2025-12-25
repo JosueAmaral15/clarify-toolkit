@@ -78,6 +78,11 @@ class SearchReplacePanel(QWidget):
         self.progress_manager = progress_manager
         self._current_task_id = None
         self._processing_modal = None  # Modal de progresso
+    
+    def set_editor_fonts(self, font):
+        """Set monospaced font for query and replacement editors (v2.9.115)."""
+        self.ed_repl.setFont(font)
+        self.ed_query.setFont(font)
         
         # Path row
         column = QVBoxLayout()

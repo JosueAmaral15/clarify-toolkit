@@ -13,6 +13,13 @@ from .file_list_table_manager import FileListTableManager
 from .syntax_highlighter import SyntaxHighlighter
 from .editor_tab import EditorTab
 from .json_tree_widget import JsonTreeWidget
+from .search_widgets import (
+    FileNameQueryPanel,
+    ContentQueryPanel,
+    SearchOptionsPanel,
+    ReplacePanel,
+    ConditionsGrid
+)
 
 __all__ = [
     'PathEntry',
@@ -23,5 +30,10 @@ __all__ = [
     'FileListTableManager',
     'SyntaxHighlighter',
     'EditorTab',
-    'JsonTreeWidget'
+    'JsonTreeWidget',
+    'FileNameQueryPanel',
+    'ContentQueryPanel',
+    'SearchOptionsPanel',
+    'ReplacePanel',
+    'ConditionsGrid'
 ]

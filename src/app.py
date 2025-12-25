@@ -419,8 +419,7 @@ if _PYSIDE:
             # Nice monospaced font for preview-ish widgets
             try:
                 f = QFontDatabase.systemFont(QFontDatabase.FixedFont)
-                self.search_panel.ed_repl.setFont(f)
-                self.search_panel.ed_query.setFont(f)
+                self.tab_search.set_editor_fonts(f)
                 self.insert_panel.ed_text.setFont(f)
             except Exception:
                 pass
@@ -554,25 +553,9 @@ if _PYSIDE:
             else:
                 # Tab was closed, recreate at index 0 using internal SearchReplacePanel class
                 self.tab_search = SearchReplacePanel(parent=self, progress_manager=self.progress_manager)
-                
-                # Force immediate visibility before inserting
-                self.tab_search.setVisible(True)
-                self.tab_search.show()
-                
                 self.tabs.insertTab(0, self.tab_search, "Search / Replace")
                 self.tabs.setCurrentIndex(0)
-                
-                # Force widget rendering (fix invisible widgets bug)
                 QApplication.processEvents()
-                self.tab_search.updateGeometry()
-                self.tab_search.update()
-                self.tab_search.repaint()
-                
-                # Force update of all child widgets
-                for child in self.tab_search.findChildren(QWidget):
-                    child.setVisible(True)
-                    child.updateGeometry()
-                    child.update()
         
         def _show_insert(self):
             """Show Insert tab (v2.9.40.2 - reopen if closed)."""
@@ -584,25 +567,9 @@ if _PYSIDE:
                 # Tab was closed, recreate at index 1
                 # InsertPanel is an internal class defined in this file, no import needed
                 self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
-                
-                # Force immediate visibility before inserting
-                self.tab_insert.setVisible(True)
-                self.tab_insert.show()
-                
                 self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
                 self.tabs.setCurrentIndex(expected_index)
-                
-                # Force widget rendering (fix invisible widgets bug)
                 QApplication.processEvents()
-                self.tab_insert.updateGeometry()
-                self.tab_insert.update()
-                self.tab_insert.repaint()
-                
-                # Force update of all child widgets
-                for child in self.tab_insert.findChildren(QWidget):
-                    child.setVisible(True)
-                    child.updateGeometry()
-                    child.update()
         
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
@@ -1300,7 +1267,7 @@ if _PYSIDE:
             # Register main docks
             dock_mapping = {
                 "editor": getattr(self, "editor_dock", None),
-                "search": getattr(self, "search_panel", None),
+                "search": getattr(self, "tab_search", None),
                 "replace": getattr(self, "replace_panel", None),
                 "insert": getattr(self, "insert_panel", None),
                 "set_operations": getattr(self, "set_operations_dock", None),
