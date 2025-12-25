@@ -1636,8 +1636,8 @@ if _PYSIDE:
             """Handle mouse wheel for font scaling (v2.9.35) and horizontal scroll (v2.9.101)."""
             from PySide6.QtCore import Qt
             
-            # Ctrl+Shift+Scroll - Horizontal scroll
-            if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
+            # Shift+Scroll OR Ctrl+Shift+Scroll - Horizontal scroll
+            if event.modifiers() == Qt.ShiftModifier or event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
                 # Get widget under mouse
                 widget = QApplication.widgetAt(event.globalPosition().toPoint())
                 if widget:

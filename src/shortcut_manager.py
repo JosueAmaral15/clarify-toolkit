@@ -71,7 +71,7 @@ class ShortcutManager:
         "zoom_in": ("Ctrl++", "Zoom in"),
         "zoom_out": ("Ctrl+-", "Zoom out"),
         "reset_zoom": ("Ctrl+0", "Reset zoom"),
-        "horizontal_scroll": ("Ctrl+Shift+Scroll", "Horizontal scroll"),
+        "horizontal_scroll": ("Shift+Scroll / Ctrl+Shift+Scroll", "Horizontal scroll"),
         
         # Processing
         "process": ("F5", "Process/Run"),
