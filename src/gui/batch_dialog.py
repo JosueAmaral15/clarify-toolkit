@@ -16,6 +16,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QIcon
 from ..batch_manager import BatchJob, BatchStep, BatchExecutor, BatchHistory
 from ..accessibility_manager import AccessibilityManager
+from src.i18n.translator import tr
 import os
 
 
@@ -36,7 +37,7 @@ class BatchStepEditorDialog(QDialog):
         self.is_first_step = is_first_step
         self.edited_step = None
         
-        self.setWindowTitle("Add Batch Step" if step is None else "Edit Batch Step")
+        self.setWindowTitle(tr("batch_dialog.step.title_add") if step is None else tr("batch_dialog.step.title_edit"))
         self.resize(600, 400)
         
         self._init_ui()
@@ -51,20 +52,20 @@ class BatchStepEditorDialog(QDialog):
         
         # Description
         desc_layout = QHBoxLayout()
-        desc_layout.addWidget(QLabel("Description:"))
+        desc_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_description")))
         self.ed_description = QLineEdit()
-        self.ed_description.setPlaceholderText("Optional step description")
+        self.ed_description.setPlaceholderText(tr("batch_dialog.step.placeholder_description"))
         self.ed_description.setToolTip("Human-readable description for this step (optional)")
         desc_layout.addWidget(self.ed_description)
         layout.addLayout(desc_layout)
         
         # File A source
-        file_a_group = QGroupBox("File A Source")
+        file_a_group = QGroupBox(tr("batch_dialog.step.group_file_a"))
         file_a_layout = QVBoxLayout()
         
-        self.radio_file_a_file = QCheckBox("From File Path")
+        self.radio_file_a_file = QCheckBox(tr("batch_dialog.step.chk_from_file"))
         self.radio_file_a_file.setToolTip("Use a JSON file from disk as input")
-        self.radio_file_a_previous = QCheckBox("From Previous Result")
+        self.radio_file_a_previous = QCheckBox(tr("batch_dialog.step.chk_from_previous"))
         self.radio_file_a_previous.setToolTip("Use the result from the previous step as input")
         
         if self.is_first_step:
@@ -83,7 +84,7 @@ class BatchStepEditorDialog(QDialog):
         self.ed_file_a.setPlaceholderText("Path to File A (if from file)")
         self.ed_file_a.setToolTip("Full path to JSON file A")
         self.ed_file_a.setEnabled(self.radio_file_a_file.isChecked())
-        self.btn_browse_a = QPushButton("Browse...")
+        self.btn_browse_a = QPushButton(tr("batch_dialog.step.btn_browse_a"))
         self.btn_browse_a.setToolTip("Select JSON file A from file dialog")
         self.btn_browse_a.clicked.connect(lambda: self._browse_file('a'))
         self.btn_browse_a.setEnabled(self.radio_file_a_file.isChecked())
@@ -100,7 +101,7 @@ class BatchStepEditorDialog(QDialog):
         
         # Operation
         op_layout = QHBoxLayout()
-        op_layout.addWidget(QLabel("Operation:"))
+        op_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_operation")))
         self.combo_operation = QComboBox()
         self.combo_operation.addItems(['Intersection (∩)', 'Union (∪)', 'Difference (−)', 'Symmetric Difference (⊕)'])
         self.combo_operation.setToolTip("Set operation to perform: ∩ (common keys), ∪ (all keys), − (keys in A not in B), ⊕ (keys in A or B but not both)")
@@ -109,11 +110,11 @@ class BatchStepEditorDialog(QDialog):
         
         # File B
         file_b_layout = QHBoxLayout()
-        file_b_layout.addWidget(QLabel("File B:"))
+        file_b_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_file_b")))
         self.ed_file_b = QLineEdit()
         self.ed_file_b.setPlaceholderText("Path to File B")
         self.ed_file_b.setToolTip("Full path to JSON file B (required for all operations)")
-        self.btn_browse_b = QPushButton("Browse...")
+        self.btn_browse_b = QPushButton(tr("batch_dialog.step.btn_browse_b"))
         self.btn_browse_b.setToolTip("Select JSON file B from file dialog")
         self.btn_browse_b.clicked.connect(lambda: self._browse_file('b'))
         file_b_layout.addWidget(self.ed_file_b)
@@ -122,7 +123,7 @@ class BatchStepEditorDialog(QDialog):
         
         # Comparison mode
         mode_layout = QHBoxLayout()
-        mode_layout.addWidget(QLabel("Comparison Mode:"))
+        mode_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_mode")))
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(['Key + Value', 'Full Path + Value', 'Key Only'])
         self.combo_mode.setToolTip("How to compare JSON keys: Key+Value (shallow), Full Path+Value (deep nested), Key Only (ignore values)")
@@ -130,16 +131,16 @@ class BatchStepEditorDialog(QDialog):
         layout.addLayout(mode_layout)
         
         # Options
-        options_group = QGroupBox("Options")
+        options_group = QGroupBox(tr("batch_dialog.step.group_options"))
         options_layout = QVBoxLayout()
         
-        self.chk_ignore_case_keys = QCheckBox("Ignore case in keys")
+        self.chk_ignore_case_keys = QCheckBox(tr("batch_dialog.step.chk_ignore_case_keys"))
         self.chk_ignore_case_keys.setToolTip("Treat 'Name' and 'name' as identical keys")
-        self.chk_ignore_case_values = QCheckBox("Ignore case in values")
+        self.chk_ignore_case_values = QCheckBox(tr("batch_dialog.step.chk_ignore_case_values"))
         self.chk_ignore_case_values.setToolTip("Treat 'Hello' and 'hello' as identical values")
-        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_skip_empty = QCheckBox(tr("batch_dialog.step.chk_skip_empty"))
         self.chk_skip_empty.setToolTip("Ignore keys with null, empty string, [], or {} values")
-        self.chk_arrays_ignore_order = QCheckBox("Arrays ignore order")
+        self.chk_arrays_ignore_order = QCheckBox(tr("batch_dialog.step.chk_arrays_ignore_order"))
         self.chk_arrays_ignore_order.setToolTip("Treat [1,2,3] and [3,2,1] as identical arrays")
         
         options_layout.addWidget(self.chk_ignore_case_keys)
@@ -154,12 +155,12 @@ class BatchStepEditorDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        self.btn_ok = QPushButton("OK")
+        self.btn_ok = QPushButton(tr("batch_dialog.step.btn_ok"))
         self.btn_ok.setToolTip("Add this step to the batch job")
         self.btn_ok.clicked.connect(self._on_ok)
         btn_layout.addWidget(self.btn_ok)
         
-        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel = QPushButton(tr("batch_dialog.step.btn_cancel"))
         self.btn_cancel.setToolTip("Discard step without adding to batch")
         self.btn_cancel.clicked.connect(self.reject)
         btn_layout.addWidget(self.btn_cancel)
@@ -314,7 +315,7 @@ class BatchDialog(QDialog):
         self.executor = None
         self.history = BatchHistory()
         
-        self.setWindowTitle("Batch Set Operations")
+        self.setWindowTitle(tr("batch_dialog.title"))
         self.resize(900, 600)
         
         self._init_ui()
@@ -325,14 +326,14 @@ class BatchDialog(QDialog):
         
         # Batch name
         name_layout = QHBoxLayout()
-        name_layout.addWidget(QLabel("Batch Name:"))
+        name_layout.addWidget(QLabel(tr("batch_dialog.lbl_name")))
         self.ed_batch_name = QLineEdit("Untitled Batch")
         self.ed_batch_name.setToolTip("Name for this batch job (used when saving/loading)")
         name_layout.addWidget(self.ed_batch_name)
         layout.addLayout(name_layout)
         
         # Steps table
-        steps_label = QLabel("<b>Batch Steps</b> (executed sequentially):")
+        steps_label = QLabel(tr("batch_dialog.lbl_steps"))
         layout.addWidget(steps_label)
         
         self.table_steps = QTableWidget()
@@ -348,17 +349,17 @@ class BatchDialog(QDialog):
         # Step buttons
         step_btn_layout = QHBoxLayout()
         
-        self.btn_add_step = QPushButton("➕ Add Step")
-        self.btn_add_step.setToolTip("Add a new operation step to the batch")
+        self.btn_add_step = QPushButton(tr("batch_dialog.btn_add_step"))
+        self.btn_add_step.setToolTip("Add a new step to the batch")
         self.btn_add_step.clicked.connect(self._add_step)
         step_btn_layout.addWidget(self.btn_add_step)
         
-        self.btn_edit_step = QPushButton("✏️ Edit Step")
-        self.btn_edit_step.setToolTip("Modify the selected step configuration")
+        self.btn_edit_step = QPushButton(tr("batch_dialog.btn_edit_step"))
+        self.btn_edit_step.setToolTip("Edit the selected step")
         self.btn_edit_step.clicked.connect(self._edit_step)
         step_btn_layout.addWidget(self.btn_edit_step)
         
-        self.btn_remove_step = QPushButton("🗑️ Remove Step")
+        self.btn_remove_step = QPushButton(tr("batch_dialog.btn_remove_step"))
         self.btn_remove_step.setToolTip("Delete the selected step from batch")
         self.btn_remove_step.clicked.connect(self._remove_step)
         step_btn_layout.addWidget(self.btn_remove_step)
@@ -367,7 +368,7 @@ class BatchDialog(QDialog):
         layout.addLayout(step_btn_layout)
         
         # Intermediate results option
-        self.chk_save_intermediate = QCheckBox("Save intermediate results to folder")
+        self.chk_save_intermediate = QCheckBox(tr("batch_dialog.chk_save_intermediate"))
         self.chk_save_intermediate.setToolTip("Save each step's result as separate JSON file (step_1_result.json, step_2_result.json, etc.)")
         layout.addWidget(self.chk_save_intermediate)
         
@@ -376,7 +377,7 @@ class BatchDialog(QDialog):
         self.ed_output_folder.setPlaceholderText("Output folder (if saving intermediate)")
         self.ed_output_folder.setToolTip("Directory where intermediate JSON files will be saved")
         self.ed_output_folder.setEnabled(False)
-        self.btn_browse_output = QPushButton("Browse...")
+        self.btn_browse_output = QPushButton(tr("batch_dialog.btn_browse_output"))
         self.btn_browse_output.setToolTip("Select output directory for intermediate results")
         self.btn_browse_output.clicked.connect(self._browse_output_folder)
         self.btn_browse_output.setEnabled(False)
@@ -389,31 +390,31 @@ class BatchDialog(QDialog):
         # Action buttons
         action_layout = QHBoxLayout()
         
-        self.btn_save_batch = QPushButton("💾 Save Batch")
+        self.btn_save_batch = QPushButton(tr("batch_dialog.btn_save_batch"))
         self.btn_save_batch.setToolTip("Save batch definition to JSON file")
         self.btn_save_batch.clicked.connect(self._save_batch)
         action_layout.addWidget(self.btn_save_batch)
         
-        self.btn_load_batch = QPushButton("📂 Load Batch")
+        self.btn_load_batch = QPushButton(tr("batch_dialog.btn_load_batch"))
         self.btn_load_batch.setToolTip("Load batch definition from JSON file")
         self.btn_load_batch.clicked.connect(self._load_batch)
         action_layout.addWidget(self.btn_load_batch)
         
         action_layout.addStretch()
         
-        self.btn_execute = QPushButton("▶️ Execute Batch")
+        self.btn_execute = QPushButton(tr("batch_dialog.btn_execute"))
         self.btn_execute.setStyleSheet("background-color: #0e639c; color: white; font-weight: bold;")
         self.btn_execute.setToolTip("Run all steps sequentially with result chaining (stops on first error)")
         self.btn_execute.clicked.connect(self._execute_batch)
         action_layout.addWidget(self.btn_execute)
         
-        self.btn_cancel_exec = QPushButton("⏹️ Cancel")
+        self.btn_cancel_exec = QPushButton(tr("batch_dialog.btn_cancel_exec"))
         self.btn_cancel_exec.setToolTip("Stop execution immediately (current step will complete)")
         self.btn_cancel_exec.setEnabled(False)
         self.btn_cancel_exec.clicked.connect(self._cancel_execution)
         action_layout.addWidget(self.btn_cancel_exec)
         
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("batch_dialog.btn_close"))
         self.btn_close.setToolTip("Close batch dialog without executing")
         self.btn_close.clicked.connect(self.reject)
         action_layout.addWidget(self.btn_close)
