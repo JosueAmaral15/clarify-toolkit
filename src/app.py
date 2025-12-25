@@ -391,6 +391,9 @@ if _PYSIDE:
             from .gui.initialization_manager import InitializationManager
             InitializationManager.initialize_all(self, app)
             
+            # Install global event filter for Shift+Scroll horizontal scrolling (v2.9.115)
+            app.installEventFilter(self)
+            
             # Restore last layout (v2.9.84)
             self.layout_manager.restore_last_layout()
             
@@ -1632,9 +1635,13 @@ if _PYSIDE:
             # Pass to parent for default handling
             super().keyPressEvent(event)
         
-        def wheelEvent(self, event):
-            """Handle mouse wheel for font scaling (v2.9.35) and horizontal scroll (v2.9.101)."""
-            from PySide6.QtCore import Qt
+        def eventFilter(self, obj, event):
+            """Global event filter for Shift+Scroll horizontal scrolling (v2.9.115)."""
+            from PySide6.QtCore import Qt, QEvent
+            
+            # Only handle wheel events
+            if event.type() != QEvent.Wheel:
+                return super().eventFilter(obj, event)
             
             # Shift+Scroll OR Ctrl+Shift+Scroll - Horizontal scroll
             if event.modifiers() == Qt.ShiftModifier or event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
@@ -1661,8 +1668,14 @@ if _PYSIDE:
                                 scrollbar.setValue(scrollbar.value() + step)
                 
                 # Consume event completely - prevent vertical scroll when Shift is pressed
-                event.accept()
-                return
+                return True  # Event handled, don't propagate
+            
+            # Pass to parent for default handling
+            return super().eventFilter(obj, event)
+        
+        def wheelEvent(self, event):
+            """Handle mouse wheel for font scaling (v2.9.35)."""
+            from PySide6.QtCore import Qt
             
             # Ctrl+Scroll - Font scaling
             elif event.modifiers() == Qt.ControlModifier:
