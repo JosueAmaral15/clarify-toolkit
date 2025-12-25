@@ -120,14 +120,9 @@ class MenuBuilder:
         main_window.act_open_calculator.setStatusTip("Store and recall JSON data in 5 memory slots (v2.9.98)")
         main_window.act_open_formula_builder = QAction("📐 Formula Builder...", main_window)
         main_window.act_open_formula_builder.setStatusTip("Build complex formulas with multiple operations (v2.9.108)")
-        main_window.act_open_file_list = QAction("File List...", main_window)
-        main_window.act_open_file_list.setStatusTip("Generate directory listings with filters (ls-like functionality)")
-        main_window.act_open_file_explorer = QAction("File Explorer...", main_window)
-        main_window.act_open_file_explorer.setStatusTip("Unified file explorer with advanced search (v2.9.115)")
+        main_window.act_open_file_explorer = QAction("📁 File Explorer...", main_window)
+        main_window.act_open_file_explorer.setStatusTip("Unified file explorer with advanced search (replaces File List + Advanced Search - v2.9.115)")
         main_window.act_open_file_explorer.setShortcut("Ctrl+Shift+F")
-        main_window.act_advanced_file_search = QAction("Advanced File Search...", main_window)
-        main_window.act_advanced_file_search.setStatusTip("Search files with advanced conditions (regex, size, date filters)")
-        main_window.act_advanced_file_search.setShortcut("Ctrl+Shift+F")
         
         # Add actions to menu
         m_tools.addAction(main_window.act_open_search_replace)
@@ -146,9 +141,7 @@ class MenuBuilder:
         m_tools.addAction(main_window.act_open_calculator)
         m_tools.addAction(main_window.act_open_formula_builder)
         m_tools.addSeparator()
-        m_tools.addAction(main_window.act_open_file_list)
         m_tools.addAction(main_window.act_open_file_explorer)
-        m_tools.addAction(main_window.act_advanced_file_search)
         
         # Connect actions
         main_window.act_open_search_replace.triggered.connect(main_window._show_search_replace)
@@ -166,8 +159,6 @@ class MenuBuilder:
         main_window.act_open_calculator.triggered.connect(main_window._show_calculator)
         main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_builder)
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
-        main_window.act_open_file_list.triggered.connect(main_window._show_file_list)
-        main_window.act_advanced_file_search.triggered.connect(main_window._show_advanced_file_search)
     
     @staticmethod
     def _build_view_menu(main_window, bar) -> None:

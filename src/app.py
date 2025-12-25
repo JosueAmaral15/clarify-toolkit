@@ -514,10 +514,6 @@ if _PYSIDE:
             self.dock_editor.load_json_string(json_str)
             self.dock_editor.show()
         
-        def _open_file_list(self):
-            """Open File List dock (Task #33 - v2.9.11)."""
-            DockFactory.create_file_list_dock(self)
-        
         def _open_file_explorer(self):
             """Open File Explorer dock (unified File List + Advanced Search - v2.9.115)."""
             DockFactory.create_file_explorer_dock(self)
@@ -667,11 +663,6 @@ if _PYSIDE:
                 self.dock_text_to_json = TextToJsonDock(self)
                 self.dock_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
             self._add_tool_tab(self.dock_text_to_json, "Text to JSON", "text_to_json")
-        
-        def _show_file_list(self):
-            """Show File List as tab (create on-demand)."""
-            from .gui.tab_manager import TabManager
-            TabManager.show_file_list(self)
         
         def _show_file_explorer(self):
             """Show File Explorer as tab (unified File List + Advanced Search - v2.9.115)."""
@@ -925,23 +916,6 @@ if _PYSIDE:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
             self._add_tool_tab(self.dock_editor, "Editor", "editor")
-        
-        def _show_advanced_file_search(self):
-            """Show advanced file search dialog (Task #36 - v2.9.11)."""
-            from .utils.file_finder import show_advanced_file_search
-            
-            # Get initial directory (current working directory or last used)
-            initial_dir = os.getcwd()
-            
-            # Show dialog
-            results = show_advanced_file_search(self, initial_dir)
-            
-            if results:
-                # User selected files - could integrate with other tools here
-                # For now, just show info message
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.information(
-                    self,
                     "Search Complete",
                     f"Found and selected {len(results)} items.\n\n"
                     f"First item: {results[0] if results else 'None'}"

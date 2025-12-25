@@ -38,7 +38,6 @@ class TabManager:
         'case_converter': ('dock_case_converter', 'CaseConverterDock', 'Case Converter', 'case_converter'),
         'google_translate': ('dock_google_translate', 'GoogleTranslateDock', 'Google Translate', 'google_translate'),
         'jsx_extractor': ('dock_jsx_extractor', 'JSXExtractorDock', 'JSX Extractor', 'jsx_extractor'),
-        'file_list': ('dock_file_list', 'FileListDock', 'File List', 'file_list'),
         'file_explorer': ('dock_file_explorer', 'FileExplorerDock', 'File Explorer', 'file_explorer'),
         'tutorials': ('dock_tutorials', 'TutorialsDock', 'Tutorials', 'tutorials'),
     }
@@ -111,11 +110,6 @@ class TabManager:
     def show_jsx_extractor(main_window) -> None:
         """Show JSX Parameter Extractor as tab."""
         TabManager.show_tool_tab(main_window, 'jsx_extractor')
-    
-    @staticmethod
-    def show_file_list(main_window) -> None:
-        """Show File List as tab."""
-        TabManager.show_tool_tab(main_window, 'file_list')
     
     @staticmethod
     def show_file_explorer(main_window) -> None:
