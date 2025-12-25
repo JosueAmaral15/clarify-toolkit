@@ -1162,5 +1162,12 @@
   "history_dialog.btn_re_execute": "🔄 Re-execute",
   "history_dialog.btn_export": "📤 Export History",
   "history_dialog.btn_clear": "🗑️ Clear All",
-  "history_dialog.btn_close": "Close"
+  "history_dialog.btn_close": "Close",
+  "template_dialog.title": "Project Templates",
+  "template_dialog.lbl_available": "<b>Available Templates</b>",
+  "template_dialog.lbl_details": "<b>Template Details</b>",
+  "template_dialog.lbl_target_dir": "Target Directory:",
+  "template_dialog.btn_browse": "Browse...",
+  "template_dialog.btn_create": "Create Project",
+  "template_dialog.btn_close": "Close"
 }

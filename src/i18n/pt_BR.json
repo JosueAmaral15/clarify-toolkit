@@ -1139,5 +1139,12 @@
   "history_dialog.btn_re_execute": "🔄 Reexecutar",
   "history_dialog.btn_export": "📤 Exportar Histórico",
   "history_dialog.btn_clear": "🗑️ Limpar Tudo",
-  "history_dialog.btn_close": "Fechar"
+  "history_dialog.btn_close": "Fechar",
+  "template_dialog.title": "Modelos de Projeto",
+  "template_dialog.lbl_available": "<b>Modelos Disponíveis</b>",
+  "template_dialog.lbl_details": "<b>Detalhes do Modelo</b>",
+  "template_dialog.lbl_target_dir": "Diretório de Destino:",
+  "template_dialog.btn_browse": "Procurar...",
+  "template_dialog.btn_create": "Criar Projeto",
+  "template_dialog.btn_close": "Fechar"
 }

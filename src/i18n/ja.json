@@ -1131,5 +1131,12 @@
   "history_dialog.btn_re_execute": "🔄 再実行",
   "history_dialog.btn_export": "📤 履歴をエクスポート",
   "history_dialog.btn_clear": "🗑️ すべてクリア",
-  "history_dialog.btn_close": "閉じる"
+  "history_dialog.btn_close": "閉じる",
+  "template_dialog.title": "プロジェクトテンプレート",
+  "template_dialog.lbl_available": "<b>利用可能なテンプレート</b>",
+  "template_dialog.lbl_details": "<b>テンプレート詳細</b>",
+  "template_dialog.lbl_target_dir": "ターゲットディレクトリ:",
+  "template_dialog.btn_browse": "参照...",
+  "template_dialog.btn_create": "プロジェクトを作成",
+  "template_dialog.btn_close": "閉じる"
 }

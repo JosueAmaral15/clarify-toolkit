@@ -1139,5 +1139,12 @@
   "history_dialog.btn_re_execute": "🔄 Reejecutar",
   "history_dialog.btn_export": "📤 Exportar Historial",
   "history_dialog.btn_clear": "🗑️ Limpiar Todo",
-  "history_dialog.btn_close": "Cerrar"
+  "history_dialog.btn_close": "Cerrar",
+  "template_dialog.title": "Plantillas de Proyecto",
+  "template_dialog.lbl_available": "<b>Plantillas Disponibles</b>",
+  "template_dialog.lbl_details": "<b>Detalles de la Plantilla</b>",
+  "template_dialog.lbl_target_dir": "Directorio de Destino:",
+  "template_dialog.btn_browse": "Examinar...",
+  "template_dialog.btn_create": "Crear Proyecto",
+  "template_dialog.btn_close": "Cerrar"
 }

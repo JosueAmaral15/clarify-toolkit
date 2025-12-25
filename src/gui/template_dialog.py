@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QLineEdit, QFileDialog, QMessageBox, QTextEdit
 )
 from PySide6.QtCore import Qt
+from src.i18n.translator import tr
 
 from ..template_manager import get_template_manager, ProjectTemplate
 
@@ -18,7 +19,7 @@ class TemplateDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Project Templates")
+        self.setWindowTitle(tr("template_dialog.title"))
         self.resize(700, 500)
         self.manager = get_template_manager()
         self.selected_template = None
@@ -30,7 +31,7 @@ class TemplateDialog(QDialog):
         
         # Left: Template list
         left = QVBoxLayout()
-        left.addWidget(QLabel("<b>Available Templates</b>"))
+        left.addWidget(QLabel(tr("template_dialog.lbl_available")))
         
         self.template_list = QListWidget()
         self.template_list.currentItemChanged.connect(self._on_template_selected)
@@ -40,26 +41,26 @@ class TemplateDialog(QDialog):
         
         # Right: Details + actions
         right = QVBoxLayout()
-        right.addWidget(QLabel("<b>Template Details</b>"))
+        right.addWidget(QLabel(tr("template_dialog.lbl_details")))
         
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         right.addWidget(self.details_text)
         
-        right.addWidget(QLabel("Target Directory:"))
+        right.addWidget(QLabel(tr("template_dialog.lbl_target_dir")))
         dir_layout = QHBoxLayout()
         self.dir_edit = QLineEdit(str(Path.home() / "new_project"))
         dir_layout.addWidget(self.dir_edit)
-        browse_btn = QPushButton("Browse...")
+        browse_btn = QPushButton(tr("template_dialog.btn_browse"))
         browse_btn.clicked.connect(self._browse_directory)
         dir_layout.addWidget(browse_btn)
         right.addLayout(dir_layout)
         
-        create_btn = QPushButton("Create Project")
+        create_btn = QPushButton(tr("template_dialog.btn_create"))
         create_btn.clicked.connect(self._create_project)
         right.addWidget(create_btn)
         
-        close_btn = QPushButton("Close")
+        close_btn = QPushButton(tr("template_dialog.btn_close"))
         close_btn.clicked.connect(self.close)
         right.addWidget(close_btn)
         

@@ -1131,5 +1131,12 @@
   "history_dialog.btn_re_execute": "🔄 Erneut ausführen",
   "history_dialog.btn_export": "📤 Verlauf exportieren",
   "history_dialog.btn_clear": "🗑️ Alles löschen",
-  "history_dialog.btn_close": "Schließen"
+  "history_dialog.btn_close": "Schließen",
+  "template_dialog.title": "Projektvorlagen",
+  "template_dialog.lbl_available": "<b>Verfügbare Vorlagen</b>",
+  "template_dialog.lbl_details": "<b>Vorlagendetails</b>",
+  "template_dialog.lbl_target_dir": "Zielverzeichnis:",
+  "template_dialog.btn_browse": "Durchsuchen...",
+  "template_dialog.btn_create": "Projekt erstellen",
+  "template_dialog.btn_close": "Schließen"
 }

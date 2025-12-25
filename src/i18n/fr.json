@@ -1131,5 +1131,12 @@
   "history_dialog.btn_re_execute": "🔄 Réexécuter",
   "history_dialog.btn_export": "📤 Exporter l'Historique",
   "history_dialog.btn_clear": "🗑️ Tout Effacer",
-  "history_dialog.btn_close": "Fermer"
+  "history_dialog.btn_close": "Fermer",
+  "template_dialog.title": "Modèles de Projet",
+  "template_dialog.lbl_available": "<b>Modèles Disponibles</b>",
+  "template_dialog.lbl_details": "<b>Détails du Modèle</b>",
+  "template_dialog.lbl_target_dir": "Répertoire Cible:",
+  "template_dialog.btn_browse": "Parcourir...",
+  "template_dialog.btn_create": "Créer le Projet",
+  "template_dialog.btn_close": "Fermer"
 }
