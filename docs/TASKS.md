@@ -42,13 +42,39 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - [x] Merge `SearchWorker.replace_content()`
   - [x] Integrate `filter_files_by_conditions()`
 
-### Tarefas Fase 3 (Refatoração)
-- [ ] **3.1**: Atualizar `file_explorer_dock.py` (2h)
-  - [ ] Adicionar collapsible sections com QGroupBox
-  - [ ] Integrar widgets extraídos
-  - [ ] Conectar sinais dos novos componentes
-  - [ ] Adicionar lógica de collapse/expand
-  - [ ] Remover código duplicado do file_list
+### Tarefas Fase 3 (Refatoração - 2h) ⏳ PRÓXIMA
+- [ ] **3.1**: Adicionar imports dos novos componentes
+  - [ ] Import `UnifiedFileExplorerExecutor` from core
+  - [ ] Import widgets: FileNameQueryPanel, ContentQueryPanel, etc.
+- [ ] **3.2**: Criar collapsible sections (1h)
+  - [ ] 📁 **Section 1**: Directory & Type (sempre expanded)
+    - Mover: ed_directory, btn_browse, btn_recent
+    - Mover: combo_type (Any/Files/Dirs)
+    - Mover: chk_all, chk_long, chk_human, chk_recursive
+  - [ ] 🔍 **Section 2**: Search & Replace (sempre expanded)
+    - Adicionar: FileNameQueryPanel (pattern + clear)
+    - Adicionar: ContentQueryPanel (multi-line editor)
+    - Adicionar: SearchOptionsPanel (case, word, regex)
+    - Adicionar: ReplacePanel (editor + buttons)
+  - [ ] ⚙️ **Section 3**: Filters (collapsible)
+    - Manter: FileFilterPanel existente
+  - [ ] 🎯 **Section 4**: Advanced Conditions (collapsible)
+    - Adicionar: ConditionsGrid (AND/OR logic)
+  - [ ] 💾 **Section 5**: Presets (collapsible)
+    - Manter: PresetManager existente
+- [ ] **3.3**: Conectar sinais dos widgets (30 min)
+  - [ ] FileNameQueryPanel.pattern_changed → trigger search
+  - [ ] ContentQueryPanel.query_changed → update search params
+  - [ ] SearchOptionsPanel.options_changed → update options
+  - [ ] ReplacePanel.replace_first_requested → execute replace
+  - [ ] ReplacePanel.replace_all_requested → execute replace
+  - [ ] ConditionsGrid.conditions_changed → filter results
+- [ ] **3.4**: Substituir FileListExecutor por UnifiedFileExplorerExecutor (30 min)
+  - [ ] Trocar `FileListExecutor.list_files()` por `executor.execute_browse()`
+  - [ ] Adicionar `executor.execute_search()` para busca
+  - [ ] Adicionar `executor.execute_replace()` para replace
+  - [ ] Conectar sinais de progresso: progress, progress_detailed
+  - [ ] Implementar pause/cancel handlers
 
 ### Tarefas Fase 4 (Lógica)
 - [ ] **4.1**: Implementar busca unificada (1h)
