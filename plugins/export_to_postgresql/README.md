@@ -21,7 +21,7 @@ pip install psycopg2-binary
 
 ## Usage
 
-1. **Tools → Export → Export to PostgreSQL...**
+1. **File → Export to PostgreSQL...**
 2. Configure database connection:
    - Host: `localhost`
    - Port: `5432`
