@@ -19,28 +19,28 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - ✅ Análise comparativa dos dois tools
   - ✅ Design UI com collapsible sections
   - ✅ Arquitetura definida (componentes + executor unificado)
-- 🔄 **Fase 2: Componentes** (1h) - EM ANDAMENTO
+- ✅ **Fase 2: Componentes** (1h) - COMPLETO
   - ✅ Extrair widgets reutilizáveis (search_widgets.py criado)
-  - ⏳ Criar FileExplorerExecutor unificado
-- ⏳ **Fase 3: Refatoração** (2h)
+  - ✅ Criar FileExplorerExecutor unificado
+- 🔄 **Fase 3: Refatoração** (2h) - PRÓXIMA
 - ⏳ **Fase 4: Lógica** (1.5h)
 - ⏳ **Fase 5: UI/UX** (1h)
 - ⏳ **Fase 6: Testes** (1h)
 - ⏳ **Fase 7: Documentação** (30 min)
 - ⏳ **Fase 8: Deploy** (30 min)
 
-### Tarefas Fase 2 (Componentes)
+### Tarefas Fase 2 (Componentes) ✅
 - [x] **2.1**: Criar `src/gui/widgets/search_widgets.py` ✅
   - [x] Extrair `FileNameQueryPanel` (filename pattern + clear)
   - [x] Extrair `ContentQueryPanel` (multi-line editor)
   - [x] Extrair `SearchOptionsPanel` (case, word, regex)
   - [x] Extrair `ReplacePanel` (editor + preserve case + buttons)
   - [x] Extrair `ConditionsGrid` (dynamic rows + AND/OR) - estrutura base
-- [ ] **2.2**: Criar `src/core/file_explorer_executor.py`
-  - [ ] Merge `FileListExecutor.list_files()`
-  - [ ] Merge `SearchWorker.search_content()`
-  - [ ] Merge `SearchWorker.replace_content()`
-  - [ ] Integrate `filter_files_by_conditions()`
+- [x] **2.2**: Criar `src/core/file_explorer_executor.py` ✅
+  - [x] Merge `FileListExecutor.list_files()`
+  - [x] Merge `SearchWorker.search_content()`
+  - [x] Merge `SearchWorker.replace_content()`
+  - [x] Integrate `filter_files_by_conditions()`
 
 ### Tarefas Fase 3 (Refatoração)
 - [ ] **3.1**: Atualizar `file_explorer_dock.py` (2h)
