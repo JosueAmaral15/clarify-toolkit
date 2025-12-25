@@ -9,7 +9,7 @@ import os
 from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox
 
 from src.accessibility_manager import AccessibilityManager
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 from .base_dock import ProcessorWorkerBase, StandardToolDock
 from src.json_search import (
     ProjectIndexer,
@@ -82,7 +82,7 @@ class JsonSearchDock(StandardToolDock):
     """Dock widget for JSON search tool."""
 
     def __init__(self, parent=None):
-        super().__init__("JSON Search", parent)
+        super().__init__(tr("json_search.title"), parent)
         self.worker = None
         self.last_results = []  # Store last search results for saving
         self._apply_accessibility()
@@ -92,26 +92,26 @@ class JsonSearchDock(StandardToolDock):
         grid = QGridLayout()
 
         # Search inputs
-        grid.addWidget(QLabel("Search key:"), 0, 0)
+        grid.addWidget(QLabel(tr("json_search.lbl_search_key")), 0, 0)
         self.ed_search_key = QLineEdit()
-        self.ed_search_key.setPlaceholderText("e.g., 'home.title' or leave empty")
+        self.ed_search_key.setPlaceholderText(tr("json_search.placeholder_search_key"))
         grid.addWidget(self.ed_search_key, 0, 1, 1, 3)
 
-        grid.addWidget(QLabel("Search value:"), 1, 0)
+        grid.addWidget(QLabel(tr("json_search.lbl_search_value")), 1, 0)
         self.ed_search_value = QLineEdit()
-        self.ed_search_value.setPlaceholderText("e.g., 'Welcome' or leave empty")
+        self.ed_search_value.setPlaceholderText(tr("json_search.placeholder_search_value"))
         grid.addWidget(self.ed_search_value, 1, 1, 1, 3)
 
         # Filename filter (NEW - Task #6)
-        grid.addWidget(QLabel("Filename filter:"), 2, 0)
+        grid.addWidget(QLabel(tr("json_search.lbl_filename")), 2, 0)
         self.ed_filename = QLineEdit()
-        self.ed_filename.setPlaceholderText("e.g., '*.config.ts' or 'filename:en' or leave empty")
+        self.ed_filename.setPlaceholderText(tr("json_search.placeholder_filename"))
         grid.addWidget(self.ed_filename, 2, 1, 1, 3)
 
         # Search mode
-        grid.addWidget(QLabel("Search mode:"), 3, 0)
+        grid.addWidget(QLabel(tr("json_search.lbl_mode")), 3, 0)
         self.combo_mode = QComboBox()
-        self.combo_mode.addItems(["Key and Value", "Key only", "Value only"])
+        self.combo_mode.addItems([tr("json_search.mode_key_value"), tr("json_search.mode_key"), tr("json_search.mode_value")])
         grid.addWidget(self.combo_mode, 3, 1, 1, 3)
 
         # File/directory input
@@ -123,18 +123,18 @@ class JsonSearchDock(StandardToolDock):
         grid.addWidget(self.btn_browse, 4, 3)
 
         # Options
-        self.chk_case = QCheckBox("Case sensitive")
-        self.chk_regex = QCheckBox("Use regex")
+        self.chk_case = QCheckBox(tr("json_search.chk_case"))
+        self.chk_regex = QCheckBox(tr("json_search.chk_regex"))
         grid.addWidget(self.chk_is_file, 5, 0)
         grid.addWidget(self.chk_case, 5, 1)
         grid.addWidget(self.chk_regex, 5, 2)
 
         # Max results
-        grid.addWidget(QLabel("Max results:"), 5, 3)
+        grid.addWidget(QLabel(tr("json_search.lbl_max")), 5, 3)
         self.spin_max = QSpinBox()
         self.spin_max.setRange(0, 10000)
         self.spin_max.setValue(1000)
-        self.spin_max.setSpecialValueText("Unlimited")
+        self.spin_max.setSpecialValueText(tr("json_search.max_unlimited"))
         grid.addWidget(self.spin_max, 5, 4)
 
         self.layout.addLayout(grid)
@@ -273,7 +273,7 @@ class JsonSearchDock(StandardToolDock):
             search_value = self.ed_search_value.text().strip()
 
             if not search_key and not search_value:
-                self.show_warning("No Search Terms", "Please enter a key or value to search for.")
+                self.show_warning(tr("json_search.warning_no_terms_title"), tr("json_search.warning_no_terms_message"))
                 return
 
             # Get files
@@ -310,7 +310,7 @@ class JsonSearchDock(StandardToolDock):
             self.worker.start()
 
         except Exception as e:
-            self.show_error("Search Error", str(e))
+            self.show_error(tr("json_search.error_title"), str(e))
 
     def _interrupt(self):
         """Interrupt search."""
@@ -386,30 +386,30 @@ class JsonSearchDock(StandardToolDock):
         from PySide6.QtWidgets import QButtonGroup, QDialog, QDialogButtonBox, QLabel, QRadioButton, QVBoxLayout
 
         if not self.last_results:
-            self.show_warning("No Results", "No search results to save. Please run a search first.")
+            self.show_warning(tr("json_search.warning_no_results_title"), tr("json_search.warning_no_results_message"))
             return
 
         # Create dialog for save options
         dialog = QDialog(self)
-        dialog.setWindowTitle("Save Results Options")
+        dialog.setWindowTitle(tr("json_search.save_dialog_title"))
         layout = QVBoxLayout(dialog)
 
         # Title
-        layout.addWidget(QLabel("Choose how to save the results:"))
+        layout.addWidget(QLabel(tr("json_search.save_dialog_label")))
 
         # Radio buttons for save format
         self.radio_group = QButtonGroup(dialog)
 
-        radio_single = QRadioButton("Single file (all results in one TXT)")
+        radio_single = QRadioButton(tr("json_search.radio_single"))
         radio_single.setChecked(True)
         self.radio_group.addButton(radio_single, 0)
         layout.addWidget(radio_single)
 
-        radio_per_file = QRadioButton("Per original file (one result file per source)")
+        radio_per_file = QRadioButton(tr("json_search.radio_per_file"))
         self.radio_group.addButton(radio_per_file, 1)
         layout.addWidget(radio_per_file)
 
-        radio_per_query = QRadioButton("Per query (group by search term)")
+        radio_per_query = QRadioButton(tr("json_search.radio_per_query"))
         radio_per_query.setToolTip("Group results by search query (key or value)")
         self.radio_group.addButton(radio_per_query, 2)
         layout.addWidget(radio_per_query)
@@ -464,9 +464,9 @@ class JsonSearchDock(StandardToolDock):
                     f.write(f"  Value: {value}\n")
                     f.write("\n")
 
-            self.show_info("Success", f"Results saved to:\n{file_path}")
+            self.show_info(tr("json_search.success_title"), tr("json_search.success_saved").replace("{path}", file_path))
         except Exception as e:
-            self.show_error("Save Error", f"Failed to save results:\n{str(e)}")
+            self.show_error(tr("json_search.error_save_title"), tr("json_search.error_save_message").replace("{error}", str(e)))
 
     def _save_per_original_file(self):
         """Save results grouped by original source file."""
@@ -505,9 +505,9 @@ class JsonSearchDock(StandardToolDock):
                         f.write(f"  Value: {value}\n")
                         f.write("\n")
 
-            self.show_info("Success", f"Saved {len(grouped)} result file(s) to:\n{output_dir}")
+            self.show_info(tr("json_search.success_title"), tr("json_search.success_saved_multiple").replace("{count}", str(len(grouped))).replace("{path}", output_dir))
         except Exception as e:
-            self.show_error("Save Error", f"Failed to save results:\n{str(e)}")
+            self.show_error(tr("json_search.error_save_title"), tr("json_search.error_save_message").replace("{error}", str(e)))
 
     def _save_per_query(self):
         """Save results grouped by search query (key or value)."""
