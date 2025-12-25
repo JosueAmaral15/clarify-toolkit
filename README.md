@@ -460,6 +460,18 @@ python clarify.py --help
 
 ### 🔗 Acesso Rápido
 - **docs/README.md** - Índice bilíngue de toda documentação
+- **docs/ORPHANED_CODE_INTEGRATION_PLAN.md** - Plano de integração de código órfão (25h de features prontas!)
+
+### 🛠️ Desenvolvimento e Planos
+- **docs/refactoring/** - Histórico completo de refatorações (14 arquivos)
+- **docs/ORPHANED_CODE_INTEGRATION_PLAN.md** - Plano detalhado para integrar ~2.500 linhas de código implementado mas não utilizado
+  - 7 itens identificados (MinimalProcessingModal, ManualCheckDialog, Advanced Extractor, etc.)
+  - Roadmap de 3 sprints (3 semanas)
+  - 5 novas features + 3 ferramentas de desenvolvimento melhoradas
+- **scripts/refactor_app.py** - Ferramenta automatizada de refatoração
+- **tests/test_docks_factory.py** - Teste de integração DockFactory
+- **load_tests/** - Sistema completo de load testing (a integrar)
+- **benchmarks/** - Sistema de benchmarks de performance (a integrar)
 
 ## 👤 Autor
 
