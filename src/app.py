@@ -553,7 +553,7 @@ if _PYSIDE:
                 self.tabs.setCurrentIndex(0)
             else:
                 # Tab was closed, recreate at index 0 using internal SearchReplacePanel class
-                self.tab_search = SearchReplacePanel(progress_manager=self.progress_manager)
+                self.tab_search = SearchReplacePanel(parent=self, progress_manager=self.progress_manager)
                 
                 # Force immediate visibility before inserting
                 self.tab_search.setVisible(True)
@@ -583,7 +583,7 @@ if _PYSIDE:
             else:
                 # Tab was closed, recreate at index 1
                 # InsertPanel is an internal class defined in this file, no import needed
-                self.tab_insert = InsertPanel(progress_manager=self.progress_manager)
+                self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
                 
                 # Force immediate visibility before inserting
                 self.tab_insert.setVisible(True)
