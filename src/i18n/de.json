@@ -1110,5 +1110,20 @@
   "config_editor.btn_preview": "👁️ Vorschau",
   "config_editor.btn_reset": "🔄 Auf Standard zurücksetzen",
   "config_editor.btn_save": "💾 Speichern",
-  "config_editor.btn_cancel": "❌ Abbrechen"
+  "config_editor.btn_cancel": "❌ Abbrechen",
+  "error_report.title": "Fehlermelder - Clarify",
+  "error_report.header": "⚠️ Hoppla! Clarify ist auf einen Fehler gestoßen",
+  "error_report.group_summary": "Fehlerzusammenfassung",
+  "error_report.lbl_type": "Typ: ",
+  "error_report.lbl_message": "Nachricht: ",
+  "error_report.lbl_location": "Ort: ",
+  "error_report.group_steps": "Schritte zur Reproduktion (Optional)",
+  "error_report.group_behavior": "Erwartet vs Tatsächlich (Optional)",
+  "error_report.lbl_expected": "Erwartet:",
+  "error_report.lbl_actual": "Tatsächlich:",
+  "error_report.chk_dont_show": "Diesen Dialog nicht mehr anzeigen (Fehlerberichte deaktivieren)",
+  "error_report.btn_github": "🐛 An GitHub senden",
+  "error_report.btn_copy": "📋 In Zwischenablage kopieren",
+  "error_report.btn_save": "💾 Protokoll speichern",
+  "error_report.btn_close": "Schließen"
 }

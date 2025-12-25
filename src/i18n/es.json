@@ -1118,5 +1118,20 @@
   "config_editor.btn_preview": "👁️ Vista Previa",
   "config_editor.btn_reset": "🔄 Restablecer Predeterminados",
   "config_editor.btn_save": "💾 Guardar",
-  "config_editor.btn_cancel": "❌ Cancelar"
+  "config_editor.btn_cancel": "❌ Cancelar",
+  "error_report.title": "Informador de Errores - Clarify",
+  "error_report.header": "⚠️ ¡Ups! Clarify encontró un error",
+  "error_report.group_summary": "Resumen del Error",
+  "error_report.lbl_type": "Tipo: ",
+  "error_report.lbl_message": "Mensaje: ",
+  "error_report.lbl_location": "Ubicación: ",
+  "error_report.group_steps": "Pasos para Reproducir (Opcional)",
+  "error_report.group_behavior": "Esperado vs Real (Opcional)",
+  "error_report.lbl_expected": "Esperado:",
+  "error_report.lbl_actual": "Real:",
+  "error_report.chk_dont_show": "No mostrar este diálogo de nuevo (deshabilitar informes de errores)",
+  "error_report.btn_github": "🐛 Enviar a GitHub",
+  "error_report.btn_copy": "📋 Copiar al Portapapeles",
+  "error_report.btn_save": "💾 Guardar Registro",
+  "error_report.btn_close": "Cerrar"
 }

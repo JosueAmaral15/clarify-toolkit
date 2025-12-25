@@ -1110,5 +1110,20 @@
   "config_editor.btn_preview": "👁️ プレビュー",
   "config_editor.btn_reset": "🔄 デフォルトにリセット",
   "config_editor.btn_save": "💾 保存",
-  "config_editor.btn_cancel": "❌ キャンセル"
+  "config_editor.btn_cancel": "❌ キャンセル",
+  "error_report.title": "エラーレポーター - Clarify",
+  "error_report.header": "⚠️ おっと！Clarifyがエラーに遇遇しました",
+  "error_report.group_summary": "エラー概要",
+  "error_report.lbl_type": "種類: ",
+  "error_report.lbl_message": "メッセージ: ",
+  "error_report.lbl_location": "場所: ",
+  "error_report.group_steps": "再現手順（オプション）",
+  "error_report.group_behavior": "期待される vs 実際（オプション）",
+  "error_report.lbl_expected": "期待される:",
+  "error_report.lbl_actual": "実際:",
+  "error_report.chk_dont_show": "このダイアログを二度と表示しない（エラーレポートを無効化）",
+  "error_report.btn_github": "🐛 GitHubに送信",
+  "error_report.btn_copy": "📋 クリップボードにコピー",
+  "error_report.btn_save": "💾 ログを保存",
+  "error_report.btn_close": "閉じる"
 }

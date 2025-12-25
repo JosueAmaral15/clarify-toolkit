@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QIcon, QFont
+from src.i18n.translator import tr
 
 
 class ErrorReportDialog(QDialog):
@@ -20,7 +21,7 @@ class ErrorReportDialog(QDialog):
     def __init__(self, parent=None):
         """Initialize error report dialog."""
         super().__init__(parent)
-        self.setWindowTitle("Error Reporter - Clarify")
+        self.setWindowTitle(tr("error_report.title"))
         self.resize(700, 600)
         self.setModal(True)
         
@@ -34,7 +35,7 @@ class ErrorReportDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Header
-        header_label = QLabel("⚠️ Oops! Clarify encountered an error")
+        header_label = QLabel(tr("error_report.header"))
         header_font = QFont()
         header_font.setPointSize(14)
         header_font.setBold(True)
@@ -51,13 +52,13 @@ class ErrorReportDialog(QDialog):
         layout.addSpacing(10)
         
         # Error Summary Group
-        error_group = QGroupBox("Error Summary")
+        error_group = QGroupBox(tr("error_report.group_summary"))
         error_layout = QVBoxLayout()
         
-        self.error_type_label = QLabel("Type: ")
-        self.error_message_label = QLabel("Message: ")
+        self.error_type_label = QLabel(tr("error_report.lbl_type"))
+        self.error_message_label = QLabel(tr("error_report.lbl_message"))
         self.error_message_label.setWordWrap(True)
-        self.error_location_label = QLabel("Location: ")
+        self.error_location_label = QLabel(tr("error_report.lbl_location"))
         
         error_layout.addWidget(self.error_type_label)
         error_layout.addWidget(self.error_message_label)
@@ -66,7 +67,7 @@ class ErrorReportDialog(QDialog):
         layout.addWidget(error_group)
         
         # Steps to Reproduce
-        steps_group = QGroupBox("Steps to Reproduce (Optional)")
+        steps_group = QGroupBox(tr("error_report.group_steps"))
         steps_layout = QVBoxLayout()
         self.steps_edit = QTextEdit()
         self.steps_edit.setPlaceholderText(
@@ -81,15 +82,15 @@ class ErrorReportDialog(QDialog):
         layout.addWidget(steps_group)
         
         # Expected/Actual Behavior
-        behavior_group = QGroupBox("Expected vs Actual (Optional)")
+        behavior_group = QGroupBox(tr("error_report.group_behavior"))
         behavior_layout = QVBoxLayout()
         
-        QLabel_expected = QLabel("Expected:")
+        QLabel_expected = QLabel(tr("error_report.lbl_expected"))
         self.expected_edit = QTextEdit()
         self.expected_edit.setPlaceholderText("What did you expect to happen?")
         self.expected_edit.setMaximumHeight(60)
         
-        QLabel_actual = QLabel("Actual:")
+        QLabel_actual = QLabel(tr("error_report.lbl_actual"))
         self.actual_edit = QTextEdit()
         self.actual_edit.setPlaceholderText("What actually happened?")
         self.actual_edit.setMaximumHeight(60)
@@ -102,25 +103,25 @@ class ErrorReportDialog(QDialog):
         layout.addWidget(behavior_group)
         
         # Checkbox: Don't show again
-        self.dont_show_checkbox = QCheckBox("Don't show this dialog again (disable error reporting)")
+        self.dont_show_checkbox = QCheckBox(tr("error_report.chk_dont_show"))
         layout.addWidget(self.dont_show_checkbox)
         
         # Buttons
         button_layout = QHBoxLayout()
         
-        self.github_button = QPushButton("🐛 Send to GitHub")
+        self.github_button = QPushButton(tr("error_report.btn_github"))
         self.github_button.setToolTip("Open GitHub Issues with pre-filled bug report")
         self.github_button.clicked.connect(self._send_to_github)
         
-        self.copy_button = QPushButton("📋 Copy to Clipboard")
+        self.copy_button = QPushButton(tr("error_report.btn_copy"))
         self.copy_button.setToolTip("Copy error info to clipboard")
         self.copy_button.clicked.connect(self._copy_to_clipboard)
         
-        self.save_button = QPushButton("💾 Save Log")
+        self.save_button = QPushButton(tr("error_report.btn_save"))
         self.save_button.setToolTip("Save full error log to file")
         self.save_button.clicked.connect(self._save_log)
         
-        self.close_button = QPushButton("Close")
+        self.close_button = QPushButton(tr("error_report.btn_close"))
         self.close_button.clicked.connect(self._close_dialog)
         
         button_layout.addWidget(self.github_button)

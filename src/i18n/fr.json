@@ -1110,5 +1110,20 @@
   "config_editor.btn_preview": "👁️ Aperçu",
   "config_editor.btn_reset": "🔄 Réinitialiser aux Valeurs par Défaut",
   "config_editor.btn_save": "💾 Enregistrer",
-  "config_editor.btn_cancel": "❌ Annuler"
+  "config_editor.btn_cancel": "❌ Annuler",
+  "error_report.title": "Rapporteur d'Erreurs - Clarify",
+  "error_report.header": "⚠️ Oups! Clarify a rencontré une erreur",
+  "error_report.group_summary": "Résumé de l'Erreur",
+  "error_report.lbl_type": "Type: ",
+  "error_report.lbl_message": "Message: ",
+  "error_report.lbl_location": "Emplacement: ",
+  "error_report.group_steps": "Étapes pour Reproduire (Optionnel)",
+  "error_report.group_behavior": "Attendu vs Réel (Optionnel)",
+  "error_report.lbl_expected": "Attendu:",
+  "error_report.lbl_actual": "Réel:",
+  "error_report.chk_dont_show": "Ne plus afficher cette boîte de dialogue (désactiver les rapports d'erreurs)",
+  "error_report.btn_github": "🐛 Envoyer à GitHub",
+  "error_report.btn_copy": "📋 Copier dans le Presse-papiers",
+  "error_report.btn_save": "💾 Enregistrer le Journal",
+  "error_report.btn_close": "Fermer"
 }

@@ -1118,5 +1118,20 @@
   "config_editor.btn_preview": "👁️ Visualizar",
   "config_editor.btn_reset": "🔄 Restaurar Padrões",
   "config_editor.btn_save": "💾 Salvar",
-  "config_editor.btn_cancel": "❌ Cancelar"
+  "config_editor.btn_cancel": "❌ Cancelar",
+  "error_report.title": "Relatório de Erro - Clarify",
+  "error_report.header": "⚠️ Ops! Clarify encontrou um erro",
+  "error_report.group_summary": "Resumo do Erro",
+  "error_report.lbl_type": "Tipo: ",
+  "error_report.lbl_message": "Mensagem: ",
+  "error_report.lbl_location": "Local: ",
+  "error_report.group_steps": "Passos para Reproduzir (Opcional)",
+  "error_report.group_behavior": "Esperado vs Real (Opcional)",
+  "error_report.lbl_expected": "Esperado:",
+  "error_report.lbl_actual": "Real:",
+  "error_report.chk_dont_show": "Não mostrar este diálogo novamente (desativar relatórios de erro)",
+  "error_report.btn_github": "🐛 Enviar para GitHub",
+  "error_report.btn_copy": "📋 Copiar para Área de Transferência",
+  "error_report.btn_save": "💾 Salvar Log",
+  "error_report.btn_close": "Fechar"
 }

@@ -1147,5 +1147,20 @@
   "config_editor.btn_preview": "👁️ 预览",
   "config_editor.btn_reset": "🔄 恢复默认值",
   "config_editor.btn_save": "💾 保存",
-  "config_editor.btn_cancel": "❌ 取消"
+  "config_editor.btn_cancel": "❌ 取消",
+  "error_report.title": "错误报告器 - Clarify",
+  "error_report.header": "⚠️ 哎呀！Clarify遇到了错误",
+  "error_report.group_summary": "错误摘要",
+  "error_report.lbl_type": "类型: ",
+  "error_report.lbl_message": "消息: ",
+  "error_report.lbl_location": "位置: ",
+  "error_report.group_steps": "重现步骤（可选）",
+  "error_report.group_behavior": "预期 vs 实际（可选）",
+  "error_report.lbl_expected": "预期:",
+  "error_report.lbl_actual": "实际:",
+  "error_report.chk_dont_show": "不再显示此对话框（禁用错误报告）",
+  "error_report.btn_github": "🐛 发送到GitHub",
+  "error_report.btn_copy": "📋 复制到剪贴板",
+  "error_report.btn_save": "💾 保存日志",
+  "error_report.btn_close": "关闭"
 }
