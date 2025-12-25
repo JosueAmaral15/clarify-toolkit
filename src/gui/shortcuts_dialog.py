@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.i18n.translator import tr
 from src.shortcut_manager import ShortcutManager
 
 
@@ -50,7 +51,7 @@ class ShortcutsDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Customize Keyboard Shortcuts")
+        self.setWindowTitle(tr("shortcuts_dialog.title"))
         self.setMinimumSize(800, 600)
 
         # Store changes temporarily until Save is clicked
@@ -65,15 +66,15 @@ class ShortcutsDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Header
-        header = QLabel("Customize keyboard shortcuts for all actions")
+        header = QLabel(tr("shortcuts_dialog.header"))
         header.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
         layout.addWidget(header)
 
         # Search box
         search_layout = QHBoxLayout()
-        search_label = QLabel("Search:")
+        search_label = QLabel(tr("shortcuts_dialog.search_label"))
         self.search_box = QLineEdit()
-        self.search_box.setPlaceholderText("Type to filter shortcuts...")
+        self.search_box.setPlaceholderText(tr("shortcuts_dialog.search_placeholder"))
         self.search_box.textChanged.connect(self._filter_shortcuts)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.search_box)
@@ -82,7 +83,12 @@ class ShortcutsDialog(QDialog):
         # Shortcuts table
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Category", "Action", "Shortcut", "Description"])
+        self.table.setHorizontalHeaderLabels([
+            tr("shortcuts_dialog.col_category"),
+            tr("shortcuts_dialog.col_action"),
+            tr("shortcuts_dialog.col_shortcut"),
+            tr("shortcuts_dialog.col_description")
+        ])
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.itemDoubleClicked.connect(self._on_item_double_clicked)
@@ -104,25 +110,25 @@ class ShortcutsDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
 
-        self.btn_reset_selected = QPushButton("Reset Selected")
-        self.btn_reset_selected.setToolTip("Reset selected shortcut to default")
+        self.btn_reset_selected = QPushButton(tr("shortcuts_dialog.btn_reset_selected"))
+        self.btn_reset_selected.setToolTip(tr("shortcuts_dialog.btn_reset_selected_tooltip"))
         self.btn_reset_selected.clicked.connect(self._reset_selected)
 
-        self.btn_reset_all = QPushButton("Reset All")
-        self.btn_reset_all.setToolTip("Reset all shortcuts to defaults")
+        self.btn_reset_all = QPushButton(tr("shortcuts_dialog.btn_reset_all"))
+        self.btn_reset_all.setToolTip(tr("shortcuts_dialog.btn_reset_all_tooltip"))
         self.btn_reset_all.clicked.connect(self._reset_all)
 
         btn_layout.addWidget(self.btn_reset_selected)
         btn_layout.addWidget(self.btn_reset_all)
         btn_layout.addStretch()
 
-        self.btn_save = QPushButton("Save")
-        self.btn_save.setToolTip("Save changes and close")
+        self.btn_save = QPushButton(tr("shortcuts_dialog.btn_save"))
+        self.btn_save.setToolTip(tr("shortcuts_dialog.btn_save_tooltip"))
         self.btn_save.clicked.connect(self._save_changes)
         self.btn_save.setDefault(True)
 
-        self.btn_cancel = QPushButton("Cancel")
-        self.btn_cancel.setToolTip("Discard changes and close")
+        self.btn_cancel = QPushButton(tr("shortcuts_dialog.btn_cancel"))
+        self.btn_cancel.setToolTip(tr("shortcuts_dialog.btn_cancel_tooltip"))
         self.btn_cancel.clicked.connect(self.reject)
 
         btn_layout.addWidget(self.btn_save)
@@ -131,7 +137,7 @@ class ShortcutsDialog(QDialog):
         layout.addLayout(btn_layout)
 
         # Info label
-        info = QLabel("💡 Double-click on any shortcut to edit it")
+        info = QLabel(tr("shortcuts_dialog.info_hint"))
         info.setStyleSheet("color: #666; font-size: 11px; margin-top: 5px;")
         layout.addWidget(info)
 
@@ -241,7 +247,7 @@ class ShortcutsDialog(QDialog):
     def _show_edit_dialog(self, action_name: str, current_shortcut: str) -> Optional[str]:
         """Show dialog to edit a shortcut."""
         dialog = QDialog(self)
-        dialog.setWindowTitle(f"Edit Shortcut: {action_name}")
+        dialog.setWindowTitle(tr("shortcuts_dialog.edit_title").replace("{action}", action_name))
         dialog.setMinimumWidth(400)
 
         layout = QVBoxLayout(dialog)
@@ -252,11 +258,11 @@ class ShortcutsDialog(QDialog):
         layout.addWidget(desc_label)
 
         # Current shortcut
-        current_label = QLabel(f"Current: {current_shortcut}")
+        current_label = QLabel(tr("shortcuts_dialog.edit_current").replace("{shortcut}", current_shortcut))
         layout.addWidget(current_label)
 
         # Key sequence editor
-        layout.addWidget(QLabel("New shortcut:"))
+        layout.addWidget(QLabel(tr("shortcuts_dialog.edit_new_label")))
         key_edit = QKeySequenceEdit()
         if current_shortcut:
             key_edit.setKeySequence(QKeySequence(current_shortcut))
@@ -279,20 +285,20 @@ class ShortcutsDialog(QDialog):
             conflicts = [c for c in conflicts if c != action_name]
 
             if conflicts:
-                warning_label.setText(f"⚠️ Conflicts with: {', '.join(conflicts)}")
+                warning_label.setText(tr("shortcuts_dialog.edit_conflicts").replace("{actions}", ", ".join(conflicts)))
             elif ShortcutManager.is_os_shortcut(new_seq):
-                warning_label.setText(f"⚠️ This might conflict with OS shortcut")
+                warning_label.setText(tr("shortcuts_dialog.edit_os_warning"))
             else:
-                warning_label.setText("✓ No conflicts detected")
+                warning_label.setText(tr("shortcuts_dialog.edit_no_conflicts"))
                 warning_label.setStyleSheet("color: green; font-weight: bold;")
 
         key_edit.keySequenceChanged.connect(check_conflicts)
 
         # Buttons
         btn_layout = QHBoxLayout()
-        btn_ok = QPushButton("OK")
-        btn_cancel = QPushButton("Cancel")
-        btn_clear = QPushButton("Clear")
+        btn_ok = QPushButton(tr("shortcuts_dialog.edit_btn_ok"))
+        btn_cancel = QPushButton(tr("shortcuts_dialog.edit_btn_cancel"))
+        btn_clear = QPushButton(tr("shortcuts_dialog.edit_btn_clear"))
 
         btn_ok.clicked.connect(dialog.accept)
         btn_cancel.clicked.connect(dialog.reject)
@@ -318,11 +324,11 @@ class ShortcutsDialog(QDialog):
         conflicts = [c for c in conflicts if c != action_name]
 
         if conflicts:
+            msg = tr("shortcuts_dialog.conflict_msg").replace("{actions}", ", ".join(conflicts))
             reply = QMessageBox.question(
                 self,
-                "Shortcut Conflict",
-                f"This shortcut is already used by:\n\n{', '.join(conflicts)}\n\n"
-                "Do you want to use it anyway? (This will cause conflicts)",
+                tr("shortcuts_dialog.conflict_title"),
+                msg,
                 QMessageBox.Yes | QMessageBox.No,
             )
             if reply != QMessageBox.Yes:
@@ -330,11 +336,11 @@ class ShortcutsDialog(QDialog):
 
         # Check OS shortcuts
         if ShortcutManager.is_os_shortcut(shortcut):
+            msg = tr("shortcuts_dialog.os_conflict_msg").replace("{shortcut}", shortcut)
             reply = QMessageBox.question(
                 self,
-                "OS Shortcut Warning",
-                f"The shortcut '{shortcut}' might conflict with your operating system.\n\n"
-                "Do you want to use it anyway?",
+                tr("shortcuts_dialog.os_conflict_title"),
+                msg,
                 QMessageBox.Yes | QMessageBox.No,
             )
             if reply != QMessageBox.Yes:
@@ -347,7 +353,7 @@ class ShortcutsDialog(QDialog):
         selected_rows = set(item.row() for item in self.table.selectedItems())
 
         if not selected_rows:
-            QMessageBox.information(self, "No Selection", "Please select a shortcut to reset.")
+            QMessageBox.information(self, tr("shortcuts_dialog.no_selection_title"), tr("shortcuts_dialog.no_selection_msg"))
             return
 
         for row in selected_rows:
@@ -359,22 +365,21 @@ class ShortcutsDialog(QDialog):
                 del self._pending_changes[action_name]
 
         self._load_shortcuts()
-        self.status_label.setText("✓ Selected shortcuts reset to defaults")
+        self.status_label.setText(tr("shortcuts_dialog.status_reset_selected"))
 
     def _reset_all(self):
         """Reset all shortcuts to defaults."""
         reply = QMessageBox.question(
             self,
-            "Reset All Shortcuts",
-            "Are you sure you want to reset ALL shortcuts to defaults?\n\n"
-            "This will discard all your customizations.",
+            tr("shortcuts_dialog.reset_all_title"),
+            tr("shortcuts_dialog.reset_all_msg"),
             QMessageBox.Yes | QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
             self._pending_changes.clear()
             self._load_shortcuts()
-            self.status_label.setText("✓ All shortcuts reset to defaults")
+            self.status_label.setText(tr("shortcuts_dialog.status_reset_all"))
 
     def _save_changes(self):
         """Save changes and close dialog."""
@@ -398,13 +403,13 @@ class ShortcutsDialog(QDialog):
         num_pending = len(self._pending_changes)
 
         if num_pending > 0:
-            self.status_label.setText(
-                f"⚠️ {num_pending} unsaved change(s) | " f"{num_custom} custom shortcut(s) active"
-            )
+            msg = tr("shortcuts_dialog.status_unsaved").replace("{pending}", str(num_pending)).replace("{custom}", str(num_custom))
+            self.status_label.setText(msg)
             self.status_label.setStyleSheet("color: orange; font-weight: bold;")
         elif num_custom > 0:
-            self.status_label.setText(f"ℹ️ {num_custom} custom shortcut(s) active")
+            msg = tr("shortcuts_dialog.status_custom").replace("{custom}", str(num_custom))
+            self.status_label.setText(msg)
             self.status_label.setStyleSheet("color: blue;")
         else:
-            self.status_label.setText("Using default shortcuts")
+            self.status_label.setText(tr("shortcuts_dialog.status_default"))
             self.status_label.setStyleSheet("color: gray;")
