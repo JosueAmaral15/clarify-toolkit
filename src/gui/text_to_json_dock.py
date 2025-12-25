@@ -45,7 +45,7 @@ from PySide6.QtGui import QFont
 
 from .base_dock import BaseDock
 from src.text_to_json import convert_text_to_json, detect_format
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ items[2]{id,name}:
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Format Templates")
+        self.setWindowTitle(tr("text_to_json.templates_dialog_title"))
         # Removed resize(500, 600) - v2.9.40.2: caused window sizing issues when used as tab
         self._setup_ui()
     
@@ -132,7 +132,7 @@ items[2]{id,name}:
         self.format_combo = QComboBox()
         self.format_combo.addItems(self.TEMPLATES.keys())
         self.format_combo.currentTextChanged.connect(self._on_format_changed)
-        layout.addWidget(QLabel("Select format:"))
+        layout.addWidget(QLabel(tr("text_to_json.lbl_select_format")))
         layout.addWidget(self.format_combo)
         
         # Example text
@@ -140,16 +140,16 @@ items[2]{id,name}:
         self.example_text.setReadOnly(True)
         font = QFont("Courier New", 10)
         self.example_text.setFont(font)
-        layout.addWidget(QLabel("Example:"))
+        layout.addWidget(QLabel(tr("text_to_json.lbl_example")))
         layout.addWidget(self.example_text)
         
         # Use button
-        self.use_btn = QPushButton("Use This Template")
+        self.use_btn = QPushButton(tr("text_to_json.btn_use_template"))
         self.use_btn.clicked.connect(self.accept)
         layout.addWidget(self.use_btn)
         
         # Close button
-        self.close_btn = QPushButton("Close")
+        self.close_btn = QPushButton(tr("text_to_json.btn_close"))
         self.close_btn.clicked.connect(self.reject)
         layout.addWidget(self.close_btn)
         
@@ -191,13 +191,13 @@ class TextToJsonDock(BaseDock):
     def _create_widgets(self) -> None:
         """Create all widgets."""
         # Input section
-        self.input_label = QLabel("Input Text:")
+        self.input_label = QLabel(tr("text_to_json.lbl_input"))
         self.input_text = QPlainTextEdit()
-        self.input_text.setPlaceholderText("Paste your text here...")
+        self.input_text.setPlaceholderText(tr("text_to_json.input_placeholder"))
         self.input_text.textChanged.connect(self._on_input_changed)
         
         # Format selector
-        self.format_label = QLabel("Format:")
+        self.format_label = QLabel(tr("text_to_json.lbl_format"))
         self.format_combo = QComboBox()
         self.format_combo.addItems([
             "Auto-detect",
@@ -213,68 +213,68 @@ class TextToJsonDock(BaseDock):
         ])
         
         # Type inference options
-        self.type_group = QGroupBox("Type Inference")
-        self.type_auto_radio = QRadioButton("Auto-detect types (int, float, bool, null)")
-        self.type_string_radio = QRadioButton("All values as strings")
+        self.type_group = QGroupBox(tr("text_to_json.group_type_inference"))
+        self.type_auto_radio = QRadioButton(tr("text_to_json.radio_auto_detect"))
+        self.type_string_radio = QRadioButton(tr("text_to_json.radio_all_strings"))
         self.type_auto_radio.setChecked(True)
         self.type_button_group = QButtonGroup()
         self.type_button_group.addButton(self.type_auto_radio)
         self.type_button_group.addButton(self.type_string_radio)
         
         # CSV options group
-        self.csv_group = QGroupBox("CSV Options")
-        self.csv_header_check = QCheckBox("First row is header")
+        self.csv_group = QGroupBox(tr("text_to_json.group_csv"))
+        self.csv_header_check = QCheckBox(tr("text_to_json.check_first_row_header"))
         self.csv_header_check.setChecked(True)
         
-        self.csv_separator_label = QLabel("Separator:")
+        self.csv_separator_label = QLabel(tr("text_to_json.lbl_separator"))
         self.csv_separator_combo = QComboBox()
         self.csv_separator_combo.addItems(["Comma (,)", "Semicolon (;)", "Tab (\\t)"])
         
-        self.csv_format_label = QLabel("Output format:")
-        self.csv_array_objects_radio = QRadioButton("Array of objects")
-        self.csv_array_arrays_radio = QRadioButton("Array of arrays")
+        self.csv_format_label = QLabel(tr("text_to_json.lbl_output_format"))
+        self.csv_array_objects_radio = QRadioButton(tr("text_to_json.radio_array_objects"))
+        self.csv_array_arrays_radio = QRadioButton(tr("text_to_json.radio_array_arrays"))
         self.csv_array_objects_radio.setChecked(True)
         self.csv_format_group = QButtonGroup()
         self.csv_format_group.addButton(self.csv_array_objects_radio)
         self.csv_format_group.addButton(self.csv_array_arrays_radio)
         
         # General options
-        self.pretty_print_check = QCheckBox("Pretty print JSON")
+        self.pretty_print_check = QCheckBox(tr("text_to_json.check_pretty_print"))
         self.pretty_print_check.setChecked(True)
         
-        self.live_preview_check = QCheckBox("Enable live preview (500ms delay)")
+        self.live_preview_check = QCheckBox(tr("text_to_json.check_live_preview"))
         self.live_preview_check.setChecked(False)
         
         # Action buttons
-        self.convert_btn = QPushButton("Convert")
+        self.convert_btn = QPushButton(tr("text_to_json.btn_convert"))
         self.convert_btn.clicked.connect(self._on_convert_clicked)
         
-        self.templates_btn = QPushButton("Templates")
+        self.templates_btn = QPushButton(tr("text_to_json.btn_templates"))
         self.templates_btn.clicked.connect(self._on_templates_clicked)
         
-        self.clear_btn = QPushButton("Clear")
+        self.clear_btn = QPushButton(tr("text_to_json.btn_clear"))
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         
-        self.validate_btn = QPushButton("Validate JSON")
+        self.validate_btn = QPushButton(tr("text_to_json.btn_validate"))
         self.validate_btn.clicked.connect(self._on_validate_clicked)
         
-        self.copy_btn = QPushButton("Copy Result")
+        self.copy_btn = QPushButton(tr("text_to_json.btn_copy"))
         self.copy_btn.clicked.connect(self._on_copy_clicked)
         
-        self.open_editor_btn = QPushButton("Open in Editor")
+        self.open_editor_btn = QPushButton(tr("text_to_json.btn_open_editor"))
         self.open_editor_btn.clicked.connect(self._on_open_editor_clicked)
         
-        self.history_btn = QPushButton("History")
+        self.history_btn = QPushButton(tr("text_to_json.btn_history"))
         self.history_btn.clicked.connect(self._on_history_clicked)
         
-        self.swap_btn = QPushButton("Swap (JSON → Text)")
+        self.swap_btn = QPushButton(tr("text_to_json.btn_swap"))
         self.swap_btn.clicked.connect(self._on_swap_clicked)
         
         # Output section
-        self.output_label = QLabel("JSON Output:")
+        self.output_label = QLabel(tr("text_to_json.lbl_output"))
         self.output_text = QPlainTextEdit()
         self.output_text.setReadOnly(True)
-        self.output_text.setPlaceholderText("Converted JSON will appear here...")
+        self.output_text.setPlaceholderText(tr("text_to_json.output_placeholder"))
         
         # Status label
         self.status_label = QLabel("")
@@ -423,7 +423,7 @@ class TextToJsonDock(BaseDock):
         input_text = self.input_text.toPlainText().strip()
         
         if not input_text:
-            self.show_warning("Empty Input", "Please enter text to convert.")
+            self.show_warning(tr("text_to_json.warn_empty_input_title"), tr("text_to_json.warn_empty_input_msg"))
             return
         
         try:
@@ -459,7 +459,7 @@ class TextToJsonDock(BaseDock):
             self._add_to_history(input_text, json_str, detected_format)
             
         except Exception as e:
-            self.show_error("Conversion Error", f"Failed to convert text:\n\n{str(e)}")
+            self.show_error(tr("text_to_json.error_conversion_title"), tr("text_to_json.error_conversion_msg").replace("{error}", str(e)))
             self.status_label.setText(f"✗ Conversion failed: {str(e)}")
             self.status_label.setStyleSheet("color: red;")
     
@@ -482,16 +482,16 @@ class TextToJsonDock(BaseDock):
         json_str = self.output_text.toPlainText().strip()
         
         if not json_str:
-            self.show_warning("Empty Output", "No JSON to validate.")
+            self.show_warning(tr("text_to_json.warn_empty_output_title"), tr("text_to_json.warn_empty_output_validate"))
             return
         
         try:
             json.loads(json_str)
-            self.show_info("Validation Success", "✓ JSON is valid!")
-            self.status_label.setText("✓ JSON is valid")
+            self.show_info(tr("text_to_json.info_valid_title"), tr("text_to_json.info_valid_msg"))
+            self.status_label.setText(tr("text_to_json.status_valid"))
             self.status_label.setStyleSheet("color: green;")
         except json.JSONDecodeError as e:
-            self.show_error("Validation Error", f"Invalid JSON:\n\n{str(e)}")
+            self.show_error(tr("text_to_json.error_invalid_title"), tr("text_to_json.error_invalid_msg").replace("{error}", str(e)))
             self.status_label.setText(f"✗ Invalid JSON: {str(e)}")
             self.status_label.setStyleSheet("color: red;")
     
@@ -500,15 +500,15 @@ class TextToJsonDock(BaseDock):
         json_str = self.output_text.toPlainText()
         
         if not json_str:
-            self.show_warning("Empty Output", "No JSON to copy.")
+            self.show_warning(tr("text_to_json.warn_empty_output_title"), tr("text_to_json.warn_empty_output_copy"))
             return
         
         from PySide6.QtWidgets import QApplication
         clipboard = QApplication.clipboard()
         clipboard.setText(json_str)
         
-        self.show_info("Copied", "JSON copied to clipboard!")
-        self.status_label.setText("✓ Copied to clipboard")
+        self.show_info(tr("text_to_json.info_copied_title"), tr("text_to_json.info_copied_msg"))
+        self.status_label.setText(tr("text_to_json.status_copied"))
         self.status_label.setStyleSheet("color: green;")
     
     def _on_open_editor_clicked(self) -> None:
@@ -516,23 +516,23 @@ class TextToJsonDock(BaseDock):
         json_str = self.output_text.toPlainText()
         
         if not json_str:
-            self.show_warning("Empty Output", "No JSON to open in editor.")
+            self.show_warning(tr("text_to_json.warn_empty_output_title"), tr("text_to_json.warn_empty_output_editor"))
             return
         
         # Emit signal to main window
         self.open_in_editor_requested.emit(json_str)
-        self.status_label.setText("✓ Opened in editor")
+        self.status_label.setText(tr("text_to_json.status_opened_editor"))
         self.status_label.setStyleSheet("color: green;")
     
     def _on_history_clicked(self) -> None:
         """Show conversion history."""
         if not self.conversion_history:
-            self.show_info("History Empty", "No conversion history yet.")
+            self.show_info(tr("text_to_json.info_history_empty_title"), tr("text_to_json.info_history_empty_msg"))
             return
         
         # Create history dialog
         dialog = QDialog(self)
-        dialog.setWindowTitle("Conversion History")
+        dialog.setWindowTitle(tr("text_to_json.history_dialog_title"))
         dialog.resize(600, 400)
         
         layout = QVBoxLayout(dialog)
@@ -546,10 +546,10 @@ class TextToJsonDock(BaseDock):
         
         list_widget.itemDoubleClicked.connect(lambda item: self._load_history_item(item, dialog))
         
-        layout.addWidget(QLabel("Double-click to load:"))
+        layout.addWidget(QLabel(tr("text_to_json.history_lbl_double_click")))
         layout.addWidget(list_widget)
         
-        close_btn = QPushButton("Close")
+        close_btn = QPushButton(tr("text_to_json.btn_close"))
         close_btn.clicked.connect(dialog.reject)
         layout.addWidget(close_btn)
         
@@ -566,7 +566,7 @@ class TextToJsonDock(BaseDock):
     
     def _on_swap_clicked(self) -> None:
         """Swap JSON to text (reverse conversion)."""
-        self.show_info("Swap Feature", "JSON to text conversion will be implemented in a future version.")
+        self.show_info(tr("text_to_json.info_swap_title"), tr("text_to_json.info_swap_msg"))
         # TODO: Implement reverse conversion (JSON → text format)
         # This would require converting JSON back to chosen text format
     
