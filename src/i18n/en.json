@@ -1032,5 +1032,14 @@
   "tutorials.title_welcome": "<h3>Welcome to Clarify Tutorials</h3>",
   "tutorials.status_ready": "Ready",
   "tutorials.status_index_not_found": "⚠️ index.json not found",
-  "tutorials.status_enter_keywords": "⚠️ Enter search keywords"
+  "tutorials.status_enter_keywords": "⚠️ Enter search keywords",
+  "file_list.placeholder_directory": "Directory to list...",
+  "file_list.btn_browse": "Browse...",
+  "file_list.btn_recent": "Recent ▼",
+  "file_list.chk_all": "Show hidden files (-a)",
+  "file_list.chk_long": "Long format (-l)",
+  "file_list.chk_human": "Human-readable sizes (-h)",
+  "file_list.chk_recursive": "Recursive (-R)",
+  "file_list.btn_list": "List Files",
+  "file_list.lbl_directory": "Directory:"
 }

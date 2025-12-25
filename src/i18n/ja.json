@@ -1001,5 +1001,14 @@
   "tutorials.title_welcome": "<h3>Clarifyチュートリアルへようこそ</h3>",
   "tutorials.status_ready": "準備完了",
   "tutorials.status_index_not_found": "⚠️ index.jsonが見つかりません",
-  "tutorials.status_enter_keywords": "⚠️ 検索キーワードを入力"
+  "tutorials.status_enter_keywords": "⚠️ 検索キーワードを入力",
+  "file_list.placeholder_directory": "一覧表示するディレクトリ...",
+  "file_list.btn_browse": "参照...",
+  "file_list.btn_recent": "最近 ▼",
+  "file_list.chk_all": "隠しファイルを表示 (-a)",
+  "file_list.chk_long": "詳細形式 (-l)",
+  "file_list.chk_human": "読みやすいサイズ (-h)",
+  "file_list.chk_recursive": "再帰的 (-R)",
+  "file_list.btn_list": "ファイル一覧",
+  "file_list.lbl_directory": "ディレクトリ:"
 }

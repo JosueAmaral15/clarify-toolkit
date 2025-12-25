@@ -55,29 +55,29 @@ class FileListDock(BaseDock):
         """Create UI widgets."""
         # Directory input
         self.ed_directory = QLineEdit()
-        self.ed_directory.setPlaceholderText("Directory to list...")
-        self.btn_browse = QPushButton("Browse...")
+        self.ed_directory.setPlaceholderText(tr("file_list.placeholder_directory"))
+        self.btn_browse = QPushButton(tr("file_list.btn_browse"))
         self.btn_browse.clicked.connect(self._browse_directory)
         
         # Recent directories menu button
-        self.btn_recent = QPushButton("Recent ▼")
+        self.btn_recent = QPushButton(tr("file_list.btn_recent"))
         self.btn_recent.clicked.connect(self._show_recent_menu)
         
         # Options
-        self.chk_all = QCheckBox("Show hidden files (-a)")
+        self.chk_all = QCheckBox(tr("file_list.chk_all"))
         self.chk_all.setChecked(getattr(self, 'chk_all_state', False))
         
-        self.chk_long = QCheckBox("Long format (-l)")
+        self.chk_long = QCheckBox(tr("file_list.chk_long"))
         self.chk_long.setChecked(getattr(self, 'chk_long_state', True))
         
-        self.chk_human = QCheckBox("Human-readable sizes (-h)")
+        self.chk_human = QCheckBox(tr("file_list.chk_human"))
         self.chk_human.setChecked(getattr(self, 'chk_human_state', True))
         
-        self.chk_recursive = QCheckBox("Recursive (-R)")
+        self.chk_recursive = QCheckBox(tr("file_list.chk_recursive"))
         self.chk_recursive.setChecked(getattr(self, 'chk_recursive_state', False))
         
         # List button
-        self.btn_list = QPushButton("List Files")
+        self.btn_list = QPushButton(tr("file_list.btn_list"))
         self.btn_list.clicked.connect(self._list_files)
         
         # Advanced Filters Panel (extracted component)
@@ -110,7 +110,7 @@ class FileListDock(BaseDock):
         
         # Directory selection
         dir_layout = QHBoxLayout()
-        dir_layout.addWidget(QLabel("Directory:"))
+        dir_layout.addWidget(QLabel(tr("file_list.lbl_directory")))
         dir_layout.addWidget(self.ed_directory)
         dir_layout.addWidget(self.btn_browse)
         dir_layout.addWidget(self.btn_recent)

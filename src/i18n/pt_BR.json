@@ -1009,5 +1009,14 @@
   "tutorials.title_welcome": "<h3>Bem-vindo aos Tutoriais do Clarify</h3>",
   "tutorials.status_ready": "Pronto",
   "tutorials.status_index_not_found": "⚠️ index.json não encontrado",
-  "tutorials.status_enter_keywords": "⚠️ Digite palavras-chave de pesquisa"
+  "tutorials.status_enter_keywords": "⚠️ Digite palavras-chave de pesquisa",
+  "file_list.placeholder_directory": "Diretório para listar...",
+  "file_list.btn_browse": "Procurar...",
+  "file_list.btn_recent": "Recentes ▼",
+  "file_list.chk_all": "Mostrar arquivos ocultos (-a)",
+  "file_list.chk_long": "Formato longo (-l)",
+  "file_list.chk_human": "Tamanhos legíveis (-h)",
+  "file_list.chk_recursive": "Recursivo (-R)",
+  "file_list.btn_list": "Listar Arquivos",
+  "file_list.lbl_directory": "Diretório:"
 }

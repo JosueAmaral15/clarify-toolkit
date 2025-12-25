@@ -1038,5 +1038,14 @@
   "tutorials.title_welcome": "<h3>欢迎来到 Clarify 教程</h3>",
   "tutorials.status_ready": "就绪",
   "tutorials.status_index_not_found": "⚠️ 找不到 index.json",
-  "tutorials.status_enter_keywords": "⚠️ 输入搜索关键字"
+  "tutorials.status_enter_keywords": "⚠️ 输入搜索关键字",
+  "file_list.placeholder_directory": "要列出的目录...",
+  "file_list.btn_browse": "浏览...",
+  "file_list.btn_recent": "最近 ▼",
+  "file_list.chk_all": "显示隐藏文件 (-a)",
+  "file_list.chk_long": "详细格式 (-l)",
+  "file_list.chk_human": "可读大小 (-h)",
+  "file_list.chk_recursive": "递归 (-R)",
+  "file_list.btn_list": "列出文件",
+  "file_list.lbl_directory": "目录:"
 }
