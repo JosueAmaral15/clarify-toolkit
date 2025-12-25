@@ -268,7 +268,7 @@ class StatisticsDialog(QDialog):
     def _export_excel(self):
         """Export removal stats to Excel (requires openpyxl)."""
         try:
-            import openpyxl
+            import openpyxl  # type: ignore[import-not-found]  # Optional dependency
         except ImportError:
             QMessageBox.warning(
                 self, "Missing Dependency", 

@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 try:
-    import openpyxl
-    from openpyxl.styles import Font, PatternFill
+    import openpyxl  # type: ignore[import-not-found]  # Optional dependency
+    from openpyxl.styles import Font, PatternFill  # type: ignore[import-not-found]
     _EXCEL_AVAILABLE = True
 except ImportError:
     _EXCEL_AVAILABLE = False
