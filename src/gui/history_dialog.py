@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from pathlib import Path
 from typing import Optional, Dict, Any
+from src.i18n.translator import tr
 
 
 class HistoryDialog(QDialog):
@@ -28,7 +29,7 @@ class HistoryDialog(QDialog):
         """
         super().__init__(parent)
         self.history_manager = history_manager
-        self.setWindowTitle("Operation History")
+        self.setWindowTitle(tr("history_dialog.title"))
         self.resize(800, 500)
         
         self._setup_ui()
@@ -53,7 +54,7 @@ class HistoryDialog(QDialog):
         layout.addWidget(self.list_widget)
         
         # Área de detalhes
-        details_label = QLabel("Operation Details:")
+        details_label = QLabel(tr("history_dialog.lbl_details"))
         layout.addWidget(details_label)
         
         self.details_text = QTextEdit()
@@ -64,25 +65,25 @@ class HistoryDialog(QDialog):
         # Botões de ação
         buttons_layout = QHBoxLayout()
         
-        self.btn_re_execute = QPushButton("🔄 Re-execute")
+        self.btn_re_execute = QPushButton(tr("history_dialog.btn_re_execute"))
         self.btn_re_execute.setToolTip("Re-execute selected operation")
         self.btn_re_execute.clicked.connect(self._on_re_execute_clicked)
         self.btn_re_execute.setEnabled(False)
         buttons_layout.addWidget(self.btn_re_execute)
         
-        self.btn_export = QPushButton("📤 Export History")
+        self.btn_export = QPushButton(tr("history_dialog.btn_export"))
         self.btn_export.setToolTip("Export all history to JSON file")
         self.btn_export.clicked.connect(self._on_export_clicked)
         buttons_layout.addWidget(self.btn_export)
         
-        self.btn_clear = QPushButton("🗑️ Clear All")
+        self.btn_clear = QPushButton(tr("history_dialog.btn_clear"))
         self.btn_clear.setToolTip("Clear all history")
         self.btn_clear.clicked.connect(self._on_clear_clicked)
         buttons_layout.addWidget(self.btn_clear)
         
         buttons_layout.addStretch()
         
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("history_dialog.btn_close"))
         self.btn_close.clicked.connect(self.accept)
         buttons_layout.addWidget(self.btn_close)
         

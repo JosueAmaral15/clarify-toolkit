@@ -1125,5 +1125,11 @@
   "error_report.btn_github": "🐛 An GitHub senden",
   "error_report.btn_copy": "📋 In Zwischenablage kopieren",
   "error_report.btn_save": "💾 Protokoll speichern",
-  "error_report.btn_close": "Schließen"
+  "error_report.btn_close": "Schließen",
+  "history_dialog.title": "Operationsverlauf",
+  "history_dialog.lbl_details": "Operationsdetails:",
+  "history_dialog.btn_re_execute": "🔄 Erneut ausführen",
+  "history_dialog.btn_export": "📤 Verlauf exportieren",
+  "history_dialog.btn_clear": "🗑️ Alles löschen",
+  "history_dialog.btn_close": "Schließen"
 }

@@ -1133,5 +1133,11 @@
   "error_report.btn_github": "🐛 Enviar para GitHub",
   "error_report.btn_copy": "📋 Copiar para Área de Transferência",
   "error_report.btn_save": "💾 Salvar Log",
-  "error_report.btn_close": "Fechar"
+  "error_report.btn_close": "Fechar",
+  "history_dialog.title": "Histórico de Operações",
+  "history_dialog.lbl_details": "Detalhes da Operação:",
+  "history_dialog.btn_re_execute": "🔄 Reexecutar",
+  "history_dialog.btn_export": "📤 Exportar Histórico",
+  "history_dialog.btn_clear": "🗑️ Limpar Tudo",
+  "history_dialog.btn_close": "Fechar"
 }
