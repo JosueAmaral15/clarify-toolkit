@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.extractors import GenericScopeParser, JSXParser
+from src.i18n.translator import tooltip_tr, tr
 from src.utils.normalization import (
     STANDARD_HTML_TAGS,
     is_standard_tag,
@@ -114,112 +115,112 @@ class JSXExtractorDock(BaseDock):
     def _create_widgets(self) -> None:
         """Create all widgets."""
         # Path section
-        self.path_label = QLabel("Path (file/dir):")
+        self.path_label = QLabel(tr("jsx.lbl_path"))
         self.ed_path = QLineEdit()
-        self.ed_path.setPlaceholderText("Select a file or directory...")
+        self.ed_path.setPlaceholderText(tr("jsx.placeholder_path"))
 
-        self.btn_browse = QPushButton("Browse")
+        self.btn_browse = QPushButton(tr("jsx.btn_browse"))
 
-        self.is_file = QCheckBox("Is file?")
+        self.is_file = QCheckBox(tr("jsx.chk_is_file"))
 
         # Param and mode section
-        self.param_label = QLabel("Param/Attribute:")
+        self.param_label = QLabel(tr("jsx.lbl_param"))
         self.ed_param = QLineEdit("")
-        self.ed_param.setPlaceholderText("Leave empty or * to match all")
+        self.ed_param.setPlaceholderText(tr("jsx.placeholder_param"))
 
-        self.chk_is_attribute_mode = QCheckBox("Treat Param as ATTRIBUTE?")
+        self.chk_is_attribute_mode = QCheckBox(tr("jsx.chk_is_attribute"))
         self.chk_is_attribute_mode.setChecked(True)  # Default: attribute mode
 
-        self.mode_label = QLabel("Mode:")
+        self.mode_label = QLabel(tr("jsx.lbl_mode"))
         self.cb_mode = QComboBox()
         self.cb_mode.addItems(["jsx", "generic"])
 
         # Generic delimiters (only for generic mode)
-        self.start_label = QLabel("Start delimiter (regex):")
+        self.start_label = QLabel(tr("jsx.lbl_start_delim"))
         self.ed_start = QLineEdit("<.*?>")
         self.ed_start.setEnabled(False)
 
-        self.end_label = QLabel("End delimiter (regex):")
+        self.end_label = QLabel(tr("jsx.lbl_end_delim"))
         self.ed_end = QLineEdit("</.*?>")
         self.ed_end.setEnabled(False)
 
         # Extensions
-        self.ext_label = QLabel("Extensions:")
+        self.ext_label = QLabel(tr("jsx.lbl_extensions"))
         self.ed_ext = QLineEdit(".tsx .jsx .js .ts")
 
         # Options group
-        self.options_group = QGroupBox("Extraction Options")
+        self.options_group = QGroupBox(tr("jsx.group_options"))
 
-        self.chk_include_key = QCheckBox("Include key")
+        self.chk_include_key = QCheckBox(tr("jsx.chk_include_key"))
         self.chk_include_key.setChecked(True)
 
-        self.chk_include_value = QCheckBox("Include value")
+        self.chk_include_value = QCheckBox(tr("jsx.chk_include_value"))
         self.chk_include_value.setChecked(False)
 
-        self.chk_no_standard = QCheckBox("Drop standard HTML tags")
+        self.chk_no_standard = QCheckBox(tr("jsx.chk_no_standard"))
         self.chk_no_standard.setChecked(False)
 
-        self.chk_only_strings = QCheckBox("Only strings")
+        self.chk_only_strings = QCheckBox(tr("jsx.chk_only_strings"))
         self.chk_only_strings.setChecked(False)
 
-        self.chk_include_quotation_marks = QCheckBox("Include quotation marks")
+        self.chk_include_quotation_marks = QCheckBox(tr("jsx.chk_include_quotes"))
         self.chk_include_quotation_marks.setChecked(False)
 
         # Normalization options
-        self.norm_group = QGroupBox("Token Normalization")
+        self.norm_group = QGroupBox(tr("jsx.group_normalization"))
 
-        self.case_label = QLabel("Case style:")
+        self.case_label = QLabel(tr("jsx.lbl_case_style"))
         self.cb_case = QComboBox()
         self.cb_case.addItems(["snake", "camel", "pascal", "kebab"])
 
-        self.chk_upper = QCheckBox("Uppercase token")
+        self.chk_upper = QCheckBox(tr("jsx.chk_uppercase"))
         self.chk_upper.setChecked(False)
 
-        self.limit_label = QLabel("Limit:")
+        self.limit_label = QLabel(tr("jsx.lbl_limit"))
         self.ed_limit = QLineEdit("all")
-        self.ed_limit.setPlaceholderText("all or number")
+        self.ed_limit.setPlaceholderText(tr("jsx.placeholder_limit"))
 
-        self.chk_avoid_cut = QCheckBox("Avoid cut")
+        self.chk_avoid_cut = QCheckBox(tr("jsx.chk_avoid_cut"))
         self.chk_avoid_cut.setChecked(False)
 
         # JSON options
-        self.json_group = QGroupBox("JSON Options")
+        self.json_group = QGroupBox(tr("jsx.group_json"))
 
-        self.indent_label = QLabel("Indentation:")
+        self.indent_label = QLabel(tr("jsx.lbl_indentation"))
         self.spin_indent = QSpinBox()
         self.spin_indent.setRange(0, 8)
         self.spin_indent.setValue(2)
 
         # Avoid keys (filter)
-        self.avoid_label = QLabel("Avoid keys (comma-separated):")
+        self.avoid_label = QLabel(tr("jsx.lbl_avoid_keys"))
         self.avoid_keys = QLineEdit("")
-        self.avoid_keys.setPlaceholderText("e.g., className,key,ref")
+        self.avoid_keys.setPlaceholderText(tr("jsx.placeholder_avoid_keys"))
 
-        self.avoid_keys_mode_label = QLabel("Avoid mode:")
+        self.avoid_keys_mode_label = QLabel(tr("jsx.lbl_avoid_mode"))
         self.cb_avoid_mode = QComboBox()
         self.cb_avoid_mode.addItems(["contains", "equals"])
 
         # Action buttons
-        self.btn_run = QPushButton("Extract")
+        self.btn_run = QPushButton(tr("jsx.btn_extract"))
 
-        self.btn_save = QPushButton("Save Outputs")
+        self.btn_save = QPushButton(tr("jsx.btn_save"))
 
-        self.btn_copy = QPushButton("Copy All")
+        self.btn_copy = QPushButton(tr("jsx.btn_copy"))
 
-        self.btn_clear = QPushButton("Clear")
+        self.btn_clear = QPushButton(tr("jsx.btn_clear"))
 
         # Output tabs
         self.tabs = QTabWidget()
 
         self.out_paths = QPlainTextEdit()
         self.out_paths.setReadOnly(True)
-        self.out_paths.setPlaceholderText("Extracted paths will appear here...")
+        self.out_paths.setPlaceholderText(tr("jsx.placeholder_paths"))
         font = QFont("Courier New", 10)
         self.out_paths.setFont(font)
 
         self.out_json = QPlainTextEdit()
         self.out_json.setReadOnly(True)
-        self.out_json.setPlaceholderText("Generated JSON will appear here...")
+        self.out_json.setPlaceholderText(tr("jsx.placeholder_json"))
         self.out_json.setFont(font)
 
         self.tabs.addTab(self.out_paths, "Paths")
@@ -454,7 +455,7 @@ class JSXExtractorDock(BaseDock):
             exts = [e.strip() for e in self.ed_ext.text().split() if e.strip()]
             avoid_mode = self.cb_avoid_mode.currentText()
 
-            self.status_label.setText("Extracting...")
+            self.status_label.setText(tr("jsx.status_extracting"))
             self.status_label.setStyleSheet("color: blue; font-style: italic;")
 
             # Import Extractor here to avoid circular imports
@@ -491,7 +492,7 @@ class JSXExtractorDock(BaseDock):
             self.out_paths.setPlainText(text_result)
             self.out_json.setPlainText(json_result or "{}")
 
-            self.status_label.setText("Extraction completed successfully!")
+            self.status_label.setText(tr("jsx.status_completed"))
             self.status_label.setStyleSheet("color: green; font-style: italic;")
 
         except Exception as e:
@@ -556,7 +557,7 @@ class JSXExtractorDock(BaseDock):
 
         if text:
             QApplication.clipboard().setText(text)
-            self.status_label.setText("Copied to clipboard!")
+            self.status_label.setText(tr("jsx.status_copied"))
             self.status_label.setStyleSheet("color: green; font-style: italic;")
         else:
             QMessageBox.information(self, "Nothing to copy", "No content to copy.")
