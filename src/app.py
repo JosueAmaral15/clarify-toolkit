@@ -1476,8 +1476,7 @@ if _PYSIDE:
                 (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON"),
                 (self.act_open_placeholder_replacer, "open_placeholder_replacer", "Replace placeholders in text"),
                 (self.act_open_translate, "open_translate", "Translate JSON content"),
-                (self.act_open_file_list, "open_file_list", "Manage file lists"),
-                (self.act_advanced_file_search, "advanced_file_search", "Advanced file search"),
+                (self.act_open_file_explorer, "open_file_explorer", "Unified file explorer with advanced search"),
                 
                 # View menu
                 (self.act_toggle_history, "toggle_history", "Show/hide operation history"),
