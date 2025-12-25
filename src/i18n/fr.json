@@ -682,5 +682,18 @@
   "placeholder_replacer.warning_no_target": "Veuillez sélectionner un fichier ou un répertoire.",
   "placeholder_replacer.warning_no_mapping": "Veuillez sélectionner un fichier de mappage.",
   "placeholder_replacer.success_replacement": "Remplacement terminé!",
-  "placeholder_replacer.error_processing": "Échec du traitement:\n{error}"
+  "placeholder_replacer.error_processing": "Échec du traitement:\n{error}",
+  "case_converter.title": "Convertisseur de Casse",
+  "case_converter.lbl_source": "Style source:",
+  "case_converter.option_auto": "Détection automatique",
+  "case_converter.option_camel": "camelCase",
+  "case_converter.option_pascal": "PascalCase",
+  "case_converter.option_snake": "snake_case",
+  "case_converter.option_kebab": "kebab-case",
+  "case_converter.lbl_target": "Style cible:",
+  "case_converter.lbl_extensions": "Extensions:",
+  "case_converter.default_extensions": ".js,.ts,.jsx,.tsx,.py",
+  "case_converter.placeholder_extensions": "Séparé par des virgules (ex: .js,.py)",
+  "case_converter.browse_filter": "Fichiers source (*.js *.ts *.jsx *.tsx *.py);;Tous les fichiers (*)",
+  "case_converter.error_title": "Erreur de Conversion"
 }

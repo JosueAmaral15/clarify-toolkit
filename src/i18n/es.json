@@ -690,5 +690,18 @@
   "placeholder_replacer.warning_no_target": "Por favor, seleccione un archivo o directorio.",
   "placeholder_replacer.warning_no_mapping": "Por favor, seleccione un archivo de mapeo.",
   "placeholder_replacer.success_replacement": "¡Reemplazo completado!",
-  "placeholder_replacer.error_processing": "Fallo en el procesamiento:\n{error}"
+  "placeholder_replacer.error_processing": "Falló el procesamiento:\n{error}",
+  "case_converter.title": "Convertidor de Casos",
+  "case_converter.lbl_source": "Estilo de origen:",
+  "case_converter.option_auto": "Detección automática",
+  "case_converter.option_camel": "camelCase",
+  "case_converter.option_pascal": "PascalCase",
+  "case_converter.option_snake": "snake_case",
+  "case_converter.option_kebab": "kebab-case",
+  "case_converter.lbl_target": "Estilo de destino:",
+  "case_converter.lbl_extensions": "Extensiones:",
+  "case_converter.default_extensions": ".js,.ts,.jsx,.tsx,.py",
+  "case_converter.placeholder_extensions": "Separado por comas (ej: .js,.py)",
+  "case_converter.browse_filter": "Archivos de código (*.js *.ts *.jsx *.tsx *.py);;Todos los archivos (*)",
+  "case_converter.error_title": "Error de Conversión"
 }

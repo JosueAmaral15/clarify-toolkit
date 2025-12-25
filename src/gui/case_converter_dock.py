@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 from .base_dock import StandardToolDock, ProcessorWorkerBase
 from src.case_converter import convert_file, convert_string
 from src.i18n import tooltip_tr
+from src.i18n.translator import tr
 
 
 class CaseConverterWorker(ProcessorWorkerBase):
@@ -61,7 +62,7 @@ class CaseConverterDock(StandardToolDock):
     """Dock widget for case conversion tool."""
     
     def __init__(self, parent=None):
-        super().__init__("Case Converter", parent)
+        super().__init__(tr("case_converter.title"), parent)
         self.worker = None
     
     def _setup_ui(self):
@@ -69,26 +70,26 @@ class CaseConverterDock(StandardToolDock):
         grid = QGridLayout()
         
         # Source case style
-        grid.addWidget(QLabel("Source style:"), 0, 0)
+        grid.addWidget(QLabel(tr("case_converter.lbl_source")), 0, 0)
         self.combo_source = QComboBox()
         self.combo_source.addItems([
-            "Auto-detect",
-            "camelCase",
-            "PascalCase",
-            "snake_case",
-            "kebab-case"
+            tr("case_converter.option_auto"),
+            tr("case_converter.option_camel"),
+            tr("case_converter.option_pascal"),
+            tr("case_converter.option_snake"),
+            tr("case_converter.option_kebab")
         ])
         self.combo_source.setToolTip(tooltip_tr("case.combo_source"))
         grid.addWidget(self.combo_source, 0, 1, 1, 3)
         
         # Target case style
-        grid.addWidget(QLabel("Target style:"), 1, 0)
+        grid.addWidget(QLabel(tr("case_converter.lbl_target")), 1, 0)
         self.combo_target = QComboBox()
         self.combo_target.addItems([
-            "camelCase",
-            "PascalCase",
-            "snake_case",
-            "kebab-case"
+            tr("case_converter.option_camel"),
+            tr("case_converter.option_pascal"),
+            tr("case_converter.option_snake"),
+            tr("case_converter.option_kebab")
         ])
         self.combo_target.setToolTip(tooltip_tr("case.combo_target"))
         grid.addWidget(self.combo_target, 1, 1, 1, 3)
@@ -107,10 +108,10 @@ class CaseConverterDock(StandardToolDock):
         grid.addWidget(self.chk_is_file, 3, 0, 1, 2)
         
         # Extensions filter
-        grid.addWidget(QLabel("Extensions:"), 3, 2)
+        grid.addWidget(QLabel(tr("case_converter.lbl_extensions")), 3, 2)
         self.ed_extensions = QLineEdit()
-        self.ed_extensions.setText(".js,.ts,.jsx,.tsx,.py")
-        self.ed_extensions.setPlaceholderText("Comma-separated (e.g., .js,.py)")
+        self.ed_extensions.setText(tr("case_converter.default_extensions"))
+        self.ed_extensions.setPlaceholderText(tr("case_converter.placeholder_extensions"))
         self.ed_extensions.setToolTip(tooltip_tr("case.ed_extensions"))
         grid.addWidget(self.ed_extensions, 3, 3)
         
@@ -158,7 +159,7 @@ class CaseConverterDock(StandardToolDock):
         self.browse_file_or_directory(
             self.ed_path,
             self.chk_is_file.isChecked(),
-            "Source files (*.js *.ts *.jsx *.tsx *.py);;All files (*)"
+            tr("case_converter.browse_filter")
         )
     
     def _get_files(self):
@@ -226,7 +227,7 @@ class CaseConverterDock(StandardToolDock):
             self.worker.start()
             
         except Exception as e:
-            self.show_error("Conversion Error", str(e))
+            self.show_error(tr("case_converter.error_title"), str(e))
     
     def _interrupt(self):
         """Interrupt processing."""

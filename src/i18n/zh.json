@@ -682,5 +682,18 @@
   "placeholder_replacer.warning_no_target": "请选择文件或目录。",
   "placeholder_replacer.warning_no_mapping": "请选择映射文件。",
   "placeholder_replacer.success_replacement": "替换完成！",
-  "placeholder_replacer.error_processing": "处理失败:\n{error}"
+  "placeholder_replacer.error_processing": "处理失败：\n{error}",
+  "case_converter.title": "大小写转换器",
+  "case_converter.lbl_source": "源样式：",
+  "case_converter.option_auto": "自动检测",
+  "case_converter.option_camel": "camelCase",
+  "case_converter.option_pascal": "PascalCase",
+  "case_converter.option_snake": "snake_case",
+  "case_converter.option_kebab": "kebab-case",
+  "case_converter.lbl_target": "目标样式：",
+  "case_converter.lbl_extensions": "扩展名：",
+  "case_converter.default_extensions": ".js,.ts,.jsx,.tsx,.py",
+  "case_converter.placeholder_extensions": "逗号分隔（例如：.js,.py）",
+  "case_converter.browse_filter": "源文件 (*.js *.ts *.jsx *.tsx *.py);;所有文件 (*)",
+  "case_converter.error_title": "转换错误"
 }

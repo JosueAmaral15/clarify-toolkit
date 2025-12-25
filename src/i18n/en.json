@@ -713,5 +713,18 @@
   "placeholder_replacer.warning_no_target": "Please select a file or directory.",
   "placeholder_replacer.warning_no_mapping": "Please select a mapping file.",
   "placeholder_replacer.success_replacement": "Replacement completed!",
-  "placeholder_replacer.error_processing": "Processing failed:\n{error}"
+  "placeholder_replacer.error_processing": "Processing failed:\n{error}",
+  "case_converter.title": "Case Converter",
+  "case_converter.lbl_source": "Source style:",
+  "case_converter.option_auto": "Auto-detect",
+  "case_converter.option_camel": "camelCase",
+  "case_converter.option_pascal": "PascalCase",
+  "case_converter.option_snake": "snake_case",
+  "case_converter.option_kebab": "kebab-case",
+  "case_converter.lbl_target": "Target style:",
+  "case_converter.lbl_extensions": "Extensions:",
+  "case_converter.default_extensions": ".js,.ts,.jsx,.tsx,.py",
+  "case_converter.placeholder_extensions": "Comma-separated (e.g., .js,.py)",
+  "case_converter.browse_filter": "Source files (*.js *.ts *.jsx *.tsx *.py);;All files (*)",
+  "case_converter.error_title": "Conversion Error"
 }
