@@ -589,5 +589,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom}个自定义快捷键活动",
   "shortcuts_dialog.status_default": "使用默认快捷键",
   "shortcuts_dialog.status_reset_selected": "✓ 选定的快捷键已重置为默认值",
-  "shortcuts_dialog.status_reset_all": "✓ 所有快捷键已重置为默认值"
+  "shortcuts_dialog.status_reset_all": "✓ 所有快捷键已重置为默认值",
+  
+  "update_notification.title": "可用更新 - Clarify",
+  "update_notification.header": "✨ 新版本: Clarify v{version}",
+  "update_notification.published_at": "发布于: {date}",
+  "update_notification.whats_new": "<b>新功能:</b>",
+  "update_notification.btn_changelog": "📖 查看完整变更日志",
+  "update_notification.chk_dont_show": "不再显示版本{version}",
+  "update_notification.btn_download": "⬇️ 下载更新",
+  "update_notification.btn_later": "稍后提醒我",
+  "update_notification.no_description": "没有描述。"
 }

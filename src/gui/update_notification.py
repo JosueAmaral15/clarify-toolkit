@@ -23,6 +23,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QFont, QIcon
 
+from src.i18n.translator import tr
+
 
 class UpdateNotificationDialog(QDialog):
     """
@@ -80,7 +82,7 @@ class UpdateNotificationDialog(QDialog):
     
     def _init_ui(self) -> None:
         """Build dialog UI."""
-        self.setWindowTitle("Atualização Disponível - Clarify")
+        self.setWindowTitle(tr("update_notification.title"))
         self.setMinimumSize(500, 400)
         self.setModal(False)  # Non-modal
         
@@ -94,7 +96,7 @@ class UpdateNotificationDialog(QDialog):
         header_layout.setSpacing(5)
         
         # Title
-        title = QLabel(f"✨ Nova Versão: Clarify v{self.latest_version}")
+        title = QLabel(tr("update_notification.header").replace("{version}", self.latest_version))
         title_font = QFont()
         title_font.setPointSize(14)
         title_font.setBold(True)
@@ -103,14 +105,14 @@ class UpdateNotificationDialog(QDialog):
         
         # Publication date
         if self.published_at:
-            date_label = QLabel(f"Publicado em: {self._format_date(self.published_at)}")
+            date_label = QLabel(tr("update_notification.published_at").replace("{date}", self._format_date(self.published_at)))
             date_label.setStyleSheet("color: gray;")
             header_layout.addWidget(date_label)
         
         layout.addLayout(header_layout)
         
         # --- Release Notes ---
-        notes_label = QLabel("<b>Novidades:</b>")
+        notes_label = QLabel(tr("update_notification.whats_new"))
         layout.addWidget(notes_label)
         
         notes_text = QTextEdit()
@@ -121,7 +123,7 @@ class UpdateNotificationDialog(QDialog):
         layout.addWidget(notes_text)
         
         # --- Changelog Link ---
-        changelog_btn = QPushButton("📖 Ver Changelog Completo")
+        changelog_btn = QPushButton(tr("update_notification.btn_changelog"))
         changelog_btn.clicked.connect(self._open_changelog)
         changelog_btn.setStyleSheet("text-align: left; padding: 5px;")
         layout.addWidget(changelog_btn)
@@ -131,7 +133,7 @@ class UpdateNotificationDialog(QDialog):
         
         # --- "Don't show again" Option ---
         self.dont_show_checkbox = QCheckBox(
-            f"Não mostrar novamente para a versão {self.latest_version}"
+            tr("update_notification.chk_dont_show").replace("{version}", self.latest_version)
         )
         layout.addWidget(self.dont_show_checkbox)
         
@@ -140,7 +142,7 @@ class UpdateNotificationDialog(QDialog):
         button_layout.setSpacing(10)
         
         # Download button (primary)
-        download_btn = QPushButton("⬇️ Baixar Atualização")
+        download_btn = QPushButton(tr("update_notification.btn_download"))
         download_btn.clicked.connect(self._download_update)
         download_btn.setDefault(True)
         download_btn.setStyleSheet("""
@@ -159,7 +161,7 @@ class UpdateNotificationDialog(QDialog):
         button_layout.addWidget(download_btn)
         
         # Remind me later button (secondary)
-        later_btn = QPushButton("Lembrar Depois")
+        later_btn = QPushButton(tr("update_notification.btn_later"))
         later_btn.clicked.connect(self._remind_later)
         later_btn.setStyleSheet("""
             QPushButton {
@@ -202,7 +204,7 @@ class UpdateNotificationDialog(QDialog):
             Formatted excerpt (first 5 lines or 300 chars)
         """
         if not notes:
-            return "Sem descrição disponível."
+            return tr("update_notification.no_description")
         
         # Remove markdown headers
         lines = [line.strip() for line in notes.split('\n') if line.strip()]

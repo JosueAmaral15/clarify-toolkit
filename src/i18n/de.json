@@ -589,5 +589,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom} benutzerdefinierte(s) Kürzel aktiv",
   "shortcuts_dialog.status_default": "Verwende Standard-Kürzel",
   "shortcuts_dialog.status_reset_selected": "✓ Ausgewählte Kürzel auf Standard zurückgesetzt",
-  "shortcuts_dialog.status_reset_all": "✓ Alle Kürzel auf Standard zurückgesetzt"
+  "shortcuts_dialog.status_reset_all": "✓ Alle Kürzel auf Standard zurückgesetzt",
+  
+  "update_notification.title": "Update Verfügbar - Clarify",
+  "update_notification.header": "✨ Neue Version: Clarify v{version}",
+  "update_notification.published_at": "Veröffentlicht am: {date}",
+  "update_notification.whats_new": "<b>Neuigkeiten:</b>",
+  "update_notification.btn_changelog": "📖 Vollständiges Changelog anzeigen",
+  "update_notification.chk_dont_show": "Nicht mehr anzeigen für Version {version}",
+  "update_notification.btn_download": "⬇️ Update Herunterladen",
+  "update_notification.btn_later": "Später Erinnern",
+  "update_notification.no_description": "Keine Beschreibung verfügbar."
 }

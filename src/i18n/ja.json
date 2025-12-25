@@ -589,5 +589,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom}件のカスタムショートカットがアクティブ",
   "shortcuts_dialog.status_default": "デフォルトのショートカットを使用中",
   "shortcuts_dialog.status_reset_selected": "✓ 選択したショートカットをデフォルトにリセットしました",
-  "shortcuts_dialog.status_reset_all": "✓ すべてのショートカットをデフォルトにリセットしました"
+  "shortcuts_dialog.status_reset_all": "✓ すべてのショートカットをデフォルトにリセットしました",
+  
+  "update_notification.title": "アップデート利用可能 - Clarify",
+  "update_notification.header": "✨ 新しいバージョン: Clarify v{version}",
+  "update_notification.published_at": "公開日: {date}",
+  "update_notification.whats_new": "<b>新機能:</b>",
+  "update_notification.btn_changelog": "📖 完全な変更履歴を表示",
+  "update_notification.chk_dont_show": "バージョン{version}については二度と表示しない",
+  "update_notification.btn_download": "⬇️ アップデートをダウンロード",
+  "update_notification.btn_later": "後で通知する",
+  "update_notification.no_description": "説明はありません。"
 }

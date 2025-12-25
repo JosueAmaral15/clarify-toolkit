@@ -620,5 +620,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom} custom shortcut(s) active",
   "shortcuts_dialog.status_default": "Using default shortcuts",
   "shortcuts_dialog.status_reset_selected": "✓ Selected shortcuts reset to defaults",
-  "shortcuts_dialog.status_reset_all": "✓ All shortcuts reset to defaults"
+  "shortcuts_dialog.status_reset_all": "✓ All shortcuts reset to defaults",
+  
+  "update_notification.title": "Update Available - Clarify",
+  "update_notification.header": "✨ New Version: Clarify v{version}",
+  "update_notification.published_at": "Published on: {date}",
+  "update_notification.whats_new": "<b>What's New:</b>",
+  "update_notification.btn_changelog": "📖 View Full Changelog",
+  "update_notification.chk_dont_show": "Don't show again for version {version}",
+  "update_notification.btn_download": "⬇️ Download Update",
+  "update_notification.btn_later": "Remind Me Later",
+  "update_notification.no_description": "No description available."
 }

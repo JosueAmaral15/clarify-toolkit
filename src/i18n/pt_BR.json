@@ -597,5 +597,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom} atalho(s) personalizado(s) ativo(s)",
   "shortcuts_dialog.status_default": "Usando atalhos padrão",
   "shortcuts_dialog.status_reset_selected": "✓ Atalhos selecionados redefinidos para os padrões",
-  "shortcuts_dialog.status_reset_all": "✓ Todos os atalhos redefinidos para os padrões"
+  "shortcuts_dialog.status_reset_all": "✓ Todos os atalhos redefinidos para os padrões",
+  
+  "update_notification.title": "Atualização Disponível - Clarify",
+  "update_notification.header": "✨ Nova Versão: Clarify v{version}",
+  "update_notification.published_at": "Publicado em: {date}",
+  "update_notification.whats_new": "<b>Novidades:</b>",
+  "update_notification.btn_changelog": "📖 Ver Changelog Completo",
+  "update_notification.chk_dont_show": "Não mostrar novamente para a versão {version}",
+  "update_notification.btn_download": "⬇️ Baixar Atualização",
+  "update_notification.btn_later": "Lembrar Depois",
+  "update_notification.no_description": "Sem descrição disponível."
 }

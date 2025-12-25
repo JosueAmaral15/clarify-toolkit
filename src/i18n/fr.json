@@ -589,5 +589,15 @@
   "shortcuts_dialog.status_custom": "ℹ️ {custom} raccourci(s) personnalisé(s) actif(s)",
   "shortcuts_dialog.status_default": "Utilisation des raccourcis par défaut",
   "shortcuts_dialog.status_reset_selected": "✓ Raccourcis sélectionnés réinitialisés par défaut",
-  "shortcuts_dialog.status_reset_all": "✓ Tous les raccourcis réinitialisés par défaut"
+  "shortcuts_dialog.status_reset_all": "✓ Tous les raccourcis réinitialisés par défaut",
+  
+  "update_notification.title": "Mise à Jour Disponible - Clarify",
+  "update_notification.header": "✨ Nouvelle Version: Clarify v{version}",
+  "update_notification.published_at": "Publié le: {date}",
+  "update_notification.whats_new": "<b>Nouveautés:</b>",
+  "update_notification.btn_changelog": "📖 Voir le Changelog Complet",
+  "update_notification.chk_dont_show": "Ne plus afficher pour la version {version}",
+  "update_notification.btn_download": "⬇️ Télécharger la Mise à Jour",
+  "update_notification.btn_later": "Me Rappeler Plus Tard",
+  "update_notification.no_description": "Aucune description disponible."
 }
