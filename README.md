@@ -288,6 +288,23 @@ cd clarify
 pip install PySide6  # Necessário para GUI
 ```
 
+#### 📦 Dependências Opcionais
+
+O Clarify tem algumas features que requerem bibliotecas adicionais:
+
+**Excel Export** (Exportar estatísticas para .xlsx):
+```bash
+pip install openpyxl>=3.1.0
+```
+
+Se `openpyxl` não estiver instalado, ao tentar exportar para Excel você verá:
+> ⚠️ Excel export requires 'openpyxl' package. Install with: pip install openpyxl
+
+**Instalação completa** (todas as dependências):
+```bash
+pip install -r requirements.txt  # Todas as bibliotecas principais + opcionais
+```
+
 ### 🖥️ Modo GUI (Recomendado)
 
 ```bash
