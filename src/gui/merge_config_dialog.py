@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from src.i18n.translator import tr
 
 
 class MergeConfigDialog(QDialog):
@@ -41,7 +42,7 @@ class MergeConfigDialog(QDialog):
         self.auto_backup = True
         self.max_backups = 5
         
-        self.setWindowTitle("Merge Configuration - v2.9.100")
+        self.setWindowTitle(tr("merge_config.title"))
         self.setMinimumWidth(500)
         self.setModal(True)
         
@@ -52,16 +53,13 @@ class MergeConfigDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # === Info Section ===
-        info_label = QLabel(
-            "Configure how Set Operations results will be merged back to the original file.\n"
-            "Preview will be shown before applying changes."
-        )
+        info_label = QLabel(tr("merge_config.info"))
         info_label.setWordWrap(True)
         info_label.setStyleSheet("color: #6A9955; font-style: italic;")
         layout.addWidget(info_label)
         
         # === File Selection ===
-        file_group = QGroupBox("Target File")
+        file_group = QGroupBox(tr("merge_config.group_target_file"))
         file_layout = QVBoxLayout()
         
         file_row = QHBoxLayout()
@@ -69,7 +67,7 @@ class MergeConfigDialog(QDialog):
         self.ed_file.setReadOnly(True)
         self.ed_file.setToolTip("File to merge results into")
         
-        self.btn_browse = QPushButton("Browse...")
+        self.btn_browse = QPushButton(tr("merge_config.btn_browse"))
         self.btn_browse.setToolTip("Select different target file")
         self.btn_browse.clicked.connect(self._browse_file)
         
@@ -81,31 +79,31 @@ class MergeConfigDialog(QDialog):
         layout.addWidget(file_group)
         
         # === Merge Mode Selection ===
-        mode_group = QGroupBox("Merge Mode")
+        mode_group = QGroupBox(tr("merge_config.group_merge_mode"))
         mode_layout = QVBoxLayout()
         
-        self.radio_replace = QRadioButton("Replace")
+        self.radio_replace = QRadioButton(tr("merge_config.radio_replace"))
         self.radio_replace.setToolTip(
             "Overwrite entire file with result data (creates backup first)"
         )
         font_bold = QFont()
         font_bold.setBold(True)
-        label_replace = QLabel("Complete replacement - original content lost")
+        label_replace = QLabel(tr("merge_config.label_replace"))
         label_replace.setStyleSheet("color: #CE9178; margin-left: 20px;")
         
-        self.radio_merge = QRadioButton("Merge")
+        self.radio_merge = QRadioButton(tr("merge_config.radio_merge"))
         self.radio_merge.setChecked(True)
         self.radio_merge.setToolTip(
             "Deep merge result into existing file (result keys overwrite original)"
         )
-        label_merge = QLabel("Intelligent merge - preserves original keys not in result")
+        label_merge = QLabel(tr("merge_config.label_merge"))
         label_merge.setStyleSheet("color: #6A9955; margin-left: 20px;")
         
-        self.radio_new_file = QRadioButton("New File")
+        self.radio_new_file = QRadioButton(tr("merge_config.radio_new_file"))
         self.radio_new_file.setToolTip(
             "Create new file with '_merged' suffix (original untouched)"
         )
-        label_new = QLabel("Safest option - creates data_merged.json")
+        label_new = QLabel(tr("merge_config.label_new_file"))
         label_new.setStyleSheet("color: #4EC9B0; margin-left: 20px;")
         
         mode_layout.addWidget(self.radio_replace)
@@ -121,10 +119,10 @@ class MergeConfigDialog(QDialog):
         layout.addWidget(mode_group)
         
         # === Backup Options ===
-        backup_group = QGroupBox("Backup Options")
+        backup_group = QGroupBox(tr("merge_config.group_backup"))
         backup_layout = QVBoxLayout()
         
-        self.chk_auto_backup = QCheckBox("Automatic backup before merge (recommended)")
+        self.chk_auto_backup = QCheckBox(tr("merge_config.chk_auto_backup"))
         self.chk_auto_backup.setChecked(True)
         self.chk_auto_backup.setToolTip(
             "Creates .bak file with timestamp before overwriting (only for Replace/Merge modes)"
@@ -132,7 +130,7 @@ class MergeConfigDialog(QDialog):
         backup_layout.addWidget(self.chk_auto_backup)
         
         backup_row = QHBoxLayout()
-        backup_label = QLabel("Maximum backups to keep:")
+        backup_label = QLabel(tr("merge_config.lbl_max_backups"))
         backup_label.setToolTip("Older backups are automatically deleted")
         
         self.spin_max_backups = QSpinBox()
@@ -152,12 +150,12 @@ class MergeConfigDialog(QDialog):
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         
-        self.btn_preview = QPushButton("Preview Merge")
+        self.btn_preview = QPushButton(tr("merge_config.btn_preview"))
         self.btn_preview.setToolTip("Show preview before applying changes")
         self.btn_preview.clicked.connect(self._accept)
         self.btn_preview.setDefault(True)
         
-        btn_cancel = QPushButton("Cancel")
+        btn_cancel = QPushButton(tr("merge_config.btn_cancel"))
         btn_cancel.setToolTip("Cancel merge operation")
         btn_cancel.clicked.connect(self.reject)
         
@@ -169,7 +167,7 @@ class MergeConfigDialog(QDialog):
         """Open file browser to select target file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select Target File",
+            tr("merge_config.browse_title"),
             os.path.dirname(self.default_file),
             "JSON Files (*.json)"
         )
@@ -194,8 +192,8 @@ class MergeConfigDialog(QDialog):
         if not os.path.exists(self.selected_file):
             QMessageBox.warning(
                 self,
-                "File Not Found",
-                f"Target file does not exist:\n{self.selected_file}"
+                tr("merge_config.file_not_found_title"),
+                tr("merge_config.file_not_found_msg").replace("{file}", self.selected_file)
             )
             return
         
@@ -207,10 +205,8 @@ class MergeConfigDialog(QDialog):
         if self.selected_mode == "replace" and not self.auto_backup:
             reply = QMessageBox.question(
                 self,
-                "No Backup",
-                "You selected Replace mode without backup.\n"
-                "Original file will be permanently overwritten.\n\n"
-                "Continue without backup?",
+                tr("merge_config.no_backup_title"),
+                tr("merge_config.no_backup_msg"),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
