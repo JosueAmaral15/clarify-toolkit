@@ -901,5 +901,8 @@
   "editor.dialog_open_title": "打开文件",
   "editor.chk_edit_only": "以仅编辑模式打开 (不修改文件)",
   "editor.dialog_close_edit_title": "关闭仅编辑标签",
-  "editor.status_copied": "内容已复制到剪贴板"
+  "editor.status_copied": "内容已复制到剪贴板",
+  "history.btn_clear": "清除历史记录",
+  "history.btn_export": "导出...",
+  "history.btn_refresh": "刷新"
 }

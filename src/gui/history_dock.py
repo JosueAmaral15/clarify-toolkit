@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QLabel, QFileDialog, QMessageBox
 )
 from .base_dock import BaseDock
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class HistoryDock(BaseDock):
@@ -72,9 +72,9 @@ class HistoryDock(BaseDock):
         self.tree_history.setRootIsDecorated(False)
         
         # Action buttons
-        self.btn_clear = QPushButton("Clear History")
-        self.btn_export = QPushButton("Export...")
-        self.btn_refresh = QPushButton("Refresh")
+        self.btn_clear = QPushButton(tr("history.btn_clear"))
+        self.btn_export = QPushButton(tr("history.btn_export"))
+        self.btn_refresh = QPushButton(tr("history.btn_refresh"))
     
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""

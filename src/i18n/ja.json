@@ -901,5 +901,8 @@
   "editor.dialog_open_title": "ファイルを開く",
   "editor.chk_edit_only": "編集専用モードで開く (ファイル変更なし)",
   "editor.dialog_close_edit_title": "編集専用タブを閉じる",
-  "editor.status_copied": "コンテンツをクリップボードにコピーしました"
+  "editor.status_copied": "コンテンツをクリップボードにコピーしました",
+  "history.btn_clear": "履歴をクリア",
+  "history.btn_export": "エクスポート...",
+  "history.btn_refresh": "更新"
 }

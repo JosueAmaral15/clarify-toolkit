@@ -932,5 +932,8 @@
   "editor.dialog_open_title": "Open File",
   "editor.chk_edit_only": "Open in Edit-Only Mode (no file changes)",
   "editor.dialog_close_edit_title": "Close Edit-Only Tab",
-  "editor.status_copied": "Content copied to clipboard"
+  "editor.status_copied": "Content copied to clipboard",
+  "history.btn_clear": "Clear History",
+  "history.btn_export": "Export...",
+  "history.btn_refresh": "Refresh"
 }

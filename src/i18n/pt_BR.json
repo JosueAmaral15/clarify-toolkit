@@ -909,5 +909,8 @@
   "editor.dialog_open_title": "Abrir Arquivo",
   "editor.chk_edit_only": "Abrir no Modo Somente Edição (sem alterações no arquivo)",
   "editor.dialog_close_edit_title": "Fechar Aba Somente Edição",
-  "editor.status_copied": "Conteúdo copiado para a área de transferência"
+  "editor.status_copied": "Conteúdo copiado para a área de transferência",
+  "history.btn_clear": "Limpar Histórico",
+  "history.btn_export": "Exportar...",
+  "history.btn_refresh": "Atualizar"
 }

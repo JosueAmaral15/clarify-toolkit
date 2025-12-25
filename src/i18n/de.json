@@ -901,5 +901,8 @@
   "editor.dialog_open_title": "Datei öffnen",
   "editor.chk_edit_only": "Im Nur-Bearbeiten-Modus öffnen (keine Dateiänderungen)",
   "editor.dialog_close_edit_title": "Nur-Bearbeiten-Tab schließen",
-  "editor.status_copied": "Inhalt in die Zwischenablage kopiert"
+  "editor.status_copied": "Inhalt in die Zwischenablage kopiert",
+  "history.btn_clear": "Verlauf löschen",
+  "history.btn_export": "Exportieren...",
+  "history.btn_refresh": "Aktualisieren"
 }

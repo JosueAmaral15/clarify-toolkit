@@ -901,5 +901,8 @@
   "editor.dialog_open_title": "Ouvrir un Fichier",
   "editor.chk_edit_only": "Ouvrir en Mode Édition Seule (aucune modification de fichier)",
   "editor.dialog_close_edit_title": "Fermer l'Onglet Édition Seule",
-  "editor.status_copied": "Contenu copié dans le presse-papiers"
+  "editor.status_copied": "Contenu copié dans le presse-papiers",
+  "history.btn_clear": "Effacer l'Historique",
+  "history.btn_export": "Exporter...",
+  "history.btn_refresh": "Actualiser"
 }
