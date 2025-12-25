@@ -29,7 +29,7 @@ import sys
 from typing import List, Tuple, Dict, Optional
 
 # PySide6 imports
-from PySide6.QtCore import Qt, Signal, QThread
+from PySide6.QtCore import Qt, Signal, QThread, QEvent
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QCheckBox, QComboBox,
@@ -264,6 +264,9 @@ class SearchReplacePanel(QWidget):
         # Results on the right
         self.results = ResultsTree()
         
+        # Install event filter for hover expansion (v2.9.115)
+        self.results.installEventFilter(self)
+        
         # Results panel with save button
         results_layout = QVBoxLayout()
         results_header = QHBoxLayout()
@@ -303,6 +306,12 @@ class SearchReplacePanel(QWidget):
         splitter.addWidget(scroll_area)
         splitter.addWidget(results_widget)
         splitter.setSizes([500, 800])
+        
+        # Store splitter and widget references for hover expansion (v2.9.115)
+        self._splitter = splitter
+        self._results_widget = results_widget
+        self._original_sizes = [500, 800]  # Default sizes
+        self._is_expanded = False
 
         wroot = QVBoxLayout(self)
         wroot.setContentsMargins(0, 0, 0, 0)
@@ -314,6 +323,38 @@ class SearchReplacePanel(QWidget):
         self.btn_search.clicked.connect(self._start_search_threaded)
         self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
         self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
+
+    def eventFilter(self, obj, event):
+        """
+        Event filter for Results panel hover expansion (v2.9.115).
+        
+        When mouse enters Results panel: expand width to show full content.
+        When mouse leaves Results panel: restore original width.
+        
+        Solves issue: Panel was moving left/right on mouse movement.
+        """
+        if obj == self.results:
+            if event.type() == QEvent.Enter:
+                # Mouse entered Results panel - expand to show more content
+                if not self._is_expanded:
+                    self._original_sizes = self._splitter.sizes()
+                    left_size = self._original_sizes[0]
+                    right_size = self._original_sizes[1]
+                    
+                    # Expand right panel by 300px (take from left)
+                    new_left = max(200, left_size - 300)  # Minimum 200px for left
+                    new_right = right_size + (left_size - new_left)
+                    
+                    self._splitter.setSizes([new_left, new_right])
+                    self._is_expanded = True
+                    
+            elif event.type() == QEvent.Leave:
+                # Mouse left Results panel - restore original width
+                if self._is_expanded:
+                    self._splitter.setSizes(self._original_sizes)
+                    self._is_expanded = False
+        
+        return super().eventFilter(obj, event)
 
     def change_advanced_conditions(self):
         self.enable_buttons(not self.is_file.isChecked(), include_buttons = False)

@@ -1678,7 +1678,7 @@ if _PYSIDE:
             from PySide6.QtCore import Qt
             
             # Ctrl+Scroll - Font scaling
-            elif event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.ControlModifier:
                 from .accessibility_manager import AccessibilityManager
                 
                 if event.angleDelta().y() > 0:
