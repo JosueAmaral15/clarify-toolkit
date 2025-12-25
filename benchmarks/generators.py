@@ -251,5 +251,60 @@ def _random_string(length: int) -> str:
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
+def generate_jsx_content(size_kb: int) -> str:
+    """
+    Generate JSX content for Advanced Extractor benchmarks (v2.9.115).
+    
+    Creates realistic React/JSX components with attributes and nested structure
+    to benchmark the Advanced Extractor tool.
+    
+    Args:
+        size_kb: Target size in kilobytes
+    
+    Returns:
+        JSX code string
+    
+    Example:
+        >>> jsx = generate_jsx_content(10)
+        >>> 'label=' in jsx
+        True
+    """
+    target_bytes = size_kb * 1024
+    jsx_parts = []
+    
+    # Header
+    jsx_parts.append("import React from 'react';\n\n")
+    
+    # Generate components until we reach target size
+    component_count = 0
+    current_size = sum(len(part.encode('utf-8')) for part in jsx_parts)
+    
+    while current_size < target_bytes:
+        # Generate component with random attributes
+        jsx_parts.append(f"function Component{component_count}() {{\n")
+        jsx_parts.append("  return (\n")
+        jsx_parts.append("    <div>\n")
+        
+        # Add nested components with label attributes
+        for i in range(random.randint(3, 8)):
+            label = f"Label {component_count}.{i} - {_random_string(15)}"
+            title = f"Title {_random_string(10)}"
+            jsx_parts.append(f'      <Button label="{label}" title="{title}">\n')
+            jsx_parts.append(f'        <Icon label="icon_{i}" />\n')
+            jsx_parts.append(f'        <Text>{_random_string(20)}</Text>\n')
+            jsx_parts.append('      </Button>\n')
+        
+        jsx_parts.append("    </div>\n")
+        jsx_parts.append("  );\n")
+        jsx_parts.append("}\n\n")
+        
+        component_count += 1
+        current_size = sum(len(part.encode('utf-8')) for part in jsx_parts)
+    
+    jsx_parts.append(f"export default Component0;\n")
+    
+    return ''.join(jsx_parts)
+
+
 # Seed for reproducibility
 random.seed(42)

@@ -1,0 +1,219 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'benchmarks/**'
+      - '.github/workflows/benchmarks.yml'
+  
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  
+  workflow_dispatch:
+    inputs:
+      sizes:
+        description: 'Sizes to benchmark (comma-separated MB)'
+        required: false
+        default: '1,5'
+      operations:
+        description: 'Operations to benchmark'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - converter
+          - set
+          - rewriter
+          - search
+          - extractor
+      runs:
+        description: 'Number of runs per benchmark'
+        required: false
+        default: '3'
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install psutil
+      
+      - name: 🏃 Run benchmarks (Quick)
+        if: github.event_name == 'push'
+        run: |
+          python -m benchmarks \
+            --sizes 1 \
+            --runs 2 \
+            --no-warmup \
+            --output benchmarks/results_quick.json
+      
+      - name: 🏃 Run benchmarks (Full)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          python -m benchmarks \
+            --sizes ${{ inputs.sizes || '1,5' }} \
+            --operations ${{ inputs.operations || 'all' }} \
+            --runs ${{ inputs.runs || '3' }} \
+            --output benchmarks/results_full.json
+      
+      - name: 📊 Display results
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### System Info" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- OS: ubuntu-latest" >> $GITHUB_STEP_SUMMARY
+          echo "- Event: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Show results file
+          if [ -f "benchmarks/results_quick.json" ]; then
+            echo "### Quick Benchmarks" >> $GITHUB_STEP_SUMMARY
+            python -c "
+          import json
+          with open('benchmarks/results_quick.json') as f:
+              data = json.load(f)
+          print('| Benchmark | Time (s) | Memory (MB) | CPU (%) |')
+          print('|-----------|----------|-------------|---------|')
+          for r in data['results'][:10]:
+              print(f\"| {r['name']} | {r['avg_time']:.3f} | {r['avg_memory_mb']:.1f} | {r['avg_cpu_percent']:.1f} |\")
+          " >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "benchmarks/results_full.json" ]; then
+            echo "### Full Benchmarks" >> $GITHUB_STEP_SUMMARY
+            python -c "
+          import json
+          with open('benchmarks/results_full.json') as f:
+              data = json.load(f)
+          print('| Benchmark | Time (s) | Memory (MB) | CPU (%) |')
+          print('|-----------|----------|-------------|---------|')
+          for r in data['results']:
+              print(f\"| {r['name']} | {r['avg_time']:.3f} | {r['avg_memory_mb']:.1f} | {r['avg_cpu_percent']:.1f} |\")
+          " >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 💾 Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: |
+            benchmarks/results*.json
+          retention-days: 90
+      
+      - name: 📈 Compare with baseline (if exists)
+        continue-on-error: true
+        run: |
+          # Download previous results from artifacts (if available)
+          # This would require downloading previous artifacts
+          # For now, just log that comparison is available
+          echo "💡 Tip: Compare results manually using benchmark history"
+      
+      - name: ⚠️ Check for regressions
+        run: |
+          # Simple regression check: fail if any benchmark takes > 5s
+          python -c "
+          import json
+          import sys
+          
+          file = 'benchmarks/results_quick.json' if '${{ github.event_name }}' == 'push' else 'benchmarks/results_full.json'
+          
+          with open(file) as f:
+              data = json.load(f)
+          
+          regressions = []
+          for r in data['results']:
+              if r['avg_time'] > 5.0:
+                  regressions.append(f\"{r['name']}: {r['avg_time']:.3f}s\")
+          
+          if regressions:
+              print('⚠️ Performance regressions detected:')
+              for reg in regressions:
+                  print(f'  - {reg}')
+              sys.exit(1)
+          else:
+              print('✅ No significant performance regressions')
+          "
+
+  benchmark-comparison:
+    name: Compare Performance (PR only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout PR branch
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: 📦 Install dependencies
+        run: |
+          pip install -e .
+          pip install psutil
+      
+      - name: 🏃 Run benchmarks (PR)
+        run: |
+          python -m benchmarks --sizes 1 --runs 2 --no-warmup --output pr_results.json
+      
+      - name: 📥 Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+      
+      - name: 🏃 Run benchmarks (Base)
+        run: |
+          python -m benchmarks --sizes 1 --runs 2 --no-warmup --output base_results.json
+      
+      - name: 📊 Compare results
+        run: |
+          python -c "
+          import json
+          
+          with open('pr_results.json') as f:
+              pr = json.load(f)
+          with open('base_results.json') as f:
+              base = json.load(f)
+          
+          print('## Performance Comparison')
+          print()
+          print('| Benchmark | Base Time | PR Time | Δ % |')
+          print('|-----------|-----------|---------|-----|')
+          
+          for pr_bench in pr['results']:
+              name = pr_bench['name']
+              base_bench = next((b for b in base['results'] if b['name'] == name), None)
+              
+              if base_bench:
+                  base_time = base_bench['avg_time']
+                  pr_time = pr_bench['avg_time']
+                  delta = ((pr_time - base_time) / base_time) * 100
+                  
+                  emoji = '🔴' if delta > 10 else '🟡' if delta > 5 else '🟢'
+                  print(f\"| {emoji} {name} | {base_time:.3f}s | {pr_time:.3f}s | {delta:+.1f}% |\")
+          " >> $GITHUB_STEP_SUMMARY

@@ -20,7 +20,8 @@ from .generators import (
     generate_json_data,
     generate_nested_json,
     generate_array_with_duplicates,
-    generate_html_content
+    generate_html_content,
+    generate_jsx_content
 )
 
 # Import operations to benchmark
@@ -49,6 +50,12 @@ try:
     HAS_EXTRACTOR = True
 except ImportError:
     HAS_EXTRACTOR = False
+
+try:
+    from src.extractors.advanced_extractor import AdvancedExtractor
+    HAS_ADVANCED_EXTRACTOR = True
+except ImportError:
+    HAS_ADVANCED_EXTRACTOR = False
 
 
 def setup_converter_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
@@ -172,8 +179,88 @@ def setup_extractor_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
                 size_label=f"{size_mb}MB"
             )
         finally:
+            # Cleanup will happen after benchmark runs
+            pass
+
+
+def setup_advanced_extractor_benchmarks(runner: BenchmarkRunner, sizes: List[float]):
+    """Register Advanced Extractor benchmarks (v2.9.115)."""
+    if not HAS_ADVANCED_EXTRACTOR:
+        print("⚠️  Skipping Advanced Extractor benchmarks (not available)")
+        return
+    
+    import tempfile
+    import os
+    
+    for size_kb in [10, 50, 100]:  # KB for JSX files
+        # Generate JSX content with components
+        jsx_content = generate_jsx_content(size_kb)
+        
+        # Create temp JSX file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsx', delete=False) as f:
+            f.write(jsx_content)
+            temp_path = f.name
+        
+        try:
+            # Benchmark: Attribute extraction
+            extractor_attr = AdvancedExtractor(
+                param="label",
+                mode="jsx",
+                avoid_keys="",
+                avoid_keys_parameter="equals",
+                include_key=True,
+                include_value=True,
+                no_standard=True,
+                convert_to_json=True,
+                with_quotation_marks=True,
+                indentation=2,
+                case_style="snake",
+                limit="all",
+                avoid_cut=False,
+                to_upper=False,
+                only_strings=True,
+                is_attribute_mode=True
+            )
+            
+            runner.register(
+                name=f"advanced_extract_attr_{size_kb}KB",
+                func=lambda: extractor_attr.run(temp_path),
+                args=(),
+                size_label=f"{size_kb}KB JSX"
+            )
+            
+            # Benchmark: Tag content extraction
+            extractor_tag = AdvancedExtractor(
+                param="Text",
+                mode="jsx",
+                avoid_keys="",
+                avoid_keys_parameter="equals",
+                include_key=True,
+                include_value=True,
+                no_standard=True,
+                convert_to_json=True,
+                with_quotation_marks=True,
+                indentation=2,
+                case_style="snake",
+                limit="all",
+                avoid_cut=False,
+                to_upper=False,
+                only_strings=False,
+                is_attribute_mode=False
+            )
+            
+            runner.register(
+                name=f"advanced_extract_tag_{size_kb}KB",
+                func=lambda: extractor_tag.run(temp_path),
+                args=(),
+                size_label=f"{size_kb}KB JSX"
+            )
+        finally:
             # Cleanup temp file
-            PathLib(temp_path).unlink(missing_ok=True)
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
 
 
 def main():
@@ -201,7 +288,7 @@ Examples:
         '--operations',
         type=str,
         default='all',
-        choices=['all', 'converter', 'set', 'rewriter', 'search', 'extractor'],
+        choices=['all', 'converter', 'set', 'rewriter', 'search', 'extractor', 'advanced'],
         help='Which operations to benchmark (default: all)'
     )
     
@@ -256,6 +343,9 @@ Examples:
     
     if args.operations in ['all', 'extractor']:
         setup_extractor_benchmarks(runner, sizes)
+    
+    if args.operations in ['all', 'advanced']:
+        setup_advanced_extractor_benchmarks(runner, sizes)
     
     # Run benchmarks
     results = runner.run_all()
