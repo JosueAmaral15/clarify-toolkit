@@ -136,10 +136,10 @@ class ExportToPostgreSQLPlugin(PluginBase):
         """Register plugin menu item."""
         self.app = app
         
-        # Add menu item: Tools -> Export to PostgreSQL
+        # Add menu item: File -> Export to PostgreSQL
         self.add_menu_item(
             app,
-            menu_path="Tools/Export",
+            menu_path="File",
             text="📊 Export to PostgreSQL...",
             callback=self._show_export_dialog
         )

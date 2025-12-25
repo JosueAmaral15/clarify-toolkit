@@ -196,8 +196,12 @@ class PluginBase:
         for part in parts:
             if current_menu is None:
                 # Find or create top-level menu
+                # Use case-insensitive comparison to find existing menus
+                part_lower = part.lower()
                 for action in menu_bar.actions():
-                    if action.text() == part:
+                    # Compare normalized text (remove &, lower case)
+                    menu_text = action.text().replace("&", "").lower()
+                    if menu_text == part_lower or action.text() == part:
                         current_menu = action.menu()
                         break
                 if current_menu is None:
@@ -205,11 +209,14 @@ class PluginBase:
             else:
                 # Find or create submenu
                 found = False
+                part_lower = part.lower()
                 for action in current_menu.actions():
-                    if action.text() == part and action.menu():
-                        current_menu = action.menu()
-                        found = True
-                        break
+                    if action.menu():
+                        menu_text = action.text().replace("&", "").lower()
+                        if menu_text == part_lower or action.text() == part:
+                            current_menu = action.menu()
+                            found = True
+                            break
                 if not found:
                     current_menu = current_menu.addMenu(part)
         
