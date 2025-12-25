@@ -80,9 +80,11 @@ class UIBuilder:
         """
         # Create panels and pass progress_manager reference
         main_window.tab_search = SearchReplacePanel(
+            parent=main_window,
             progress_manager=main_window.progress_manager
         )
         main_window.tab_insert = InsertPanel(
+            parent=main_window,
             progress_manager=main_window.progress_manager
         )
         
