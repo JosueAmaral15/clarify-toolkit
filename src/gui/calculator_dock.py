@@ -20,6 +20,7 @@ from ..calculator_operations import CalculatorOperations
 from ..accessibility_manager import AccessibilityManager
 from .recall_dialog import RecallDialog
 from .operation_preview_dialog import OperationPreviewDialog
+from ..i18n.translator import tr
 
 
 class CompareDialog(QDialog):
@@ -28,7 +29,7 @@ class CompareDialog(QDialog):
     def __init__(self, comparison_data: dict, parent=None):
         super().__init__(parent)
         self.comparison_data = comparison_data
-        self.setWindowTitle("Compare Memory Slots")
+        self.setWindowTitle(tr("calculator.dialog_compare_title"))
         self.setModal(True)
         self.resize(700, 500)
         self._init_ui()
@@ -75,7 +76,7 @@ class CompareDialog(QDialog):
         layout.addWidget(txt_compare)
         
         # Close button
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr("calculator.btn_close"))
         btn_close.clicked.connect(self.accept)
         layout.addWidget(btn_close)
 
@@ -111,7 +112,7 @@ class CalculatorDock(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         
         # Title
-        title = QLabel("Calculator Memory Slots")
+        title = QLabel(tr("calculator.title"))
         title_font = QFont()
         title_font.setPointSize(11)
         title_font.setBold(True)
@@ -119,7 +120,7 @@ class CalculatorDock(QWidget):
         layout.addWidget(title)
         
         # Info label
-        info = QLabel("Store JSON result sets in memory slots with statistics tracking")
+        info = QLabel(tr("calculator.info"))
         info.setStyleSheet("color: gray; font-size: 9pt;")
         layout.addWidget(info)
         
@@ -128,7 +129,10 @@ class CalculatorDock(QWidget):
         self.table.setColumnCount(8)
         self.table.setRowCount(5)  # 5 slots (A-E)
         self.table.setHorizontalHeaderLabels([
-            "Slot", "Source", "Count", "Size", "Depth", "Unique Keys", "Dup Keys", "Types"
+            tr("calculator.header_slot"), tr("calculator.header_source"), 
+            tr("calculator.header_count"), tr("calculator.header_size"), 
+            tr("calculator.header_depth"), tr("calculator.header_unique_keys"), 
+            tr("calculator.header_dup_keys"), tr("calculator.header_types")
         ])
         
         # Configure table appearance
@@ -146,21 +150,21 @@ class CalculatorDock(QWidget):
         # Slot selector
         self.combo_slot = QComboBox()
         self.combo_slot.addItems(CalculatorMemory.SLOT_NAMES)
-        actions_layout.addWidget(QLabel("Select Slot:"))
+        actions_layout.addWidget(QLabel(tr("calculator.lbl_select_slot")))
         actions_layout.addWidget(self.combo_slot)
         
         # Buttons
-        self.btn_recall = QPushButton("📤 Recall")
+        self.btn_recall = QPushButton(tr("calculator.btn_recall"))
         self.btn_recall.setToolTip("Load data from selected slot")
         self.btn_recall.clicked.connect(self._recall_slot)
         actions_layout.addWidget(self.btn_recall)
         
-        self.btn_view = QPushButton("👁️ View Details")
+        self.btn_view = QPushButton(tr("calculator.btn_view"))
         self.btn_view.setToolTip("View detailed statistics for slot")
         self.btn_view.clicked.connect(self._view_details)
         actions_layout.addWidget(self.btn_view)
         
-        self.btn_clear = QPushButton("🗑️ Clear")
+        self.btn_clear = QPushButton(tr("calculator.btn_clear"))
         self.btn_clear.setToolTip("Clear selected slot")
         self.btn_clear.clicked.connect(self._clear_slot)
         actions_layout.addWidget(self.btn_clear)
@@ -168,23 +172,23 @@ class CalculatorDock(QWidget):
         layout.addWidget(actions_group)
         
         # Comparison group
-        compare_group = QGroupBox("Compare Slots")
+        compare_group = QGroupBox(tr("calculator.group_compare"))
         compare_layout = QHBoxLayout(compare_group)
         
         self.combo_compare1 = QComboBox()
         self.combo_compare1.addItems(CalculatorMemory.SLOT_NAMES)
-        compare_layout.addWidget(QLabel("Slot 1:"))
+        compare_layout.addWidget(QLabel(tr("calculator.lbl_slot1")))
         compare_layout.addWidget(self.combo_compare1)
         
-        compare_layout.addWidget(QLabel("vs"))
+        compare_layout.addWidget(QLabel(tr("calculator.dialog_compare_vs")))
         
         self.combo_compare2 = QComboBox()
         self.combo_compare2.addItems(CalculatorMemory.SLOT_NAMES)
         self.combo_compare2.setCurrentIndex(1)  # Default to B
-        compare_layout.addWidget(QLabel("Slot 2:"))
+        compare_layout.addWidget(QLabel(tr("calculator.lbl_slot2")))
         compare_layout.addWidget(self.combo_compare2)
         
-        self.btn_compare = QPushButton("⚖️ Compare")
+        self.btn_compare = QPushButton(tr("calculator.btn_compare"))
         self.btn_compare.setToolTip("Compare statistics between two slots")
         self.btn_compare.clicked.connect(self._compare_slots)
         compare_layout.addWidget(self.btn_compare)
@@ -192,18 +196,18 @@ class CalculatorDock(QWidget):
         layout.addWidget(compare_group)
         
         # Operations group (v2.9.101)
-        operations_group = QGroupBox("Memory Operations")
+        operations_group = QGroupBox(tr("calculator.group_operations"))
         operations_layout = QVBoxLayout(operations_group)
         
         # Slot selectors row
         selectors_layout = QHBoxLayout()
         
-        selectors_layout.addWidget(QLabel("Slot 1:"))
+        selectors_layout.addWidget(QLabel(tr("calculator.lbl_slot1")))
         self.combo_op_slot1 = QComboBox()
         self.combo_op_slot1.addItems(CalculatorMemory.SLOT_NAMES)
         selectors_layout.addWidget(self.combo_op_slot1)
         
-        selectors_layout.addWidget(QLabel("Slot 2:"))
+        selectors_layout.addWidget(QLabel(tr("calculator.lbl_slot2")))
         self.combo_op_slot2 = QComboBox()
         self.combo_op_slot2.addItems(CalculatorMemory.SLOT_NAMES)
         self.combo_op_slot2.setCurrentIndex(1)  # Default to B
@@ -214,22 +218,22 @@ class CalculatorDock(QWidget):
         # Operation buttons row
         op_buttons_layout = QHBoxLayout()
         
-        self.btn_add = QPushButton("➕ Add (Merge)")
+        self.btn_add = QPushButton(tr("calculator.btn_add"))
         self.btn_add.setToolTip("Deep merge: Slot 1 + Slot 2 (v2.9.100 merge logic)")
         self.btn_add.clicked.connect(lambda: self._execute_operation('add'))
         op_buttons_layout.addWidget(self.btn_add)
         
-        self.btn_intersection = QPushButton("∩ Intersection")
+        self.btn_intersection = QPushButton(tr("calculator.btn_intersection"))
         self.btn_intersection.setToolTip("Common keys: Slot 1 ∩ Slot 2")
         self.btn_intersection.clicked.connect(lambda: self._execute_operation('intersection'))
         op_buttons_layout.addWidget(self.btn_intersection)
         
-        self.btn_union = QPushButton("∪ Union")
+        self.btn_union = QPushButton(tr("calculator.btn_union"))
         self.btn_union.setToolTip("All keys: Slot 1 ∪ Slot 2")
         self.btn_union.clicked.connect(lambda: self._execute_operation('union'))
         op_buttons_layout.addWidget(self.btn_union)
         
-        self.btn_difference = QPushButton("− Difference")
+        self.btn_difference = QPushButton(tr("calculator.btn_difference"))
         self.btn_difference.setToolTip("Keys only in Slot 1: Slot 1 − Slot 2")
         self.btn_difference.clicked.connect(lambda: self._execute_operation('difference'))
         op_buttons_layout.addWidget(self.btn_difference)
@@ -239,7 +243,7 @@ class CalculatorDock(QWidget):
         layout.addWidget(operations_group)
         
         # Clear all button
-        self.btn_clear_all = QPushButton("🗑️ Clear All Slots")
+        self.btn_clear_all = QPushButton(tr("calculator.btn_clear_all"))
         self.btn_clear_all.setToolTip("Clear all memory slots")
         self.btn_clear_all.clicked.connect(self._clear_all_slots)
         self.btn_clear_all.setStyleSheet("background-color: #dc3545; color: white;")
