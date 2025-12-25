@@ -11,7 +11,8 @@ from typing import Optional
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                 QPushButton, QTableWidget, QTableWidgetItem,
                                 QGroupBox, QLineEdit, QComboBox, QCheckBox,
-                                QFileDialog, QMessageBox, QHeaderView, QTextEdit)
+                                QFileDialog, QMessageBox, QHeaderView, QTextEdit,
+                                QAbstractItemView)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QIcon
 from ..batch_manager import BatchJob, BatchStep, BatchExecutor, BatchHistory
@@ -343,7 +344,7 @@ class BatchDialog(QDialog):
         ])
         self.table_steps.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table_steps.setSelectionBehavior(QTableWidget.SelectRows)
-        self.table_steps.setSelectionMode(QTableWidget.SingleSelection)
+        self.table_steps.setSelectionMode(QAbstractItemView.SingleSelection)
         layout.addWidget(self.table_steps)
         
         # Step buttons

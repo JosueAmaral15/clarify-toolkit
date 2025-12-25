@@ -10,7 +10,7 @@ Version: 2.9.98
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QPushButton, QLabel, QMessageBox, QComboBox, QDialog, QTextEdit,
-    QGroupBox, QHeaderView
+    QGroupBox, QHeaderView, QAbstractItemView
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
@@ -138,7 +138,7 @@ class CalculatorDock(QWidget):
         # Configure table appearance
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
-        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setAlternatingRowColors(True)
         
         layout.addWidget(self.table)
