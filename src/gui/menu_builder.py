@@ -124,6 +124,9 @@ class MenuBuilder:
         main_window.act_open_file_explorer = QAction("📁 File Explorer...", main_window)
         main_window.act_open_file_explorer.setStatusTip("Unified file explorer with advanced search (replaces File List + Advanced Search - v2.9.115)")
         main_window.act_open_file_explorer.setShortcut("Ctrl+Shift+F")
+        main_window.act_open_advanced_extractor = QAction("🔍 Advanced Extractor...", main_window)
+        main_window.act_open_advanced_extractor.setStatusTip("Advanced parameter extraction tool for JSX/TSX with hierarchical JSON generation (v2.9.115)")
+        main_window.act_open_advanced_extractor.setShortcut("Ctrl+Shift+E")
         
         # Add actions to menu
         m_tools.addAction(main_window.act_open_search_replace)
@@ -143,6 +146,7 @@ class MenuBuilder:
         m_tools.addAction(main_window.act_open_formula_builder)
         m_tools.addSeparator()
         m_tools.addAction(main_window.act_open_file_explorer)
+        m_tools.addAction(main_window.act_open_advanced_extractor)
         
         # Connect actions
         main_window.act_open_search_replace.triggered.connect(main_window._show_search_replace)
@@ -158,7 +162,8 @@ class MenuBuilder:
         main_window.act_open_google_translate.triggered.connect(main_window._show_google_translate)
         main_window.act_open_set_operations.triggered.connect(main_window._show_set_operations)
         main_window.act_open_calculator.triggered.connect(main_window._show_calculator)
-        main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_builder)
+        main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_buil
+        main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)der)
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
     
     @staticmethod

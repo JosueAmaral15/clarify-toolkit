@@ -708,6 +708,13 @@ if _PYSIDE:
                 self.dock_formula_builder = FormulaDock(self)
             self._add_tool_tab(self.dock_formula_builder, "Formula Builder", "formula_builder")
         
+        def _show_advanced_extractor(self):
+            """Show Advanced Extractor as tab (v2.9.115 - Sprint 2)."""
+            from .gui.dock_factory import DockFactory
+            if not hasattr(self, 'dock_advanced_extractor') or self.dock_advanced_extractor is None:
+                self.dock_advanced_extractor = DockFactory.create_advanced_extractor_dock(self)
+            self._add_tool_tab(self.dock_advanced_extractor, "Advanced Extractor", "advanced_extractor")
+        
         def _show_tutorials(self):
             """Show tutorials as tab (Task #45 - v2.9.15 / v2.9.40)."""
             from .gui.tab_manager import TabManager

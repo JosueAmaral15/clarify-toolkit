@@ -242,3 +242,11 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, GoogleTranslateDock, 'dock_google_translate'
         )
+    
+    @staticmethod
+    def create_advanced_extractor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
+        """Create Advanced Extractor dock (v2.9.115)."""
+        from ..gui.advanced_extractor_dock import AdvancedExtractorDock
+        return DockFactory.create_dock(
+            main_window, AdvancedExtractorDock, 'dock_advanced_extractor'
+        )
