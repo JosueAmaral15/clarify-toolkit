@@ -18,9 +18,10 @@ from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
-    QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox
+    QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox,
+    QProgressDialog
 )
-from PySide6.QtCore import Qt, QSettings, QDate
+from PySide6.QtCore import Qt, QSettings, QDate, QTimer
 from PySide6.QtGui import QAction
 from .base_dock import BaseDock
 from .widgets import (
@@ -77,6 +78,14 @@ class FileExplorerDock(BaseDock):
         self.executor.done.connect(self._on_execution_done)
         self.executor.error.connect(self._on_execution_error)
         
+        # Progress dialog for long operations
+        self.progress_dialog = None
+        
+        # Auto-search debounce timer (500ms delay)
+        self.auto_search_timer = QTimer()
+        self.auto_search_timer.setSingleShot(True)
+        self.auto_search_timer.timeout.connect(self._trigger_auto_search)
+        
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
@@ -94,6 +103,20 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         self.section_directory = QGroupBox("📁 Directory & Type")
         self.section_directory.setCheckable(False)
+        self.section_directory.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #3498db;
+                border-radius: 6px;
+                margin-top: 6px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
         
         # Directory input
         self.ed_directory = QLineEdit()
@@ -135,6 +158,20 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         self.section_search = QGroupBox("🔍 Search & Replace")
         self.section_search.setCheckable(False)
+        self.section_search.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #2ecc71;
+                border-radius: 6px;
+                margin-top: 6px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
         
         # NEW: Integrated search widgets (v2.9.116)
         self.filename_panel = FileNameQueryPanel()
@@ -155,6 +192,24 @@ class FileExplorerDock(BaseDock):
         self.section_filters = QGroupBox("⚙️ Filters")
         self.section_filters.setCheckable(True)
         self.section_filters.setChecked(False)  # Collapsed by default
+        self.section_filters.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #95a5a6;
+                border-radius: 6px;
+                margin-top: 6px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+            QGroupBox::indicator {
+                width: 13px;
+                height: 13px;
+            }
+        """)
         
         # Advanced Filters Panel (extracted component)
         self.filter_panel = FileFilterPanel()
@@ -165,6 +220,24 @@ class FileExplorerDock(BaseDock):
         self.section_conditions = QGroupBox("🎯 Advanced Conditions")
         self.section_conditions.setCheckable(True)
         self.section_conditions.setChecked(False)  # Collapsed by default
+        self.section_conditions.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #95a5a6;
+                border-radius: 6px;
+                margin-top: 6px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+            QGroupBox::indicator {
+                width: 13px;
+                height: 13px;
+            }
+        """)
         
         # NEW: Conditions grid with AND/OR logic (v2.9.116)
         self.conditions_grid = ConditionsGrid()
@@ -213,7 +286,8 @@ class FileExplorerDock(BaseDock):
             self.button_box.rejected.connect(self.reject)
     
     def _apply_tooltips(self):
-        """Apply internationalized tooltips to all widgets."""
+        """Apply internationalized tooltips to all widgets (v2.9.116)."""
+        # Directory & Type section
         self.ed_directory.setToolTip(tooltip_tr("file_list.ed_directory"))
         self.btn_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
         self.btn_recent.setToolTip(tooltip_tr("file_list.btn_recent"))
@@ -222,6 +296,46 @@ class FileExplorerDock(BaseDock):
         self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
         self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
         self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
+        
+        # Search & Replace section
+        self.section_search.setToolTip(
+            "Search for files by name pattern or content query. "
+            "Leave empty to browse all files."
+        )
+        self.filename_panel.setToolTip(
+            "Enter filename pattern (e.g., *.py, test_*.json). "
+            "Supports wildcards: * (any chars), ? (single char)"
+        )
+        self.content_panel.setToolTip(
+            "Search for text inside files. "
+            "Supports multi-line queries and regex patterns."
+        )
+        self.search_options_panel.setToolTip(
+            "Configure search behavior: case sensitivity, whole word matching, regex mode"
+        )
+        self.replace_panel.setToolTip(
+            "Replace matched text in selected files. "
+            "Select files in results table first."
+        )
+        
+        # Filters section
+        self.section_filters.setToolTip(
+            "Advanced filters: regex patterns, size ranges, date ranges, "
+            "file extensions, depth limits, exclusions"
+        )
+        
+        # Conditions section
+        self.section_conditions.setToolTip(
+            "Apply complex filtering conditions with AND/OR logic. "
+            "Combine multiple criteria for precise file selection."
+        )
+        
+        # Presets section (if visible)
+        if hasattr(self, 'section_presets'):
+            self.section_presets.setToolTip(
+                "Save and load filter configurations for reuse. "
+                "Export/import presets to share with others."
+            )
     
     def _create_layout(self):
         """Create layout with collapsible sections (v2.9.116)."""
@@ -336,6 +450,10 @@ class FileExplorerDock(BaseDock):
         
         if not os.path.isdir(directory):
             QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            return
+        
+        if not os.access(directory, os.R_OK):
+            QMessageBox.warning(self, "Permission Denied", f"Cannot read directory: {directory}")
             return
         
         # Save to recent directories
@@ -627,9 +745,23 @@ class FileExplorerDock(BaseDock):
     # ============================================================================
     
     def _on_search_params_changed(self):
-        """Handle search parameter changes."""
-        # Auto-trigger search if content is not empty
-        pass  # Could implement auto-search on typing
+        """Handle search parameter changes (v2.9.116)."""
+        # Debounce: restart timer on each change (500ms delay)
+        if self.auto_search_timer.isActive():
+            self.auto_search_timer.stop()
+        
+        # Only auto-search if directory is set
+        if self.ed_directory.text().strip():
+            self.auto_search_timer.start(500)  # 500ms debounce
+    
+    def _trigger_auto_search(self):
+        """Execute auto-search after debounce delay."""
+        filename_pattern = self.filename_panel.get_pattern()
+        content_query = self.content_panel.get_query()
+        
+        # Only auto-search if there's actually a query
+        if filename_pattern or content_query:
+            self._list_files()
     
     def _on_replace_first(self):
         """Handle replace first occurrence (v2.9.116)."""
@@ -781,19 +913,42 @@ class FileExplorerDock(BaseDock):
         pass
     
     def _on_progress(self, message: str):
-        """Handle progress updates from executor."""
-        # Show progress in status bar or progress dialog
-        pass
+        """Handle progress updates from executor (v2.9.116)."""
+        # Show progress dialog if not already visible
+        if not self.progress_dialog:
+            self.progress_dialog = QProgressDialog(
+                "Processing...", "Cancel", 0, 100, self
+            )
+            self.progress_dialog.setWindowTitle("File Explorer")
+            self.progress_dialog.setWindowModality(Qt.WindowModal)
+            self.progress_dialog.canceled.connect(self.executor.cancel)
+        
+        # Update message
+        self.progress_dialog.setLabelText(message)
     
     def _on_progress_detailed(self, current: int, total: int, message: str):
-        """Handle detailed progress updates."""
-        # Update progress bar
-        pass
+        """Handle detailed progress updates (v2.9.116)."""
+        if self.progress_dialog:
+            # Calculate percentage
+            percentage = int((current / total) * 100) if total > 0 else 0
+            self.progress_dialog.setValue(percentage)
+            self.progress_dialog.setLabelText(f"{message}\n({current}/{total})")
     
     def _on_execution_done(self, results: dict):
-        """Handle execution completion."""
-        # Update table with results
-        pass
+        """Handle execution completion (v2.9.116)."""
+        # Close progress dialog
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
+        
+        # Results are already processed by _list_files() method
+        # This is just for cleanup and optional status updates
+        files_count = len(results.get('files', []))
+        stats = results.get('stats', {})
+        total_size = stats.get('total_size', 0)
+        
+        # Update status bar or show completion message (optional)
+        # For now, just close the progress dialog
     
     def _on_execution_error(self, error: str):
         """Handle execution errors."""
