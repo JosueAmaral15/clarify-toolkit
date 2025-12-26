@@ -144,6 +144,11 @@ class FileExplorerDock(BaseDock):
         self.chk_recursive = QCheckBox(tr("file_list.chk_recursive"))
         self.chk_recursive.setChecked(getattr(self, 'chk_recursive_state', False))
         
+        # Sort results checkbox (from Search/Replace)
+        self.chk_sort_results = QCheckBox("Sort results alphabetically")
+        self.chk_sort_results.setChecked(False)
+        self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
+        
         # File type filter
         self.lbl_type = QLabel("Type:")
         self.combo_type = QComboBox()
@@ -343,14 +348,20 @@ class FileExplorerDock(BaseDock):
         opts_layout.addStretch()
         section1_layout.addLayout(opts_layout)
         
-        # Options row 2: Type filter + Selection mode
+        # Options row 2: Sort results checkbox
         opts2_layout = QHBoxLayout()
-        opts2_layout.addWidget(self.lbl_type)
-        opts2_layout.addWidget(self.combo_type)
-        if self.dialog_mode:
-            opts2_layout.addWidget(self.chk_selection_mode)
+        opts2_layout.addWidget(self.chk_sort_results)
         opts2_layout.addStretch()
         section1_layout.addLayout(opts2_layout)
+        
+        # Options row 3: Type filter + Selection mode
+        opts3_layout = QHBoxLayout()
+        opts3_layout.addWidget(self.lbl_type)
+        opts3_layout.addWidget(self.combo_type)
+        if self.dialog_mode:
+            opts3_layout.addWidget(self.chk_selection_mode)
+        opts3_layout.addStretch()
+        section1_layout.addLayout(opts3_layout)
         
         self.section_directory.setLayout(section1_layout)
         left_layout.addWidget(self.section_directory)
@@ -403,8 +414,21 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # RIGHT PANEL: Results with QStackedWidget (v2.9.117 - B.2)
         # ============================================================================
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(8)
+        
         # Create ResultsTree for search mode
         self.results_tree = ResultsTree()
+        
+        # Create status bar for position info (from Search/Replace)
+        self.results_status = QLabel("")
+        self.results_status.setObjectName("results_status")
+        self.results_status.setMinimumHeight(25)
+        
+        # Connect status label to results tree
+        self.results_tree.set_status_label(self.results_status)
         
         # Create QStackedWidget to switch between browse/search views
         self.results_stack = QStackedWidget()
@@ -413,6 +437,12 @@ class FileExplorerDock(BaseDock):
         
         # Start in browse mode (table view)
         self.results_stack.setCurrentIndex(1)
+        
+        # Add results stack to right panel
+        right_layout.addWidget(self.results_stack)
+        
+        # Add status bar below results
+        right_layout.addWidget(self.results_status)
         
         # ============================================================================
         # STATISTICS PANEL (v2.9.117 - B.4)
@@ -446,6 +476,13 @@ class FileExplorerDock(BaseDock):
         stats_layout.addWidget(self.lbl_exec_time)
         
         stats_layout.addStretch()
+        
+        # Save Results button (from Search/Replace)
+        self.btn_save_results = QPushButton("💾 Save Results")
+        self.btn_save_results.setToolTip("Save all search results to a formatted text file with statistics")
+        self.btn_save_results.clicked.connect(self._save_results)
+        self.btn_save_results.setObjectName("btn_save")  # For theme styling
+        stats_layout.addWidget(self.btn_save_results)
         
         # Export CSV button (v2.9.117 - B.5)
         self.btn_export_csv = QPushButton("💾 Export CSV")
@@ -618,6 +655,35 @@ class FileExplorerDock(BaseDock):
             files_list = result.get('files', [])
             self._update_statistics(files_list, time.time() - start_time)
             
+            # Save to history (History Integration from Search/Replace)
+            try:
+                from src.gui.progress import OperationHistory
+                history = OperationHistory()
+                
+                total_matches = sum(len(items) for items in matches_dict.values())
+                
+                history.add_operation("file_explorer_search", {
+                    "directory": directory,
+                    "filename_pattern": filename_pattern,
+                    "content_query": content_query,
+                    "files_matched": len(matches_dict),
+                    "total_matches": total_matches,
+                    "case_sensitive": self.search_options_panel.get_options().get('case_sensitive', False),
+                    "whole_word": self.search_options_panel.get_options().get('whole_word', False),
+                    "regex": self.search_options_panel.get_options().get('regex', False)
+                })
+                
+                # Add to History Dock if available
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("File Explorer Search", {
+                        "directory": directory,
+                        "pattern": filename_pattern or content_query,
+                        "files_found": len(matches_dict),
+                        "matches_found": total_matches
+                    })
+            except Exception as e:
+                print(f"Failed to save history: {e}")
+            
         else:
             # ============================================================================
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
@@ -664,6 +730,27 @@ class FileExplorerDock(BaseDock):
             # Update statistics (v2.9.117 - B.4)
             files_list = result.get('files', [])
             self._update_statistics(files_list, time.time() - start_time)
+            
+            # Save to history (History Integration for browse mode)
+            try:
+                from src.gui.progress import OperationHistory
+                history = OperationHistory()
+                
+                history.add_operation("file_explorer_browse", {
+                    "directory": directory,
+                    "files_found": len(files_data),
+                    "recursive": recursive,
+                    "show_hidden": show_hidden
+                })
+                
+                # Add to History Dock if available
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("File Explorer Browse", {
+                        "directory": directory,
+                        "files_found": len(files_data)
+                    })
+            except Exception as e:
+                print(f"Failed to save history: {e}")
         
         # Show errors if any
         if result.get('errors'):
@@ -1008,6 +1095,27 @@ class FileExplorerDock(BaseDock):
                 f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
             )
             
+            # Save to history (History Integration for replace operations)
+            try:
+                from src.gui.progress import OperationHistory
+                history = OperationHistory()
+                
+                history.add_operation("file_explorer_replace_first", {
+                    "search_query": query,
+                    "replacement": replacement,
+                    "files_modified": files_modified,
+                    "replacements_made": replacements_made
+                })
+                
+                # Add to History Dock if available
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("File Explorer Replace First", {
+                        "files_modified": files_modified,
+                        "replacements": replacements_made
+                    })
+            except Exception as e:
+                print(f"Failed to save history: {e}")
+            
             # Refresh file list to show updated sizes/times
             self._list_files()
         else:
@@ -1086,6 +1194,27 @@ class FileExplorerDock(BaseDock):
                 f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
             )
             
+            # Save to history (History Integration for replace all operations)
+            try:
+                from src.gui.progress import OperationHistory
+                history = OperationHistory()
+                
+                history.add_operation("file_explorer_replace_all", {
+                    "search_query": query,
+                    "replacement": replacement,
+                    "files_modified": files_modified,
+                    "replacements_made": replacements_made
+                })
+                
+                # Add to History Dock if available
+                if hasattr(self, 'dock_history'):
+                    self.dock_history.add_operation("File Explorer Replace All", {
+                        "files_modified": files_modified,
+                        "replacements": replacements_made
+                    })
+            except Exception as e:
+                print(f"Failed to save history: {e}")
+            
             # Refresh file list to show updated sizes/times
             self._list_files()
         else:
@@ -1138,6 +1267,49 @@ class FileExplorerDock(BaseDock):
     def _on_execution_error(self, error: str):
         """Handle execution errors."""
         QMessageBox.warning(self, "Error", error)
+    
+    def _save_results(self):
+        """Save search results to a text file (from Search/Replace)."""
+        # Get matches data from ResultsTree
+        matches_data = self.results_tree.get_matches_data()
+        
+        if not matches_data:
+            QMessageBox.information(self, "No Results", 
+                "No search results to save. Please perform a search first.")
+            return
+        
+        # Ask user for file location
+        default_filename = "clarify_file_explorer_results.txt"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Save Search Results", 
+            default_filename,
+            "Text Files (*.txt);;All Files (*)"
+        )
+        
+        if not file_path:
+            return  # User cancelled
+        
+        try:
+            # Export matches to text
+            text_content = self.results_tree.export_to_text()
+            
+            # Write to file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(text_content)
+            
+            total_files = len(matches_data)
+            total_matches = sum(len(items) for items in matches_data.values())
+            
+            QMessageBox.information(self, "Results Saved", 
+                f"Search results saved successfully!\n\n"
+                f"File: {file_path}\n"
+                f"Total files: {total_files}\n"
+                f"Total matches: {total_matches}")
+        
+        except Exception as e:
+            QMessageBox.critical(self, "Error", 
+                f"Failed to save results:\n{str(e)}")
 
 
 def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[List[str]]:
