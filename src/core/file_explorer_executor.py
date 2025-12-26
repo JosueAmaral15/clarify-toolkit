@@ -97,25 +97,68 @@ class UnifiedFileExplorerExecutor(QObject):
             directory: Directory path
             show_hidden: Show hidden files
             recursive: Recurse into subdirectories
-            filters: Filter configuration
+            filters: Filter configuration (includes include_globs, exclude_globs)
             
         Returns:
             Dict with files and statistics
         """
+        filters = filters or {}
+        
+        # Step 1: Get base file list
         result = FileListExecutor.list_files(
             directory, show_hidden, recursive, filters
         )
         
+        file_list = result.files
+        
+        # Step 2: Apply include/exclude glob filters (from Search/Replace)
+        include_globs = filters.get('include_globs', [])
+        exclude_globs = filters.get('exclude_globs', [])
+        
+        if include_globs or exclude_globs:
+            filtered_files = []
+            for file_info in file_list:
+                file_path = file_info.path
+                file_name = file_info.name
+                
+                # Check exclude globs first (higher priority)
+                excluded = False
+                for pattern in exclude_globs:
+                    if fnmatch.fnmatch(file_path, f"*{pattern}*") or \
+                       fnmatch.fnmatch(file_name, pattern):
+                        excluded = True
+                        break
+                
+                if excluded:
+                    continue
+                
+                # Check include globs (if any)
+                if include_globs:
+                    included = False
+                    for pattern in include_globs:
+                        if fnmatch.fnmatch(file_path, pattern) or \
+                           fnmatch.fnmatch(file_name, pattern):
+                            included = True
+                            break
+                    
+                    if not included:
+                        continue
+                
+                filtered_files.append(file_info)
+            
+            file_list = filtered_files
+        
+        # Step 3: Create search results
         search_results = [
             SearchResult(
                 file_info=file_info,
                 matches=[],
                 match_count=0
             )
-            for file_info in result.files
+            for file_info in file_list
         ]
         
-        stats = FileListExecutor.calculate_statistics(result.files)
+        stats = FileListExecutor.calculate_statistics(file_list)
         stats['errors'] = result.errors
         
         return {

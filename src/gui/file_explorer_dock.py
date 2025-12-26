@@ -13,6 +13,7 @@ v2.9.115 Integration:
 """
 
 import os
+import re
 import time
 import csv
 from datetime import datetime
@@ -779,12 +780,44 @@ class FileExplorerDock(BaseDock):
         self._save_preferences()
     
     def _build_filters(self) -> Dict[str, Any]:
-        """Build filter dictionary from filter panel."""
+        """Build filter dictionary from filter panel AND extension/glob fields."""
         panel_filters = self.filter_panel.get_filters()
         
         # Convert to format expected by FileListExecutor
         filters = {}
         
+        # ============================================================================
+        # EXTENSION FILTER (from Search/Replace) - IMPLEMENTATION
+        # ============================================================================
+        use_ext_filter = self.chk_use_ext_filter.isChecked()
+        extensions_text = self.ed_extensions.text().strip() if use_ext_filter else ""
+        
+        if use_ext_filter and extensions_text:
+            # Parse extensions (comma or semicolon separated)
+            extensions = [ext.strip() for ext in re.split(r"[;,]", extensions_text) if ext.strip()]
+            # Ensure extensions start with dot
+            extensions = [ext if ext.startswith('.') else f'.{ext}' for ext in extensions]
+            filters['extensions'] = extensions
+        
+        # ============================================================================
+        # INCLUDE/EXCLUDE GLOBS (from Search/Replace) - IMPLEMENTATION
+        # ============================================================================
+        ed_inc_text = self.ed_inc.text().strip()
+        ed_exc_text = self.ed_exc.text().strip()
+        
+        # Include globs (advanced patterns)
+        if ed_inc_text:
+            include_patterns = [p.strip() for p in re.split(r"[;,]", ed_inc_text) if p.strip()]
+            filters['include_globs'] = include_patterns
+        
+        # Exclude globs (exclude patterns)
+        if ed_exc_text:
+            exclude_patterns = [p.strip() for p in re.split(r"[;,]", ed_exc_text) if p.strip()]
+            filters['exclude_globs'] = exclude_patterns
+        
+        # ============================================================================
+        # PANEL FILTERS (existing functionality)
+        # ============================================================================
         # Regex filter
         if panel_filters.get('regex_enabled') and panel_filters.get('regex_pattern'):
             filters['regex'] = {
@@ -818,8 +851,8 @@ class FileExplorerDock(BaseDock):
         if mtime_config:
             filters['mtime'] = mtime_config
         
-        # Extensions filter
-        if panel_filters.get('extensions'):
+        # Extensions filter from panel (fallback if not using top-level filter)
+        if not use_ext_filter and panel_filters.get('extensions'):
             filters['extensions'] = panel_filters['extensions']
         
         # Depth filter
