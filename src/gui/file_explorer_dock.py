@@ -13,13 +13,14 @@ v2.9.115 Integration:
 """
 
 import os
+import time
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
     QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox,
-    QProgressDialog, QSplitter, QScrollArea, QStackedWidget
+    QProgressDialog, QSplitter, QScrollArea, QStackedWidget, QFrame
 )
 from PySide6.QtCore import Qt, QSettings, QDate, QTimer
 from PySide6.QtGui import QAction
@@ -460,10 +461,51 @@ class FileExplorerDock(BaseDock):
         # Start in browse mode (table view)
         self.results_stack.setCurrentIndex(1)
         
+        # ============================================================================
+        # STATISTICS PANEL (v2.9.117 - B.4)
+        # ============================================================================
+        stats_frame = QFrame()
+        stats_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        stats_frame.setStyleSheet("""
+            QFrame {
+                background-color: #ecf0f1;
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                padding: 8px;
+            }
+        """)
+        
+        stats_layout = QHBoxLayout(stats_frame)
+        stats_layout.setContentsMargins(8, 8, 8, 8)
+        stats_layout.setSpacing(16)
+        
+        # Files count
+        self.lbl_files_count = QLabel("📄 Files: 0")
+        self.lbl_files_count.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        stats_layout.addWidget(self.lbl_files_count)
+        
+        # Directories count
+        self.lbl_dirs_count = QLabel("📁 Dirs: 0")
+        self.lbl_dirs_count.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        stats_layout.addWidget(self.lbl_dirs_count)
+        
+        # Total size
+        self.lbl_total_size = QLabel("💾 Size: 0 B")
+        self.lbl_total_size.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        stats_layout.addWidget(self.lbl_total_size)
+        
+        # Execution time
+        self.lbl_exec_time = QLabel("⏱️ Time: 0.00s")
+        self.lbl_exec_time.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        stats_layout.addWidget(self.lbl_exec_time)
+        
+        stats_layout.addStretch()
+        
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addWidget(self.results_stack)
+        right_layout.addWidget(stats_frame)
         
         # ============================================================================
         # HORIZONTAL SPLITTER: Left (controls) + Right (results)
@@ -523,6 +565,9 @@ class FileExplorerDock(BaseDock):
     
     def _list_files(self):
         """List or search files with unified executor (v2.9.116)."""
+        # Start timer (v2.9.117 - B.4)
+        start_time = time.time()
+        
         directory = self.ed_directory.text().strip()
         
         if not directory:
@@ -611,6 +656,10 @@ class FileExplorerDock(BaseDock):
             # Populate ResultsTree
             self.results_tree.populate(matches_dict, sort_results=True)
             
+            # Update statistics (v2.9.117 - B.4)
+            files_list = result.get('files', [])
+            self._update_statistics(files_list, time.time() - start_time)
+            
         else:
             # ============================================================================
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
@@ -653,6 +702,10 @@ class FileExplorerDock(BaseDock):
             
             # Populate table
             self.table_manager.populate(files_data, human_readable=human_readable)
+            
+            # Update statistics (v2.9.117 - B.4)
+            files_list = result.get('files', [])
+            self._update_statistics(files_list, time.time() - start_time)
         
         # Show errors if any
         if result.get('errors'):
@@ -746,6 +799,40 @@ class FileExplorerDock(BaseDock):
         self.settings.setValue("human_readable", self.chk_human.isChecked())
         self.settings.setValue("recursive", self.chk_recursive.isChecked())
         self.settings.setValue("recent_directories", self.recent_dirs)
+    
+    def _update_statistics(self, files_list: List, elapsed_time: float):
+        """
+        Update statistics panel with file counts, size, and execution time (v2.9.117 - B.4).
+        
+        Args:
+            files_list: List of SearchResult objects
+            elapsed_time: Execution time in seconds
+        """
+        file_count = 0
+        dir_count = 0
+        total_size = 0
+        
+        for search_result in files_list:
+            file_info = search_result.file_info
+            if file_info.is_dir:
+                dir_count += 1
+            else:
+                file_count += 1
+                total_size += file_info.size
+        
+        # Update labels
+        self.lbl_files_count.setText(f"📄 Files: {file_count:,}")
+        self.lbl_dirs_count.setText(f"📁 Dirs: {dir_count:,}")
+        self.lbl_total_size.setText(f"💾 Size: {self._format_size_human(total_size)}")
+        self.lbl_exec_time.setText(f"⏱️ Time: {elapsed_time:.2f}s")
+    
+    def _format_size_human(self, size: int) -> str:
+        """Format size in human-readable format."""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} PB"
     
     def _add_to_recent(self, directory: str):
         """Add directory to recent list."""
