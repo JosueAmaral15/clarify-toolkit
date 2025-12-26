@@ -23,7 +23,7 @@ from PySide6.QtWidgets import (
     QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox,
     QProgressDialog, QSplitter, QScrollArea, QStackedWidget, QFrame
 )
-from PySide6.QtCore import Qt, QSettings, QDate, QTimer
+from PySide6.QtCore import Qt, QSettings, QDate, QTimer, QObject, QEvent
 from PySide6.QtGui import QAction
 from .base_dock import BaseDock
 from .widgets import (
@@ -37,6 +37,47 @@ from src.core.file_explorer_executor import (
     UnifiedFileExplorerExecutor, SearchResult, SearchMatch
 )
 from src.i18n.translator import tooltip_tr, tr
+
+
+class HoverExpandFilter(QObject):
+    """
+    Event filter for hover expansion of results panel (v2.9.117 - C.1).
+    
+    Expands the right panel when mouse hovers over it,
+    restores original size when mouse leaves.
+    """
+    
+    def __init__(self, splitter: QSplitter, original_sizes: list):
+        """
+        Initialize hover expand filter.
+        
+        Args:
+            splitter: The QSplitter to adjust
+            original_sizes: Original sizes to restore [left, right]
+        """
+        super().__init__()
+        self._splitter = splitter
+        self._original_sizes = original_sizes
+        self._is_expanded = False
+    
+    def eventFilter(self, obj, event):
+        """Handle enter/leave events for hover expansion."""
+        if event.type() == QEvent.Type.Enter:
+            # Expand right panel
+            if not self._is_expanded:
+                total_width = sum(self._splitter.sizes())
+                new_left = int(total_width * 0.15)  # 15% left
+                new_right = total_width - new_left   # 85% right
+                self._splitter.setSizes([new_left, new_right])
+                self._is_expanded = True
+        
+        elif event.type() == QEvent.Type.Leave:
+            # Restore original sizes
+            if self._is_expanded:
+                self._splitter.setSizes(self._original_sizes)
+                self._is_expanded = False
+        
+        return False  # Don't filter the event
 
 
 class FileExplorerDock(BaseDock):
@@ -487,6 +528,16 @@ class FileExplorerDock(BaseDock):
         self.splitter.setSizes([300, 900])  # 25% left, 75% right
         self.splitter.setStretchFactor(0, 1)  # Left panel can shrink
         self.splitter.setStretchFactor(1, 3)  # Right panel gets 3x space
+        
+        # ============================================================================
+        # HOVER EXPANSION (v2.9.117 - C.1)
+        # ============================================================================
+        # Store original sizes for restoration
+        self._original_sizes = [300, 900]
+        
+        # Create and install hover event filter on right panel
+        self._hover_filter = HoverExpandFilter(self.splitter, self._original_sizes)
+        right_panel.installEventFilter(self._hover_filter)
         
         # Add splitter to main layout
         self.layout.addWidget(self.splitter)

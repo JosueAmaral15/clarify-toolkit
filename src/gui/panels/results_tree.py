@@ -211,6 +211,18 @@ class ResultsTree(QTreeWidget):
         open_all_action.setEnabled(bool(self._matches_data))
         open_all_action.triggered.connect(self._open_all_files)
         
+        menu.addSeparator()
+        
+        # Open location action (v2.9.117 - C.2)
+        open_location_action = menu.addAction("🗂️ Open Location")
+        open_location_action.setEnabled(has_selection)
+        open_location_action.triggered.connect(self._open_file_location)
+        
+        # Properties action (v2.9.117 - C.2)
+        properties_action = menu.addAction("🔍 Properties")
+        properties_action.setEnabled(has_selection)
+        properties_action.triggered.connect(self._show_file_properties)
+        
         # Show menu at cursor position
         menu.exec_(self.mapToGlobal(position))
     
@@ -335,3 +347,116 @@ class ResultsTree(QTreeWidget):
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s)")
             QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+
+    def _open_file_location(self):
+        """Open file location in file manager (v2.9.117 - C.2)."""
+        import subprocess
+        import platform
+        
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+        
+        # Collect unique file paths from selection
+        file_paths = set()
+        for item in selected_items:
+            # Skip summary header
+            if item.text(0).startswith("📊 Results:"):
+                continue
+            
+            # If it's a file item (no parent), use it directly
+            if not item.parent():
+                file_paths.add(item.text(0))
+            # If it's a match item, get parent file path
+            else:
+                parent_text = item.parent().text(0)
+                if not parent_text.startswith("📊"):
+                    file_paths.add(parent_text)
+        
+        # Open each file's location
+        opened_count = 0
+        for path in file_paths:
+            if os.path.exists(path):
+                directory = os.path.dirname(path) if os.path.isfile(path) else path
+                
+                try:
+                    system = platform.system()
+                    if system == "Windows":
+                        subprocess.run(["explorer", "/select,", path])
+                    elif system == "Darwin":  # macOS
+                        subprocess.run(["open", "-R", path])
+                    else:  # Linux
+                        subprocess.run(["xdg-open", directory])
+                    opened_count += 1
+                except Exception as e:
+                    print(f"Error opening location for {path}: {e}")
+        
+        # Show feedback
+        if self._status_label and opened_count > 0:
+            self._status_label.setText(f"✅ Opened {opened_count} location(s)")
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+    
+    def _show_file_properties(self):
+        """Show file properties dialog (v2.9.117 - C.2)."""
+        from datetime import datetime
+        import stat
+        
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+        
+        # Collect file paths from selection
+        file_paths = []
+        for item in selected_items:
+            # Skip summary header
+            if item.text(0).startswith("📊 Results:"):
+                continue
+            
+            # If it's a file item (no parent), use it directly
+            if not item.parent():
+                file_paths.append(item.text(0))
+            # If it's a match item, get parent file path
+            else:
+                parent_text = item.parent().text(0)
+                if not parent_text.startswith("📊") and parent_text not in file_paths:
+                    file_paths.append(parent_text)
+        
+        if not file_paths:
+            return
+        
+        # Show properties for first file
+        path = file_paths[0]
+        if os.path.exists(path):
+            stat_info = os.stat(path)
+            is_dir = os.path.isdir(path)
+            
+            # Format file info
+            info_lines = [
+                f"Path: {path}",
+                f"Type: {'Directory' if is_dir else 'File'}",
+                f"Size: {self._format_size(stat_info.st_size)}",
+                f"Created: {datetime.fromtimestamp(stat_info.st_ctime).strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Modified: {datetime.fromtimestamp(stat_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Accessed: {datetime.fromtimestamp(stat_info.st_atime).strftime('%Y-%m-%d %H:%M:%S')}",
+            ]
+            
+            # Add permissions on Unix
+            if hasattr(stat_info, 'st_mode'):
+                mode = stat_info.st_mode
+                perms = stat.filemode(mode)
+                info_lines.append(f"Permissions: {perms}")
+            
+            # Show in message box
+            QMessageBox.information(
+                self,
+                "File Properties",
+                "\n".join(info_lines)
+            )
+    
+    def _format_size(self, size: int) -> str:
+        """Format size in human-readable format."""
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} PB"
