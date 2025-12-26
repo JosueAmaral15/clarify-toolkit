@@ -102,24 +102,10 @@ class FileExplorerDock(BaseDock):
     def _create_widgets(self):
         """Create UI widgets."""
         # ============================================================================
-        # SECTION 1: Directory & Type (📁 - Always Expanded)
+        # SECTION 1: Directory & Type (📁 - Collapsible)
         # ============================================================================
-        self.section_directory = QGroupBox("📁 Directory & Type")
-        self.section_directory.setCheckable(False)
-        self.section_directory.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #3498db;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-        """)
+        self.section_directory = CollapsibleSection("📁 Directory & Type")
+        self.section_directory.setCollapsed(False)  # Start expanded
         
         # Directory input
         self.ed_directory = QLineEdit()
@@ -162,24 +148,10 @@ class FileExplorerDock(BaseDock):
             self.chk_selection_mode.setToolTip("Enable multi-selection to return selected files")
         
         # ============================================================================
-        # SECTION 2: Search & Replace (🔍 - Always Expanded)
+        # SECTION 2: Search & Replace (🔍 - Collapsible)
         # ============================================================================
-        self.section_search = QGroupBox("🔍 Search & Replace")
-        self.section_search.setCheckable(False)
-        self.section_search.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #2ecc71;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-        """)
+        self.section_search = CollapsibleSection("🔍 Search & Replace")
+        self.section_search.setCollapsed(False)  # Start expanded
         
         # NEW: Integrated search widgets (v2.9.116)
         self.filename_panel = FileNameQueryPanel()
@@ -363,7 +335,10 @@ class FileExplorerDock(BaseDock):
         opts3_layout.addStretch()
         section1_layout.addLayout(opts3_layout)
         
-        self.section_directory.setLayout(section1_layout)
+        # Wrap in widget for CollapsibleSection
+        section1_widget = QWidget()
+        section1_widget.setLayout(section1_layout)
+        self.section_directory.setContent(section1_widget)
         left_layout.addWidget(self.section_directory)
         
         # ----------------------------------------------------------------------------
@@ -375,7 +350,10 @@ class FileExplorerDock(BaseDock):
         section2_layout.addWidget(self.search_options_panel)
         section2_layout.addWidget(self.replace_panel)
         
-        self.section_search.setLayout(section2_layout)
+        # Wrap in widget for CollapsibleSection
+        section2_widget = QWidget()
+        section2_widget.setLayout(section2_layout)
+        self.section_search.setContent(section2_widget)
         left_layout.addWidget(self.section_search)
         
         # ----------------------------------------------------------------------------
