@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
     QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox,
-    QProgressDialog
+    QProgressDialog, QSplitter, QScrollArea
 )
 from PySide6.QtCore import Qt, QSettings, QDate, QTimer
 from PySide6.QtGui import QAction
@@ -338,10 +338,18 @@ class FileExplorerDock(BaseDock):
             )
     
     def _create_layout(self):
-        """Create layout with collapsible sections (v2.9.116)."""
+        """Create horizontal splitter layout with controls on left, results on right (v2.9.117 - B.1)."""
         # ============================================================================
-        # SECTION 1 LAYOUT: Directory & Type
+        # LEFT PANEL: All control sections in scroll area
         # ============================================================================
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(8)
+        
+        # ----------------------------------------------------------------------------
+        # SECTION 1: Directory & Type
+        # ----------------------------------------------------------------------------
         section1_layout = QVBoxLayout()
         
         # Directory row
@@ -371,11 +379,11 @@ class FileExplorerDock(BaseDock):
         section1_layout.addLayout(opts2_layout)
         
         self.section_directory.setLayout(section1_layout)
-        self.layout.addWidget(self.section_directory)
+        left_layout.addWidget(self.section_directory)
         
-        # ============================================================================
-        # SECTION 2 LAYOUT: Search & Replace
-        # ============================================================================
+        # ----------------------------------------------------------------------------
+        # SECTION 2: Search & Replace
+        # ----------------------------------------------------------------------------
         section2_layout = QVBoxLayout()
         section2_layout.addWidget(self.filename_panel)
         section2_layout.addWidget(self.content_panel)
@@ -383,45 +391,68 @@ class FileExplorerDock(BaseDock):
         section2_layout.addWidget(self.replace_panel)
         
         self.section_search.setLayout(section2_layout)
-        self.layout.addWidget(self.section_search)
+        left_layout.addWidget(self.section_search)
         
-        # ============================================================================
-        # SECTION 3 LAYOUT: Filters
-        # ============================================================================
+        # ----------------------------------------------------------------------------
+        # SECTION 3: Filters
+        # ----------------------------------------------------------------------------
         section3_layout = QVBoxLayout()
         section3_layout.addWidget(self.filter_panel)
         
         self.section_filters.setLayout(section3_layout)
-        self.layout.addWidget(self.section_filters)
+        left_layout.addWidget(self.section_filters)
         
-        # ============================================================================
-        # SECTION 4 LAYOUT: Advanced Conditions
-        # ============================================================================
+        # ----------------------------------------------------------------------------
+        # SECTION 4: Advanced Conditions
+        # ----------------------------------------------------------------------------
         section4_layout = QVBoxLayout()
         section4_layout.addWidget(self.conditions_grid)
         
         self.section_conditions.setLayout(section4_layout)
-        self.layout.addWidget(self.section_conditions)
+        left_layout.addWidget(self.section_conditions)
         
-        # ============================================================================
-        # SECTION 5 LAYOUT: Presets (Dock Mode Only)
-        # ============================================================================
+        # ----------------------------------------------------------------------------
+        # SECTION 5: Presets (Dock Mode Only)
+        # ----------------------------------------------------------------------------
         if not self.dialog_mode:
             section5_layout = QVBoxLayout()
             section5_layout.addWidget(self.preset_manager)
             
             self.section_presets.setLayout(section5_layout)
-            self.layout.addWidget(self.section_presets)
+            left_layout.addWidget(self.section_presets)
         
-        # ============================================================================
+        # ----------------------------------------------------------------------------
         # Action Button
-        # ============================================================================
-        self.layout.addWidget(self.btn_list)
+        # ----------------------------------------------------------------------------
+        left_layout.addWidget(self.btn_list)
+        left_layout.addStretch()  # Push everything to top
+        
+        # Wrap left panel in scroll area
+        left_scroll = QScrollArea()
+        left_scroll.setWidget(left_panel)
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
         
         # ============================================================================
-        # Results Table
+        # RIGHT PANEL: Results table only
         # ============================================================================
-        self.layout.addWidget(self.table_manager)
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.addWidget(self.table_manager)
+        
+        # ============================================================================
+        # HORIZONTAL SPLITTER: Left (controls) + Right (results)
+        # ============================================================================
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(left_scroll)
+        self.splitter.addWidget(right_panel)
+        self.splitter.setSizes([300, 900])  # 25% left, 75% right
+        self.splitter.setStretchFactor(0, 1)  # Left panel can shrink
+        self.splitter.setStretchFactor(1, 3)  # Right panel gets 3x space
+        
+        # Add splitter to main layout
+        self.layout.addWidget(self.splitter)
         
         # ============================================================================
         # Dialog Buttons (Dialog Mode Only)
