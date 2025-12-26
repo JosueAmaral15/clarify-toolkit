@@ -391,12 +391,15 @@ if _PYSIDE:
             # Linux window managers (X11/Wayland) require explicit WindowMaximizeButtonHint
             # to show the maximize button [□] in the title bar alongside [_] and [×]
             from PySide6.QtCore import Qt
-            self.setWindowFlags(
+            
+            # Store desired window flags for restoration later (prevent QDockWidget interference)
+            self._desired_window_flags = (
                 Qt.Window |
                 Qt.WindowMinimizeButtonHint |
                 Qt.WindowMaximizeButtonHint |
                 Qt.WindowCloseButtonHint
             )
+            self.setWindowFlags(self._desired_window_flags)
             
             # Initialize all core systems using InitializationManager (Phase 3.7)
             from .gui.initialization_manager import InitializationManager
@@ -938,6 +941,10 @@ if _PYSIDE:
             # Switch to new tab
             self.tabs.setCurrentIndex(tab_index)
             
+            # Fix: Restore MainWindow window flags after adding tab (v2.9.117)
+            # QDockWidget as tab can interfere with MainWindow flags on Linux
+            self._restore_window_flags()
+            
             # Save tab state to QSettings
             self._save_tab_state()
             
@@ -975,6 +982,10 @@ if _PYSIDE:
             
             # Remove tab
             self.tabs.removeTab(index)
+            
+            # Fix: Restore MainWindow window flags after removing tab (v2.9.117)
+            # QDockWidget as tab can interfere with MainWindow flags on Linux
+            self._restore_window_flags()
             
             # Remove from tracking dict
             tool_name_to_remove = None
@@ -1037,6 +1048,29 @@ if _PYSIDE:
             self.tabs.setCurrentIndex(original_index)
             QApplication.processEvents()
             logger.info("Tab initialization complete")
+        
+        def _restore_window_flags(self):
+            """
+            Restore MainWindow window flags to desired state (v2.9.117).
+            
+            Purpose: QDockWidget used as tab widget can interfere with MainWindow
+            window flags on Linux, causing maximize button to disappear.
+            
+            This method ensures window flags are always restored after tab operations
+            (add/remove tabs) to maintain consistent window controls.
+            
+            Called after:
+            - Adding a tool as tab (_add_tool_tab)
+            - Removing a tab (_close_tab)
+            - Any operation that might affect window flags
+            """
+            if hasattr(self, '_desired_window_flags'):
+                current_flags = self.windowFlags()
+                if current_flags != self._desired_window_flags:
+                    # Flags were modified - restore them
+                    self.setWindowFlags(self._desired_window_flags)
+                    # Show window again (setWindowFlags hides window)
+                    self.show()
         
         def _apply_tab_close_button_style(self):
             """Apply theme-appropriate styling to tab close buttons (v2.9.40)."""
