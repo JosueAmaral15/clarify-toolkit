@@ -251,6 +251,29 @@ class ThemeManager:
                 background-color: #f0f0f0;
                 padding: 5px;
             }
+            
+            /* CollapsibleSection (File Explorer) */
+            QPushButton[objectName="collapsible_header"] {
+                background-color: #3498db;
+                color: white;
+                text-align: left;
+                padding: 8px;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton[objectName="collapsible_header"]:hover {
+                background-color: #2980b9;
+            }
+            QPushButton[objectName="collapsible_header"]:checked {
+                background-color: #2c3e50;
+            }
+            QFrame[objectName="collapsible_content"] {
+                border: 1px solid #d0d0d0;
+                border-top: none;
+                border-radius: 0 0 4px 4px;
+                background-color: #ffffff;
+            }
         """
         app.setStyleSheet(stylesheet)
 
@@ -473,6 +496,29 @@ class ThemeManager:
             QDockWidget::title {
                 background-color: #3c3c3c;
                 padding: 5px;
+            }
+            
+            /* CollapsibleSection (File Explorer) - DARK THEME */
+            QPushButton[objectName="collapsible_header"] {
+                background-color: #3498db;
+                color: white;
+                text-align: left;
+                padding: 8px;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton[objectName="collapsible_header"]:hover {
+                background-color: #2980b9;
+            }
+            QPushButton[objectName="collapsible_header"]:checked {
+                background-color: #2c3e50;
+            }
+            QFrame[objectName="collapsible_content"] {
+                border: 1px solid #505050;
+                border-top: none;
+                border-radius: 0 0 4px 4px;
+                background-color: #2d2d30;
             }
         """
         app.setStyleSheet(stylesheet)

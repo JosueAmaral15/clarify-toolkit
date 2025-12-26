@@ -52,36 +52,13 @@ class CollapsibleSection(QWidget):
         self.header_button.setCheckable(True)
         self.header_button.setChecked(True)  # Expanded by default
         self.header_button.clicked.connect(self._toggle_collapsed)
-        self.header_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3498db;
-                color: white;
-                text-align: left;
-                padding: 8px;
-                border: none;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:checked {
-                background-color: #2c3e50;
-            }
-        """)
+        self.header_button.setObjectName("collapsible_header")
         self.main_layout.addWidget(self.header_button)
         
         # Content frame (for animation)
         self.content_frame = QFrame()
         self.content_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.content_frame.setStyleSheet("""
-            QFrame {
-                border: 1px solid #bdc3c7;
-                border-top: none;
-                border-radius: 0 0 4px 4px;
-                background-color: #ecf0f1;
-            }
-        """)
+        self.content_frame.setObjectName("collapsible_content")
         
         self.content_layout = QVBoxLayout(self.content_frame)
         self.content_layout.setContentsMargins(8, 8, 8, 8)
