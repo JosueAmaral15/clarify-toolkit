@@ -313,14 +313,86 @@ class ConditionsGrid(QWidget):
     
     def add_condition_row(self):
         """Add a new condition row."""
-        # TODO: Implement condition row widget with fields:
-        # - Field (filename, path, ext, size, mtime, content)
-        # - Operator (=, !=, contains, >, <, etc)
-        # - Value (text input)
-        # - Scope (all/any for content search)
-        # - Options (case, word, regex checkboxes)
-        # - Delete button
-        pass
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 2, 0, 2)
+        
+        # Field selector
+        combo_field = QComboBox()
+        combo_field.addItems(["filename", "path", "ext", "size", "mtime", "content"])
+        combo_field.setToolTip("Choose field to filter by")
+        row_layout.addWidget(combo_field)
+        
+        # Operator selector
+        combo_operator = QComboBox()
+        combo_operator.addItems(["=", "!=", "contains", "!contains", ">", "<", ">=", "<=", "regex"])
+        combo_operator.setToolTip("Choose comparison operator")
+        row_layout.addWidget(combo_operator)
+        
+        # Value input
+        line_value = QLineEdit()
+        line_value.setPlaceholderText("Enter value...")
+        line_value.setToolTip("Enter value to compare against")
+        row_layout.addWidget(line_value, 1)  # Stretch to fill space
+        
+        # Options for content field
+        chk_case = QCheckBox("Case")
+        chk_case.setToolTip("Case sensitive")
+        chk_case.setEnabled(False)  # Only enabled for content field
+        row_layout.addWidget(chk_case)
+        
+        chk_regex = QCheckBox("Regex")
+        chk_regex.setToolTip("Use regex pattern")
+        chk_regex.setEnabled(False)  # Only enabled for content field
+        row_layout.addWidget(chk_regex)
+        
+        # Delete button
+        btn_delete = QPushButton("🗑️")
+        btn_delete.setToolTip("Remove this condition")
+        btn_delete.setMaximumWidth(40)
+        btn_delete.clicked.connect(lambda: self._remove_condition_row(row_widget))
+        row_layout.addWidget(btn_delete)
+        
+        # Enable/disable options based on field
+        def on_field_changed(field):
+            is_content = field == "content"
+            chk_case.setEnabled(is_content)
+            chk_regex.setEnabled(is_content)
+        
+        combo_field.currentTextChanged.connect(on_field_changed)
+        
+        # Add to layout
+        self.conditions_layout.addWidget(row_widget)
+        
+        # Store references
+        row_data = {
+            'widget': row_widget,
+            'field': combo_field,
+            'operator': combo_operator,
+            'value': line_value,
+            'case': chk_case,
+            'regex': chk_regex
+        }
+        self.condition_rows.append(row_data)
+        
+        # Connect signals to emit changes
+        combo_field.currentTextChanged.connect(self._emit_conditions)
+        combo_operator.currentTextChanged.connect(self._emit_conditions)
+        line_value.textChanged.connect(self._emit_conditions)
+        chk_case.stateChanged.connect(self._emit_conditions)
+        chk_regex.stateChanged.connect(self._emit_conditions)
+    
+    def _remove_condition_row(self, row_widget):
+        """Remove a specific condition row."""
+        # Find and remove from list
+        for i, row_data in enumerate(self.condition_rows):
+            if row_data['widget'] == row_widget:
+                self.condition_rows.pop(i)
+                break
+        
+        # Remove widget
+        row_widget.deleteLater()
+        self._emit_conditions()
     
     def clear_conditions(self):
         """Remove all condition rows."""
@@ -335,8 +407,26 @@ class ConditionsGrid(QWidget):
     
     def get_conditions(self) -> list:
         """Get all conditions as list of dicts."""
-        # TODO: Collect data from all condition rows
-        return []
+        conditions = []
+        for row_data in self.condition_rows:
+            field = row_data['field'].currentText()
+            operator = row_data['operator'].currentText()
+            value = row_data['value'].text().strip()
+            
+            # Skip empty conditions
+            if not value:
+                continue
+            
+            condition = {
+                'field': field,
+                'operator': operator,
+                'value': value,
+                'case_sensitive': row_data['case'].isChecked(),
+                'regex': row_data['regex'].isChecked()
+            }
+            conditions.append(condition)
+        
+        return conditions
     
     def get_logic_operator(self) -> str:
         """Get selected logic operator (AND/OR)."""

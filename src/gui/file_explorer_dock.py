@@ -39,47 +39,6 @@ from src.core.file_explorer_executor import (
 from src.i18n.translator import tooltip_tr, tr
 
 
-class HoverExpandFilter(QObject):
-    """
-    Event filter for hover expansion of results panel (v2.9.117 - C.1).
-    
-    Expands the right panel when mouse hovers over it,
-    restores original size when mouse leaves.
-    """
-    
-    def __init__(self, splitter: QSplitter, original_sizes: list):
-        """
-        Initialize hover expand filter.
-        
-        Args:
-            splitter: The QSplitter to adjust
-            original_sizes: Original sizes to restore [left, right]
-        """
-        super().__init__()
-        self._splitter = splitter
-        self._original_sizes = original_sizes
-        self._is_expanded = False
-    
-    def eventFilter(self, obj, event):
-        """Handle enter/leave events for hover expansion."""
-        if event.type() == QEvent.Type.Enter:
-            # Expand right panel
-            if not self._is_expanded:
-                total_width = sum(self._splitter.sizes())
-                new_left = int(total_width * 0.15)  # 15% left
-                new_right = total_width - new_left   # 85% right
-                self._splitter.setSizes([new_left, new_right])
-                self._is_expanded = True
-        
-        elif event.type() == QEvent.Type.Leave:
-            # Restore original sizes
-            if self._is_expanded:
-                self._splitter.setSizes(self._original_sizes)
-                self._is_expanded = False
-        
-        return False  # Don't filter the event
-
-
 class FileExplorerDock(BaseDock):
     """
     Unified dock/dialog widget for file exploration with advanced filters.
@@ -271,12 +230,12 @@ class FileExplorerDock(BaseDock):
         self.btn_list_browse = QPushButton("📁 Browse")
         self.btn_list_browse.setToolTip("List all files in directory (no search)")
         self.btn_list_browse.clicked.connect(self._browse_files)
-        self.btn_list_browse.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; padding: 8px; font-weight: bold; }")
+        self.btn_list_browse.setObjectName("btn_browse")  # For theme styling
         
         self.btn_list_search = QPushButton("🔍 Search")
         self.btn_list_search.setToolTip("Search files by name/content patterns")
         self.btn_list_search.clicked.connect(self._search_files)
-        self.btn_list_search.setStyleSheet("QPushButton { background-color: #27ae60; color: white; padding: 8px; font-weight: bold; }")
+        self.btn_list_search.setObjectName("btn_search")  # For theme styling
         
         # ============================================================================
         # Results Table
@@ -460,14 +419,7 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         stats_frame = QFrame()
         stats_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        stats_frame.setStyleSheet("""
-            QFrame {
-                background-color: #ecf0f1;
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                padding: 8px;
-            }
-        """)
+        stats_frame.setObjectName("stats_frame")  # For theme styling
         
         stats_layout = QHBoxLayout(stats_frame)
         stats_layout.setContentsMargins(8, 8, 8, 8)
@@ -475,22 +427,22 @@ class FileExplorerDock(BaseDock):
         
         # Files count
         self.lbl_files_count = QLabel("📄 Files: 0")
-        self.lbl_files_count.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        self.lbl_files_count.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_files_count)
         
         # Directories count
         self.lbl_dirs_count = QLabel("📁 Dirs: 0")
-        self.lbl_dirs_count.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        self.lbl_dirs_count.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_dirs_count)
         
         # Total size
         self.lbl_total_size = QLabel("💾 Size: 0 B")
-        self.lbl_total_size.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        self.lbl_total_size.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_total_size)
         
         # Execution time
         self.lbl_exec_time = QLabel("⏱️ Time: 0.00s")
-        self.lbl_exec_time.setStyleSheet("font-weight: bold; color: #2c3e50;")
+        self.lbl_exec_time.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_exec_time)
         
         stats_layout.addStretch()
@@ -499,18 +451,7 @@ class FileExplorerDock(BaseDock):
         self.btn_export_csv = QPushButton("💾 Export CSV")
         self.btn_export_csv.setToolTip("Export current results to CSV file")
         self.btn_export_csv.clicked.connect(self._export_results_csv)
-        self.btn_export_csv.setStyleSheet("""
-            QPushButton {
-                background-color: #9b59b6;
-                color: white;
-                padding: 6px 12px;
-                font-weight: bold;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #8e44ad;
-            }
-        """)
+        self.btn_export_csv.setObjectName("btn_export")  # For theme styling
         stats_layout.addWidget(self.btn_export_csv)
         
         right_panel = QWidget()
@@ -530,14 +471,9 @@ class FileExplorerDock(BaseDock):
         self.splitter.setStretchFactor(1, 3)  # Right panel gets 3x space
         
         # ============================================================================
-        # HOVER EXPANSION (v2.9.117 - C.1)
+        # HOVER EXPANSION DISABLED (user request - Dec 26, 2024)
         # ============================================================================
-        # Store original sizes for restoration
-        self._original_sizes = [300, 900]
-        
-        # Create and install hover event filter on right panel
-        self._hover_filter = HoverExpandFilter(self.splitter, self._original_sizes)
-        right_panel.installEventFilter(self._hover_filter)
+        # Hover expansion removed as it was distracting for users
         
         # Add splitter to main layout
         self.layout.addWidget(self.splitter)
