@@ -260,11 +260,17 @@ class FileExplorerDock(BaseDock):
             )
         
         # ============================================================================
-        # Action Button
+        # Action Buttons (v2.9.117 - B.3: Separate Browse/Search)
         # ============================================================================
-        self.btn_list = QPushButton("🔍 Search & List")
-        self.btn_list.setToolTip("Execute search/list operation")
-        self.btn_list.clicked.connect(self._list_files)
+        self.btn_list_browse = QPushButton("📁 Browse")
+        self.btn_list_browse.setToolTip("List all files in directory (no search)")
+        self.btn_list_browse.clicked.connect(self._browse_files)
+        self.btn_list_browse.setStyleSheet("QPushButton { background-color: #4a90e2; color: white; padding: 8px; font-weight: bold; }")
+        
+        self.btn_list_search = QPushButton("🔍 Search")
+        self.btn_list_search.setToolTip("Search files by name/content patterns")
+        self.btn_list_search.clicked.connect(self._search_files)
+        self.btn_list_search.setStyleSheet("QPushButton { background-color: #27ae60; color: white; padding: 8px; font-weight: bold; }")
         
         # ============================================================================
         # Results Table
@@ -296,7 +302,9 @@ class FileExplorerDock(BaseDock):
         self.chk_long.setToolTip(tooltip_tr("file_list.chk_long"))
         self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
         self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
-        self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
+        # Action buttons tooltips (v2.9.117 - B.3)
+        self.btn_list_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
+        self.btn_list_search.setToolTip(tooltip_tr("file_list.btn_search"))
         
         # Search & Replace section
         self.section_search.setToolTip(
@@ -423,9 +431,13 @@ class FileExplorerDock(BaseDock):
             left_layout.addWidget(self.section_presets)
         
         # ----------------------------------------------------------------------------
-        # Action Button
+        # Action Buttons (v2.9.117 - B.3)
         # ----------------------------------------------------------------------------
-        left_layout.addWidget(self.btn_list)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.btn_list_browse)
+        buttons_layout.addWidget(self.btn_list_search)
+        buttons_layout.setSpacing(8)
+        left_layout.addLayout(buttons_layout)
         left_layout.addStretch()  # Push everything to top
         
         # Wrap left panel in scroll area
@@ -482,6 +494,32 @@ class FileExplorerDock(BaseDock):
         )
         if directory:
             self.ed_directory.setText(directory)
+    
+    def _browse_files(self):
+        """Browse all files in directory without search filters (v2.9.117 - B.3)."""
+        # Clear search fields to ensure browse mode
+        self.filename_panel.clear()
+        self.content_panel.clear()
+        # Execute list operation (will detect no search and use browse mode)
+        self._list_files()
+    
+    def _search_files(self):
+        """Search files with current patterns (v2.9.117 - B.3)."""
+        # Validate that at least one search criteria is set
+        filename_pattern = self.filename_panel.get_pattern()
+        content_query = self.content_panel.get_query()
+        
+        if not filename_pattern and not content_query:
+            QMessageBox.information(
+                self,
+                "No Search Criteria",
+                "Please enter a filename pattern or content query to search.\n\n"
+                "For browsing all files, use the Browse button instead."
+            )
+            return
+        
+        # Execute list operation (will detect search criteria and use search mode)
+        self._list_files()
     
     def _list_files(self):
         """List or search files with unified executor (v2.9.116)."""

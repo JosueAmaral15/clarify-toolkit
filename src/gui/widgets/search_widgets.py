@@ -64,6 +64,10 @@ class FileNameQueryPanel(QWidget):
     def set_pattern(self, pattern: str):
         """Set filename pattern."""
         self.ed_pattern.setText(pattern)
+    
+    def clear(self):
+        """Clear filename pattern (v2.9.117)."""
+        self.ed_pattern.clear()
 
 
 class ContentQueryPanel(QWidget):
@@ -107,6 +111,10 @@ class ContentQueryPanel(QWidget):
     def set_font(self, font: QFont):
         """Set monospaced font for editor."""
         self.ed_query.setFont(font)
+    
+    def clear(self):
+        """Clear search query (v2.9.117)."""
+        self.ed_query.clear()
 
 
 class SearchOptionsPanel(QWidget):
