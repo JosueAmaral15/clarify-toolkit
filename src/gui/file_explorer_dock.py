@@ -327,7 +327,7 @@ class FileExplorerDock(BaseDock):
             self.ed_directory.setText(directory)
     
     def _list_files(self):
-        """List files with selected options."""
+        """List or search files with unified executor (v2.9.116)."""
         directory = self.ed_directory.text().strip()
         
         if not directory:
@@ -347,13 +347,13 @@ class FileExplorerDock(BaseDock):
         recursive = self.chk_recursive.isChecked()
         long_format = self.chk_long.isChecked()
         
-        # Get file type filter (NEW)
+        # Get file type filter
         type_filter = self.combo_type.currentText()
         
         # Get advanced filters
         filters = self._build_filters()
         
-        # Add type filter to filters dict (NEW)
+        # Add type filter to filters dict
         if type_filter == "Files Only":
             filters['type'] = 'files'
         elif type_filter == "Directories Only":
@@ -361,46 +361,89 @@ class FileExplorerDock(BaseDock):
         else:
             filters['type'] = 'any'
         
-        # Execute file listing using FileListExecutor
-        result = FileListExecutor.list_files(
-            directory=directory,
-            show_hidden=show_hidden,
-            recursive=recursive,
-            filters=filters
-        )
+        # ============================================================================
+        # UNIFIED EXECUTOR INTEGRATION (v2.9.116)
+        # ============================================================================
+        # Get search parameters from new widgets
+        filename_pattern = self.filename_panel.get_pattern()
+        content_query = self.content_panel.get_query()
+        search_options = self.search_options_panel.get_options()
+        conditions = self.conditions_grid.get_conditions()
+        
+        # Determine if this is a search or browse operation
+        is_search = bool(filename_pattern or content_query)
+        
+        if is_search:
+            # Execute search with UnifiedFileExplorerExecutor
+            result = self.executor.execute_search(
+                directory=directory,
+                filename_pattern=filename_pattern,
+                content_query=content_query,
+                case_sensitive=search_options.get('case_sensitive', False),
+                whole_word=search_options.get('whole_word', False),
+                regex_enabled=search_options.get('regex_enabled', False),
+                show_hidden=show_hidden,
+                recursive=recursive,
+                filters=filters,
+                conditions=conditions
+            )
+            
+            # Process SearchResult objects
+            files_data = []
+            for search_result in result.get('files', []):
+                # Format permissions
+                perms = search_result.permissions
+                if long_format:
+                    perms = f"{perms} {search_result.owner}:{search_result.group}"
+                
+                # Add match count to display if content search
+                display_name = search_result.name
+                if search_result.matches:
+                    match_count = len(search_result.matches)
+                    display_name = f"{search_result.name} ({match_count} matches)"
+                
+                files_data.append({
+                    'name': display_name,
+                    'size': search_result.size,
+                    'mtime': search_result.mtime,
+                    'permissions': perms,
+                    'path': search_result.path,
+                    'is_dir': search_result.is_dir
+                })
+        else:
+            # Execute browse with UnifiedFileExplorerExecutor
+            result = self.executor.execute_browse(
+                directory=directory,
+                show_hidden=show_hidden,
+                recursive=recursive,
+                filters=filters
+            )
+            
+            # Process FileInfo objects
+            files_data = []
+            for file_info in result.get('files', []):
+                # Format permissions
+                perms = file_info.permissions
+                if long_format:
+                    perms = f"{perms} {file_info.owner}:{file_info.group}"
+                
+                files_data.append({
+                    'name': file_info.name,
+                    'size': file_info.size,
+                    'mtime': file_info.mtime,
+                    'permissions': perms,
+                    'path': file_info.path,
+                    'is_dir': file_info.is_dir
+                })
         
         # Show errors if any
-        if result.errors:
-            error_msg = "\n".join(result.errors[:5])  # Show first 5 errors
-            if len(result.errors) > 5:
-                error_msg += f"\n... and {len(result.errors) - 5} more errors"
+        if result.get('errors'):
+            error_msg = "\n".join(result['errors'][:5])  # Show first 5 errors
+            if len(result['errors']) > 5:
+                error_msg += f"\n... and {len(result['errors']) - 5} more errors"
             QMessageBox.warning(self, "Errors Encountered", error_msg)
         
-        # Filter by type (NEW - post-processing since FileListExecutor might not support 'type')
-        filtered_files = result.files
-        if type_filter == "Files Only":
-            filtered_files = [f for f in result.files if not f.is_dir]
-        elif type_filter == "Directories Only":
-            filtered_files = [f for f in result.files if f.is_dir]
-        
-        # Convert FileInfo objects to dicts for table
-        files_data = []
-        for file_info in filtered_files:
-            # Format permissions
-            perms = file_info.permissions
-            if long_format:
-                perms = f"{perms} {file_info.owner}:{file_info.group}"
-            
-            files_data.append({
-                'name': file_info.name,
-                'size': file_info.size,
-                'mtime': file_info.mtime,
-                'permissions': perms,
-                'path': file_info.path,
-                'is_dir': file_info.is_dir
-            })
-        
-        # Enable multi-selection if in selection mode (NEW)
+        # Enable multi-selection if in selection mode
         if self.dialog_mode and hasattr(self, 'chk_selection_mode') and self.chk_selection_mode.isChecked():
             self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
         else:
@@ -585,7 +628,7 @@ class FileExplorerDock(BaseDock):
         pass  # Could implement auto-search on typing
     
     def _on_replace_first(self):
-        """Handle replace first occurrence."""
+        """Handle replace first occurrence (v2.9.116)."""
         query = self.content_panel.get_query()
         replacement = self.replace_panel.get_replacement()
         
@@ -593,11 +636,51 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, "No Query", "Please enter search text.")
             return
         
-        # TODO: Implement replace first with executor
-        QMessageBox.information(self, "Replace First", "Replace first not yet implemented.")
+        # Get selected files from table
+        selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Please select at least one file.")
+            return
+        
+        # Collect file paths
+        file_paths = []
+        for row in sorted(selected_rows):
+            path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
+            if path_item:
+                file_paths.append(path_item.text())
+        
+        # Get search options
+        search_options = self.search_options_panel.get_options()
+        
+        # Execute replace first
+        result = self.executor.execute_replace(
+            file_paths=file_paths,
+            search_query=query,
+            replacement=replacement,
+            case_sensitive=search_options.get('case_sensitive', False),
+            whole_word=search_options.get('whole_word', False),
+            regex_enabled=search_options.get('regex_enabled', False),
+            replace_all=False  # Replace first only
+        )
+        
+        # Show result
+        if result.get('success'):
+            files_modified = result.get('files_modified', 0)
+            replacements_made = result.get('replacements_made', 0)
+            QMessageBox.information(
+                self, 
+                "Replace Complete", 
+                f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
+            )
+            
+            # Refresh file list to show updated sizes/times
+            self._list_files()
+        else:
+            error = result.get('error', 'Unknown error')
+            QMessageBox.warning(self, "Replace Failed", f"Error: {error}")
     
     def _on_replace_all(self):
-        """Handle replace all occurrences."""
+        """Handle replace all occurrences (v2.9.116)."""
         query = self.content_panel.get_query()
         replacement = self.replace_panel.get_replacement()
         
@@ -605,8 +688,60 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, "No Query", "Please enter search text.")
             return
         
-        # TODO: Implement replace all with executor
-        QMessageBox.information(self, "Replace All", "Replace all not yet implemented.")
+        # Get selected files from table
+        selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
+        if not selected_rows:
+            QMessageBox.warning(self, "No Selection", "Please select at least one file.")
+            return
+        
+        # Collect file paths
+        file_paths = []
+        for row in sorted(selected_rows):
+            path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
+            if path_item:
+                file_paths.append(path_item.text())
+        
+        # Confirm with user
+        reply = QMessageBox.question(
+            self,
+            "Confirm Replace All",
+            f"Replace all occurrences in {len(file_paths)} file(s)?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply != QMessageBox.Yes:
+            return
+        
+        # Get search options
+        search_options = self.search_options_panel.get_options()
+        
+        # Execute replace all
+        result = self.executor.execute_replace(
+            file_paths=file_paths,
+            search_query=query,
+            replacement=replacement,
+            case_sensitive=search_options.get('case_sensitive', False),
+            whole_word=search_options.get('whole_word', False),
+            regex_enabled=search_options.get('regex_enabled', False),
+            replace_all=True  # Replace all occurrences
+        )
+        
+        # Show result
+        if result.get('success'):
+            files_modified = result.get('files_modified', 0)
+            replacements_made = result.get('replacements_made', 0)
+            QMessageBox.information(
+                self, 
+                "Replace Complete", 
+                f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
+            )
+            
+            # Refresh file list to show updated sizes/times
+            self._list_files()
+        else:
+            error = result.get('error', 'Unknown error')
+            QMessageBox.warning(self, "Replace Failed", f"Error: {error}")
     
     def _on_conditions_changed(self, conditions: list):
         """Handle advanced conditions changes."""
