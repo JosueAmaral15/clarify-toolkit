@@ -491,10 +491,7 @@ class FileExplorerDock(BaseDock):
         self.btn_export_csv.setObjectName("btn_export")  # For theme styling
         stats_layout.addWidget(self.btn_export_csv)
         
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(self.results_stack)
+        # Add stats frame to right panel
         right_layout.addWidget(stats_frame)
         
         # ============================================================================
