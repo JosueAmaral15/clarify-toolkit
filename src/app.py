@@ -387,6 +387,17 @@ if _PYSIDE:
         def __init__(self, app: QApplication):
             super().__init__()
             
+            # Fix: Configure window flags for Linux compatibility (v2.9.117)
+            # Linux window managers (X11/Wayland) require explicit WindowMaximizeButtonHint
+            # to show the maximize button [□] in the title bar alongside [_] and [×]
+            from PySide6.QtCore import Qt
+            self.setWindowFlags(
+                Qt.Window |
+                Qt.WindowMinimizeButtonHint |
+                Qt.WindowMaximizeButtonHint |
+                Qt.WindowCloseButtonHint
+            )
+            
             # Initialize all core systems using InitializationManager (Phase 3.7)
             from .gui.initialization_manager import InitializationManager
             InitializationManager.initialize_all(self, app)
