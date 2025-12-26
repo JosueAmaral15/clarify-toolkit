@@ -14,6 +14,7 @@ v2.9.115 Integration:
 
 import os
 import time
+import csv
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
@@ -501,6 +502,24 @@ class FileExplorerDock(BaseDock):
         
         stats_layout.addStretch()
         
+        # Export CSV button (v2.9.117 - B.5)
+        self.btn_export_csv = QPushButton("💾 Export CSV")
+        self.btn_export_csv.setToolTip("Export current results to CSV file")
+        self.btn_export_csv.clicked.connect(self._export_results_csv)
+        self.btn_export_csv.setStyleSheet("""
+            QPushButton {
+                background-color: #9b59b6;
+                color: white;
+                padding: 6px 12px;
+                font-weight: bold;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #8e44ad;
+            }
+        """)
+        stats_layout.addWidget(self.btn_export_csv)
+        
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(0, 0, 0, 0)
@@ -833,6 +852,59 @@ class FileExplorerDock(BaseDock):
                 return f"{size:.1f} {unit}"
             size /= 1024.0
         return f"{size:.1f} PB"
+    
+    def _export_results_csv(self):
+        """
+        Export current results to CSV (v2.9.117 - B.5).
+        Works for both browse mode (table) and search mode (tree).
+        """
+        current_index = self.results_stack.currentIndex()
+        
+        if current_index == 1:
+            # Browse mode: Use FileListTableManager's export method
+            self.table_manager.export_csv()
+        else:
+            # Search mode: Export ResultsTree matches to CSV
+            self._export_tree_to_csv()
+    
+    def _export_tree_to_csv(self):
+        """Export ResultsTree matches to CSV file (v2.9.117 - B.5)."""
+        matches_data = self.results_tree.get_matches_data()
+        
+        if not matches_data:
+            QMessageBox.information(self, "No Data", "No search results to export.")
+            return
+        
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Search Results",
+            "search_results.csv",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            with open(filepath, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                
+                # Header
+                writer.writerow(["File", "Line", "Column", "Match"])
+                
+                # Data: Iterate through files and matches
+                for file_path, matches in matches_data.items():
+                    for line, col, snippet in matches:
+                        writer.writerow([file_path, line, col, snippet.strip()])
+            
+            QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Search results exported to:\n{filepath}\n\n"
+                f"Total: {sum(len(m) for m in matches_data.values())} matches in {len(matches_data)} files"
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
     
     def _add_to_recent(self, directory: str):
         """Add directory to recent list."""
