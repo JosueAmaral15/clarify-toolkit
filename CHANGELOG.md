@@ -1,5 +1,161 @@
 # Changelog - Clarify Project
 
+## [2.9.117] - 2024-12-26
+
+### 🔧 File Explorer Critical Corrections (8h)
+
+Correções estruturais para 6 problemas identificados na v2.9.116, incluindo fix crítico do botão maximizar e refatorações de UX/UI.
+
+---
+
+#### **Correções Implementadas** (Fases A-D)
+
+**FASE A - Maximize Button Fix (1h)** ✅ **CRÍTICO**
+
+**Problema #6**: Botão maximizar [□] não aparecia na barra de título do MainWindow no Linux
+- **Causa**: WindowFlags não configurados explicitamente no construtor
+- **Solução**: 
+  - Added `_desired_window_flags` com `WindowMaximizeButtonHint`
+  - Added `_restore_window_flags()` para restaurar após operações de tab
+  - QDockWidget em QTabWidget pode interferir com flags no Linux
+- **Arquivo**: [src/app.py](src/app.py#L1052)
+- **Commits**: `c0f1d8d`, `187d3e2`, `7c101e7`
+
+**FASE B - Layout & Features (5h total)**
+
+**B.1 - QSplitter Horizontal (1h)** ✅
+- **Problema #1**: Layout vertical com QGroupBox estáticas
+- **Solução**: 
+  - Replaced vertical layout with horizontal `QSplitter`
+  - Left panel (controls): 25%, Right panel (results): 75%
+  - QScrollArea wraps left panel for overflow
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L525)
+- **Commit**: `a8e8450`
+
+**B.2 - ResultsTree Integration (1.5h)** ✅
+- **Problema #3**: ResultsTree não estava integrada
+- **Solução**:
+  - QStackedWidget com 2 views:
+    - Index 0: ResultsTree (hierarchical, search mode)
+    - Index 1: FileListTable (flat, browse mode)
+  - Auto-switch baseado em presença de critérios de busca
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L550-L660)
+- **Commit**: `8f2af94`
+
+**B.3 - Separate Buttons (30min)** ✅
+- **Problema #4**: Botão único "Search & List" confuso
+- **Solução**:
+  - 📁 **Browse** (blue): Clears search, lists all files
+  - 🔍 **Search** (green): Validates criteria, executes search
+  - Added `clear()` methods to FileNameQueryPanel and ContentQueryPanel
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L280-L310)
+- **Commit**: `b03d8d2`
+
+**B.4 - Statistics Panel (30min)** ✅
+- **Problema #2**: Sem estatísticas visuais
+- **Solução**:
+  - Panel with 4 metrics: 📄 Files, 📁 Dirs, 💾 Size, ⏱️ Time
+  - Human-readable sizes (B→KB→MB→GB→TB→PB)
+  - Comma-separated counts
+  - 2-decimal precision for time
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L430-L475)
+- **Commit**: `7abc576`
+
+**B.5 - Export CSV (30min)** ✅
+- **Problema #5**: Sem opção de exportar CSV
+- **Solução**:
+  - 💾 **Export CSV** button (purple) in stats panel
+  - Detects mode (browse/search) and exports appropriately
+  - Browse: Uses `FileListTableManager.export_csv()`
+  - Search: Custom CSV with File, Line, Column, Match columns
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L870-L925)
+- **Commit**: `551b2b2`
+
+**B.6 - Collapsible Sections (1h)** ✅
+- **Problema #1**: QGroupBox sections não colapsáveis
+- **Solução**:
+  - Created `CollapsibleSection` widget with QPropertyAnimation
+  - 300ms InOutQuad easing curve
+  - Replaced 3 sections: ⚙️ Filters, 🎯 Advanced, 💾 Presets
+  - All start collapsed by default
+  - Smooth height animation
+- **Arquivos**: 
+  - [src/gui/widgets/collapsible_section.py](src/gui/widgets/collapsible_section.py) (NEW, 213 lines)
+  - [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L200-L250)
+- **Commit**: `b558282`
+
+**FASE C - Visual Polish (1h)** ✅
+
+**C.1 - Hover Expansion (30min)** ✅
+- **Solução**:
+  - `HoverExpandFilter` class (QObject event filter)
+  - Mouse enter: Expand right panel to 85% (from 75%)
+  - Mouse leave: Restore 25/75% split
+  - Stores `_original_sizes` for restoration
+- **Arquivo**: [src/gui/file_explorer_dock.py](src/gui/file_explorer_dock.py#L40-L75)
+- **Commit**: `cd9dffa`
+
+**C.2 - Enhanced Context Menu (30min)** ✅
+- **Solução**:
+  - Added to ResultsTree context menu:
+    - 🗂️ **Open Location**: Opens file manager at file location
+      - Windows: `explorer /select`
+      - macOS: `open -R`
+      - Linux: `xdg-open directory`
+    - 🔍 **Properties**: Shows file info dialog
+      - Path, Type, Size, Created, Modified, Accessed
+      - Permissions (Unix systems)
+  - Added `_format_size()` helper for human-readable sizes
+- **Arquivo**: [src/gui/panels/results_tree.py](src/gui/panels/results_tree.py#L350-L468)
+- **Commit**: `cd9dffa`
+
+**FASE D - Tests & Docs (1h)** ✅
+
+**D.1 - Integration Tests (30min)** ✅
+- **Solução**:
+  - Created comprehensive test suite with 11 test functions
+  - Tests all phases A-C without full app initialization
+  - Validates code structure through file content analysis
+  - Manual execution mode for import-challenged environments
+  - **Result**: 11/11 tests passed ✓
+- **Arquivo**: [tests/test_file_explorer_v2_9_117.py](tests/test_file_explorer_v2_9_117.py) (NEW, 343 lines)
+- **Commit**: `b152279`
+
+**D.2 - Documentation (30min)** ✅
+- Updated CHANGELOG.md with v2.9.117 details
+- Created completion summary document
+- **Commit**: (this one)
+
+---
+
+#### **Resumo da Integração**
+
+**Total**: 8 hours across 4 phases (A-D)
+**Commits**: 10 commits total
+- Phase A: 3 commits (maximize button fix + docs)
+- Phase B: 6 commits (6 subfases)
+- Phase C: 1 commit (hover + context menu)
+- Phase D: 2 commits (tests + docs)
+
+**Arquivos Modificados**:
+- `src/app.py`: Phase A implementation
+- `src/gui/file_explorer_dock.py`: Phases B and C
+- `src/gui/panels/results_tree.py`: Phase C.2
+- `src/gui/widgets/collapsible_section.py`: NEW (Phase B.6)
+- `src/gui/widgets/__init__.py`: Export CollapsibleSection
+- `src/gui/widgets/search_widgets.py`: Added clear() methods
+- `tests/test_file_explorer_v2_9_117.py`: NEW (Phase D.1)
+
+**Issues Resolvidas**: 6/6 (100%)
+- Issue #6 (CRÍTICA): Maximize button ✅
+- Issue #1: QGroupBox collapsible ✅
+- Issue #2: Statistics panel ✅
+- Issue #3: ResultsTree integration ✅
+- Issue #4: Separate buttons ✅
+- Issue #5: CSV export ✅
+
+---
+
 ## [2.9.116] - 2024-12-26
 
 ### 🔍 File Explorer + Search/Replace Integration
