@@ -379,9 +379,7 @@ class FileExplorerDock(BaseDock):
                 directory=directory,
                 filename_pattern=filename_pattern,
                 content_query=content_query,
-                case_sensitive=search_options.get('case_sensitive', False),
-                whole_word=search_options.get('whole_word', False),
-                regex_enabled=search_options.get('regex_enabled', False),
+                search_options=search_options,  # Pass as dict
                 show_hidden=show_hidden,
                 recursive=recursive,
                 filters=filters,
@@ -391,24 +389,27 @@ class FileExplorerDock(BaseDock):
             # Process SearchResult objects
             files_data = []
             for search_result in result.get('files', []):
+                # Access file_info from SearchResult
+                file_info = search_result.file_info
+                
                 # Format permissions
-                perms = search_result.permissions
+                perms = file_info.permissions
                 if long_format:
-                    perms = f"{perms} {search_result.owner}:{search_result.group}"
+                    perms = f"{perms} {file_info.owner}:{file_info.group}"
                 
                 # Add match count to display if content search
-                display_name = search_result.name
+                display_name = file_info.name
                 if search_result.matches:
                     match_count = len(search_result.matches)
-                    display_name = f"{search_result.name} ({match_count} matches)"
+                    display_name = f"{file_info.name} ({match_count} matches)"
                 
                 files_data.append({
                     'name': display_name,
-                    'size': search_result.size,
-                    'mtime': search_result.mtime,
+                    'size': file_info.size,
+                    'mtime': file_info.mtime,
                     'permissions': perms,
-                    'path': search_result.path,
-                    'is_dir': search_result.is_dir
+                    'path': file_info.path,
+                    'is_dir': file_info.is_dir
                 })
         else:
             # Execute browse with UnifiedFileExplorerExecutor
@@ -419,9 +420,12 @@ class FileExplorerDock(BaseDock):
                 filters=filters
             )
             
-            # Process FileInfo objects
+            # Process SearchResult objects (browse returns SearchResult with empty matches)
             files_data = []
-            for file_info in result.get('files', []):
+            for search_result in result.get('files', []):
+                # Access file_info from SearchResult
+                file_info = search_result.file_info
+                
                 # Format permissions
                 perms = file_info.permissions
                 if long_format:
@@ -642,24 +646,38 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, "No Selection", "Please select at least one file.")
             return
         
-        # Collect file paths
-        file_paths = []
+        # Collect file paths and create SearchResult objects
+        from src.core.file_list_executor import FileInfo
+        from src.core.file_explorer_executor import SearchResult
+        
+        search_results = []
         for row in sorted(selected_rows):
             path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
             if path_item:
-                file_paths.append(path_item.text())
+                file_path = path_item.text()
+                # Create minimal FileInfo
+                file_info = FileInfo(
+                    name=os.path.basename(file_path),
+                    path=file_path,
+                    size=0,
+                    mtime="",
+                    permissions="",
+                    owner="",
+                    group="",
+                    is_dir=False
+                )
+                # Create SearchResult with empty matches (will be found during replace)
+                search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
         
         # Get search options
         search_options = self.search_options_panel.get_options()
         
         # Execute replace first
         result = self.executor.execute_replace(
-            file_paths=file_paths,
+            files=search_results,
             search_query=query,
             replacement=replacement,
-            case_sensitive=search_options.get('case_sensitive', False),
-            whole_word=search_options.get('whole_word', False),
-            regex_enabled=search_options.get('regex_enabled', False),
+            search_options=search_options,
             replace_all=False  # Replace first only
         )
         
@@ -694,18 +712,34 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, "No Selection", "Please select at least one file.")
             return
         
-        # Collect file paths
-        file_paths = []
+        # Collect file paths and create SearchResult objects
+        from src.core.file_list_executor import FileInfo
+        from src.core.file_explorer_executor import SearchResult
+        
+        search_results = []
         for row in sorted(selected_rows):
             path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
             if path_item:
-                file_paths.append(path_item.text())
+                file_path = path_item.text()
+                # Create minimal FileInfo
+                file_info = FileInfo(
+                    name=os.path.basename(file_path),
+                    path=file_path,
+                    size=0,
+                    mtime="",
+                    permissions="",
+                    owner="",
+                    group="",
+                    is_dir=False
+                )
+                # Create SearchResult
+                search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
         
         # Confirm with user
         reply = QMessageBox.question(
             self,
             "Confirm Replace All",
-            f"Replace all occurrences in {len(file_paths)} file(s)?",
+            f"Replace all occurrences in {len(search_results)} file(s)?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -718,12 +752,10 @@ class FileExplorerDock(BaseDock):
         
         # Execute replace all
         result = self.executor.execute_replace(
-            file_paths=file_paths,
+            files=search_results,
             search_query=query,
             replacement=replacement,
-            case_sensitive=search_options.get('case_sensitive', False),
-            whole_word=search_options.get('whole_word', False),
-            regex_enabled=search_options.get('regex_enabled', False),
+            search_options=search_options,
             replace_all=True  # Replace all occurrences
         )
         
