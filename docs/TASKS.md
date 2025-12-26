@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/25 - v2.9.116 Search/Replace → File Explorer Integration
+**Last Update**: 2025/12/26 - v2.9.116 Integration Complete (Phase 3)
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -12,6 +12,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 **Data Início**: 25/12/2025  
 **Estimativa**: 6-8 horas  
+**Progresso**: 5.5h (~68.75%)  
 **Documento Completo**: [INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md](../INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md)
 
 ### Status Geral
@@ -22,14 +23,20 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - ✅ **Fase 2: Componentes** (1h) - COMPLETO
   - ✅ Extrair widgets reutilizáveis (search_widgets.py criado)
   - ✅ Criar FileExplorerExecutor unificado
-- 🔄 **Fase 3: Refatoração** (2h) - PRÓXIMA
-- ⏳ **Fase 4: Lógica** (1.5h)
+- ✅ **Fase 3: Refatoração** (2.5h) - COMPLETO 🎉
+  - ✅ Imports adicionados
+  - ✅ 5 collapsible sections criadas
+  - ✅ Signal connections completas
+  - ✅ _list_files() atualizado para executor unificado
+  - ✅ Replace functionality implementada
+  - ✅ 6 testes de integração criados e passando (100%)
+- ⏳ **Fase 4: Lógica** (1.5h) - PRÓXIMA
 - ⏳ **Fase 5: UI/UX** (1h)
-- ⏳ **Fase 6: Testes** (1h)
+- ⏳ **Fase 6: Testes Manual** (30 min)
 - ⏳ **Fase 7: Documentação** (30 min)
 - ⏳ **Fase 8: Deploy** (30 min)
 
-### Tarefas Fase 2 (Componentes) ✅
+### Tarefas Fase 2 (Componentes) ✅ COMPLETO
 - [x] **2.1**: Criar `src/gui/widgets/search_widgets.py` ✅
   - [x] Extrair `FileNameQueryPanel` (filename pattern + clear)
   - [x] Extrair `ContentQueryPanel` (multi-line editor)
@@ -42,12 +49,44 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - [x] Merge `SearchWorker.replace_content()`
   - [x] Integrate `filter_files_by_conditions()`
 
-### Tarefas Fase 3 (Refatoração - 2h) ⏳ PRÓXIMA
-- [ ] **3.1**: Adicionar imports dos novos componentes
-  - [ ] Import `UnifiedFileExplorerExecutor` from core
-  - [ ] Import widgets: FileNameQueryPanel, ContentQueryPanel, etc.
-- [ ] **3.2**: Criar collapsible sections (1h)
-  - [ ] 📁 **Section 1**: Directory & Type (sempre expanded)
+### Tarefas Fase 3 (Refatoração) ✅ COMPLETO
+- [x] **3.1**: Adicionar imports dos novos componentes ✅
+  - [x] Import `UnifiedFileExplorerExecutor` from core
+  - [x] Import widgets: FileNameQueryPanel, ContentQueryPanel, etc.
+  - [x] Import QGroupBox para sections
+- [x] **3.2**: Criar collapsible sections ✅
+  - [x] 📁 **Section 1**: Directory & Type (sempre expanded)
+  - [x] 🔍 **Section 2**: Search & Replace (sempre expanded)
+  - [x] ⚙️ **Section 3**: Filters (collapsible)
+  - [x] 🎯 **Section 4**: Advanced Conditions (collapsible)
+  - [x] 💾 **Section 5**: Presets (collapsible, dock only)
+- [x] **3.3**: Conectar sinais ✅
+  - [x] filename_panel.pattern_changed → _on_search_params_changed
+  - [x] content_panel.query_changed → _on_search_params_changed
+  - [x] search_options_panel.options_changed → _on_search_params_changed
+  - [x] replace_panel.replace_first/all_requested → handlers
+  - [x] conditions_grid.conditions_changed → _on_conditions_changed
+  - [x] executor.progress/done/error → handlers
+- [x] **3.4**: Atualizar _list_files() ✅
+  - [x] Substituir FileListExecutor por UnifiedFileExplorerExecutor
+  - [x] Adicionar lógica condicional: browse vs search
+  - [x] Processar SearchResult objects corretamente
+  - [x] Display match counts em search mode
+- [x] **3.5**: Implementar replace functionality ✅
+  - [x] _on_replace_first() completo
+  - [x] _on_replace_all() com confirmação
+  - [x] Criar SearchResult objects de seleções da tabela
+  - [x] Auto-refresh após replace
+- [x] **3.6**: Testes de integração ✅
+  - [x] test_widget_instantiation (all widgets exist)
+  - [x] test_browse_mode (execute_browse workflow)
+  - [x] test_search_mode_filename (pattern matching)
+  - [x] test_search_mode_content (content search + match counts)
+  - [x] test_signal_connections (handlers exist)
+  - [x] test_executor_methods (browse/search/replace)
+  - [x] **RESULTADO**: 6/6 tests passed (100%) 🎉
+
+### Tarefas Fase 4 (Lógica - 1.5h) ⏳ PRÓXIMA
     - Mover: ed_directory, btn_browse, btn_recent
     - Mover: combo_type (Any/Files/Dirs)
     - Mover: chk_all, chk_long, chk_human, chk_recursive
