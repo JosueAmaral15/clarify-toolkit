@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
     QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox,
-    QProgressDialog, QSplitter, QScrollArea
+    QProgressDialog, QSplitter, QScrollArea, QStackedWidget
 )
 from PySide6.QtCore import Qt, QSettings, QDate, QTimer
 from PySide6.QtGui import QAction
@@ -29,6 +29,7 @@ from .widgets import (
     FileNameQueryPanel, ContentQueryPanel, SearchOptionsPanel,
     ReplacePanel, ConditionsGrid
 )
+from .panels import ResultsTree
 from src.core import FileListExecutor, FileInfo, ListResult
 from src.core.file_explorer_executor import (
     UnifiedFileExplorerExecutor, SearchResult, SearchMatch
@@ -434,12 +435,23 @@ class FileExplorerDock(BaseDock):
         left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
         
         # ============================================================================
-        # RIGHT PANEL: Results table only
+        # RIGHT PANEL: Results with QStackedWidget (v2.9.117 - B.2)
         # ============================================================================
+        # Create ResultsTree for search mode
+        self.results_tree = ResultsTree()
+        
+        # Create QStackedWidget to switch between browse/search views
+        self.results_stack = QStackedWidget()
+        self.results_stack.addWidget(self.results_tree)     # Index 0: Search mode (tree)
+        self.results_stack.addWidget(self.table_manager)    # Index 1: Browse mode (table)
+        
+        # Start in browse mode (table view)
+        self.results_stack.setCurrentIndex(1)
+        
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(self.table_manager)
+        right_layout.addWidget(self.results_stack)
         
         # ============================================================================
         # HORIZONTAL SPLITTER: Left (controls) + Right (results)
@@ -535,32 +547,38 @@ class FileExplorerDock(BaseDock):
                 conditions=conditions
             )
             
-            # Process SearchResult objects
-            files_data = []
+            # ============================================================================
+            # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
+            # ============================================================================
+            # Switch to tree view
+            self.results_stack.setCurrentIndex(0)
+            
+            # Build matches dictionary for ResultsTree
+            matches_dict = {}
             for search_result in result.get('files', []):
-                # Access file_info from SearchResult
                 file_info = search_result.file_info
+                file_path = file_info.path
                 
-                # Format permissions
-                perms = file_info.permissions
-                if long_format:
-                    perms = f"{perms} {file_info.owner}:{file_info.group}"
-                
-                # Add match count to display if content search
-                display_name = file_info.name
                 if search_result.matches:
-                    match_count = len(search_result.matches)
-                    display_name = f"{file_info.name} ({match_count} matches)"
-                
-                files_data.append({
-                    'name': display_name,
-                    'size': file_info.size,
-                    'mtime': file_info.mtime,
-                    'permissions': perms,
-                    'path': file_info.path,
-                    'is_dir': file_info.is_dir
-                })
+                    # Content search: show matches
+                    matches_list = []
+                    for match in search_result.matches:
+                        snippet = match.snippet if hasattr(match, 'snippet') else ""
+                        matches_list.append((match.line, match.column, snippet))
+                    matches_dict[file_path] = matches_list
+                else:
+                    # Filename search: show file with line 1
+                    matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
+            
+            # Populate ResultsTree
+            self.results_tree.populate(matches_dict, sort_results=True)
+            
         else:
+            # ============================================================================
+            # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
+            # ============================================================================
+            # Switch to table view
+            self.results_stack.setCurrentIndex(1)
             # Execute browse with UnifiedFileExplorerExecutor
             result = self.executor.execute_browse(
                 directory=directory,
@@ -588,6 +606,15 @@ class FileExplorerDock(BaseDock):
                     'path': file_info.path,
                     'is_dir': file_info.is_dir
                 })
+            
+            # Enable multi-selection if in selection mode
+            if self.dialog_mode and hasattr(self, 'chk_selection_mode') and self.chk_selection_mode.isChecked():
+                self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
+            else:
+                self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)
+            
+            # Populate table
+            self.table_manager.populate(files_data, human_readable=human_readable)
         
         # Show errors if any
         if result.get('errors'):
@@ -595,15 +622,6 @@ class FileExplorerDock(BaseDock):
             if len(result['errors']) > 5:
                 error_msg += f"\n... and {len(result['errors']) - 5} more errors"
             QMessageBox.warning(self, "Errors Encountered", error_msg)
-        
-        # Enable multi-selection if in selection mode
-        if self.dialog_mode and hasattr(self, 'chk_selection_mode') and self.chk_selection_mode.isChecked():
-            self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
-        else:
-            self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)
-        
-        # Populate table
-        self.table_manager.populate(files_data, human_readable=human_readable)
         
         # Save preferences after listing
         self._save_preferences()
