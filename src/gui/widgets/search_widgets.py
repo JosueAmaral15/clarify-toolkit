@@ -156,6 +156,15 @@ class SearchOptionsPanel(QWidget):
         self.chk_regex.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_regex)
         
+        # Multi-line (from Search/Replace) - CRITICAL FEATURE
+        self.chk_multi_query = QCheckBox("Multi-line")
+        self.chk_multi_query.setToolTip("Enable multi-line query mode:\n"
+                                        "- Each line is a separate search\n"
+                                        "- Lines starting with # are comments\n"
+                                        "- Empty lines are ignored")
+        self.chk_multi_query.toggled.connect(self._emit_options)
+        layout.addWidget(self.chk_multi_query)
+        
         layout.addStretch()
     
     def _emit_options(self):
@@ -166,7 +175,8 @@ class SearchOptionsPanel(QWidget):
         return {
             'case_sensitive': self.chk_case.isChecked(),
             'whole_word': self.chk_word.isChecked(),
-            'regex': self.chk_regex.isChecked()
+            'regex': self.chk_regex.isChecked(),
+            'multi_query': self.chk_multi_query.isChecked()
         }
     
     def set_options(self, options: dict):
@@ -174,6 +184,7 @@ class SearchOptionsPanel(QWidget):
         self.chk_case.setChecked(options.get('case_sensitive', False))
         self.chk_word.setChecked(options.get('whole_word', False))
         self.chk_regex.setChecked(options.get('regex', False))
+        self.chk_multi_query.setChecked(options.get('multi_query', False))
 
 
 class ReplacePanel(QWidget):

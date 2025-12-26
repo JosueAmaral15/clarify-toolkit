@@ -135,6 +135,27 @@ class FileExplorerDock(BaseDock):
         self.chk_sort_results.setChecked(False)
         self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
         
+        # Extension filter (from Search/Replace) - CRITICAL FEATURE
+        self.chk_use_ext_filter = QCheckBox("Use extension filter")
+        self.chk_use_ext_filter.setChecked(True)
+        self.chk_use_ext_filter.setToolTip("Enable simple extension filtering (.py,.js,.tsx)")
+        
+        self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
+        self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
+        self.ed_extensions.setToolTip("Filter files by extensions. Examples:\n"
+                                      "  .py          - Only Python files\n"
+                                      "  .jsx,.tsx    - React files\n"
+                                      "  .js,.ts      - JavaScript/TypeScript\n"
+                                      "Leave empty to include all file types")
+        
+        # Include/Exclude globs (from Search/Replace) - CRITICAL FEATURE
+        self.ed_inc = QLineEdit()
+        self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/** (leave empty for all)")
+        self.ed_inc.setToolTip("Advanced glob patterns to include specific files.\nExamples:\n  *.test.*    - Test files\n  **/src/**   - Files in src folders")
+        
+        self.ed_exc = QLineEdit("node_modules;dist;build;.git")
+        self.ed_exc.setToolTip("Glob patterns to exclude folders/files.\nDefault excludes common build/dependency folders")
+        
         # File type filter
         self.lbl_type = QLabel("Type:")
         self.combo_type = QComboBox()
@@ -326,7 +347,27 @@ class FileExplorerDock(BaseDock):
         opts2_layout.addStretch()
         section1_layout.addLayout(opts2_layout)
         
-        # Options row 3: Type filter + Selection mode
+        # Options row 3: Extension filter (from Search/Replace)
+        ext_row = QHBoxLayout()
+        ext_row.addWidget(self.chk_use_ext_filter)
+        ext_row.addWidget(QLabel("Extensions:"))
+        ext_row.addWidget(self.ed_extensions)
+        ext_row.addStretch()
+        section1_layout.addLayout(ext_row)
+        
+        # Options row 4: Include globs (from Search/Replace)
+        inc_row = QHBoxLayout()
+        inc_row.addWidget(QLabel("Include globs (advanced, comma-separated):"))
+        section1_layout.addLayout(inc_row)
+        section1_layout.addWidget(self.ed_inc)
+        
+        # Options row 5: Exclude globs (from Search/Replace)
+        exc_row = QHBoxLayout()
+        exc_row.addWidget(QLabel("Exclude globs (comma-separated):"))
+        section1_layout.addLayout(exc_row)
+        section1_layout.addWidget(self.ed_exc)
+        
+        # Options row 6: Type filter + Selection mode
         opts3_layout = QHBoxLayout()
         opts3_layout.addWidget(self.lbl_type)
         opts3_layout.addWidget(self.combo_type)
