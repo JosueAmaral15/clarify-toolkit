@@ -18,13 +18,20 @@ from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu,
-    QComboBox, QDialog, QDialogButtonBox, QAbstractItemView
+    QComboBox, QDialog, QDialogButtonBox, QAbstractItemView, QGroupBox
 )
 from PySide6.QtCore import Qt, QSettings, QDate
 from PySide6.QtGui import QAction
 from .base_dock import BaseDock
-from .widgets import FileFilterPanel, PresetManager, FileListTableManager
+from .widgets import (
+    FileFilterPanel, PresetManager, FileListTableManager,
+    FileNameQueryPanel, ContentQueryPanel, SearchOptionsPanel,
+    ReplacePanel, ConditionsGrid
+)
 from src.core import FileListExecutor, FileInfo, ListResult
+from src.core.file_explorer_executor import (
+    UnifiedFileExplorerExecutor, SearchResult, SearchMatch
+)
 from src.i18n.translator import tooltip_tr, tr
 
 
@@ -63,6 +70,13 @@ class FileExplorerDock(BaseDock):
         self.settings = QSettings("Clarify", "FileExplorer")
         self._load_preferences()
         
+        # Initialize unified executor (v2.9.116)
+        self.executor = UnifiedFileExplorerExecutor()
+        self.executor.progress.connect(self._on_progress)
+        self.executor.progress_detailed.connect(self._on_progress_detailed)
+        self.executor.done.connect(self._on_execution_done)
+        self.executor.error.connect(self._on_execution_error)
+        
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
@@ -75,6 +89,12 @@ class FileExplorerDock(BaseDock):
     
     def _create_widgets(self):
         """Create UI widgets."""
+        # ============================================================================
+        # SECTION 1: Directory & Type (📁 - Always Expanded)
+        # ============================================================================
+        self.section_directory = QGroupBox("📁 Directory & Type")
+        self.section_directory.setCheckable(False)
+        
         # Directory input
         self.ed_directory = QLineEdit()
         self.ed_directory.setPlaceholderText(tr("file_list.placeholder_directory"))
@@ -98,41 +118,93 @@ class FileExplorerDock(BaseDock):
         self.chk_recursive = QCheckBox(tr("file_list.chk_recursive"))
         self.chk_recursive.setChecked(getattr(self, 'chk_recursive_state', False))
         
-        # NEW: File type filter (from Advanced File Search)
+        # File type filter
         self.lbl_type = QLabel("Type:")
         self.combo_type = QComboBox()
         self.combo_type.addItems(["Any", "Files Only", "Directories Only"])
         self.combo_type.setToolTip("Filter by file type")
         
-        # NEW: Selection mode (from Advanced File Search)
+        # Selection mode (dialog only)
         if self.dialog_mode:
             self.chk_selection_mode = QCheckBox("Selection Mode")
             self.chk_selection_mode.setChecked(True)
             self.chk_selection_mode.setToolTip("Enable multi-selection to return selected files")
         
-        # List/Search button
-        self.btn_list = QPushButton(tr("file_list.btn_list"))
-        self.btn_list.clicked.connect(self._list_files)
+        # ============================================================================
+        # SECTION 2: Search & Replace (🔍 - Always Expanded)
+        # ============================================================================
+        self.section_search = QGroupBox("🔍 Search & Replace")
+        self.section_search.setCheckable(False)
+        
+        # NEW: Integrated search widgets (v2.9.116)
+        self.filename_panel = FileNameQueryPanel()
+        self.content_panel = ContentQueryPanel()
+        self.search_options_panel = SearchOptionsPanel()
+        self.replace_panel = ReplacePanel()
+        
+        # Connect search widget signals
+        self.filename_panel.pattern_changed.connect(self._on_search_params_changed)
+        self.content_panel.query_changed.connect(self._on_search_params_changed)
+        self.search_options_panel.options_changed.connect(self._on_search_params_changed)
+        self.replace_panel.replace_first_requested.connect(self._on_replace_first)
+        self.replace_panel.replace_all_requested.connect(self._on_replace_all)
+        
+        # ============================================================================
+        # SECTION 3: Filters (⚙️ - Collapsible)
+        # ============================================================================
+        self.section_filters = QGroupBox("⚙️ Filters")
+        self.section_filters.setCheckable(True)
+        self.section_filters.setChecked(False)  # Collapsed by default
         
         # Advanced Filters Panel (extracted component)
         self.filter_panel = FileFilterPanel()
         
-        # Preset Manager (extracted component)
-        if not self.dialog_mode:  # Presets only in dock mode
+        # ============================================================================
+        # SECTION 4: Advanced Conditions (🎯 - Collapsible)
+        # ============================================================================
+        self.section_conditions = QGroupBox("🎯 Advanced Conditions")
+        self.section_conditions.setCheckable(True)
+        self.section_conditions.setChecked(False)  # Collapsed by default
+        
+        # NEW: Conditions grid with AND/OR logic (v2.9.116)
+        self.conditions_grid = ConditionsGrid()
+        self.conditions_grid.conditions_changed.connect(self._on_conditions_changed)
+        
+        # ============================================================================
+        # SECTION 5: Presets (💾 - Collapsible, Dock Mode Only)
+        # ============================================================================
+        if not self.dialog_mode:
+            self.section_presets = QGroupBox("💾 Presets")
+            self.section_presets.setCheckable(True)
+            self.section_presets.setChecked(False)  # Collapsed by default
+            
+            # Preset Manager (extracted component)
             self.preset_manager = PresetManager(settings_group="FileExplorerDock")
             self.preset_manager.set_callbacks(
                 get_filters=self._get_current_filters,
                 apply_filters=self._apply_filters_to_widgets
             )
         
+        # ============================================================================
+        # Action Button
+        # ============================================================================
+        self.btn_list = QPushButton("🔍 Search & List")
+        self.btn_list.setToolTip("Execute search/list operation")
+        self.btn_list.clicked.connect(self._list_files)
+        
+        # ============================================================================
+        # Results Table
+        # ============================================================================
         # Table Manager (extracted component)
         self.table_manager = FileListTableManager()
         
-        # NEW: Enable tooltips for preview (from Advanced File Search)
+        # Enable tooltips for preview
         self.table_manager.table.setMouseTracking(True)
         self.table_manager.table.itemEntered.connect(self._show_preview_tooltip)
         
-        # Dialog mode buttons
+        # ============================================================================
+        # Dialog Buttons (Dialog Mode Only)
+        # ============================================================================
         if self.dialog_mode:
             self.button_box = QDialogButtonBox(
                 QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -152,14 +224,19 @@ class FileExplorerDock(BaseDock):
         self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
     
     def _create_layout(self):
-        """Create layout."""
-        # Directory selection
+        """Create layout with collapsible sections (v2.9.116)."""
+        # ============================================================================
+        # SECTION 1 LAYOUT: Directory & Type
+        # ============================================================================
+        section1_layout = QVBoxLayout()
+        
+        # Directory row
         dir_layout = QHBoxLayout()
         dir_layout.addWidget(QLabel(tr("file_list.lbl_directory")))
         dir_layout.addWidget(self.ed_directory)
         dir_layout.addWidget(self.btn_browse)
         dir_layout.addWidget(self.btn_recent)
-        self.layout.addLayout(dir_layout)
+        section1_layout.addLayout(dir_layout)
         
         # Options row 1: Unix-style options
         opts_layout = QHBoxLayout()
@@ -168,31 +245,73 @@ class FileExplorerDock(BaseDock):
         opts_layout.addWidget(self.chk_human)
         opts_layout.addWidget(self.chk_recursive)
         opts_layout.addStretch()
-        self.layout.addLayout(opts_layout)
+        section1_layout.addLayout(opts_layout)
         
-        # Options row 2: Type filter + Selection mode (NEW)
+        # Options row 2: Type filter + Selection mode
         opts2_layout = QHBoxLayout()
         opts2_layout.addWidget(self.lbl_type)
         opts2_layout.addWidget(self.combo_type)
         if self.dialog_mode:
             opts2_layout.addWidget(self.chk_selection_mode)
         opts2_layout.addStretch()
-        self.layout.addLayout(opts2_layout)
+        section1_layout.addLayout(opts2_layout)
         
-        # List button
+        self.section_directory.setLayout(section1_layout)
+        self.layout.addWidget(self.section_directory)
+        
+        # ============================================================================
+        # SECTION 2 LAYOUT: Search & Replace
+        # ============================================================================
+        section2_layout = QVBoxLayout()
+        section2_layout.addWidget(self.filename_panel)
+        section2_layout.addWidget(self.content_panel)
+        section2_layout.addWidget(self.search_options_panel)
+        section2_layout.addWidget(self.replace_panel)
+        
+        self.section_search.setLayout(section2_layout)
+        self.layout.addWidget(self.section_search)
+        
+        # ============================================================================
+        # SECTION 3 LAYOUT: Filters
+        # ============================================================================
+        section3_layout = QVBoxLayout()
+        section3_layout.addWidget(self.filter_panel)
+        
+        self.section_filters.setLayout(section3_layout)
+        self.layout.addWidget(self.section_filters)
+        
+        # ============================================================================
+        # SECTION 4 LAYOUT: Advanced Conditions
+        # ============================================================================
+        section4_layout = QVBoxLayout()
+        section4_layout.addWidget(self.conditions_grid)
+        
+        self.section_conditions.setLayout(section4_layout)
+        self.layout.addWidget(self.section_conditions)
+        
+        # ============================================================================
+        # SECTION 5 LAYOUT: Presets (Dock Mode Only)
+        # ============================================================================
+        if not self.dialog_mode:
+            section5_layout = QVBoxLayout()
+            section5_layout.addWidget(self.preset_manager)
+            
+            self.section_presets.setLayout(section5_layout)
+            self.layout.addWidget(self.section_presets)
+        
+        # ============================================================================
+        # Action Button
+        # ============================================================================
         self.layout.addWidget(self.btn_list)
         
-        # Advanced filters panel
-        self.layout.addWidget(self.filter_panel)
-        
-        # Preset manager (only in dock mode)
-        if not self.dialog_mode:
-            self.layout.addWidget(self.preset_manager)
-        
-        # Table manager
+        # ============================================================================
+        # Results Table
+        # ============================================================================
         self.layout.addWidget(self.table_manager)
         
-        # Dialog buttons (only in dialog mode)
+        # ============================================================================
+        # Dialog Buttons (Dialog Mode Only)
+        # ============================================================================
         if self.dialog_mode:
             self.layout.addWidget(self.button_box)
     
@@ -455,6 +574,63 @@ class FileExplorerDock(BaseDock):
             List of selected file paths
         """
         return self.selected_files
+    
+    # ============================================================================
+    # New Signal Handlers (v2.9.116 Integration)
+    # ============================================================================
+    
+    def _on_search_params_changed(self):
+        """Handle search parameter changes."""
+        # Auto-trigger search if content is not empty
+        pass  # Could implement auto-search on typing
+    
+    def _on_replace_first(self):
+        """Handle replace first occurrence."""
+        query = self.content_panel.get_query()
+        replacement = self.replace_panel.get_replacement()
+        
+        if not query:
+            QMessageBox.warning(self, "No Query", "Please enter search text.")
+            return
+        
+        # TODO: Implement replace first with executor
+        QMessageBox.information(self, "Replace First", "Replace first not yet implemented.")
+    
+    def _on_replace_all(self):
+        """Handle replace all occurrences."""
+        query = self.content_panel.get_query()
+        replacement = self.replace_panel.get_replacement()
+        
+        if not query:
+            QMessageBox.warning(self, "No Query", "Please enter search text.")
+            return
+        
+        # TODO: Implement replace all with executor
+        QMessageBox.information(self, "Replace All", "Replace all not yet implemented.")
+    
+    def _on_conditions_changed(self, conditions: list):
+        """Handle advanced conditions changes."""
+        # Could auto-filter results when conditions change
+        pass
+    
+    def _on_progress(self, message: str):
+        """Handle progress updates from executor."""
+        # Show progress in status bar or progress dialog
+        pass
+    
+    def _on_progress_detailed(self, current: int, total: int, message: str):
+        """Handle detailed progress updates."""
+        # Update progress bar
+        pass
+    
+    def _on_execution_done(self, results: dict):
+        """Handle execution completion."""
+        # Update table with results
+        pass
+    
+    def _on_execution_error(self, error: str):
+        """Handle execution errors."""
+        QMessageBox.warning(self, "Error", error)
 
 
 def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[List[str]]:
