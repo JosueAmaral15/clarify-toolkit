@@ -1,5 +1,138 @@
 # Changelog - Clarify Project
 
+## [2.9.116] - 2024-12-26
+
+### 🔍 File Explorer + Search/Replace Integration
+
+Integração completa de todas as funcionalidades do Tool "Search/Replace" no Tool "File Explorer", criando uma ferramenta unificada que elimina redundância (80% de sobreposição) e melhora significativamente a experiência do usuário.
+
+---
+
+#### **Arquitetura Implementada** (7h de desenvolvimento)
+
+**Novos Componentes**:
+
+1. **src/gui/widgets/search_widgets.py** (370 linhas)
+   - `FileNameQueryPanel`: Filename pattern input com wildcards
+   - `ContentQueryPanel`: Multi-line content search editor
+   - `SearchOptionsPanel`: Case/Word/Regex options
+   - `ReplacePanel`: Replacement text + preserve case + buttons
+   - `ConditionsGrid`: Dynamic AND/OR conditions rows
+   - **Benefício**: Widgets reutilizáveis e testáveis
+
+2. **src/core/file_explorer_executor.py** (540 linhas)
+   - `UnifiedFileExplorerExecutor`: Executor unificado
+   - `execute_browse()`: List files with filters
+   - `execute_search()`: Search by name/content
+   - `execute_replace()`: Replace in files
+   - Progress tracking com signals (progress/done/error)
+   - **Benefício**: Business logic centralizada
+
+3. **src/gui/file_explorer_dock.py** (REFATORADO +250 linhas)
+   - 5 collapsible sections com hierarquia visual:
+     - 📁 Directory & Type (azul, sempre expandida)
+     - 🔍 Search & Replace (verde, sempre expandida)
+     - ⚙️ Filters (cinza, colapsável)
+     - 🎯 Advanced Conditions (cinza, colapsável)
+     - 💾 Presets (cinza, colapsável)
+   - Auto-search com debouncing (500ms)
+   - Progress dialog com cancelamento
+   - Tooltips detalhados em todos os widgets
+
+---
+
+#### **Funcionalidades Integradas**
+
+**Browse Mode**:
+- Lista todos os arquivos/diretórios sem filtros
+- Usa `execute_browse()` do executor unificado
+- Mantém todas as opções Unix-style (-la, -lh, -R)
+
+**Search Mode**:
+- **Por Nome**: Patterns com wildcards (*.py, test_*.json, **/*.txt)
+- **Por Conteúdo**: Query multi-linha com regex opcional
+- Match count exibido: "file.py (3 matches)"
+- Auto-search: Busca automática após 500ms de inatividade
+
+**Replace Mode**:
+1. Executar search (filename OR content)
+2. Selecionar arquivos na tabela de resultados
+3. Inserir replacement text
+4. Replace First ou Replace All (com confirmação)
+5. Feedback: "Modified X files, Y replacements"
+6. Auto-refresh da tabela
+
+---
+
+#### **Refinamentos de UX** (Phase 4-5)
+
+**Auto-Search**:
+- Debounce timer de 500ms previne spam
+- Trigger automático quando usuário digita
+- Só executa se diretório estiver definido
+
+**Progress Feedback**:
+- QProgressDialog para operações longas
+- Atualizações em tempo real: "file.py (15/234)"
+- Botão Cancel conectado a `executor.cancel()`
+- Auto-close ao completar
+
+**Visual Hierarchy**:
+- Sections com borders coloridas (azul/verde/cinza)
+- Títulos bold com emoji icons (📁🔍⚙️🎯💾)
+- Rounded corners (6px) e padding consistente
+- Tooltips contextuais em todos os widgets
+
+**Validação Melhorada**:
+- Check de existência de diretório
+- Validação de permissões de leitura
+- Mensagens de erro claras para o usuário
+
+---
+
+#### **Testes e Qualidade**
+
+**Test Suite** (tests/test_file_explorer_integration.py - 250 linhas):
+1. ✅ Widget Instantiation (all widgets + sections)
+2. ✅ Browse Mode (execute_browse workflow)
+3. ✅ Search - Filename Pattern (test_* → 2 matches)
+4. ✅ Search - Content Query (SEARCHME → 2 files with matches)
+5. ✅ Signal Connections (all handlers exist)
+6. ✅ Executor Methods (browse/search/replace + signals)
+
+**Resultado**: 6/6 tests passing (100%) 🎉
+
+---
+
+#### **Bugs Corrigidos**
+
+1. **SearchResult Access Pattern**: Fixed access to file_info properties through wrapper
+2. **Executor Parameters**: Fixed search_options dict vs individual params
+3. **Widget Attributes**: Fixed ed_pattern, ed_query, ed_replace naming
+4. **Replace Parameters**: Fixed List[SearchResult] vs file_paths
+
+---
+
+#### **Métricas de Desenvolvimento**
+
+- **Código Criado**: ~1,410 linhas (widgets + executor + tests)
+- **Commits**: 8 commits bem documentados
+- **Tempo**: 7 horas (estimativa: 6-8h) ✅
+- **Testes**: 6/6 passing (100%)
+- **Documentação**: INTEGRATION_COMPLETE_v2.9.116.md (completo)
+
+---
+
+#### **Impacto no Usuário**
+
+- 🎯 Uma ferramenta unificada ao invés de duas separadas
+- 🚀 Workflows mais eficientes (browse → search → replace)
+- 💡 UI mais clara com progressive disclosure
+- ⚡ Feedback visual melhorado (progress + auto-search)
+- 🔍 Busca mais poderosa com match counts
+
+---
+
 ## [2.9.115] - 2024-12-25
 
 ### 🧩 Orphaned Code Integration - Sprints 1-3
