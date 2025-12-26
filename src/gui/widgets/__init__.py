@@ -20,6 +20,7 @@ from .search_widgets import (
     ReplacePanel,
     ConditionsGrid
 )
+from .collapsible_section import CollapsibleSection
 
 __all__ = [
     'PathEntry',
@@ -35,5 +36,6 @@ __all__ = [
     'ContentQueryPanel',
     'SearchOptionsPanel',
     'ReplacePanel',
-    'ConditionsGrid'
+    'ConditionsGrid',
+    'CollapsibleSection'
 ]

@@ -29,7 +29,7 @@ from .base_dock import BaseDock
 from .widgets import (
     FileFilterPanel, PresetManager, FileListTableManager,
     FileNameQueryPanel, ContentQueryPanel, SearchOptionsPanel,
-    ReplacePanel, ConditionsGrid
+    ReplacePanel, ConditionsGrid, CollapsibleSection
 )
 from .panels import ResultsTree
 from src.core import FileListExecutor, FileInfo, ListResult
@@ -190,69 +190,32 @@ class FileExplorerDock(BaseDock):
         self.replace_panel.replace_all_requested.connect(self._on_replace_all)
         
         # ============================================================================
-        # SECTION 3: Filters (⚙️ - Collapsible)
+        # SECTION 3: Filters (⚙️ - Collapsible with Animation - v2.9.117 B.6)
         # ============================================================================
-        self.section_filters = QGroupBox("⚙️ Filters")
-        self.section_filters.setCheckable(True)
-        self.section_filters.setChecked(False)  # Collapsed by default
-        self.section_filters.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #95a5a6;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-            QGroupBox::indicator {
-                width: 13px;
-                height: 13px;
-            }
-        """)
+        self.section_filters = CollapsibleSection("⚙️ Filters")
+        self.section_filters.setCollapsed(True)  # Start collapsed
         
         # Advanced Filters Panel (extracted component)
         self.filter_panel = FileFilterPanel()
+        self.section_filters.setContent(self.filter_panel)
         
         # ============================================================================
-        # SECTION 4: Advanced Conditions (🎯 - Collapsible)
+        # SECTION 4: Advanced Conditions (🎯 - Collapsible with Animation - v2.9.117 B.6)
         # ============================================================================
-        self.section_conditions = QGroupBox("🎯 Advanced Conditions")
-        self.section_conditions.setCheckable(True)
-        self.section_conditions.setChecked(False)  # Collapsed by default
-        self.section_conditions.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #95a5a6;
-                border-radius: 6px;
-                margin-top: 6px;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
-            QGroupBox::indicator {
-                width: 13px;
-                height: 13px;
-            }
-        """)
+        self.section_conditions = CollapsibleSection("🎯 Advanced Conditions")
+        self.section_conditions.setCollapsed(True)  # Start collapsed
         
         # NEW: Conditions grid with AND/OR logic (v2.9.116)
         self.conditions_grid = ConditionsGrid()
         self.conditions_grid.conditions_changed.connect(self._on_conditions_changed)
+        self.section_conditions.setContent(self.conditions_grid)
         
         # ============================================================================
-        # SECTION 5: Presets (💾 - Collapsible, Dock Mode Only)
+        # SECTION 5: Presets (💾 - Collapsible with Animation, Dock Mode Only - v2.9.117 B.6)
         # ============================================================================
         if not self.dialog_mode:
-            self.section_presets = QGroupBox("💾 Presets")
-            self.section_presets.setCheckable(True)
-            self.section_presets.setChecked(False)  # Collapsed by default
+            self.section_presets = CollapsibleSection("💾 Presets")
+            self.section_presets.setCollapsed(True)  # Start collapsed
             
             # Preset Manager (extracted component)
             self.preset_manager = PresetManager(settings_group="FileExplorerDock")
@@ -405,31 +368,20 @@ class FileExplorerDock(BaseDock):
         left_layout.addWidget(self.section_search)
         
         # ----------------------------------------------------------------------------
-        # SECTION 3: Filters
+        # SECTION 3: Filters (v2.9.117 - B.6: CollapsibleSection)
         # ----------------------------------------------------------------------------
-        section3_layout = QVBoxLayout()
-        section3_layout.addWidget(self.filter_panel)
-        
-        self.section_filters.setLayout(section3_layout)
         left_layout.addWidget(self.section_filters)
         
         # ----------------------------------------------------------------------------
-        # SECTION 4: Advanced Conditions
+        # SECTION 4: Advanced Conditions (v2.9.117 - B.6: CollapsibleSection)
         # ----------------------------------------------------------------------------
-        section4_layout = QVBoxLayout()
-        section4_layout.addWidget(self.conditions_grid)
-        
-        self.section_conditions.setLayout(section4_layout)
         left_layout.addWidget(self.section_conditions)
         
         # ----------------------------------------------------------------------------
-        # SECTION 5: Presets (Dock Mode Only)
+        # SECTION 5: Presets (Dock Mode Only - v2.9.117 - B.6: CollapsibleSection)
         # ----------------------------------------------------------------------------
         if not self.dialog_mode:
-            section5_layout = QVBoxLayout()
-            section5_layout.addWidget(self.preset_manager)
-            
-            self.section_presets.setLayout(section5_layout)
+            self.section_presets.setContent(self.preset_manager)
             left_layout.addWidget(self.section_presets)
         
         # ----------------------------------------------------------------------------
