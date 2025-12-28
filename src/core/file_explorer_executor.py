@@ -20,7 +20,10 @@ from datetime import datetime
 from PySide6.QtCore import QObject, Signal
 
 from .file_list_executor import FileInfo, FileListExecutor
-from ..utils import read_text
+from ..utils import read_text, get_logger
+
+# Initialize logger for structured logging (Protocolo Simplicidade 3 - Etapa 6)
+logger = get_logger(__name__)
 
 
 @dataclass

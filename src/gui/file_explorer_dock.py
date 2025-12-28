@@ -38,6 +38,10 @@ from src.core.file_explorer_executor import (
     UnifiedFileExplorerExecutor, SearchResult, SearchMatch
 )
 from src.i18n.translator import tooltip_tr, tr
+from src.utils import get_logger
+
+# Initialize logger for structured logging (Protocolo Simplicidade 3 - Etapa 6)
+logger = get_logger(__name__)
 
 
 class FileExplorerDock(BaseDock):
@@ -583,16 +587,30 @@ class FileExplorerDock(BaseDock):
         directory = self.ed_directory.text().strip()
         
         if not directory:
+            logger.warning("Empty directory path provided")
             QMessageBox.warning(self, "Missing", "Please select a directory.")
             return
         
+        # SECURITY OWASP A01: Path Traversal Prevention (CWE-22)
+        # Normalize and validate directory path
+        try:
+            directory = os.path.abspath(directory)
+        except (OSError, ValueError) as e:
+            logger.error(f"Invalid directory path: {directory}", exc_info=True)
+            QMessageBox.warning(self, "Invalid", f"Invalid directory path: {str(e)}")
+            return
+        
         if not os.path.isdir(directory):
+            logger.error(f"Directory does not exist: {directory}")
             QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
             return
         
         if not os.access(directory, os.R_OK):
+            logger.error(f"Permission denied for directory: {directory}")
             QMessageBox.warning(self, "Permission Denied", f"Cannot read directory: {directory}")
             return
+        
+        logger.info("Starting file explorer operation", extra={"directory": directory, "recursive": self.chk_recursive.isChecked()})
         
         # Save to recent directories
         self._add_to_recent(directory)
@@ -630,6 +648,12 @@ class FileExplorerDock(BaseDock):
         is_search = bool(filename_pattern or content_query)
         
         if is_search:
+            logger.info(f"Executing search operation", extra={
+                "filename_pattern": filename_pattern,
+                "content_query": content_query[:50] if content_query else None,
+                "recursive": recursive,
+                "case_sensitive": search_options.get('case_sensitive', False)
+            })
             # Execute search with UnifiedFileExplorerExecutor
             result = self.executor.execute_search(
                 directory=directory,
@@ -705,6 +729,7 @@ class FileExplorerDock(BaseDock):
             # ============================================================================
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
+            logger.info(f"Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
             # Switch to table view
             self.results_stack.setCurrentIndex(1)
             # Execute browse with UnifiedFileExplorerExecutor
@@ -771,10 +796,13 @@ class FileExplorerDock(BaseDock):
         
         # Show errors if any
         if result.get('errors'):
+            logger.warning(f"Operation completed with errors", extra={"error_count": len(result['errors'])})
             error_msg = "\n".join(result['errors'][:5])  # Show first 5 errors
             if len(result['errors']) > 5:
                 error_msg += f"\n... and {len(result['errors']) - 5} more errors"
             QMessageBox.warning(self, "Errors Encountered", error_msg)
+        else:
+            logger.info(f"Operation completed successfully", extra={"duration": time.time() - start_time})
         
         # Save preferences after listing
         self._save_preferences()
