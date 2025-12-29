@@ -198,9 +198,9 @@ class AIProcessorDock(StandardToolDock):
         self.ed_scope_start.setToolTip("Starting marker to extract content from (e.g., '{' or '<div>') | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.ed_scope_start, 1, 1, 1, 2)
         
-        self.chk_start_regex = QCheckBox("Regex")
+        self.chk_start_regex = QCheckBox(tr("ai_processor.chk_regex"))
         self.chk_start_regex.setToolTip("Treat start marker as regex pattern | Ctrl+Shift+A to open AI Processor")
-        self.chk_start_case = QCheckBox("Case sensitive")
+        self.chk_start_case = QCheckBox(tr("ai_processor.chk_case_sensitive"))
         self.chk_start_case.setToolTip("Case sensitive matching for start marker | Ctrl+Shift+A to open AI Processor")
         scope_layout.addWidget(self.chk_start_regex, 1, 3)
         scope_layout.addWidget(self.chk_start_case, 1, 4)

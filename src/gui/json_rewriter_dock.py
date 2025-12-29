@@ -319,12 +319,12 @@ class JsonRewriterDock(BaseDock):
         layout = QVBoxLayout(dialog)
 
         # Active options group
-        active_group = QGroupBox("Format Options")
+        active_group = QGroupBox(tr("json_rewriter.group_format_options"))
         active_layout = QVBoxLayout()
 
         # Format dropdown
         format_layout = QHBoxLayout()
-        format_layout.addWidget(QLabel("Reference format:"))
+        format_layout.addWidget(QLabel(tr("json_rewriter.lbl_reference_format")))
         combo_format = QComboBox()
         combo_format.addItems(["$ref: (Default)", "#/ (JSON Pointer)", "@ (Compact)"])
         current_format = settings.value("reference_format", "$ref")
@@ -338,12 +338,12 @@ class JsonRewriterDock(BaseDock):
         active_layout.addLayout(format_layout)
 
         # Checkboxes
-        chk_line_numbers = QCheckBox("Include line numbers")
+        chk_line_numbers = QCheckBox(tr("json_rewriter.chk_include_line_numbers"))
         chk_line_numbers.setChecked(settings.value("include_line_numbers_ref", True, type=bool))
         chk_line_numbers.setToolTip("Append :line_number to references (e.g., $ref:path:123)")
         active_layout.addWidget(chk_line_numbers)
 
-        chk_relative = QCheckBox("Use relative paths")
+        chk_relative = QCheckBox(tr("json_rewriter.chk_relative_paths"))
         chk_relative.setChecked(settings.value("use_relative_paths", False, type=bool))
         chk_relative.setToolTip("Remove 'root.' prefix from paths (e.g., users.admin instead of root.users.admin)")
         active_layout.addWidget(chk_relative)
@@ -367,17 +367,17 @@ class JsonRewriterDock(BaseDock):
         chk_relative.toggled.connect(update_preview)
         update_preview()
 
-        active_layout.addWidget(QLabel("Preview:"))
+        active_layout.addWidget(QLabel(tr("json_rewriter.lbl_preview")))
         active_layout.addWidget(preview_label)
         active_group.setLayout(active_layout)
         layout.addWidget(active_group)
 
         # Future features group (grayed out)
-        future_group = QGroupBox("Cross-File References (Coming Soon)")
+        future_group = QGroupBox(tr("json_rewriter.group_cross_file"))
         future_group.setEnabled(False)
         future_layout = QVBoxLayout()
-        future_layout.addWidget(QCheckBox("Enable cross-file references"))
-        future_layout.addWidget(QCheckBox("Use absolute file paths"))
+        future_layout.addWidget(QCheckBox(tr("json_rewriter.chk_enable_cross_file")))
+        future_layout.addWidget(QCheckBox(tr("json_rewriter.chk_absolute_file_paths")))
         future_group.setLayout(future_layout)
         layout.addWidget(future_group)
 
@@ -424,16 +424,16 @@ class JsonRewriterDock(BaseDock):
         layout.addWidget(info)
 
         # Create 3 condition rows (same UI as AI Processor)
-        cond_group = QGroupBox("Filter Conditions")
+        cond_group = QGroupBox(tr("json_rewriter.group_filter_conditions"))
         cond_layout = QGridLayout()
 
         # Headers
-        cond_layout.addWidget(QLabel("Field"), 0, 0)
-        cond_layout.addWidget(QLabel("Operator"), 0, 1)
-        cond_layout.addWidget(QLabel("Value"), 0, 2)
-        cond_layout.addWidget(QLabel("Scope"), 0, 3)
-        cond_layout.addWidget(QLabel("Case"), 0, 4)
-        cond_layout.addWidget(QLabel("Regex"), 0, 5)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_field")), 0, 0)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_operator")), 0, 1)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_value")), 0, 2)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_scope")), 0, 3)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_case")), 0, 4)
+        cond_layout.addWidget(QLabel(tr("json_rewriter.lbl_regex")), 0, 5)
 
         # Create condition rows
         cond_rows = []

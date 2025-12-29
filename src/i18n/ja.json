@@ -1722,5 +1722,20 @@
   "search_replace.btn_add_condition": "➕ 条件を追加",
   "search_replace.btn_clear_conditions": "🗑️ すべての条件をクリア",
   "search_replace.lbl_results": "検索結果",
-  "search_replace.btn_save_results": "�� 結果を保存"
+  "search_replace.btn_save_results": "�� 結果を保存",
+  "json_rewriter.group_format_options": "フォーマットオプション",
+  "json_rewriter.lbl_reference_format": "参照フォーマット:",
+  "json_rewriter.chk_include_line_numbers": "行番号を含める",
+  "json_rewriter.chk_relative_paths": "相対パスを使用",
+  "json_rewriter.lbl_preview": "プレビュー:",
+  "json_rewriter.group_cross_file": "ファイル間参照（近日公開）",
+  "json_rewriter.chk_enable_cross_file": "ファイル間参照を有効化",
+  "json_rewriter.chk_absolute_file_paths": "絶対ファイルパスを使用",
+  "json_rewriter.group_filter_conditions": "フィルタ条件",
+  "json_rewriter.lbl_field": "フィールド",
+  "json_rewriter.lbl_operator": "演算子",
+  "json_rewriter.lbl_value": "値",
+  "json_rewriter.lbl_scope": "スコープ",
+  "json_rewriter.lbl_case": "大小文字",
+  "json_rewriter.lbl_regex": "正規表現"
 }

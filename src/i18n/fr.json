@@ -1722,5 +1722,20 @@
   "search_replace.btn_add_condition": "➕ Ajouter Condition",
   "search_replace.btn_clear_conditions": "🗑️ Effacer Toutes Conditions",
   "search_replace.lbl_results": "Résultats de Recherche",
-  "search_replace.btn_save_results": "💾 Enregistrer Résultats"
+  "search_replace.btn_save_results": "💾 Enregistrer Résultats",
+  "json_rewriter.group_format_options": "Options de Format",
+  "json_rewriter.lbl_reference_format": "Format de référence :",
+  "json_rewriter.chk_include_line_numbers": "Inclure les numéros de ligne",
+  "json_rewriter.chk_relative_paths": "Utiliser des chemins relatifs",
+  "json_rewriter.lbl_preview": "Aperçu :",
+  "json_rewriter.group_cross_file": "Références Inter-Fichiers (Bientôt)",
+  "json_rewriter.chk_enable_cross_file": "Activer les références inter-fichiers",
+  "json_rewriter.chk_absolute_file_paths": "Utiliser des chemins absolus de fichier",
+  "json_rewriter.group_filter_conditions": "Conditions de Filtre",
+  "json_rewriter.lbl_field": "Champ",
+  "json_rewriter.lbl_operator": "Opérateur",
+  "json_rewriter.lbl_value": "Valeur",
+  "json_rewriter.lbl_scope": "Portée",
+  "json_rewriter.lbl_case": "Casse",
+  "json_rewriter.lbl_regex": "Regex"
 }

@@ -144,7 +144,7 @@ class CalculatorDock(QWidget):
         layout.addWidget(self.table)
         
         # Actions group
-        actions_group = QGroupBox("Slot Actions")
+        actions_group = QGroupBox(tr("calculator.group_slot_actions"))
         actions_layout = QHBoxLayout(actions_group)
         
         # Slot selector

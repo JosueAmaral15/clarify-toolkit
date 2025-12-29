@@ -1613,7 +1613,6 @@
   "formula.dialog_description_optional": "Description (optional):",
   "formula.dialog_load_template": "Load Template",
   "formula.dialog_select_formula": "Select formula:",
-  
   "jsx.msg_security_error_title": "Security Error",
   "jsx.msg_security_access_denied": "Access denied: Path must be within your home directory or workspace.\nAttempted path: {0}",
   "jsx.msg_error_title": "Error",
@@ -1630,7 +1629,6 @@
   "jsx.msg_save_error_title": "Save error",
   "jsx.msg_nothing_to_copy_title": "Nothing to copy",
   "jsx.msg_nothing_to_copy_msg": "No content to copy.",
-  
   "calculator.group_slot_actions": "Slot Actions",
   "calculator.msg_stored_title": "Stored",
   "calculator.msg_stored_success": "Result stored in slot {0}\nSource: {1}",
@@ -1654,7 +1652,6 @@
   "calculator.msg_operation_failed_title": "Operation Failed",
   "calculator.status_empty": "Empty",
   "calculator.status_ok": "OK",
-  
   "google_translate.msg_file_error_title": "File Error",
   "google_translate.msg_file_error_read": "Could not read file:\n{0}",
   "google_translate.msg_no_file_title": "No File Selected",
@@ -1663,7 +1660,6 @@
   "google_translate.msg_no_text_msg": "Please enter text to translate.",
   "google_translate.msg_same_language_title": "Same Languages",
   "google_translate.msg_same_language_msg": "Source and target languages are the same.",
-  
   "file_list.msg_missing_title": "Missing",
   "file_list.msg_missing_directory": "Please select a directory.",
   "file_list.msg_invalid_title": "Invalid",
@@ -1672,7 +1668,6 @@
   "file_list.msg_no_recent_msg": "No recent directories saved yet.",
   "file_list.msg_cleared_title": "Cleared",
   "file_list.msg_cleared_msg": "Recent directories list cleared.",
-  
   "json_rewriter.msg_missing_input_title": "Missing",
   "json_rewriter.msg_missing_input": "Choose an input file.",
   "json_rewriter.msg_cancelled_title": "Cancelled",
@@ -1693,13 +1688,10 @@
   "json_rewriter.msg_no_changes": "No orphaned references found in project.",
   "json_rewriter.msg_error_title": "Error",
   "json_rewriter.msg_error": "{0}\n\n{1}",
-  
   "regex_insert.msg_empty_pattern2_title": "Empty Pattern",
   "regex_insert.msg_empty_pattern2_msg": "Please enter a regex pattern.",
-  
   "file_explorer.msg_no_results_title": "No Results",
   "file_explorer.msg_no_results": "No search results to save. Please perform a search first.",
-  
   "batch_dialog.msg_validation_select_a_title": "Validation Error",
   "batch_dialog.msg_validation_select_a": "Please select File A",
   "batch_dialog.msg_validation_select_b_title": "Validation Error",
@@ -1716,26 +1708,19 @@
   "batch_dialog.msg_error_load": "Failed to load batch job",
   "batch_dialog.msg_empty_batch_exec_title": "Empty Batch",
   "batch_dialog.msg_empty_batch_exec": "Please add at least one step before executing",
-  
   "shortcut_customizer.msg_no_selection_title": "No Selection",
   "shortcut_customizer.msg_no_selection": "Please select a shortcut to reset.",
-  
   "template_dialog.msg_no_template_title": "No Template",
   "template_dialog.msg_no_template": "Please select a template first.",
-  
   "json_search_dialog.msg_invalid_pattern_title": "Invalid Pattern",
   "json_search_dialog.msg_invalid_pattern": "Invalid search pattern",
-  
   "match_panel.msg_open_title": "Open",
   "match_panel.msg_open": "Select a file in the list.",
-  
   "search_replace_panel.msg_error_thread_title": "Error",
   "search_replace_panel.msg_error_thread": "Failed to start search thread.",
-  
   "match_panel.lbl_matches": "Matches: {0}",
   "match_panel.btn_refresh": "Refresh",
   "match_panel.btn_open_folder": "Open Folder…",
-  
   "search_replace.lbl_root_path": "Root path:",
   "search_replace.btn_browse": "Browse…",
   "search_replace.chk_is_file": "Is File?",
@@ -1770,5 +1755,20 @@
   "search_replace.btn_add_condition": "➕ Add Condition",
   "search_replace.btn_clear_conditions": "🗑️ Clear All Conditions",
   "search_replace.lbl_results": "Search Results",
-  "search_replace.btn_save_results": "💾 Save Results"
+  "search_replace.btn_save_results": "💾 Save Results",
+  "json_rewriter.group_format_options": "Format Options",
+  "json_rewriter.lbl_reference_format": "Reference format:",
+  "json_rewriter.chk_include_line_numbers": "Include line numbers",
+  "json_rewriter.chk_relative_paths": "Use relative paths",
+  "json_rewriter.lbl_preview": "Preview:",
+  "json_rewriter.group_cross_file": "Cross-File References (Coming Soon)",
+  "json_rewriter.chk_enable_cross_file": "Enable cross-file references",
+  "json_rewriter.chk_absolute_file_paths": "Use absolute file paths",
+  "json_rewriter.group_filter_conditions": "Filter Conditions",
+  "json_rewriter.lbl_field": "Field",
+  "json_rewriter.lbl_operator": "Operator",
+  "json_rewriter.lbl_value": "Value",
+  "json_rewriter.lbl_scope": "Scope",
+  "json_rewriter.lbl_case": "Case",
+  "json_rewriter.lbl_regex": "Regex"
 }
