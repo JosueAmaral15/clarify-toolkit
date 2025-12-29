@@ -1774,5 +1774,11 @@
   "venn_diagram.btn_close": "关闭",
   "progress_details.lbl_initializing": "正在初始化...",
   "progress_details.lbl_speed": "速度：正在计算...",
-  "progress_bar.lbl_starting": "正在启动..."
+  "progress_bar.lbl_starting": "正在启动...",
+  "operation_options.radio_key_value": "键和值（严格类型）",
+  "operation_options.radio_full_path": "完整路径和值（点表示法）",
+  "operation_options.radio_key_only": "仅键（路径）",
+  "json_search.chk_case_sensitive": "区分大小写",
+  "json_search.chk_keys_only": "仅键",
+  "json_search.chk_values_only": "仅值"
 }

@@ -1774,5 +1774,11 @@
   "venn_diagram.btn_close": "Schließen",
   "progress_details.lbl_initializing": "Initialisierung...",
   "progress_details.lbl_speed": "Geschwindigkeit: wird berechnet...",
-  "progress_bar.lbl_starting": "Wird gestartet..."
+  "progress_bar.lbl_starting": "Wird gestartet...",
+  "operation_options.radio_key_value": "Schlüssel und Werte (strenge Typen)",
+  "operation_options.radio_full_path": "Vollständiger Pfad und Werte (Punktnotation)",
+  "operation_options.radio_key_only": "Nur Schlüssel (Pfad)",
+  "json_search.chk_case_sensitive": "Groß-/Kleinschreibung beachten",
+  "json_search.chk_keys_only": "Nur Schlüssel",
+  "json_search.chk_values_only": "Nur Werte"
 }

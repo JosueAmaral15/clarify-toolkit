@@ -84,12 +84,12 @@ class OperationOptionsWidget(QWidget):
         comp_group = QGroupBox(tr("operation_options.comparison_mode"))
         comp_layout = QVBoxLayout()
         
-        self.radio_key_value = QRadioButton("Keys and values (strict types)")
+        self.radio_key_value = QRadioButton(tr("operation_options.radio_key_value"))
         self.radio_key_value.setChecked(True)
         self.radio_key_value.setToolTip(tooltip_tr("set_ops.radio_key_value"))
-        self.radio_full_path = QRadioButton("Full path and values (dot notation)")
+        self.radio_full_path = QRadioButton(tr("operation_options.radio_full_path"))
         self.radio_full_path.setToolTip(tooltip_tr("set_ops.radio_full_path"))
-        self.radio_key_only = QRadioButton("Keys only (path)")
+        self.radio_key_only = QRadioButton(tr("operation_options.radio_key_only"))
         self.radio_key_only.setToolTip(tooltip_tr("set_ops.radio_key_only"))
         
         self.comp_mode_group = QButtonGroup()

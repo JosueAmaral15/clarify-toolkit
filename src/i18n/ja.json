@@ -1774,5 +1774,11 @@
   "venn_diagram.btn_close": "閉じる",
   "progress_details.lbl_initializing": "初期化中...",
   "progress_details.lbl_speed": "速度：計算中...",
-  "progress_bar.lbl_starting": "開始中..."
+  "progress_bar.lbl_starting": "開始中...",
+  "operation_options.radio_key_value": "キーと値（厳密な型）",
+  "operation_options.radio_full_path": "完全パスと値（ドット記法）",
+  "operation_options.radio_key_only": "キーのみ（パス）",
+  "json_search.chk_case_sensitive": "大文字小文字を区別",
+  "json_search.chk_keys_only": "キーのみ",
+  "json_search.chk_values_only": "値のみ"
 }

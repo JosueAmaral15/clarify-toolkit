@@ -80,9 +80,9 @@ class JsonSearchDialog(QDialog):
         
         # Options
         options_layout = QHBoxLayout()
-        self.chk_case_sensitive = QCheckBox("Case Sensitive")
-        self.chk_keys_only = QCheckBox("Keys Only")
-        self.chk_values_only = QCheckBox("Values Only")
+        self.chk_case_sensitive = QCheckBox(tr("json_search.chk_case_sensitive"))
+        self.chk_keys_only = QCheckBox(tr("json_search.chk_keys_only"))
+        self.chk_values_only = QCheckBox(tr("json_search.chk_values_only"))
         options_layout.addWidget(self.chk_case_sensitive)
         options_layout.addWidget(self.chk_keys_only)
         options_layout.addWidget(self.chk_values_only)
