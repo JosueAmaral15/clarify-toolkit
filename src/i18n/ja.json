@@ -1580,7 +1580,6 @@
   "formula.dialog_description_optional": "説明（オプション）：",
   "formula.dialog_load_template": "テンプレートを読み込む",
   "formula.dialog_select_formula": "式を選択してください：",
-  
   "jsx.msg_security_error_title": "セキュリティエラー",
   "jsx.msg_security_access_denied": "アクセス拒否：パスはホームディレクトリまたはワークスペース内である必要があります。\n試行されたパス：{0}",
   "jsx.msg_error_title": "エラー",
@@ -1597,7 +1596,6 @@
   "jsx.msg_save_error_title": "保存エラー",
   "jsx.msg_nothing_to_copy_title": "コピーするものがありません",
   "jsx.msg_nothing_to_copy_msg": "コピーするコンテンツがありません。",
-  
   "calculator.group_slot_actions": "スロットアクション",
   "calculator.msg_stored_title": "保存しました",
   "calculator.msg_stored_success": "スロット{0}に結果を保存\nソース：{1}",
@@ -1621,7 +1619,6 @@
   "calculator.msg_operation_failed_title": "操作失敗",
   "calculator.status_empty": "空",
   "calculator.status_ok": "OK",
-  
   "google_translate.msg_file_error_title": "ファイルエラー",
   "google_translate.msg_file_error_read": "ファイルを読み込めませんでした：\n{0}",
   "google_translate.msg_no_file_title": "ファイルが選択されていません",
@@ -1630,7 +1627,6 @@
   "google_translate.msg_no_text_msg": "翻訳するテキストを入力してください。",
   "google_translate.msg_same_language_title": "同じ言語",
   "google_translate.msg_same_language_msg": "ソース言語とターゲット言語が同じです。",
-  
   "file_list.msg_missing_title": "欠落",
   "file_list.msg_missing_directory": "ディレクトリを選択してください。",
   "file_list.msg_invalid_title": "無効",
@@ -1639,7 +1635,6 @@
   "file_list.msg_no_recent_msg": "まだ最近のディレクトリが保存されていません。",
   "file_list.msg_cleared_title": "クリアしました",
   "file_list.msg_cleared_msg": "最近のディレクトリリストをクリアしました。",
-  
   "json_rewriter.msg_missing_input_title": "不足",
   "json_rewriter.msg_missing_input": "入力ファイルを選択してください。",
   "json_rewriter.msg_cancelled_title": "キャンセルされました",
@@ -1660,13 +1655,10 @@
   "json_rewriter.msg_no_changes": "プロジェクト内に孤立した参照は見つかりませんでした。",
   "json_rewriter.msg_error_title": "エラー",
   "json_rewriter.msg_error": "{0}\n\n{1}",
-  
   "regex_insert.msg_empty_pattern2_title": "空のパターン",
   "regex_insert.msg_empty_pattern2_msg": "正規表現パターンを入力してください。",
-  
   "file_explorer.msg_no_results_title": "結果なし",
   "file_explorer.msg_no_results": "保存する検索結果がありません。まず検索を実行してください。",
-  
   "batch_dialog.msg_validation_select_a_title": "検証エラー",
   "batch_dialog.msg_validation_select_a": "ファイルAを選択してください",
   "batch_dialog.msg_validation_select_b_title": "検証エラー",
@@ -1683,19 +1675,52 @@
   "batch_dialog.msg_error_load": "バッチジョブの読み込みに失敗しました",
   "batch_dialog.msg_empty_batch_exec_title": "空のバッチ",
   "batch_dialog.msg_empty_batch_exec": "実行する前に少なくとも1つのステップを追加してください",
-  
   "shortcut_customizer.msg_no_selection_title": "選択なし",
   "shortcut_customizer.msg_no_selection": "リセットするショートカットを選択してください。",
-  
   "template_dialog.msg_no_template_title": "テンプレートなし",
   "template_dialog.msg_no_template": "まずテンプレートを選択してください。",
-  
   "json_search_dialog.msg_invalid_pattern_title": "無効なパターン",
   "json_search_dialog.msg_invalid_pattern": "無効な検索パターン",
-  
   "match_panel.msg_open_title": "開く",
   "match_panel.msg_open": "リスト内のファイルを選択してください。",
-  
   "search_replace_panel.msg_error_thread_title": "エラー",
-  "search_replace_panel.msg_error_thread": "検索スレッドの開始に失敗しました。"
+  "search_replace_panel.msg_error_thread": "検索スレッドの開始に失敗しました。",
+  "match_panel.lbl_matches": "一致: {0}",
+  "match_panel.btn_refresh": "更新",
+  "match_panel.btn_open_folder": "フォルダを開く…",
+  "search_replace.lbl_root_path": "ルートパス:",
+  "search_replace.btn_browse": "参照…",
+  "search_replace.chk_is_file": "ファイルですか？",
+  "search_replace.chk_use_ext_filter": "拡張子フィルタを使用",
+  "search_replace.lbl_extensions": "拡張子:",
+  "search_replace.chk_sort_results": "結果をアルファベット順にソート",
+  "search_replace.lbl_include_globs": "含めるglobs（高度、カンマ区切り）:",
+  "search_replace.lbl_exclude_globs": "除外するglobs（カンマ区切り）:",
+  "search_replace.group_search": "検索",
+  "search_replace.lbl_file_name_query": "ファイル名クエリ:",
+  "search_replace.lbl_file_content_query": "ファイル内容クエリ:",
+  "search_replace.chk_case_sensitive": "大文字小文字を区別",
+  "search_replace.chk_whole_word": "単語全体",
+  "search_replace.chk_regex": "正規表現",
+  "search_replace.chk_multi_line": "複数行",
+  "search_replace.btn_search_cancel": "検索/キャンセル",
+  "search_replace.group_replace": "置換（必要に応じて有効化）",
+  "search_replace.lbl_replacement": "置換:",
+  "search_replace.chk_preserve_case": "大文字小文字を保持",
+  "search_replace.btn_replace_first": "ファイルごとに最初を置換",
+  "search_replace.btn_replace_all": "すべて置換",
+  "search_replace.group_advanced": "高度な条件（フォルダで操作時）",
+  "search_replace.lbl_logic_operator": "論理演算子:",
+  "search_replace.lbl_field": "フィールド",
+  "search_replace.lbl_operator": "演算子",
+  "search_replace.lbl_value": "値",
+  "search_replace.lbl_scope": "スコープ",
+  "search_replace.lbl_scope_param": "スコープパラメータ",
+  "search_replace.lbl_case": "大小文字",
+  "search_replace.lbl_word": "単語",
+  "search_replace.lbl_regex": "正規表現",
+  "search_replace.btn_add_condition": "➕ 条件を追加",
+  "search_replace.btn_clear_conditions": "🗑️ すべての条件をクリア",
+  "search_replace.lbl_results": "検索結果",
+  "search_replace.btn_save_results": "�� 結果を保存"
 }

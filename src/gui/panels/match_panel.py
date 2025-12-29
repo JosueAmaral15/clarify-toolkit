@@ -51,9 +51,9 @@ class MatchPanel(QWidget):
         super().__init__(parent)
         v = QVBoxLayout(self)
         top = QHBoxLayout()
-        self.lbl_count = QLabel("Matches: 0")
-        self.btn_refresh = QPushButton("Refresh")
-        self.btn_open_dir = QPushButton("Open Folder…")
+        self.lbl_count = QLabel(tr("match_panel.lbl_matches").format(0))
+        self.btn_refresh = QPushButton(tr("match_panel.btn_refresh"))
+        self.btn_open_dir = QPushButton(tr("match_panel.btn_open_folder"))
         top.addWidget(self.lbl_count)
         top.addStretch(1)
         top.addWidget(self.btn_refresh)
@@ -72,7 +72,7 @@ class MatchPanel(QWidget):
         """Set the list of matched files."""
         self.current_root = root
         self.model.set_items(files)
-        self.lbl_count.setText(f"Matches: {len(files)}")
+        self.lbl_count.setText(tr("match_panel.lbl_matches").format(len(files)))
 
     def selected_path(self) -> Optional[str]:
         """Get the currently selected file path."""

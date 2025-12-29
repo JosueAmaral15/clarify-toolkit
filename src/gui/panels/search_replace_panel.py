@@ -89,26 +89,26 @@ class SearchReplacePanel(QWidget):
         # Path row
         column = QVBoxLayout()
         row = QHBoxLayout()
-        row.addWidget(QLabel("Root path:"))
+        row.addWidget(QLabel(tr("search_replace.lbl_root_path")))
         self.ed_path = QLineEdit()
         self.ed_path.setToolTip("Enter the directory path or file path to search in")
-        self.btn_browse = QPushButton("Browse…")
+        self.btn_browse = QPushButton(tr("search_replace.btn_browse"))
         self.btn_browse.setToolTip("Open file browser to select a directory or file")
         row.addWidget(self.ed_path, 1)
         row.addWidget(self.btn_browse)
         column.addLayout(row)
-        self.is_file = QCheckBox("Is File?")
+        self.is_file = QCheckBox(tr("search_replace.chk_is_file"))
         self.is_file.setToolTip("Check this if you want to process a single file instead of a directory")
         column.addWidget(self.is_file)
         root.addLayout(column)
 
         # File extension filter (v2.9.0, v2.9.1 - optional)
         row = QHBoxLayout()
-        self.chk_use_ext_filter = QCheckBox("Use extension filter")
+        self.chk_use_ext_filter = QCheckBox(tr("search_replace.chk_use_ext_filter"))
         self.chk_use_ext_filter.setChecked(True)  # Default: enabled
         self.chk_use_ext_filter.setToolTip("Enable simple extension filtering (.py,.js,.tsx)")
         row.addWidget(self.chk_use_ext_filter)
-        row.addWidget(QLabel("Extensions:"))
+        row.addWidget(QLabel(tr("search_replace.lbl_extensions")))
         self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
         self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
         self.ed_extensions.setToolTip("Filter files by extensions. Examples:\n"
@@ -120,32 +120,32 @@ class SearchReplacePanel(QWidget):
         root.addLayout(row)
         
         # Sort results option (v2.9.5)
-        self.chk_sort_results = QCheckBox("Sort results alphabetically")
+        self.chk_sort_results = QCheckBox(tr("search_replace.chk_sort_results"))
         self.chk_sort_results.setChecked(False)
         self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
         root.addWidget(self.chk_sort_results)
         
         # Include/Exclude globs (advanced)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Include globs (advanced, comma-separated):"))
+        row.addWidget(QLabel(tr("search_replace.lbl_include_globs")))
         self.ed_inc = QLineEdit()
         self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/** (leave empty for all)")
         self.ed_inc.setToolTip("Advanced glob patterns to include specific files.\nExamples:\n  *.test.*    - Test files\n  **/src/**   - Files in src folders")
         root.addLayout(row)
         root.addWidget(self.ed_inc)
         row = QHBoxLayout()
-        row.addWidget(QLabel("Exclude globs (comma-separated):"))
+        row.addWidget(QLabel(tr("search_replace.lbl_exclude_globs")))
         self.ed_exc = QLineEdit("node_modules;dist;build;.git")
         self.ed_exc.setToolTip("Glob patterns to exclude folders/files.\nDefault excludes common build/dependency folders")
         root.addLayout(row)
         root.addWidget(self.ed_exc)
 
         # Search field + toggles (v2.9.112 - split into file name and file content)
-        gb = QGroupBox("Search")
+        gb = QGroupBox(tr("search_replace.group_search"))
         g = QGridLayout(gb)
         
         # File name query field
-        g.addWidget(QLabel("File name query:"), 0, 0)
+        g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
         self.ed_filename_query = QLineEdit()
         self.ed_filename_query.setPlaceholderText("Search in file names (e.g., test_*.py)")
         self.ed_filename_query.setToolTip("Search pattern for file names\n"
@@ -154,7 +154,7 @@ class SearchReplacePanel(QWidget):
         g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
         
         # File content query field
-        g.addWidget(QLabel("File content query:"), 1, 0)
+        g.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
         self.ed_query = QPlainTextEdit()
         self.ed_query.setMinimumHeight(30)
         self.ed_query.setMaximumHeight(150)
@@ -165,19 +165,19 @@ class SearchReplacePanel(QWidget):
         g.addWidget(self.ed_query, 1, 1, 1, 3)
         
         # Checkboxes
-        self.chk_case = QCheckBox("Case sensitive")
+        self.chk_case = QCheckBox(tr("search_replace.chk_case_sensitive"))
         self.chk_case.setToolTip("Match exact case (A ≠ a)")
-        self.chk_word = QCheckBox("Whole word")
+        self.chk_word = QCheckBox(tr("search_replace.chk_whole_word"))
         self.chk_word.setToolTip("Match only complete words (not partial matches)")
-        self.chk_regex = QCheckBox("Regex")
+        self.chk_regex = QCheckBox(tr("search_replace.chk_regex"))
         self.chk_regex.setToolTip("Treat query as a regular expression pattern")
-        self.chk_multi_query = QCheckBox("Multi-line")  # v2.8.0
+        self.chk_multi_query = QCheckBox(tr("search_replace.chk_multi_line"))  # v2.8.0
         self.chk_multi_query.setToolTip("Enable multi-line query mode:\n"
                                        "- Each line is a separate search\n"
                                        "- Lines starting with # are comments\n"
                                        "- Empty lines are ignored\n"
                                        "(Query field is now always multi-line capable)")
-        self.btn_search = QPushButton("Search/Cancel")
+        self.btn_search = QPushButton(tr("search_replace.btn_search_cancel"))
         self.btn_search.setToolTip("Start search operation or cancel if already running\n"
                                   "Search logic:\n"
                                   "- Both empty: no search\n"
@@ -194,18 +194,18 @@ class SearchReplacePanel(QWidget):
         root.addWidget(gb)
 
         # Replace extras (optional)
-        gb2 = QGroupBox("Replace (enable if needed)")
+        gb2 = QGroupBox(tr("search_replace.group_replace"))
         g2 = QGridLayout(gb2)
-        g2.addWidget(QLabel("Replacement:"), 0, 0)
+        g2.addWidget(QLabel(tr("search_replace.lbl_replacement")), 0, 0)
         self.ed_repl = QPlainTextEdit()
         self.ed_repl.setMinimumHeight(30)
         self.ed_repl.setMaximumHeight(150)
         self.ed_repl.setToolTip("Enter the replacement text (supports regex capture groups like $1, $2)\nResizable: drag bottom edge to adjust height")
-        self.chk_preserve = QCheckBox("Preserve case")
+        self.chk_preserve = QCheckBox(tr("search_replace.chk_preserve_case"))
         self.chk_preserve.setToolTip("Maintain the original case pattern when replacing")
-        self.btn_replace_one = QPushButton("Replace first per file")
+        self.btn_replace_one = QPushButton(tr("search_replace.btn_replace_first"))
         self.btn_replace_one.setToolTip("Replace only the first occurrence in each file")
-        self.btn_replace_all = QPushButton("Replace all")
+        self.btn_replace_all = QPushButton(tr("search_replace.btn_replace_all"))
         self.btn_replace_all.setToolTip("Replace all occurrences in all matching files")
         g2.addWidget(self.ed_repl, 0, 1, 1, 3)
         g2.addWidget(self.chk_preserve, 1, 0)
@@ -214,11 +214,11 @@ class SearchReplacePanel(QWidget):
         root.addWidget(gb2)
 
         # Advanced conditions (collapsible style via group box)
-        gb3 = QGroupBox("Advanced conditions (when operating on a folder)")
+        gb3 = QGroupBox(tr("search_replace.group_advanced"))
         g3 = QGridLayout(gb3)
         
         # Add AND/OR selector at the top
-        lbl_logic = QLabel("Logic Operator:")
+        lbl_logic = QLabel(tr("search_replace.lbl_logic_operator"))
         self.combo_logic_op = QComboBox()
         self.combo_logic_op.addItems(["AND", "OR"])
         self.combo_logic_op.setToolTip("AND: All conditions must match\nOR: At least one condition must match")
@@ -229,14 +229,14 @@ class SearchReplacePanel(QWidget):
         g3.addLayout(logic_layout, 0, 0, 1, 8)
         
         # Add headers (now starting from row 1)
-        g3.addWidget(QLabel("Field"), 1, 0)
-        g3.addWidget(QLabel("Operator"), 1, 1)
-        g3.addWidget(QLabel("Value"), 1, 2)
-        g3.addWidget(QLabel("Scope"), 1, 3)
-        g3.addWidget(QLabel("Scope Param"), 1, 4)
-        g3.addWidget(QLabel("Case"), 1, 5)
-        g3.addWidget(QLabel("Word"), 1, 6)
-        g3.addWidget(QLabel("Regex"), 1, 7)
+        g3.addWidget(QLabel(tr("search_replace.lbl_field")), 1, 0)
+        g3.addWidget(QLabel(tr("search_replace.lbl_operator")), 1, 1)
+        g3.addWidget(QLabel(tr("search_replace.lbl_value")), 1, 2)
+        g3.addWidget(QLabel(tr("search_replace.lbl_scope")), 1, 3)
+        g3.addWidget(QLabel(tr("search_replace.lbl_scope_param")), 1, 4)
+        g3.addWidget(QLabel(tr("search_replace.lbl_case")), 1, 5)
+        g3.addWidget(QLabel(tr("search_replace.lbl_word")), 1, 6)
+        g3.addWidget(QLabel(tr("search_replace.lbl_regex")), 1, 7)
         
         # Dynamic condition rows (Task #5 - v2.9.7)
         self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]] = []
@@ -251,13 +251,13 @@ class SearchReplacePanel(QWidget):
             self._add_condition_row()
         
         # Add Condition button
-        btn_add_condition = QPushButton("➕ Add Condition")
+        btn_add_condition = QPushButton(tr("search_replace.btn_add_condition"))
         btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
         btn_add_condition.clicked.connect(self._add_condition_row)
         self.buttons_layout_ref.addWidget(btn_add_condition)
         
         # Clear All Conditions button (v2.9.5)
-        btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
+        btn_clear_conditions = QPushButton(tr("search_replace.btn_clear_conditions"))
         btn_clear_conditions.setToolTip("Clear all advanced condition fields")
         btn_clear_conditions.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_conditions)
@@ -277,9 +277,9 @@ class SearchReplacePanel(QWidget):
         # Results panel with save button
         results_layout = QVBoxLayout()
         results_header = QHBoxLayout()
-        results_label = QLabel("Search Results")
+        results_label = QLabel(tr("search_replace.lbl_results"))
         results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
-        self.btn_save_results = QPushButton("💾 Save Results")
+        self.btn_save_results = QPushButton(tr("search_replace.btn_save_results"))
         self.btn_save_results.setToolTip("Save all search results to a formatted text file with statistics")
         self.btn_save_results.clicked.connect(self._save_results)
         results_header.addWidget(results_label)

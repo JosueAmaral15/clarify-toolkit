@@ -1580,7 +1580,6 @@
   "formula.dialog_description_optional": "描述（可选）：",
   "formula.dialog_load_template": "加载模板",
   "formula.dialog_select_formula": "选择公式：",
-  
   "jsx.msg_security_error_title": "安全错误",
   "jsx.msg_security_access_denied": "访问被拒绝：路径必须在您的主目录或工作区内。\n尝试的路径：{0}",
   "jsx.msg_error_title": "错误",
@@ -1597,7 +1596,6 @@
   "jsx.msg_save_error_title": "保存错误",
   "jsx.msg_nothing_to_copy_title": "没有可复制的内容",
   "jsx.msg_nothing_to_copy_msg": "没有内容可复制。",
-  
   "calculator.group_slot_actions": "槽位操作",
   "calculator.msg_stored_title": "已存储",
   "calculator.msg_stored_success": "结果已存储在槽位{0}\n来源：{1}",
@@ -1621,7 +1619,6 @@
   "calculator.msg_operation_failed_title": "操作失败",
   "calculator.status_empty": "空",
   "calculator.status_ok": "正常",
-  
   "google_translate.msg_file_error_title": "文件错误",
   "google_translate.msg_file_error_read": "无法读取文件：\n{0}",
   "google_translate.msg_no_file_title": "未选择文件",
@@ -1630,7 +1627,6 @@
   "google_translate.msg_no_text_msg": "请输入要翻译的文本。",
   "google_translate.msg_same_language_title": "相同语言",
   "google_translate.msg_same_language_msg": "源语言和目标语言相同。",
-  
   "file_list.msg_missing_title": "缺失",
   "file_list.msg_missing_directory": "请选择一个目录。",
   "file_list.msg_invalid_title": "无效",
@@ -1639,7 +1635,6 @@
   "file_list.msg_no_recent_msg": "还没有保存最近的目录。",
   "file_list.msg_cleared_title": "已清除",
   "file_list.msg_cleared_msg": "最近目录列表已清除。",
-  
   "json_rewriter.msg_missing_input_title": "缺失",
   "json_rewriter.msg_missing_input": "选择输入文件。",
   "json_rewriter.msg_cancelled_title": "已取消",
@@ -1660,13 +1655,10 @@
   "json_rewriter.msg_no_changes": "在项目中未找到孤立引用。",
   "json_rewriter.msg_error_title": "错误",
   "json_rewriter.msg_error": "{0}\n\n{1}",
-  
   "regex_insert.msg_empty_pattern2_title": "空模式",
   "regex_insert.msg_empty_pattern2_msg": "请输入正则表达式模式。",
-  
   "file_explorer.msg_no_results_title": "无结果",
   "file_explorer.msg_no_results": "没有要保存的搜索结果。请先执行搜索。",
-  
   "batch_dialog.msg_validation_select_a_title": "验证错误",
   "batch_dialog.msg_validation_select_a": "请选择文件A",
   "batch_dialog.msg_validation_select_b_title": "验证错误",
@@ -1683,19 +1675,52 @@
   "batch_dialog.msg_error_load": "加载批处理作业失败",
   "batch_dialog.msg_empty_batch_exec_title": "空批处理",
   "batch_dialog.msg_empty_batch_exec": "请在执行前至少添加一个步骤",
-  
   "shortcut_customizer.msg_no_selection_title": "未选择",
   "shortcut_customizer.msg_no_selection": "请选择要重置的快捷键。",
-  
   "template_dialog.msg_no_template_title": "无模板",
   "template_dialog.msg_no_template": "请先选择一个模板。",
-  
   "json_search_dialog.msg_invalid_pattern_title": "无效模式",
   "json_search_dialog.msg_invalid_pattern": "无效的搜索模式",
-  
   "match_panel.msg_open_title": "打开",
   "match_panel.msg_open": "请在列表中选择一个文件。",
-  
   "search_replace_panel.msg_error_thread_title": "错误",
-  "search_replace_panel.msg_error_thread": "启动搜索线程失败。"
+  "search_replace_panel.msg_error_thread": "启动搜索线程失败。",
+  "match_panel.lbl_matches": "匹配：{0}",
+  "match_panel.btn_refresh": "刷新",
+  "match_panel.btn_open_folder": "打开文件夹…",
+  "search_replace.lbl_root_path": "根路径：",
+  "search_replace.btn_browse": "浏览…",
+  "search_replace.chk_is_file": "是文件？",
+  "search_replace.chk_use_ext_filter": "使用扩展名过滤器",
+  "search_replace.lbl_extensions": "扩展名：",
+  "search_replace.chk_sort_results": "按字母顺序排序结果",
+  "search_replace.lbl_include_globs": "包含 globs（高级，逗号分隔）：",
+  "search_replace.lbl_exclude_globs": "排除 globs（逗号分隔）：",
+  "search_replace.group_search": "搜索",
+  "search_replace.lbl_file_name_query": "文件名查询：",
+  "search_replace.lbl_file_content_query": "文件内容查询：",
+  "search_replace.chk_case_sensitive": "区分大小写",
+  "search_replace.chk_whole_word": "全字匹配",
+  "search_replace.chk_regex": "正则表达式",
+  "search_replace.chk_multi_line": "多行",
+  "search_replace.btn_search_cancel": "搜索/取消",
+  "search_replace.group_replace": "替换（根据需要启用）",
+  "search_replace.lbl_replacement": "替换内容：",
+  "search_replace.chk_preserve_case": "保持大小写",
+  "search_replace.btn_replace_first": "替换每个文件的第一个",
+  "search_replace.btn_replace_all": "全部替换",
+  "search_replace.group_advanced": "高级条件（在文件夹上操作时）",
+  "search_replace.lbl_logic_operator": "逻辑运算符：",
+  "search_replace.lbl_field": "字段",
+  "search_replace.lbl_operator": "运算符",
+  "search_replace.lbl_value": "值",
+  "search_replace.lbl_scope": "范围",
+  "search_replace.lbl_scope_param": "范围参数",
+  "search_replace.lbl_case": "大小写",
+  "search_replace.lbl_word": "单词",
+  "search_replace.lbl_regex": "正则表达式",
+  "search_replace.btn_add_condition": "➕ 添加条件",
+  "search_replace.btn_clear_conditions": "🗑️ 清除所有条件",
+  "search_replace.lbl_results": "搜索结果",
+  "search_replace.btn_save_results": "💾 保存结果"
 }

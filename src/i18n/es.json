@@ -1588,7 +1588,6 @@
   "formula.dialog_description_optional": "Descripción (opcional):",
   "formula.dialog_load_template": "Cargar Plantilla",
   "formula.dialog_select_formula": "Seleccione la fórmula:",
-  
   "jsx.msg_security_error_title": "Error de Seguridad",
   "jsx.msg_security_access_denied": "Acceso denegado: La ruta debe estar dentro de su directorio home o workspace.\nRuta intentada: {0}",
   "jsx.msg_error_title": "Error",
@@ -1605,7 +1604,6 @@
   "jsx.msg_save_error_title": "Error al guardar",
   "jsx.msg_nothing_to_copy_title": "Nada para copiar",
   "jsx.msg_nothing_to_copy_msg": "No hay contenido para copiar.",
-  
   "calculator.group_slot_actions": "Acciones de Ranura",
   "calculator.msg_stored_title": "Almacenado",
   "calculator.msg_stored_success": "Resultado almacenado en ranura {0}\nOrigen: {1}",
@@ -1629,7 +1627,6 @@
   "calculator.msg_operation_failed_title": "Operación Fallida",
   "calculator.status_empty": "Vacío",
   "calculator.status_ok": "OK",
-  
   "google_translate.msg_file_error_title": "Error de Archivo",
   "google_translate.msg_file_error_read": "No se pudo leer el archivo:\n{0}",
   "google_translate.msg_no_file_title": "Ningún Archivo Seleccionado",
@@ -1638,7 +1635,6 @@
   "google_translate.msg_no_text_msg": "Por favor, ingrese texto para traducir.",
   "google_translate.msg_same_language_title": "Mismos Idiomas",
   "google_translate.msg_same_language_msg": "Los idiomas de origen y destino son los mismos.",
-  
   "file_list.msg_missing_title": "Faltante",
   "file_list.msg_missing_directory": "Por favor, seleccione un directorio.",
   "file_list.msg_invalid_title": "Inválido",
@@ -1647,7 +1643,6 @@
   "file_list.msg_no_recent_msg": "Aún no se han guardado directorios recientes.",
   "file_list.msg_cleared_title": "Limpiado",
   "file_list.msg_cleared_msg": "Lista de directorios recientes limpiada.",
-  
   "json_rewriter.msg_missing_input_title": "Falta",
   "json_rewriter.msg_missing_input": "Elija un archivo de entrada.",
   "json_rewriter.msg_cancelled_title": "Cancelado",
@@ -1668,13 +1663,10 @@
   "json_rewriter.msg_no_changes": "No se encontraron referencias huérfanas en el proyecto.",
   "json_rewriter.msg_error_title": "Error",
   "json_rewriter.msg_error": "{0}\n\n{1}",
-  
   "regex_insert.msg_empty_pattern2_title": "Patrón Vacío",
   "regex_insert.msg_empty_pattern2_msg": "Por favor, ingrese un patrón regex.",
-  
   "file_explorer.msg_no_results_title": "Sin Resultados",
   "file_explorer.msg_no_results": "No hay resultados de búsqueda para guardar. Por favor, realice una búsqueda primero.",
-  
   "batch_dialog.msg_validation_select_a_title": "Error de Validación",
   "batch_dialog.msg_validation_select_a": "Por favor, seleccione Archivo A",
   "batch_dialog.msg_validation_select_b_title": "Error de Validación",
@@ -1691,19 +1683,52 @@
   "batch_dialog.msg_error_load": "Error al cargar trabajo por lotes",
   "batch_dialog.msg_empty_batch_exec_title": "Lote Vacío",
   "batch_dialog.msg_empty_batch_exec": "Por favor, agregue al menos un paso antes de ejecutar",
-  
   "shortcut_customizer.msg_no_selection_title": "Sin Selección",
   "shortcut_customizer.msg_no_selection": "Por favor, seleccione un atajo para restablecer.",
-  
   "template_dialog.msg_no_template_title": "Sin Plantilla",
   "template_dialog.msg_no_template": "Por favor, seleccione una plantilla primero.",
-  
   "json_search_dialog.msg_invalid_pattern_title": "Patrón Inválido",
   "json_search_dialog.msg_invalid_pattern": "Patrón de búsqueda inválido",
-  
   "match_panel.msg_open_title": "Abrir",
   "match_panel.msg_open": "Seleccione un archivo en la lista.",
-  
   "search_replace_panel.msg_error_thread_title": "Error",
-  "search_replace_panel.msg_error_thread": "Error al iniciar hilo de búsqueda."
+  "search_replace_panel.msg_error_thread": "Error al iniciar hilo de búsqueda.",
+  "match_panel.lbl_matches": "Coincidencias: {0}",
+  "match_panel.btn_refresh": "Actualizar",
+  "match_panel.btn_open_folder": "Abrir Carpeta…",
+  "search_replace.lbl_root_path": "Ruta raíz:",
+  "search_replace.btn_browse": "Examinar…",
+  "search_replace.chk_is_file": "¿Es Archivo?",
+  "search_replace.chk_use_ext_filter": "Usar filtro de extensión",
+  "search_replace.lbl_extensions": "Extensiones:",
+  "search_replace.chk_sort_results": "Ordenar resultados alfabéticamente",
+  "search_replace.lbl_include_globs": "Incluir globs (avanzado, separados por comas):",
+  "search_replace.lbl_exclude_globs": "Excluir globs (separados por comas):",
+  "search_replace.group_search": "Búsqueda",
+  "search_replace.lbl_file_name_query": "Consulta de nombre de archivo:",
+  "search_replace.lbl_file_content_query": "Consulta de contenido de archivo:",
+  "search_replace.chk_case_sensitive": "Distinguir mayúsculas/minúsculas",
+  "search_replace.chk_whole_word": "Palabra completa",
+  "search_replace.chk_regex": "Regex",
+  "search_replace.chk_multi_line": "Multi-línea",
+  "search_replace.btn_search_cancel": "Buscar/Cancelar",
+  "search_replace.group_replace": "Reemplazar (activar si es necesario)",
+  "search_replace.lbl_replacement": "Reemplazo:",
+  "search_replace.chk_preserve_case": "Preservar mayúsculas/minúsculas",
+  "search_replace.btn_replace_first": "Reemplazar primero por archivo",
+  "search_replace.btn_replace_all": "Reemplazar todo",
+  "search_replace.group_advanced": "Condiciones avanzadas (al operar en una carpeta)",
+  "search_replace.lbl_logic_operator": "Operador Lógico:",
+  "search_replace.lbl_field": "Campo",
+  "search_replace.lbl_operator": "Operador",
+  "search_replace.lbl_value": "Valor",
+  "search_replace.lbl_scope": "Ámbito",
+  "search_replace.lbl_scope_param": "Parámetro Ámbito",
+  "search_replace.lbl_case": "May/Min",
+  "search_replace.lbl_word": "Palabra",
+  "search_replace.lbl_regex": "Regex",
+  "search_replace.btn_add_condition": "➕ Agregar Condición",
+  "search_replace.btn_clear_conditions": "🗑️ Limpiar Todas Condiciones",
+  "search_replace.lbl_results": "Resultados de Búsqueda",
+  "search_replace.btn_save_results": "💾 Guardar Resultados"
 }
