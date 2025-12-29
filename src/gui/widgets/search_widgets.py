@@ -335,7 +335,7 @@ class ConditionsGrid(QWidget):
         
         # Operator selector
         combo_operator = QComboBox()
-        combo_operator.addItems(["=", "!=", "contains", "!contains", ">", "<", ">=", "<=", "regex"])
+        combo_operator.addItems(["equals", "not equals", "contains", "not contains", "greater than", "<", ">=", "<=", "regex"])
         combo_operator.setToolTip(tr("search.tooltip_operator"))
         row_layout.addWidget(combo_operator)
         

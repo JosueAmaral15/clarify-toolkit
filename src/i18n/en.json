@@ -1612,5 +1612,22 @@
   "formula.dialog_enter_name": "Enter formula name:",
   "formula.dialog_description_optional": "Description (optional):",
   "formula.dialog_load_template": "Load Template",
-  "formula.dialog_select_formula": "Select formula:"
+  "formula.dialog_select_formula": "Select formula:",
+  
+  "jsx.msg_security_error_title": "Security Error",
+  "jsx.msg_security_access_denied": "Access denied: Path must be within your home directory or workspace.\nAttempted path: {0}",
+  "jsx.msg_error_title": "Error",
+  "jsx.msg_invalid_path": "Invalid path: {0}",
+  "jsx.msg_provide_path": "Please provide a path (file or directory).",
+  "jsx.msg_path_not_exist": "Path does not exist: {0}",
+  "jsx.msg_extraction_error_title": "Extraction Error",
+  "jsx.msg_nothing_to_save_title": "Nothing to save",
+  "jsx.msg_nothing_to_save_msg": "No outputs to save.",
+  "jsx.msg_txt_only": "Only .txt files are allowed for paths output.",
+  "jsx.msg_json_only": "Only .json files are allowed for JSON output.",
+  "jsx.msg_saved_title": "Saved",
+  "jsx.msg_saved_success": "Outputs saved successfully.",
+  "jsx.msg_save_error_title": "Save error",
+  "jsx.msg_nothing_to_copy_title": "Nothing to copy",
+  "jsx.msg_nothing_to_copy_msg": "No content to copy."
 }

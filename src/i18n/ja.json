@@ -1579,5 +1579,22 @@
   "formula.dialog_enter_name": "式の名前を入力してください：",
   "formula.dialog_description_optional": "説明（オプション）：",
   "formula.dialog_load_template": "テンプレートを読み込む",
-  "formula.dialog_select_formula": "式を選択してください："
+  "formula.dialog_select_formula": "式を選択してください：",
+  
+  "jsx.msg_security_error_title": "セキュリティエラー",
+  "jsx.msg_security_access_denied": "アクセス拒否：パスはホームディレクトリまたはワークスペース内である必要があります。\n試行されたパス：{0}",
+  "jsx.msg_error_title": "エラー",
+  "jsx.msg_invalid_path": "無効なパス：{0}",
+  "jsx.msg_provide_path": "パス（ファイルまたはディレクトリ）を指定してください。",
+  "jsx.msg_path_not_exist": "パスが存在しません：{0}",
+  "jsx.msg_extraction_error_title": "抽出エラー",
+  "jsx.msg_nothing_to_save_title": "保存するものがありません",
+  "jsx.msg_nothing_to_save_msg": "保存する出力がありません。",
+  "jsx.msg_txt_only": "パス出力には.txtファイルのみが許可されています。",
+  "jsx.msg_json_only": "JSON出力には.jsonファイルのみが許可されています。",
+  "jsx.msg_saved_title": "保存しました",
+  "jsx.msg_saved_success": "出力が正常に保存されました。",
+  "jsx.msg_save_error_title": "保存エラー",
+  "jsx.msg_nothing_to_copy_title": "コピーするものがありません",
+  "jsx.msg_nothing_to_copy_msg": "コピーするコンテンツがありません。"
 }

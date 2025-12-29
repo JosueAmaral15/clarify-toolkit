@@ -1587,5 +1587,22 @@
   "formula.dialog_enter_name": "Ingrese el nombre de la fórmula:",
   "formula.dialog_description_optional": "Descripción (opcional):",
   "formula.dialog_load_template": "Cargar Plantilla",
-  "formula.dialog_select_formula": "Seleccione la fórmula:"
+  "formula.dialog_select_formula": "Seleccione la fórmula:",
+  
+  "jsx.msg_security_error_title": "Error de Seguridad",
+  "jsx.msg_security_access_denied": "Acceso denegado: La ruta debe estar dentro de su directorio home o workspace.\nRuta intentada: {0}",
+  "jsx.msg_error_title": "Error",
+  "jsx.msg_invalid_path": "Ruta inválida: {0}",
+  "jsx.msg_provide_path": "Por favor, proporcione una ruta (archivo o directorio).",
+  "jsx.msg_path_not_exist": "La ruta no existe: {0}",
+  "jsx.msg_extraction_error_title": "Error de Extracción",
+  "jsx.msg_nothing_to_save_title": "Nada para guardar",
+  "jsx.msg_nothing_to_save_msg": "No hay salidas para guardar.",
+  "jsx.msg_txt_only": "Solo se permiten archivos .txt para la salida de rutas.",
+  "jsx.msg_json_only": "Solo se permiten archivos .json para la salida JSON.",
+  "jsx.msg_saved_title": "Guardado",
+  "jsx.msg_saved_success": "Salidas guardadas con éxito.",
+  "jsx.msg_save_error_title": "Error al guardar",
+  "jsx.msg_nothing_to_copy_title": "Nada para copiar",
+  "jsx.msg_nothing_to_copy_msg": "No hay contenido para copiar."
 }

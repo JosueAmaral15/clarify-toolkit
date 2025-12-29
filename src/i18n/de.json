@@ -1579,5 +1579,22 @@
   "formula.dialog_enter_name": "Formelname eingeben:",
   "formula.dialog_description_optional": "Beschreibung (optional):",
   "formula.dialog_load_template": "Vorlage laden",
-  "formula.dialog_select_formula": "Formel auswählen:"
+  "formula.dialog_select_formula": "Formel auswählen:",
+  
+  "jsx.msg_security_error_title": "Sicherheitsfehler",
+  "jsx.msg_security_access_denied": "Zugriff verweigert: Pfad muss in Ihrem Home-Verzeichnis oder Workspace sein.\nVersuchter Pfad: {0}",
+  "jsx.msg_error_title": "Fehler",
+  "jsx.msg_invalid_path": "Ungültiger Pfad: {0}",
+  "jsx.msg_provide_path": "Bitte geben Sie einen Pfad an (Datei oder Verzeichnis).",
+  "jsx.msg_path_not_exist": "Pfad existiert nicht: {0}",
+  "jsx.msg_extraction_error_title": "Extraktionsfehler",
+  "jsx.msg_nothing_to_save_title": "Nichts zu speichern",
+  "jsx.msg_nothing_to_save_msg": "Keine Ausgaben zum Speichern.",
+  "jsx.msg_txt_only": "Nur .txt-Dateien sind für die Pfadausgabe zulässig.",
+  "jsx.msg_json_only": "Nur .json-Dateien sind für die JSON-Ausgabe zulässig.",
+  "jsx.msg_saved_title": "Gespeichert",
+  "jsx.msg_saved_success": "Ausgaben erfolgreich gespeichert.",
+  "jsx.msg_save_error_title": "Speicherfehler",
+  "jsx.msg_nothing_to_copy_title": "Nichts zum Kopieren",
+  "jsx.msg_nothing_to_copy_msg": "Kein Inhalt zum Kopieren."
 }

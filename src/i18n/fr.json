@@ -1579,5 +1579,22 @@
   "formula.dialog_enter_name": "Entrez le nom de la formule :",
   "formula.dialog_description_optional": "Description (optionnel) :",
   "formula.dialog_load_template": "Charger le modèle",
-  "formula.dialog_select_formula": "Sélectionnez la formule :"
+  "formula.dialog_select_formula": "Sélectionnez la formule :",
+  
+  "jsx.msg_security_error_title": "Erreur de Sécurité",
+  "jsx.msg_security_access_denied": "Accès refusé : Le chemin doit être dans votre répertoire home ou workspace.\nChemin tenté : {0}",
+  "jsx.msg_error_title": "Erreur",
+  "jsx.msg_invalid_path": "Chemin invalide : {0}",
+  "jsx.msg_provide_path": "Veuillez fournir un chemin (fichier ou répertoire).",
+  "jsx.msg_path_not_exist": "Le chemin n'existe pas : {0}",
+  "jsx.msg_extraction_error_title": "Erreur d'Extraction",
+  "jsx.msg_nothing_to_save_title": "Rien à enregistrer",
+  "jsx.msg_nothing_to_save_msg": "Aucune sortie à enregistrer.",
+  "jsx.msg_txt_only": "Seuls les fichiers .txt sont autorisés pour la sortie des chemins.",
+  "jsx.msg_json_only": "Seuls les fichiers .json sont autorisés pour la sortie JSON.",
+  "jsx.msg_saved_title": "Enregistré",
+  "jsx.msg_saved_success": "Sorties enregistrées avec succès.",
+  "jsx.msg_save_error_title": "Erreur d'enregistrement",
+  "jsx.msg_nothing_to_copy_title": "Rien à copier",
+  "jsx.msg_nothing_to_copy_msg": "Aucun contenu à copier."
 }

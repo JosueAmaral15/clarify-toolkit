@@ -2,14 +2,14 @@
 
 **Data**: 2025-12-28  
 **Responsável**: GitHub Copilot  
-**Status**: ✅ FASE 15 COMPLETA - EDITOR DOCK TRADUZIDO  
+**Status**: ✅ FASE 17 COMPLETA - JSX EXTRACTOR TRADUZIDO  
 **Protocolo**: Protocolo Simplicidade 3 - Planejamento Sistemático
 
 ---
 
 ## 📋 Resumo Executivo
 
-O File Explorer e seus módulos relacionados foram **COMPLETAMENTE** internacionalizados através de doze fases sistemáticas:
+O File Explorer e seus módulos relacionados foram **COMPLETAMENTE** internacionalizados através de quinze fases sistemáticas:
 
 - **Fase 1**: 95 strings originais (preset_manager + search_widgets + tooltips)
 - **Fase 2**: 4 strings de labels/filtros descobertas em auditoria
@@ -24,16 +24,18 @@ O File Explorer e seus módulos relacionados foram **COMPLETAMENTE** internacion
 - **Fase 13**: 19 strings adicionais de insert panels (botões, labels, mensagens)
 - **Fase 14**: 35 strings de regex_insert QMessageBox + history_dock
 - **Fase 15**: 16 strings de editor_dock (erros, save, dialogs)
-- **TOTAL**: **359 strings × 7 idiomas = 2.513 traduções**
+- **Fase 16**: 22 strings de formula_dock (grupos, labels, dialogs)
+- **Fase 17**: 16 strings de jsx_extractor_dock (erros, security, save)
+- **TOTAL**: **397 strings × 7 idiomas = 2.779 traduções**
 
-### Idiomas Disponíveis no Projeto308 strings
-- ✅ **en.json** - Inglês - 308 strings
-- ✅ **de.json** - Alemão - 308 strings
-- ✅ **es.json** - Espanhol - 308 strings
-- ✅ **fr.json** - Francês - 308 strings
-- ✅ **ja.json** - Japonês - 308 strings
-- ✅ **zh.json** - Chinês - 3089 strings
-- ✅ **zh.json** - Chinês - 289 strings
+### Idiomas Disponíveis no Projeto
+- ✅ **en.json** - Inglês - 397 strings
+- ✅ **de.json** - Alemão - 397 strings
+- ✅ **es.json** - Espanhol - 397 strings
+- ✅ **fr.json** - Francês - 397 strings
+- ✅ **ja.json** - Japonês - 397 strings
+- ✅ **zh.json** - Chinês - 397 strings
+- ✅ **pt_BR.json** - Português BR - 397 strings
 
 ---
 
@@ -581,20 +583,59 @@ Adicionar **TODAS as strings hardcoded** identificadas em **TODOS os 7 arquivos 
 23. ✅ `src/gui/panels/regex_insert_panel.py` - **27 traduções de QMessageBox** (Fase 14: validações, erros, preview)
 24. ✅ `src/gui/history_dock.py` - **8 traduções de QMessageBox** (Fase 14: clear, export, errors)
 25. ✅ `src/gui/editor_dock.py` - **16 traduções de QMessageBox** (Fase 15: save, open, errors, dialogs)
+26. ✅ `src/gui/formula_dock.py` - **22 traduções** (Fase 16: grupos, labels, botões, dialogs, QMessageBox)
+27. ✅ `src/gui/jsx_extractor_dock.py` - **16 traduções de QMessageBox** (Fase 17: security, extraction, save errors)
 
 ---
 
 ## 📈 Estatísticas Finais
 
-- **Total de Strings**: 359 (343 fases anteriores + 16 fase 15)
+- **Total de Strings**: 397 (359 fases 1-15 + 22 fase 16 + 16 fase 17)
 - **Total de Idiomas**: 7 (pt_BR, en, de, es, fr, ja, zh)
-- **Total de Traduções**: **2.513**
-- **Arquivos Modificados**: 24 (7 JSON + 17 Python)
-- **Localizações Python Atualizadas**: 251 (235 fases anteriores + 16 editor_dock)
+- **Total de Traduções**: **2.779**
+- **Arquivos Modificados**: 27 (7 JSON + 20 Python)
+- **Localizações Python Atualizadas**: 289 (251 fases 1-15 + 22 formula_dock + 16 jsx_extractor)
 
 ---
 
-**Última atualização**: 2025-12-29 (FASE 15 COMPLETA)  
-**Status Final**: ✅ **359 STRINGS TRADUZIDAS PARA 7 IDIOMAS**  
-**Cobertura**: Preset Manager, Search Widgets, Tooltips, Labels, Dialogs, Estatísticas, CSV Headers, File Dialogs, File Filter Panel, Table Manager, Editor Tab, Operation Options, Path Entry, JSON Search, File Selection, AI Processor, JSON Editor, Insert Panel (completo), Regex Insert Panel (completo), History Dock, **Editor Dock**  
+## 🆕 Fase 17: JSX Extractor Dock (v2.9.117 - 2025-12-29)
+
+### Strings Adicionadas (16 × 7 idiomas = 112 traduções)
+
+**Categoria**: Mensagens de erro e segurança do JSX Extractor
+
+```json
+{
+  "jsx.msg_security_error_title": "Erro de Segurança / Security Error / ...",
+  "jsx.msg_security_access_denied": "Acesso negado: O caminho deve estar dentro do seu diretório home ou workspace.\nCaminho tentado: {0}",
+  "jsx.msg_error_title": "Erro / Error / ...",
+  "jsx.msg_invalid_path": "Caminho inválido: {0}",
+  "jsx.msg_provide_path": "Por favor, forneça um caminho (arquivo ou diretório).",
+  "jsx.msg_path_not_exist": "O caminho não existe: {0}",
+  "jsx.msg_extraction_error_title": "Erro de Extração / Extraction Error / ...",
+  "jsx.msg_nothing_to_save_title": "Nada para Salvar / Nothing to save / ...",
+  "jsx.msg_nothing_to_save_msg": "Nenhuma saída para salvar.",
+  "jsx.msg_txt_only": "Apenas arquivos .txt são permitidos para saída de caminhos.",
+  "jsx.msg_json_only": "Apenas arquivos .json são permitidos para saída JSON.",
+  "jsx.msg_saved_title": "Salvo / Saved / ...",
+  "jsx.msg_saved_success": "Saídas salvas com sucesso.",
+  "jsx.msg_save_error_title": "Erro ao Salvar / Save error / ...",
+  "jsx.msg_nothing_to_copy_title": "Nada para Copiar / Nothing to copy / ...",
+  "jsx.msg_nothing_to_copy_msg": "Nenhum conteúdo para copiar."
+}
+```
+
+**Execução**:
+1. ✅ Adicionadas 16 strings × 7 idiomas = 112 traduções
+2. ✅ Substituídas 10 QMessageBox em jsx_extractor_dock.py com tr()
+3. ✅ Validados todos os 7 arquivos JSON (sintaxe correta)
+
+---
+
+**Última atualização**: 2025-12-29 (FASE 17 COMPLETA)  
+**Status Final**: ✅ **397 STRINGS TRADUZIDAS PARA 7 IDIOMAS**  
+**Cobertura**: Preset Manager, Search Widgets, Tooltips, Labels, Dialogs, Estatísticas, CSV Headers, File Dialogs, File Filter Panel, Table Manager, Editor Tab, Operation Options, Path Entry, JSON Search, File Selection, AI Processor, JSON Editor, Insert Panel (completo), Regex Insert Panel (completo), History Dock, Editor Dock, Formula Dock, **JSX Extractor Dock**  
+**Próxima revisão**: Continuar buscando mais strings hardcoded em outros componentes GUI
+
+
 **Próxima revisão**: Continuar buscando mais strings hardcoded em outros componentes GUI

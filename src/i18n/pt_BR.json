@@ -1612,5 +1612,22 @@
   "formula.dialog_enter_name": "Digite o nome da fórmula:",
   "formula.dialog_description_optional": "Descrição (opcional):",
   "formula.dialog_load_template": "Carregar Modelo",
-  "formula.dialog_select_formula": "Selecione a fórmula:"
+  "formula.dialog_select_formula": "Selecione a fórmula:",
+  
+  "jsx.msg_security_error_title": "Erro de Segurança",
+  "jsx.msg_security_access_denied": "Acesso negado: O caminho deve estar dentro do seu diretório home ou workspace.\nCaminho tentado: {0}",
+  "jsx.msg_error_title": "Erro",
+  "jsx.msg_invalid_path": "Caminho inválido: {0}",
+  "jsx.msg_provide_path": "Por favor, forneça um caminho (arquivo ou diretório).",
+  "jsx.msg_path_not_exist": "O caminho não existe: {0}",
+  "jsx.msg_extraction_error_title": "Erro de Extração",
+  "jsx.msg_nothing_to_save_title": "Nada para Salvar",
+  "jsx.msg_nothing_to_save_msg": "Nenhuma saída para salvar.",
+  "jsx.msg_txt_only": "Apenas arquivos .txt são permitidos para saída de caminhos.",
+  "jsx.msg_json_only": "Apenas arquivos .json são permitidos para saída JSON.",
+  "jsx.msg_saved_title": "Salvo",
+  "jsx.msg_saved_success": "Saídas salvas com sucesso.",
+  "jsx.msg_save_error_title": "Erro ao Salvar",
+  "jsx.msg_nothing_to_copy_title": "Nada para Copiar",
+  "jsx.msg_nothing_to_copy_msg": "Nenhum conteúdo para copiar."
 }

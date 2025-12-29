@@ -101,15 +101,14 @@ class JSXExtractorDock(BaseDock):
             if not (real_path.startswith(home_dir) or real_path.startswith(cwd)):
                 QMessageBox.warning(
                     self,
-                    "Security Error",
-                    f"Access denied: Path must be within your home directory or workspace.\n"
-                    f"Attempted path: {real_path}",
+                    tr("jsx.msg_security_error_title"),
+                    tr("jsx.msg_security_access_denied").format(real_path),
                 )
                 return None
 
             return real_path
         except (OSError, ValueError) as e:
-            QMessageBox.warning(self, "Error", f"Invalid path: {e}")
+            QMessageBox.warning(self, tr("jsx.msg_error_title"), tr("jsx.msg_invalid_path").format(e))
             return None
 
     def _create_widgets(self) -> None:
@@ -420,7 +419,7 @@ class JSXExtractorDock(BaseDock):
         try:
             path = self.ed_path.text().strip()
             if not path:
-                QMessageBox.warning(self, "Error", "Please provide a path (file or directory).")
+                QMessageBox.warning(self, tr("jsx.msg_error_title"), tr("jsx.msg_provide_path"))
                 return
 
             # Security: Validate path
@@ -430,7 +429,7 @@ class JSXExtractorDock(BaseDock):
 
             # Check if path exists
             if not os.path.exists(validated_path):
-                QMessageBox.warning(self, "Error", f"Path does not exist: {path}")
+                QMessageBox.warning(self, tr("jsx.msg_error_title"), tr("jsx.msg_path_not_exist").format(path))
                 return
 
             path = validated_path
@@ -496,7 +495,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setStyleSheet("color: green; font-style: italic;")
 
         except Exception as e:
-            QMessageBox.critical(self, "Extraction Error", str(e))
+            QMessageBox.critical(self, tr("jsx.msg_extraction_error_title"), str(e))
             self.status_label.setText(f"Error: {str(e)}")
             self.status_label.setStyleSheet("color: red; font-style: italic;")
 
@@ -507,7 +506,7 @@ class JSXExtractorDock(BaseDock):
             js = self.out_json.toPlainText()
 
             if not text and not js:
-                QMessageBox.information(self, "Nothing to save", "No outputs to save.")
+                QMessageBox.information(self, tr("jsx.msg_nothing_to_save_title"), tr("jsx.msg_nothing_to_save_msg"))
                 return
 
             # Save paths
@@ -516,7 +515,7 @@ class JSXExtractorDock(BaseDock):
                 if fp:
                     # Security: Validate file extension
                     if not fp.lower().endswith(".txt"):
-                        QMessageBox.warning(self, "Security Error", "Only .txt files are allowed for paths output.")
+                        QMessageBox.warning(self, tr("jsx.msg_security_error_title"), tr("jsx.msg_txt_only"))
                         return
 
                     # Security: Validate path
@@ -533,7 +532,7 @@ class JSXExtractorDock(BaseDock):
                 if fj:
                     # Security: Validate file extension
                     if not fj.lower().endswith(".json"):
-                        QMessageBox.warning(self, "Security Error", "Only .json files are allowed for JSON output.")
+                        QMessageBox.warning(self, tr("jsx.msg_security_error_title"), tr("jsx.msg_json_only"))
                         return
 
                     # Security: Validate path
@@ -544,9 +543,9 @@ class JSXExtractorDock(BaseDock):
                     with open(validated_fj, "w", encoding="utf-8") as f:
                         f.write(js)
 
-            QMessageBox.information(self, "Saved", "Outputs saved successfully.")
+            QMessageBox.information(self, tr("jsx.msg_saved_title"), tr("jsx.msg_saved_success"))
         except Exception as e:
-            QMessageBox.critical(self, "Save error", str(e))
+            QMessageBox.critical(self, tr("jsx.msg_save_error_title"), str(e))
 
     def _on_copy(self) -> None:
         """Copy current tab content to clipboard."""
@@ -560,7 +559,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setText(tr("jsx.status_copied"))
             self.status_label.setStyleSheet("color: green; font-style: italic;")
         else:
-            QMessageBox.information(self, "Nothing to copy", "No content to copy.")
+            QMessageBox.information(self, tr("jsx.msg_nothing_to_copy_title"), tr("jsx.msg_nothing_to_copy_msg"))
 
     def _on_clear(self) -> None:
         """Clear all outputs."""

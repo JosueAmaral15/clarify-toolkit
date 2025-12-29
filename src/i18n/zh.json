@@ -1579,5 +1579,22 @@
   "formula.dialog_enter_name": "输入公式名称：",
   "formula.dialog_description_optional": "描述（可选）：",
   "formula.dialog_load_template": "加载模板",
-  "formula.dialog_select_formula": "选择公式："
+  "formula.dialog_select_formula": "选择公式：",
+  
+  "jsx.msg_security_error_title": "安全错误",
+  "jsx.msg_security_access_denied": "访问被拒绝：路径必须在您的主目录或工作区内。\n尝试的路径：{0}",
+  "jsx.msg_error_title": "错误",
+  "jsx.msg_invalid_path": "无效路径：{0}",
+  "jsx.msg_provide_path": "请提供路径（文件或目录）。",
+  "jsx.msg_path_not_exist": "路径不存在：{0}",
+  "jsx.msg_extraction_error_title": "提取错误",
+  "jsx.msg_nothing_to_save_title": "没有可保存的内容",
+  "jsx.msg_nothing_to_save_msg": "没有输出可保存。",
+  "jsx.msg_txt_only": "路径输出仅允许.txt文件。",
+  "jsx.msg_json_only": "JSON输出仅允许.json文件。",
+  "jsx.msg_saved_title": "已保存",
+  "jsx.msg_saved_success": "输出已成功保存。",
+  "jsx.msg_save_error_title": "保存错误",
+  "jsx.msg_nothing_to_copy_title": "没有可复制的内容",
+  "jsx.msg_nothing_to_copy_msg": "没有内容可复制。"
 }
