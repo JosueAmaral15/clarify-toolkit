@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
+from src.i18n.translator import tr
+
 
 class UpdateNotificationDialog(QDialog):
     """Dialog to notify users of available updates."""
@@ -52,12 +54,12 @@ class UpdateNotificationDialog(QDialog):
         layout.addWidget(header)
         
         # Version info group
-        version_group = QGroupBox("Version Information")
+        version_group = QGroupBox(tr("update_notification.group_version"))
         version_layout = QVBoxLayout(version_group)
         
-        self.lbl_current = QLabel("Current version: ...")
-        self.lbl_latest = QLabel("Latest version: ...")
-        self.lbl_published = QLabel("Published: ...")
+        self.lbl_current = QLabel(tr("update_notification.lbl_current"))
+        self.lbl_latest = QLabel(tr("update_notification.lbl_latest"))
+        self.lbl_published = QLabel(tr("update_notification.lbl_published"))
         
         version_layout.addWidget(self.lbl_current)
         version_layout.addWidget(self.lbl_latest)
@@ -66,7 +68,7 @@ class UpdateNotificationDialog(QDialog):
         layout.addWidget(version_group)
         
         # Release notes
-        notes_label = QLabel("What's New:")
+        notes_label = QLabel(tr("update_notification.lbl_whats_new"))
         notes_label_font = QFont()
         notes_label_font.setBold(True)
         notes_label.setFont(notes_label_font)
@@ -78,7 +80,7 @@ class UpdateNotificationDialog(QDialog):
         layout.addWidget(self.text_notes)
         
         # Checkbox to skip this version
-        self.chk_skip_version = QCheckBox("Don't show again for this version")
+        self.chk_skip_version = QCheckBox(tr("update_notification.chk_skip_version"))
         layout.addWidget(self.chk_skip_version)
         
         # Buttons
@@ -91,7 +93,7 @@ class UpdateNotificationDialog(QDialog):
         )
         
         self.btn_remind_later = QPushButton("🕐 Remind Me Later")
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("update_notification.btn_close"))
         
         btn_layout.addWidget(self.btn_download)
         btn_layout.addWidget(self.btn_remind_later)
@@ -186,7 +188,7 @@ class ManualCheckDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Status label
-        self.lbl_status = QLabel("Checking for updates...")
+        self.lbl_status = QLabel(tr("update_notification.lbl_checking"))
         self.lbl_status.setWordWrap(True)
         layout.addWidget(self.lbl_status)
         
@@ -194,7 +196,7 @@ class ManualCheckDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
         
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("update_notification.btn_close"))
         self.btn_close.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_close)
         

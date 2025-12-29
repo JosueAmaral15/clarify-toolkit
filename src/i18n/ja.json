@@ -1761,5 +1761,13 @@
   "diff_viewer.btn_close": "閉じる",
   "venn_diagram.group_venn": "ベン図（詳細は領域をクリック）",
   "venn_diagram.lbl_legend": "凡例：",
-  "venn_diagram.group_details": "領域の詳細（領域をクリック）"
+  "venn_diagram.group_details": "領域の詳細（領域をクリック）",
+  "update_notification.group_version": "バージョン情報",
+  "update_notification.lbl_current": "現在のバージョン: ...",
+  "update_notification.lbl_latest": "最新バージョン: ...",
+  "update_notification.lbl_published": "公開日: ...",
+  "update_notification.lbl_whats_new": "新機能：",
+  "update_notification.btn_close": "閉じる",
+  "update_notification.lbl_checking": "アップデートを確認中...",
+  "update_notification.chk_skip_version": "このバージョンでは再表示しない"
 }

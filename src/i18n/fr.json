@@ -1761,5 +1761,13 @@
   "diff_viewer.btn_close": "Fermer",
   "venn_diagram.group_venn": "Diagramme de Venn (Cliquez sur les régions pour les détails)",
   "venn_diagram.lbl_legend": "Légende :",
-  "venn_diagram.group_details": "Détails de la Région (Cliquez sur une région)"
+  "venn_diagram.group_details": "Détails de la Région (Cliquez sur une région)",
+  "update_notification.group_version": "Informations de Version",
+  "update_notification.lbl_current": "Version actuelle : ...",
+  "update_notification.lbl_latest": "Dernière version : ...",
+  "update_notification.lbl_published": "Publié : ...",
+  "update_notification.lbl_whats_new": "Nouveautés :",
+  "update_notification.btn_close": "Fermer",
+  "update_notification.lbl_checking": "Vérification des mises à jour...",
+  "update_notification.chk_skip_version": "Ne plus afficher pour cette version"
 }
