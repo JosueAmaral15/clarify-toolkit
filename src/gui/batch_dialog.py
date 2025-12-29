@@ -244,7 +244,7 @@ class BatchStepEditorDialog(QDialog):
         file_a_path = self.ed_file_a.text().strip()
         
         if file_a_source == 'file_path' and not file_a_path:
-            QMessageBox.warning(self, "Validation Error", "Please select File A")
+            QMessageBox.warning(self, tr("batch_dialog.msg_validation_select_a_title"), tr("batch_dialog.msg_validation_select_a"))
             return
         
         if file_a_source == 'file_path' and not os.path.exists(file_a_path):
@@ -254,7 +254,7 @@ class BatchStepEditorDialog(QDialog):
         # Validate File B
         file_b_path = self.ed_file_b.text().strip()
         if not file_b_path:
-            QMessageBox.warning(self, "Validation Error", "Please select File B")
+            QMessageBox.warning(self, tr("batch_dialog.msg_validation_select_b_title"), tr("batch_dialog.msg_validation_select_b"))
             return
         
         if not os.path.exists(file_b_path):
@@ -489,7 +489,7 @@ class BatchDialog(QDialog):
         """Edit selected step."""
         row = self.table_steps.currentRow()
         if row < 0:
-            QMessageBox.information(self, "No Selection", "Please select a step to edit")
+            QMessageBox.information(self, tr("batch_dialog.msg_no_selection_edit_title"), tr("batch_dialog.msg_no_selection_edit"))
             return
         
         step = self.batch_job.steps[row]
@@ -507,7 +507,7 @@ class BatchDialog(QDialog):
         """Remove selected step."""
         row = self.table_steps.currentRow()
         if row < 0:
-            QMessageBox.information(self, "No Selection", "Please select a step to remove")
+            QMessageBox.information(self, tr("batch_dialog.msg_no_selection_remove_title"), tr("batch_dialog.msg_no_selection_remove"))
             return
         
         reply = QMessageBox.question(
@@ -536,7 +536,7 @@ class BatchDialog(QDialog):
     def _save_batch(self):
         """Save batch to JSON file."""
         if len(self.batch_job.steps) == 0:
-            QMessageBox.warning(self, "Empty Batch", "Please add at least one step before saving")
+            QMessageBox.warning(self, tr("batch_dialog.msg_empty_batch_save_title"), tr("batch_dialog.msg_empty_batch_save"))
             return
         
         file_path, _ = QFileDialog.getSaveFileName(
@@ -554,7 +554,7 @@ class BatchDialog(QDialog):
             if self.batch_job.save_to_file(file_path):
                 QMessageBox.information(self, "Saved", f"Batch saved to:\n{file_path}")
             else:
-                QMessageBox.critical(self, "Error", "Failed to save batch job")
+                QMessageBox.critical(self, tr("batch_dialog.msg_error_save_title"), tr("batch_dialog.msg_error_save"))
     
     def _load_batch(self):
         """Load batch from JSON file."""
@@ -575,12 +575,12 @@ class BatchDialog(QDialog):
                 self._refresh_table()
                 QMessageBox.information(self, "Loaded", f"Batch loaded: {batch_job.name}\n{len(batch_job.steps)} steps")
             else:
-                QMessageBox.critical(self, "Error", "Failed to load batch job")
+                QMessageBox.critical(self, tr("batch_dialog.msg_error_load_title"), tr("batch_dialog.msg_error_load"))
     
     def _execute_batch(self):
         """Execute batch job."""
         if len(self.batch_job.steps) == 0:
-            QMessageBox.warning(self, "Empty Batch", "Please add at least one step before executing")
+            QMessageBox.warning(self, tr("batch_dialog.msg_empty_batch_exec_title"), tr("batch_dialog.msg_empty_batch_exec"))
             return
         
         # Update batch job settings

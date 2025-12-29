@@ -385,14 +385,14 @@ class CalculatorDock(QWidget):
             self._refresh_table()
             QMessageBox.information(
                 self,
-                "Stored",
-                f"Result stored in slot {slot_name}\nSource: {source}"
+                tr("calculator.msg_stored_title"),
+                tr("calculator.msg_stored_success").format(slot_name, source)
             )
         else:
             QMessageBox.warning(
                 self,
-                "Error",
-                f"Failed to store result in slot {slot_name}"
+                tr("calculator.msg_store_error_title"),
+                tr("calculator.msg_store_error_msg").format(slot_name)
             )
         
         return success
@@ -402,7 +402,7 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
         
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, "Empty Slot", f"Slot {slot_name} is empty")
+            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot").format(slot_name))
             return
         
         slot_info = self.memory.get_slot_info(slot_name)
@@ -430,7 +430,7 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
         
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, "Empty Slot", f"Slot {slot_name} is empty")
+            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot").format(slot_name))
             return
         
         slot_info = self.memory.get_slot_info(slot_name)
@@ -455,42 +455,40 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
         
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, "Empty Slot", f"Slot {slot_name} is already empty")
+            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot_already").format(slot_name))
             return
         
         reply = QMessageBox.question(
             self,
-            "Confirm Clear",
-            f"Clear slot {slot_name}?\nThis action cannot be undone.",
+            tr("calculator.msg_confirm_clear_title"),
+            tr("calculator.msg_confirm_clear").format(slot_name),
             QMessageBox.Yes | QMessageBox.No
         )
         
         if reply == QMessageBox.Yes:
             self.memory.clear_slot(slot_name)
             self._refresh_table()
-            QMessageBox.information(self, "Cleared", f"Slot {slot_name} cleared")
+            QMessageBox.information(self, tr("calculator.msg_cleared_title"), tr("calculator.msg_cleared_slot").format(slot_name))
     
     def _clear_all_slots(self):
         """Clear all memory slots."""
         occupied = self.memory.get_occupied_slots()
         
         if not occupied:
-            QMessageBox.information(self, "No Data", "All slots are already empty")
+            QMessageBox.information(self, tr("calculator.msg_no_data_title"), tr("calculator.msg_no_data"))
             return
         
         reply = QMessageBox.warning(
             self,
-            "Confirm Clear All",
-            f"Clear all {len(occupied)} occupied slots?\n"
-            f"Slots: {', '.join(occupied)}\n\n"
-            f"This action cannot be undone.",
+            tr("calculator.msg_confirm_clear_all_title"),
+            tr("calculator.msg_confirm_clear_all").format(len(occupied), ', '.join(occupied)),
             QMessageBox.Yes | QMessageBox.No
         )
         
         if reply == QMessageBox.Yes:
             self.memory.clear_all_slots()
             self._refresh_table()
-            QMessageBox.information(self, "Cleared", "All slots cleared")
+            QMessageBox.information(self, tr("calculator.msg_cleared_title"), tr("calculator.msg_cleared_all"))
     
     def _compare_slots(self):
         """Compare statistics between two slots."""
@@ -498,16 +496,16 @@ class CalculatorDock(QWidget):
         slot2 = self.combo_compare2.currentText()
         
         if slot1 == slot2:
-            QMessageBox.warning(self, "Invalid Selection", "Please select two different slots")
+            QMessageBox.warning(self, tr("calculator.msg_invalid_selection_title"), tr("calculator.msg_invalid_selection"))
             return
         
         if self.memory.is_slot_empty(slot1) or self.memory.is_slot_empty(slot2):
+            status1 = tr("calculator.status_empty") if self.memory.is_slot_empty(slot1) else tr("calculator.status_ok")
+            status2 = tr("calculator.status_empty") if self.memory.is_slot_empty(slot2) else tr("calculator.status_ok")
             QMessageBox.warning(
                 self,
-                "Empty Slot",
-                f"Both slots must have data\n"
-                f"Slot {slot1}: {'Empty' if self.memory.is_slot_empty(slot1) else 'OK'}\n"
-                f"Slot {slot2}: {'Empty' if self.memory.is_slot_empty(slot2) else 'OK'}"
+                tr("calculator.msg_empty_slot_title"),
+                tr("calculator.msg_empty_slot_compare").format(slot1, status1, slot2, status2)
             )
             return
         
@@ -524,7 +522,7 @@ class CalculatorDock(QWidget):
         
         # Validate selection
         if slot1 == slot2:
-            QMessageBox.warning(self, "Invalid Selection", "Please select two different slots")
+            QMessageBox.warning(self, tr("calculator.msg_invalid_selection_title"), tr("calculator.msg_invalid_selection"))
             return
         
         # Get slot data
@@ -534,7 +532,7 @@ class CalculatorDock(QWidget):
         # Validate data
         valid, error_msg = self.operations.validate_operation_data(data1, data2)
         if not valid:
-            QMessageBox.warning(self, "Operation Failed", error_msg)
+            QMessageBox.warning(self, tr("calculator.msg_operation_failed_title"), error_msg)
             return
         
         # Execute operation

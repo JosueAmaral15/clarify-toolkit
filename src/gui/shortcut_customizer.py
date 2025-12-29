@@ -401,7 +401,7 @@ class ShortcutCustomizerDialog(QDialog):
         """Reset selected shortcut to default."""
         current_row = self.table.currentRow()
         if current_row < 0:
-            QMessageBox.information(self, "No Selection", "Please select a shortcut to reset.")
+            QMessageBox.information(self, tr("shortcut_customizer.msg_no_selection_title"), tr("shortcut_customizer.msg_no_selection"))
             return
         
         action_name = self.table.item(current_row, 0).text()

@@ -151,11 +151,11 @@ class FileListDock(BaseDock):
         directory = self.ed_directory.text().strip()
         
         if not directory:
-            QMessageBox.warning(self, "Missing", "Please select a directory.")
+            QMessageBox.warning(self, tr("file_list.msg_missing_title"), tr("file_list.msg_missing_directory"))
             return
         
         if not os.path.isdir(directory):
-            QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            QMessageBox.warning(self, tr("file_list.msg_invalid_title"), tr("file_list.msg_invalid_directory").format(directory))
             return
         
         # Save to recent directories
@@ -302,7 +302,7 @@ class FileListDock(BaseDock):
     def _show_recent_menu(self):
         """Show recent directories menu."""
         if not self.recent_dirs:
-            QMessageBox.information(self, "No Recent Directories", "No recent directories saved yet.")
+            QMessageBox.information(self, tr("file_list.msg_no_recent_title"), tr("file_list.msg_no_recent_msg"))
             return
         
         menu = QMenu(self)
@@ -322,4 +322,4 @@ class FileListDock(BaseDock):
         """Clear recent directories list."""
         self.recent_dirs = []
         self._save_preferences()
-        QMessageBox.information(self, "Cleared", "Recent directories list cleared.")
+        QMessageBox.information(self, tr("file_list.msg_cleared_title"), tr("file_list.msg_cleared_msg"))

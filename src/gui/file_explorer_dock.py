@@ -1473,7 +1473,7 @@ class FileExplorerDock(BaseDock):
         matches_data = self.results_tree.get_matches_data()
 
         if not matches_data:
-            QMessageBox.information(self, "No Results", "No search results to save. Please perform a search first.")
+            QMessageBox.information(self, tr("file_explorer.msg_no_results_title"), tr("file_explorer.msg_no_results"))
             return
 
         # Ask user for file location

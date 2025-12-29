@@ -37,6 +37,8 @@ from PySide6.QtWidgets import (
     QFileDialog, QMessageBox
 )
 
+from src.i18n.translator import tr
+
 # Core functionality
 from ...core import (
     SearchOptions, preserve_case_like, replace_in_text,
@@ -758,7 +760,7 @@ class SearchReplacePanel(QWidget):
                 feature=FeatureType.SEARCH_REPLACE,
                 cancel_callback=lambda: self._search_worker.cancel()
             ):
-                QMessageBox.warning(self, "Error", "Failed to start search thread.")
+                QMessageBox.warning(self, tr("search_replace_panel.msg_error_thread_title"), tr("search_replace_panel.msg_error_thread"))
                 if self._processing_modal:
                     self._processing_modal.close()
                     self._processing_modal = None

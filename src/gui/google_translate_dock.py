@@ -369,20 +369,20 @@ class GoogleTranslateDock(BaseDock):
             # File mode - read full file
             file_path = self.ed_file_path.currentText().strip()
             if not file_path:
-                QMessageBox.warning(self, "No File Selected", "Please select a text file to translate.")
+                QMessageBox.warning(self, tr("google_translate.msg_no_file_title"), tr("google_translate.msg_no_file_msg"))
                 return
             
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     text_to_translate = f.read()
             except Exception as e:
-                QMessageBox.critical(self, "File Error", f"Could not read file:\n{str(e)}")
+                QMessageBox.warning(self, tr("google_translate.msg_file_error_title"), tr("google_translate.msg_file_error_read").format(str(e)))
                 return
         else:
             # Text mode
             text_to_translate = self.text_input.toPlainText().strip()
             if not text_to_translate:
-                QMessageBox.warning(self, "No Text", "Please enter text to translate.")
+                QMessageBox.warning(self, tr("google_translate.msg_no_text_title"), tr("google_translate.msg_no_text_msg"))
                 return
         
         # Get language selections
@@ -390,7 +390,7 @@ class GoogleTranslateDock(BaseDock):
         to_lang = self.combo_to_lang.currentData()
         
         if from_lang == to_lang and from_lang != "auto":
-            QMessageBox.warning(self, "Same Languages", "Source and target languages are the same.")
+            QMessageBox.warning(self, tr("google_translate.msg_same_language_title"), tr("google_translate.msg_same_language_msg"))
             return
         
         # Start translation in background

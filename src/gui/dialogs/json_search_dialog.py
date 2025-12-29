@@ -159,7 +159,7 @@ class JsonSearchDialog(QDialog):
             for match in re.finditer(pattern, text, search_flags):
                 self.matches.append((match.start(), len(match.group())))
         except re.error:
-            QMessageBox.warning(self, "Invalid Pattern", "Invalid search pattern")
+            QMessageBox.warning(self, tr("json_search_dialog.msg_invalid_pattern_title"), tr("json_search_dialog.msg_invalid_pattern"))
             return
         
         # Update results label

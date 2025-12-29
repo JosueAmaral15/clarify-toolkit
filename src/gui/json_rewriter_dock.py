@@ -524,7 +524,11 @@ class JsonRewriterDock(BaseDock):
     def _rewrite(self) -> None:
         """Execute rewrite operation on selected file."""
         if not self.ed_in.text().strip():
-            QMessageBox.warning(self, "Missing", "Choose an input file.")
+            QMessageBox.warning(
+                self, 
+                tr("json_rewriter.msg_missing_input_title"), 
+                tr("json_rewriter.msg_missing_input")
+            )
             return
 
         # Case validation dialog (if enabled)
@@ -549,7 +553,11 @@ class JsonRewriterDock(BaseDock):
 
                 # User cancelled
                 if not accepted:
-                    QMessageBox.information(self, "Cancelled", "Case conversion cancelled by user.")
+                    QMessageBox.information(
+                        self, 
+                        tr("json_rewriter.msg_cancelled_title"), 
+                        tr("json_rewriter.msg_cancelled_case")
+                    )
                     return
 
                 # User accepted - we'll use the converted object
@@ -572,14 +580,22 @@ class JsonRewriterDock(BaseDock):
                 with open(out_path, "w", encoding="utf-8") as f:
                     f.write(temp_text)
 
-                QMessageBox.information(self, "Done", f"Rewriter finished with {len(warnings)} case conversions.")
+                QMessageBox.information(
+                    self, 
+                    tr("json_rewriter.msg_done_title"), 
+                    tr("json_rewriter.msg_done_case").format(len(warnings))
+                )
 
                 # Re-enable enforce_case for next run
                 self.chk_enforce_case.setChecked(True)
                 return
 
             except Exception as e:
-                QMessageBox.critical(self, "Validation Error", f"Failed to validate case: {e}")
+                QMessageBox.critical(
+                    self, 
+                    tr("json_rewriter.msg_validation_error_title"), 
+                    tr("json_rewriter.msg_validation_error").format(e)
+                )
                 return
 
         # Build argparse namespace with all options
@@ -634,11 +650,19 @@ class JsonRewriterDock(BaseDock):
                 project_dir = self.ed_project_dir.text().strip()
 
                 if not project_dir:
-                    QMessageBox.warning(self, "Missing", "Choose a project directory to update references.")
+                    QMessageBox.warning(
+                        self, 
+                        tr("json_rewriter.msg_missing_project_title"), 
+                        tr("json_rewriter.msg_missing_project")
+                    )
                     return
 
                 if not os.path.isdir(project_dir):
-                    QMessageBox.warning(self, "Invalid", f"Project directory does not exist: {project_dir}")
+                    QMessageBox.warning(
+                        self, 
+                        tr("json_rewriter.msg_invalid_project_title"), 
+                        tr("json_rewriter.msg_invalid_project").format(project_dir)
+                    )
                     return
 
                 # Show preview dialog with substitutions
@@ -652,19 +676,31 @@ class JsonRewriterDock(BaseDock):
                     # Show summary
                     total_subs = sum(results.values())
                     file_count = len(results)
-                    msg = f"Updated {total_subs} references in {file_count} files:\n\n"
+                    files_list = ""
                     for filepath, count in list(results.items())[:10]:
-                        msg += f"  - {os.path.basename(filepath)}: {count} changes\n"
+                        files_list += f"  - {os.path.basename(filepath)}: {count} changes\n"
                     if file_count > 10:
-                        msg += f"  ... and {file_count - 10} more files\n"
-                    QMessageBox.information(self, "References Updated", msg)
+                        files_list += f"  ... and {file_count - 10} more files\n"
+                    QMessageBox.information(
+                        self, 
+                        tr("json_rewriter.msg_refs_updated_title"), 
+                        tr("json_rewriter.msg_refs_updated").format(total_subs, file_count, files_list)
+                    )
                 else:
-                    QMessageBox.information(self, "No Changes", "No orphaned references found in project.")
+                    QMessageBox.information(
+                        self, 
+                        tr("json_rewriter.msg_no_changes_title"), 
+                        tr("json_rewriter.msg_no_changes")
+                    )
 
             # Task v2.9.22: Format and display removal statistics (Q3: MessageBox only)
             stats_msg = format_removal_statistics(removal_stats)
             if stats_msg:
-                QMessageBox.information(self, "Done", f"Rewriter finished.\n\n{stats_msg}")
+                QMessageBox.information(
+                    self, 
+                    tr("json_rewriter.msg_done_title"), 
+                    tr("json_rewriter.msg_done_stats").format(stats_msg)
+                )
 
                 # Sprint B Feature #3 (v2.9.31): Show detailed statistics dialog if there are stats
                 if detailed_stats:
@@ -682,14 +718,22 @@ class JsonRewriterDock(BaseDock):
                     dialog.exec()
             else:
                 # Q5-C: Special message if nothing was removed
-                QMessageBox.information(self, "Done", "Rewriter finished.\n\nℹ️ No items were removed by any operation.")
+                QMessageBox.information(
+                    self, 
+                    tr("json_rewriter.msg_done_title"), 
+                    tr("json_rewriter.msg_done_no_removal")
+                )
 
             # Save preferences after successful execution
             self._save_preferences()
         except Exception as e:
             import traceback
 
-            QMessageBox.critical(self, "Error", f"{str(e)}\n\n{traceback.format_exc()}")
+            QMessageBox.critical(
+                self, 
+                tr("json_rewriter.msg_error_title"), 
+                tr("json_rewriter.msg_error").format(str(e), traceback.format_exc())
+            )
 
     def _load_preferences(self) -> None:
         """Load preferences from QSettings (Task #52 + Sprint B Feature #1)."""

@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QPushButton, QListView, QMessageBox
 )
 
+from src.i18n.translator import tr
+
 
 class MatchListModel(QAbstractListModel):
     """
@@ -83,7 +85,7 @@ class MatchPanel(QWidget):
         """Open the folder containing the selected file in OS file manager."""
         path = self.selected_path()
         if not path:
-            QMessageBox.information(self, "Open", "Select a file in the list.")
+            QMessageBox.information(self, tr("match_panel.msg_open_title"), tr("match_panel.msg_open"))
             return
         
         # Open in OS file manager

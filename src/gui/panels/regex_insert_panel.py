@@ -225,7 +225,7 @@ class RegexInsertPanel(QWidget):
         """Execute regex capture."""
         pattern = self.ed_pattern.text().strip()
         if not pattern:
-            QMessageBox.warning(self, "Empty Pattern", "Please enter a regex pattern.")
+            QMessageBox.warning(self, tr("regex_insert.msg_empty_pattern2_title"), tr("regex_insert.msg_empty_pattern2_msg"))
             return
         
         # Get source text (from parent or custom)

@@ -93,7 +93,7 @@ class TemplateDialog(QDialog):
     
     def _create_project(self):
         if not self.selected_template:
-            QMessageBox.warning(self, "No Template", "Please select a template first.")
+            QMessageBox.warning(self, tr("template_dialog.msg_no_template_title"), tr("template_dialog.msg_no_template"))
             return
         
         target_dir = Path(self.dir_edit.text())
