@@ -40,7 +40,7 @@ class LayoutManagerDialog(QDialog):
         layout = QVBoxLayout()
         
         # Label
-        label = QLabel("Saved layouts (custom layouts only):")
+        label = QLabel(tr("layout_manager.lbl_saved_layouts"))
         layout.addWidget(label)
         
         # List widget
@@ -51,10 +51,10 @@ class LayoutManagerDialog(QDialog):
         
         # Buttons
         btn_layout = QHBoxLayout()
-        btn_load = QPushButton("Load")
-        btn_delete = QPushButton("Delete")
-        btn_reset = QPushButton("Reset to Defaults")
-        btn_close = QPushButton("Close")
+        btn_load = QPushButton(tr("layout_manager.btn_load"))
+        btn_delete = QPushButton(tr("layout_manager.btn_delete"))
+        btn_reset = QPushButton(tr("layout_manager.btn_reset"))
+        btn_close = QPushButton(tr("layout_manager.btn_close"))
         
         btn_layout.addWidget(btn_load)
         btn_layout.addWidget(btn_delete)

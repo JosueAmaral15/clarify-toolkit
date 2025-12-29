@@ -1742,5 +1742,14 @@
   "file_filter.chk_node_modules": "node_modules",
   "file_filter.chk_dist": "dist",
   "file_filter.chk_build": "build",
-  "path_entry.chk_file": "文件"
+  "path_entry.chk_file": "文件",
+  "layout_manager.lbl_saved_layouts": "已保存的布局（仅自定义布局）：",
+  "layout_manager.btn_load": "加载",
+  "layout_manager.btn_delete": "删除",
+  "layout_manager.btn_reset": "恢复默认值",
+  "layout_manager.btn_close": "关闭",
+  "recall_dialog.group_statistics": "统计信息",
+  "recall_dialog.btn_close": "关闭",
+  "transparency_dialog.group_transparency": "透明度级别",
+  "transparency_dialog.btn_close": "关闭"
 }

@@ -1775,5 +1775,14 @@
   "file_filter.chk_node_modules": "node_modules",
   "file_filter.chk_dist": "dist",
   "file_filter.chk_build": "build",
-  "path_entry.chk_file": "Arquivo"
+  "path_entry.chk_file": "Arquivo",
+  "layout_manager.lbl_saved_layouts": "Layouts salvos (apenas layouts personalizados):",
+  "layout_manager.btn_load": "Carregar",
+  "layout_manager.btn_delete": "Excluir",
+  "layout_manager.btn_reset": "Restaurar Padrões",
+  "layout_manager.btn_close": "Fechar",
+  "recall_dialog.group_statistics": "Estatísticas",
+  "recall_dialog.btn_close": "Fechar",
+  "transparency_dialog.group_transparency": "Nível de Transparência",
+  "transparency_dialog.btn_close": "Fechar"
 }

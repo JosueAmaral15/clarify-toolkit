@@ -71,7 +71,7 @@ class RecallDialog(QDialog):
         layout.addWidget(timestamp_label)
         
         # Statistics summary
-        stats_group = QGroupBox("Statistics")
+        stats_group = QGroupBox(tr("recall_dialog.group_statistics"))
         stats_layout = QVBoxLayout()
         
         stats_text = self._format_stats_summary()
@@ -119,7 +119,7 @@ class RecallDialog(QDialog):
         close_layout = QHBoxLayout()
         close_layout.addStretch()
         
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(tr("recall_dialog.btn_close"))
         self.btn_close.clicked.connect(self.accept)
         self.btn_close.setDefault(True)
         close_layout.addWidget(self.btn_close)

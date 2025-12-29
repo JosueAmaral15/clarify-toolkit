@@ -1742,5 +1742,14 @@
   "file_filter.chk_node_modules": "node_modules",
   "file_filter.chk_dist": "dist",
   "file_filter.chk_build": "build",
-  "path_entry.chk_file": "Fichier"
+  "path_entry.chk_file": "Fichier",
+  "layout_manager.lbl_saved_layouts": "Mises en page enregistrées (personnalisées uniquement) :",
+  "layout_manager.btn_load": "Charger",
+  "layout_manager.btn_delete": "Supprimer",
+  "layout_manager.btn_reset": "Réinitialiser aux Valeurs par Défaut",
+  "layout_manager.btn_close": "Fermer",
+  "recall_dialog.group_statistics": "Statistiques",
+  "recall_dialog.btn_close": "Fermer",
+  "transparency_dialog.group_transparency": "Niveau de Transparence",
+  "transparency_dialog.btn_close": "Fermer"
 }

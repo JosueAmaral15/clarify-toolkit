@@ -52,7 +52,7 @@ class TransparencyDialog(QDialog):
         layout.addWidget(info_label)
         
         # Transparency group
-        trans_group = QGroupBox("Transparency Level")
+        trans_group = QGroupBox(tr("transparency_dialog.group_transparency"))
         trans_layout = QVBoxLayout()
         
         # Slider

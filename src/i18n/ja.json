@@ -1742,5 +1742,14 @@
   "file_filter.chk_node_modules": "node_modules",
   "file_filter.chk_dist": "dist",
   "file_filter.chk_build": "build",
-  "path_entry.chk_file": "ファイル"
+  "path_entry.chk_file": "ファイル",
+  "layout_manager.lbl_saved_layouts": "保存されたレイアウト（カスタムのみ）：",
+  "layout_manager.btn_load": "読み込み",
+  "layout_manager.btn_delete": "削除",
+  "layout_manager.btn_reset": "デフォルトに戻す",
+  "layout_manager.btn_close": "閉じる",
+  "recall_dialog.group_statistics": "統計",
+  "recall_dialog.btn_close": "閉じる",
+  "transparency_dialog.group_transparency": "透明度レベル",
+  "transparency_dialog.btn_close": "閉じる"
 }
