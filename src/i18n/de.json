@@ -1769,5 +1769,10 @@
   "update_notification.lbl_whats_new": "Was gibt's Neues:",
   "update_notification.btn_close": "Schließen",
   "update_notification.lbl_checking": "Suche nach Updates...",
-  "update_notification.chk_skip_version": "Nicht mehr für diese Version anzeigen"
+  "update_notification.chk_skip_version": "Nicht mehr für diese Version anzeigen",
+  "venn_diagram.lbl_value_preview": "Wertvorschau:",
+  "venn_diagram.btn_close": "Schließen",
+  "progress_details.lbl_initializing": "Initialisierung...",
+  "progress_details.lbl_speed": "Geschwindigkeit: wird berechnet...",
+  "progress_bar.lbl_starting": "Wird gestartet..."
 }

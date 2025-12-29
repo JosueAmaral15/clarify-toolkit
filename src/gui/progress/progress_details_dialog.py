@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QProgressBar, QTextEdit, QPushButton
 )
 
+from src.i18n.translator import tr
+
 
 class ProgressDetailsDialog(QDialog):
     """
@@ -38,11 +40,11 @@ class ProgressDetailsDialog(QDialog):
         layout.addWidget(self.progress_bar)
         
         # Status label with time estimation
-        self.status_label = QLabel("Initializing...")
+        self.status_label = QLabel(tr("progress_details.lbl_initializing"))
         layout.addWidget(self.status_label)
         
         # Statistics label (NEW - v2.5.0+)
-        self.stats_label = QLabel("Speed: calculating...")
+        self.stats_label = QLabel(tr("progress_details.lbl_speed"))
         self.stats_label.setStyleSheet("color: #666; font-size: 10px;")
         layout.addWidget(self.stats_label)
         

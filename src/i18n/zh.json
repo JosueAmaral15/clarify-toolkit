@@ -1769,5 +1769,10 @@
   "update_notification.lbl_whats_new": "更新内容：",
   "update_notification.btn_close": "关闭",
   "update_notification.lbl_checking": "正在检查更新...",
-  "update_notification.chk_skip_version": "不再显示此版本"
+  "update_notification.chk_skip_version": "不再显示此版本",
+  "venn_diagram.lbl_value_preview": "值预览：",
+  "venn_diagram.btn_close": "关闭",
+  "progress_details.lbl_initializing": "正在初始化...",
+  "progress_details.lbl_speed": "速度：正在计算...",
+  "progress_bar.lbl_starting": "正在启动..."
 }

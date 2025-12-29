@@ -1769,5 +1769,10 @@
   "update_notification.lbl_whats_new": "新機能：",
   "update_notification.btn_close": "閉じる",
   "update_notification.lbl_checking": "アップデートを確認中...",
-  "update_notification.chk_skip_version": "このバージョンでは再表示しない"
+  "update_notification.chk_skip_version": "このバージョンでは再表示しない",
+  "venn_diagram.lbl_value_preview": "値のプレビュー：",
+  "venn_diagram.btn_close": "閉じる",
+  "progress_details.lbl_initializing": "初期化中...",
+  "progress_details.lbl_speed": "速度：計算中...",
+  "progress_bar.lbl_starting": "開始中..."
 }

@@ -84,7 +84,7 @@ class ProgressBarWidget(QWidget):
         layout.addWidget(self.progress_bar)
         
         # Status label (current action)
-        self.status_label = QLabel("Starting...")
+        self.status_label = QLabel(tr("progress_bar.lbl_starting"))
         self.status_label.setStyleSheet("color: #666; font-size: 10px;")
         layout.addWidget(self.status_label)
         

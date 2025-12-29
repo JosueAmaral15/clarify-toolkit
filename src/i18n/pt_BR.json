@@ -1802,5 +1802,10 @@
   "update_notification.lbl_whats_new": "Novidades:",
   "update_notification.btn_close": "Fechar",
   "update_notification.lbl_checking": "Verificando atualizações...",
-  "update_notification.chk_skip_version": "Não mostrar novamente para esta versão"
+  "update_notification.chk_skip_version": "Não mostrar novamente para esta versão",
+  "venn_diagram.lbl_value_preview": "Visualização de Valor:",
+  "venn_diagram.btn_close": "Fechar",
+  "progress_details.lbl_initializing": "Inicializando...",
+  "progress_details.lbl_speed": "Velocidade: calculando...",
+  "progress_bar.lbl_starting": "Iniciando..."
 }

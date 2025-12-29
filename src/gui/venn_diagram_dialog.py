@@ -189,7 +189,7 @@ class VennDiagramDialog(QDialog):
         details_layout.addWidget(self.list_keys)
         
         # Value preview
-        value_label = QLabel("Value Preview:")
+        value_label = QLabel(tr("venn_diagram.lbl_value_preview"))
         details_layout.addWidget(value_label)
         
         self.text_value = QTextEdit()
@@ -214,7 +214,7 @@ class VennDiagramDialog(QDialog):
         
         btn_layout.addStretch()
         
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr("venn_diagram.btn_close"))
         btn_close.clicked.connect(self.accept)
         btn_layout.addWidget(btn_close)
         
