@@ -31,6 +31,8 @@ from PySide6.QtCore import Signal, QDate
 
 from src.i18n.translator import tr
 
+from src.i18n.translator import tr
+
 
 class FileFilterPanel(QGroupBox):
     """Widget for advanced file filtering options."""
@@ -143,11 +145,11 @@ class FileFilterPanel(QGroupBox):
         
         # Common excludes (checkboxes)
         exclude_layout = QVBoxLayout()
-        self.chk_exclude_node_modules = QCheckBox("node_modules")
+        self.chk_exclude_node_modules = QCheckBox(tr("file_filter.chk_node_modules"))
         self.chk_exclude_git = QCheckBox(".git")
         self.chk_exclude_pycache = QCheckBox("__pycache__")
-        self.chk_exclude_dist = QCheckBox("dist")
-        self.chk_exclude_build = QCheckBox("build")
+        self.chk_exclude_dist = QCheckBox(tr("file_filter.chk_dist"))
+        self.chk_exclude_build = QCheckBox(tr("file_filter.chk_build"))
         
         # Default: check common excludes
         self.chk_exclude_node_modules.setChecked(True)

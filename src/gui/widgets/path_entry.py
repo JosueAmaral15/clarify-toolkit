@@ -37,7 +37,7 @@ class PathEntry(QWidget):
         self.btn_browse.clicked.connect(self._browse)
         
         # Is file checkbox
-        self.chk_is_file = QCheckBox("File")
+        self.chk_is_file = QCheckBox(tr("path_entry.chk_file"))
         
         # Remove button (disabled for first path)
         self.btn_remove = QPushButton(tr("path_entry.btn_remove"))

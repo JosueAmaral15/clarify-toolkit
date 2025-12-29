@@ -1737,5 +1737,10 @@
   "json_rewriter.lbl_value": "Valeur",
   "json_rewriter.lbl_scope": "Portée",
   "json_rewriter.lbl_case": "Casse",
-  "json_rewriter.lbl_regex": "Regex"
+  "json_rewriter.lbl_regex": "Regex",
+  "file_selection.chk_multiple": "Fichiers multiples (traitement en pipeline)",
+  "file_filter.chk_node_modules": "node_modules",
+  "file_filter.chk_dist": "dist",
+  "file_filter.chk_build": "build",
+  "path_entry.chk_file": "Fichier"
 }

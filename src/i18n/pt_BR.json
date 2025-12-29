@@ -1770,5 +1770,10 @@
   "json_rewriter.lbl_value": "Valor",
   "json_rewriter.lbl_scope": "Escopo",
   "json_rewriter.lbl_case": "Mai/Min",
-  "json_rewriter.lbl_regex": "Regex"
+  "json_rewriter.lbl_regex": "Regex",
+  "file_selection.chk_multiple": "Múltiplos arquivos (processamento em pipeline)",
+  "file_filter.chk_node_modules": "node_modules",
+  "file_filter.chk_dist": "dist",
+  "file_filter.chk_build": "build",
+  "path_entry.chk_file": "Arquivo"
 }

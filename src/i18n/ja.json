@@ -1737,5 +1737,10 @@
   "json_rewriter.lbl_value": "値",
   "json_rewriter.lbl_scope": "スコープ",
   "json_rewriter.lbl_case": "大小文字",
-  "json_rewriter.lbl_regex": "正規表現"
+  "json_rewriter.lbl_regex": "正規表現",
+  "file_selection.chk_multiple": "複数ファイル（パイプライン処理）",
+  "file_filter.chk_node_modules": "node_modules",
+  "file_filter.chk_dist": "dist",
+  "file_filter.chk_build": "build",
+  "path_entry.chk_file": "ファイル"
 }

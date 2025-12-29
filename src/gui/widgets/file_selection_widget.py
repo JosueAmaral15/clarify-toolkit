@@ -21,6 +21,8 @@ from typing import List
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox,
+
+from src.i18n.translator import tr
     QFileDialog,
     QGridLayout,
     QGroupBox,
@@ -90,7 +92,7 @@ class FileSelectionWidget(QWidget):
         file_layout.addWidget(self.btn_browse_b, 1, 2)
         
         # Multiple files checkbox
-        self.chk_multiple = QCheckBox("Multiple files (pipeline processing)")
+        self.chk_multiple = QCheckBox(tr("file_selection.chk_multiple"))
         self.chk_multiple.setToolTip(tooltip_tr("set_ops.chk_multiple"))
         file_layout.addWidget(self.chk_multiple, 2, 0, 1, 3)
         

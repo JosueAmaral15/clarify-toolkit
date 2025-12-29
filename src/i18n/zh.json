@@ -1737,5 +1737,10 @@
   "json_rewriter.lbl_value": "值",
   "json_rewriter.lbl_scope": "范围",
   "json_rewriter.lbl_case": "大小写",
-  "json_rewriter.lbl_regex": "正则表达式"
+  "json_rewriter.lbl_regex": "正则表达式",
+  "file_selection.chk_multiple": "多个文件（流水线处理）",
+  "file_filter.chk_node_modules": "node_modules",
+  "file_filter.chk_dist": "dist",
+  "file_filter.chk_build": "build",
+  "path_entry.chk_file": "文件"
 }
