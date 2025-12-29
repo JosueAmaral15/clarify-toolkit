@@ -1784,5 +1784,15 @@
   "recall_dialog.group_statistics": "Statistics",
   "recall_dialog.btn_close": "Close",
   "transparency_dialog.group_transparency": "Transparency Level",
-  "transparency_dialog.btn_close": "Close"
+  "transparency_dialog.btn_close": "Close",
+  "tutorial_assistant.btn_send": "Send",
+  "tutorial_assistant.btn_clear": "Clear Chat",
+  "tutorial_assistant.btn_close": "Close",
+  "plugin_manager.lbl_header": "Manage installed plugins",
+  "diff_viewer.group_summary": "Summary",
+  "diff_viewer.lbl_legend": "Legend:",
+  "diff_viewer.btn_close": "Close",
+  "venn_diagram.group_venn": "Venn Diagram (Click regions for details)",
+  "venn_diagram.lbl_legend": "Legend:",
+  "venn_diagram.group_details": "Region Details (Click a region)"
 }

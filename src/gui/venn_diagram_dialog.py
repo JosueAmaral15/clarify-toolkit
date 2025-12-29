@@ -141,7 +141,7 @@ class VennDiagramDialog(QDialog):
         splitter = QSplitter(Qt.Horizontal)
         
         # === Left: Venn Diagram ===
-        venn_group = QGroupBox("Venn Diagram (Click regions for details)")
+        venn_group = QGroupBox(tr("venn_diagram.group_venn"))
         venn_layout = QVBoxLayout(venn_group)
         
         self.scene = QGraphicsScene()
@@ -152,7 +152,7 @@ class VennDiagramDialog(QDialog):
         
         # Legend
         legend_layout = QHBoxLayout()
-        legend_layout.addWidget(QLabel("Legend:"))
+        legend_layout.addWidget(QLabel(tr("venn_diagram.lbl_legend")))
         
         only_a_data = self.venn_data["regions"]["only_a"]
         legend_a = QLabel(f" {only_a_data['label']}: {only_a_data['description']} ")
@@ -175,7 +175,7 @@ class VennDiagramDialog(QDialog):
         splitter.addWidget(venn_group)
         
         # === Right: Details Panel ===
-        details_group = QGroupBox("Region Details (Click a region)")
+        details_group = QGroupBox(tr("venn_diagram.group_details"))
         details_layout = QVBoxLayout(details_group)
         
         self.lbl_region_title = QLabel("<i>Click a region to view keys and values</i>")

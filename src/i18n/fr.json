@@ -1751,5 +1751,15 @@
   "recall_dialog.group_statistics": "Statistiques",
   "recall_dialog.btn_close": "Fermer",
   "transparency_dialog.group_transparency": "Niveau de Transparence",
-  "transparency_dialog.btn_close": "Fermer"
+  "transparency_dialog.btn_close": "Fermer",
+  "tutorial_assistant.btn_send": "Envoyer",
+  "tutorial_assistant.btn_clear": "Effacer le Chat",
+  "tutorial_assistant.btn_close": "Fermer",
+  "plugin_manager.lbl_header": "Gérer les plugins installés",
+  "diff_viewer.group_summary": "Résumé",
+  "diff_viewer.lbl_legend": "Légende :",
+  "diff_viewer.btn_close": "Fermer",
+  "venn_diagram.group_venn": "Diagramme de Venn (Cliquez sur les régions pour les détails)",
+  "venn_diagram.lbl_legend": "Légende :",
+  "venn_diagram.group_details": "Détails de la Région (Cliquez sur une région)"
 }

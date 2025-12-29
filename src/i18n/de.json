@@ -1751,5 +1751,15 @@
   "recall_dialog.group_statistics": "Statistiken",
   "recall_dialog.btn_close": "Schließen",
   "transparency_dialog.group_transparency": "Transparenzstufe",
-  "transparency_dialog.btn_close": "Schließen"
+  "transparency_dialog.btn_close": "Schließen",
+  "tutorial_assistant.btn_send": "Senden",
+  "tutorial_assistant.btn_clear": "Chat Löschen",
+  "tutorial_assistant.btn_close": "Schließen",
+  "plugin_manager.lbl_header": "Installierte Plugins verwalten",
+  "diff_viewer.group_summary": "Zusammenfassung",
+  "diff_viewer.lbl_legend": "Legende:",
+  "diff_viewer.btn_close": "Schließen",
+  "venn_diagram.group_venn": "Venn-Diagramm (Klicken Sie auf Bereiche für Details)",
+  "venn_diagram.lbl_legend": "Legende:",
+  "venn_diagram.group_details": "Bereichsdetails (Klicken Sie auf einen Bereich)"
 }

@@ -114,7 +114,7 @@ class DiffViewerDialog(QDialog):
         layout.addWidget(title)
         
         # Summary
-        summary_group = QGroupBox("Summary")
+        summary_group = QGroupBox(tr("diff_viewer.group_summary"))
         summary_layout = QHBoxLayout(summary_group)
         
         summary_text = DiffAnalyzer.format_diff_summary(self.diff_result)
@@ -126,7 +126,7 @@ class DiffViewerDialog(QDialog):
         
         # Legend
         legend_layout = QHBoxLayout()
-        legend_layout.addWidget(QLabel("Legend:"))
+        legend_layout.addWidget(QLabel(tr("diff_viewer.lbl_legend")))
         
         legend_only_a = QLabel(" Only in A ")
         legend_only_a.setStyleSheet("background-color: #c8f7c5; padding: 3px; border: 1px solid #aaa;")
@@ -192,7 +192,7 @@ class DiffViewerDialog(QDialog):
         
         btn_layout.addStretch()
         
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr("diff_viewer.btn_close"))
         btn_close.clicked.connect(self.accept)
         btn_layout.addWidget(btn_close)
         

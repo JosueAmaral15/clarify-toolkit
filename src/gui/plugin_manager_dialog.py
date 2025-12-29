@@ -50,7 +50,7 @@ class PluginManagerDialog(QDialog):
         layout = QVBoxLayout()
         
         # Header
-        lbl_header = QLabel("Manage installed plugins")
+        lbl_header = QLabel(tr("plugin_manager.lbl_header"))
         lbl_header.setStyleSheet("font-size: 14pt; font-weight: bold;")
         layout.addWidget(lbl_header)
         

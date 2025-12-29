@@ -100,7 +100,7 @@ class TutorialAssistantDialog(QDialog):
         self.input_field.returnPressed.connect(self._send_message)
         input_layout.addWidget(self.input_field)
         
-        self.send_button = QPushButton("Send")
+        self.send_button = QPushButton(tr("tutorial_assistant.btn_send"))
         self.send_button.clicked.connect(self._send_message)
         self.send_button.setMinimumWidth(80)
         input_layout.addWidget(self.send_button)
@@ -124,11 +124,11 @@ class TutorialAssistantDialog(QDialog):
         
         actions_layout.addStretch()
         
-        self.clear_button = QPushButton("Clear Chat")
+        self.clear_button = QPushButton(tr("tutorial_assistant.btn_clear"))
         self.clear_button.clicked.connect(self._clear_chat)
         actions_layout.addWidget(self.clear_button)
         
-        self.close_button = QPushButton("Close")
+        self.close_button = QPushButton(tr("tutorial_assistant.btn_close"))
         self.close_button.clicked.connect(self.close)
         actions_layout.addWidget(self.close_button)
         

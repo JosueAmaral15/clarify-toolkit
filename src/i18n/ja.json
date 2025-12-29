@@ -1751,5 +1751,15 @@
   "recall_dialog.group_statistics": "統計",
   "recall_dialog.btn_close": "閉じる",
   "transparency_dialog.group_transparency": "透明度レベル",
-  "transparency_dialog.btn_close": "閉じる"
+  "transparency_dialog.btn_close": "閉じる",
+  "tutorial_assistant.btn_send": "送信",
+  "tutorial_assistant.btn_clear": "チャットをクリア",
+  "tutorial_assistant.btn_close": "閉じる",
+  "plugin_manager.lbl_header": "インストールされたプラグインを管理",
+  "diff_viewer.group_summary": "概要",
+  "diff_viewer.lbl_legend": "凡例：",
+  "diff_viewer.btn_close": "閉じる",
+  "venn_diagram.group_venn": "ベン図（詳細は領域をクリック）",
+  "venn_diagram.lbl_legend": "凡例：",
+  "venn_diagram.group_details": "領域の詳細（領域をクリック）"
 }

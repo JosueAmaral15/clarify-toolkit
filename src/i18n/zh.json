@@ -1751,5 +1751,15 @@
   "recall_dialog.group_statistics": "统计信息",
   "recall_dialog.btn_close": "关闭",
   "transparency_dialog.group_transparency": "透明度级别",
-  "transparency_dialog.btn_close": "关闭"
+  "transparency_dialog.btn_close": "关闭",
+  "tutorial_assistant.btn_send": "发送",
+  "tutorial_assistant.btn_clear": "清除聊天",
+  "tutorial_assistant.btn_close": "关闭",
+  "plugin_manager.lbl_header": "管理已安装的插件",
+  "diff_viewer.group_summary": "摘要",
+  "diff_viewer.lbl_legend": "图例：",
+  "diff_viewer.btn_close": "关闭",
+  "venn_diagram.group_venn": "韦恩图（点击区域查看详情）",
+  "venn_diagram.lbl_legend": "图例：",
+  "venn_diagram.group_details": "区域详情（点击一个区域）"
 }
