@@ -338,14 +338,14 @@ class EditorDock(BaseDock):
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
             else:
-                QMessageBox.critical(self, "Error", f"Failed to save file:\n{error_msg}")
+                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed").format(error_msg))
         else:
             # EditorTab
             if tab.save_file():
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
             else:
-                QMessageBox.critical(self, "Error", f"Failed to save file:\n{tab.file_path}")
+                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed_path").format(tab.file_path))
     
     def _save_file_as(self):
         """Save current file with new name."""
@@ -370,14 +370,14 @@ class EditorDock(BaseDock):
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
             else:
-                QMessageBox.critical(self, "Error", f"Failed to save file:\n{error_msg}")
+                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed").format(error_msg))
         else:
             # EditorTab
             if tab.save_file(file_path):
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
             else:
-                QMessageBox.critical(self, "Error", f"Failed to save file:\n{file_path}")
+                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed_path").format(file_path))
     
     def _close_current_tab(self):
         """Close currently active tab."""
@@ -399,10 +399,10 @@ class EditorDock(BaseDock):
                 msg.setText(f"'{tab.get_tab_title()}' has unsaved changes.")
                 msg.setInformativeText("What would you like to do?")
                 
-                btn_save = msg.addButton("Save to File", QMessageBox.ActionRole)
-                btn_clipboard = msg.addButton("Copy to Clipboard", QMessageBox.ActionRole)
-                btn_discard = msg.addButton("Discard", QMessageBox.DestructiveRole)
-                btn_cancel = msg.addButton("Cancel", QMessageBox.RejectRole)
+                btn_save = msg.addButton(tr("editor.btn_save_to_file"), QMessageBox.ActionRole)
+                btn_clipboard = msg.addButton(tr("editor.btn_copy_to_clipboard"), QMessageBox.ActionRole)
+                btn_discard = msg.addButton(tr("editor.btn_discard"), QMessageBox.DestructiveRole)
+                btn_cancel = msg.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
                 
                 msg.exec_()
                 clicked = msg.clickedButton()
@@ -529,7 +529,7 @@ class EditorDock(BaseDock):
         Public API method for integration with other tools.
         """
         if not os.path.exists(file_path):
-            QMessageBox.warning(self, "File Not Found", f"File does not exist:\n{file_path}")
+            QMessageBox.warning(self, tr("editor.msg_file_not_found_title"), tr("editor.msg_file_not_found_msg").format(file_path))
             return
         
         # Check if already open

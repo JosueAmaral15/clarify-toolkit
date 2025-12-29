@@ -29,6 +29,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, QDate
 
+from src.i18n.translator import tr
+
 
 class FileFilterPanel(QGroupBox):
     """Widget for advanced file filtering options."""
@@ -64,18 +66,18 @@ class FileFilterPanel(QGroupBox):
         grid.setSpacing(8)
         
         # Row 0: Regex filter
-        grid.addWidget(QLabel("Regex Pattern:"), 0, 0)
+        grid.addWidget(QLabel(tr("file_filter.regex_pattern")), 0, 0)
         self.ed_regex = QLineEdit()
-        self.ed_regex.setPlaceholderText("e.g., ^test_.*\\.py$")
+        self.ed_regex.setPlaceholderText(tr("file_filter.placeholder_regex"))
         grid.addWidget(self.ed_regex, 0, 1, 1, 2)
         
-        self.chk_regex_enabled = QCheckBox("Enable Regex")
+        self.chk_regex_enabled = QCheckBox(tr("file_filter.enable_regex"))
         grid.addWidget(self.chk_regex_enabled, 0, 3)
         
         # Row 1: Size filter (min)
-        grid.addWidget(QLabel("Size Min:"), 1, 0)
+        grid.addWidget(QLabel(tr("file_filter.size_min")), 1, 0)
         self.ed_size_min = QLineEdit()
-        self.ed_size_min.setPlaceholderText("0")
+        self.ed_size_min.setPlaceholderText(tr("file_filter.placeholder_size_min"))
         self.ed_size_min.setMaximumWidth(100)
         grid.addWidget(self.ed_size_min, 1, 1)
         
@@ -86,9 +88,9 @@ class FileFilterPanel(QGroupBox):
         grid.addWidget(self.cmb_size_min_unit, 1, 2)
         
         # Row 2: Size filter (max)
-        grid.addWidget(QLabel("Size Max:"), 2, 0)
+        grid.addWidget(QLabel(tr("file_filter.size_max")), 2, 0)
         self.ed_size_max = QLineEdit()
-        self.ed_size_max.setPlaceholderText("∞")
+        self.ed_size_max.setPlaceholderText(tr("file_filter.placeholder_size_max"))
         self.ed_size_max.setMaximumWidth(100)
         grid.addWidget(self.ed_size_max, 2, 1)
         
@@ -99,45 +101,45 @@ class FileFilterPanel(QGroupBox):
         grid.addWidget(self.cmb_size_max_unit, 2, 2)
         
         # Row 3: Modified time (after)
-        grid.addWidget(QLabel("Modified After:"), 3, 0)
+        grid.addWidget(QLabel(tr("file_filter.modified_after")), 3, 0)
         self.dte_mtime_after = QDateEdit()
         self.dte_mtime_after.setCalendarPopup(True)
-        self.dte_mtime_after.setSpecialValueText("No limit")
+        self.dte_mtime_after.setSpecialValueText(tr("file_filter.no_limit"))
         self.dte_mtime_after.setDate(QDate(2000, 1, 1))
         grid.addWidget(self.dte_mtime_after, 3, 1, 1, 2)
         
-        self.chk_mtime_after_enabled = QCheckBox("Enable")
+        self.chk_mtime_after_enabled = QCheckBox(tr("file_filter.enable"))
         grid.addWidget(self.chk_mtime_after_enabled, 3, 3)
         
         # Row 4: Modified time (before)
-        grid.addWidget(QLabel("Modified Before:"), 4, 0)
+        grid.addWidget(QLabel(tr("file_filter.modified_before")), 4, 0)
         self.dte_mtime_before = QDateEdit()
         self.dte_mtime_before.setCalendarPopup(True)
-        self.dte_mtime_before.setSpecialValueText("No limit")
+        self.dte_mtime_before.setSpecialValueText(tr("file_filter.no_limit"))
         self.dte_mtime_before.setDate(QDate.currentDate())
         grid.addWidget(self.dte_mtime_before, 4, 1, 1, 2)
         
-        self.chk_mtime_before_enabled = QCheckBox("Enable")
+        self.chk_mtime_before_enabled = QCheckBox(tr("file_filter.enable"))
         grid.addWidget(self.chk_mtime_before_enabled, 4, 3)
         
         # Row 5: Extensions filter
-        grid.addWidget(QLabel("Extensions:"), 5, 0)
+        grid.addWidget(QLabel(tr("file_filter.extensions")), 5, 0)
         self.ed_extensions = QLineEdit()
-        self.ed_extensions.setPlaceholderText("e.g., py,js,txt")
+        self.ed_extensions.setPlaceholderText(tr("file_filter.placeholder_extensions"))
         grid.addWidget(self.ed_extensions, 5, 1, 1, 3)
         
         # Row 6: Depth limit
-        grid.addWidget(QLabel("Max Depth:"), 6, 0)
+        grid.addWidget(QLabel(tr("file_filter.max_depth")), 6, 0)
         self.spn_depth = QSpinBox()
         self.spn_depth.setMinimum(0)
         self.spn_depth.setMaximum(10)
         self.spn_depth.setValue(0)
-        self.spn_depth.setSpecialValueText("Unlimited")
+        self.spn_depth.setSpecialValueText(tr("file_filter.unlimited"))
         self.spn_depth.setMaximumWidth(100)
         grid.addWidget(self.spn_depth, 6, 1)
         
         # Row 7-8: Exclude directories
-        grid.addWidget(QLabel("Exclude Dirs:"), 7, 0)
+        grid.addWidget(QLabel(tr("file_filter.exclude_dirs")), 7, 0)
         
         # Common excludes (checkboxes)
         exclude_layout = QVBoxLayout()
@@ -162,32 +164,32 @@ class FileFilterPanel(QGroupBox):
         grid.addLayout(exclude_layout, 7, 1, 2, 2)
         
         # Custom exclude patterns
-        grid.addWidget(QLabel("Custom:"), 9, 0)
+        grid.addWidget(QLabel(tr("file_filter.custom")), 9, 0)
         self.ed_exclude_custom = QLineEdit()
-        self.ed_exclude_custom.setPlaceholderText("e.g., temp,cache,*.tmp")
+        self.ed_exclude_custom.setPlaceholderText(tr("file_filter.placeholder_custom"))
         grid.addWidget(self.ed_exclude_custom, 9, 1, 1, 3)
     
     def _connect_signals(self) -> None:
         """Connect internal signals."""
-        # Emit filters_changed when any filter is modified
-        self.ed_regex.textChanged.connect(self.filters_changed.emit)
-        self.chk_regex_enabled.toggled.connect(self.filters_changed.emit)
-        self.ed_size_min.textChanged.connect(self.filters_changed.emit)
-        self.ed_size_max.textChanged.connect(self.filters_changed.emit)
-        self.cmb_size_min_unit.currentIndexChanged.connect(self.filters_changed.emit)
-        self.cmb_size_max_unit.currentIndexChanged.connect(self.filters_changed.emit)
-        self.dte_mtime_after.dateChanged.connect(self.filters_changed.emit)
-        self.dte_mtime_before.dateChanged.connect(self.filters_changed.emit)
-        self.chk_mtime_after_enabled.toggled.connect(self.filters_changed.emit)
-        self.chk_mtime_before_enabled.toggled.connect(self.filters_changed.emit)
-        self.ed_extensions.textChanged.connect(self.filters_changed.emit)
-        self.spn_depth.valueChanged.connect(self.filters_changed.emit)
-        self.chk_exclude_node_modules.toggled.connect(self.filters_changed.emit)
-        self.chk_exclude_git.toggled.connect(self.filters_changed.emit)
-        self.chk_exclude_pycache.toggled.connect(self.filters_changed.emit)
-        self.chk_exclude_dist.toggled.connect(self.filters_changed.emit)
-        self.chk_exclude_build.toggled.connect(self.filters_changed.emit)
-        self.ed_exclude_custom.textChanged.connect(self.filters_changed.emit)
+        # Emit filters_changed when any filter is modified (use lambdas to discard signal arguments)
+        self.ed_regex.textChanged.connect(lambda: self.filters_changed.emit())
+        self.chk_regex_enabled.toggled.connect(lambda: self.filters_changed.emit())
+        self.ed_size_min.textChanged.connect(lambda: self.filters_changed.emit())
+        self.ed_size_max.textChanged.connect(lambda: self.filters_changed.emit())
+        self.cmb_size_min_unit.currentIndexChanged.connect(lambda: self.filters_changed.emit())
+        self.cmb_size_max_unit.currentIndexChanged.connect(lambda: self.filters_changed.emit())
+        self.dte_mtime_after.dateChanged.connect(lambda: self.filters_changed.emit())
+        self.dte_mtime_before.dateChanged.connect(lambda: self.filters_changed.emit())
+        self.chk_mtime_after_enabled.toggled.connect(lambda: self.filters_changed.emit())
+        self.chk_mtime_before_enabled.toggled.connect(lambda: self.filters_changed.emit())
+        self.ed_extensions.textChanged.connect(lambda: self.filters_changed.emit())
+        self.spn_depth.valueChanged.connect(lambda: self.filters_changed.emit())
+        self.chk_exclude_node_modules.toggled.connect(lambda: self.filters_changed.emit())
+        self.chk_exclude_git.toggled.connect(lambda: self.filters_changed.emit())
+        self.chk_exclude_pycache.toggled.connect(lambda: self.filters_changed.emit())
+        self.chk_exclude_dist.toggled.connect(lambda: self.filters_changed.emit())
+        self.chk_exclude_build.toggled.connect(lambda: self.filters_changed.emit())
+        self.ed_exclude_custom.textChanged.connect(lambda: self.filters_changed.emit())
     
     # Public API
     

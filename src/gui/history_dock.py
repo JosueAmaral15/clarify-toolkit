@@ -71,6 +71,14 @@ class HistoryDock(BaseDock):
         self.tree_history.setAlternatingRowColors(True)
         self.tree_history.setRootIsDecorated(False)
         
+        # Prevent horizontal expansion from long details (v2.9.117)
+        self.tree_history.setWordWrap(False)
+        self.tree_history.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.tree_history.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        header = self.tree_history.header()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(2, header.ResizeMode.Stretch)  # Details column stretches
+        
         # Action buttons
         self.btn_clear = QPushButton(tr("history.btn_clear"))
         self.btn_export = QPushButton(tr("history.btn_export"))
@@ -158,12 +166,12 @@ class HistoryDock(BaseDock):
     def _clear_history(self) -> None:
         """Clear history and update display."""
         if not self.history:
-            QMessageBox.information(self, "Empty", "History is already empty.")
+            QMessageBox.information(self, tr("history.msg_empty_title"), tr("history.msg_already_empty"))
             return
         
         reply = QMessageBox.question(
-            self, "Clear History",
-            f"Clear all {len(self.history)} history entries?",
+            self, tr("history.msg_confirm_clear_title"),
+            tr("history.msg_confirm_clear_msg"),
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -175,7 +183,7 @@ class HistoryDock(BaseDock):
     def _export_history(self) -> None:
         """Export history to text file."""
         if not self.history:
-            QMessageBox.information(self, "Empty", "No history to export.")
+            QMessageBox.information(self, tr("history.msg_empty_title"), tr("history.msg_no_history"))
             return
         
         file_path, _ = QFileDialog.getSaveFileName(
@@ -214,9 +222,9 @@ class HistoryDock(BaseDock):
                     
                     f.write("-" * 80 + "\n\n")
             
-            QMessageBox.information(self, "Exported", f"History exported to:\n{file_path}")
+            QMessageBox.information(self, tr("history.msg_exported_title"), tr("history.msg_exported_msg").format(file_path))
         except Exception as e:
-            QMessageBox.critical(self, "Export Error", f"Failed to export history:\n{str(e)}")
+            QMessageBox.critical(self, tr("history.msg_export_error_title"), tr("history.msg_export_error_msg").format(str(e)))
     
     def _refresh_display(self) -> None:
         """Refresh the tree widget display."""
@@ -250,8 +258,16 @@ class HistoryDock(BaseDock):
             details_str = " | ".join(detail_parts)
             files_count = str(details.get('files_processed', '-'))
             
+            # Truncate long details to prevent horizontal expansion (v2.9.117)
+            details_display = details_str
+            if len(details_str) > 100:
+                details_display = details_str[:100] + "..."
+            
             # Create tree item
-            item = QTreeWidgetItem([timestamp, operation, details_str, files_count])
+            item = QTreeWidgetItem([timestamp, operation, details_display, files_count])
+            # Add full details as tooltip if truncated
+            if len(details_str) > 100:
+                item.setToolTip(2, details_str)
             self.tree_history.addTopLevelItem(item)
         
         # Update header

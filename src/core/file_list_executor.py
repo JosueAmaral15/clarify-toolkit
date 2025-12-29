@@ -225,7 +225,9 @@ class FileListExecutor:
         extensions = filters.get('extensions', [])
         if extensions:
             file_ext = os.path.splitext(filename)[1].lstrip('.').lower()
-            if file_ext not in [ext.lower() for ext in extensions]:
+            # Normalize extensions to remove leading dots for comparison
+            normalized_exts = [ext.lstrip('.').lower() for ext in extensions]
+            if file_ext not in normalized_exts:
                 return False
         
         # Depth filter

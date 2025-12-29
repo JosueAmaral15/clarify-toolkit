@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QCheckBox, QPushButton, QMessageBox, QTextEdit
 )
 from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat
+from src.i18n.translator import tr
 
 
 class JsonSearchDialog(QDialog):
@@ -71,9 +72,9 @@ class JsonSearchDialog(QDialog):
         
         # Search input
         search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Find:"))
+        search_layout.addWidget(QLabel(tr("json_search.lbl_find")))
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Enter key or value to search...")
+        self.search_input.setPlaceholderText(tr("json_search.placeholder"))
         search_layout.addWidget(self.search_input)
         layout.addLayout(search_layout)
         
@@ -89,16 +90,16 @@ class JsonSearchDialog(QDialog):
         layout.addLayout(options_layout)
         
         # Results label
-        self.lbl_results = QLabel("0 matches found")
+        self.lbl_results = QLabel(tr("json_search.lbl_results"))
         self.lbl_results.setStyleSheet("color: #6A9955;")
         layout.addWidget(self.lbl_results)
         
         # Buttons
         btn_layout = QHBoxLayout()
-        self.btn_find = QPushButton("Find All")
-        self.btn_next = QPushButton("Next")
-        self.btn_prev = QPushButton("Previous")
-        self.btn_close = QPushButton("Close")
+        self.btn_find = QPushButton(tr("json_search.btn_find_all"))
+        self.btn_next = QPushButton(tr("json_search.btn_next"))
+        self.btn_prev = QPushButton(tr("json_search.btn_prev"))
+        self.btn_close = QPushButton(tr("json_search.btn_close"))
         
         self.btn_next.setEnabled(False)
         self.btn_prev.setEnabled(False)

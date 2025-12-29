@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n import tooltip_tr
+from src.i18n.translator import tr
 from src.accessibility_manager import AccessibilityManager
 
 
@@ -67,23 +68,23 @@ class FileSelectionWidget(QWidget):
         file_layout = QGridLayout()
         
         # File A
-        file_layout.addWidget(QLabel("File A:"), 0, 0)
+        file_layout.addWidget(QLabel(tr("file_selection.lbl_file_a")), 0, 0)
         self.ed_file_a = QLineEdit()
-        self.ed_file_a.setPlaceholderText("Select first file...")
+        self.ed_file_a.setPlaceholderText(tr("file_selection.placeholder_a"))
         self.ed_file_a.setToolTip(tooltip_tr("set_ops.file_a"))
         file_layout.addWidget(self.ed_file_a, 0, 1)
-        self.btn_browse_a = QPushButton("Browse...")
+        self.btn_browse_a = QPushButton(tr("file_selection.btn_browse_a"))
         self.btn_browse_a.setMaximumWidth(100)
         self.btn_browse_a.setToolTip(tooltip_tr("set_ops.btn_browse_a"))
         file_layout.addWidget(self.btn_browse_a, 0, 2)
         
         # File B
-        file_layout.addWidget(QLabel("File B:"), 1, 0)
+        file_layout.addWidget(QLabel(tr("file_selection.lbl_file_b")), 1, 0)
         self.ed_file_b = QLineEdit()
-        self.ed_file_b.setPlaceholderText("Select second file...")
+        self.ed_file_b.setPlaceholderText(tr("file_selection.placeholder_b"))
         self.ed_file_b.setToolTip(tooltip_tr("set_ops.file_b"))
         file_layout.addWidget(self.ed_file_b, 1, 1)
-        self.btn_browse_b = QPushButton("Browse...")
+        self.btn_browse_b = QPushButton(tr("file_selection.btn_browse_b"))
         self.btn_browse_b.setMaximumWidth(100)
         self.btn_browse_b.setToolTip(tooltip_tr("set_ops.btn_browse_b"))
         file_layout.addWidget(self.btn_browse_b, 1, 2)
@@ -101,13 +102,13 @@ class FileSelectionWidget(QWidget):
         
         # Buttons for file list
         file_btn_layout = QHBoxLayout()
-        self.btn_add_file = QPushButton("+ Add File")
+        self.btn_add_file = QPushButton(tr("file_selection.btn_add_file"))
         self.btn_add_file.setToolTip(tooltip_tr("set_ops.btn_add_file"))
         self.btn_add_file.setVisible(False)
-        self.btn_remove_file = QPushButton("- Remove Selected")
+        self.btn_remove_file = QPushButton(tr("file_selection.btn_remove_file"))
         self.btn_remove_file.setToolTip(tooltip_tr("set_ops.btn_remove_file"))
         self.btn_remove_file.setVisible(False)
-        self.btn_clear_files = QPushButton("Clear All")
+        self.btn_clear_files = QPushButton(tr("file_selection.btn_clear_files"))
         self.btn_clear_files.setToolTip(tooltip_tr("set_ops.btn_clear_files"))
         self.btn_clear_files.setVisible(False)
         file_btn_layout.addWidget(self.btn_add_file)

@@ -240,7 +240,7 @@ class AIProcessorDock(StandardToolDock):
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_value")), 1, 2)
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_scope")), 1, 3)
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_case")), 1, 4)
-        adv_cond_layout.addWidget(QLabel("Regex"), 1, 5)
+        adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_regex")), 1, 5)
         
         # 3 condition rows (minimum)
         self.cond_rows = []
@@ -281,12 +281,12 @@ class AIProcessorDock(StandardToolDock):
         
         # Add buttons: Add Condition and Clear All (v2.9.40.3: store reference)
         self.buttons_layout_ref = QHBoxLayout()
-        btn_add_cond = QPushButton("➕ Add Condition")
+        btn_add_cond = QPushButton(tr("ai_processor.btn_add_condition"))
         btn_add_cond.setToolTip("Add more condition rows (no limit) | Ctrl+Shift+A to open AI Processor")
         btn_add_cond.clicked.connect(self._add_condition_row)
         self.buttons_layout_ref.addWidget(btn_add_cond)
         
-        btn_clear_cond = QPushButton("🗑️ Clear All")
+        btn_clear_cond = QPushButton(tr("ai_processor.btn_clear_conditions"))
         btn_clear_cond.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_cond)
         self.buttons_layout_ref.addStretch()
@@ -323,9 +323,9 @@ class AIProcessorDock(StandardToolDock):
         stats_group = QGroupBox(tr("ai_processor.group_stats"))
         stats_layout = QGridLayout()
         
-        self.lbl_session_stats = QLabel("Session: 0 in / 0 out | $0.00")
+        self.lbl_session_stats = QLabel(tr("ai_processor.lbl_session_stats"))
         self.lbl_session_stats.setToolTip("Current session token usage: input tokens / output tokens | Estimated cost | Ctrl+Shift+A to open AI Processor")
-        self.lbl_lifetime_stats = QLabel("Lifetime: 0 in / 0 out | $0.00")
+        self.lbl_lifetime_stats = QLabel(tr("ai_processor.lbl_lifetime_stats"))
         self.lbl_lifetime_stats.setToolTip("Lifetime total token usage across all sessions | Estimated cumulative cost | Ctrl+Shift+A to open AI Processor")
         
         stats_layout.addWidget(QLabel("💬"), 0, 0)

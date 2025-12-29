@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from .syntax_highlighter import SyntaxHighlighter
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class EditorTab(QWidget):
@@ -115,17 +115,17 @@ class EditorTab(QWidget):
         toolbar.setStyleSheet("QToolBar { border: none; padding: 2px; }")
         
         # Copy to Clipboard button
-        self.btn_copy = QPushButton("📋 Copy")
+        self.btn_copy = QPushButton(tr("editor_tab.btn_copy"))
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         toolbar.addWidget(self.btn_copy)
         
         # Export to File button
-        self.btn_export = QPushButton("💾 Export")
+        self.btn_export = QPushButton(tr("editor_tab.btn_export"))
         self.btn_export.clicked.connect(self._export_to_file)
         toolbar.addWidget(self.btn_export)
         
         # Enable File Saving button (only visible in edit-only mode)
-        self.btn_enable_saving = QPushButton("🔓 Enable Saving")
+        self.btn_enable_saving = QPushButton(tr("editor_tab.btn_enable_saving"))
         self.btn_enable_saving.clicked.connect(self._enable_file_saving)
         toolbar.addWidget(self.btn_enable_saving)
         
@@ -153,16 +153,16 @@ class EditorTab(QWidget):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.editor.toPlainText())
         # Visual feedback
-        self.btn_copy.setText("✓ Copied!")
-        QTimer.singleShot(1500, lambda: self.btn_copy.setText("📋 Copy"))
+        self.btn_copy.setText(tr("editor_tab.btn_copied"))
+        QTimer.singleShot(1500, lambda: self.btn_copy.setText(tr("editor_tab.btn_copy")))
     
     def _export_to_file(self):
         """Export content to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Export File",
+            tr("editor_tab.export_dialog_title"),
             "",
-            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py)"
+            tr("editor_tab.export_dialog_filter")
         )
         
         if not file_path:
@@ -173,17 +173,21 @@ class EditorTab(QWidget):
                 f.write(self.editor.toPlainText())
             
             # Visual feedback
-            self.btn_export.setText("✓ Exported!")
-            QTimer.singleShot(1500, lambda: self.btn_export.setText("💾 Export"))
+            self.btn_export.setText(tr("editor_tab.btn_exported"))
+            QTimer.singleShot(1500, lambda: self.btn_export.setText(tr("editor_tab.btn_export")))
         except Exception as e:
-            QMessageBox.critical(self, "Export Error", f"Failed to export file:\n{e}")
+            QMessageBox.critical(
+                self, 
+                tr("editor_tab.export_error_title"), 
+                tr("editor_tab.export_error_message").format(e)
+            )
     
     def _enable_file_saving(self):
         """Convert edit-only tab to normal file-backed editor."""
         reply = QMessageBox.question(
             self,
-            "Enable File Saving",
-            "This will convert the editor to file-backed mode.\n\nYou'll need to choose a file location to save to.\n\nContinue?",
+            tr("editor_tab.enable_saving_title"),
+            tr("editor_tab.enable_saving_message"),
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -191,9 +195,9 @@ class EditorTab(QWidget):
             # Trigger Save As to get file path
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "Save File As",
+                tr("editor_tab.save_as_dialog_title"),
                 "",
-                "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py)"
+                tr("editor_tab.export_dialog_filter")
             )
             
             if file_path:
@@ -212,7 +216,11 @@ class EditorTab(QWidget):
                     self.edit_only_changed.emit(False)
                     self.modified_changed.emit(False)
                 except Exception as e:
-                    QMessageBox.critical(self, "Save Error", f"Failed to save file:\n{e}")
+                    QMessageBox.critical(
+                        self, 
+                        tr("editor_tab.save_error_title"), 
+                        tr("editor_tab.save_error_message").format(e)
+                    )
     
     def _update_visual_indicators(self):
         """Update visual indicators for edit-only mode."""
@@ -234,8 +242,8 @@ class EditorTab(QWidget):
             # Cannot enable edit-only if file is already backed
             reply = QMessageBox.question(
                 self,
-                "Enable Edit-Only Mode",
-                "This will disconnect the editor from the file.\n\nChanges will not be saved automatically.\n\nContinue?",
+                tr("editor_tab.edit_only_title"),
+                tr("editor_tab.edit_only_message"),
                 QMessageBox.Yes | QMessageBox.No
             )
             

@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
     QFrame,
 )
 from PySide6.QtCore import Qt, QSettings, QDate, QTimer, QObject, QEvent
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QShortcut, QKeySequence
 from .base_dock import BaseDock
 from .widgets import (
     FileFilterPanel,
@@ -109,14 +109,13 @@ class FileExplorerDock(BaseDock):
         # Progress dialog for long operations
         self.progress_dialog = None
 
-        # Auto-search debounce timer (500ms delay)
-        self.auto_search_timer = QTimer()
-        self.auto_search_timer.setSingleShot(True)
-        self.auto_search_timer.timeout.connect(self._trigger_auto_search)
-
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
+        
+        # Connect to language change signal for dynamic translation update
+        from src.i18n.translator import get_translator
+        get_translator().languageChanged.connect(self.retranslateUi)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -129,7 +128,7 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # SECTION 1: Directory & Type (📁 - Collapsible)
         # ============================================================================
-        self.section_directory = CollapsibleSection("📁 Directory & Type")
+        self.section_directory = CollapsibleSection(tr("file_list.section_directory"))
         self.section_directory.setCollapsed(False)  # Start expanded
 
         # Directory input
@@ -156,53 +155,43 @@ class FileExplorerDock(BaseDock):
         self.chk_recursive.setChecked(getattr(self, "chk_recursive_state", False))
 
         # Sort results checkbox (from Search/Replace)
-        self.chk_sort_results = QCheckBox("Sort results alphabetically")
+        self.chk_sort_results = QCheckBox(tr("file_list.chk_sort_results"))
         self.chk_sort_results.setChecked(False)
-        self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
+        self.chk_sort_results.setToolTip(tr("file_list.tooltip_sort_results"))
 
         # Extension filter (from Search/Replace) - CRITICAL FEATURE
-        self.chk_use_ext_filter = QCheckBox("Use extension filter")
+        self.chk_use_ext_filter = QCheckBox(tr("file_list.chk_use_ext_filter"))
         self.chk_use_ext_filter.setChecked(True)
-        self.chk_use_ext_filter.setToolTip("Enable simple extension filtering (.py,.js,.tsx)")
+        self.chk_use_ext_filter.setToolTip(tr("file_list.tooltip_use_ext_filter"))
 
         self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
-        self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
-        self.ed_extensions.setToolTip(
-            "Filter files by extensions. Examples:\n"
-            "  .py          - Only Python files\n"
-            "  .jsx,.tsx    - React files\n"
-            "  .js,.ts      - JavaScript/TypeScript\n"
-            "Leave empty to include all file types"
-        )
+        self.ed_extensions.setPlaceholderText(tr("file_list.placeholder_extensions"))
+        self.ed_extensions.setToolTip(tr("file_list.tooltip_extensions"))
 
         # Include/Exclude globs (from Search/Replace) - CRITICAL FEATURE
         self.ed_inc = QLineEdit()
-        self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/** (leave empty for all)")
-        self.ed_inc.setToolTip(
-            "Advanced glob patterns to include specific files.\nExamples:\n  *.test.*    - Test files\n  **/src/**   - Files in src folders"
-        )
+        self.ed_inc.setPlaceholderText(tr("file_list.placeholder_include_globs"))
+        self.ed_inc.setToolTip(tr("file_list.tooltip_include_globs"))
 
         self.ed_exc = QLineEdit("node_modules;dist;build;.git")
-        self.ed_exc.setToolTip(
-            "Glob patterns to exclude folders/files.\nDefault excludes common build/dependency folders"
-        )
+        self.ed_exc.setToolTip(tr("file_list.tooltip_exclude_globs"))
 
         # File type filter
-        self.lbl_type = QLabel("Type:")
+        self.lbl_type = QLabel(tr("file_list.lbl_type"))
         self.combo_type = QComboBox()
-        self.combo_type.addItems(["Any", "Files Only", "Directories Only"])
-        self.combo_type.setToolTip("Filter by file type")
+        self.combo_type.addItems([tr("file_list.type_any"), tr("file_list.type_files_only"), tr("file_list.type_directories_only")])
+        self.combo_type.setToolTip(tr("file_list.tooltip_type"))
 
         # Selection mode (dialog only)
         if self.dialog_mode:
-            self.chk_selection_mode = QCheckBox("Selection Mode")
+            self.chk_selection_mode = QCheckBox(tr("file_list.chk_selection_mode"))
             self.chk_selection_mode.setChecked(True)
-            self.chk_selection_mode.setToolTip("Enable multi-selection to return selected files")
+            self.chk_selection_mode.setToolTip(tr("file_list.tooltip_selection_mode"))
 
         # ============================================================================
         # SECTION 2: Search & Replace (🔍 - Collapsible)
         # ============================================================================
-        self.section_search = CollapsibleSection("🔍 Search & Replace")
+        self.section_search = CollapsibleSection(tr("file_list.section_search"))
         self.section_search.setCollapsed(False)  # Start expanded
 
         # NEW: Integrated search widgets (v2.9.116)
@@ -211,17 +200,15 @@ class FileExplorerDock(BaseDock):
         self.search_options_panel = SearchOptionsPanel()
         self.replace_panel = ReplacePanel()
 
-        # Connect search widget signals
-        self.filename_panel.pattern_changed.connect(self._on_search_params_changed)
-        self.content_panel.query_changed.connect(self._on_search_params_changed)
-        self.search_options_panel.options_changed.connect(self._on_search_params_changed)
+        # Connect search widget signals (only for Replace operations, not auto-search)
+        # Auto-search DISABLED: search only happens when user clicks Browse/Search button
         self.replace_panel.replace_first_requested.connect(self._on_replace_first)
         self.replace_panel.replace_all_requested.connect(self._on_replace_all)
 
         # ============================================================================
         # SECTION 3: Filters (⚙️ - Collapsible with Animation - v2.9.117 B.6)
         # ============================================================================
-        self.section_filters = CollapsibleSection("⚙️ Filters")
+        self.section_filters = CollapsibleSection(tr("file_list.section_filters"))
         self.section_filters.setCollapsed(True)  # Start collapsed
 
         # Advanced Filters Panel (extracted component)
@@ -231,7 +218,7 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # SECTION 4: Advanced Conditions (🎯 - Collapsible with Animation - v2.9.117 B.6)
         # ============================================================================
-        self.section_conditions = CollapsibleSection("🎯 Advanced Conditions")
+        self.section_conditions = CollapsibleSection(tr("file_list.section_conditions"))
         self.section_conditions.setCollapsed(True)  # Start collapsed
 
         # NEW: Conditions grid with AND/OR logic (v2.9.116)
@@ -243,7 +230,7 @@ class FileExplorerDock(BaseDock):
         # SECTION 5: Presets (💾 - Collapsible with Animation, Dock Mode Only - v2.9.117 B.6)
         # ============================================================================
         if not self.dialog_mode:
-            self.section_presets = CollapsibleSection("💾 Presets")
+            self.section_presets = CollapsibleSection(tr("file_list.section_presets"))
             self.section_presets.setCollapsed(True)  # Start collapsed
 
             # Preset Manager (extracted component)
@@ -253,17 +240,12 @@ class FileExplorerDock(BaseDock):
             )
 
         # ============================================================================
-        # Action Buttons (v2.9.117 - B.3: Separate Browse/Search)
+        # Action Buttons (v2.9.117 - B.7: Unified Browse/Search)
         # ============================================================================
-        self.btn_list_browse = QPushButton("📁 Browse")
-        self.btn_list_browse.setToolTip("List all files in directory (no search)")
-        self.btn_list_browse.clicked.connect(self._browse_files)
-        self.btn_list_browse.setObjectName("btn_browse")  # For theme styling
-
-        self.btn_list_search = QPushButton("🔍 Search")
-        self.btn_list_search.setToolTip("Search files by name/content patterns")
-        self.btn_list_search.clicked.connect(self._search_files)
-        self.btn_list_search.setObjectName("btn_search")  # For theme styling
+        self.btn_list = QPushButton(tr("file_list.btn_list"))
+        self.btn_list.setToolTip(tr("file_list.tooltip_btn_list"))
+        self.btn_list.clicked.connect(self._list_files_smart)
+        self.btn_list.setObjectName("btn_list")  # For theme styling
 
         # ============================================================================
         # Results Table
@@ -293,41 +275,68 @@ class FileExplorerDock(BaseDock):
         self.chk_long.setToolTip(tooltip_tr("file_list.chk_long"))
         self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
         self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
-        # Action buttons tooltips (v2.9.117 - B.3)
-        self.btn_list_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
-        self.btn_list_search.setToolTip(tooltip_tr("file_list.btn_search"))
+        # Action button tooltip (v2.9.117 - B.7: Unified)
+        self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
+    
+    def retranslateUi(self):
+        """Retranslate all UI elements when language changes (v2.9.117 - B.7)."""
+        # Update window title
+        self.setWindowTitle(tr("file_list.title"))
+        
+        # Update button text
+        self.btn_list.setText(tr("file_list.btn_list"))
+        
+        # Update section titles
+        self.section_directory.setTitle(tr("file_list.section_directory"))
+        self.section_search.setTitle(tr("file_list.section_search"))
+        self.section_filters.setTitle(tr("file_list.section_filters"))
+        self.section_conditions.setTitle(tr("file_list.section_conditions"))
+        if hasattr(self, 'section_presets'):
+            self.section_presets.setTitle(tr("file_list.section_presets"))
+        
+        # Update checkboxes
+        self.chk_sort_results.setText(tr("file_list.chk_sort_results"))
+        self.chk_use_ext_filter.setText(tr("file_list.chk_use_ext_filter"))
+        self.chk_word_wrap.setText(tr("file_list.chk_word_wrap"))
+        if hasattr(self, 'chk_selection_mode'):
+            self.chk_selection_mode.setText(tr("file_list.chk_selection_mode"))
+        
+        # Update labels
+        self.lbl_type.setText(tr("file_list.lbl_type"))
+        
+        # Update ComboBox items
+        current_index = self.combo_type.currentIndex()
+        self.combo_type.clear()
+        self.combo_type.addItems([
+            tr("file_list.type_any"),
+            tr("file_list.type_files_only"),
+            tr("file_list.type_directories_only")
+        ])
+        self.combo_type.setCurrentIndex(current_index)
+        
+        # Update placeholders
+        self.ed_extensions.setPlaceholderText(tr("file_list.placeholder_extensions"))
+        self.ed_inc.setPlaceholderText(tr("file_list.placeholder_include_globs"))
+        
+        # Update tooltips
+        self._apply_tooltips()
 
         # Search & Replace section
-        self.section_search.setToolTip(
-            "Search for files by name pattern or content query. " "Leave empty to browse all files."
-        )
-        self.filename_panel.setToolTip(
-            "Enter filename pattern (e.g., *.py, test_*.json). " "Supports wildcards: * (any chars), ? (single char)"
-        )
-        self.content_panel.setToolTip(
-            "Search for text inside files. " "Supports multi-line queries and regex patterns."
-        )
-        self.search_options_panel.setToolTip(
-            "Configure search behavior: case sensitivity, whole word matching, regex mode"
-        )
-        self.replace_panel.setToolTip("Replace matched text in selected files. " "Select files in results table first.")
+        self.section_search.setToolTip(tr("file_list.tooltip_section_search"))
+        self.filename_panel.setToolTip(tr("file_explorer.tooltip_filename_panel"))
+        self.content_panel.setToolTip(tr("file_explorer.tooltip_content_panel"))
+        self.search_options_panel.setToolTip(tr("file_explorer.tooltip_search_options"))
+        self.replace_panel.setToolTip(tr("file_explorer.tooltip_replace_panel"))
 
         # Filters section
-        self.section_filters.setToolTip(
-            "Advanced filters: regex patterns, size ranges, date ranges, " "file extensions, depth limits, exclusions"
-        )
+        self.section_filters.setToolTip(tr("file_list.tooltip_section_filters"))
 
         # Conditions section
-        self.section_conditions.setToolTip(
-            "Apply complex filtering conditions with AND/OR logic. "
-            "Combine multiple criteria for precise file selection."
-        )
+        self.section_conditions.setToolTip(tr("file_list.tooltip_section_conditions"))
 
         # Presets section (if visible)
         if hasattr(self, "section_presets"):
-            self.section_presets.setToolTip(
-                "Save and load filter configurations for reuse. " "Export/import presets to share with others."
-            )
+            self.section_presets.setToolTip(tr("file_explorer.tooltip_presets"))
 
     def _create_layout(self):
         """Create horizontal splitter layout with controls on left, results on right (v2.9.117 - B.1)."""
@@ -370,20 +379,20 @@ class FileExplorerDock(BaseDock):
         # Options row 3: Extension filter (from Search/Replace)
         ext_row = QHBoxLayout()
         ext_row.addWidget(self.chk_use_ext_filter)
-        ext_row.addWidget(QLabel("Extensions:"))
+        ext_row.addWidget(QLabel(tr("file_list.lbl_extensions")))
         ext_row.addWidget(self.ed_extensions)
         ext_row.addStretch()
         section1_layout.addLayout(ext_row)
 
         # Options row 4: Include globs (from Search/Replace)
         inc_row = QHBoxLayout()
-        inc_row.addWidget(QLabel("Include globs (advanced, comma-separated):"))
+        inc_row.addWidget(QLabel(tr("file_list.lbl_include_globs")))
         section1_layout.addLayout(inc_row)
         section1_layout.addWidget(self.ed_inc)
 
         # Options row 5: Exclude globs (from Search/Replace)
         exc_row = QHBoxLayout()
-        exc_row.addWidget(QLabel("Exclude globs (comma-separated):"))
+        exc_row.addWidget(QLabel(tr("file_list.lbl_exclude_globs")))
         section1_layout.addLayout(exc_row)
         section1_layout.addWidget(self.ed_exc)
 
@@ -435,13 +444,9 @@ class FileExplorerDock(BaseDock):
             left_layout.addWidget(self.section_presets)
 
         # ----------------------------------------------------------------------------
-        # Action Buttons (v2.9.117 - B.3)
+        # Action Button (v2.9.117 - B.7: Unified Browse/Search)
         # ----------------------------------------------------------------------------
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addWidget(self.btn_list_browse)
-        buttons_layout.addWidget(self.btn_list_search)
-        buttons_layout.setSpacing(8)
-        left_layout.addLayout(buttons_layout)
+        left_layout.addWidget(self.btn_list)
         left_layout.addStretch()  # Push everything to top
 
         # Wrap left panel in scroll area
@@ -458,8 +463,47 @@ class FileExplorerDock(BaseDock):
         right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(8)
 
-        # Create ResultsTree for search mode
+        # ============================================================================
+        # CONTROLS ROW: View toggle + Word wrap (always visible - v2.9.118)
+        # ============================================================================
+        controls_row = QWidget()
+        controls_layout = QHBoxLayout(controls_row)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(8)
+        
+        # View toggle: Tree vs Table (v2.9.118)
+        view_label = QLabel(tr("file_list.lbl_view"))
+        controls_layout.addWidget(view_label)
+        
+        self.combo_view_mode = QComboBox()
+        self.combo_view_mode.addItem(tr("file_list.view_tree"), 0)  # Index 0 in stacked widget
+        self.combo_view_mode.addItem(tr("file_list.view_table"), 1)   # Index 1 in stacked widget
+        self.combo_view_mode.setToolTip(tr("file_list.tooltip_view_mode"))
+        self.combo_view_mode.currentIndexChanged.connect(self._switch_view_mode)
+        controls_layout.addWidget(self.combo_view_mode)
+        
+        controls_layout.addSpacing(16)
+        
+        # Word wrap control checkbox (only for Tree view)
+        self.chk_word_wrap = QCheckBox(tr("file_list.chk_word_wrap"))
+        self.chk_word_wrap.setChecked(False)  # Default: scroll mode
+        self.chk_word_wrap.setToolTip(tr("file_list.tooltip_word_wrap"))
+        self.chk_word_wrap.toggled.connect(self._toggle_word_wrap)
+        controls_layout.addWidget(self.chk_word_wrap)
+        
+        controls_layout.addStretch()
+        
+        # Add controls to right panel (before stacked widget)
+        right_layout.addWidget(controls_row)
+
+        # Create ResultsTree container (just the tree, no controls)
+        results_tree_container = QWidget()
+        results_tree_layout = QVBoxLayout(results_tree_container)
+        results_tree_layout.setContentsMargins(0, 0, 0, 0)
+        results_tree_layout.setSpacing(0)
+        
         self.results_tree = ResultsTree()
+        results_tree_layout.addWidget(self.results_tree)
 
         # Create status bar for position info (from Search/Replace)
         self.results_status = QLabel("")
@@ -471,11 +515,12 @@ class FileExplorerDock(BaseDock):
 
         # Create QStackedWidget to switch between browse/search views
         self.results_stack = QStackedWidget()
-        self.results_stack.addWidget(self.results_tree)  # Index 0: Search mode (tree)
+        self.results_stack.addWidget(results_tree_container)  # Index 0: Search mode (tree)
         self.results_stack.addWidget(self.table_manager)  # Index 1: Browse mode (table)
 
-        # Start in browse mode (table view)
+        # Start in table mode (browse view)
         self.results_stack.setCurrentIndex(1)
+        self.combo_view_mode.setCurrentIndex(1)  # Sync combo to table view
 
         # Add results stack to right panel
         right_layout.addWidget(self.results_stack)
@@ -495,37 +540,37 @@ class FileExplorerDock(BaseDock):
         stats_layout.setSpacing(16)
 
         # Files count
-        self.lbl_files_count = QLabel("📄 Files: 0")
+        self.lbl_files_count = QLabel(tr("file_list.stats_files_init"))
         self.lbl_files_count.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_files_count)
 
         # Directories count
-        self.lbl_dirs_count = QLabel("📁 Dirs: 0")
+        self.lbl_dirs_count = QLabel(tr("file_list.stats_dirs_init"))
         self.lbl_dirs_count.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_dirs_count)
 
         # Total size
-        self.lbl_total_size = QLabel("💾 Size: 0 B")
+        self.lbl_total_size = QLabel(tr("file_list.stats_size_init"))
         self.lbl_total_size.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_total_size)
 
         # Execution time
-        self.lbl_exec_time = QLabel("⏱️ Time: 0.00s")
+        self.lbl_exec_time = QLabel(tr("file_list.stats_time_init"))
         self.lbl_exec_time.setObjectName("stats_label")
         stats_layout.addWidget(self.lbl_exec_time)
 
         stats_layout.addStretch()
 
         # Save Results button (from Search/Replace)
-        self.btn_save_results = QPushButton("💾 Save Results")
-        self.btn_save_results.setToolTip("Save all search results to a formatted text file with statistics")
+        self.btn_save_results = QPushButton(tr("file_list.btn_save_results"))
+        self.btn_save_results.setToolTip(tr("file_list.tooltip_save_results"))
         self.btn_save_results.clicked.connect(self._save_results)
         self.btn_save_results.setObjectName("btn_save")  # For theme styling
         stats_layout.addWidget(self.btn_save_results)
 
         # Export CSV button (v2.9.117 - B.5)
-        self.btn_export_csv = QPushButton("💾 Export CSV")
-        self.btn_export_csv.setToolTip("Export current results to CSV file")
+        self.btn_export_csv = QPushButton(tr("file_list.btn_export_csv"))
+        self.btn_export_csv.setToolTip(tr("file_list.tooltip_export_csv"))
         self.btn_export_csv.clicked.connect(self._export_results_csv)
         self.btn_export_csv.setObjectName("btn_export")  # For theme styling
         stats_layout.addWidget(self.btn_export_csv)
@@ -552,6 +597,21 @@ class FileExplorerDock(BaseDock):
         self.layout.addWidget(self.splitter)
 
         # ============================================================================
+        # KEYBOARD SHORTCUTS (v2.9.118)
+        # ============================================================================
+        # ENTER: Execute Browse/Search command
+        # Context: WidgetWithChildrenShortcut ensures shortcut only works when
+        # File Explorer dock or its children have focus, avoiding conflicts with other tools
+        self.shortcut_enter = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
+        self.shortcut_enter.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.shortcut_enter.activated.connect(self._list_files_smart)
+        
+        # Also support Enter on numpad
+        self.shortcut_enter_numpad = QShortcut(QKeySequence(Qt.Key.Key_Enter), self)
+        self.shortcut_enter_numpad.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self.shortcut_enter_numpad.activated.connect(self._list_files_smart)
+
+        # ============================================================================
         # Dialog Buttons (Dialog Mode Only)
         # ============================================================================
         if self.dialog_mode:
@@ -560,35 +620,49 @@ class FileExplorerDock(BaseDock):
     def _browse_directory(self):
         """Browse for directory."""
         directory = QFileDialog.getExistingDirectory(
-            self, "Select Directory", self.ed_directory.text() or os.getcwd(), QFileDialog.Option.ShowDirsOnly
+            self, tr("file_list.dialog_select_directory"), self.ed_directory.text() or os.getcwd(), QFileDialog.Option.ShowDirsOnly
         )
         if directory:
             self.ed_directory.setText(directory)
+    
+    def _toggle_word_wrap(self, enabled: bool):
+        """Toggle word wrap mode in results tree (v2.9.117)."""
+        self.results_tree.set_word_wrap(enabled)
+    
+    def _switch_view_mode(self, index: int):
+        """Switch between Tree and Table view manually (v2.9.118)."""
+        view_index = self.combo_view_mode.itemData(index)
+        self.results_stack.setCurrentIndex(view_index)
+        
+        # Enable/disable word wrap checkbox based on view
+        # Word wrap only applies to Tree view
+        is_tree_view = (view_index == 0)
+        self.chk_word_wrap.setEnabled(is_tree_view)
 
-    def _browse_files(self):
-        """Browse all files in directory without search filters (v2.9.117 - B.3)."""
-        # Clear search fields to ensure browse mode
-        self.filename_panel.clear()
-        self.content_panel.clear()
-        # Execute list operation (will detect no search and use browse mode)
-        self._list_files()
-
-    def _search_files(self):
-        """Search files with current patterns (v2.9.117 - B.3)."""
-        # Validate that at least one search criteria is set
+    def _list_files_smart(self):
+        """Smart file operation: auto-detect Browse or Search mode (v2.9.117 - B.7).
+        
+        Behavior:
+        - If filename pattern OR content query is set: Search mode
+        - If both are empty/default: Browse mode (list all files)
+        """
         filename_pattern = self.filename_panel.get_pattern()
         content_query = self.content_panel.get_query()
-
-        if not filename_pattern and not content_query:
-            QMessageBox.information(
-                self,
-                "No Search Criteria",
-                "Please enter a filename pattern or content query to search.\n\n"
-                "For browsing all files, use the Browse button instead.",
-            )
-            return
-
-        # Execute list operation (will detect search criteria and use search mode)
+        
+        # Auto-detect mode based on filters
+        has_search_criteria = bool(filename_pattern) or bool(content_query)
+        
+        if has_search_criteria:
+            # Search mode: user provided filters
+            logger.info("Smart mode: SEARCH (filters detected)", extra={
+                "filename_pattern": filename_pattern,
+                "content_query": bool(content_query)
+            })
+        else:
+            # Browse mode: no filters, list all files
+            logger.info("Smart mode: BROWSE (no filters)")
+        
+        # Execute unified operation (executor will handle both modes)
         self._list_files()
 
     def _list_files(self):
@@ -600,7 +674,7 @@ class FileExplorerDock(BaseDock):
 
         if not directory:
             logger.warning("Empty directory path provided")
-            QMessageBox.warning(self, "Missing", "Please select a directory.")
+            QMessageBox.warning(self, tr("file_list.error_missing_title"), tr("file_list.error_missing_directory"))
             return
 
         # SECURITY OWASP A01: Path Traversal Prevention (CWE-22)
@@ -609,17 +683,17 @@ class FileExplorerDock(BaseDock):
             directory = os.path.abspath(directory)
         except (OSError, ValueError) as e:
             logger.error(f"Invalid directory path: {directory}", exc_info=True)
-            QMessageBox.warning(self, "Invalid", f"Invalid directory path: {str(e)}")
+            QMessageBox.warning(self, tr("file_list.error_invalid_title"), tr("file_list.error_invalid_path").format(str(e)))
             return
 
         if not os.path.isdir(directory):
             logger.error(f"Directory does not exist: {directory}")
-            QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            QMessageBox.warning(self, tr("file_list.error_invalid_title"), tr("file_list.error_not_exist").format(directory))
             return
 
         if not os.access(directory, os.R_OK):
             logger.error(f"Permission denied for directory: {directory}")
-            QMessageBox.warning(self, "Permission Denied", f"Cannot read directory: {directory}")
+            QMessageBox.warning(self, tr("file_list.error_permission_title"), tr("file_list.error_no_permission").format(directory))
             return
 
         logger.info(
@@ -687,8 +761,11 @@ class FileExplorerDock(BaseDock):
             # ============================================================================
             # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
             # ============================================================================
-            # Switch to tree view
-            self.results_stack.setCurrentIndex(0)
+            # Switch to tree view (but respect manual override)
+            # Only auto-switch if user hasn't manually selected a view
+            if self.combo_view_mode.currentIndex() != 0:
+                self.results_stack.setCurrentIndex(0)
+                self.combo_view_mode.setCurrentIndex(0)  # Sync combo
 
             # Build matches dictionary for ResultsTree
             matches_dict = {}
@@ -701,14 +778,15 @@ class FileExplorerDock(BaseDock):
                     matches_list = []
                     for match in search_result.matches:
                         snippet = match.snippet if hasattr(match, "snippet") else ""
-                        matches_list.append((match.line, match.column, snippet))
+                        matches_list.append((match.line, match.col, snippet))
                     matches_dict[file_path] = matches_list
                 else:
                     # Filename search: show file with line 1
                     matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
 
-            # Populate ResultsTree
-            self.results_tree.populate(matches_dict, sort_results=True)
+            # Populate ResultsTree with sort option from checkbox
+            sort_results = self.chk_sort_results.isChecked()
+            self.results_tree.populate(matches_dict, sort_results=sort_results)
 
             # Update statistics (v2.9.117 - B.4)
             files_list = result.get("files", [])
@@ -755,8 +833,11 @@ class FileExplorerDock(BaseDock):
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
             logger.info(f"Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
-            # Switch to table view
-            self.results_stack.setCurrentIndex(1)
+            # Switch to table view (but respect manual override)
+            # Only auto-switch if user hasn't manually selected a view
+            if self.combo_view_mode.currentIndex() != 1:
+                self.results_stack.setCurrentIndex(1)
+                self.combo_view_mode.setCurrentIndex(1)  # Sync combo
             # Execute browse with UnifiedFileExplorerExecutor
             result = self.executor.execute_browse(
                 directory=directory, show_hidden=show_hidden, recursive=recursive, filters=filters
@@ -783,6 +864,10 @@ class FileExplorerDock(BaseDock):
                         "is_dir": file_info.is_dir,
                     }
                 )
+
+            # Sort alphabetically if checkbox is enabled
+            if self.chk_sort_results.isChecked():
+                files_data.sort(key=lambda x: x['path'].lower())
 
             # Enable multi-selection if in selection mode
             if self.dialog_mode and hasattr(self, "chk_selection_mode") and self.chk_selection_mode.isChecked():
@@ -827,7 +912,7 @@ class FileExplorerDock(BaseDock):
             error_msg = "\n".join(result["errors"][:5])  # Show first 5 errors
             if len(result["errors"]) > 5:
                 error_msg += f"\n... and {len(result['errors']) - 5} more errors"
-            QMessageBox.warning(self, "Errors Encountered", error_msg)
+            QMessageBox.warning(self, tr("file_list.errors_title"), error_msg)
         else:
             logger.info(f"Operation completed successfully", extra={"duration": time.time() - start_time})
 
@@ -967,10 +1052,10 @@ class FileExplorerDock(BaseDock):
                 total_size += file_info.size
 
         # Update labels
-        self.lbl_files_count.setText(f"📄 Files: {file_count:,}")
-        self.lbl_dirs_count.setText(f"📁 Dirs: {dir_count:,}")
-        self.lbl_total_size.setText(f"💾 Size: {self._format_size_human(total_size)}")
-        self.lbl_exec_time.setText(f"⏱️ Time: {elapsed_time:.2f}s")
+        self.lbl_files_count.setText(tr("file_list.stats_files").format(f"{file_count:,}"))
+        self.lbl_dirs_count.setText(tr("file_list.stats_dirs").format(f"{dir_count:,}"))
+        self.lbl_total_size.setText(tr("file_list.stats_size").format(self._format_size_human(total_size)))
+        self.lbl_exec_time.setText(tr("file_list.stats_time").format(f"{elapsed_time:.2f}"))
 
     def _format_size_human(self, size: int) -> str:
         """Format size in human-readable format."""
@@ -999,11 +1084,14 @@ class FileExplorerDock(BaseDock):
         matches_data = self.results_tree.get_matches_data()
 
         if not matches_data:
-            QMessageBox.information(self, "No Data", "No search results to export.")
+            QMessageBox.information(self, tr("file_list.no_data_title"), tr("file_list.no_data_message"))
             return
 
         filepath, _ = QFileDialog.getSaveFileName(
-            self, "Export Search Results", "search_results.csv", "CSV Files (*.csv);;All Files (*)"
+            self,
+            tr("file_list.dialog_export_csv_title"),
+            tr("file_list.dialog_export_csv_default"),
+            tr("file_list.dialog_export_csv_filter"),
         )
 
         if not filepath:
@@ -1014,7 +1102,12 @@ class FileExplorerDock(BaseDock):
                 writer = csv.writer(f)
 
                 # Header
-                writer.writerow(["File", "Line", "Column", "Match"])
+                writer.writerow([
+                    tr("file_list.csv_header_file"),
+                    tr("file_list.csv_header_line"),
+                    tr("file_list.csv_header_column"),
+                    tr("file_list.csv_header_match"),
+                ])
 
                 # Data: Iterate through files and matches
                 for file_path, matches in matches_data.items():
@@ -1023,12 +1116,13 @@ class FileExplorerDock(BaseDock):
 
             QMessageBox.information(
                 self,
-                "Export Complete",
-                f"Search results exported to:\n{filepath}\n\n"
-                f"Total: {sum(len(m) for m in matches_data.values())} matches in {len(matches_data)} files",
+                tr("file_list.export_complete_title"),
+                tr("file_list.export_complete_message").format(
+                    filepath, sum(len(m) for m in matches_data.values()), len(matches_data)
+                ),
             )
         except Exception as e:
-            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+            QMessageBox.critical(self, tr("file_list.export_failed_title"), tr("file_list.export_failed_message").format(e))
 
     def _add_to_recent(self, directory: str):
         """Add directory to recent list."""
@@ -1041,7 +1135,7 @@ class FileExplorerDock(BaseDock):
     def _show_recent_menu(self):
         """Show recent directories menu."""
         if not self.recent_dirs:
-            QMessageBox.information(self, "No Recent Directories", "No recent directories saved yet.")
+            QMessageBox.information(self, tr("file_list.recent_none_title"), tr("file_list.recent_none_message"))
             return
 
         menu = QMenu(self)
@@ -1051,7 +1145,7 @@ class FileExplorerDock(BaseDock):
             menu.addAction(action)
 
         menu.addSeparator()
-        clear_action = QAction("Clear Recent", self)
+        clear_action = QAction(tr("file_list.recent_clear"), self)
         clear_action.triggered.connect(self._clear_recent)
         menu.addAction(clear_action)
 
@@ -1061,7 +1155,7 @@ class FileExplorerDock(BaseDock):
         """Clear recent directories list."""
         self.recent_dirs = []
         self._save_preferences()
-        QMessageBox.information(self, "Cleared", "Recent directories list cleared.")
+        QMessageBox.information(self, tr("file_list.cleared_title"), tr("file_list.cleared_message"))
 
     def _show_preview_tooltip(self, item):
         """
@@ -1096,7 +1190,7 @@ class FileExplorerDock(BaseDock):
                 self.selected_files.append(path_item.text())
 
         if not self.selected_files:
-            QMessageBox.warning(self, "No Selection", "Please select at least one file.")
+            QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
 
         self.accept()
@@ -1113,25 +1207,28 @@ class FileExplorerDock(BaseDock):
     # ============================================================================
     # New Signal Handlers (v2.9.116 Integration)
     # ============================================================================
+    # Auto-search Methods (DISABLED - v2.9.117 - B.7)
+    # Search now only triggered by clicking Browse/Search button
+    # ============================================================================
 
-    def _on_search_params_changed(self):
-        """Handle search parameter changes (v2.9.116)."""
-        # Debounce: restart timer on each change (500ms delay)
-        if self.auto_search_timer.isActive():
-            self.auto_search_timer.stop()
-
-        # Only auto-search if directory is set
-        if self.ed_directory.text().strip():
-            self.auto_search_timer.start(500)  # 500ms debounce
-
-    def _trigger_auto_search(self):
-        """Execute auto-search after debounce delay."""
-        filename_pattern = self.filename_panel.get_pattern()
-        content_query = self.content_panel.get_query()
-
-        # Only auto-search if there's actually a query
-        if filename_pattern or content_query:
-            self._list_files()
+    # def _on_search_params_changed(self):
+    #     """Handle search parameter changes (v2.9.116)."""
+    #     # Debounce: restart timer on each change (500ms delay)
+    #     if self.auto_search_timer.isActive():
+    #         self.auto_search_timer.stop()
+    #
+    #     # Only auto-search if directory is set
+    #     if self.ed_directory.text().strip():
+    #         self.auto_search_timer.start(500)  # 500ms debounce
+    #
+    # def _trigger_auto_search(self):
+    #     """Execute auto-search after debounce delay."""
+    #     filename_pattern = self.filename_panel.get_pattern()
+    #     content_query = self.content_panel.get_query()
+    #
+    #     # Only auto-search if there's actually a query
+    #     if filename_pattern or content_query:
+    #         self._list_files()
 
     def _on_replace_first(self):
         """Handle replace first occurrence (v2.9.116)."""
@@ -1139,13 +1236,13 @@ class FileExplorerDock(BaseDock):
         replacement = self.replace_panel.get_replacement()
 
         if not query:
-            QMessageBox.warning(self, "No Query", "Please enter search text.")
+            QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
             return
 
         # Get selected files from table
         selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
         if not selected_rows:
-            QMessageBox.warning(self, "No Selection", "Please select at least one file.")
+            QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
 
         # Collect file paths and create SearchResult objects
@@ -1220,7 +1317,7 @@ class FileExplorerDock(BaseDock):
             self._list_files()
         else:
             error = result.get("error", "Unknown error")
-            QMessageBox.warning(self, "Replace Failed", f"Error: {error}")
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"), tr("file_list.replace_failed_message").format(error))
 
     def _on_replace_all(self):
         """Handle replace all occurrences (v2.9.116)."""
@@ -1228,13 +1325,13 @@ class FileExplorerDock(BaseDock):
         replacement = self.replace_panel.get_replacement()
 
         if not query:
-            QMessageBox.warning(self, "No Query", "Please enter search text.")
+            QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
             return
 
         # Get selected files from table
         selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
         if not selected_rows:
-            QMessageBox.warning(self, "No Selection", "Please select at least one file.")
+            QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
 
         # Collect file paths and create SearchResult objects
@@ -1263,8 +1360,8 @@ class FileExplorerDock(BaseDock):
         # Confirm with user
         reply = QMessageBox.question(
             self,
-            "Confirm Replace All",
-            f"Replace all occurrences in {len(search_results)} file(s)?",
+            tr("file_list.confirm_replace_title"),
+            tr("file_list.confirm_replace_message").format(len(search_results)),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -1332,8 +1429,10 @@ class FileExplorerDock(BaseDock):
         """Handle progress updates from executor (v2.9.116)."""
         # Show progress dialog if not already visible
         if not self.progress_dialog:
-            self.progress_dialog = QProgressDialog("Processing...", "Cancel", 0, 100, self)
-            self.progress_dialog.setWindowTitle("File Explorer")
+            self.progress_dialog = QProgressDialog(
+                tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
+            )
+            self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
             self.progress_dialog.setWindowModality(Qt.WindowModal)
             self.progress_dialog.canceled.connect(self.executor.cancel)
 
@@ -1366,7 +1465,7 @@ class FileExplorerDock(BaseDock):
 
     def _on_execution_error(self, error: str):
         """Handle execution errors."""
-        QMessageBox.warning(self, "Error", error)
+        QMessageBox.warning(self, tr("file_list.error_title"), error)
 
     def _save_results(self):
         """Save search results to a text file (from Search/Replace)."""
@@ -1378,9 +1477,11 @@ class FileExplorerDock(BaseDock):
             return
 
         # Ask user for file location
-        default_filename = "clarify_file_explorer_results.txt"
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Search Results", default_filename, "Text Files (*.txt);;All Files (*)"
+            self,
+            tr("file_list.dialog_save_results_title"),
+            tr("file_list.dialog_save_results_default"),
+            tr("file_list.dialog_save_results_filter"),
         )
 
         if not file_path:
@@ -1399,15 +1500,12 @@ class FileExplorerDock(BaseDock):
 
             QMessageBox.information(
                 self,
-                "Results Saved",
-                f"Search results saved successfully!\n\n"
-                f"File: {file_path}\n"
-                f"Total files: {total_files}\n"
-                f"Total matches: {total_matches}",
+                tr("file_list.results_saved_title"),
+                tr("file_list.results_saved_message").format(file_path, total_files, total_matches),
             )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save results:\n{str(e)}")
+            QMessageBox.critical(self, tr("file_list.error_title"), tr("file_list.error_save_failed").format(str(e)))
 
 
 def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[List[str]]:

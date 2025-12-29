@@ -190,12 +190,28 @@ class WindowSettings:
         
         # Normal exit confirmation
         if main_window.settings.get("confirm_on_exit", True):
-            reply = QMessageBox.question(
-                main_window,
-                "Exit Clarify",
-                "Are you sure you want to exit?",
-                QMessageBox.Yes | QMessageBox.No
-            )
+            # Import translation function
+            from ..i18n.translator import tr
+            
+            # Create custom message box with checkbox
+            msg_box = QMessageBox(main_window)
+            msg_box.setWindowTitle(tr("dialog.exit.title"))
+            msg_box.setText(tr("dialog.exit.message"))
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.No)
+            msg_box.setIcon(QMessageBox.Question)
+            
+            # Add checkbox "Don't show this message again"
+            from PySide6.QtWidgets import QCheckBox
+            checkbox = QCheckBox(tr("dialog.exit.dont_show_again"))
+            msg_box.setCheckBox(checkbox)
+            
+            reply = msg_box.exec()
+            
+            # Save preference if checkbox is checked
+            if checkbox.isChecked():
+                main_window.settings.set("confirm_on_exit", False)
+                main_window.settings.save()
             
             if reply == QMessageBox.Yes:
                 WindowSettings.save_geometry(main_window)

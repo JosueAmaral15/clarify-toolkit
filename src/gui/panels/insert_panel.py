@@ -48,6 +48,7 @@ from ...core import (
 from ...utils import (
     walk_files, read_text, write_text
 )
+from ...i18n.translator import tr
 
 # Components from this package
 from .results_tree import ResultsTree
@@ -75,85 +76,85 @@ class InsertPanel(QWidget):
         self._current_progress_widget = None
         self._processing_modal = None  # Modal de progresso (v2.7.0)
         
-        layout.addWidget(QLabel("Root path:"), 0, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_root_path")), 0, 0)
         self.ed_path = QLineEdit()
         self.ed_path.setToolTip("Enter the directory path or file path for insertion")
-        self.btn_browse = QPushButton("Browse…")
+        self.btn_browse = QPushButton(tr("insert_panel.btn_browse"))
         self.btn_browse.setToolTip("Open file browser to select a directory or file")
         layout.addWidget(self.ed_path, 0, 1, 1, 3)
         layout.addWidget(self.btn_browse, 0, 4)
         
-        self.is_file = QCheckBox("Is File?")
+        self.is_file = QCheckBox(tr("insert_panel.chk_is_file"))
         self.is_file.setToolTip("Check this if you want to process a single file instead of a directory")
         layout.addWidget(self.is_file, 1, 0)
         
         # Extension filter (v2.9.0, v2.9.1 - optional)
-        self.chk_use_ext_filter = QCheckBox("Use extension filter")
+        self.chk_use_ext_filter = QCheckBox(tr("insert_panel.chk_use_ext_filter"))
         self.chk_use_ext_filter.setChecked(True)
         self.chk_use_ext_filter.setToolTip("Enable simple extension filtering")
         layout.addWidget(self.chk_use_ext_filter, 2, 0)
-        layout.addWidget(QLabel("Extensions:"), 2, 1)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_extensions")), 2, 1)
         self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
-        self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
+        self.ed_extensions.setPlaceholderText(tr("insert_panel.placeholder_extensions"))
         self.ed_extensions.setToolTip("Filter files by extensions")
         layout.addWidget(self.ed_extensions, 2, 2, 1, 3)
         
         # Sort results option (v2.9.5)
-        self.chk_sort_results = QCheckBox("Sort results alphabetically")
+        self.chk_sort_results = QCheckBox(tr("insert_panel.chk_sort_results"))
         self.chk_sort_results.setChecked(False)
         self.chk_sort_results.setToolTip("Sort file paths and results in alphabetical order")
         layout.addWidget(self.chk_sort_results, 2, 5)
         
-        layout.addWidget(QLabel("Include globs (advanced):"), 3, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_include_globs")), 3, 0)
         self.ed_inc = QLineEdit()
-        self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/**")
+        self.ed_inc.setPlaceholderText(tr("insert_panel.placeholder_include"))
         self.ed_inc.setToolTip("Advanced glob patterns to include specific files")
         layout.addWidget(self.ed_inc, 3, 1, 1, 4)
 
-        layout.addWidget(QLabel("Exclude globs:"), 4, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_exclude_globs")), 4, 0)
         self.ed_exc = QLineEdit("node_modules;dist;build;.git")
         self.ed_exc.setToolTip("Glob patterns to exclude folders/files")
         layout.addWidget(self.ed_exc, 4, 1, 1, 4)
 
         # Search/Lookup section (new feature)
-        gb_lookup = QGroupBox("Line Lookup (optional - leave empty to use line number)")
+        gb_lookup = QGroupBox(tr("insert_panel.group_lookup"))
         g_lookup = QGridLayout(gb_lookup)
-        g_lookup.addWidget(QLabel("Search query:"), 0, 0)
+        g_lookup.addWidget(QLabel(tr("insert_panel.lbl_search_query")), 0, 0)
         self.ed_query = QLineEdit()
-        self.ed_query.setPlaceholderText("Enter text to search for line position")
+        self.ed_query.setPlaceholderText(tr("insert_panel.placeholder_query"))
         self.ed_query.setToolTip("Search for text to determine insertion position dynamically")
         g_lookup.addWidget(self.ed_query, 0, 1, 1, 3)
         
-        self.chk_lookup_case = QCheckBox("Case sensitive")
+        self.chk_lookup_case = QCheckBox(tr("insert_panel.chk_case_sensitive"))
         self.chk_lookup_case.setToolTip("Match exact case in lookup query")
-        self.chk_lookup_word = QCheckBox("Whole word")
+        self.chk_lookup_word = QCheckBox(tr("insert_panel.chk_whole_word"))
         self.chk_lookup_word.setToolTip("Match only complete words in lookup")
-        self.chk_lookup_regex = QCheckBox("Regex")
+        self.chk_lookup_regex = QCheckBox(tr("insert_panel.chk_regex"))
         self.chk_lookup_regex.setToolTip("Treat lookup query as a regular expression")
         g_lookup.addWidget(self.chk_lookup_case, 1, 0)
         g_lookup.addWidget(self.chk_lookup_word, 1, 1)
         g_lookup.addWidget(self.chk_lookup_regex, 1, 2)
         
         self.cb_lookup_occurrence = QComboBox()
-        self.cb_lookup_occurrence.addItems(["First", "Last", "All"])
+        self.cb_lookup_occurrence.addItems([tr("insert_panel.combo_first"), tr("insert_panel.combo_last"), tr("insert_panel.combo_all")])
         self.cb_lookup_occurrence.setToolTip("Which occurrence to use for insertion")
-        g_lookup.addWidget(QLabel("Occurrence:"), 1, 3)
+        g_lookup.addWidget(QLabel(tr("insert_panel.lbl_occurrence")), 1, 3)
         g_lookup.addWidget(self.cb_lookup_occurrence, 1, 4)
         layout.addWidget(gb_lookup, 5, 0, 1, 5)
 
-        layout.addWidget(QLabel("Line number (1-based):"), 6, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_line_number")), 6, 0)
         self.spin_line = QSpinBox(); self.spin_line.setRange(1, 10_000_000); self.spin_line.setValue(1)
         self.spin_line.setToolTip("Manual line number (used only if search query is empty)")
         layout.addWidget(self.spin_line, 6, 1)
 
-        layout.addWidget(QLabel("Insert text:"), 7, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_insert_text")), 7, 0)
         self.ed_text = QPlainTextEdit()
         self.ed_text.setMinimumHeight(60)
         self.ed_text.setMaximumHeight(200)
         self.ed_text.setToolTip("Enter the text content to insert into files\nResizable: drag bottom edge to adjust height")
         layout.addWidget(self.ed_text, 7, 1, 1, 4)
 
-        layout.addWidget(QLabel("Mode:"), 8, 0)
+        layout.addWidget(QLabel(tr("insert_panel.lbl_mode")), 8, 0)
         self.cb_mode = QComboBox()
         self.cb_mode.addItems([InsertMode.LEFT, InsertMode.RIGHT, InsertMode.REPLACE,
                                InsertMode.INSERT_ABOVE, InsertMode.INSERT_BELOW])
@@ -166,11 +167,11 @@ class InsertPanel(QWidget):
         self._debounce_timer.timeout.connect(self._start_search_threaded)
         
         # Advanced conditions (same as Search/Replace, including `content`)
-        gb3 = QGroupBox("Advanced conditions (folder mode)")
+        gb3 = QGroupBox(tr("insert_panel.group_advanced"))
         g3 = QGridLayout(gb3)
         
         # Add AND/OR selector at the top
-        lbl_logic = QLabel("Logic Operator:")
+        lbl_logic = QLabel(tr("insert_panel.lbl_logic_operator"))
         self.combo_logic_op = QComboBox()
         self.combo_logic_op.addItems(["AND", "OR"])
         self.combo_logic_op.setToolTip("AND: All conditions must match\nOR: At least one condition must match")
@@ -182,14 +183,14 @@ class InsertPanel(QWidget):
         g3.addLayout(logic_layout, 0, 0, 1, 8)
         
         # Add headers (now starting from row 1)
-        g3.addWidget(QLabel("Field"), 1, 0)
-        g3.addWidget(QLabel("Operator"), 1, 1)
-        g3.addWidget(QLabel("Value"), 1, 2)
-        g3.addWidget(QLabel("Scope"), 1, 3)
-        g3.addWidget(QLabel("Scope Param"), 1, 4)
-        g3.addWidget(QLabel("Case"), 1, 5)
-        g3.addWidget(QLabel("Word"), 1, 6)
-        g3.addWidget(QLabel("Regex"), 1, 7)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_field")), 1, 0)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_operator")), 1, 1)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_value")), 1, 2)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_scope")), 1, 3)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_scope_param")), 1, 4)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_case")), 1, 5)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_word")), 1, 6)
+        g3.addWidget(QLabel(tr("insert_panel.lbl_regex")), 1, 7)
         
         # Dynamic condition rows (Task #5 - v2.9.7) - same as SearchReplacePanel
         self.cond_list: List[Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]] = []
@@ -204,13 +205,13 @@ class InsertPanel(QWidget):
             self._add_condition_row()
         
         # Add Condition button
-        btn_add_condition = QPushButton("➕ Add Condition")
+        btn_add_condition = QPushButton(tr("insert_panel.btn_add_condition"))
         btn_add_condition.setToolTip("Add a new condition row (no maximum limit)")
         btn_add_condition.clicked.connect(self._add_condition_row)
         self.buttons_layout_ref.addWidget(btn_add_condition)
         
         # Clear All Conditions button (v2.9.5)
-        btn_clear_conditions = QPushButton("🗑️ Clear All Conditions")
+        btn_clear_conditions = QPushButton(tr("insert_panel.btn_clear_conditions"))
         btn_clear_conditions.setToolTip("Clear all advanced condition fields")
         btn_clear_conditions.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_conditions)
@@ -221,7 +222,7 @@ class InsertPanel(QWidget):
         
         layout.addWidget(gb3, 9, 0, 1, 5)
         
-        self.btn_apply = QPushButton("Apply to files")
+        self.btn_apply = QPushButton(tr("insert_panel.btn_apply"))
         self.btn_apply.setToolTip("Execute insertion operation on all matching files")
         layout.addWidget(self.btn_apply, 10, 4)
 
@@ -231,9 +232,9 @@ class InsertPanel(QWidget):
         # Results panel with save button
         results_layout = QVBoxLayout()
         results_header = QHBoxLayout()
-        results_label = QLabel("Match Results")
+        results_label = QLabel(tr("insert_panel.lbl_match_results"))
         results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
-        self.btn_save_results = QPushButton("💾 Save Results")
+        self.btn_save_results = QPushButton(tr("insert_panel.btn_save_results"))
         self.btn_save_results.setToolTip("Save all match results to a text file")
         self.btn_save_results.clicked.connect(self._save_results)
         results_header.addWidget(results_label)
@@ -330,7 +331,7 @@ class InsertPanel(QWidget):
         cb_scope.currentTextChanged.connect(self._schedule_live_refresh)
         
         ed_scope_val = QLineEdit()
-        ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
+        ed_scope_val.setPlaceholderText(tr("insert_panel.placeholder_scope_param"))
         ed_scope_val.textChanged.connect(self._schedule_live_refresh)
         
         # Checkboxes for matching options
@@ -348,7 +349,7 @@ class InsertPanel(QWidget):
         chk_regex.stateChanged.connect(self._schedule_live_refresh)
         
         # Remove button (X)
-        btn_remove = QPushButton("✖")
+        btn_remove = QPushButton(tr("insert_panel.btn_remove"))
         btn_remove.setFixedWidth(30)
         btn_remove.setToolTip("Remove this condition row")
         btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
@@ -382,8 +383,8 @@ class InsertPanel(QWidget):
         """Remove a condition row (Task #5 - v2.9.7)"""
         # Enforce minimum of 3 rows
         if len(self.cond_list) <= 3:
-            QMessageBox.warning(self, "Cannot Remove", 
-                              "Minimum of 3 condition rows required.\nClear the fields instead.")
+            QMessageBox.warning(self, tr("insert_panel.warning_cannot_remove_title"), 
+                              tr("insert_panel.warning_cannot_remove_msg"))
             return
         
         # Remove from list
@@ -749,7 +750,7 @@ class InsertPanel(QWidget):
         else:
             msg += f"\n\nUsed line number: {manual_line}"
         
-        QMessageBox.information(self, "Insert", msg)
+        QMessageBox.information(self, tr("insert_panel.msg_insert_title"), msg)
         self._start_search_threaded()
     
     def _save_results(self):
@@ -757,8 +758,8 @@ class InsertPanel(QWidget):
         matches_data = self.results.get_matches_data()
         
         if not matches_data:
-            QMessageBox.information(self, "No Results", 
-                "No match results to save. Advanced conditions must be set to see preview results.")
+            QMessageBox.information(self, tr("insert_panel.msg_no_results_title"), 
+                tr("insert_panel.msg_no_results_msg"))
             return
         
         # Ask user for file location
@@ -784,12 +785,12 @@ class InsertPanel(QWidget):
             total_files = len(matches_data)
             total_matches = sum(len(items) for items in matches_data.values())
             
-            QMessageBox.information(self, "Results Saved", 
+            QMessageBox.information(self, tr("insert_panel.msg_results_saved_title"), 
                 f"Match results saved successfully!\n\n"
                 f"File: {file_path}\n"
                 f"Total files: {total_files}\n"
                 f"Total matches: {total_matches}")
         
         except Exception as e:
-            QMessageBox.critical(self, "Error", 
-                f"Failed to save results:\n{str(e)}")
+            QMessageBox.critical(self, tr("insert_panel.msg_error_title"), 
+                tr("insert_panel.msg_error_save").format(str(e)))

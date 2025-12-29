@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n import tooltip_tr
+from src.i18n.translator import tr
 from src.accessibility_manager import AccessibilityManager
 
 
@@ -58,17 +59,17 @@ class OperationOptionsWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         
         # === Operations Section ===
-        ops_group = QGroupBox("Operations (Pipeline: Left → Right)")
+        ops_group = QGroupBox(tr("operation_options.operations_group"))
         ops_layout = QVBoxLayout()
         
-        ops_layout.addWidget(QLabel("Select operations to perform:"))
-        self.chk_intersection = QCheckBox("∩ Intersection")
+        ops_layout.addWidget(QLabel(tr("operation_options.select_operations")))
+        self.chk_intersection = QCheckBox(tr("operation_options.chk_intersection"))
         self.chk_intersection.setToolTip(tooltip_tr("set_ops.intersection"))
-        self.chk_union = QCheckBox("∪ Union")
+        self.chk_union = QCheckBox(tr("operation_options.chk_union"))
         self.chk_union.setToolTip(tooltip_tr("set_ops.union"))
-        self.chk_difference = QCheckBox("− Difference")
+        self.chk_difference = QCheckBox(tr("operation_options.chk_difference"))
         self.chk_difference.setToolTip(tooltip_tr("set_ops.difference"))
-        self.chk_symmetric = QCheckBox("⊕ Symmetric Difference (2 files only)")
+        self.chk_symmetric = QCheckBox(tr("operation_options.chk_symmetric"))
         self.chk_symmetric.setToolTip(tooltip_tr("set_ops.symmetric"))
         
         ops_layout.addWidget(self.chk_intersection)
@@ -80,7 +81,7 @@ class OperationOptionsWidget(QWidget):
         main_layout.addWidget(ops_group)
         
         # === Comparison Mode Section ===
-        comp_group = QGroupBox("Comparison Mode")
+        comp_group = QGroupBox(tr("operation_options.comparison_mode"))
         comp_layout = QVBoxLayout()
         
         self.radio_key_value = QRadioButton("Keys and values (strict types)")
@@ -104,16 +105,16 @@ class OperationOptionsWidget(QWidget):
         main_layout.addWidget(comp_group)
         
         # === Options Section ===
-        opts_group = QGroupBox("Options")
+        opts_group = QGroupBox(tr("operation_options.options_group"))
         opts_layout = QVBoxLayout()
         
-        self.chk_ignore_case_keys = QCheckBox("Ignore case in keys")
+        self.chk_ignore_case_keys = QCheckBox(tr("operation_options.chk_ignore_case_keys"))
         self.chk_ignore_case_keys.setToolTip(tooltip_tr("set_ops.ignore_case_keys"))
-        self.chk_ignore_case_values = QCheckBox("Ignore case in values")
+        self.chk_ignore_case_values = QCheckBox(tr("operation_options.chk_ignore_case_values"))
         self.chk_ignore_case_values.setToolTip(tooltip_tr("set_ops.ignore_case_values"))
-        self.chk_skip_empty = QCheckBox("Skip empty values")
+        self.chk_skip_empty = QCheckBox(tr("operation_options.chk_skip_empty"))
         self.chk_skip_empty.setToolTip(tooltip_tr("set_ops.skip_empty"))
-        self.chk_arrays_ignore_order = QCheckBox("Arrays: ignore order")
+        self.chk_arrays_ignore_order = QCheckBox(tr("operation_options.chk_arrays_ignore_order"))
         self.chk_arrays_ignore_order.setToolTip(tooltip_tr("set_ops.arrays_ignore_order"))
         
         opts_layout.addWidget(self.chk_ignore_case_keys)
@@ -125,15 +126,15 @@ class OperationOptionsWidget(QWidget):
         main_layout.addWidget(opts_group)
         
         # === Output Format Section ===
-        output_group = QGroupBox("Output Format")
+        output_group = QGroupBox(tr("operation_options.output_format"))
         output_layout = QVBoxLayout()
         
-        output_layout.addWidget(QLabel("Select output organization:"))
+        output_layout.addWidget(QLabel(tr("operation_options.select_output")))
         self.combo_output = QComboBox()
         self.combo_output.addItems([
-            "JSON nested (all operations)", 
-            "Separate files", 
-            "Display only (no save)"
+            tr("operation_options.output_json_nested"), 
+            tr("operation_options.output_separate"), 
+            tr("operation_options.output_display_only")
         ])
         self.combo_output.setToolTip(tooltip_tr("set_ops.combo_output"))
         output_layout.addWidget(self.combo_output)

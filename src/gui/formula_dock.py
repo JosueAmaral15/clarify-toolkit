@@ -151,7 +151,7 @@ class AddStepDialog(QWidget):
         # Validation
         output_var = self.ed_output.text().strip()
         if not output_var:
-            QMessageBox.warning(self, "Validation Error", "Output variable is required")
+            QMessageBox.warning(self, tr("formula.msg_validation_error_title"), tr("formula.msg_output_required"))
             return
         
         # Create step
@@ -212,6 +212,14 @@ class FormulaDock(QDockWidget):
         self.tree_steps = QTreeWidget()
         self.tree_steps.setHeaderLabels(['Step', 'Expression'])
         self.tree_steps.setColumnWidth(0, 80)
+        
+        # Prevent horizontal expansion from long expressions (v2.9.117)
+        self.tree_steps.setWordWrap(False)
+        self.tree_steps.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.tree_steps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        header = self.tree_steps.header()
+        header.setStretchLastSection(True)
+        
         left_layout.addWidget(self.tree_steps)
         
         # Step management buttons
@@ -311,7 +319,7 @@ class FormulaDock(QDockWidget):
         """Edit selected step."""
         current_item = self.tree_steps.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "No Selection", "Please select a step to edit")
+            QMessageBox.warning(self, tr("formula.msg_no_selection_title"), tr("formula.msg_select_step_edit"))
             return
         
         index = self.tree_steps.indexOfTopLevelItem(current_item)
@@ -334,13 +342,13 @@ class FormulaDock(QDockWidget):
         """Remove selected step."""
         current_item = self.tree_steps.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "No Selection", "Please select a step to remove")
+            QMessageBox.warning(self, tr("formula.msg_no_selection_title"), tr("formula.msg_select_step_remove"))
             return
         
         index = self.tree_steps.indexOfTopLevelItem(current_item)
         reply = QMessageBox.question(
-            self, "Confirm Remove",
-            f"Remove step {index + 1}?",
+            self, tr("formula.msg_confirm_remove_title"),
+            tr("formula.msg_confirm_remove_msg").format(index + 1),
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -382,7 +390,15 @@ class FormulaDock(QDockWidget):
         self.tree_steps.clear()
         
         for i, step in enumerate(self.current_formula.steps, 1):
-            item = QTreeWidgetItem([f"Step {i}", step.get_display_text()])
+            display_text = step.get_display_text()
+            # Truncate long expressions to prevent horizontal expansion (v2.9.117)
+            if len(display_text) > 80:
+                display_text_short = display_text[:80] + "..."
+                item = QTreeWidgetItem([f"Step {i}", display_text_short])
+                # Add full text as tooltip
+                item.setToolTip(1, display_text)
+            else:
+                item = QTreeWidgetItem([f"Step {i}", display_text])
             self.tree_steps.addTopLevelItem(item)
     
     def _update_preview(self):
@@ -399,7 +415,7 @@ class FormulaDock(QDockWidget):
     def _execute_formula(self):
         """Execute current formula."""
         if not self.current_formula.steps:
-            QMessageBox.warning(self, "Empty Formula", "Add at least one step before executing")
+            QMessageBox.warning(self, tr("formula.msg_empty_formula_title"), tr("formula.msg_add_step_execute"))
             return
         
         # Get file paths from steps
@@ -436,13 +452,13 @@ class FormulaDock(QDockWidget):
     def _save_template(self):
         """Save current formula as template."""
         if not self.current_formula.steps:
-            QMessageBox.warning(self, "Empty Formula", "Add at least one step before saving")
+            QMessageBox.warning(self, tr("formula.msg_empty_formula_title"), tr("formula.msg_add_step_save"))
             return
         
         name = self.ed_formula_name.text().strip()
         if not name:
             name, ok = QInputDialog.getText(
-                self, "Save Template", "Enter formula name:"
+                self, tr("formula.dialog_save_template"), tr("formula.dialog_enter_name")
             )
             if not ok or not name:
                 return
@@ -451,27 +467,27 @@ class FormulaDock(QDockWidget):
         
         # Ask for description
         description, ok = QInputDialog.getMultiLineText(
-            self, "Save Template", "Description (optional):",
+            self, tr("formula.dialog_save_template"), tr("formula.dialog_description_optional"),
             self.current_formula.description
         )
         if ok:
             self.current_formula.description = description
         
         self.formula_manager.save_formula(self.current_formula)
-        QMessageBox.information(self, "Success", f"Formula '{name}' saved successfully!")
+        QMessageBox.information(self, tr("formula.msg_success_title"), tr("formula.msg_saved_success").format(name))
     
     def _load_template(self):
         """Load formula template."""
         formulas = self.formula_manager.get_formulas()
         
         if not formulas:
-            QMessageBox.information(self, "No Templates", "No saved templates found")
+            QMessageBox.information(self, tr("formula.msg_no_templates_title"), tr("formula.msg_no_templates_found"))
             return
         
         # Show selection dialog
         names = [f.name for f in formulas]
         name, ok = QInputDialog.getItem(
-            self, "Load Template", "Select formula:", names, 0, False
+            self, tr("formula.dialog_load_template"), tr("formula.dialog_select_formula"), names, 0, False
         )
         
         if ok and name:
@@ -481,14 +497,14 @@ class FormulaDock(QDockWidget):
                 self.ed_formula_name.setText(formula.name)
                 self._refresh_tree()
                 self._update_preview()
-                QMessageBox.information(self, "Success", f"Formula '{name}' loaded!")
+                QMessageBox.information(self, tr("formula.msg_success_title"), tr("formula.msg_loaded_success").format(name))
     
     def _clear_all(self):
         """Clear all steps and reset formula."""
         if self.current_formula.steps:
             reply = QMessageBox.question(
-                self, "Confirm Clear",
-                "Clear all steps?",
+                self, tr("formula.msg_confirm_clear_title"),
+                tr("formula.msg_confirm_clear_msg"),
                 QMessageBox.Yes | QMessageBox.No
             )
             if reply != QMessageBox.Yes:

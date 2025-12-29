@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
+from src.i18n.translator import tr
 
 
 class FileNameQueryPanel(QWidget):
@@ -37,19 +38,19 @@ class FileNameQueryPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Label
-        label = QLabel("File Name:")
-        label.setToolTip("Filename pattern (supports wildcards: *.py, test_*.json)")
+        label = QLabel(tr("search.lbl_filename"))
+        label.setToolTip(tr("search.tooltip_filename"))
         layout.addWidget(label)
         
         # Pattern input
         self.ed_pattern = QLineEdit()
-        self.ed_pattern.setPlaceholderText("*.py, test_*.json, **/*.txt")
+        self.ed_pattern.setPlaceholderText(tr("search.placeholder_filename"))
         self.ed_pattern.textChanged.connect(self.pattern_changed.emit)
         layout.addWidget(self.ed_pattern, stretch=1)
         
         # Clear button
-        btn_clear = QPushButton("Clear")
-        btn_clear.setToolTip("Clear filename pattern")
+        btn_clear = QPushButton(tr("search.btn_clear_filename"))
+        btn_clear.setToolTip(tr("search.tooltip_clear_filename"))
         btn_clear.clicked.connect(self._on_clear)
         layout.addWidget(btn_clear)
     
@@ -89,13 +90,13 @@ class ContentQueryPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Label
-        label = QLabel("Content Search:")
-        label.setToolTip("Search for text within file contents (multi-line supported)")
+        label = QLabel(tr("search.lbl_content"))
+        label.setToolTip(tr("search.tooltip_content"))
         layout.addWidget(label)
         
         # Text editor
         self.ed_query = QTextEdit()
-        self.ed_query.setPlaceholderText("Search text...\nMulti-line supported")
+        self.ed_query.setPlaceholderText(tr("search.placeholder_content"))
         self.ed_query.setMaximumHeight(80)
         self.ed_query.textChanged.connect(lambda: self.query_changed.emit(self.get_query()))
         layout.addWidget(self.ed_query)
@@ -135,33 +136,30 @@ class SearchOptionsPanel(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        label = QLabel("Options:")
+        label = QLabel(tr("search.lbl_options"))
         layout.addWidget(label)
         
         # Case-sensitive
-        self.chk_case = QCheckBox("Case Sensitive")
-        self.chk_case.setToolTip("Match case exactly")
+        self.chk_case = QCheckBox(tr("search.chk_case_sensitive"))
+        self.chk_case.setToolTip(tr("search.tooltip_case_sensitive"))
         self.chk_case.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_case)
         
         # Whole word
-        self.chk_word = QCheckBox("Whole Word")
-        self.chk_word.setToolTip("Match whole words only")
+        self.chk_word = QCheckBox(tr("search.chk_whole_word"))
+        self.chk_word.setToolTip(tr("search.tooltip_whole_word"))
         self.chk_word.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_word)
         
         # Regex
-        self.chk_regex = QCheckBox("Regex")
-        self.chk_regex.setToolTip("Use regular expressions")
+        self.chk_regex = QCheckBox(tr("search.chk_regex"))
+        self.chk_regex.setToolTip(tr("search.tooltip_regex"))
         self.chk_regex.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_regex)
         
         # Multi-line (from Search/Replace) - CRITICAL FEATURE
-        self.chk_multi_query = QCheckBox("Multi-line")
-        self.chk_multi_query.setToolTip("Enable multi-line query mode:\n"
-                                        "- Each line is a separate search\n"
-                                        "- Lines starting with # are comments\n"
-                                        "- Empty lines are ignored")
+        self.chk_multi_query = QCheckBox(tr("search.chk_multi_line"))
+        self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
         self.chk_multi_query.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_multi_query)
         
@@ -208,33 +206,33 @@ class ReplacePanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         # Label
-        label = QLabel("Replace With:")
-        label.setToolTip("Replacement text (multi-line supported)")
+        label = QLabel(tr("search.lbl_replace"))
+        label.setToolTip(tr("search.tooltip_replace"))
         layout.addWidget(label)
         
         # Text editor
         self.ed_replace = QTextEdit()
-        self.ed_replace.setPlaceholderText("Replacement text...\nMulti-line supported")
+        self.ed_replace.setPlaceholderText(tr("search.placeholder_replace"))
         self.ed_replace.setMaximumHeight(80)
         layout.addWidget(self.ed_replace)
         
         # Options row
         options_layout = QHBoxLayout()
         
-        self.chk_preserve_case = QCheckBox("Preserve Case")
-        self.chk_preserve_case.setToolTip("Maintain original case pattern in replacements")
+        self.chk_preserve_case = QCheckBox(tr("search.chk_preserve_case"))
+        self.chk_preserve_case.setToolTip(tr("search.tooltip_preserve_case"))
         options_layout.addWidget(self.chk_preserve_case)
         
         options_layout.addStretch()
         
         # Action buttons
-        self.btn_replace_first = QPushButton("Replace First")
-        self.btn_replace_first.setToolTip("Replace first occurrence only")
+        self.btn_replace_first = QPushButton(tr("search.btn_replace_first"))
+        self.btn_replace_first.setToolTip(tr("search.tooltip_replace_first"))
         self.btn_replace_first.clicked.connect(self.replace_first_requested.emit)
         options_layout.addWidget(self.btn_replace_first)
         
-        self.btn_replace_all = QPushButton("Replace All")
-        self.btn_replace_all.setToolTip("Replace all occurrences")
+        self.btn_replace_all = QPushButton(tr("search.btn_replace_all"))
+        self.btn_replace_all.setToolTip(tr("search.tooltip_replace_all"))
         self.btn_replace_all.clicked.connect(self.replace_all_requested.emit)
         options_layout.addWidget(self.btn_replace_all)
         
@@ -289,25 +287,25 @@ class ConditionsGrid(QWidget):
         header_layout = QHBoxLayout()
         
         # Logic operator
-        label_logic = QLabel("Logic:")
+        label_logic = QLabel(tr("search.lbl_logic"))
         header_layout.addWidget(label_logic)
         
         self.combo_logic = QComboBox()
         self.combo_logic.addItems(["AND", "OR"])
-        self.combo_logic.setToolTip("Logical operator between conditions")
+        self.combo_logic.setToolTip(tr("search.tooltip_logic"))
         self.combo_logic.currentTextChanged.connect(self._emit_conditions)
         header_layout.addWidget(self.combo_logic)
         
         header_layout.addStretch()
         
         # Buttons
-        btn_add = QPushButton("+ Add Condition")
-        btn_add.setToolTip("Add new condition row")
+        btn_add = QPushButton(tr("search.btn_add_condition"))
+        btn_add.setToolTip(tr("search.tooltip_add_condition"))
         btn_add.clicked.connect(self.add_condition_row)
         header_layout.addWidget(btn_add)
         
-        btn_clear = QPushButton("Clear All")
-        btn_clear.setToolTip("Remove all conditions")
+        btn_clear = QPushButton(tr("search.btn_clear_all"))
+        btn_clear.setToolTip(tr("search.tooltip_clear_all"))
         btn_clear.clicked.connect(self.clear_conditions)
         header_layout.addWidget(btn_clear)
         
@@ -330,36 +328,37 @@ class ConditionsGrid(QWidget):
         
         # Field selector
         combo_field = QComboBox()
-        combo_field.addItems(["filename", "path", "ext", "size", "mtime", "content"])
-        combo_field.setToolTip("Choose field to filter by")
+        combo_field.addItems([tr("search.field_filename"), tr("search.field_path"), tr("search.field_ext"), 
+                              tr("search.field_size"), tr("search.field_mtime"), tr("search.field_content")])
+        combo_field.setToolTip(tr("search.tooltip_field"))
         row_layout.addWidget(combo_field)
         
         # Operator selector
         combo_operator = QComboBox()
         combo_operator.addItems(["=", "!=", "contains", "!contains", ">", "<", ">=", "<=", "regex"])
-        combo_operator.setToolTip("Choose comparison operator")
+        combo_operator.setToolTip(tr("search.tooltip_operator"))
         row_layout.addWidget(combo_operator)
         
         # Value input
         line_value = QLineEdit()
-        line_value.setPlaceholderText("Enter value...")
-        line_value.setToolTip("Enter value to compare against")
+        line_value.setPlaceholderText(tr("search.placeholder_value"))
+        line_value.setToolTip(tr("search.tooltip_value"))
         row_layout.addWidget(line_value, 1)  # Stretch to fill space
         
         # Options for content field
-        chk_case = QCheckBox("Case")
-        chk_case.setToolTip("Case sensitive")
+        chk_case = QCheckBox(tr("search.chk_case"))
+        chk_case.setToolTip(tr("search.tooltip_case"))
         chk_case.setEnabled(False)  # Only enabled for content field
         row_layout.addWidget(chk_case)
         
-        chk_regex = QCheckBox("Regex")
-        chk_regex.setToolTip("Use regex pattern")
+        chk_regex = QCheckBox(tr("search.chk_regex"))
+        chk_regex.setToolTip(tr("search.tooltip_regex_option"))
         chk_regex.setEnabled(False)  # Only enabled for content field
         row_layout.addWidget(chk_regex)
         
         # Delete button
-        btn_delete = QPushButton("🗑️")
-        btn_delete.setToolTip("Remove this condition")
+        btn_delete = QPushButton(tr("search.btn_delete"))
+        btn_delete.setToolTip(tr("search.tooltip_delete"))
         btn_delete.setMaximumWidth(40)
         btn_delete.clicked.connect(lambda: self._remove_condition_row(row_widget))
         row_layout.addWidget(btn_delete)

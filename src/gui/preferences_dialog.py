@@ -52,6 +52,11 @@ class PreferencesDialog(QDialog):
         # Confirm exit checkbox
         self.chk_confirm_exit = QCheckBox(tr("dialog.preferences.confirm_exit"))
         self.chk_confirm_exit.setChecked(self.settings.get("confirm_on_exit", True))
+        self.chk_confirm_exit.setToolTip(
+            "Show confirmation dialog when closing the application. "
+            "You can also disable this by checking 'Don't show this message again' "
+            "in the exit confirmation dialog."
+        )
         
         # Auto-save checkbox
         self.chk_auto_save = QCheckBox(tr("dialog.preferences.auto_save"))

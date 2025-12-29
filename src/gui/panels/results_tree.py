@@ -8,10 +8,107 @@ import sys
 from typing import Dict, List, Tuple
 
 from PySide6.QtWidgets import (
-    QTreeWidget, QTreeWidgetItem, QMenu, QMessageBox, QApplication
+    QTreeWidget, QTreeWidgetItem, QMenu, QMessageBox, QApplication, QHeaderView, QCheckBox,
+    QStyledItemDelegate, QStyleOptionViewItem, QStyle
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect, QRectF
+from PySide6.QtGui import QColor, QPainter, QFontMetrics, QTextDocument, QAbstractTextDocumentLayout
+
+
+class WordWrapDelegate(QStyledItemDelegate):
+    """Custom delegate to enable word wrap in QTreeWidget items (v2.9.118)."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._word_wrap_enabled = False
+    
+    def set_word_wrap(self, enabled: bool):
+        """Enable or disable word wrap."""
+        self._word_wrap_enabled = enabled
+    
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex):
+        """Custom paint to support word wrap using QTextDocument."""
+        if self._word_wrap_enabled:
+            text = index.data(Qt.ItemDataRole.DisplayRole)
+            if text:
+                painter.save()
+                
+                # Draw background
+                if option.state & QStyle.StateFlag.State_Selected:
+                    painter.fillRect(option.rect, option.palette.highlight())
+                
+                # Create QTextDocument for proper text rendering with word wrap
+                doc = QTextDocument()
+                doc.setDefaultFont(option.font)
+                
+                # Remove trailing/leading whitespace and newlines to prevent extra spacing
+                clean_text = text.strip().replace('\n', ' ')
+                doc.setPlainText(clean_text)
+                
+                # Use actual tree widget width instead of option.rect.width()
+                tree = self.parent()
+                if tree and hasattr(tree, 'viewport'):
+                    available_width = tree.viewport().width() - 40  # Subtract scrollbar + margins
+                else:
+                    available_width = option.rect.width() - 8 if option.rect.width() > 0 else 400
+                
+                doc.setTextWidth(available_width)
+                
+                # Remove spacing between blocks (paragraphs)
+                doc.setDocumentMargin(0)
+                
+                # Set text color based on selection
+                if option.state & QStyle.StateFlag.State_Selected:
+                    painter.setPen(option.palette.highlightedText().color())
+                else:
+                    painter.setPen(option.palette.text().color())
+                
+                # Translate painter to draw position (no extra offset for tight spacing)
+                painter.translate(option.rect.left(), option.rect.top())
+                
+                # Draw the text document
+                doc.drawContents(painter)
+                
+                painter.restore()
+                return
+        
+        # Default painting
+        super().paint(painter, option, index)
+    
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex):
+        """Calculate size hint with word wrap using QTextDocument."""
+        if self._word_wrap_enabled:
+            text = index.data(Qt.ItemDataRole.DisplayRole)
+            if text:
+                # Use QTextDocument to calculate proper wrapped text height
+                doc = QTextDocument()
+                doc.setDefaultFont(option.font)
+                
+                # Remove trailing/leading whitespace and newlines to prevent extra spacing
+                clean_text = text.strip().replace('\n', ' ')
+                doc.setPlainText(clean_text)
+                
+                # Use actual tree widget width instead of option.rect.width()
+                tree = self.parent()
+                if tree and hasattr(tree, 'viewport'):
+                    available_width = tree.viewport().width() - 40  # Subtract scrollbar + margins
+                else:
+                    available_width = option.rect.width() - 8 if option.rect.width() > 0 else 400
+                
+                doc.setTextWidth(available_width)
+                
+                # Remove spacing between blocks
+                doc.setDocumentMargin(0)
+                
+                # Return FULL document height to accommodate all wrapped lines
+                size = doc.size()
+                height = int(size.height()) + 4  # Add small padding for readability
+                return QRect(0, 0, int(size.width()) + 8, height).size()
+        else:
+            # When word wrap is OFF, also use compact height
+            return QRect(0, 0, option.rect.width(), option.fontMetrics.height() + 4).size()
+        
+        return super().sizeHint(option, index)
 
 
 class ResultsTree(QTreeWidget):
@@ -32,7 +129,37 @@ class ResultsTree(QTreeWidget):
         self.setRootIsDecorated(True)
         self.setColumnCount(1)
         self.setUniformRowHeights(True)
+        self.setStyleSheet("""
+            QTreeWidget::item {
+                padding-top: 0px;
+                padding-bottom: 0px;
+                margin-top: 0px;
+                margin-bottom: 0px;
+            }
+        """)
         self._matches_data: Dict[str, List[Tuple[int, int, str]]] = {}
+        self._word_wrap_enabled = False  # Default: no word wrap
+        
+        # Word wrap disabled by default - allow horizontal scroll (v2.9.117)
+        self.setWordWrap(False)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        
+        # Use Interactive mode to allow horizontal scroll when word wrap is off
+        # This fixes: path truncation, scroll bar not appearing, word wrap not working
+        self.header().setStretchLastSection(True)
+        self.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        
+        # Set initial column width (user can resize manually)
+        self.setColumnWidth(0, 800)  # Wider default for long paths
+        
+        # Allow manual resize
+        self.header().setSectionsClickable(True)
+        self.header().setSectionsMovable(False)
+        
+        # Set size policy to allow expansion
+        from PySide6.QtWidgets import QSizePolicy
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMinimumWidth(300)
         
         # Enable multi-selection with CTRL/Shift (v2.9.2)
         self.setSelectionMode(QTreeWidget.ExtendedSelection)
@@ -41,16 +168,83 @@ class ResultsTree(QTreeWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
         
-        # Enable mouse tracking for hover effects (v2.5.1)
-        self.setMouseTracking(True)
-        self.itemEntered.connect(self._on_item_hover)
+        # DISABLED: Mouse tracking causes horizontal scrolling/jumping when hovering
+        # The itemEntered signal triggers updates that affect column width
+        # self.setMouseTracking(True)
+        # self.itemEntered.connect(self._on_item_hover)
         
         # Status label at bottom of tree (v2.5.1)
         self._status_label = None  # Will be set by parent
+        
+        # Custom delegate for word wrap (v2.9.118)
+        self._delegate = WordWrapDelegate(self)
+        self.setItemDelegate(self._delegate)
     
     def set_status_label(self, label):
         """Set the status label widget for showing position info (v2.5.1)."""
         self._status_label = label
+    
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts like CTRL+C for copy."""
+        if event.key() == Qt.Key.Key_C and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            self._copy_selected()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
+    
+    def resizeEvent(self, event):
+        """Handle resize to update word wrap when panel width changes."""
+        super().resizeEvent(event)
+        # Force recalculation of item heights when resizing with word wrap enabled
+        if self._word_wrap_enabled:
+            self.scheduleDelayedItemsLayout()
+            self.viewport().update()
+    
+    def set_word_wrap(self, enabled: bool):
+        """Toggle word wrap mode (v2.9.118 - fixed with custom delegate)."""
+        self._word_wrap_enabled = enabled
+        self.setWordWrap(enabled)
+        
+        # Update delegate
+        self._delegate.set_word_wrap(enabled)
+        
+        if enabled:
+            # Word wrap ON: Stretch to fit panel width and wrap text
+            self.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            # Allow variable height for wrapped text
+            self.setUniformRowHeights(False)
+            # Tight spacing - no padding or margin
+            self.setStyleSheet("""
+                QTreeWidget::item {
+                    padding-top: 0px;
+                    padding-bottom: 0px;
+                    margin-top: 0px;
+                    margin-bottom: 0px;
+                }
+            """)
+        else:
+            # Word wrap OFF: use Interactive to allow horizontal scroll
+            self.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            self.setColumnWidth(0, 800)  # Reset to default width
+            # Back to uniform for performance
+            self.setUniformRowHeights(True)
+            # Tight spacing - no padding or margin
+            self.setStyleSheet("""
+                QTreeWidget::item {
+                    padding-top: 0px;
+                    padding-bottom: 0px;
+                    margin-top: 0px;
+                    margin-bottom: 0px;
+                }
+            """)
+        
+        # Refresh display if there's data
+        if self._matches_data:
+            self.populate(self._matches_data, sort_results=False)
+            # Force viewport update
+            self.viewport().update()
     
     def _on_item_hover(self, item: QTreeWidgetItem, column: int):
         """Show position info when hovering over match items (v2.5.1)."""
@@ -119,7 +313,17 @@ class ResultsTree(QTreeWidget):
                     items = sorted(items, key=lambda x: (x[0], x[1]))  # Sort by line, then col
                 
                 for line, col, snippet in items:
-                    leaf = QTreeWidgetItem([f"{line}:{col}  {snippet.strip()}"])
+                    # Truncate long snippets only if word wrap is disabled (v2.9.117)
+                    snippet_clean = snippet.strip()
+                    if not self._word_wrap_enabled and len(snippet_clean) > 120:
+                        snippet_clean = snippet_clean[:120] + "..."
+                    
+                    leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
+                    
+                    # Store full snippet in tooltip if truncated and word wrap is off
+                    if not self._word_wrap_enabled and len(snippet.strip()) > 120:
+                        leaf.setToolTip(0, f"Full content:\n{snippet.strip()}")
+                    
                     top.addChild(leaf)
             self.expandAll()
         finally:
@@ -190,7 +394,7 @@ class ResultsTree(QTreeWidget):
         copy_action.triggered.connect(self._copy_selected)
         
         # Copy all action
-        copy_all_action = menu.addAction("📋 Copy All Results")
+        copy_all_action = menu.addAction("📋 Copy All ReResposta: sults")
         copy_all_action.setEnabled(bool(self._matches_data))
         copy_all_action.triggered.connect(self._copy_all)
         
@@ -227,12 +431,14 @@ class ResultsTree(QTreeWidget):
         menu.exec_(self.mapToGlobal(position))
     
     def _copy_selected(self):
-        """Copy selected items to clipboard (v2.9.2)."""
+        """Copy selected items to clipboard with full file paths (v2.9.2)."""
         selected_items = self.selectedItems()
         if not selected_items:
             return
         
         lines = []
+        last_file = None
+        
         for item in selected_items:
             # Skip summary header
             if item.text(0).startswith("📊 Results:"):
@@ -240,11 +446,27 @@ class ResultsTree(QTreeWidget):
             
             # If it's a file item (no parent)
             if not item.parent():
-                lines.append(f"\n📁 {item.text(0)}")
-                lines.append("-" * 80)
+                file_path = item.text(0)
+                # Add blank line before new file (except first one)
+                if last_file is not None:
+                    lines.append("")
+                lines.append(file_path)
+                last_file = file_path
             # If it's a match item (has parent)
             else:
-                lines.append(f"   {item.text(0)}")
+                # Get file path from parent and match text
+                file_path = item.parent().text(0)
+                match_text = item.text(0)
+                
+                # If parent file wasn't selected, add it first
+                if last_file != file_path:
+                    if last_file is not None:
+                        lines.append("")
+                    lines.append(file_path)
+                    last_file = file_path
+                
+                # Add match with simple indentation
+                lines.append(f"   {match_text}")
         
         text = "\n".join(lines)
         clipboard = QApplication.clipboard()
@@ -252,7 +474,7 @@ class ResultsTree(QTreeWidget):
         
         # Show feedback
         if self._status_label:
-            self._status_label.setText(f"✅ Copied {len(selected_items)} item(s) to clipboard")
+            self._status_label.setText(f"✅ Copied {len(selected_items)} item(s) to clipboard (CTRL+C)")
             QTimer.singleShot(3000, lambda: self._status_label.setText(""))
     
     def _copy_all(self):

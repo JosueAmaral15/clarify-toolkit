@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QCheckBox, QFileDialog
 )
+from src.i18n.translator import tr
 
 
 class PathEntry(QWidget):
@@ -28,10 +29,10 @@ class PathEntry(QWidget):
         
         # Path input
         self.ed_path = QLineEdit()
-        self.ed_path.setPlaceholderText("Enter file or directory path")
+        self.ed_path.setPlaceholderText(tr("path_entry.placeholder"))
         
         # Browse button
-        self.btn_browse = QPushButton("Browse")
+        self.btn_browse = QPushButton(tr("path_entry.btn_browse"))
         self.btn_browse.setMaximumWidth(80)
         self.btn_browse.clicked.connect(self._browse)
         
@@ -39,7 +40,7 @@ class PathEntry(QWidget):
         self.chk_is_file = QCheckBox("File")
         
         # Remove button (disabled for first path)
-        self.btn_remove = QPushButton("✕")
+        self.btn_remove = QPushButton(tr("path_entry.btn_remove"))
         self.btn_remove.setMaximumWidth(30)
         self.btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
         self.btn_remove.clicked.connect(self._remove)

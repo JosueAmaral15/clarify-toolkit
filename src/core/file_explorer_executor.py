@@ -111,7 +111,15 @@ class UnifiedFileExplorerExecutor(QObject):
 
         file_list = result.files
 
-        # Step 2: Apply include/exclude glob filters (from Search/Replace)
+        # Step 2: Apply type filter (files only, directories only, or any)
+        type_filter = filters.get("type", "any")
+        if type_filter == "files":
+            file_list = [f for f in file_list if not f.is_dir]
+        elif type_filter == "dirs":
+            file_list = [f for f in file_list if f.is_dir]
+        # "any" or other values: keep all files
+
+        # Step 3: Apply include/exclude glob filters (from Search/Replace)
         include_globs = filters.get("include_globs", [])
         exclude_globs = filters.get("exclude_globs", [])
 

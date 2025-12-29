@@ -33,6 +33,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QAction
 
+from src.i18n.translator import tr
+
 
 class FileListTableManager(QWidget):
     """Manager for file list table display."""
@@ -59,10 +61,10 @@ class FileListTableManager(QWidget):
         
         # Quick filter
         filter_layout = QHBoxLayout()
-        filter_layout.addWidget(QLabel("Quick Filter:"))
+        filter_layout.addWidget(QLabel(tr("table_manager.quick_filter")))
         
         self.ed_quick_filter = QLineEdit()
-        self.ed_quick_filter.setPlaceholderText("Filter by name...")
+        self.ed_quick_filter.setPlaceholderText(tr("table_manager.placeholder_filter"))
         self.ed_quick_filter.textChanged.connect(self._apply_quick_filter)
         filter_layout.addWidget(self.ed_quick_filter, stretch=1)
         
@@ -72,13 +74,22 @@ class FileListTableManager(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels([
-            "Name", "Size", "Modified", "Permissions", "Path"
+            tr("table_manager.header_name"), 
+            tr("table_manager.header_size"), 
+            tr("table_manager.header_modified"), 
+            tr("table_manager.header_permissions"), 
+            tr("table_manager.header_path")
         ])
         
         # Configure columns
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(self.COL_NAME, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(self.COL_PATH, QHeaderView.ResizeMode.Stretch)
+        
+        # Prevent horizontal expansion from long paths (v2.9.117)
+        self.table.setWordWrap(False)
+        self.table.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         
         # Configure behavior
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -94,10 +105,10 @@ class FileListTableManager(QWidget):
         # Bottom toolbar
         toolbar_layout = QHBoxLayout()
         
-        self.lbl_stats = QLabel("No files listed")
+        self.lbl_stats = QLabel(tr("table_manager.no_files_listed"))
         toolbar_layout.addWidget(self.lbl_stats, stretch=1)
         
-        self.btn_export = QPushButton("Export to CSV...")
+        self.btn_export = QPushButton(tr("table_manager.btn_export_csv"))
         self.btn_export.clicked.connect(self.export_csv)
         toolbar_layout.addWidget(self.btn_export)
         
@@ -159,7 +170,11 @@ class FileListTableManager(QWidget):
             
             # Path
             path = file_info.get('path', '')
-            self.table.setItem(row, self.COL_PATH, QTableWidgetItem(path))
+            path_item = QTableWidgetItem(path)
+            # Add tooltip for long paths (v2.9.117)
+            if len(path) > 80:
+                path_item.setToolTip(path)
+            self.table.setItem(row, self.COL_PATH, path_item)
         
         self.table.setSortingEnabled(True)
         
@@ -177,7 +192,7 @@ class FileListTableManager(QWidget):
     def clear(self):
         """Clear table contents."""
         self.table.setRowCount(0)
-        self.lbl_stats.setText("No files listed")
+        self.lbl_stats.setText(tr("table_manager.no_files_listed"))
         self.ed_quick_filter.clear()
     
     def _apply_quick_filter(self, text: str):
@@ -199,16 +214,16 @@ class FileListTableManager(QWidget):
         
         # Open in file manager action
         if len(selected_rows) == 1:
-            action_text = "Open in File Manager"
+            action_text = tr("table_manager.action_open_file_manager")
         else:
-            action_text = f"Open {len(selected_rows)} Locations in File Manager"
+            action_text = tr("table_manager.action_open_locations").format(len(selected_rows))
         
         action_open = QAction(action_text, self)
         action_open.triggered.connect(self._open_in_file_manager)
         menu.addAction(action_open)
         
         # Copy path action
-        action_copy = QAction("Copy Path", self)
+        action_copy = QAction(tr("table_manager.action_copy_path"), self)
         action_copy.triggered.connect(self._copy_path)
         menu.addAction(action_copy)
         
@@ -234,7 +249,11 @@ class FileListTableManager(QWidget):
                     else:  # Linux
                         subprocess.run(["xdg-open", directory])
                 except Exception as e:
-                    QMessageBox.warning(self, "Error", f"Could not open file manager: {e}")
+                    QMessageBox.warning(
+                        self, 
+                        tr("table_manager.error_title"), 
+                        tr("table_manager.error_file_manager").format(e)
+                    )
                     break
     
     def _copy_path(self):
@@ -256,21 +275,26 @@ class FileListTableManager(QWidget):
         clipboard.setText("\n".join(paths))
         
         QMessageBox.information(
-            self, "Copied", 
-            f"Copied {len(paths)} path(s) to clipboard"
+            self, 
+            tr("table_manager.copied_title"), 
+            tr("table_manager.copied_message").format(len(paths))
         )
     
     def export_csv(self):
         """Export table to CSV file."""
         if self.table.rowCount() == 0:
-            QMessageBox.information(self, "No Data", "No files to export.")
+            QMessageBox.information(
+                self, 
+                tr("table_manager.no_data_title"), 
+                tr("table_manager.no_data_message")
+            )
             return
         
         filepath, _ = QFileDialog.getSaveFileName(
             self,
-            "Export File List",
+            tr("table_manager.export_dialog_title"),
             "file_list.csv",
-            "CSV Files (*.csv);;All Files (*)"
+            tr("table_manager.export_dialog_filter")
         )
         
         if not filepath:
