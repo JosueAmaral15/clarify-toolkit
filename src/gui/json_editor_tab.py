@@ -159,7 +159,7 @@ class JsonEditorTab(QWidget):
         self.editor = QTextEdit()
         self.editor.setAcceptRichText(False)
         self.editor.setTabStopDistance(40)
-        self.editor.setToolTip("JSON text editor with syntax highlighting and real-time validation | Ctrl+S to save | Ctrl+E to open Editor")
+        self.editor.setToolTip(tooltip_tr("json_editor.tooltip_editor"))
         font = QFont("Courier New", 10)
         self.editor.setFont(font)
         editor_layout.addWidget(self.editor)
@@ -168,7 +168,7 @@ class JsonEditorTab(QWidget):
         
         # Right: Tree view
         self.tree = JsonTreeWidget()
-        self.tree.setToolTip("JSON tree structure for navigation (click nodes to jump to line in editor) | Ctrl+E to open Editor")
+        self.tree.setToolTip(tooltip_tr("json_editor.tooltip_tree"))
         splitter.addWidget(self.tree)
         
         # Set initial splitter sizes (70% editor, 30% tree)

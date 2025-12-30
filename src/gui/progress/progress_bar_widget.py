@@ -59,21 +59,21 @@ class ProgressBarWidget(QWidget):
         self.btn_pause = QPushButton("⏸")
         self.btn_pause.setFixedSize(25, 25)
         self.btn_pause.setCheckable(True)
-        self.btn_pause.setToolTip("Pause/Resume task")
+        self.btn_pause.setToolTip(tooltip_tr("progress.tooltip_pause"))
         self.btn_pause.clicked.connect(self._on_pause_clicked)
         top_layout.addWidget(self.btn_pause)
         
         # Expand button
         self.btn_expand = QPushButton("↗")
         self.btn_expand.setFixedSize(25, 25)
-        self.btn_expand.setToolTip("Expand to detailed view")
+        self.btn_expand.setToolTip(tooltip_tr("progress.tooltip_expand"))
         self.btn_expand.clicked.connect(self._on_expand_clicked)
         top_layout.addWidget(self.btn_expand)
         
         # Close button
         self.btn_close = QPushButton("✖")
         self.btn_close.setFixedSize(25, 25)
-        self.btn_close.setToolTip("Close progress bar")
+        self.btn_close.setToolTip(tooltip_tr("progress.tooltip_close"))
         self.btn_close.clicked.connect(self._on_close_clicked)
         top_layout.addWidget(self.btn_close)
         

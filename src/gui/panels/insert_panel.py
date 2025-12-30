@@ -223,7 +223,7 @@ class InsertPanel(QWidget):
         layout.addWidget(gb3, 9, 0, 1, 5)
         
         self.btn_apply = QPushButton(tr("insert_panel.btn_apply"))
-        self.btn_apply.setToolTip("Execute insertion operation on all matching files")
+        self.btn_apply.setToolTip(tooltip_tr("insert.tooltip_apply"))
         layout.addWidget(self.btn_apply, 10, 4)
 
         # Results on the right

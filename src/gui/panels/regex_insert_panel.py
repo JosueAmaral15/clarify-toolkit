@@ -104,24 +104,24 @@ class RegexInsertPanel(QWidget):
         capture_layout.addWidget(QLabel(tr("regex_insert.lbl_source")), 0, 0)
         self.combo_source = QComboBox()
         self.combo_source.addItems([tr("regex_insert.combo_current_editor"), tr("regex_insert.combo_selection"), tr("regex_insert.combo_custom")])
-        self.combo_source.setToolTip("Where to search for regex matches")
+        self.combo_source.setToolTip(tooltip_tr("regex_insert.tooltip_source"))
         capture_layout.addWidget(self.combo_source, 0, 1, 1, 2)
         
         # Regex pattern
         capture_layout.addWidget(QLabel(tr("regex_insert.lbl_pattern")), 1, 0)
         self.ed_pattern = QLineEdit()
         self.ed_pattern.setPlaceholderText(tr("regex_insert.placeholder_pattern"))
-        self.ed_pattern.setToolTip("Regex pattern with capture groups (use parentheses)")
+        self.ed_pattern.setToolTip(tooltip_tr("regex_insert.tooltip_pattern"))
         capture_layout.addWidget(self.ed_pattern, 1, 1, 1, 2)
         
         # Flags
         flags_layout = QHBoxLayout()
         self.chk_case_insensitive = QCheckBox(tr("regex_insert.chk_case_insensitive"))
-        self.chk_case_insensitive.setToolTip("Ignore case when matching")
+        self.chk_case_insensitive.setToolTip(tooltip_tr("regex_insert.tooltip_case_insensitive"))
         flags_layout.addWidget(self.chk_case_insensitive)
         
         self.chk_multiline = QCheckBox(tr("regex_insert.chk_multiline"))
-        self.chk_multiline.setToolTip("^ and $ match line boundaries")
+        self.chk_multiline.setToolTip(tooltip_tr("regex_insert.tooltip_multiline"))
         flags_layout.addWidget(self.chk_multiline)
         flags_layout.addStretch()
         capture_layout.addLayout(flags_layout, 2, 0, 1, 3)
@@ -129,17 +129,17 @@ class RegexInsertPanel(QWidget):
         # Capture button
         btn_capture_layout = QHBoxLayout()
         self.btn_capture = QPushButton(tr("regex_insert.btn_capture"))
-        self.btn_capture.setToolTip("Execute regex capture and populate registers")
+        self.btn_capture.setToolTip(tooltip_tr("regex_insert.tooltip_capture"))
         self.btn_capture.clicked.connect(self._execute_capture)
         btn_capture_layout.addWidget(self.btn_capture)
         
         self.btn_test_pattern = QPushButton(tr("regex_insert.btn_test"))
-        self.btn_test_pattern.setToolTip("Test regex pattern validity")
+        self.btn_test_pattern.setToolTip(tooltip_tr("regex_insert.tooltip_test_pattern"))
         self.btn_test_pattern.clicked.connect(self._test_pattern)
         btn_capture_layout.addWidget(self.btn_test_pattern)
         
         self.btn_clear_registers = QPushButton(tr("regex_insert.btn_clear"))
-        self.btn_clear_registers.setToolTip("Clear all registers")
+        self.btn_clear_registers.setToolTip(tooltip_tr("regex_insert.tooltip_clear_registers"))
         self.btn_clear_registers.clicked.connect(self._clear_registers)
         btn_capture_layout.addWidget(self.btn_clear_registers)
         btn_capture_layout.addStretch()
@@ -158,7 +158,7 @@ class RegexInsertPanel(QWidget):
         self.table_registers.setHorizontalHeaderLabels([tr("regex_insert.table_register"), tr("regex_insert.table_value"), tr("regex_insert.table_source")])
         self.table_registers.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table_registers.setMaximumHeight(120)
-        self.table_registers.setToolTip("Captured values ($0 = whole match, $1+ = groups)")
+        self.table_registers.setToolTip(tooltip_tr("regex_insert.tooltip_registers_table"))
         registers_layout.addWidget(self.table_registers)
         
         registers_group.setLayout(registers_layout)
@@ -172,39 +172,39 @@ class RegexInsertPanel(QWidget):
         insert_layout.addWidget(QLabel(tr("regex_insert.lbl_target_key")), 0, 0)
         self.ed_target_key = QLineEdit()
         self.ed_target_key.setPlaceholderText(tr("regex_insert.placeholder_target"))
-        self.ed_target_key.setToolTip("JSON key where new field will be inserted")
+        self.ed_target_key.setToolTip(tooltip_tr("regex_insert.tooltip_target_key"))
         insert_layout.addWidget(self.ed_target_key, 0, 1, 1, 2)
         
         # Position
         insert_layout.addWidget(QLabel(tr("regex_insert.lbl_position")), 1, 0)
         self.combo_position = QComboBox()
         self.combo_position.addItems([tr("regex_insert.combo_inside"), tr("regex_insert.combo_before"), tr("regex_insert.combo_after")])
-        self.combo_position.setToolTip("Where to insert relative to target key")
+        self.combo_position.setToolTip(tooltip_tr("regex_insert.tooltip_position"))
         insert_layout.addWidget(self.combo_position, 1, 1, 1, 2)
         
         # New key
         insert_layout.addWidget(QLabel(tr("regex_insert.lbl_new_key")), 2, 0)
         self.ed_new_key = QLineEdit()
         self.ed_new_key.setPlaceholderText(tr("regex_insert.placeholder_new_key"))
-        self.ed_new_key.setToolTip("Name for the new JSON field")
+        self.ed_new_key.setToolTip(tooltip_tr("regex_insert.tooltip_new_key"))
         insert_layout.addWidget(self.ed_new_key, 2, 1, 1, 2)
         
         # New value (template with $N)
         insert_layout.addWidget(QLabel(tr("regex_insert.lbl_new_value")), 3, 0)
         self.ed_new_value = QLineEdit()
         self.ed_new_value.setPlaceholderText(tr("regex_insert.placeholder_new_value"))
-        self.ed_new_value.setToolTip("Value with $N placeholders (e.g., '$1@newdomain.com')")
+        self.ed_new_value.setToolTip(tooltip_tr("regex_insert.tooltip_new_value"))
         insert_layout.addWidget(self.ed_new_value, 3, 1, 1, 2)
         
         # Insert button
         btn_insert_layout = QHBoxLayout()
         self.btn_insert = QPushButton(tr("regex_insert.btn_insert"))
-        self.btn_insert.setToolTip("Insert new field using register values")
+        self.btn_insert.setToolTip(tooltip_tr("regex_insert.tooltip_insert"))
         self.btn_insert.clicked.connect(self._execute_insert)
         btn_insert_layout.addWidget(self.btn_insert)
         
         self.btn_preview = QPushButton(tr("regex_insert.btn_preview"))
-        self.btn_preview.setToolTip("Preview resulting key/value before inserting")
+        self.btn_preview.setToolTip(tooltip_tr("regex_insert.tooltip_preview"))
         self.btn_preview.clicked.connect(self._preview_insert)
         btn_insert_layout.addWidget(self.btn_preview)
         btn_insert_layout.addStretch()
