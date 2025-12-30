@@ -63,7 +63,7 @@ class HistoryDock(BaseDock):
         
         # Tree widget for history display
         self.tree_history = QTreeWidget()
-        self.tree_history.setHeaderLabels(["Time", "Operation", "Details", "Files"])
+        self.tree_history.setHeaderLabels([tr("history_dock.header_time"), tr("history_dock.header_operation"), tr("history_dock.header_details"), tr("history_dock.header_files")])
         self.tree_history.setColumnWidth(0, 150)  # Timestamp
         self.tree_history.setColumnWidth(1, 100)  # Operation type
         self.tree_history.setColumnWidth(2, 300)  # Details

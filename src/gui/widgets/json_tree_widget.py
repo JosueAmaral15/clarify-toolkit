@@ -53,7 +53,7 @@ class JsonTreeWidget(QTreeWidget):
             parent: Parent widget
         """
         super().__init__(parent)
-        self.setHeaderLabels(["Key", "Value", "Type"])
+        self.setHeaderLabels([tr("json_tree_widget.header_key"), tr("json_tree_widget.header_value"), tr("json_tree_widget.header_type")])
         self.setColumnWidth(0, 200)
         self.setColumnWidth(1, 300)
         self.setColumnWidth(2, 80)

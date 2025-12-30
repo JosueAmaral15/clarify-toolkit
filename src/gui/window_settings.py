@@ -170,7 +170,7 @@ class WindowSettings:
                 return
             
             # User confirmed, wait for threads to finish
-            main_window.statusBar().showMessage("Canceling active operations...")
+            main_window.statusBar().showMessage(tr("window_settings.status_canceling"))
             if not thread_manager.wait_all_threads(timeout_ms=5000):
                 # Some threads didn't finish in time
                 reply = QMessageBox.critical(

@@ -2244,5 +2244,17 @@
   "venn_diagram.msg_export_failed_title": "Export Failed",
   "venn_diagram.msg_export_success": "Venn diagram exported to:\n{path}\n\nOpen in browser or image viewer to view.",
   "venn_diagram.msg_export_success_title": "Export Successful",
-  "venn_diagram.window_title": "Venn Diagram: {file_a_name} vs {file_b_name}"
+  "venn_diagram.window_title": "Venn Diagram: {file_a_name} vs {file_b_name}",
+  "editor_dock.error_title": "Error",
+  "file_explorer.warning_replace_failed": "Replace Failed",
+  "history_dock.header_time": "Time",
+  "history_dock.header_operation": "Operation",
+  "history_dock.header_details": "Details",
+  "history_dock.header_files": "Files",
+  "json_tree_widget.header_key": "Key",
+  "json_tree_widget.header_value": "Value",
+  "json_tree_widget.header_type": "Type",
+  "statistics_dialog.header_metric": "Metric",
+  "statistics_dialog.header_value": "Value",
+  "window_settings.status_canceling": "Canceling active operations..."
 }

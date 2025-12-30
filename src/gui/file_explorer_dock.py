@@ -1418,7 +1418,7 @@ class FileExplorerDock(BaseDock):
             self._list_files()
         else:
             error = result.get("error", "Unknown error")
-            QMessageBox.warning(self, "Replace Failed", f"Error: {error}")
+            QMessageBox.warning(self, tr("file_explorer.warning_replace_failed"), f"Error: {error}")
 
     def _on_conditions_changed(self, conditions: list):
         """Handle advanced conditions changes."""

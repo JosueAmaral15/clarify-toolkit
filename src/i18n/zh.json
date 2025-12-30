@@ -2211,5 +2211,17 @@
   "venn_diagram.msg_export_failed_title": "导出失败",
   "venn_diagram.msg_export_success": "维恩图已导出到:\n{path}\n\n在浏览器或图像查看器中打开以查看。",
   "venn_diagram.msg_export_success_title": "导出成功",
-  "venn_diagram.window_title": "维恩图: {file_a_name} vs {file_b_name}"
+  "venn_diagram.window_title": "维恩图: {file_a_name} vs {file_b_name}",
+  "editor_dock.error_title": "错误",
+  "file_explorer.warning_replace_failed": "替换失败",
+  "history_dock.header_time": "时间",
+  "history_dock.header_operation": "操作",
+  "history_dock.header_details": "详情",
+  "history_dock.header_files": "文件",
+  "json_tree_widget.header_key": "键",
+  "json_tree_widget.header_value": "值",
+  "json_tree_widget.header_type": "类型",
+  "statistics_dialog.header_metric": "指标",
+  "statistics_dialog.header_value": "值",
+  "window_settings.status_canceling": "正在取消活动操作..."
 }

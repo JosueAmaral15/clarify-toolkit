@@ -559,7 +559,7 @@ class EditorDock(BaseDock):
             mode_text = " (Edit-Only)" if edit_only else ""
             self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
         else:
-            QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")
+            QMessageBox.critical(self, tr("editor_dock.error_title"), f"Failed to open file:\n{file_path}")
     
     def has_unsaved_changes(self) -> bool:
         """

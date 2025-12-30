@@ -136,7 +136,7 @@ class StatisticsDialog(QDialog):
         # Table for reference stats
         self.reference_table = QTableWidget()
         self.reference_table.setColumnCount(2)
-        self.reference_table.setHorizontalHeaderLabels(["Metric", "Value"])
+        self.reference_table.setHorizontalHeaderLabels([tr("statistics_dialog.header_metric"), tr("statistics_dialog.header_value")])
         self.reference_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.reference_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.reference_table.setAlternatingRowColors(True)

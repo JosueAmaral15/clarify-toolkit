@@ -2211,5 +2211,17 @@
   "venn_diagram.msg_export_failed_title": "エクスポート失敗",
   "venn_diagram.msg_export_success": "ベン図をエクスポートしました:\n{path}\n\nブラウザまたは画像ビューアで開いてください。",
   "venn_diagram.msg_export_success_title": "エクスポート成功",
-  "venn_diagram.window_title": "ベン図: {file_a_name} vs {file_b_name}"
+  "venn_diagram.window_title": "ベン図: {file_a_name} vs {file_b_name}",
+  "editor_dock.error_title": "エラー",
+  "file_explorer.warning_replace_failed": "置換失敗",
+  "history_dock.header_time": "時刻",
+  "history_dock.header_operation": "操作",
+  "history_dock.header_details": "詳細",
+  "history_dock.header_files": "ファイル",
+  "json_tree_widget.header_key": "キー",
+  "json_tree_widget.header_value": "値",
+  "json_tree_widget.header_type": "タイプ",
+  "statistics_dialog.header_metric": "メトリック",
+  "statistics_dialog.header_value": "値",
+  "window_settings.status_canceling": "アクティブな操作をキャンセル中..."
 }
