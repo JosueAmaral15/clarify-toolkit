@@ -222,8 +222,8 @@ class JSXExtractorDock(BaseDock):
         self.out_json.setPlaceholderText(tr("jsx.placeholder_json"))
         self.out_json.setFont(font)
 
-        self.tabs.addTab(self.out_paths, "Paths")
-        self.tabs.addTab(self.out_json, "JSON")
+        self.tabs.addTab(self.out_paths, tr("jsx_extractor.tab_paths"))
+        self.tabs.addTab(self.out_json, tr("jsx_extractor.tab_json"))
 
         # Status label
         self.status_label = QLabel("")

@@ -1830,5 +1830,11 @@
   "json_rewriter.placeholder_filter_value": "Filterwert",
   "shortcut_customizer.placeholder_keys": "Tasten drücken...",
   "shortcut_customizer.placeholder_search": "Aktionen suchen...",
-  "base_dock.placeholder_generic": "Text eingeben..."
+  "base_dock.placeholder_generic": "Text eingeben...",
+  "diff_viewer.groupbox_file_a": "Datei A: {file_name}",
+  "diff_viewer.groupbox_file_b": "Datei B: {file_name}",
+  "ui_builder.tab_search": "Suchen / Ersetzen",
+  "ui_builder.tab_insert": "Einfügen",
+  "jsx_extractor.tab_paths": "Pfade",
+  "jsx_extractor.tab_json": "JSON"
 }

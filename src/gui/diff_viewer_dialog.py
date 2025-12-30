@@ -155,7 +155,7 @@ class DiffViewerDialog(QDialog):
         splitter = QSplitter(Qt.Horizontal)
         
         # Left panel (File A)
-        left_panel = QGroupBox(f"File A: {self.file_a_name}")
+        left_panel = QGroupBox(tr("diff_viewer.groupbox_file_a").format(file_name=self.file_a_name))
         left_layout = QVBoxLayout(left_panel)
         
         self.text_a = QTextEdit()
@@ -166,7 +166,7 @@ class DiffViewerDialog(QDialog):
         splitter.addWidget(left_panel)
         
         # Right panel (File B)
-        right_panel = QGroupBox(f"File B: {self.file_b_name}")
+        right_panel = QGroupBox(tr("diff_viewer.groupbox_file_b").format(file_name=self.file_b_name))
         right_layout = QVBoxLayout(right_panel)
         
         self.text_b = QTextEdit()

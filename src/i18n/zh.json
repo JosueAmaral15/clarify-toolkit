@@ -1830,5 +1830,11 @@
   "json_rewriter.placeholder_filter_value": "过滤器值",
   "shortcut_customizer.placeholder_keys": "按键...",
   "shortcut_customizer.placeholder_search": "搜索操作...",
-  "base_dock.placeholder_generic": "输入文本..."
+  "base_dock.placeholder_generic": "输入文本...",
+  "diff_viewer.groupbox_file_a": "文件A: {file_name}",
+  "diff_viewer.groupbox_file_b": "文件B: {file_name}",
+  "ui_builder.tab_search": "搜索 / 替换",
+  "ui_builder.tab_insert": "插入",
+  "jsx_extractor.tab_paths": "路径",
+  "jsx_extractor.tab_json": "JSON"
 }

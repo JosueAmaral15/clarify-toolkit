@@ -1830,5 +1830,11 @@
   "json_rewriter.placeholder_filter_value": "フィルター値",
   "shortcut_customizer.placeholder_keys": "キーを押す...",
   "shortcut_customizer.placeholder_search": "アクションを検索...",
-  "base_dock.placeholder_generic": "テキストを入力..."
+  "base_dock.placeholder_generic": "テキストを入力...",
+  "diff_viewer.groupbox_file_a": "ファイルA: {file_name}",
+  "diff_viewer.groupbox_file_b": "ファイルB: {file_name}",
+  "ui_builder.tab_search": "検索 / 置換",
+  "ui_builder.tab_insert": "挿入",
+  "jsx_extractor.tab_paths": "パス",
+  "jsx_extractor.tab_json": "JSON"
 }

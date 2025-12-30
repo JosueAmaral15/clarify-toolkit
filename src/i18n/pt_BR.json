@@ -1863,5 +1863,11 @@
   "json_rewriter.placeholder_filter_value": "Valor do filtro",
   "shortcut_customizer.placeholder_keys": "Pressione teclas...",
   "shortcut_customizer.placeholder_search": "Pesquisar ações...",
-  "base_dock.placeholder_generic": "Digite o texto..."
+  "base_dock.placeholder_generic": "Digite o texto...",
+  "diff_viewer.groupbox_file_a": "Arquivo A: {file_name}",
+  "diff_viewer.groupbox_file_b": "Arquivo B: {file_name}",
+  "ui_builder.tab_search": "Pesquisar / Substituir",
+  "ui_builder.tab_insert": "Inserir",
+  "jsx_extractor.tab_paths": "Caminhos",
+  "jsx_extractor.tab_json": "JSON"
 }

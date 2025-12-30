@@ -92,8 +92,8 @@ class UIBuilder:
         main_window.insert_panel = main_window.tab_insert
         
         # Add to tabs
-        main_window.tabs.addTab(main_window.tab_search, "Search / Replace")
-        main_window.tabs.addTab(main_window.tab_insert, "Insert")
+        main_window.tabs.addTab(main_window.tab_search, tr("ui_builder.tab_search"))
+        main_window.tabs.addTab(main_window.tab_insert, tr("ui_builder.tab_insert"))
         
         # Mark Search/Replace and Insert as not closeable initially (fixed tabs)
         # They will be marked as closeable when saved to QSettings
