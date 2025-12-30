@@ -162,7 +162,7 @@ class BatchStepEditorDialog(QDialog):
         btn_layout.addWidget(self.btn_ok)
         
         self.btn_cancel = QPushButton(tr("batch_dialog.step.btn_cancel"))
-        self.btn_cancel.setToolTip("Discard step without adding to batch")
+        self.btn_cancel.setToolTip(tooltip_tr("batch.tooltip_cancel"))
         self.btn_cancel.clicked.connect(self.reject)
         btn_layout.addWidget(self.btn_cancel)
         
@@ -331,7 +331,7 @@ class BatchDialog(QDialog):
         name_layout = QHBoxLayout()
         name_layout.addWidget(QLabel(tr("batch_dialog.lbl_name")))
         self.ed_batch_name = QLineEdit("Untitled Batch")
-        self.ed_batch_name.setToolTip("Name for this batch job (used when saving/loading)")
+        self.ed_batch_name.setToolTip(tooltip_tr("batch.tooltip_batch_name"))
         name_layout.addWidget(self.ed_batch_name)
         layout.addLayout(name_layout)
         

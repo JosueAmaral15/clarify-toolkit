@@ -190,7 +190,7 @@ class DiffViewerDialog(QDialog):
         btn_layout = QHBoxLayout()
         
         self.btn_export = QPushButton(f"📤 {tr('diff_viewer.btn_export')}")
-        self.btn_export.setToolTip("Export diff as HTML file with color highlighting")
+        self.btn_export.setToolTip(tooltip_tr("diff_viewer.tooltip_export"))
         self.btn_export.clicked.connect(self._export_html)
         btn_layout.addWidget(self.btn_export)
         
