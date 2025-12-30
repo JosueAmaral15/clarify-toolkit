@@ -1976,5 +1976,17 @@
   "app.msg_clear_recent_title": "Borrar Archivos Recientes",
   "app.msg_clear_recent_confirm": "¿Está seguro de que desea borrar la lista de archivos recientes?",
   "app.msg_clear_recent_success": "¡Archivos recientes borrados!",
-  "app.msg_success_title": "Éxito"
+  "app.msg_success_title": "Éxito",
+  "file_finder.msg_missing_title": "Faltante",
+  "file_finder.msg_missing_directory": "Por favor, seleccione un directorio para buscar.",
+  "file_finder.msg_invalid_title": "Inválido",
+  "file_finder.msg_invalid_directory": "El directorio no existe: {directory}",
+  "file_finder.msg_invalid_regex_title": "Regex Inválido",
+  "file_finder.msg_invalid_regex": "Patrón regex inválido: {error}",
+  "file_finder.msg_no_results_title": "Sin Resultados",
+  "file_finder.msg_no_results_export": "No hay resultados para exportar.",
+  "file_finder.msg_export_complete_title": "Exportación Completa",
+  "file_finder.msg_export_complete": "Resultados exportados a:\n{filepath}",
+  "file_finder.msg_export_failed_title": "Exportación Fallida",
+  "file_finder.msg_export_failed": "Error al exportar: {error}"
 }

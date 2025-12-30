@@ -2001,5 +2001,17 @@
   "app.msg_clear_recent_title": "Limpar Arquivos Recentes",
   "app.msg_clear_recent_confirm": "Tem certeza de que deseja limpar a lista de arquivos recentes?",
   "app.msg_clear_recent_success": "Arquivos recentes limpos!",
-  "app.msg_success_title": "Sucesso"
+  "app.msg_success_title": "Sucesso",
+  "file_finder.msg_missing_title": "Faltando",
+  "file_finder.msg_missing_directory": "Por favor, selecione um diretório para pesquisar.",
+  "file_finder.msg_invalid_title": "Inválido",
+  "file_finder.msg_invalid_directory": "Diretório não existe: {directory}",
+  "file_finder.msg_invalid_regex_title": "Regex Inválido",
+  "file_finder.msg_invalid_regex": "Padrão regex inválido: {error}",
+  "file_finder.msg_no_results_title": "Sem Resultados",
+  "file_finder.msg_no_results_export": "Não há resultados para exportar.",
+  "file_finder.msg_export_complete_title": "Exportação Completa",
+  "file_finder.msg_export_complete": "Resultados exportados para:\n{filepath}",
+  "file_finder.msg_export_failed_title": "Exportação Falhou",
+  "file_finder.msg_export_failed": "Falha ao exportar: {error}"
 }

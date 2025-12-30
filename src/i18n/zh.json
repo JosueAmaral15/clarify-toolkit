@@ -1968,5 +1968,17 @@
   "app.msg_clear_recent_title": "清除最近的文件",
   "app.msg_clear_recent_confirm": "您确定要清除最近的文件列表吗？",
   "app.msg_clear_recent_success": "最近的文件已清除！",
-  "app.msg_success_title": "成功"
+  "app.msg_success_title": "成功",
+  "file_finder.msg_missing_title": "缺失",
+  "file_finder.msg_missing_directory": "请选择要搜索的目录。",
+  "file_finder.msg_invalid_title": "无效",
+  "file_finder.msg_invalid_directory": "目录不存在: {directory}",
+  "file_finder.msg_invalid_regex_title": "无效的正则表达式",
+  "file_finder.msg_invalid_regex": "无效的正则表达式模式: {error}",
+  "file_finder.msg_no_results_title": "无结果",
+  "file_finder.msg_no_results_export": "没有要导出的结果。",
+  "file_finder.msg_export_complete_title": "导出完成",
+  "file_finder.msg_export_complete": "结果已导出到:\n{filepath}",
+  "file_finder.msg_export_failed_title": "导出失败",
+  "file_finder.msg_export_failed": "导出失败: {error}"
 }

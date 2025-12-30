@@ -1968,5 +1968,17 @@
   "app.msg_clear_recent_title": "Effacer les fichiers récents",
   "app.msg_clear_recent_confirm": "Êtes-vous sûr de vouloir effacer la liste des fichiers récents ?",
   "app.msg_clear_recent_success": "Fichiers récents effacés !",
-  "app.msg_success_title": "Succès"
+  "app.msg_success_title": "Succès",
+  "file_finder.msg_missing_title": "Manquant",
+  "file_finder.msg_missing_directory": "Veuillez sélectionner un répertoire à rechercher.",
+  "file_finder.msg_invalid_title": "Invalide",
+  "file_finder.msg_invalid_directory": "Le répertoire n'existe pas : {directory}",
+  "file_finder.msg_invalid_regex_title": "Regex invalide",
+  "file_finder.msg_invalid_regex": "Modèle regex invalide : {error}",
+  "file_finder.msg_no_results_title": "Aucun résultat",
+  "file_finder.msg_no_results_export": "Aucun résultat à exporter.",
+  "file_finder.msg_export_complete_title": "Exportation terminée",
+  "file_finder.msg_export_complete": "Résultats exportés vers :\n{filepath}",
+  "file_finder.msg_export_failed_title": "Échec de l'exportation",
+  "file_finder.msg_export_failed": "Échec de l'exportation : {error}"
 }

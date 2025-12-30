@@ -1968,5 +1968,17 @@
   "app.msg_clear_recent_title": "最近のファイルをクリア",
   "app.msg_clear_recent_confirm": "最近のファイルリストをクリアしてもよろしいですか？",
   "app.msg_clear_recent_success": "最近のファイルをクリアしました！",
-  "app.msg_success_title": "成功"
+  "app.msg_success_title": "成功",
+  "file_finder.msg_missing_title": "不足",
+  "file_finder.msg_missing_directory": "検索するディレクトリを選択してください。",
+  "file_finder.msg_invalid_title": "無効",
+  "file_finder.msg_invalid_directory": "ディレクトリが存在しません: {directory}",
+  "file_finder.msg_invalid_regex_title": "無効な正規表現",
+  "file_finder.msg_invalid_regex": "無効な正規表現パターン: {error}",
+  "file_finder.msg_no_results_title": "結果なし",
+  "file_finder.msg_no_results_export": "エクスポートする結果がありません。",
+  "file_finder.msg_export_complete_title": "エクスポート完了",
+  "file_finder.msg_export_complete": "結果をエクスポートしました:\n{filepath}",
+  "file_finder.msg_export_failed_title": "エクスポート失敗",
+  "file_finder.msg_export_failed": "エクスポートに失敗しました: {error}"
 }

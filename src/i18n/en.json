@@ -2001,5 +2001,17 @@
   "app.msg_clear_recent_title": "Clear Recent Files",
   "app.msg_clear_recent_confirm": "Are you sure you want to clear the recent files list?",
   "app.msg_clear_recent_success": "Recent files cleared!",
-  "app.msg_success_title": "Success"
+  "app.msg_success_title": "Success",
+  "file_finder.msg_missing_title": "Missing",
+  "file_finder.msg_missing_directory": "Please select a directory to search.",
+  "file_finder.msg_invalid_title": "Invalid",
+  "file_finder.msg_invalid_directory": "Directory does not exist: {directory}",
+  "file_finder.msg_invalid_regex_title": "Invalid Regex",
+  "file_finder.msg_invalid_regex": "Invalid regex pattern: {error}",
+  "file_finder.msg_no_results_title": "No Results",
+  "file_finder.msg_no_results_export": "No results to export.",
+  "file_finder.msg_export_complete_title": "Export Complete",
+  "file_finder.msg_export_complete": "Results exported to:\n{filepath}",
+  "file_finder.msg_export_failed_title": "Export Failed",
+  "file_finder.msg_export_failed": "Failed to export: {error}"
 }

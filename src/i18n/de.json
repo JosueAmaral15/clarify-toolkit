@@ -1968,5 +1968,17 @@
   "app.msg_clear_recent_title": "Zuletzt verwendete Dateien löschen",
   "app.msg_clear_recent_confirm": "Sind Sie sicher, dass Sie die Liste der zuletzt verwendeten Dateien löschen möchten?",
   "app.msg_clear_recent_success": "Zuletzt verwendete Dateien gelöscht!",
-  "app.msg_success_title": "Erfolg"
+  "app.msg_success_title": "Erfolg",
+  "file_finder.msg_missing_title": "Fehlend",
+  "file_finder.msg_missing_directory": "Bitte wählen Sie ein Verzeichnis zum Durchsuchen aus.",
+  "file_finder.msg_invalid_title": "Ungültig",
+  "file_finder.msg_invalid_directory": "Verzeichnis existiert nicht: {directory}",
+  "file_finder.msg_invalid_regex_title": "Ungültiger Regex",
+  "file_finder.msg_invalid_regex": "Ungültiges Regex-Muster: {error}",
+  "file_finder.msg_no_results_title": "Keine Ergebnisse",
+  "file_finder.msg_no_results_export": "Keine Ergebnisse zum Exportieren.",
+  "file_finder.msg_export_complete_title": "Export abgeschlossen",
+  "file_finder.msg_export_complete": "Ergebnisse exportiert nach:\n{filepath}",
+  "file_finder.msg_export_failed_title": "Export fehlgeschlagen",
+  "file_finder.msg_export_failed": "Exportieren fehlgeschlagen: {error}"
 }

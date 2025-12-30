@@ -166,11 +166,11 @@ class AdvancedFileSearchDialog(QDialog):
         directory = self.ed_directory.text().strip()
         
         if not directory:
-            QMessageBox.warning(self, "Missing", "Please select a directory to search.")
+            QMessageBox.warning(self, tr("file_finder.msg_missing_title"), tr("file_finder.msg_missing_directory"))
             return
         
         if not os.path.isdir(directory):
-            QMessageBox.warning(self, "Invalid", f"Directory does not exist: {directory}")
+            QMessageBox.warning(self, tr("file_finder.msg_invalid_title"), tr("file_finder.msg_invalid_directory").format(directory=directory))
             return
         
         # Build search criteria
@@ -180,7 +180,7 @@ class AdvancedFileSearchDialog(QDialog):
                 flags = 0 if self.chk_case_sensitive.isChecked() else re.IGNORECASE
                 regex = re.compile(pattern, flags)
             except re.error as e:
-                QMessageBox.warning(self, "Invalid Regex", f"Invalid regex pattern: {e}")
+                QMessageBox.warning(self, tr("file_finder.msg_invalid_regex_title"), tr("file_finder.msg_invalid_regex").format(error=e))
                 return
         else:
             regex = None
@@ -310,7 +310,7 @@ class AdvancedFileSearchDialog(QDialog):
     def _export_results(self):
         """Export results to CSV file."""
         if not self.results:
-            QMessageBox.information(self, "No Results", "No results to export.")
+            QMessageBox.information(self, tr("file_finder.msg_no_results_title"), tr("file_finder.msg_no_results_export"))
             return
         
         filepath, _ = QFileDialog.getSaveFileName(
@@ -343,11 +343,11 @@ class AdvancedFileSearchDialog(QDialog):
             
             QMessageBox.information(
                 self,
-                "Export Complete",
-                f"Results exported to:\n{filepath}"
+                tr("file_finder.msg_export_complete_title"),
+                tr("file_finder.msg_export_complete").format(filepath=filepath)
             )
         except Exception as e:
-            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+            QMessageBox.critical(self, tr("file_finder.msg_export_failed_title"), tr("file_finder.msg_export_failed").format(error=e))
     
     def _show_file_preview(self, item: QTableWidgetItem):
         """Show file preview tooltip on hover (Task #41 - v2.9.13)."""
