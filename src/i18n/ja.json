@@ -1994,5 +1994,11 @@
   "search_replace.msg_error_save_title": "エラー",
   "search_replace.msg_error_save": "結果の保存に失敗しました:\n{error}",
   "search_replace.msg_replace_title": "置換",
-  "search_replace.msg_replace_success": "変更されたファイル: {count}"
+  "search_replace.msg_replace_success": "変更されたファイル: {count}",
+  "ai_processor.msg_templates_disabled_title": "テンプレート無効",
+  "ai_processor.msg_templates_disabled": "テンプレート変数は現在無効になっています。\n\nこの機能を使用するには、「テンプレート変数 {{...}} を有効にする」チェックボックスをオンにしてください。",
+  "ai_processor.msg_no_templates_title": "テンプレートが見つかりません",
+  "ai_processor.msg_no_templates": "プロンプトに {{count}}、{{filename}} などのテンプレート変数が含まれていません。\n\nテンプレートの例：\n• {{count}} - ファイルインデックス（0ベース）\n• {{count+1}} - 1ベースインデックス\n• {{filename}} - 現在のファイル名\n• {{total}} - 総ファイル数",
+  "ai_processor.msg_template_preview_title": "テンプレートプレビュー",
+  "ai_processor.msg_template_preview": "元のプロンプト：\n{prompt}\n\n{separator}\n\n{preview}\n\n（合計 {total} ファイルのうち最初のファイルの処理方法を表示）"
 }

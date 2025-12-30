@@ -1994,5 +1994,11 @@
   "search_replace.msg_error_save_title": "Erreur",
   "search_replace.msg_error_save": "Échec de l'enregistrement des résultats :\n{error}",
   "search_replace.msg_replace_title": "Remplacer",
-  "search_replace.msg_replace_success": "Fichiers modifiés : {count}"
+  "search_replace.msg_replace_success": "Fichiers modifiés : {count}",
+  "ai_processor.msg_templates_disabled_title": "Modèles désactivés",
+  "ai_processor.msg_templates_disabled": "Les variables de modèle sont actuellement désactivées.\n\nActivez la case à cocher 'Activer les variables de modèle {{...}}' pour utiliser cette fonctionnalité.",
+  "ai_processor.msg_no_templates_title": "Aucun modèle trouvé",
+  "ai_processor.msg_no_templates": "Votre invite ne contient aucune variable de modèle comme {{count}}, {{filename}}, etc.\n\nExemples de modèles :\n• {{count}} - Index de fichier (base 0)\n• {{count+1}} - Index base 1\n• {{filename}} - Nom du fichier actuel\n• {{total}} - Total de fichiers",
+  "ai_processor.msg_template_preview_title": "Aperçu du modèle",
+  "ai_processor.msg_template_preview": "Invite d'origine :\n{prompt}\n\n{separator}\n\n{preview}\n\n(Affichage du traitement du premier fichier sur {total} fichiers au total)"
 }

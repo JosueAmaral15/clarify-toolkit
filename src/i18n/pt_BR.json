@@ -2027,5 +2027,11 @@
   "search_replace.msg_error_save_title": "Erro",
   "search_replace.msg_error_save": "Falha ao salvar resultados:\n{error}",
   "search_replace.msg_replace_title": "Substituir",
-  "search_replace.msg_replace_success": "Arquivos modificados: {count}"
+  "search_replace.msg_replace_success": "Arquivos modificados: {count}",
+  "ai_processor.msg_templates_disabled_title": "Templates Desabilitados",
+  "ai_processor.msg_templates_disabled": "Variáveis de template estão desabilitadas no momento.\n\nHabilite a opção 'Habilitar variáveis de template {{...}}' para usar este recurso.",
+  "ai_processor.msg_no_templates_title": "Nenhum Template Encontrado",
+  "ai_processor.msg_no_templates": "Seu prompt não contém nenhuma variável de template como {{count}}, {{filename}}, etc.\n\nExemplos de templates:\n• {{count}} - Índice do arquivo (base 0)\n• {{count+1}} - Índice base 1\n• {{filename}} - Nome do arquivo atual\n• {{total}} - Total de arquivos",
+  "ai_processor.msg_template_preview_title": "Visualização do Template",
+  "ai_processor.msg_template_preview": "Prompt original:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Mostrando como o primeiro arquivo será processado de {total} arquivos no total)"
 }

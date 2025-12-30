@@ -1157,22 +1157,16 @@ class AIProcessorDock(StandardToolDock):
         if not self.chk_enable_templates.isChecked():
             QMessageBox.information(
                 self,
-                "Templates Disabled",
-                "Template variables are currently disabled.\n\n"
-                "Enable the 'Enable template variables {{...}}' checkbox to use this feature."
+                tr("ai_processor.msg_templates_disabled_title"),
+                tr("ai_processor.msg_templates_disabled")
             )
             return
         
         if not has_templates(prompt):
             QMessageBox.information(
                 self,
-                "No Templates Found",
-                "Your prompt doesn't contain any template variables like {{count}}, {{filename}}, etc.\n\n"
-                "Example templates:\n"
-                "• {{count}} - File index (0-based)\n"
-                "• {{count+1}} - 1-based index\n"
-                "• {{filename}} - Current file name\n"
-                "• {{total}} - Total files"
+                tr("ai_processor.msg_no_templates_title"),
+                tr("ai_processor.msg_no_templates")
             )
             return
         
@@ -1189,9 +1183,11 @@ class AIProcessorDock(StandardToolDock):
         # Show in message box
         QMessageBox.information(
             self,
-            "Template Preview",
-            f"Original prompt:\n{prompt}\n\n"
-            f"{'='*50}\n\n"
-            f"{preview_text}\n\n"
-            f"(Showing how first file will be processed out of {total_files} total files)"
+            tr("ai_processor.msg_template_preview_title"),
+            tr("ai_processor.msg_template_preview").format(
+                prompt=prompt,
+                separator='='*50,
+                preview=preview_text,
+                total=total_files
+            )
         ).strip()

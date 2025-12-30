@@ -1994,5 +1994,11 @@
   "search_replace.msg_error_save_title": "Fehler",
   "search_replace.msg_error_save": "Fehler beim Speichern der Ergebnisse:\n{error}",
   "search_replace.msg_replace_title": "Ersetzen",
-  "search_replace.msg_replace_success": "Geänderte Dateien: {count}"
+  "search_replace.msg_replace_success": "Geänderte Dateien: {count}",
+  "ai_processor.msg_templates_disabled_title": "Vorlagen deaktiviert",
+  "ai_processor.msg_templates_disabled": "Vorlagenvariablen sind derzeit deaktiviert.\n\nAktivieren Sie das Kontrollkästchen 'Vorlagenvariablen {{...}} aktivieren', um diese Funktion zu verwenden.",
+  "ai_processor.msg_no_templates_title": "Keine Vorlagen gefunden",
+  "ai_processor.msg_no_templates": "Ihr Prompt enthält keine Vorlagenvariablen wie {{count}}, {{filename}}, usw.\n\nBeispielvorlagen:\n• {{count}} - Dateiindex (0-basiert)\n• {{count+1}} - 1-basierter Index\n• {{filename}} - Aktueller Dateiname\n• {{total}} - Gesamtdateien",
+  "ai_processor.msg_template_preview_title": "Vorlagenvorschau",
+  "ai_processor.msg_template_preview": "Ursprünglicher Prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Zeigt, wie die erste Datei von insgesamt {total} Dateien verarbeitet wird)"
 }

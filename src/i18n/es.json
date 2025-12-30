@@ -2002,5 +2002,11 @@
   "search_replace.msg_error_save_title": "Error",
   "search_replace.msg_error_save": "Error al guardar resultados:\n{error}",
   "search_replace.msg_replace_title": "Reemplazar",
-  "search_replace.msg_replace_success": "Archivos modificados: {count}"
+  "search_replace.msg_replace_success": "Archivos modificados: {count}",
+  "ai_processor.msg_templates_disabled_title": "Plantillas Deshabilitadas",
+  "ai_processor.msg_templates_disabled": "Las variables de plantilla están deshabilitadas actualmente.\n\nHabilite la opción 'Habilitar variables de plantilla {{...}}' para usar esta función.",
+  "ai_processor.msg_no_templates_title": "No se Encontraron Plantillas",
+  "ai_processor.msg_no_templates": "Su prompt no contiene ninguna variable de plantilla como {{count}}, {{filename}}, etc.\n\nEjemplos de plantillas:\n• {{count}} - Índice de archivo (base 0)\n• {{count+1}} - Índice base 1\n• {{filename}} - Nombre del archivo actual\n• {{total}} - Total de archivos",
+  "ai_processor.msg_template_preview_title": "Vista Previa de Plantilla",
+  "ai_processor.msg_template_preview": "Prompt original:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Mostrando cómo se procesará el primer archivo de {total} archivos en total)"
 }

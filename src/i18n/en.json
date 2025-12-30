@@ -2027,5 +2027,11 @@
   "search_replace.msg_error_save_title": "Error",
   "search_replace.msg_error_save": "Failed to save results:\n{error}",
   "search_replace.msg_replace_title": "Replace",
-  "search_replace.msg_replace_success": "Modified files: {count}"
+  "search_replace.msg_replace_success": "Modified files: {count}",
+  "ai_processor.msg_templates_disabled_title": "Templates Disabled",
+  "ai_processor.msg_templates_disabled": "Template variables are currently disabled.\n\nEnable the 'Enable template variables {{...}}' checkbox to use this feature.",
+  "ai_processor.msg_no_templates_title": "No Templates Found",
+  "ai_processor.msg_no_templates": "Your prompt doesn't contain any template variables like {{count}}, {{filename}}, etc.\n\nExample templates:\n• {{count}} - File index (0-based)\n• {{count+1}} - 1-based index\n• {{filename}} - Current file name\n• {{total}} - Total files",
+  "ai_processor.msg_template_preview_title": "Template Preview",
+  "ai_processor.msg_template_preview": "Original prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Showing how first file will be processed out of {total} total files)"
 }

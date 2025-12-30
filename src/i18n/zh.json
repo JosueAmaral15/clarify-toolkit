@@ -1994,5 +1994,11 @@
   "search_replace.msg_error_save_title": "错误",
   "search_replace.msg_error_save": "保存结果失败:\n{error}",
   "search_replace.msg_replace_title": "替换",
-  "search_replace.msg_replace_success": "修改的文件: {count}"
+  "search_replace.msg_replace_success": "修改的文件: {count}",
+  "ai_processor.msg_templates_disabled_title": "模板已禁用",
+  "ai_processor.msg_templates_disabled": "模板变量当前已禁用。\n\n启用'启用模板变量 {{...}}'复选框以使用此功能。",
+  "ai_processor.msg_no_templates_title": "未找到模板",
+  "ai_processor.msg_no_templates": "您的提示不包含任何模板变量，如 {{count}}、{{filename}} 等。\n\n模板示例：\n• {{count}} - 文件索引（从0开始）\n• {{count+1}} - 从1开始的索引\n• {{filename}} - 当前文件名\n• {{total}} - 总文件数",
+  "ai_processor.msg_template_preview_title": "模板预览",
+  "ai_processor.msg_template_preview": "原始提示：\n{prompt}\n\n{separator}\n\n{preview}\n\n（显示总共 {total} 个文件中第一个文件的处理方式）"
 }
