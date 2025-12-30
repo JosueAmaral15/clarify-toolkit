@@ -164,14 +164,14 @@ class UpdateNotificationDialog(QDialog):
                 except Exception as e:
                     QMessageBox.warning(
                         self,
-                        "Error",
-                        f"Failed to open browser:\n{str(e)}\n\nPlease visit:\n{download_url}"
+                        tr("update.browser_error_title"),
+                        tr("update.browser_error").format(error=str(e), url=download_url)
                     )
             else:
                 QMessageBox.warning(
                     self,
-                    "Error",
-                    "Download URL not available."
+                    tr("update.browser_error_title"),
+                    tr("update.url_unavailable")
                 )
 
 

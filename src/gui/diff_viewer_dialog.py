@@ -283,12 +283,12 @@ class DiffViewerDialog(QDialog):
             
             QMessageBox.information(
                 self,
-                "Export Successful",
-                f"Diff exported to:\n{file_path}\n\nOpen in browser to view with colors preserved."
+                tr("diff_viewer.export_success_title"),
+                tr("diff_viewer.export_success").format(path=file_path)
             )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Export Failed",
-                f"Failed to export diff:\n{str(e)}"
+                tr("diff_viewer.export_failed_title"),
+                tr("diff_viewer.export_failed").format(error=str(e))
             )

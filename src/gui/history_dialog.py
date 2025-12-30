@@ -175,8 +175,8 @@ Results: {entry['result_count']} items"""
         if not entry:
             QMessageBox.warning(
                 self,
-                "Re-execute Error",
-                "Could not retrieve operation data."
+                tr("history.reexecute_error_title"),
+                tr("history.reexecute_no_data")
             )
             return
         
@@ -184,16 +184,16 @@ Results: {entry['result_count']} items"""
         if not Path(entry["file1"]).exists():
             QMessageBox.warning(
                 self,
-                "File Not Found",
-                f"File 1 no longer exists:\n{entry['file1']}"
+                tr("history.file_not_found_title"),
+                tr("history.file1_not_found").format(file=entry['file1'])
             )
             return
         
         if not Path(entry["file2"]).exists():
             QMessageBox.warning(
                 self,
-                "File Not Found",
-                f"File 2 no longer exists:\n{entry['file2']}"
+                tr("history.file_not_found_title"),
+                tr("history.file2_not_found").format(file=entry['file2'])
             )
             return
         
@@ -223,23 +223,22 @@ Results: {entry['result_count']} items"""
         if success:
             QMessageBox.information(
                 self,
-                "Export Success",
-                f"History exported successfully to:\n{filepath}"
+                tr("history.export_success_title"),
+                tr("history.export_success").format(filepath=filepath)
             )
         else:
             QMessageBox.critical(
                 self,
-                "Export Error",
-                "Failed to export history. Check logs for details."
+                tr("history.export_error_title"),
+                tr("history.export_error")
             )
     
     def _on_clear_clicked(self):
         """Callback para limpar histórico."""
         reply = QMessageBox.question(
             self,
-            "Clear History",
-            "Are you sure you want to clear all operation history?\n"
-            "This action cannot be undone.",
+            tr("history.clear_title"),
+            tr("history.clear_confirm"),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
@@ -250,6 +249,6 @@ Results: {entry['result_count']} items"""
             
             QMessageBox.information(
                 self,
-                "History Cleared",
-                "All operation history has been cleared."
+                tr("history.cleared_title"),
+                tr("history.cleared")
             )
