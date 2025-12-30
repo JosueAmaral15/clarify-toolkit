@@ -2000,5 +2000,16 @@
   "ai_processor.msg_no_templates_title": "テンプレートが見つかりません",
   "ai_processor.msg_no_templates": "プロンプトに {{count}}、{{filename}} などのテンプレート変数が含まれていません。\n\nテンプレートの例：\n• {{count}} - ファイルインデックス（0ベース）\n• {{count+1}} - 1ベースインデックス\n• {{filename}} - 現在のファイル名\n• {{total}} - 総ファイル数",
   "ai_processor.msg_template_preview_title": "テンプレートプレビュー",
-  "ai_processor.msg_template_preview": "元のプロンプト：\n{prompt}\n\n{separator}\n\n{preview}\n\n（合計 {total} ファイルのうち最初のファイルの処理方法を表示）"
+  "ai_processor.msg_template_preview": "元のプロンプト：\n{prompt}\n\n{separator}\n\n{preview}\n\n（合計 {total} ファイルのうち最初のファイルの処理方法を表示）",
+  "batch_dialog.msg_validation_file_not_found_title": "検証エラー",
+  "batch_dialog.msg_file_a_not_found": "ファイルAが見つかりません: {path}",
+  "batch_dialog.msg_file_b_not_found": "ファイルBが見つかりません: {path}",
+  "batch_dialog.msg_saved_title": "保存完了",
+  "batch_dialog.msg_saved": "バッチの保存先:\n{path}",
+  "batch_dialog.msg_loaded_title": "読み込み完了",
+  "batch_dialog.msg_loaded": "バッチを読み込みました: {name}\n{count} ステップ",
+  "batch_dialog.msg_batch_completed_title": "バッチ完了",
+  "batch_dialog.msg_batch_completed": "すべての {count} ステップが正常に完了しました！\n\n最終結果: {result_count} 項目",
+  "batch_dialog.msg_batch_failed_title": "バッチ失敗",
+  "batch_dialog.msg_batch_failed": "バッチがステップ {step} で失敗しました:\n\n{error}\n\nデバッグ用に部分的な結果が保持されています。"
 }

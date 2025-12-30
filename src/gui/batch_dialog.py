@@ -248,7 +248,8 @@ class BatchStepEditorDialog(QDialog):
             return
         
         if file_a_source == 'file_path' and not os.path.exists(file_a_path):
-            QMessageBox.warning(self, "Validation Error", f"File A not found: {file_a_path}")
+            QMessageBox.warning(self, tr("batch_dialog.msg_validation_file_not_found_title"), 
+                tr("batch_dialog.msg_file_a_not_found").format(path=file_a_path))
             return
         
         # Validate File B
@@ -258,7 +259,8 @@ class BatchStepEditorDialog(QDialog):
             return
         
         if not os.path.exists(file_b_path):
-            QMessageBox.warning(self, "Validation Error", f"File B not found: {file_b_path}")
+            QMessageBox.warning(self, tr("batch_dialog.msg_validation_file_not_found_title"), 
+                tr("batch_dialog.msg_file_b_not_found").format(path=file_b_path))
             return
         
         # Get operation
@@ -552,7 +554,8 @@ class BatchDialog(QDialog):
             self.batch_job.output_folder = self.ed_output_folder.text()
             
             if self.batch_job.save_to_file(file_path):
-                QMessageBox.information(self, "Saved", f"Batch saved to:\n{file_path}")
+                QMessageBox.information(self, tr("batch_dialog.msg_saved_title"), 
+                    tr("batch_dialog.msg_saved").format(path=file_path))
             else:
                 QMessageBox.critical(self, tr("batch_dialog.msg_error_save_title"), tr("batch_dialog.msg_error_save"))
     
@@ -573,7 +576,8 @@ class BatchDialog(QDialog):
                 self.chk_save_intermediate.setChecked(batch_job.save_intermediate)
                 self.ed_output_folder.setText(batch_job.output_folder)
                 self._refresh_table()
-                QMessageBox.information(self, "Loaded", f"Batch loaded: {batch_job.name}\n{len(batch_job.steps)} steps")
+                QMessageBox.information(self, tr("batch_dialog.msg_loaded_title"), 
+                    tr("batch_dialog.msg_loaded").format(name=batch_job.name, count=len(batch_job.steps)))
             else:
                 QMessageBox.critical(self, tr("batch_dialog.msg_error_load_title"), tr("batch_dialog.msg_error_load"))
     
@@ -641,9 +645,11 @@ class BatchDialog(QDialog):
         """Handle batch completed."""
         QMessageBox.information(
             self,
-            "Batch Completed",
-            f"All {len(self.batch_job.steps)} steps completed successfully!\n\n"
-            f"Final result: {self.batch_job.steps[-1].result_count} items"
+            tr("batch_dialog.msg_batch_completed_title"),
+            tr("batch_dialog.msg_batch_completed").format(
+                count=len(self.batch_job.steps),
+                result_count=self.batch_job.steps[-1].result_count
+            )
         )
         
         # Add to history
@@ -658,9 +664,11 @@ class BatchDialog(QDialog):
         """Handle batch failed."""
         QMessageBox.critical(
             self,
-            "Batch Failed",
-            f"Batch failed at step {failed_step_index + 1}:\n\n{error_message}\n\n"
-            f"Partial results preserved for debugging."
+            tr("batch_dialog.msg_batch_failed_title"),
+            tr("batch_dialog.msg_batch_failed").format(
+                step=failed_step_index + 1,
+                error=error_message
+            )
         )
     
     def _on_executor_finished(self):

@@ -2000,5 +2000,16 @@
   "ai_processor.msg_no_templates_title": "Aucun modèle trouvé",
   "ai_processor.msg_no_templates": "Votre invite ne contient aucune variable de modèle comme {{count}}, {{filename}}, etc.\n\nExemples de modèles :\n• {{count}} - Index de fichier (base 0)\n• {{count+1}} - Index base 1\n• {{filename}} - Nom du fichier actuel\n• {{total}} - Total de fichiers",
   "ai_processor.msg_template_preview_title": "Aperçu du modèle",
-  "ai_processor.msg_template_preview": "Invite d'origine :\n{prompt}\n\n{separator}\n\n{preview}\n\n(Affichage du traitement du premier fichier sur {total} fichiers au total)"
+  "ai_processor.msg_template_preview": "Invite d'origine :\n{prompt}\n\n{separator}\n\n{preview}\n\n(Affichage du traitement du premier fichier sur {total} fichiers au total)",
+  "batch_dialog.msg_validation_file_not_found_title": "Erreur de validation",
+  "batch_dialog.msg_file_a_not_found": "Fichier A introuvable : {path}",
+  "batch_dialog.msg_file_b_not_found": "Fichier B introuvable : {path}",
+  "batch_dialog.msg_saved_title": "Enregistré",
+  "batch_dialog.msg_saved": "Lot enregistré dans :\n{path}",
+  "batch_dialog.msg_loaded_title": "Chargé",
+  "batch_dialog.msg_loaded": "Lot chargé : {name}\n{count} étapes",
+  "batch_dialog.msg_batch_completed_title": "Lot terminé",
+  "batch_dialog.msg_batch_completed": "Toutes les {count} étapes terminées avec succès !\n\nRésultat final : {result_count} éléments",
+  "batch_dialog.msg_batch_failed_title": "Échec du lot",
+  "batch_dialog.msg_batch_failed": "Le lot a échoué à l'étape {step} :\n\n{error}\n\nRésultats partiels conservés pour le débogage."
 }

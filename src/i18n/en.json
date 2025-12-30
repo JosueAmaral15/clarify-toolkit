@@ -2033,5 +2033,16 @@
   "ai_processor.msg_no_templates_title": "No Templates Found",
   "ai_processor.msg_no_templates": "Your prompt doesn't contain any template variables like {{count}}, {{filename}}, etc.\n\nExample templates:\n• {{count}} - File index (0-based)\n• {{count+1}} - 1-based index\n• {{filename}} - Current file name\n• {{total}} - Total files",
   "ai_processor.msg_template_preview_title": "Template Preview",
-  "ai_processor.msg_template_preview": "Original prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Showing how first file will be processed out of {total} total files)"
+  "ai_processor.msg_template_preview": "Original prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Showing how first file will be processed out of {total} total files)",
+  "batch_dialog.msg_validation_file_not_found_title": "Validation Error",
+  "batch_dialog.msg_file_a_not_found": "File A not found: {path}",
+  "batch_dialog.msg_file_b_not_found": "File B not found: {path}",
+  "batch_dialog.msg_saved_title": "Saved",
+  "batch_dialog.msg_saved": "Batch saved to:\n{path}",
+  "batch_dialog.msg_loaded_title": "Loaded",
+  "batch_dialog.msg_loaded": "Batch loaded: {name}\n{count} steps",
+  "batch_dialog.msg_batch_completed_title": "Batch Completed",
+  "batch_dialog.msg_batch_completed": "All {count} steps completed successfully!\n\nFinal result: {result_count} items",
+  "batch_dialog.msg_batch_failed_title": "Batch Failed",
+  "batch_dialog.msg_batch_failed": "Batch failed at step {step}:\n\n{error}\n\nPartial results preserved for debugging."
 }

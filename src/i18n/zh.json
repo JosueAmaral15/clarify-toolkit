@@ -2000,5 +2000,16 @@
   "ai_processor.msg_no_templates_title": "未找到模板",
   "ai_processor.msg_no_templates": "您的提示不包含任何模板变量，如 {{count}}、{{filename}} 等。\n\n模板示例：\n• {{count}} - 文件索引（从0开始）\n• {{count+1}} - 从1开始的索引\n• {{filename}} - 当前文件名\n• {{total}} - 总文件数",
   "ai_processor.msg_template_preview_title": "模板预览",
-  "ai_processor.msg_template_preview": "原始提示：\n{prompt}\n\n{separator}\n\n{preview}\n\n（显示总共 {total} 个文件中第一个文件的处理方式）"
+  "ai_processor.msg_template_preview": "原始提示：\n{prompt}\n\n{separator}\n\n{preview}\n\n（显示总共 {total} 个文件中第一个文件的处理方式）",
+  "batch_dialog.msg_validation_file_not_found_title": "验证错误",
+  "batch_dialog.msg_file_a_not_found": "未找到文件A: {path}",
+  "batch_dialog.msg_file_b_not_found": "未找到文件B: {path}",
+  "batch_dialog.msg_saved_title": "已保存",
+  "batch_dialog.msg_saved": "批次已保存到:\n{path}",
+  "batch_dialog.msg_loaded_title": "已加载",
+  "batch_dialog.msg_loaded": "已加载批次: {name}\n{count} 步骤",
+  "batch_dialog.msg_batch_completed_title": "批次已完成",
+  "batch_dialog.msg_batch_completed": "所有 {count} 步骤已成功完成！\n\n最终结果: {result_count} 项",
+  "batch_dialog.msg_batch_failed_title": "批次失败",
+  "batch_dialog.msg_batch_failed": "批次在步骤 {step} 失败:\n\n{error}\n\n部分结果已保留用于调试。"
 }

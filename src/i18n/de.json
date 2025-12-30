@@ -2000,5 +2000,16 @@
   "ai_processor.msg_no_templates_title": "Keine Vorlagen gefunden",
   "ai_processor.msg_no_templates": "Ihr Prompt enthält keine Vorlagenvariablen wie {{count}}, {{filename}}, usw.\n\nBeispielvorlagen:\n• {{count}} - Dateiindex (0-basiert)\n• {{count+1}} - 1-basierter Index\n• {{filename}} - Aktueller Dateiname\n• {{total}} - Gesamtdateien",
   "ai_processor.msg_template_preview_title": "Vorlagenvorschau",
-  "ai_processor.msg_template_preview": "Ursprünglicher Prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Zeigt, wie die erste Datei von insgesamt {total} Dateien verarbeitet wird)"
+  "ai_processor.msg_template_preview": "Ursprünglicher Prompt:\n{prompt}\n\n{separator}\n\n{preview}\n\n(Zeigt, wie die erste Datei von insgesamt {total} Dateien verarbeitet wird)",
+  "batch_dialog.msg_validation_file_not_found_title": "Validierungsfehler",
+  "batch_dialog.msg_file_a_not_found": "Datei A nicht gefunden: {path}",
+  "batch_dialog.msg_file_b_not_found": "Datei B nicht gefunden: {path}",
+  "batch_dialog.msg_saved_title": "Gespeichert",
+  "batch_dialog.msg_saved": "Stapel gespeichert unter:\n{path}",
+  "batch_dialog.msg_loaded_title": "Geladen",
+  "batch_dialog.msg_loaded": "Stapel geladen: {name}\n{count} Schritte",
+  "batch_dialog.msg_batch_completed_title": "Stapel abgeschlossen",
+  "batch_dialog.msg_batch_completed": "Alle {count} Schritte erfolgreich abgeschlossen!\n\nEndgültiges Ergebnis: {result_count} Elemente",
+  "batch_dialog.msg_batch_failed_title": "Stapel fehlgeschlagen",
+  "batch_dialog.msg_batch_failed": "Stapel fehlgeschlagen bei Schritt {step}:\n\n{error}\n\nTeilergebnisse zur Fehlersuche erhalten."
 }
