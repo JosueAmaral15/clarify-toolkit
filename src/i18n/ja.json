@@ -1954,5 +1954,19 @@
   "search_replace.tooltip_clear_conditions": "すべての高度な条件フィールドをクリア",
   "search_replace.tooltip_save_results": "すべての検索結果を統計情報付きのフォーマットされたテキストファイルに保存",
   "search_replace.tooltip_cond_case": "大文字小文字を区別",
-  "search_replace.tooltip_cond_word": "単語全体を一致"
+  "search_replace.tooltip_cond_word": "単語全体を一致",
+  "app.tooltip_customize": "ショートカットのカスタマイズダイアログを開く",
+  "app.tooltip_undo_nothing": "元に戻すものがありません",
+  "app.tooltip_redo_nothing": "やり直すものがありません",
+  "app.msg_undo_title": "元に戻す",
+  "app.msg_undo_nothing": "元に戻すものがありません。",
+  "app.msg_redo_title": "やり直す",
+  "app.msg_redo_nothing": "やり直すものがありません。",
+  "app.msg_clear_history_title": "履歴をクリア",
+  "app.msg_clear_history_confirm": "すべての元に戻す/やり直し履歴をクリアしてもよろしいですか？",
+  "app.msg_clear_history_success": "元に戻す/やり直し履歴をクリアしました！",
+  "app.msg_clear_recent_title": "最近のファイルをクリア",
+  "app.msg_clear_recent_confirm": "最近のファイルリストをクリアしてもよろしいですか？",
+  "app.msg_clear_recent_success": "最近のファイルをクリアしました！",
+  "app.msg_success_title": "成功"
 }

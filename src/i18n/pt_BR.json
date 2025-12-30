@@ -1987,5 +1987,19 @@
   "search_replace.tooltip_clear_conditions": "Limpar todos os campos de condição avançada",
   "search_replace.tooltip_save_results": "Salvar todos os resultados de pesquisa em um arquivo de texto formatado com estatísticas",
   "search_replace.tooltip_cond_case": "Sensível a maiúsculas/minúsculas",
-  "search_replace.tooltip_cond_word": "Corresponder palavra inteira"
+  "search_replace.tooltip_cond_word": "Corresponder palavra inteira",
+  "app.tooltip_customize": "Abrir diálogo de personalização de atalhos",
+  "app.tooltip_undo_nothing": "Nada para desfazer",
+  "app.tooltip_redo_nothing": "Nada para refazer",
+  "app.msg_undo_title": "Desfazer",
+  "app.msg_undo_nothing": "Nada para desfazer.",
+  "app.msg_redo_title": "Refazer",
+  "app.msg_redo_nothing": "Nada para refazer.",
+  "app.msg_clear_history_title": "Limpar Histórico",
+  "app.msg_clear_history_confirm": "Tem certeza de que deseja limpar todo o histórico de desfazer/refazer?",
+  "app.msg_clear_history_success": "Histórico de desfazer/refazer limpo!",
+  "app.msg_clear_recent_title": "Limpar Arquivos Recentes",
+  "app.msg_clear_recent_confirm": "Tem certeza de que deseja limpar a lista de arquivos recentes?",
+  "app.msg_clear_recent_success": "Arquivos recentes limpos!",
+  "app.msg_success_title": "Sucesso"
 }

@@ -1987,5 +1987,19 @@
   "search_replace.tooltip_clear_conditions": "Clear all advanced condition fields",
   "search_replace.tooltip_save_results": "Save all search results to a formatted text file with statistics",
   "search_replace.tooltip_cond_case": "Case sensitive",
-  "search_replace.tooltip_cond_word": "Match whole word"
+  "search_replace.tooltip_cond_word": "Match whole word",
+  "app.tooltip_customize": "Open shortcuts customization dialog",
+  "app.tooltip_undo_nothing": "Nothing to undo",
+  "app.tooltip_redo_nothing": "Nothing to redo",
+  "app.msg_undo_title": "Undo",
+  "app.msg_undo_nothing": "Nothing to undo.",
+  "app.msg_redo_title": "Redo",
+  "app.msg_redo_nothing": "Nothing to redo.",
+  "app.msg_clear_history_title": "Clear History",
+  "app.msg_clear_history_confirm": "Are you sure you want to clear all undo/redo history?",
+  "app.msg_clear_history_success": "Undo/redo history cleared!",
+  "app.msg_clear_recent_title": "Clear Recent Files",
+  "app.msg_clear_recent_confirm": "Are you sure you want to clear the recent files list?",
+  "app.msg_clear_recent_success": "Recent files cleared!",
+  "app.msg_success_title": "Success"
 }

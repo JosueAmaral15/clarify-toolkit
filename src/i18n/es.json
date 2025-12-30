@@ -1962,5 +1962,19 @@
   "search_replace.tooltip_clear_conditions": "Limpiar todos los campos de condición avanzada",
   "search_replace.tooltip_save_results": "Guardar todos los resultados de búsqueda en un archivo de texto formateado con estadísticas",
   "search_replace.tooltip_cond_case": "Sensible a mayúsculas/minúsculas",
-  "search_replace.tooltip_cond_word": "Coincidir palabra completa"
+  "search_replace.tooltip_cond_word": "Coincidir palabra completa",
+  "app.tooltip_customize": "Abrir diálogo de personalización de atajos",
+  "app.tooltip_undo_nothing": "Nada que deshacer",
+  "app.tooltip_redo_nothing": "Nada que rehacer",
+  "app.msg_undo_title": "Deshacer",
+  "app.msg_undo_nothing": "Nada que deshacer.",
+  "app.msg_redo_title": "Rehacer",
+  "app.msg_redo_nothing": "Nada que rehacer.",
+  "app.msg_clear_history_title": "Borrar Historial",
+  "app.msg_clear_history_confirm": "¿Está seguro de que desea borrar todo el historial de deshacer/rehacer?",
+  "app.msg_clear_history_success": "¡Historial de deshacer/rehacer borrado!",
+  "app.msg_clear_recent_title": "Borrar Archivos Recientes",
+  "app.msg_clear_recent_confirm": "¿Está seguro de que desea borrar la lista de archivos recientes?",
+  "app.msg_clear_recent_success": "¡Archivos recientes borrados!",
+  "app.msg_success_title": "Éxito"
 }

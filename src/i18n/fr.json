@@ -1954,5 +1954,19 @@
   "search_replace.tooltip_clear_conditions": "Effacer tous les champs de condition avancés",
   "search_replace.tooltip_save_results": "Enregistrer tous les résultats de recherche dans un fichier texte formaté avec des statistiques",
   "search_replace.tooltip_cond_case": "Sensible à la casse",
-  "search_replace.tooltip_cond_word": "Correspondre au mot entier"
+  "search_replace.tooltip_cond_word": "Correspondre au mot entier",
+  "app.tooltip_customize": "Ouvrir la boîte de dialogue de personnalisation des raccourcis",
+  "app.tooltip_undo_nothing": "Rien à annuler",
+  "app.tooltip_redo_nothing": "Rien à refaire",
+  "app.msg_undo_title": "Annuler",
+  "app.msg_undo_nothing": "Rien à annuler.",
+  "app.msg_redo_title": "Refaire",
+  "app.msg_redo_nothing": "Rien à refaire.",
+  "app.msg_clear_history_title": "Effacer l'historique",
+  "app.msg_clear_history_confirm": "Êtes-vous sûr de vouloir effacer tout l'historique d'annulation/rétablissement ?",
+  "app.msg_clear_history_success": "Historique d'annulation/rétablissement effacé !",
+  "app.msg_clear_recent_title": "Effacer les fichiers récents",
+  "app.msg_clear_recent_confirm": "Êtes-vous sûr de vouloir effacer la liste des fichiers récents ?",
+  "app.msg_clear_recent_success": "Fichiers récents effacés !",
+  "app.msg_success_title": "Succès"
 }

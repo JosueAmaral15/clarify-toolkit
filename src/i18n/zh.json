@@ -1954,5 +1954,19 @@
   "search_replace.tooltip_clear_conditions": "清除所有高级条件字段",
   "search_replace.tooltip_save_results": "将所有搜索结果保存到带统计信息的格式化文本文件",
   "search_replace.tooltip_cond_case": "区分大小写",
-  "search_replace.tooltip_cond_word": "匹配整个单词"
+  "search_replace.tooltip_cond_word": "匹配整个单词",
+  "app.tooltip_customize": "打开快捷键自定义对话框",
+  "app.tooltip_undo_nothing": "无可撤消",
+  "app.tooltip_redo_nothing": "无可重做",
+  "app.msg_undo_title": "撤消",
+  "app.msg_undo_nothing": "无可撤消。",
+  "app.msg_redo_title": "重做",
+  "app.msg_redo_nothing": "无可重做。",
+  "app.msg_clear_history_title": "清除历史记录",
+  "app.msg_clear_history_confirm": "您确定要清除所有撤消/重做历史记录吗？",
+  "app.msg_clear_history_success": "撤消/重做历史记录已清除！",
+  "app.msg_clear_recent_title": "清除最近的文件",
+  "app.msg_clear_recent_confirm": "您确定要清除最近的文件列表吗？",
+  "app.msg_clear_recent_success": "最近的文件已清除！",
+  "app.msg_success_title": "成功"
 }

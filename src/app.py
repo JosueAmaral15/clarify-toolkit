@@ -1439,7 +1439,7 @@ if _PYSIDE:
             btn_layout = QHBoxLayout()
             
             customize_btn = QPushButton("Customize...")
-            customize_btn.setToolTip("Open shortcuts customization dialog")
+            customize_btn.setToolTip(tooltip_tr("app.tooltip_customize"))
             customize_btn.clicked.connect(lambda: (dialog.close(), self._show_shortcuts()))
             
             close_btn = QPushButton("Close")
@@ -1530,11 +1530,11 @@ if _PYSIDE:
                 self._update_undo_redo_state()
                 QMessageBox.information(
                     self,
-                    "Undo",
-                    f"Undone: {self.command_manager.get_redo_description() or 'Last operation'}"
+                    tr("app.msg_undo_title"),
+                    f"{tr('app.msg_undo_title')}: {self.command_manager.get_redo_description() or tr('app.msg_success_title')}"
                 )
             else:
-                QMessageBox.warning(self, "Undo", "Nothing to undo.")
+                QMessageBox.warning(self, tr("app.msg_undo_title"), tr("app.msg_undo_nothing"))
         
         def _redo(self):
             """Redo the last undone command."""
@@ -1542,25 +1542,25 @@ if _PYSIDE:
                 self._update_undo_redo_state()
                 QMessageBox.information(
                     self,
-                    "Redo",
-                    f"Redone: {self.command_manager.get_undo_description() or 'Last operation'}"
+                    tr("app.msg_redo_title"),
+                    f"{tr('app.msg_redo_title')}: {self.command_manager.get_undo_description() or tr('app.msg_success_title')}"
                 )
             else:
-                QMessageBox.warning(self, "Redo", "Nothing to redo.")
+                QMessageBox.warning(self, tr("app.msg_redo_title"), tr("app.msg_redo_nothing"))
         
         def _clear_undo_history(self):
             """Clear all undo/redo history."""
             reply = QMessageBox.question(
                 self,
-                "Clear History",
-                "Are you sure you want to clear all undo/redo history?",
+                tr("app.msg_clear_history_title"),
+                tr("app.msg_clear_history_confirm"),
                 QMessageBox.Yes | QMessageBox.No
             )
             
             if reply == QMessageBox.Yes:
                 self.command_manager.clear_history()
                 self._update_undo_redo_state()
-                QMessageBox.information(self, "Success", "Undo/redo history cleared!")
+                QMessageBox.information(self, tr("app.msg_success_title"), tr("app.msg_clear_history_success"))
         
         def _update_undo_redo_state(self):
             """Update the enabled state of undo/redo buttons based on history."""
@@ -1569,27 +1569,27 @@ if _PYSIDE:
             
             # Update button tooltips with descriptions
             if self.command_manager.can_undo():
-                self.act_undo.setToolTip(f"Undo: {self.command_manager.get_undo_description()}")
+                self.act_undo.setToolTip(f"{tr('app.msg_undo_title')}: {self.command_manager.get_undo_description()}")
             else:
-                self.act_undo.setToolTip("Nothing to undo")
+                self.act_undo.setToolTip(tr("app.tooltip_undo_nothing"))
             
             if self.command_manager.can_redo():
-                self.act_redo.setToolTip(f"Redo: {self.command_manager.get_redo_description()}")
+                self.act_redo.setToolTip(f"{tr('app.msg_redo_title')}: {self.command_manager.get_redo_description()}")
             else:
-                self.act_redo.setToolTip("Nothing to redo")
+                self.act_redo.setToolTip(tr("app.tooltip_redo_nothing"))
         
         def _clear_recent_files(self):
             """Clear recent files list."""
             reply = QMessageBox.question(
                 self,
-                "Clear Recent Files",
-                "Are you sure you want to clear the recent files list?",
+                tr("app.msg_clear_recent_title"),
+                tr("app.msg_clear_recent_confirm"),
                 QMessageBox.Yes | QMessageBox.No
             )
             
             if reply == QMessageBox.Yes:
                 self.settings.clear_recent_files()
-                QMessageBox.information(self, "Success", "Recent files cleared!")
+                QMessageBox.information(self, tr("app.msg_success_title"), tr("app.msg_clear_recent_success"))
         
         def keyPressEvent(self, event):
             """Handle global keyboard shortcuts (v2.9.33 + v2.9.35 accessibility)."""

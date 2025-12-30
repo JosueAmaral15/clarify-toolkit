@@ -1954,5 +1954,19 @@
   "search_replace.tooltip_clear_conditions": "Alle erweiterten Bedingungsfelder löschen",
   "search_replace.tooltip_save_results": "Alle Suchergebnisse in eine formatierte Textdatei mit Statistiken speichern",
   "search_replace.tooltip_cond_case": "Groß-/Kleinschreibung beachten",
-  "search_replace.tooltip_cond_word": "Ganzes Wort abgleichen"
+  "search_replace.tooltip_cond_word": "Ganzes Wort abgleichen",
+  "app.tooltip_customize": "Tastaturkürzel-Anpassungsdialog öffnen",
+  "app.tooltip_undo_nothing": "Nichts zum Rückgängig machen",
+  "app.tooltip_redo_nothing": "Nichts zum Wiederherstellen",
+  "app.msg_undo_title": "Rückgängig",
+  "app.msg_undo_nothing": "Nichts zum Rückgängig machen.",
+  "app.msg_redo_title": "Wiederherstellen",
+  "app.msg_redo_nothing": "Nichts zum Wiederherstellen.",
+  "app.msg_clear_history_title": "Verlauf löschen",
+  "app.msg_clear_history_confirm": "Sind Sie sicher, dass Sie den gesamten Rückgängig-/Wiederherstellen-Verlauf löschen möchten?",
+  "app.msg_clear_history_success": "Rückgängig-/Wiederherstellen-Verlauf gelöscht!",
+  "app.msg_clear_recent_title": "Zuletzt verwendete Dateien löschen",
+  "app.msg_clear_recent_confirm": "Sind Sie sicher, dass Sie die Liste der zuletzt verwendeten Dateien löschen möchten?",
+  "app.msg_clear_recent_success": "Zuletzt verwendete Dateien gelöscht!",
+  "app.msg_success_title": "Erfolg"
 }
