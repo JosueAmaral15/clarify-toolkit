@@ -2035,5 +2035,13 @@
   "error_report.msg_saved": "Fehlerprotokoll gespeichert unter:\n{filename}",
   "error_report.msg_save_error": "Protokolldatei konnte nicht gespeichert werden: {error}",
   "error_report.msg_reporting_disabled_title": "Fehlerberichterstattung deaktiviert",
-  "error_report.msg_reporting_disabled": "Fehlerberichterstattung wurde deaktiviert.\n\nSie können sie unter Einstellungen → Erweitert → Fehlerberichterstattung wieder aktivieren."
+  "error_report.msg_reporting_disabled": "Fehlerberichterstattung wurde deaktiviert.\n\nSie können sie unter Einstellungen → Erweitert → Fehlerberichterstattung wieder aktivieren.",
+  "statistics.msg_success_title": "Erfolg",
+  "statistics.msg_exported_csv": "Exportiert nach {filename}",
+  "statistics.msg_error_title": "Fehler",
+  "statistics.msg_export_csv_failed": "CSV-Export fehlgeschlagen: {error}",
+  "statistics.msg_export_json_failed": "JSON-Export fehlgeschlagen: {error}",
+  "statistics.msg_missing_dependency_title": "Fehlende Abhängigkeit",
+  "statistics.msg_missing_openpyxl": "Excel-Export erfordert das Paket 'openpyxl'.\nInstallieren mit: pip install openpyxl",
+  "statistics.msg_export_excel_failed": "Excel-Export fehlgeschlagen: {error}"
 }

@@ -239,9 +239,11 @@ class StatisticsDialog(QDialog):
                             row_data.append(item.text() if item else "")
                         writer.writerow(row_data)
             
-            QMessageBox.information(self, "Success", f"Exported to {filename}")
+            QMessageBox.information(self, tr("statistics.msg_success_title"), 
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to export CSV: {e}")
+            QMessageBox.critical(self, tr("statistics.msg_error_title"), 
+                tr("statistics.msg_export_csv_failed").format(error=e))
     
     def _export_json(self):
         """Export removal stats to JSON."""
@@ -261,9 +263,11 @@ class StatisticsDialog(QDialog):
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
             
-            QMessageBox.information(self, "Success", f"Exported to {filename}")
+            QMessageBox.information(self, tr("statistics.msg_success_title"), 
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to export JSON: {e}")
+            QMessageBox.critical(self, tr("statistics.msg_error_title"), 
+                tr("statistics.msg_export_json_failed").format(error=e))
     
     def _export_excel(self):
         """Export removal stats to Excel (requires openpyxl)."""
@@ -271,8 +275,8 @@ class StatisticsDialog(QDialog):
             import openpyxl  # type: ignore[import-not-found]  # Optional dependency
         except ImportError:
             QMessageBox.warning(
-                self, "Missing Dependency", 
-                "Excel export requires 'openpyxl' package.\nInstall with: pip install openpyxl"
+                self, tr("statistics.msg_missing_dependency_title"), 
+                tr("statistics.msg_missing_openpyxl")
             )
             return
         
@@ -303,6 +307,8 @@ class StatisticsDialog(QDialog):
                     sheet.append(row_data)
             
             workbook.save(filename)
-            QMessageBox.information(self, "Success", f"Exported to {filename}")
+            QMessageBox.information(self, tr("statistics.msg_success_title"), 
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to export Excel: {e}")
+            QMessageBox.critical(self, tr("statistics.msg_error_title"), 
+                tr("statistics.msg_export_excel_failed").format(error=e))

@@ -2035,5 +2035,13 @@
   "error_report.msg_saved": "Journal d'erreur enregistré dans :\n{filename}",
   "error_report.msg_save_error": "Impossible d'enregistrer le fichier journal : {error}",
   "error_report.msg_reporting_disabled_title": "Rapport d'erreurs désactivé",
-  "error_report.msg_reporting_disabled": "Le rapport d'erreurs a été désactivé.\n\nVous pouvez le réactiver dans Paramètres → Avancé → Rapport d'erreurs."
+  "error_report.msg_reporting_disabled": "Le rapport d'erreurs a été désactivé.\n\nVous pouvez le réactiver dans Paramètres → Avancé → Rapport d'erreurs.",
+  "statistics.msg_success_title": "Succès",
+  "statistics.msg_exported_csv": "Exporté vers {filename}",
+  "statistics.msg_error_title": "Erreur",
+  "statistics.msg_export_csv_failed": "Échec de l'exportation CSV : {error}",
+  "statistics.msg_export_json_failed": "Échec de l'exportation JSON : {error}",
+  "statistics.msg_missing_dependency_title": "Dépendance manquante",
+  "statistics.msg_missing_openpyxl": "L'exportation Excel nécessite le package 'openpyxl'.\nInstallez avec : pip install openpyxl",
+  "statistics.msg_export_excel_failed": "Échec de l'exportation Excel : {error}"
 }

@@ -2035,5 +2035,13 @@
   "error_report.msg_saved": "エラーログの保存先:\n{filename}",
   "error_report.msg_save_error": "ログファイルを保存できませんでした: {error}",
   "error_report.msg_reporting_disabled_title": "エラー報告が無効",
-  "error_report.msg_reporting_disabled": "エラー報告が無効になりました。\n\n設定 → 詳細 → エラー報告で再度有効にできます。"
+  "error_report.msg_reporting_disabled": "エラー報告が無効になりました。\n\n設定 → 詳細 → エラー報告で再度有効にできます。",
+  "statistics.msg_success_title": "成功",
+  "statistics.msg_exported_csv": "{filename} にエクスポートしました",
+  "statistics.msg_error_title": "エラー",
+  "statistics.msg_export_csv_failed": "CSVのエクスポートに失敗しました: {error}",
+  "statistics.msg_export_json_failed": "JSONのエクスポートに失敗しました: {error}",
+  "statistics.msg_missing_dependency_title": "依存関係が不足しています",
+  "statistics.msg_missing_openpyxl": "Excelエクスポートには 'openpyxl' パッケージが必要です。\nインストール: pip install openpyxl",
+  "statistics.msg_export_excel_failed": "Excelのエクスポートに失敗しました: {error}"
 }

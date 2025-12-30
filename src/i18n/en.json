@@ -2068,5 +2068,13 @@
   "error_report.msg_saved": "Error log saved to:\n{filename}",
   "error_report.msg_save_error": "Could not save log file: {error}",
   "error_report.msg_reporting_disabled_title": "Error Reporting Disabled",
-  "error_report.msg_reporting_disabled": "Error reporting has been disabled.\n\nYou can re-enable it in Settings → Advanced → Error Reporting."
+  "error_report.msg_reporting_disabled": "Error reporting has been disabled.\n\nYou can re-enable it in Settings → Advanced → Error Reporting.",
+  "statistics.msg_success_title": "Success",
+  "statistics.msg_exported_csv": "Exported to {filename}",
+  "statistics.msg_error_title": "Error",
+  "statistics.msg_export_csv_failed": "Failed to export CSV: {error}",
+  "statistics.msg_export_json_failed": "Failed to export JSON: {error}",
+  "statistics.msg_missing_dependency_title": "Missing Dependency",
+  "statistics.msg_missing_openpyxl": "Excel export requires 'openpyxl' package.\nInstall with: pip install openpyxl",
+  "statistics.msg_export_excel_failed": "Failed to export Excel: {error}"
 }

@@ -2035,5 +2035,13 @@
   "error_report.msg_saved": "错误日志已保存到:\n{filename}",
   "error_report.msg_save_error": "无法保存日志文件: {error}",
   "error_report.msg_reporting_disabled_title": "错误报告已禁用",
-  "error_report.msg_reporting_disabled": "错误报告已禁用。\n\n您可以在 设置 → 高级 → 错误报告 中重新启用。"
+  "error_report.msg_reporting_disabled": "错误报告已禁用。\n\n您可以在 设置 → 高级 → 错误报告 中重新启用。",
+  "statistics.msg_success_title": "成功",
+  "statistics.msg_exported_csv": "已导出到 {filename}",
+  "statistics.msg_error_title": "错误",
+  "statistics.msg_export_csv_failed": "导出CSV失败: {error}",
+  "statistics.msg_export_json_failed": "导出JSON失败: {error}",
+  "statistics.msg_missing_dependency_title": "缺少依赖",
+  "statistics.msg_missing_openpyxl": "Excel导出需要 'openpyxl' 包。\n安装命令: pip install openpyxl",
+  "statistics.msg_export_excel_failed": "导出Excel失败: {error}"
 }

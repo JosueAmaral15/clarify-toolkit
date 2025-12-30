@@ -2043,5 +2043,13 @@
   "error_report.msg_saved": "Log de error guardado en:\n{filename}",
   "error_report.msg_save_error": "No se pudo guardar el archivo de log: {error}",
   "error_report.msg_reporting_disabled_title": "Informe de Errores Deshabilitado",
-  "error_report.msg_reporting_disabled": "El informe de errores ha sido deshabilitado.\n\nPuede volver a habilitarlo en Configuración → Avanzado → Informe de Errores."
+  "error_report.msg_reporting_disabled": "El informe de errores ha sido deshabilitado.\n\nPuede volver a habilitarlo en Configuración → Avanzado → Informe de Errores.",
+  "statistics.msg_success_title": "Éxito",
+  "statistics.msg_exported_csv": "Exportado a {filename}",
+  "statistics.msg_error_title": "Error",
+  "statistics.msg_export_csv_failed": "Error al exportar CSV: {error}",
+  "statistics.msg_export_json_failed": "Error al exportar JSON: {error}",
+  "statistics.msg_missing_dependency_title": "Dependencia Faltante",
+  "statistics.msg_missing_openpyxl": "La exportación a Excel requiere el paquete 'openpyxl'.\nInstale con: pip install openpyxl",
+  "statistics.msg_export_excel_failed": "Error al exportar Excel: {error}"
 }
