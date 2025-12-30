@@ -135,7 +135,7 @@ class UpdateNotificationDialog(QDialog):
             except:
                 self.lbl_published.setText(f"Published: {published}")
         else:
-            self.lbl_published.setText("Published: Unknown")
+            self.lbl_published.setText(tr("update_notification.text_published_unknown"))
         
         # Release notes
         notes = result.get("release_notes", "No release notes available.")

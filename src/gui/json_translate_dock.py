@@ -141,9 +141,7 @@ class JsonTranslateDock(BaseDock):
         self.chk_emit_export.setChecked(True)
 
         self.chk_preserve_uppercase = QCheckBox(tr("json_translate.chk_preserve_uppercase"))
-        self.chk_preserve_uppercase.setToolTip(
-            "Preserve keys that are already UPPERCASE (e.g., HOME_TITLE stays HOME_TITLE, useful for constants) | Ctrl+T to open Translate"
-        )
+        self.chk_preserve_uppercase.setToolTip(tr("json_translate.tooltip_preserve_uppercase"))
 
         # Stats label (Task #43 - v2.9.13)
         self.lbl_stats = QLabel(tr("json_translate.lbl_stats_ready"))

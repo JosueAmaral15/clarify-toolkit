@@ -120,9 +120,9 @@ class TextExtractorDock(StandardToolDock):
         options_layout.addWidget(self.chk_only_strings, 2, 2)
         
         self.chk_exclude_numeric = QCheckBox(tr("text_extractor.chk_exclude_numeric"))
-        self.chk_exclude_numeric.setToolTip("Skip keys that are purely numeric (e.g., '0', '123')")
+        self.chk_exclude_numeric.setToolTip(tr("text_extractor.tooltip_exclude_numeric"))
         self.chk_skip_empty = QCheckBox(tr("text_extractor.chk_skip_empty"))
-        self.chk_skip_empty.setToolTip("Skip empty strings, null, [], {}, and whitespace-only values")
+        self.chk_skip_empty.setToolTip(tr("text_extractor.tooltip_skip_empty"))
         self.chk_exclude_numeric = QCheckBox(tr("text_extractor.chk_exclude_numeric"))
         self.chk_skip_empty = QCheckBox(tr("text_extractor.chk_skip_empty"))
         

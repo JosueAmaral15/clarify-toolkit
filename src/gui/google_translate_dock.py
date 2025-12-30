@@ -455,7 +455,7 @@ class GoogleTranslateDock(BaseDock):
             self.btn_translate.setEnabled(True)
             self.btn_cancel.setEnabled(False)
             self.progress_bar.setVisible(False)
-            self.lbl_status.setText("Translation cancelled")
+            self.lbl_status.setText(tr("google_translate.text_cancelled"))
     
     def _copy_result(self):
         """Copy translation result to clipboard."""

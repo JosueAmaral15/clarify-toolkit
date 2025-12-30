@@ -411,7 +411,7 @@ class JsonSearchDock(StandardToolDock):
         layout.addWidget(radio_per_file)
 
         radio_per_query = QRadioButton(tr("json_search.radio_per_query"))
-        radio_per_query.setToolTip("Group results by search query (key or value)")
+        radio_per_query.setToolTip(tr("json_search.tooltip_per_query"))
         self.radio_group.addButton(radio_per_query, 2)
         layout.addWidget(radio_per_query)
 

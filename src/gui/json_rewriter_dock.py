@@ -340,12 +340,12 @@ class JsonRewriterDock(BaseDock):
         # Checkboxes
         chk_line_numbers = QCheckBox(tr("json_rewriter.chk_include_line_numbers"))
         chk_line_numbers.setChecked(settings.value("include_line_numbers_ref", True, type=bool))
-        chk_line_numbers.setToolTip("Append :line_number to references (e.g., $ref:path:123)")
+        chk_line_numbers.setToolTip(tr("json_rewriter.tooltip_line_numbers"))
         active_layout.addWidget(chk_line_numbers)
 
         chk_relative = QCheckBox(tr("json_rewriter.chk_relative_paths"))
         chk_relative.setChecked(settings.value("use_relative_paths", False, type=bool))
-        chk_relative.setToolTip("Remove 'root.' prefix from paths (e.g., users.admin instead of root.users.admin)")
+        chk_relative.setToolTip(tr("json_rewriter.tooltip_relative"))
         active_layout.addWidget(chk_relative)
 
         # Preview label
