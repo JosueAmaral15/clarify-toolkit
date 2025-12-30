@@ -70,12 +70,7 @@ class ErrorReportDialog(QDialog):
         steps_group = QGroupBox(tr("error_report.group_steps"))
         steps_layout = QVBoxLayout()
         self.steps_edit = QTextEdit()
-        self.steps_edit.setPlaceholderText(
-            "Please describe what you were doing when the error occurred:\n"
-            "1. I opened a file...\n"
-            "2. I clicked on...\n"
-            "3. Then I..."
-        )
+        self.steps_edit.setPlaceholderText(tr("error_report.placeholder_steps"))
         self.steps_edit.setMaximumHeight(100)
         steps_layout.addWidget(self.steps_edit)
         steps_group.setLayout(steps_layout)
@@ -87,12 +82,12 @@ class ErrorReportDialog(QDialog):
         
         QLabel_expected = QLabel(tr("error_report.lbl_expected"))
         self.expected_edit = QTextEdit()
-        self.expected_edit.setPlaceholderText("What did you expect to happen?")
+        self.expected_edit.setPlaceholderText(tr("error_report.placeholder_expected"))
         self.expected_edit.setMaximumHeight(60)
         
         QLabel_actual = QLabel(tr("error_report.lbl_actual"))
         self.actual_edit = QTextEdit()
-        self.actual_edit.setPlaceholderText("What actually happened?")
+        self.actual_edit.setPlaceholderText(tr("error_report.placeholder_actual"))
         self.actual_edit.setMaximumHeight(60)
         
         behavior_layout.addWidget(QLabel_expected)

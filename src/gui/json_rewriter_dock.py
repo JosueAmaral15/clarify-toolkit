@@ -459,7 +459,7 @@ class JsonRewriterDock(BaseDock):
             )
 
             ed_value = QLineEdit()
-            ed_value.setPlaceholderText("Filter value")
+            ed_value.setPlaceholderText(tr("json_rewriter.placeholder_filter_value"))
 
             combo_scope = QComboBox()
             combo_scope.addItems(

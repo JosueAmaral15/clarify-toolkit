@@ -96,7 +96,7 @@ class TutorialAssistantDialog(QDialog):
         input_layout = QHBoxLayout()
         
         self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Type your question here...")
+        self.input_field.setPlaceholderText(tr("tutorial_assistant.placeholder_question"))
         self.input_field.setFont(QFont("Segoe UI", 10))
         self.input_field.returnPressed.connect(self._send_message)
         input_layout.addWidget(self.input_field)

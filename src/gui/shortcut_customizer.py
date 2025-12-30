@@ -33,7 +33,7 @@ class KeySequenceEdit(QLineEdit):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setPlaceholderText("Press keys...")
+        self.setPlaceholderText(tr("shortcut_customizer.placeholder_keys"))
         self.setReadOnly(True)
         self._current_keys = []
         self._max_keys = 2  # Support Ctrl+K Ctrl+S style sequences
@@ -133,7 +133,7 @@ class ShortcutCustomizerDialog(QDialog):
         
         filter_layout.addWidget(QLabel(tr("shortcut_customizer.lbl_search")))
         self.search_box = QLineEdit()
-        self.search_box.setPlaceholderText("Search actions...")
+        self.search_box.setPlaceholderText(tr("shortcut_customizer.placeholder_search"))
         self.search_box.textChanged.connect(self._filter_shortcuts)
         filter_layout.addWidget(self.search_box, 1)
         

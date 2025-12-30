@@ -93,7 +93,7 @@ class FileInputMixin:
         """
         label = QLabel(label_text)
         line_edit = QLineEdit()
-        line_edit.setPlaceholderText(placeholder)
+        line_edit.setPlaceholderText(placeholder if placeholder else tr("base_dock.placeholder_generic"))
         
         browse_btn = QPushButton(tr("base.btn_browse"))
         browse_btn.setMaximumWidth(100)

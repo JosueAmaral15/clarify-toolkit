@@ -155,7 +155,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # Extensions
         layout.addWidget(QLabel(tr("advanced_extractor.extensions", "Extensions:")))
         self.extensions_edit = QLineEdit(".tsx .jsx .js .ts")
-        self.extensions_edit.setPlaceholderText(".tsx .jsx .js")
+        self.extensions_edit.setPlaceholderText(tr("advanced_extractor.placeholder_extensions"))
         layout.addWidget(self.extensions_edit, 1)
         
         return layout
@@ -270,7 +270,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
             tr("advanced_extractor.avoid_keys", "Keys/values to avoid (comma-separated):")
         ))
         self.avoid_keys_edit = QLineEdit()
-        self.avoid_keys_edit.setPlaceholderText("div, span, test")
+        self.avoid_keys_edit.setPlaceholderText(tr("advanced_extractor.placeholder_avoid_keys"))
         row1.addWidget(self.avoid_keys_edit, 1)
         container.addLayout(row1)
         

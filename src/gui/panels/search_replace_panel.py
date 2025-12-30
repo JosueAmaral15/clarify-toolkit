@@ -110,7 +110,7 @@ class SearchReplacePanel(QWidget):
         row.addWidget(self.chk_use_ext_filter)
         row.addWidget(QLabel(tr("search_replace.lbl_extensions")))
         self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
-        self.ed_extensions.setPlaceholderText("e.g., .py,.js,.tsx (leave empty for all)")
+        self.ed_extensions.setPlaceholderText(tr("search_replace.placeholder_extensions"))
         self.ed_extensions.setToolTip("Filter files by extensions. Examples:\n"
                                      "  .py          - Only Python files\n"
                                      "  .jsx,.tsx    - React files\n"
@@ -129,7 +129,7 @@ class SearchReplacePanel(QWidget):
         row = QHBoxLayout()
         row.addWidget(QLabel(tr("search_replace.lbl_include_globs")))
         self.ed_inc = QLineEdit()
-        self.ed_inc.setPlaceholderText("e.g., *.test.*, **/src/** (leave empty for all)")
+        self.ed_inc.setPlaceholderText(tr("search_replace.placeholder_include"))
         self.ed_inc.setToolTip("Advanced glob patterns to include specific files.\nExamples:\n  *.test.*    - Test files\n  **/src/**   - Files in src folders")
         root.addLayout(row)
         root.addWidget(self.ed_inc)
@@ -147,7 +147,7 @@ class SearchReplacePanel(QWidget):
         # File name query field
         g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
         self.ed_filename_query = QLineEdit()
-        self.ed_filename_query.setPlaceholderText("Search in file names (e.g., test_*.py)")
+        self.ed_filename_query.setPlaceholderText(tr("search_replace.placeholder_filename"))
         self.ed_filename_query.setToolTip("Search pattern for file names\n"
                                          "Leave empty to search all files\n"
                                          "Example: test_*.py, *config*, etc.")
@@ -158,7 +158,7 @@ class SearchReplacePanel(QWidget):
         self.ed_query = QPlainTextEdit()
         self.ed_query.setMinimumHeight(30)
         self.ed_query.setMaximumHeight(150)
-        self.ed_query.setPlaceholderText("Search in file contents")
+        self.ed_query.setPlaceholderText(tr("search_replace.placeholder_content"))
         self.ed_query.setToolTip("Enter the text pattern to search for in file contents\n"
                                "Leave empty to list files matching name pattern only\n"
                                "Resizable: drag bottom edge to adjust height")
@@ -430,7 +430,7 @@ class SearchReplacePanel(QWidget):
         cb_scope.addItems(["none", "brackets", "braces", "parentheses", "custom", "tag", "specific-tag"])
         
         ed_scope_val = QLineEdit()
-        ed_scope_val.setPlaceholderText("e.g., 'begin,end' or 'div'")
+        ed_scope_val.setPlaceholderText(tr("search_replace.placeholder_scope_value"))
         
         # Checkboxes for matching options
         chk_case = QCheckBox()

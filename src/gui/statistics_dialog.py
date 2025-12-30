@@ -89,7 +89,7 @@ class StatisticsDialog(QDialog):
         search_layout = QHBoxLayout()
         search_layout.addWidget(QLabel(tr("statistics_dialog.lbl_search")))
         self.search_box = QLineEdit()
-        self.search_box.setPlaceholderText("Type to filter results...")
+        self.search_box.setPlaceholderText(tr("statistics_dialog.placeholder_search"))
         self.search_box.textChanged.connect(self._filter_removal_table)
         search_layout.addWidget(self.search_box)
         container_layout.addLayout(search_layout)
