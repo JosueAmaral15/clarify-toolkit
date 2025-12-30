@@ -2013,5 +2013,19 @@
   "file_finder.msg_export_complete_title": "Exportação Completa",
   "file_finder.msg_export_complete": "Resultados exportados para:\n{filepath}",
   "file_finder.msg_export_failed_title": "Exportação Falhou",
-  "file_finder.msg_export_failed": "Falha ao exportar: {error}"
+  "file_finder.msg_export_failed": "Falha ao exportar: {error}",
+  "search_replace.msg_cannot_remove_title": "Não Pode Remover",
+  "search_replace.msg_cannot_remove": "Mínimo de 3 linhas de condição obrigatórias.\nLimpe os campos ao invés disso.",
+  "search_replace.msg_already_running_title": "Já Executando",
+  "search_replace.msg_already_running": "Buscar/Substituir já está em execução. Por favor, aguarde ou cancele a operação atual.",
+  "search_replace.msg_no_query_title": "Sem Consulta",
+  "search_replace.msg_no_query": "Por favor, digite pelo menos uma consulta de pesquisa:\n- Consulta de nome de arquivo: para pesquisar nomes de arquivo\n- Consulta de conteúdo de arquivo: para pesquisar conteúdo de arquivo\n- Ambos: para pesquisar conteúdo em arquivos correspondentes",
+  "search_replace.msg_no_results_save_title": "Sem Resultados",
+  "search_replace.msg_no_results_save": "Não há resultados de pesquisa para salvar. Por favor, realize uma pesquisa primeiro.",
+  "search_replace.msg_results_saved_title": "Resultados Salvos",
+  "search_replace.msg_results_saved": "Resultados de pesquisa salvos com sucesso!\n\nArquivo: {file_path}\nTotal de arquivos: {total_files}\nTotal de correspondências: {total_matches}",
+  "search_replace.msg_error_save_title": "Erro",
+  "search_replace.msg_error_save": "Falha ao salvar resultados:\n{error}",
+  "search_replace.msg_replace_title": "Substituir",
+  "search_replace.msg_replace_success": "Arquivos modificados: {count}"
 }

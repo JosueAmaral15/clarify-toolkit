@@ -461,8 +461,8 @@ class SearchReplacePanel(QWidget):
         """Remove a condition row (Task #5 - v2.9.7)"""
         # Enforce minimum of 3 rows
         if len(self.cond_list) <= 3:
-            QMessageBox.warning(self, "Cannot Remove", 
-                              "Minimum of 3 condition rows required.\nClear the fields instead.")
+            QMessageBox.warning(self, tr("search_replace.msg_cannot_remove_title"), 
+                              tr("search_replace.msg_cannot_remove"))
             return
         
         # Remove from list
@@ -606,8 +606,8 @@ class SearchReplacePanel(QWidget):
             if not thread_manager.can_start_feature(FeatureType.SEARCH_REPLACE):
                 QMessageBox.warning(
                     self, 
-                    "Already Running",
-                    "Search/Replace is already running. Please wait or cancel the current operation."
+                    tr("search_replace.msg_already_running_title"),
+                    tr("search_replace.msg_already_running")
                 )
                 return
             
@@ -621,11 +621,8 @@ class SearchReplacePanel(QWidget):
             if not filename_query and not content_query:
                 QMessageBox.warning(
                     self,
-                    "No Query",
-                    "Please enter at least one search query:\n"
-                    "- File name query: to search file names\n"
-                    "- File content query: to search file contents\n"
-                    "- Both: to search content in matching files"
+                    tr("search_replace.msg_no_query_title"),
+                    tr("search_replace.msg_no_query")
                 )
                 self.results.print_message("Search cancelled: no query provided")
                 return
@@ -868,8 +865,8 @@ class SearchReplacePanel(QWidget):
         matches_data = self.results.get_matches_data()
         
         if not matches_data:
-            QMessageBox.information(self, "No Results", 
-                "No search results to save. Please perform a search first.")
+            QMessageBox.information(self, tr("search_replace.msg_no_results_save_title"), 
+                tr("search_replace.msg_no_results_save"))
             return
         
         # Ask user for file location
@@ -895,15 +892,15 @@ class SearchReplacePanel(QWidget):
             total_files = len(matches_data)
             total_matches = sum(len(items) for items in matches_data.values())
             
-            QMessageBox.information(self, "Results Saved", 
-                f"Search results saved successfully!\n\n"
-                f"File: {file_path}\n"
-                f"Total files: {total_files}\n"
-                f"Total matches: {total_matches}")
+            QMessageBox.information(self, tr("search_replace.msg_results_saved_title"), 
+                tr("search_replace.msg_results_saved").format(
+                    file_path=file_path,
+                    total_files=total_files,
+                    total_matches=total_matches))
         
         except Exception as e:
-            QMessageBox.critical(self, "Error", 
-                f"Failed to save results:\n{str(e)}")
+            QMessageBox.critical(self, tr("search_replace.msg_error_save_title"), 
+                tr("search_replace.msg_error_save").format(error=str(e)))
 
     def _do_replace(self, all_: bool):
         try:
@@ -937,5 +934,6 @@ class SearchReplacePanel(QWidget):
         except Exception as e:
             print(f"Failed to save to history dock: {e}")
         
-        QMessageBox.information(self, "Replace", f"Modified files: {count_files}")
+        QMessageBox.information(self, tr("search_replace.msg_replace_title"), 
+            tr("search_replace.msg_replace_success").format(count=count_files))
         self.results.print_message()

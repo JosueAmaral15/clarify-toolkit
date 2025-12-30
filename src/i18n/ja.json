@@ -1980,5 +1980,19 @@
   "file_finder.msg_export_complete_title": "エクスポート完了",
   "file_finder.msg_export_complete": "結果をエクスポートしました:\n{filepath}",
   "file_finder.msg_export_failed_title": "エクスポート失敗",
-  "file_finder.msg_export_failed": "エクスポートに失敗しました: {error}"
+  "file_finder.msg_export_failed": "エクスポートに失敗しました: {error}",
+  "search_replace.msg_cannot_remove_title": "削除できません",
+  "search_replace.msg_cannot_remove": "最低3つの条件行が必要です。\n代わりにフィールドをクリアしてください。",
+  "search_replace.msg_already_running_title": "すでに実行中",
+  "search_replace.msg_already_running": "検索/置換はすでに実行中です。現在の操作が完了するまで待つか、キャンセルしてください。",
+  "search_replace.msg_no_query_title": "クエリなし",
+  "search_replace.msg_no_query": "少なくとも1つの検索クエリを入力してください：\n- ファイル名クエリ：ファイル名を検索\n- ファイルコンテンツクエリ：ファイルの内容を検索\n- 両方：一致するファイルのコンテンツを検索",
+  "search_replace.msg_no_results_save_title": "結果なし",
+  "search_replace.msg_no_results_save": "保存する検索結果がありません。まず検索を実行してください。",
+  "search_replace.msg_results_saved_title": "結果を保存しました",
+  "search_replace.msg_results_saved": "検索結果を正常に保存しました！\n\nファイル: {file_path}\n総ファイル数: {total_files}\n総一致数: {total_matches}",
+  "search_replace.msg_error_save_title": "エラー",
+  "search_replace.msg_error_save": "結果の保存に失敗しました:\n{error}",
+  "search_replace.msg_replace_title": "置換",
+  "search_replace.msg_replace_success": "変更されたファイル: {count}"
 }

@@ -2013,5 +2013,19 @@
   "file_finder.msg_export_complete_title": "Export Complete",
   "file_finder.msg_export_complete": "Results exported to:\n{filepath}",
   "file_finder.msg_export_failed_title": "Export Failed",
-  "file_finder.msg_export_failed": "Failed to export: {error}"
+  "file_finder.msg_export_failed": "Failed to export: {error}",
+  "search_replace.msg_cannot_remove_title": "Cannot Remove",
+  "search_replace.msg_cannot_remove": "Minimum of 3 condition rows required.\nClear the fields instead.",
+  "search_replace.msg_already_running_title": "Already Running",
+  "search_replace.msg_already_running": "Search/Replace is already running. Please wait or cancel the current operation.",
+  "search_replace.msg_no_query_title": "No Query",
+  "search_replace.msg_no_query": "Please enter at least one search query:\n- File name query: to search file names\n- File content query: to search file contents\n- Both: to search content in matching files",
+  "search_replace.msg_no_results_save_title": "No Results",
+  "search_replace.msg_no_results_save": "No search results to save. Please perform a search first.",
+  "search_replace.msg_results_saved_title": "Results Saved",
+  "search_replace.msg_results_saved": "Search results saved successfully!\n\nFile: {file_path}\nTotal files: {total_files}\nTotal matches: {total_matches}",
+  "search_replace.msg_error_save_title": "Error",
+  "search_replace.msg_error_save": "Failed to save results:\n{error}",
+  "search_replace.msg_replace_title": "Replace",
+  "search_replace.msg_replace_success": "Modified files: {count}"
 }

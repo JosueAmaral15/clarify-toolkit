@@ -1980,5 +1980,19 @@
   "file_finder.msg_export_complete_title": "导出完成",
   "file_finder.msg_export_complete": "结果已导出到:\n{filepath}",
   "file_finder.msg_export_failed_title": "导出失败",
-  "file_finder.msg_export_failed": "导出失败: {error}"
+  "file_finder.msg_export_failed": "导出失败: {error}",
+  "search_replace.msg_cannot_remove_title": "无法删除",
+  "search_replace.msg_cannot_remove": "至少需要3个条件行。\n请清除字段。",
+  "search_replace.msg_already_running_title": "已在运行",
+  "search_replace.msg_already_running": "搜索/替换已在运行。请等待或取消当前操作。",
+  "search_replace.msg_no_query_title": "无查询",
+  "search_replace.msg_no_query": "请输入至少一个搜索查询：\n- 文件名查询：搜索文件名\n- 文件内容查询：搜索文件内容\n- 两者：在匹配的文件中搜索内容",
+  "search_replace.msg_no_results_save_title": "无结果",
+  "search_replace.msg_no_results_save": "没有要保存的搜索结果。请先执行搜索。",
+  "search_replace.msg_results_saved_title": "结果已保存",
+  "search_replace.msg_results_saved": "搜索结果保存成功！\n\n文件: {file_path}\n总文件数: {total_files}\n总匹配数: {total_matches}",
+  "search_replace.msg_error_save_title": "错误",
+  "search_replace.msg_error_save": "保存结果失败:\n{error}",
+  "search_replace.msg_replace_title": "替换",
+  "search_replace.msg_replace_success": "修改的文件: {count}"
 }

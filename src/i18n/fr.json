@@ -1980,5 +1980,19 @@
   "file_finder.msg_export_complete_title": "Exportation terminée",
   "file_finder.msg_export_complete": "Résultats exportés vers :\n{filepath}",
   "file_finder.msg_export_failed_title": "Échec de l'exportation",
-  "file_finder.msg_export_failed": "Échec de l'exportation : {error}"
+  "file_finder.msg_export_failed": "Échec de l'exportation : {error}",
+  "search_replace.msg_cannot_remove_title": "Impossible de supprimer",
+  "search_replace.msg_cannot_remove": "Minimum de 3 lignes de condition requises.\nEffacez plutôt les champs.",
+  "search_replace.msg_already_running_title": "Déjà en cours d'exécution",
+  "search_replace.msg_already_running": "Rechercher/Remplacer est déjà en cours d'exécution. Veuillez patienter ou annuler l'opération en cours.",
+  "search_replace.msg_no_query_title": "Aucune requête",
+  "search_replace.msg_no_query": "Veuillez entrer au moins une requête de recherche :\n- Requête de nom de fichier : pour rechercher les noms de fichiers\n- Requête de contenu de fichier : pour rechercher le contenu des fichiers\n- Les deux : pour rechercher du contenu dans les fichiers correspondants",
+  "search_replace.msg_no_results_save_title": "Aucun résultat",
+  "search_replace.msg_no_results_save": "Aucun résultat de recherche à enregistrer. Veuillez effectuer une recherche d'abord.",
+  "search_replace.msg_results_saved_title": "Résultats enregistrés",
+  "search_replace.msg_results_saved": "Résultats de recherche enregistrés avec succès !\n\nFichier : {file_path}\nFichiers au total : {total_files}\nCorrespondances au total : {total_matches}",
+  "search_replace.msg_error_save_title": "Erreur",
+  "search_replace.msg_error_save": "Échec de l'enregistrement des résultats :\n{error}",
+  "search_replace.msg_replace_title": "Remplacer",
+  "search_replace.msg_replace_success": "Fichiers modifiés : {count}"
 }

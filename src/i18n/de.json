@@ -1980,5 +1980,19 @@
   "file_finder.msg_export_complete_title": "Export abgeschlossen",
   "file_finder.msg_export_complete": "Ergebnisse exportiert nach:\n{filepath}",
   "file_finder.msg_export_failed_title": "Export fehlgeschlagen",
-  "file_finder.msg_export_failed": "Exportieren fehlgeschlagen: {error}"
+  "file_finder.msg_export_failed": "Exportieren fehlgeschlagen: {error}",
+  "search_replace.msg_cannot_remove_title": "Kann nicht entfernen",
+  "search_replace.msg_cannot_remove": "Mindestens 3 Bedingungszeilen erforderlich.\nLöschen Sie stattdessen die Felder.",
+  "search_replace.msg_already_running_title": "Wird bereits ausgeführt",
+  "search_replace.msg_already_running": "Suchen/Ersetzen wird bereits ausgeführt. Bitte warten Sie oder brechen Sie den aktuellen Vorgang ab.",
+  "search_replace.msg_no_query_title": "Keine Abfrage",
+  "search_replace.msg_no_query": "Bitte geben Sie mindestens eine Suchabfrage ein:\n- Dateinamenabfrage: zum Durchsuchen von Dateinamen\n- Dateiinhaltsabfrage: zum Durchsuchen von Dateiinhalten\n- Beide: zum Durchsuchen von Inhalten in übereinstimmenden Dateien",
+  "search_replace.msg_no_results_save_title": "Keine Ergebnisse",
+  "search_replace.msg_no_results_save": "Keine Suchergebnisse zum Speichern. Bitte führen Sie zuerst eine Suche durch.",
+  "search_replace.msg_results_saved_title": "Ergebnisse gespeichert",
+  "search_replace.msg_results_saved": "Suchergebnisse erfolgreich gespeichert!\n\nDatei: {file_path}\nDateien insgesamt: {total_files}\nÜbereinstimmungen insgesamt: {total_matches}",
+  "search_replace.msg_error_save_title": "Fehler",
+  "search_replace.msg_error_save": "Fehler beim Speichern der Ergebnisse:\n{error}",
+  "search_replace.msg_replace_title": "Ersetzen",
+  "search_replace.msg_replace_success": "Geänderte Dateien: {count}"
 }

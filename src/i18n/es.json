@@ -1988,5 +1988,19 @@
   "file_finder.msg_export_complete_title": "Exportación Completa",
   "file_finder.msg_export_complete": "Resultados exportados a:\n{filepath}",
   "file_finder.msg_export_failed_title": "Exportación Fallida",
-  "file_finder.msg_export_failed": "Error al exportar: {error}"
+  "file_finder.msg_export_failed": "Error al exportar: {error}",
+  "search_replace.msg_cannot_remove_title": "No se Puede Eliminar",
+  "search_replace.msg_cannot_remove": "Se requieren mínimo 3 filas de condición.\nLimpie los campos en su lugar.",
+  "search_replace.msg_already_running_title": "Ya en Ejecución",
+  "search_replace.msg_already_running": "Buscar/Reemplazar ya está en ejecución. Por favor, espere o cancele la operación actual.",
+  "search_replace.msg_no_query_title": "Sin Consulta",
+  "search_replace.msg_no_query": "Por favor, ingrese al menos una consulta de búsqueda:\n- Consulta de nombre de archivo: para buscar nombres de archivo\n- Consulta de contenido de archivo: para buscar contenido de archivo\n- Ambos: para buscar contenido en archivos coincidentes",
+  "search_replace.msg_no_results_save_title": "Sin Resultados",
+  "search_replace.msg_no_results_save": "No hay resultados de búsqueda para guardar. Por favor, realice una búsqueda primero.",
+  "search_replace.msg_results_saved_title": "Resultados Guardados",
+  "search_replace.msg_results_saved": "¡Resultados de búsqueda guardados exitosamente!\n\nArchivo: {file_path}\nTotal de archivos: {total_files}\nTotal de coincidencias: {total_matches}",
+  "search_replace.msg_error_save_title": "Error",
+  "search_replace.msg_error_save": "Error al guardar resultados:\n{error}",
+  "search_replace.msg_replace_title": "Reemplazar",
+  "search_replace.msg_replace_success": "Archivos modificados: {count}"
 }
