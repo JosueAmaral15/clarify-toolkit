@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                 QGroupBox)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
+from src.i18n.translator import tr
 import json
 
 
@@ -51,7 +52,7 @@ class RecallDialog(QDialog):
         self.source = source
         self.timestamp = timestamp
         
-        self.setWindowTitle(f"Recall Slot {slot_name}")
+        self.setWindowTitle(tr("recall_dialog.window_title").format(slot_name=slot_name))
         self.resize(700, 500)
         
         self._init_ui()

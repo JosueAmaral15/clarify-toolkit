@@ -445,7 +445,7 @@ class CalculatorDock(QWidget):
         
         # Show in message box
         msg = QMessageBox(self)
-        msg.setWindowTitle(f"Slot {slot_name} Details")
+        msg.setWindowTitle(tr("calculator_dock.window_title_slot_details").format(slot_name=slot_name))
         msg.setText(details)
         msg.setFont(QFont("Courier", 9))
         msg.exec()

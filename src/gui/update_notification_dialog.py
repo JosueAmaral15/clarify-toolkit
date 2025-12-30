@@ -38,7 +38,7 @@ class UpdateNotificationDialog(QDialog):
     
     def _init_ui(self):
         """Initialize UI components."""
-        self.setWindowTitle("Update Available - Clarify")
+        self.setWindowTitle(tr("update_notification.window_title_available"))
         self.setMinimumWidth(500)
         self.setMinimumHeight(400)
         
@@ -182,7 +182,7 @@ class ManualCheckDialog(QDialog):
         """Initialize manual check dialog."""
         super().__init__(parent)
         
-        self.setWindowTitle("Check for Updates - Clarify")
+        self.setWindowTitle(tr("update_notification.window_title_check"))
         self.setMinimumWidth(400)
         
         layout = QVBoxLayout(self)

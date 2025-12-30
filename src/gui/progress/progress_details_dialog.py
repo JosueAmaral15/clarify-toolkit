@@ -20,7 +20,7 @@ class ProgressDetailsDialog(QDialog):
     """
     def __init__(self, task_name: str, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(f"Progress Details - {task_name}")
+        self.setWindowTitle(tr("progress_details.window_title").format(task_name=task_name))
         self.setModal(False)
         self.resize(600, 450)
         

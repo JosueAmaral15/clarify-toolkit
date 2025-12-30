@@ -1780,5 +1780,20 @@
   "operation_options.radio_key_only": "キーのみ（パス）",
   "json_search.chk_case_sensitive": "大文字小文字を区別",
   "json_search.chk_keys_only": "キーのみ",
-  "json_search.chk_values_only": "値のみ"
+  "json_search.chk_values_only": "値のみ",
+  "layout_manager.window_title": "レイアウトを管理",
+  "recall_dialog.window_title": "スロット {slot_name} を呼び出し",
+  "tutorial_assistant.window_title": "AIチュートリアルアシスタント",
+  "venn_diagram.window_title": "ベン図: {file_a_name} vs {file_b_name}",
+  "json_rewriter.window_title_reference": "参照形式の設定",
+  "json_rewriter.window_title_filters": "高度なファイルフィルター",
+  "json_search_dialog.window_title": "JSONで検索",
+  "diff_viewer.window_title": "差分ビューア: {file_a_name} vs {file_b_name}",
+  "calculator_dock.window_title_slot_details": "スロット {slot_name} の詳細",
+  "plugin_manager.window_title": "プラグインマネージャー - Clarify",
+  "transparency_dialog.window_title": "ウィンドウの透明度",
+  "shortcut_customizer.window_title": "ショートカットを編集: {action_name}",
+  "progress_details.window_title": "進行状況の詳細 - {task_name}",
+  "update_notification.window_title_available": "アップデート利用可能 - Clarify",
+  "update_notification.window_title_check": "アップデートを確認 - Clarify"
 }

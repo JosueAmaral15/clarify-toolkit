@@ -1780,5 +1780,20 @@
   "operation_options.radio_key_only": "仅键（路径）",
   "json_search.chk_case_sensitive": "区分大小写",
   "json_search.chk_keys_only": "仅键",
-  "json_search.chk_values_only": "仅值"
+  "json_search.chk_values_only": "仅值",
+  "layout_manager.window_title": "管理布局",
+  "recall_dialog.window_title": "调用插槽 {slot_name}",
+  "tutorial_assistant.window_title": "AI教程助手",
+  "venn_diagram.window_title": "维恩图: {file_a_name} vs {file_b_name}",
+  "json_rewriter.window_title_reference": "参考格式配置",
+  "json_rewriter.window_title_filters": "高级文件过滤器",
+  "json_search_dialog.window_title": "在JSON中搜索",
+  "diff_viewer.window_title": "差异查看器: {file_a_name} vs {file_b_name}",
+  "calculator_dock.window_title_slot_details": "插槽 {slot_name} 详情",
+  "plugin_manager.window_title": "插件管理器 - Clarify",
+  "transparency_dialog.window_title": "窗口透明度",
+  "shortcut_customizer.window_title": "编辑快捷键: {action_name}",
+  "progress_details.window_title": "进度详情 - {task_name}",
+  "update_notification.window_title_available": "更新可用 - Clarify",
+  "update_notification.window_title_check": "检查更新 - Clarify"
 }

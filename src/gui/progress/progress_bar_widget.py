@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QProgressBar, QPushButton
 )
 from PySide6.QtCore import Signal
+from src.i18n.translator import tr
 
 from .progress_details_dialog import ProgressDetailsDialog
 

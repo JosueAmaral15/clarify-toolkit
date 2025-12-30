@@ -300,7 +300,7 @@ class ShortcutCustomizerDialog(QDialog):
         
         # Create dialog with key capture
         dialog = QDialog(self)
-        dialog.setWindowTitle(f"Edit Shortcut: {action_name}")
+        dialog.setWindowTitle(tr("shortcut_customizer.window_title").format(action_name=action_name))
         layout = QVBoxLayout(dialog)
         
         layout.addWidget(QLabel(f"<b>{self.table.item(row, 1).text()}</b>"))

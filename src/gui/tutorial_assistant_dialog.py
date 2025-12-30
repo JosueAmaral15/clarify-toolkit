@@ -13,6 +13,7 @@ from PySide6.QtGui import QFont, QTextCursor
 
 from ..tutorial_assistant import get_assistant
 from ..settings_manager import SettingsManager
+from src.i18n.translator import tr
 
 
 class AssistantWorker(QThread):
@@ -58,7 +59,7 @@ class TutorialAssistantDialog(QDialog):
     
     def _init_ui(self):
         """Initialize user interface."""
-        self.setWindowTitle("AI Tutorial Assistant")
+        self.setWindowTitle(tr("tutorial_assistant.window_title"))
         self.setMinimumSize(600, 500)
         
         # Non-modal

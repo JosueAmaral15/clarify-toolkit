@@ -21,8 +21,6 @@ from typing import List
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox,
-
-from src.i18n.translator import tr
     QFileDialog,
     QGridLayout,
     QGroupBox,

@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QRectF, QPointF
 from PySide6.QtGui import QBrush, QColor, QPen, QFont, QPainter
+from src.i18n.translator import tr
 from ..venn_diagram_generator import VennDiagramGenerator
 from ..diff_analyzer import DiffAnalyzer
 
@@ -116,7 +117,10 @@ class VennDiagramDialog(QDialog):
             comparison_mode
         )
         
-        self.setWindowTitle(f"Venn Diagram: {file_a_name} vs {file_b_name}")
+        self.setWindowTitle(tr("venn_diagram.window_title").format(
+            file_a_name=file_a_name,
+            file_b_name=file_b_name
+        ))
         self.setModal(False)
         self.resize(1000, 600)
         self._init_ui()

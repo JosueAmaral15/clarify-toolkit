@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
     QPushButton, QMessageBox, QLabel
 )
+from src.i18n.translator import tr
 
 
 class LayoutManagerDialog(QDialog):
@@ -34,7 +35,7 @@ class LayoutManagerDialog(QDialog):
     
     def _build_ui(self):
         """Build the dialog UI."""
-        self.setWindowTitle("Manage Layouts")
+        self.setWindowTitle(tr("layout_manager.window_title"))
         self.setMinimumSize(500, 400)
         
         layout = QVBoxLayout()

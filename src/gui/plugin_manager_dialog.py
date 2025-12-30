@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QCheckBox, QMessageBox
 )
 from PySide6.QtCore import Qt
+from src.i18n.translator import tr
 
 
 class PluginManagerDialog(QDialog):
@@ -44,7 +45,7 @@ class PluginManagerDialog(QDialog):
     
     def _build_ui(self):
         """Build the dialog UI."""
-        self.setWindowTitle("Plugin Manager - Clarify")
+        self.setWindowTitle(tr("plugin_manager.window_title"))
         self.setMinimumSize(700, 400)
         
         layout = QVBoxLayout()

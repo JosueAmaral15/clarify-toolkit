@@ -313,7 +313,7 @@ class JsonRewriterDock(BaseDock):
 
         # Create dialog
         dialog = QDialog(self)
-        dialog.setWindowTitle("Reference Format Configuration")
+        dialog.setWindowTitle(tr("json_rewriter.window_title_reference"))
         dialog.setMinimumWidth(500)
 
         layout = QVBoxLayout(dialog)
@@ -411,7 +411,7 @@ class JsonRewriterDock(BaseDock):
         from PySide6.QtWidgets import QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QVBoxLayout
 
         dialog = QDialog(self)
-        dialog.setWindowTitle("Advanced File Filters")
+        dialog.setWindowTitle(tr("json_rewriter.window_title_filters"))
         dialog.setMinimumWidth(700)
         dialog.setMinimumHeight(400)
 

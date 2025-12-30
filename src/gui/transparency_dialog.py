@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QSlider, QGroupBox, QDialogButtonBox
 )
 from PySide6.QtCore import Qt
+from src.i18n.translator import tr
 
 
 class TransparencyDialog(QDialog):
@@ -38,7 +39,7 @@ class TransparencyDialog(QDialog):
     
     def _build_ui(self):
         """Build the dialog UI."""
-        self.setWindowTitle("Window Transparency")
+        self.setWindowTitle(tr("transparency_dialog.window_title"))
         self.setMinimumWidth(400)
         
         layout = QVBoxLayout()

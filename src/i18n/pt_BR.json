@@ -1813,5 +1813,20 @@
   "operation_options.radio_key_only": "Somente chaves (caminho)",
   "json_search.chk_case_sensitive": "Diferenciar Maiúsculas/Minúsculas",
   "json_search.chk_keys_only": "Somente Chaves",
-  "json_search.chk_values_only": "Somente Valores"
+  "json_search.chk_values_only": "Somente Valores",
+  "layout_manager.window_title": "Gerenciar Layouts",
+  "recall_dialog.window_title": "Recuperar Slot {slot_name}",
+  "tutorial_assistant.window_title": "Assistente Tutorial IA",
+  "venn_diagram.window_title": "Diagrama de Venn: {file_a_name} vs {file_b_name}",
+  "json_rewriter.window_title_reference": "Configuração de Formato de Referência",
+  "json_rewriter.window_title_filters": "Filtros Avançados de Arquivo",
+  "json_search_dialog.window_title": "Buscar no JSON",
+  "diff_viewer.window_title": "Visualizador de Diferenças: {file_a_name} vs {file_b_name}",
+  "calculator_dock.window_title_slot_details": "Detalhes do Slot {slot_name}",
+  "plugin_manager.window_title": "Gerenciador de Plugins - Clarify",
+  "transparency_dialog.window_title": "Transparência da Janela",
+  "shortcut_customizer.window_title": "Editar Atalho: {action_name}",
+  "progress_details.window_title": "Detalhes do Progresso - {task_name}",
+  "update_notification.window_title_available": "Atualização Disponível - Clarify",
+  "update_notification.window_title_check": "Verificar Atualizações - Clarify"
 }

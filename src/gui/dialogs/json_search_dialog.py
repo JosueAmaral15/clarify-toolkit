@@ -60,7 +60,7 @@ class JsonSearchDialog(QDialog):
         self.current_match_index = -1
         self.matches: List[Tuple[int, int]] = []  # [(start, length), ...]
         
-        self.setWindowTitle("Search in JSON")
+        self.setWindowTitle(tr("json_search_dialog.window_title"))
         self.setMinimumWidth(500)
         
         self._setup_ui()

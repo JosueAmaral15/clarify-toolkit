@@ -1813,5 +1813,20 @@
   "operation_options.radio_key_only": "Keys only (path)",
   "json_search.chk_case_sensitive": "Case Sensitive",
   "json_search.chk_keys_only": "Keys Only",
-  "json_search.chk_values_only": "Values Only"
+  "json_search.chk_values_only": "Values Only",
+  "layout_manager.window_title": "Manage Layouts",
+  "recall_dialog.window_title": "Recall Slot {slot_name}",
+  "tutorial_assistant.window_title": "AI Tutorial Assistant",
+  "venn_diagram.window_title": "Venn Diagram: {file_a_name} vs {file_b_name}",
+  "json_rewriter.window_title_reference": "Reference Format Configuration",
+  "json_rewriter.window_title_filters": "Advanced File Filters",
+  "json_search_dialog.window_title": "Search in JSON",
+  "diff_viewer.window_title": "Diff Viewer: {file_a_name} vs {file_b_name}",
+  "calculator_dock.window_title_slot_details": "Slot {slot_name} Details",
+  "plugin_manager.window_title": "Plugin Manager - Clarify",
+  "transparency_dialog.window_title": "Window Transparency",
+  "shortcut_customizer.window_title": "Edit Shortcut: {action_name}",
+  "progress_details.window_title": "Progress Details - {task_name}",
+  "update_notification.window_title_available": "Update Available - Clarify",
+  "update_notification.window_title_check": "Check for Updates - Clarify"
 }

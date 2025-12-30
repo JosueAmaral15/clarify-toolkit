@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter, QTextCursor
+from src.i18n.translator import tr
 from ..diff_analyzer import DiffAnalyzer
 
 
@@ -99,7 +100,10 @@ class DiffViewerDialog(QDialog):
         # Analyze differences
         self.diff_result = DiffAnalyzer.analyze(data_a, data_b, comparison_mode)
         
-        self.setWindowTitle(f"Diff Viewer: {file_a_name} vs {file_b_name}")
+        self.setWindowTitle(tr("diff_viewer.window_title").format(
+            file_a_name=file_a_name,
+            file_b_name=file_b_name
+        ))
         self.setModal(False)
         self.resize(1200, 700)
         self._init_ui()
