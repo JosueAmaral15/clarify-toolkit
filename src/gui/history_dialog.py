@@ -66,18 +66,18 @@ class HistoryDialog(QDialog):
         buttons_layout = QHBoxLayout()
         
         self.btn_re_execute = QPushButton(tr("history_dialog.btn_re_execute"))
-        self.btn_re_execute.setToolTip("Re-execute selected operation")
+        self.btn_re_execute.setToolTip(tooltip_tr("history.tooltip_re_execute"))
         self.btn_re_execute.clicked.connect(self._on_re_execute_clicked)
         self.btn_re_execute.setEnabled(False)
         buttons_layout.addWidget(self.btn_re_execute)
         
         self.btn_export = QPushButton(tr("history_dialog.btn_export"))
-        self.btn_export.setToolTip("Export all history to JSON file")
+        self.btn_export.setToolTip(tooltip_tr("history.tooltip_export"))
         self.btn_export.clicked.connect(self._on_export_clicked)
         buttons_layout.addWidget(self.btn_export)
         
         self.btn_clear = QPushButton(tr("history_dialog.btn_clear"))
-        self.btn_clear.setToolTip("Clear all history")
+        self.btn_clear.setToolTip(tooltip_tr("history.tooltip_clear"))
         self.btn_clear.clicked.connect(self._on_clear_clicked)
         buttons_layout.addWidget(self.btn_clear)
         

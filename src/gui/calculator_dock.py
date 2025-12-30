@@ -155,17 +155,17 @@ class CalculatorDock(QWidget):
         
         # Buttons
         self.btn_recall = QPushButton(tr("calculator.btn_recall"))
-        self.btn_recall.setToolTip("Load data from selected slot")
+        self.btn_recall.setToolTip(tooltip_tr("calculator.tooltip_recall"))
         self.btn_recall.clicked.connect(self._recall_slot)
         actions_layout.addWidget(self.btn_recall)
         
         self.btn_view = QPushButton(tr("calculator.btn_view"))
-        self.btn_view.setToolTip("View detailed statistics for slot")
+        self.btn_view.setToolTip(tooltip_tr("calculator.tooltip_view"))
         self.btn_view.clicked.connect(self._view_details)
         actions_layout.addWidget(self.btn_view)
         
         self.btn_clear = QPushButton(tr("calculator.btn_clear"))
-        self.btn_clear.setToolTip("Clear selected slot")
+        self.btn_clear.setToolTip(tooltip_tr("calculator.tooltip_clear"))
         self.btn_clear.clicked.connect(self._clear_slot)
         actions_layout.addWidget(self.btn_clear)
         
@@ -189,7 +189,7 @@ class CalculatorDock(QWidget):
         compare_layout.addWidget(self.combo_compare2)
         
         self.btn_compare = QPushButton(tr("calculator.btn_compare"))
-        self.btn_compare.setToolTip("Compare statistics between two slots")
+        self.btn_compare.setToolTip(tooltip_tr("calculator.tooltip_compare"))
         self.btn_compare.clicked.connect(self._compare_slots)
         compare_layout.addWidget(self.btn_compare)
         
@@ -219,22 +219,22 @@ class CalculatorDock(QWidget):
         op_buttons_layout = QHBoxLayout()
         
         self.btn_add = QPushButton(tr("calculator.btn_add"))
-        self.btn_add.setToolTip("Deep merge: Slot 1 + Slot 2 (v2.9.100 merge logic)")
+        self.btn_add.setToolTip(tooltip_tr("calculator.tooltip_add"))
         self.btn_add.clicked.connect(lambda: self._execute_operation('add'))
         op_buttons_layout.addWidget(self.btn_add)
         
         self.btn_intersection = QPushButton(tr("calculator.btn_intersection"))
-        self.btn_intersection.setToolTip("Common keys: Slot 1 ∩ Slot 2")
+        self.btn_intersection.setToolTip(tooltip_tr("calculator.tooltip_intersection"))
         self.btn_intersection.clicked.connect(lambda: self._execute_operation('intersection'))
         op_buttons_layout.addWidget(self.btn_intersection)
         
         self.btn_union = QPushButton(tr("calculator.btn_union"))
-        self.btn_union.setToolTip("All keys: Slot 1 ∪ Slot 2")
+        self.btn_union.setToolTip(tooltip_tr("calculator.tooltip_union"))
         self.btn_union.clicked.connect(lambda: self._execute_operation('union'))
         op_buttons_layout.addWidget(self.btn_union)
         
         self.btn_difference = QPushButton(tr("calculator.btn_difference"))
-        self.btn_difference.setToolTip("Keys only in Slot 1: Slot 1 − Slot 2")
+        self.btn_difference.setToolTip(tooltip_tr("calculator.tooltip_difference"))
         self.btn_difference.clicked.connect(lambda: self._execute_operation('difference'))
         op_buttons_layout.addWidget(self.btn_difference)
         
@@ -244,7 +244,7 @@ class CalculatorDock(QWidget):
         
         # Clear all button
         self.btn_clear_all = QPushButton(tr("calculator.btn_clear_all"))
-        self.btn_clear_all.setToolTip("Clear all memory slots")
+        self.btn_clear_all.setToolTip(tooltip_tr("calculator.tooltip_clear_all"))
         self.btn_clear_all.clicked.connect(self._clear_all_slots)
         self.btn_clear_all.setStyleSheet("background-color: #dc3545; color: white;")
         layout.addWidget(self.btn_clear_all)

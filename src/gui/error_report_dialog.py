@@ -105,15 +105,15 @@ class ErrorReportDialog(QDialog):
         button_layout = QHBoxLayout()
         
         self.github_button = QPushButton(tr("error_report.btn_github"))
-        self.github_button.setToolTip("Open GitHub Issues with pre-filled bug report")
+        self.github_button.setToolTip(tooltip_tr("error_report.tooltip_github"))
         self.github_button.clicked.connect(self._send_to_github)
         
         self.copy_button = QPushButton(tr("error_report.btn_copy"))
-        self.copy_button.setToolTip("Copy error info to clipboard")
+        self.copy_button.setToolTip(tooltip_tr("error_report.tooltip_copy"))
         self.copy_button.clicked.connect(self._copy_to_clipboard)
         
         self.save_button = QPushButton(tr("error_report.btn_save"))
-        self.save_button.setToolTip("Save full error log to file")
+        self.save_button.setToolTip(tooltip_tr("error_report.tooltip_save"))
         self.save_button.clicked.connect(self._save_log)
         
         self.close_button = QPushButton(tr("error_report.btn_close"))
