@@ -92,22 +92,22 @@ class JsonEditorTab(QWidget):
         toolbar = QHBoxLayout()
         
         self.btn_format = QPushButton(tr("json_editor.btn_format"))
-        self.btn_format.setToolTip("Pretty print JSON with indentation | Ctrl+E to open Editor")
+        self.btn_format.setToolTip(tooltip_tr("json_editor.tooltip_format"))
         
         self.combo_indent = QComboBox()
         self.combo_indent.addItems([tr("json_editor.combo_2spaces"), tr("json_editor.combo_4spaces"), tr("json_editor.combo_minify")])
-        self.combo_indent.setToolTip("Indentation style (2/4 spaces or compact minified JSON) | Ctrl+E to open Editor")
+        self.combo_indent.setToolTip(tooltip_tr("json_editor.tooltip_indent"))
         
         self.btn_validate = QPushButton(tr("json_editor.btn_validate"))
-        self.btn_validate.setToolTip("Check JSON syntax and update validation status | Ctrl+E to open Editor")
+        self.btn_validate.setToolTip(tooltip_tr("json_editor.tooltip_validate"))
         
         self.btn_search = QPushButton(tr("json_editor.btn_search"))
-        self.btn_search.setToolTip("Search for key or value in JSON tree | Ctrl+F to find | Ctrl+E to open Editor")
+        self.btn_search.setToolTip(tooltip_tr("json_editor.tooltip_search"))
         
         self.btn_collapse = QPushButton(tr("json_editor.btn_collapse"))
-        self.btn_collapse.setToolTip("Collapse all nodes in JSON tree view | Ctrl+E to open Editor")
+        self.btn_collapse.setToolTip(tooltip_tr("json_editor.tooltip_collapse"))
         self.btn_expand = QPushButton(tr("json_editor.btn_expand"))
-        self.btn_expand.setToolTip("Expand all nodes in JSON tree view | Ctrl+E to open Editor")
+        self.btn_expand.setToolTip(tooltip_tr("json_editor.tooltip_expand"))
         
         toolbar.addWidget(self.btn_format)
         toolbar.addWidget(self.combo_indent)
@@ -119,12 +119,12 @@ class JsonEditorTab(QWidget):
         
         # Insert Panel button (v2.9.110)
         self.btn_insert_panel = QPushButton(tr("json_editor.btn_insert_panel"))
-        self.btn_insert_panel.setToolTip("Open Insert Panel to insert text at specific lines")
+        self.btn_insert_panel.setToolTip(tooltip_tr("json_editor.tooltip_insert_panel"))
         toolbar.addWidget(self.btn_insert_panel)
         
         # Regex Insert Panel button (v2.9.111)
         self.btn_regex_insert = QPushButton(tr("json_editor.btn_regex_insert"))
-        self.btn_regex_insert.setToolTip("Open Regex Insert Panel (capture values and insert using memory registers)")
+        self.btn_regex_insert.setToolTip(tooltip_tr("json_editor.tooltip_regex_insert"))
         toolbar.addWidget(self.btn_regex_insert)
         
         layout.addLayout(toolbar)
@@ -152,7 +152,7 @@ class JsonEditorTab(QWidget):
         # Validation status
         self.lbl_validation = QLabel(tr("json_editor.lbl_valid"))
         self.lbl_validation.setStyleSheet("color: #6A9955; font-weight: bold;")
-        self.lbl_validation.setToolTip("JSON validation status (updates automatically on text change) | Ctrl+E to open Editor")
+        self.lbl_validation.setToolTip(tooltip_tr("json_editor.tooltip_validation_status"))
         editor_layout.addWidget(self.lbl_validation)
         
         # Text editor
