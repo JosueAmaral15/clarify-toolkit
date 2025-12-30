@@ -2076,5 +2076,21 @@
   "statistics.msg_export_json_failed": "Falha ao exportar JSON: {error}",
   "statistics.msg_missing_dependency_title": "Dependência Ausente",
   "statistics.msg_missing_openpyxl": "A exportação para Excel requer o pacote 'openpyxl'.\nInstale com: pip install openpyxl",
-  "statistics.msg_export_excel_failed": "Falha ao exportar Excel: {error}"
+  "statistics.msg_export_excel_failed": "Falha ao exportar Excel: {error}",
+  "venn_diagram.msg_export_success_title": "Exportação Bem-Sucedida",
+  "venn_diagram.msg_export_success": "Diagrama de Venn exportado para:\n{path}\n\nAbra no navegador ou visualizador de imagens para visualizar.",
+  "venn_diagram.msg_export_failed_title": "Falha na Exportação",
+  "venn_diagram.msg_export_failed": "Falha ao exportar diagrama de Venn:\n{error}",
+  "recall.msg_export_success_title": "Exportação Bem-Sucedida",
+  "recall.msg_export_success": "Dados do slot {slot} exportados para:\n{path}",
+  "recall.msg_export_failed_title": "Falha na Exportação",
+  "recall.msg_export_failed": "Falha ao exportar dados:\n{error}",
+  "recall.msg_copied_title": "Copiado para Área de Transferência",
+  "recall.msg_copied": "Dados do slot {slot} copiados para a área de transferência.\n\nLinhas: {lines}\nCaracteres: {chars}",
+  "recall.msg_sent_title": "Enviado para Operações de Conjunto",
+  "recall.msg_sent": "Dados do slot {slot} enviados para Operações de Conjunto.\n\nOs dados foram preenchidos no Arquivo A.",
+  "set_operations.msg_data_received_title": "Dados Recebidos da Calculadora",
+  "set_operations.msg_data_received": "Dados de {source} carregados no Arquivo A.\n\nArquivo temporário: {path}\n\nAgora você pode selecionar o Arquivo B e executar operações.",
+  "set_operations.msg_integration_error_title": "Erro de Integração",
+  "set_operations.msg_integration_error": "Falha ao receber dados da Calculadora:\n{error}"
 }

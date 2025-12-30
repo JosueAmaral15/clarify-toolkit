@@ -170,14 +170,14 @@ class RecallDialog(QDialog):
             
             QMessageBox.information(
                 self,
-                "Export Successful",
-                f"Slot {self.slot_name} data exported to:\n{file_path}"
+                tr("recall.msg_export_success_title"),
+                tr("recall.msg_export_success").format(slot=self.slot_name, path=file_path)
             )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Export Failed",
-                f"Failed to export data:\n{str(e)}"
+                tr("recall.msg_export_failed_title"),
+                tr("recall.msg_export_failed").format(error=str(e))
             )
     
     def _copy_to_clipboard(self):
@@ -191,10 +191,12 @@ class RecallDialog(QDialog):
         
         QMessageBox.information(
             self,
-            "Copied to Clipboard",
-            f"Slot {self.slot_name} data copied to clipboard.\n\n"
-            f"Lines: {len(json_text.splitlines())}\n"
-            f"Characters: {len(json_text)}"
+            tr("recall.msg_copied_title"),
+            tr("recall.msg_copied").format(
+                slot=self.slot_name,
+                lines=len(json_text.splitlines()),
+                chars=len(json_text)
+            )
         )
     
     def _send_to_set_operations(self):
@@ -205,10 +207,8 @@ class RecallDialog(QDialog):
         # Show confirmation and close
         QMessageBox.information(
             self,
-            "Sent to Set Operations",
-            f"Slot {self.slot_name} data sent to Set Operations.\n\n"
-            f"The data has been populated in File A.\n"
-            f"You can now select File B and execute operations."
+            tr("recall.msg_sent_title"),
+            tr("recall.msg_sent").format(slot=self.slot_name)
         )
         
         self.accept()

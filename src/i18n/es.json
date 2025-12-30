@@ -2051,5 +2051,21 @@
   "statistics.msg_export_json_failed": "Error al exportar JSON: {error}",
   "statistics.msg_missing_dependency_title": "Dependencia Faltante",
   "statistics.msg_missing_openpyxl": "La exportación a Excel requiere el paquete 'openpyxl'.\nInstale con: pip install openpyxl",
-  "statistics.msg_export_excel_failed": "Error al exportar Excel: {error}"
+  "statistics.msg_export_excel_failed": "Error al exportar Excel: {error}",
+  "venn_diagram.msg_export_success_title": "Exportación Exitosa",
+  "venn_diagram.msg_export_success": "Diagrama de Venn exportado a:\n{path}\n\nÁbralo en el navegador o visor de imágenes.",
+  "venn_diagram.msg_export_failed_title": "Exportación Fallida",
+  "venn_diagram.msg_export_failed": "Error al exportar diagrama de Venn:\n{error}",
+  "recall.msg_export_success_title": "Exportación Exitosa",
+  "recall.msg_export_success": "Datos del slot {slot} exportados a:\n{path}",
+  "recall.msg_export_failed_title": "Exportación Fallida",
+  "recall.msg_export_failed": "Error al exportar datos:\n{error}",
+  "recall.msg_copied_title": "Copiado al Portapapeles",
+  "recall.msg_copied": "Datos del slot {slot} copiados al portapapeles.\n\nLíneas: {lines}\nCaracteres: {chars}",
+  "recall.msg_sent_title": "Enviado a Operaciones de Conjunto",
+  "recall.msg_sent": "Datos del slot {slot} enviados a Operaciones de Conjunto.\n\nLos datos se han rellenado en Archivo A.",
+  "set_operations.msg_data_received_title": "Datos Recibidos de la Calculadora",
+  "set_operations.msg_data_received": "Datos de {source} cargados en Archivo A.\n\nArchivo temporal: {path}\n\nAhora puede seleccionar Archivo B y ejecutar operaciones.",
+  "set_operations.msg_integration_error_title": "Error de Integración",
+  "set_operations.msg_integration_error": "Error al recibir datos de la Calculadora:\n{error}"
 }

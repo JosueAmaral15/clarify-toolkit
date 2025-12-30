@@ -2076,5 +2076,21 @@
   "statistics.msg_export_json_failed": "Failed to export JSON: {error}",
   "statistics.msg_missing_dependency_title": "Missing Dependency",
   "statistics.msg_missing_openpyxl": "Excel export requires 'openpyxl' package.\nInstall with: pip install openpyxl",
-  "statistics.msg_export_excel_failed": "Failed to export Excel: {error}"
+  "statistics.msg_export_excel_failed": "Failed to export Excel: {error}",
+  "venn_diagram.msg_export_success_title": "Export Successful",
+  "venn_diagram.msg_export_success": "Venn diagram exported to:\n{path}\n\nOpen in browser or image viewer to view.",
+  "venn_diagram.msg_export_failed_title": "Export Failed",
+  "venn_diagram.msg_export_failed": "Failed to export Venn diagram:\n{error}",
+  "recall.msg_export_success_title": "Export Successful",
+  "recall.msg_export_success": "Slot {slot} data exported to:\n{path}",
+  "recall.msg_export_failed_title": "Export Failed",
+  "recall.msg_export_failed": "Failed to export data:\n{error}",
+  "recall.msg_copied_title": "Copied to Clipboard",
+  "recall.msg_copied": "Slot {slot} data copied to clipboard.\n\nLines: {lines}\nCharacters: {chars}",
+  "recall.msg_sent_title": "Sent to Set Operations",
+  "recall.msg_sent": "Slot {slot} data sent to Set Operations.\n\nThe data has been populated in File A.",
+  "set_operations.msg_data_received_title": "Data Received from Calculator",
+  "set_operations.msg_data_received": "Data from {source} loaded into File A.\n\nTemporary file: {path}\n\nYou can now select File B and execute operations.",
+  "set_operations.msg_integration_error_title": "Integration Error",
+  "set_operations.msg_integration_error": "Failed to receive data from Calculator:\n{error}"
 }

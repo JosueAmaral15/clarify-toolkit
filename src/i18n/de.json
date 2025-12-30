@@ -2043,5 +2043,21 @@
   "statistics.msg_export_json_failed": "JSON-Export fehlgeschlagen: {error}",
   "statistics.msg_missing_dependency_title": "Fehlende Abhängigkeit",
   "statistics.msg_missing_openpyxl": "Excel-Export erfordert das Paket 'openpyxl'.\nInstallieren mit: pip install openpyxl",
-  "statistics.msg_export_excel_failed": "Excel-Export fehlgeschlagen: {error}"
+  "statistics.msg_export_excel_failed": "Excel-Export fehlgeschlagen: {error}",
+  "venn_diagram.msg_export_success_title": "Export erfolgreich",
+  "venn_diagram.msg_export_success": "Venn-Diagramm exportiert nach:\n{path}\n\nÖffnen Sie es im Browser oder Bildbetrachter.",
+  "venn_diagram.msg_export_failed_title": "Export fehlgeschlagen",
+  "venn_diagram.msg_export_failed": "Fehler beim Export des Venn-Diagramms:\n{error}",
+  "recall.msg_export_success_title": "Export erfolgreich",
+  "recall.msg_export_success": "Slot {slot} Daten exportiert nach:\n{path}",
+  "recall.msg_export_failed_title": "Export fehlgeschlagen",
+  "recall.msg_export_failed": "Fehler beim Exportieren der Daten:\n{error}",
+  "recall.msg_copied_title": "In Zwischenablage kopiert",
+  "recall.msg_copied": "Slot {slot} Daten in Zwischenablage kopiert.\n\nZeilen: {lines}\nZeichen: {chars}",
+  "recall.msg_sent_title": "An Mengenoperationen gesendet",
+  "recall.msg_sent": "Slot {slot} Daten an Mengenoperationen gesendet.\n\nDie Daten wurden in Datei A eingefügt.",
+  "set_operations.msg_data_received_title": "Daten vom Rechner empfangen",
+  "set_operations.msg_data_received": "Daten von {source} in Datei A geladen.\n\nTemporäre Datei: {path}\n\nSie können jetzt Datei B auswählen und Operationen ausführen.",
+  "set_operations.msg_integration_error_title": "Integrationsfehler",
+  "set_operations.msg_integration_error": "Fehler beim Empfangen der Daten vom Rechner:\n{error}"
 }

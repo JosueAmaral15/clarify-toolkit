@@ -383,12 +383,12 @@ class VennDiagramDialog(QDialog):
             
             QMessageBox.information(
                 self,
-                "Export Successful",
-                f"Venn diagram exported to:\n{file_path}\n\nOpen in browser or image viewer to view."
+                tr("venn_diagram.msg_export_success_title"),
+                tr("venn_diagram.msg_export_success").format(path=file_path)
             )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Export Failed",
-                f"Failed to export Venn diagram:\n{str(e)}"
+                tr("venn_diagram.msg_export_failed_title"),
+                tr("venn_diagram.msg_export_failed").format(error=str(e))
             )

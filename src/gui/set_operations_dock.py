@@ -704,18 +704,19 @@ class SetOperationsDock(BaseDock):
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.information(
                 self,
-                "Data Received from Calculator",
-                f"Data from {source_description} loaded into File A.\n\n"
-                f"Temporary file: {temp_path}\n\n"
-                f"You can now select File B and execute operations."
+                tr("set_operations.msg_data_received_title"),
+                tr("set_operations.msg_data_received").format(
+                    source=source_description,
+                    path=temp_path
+                )
             )
             
         except Exception as e:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.critical(
                 self,
-                "Integration Error",
-                f"Failed to receive data from Calculator:\n{str(e)}"
+                tr("set_operations.msg_integration_error_title"),
+                tr("set_operations.msg_integration_error").format(error=str(e))
             )
 
     def _show_batch_dialog(self):
