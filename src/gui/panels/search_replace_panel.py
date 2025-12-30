@@ -446,7 +446,7 @@ class SearchReplacePanel(QWidget):
         # Remove button (X)
         btn_remove = QPushButton("✖")
         btn_remove.setFixedWidth(30)
-        btn_remove.setToolTip("Remove this condition row")
+        btn_remove.setToolTip(tooltip_tr("search_replace.tooltip_remove_condition"))
         btn_remove.setStyleSheet("QPushButton { color: red; font-weight: bold; }")
         
         # Add widgets to grid

@@ -1795,5 +1795,19 @@
   "shortcut_customizer.window_title": "ショートカットを編集: {action_name}",
   "progress_details.window_title": "進行状況の詳細 - {task_name}",
   "update_notification.window_title_available": "アップデート利用可能 - Clarify",
-  "update_notification.window_title_check": "アップデートを確認 - Clarify"
+  "update_notification.window_title_check": "アップデートを確認 - Clarify",
+  "recall_dialog.btn_export": "ファイルにエクスポート",
+  "recall_dialog.btn_copy": "クリップボードにコピー",
+  "recall_dialog.btn_send": "セット操作に送信",
+  "plugin_manager.btn_refresh": "更新",
+  "plugin_manager.btn_close": "閉じる",
+  "diff_viewer.btn_export": "HTMLをエクスポート",
+  "venn_diagram.btn_export_svg": "SVGをエクスポート",
+  "progress_bar.tooltip_pause": "進行状況を一時停止",
+  "progress_bar.tooltip_expand": "詳細を展開",
+  "progress_bar.tooltip_close": "進行状況バーを閉じる",
+  "progress_details.btn_pause": "一時停止",
+  "progress_details.btn_cancel": "タスクをキャンセル",
+  "update_notification.btn_download": "アップデートをダウンロード",
+  "search_replace.tooltip_remove_condition": "条件を削除"
 }

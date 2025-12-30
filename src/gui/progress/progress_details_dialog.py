@@ -65,11 +65,11 @@ class ProgressDetailsDialog(QDialog):
         btn_layout.addWidget(self.btn_minimize)
         
         # Pause/Resume button (NEW - v2.5.0+)
-        self.btn_pause = QPushButton("⏸ Pause")
+        self.btn_pause = QPushButton(f"⏸ {tr('progress_details.btn_pause')}")
         self.btn_pause.setCheckable(True)
         btn_layout.addWidget(self.btn_pause)
         
-        self.btn_cancel = QPushButton("✖ Cancel Task")
+        self.btn_cancel = QPushButton(f"✖ {tr('progress_details.btn_cancel')}")
         self.btn_cancel.clicked.connect(self.reject)
         btn_layout.addWidget(self.btn_cancel)
         

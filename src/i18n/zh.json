@@ -1795,5 +1795,19 @@
   "shortcut_customizer.window_title": "编辑快捷键: {action_name}",
   "progress_details.window_title": "进度详情 - {task_name}",
   "update_notification.window_title_available": "更新可用 - Clarify",
-  "update_notification.window_title_check": "检查更新 - Clarify"
+  "update_notification.window_title_check": "检查更新 - Clarify",
+  "recall_dialog.btn_export": "导出到文件",
+  "recall_dialog.btn_copy": "复制到剪贴板",
+  "recall_dialog.btn_send": "发送到集合操作",
+  "plugin_manager.btn_refresh": "刷新",
+  "plugin_manager.btn_close": "关闭",
+  "diff_viewer.btn_export": "导出HTML",
+  "venn_diagram.btn_export_svg": "导出SVG",
+  "progress_bar.tooltip_pause": "暂停进度",
+  "progress_bar.tooltip_expand": "展开详情",
+  "progress_bar.tooltip_close": "关闭进度条",
+  "progress_details.btn_pause": "暂停",
+  "progress_details.btn_cancel": "取消任务",
+  "update_notification.btn_download": "下载更新",
+  "search_replace.tooltip_remove_condition": "删除条件"
 }

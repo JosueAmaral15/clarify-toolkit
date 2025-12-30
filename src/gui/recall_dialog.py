@@ -97,19 +97,19 @@ class RecallDialog(QDialog):
         btn_layout = QHBoxLayout()
         
         # Export to File button
-        self.btn_export = QPushButton("📤 Export to File")
+        self.btn_export = QPushButton(f"📤 {tr('recall_dialog.btn_export')}")
         self.btn_export.setToolTip("Save JSON data to file")
         self.btn_export.clicked.connect(self._export_to_file)
         btn_layout.addWidget(self.btn_export)
         
         # Copy to Clipboard button
-        self.btn_copy = QPushButton("📋 Copy to Clipboard")
+        self.btn_copy = QPushButton(f"📋 {tr('recall_dialog.btn_copy')}")
         self.btn_copy.setToolTip("Copy formatted JSON to clipboard")
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_layout.addWidget(self.btn_copy)
         
         # Send to Set Operations button
-        self.btn_send = QPushButton("🔄 Send to Set Operations")
+        self.btn_send = QPushButton(f"🔄 {tr('recall_dialog.btn_send')}")
         self.btn_send.setToolTip("Populate Set Operations File A with this data")
         self.btn_send.clicked.connect(self._send_to_set_operations)
         btn_layout.addWidget(self.btn_send)

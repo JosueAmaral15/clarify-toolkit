@@ -1795,5 +1795,19 @@
   "shortcut_customizer.window_title": "Tastenkombination bearbeiten: {action_name}",
   "progress_details.window_title": "Fortschrittsdetails - {task_name}",
   "update_notification.window_title_available": "Update verfügbar - Clarify",
-  "update_notification.window_title_check": "Nach Updates suchen - Clarify"
+  "update_notification.window_title_check": "Nach Updates suchen - Clarify",
+  "recall_dialog.btn_export": "In Datei exportieren",
+  "recall_dialog.btn_copy": "In Zwischenablage kopieren",
+  "recall_dialog.btn_send": "An Mengenoperationen senden",
+  "plugin_manager.btn_refresh": "Aktualisieren",
+  "plugin_manager.btn_close": "Schließen",
+  "diff_viewer.btn_export": "HTML exportieren",
+  "venn_diagram.btn_export_svg": "SVG exportieren",
+  "progress_bar.tooltip_pause": "Fortschritt pausieren",
+  "progress_bar.tooltip_expand": "Details erweitern",
+  "progress_bar.tooltip_close": "Fortschrittsleiste schließen",
+  "progress_details.btn_pause": "Pausieren",
+  "progress_details.btn_cancel": "Aufgabe abbrechen",
+  "update_notification.btn_download": "Update herunterladen",
+  "search_replace.tooltip_remove_condition": "Bedingung entfernen"
 }

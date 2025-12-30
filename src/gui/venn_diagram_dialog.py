@@ -211,7 +211,7 @@ class VennDiagramDialog(QDialog):
         # === Buttons ===
         btn_layout = QHBoxLayout()
         
-        btn_export_svg = QPushButton("💾 Export SVG")
+        btn_export_svg = QPushButton(f"💾 {tr('venn_diagram.btn_export_svg')}")
         btn_export_svg.setToolTip("Export Venn diagram as SVG file")
         btn_export_svg.clicked.connect(self._export_svg)
         btn_layout.addWidget(btn_export_svg)

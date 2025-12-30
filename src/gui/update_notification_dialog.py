@@ -86,7 +86,7 @@ class UpdateNotificationDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
         
-        self.btn_download = QPushButton("📥 Download Update")
+        self.btn_download = QPushButton(f"📥 {tr('update_notification.btn_download')}")
         self.btn_download.setStyleSheet(
             "QPushButton { background-color: #0078D4; color: white; font-weight: bold; padding: 8px; }"
             "QPushButton:hover { background-color: #005A9E; }"

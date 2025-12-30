@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QProgressBar, QPushButton
 )
+from src.i18n.translator import tooltip_tr
 from PySide6.QtCore import Signal
 from src.i18n.translator import tr
 

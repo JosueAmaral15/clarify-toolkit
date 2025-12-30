@@ -1828,5 +1828,19 @@
   "shortcut_customizer.window_title": "Editar Atalho: {action_name}",
   "progress_details.window_title": "Detalhes do Progresso - {task_name}",
   "update_notification.window_title_available": "Atualização Disponível - Clarify",
-  "update_notification.window_title_check": "Verificar Atualizações - Clarify"
+  "update_notification.window_title_check": "Verificar Atualizações - Clarify",
+  "recall_dialog.btn_export": "Exportar para Arquivo",
+  "recall_dialog.btn_copy": "Copiar para Área de Transferência",
+  "recall_dialog.btn_send": "Enviar para Operações de Conjunto",
+  "plugin_manager.btn_refresh": "Atualizar",
+  "plugin_manager.btn_close": "Fechar",
+  "diff_viewer.btn_export": "Exportar HTML",
+  "venn_diagram.btn_export_svg": "Exportar SVG",
+  "progress_bar.tooltip_pause": "Pausar progresso",
+  "progress_bar.tooltip_expand": "Expandir detalhes",
+  "progress_bar.tooltip_close": "Fechar barra de progresso",
+  "progress_details.btn_pause": "Pausar",
+  "progress_details.btn_cancel": "Cancelar Tarefa",
+  "update_notification.btn_download": "Baixar Atualização",
+  "search_replace.tooltip_remove_condition": "Remover condição"
 }

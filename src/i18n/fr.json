@@ -1795,5 +1795,19 @@
   "shortcut_customizer.window_title": "Modifier le Raccourci: {action_name}",
   "progress_details.window_title": "Détails de Progression - {task_name}",
   "update_notification.window_title_available": "Mise à Jour Disponible - Clarify",
-  "update_notification.window_title_check": "Vérifier les Mises à Jour - Clarify"
+  "update_notification.window_title_check": "Vérifier les Mises à Jour - Clarify",
+  "recall_dialog.btn_export": "Exporter vers Fichier",
+  "recall_dialog.btn_copy": "Copier dans le Presse-papiers",
+  "recall_dialog.btn_send": "Envoyer aux Opérations d'Ensemble",
+  "plugin_manager.btn_refresh": "Actualiser",
+  "plugin_manager.btn_close": "Fermer",
+  "diff_viewer.btn_export": "Exporter HTML",
+  "venn_diagram.btn_export_svg": "Exporter SVG",
+  "progress_bar.tooltip_pause": "Mettre en pause la progression",
+  "progress_bar.tooltip_expand": "Développer les détails",
+  "progress_bar.tooltip_close": "Fermer la barre de progression",
+  "progress_details.btn_pause": "Pause",
+  "progress_details.btn_cancel": "Annuler la Tâche",
+  "update_notification.btn_download": "Télécharger la Mise à Jour",
+  "search_replace.tooltip_remove_condition": "Supprimer la condition"
 }

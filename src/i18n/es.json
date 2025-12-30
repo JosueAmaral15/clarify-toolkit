@@ -1803,5 +1803,19 @@
   "shortcut_customizer.window_title": "Editar Atajo: {action_name}",
   "progress_details.window_title": "Detalles del Progreso - {task_name}",
   "update_notification.window_title_available": "Actualización Disponible - Clarify",
-  "update_notification.window_title_check": "Buscar Actualizaciones - Clarify"
+  "update_notification.window_title_check": "Buscar Actualizaciones - Clarify",
+  "recall_dialog.btn_export": "Exportar a Archivo",
+  "recall_dialog.btn_copy": "Copiar al Portapapeles",
+  "recall_dialog.btn_send": "Enviar a Operaciones de Conjunto",
+  "plugin_manager.btn_refresh": "Actualizar",
+  "plugin_manager.btn_close": "Cerrar",
+  "diff_viewer.btn_export": "Exportar HTML",
+  "venn_diagram.btn_export_svg": "Exportar SVG",
+  "progress_bar.tooltip_pause": "Pausar progreso",
+  "progress_bar.tooltip_expand": "Expandir detalles",
+  "progress_bar.tooltip_close": "Cerrar barra de progreso",
+  "progress_details.btn_pause": "Pausar",
+  "progress_details.btn_cancel": "Cancelar Tarea",
+  "update_notification.btn_download": "Descargar Actualización",
+  "search_replace.tooltip_remove_condition": "Eliminar condición"
 }

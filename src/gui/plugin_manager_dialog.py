@@ -78,9 +78,9 @@ class PluginManagerDialog(QDialog):
         
         # Buttons
         btn_layout = QHBoxLayout()
-        btn_refresh = QPushButton("🔄 Refresh")
+        btn_refresh = QPushButton(f"🔄 {tr('plugin_manager.btn_refresh')}")
         btn_refresh.clicked.connect(self._refresh_plugins)
-        btn_close = QPushButton("✅ Close")
+        btn_close = QPushButton(f"✅ {tr('plugin_manager.btn_close')}")
         btn_close.clicked.connect(self.accept)
         
         btn_layout.addWidget(btn_refresh)

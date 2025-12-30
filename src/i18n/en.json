@@ -1828,5 +1828,19 @@
   "shortcut_customizer.window_title": "Edit Shortcut: {action_name}",
   "progress_details.window_title": "Progress Details - {task_name}",
   "update_notification.window_title_available": "Update Available - Clarify",
-  "update_notification.window_title_check": "Check for Updates - Clarify"
+  "update_notification.window_title_check": "Check for Updates - Clarify",
+  "recall_dialog.btn_export": "Export to File",
+  "recall_dialog.btn_copy": "Copy to Clipboard",
+  "recall_dialog.btn_send": "Send to Set Operations",
+  "plugin_manager.btn_refresh": "Refresh",
+  "plugin_manager.btn_close": "Close",
+  "diff_viewer.btn_export": "Export HTML",
+  "venn_diagram.btn_export_svg": "Export SVG",
+  "progress_bar.tooltip_pause": "Pause progress",
+  "progress_bar.tooltip_expand": "Expand details",
+  "progress_bar.tooltip_close": "Close progress bar",
+  "progress_details.btn_pause": "Pause",
+  "progress_details.btn_cancel": "Cancel Task",
+  "update_notification.btn_download": "Download Update",
+  "search_replace.tooltip_remove_condition": "Remove condition"
 }
