@@ -98,7 +98,7 @@ class StatisticsDialog(QDialog):
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel(tr("statistics_dialog.lbl_filter")))
         self.operation_filter = QComboBox()
-        self.operation_filter.addItem("All Operations")
+        self.operation_filter.addItem(tr("statistics_dialog.filter_all_operations"))
         self.operation_filter.currentTextChanged.connect(self._filter_removal_table)
         filter_layout.addWidget(self.operation_filter)
         filter_layout.addStretch()

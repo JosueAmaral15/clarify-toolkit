@@ -312,7 +312,7 @@ class FileListDock(BaseDock):
             menu.addAction(action)
         
         menu.addSeparator()
-        clear_action = QAction("Clear Recent", self)
+        clear_action = QAction(tr("file_list_dock.action_clear_recent"), self)
         clear_action.triggered.connect(self._clear_recent)
         menu.addAction(clear_action)
         

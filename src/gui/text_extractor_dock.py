@@ -78,7 +78,7 @@ class TextExtractorDock(StandardToolDock):
         # Normalization options
         grid.addWidget(QLabel(tr("text_extractor.lbl_case")), 3, 0)
         self.combo_case = QComboBox()
-        self.combo_case.addItems(["snake_case", "camelCase", "PascalCase", "kebab-case"])
+        self.combo_case.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
         grid.addWidget(self.combo_case, 3, 1)
         
         # Character limit

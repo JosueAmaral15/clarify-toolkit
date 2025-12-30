@@ -228,7 +228,7 @@ class TextToJsonDock(BaseDock):
         
         self.csv_separator_label = QLabel(tr("text_to_json.lbl_separator"))
         self.csv_separator_combo = QComboBox()
-        self.csv_separator_combo.addItems(["Comma (,)", "Semicolon (;)", "Tab (\\t)"])
+        self.csv_separator_combo.addItems([tr("combo.separator_comma"), tr("combo.separator_semicolon"), tr("combo.separator_tab")])
         
         self.csv_format_label = QLabel(tr("text_to_json.lbl_output_format"))
         self.csv_array_objects_radio = QRadioButton(tr("text_to_json.radio_array_objects"))

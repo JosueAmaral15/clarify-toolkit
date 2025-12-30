@@ -49,7 +49,7 @@ class CaseValidatorDialog(QDialog):
         selector_layout.addWidget(QLabel(tr("case_validator.target_case")))
         
         self.combo_case = QComboBox()
-        self.combo_case.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
+        self.combo_case.addItems([tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_snake"), tr("combo.case_kebab")])
         self.combo_case.currentTextChanged.connect(self._update_preview)
         selector_layout.addWidget(self.combo_case)
         selector_layout.addStretch()

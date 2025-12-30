@@ -119,7 +119,7 @@ class JsonRewriterDock(BaseDock):
         self.chk_enforce_case = QCheckBox(tr("json_rewriter.chk_enforce_case"))
         self.chk_enforce_case.setChecked(True)  # Applied automatically
         self.combo_case_style = QComboBox()
-        self.combo_case_style.addItems(["camelCase", "PascalCase", "snake_case", "kebab-case"])
+        self.combo_case_style.addItems([tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_snake"), tr("combo.case_kebab")])
         self.combo_case_style.setCurrentIndex(0)  # Default: camelCase
         self.chk_validate_case = QCheckBox(tr("json_rewriter.chk_validate_case"))
         self.chk_validate_case.setChecked(False)  # Optional validation

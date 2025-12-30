@@ -132,7 +132,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # Mode selector
         layout.addWidget(QLabel(tr("advanced_extractor.mode", "Mode:")))
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["jsx", "generic"])
+        self.mode_combo.addItems([tr("combo.mode_jsx"), tr("combo.mode_generic")])
         self.mode_combo.currentTextChanged.connect(self._toggle_generic_fields)
         layout.addWidget(self.mode_combo)
         
@@ -225,7 +225,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # Case style
         layout.addWidget(QLabel(tr("advanced_extractor.case", "Case:")))
         self.case_combo = QComboBox()
-        self.case_combo.addItems(["snake", "camel", "pascal", "kebab"])
+        self.case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
         layout.addWidget(self.case_combo)
         
         # Uppercase toggle

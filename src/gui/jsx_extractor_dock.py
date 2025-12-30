@@ -132,7 +132,7 @@ class JSXExtractorDock(BaseDock):
 
         self.mode_label = QLabel(tr("jsx.lbl_mode"))
         self.cb_mode = QComboBox()
-        self.cb_mode.addItems(["jsx", "generic"])
+        self.cb_mode.addItems([tr("combo.mode_jsx"), tr("combo.mode_generic")])
 
         # Generic delimiters (only for generic mode)
         self.start_label = QLabel(tr("jsx.lbl_start_delim"))
@@ -170,7 +170,7 @@ class JSXExtractorDock(BaseDock):
 
         self.case_label = QLabel(tr("jsx.lbl_case_style"))
         self.cb_case = QComboBox()
-        self.cb_case.addItems(["snake", "camel", "pascal", "kebab"])
+        self.cb_case.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
 
         self.chk_upper = QCheckBox(tr("jsx.chk_uppercase"))
         self.chk_upper.setChecked(False)
@@ -197,7 +197,7 @@ class JSXExtractorDock(BaseDock):
 
         self.avoid_keys_mode_label = QLabel(tr("jsx.lbl_avoid_mode"))
         self.cb_avoid_mode = QComboBox()
-        self.cb_avoid_mode.addItems(["contains", "equals"])
+        self.cb_avoid_mode.addItems([tr("combo.avoid_contains"), tr("combo.avoid_equals")])
 
         # Action buttons
         self.btn_run = QPushButton(tr("jsx.btn_extract"))
