@@ -2011,5 +2011,17 @@
   "batch_dialog.msg_batch_completed_title": "批次已完成",
   "batch_dialog.msg_batch_completed": "所有 {count} 步骤已成功完成！\n\n最终结果: {result_count} 项",
   "batch_dialog.msg_batch_failed_title": "批次失败",
-  "batch_dialog.msg_batch_failed": "批次在步骤 {step} 失败:\n\n{error}\n\n部分结果已保留用于调试。"
+  "batch_dialog.msg_batch_failed": "批次在步骤 {step} 失败:\n\n{error}\n\n部分结果已保留用于调试。",
+  "json_editor.msg_format_error_title": "格式错误",
+  "json_editor.msg_insert_complete_title": "插入完成",
+  "json_editor.msg_insert_complete": "使用 {mode} 模式在第 {line} 行插入了文本",
+  "json_editor.msg_insert_error_title": "插入错误",
+  "json_editor.msg_insert_error": "插入时出错:\n\n{error}",
+  "json_editor.msg_target_not_found_title": "未找到目标",
+  "json_editor.msg_target_not_found": "JSON 中未找到键 '{key}'。\n\n可用键: {available}",
+  "json_editor.msg_regex_insert_complete_title": "正则插入完成",
+  "json_editor.msg_regex_insert_complete": "已插入 '{key}': '{value}' {position} '{target}'",
+  "json_editor.msg_json_error_title": "JSON错误",
+  "json_editor.msg_json_error": "无效的JSON，无法插入:\n\n{error}",
+  "json_editor.msg_regex_insert_error": "正则插入时出错:\n\n{error}"
 }

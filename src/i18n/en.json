@@ -2044,5 +2044,17 @@
   "batch_dialog.msg_batch_completed_title": "Batch Completed",
   "batch_dialog.msg_batch_completed": "All {count} steps completed successfully!\n\nFinal result: {result_count} items",
   "batch_dialog.msg_batch_failed_title": "Batch Failed",
-  "batch_dialog.msg_batch_failed": "Batch failed at step {step}:\n\n{error}\n\nPartial results preserved for debugging."
+  "batch_dialog.msg_batch_failed": "Batch failed at step {step}:\n\n{error}\n\nPartial results preserved for debugging.",
+  "json_editor.msg_format_error_title": "Format Error",
+  "json_editor.msg_insert_complete_title": "Insert Complete",
+  "json_editor.msg_insert_complete": "Inserted text at line {line} using {mode} mode",
+  "json_editor.msg_insert_error_title": "Insert Error",
+  "json_editor.msg_insert_error": "Error during insertion:\n\n{error}",
+  "json_editor.msg_target_not_found_title": "Target Not Found",
+  "json_editor.msg_target_not_found": "Key '{key}' not found in JSON.\n\nAvailable keys: {available}",
+  "json_editor.msg_regex_insert_complete_title": "Regex Insert Complete",
+  "json_editor.msg_regex_insert_complete": "Inserted '{key}': '{value}' {position} '{target}'",
+  "json_editor.msg_json_error_title": "JSON Error",
+  "json_editor.msg_json_error": "Invalid JSON, cannot insert:\n\n{error}",
+  "json_editor.msg_regex_insert_error": "Error during regex insertion:\n\n{error}"
 }

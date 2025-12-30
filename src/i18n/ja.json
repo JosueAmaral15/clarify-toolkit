@@ -2011,5 +2011,17 @@
   "batch_dialog.msg_batch_completed_title": "バッチ完了",
   "batch_dialog.msg_batch_completed": "すべての {count} ステップが正常に完了しました！\n\n最終結果: {result_count} 項目",
   "batch_dialog.msg_batch_failed_title": "バッチ失敗",
-  "batch_dialog.msg_batch_failed": "バッチがステップ {step} で失敗しました:\n\n{error}\n\nデバッグ用に部分的な結果が保持されています。"
+  "batch_dialog.msg_batch_failed": "バッチがステップ {step} で失敗しました:\n\n{error}\n\nデバッグ用に部分的な結果が保持されています。",
+  "json_editor.msg_format_error_title": "フォーマットエラー",
+  "json_editor.msg_insert_complete_title": "挿入完了",
+  "json_editor.msg_insert_complete": "{mode} モードで行 {line} にテキストを挿入しました",
+  "json_editor.msg_insert_error_title": "挿入エラー",
+  "json_editor.msg_insert_error": "挿入中にエラーが発生しました:\n\n{error}",
+  "json_editor.msg_target_not_found_title": "ターゲットが見つかりません",
+  "json_editor.msg_target_not_found": "キー '{key}' が JSON に見つかりません。\n\n利用可能なキー: {available}",
+  "json_editor.msg_regex_insert_complete_title": "正規表現挿入完了",
+  "json_editor.msg_regex_insert_complete": "'{key}': '{value}' を '{target}' の {position} に挿入しました",
+  "json_editor.msg_json_error_title": "JSONエラー",
+  "json_editor.msg_json_error": "無効なJSON、挿入できません:\n\n{error}",
+  "json_editor.msg_regex_insert_error": "正規表現挿入中にエラーが発生しました:\n\n{error}"
 }

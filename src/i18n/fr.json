@@ -2011,5 +2011,17 @@
   "batch_dialog.msg_batch_completed_title": "Lot terminé",
   "batch_dialog.msg_batch_completed": "Toutes les {count} étapes terminées avec succès !\n\nRésultat final : {result_count} éléments",
   "batch_dialog.msg_batch_failed_title": "Échec du lot",
-  "batch_dialog.msg_batch_failed": "Le lot a échoué à l'étape {step} :\n\n{error}\n\nRésultats partiels conservés pour le débogage."
+  "batch_dialog.msg_batch_failed": "Le lot a échoué à l'étape {step} :\n\n{error}\n\nRésultats partiels conservés pour le débogage.",
+  "json_editor.msg_format_error_title": "Erreur de format",
+  "json_editor.msg_insert_complete_title": "Insertion terminée",
+  "json_editor.msg_insert_complete": "Texte inséré à la ligne {line} en mode {mode}",
+  "json_editor.msg_insert_error_title": "Erreur d'insertion",
+  "json_editor.msg_insert_error": "Erreur lors de l'insertion :\n\n{error}",
+  "json_editor.msg_target_not_found_title": "Cible introuvable",
+  "json_editor.msg_target_not_found": "Clé '{key}' introuvable dans le JSON.\n\nClés disponibles : {available}",
+  "json_editor.msg_regex_insert_complete_title": "Insertion regex terminée",
+  "json_editor.msg_regex_insert_complete": "Inséré '{key}' : '{value}' {position} '{target}'",
+  "json_editor.msg_json_error_title": "Erreur JSON",
+  "json_editor.msg_json_error": "JSON invalide, impossible d'insérer :\n\n{error}",
+  "json_editor.msg_regex_insert_error": "Erreur lors de l'insertion regex :\n\n{error}"
 }

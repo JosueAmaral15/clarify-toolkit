@@ -2044,5 +2044,17 @@
   "batch_dialog.msg_batch_completed_title": "Lote Completo",
   "batch_dialog.msg_batch_completed": "Todas as {count} etapas foram concluídas com sucesso!\n\nResultado final: {result_count} itens",
   "batch_dialog.msg_batch_failed_title": "Lote Falhou",
-  "batch_dialog.msg_batch_failed": "Lote falhou na etapa {step}:\n\n{error}\n\nResultados parciais preservados para depuração."
+  "batch_dialog.msg_batch_failed": "Lote falhou na etapa {step}:\n\n{error}\n\nResultados parciais preservados para depuração.",
+  "json_editor.msg_format_error_title": "Erro de Formato",
+  "json_editor.msg_insert_complete_title": "Inserção Completa",
+  "json_editor.msg_insert_complete": "Texto inserido na linha {line} usando modo {mode}",
+  "json_editor.msg_insert_error_title": "Erro de Inserção",
+  "json_editor.msg_insert_error": "Erro durante a inserção:\n\n{error}",
+  "json_editor.msg_target_not_found_title": "Destino Não Encontrado",
+  "json_editor.msg_target_not_found": "Chave '{key}' não encontrada no JSON.\n\nChaves disponíveis: {available}",
+  "json_editor.msg_regex_insert_complete_title": "Inserção Regex Completa",
+  "json_editor.msg_regex_insert_complete": "Inserido '{key}': '{value}' {position} '{target}'",
+  "json_editor.msg_json_error_title": "Erro JSON",
+  "json_editor.msg_json_error": "JSON inválido, não é possível inserir:\n\n{error}",
+  "json_editor.msg_regex_insert_error": "Erro durante a inserção regex:\n\n{error}"
 }

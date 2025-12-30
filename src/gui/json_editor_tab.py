@@ -248,7 +248,7 @@ class JsonEditorTab(QWidget):
             self.editor.blockSignals(False)
             self._validate()
         else:
-            QMessageBox.warning(self, "Format Error", result)
+            QMessageBox.warning(self, tr("json_editor.msg_format_error_title"), result)
     
     def _show_search(self):
         """Show search dialog."""
@@ -308,15 +308,15 @@ class JsonEditorTab(QWidget):
             # Show feedback
             QMessageBox.information(
                 self,
-                "Insert Complete",
-                f"Inserted text at line {line_no} using {mode} mode"
+                tr("json_editor.msg_insert_complete_title"),
+                tr("json_editor.msg_insert_complete").format(line=line_no, mode=mode)
             )
             
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Insert Error",
-                f"Error during insertion:\n\n{str(e)}"
+                tr("json_editor.msg_insert_error_title"),
+                tr("json_editor.msg_insert_error").format(error=str(e))
             )
     
     def _toggle_regex_insert_panel(self):
@@ -363,9 +363,11 @@ class JsonEditorTab(QWidget):
             if not target_found:
                 QMessageBox.warning(
                     self,
-                    "Target Not Found",
-                    f"Key '{target_key}' not found in JSON.\n\n"
-                    f"Available keys: {', '.join(self._get_all_keys(json_obj)[:10])}"
+                    tr("json_editor.msg_target_not_found_title"),
+                    tr("json_editor.msg_target_not_found").format(
+                        key=target_key,
+                        available=', '.join(self._get_all_keys(json_obj)[:10])
+                    )
                 )
                 return
             
@@ -396,21 +398,26 @@ class JsonEditorTab(QWidget):
             # Show feedback
             QMessageBox.information(
                 self,
-                "Regex Insert Complete",
-                f"Inserted '{new_key}': '{new_value}' {position.lower()} '{target_key}'"
+                tr("json_editor.msg_regex_insert_complete_title"),
+                tr("json_editor.msg_regex_insert_complete").format(
+                    key=new_key,
+                    value=new_value,
+                    position=position.lower(),
+                    target=target_key
+                )
             )
             
         except json.JSONDecodeError as e:
             QMessageBox.critical(
                 self,
-                "JSON Error",
-                f"Invalid JSON, cannot insert:\n\n{str(e)}"
+                tr("json_editor.msg_json_error_title"),
+                tr("json_editor.msg_json_error").format(error=str(e))
             )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Insert Error",
-                f"Error during regex insertion:\n\n{str(e)}"
+                tr("json_editor.msg_insert_error_title"),
+                tr("json_editor.msg_regex_insert_error").format(error=str(e))
             )
     
     def _find_key_in_json(self, obj, key, path=None):

@@ -2011,5 +2011,17 @@
   "batch_dialog.msg_batch_completed_title": "Stapel abgeschlossen",
   "batch_dialog.msg_batch_completed": "Alle {count} Schritte erfolgreich abgeschlossen!\n\nEndgültiges Ergebnis: {result_count} Elemente",
   "batch_dialog.msg_batch_failed_title": "Stapel fehlgeschlagen",
-  "batch_dialog.msg_batch_failed": "Stapel fehlgeschlagen bei Schritt {step}:\n\n{error}\n\nTeilergebnisse zur Fehlersuche erhalten."
+  "batch_dialog.msg_batch_failed": "Stapel fehlgeschlagen bei Schritt {step}:\n\n{error}\n\nTeilergebnisse zur Fehlersuche erhalten.",
+  "json_editor.msg_format_error_title": "Formatfehler",
+  "json_editor.msg_insert_complete_title": "Einfügen abgeschlossen",
+  "json_editor.msg_insert_complete": "Text in Zeile {line} mit Modus {mode} eingefügt",
+  "json_editor.msg_insert_error_title": "Einfügefehler",
+  "json_editor.msg_insert_error": "Fehler beim Einfügen:\n\n{error}",
+  "json_editor.msg_target_not_found_title": "Ziel nicht gefunden",
+  "json_editor.msg_target_not_found": "Schlüssel '{key}' nicht im JSON gefunden.\n\nVerfügbare Schlüssel: {available}",
+  "json_editor.msg_regex_insert_complete_title": "Regex-Einfügen abgeschlossen",
+  "json_editor.msg_regex_insert_complete": "'{key}': '{value}' {position} '{target}' eingefügt",
+  "json_editor.msg_json_error_title": "JSON-Fehler",
+  "json_editor.msg_json_error": "Ungültiges JSON, Einfügen nicht möglich:\n\n{error}",
+  "json_editor.msg_regex_insert_error": "Fehler beim Regex-Einfügen:\n\n{error}"
 }
