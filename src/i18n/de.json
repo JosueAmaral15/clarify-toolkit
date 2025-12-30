@@ -1846,5 +1846,20 @@
   "file_finder.lbl_no_results": "Keine Ergebnisse",
   "recall_dialog.lbl_preview": "<b>Datenvorschau</b> (JSON formatiert):",
   "tutorial_assistant.header": "💬 Fragen Sie mich alles über Clarify-Tutorials!",
-  "app.lbl_shortcuts_search": "Suchen:"
+  "app.lbl_shortcuts_search": "Suchen:",
+  "batch_dialog.tooltip_description": "Lesbare Beschreibung für diesen Schritt (optional)",
+  "batch_dialog.tooltip_file_from_disk": "JSON-Datei von der Festplatte als Eingabe verwenden",
+  "batch_dialog.tooltip_file_from_previous": "Ergebnis des vorherigen Schritts als Eingabe verwenden",
+  "batch_dialog.tooltip_not_available_first": "Nicht verfügbar für ersten Schritt",
+  "batch_dialog.tooltip_full_path_a": "Vollständiger Pfad zur JSON-Datei A",
+  "batch_dialog.tooltip_select_file_a": "JSON-Datei A aus Dateidialog auswählen",
+  "batch_dialog.tooltip_operation": "Mengenoperation: ∩ (gemeinsame Schlüssel), ∪ (alle), − (in A nicht in B), ⊕ (in A oder B aber nicht in beiden)",
+  "batch_dialog.tooltip_full_path_b": "Vollständiger Pfad zur JSON-Datei B (erforderlich)",
+  "batch_dialog.tooltip_select_file_b": "JSON-Datei B aus Dateidialog auswählen",
+  "batch_dialog.tooltip_comparison_mode": "Schlüsselvergleich: Schlüssel+Wert (flach), Pfad+Wert (tief verschachtelt), Nur Schlüssel (Werte ignorieren)",
+  "batch_dialog.tooltip_ignore_case_keys": "'Name' und 'name' als identische Schlüssel behandeln",
+  "batch_dialog.tooltip_ignore_case_values": "'Hallo' und 'hallo' als identische Werte behandeln",
+  "batch_dialog.tooltip_skip_empty": "Schlüssel mit null, leerer Zeichenkette, [], oder {} ignorieren",
+  "batch_dialog.tooltip_arrays_ignore_order": "[1,2,3] und [3,2,1] als identische Arrays behandeln",
+  "batch_dialog.tooltip_add_step": "Diesen Schritt zum Stapeljob hinzufügen"
 }

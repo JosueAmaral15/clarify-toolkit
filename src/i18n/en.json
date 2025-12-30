@@ -1879,5 +1879,20 @@
   "file_finder.lbl_no_results": "No results",
   "recall_dialog.lbl_preview": "<b>Data Preview</b> (JSON formatted):",
   "tutorial_assistant.header": "💬 Ask me anything about Clarify tutorials!",
-  "app.lbl_shortcuts_search": "Search:"
+  "app.lbl_shortcuts_search": "Search:",
+  "batch_dialog.tooltip_description": "Human-readable description for this step (optional)",
+  "batch_dialog.tooltip_file_from_disk": "Use a JSON file from disk as input",
+  "batch_dialog.tooltip_file_from_previous": "Use the result from the previous step as input",
+  "batch_dialog.tooltip_not_available_first": "Not available for first step",
+  "batch_dialog.tooltip_full_path_a": "Full path to JSON file A",
+  "batch_dialog.tooltip_select_file_a": "Select JSON file A from file dialog",
+  "batch_dialog.tooltip_operation": "Set operation to perform: ∩ (common keys), ∪ (all keys), − (keys in A not in B), ⊕ (keys in A or B but not both)",
+  "batch_dialog.tooltip_full_path_b": "Full path to JSON file B (required for all operations)",
+  "batch_dialog.tooltip_select_file_b": "Select JSON file B from file dialog",
+  "batch_dialog.tooltip_comparison_mode": "How to compare JSON keys: Key+Value (shallow), Full Path+Value (deep nested), Key Only (ignore values)",
+  "batch_dialog.tooltip_ignore_case_keys": "Treat 'Name' and 'name' as identical keys",
+  "batch_dialog.tooltip_ignore_case_values": "Treat 'Hello' and 'hello' as identical values",
+  "batch_dialog.tooltip_skip_empty": "Ignore keys with null, empty string, [], or {} values",
+  "batch_dialog.tooltip_arrays_ignore_order": "Treat [1,2,3] and [3,2,1] as identical arrays",
+  "batch_dialog.tooltip_add_step": "Add this step to the batch job"
 }

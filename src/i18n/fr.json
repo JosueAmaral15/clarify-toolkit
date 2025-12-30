@@ -1846,5 +1846,20 @@
   "file_finder.lbl_no_results": "Aucun résultat",
   "recall_dialog.lbl_preview": "<b>Aperçu des Données</b> (JSON formaté):",
   "tutorial_assistant.header": "💬 Demandez-moi n'importe quoi sur les tutoriels Clarify!",
-  "app.lbl_shortcuts_search": "Rechercher:"
+  "app.lbl_shortcuts_search": "Rechercher:",
+  "batch_dialog.tooltip_description": "Description lisible pour cette étape (optionnel)",
+  "batch_dialog.tooltip_file_from_disk": "Utiliser un fichier JSON du disque comme entrée",
+  "batch_dialog.tooltip_file_from_previous": "Utiliser le résultat de l'étape précédente comme entrée",
+  "batch_dialog.tooltip_not_available_first": "Non disponible pour la première étape",
+  "batch_dialog.tooltip_full_path_a": "Chemin complet vers le fichier JSON A",
+  "batch_dialog.tooltip_select_file_a": "Sélectionner le fichier JSON A depuis le dialogue",
+  "batch_dialog.tooltip_operation": "Opération d'ensemble: ∩ (clés communes), ∪ (toutes), − (dans A pas dans B), ⊕ (dans A ou B mais pas les deux)",
+  "batch_dialog.tooltip_full_path_b": "Chemin complet vers le fichier JSON B (requis)",
+  "batch_dialog.tooltip_select_file_b": "Sélectionner le fichier JSON B depuis le dialogue",
+  "batch_dialog.tooltip_comparison_mode": "Comparaison des clés: Clé+Valeur (superficiel), Chemin+Valeur (profond), Clé Seule (ignorer valeurs)",
+  "batch_dialog.tooltip_ignore_case_keys": "Traiter 'Nom' et 'nom' comme clés identiques",
+  "batch_dialog.tooltip_ignore_case_values": "Traiter 'Bonjour' et 'bonjour' comme valeurs identiques",
+  "batch_dialog.tooltip_skip_empty": "Ignorer les clés avec null, chaîne vide, [], ou {}",
+  "batch_dialog.tooltip_arrays_ignore_order": "Traiter [1,2,3] et [3,2,1] comme tableaux identiques",
+  "batch_dialog.tooltip_add_step": "Ajouter cette étape au travail par lots"
 }

@@ -1846,5 +1846,20 @@
   "file_finder.lbl_no_results": "无结果",
   "recall_dialog.lbl_preview": "<b>数据预览</b> (JSON格式):",
   "tutorial_assistant.header": "💬 询问我关于Clarify教程的任何问题！",
-  "app.lbl_shortcuts_search": "搜索:"
+  "app.lbl_shortcuts_search": "搜索:",
+  "batch_dialog.tooltip_description": "此步骤的可读描述（可选）",
+  "batch_dialog.tooltip_file_from_disk": "使用磁盘上的JSON文件作为输入",
+  "batch_dialog.tooltip_file_from_previous": "使用上一步的结果作为输入",
+  "batch_dialog.tooltip_not_available_first": "第一步不可用",
+  "batch_dialog.tooltip_full_path_a": "JSON文件A的完整路径",
+  "batch_dialog.tooltip_select_file_a": "从文件对话框选择JSON文件A",
+  "batch_dialog.tooltip_operation": "集合操作: ∩（共同键）、∪（全部）、−（在A不在B）、⊕（在A或B但不同时）",
+  "batch_dialog.tooltip_full_path_b": "JSON文件B的完整路径（必需）",
+  "batch_dialog.tooltip_select_file_b": "从文件对话框选择JSON文件B",
+  "batch_dialog.tooltip_comparison_mode": "键比较方式: 键+值（浅层）、路径+值（深层嵌套）、仅键（忽略值）",
+  "batch_dialog.tooltip_ignore_case_keys": "将'Name'和'name'视为相同键",
+  "batch_dialog.tooltip_ignore_case_values": "将'Hello'和'hello'视为相同值",
+  "batch_dialog.tooltip_skip_empty": "忽略值为null、空字符串、[]或{}的键",
+  "batch_dialog.tooltip_arrays_ignore_order": "将[1,2,3]和[3,2,1]视为相同数组",
+  "batch_dialog.tooltip_add_step": "将此步骤添加到批处理作业"
 }

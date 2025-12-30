@@ -1846,5 +1846,20 @@
   "file_finder.lbl_no_results": "結果なし",
   "recall_dialog.lbl_preview": "<b>データプレビュー</b> (JSON形式):",
   "tutorial_assistant.header": "💬 Clarifyチュートリアルについて何でも聞いてください！",
-  "app.lbl_shortcuts_search": "検索:"
+  "app.lbl_shortcuts_search": "検索:",
+  "batch_dialog.tooltip_description": "このステップの説明（オプション）",
+  "batch_dialog.tooltip_file_from_disk": "ディスクからJSONファイルを入力として使用",
+  "batch_dialog.tooltip_file_from_previous": "前のステップの結果を入力として使用",
+  "batch_dialog.tooltip_not_available_first": "最初のステップでは使用不可",
+  "batch_dialog.tooltip_full_path_a": "JSONファイルAへのフルパス",
+  "batch_dialog.tooltip_select_file_a": "ファイルダイアログからJSONファイルAを選択",
+  "batch_dialog.tooltip_operation": "集合演算: ∩（共通キー）、∪（全て）、−（AにありBにない）、⊕（AまたはBだが両方にはない）",
+  "batch_dialog.tooltip_full_path_b": "JSONファイルBへのフルパス（必須）",
+  "batch_dialog.tooltip_select_file_b": "ファイルダイアログからJSONファイルBを選択",
+  "batch_dialog.tooltip_comparison_mode": "キー比較方法: キー+値（浅い）、パス+値（深い）、キーのみ（値を無視）",
+  "batch_dialog.tooltip_ignore_case_keys": "'Name'と'name'を同一キーとして扱う",
+  "batch_dialog.tooltip_ignore_case_values": "'Hello'と'hello'を同一値として扱う",
+  "batch_dialog.tooltip_skip_empty": "null、空文字列、[]、{}の値を持つキーを無視",
+  "batch_dialog.tooltip_arrays_ignore_order": "[1,2,3]と[3,2,1]を同一配列として扱う",
+  "batch_dialog.tooltip_add_step": "このステップをバッチジョブに追加"
 }

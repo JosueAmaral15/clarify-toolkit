@@ -56,7 +56,7 @@ class BatchStepEditorDialog(QDialog):
         desc_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_description")))
         self.ed_description = QLineEdit()
         self.ed_description.setPlaceholderText(tr("batch_dialog.step.placeholder_description"))
-        self.ed_description.setToolTip("Human-readable description for this step (optional)")
+        self.ed_description.setToolTip(tooltip_tr("batch_dialog.tooltip_description"))
         desc_layout.addWidget(self.ed_description)
         layout.addLayout(desc_layout)
         
@@ -65,14 +65,14 @@ class BatchStepEditorDialog(QDialog):
         file_a_layout = QVBoxLayout()
         
         self.radio_file_a_file = QCheckBox(tr("batch_dialog.step.chk_from_file"))
-        self.radio_file_a_file.setToolTip("Use a JSON file from disk as input")
+        self.radio_file_a_file.setToolTip(tooltip_tr("batch_dialog.tooltip_file_from_disk"))
         self.radio_file_a_previous = QCheckBox(tr("batch_dialog.step.chk_from_previous"))
-        self.radio_file_a_previous.setToolTip("Use the result from the previous step as input")
+        self.radio_file_a_previous.setToolTip(tooltip_tr("batch_dialog.tooltip_file_from_previous"))
         
         if self.is_first_step:
             self.radio_file_a_file.setChecked(True)
             self.radio_file_a_previous.setEnabled(False)
-            self.radio_file_a_previous.setToolTip("Not available for first step")
+            self.radio_file_a_previous.setToolTip(tooltip_tr("batch_dialog.tooltip_not_available_first"))
         else:
             self.radio_file_a_previous.setChecked(True)
         
@@ -83,10 +83,10 @@ class BatchStepEditorDialog(QDialog):
         path_a_layout = QHBoxLayout()
         self.ed_file_a = QLineEdit()
         self.ed_file_a.setPlaceholderText(tr("batch_dialog.placeholder_file_a"))
-        self.ed_file_a.setToolTip("Full path to JSON file A")
+        self.ed_file_a.setToolTip(tooltip_tr("batch_dialog.tooltip_full_path_a"))
         self.ed_file_a.setEnabled(self.radio_file_a_file.isChecked())
         self.btn_browse_a = QPushButton(tr("batch_dialog.step.btn_browse_a"))
-        self.btn_browse_a.setToolTip("Select JSON file A from file dialog")
+        self.btn_browse_a.setToolTip(tooltip_tr("batch_dialog.tooltip_select_file_a"))
         self.btn_browse_a.clicked.connect(lambda: self._browse_file('a'))
         self.btn_browse_a.setEnabled(self.radio_file_a_file.isChecked())
         path_a_layout.addWidget(self.ed_file_a)
@@ -105,7 +105,7 @@ class BatchStepEditorDialog(QDialog):
         op_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_operation")))
         self.combo_operation = QComboBox()
         self.combo_operation.addItems(['Intersection (∩)', 'Union (∪)', 'Difference (−)', 'Symmetric Difference (⊕)'])
-        self.combo_operation.setToolTip("Set operation to perform: ∩ (common keys), ∪ (all keys), − (keys in A not in B), ⊕ (keys in A or B but not both)")
+        self.combo_operation.setToolTip(tooltip_tr("batch_dialog.tooltip_operation"))
         op_layout.addWidget(self.combo_operation)
         layout.addLayout(op_layout)
         
@@ -114,9 +114,9 @@ class BatchStepEditorDialog(QDialog):
         file_b_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_file_b")))
         self.ed_file_b = QLineEdit()
         self.ed_file_b.setPlaceholderText(tr("batch_dialog.placeholder_file_b"))
-        self.ed_file_b.setToolTip("Full path to JSON file B (required for all operations)")
+        self.ed_file_b.setToolTip(tooltip_tr("batch_dialog.tooltip_full_path_b"))
         self.btn_browse_b = QPushButton(tr("batch_dialog.step.btn_browse_b"))
-        self.btn_browse_b.setToolTip("Select JSON file B from file dialog")
+        self.btn_browse_b.setToolTip(tooltip_tr("batch_dialog.tooltip_select_file_b"))
         self.btn_browse_b.clicked.connect(lambda: self._browse_file('b'))
         file_b_layout.addWidget(self.ed_file_b)
         file_b_layout.addWidget(self.btn_browse_b)
@@ -127,7 +127,7 @@ class BatchStepEditorDialog(QDialog):
         mode_layout.addWidget(QLabel(tr("batch_dialog.step.lbl_mode")))
         self.combo_mode = QComboBox()
         self.combo_mode.addItems(['Key + Value', 'Full Path + Value', 'Key Only'])
-        self.combo_mode.setToolTip("How to compare JSON keys: Key+Value (shallow), Full Path+Value (deep nested), Key Only (ignore values)")
+        self.combo_mode.setToolTip(tooltip_tr("batch_dialog.tooltip_comparison_mode"))
         mode_layout.addWidget(self.combo_mode)
         layout.addLayout(mode_layout)
         
@@ -136,13 +136,13 @@ class BatchStepEditorDialog(QDialog):
         options_layout = QVBoxLayout()
         
         self.chk_ignore_case_keys = QCheckBox(tr("batch_dialog.step.chk_ignore_case_keys"))
-        self.chk_ignore_case_keys.setToolTip("Treat 'Name' and 'name' as identical keys")
+        self.chk_ignore_case_keys.setToolTip(tooltip_tr("batch_dialog.tooltip_ignore_case_keys"))
         self.chk_ignore_case_values = QCheckBox(tr("batch_dialog.step.chk_ignore_case_values"))
-        self.chk_ignore_case_values.setToolTip("Treat 'Hello' and 'hello' as identical values")
+        self.chk_ignore_case_values.setToolTip(tooltip_tr("batch_dialog.tooltip_ignore_case_values"))
         self.chk_skip_empty = QCheckBox(tr("batch_dialog.step.chk_skip_empty"))
-        self.chk_skip_empty.setToolTip("Ignore keys with null, empty string, [], or {} values")
+        self.chk_skip_empty.setToolTip(tooltip_tr("batch_dialog.tooltip_skip_empty"))
         self.chk_arrays_ignore_order = QCheckBox(tr("batch_dialog.step.chk_arrays_ignore_order"))
-        self.chk_arrays_ignore_order.setToolTip("Treat [1,2,3] and [3,2,1] as identical arrays")
+        self.chk_arrays_ignore_order.setToolTip(tooltip_tr("batch_dialog.tooltip_arrays_ignore_order"))
         
         options_layout.addWidget(self.chk_ignore_case_keys)
         options_layout.addWidget(self.chk_ignore_case_values)
@@ -157,7 +157,7 @@ class BatchStepEditorDialog(QDialog):
         btn_layout.addStretch()
         
         self.btn_ok = QPushButton(tr("batch_dialog.step.btn_ok"))
-        self.btn_ok.setToolTip("Add this step to the batch job")
+        self.btn_ok.setToolTip(tooltip_tr("batch_dialog.tooltip_add_step"))
         self.btn_ok.clicked.connect(self._on_ok)
         btn_layout.addWidget(self.btn_ok)
         

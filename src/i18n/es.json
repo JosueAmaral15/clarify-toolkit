@@ -1854,5 +1854,20 @@
   "file_finder.lbl_no_results": "Sin resultados",
   "recall_dialog.lbl_preview": "<b>Vista Previa de Datos</b> (JSON formateado):",
   "tutorial_assistant.header": "💬 ¡Pregúntame cualquier cosa sobre los tutoriales de Clarify!",
-  "app.lbl_shortcuts_search": "Buscar:"
+  "app.lbl_shortcuts_search": "Buscar:",
+  "batch_dialog.tooltip_description": "Descripción legible para este paso (opcional)",
+  "batch_dialog.tooltip_file_from_disk": "Usar un archivo JSON del disco como entrada",
+  "batch_dialog.tooltip_file_from_previous": "Usar el resultado del paso anterior como entrada",
+  "batch_dialog.tooltip_not_available_first": "No disponible para el primer paso",
+  "batch_dialog.tooltip_full_path_a": "Ruta completa al archivo JSON A",
+  "batch_dialog.tooltip_select_file_a": "Seleccionar archivo JSON A desde el diálogo",
+  "batch_dialog.tooltip_operation": "Operación de conjunto: ∩ (claves comunes), ∪ (todas), − (en A no en B), ⊕ (en A o B pero no en ambos)",
+  "batch_dialog.tooltip_full_path_b": "Ruta completa al archivo JSON B (requerido)",
+  "batch_dialog.tooltip_select_file_b": "Seleccionar archivo JSON B desde el diálogo",
+  "batch_dialog.tooltip_comparison_mode": "Cómo comparar claves: Clave+Valor (superficial), Ruta+Valor (profundo), Solo Clave (ignorar valores)",
+  "batch_dialog.tooltip_ignore_case_keys": "Tratar 'Nombre' y 'nombre' como claves idénticas",
+  "batch_dialog.tooltip_ignore_case_values": "Tratar 'Hola' y 'hola' como valores idénticos",
+  "batch_dialog.tooltip_skip_empty": "Ignorar claves con valores null, cadena vacía, [], o {}",
+  "batch_dialog.tooltip_arrays_ignore_order": "Tratar [1,2,3] y [3,2,1] como arrays idénticos",
+  "batch_dialog.tooltip_add_step": "Agregar este paso al trabajo por lotes"
 }
