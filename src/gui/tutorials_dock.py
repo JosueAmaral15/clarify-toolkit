@@ -163,7 +163,7 @@ class TutorialsDock(QDockWidget):
             self.status_label.setText(f"✓ Loaded {len(self.tutorials_index.get('tutorials', []))} tutorials")
         except Exception as e:
             self.status_label.setText(f"✗ Error loading index: {str(e)}")
-            QMessageBox.warning(self, "Error", f"Failed to load tutorials index:\n{str(e)}")
+            QMessageBox.warning(self, tr("tutorials.load_error_title"), tr("tutorials.load_error").format(error=str(e)))
     
     def _populate_tree(self):
         """Populate tree widget with tutorial structure."""
@@ -226,7 +226,7 @@ class TutorialsDock(QDockWidget):
         
         if not full_path.exists():
             self.status_label.setText(f"✗ File not found: {relative_path}")
-            QMessageBox.warning(self, "File Not Found", f"Tutorial file not found:\n{full_path}")
+            QMessageBox.warning(self, tr("tutorials.file_not_found_title"), tr("tutorials.file_not_found").format(file=full_path))
             return
         
         try:
@@ -252,7 +252,7 @@ class TutorialsDock(QDockWidget):
             
         except Exception as e:
             self.status_label.setText(f"✗ Error opening tutorial")
-            QMessageBox.critical(self, "Error", f"Failed to open tutorial:\n{str(e)}")
+            QMessageBox.critical(self, tr("tutorials.open_error_title"), tr("tutorials.open_error").format(error=str(e)))
     
     def _markdown_to_html(self, markdown: str) -> str:
         """

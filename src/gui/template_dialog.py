@@ -121,4 +121,4 @@ class TemplateDialog(QDialog):
             self.accept()
         
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to create project:\n{str(e)}")
+            QMessageBox.critical(self, tr("template.create_error_title"), tr("template.create_error").format(error=str(e)))

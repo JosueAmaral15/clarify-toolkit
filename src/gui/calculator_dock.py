@@ -545,11 +545,11 @@ class CalculatorDock(QWidget):
         elif operation == 'difference':
             success, result, message = self.operations.difference(data1, data2, comparison_mode='key_value')
         else:
-            QMessageBox.critical(self, "Error", f"Unknown operation: {operation}")
+            QMessageBox.critical(self, tr("calculator.unknown_operation_title"), tr("calculator.unknown_operation").format(operation=operation))
             return
         
         if not success:
-            QMessageBox.critical(self, "Operation Failed", message)
+            QMessageBox.critical(self, tr("calculator.operation_failed_title"), message)
             return
         
         # Calculate statistics for result

@@ -261,7 +261,7 @@ class EditorDock(BaseDock):
         tab = self._create_tab_for_file(file_path, edit_only)
         
         if not tab.load_file(file_path):
-            QMessageBox.critical(self, "Error", f"Failed to open file:\n{file_path}")
+            QMessageBox.critical(self, tr("editor.file_open_error_title"), tr("editor.file_open_error").format(file=file_path))
             return
         
         # If edit-only, disconnect from file

@@ -358,7 +358,7 @@ class GoogleTranslateDock(BaseDock):
                     self.lbl_status.setText(f"File loaded successfully. {len(content)} characters.")
                     
             except Exception as e:
-                QMessageBox.warning(self, "File Error", f"Could not read file:\n{str(e)}")
+                QMessageBox.warning(self, tr("translate.file_error_title"), tr("translate.file_error").format(error=str(e)))
     
     def _translate(self):
         """Start translation process."""

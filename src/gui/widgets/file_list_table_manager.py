@@ -319,11 +319,11 @@ class FileListTableManager(QWidget):
             self.files_exported.emit(filepath)
             QMessageBox.information(
                 self,
-                "Export Complete",
-                f"File list exported to:\n{filepath}"
+                tr("file_list_table.export_complete_title"),
+                tr("file_list_table.export_complete").format(filepath=filepath)
             )
         except Exception as e:
-            QMessageBox.critical(self, "Export Failed", f"Failed to export: {e}")
+            QMessageBox.critical(self, tr("file_list_table.export_failed_title"), tr("file_list_table.export_failed").format(error=e))
     
     def get_selected_paths(self) -> List[str]:
         """Get list of selected file paths."""

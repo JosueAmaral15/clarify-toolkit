@@ -183,7 +183,7 @@ class FileListDock(BaseDock):
             error_msg = "\n".join(result.errors[:5])  # Show first 5 errors
             if len(result.errors) > 5:
                 error_msg += f"\n... and {len(result.errors) - 5} more errors"
-            QMessageBox.warning(self, "Errors Encountered", error_msg)
+            QMessageBox.warning(self, tr("file_list_dock.errors_title"), error_msg)
         
         # Convert FileInfo objects to dicts for table
         files_data = []
