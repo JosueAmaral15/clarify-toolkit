@@ -60,7 +60,7 @@ class ProgressDetailsDialog(QDialog):
         # Buttons
         btn_layout = QHBoxLayout()
         
-        self.btn_minimize = QPushButton("↓ Minimize to Bar")
+        self.btn_minimize = QPushButton(tr("progress_details.btn_minimize"))
         self.btn_minimize.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_minimize)
         

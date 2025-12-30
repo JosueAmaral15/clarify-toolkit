@@ -92,7 +92,7 @@ class UpdateNotificationDialog(QDialog):
             "QPushButton:hover { background-color: #005A9E; }"
         )
         
-        self.btn_remind_later = QPushButton("🕐 Remind Me Later")
+        self.btn_remind_later = QPushButton(tr("update_notification.btn_remind_later"))
         self.btn_close = QPushButton(tr("update_notification.btn_close"))
         
         btn_layout.addWidget(self.btn_download)
