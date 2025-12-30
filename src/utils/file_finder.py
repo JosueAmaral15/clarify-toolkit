@@ -54,7 +54,7 @@ class AdvancedFileSearchDialog(QDialog):
         
         # Filename pattern (regex)
         pattern_layout = QHBoxLayout()
-        pattern_layout.addWidget(QLabel("Filename pattern (regex):"))
+        pattern_layout.addWidget(QLabel(tr("file_finder.lbl_pattern")))
         self.ed_pattern = QLineEdit()
         self.ed_pattern.setPlaceholderText(tr("file_finder.placeholder_pattern"))
         self.chk_case_sensitive = QCheckBox("Case-sensitive")
@@ -64,7 +64,7 @@ class AdvancedFileSearchDialog(QDialog):
         
         # File type filter
         type_layout = QHBoxLayout()
-        type_layout.addWidget(QLabel("Type:"))
+        type_layout.addWidget(QLabel(tr("file_finder.lbl_type")))
         self.combo_type = QComboBox()
         self.combo_type.addItems(["Any", "Files only", "Directories only"])
         type_layout.addWidget(self.combo_type)
@@ -81,9 +81,9 @@ class AdvancedFileSearchDialog(QDialog):
         self.spin_size_max.setRange(0, 100000)
         self.spin_size_max.setValue(1000)
         size_layout.addWidget(self.chk_size_filter)
-        size_layout.addWidget(QLabel("Min:"))
+        size_layout.addWidget(QLabel(tr("file_finder.lbl_size_min")))
         size_layout.addWidget(self.spin_size_min)
-        size_layout.addWidget(QLabel("Max:"))
+        size_layout.addWidget(QLabel(tr("file_finder.lbl_size_max")))
         size_layout.addWidget(self.spin_size_max)
         size_layout.addStretch()
         filter_layout.addLayout(size_layout)
@@ -98,9 +98,9 @@ class AdvancedFileSearchDialog(QDialog):
         self.date_to.setCalendarPopup(True)
         self.date_to.setDateTime(QDateTime.currentDateTime())
         date_layout.addWidget(self.chk_date_filter)
-        date_layout.addWidget(QLabel("From:"))
+        date_layout.addWidget(QLabel(tr("file_finder.lbl_date_from")))
         date_layout.addWidget(self.date_from)
-        date_layout.addWidget(QLabel("To:"))
+        date_layout.addWidget(QLabel(tr("file_finder.lbl_date_to")))
         date_layout.addWidget(self.date_to)
         date_layout.addStretch()
         filter_layout.addLayout(date_layout)
@@ -133,7 +133,7 @@ class AdvancedFileSearchDialog(QDialog):
         results_layout.addWidget(self.table)
         
         # Results stats
-        self.lbl_stats = QLabel("No results")
+        self.lbl_stats = QLabel(tr("file_finder.lbl_no_results"))
         results_layout.addWidget(self.lbl_stats)
         
         results_group.setLayout(results_layout)

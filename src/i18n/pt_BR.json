@@ -1869,5 +1869,15 @@
   "ui_builder.tab_search": "Pesquisar / Substituir",
   "ui_builder.tab_insert": "Inserir",
   "jsx_extractor.tab_paths": "Caminhos",
-  "jsx_extractor.tab_json": "JSON"
+  "jsx_extractor.tab_json": "JSON",
+  "file_finder.lbl_pattern": "Padrão de nome (regex):",
+  "file_finder.lbl_type": "Tipo:",
+  "file_finder.lbl_size_min": "Mín:",
+  "file_finder.lbl_size_max": "Máx:",
+  "file_finder.lbl_date_from": "De:",
+  "file_finder.lbl_date_to": "Até:",
+  "file_finder.lbl_no_results": "Nenhum resultado",
+  "recall_dialog.lbl_preview": "<b>Visualização de Dados</b> (JSON formatado):",
+  "tutorial_assistant.header": "💬 Pergunte-me qualquer coisa sobre os tutoriais do Clarify!",
+  "app.lbl_shortcuts_search": "Pesquisar:"
 }

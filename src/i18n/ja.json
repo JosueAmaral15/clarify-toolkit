@@ -1836,5 +1836,15 @@
   "ui_builder.tab_search": "検索 / 置換",
   "ui_builder.tab_insert": "挿入",
   "jsx_extractor.tab_paths": "パス",
-  "jsx_extractor.tab_json": "JSON"
+  "jsx_extractor.tab_json": "JSON",
+  "file_finder.lbl_pattern": "ファイル名パターン (regex):",
+  "file_finder.lbl_type": "タイプ:",
+  "file_finder.lbl_size_min": "最小:",
+  "file_finder.lbl_size_max": "最大:",
+  "file_finder.lbl_date_from": "開始:",
+  "file_finder.lbl_date_to": "終了:",
+  "file_finder.lbl_no_results": "結果なし",
+  "recall_dialog.lbl_preview": "<b>データプレビュー</b> (JSON形式):",
+  "tutorial_assistant.header": "💬 Clarifyチュートリアルについて何でも聞いてください！",
+  "app.lbl_shortcuts_search": "検索:"
 }

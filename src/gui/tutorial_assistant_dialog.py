@@ -69,7 +69,7 @@ class TutorialAssistantDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Header
-        header = QLabel("💬 Ask me anything about Clarify tutorials!")
+        header = QLabel(tr("tutorial_assistant.header"))
         header.setStyleSheet("font-size: 14pt; font-weight: bold; padding: 10px;")
         layout.addWidget(header)
         

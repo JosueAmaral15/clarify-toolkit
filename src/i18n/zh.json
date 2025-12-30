@@ -1836,5 +1836,15 @@
   "ui_builder.tab_search": "搜索 / 替换",
   "ui_builder.tab_insert": "插入",
   "jsx_extractor.tab_paths": "路径",
-  "jsx_extractor.tab_json": "JSON"
+  "jsx_extractor.tab_json": "JSON",
+  "file_finder.lbl_pattern": "文件名模式 (regex):",
+  "file_finder.lbl_type": "类型:",
+  "file_finder.lbl_size_min": "最小:",
+  "file_finder.lbl_size_max": "最大:",
+  "file_finder.lbl_date_from": "从:",
+  "file_finder.lbl_date_to": "到:",
+  "file_finder.lbl_no_results": "无结果",
+  "recall_dialog.lbl_preview": "<b>数据预览</b> (JSON格式):",
+  "tutorial_assistant.header": "💬 询问我关于Clarify教程的任何问题！",
+  "app.lbl_shortcuts_search": "搜索:"
 }

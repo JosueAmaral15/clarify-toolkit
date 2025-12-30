@@ -84,7 +84,7 @@ class RecallDialog(QDialog):
         layout.addWidget(stats_group)
         
         # Data preview
-        preview_label = QLabel("<b>Data Preview</b> (JSON formatted):")
+        preview_label = QLabel(tr("recall_dialog.lbl_preview"))
         layout.addWidget(preview_label)
         
         self.data_preview = QTextEdit()

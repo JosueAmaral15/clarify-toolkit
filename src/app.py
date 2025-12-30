@@ -1402,7 +1402,7 @@ if _PYSIDE:
             
             # Search box
             search_layout = QHBoxLayout()
-            search_label = QLabel("Search:")
+            search_label = QLabel(tr("app.lbl_shortcuts_search"))
             search_box = QLineEdit()
             search_box.setPlaceholderText(tr("app.placeholder_shortcuts"))
             search_layout.addWidget(search_label)
