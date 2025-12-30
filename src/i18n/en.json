@@ -2056,5 +2056,17 @@
   "json_editor.msg_regex_insert_complete": "Inserted '{key}': '{value}' {position} '{target}'",
   "json_editor.msg_json_error_title": "JSON Error",
   "json_editor.msg_json_error": "Invalid JSON, cannot insert:\n\n{error}",
-  "json_editor.msg_regex_insert_error": "Error during regex insertion:\n\n{error}"
+  "json_editor.msg_regex_insert_error": "Error during regex insertion:\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "Opening GitHub Issues in your browser.\n\nPlease log in to GitHub and submit the issue.\nThank you for helping improve Clarify!",
+  "error_report.msg_browser_error_title": "Error",
+  "error_report.msg_browser_error": "Could not open browser: {error}\n\nPlease copy the error info and create an issue manually at:\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "Copied",
+  "error_report.msg_copied": "Error information copied to clipboard.\n\nYou can now paste it into GitHub Issues or a text editor.",
+  "error_report.msg_clipboard_error": "Could not copy to clipboard: {error}",
+  "error_report.msg_saved_title": "Saved",
+  "error_report.msg_saved": "Error log saved to:\n{filename}",
+  "error_report.msg_save_error": "Could not save log file: {error}",
+  "error_report.msg_reporting_disabled_title": "Error Reporting Disabled",
+  "error_report.msg_reporting_disabled": "Error reporting has been disabled.\n\nYou can re-enable it in Settings → Advanced → Error Reporting."
 }

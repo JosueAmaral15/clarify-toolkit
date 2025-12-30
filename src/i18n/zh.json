@@ -2023,5 +2023,17 @@
   "json_editor.msg_regex_insert_complete": "已插入 '{key}': '{value}' {position} '{target}'",
   "json_editor.msg_json_error_title": "JSON错误",
   "json_editor.msg_json_error": "无效的JSON，无法插入:\n\n{error}",
-  "json_editor.msg_regex_insert_error": "正则插入时出错:\n\n{error}"
+  "json_editor.msg_regex_insert_error": "正则插入时出错:\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "在您的浏览器中打开 GitHub Issues。\n\n请登录 GitHub 并提交问题。\n感谢您帮助改进 Clarify！",
+  "error_report.msg_browser_error_title": "错误",
+  "error_report.msg_browser_error": "无法打开浏览器: {error}\n\n请复制错误信息并在以下位置手动创建问题:\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "已复制",
+  "error_report.msg_copied": "错误信息已复制到剪贴板。\n\n现在您可以将其粘贴到 GitHub Issues 或文本编辑器中。",
+  "error_report.msg_clipboard_error": "无法复制到剪贴板: {error}",
+  "error_report.msg_saved_title": "已保存",
+  "error_report.msg_saved": "错误日志已保存到:\n{filename}",
+  "error_report.msg_save_error": "无法保存日志文件: {error}",
+  "error_report.msg_reporting_disabled_title": "错误报告已禁用",
+  "error_report.msg_reporting_disabled": "错误报告已禁用。\n\n您可以在 设置 → 高级 → 错误报告 中重新启用。"
 }

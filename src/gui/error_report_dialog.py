@@ -179,18 +179,14 @@ class ErrorReportDialog(QDialog):
             webbrowser.open(url)
             QMessageBox.information(
                 self,
-                "GitHub Issues",
-                "Opening GitHub Issues in your browser.\n\n"
-                "Please log in to GitHub and submit the issue.\n"
-                "Thank you for helping improve Clarify!"
+                tr("error_report.msg_github_issues_title"),
+                tr("error_report.msg_github_issues")
             )
         except Exception as e:
             QMessageBox.warning(
                 self,
-                "Error",
-                f"Could not open browser: {e}\n\n"
-                "Please copy the error info and create an issue manually at:\n"
-                "https://github.com/JosueAmaral15/clarify/issues/new"
+                tr("error_report.msg_browser_error_title"),
+                tr("error_report.msg_browser_error").format(error=e)
             )
         
         self._close_dialog()
@@ -233,12 +229,12 @@ class ErrorReportDialog(QDialog):
             pyperclip.copy(text)
             QMessageBox.information(
                 self,
-                "Copied",
-                "Error information copied to clipboard.\n\n"
-                "You can now paste it into GitHub Issues or a text editor."
+                tr("error_report.msg_copied_title"),
+                tr("error_report.msg_copied")
             )
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not copy to clipboard: {e}")
+            QMessageBox.warning(self, tr("error_report.msg_browser_error_title"), 
+                tr("error_report.msg_clipboard_error").format(error=e))
     
     def _save_log(self):
         """Save full error log to file."""
@@ -286,11 +282,12 @@ class ErrorReportDialog(QDialog):
             
             QMessageBox.information(
                 self,
-                "Saved",
-                f"Error log saved to:\n{filename}"
+                tr("error_report.msg_saved_title"),
+                tr("error_report.msg_saved").format(filename=filename)
             )
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Could not save log file: {e}")
+            QMessageBox.warning(self, tr("error_report.msg_browser_error_title"), 
+                tr("error_report.msg_save_error").format(error=e))
     
     def _close_dialog(self):
         """Close dialog and update settings if needed."""
@@ -299,9 +296,8 @@ class ErrorReportDialog(QDialog):
             self.settings.setValue("error_reporting/enabled", False)
             QMessageBox.information(
                 self,
-                "Error Reporting Disabled",
-                "Error reporting has been disabled.\n\n"
-                "You can re-enable it in Settings → Advanced → Error Reporting."
+                tr("error_report.msg_reporting_disabled_title"),
+                tr("error_report.msg_reporting_disabled")
             )
         
         self.close()

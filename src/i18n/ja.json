@@ -2023,5 +2023,17 @@
   "json_editor.msg_regex_insert_complete": "'{key}': '{value}' を '{target}' の {position} に挿入しました",
   "json_editor.msg_json_error_title": "JSONエラー",
   "json_editor.msg_json_error": "無効なJSON、挿入できません:\n\n{error}",
-  "json_editor.msg_regex_insert_error": "正規表現挿入中にエラーが発生しました:\n\n{error}"
+  "json_editor.msg_regex_insert_error": "正規表現挿入中にエラーが発生しました:\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "ブラウザで GitHub Issues を開いています。\n\nGitHub にログインして問題を送信してください。\nClarify の改善にご協力いただきありがとうございます！",
+  "error_report.msg_browser_error_title": "エラー",
+  "error_report.msg_browser_error": "ブラウザを開けませんでした: {error}\n\nエラー情報をコピーして、以下で手動で問題を作成してください:\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "コピー完了",
+  "error_report.msg_copied": "エラー情報をクリップボードにコピーしました。\n\nGitHub Issues またはテキストエディタに貼り付けることができます。",
+  "error_report.msg_clipboard_error": "クリップボードにコピーできませんでした: {error}",
+  "error_report.msg_saved_title": "保存完了",
+  "error_report.msg_saved": "エラーログの保存先:\n{filename}",
+  "error_report.msg_save_error": "ログファイルを保存できませんでした: {error}",
+  "error_report.msg_reporting_disabled_title": "エラー報告が無効",
+  "error_report.msg_reporting_disabled": "エラー報告が無効になりました。\n\n設定 → 詳細 → エラー報告で再度有効にできます。"
 }

@@ -2031,5 +2031,17 @@
   "json_editor.msg_regex_insert_complete": "Insertado '{key}': '{value}' {position} '{target}'",
   "json_editor.msg_json_error_title": "Error JSON",
   "json_editor.msg_json_error": "JSON inválido, no se puede insertar:\n\n{error}",
-  "json_editor.msg_regex_insert_error": "Error durante la inserción regex:\n\n{error}"
+  "json_editor.msg_regex_insert_error": "Error durante la inserción regex:\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "Abriendo GitHub Issues en su navegador.\n\nPor favor, inicie sesión en GitHub y envíe el problema.\n¡Gracias por ayudar a mejorar Clarify!",
+  "error_report.msg_browser_error_title": "Error",
+  "error_report.msg_browser_error": "No se pudo abrir el navegador: {error}\n\nPor favor, copie la información del error y cree un problema manualmente en:\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "Copiado",
+  "error_report.msg_copied": "Información del error copiada al portapapeles.\n\nAhora puede pegarla en GitHub Issues o en un editor de texto.",
+  "error_report.msg_clipboard_error": "No se pudo copiar al portapapeles: {error}",
+  "error_report.msg_saved_title": "Guardado",
+  "error_report.msg_saved": "Log de error guardado en:\n{filename}",
+  "error_report.msg_save_error": "No se pudo guardar el archivo de log: {error}",
+  "error_report.msg_reporting_disabled_title": "Informe de Errores Deshabilitado",
+  "error_report.msg_reporting_disabled": "El informe de errores ha sido deshabilitado.\n\nPuede volver a habilitarlo en Configuración → Avanzado → Informe de Errores."
 }

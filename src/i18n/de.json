@@ -2023,5 +2023,17 @@
   "json_editor.msg_regex_insert_complete": "'{key}': '{value}' {position} '{target}' eingefügt",
   "json_editor.msg_json_error_title": "JSON-Fehler",
   "json_editor.msg_json_error": "Ungültiges JSON, Einfügen nicht möglich:\n\n{error}",
-  "json_editor.msg_regex_insert_error": "Fehler beim Regex-Einfügen:\n\n{error}"
+  "json_editor.msg_regex_insert_error": "Fehler beim Regex-Einfügen:\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "GitHub Issues wird in Ihrem Browser geöffnet.\n\nBitte melden Sie sich bei GitHub an und reichen Sie das Problem ein.\nVielen Dank, dass Sie zur Verbesserung von Clarify beitragen!",
+  "error_report.msg_browser_error_title": "Fehler",
+  "error_report.msg_browser_error": "Browser konnte nicht geöffnet werden: {error}\n\nBitte kopieren Sie die Fehlerinformationen und erstellen Sie manuell ein Problem unter:\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "Kopiert",
+  "error_report.msg_copied": "Fehlerinformationen in die Zwischenablage kopiert.\n\nSie können sie jetzt in GitHub Issues oder einen Texteditor einfügen.",
+  "error_report.msg_clipboard_error": "Konnte nicht in die Zwischenablage kopieren: {error}",
+  "error_report.msg_saved_title": "Gespeichert",
+  "error_report.msg_saved": "Fehlerprotokoll gespeichert unter:\n{filename}",
+  "error_report.msg_save_error": "Protokolldatei konnte nicht gespeichert werden: {error}",
+  "error_report.msg_reporting_disabled_title": "Fehlerberichterstattung deaktiviert",
+  "error_report.msg_reporting_disabled": "Fehlerberichterstattung wurde deaktiviert.\n\nSie können sie unter Einstellungen → Erweitert → Fehlerberichterstattung wieder aktivieren."
 }

@@ -2023,5 +2023,17 @@
   "json_editor.msg_regex_insert_complete": "Inséré '{key}' : '{value}' {position} '{target}'",
   "json_editor.msg_json_error_title": "Erreur JSON",
   "json_editor.msg_json_error": "JSON invalide, impossible d'insérer :\n\n{error}",
-  "json_editor.msg_regex_insert_error": "Erreur lors de l'insertion regex :\n\n{error}"
+  "json_editor.msg_regex_insert_error": "Erreur lors de l'insertion regex :\n\n{error}",
+  "error_report.msg_github_issues_title": "GitHub Issues",
+  "error_report.msg_github_issues": "Ouverture de GitHub Issues dans votre navigateur.\n\nVeuillez vous connecter à GitHub et soumettre le problème.\nMerci d'aider à améliorer Clarify !",
+  "error_report.msg_browser_error_title": "Erreur",
+  "error_report.msg_browser_error": "Impossible d'ouvrir le navigateur : {error}\n\nVeuillez copier les informations d'erreur et créer un problème manuellement à :\nhttps://github.com/JosueAmaral15/clarify/issues/new",
+  "error_report.msg_copied_title": "Copié",
+  "error_report.msg_copied": "Informations d'erreur copiées dans le presse-papiers.\n\nVous pouvez maintenant les coller dans GitHub Issues ou un éditeur de texte.",
+  "error_report.msg_clipboard_error": "Impossible de copier dans le presse-papiers : {error}",
+  "error_report.msg_saved_title": "Enregistré",
+  "error_report.msg_saved": "Journal d'erreur enregistré dans :\n{filename}",
+  "error_report.msg_save_error": "Impossible d'enregistrer le fichier journal : {error}",
+  "error_report.msg_reporting_disabled_title": "Rapport d'erreurs désactivé",
+  "error_report.msg_reporting_disabled": "Le rapport d'erreurs a été désactivé.\n\nVous pouvez le réactiver dans Paramètres → Avancé → Rapport d'erreurs."
 }
