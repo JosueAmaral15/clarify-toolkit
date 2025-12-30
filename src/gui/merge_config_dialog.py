@@ -65,10 +65,10 @@ class MergeConfigDialog(QDialog):
         file_row = QHBoxLayout()
         self.ed_file = QLineEdit(self.default_file)
         self.ed_file.setReadOnly(True)
-        self.ed_file.setToolTip("File to merge results into")
+        self.ed_file.setToolTip(tr("merge_config.tooltip_file"))
         
         self.btn_browse = QPushButton(tr("merge_config.btn_browse"))
-        self.btn_browse.setToolTip("Select different target file")
+        self.btn_browse.setToolTip(tr("merge_config.tooltip_browse"))
         self.btn_browse.clicked.connect(self._browse_file)
         
         file_row.addWidget(self.ed_file)
@@ -131,12 +131,12 @@ class MergeConfigDialog(QDialog):
         
         backup_row = QHBoxLayout()
         backup_label = QLabel(tr("merge_config.lbl_max_backups"))
-        backup_label.setToolTip("Older backups are automatically deleted")
+        backup_label.setToolTip(tr("merge_config.tooltip_backup_label"))
         
         self.spin_max_backups = QSpinBox()
         self.spin_max_backups.setRange(1, 20)
         self.spin_max_backups.setValue(5)
-        self.spin_max_backups.setToolTip("Number of backup files to retain per file")
+        self.spin_max_backups.setToolTip(tr("merge_config.tooltip_max_backups"))
         
         backup_row.addWidget(backup_label)
         backup_row.addWidget(self.spin_max_backups)
@@ -151,12 +151,12 @@ class MergeConfigDialog(QDialog):
         button_layout.addStretch()
         
         self.btn_preview = QPushButton(tr("merge_config.btn_preview"))
-        self.btn_preview.setToolTip("Show preview before applying changes")
+        self.btn_preview.setToolTip(tr("merge_config.tooltip_preview"))
         self.btn_preview.clicked.connect(self._accept)
         self.btn_preview.setDefault(True)
         
         btn_cancel = QPushButton(tr("merge_config.btn_cancel"))
-        btn_cancel.setToolTip("Cancel merge operation")
+        btn_cancel.setToolTip(tr("merge_config.tooltip_cancel"))
         btn_cancel.clicked.connect(self.reject)
         
         button_layout.addWidget(self.btn_preview)

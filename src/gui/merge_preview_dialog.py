@@ -189,19 +189,19 @@ class MergePreviewDialog(QDialog):
         button_layout = QHBoxLayout()
         
         btn_export = QPushButton(tr("merge_preview.btn_save"))
-        btn_export.setToolTip("Save preview to HTML file")
+        btn_export.setToolTip(tr("merge_preview.tooltip_export"))
         btn_export.clicked.connect(self._export_preview)
         
         button_layout.addWidget(btn_export)
         button_layout.addStretch()
         
         self.btn_apply = QPushButton(tr("merge_preview.btn_apply"))
-        self.btn_apply.setToolTip("Apply merge operation to file")
+        self.btn_apply.setToolTip(tr("merge_preview.tooltip_apply"))
         self.btn_apply.clicked.connect(self._apply_merge)
         self.btn_apply.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
         
         btn_cancel = QPushButton(tr("merge_preview.btn_cancel"))
-        btn_cancel.setToolTip("Cancel merge operation")
+        btn_cancel.setToolTip(tr("merge_preview.tooltip_cancel"))
         btn_cancel.clicked.connect(self.reject)
         
         button_layout.addWidget(self.btn_apply)

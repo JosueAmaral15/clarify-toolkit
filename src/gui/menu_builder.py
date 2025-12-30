@@ -53,14 +53,14 @@ class MenuBuilder:
         
         # New Project from Template (v2.9.63)
         main_window.act_new_from_template = QAction("New from Template...", main_window)
-        main_window.act_new_from_template.setToolTip("Create project from template")
+        main_window.act_new_from_template.setToolTip(tr("menu.tooltip_new_from_template"))
         main_window.act_new_from_template.setShortcut("Ctrl+Shift+N")
         m_file.addAction(main_window.act_new_from_template)
         main_window.act_new_from_template.triggered.connect(main_window._new_from_template)
         m_file.addSeparator()
         
         main_window.act_open_editor = QAction(tr("menu.file.open_editor"), main_window)
-        main_window.act_open_editor.setToolTip("Open integrated file editor")
+        main_window.act_open_editor.setToolTip(tr("menu.tooltip_open_editor"))
         main_window.act_open_editor.setShortcut("Ctrl+E")
         m_file.addAction(main_window.act_open_editor)
         main_window.act_open_editor.triggered.connect(lambda: main_window._show_editor())
@@ -175,7 +175,7 @@ class MenuBuilder:
         m_view = bar.addMenu(tr("menu.view"))
         
         main_window.act_toggle_history = QAction(tr("menu.view.history"), main_window, checkable=True)
-        main_window.act_toggle_history.setToolTip("Show/hide operation history panel")
+        main_window.act_toggle_history.setToolTip(tr("menu.tooltip_toggle_history"))
         main_window.act_toggle_history.triggered.connect(main_window._toggle_history)
         m_view.addAction(main_window.act_toggle_history)
         
@@ -301,7 +301,7 @@ class MenuBuilder:
         
         # Configuration File Editor (v2.9.90)
         main_window.act_config_editor = QAction("⚙️ Configuration File...", main_window)
-        main_window.act_config_editor.setToolTip("Edit config.yaml with visual editor")
+        main_window.act_config_editor.setToolTip(tr("menu.tooltip_config_editor"))
         main_window.act_config_editor.triggered.connect(main_window._show_config_editor)
         m_advanced.addAction(main_window.act_config_editor)
         m_advanced.addSeparator()
@@ -343,7 +343,7 @@ class MenuBuilder:
         
         # Plugin Manager submenu
         main_window.act_plugin_manager = QAction("🔌 Plugin Manager...", main_window)
-        main_window.act_plugin_manager.setToolTip("Manage installed plugins")
+        main_window.act_plugin_manager.setToolTip(tr("menu.tooltip_plugin_manager"))
         main_window.act_plugin_manager.setStatusTip("View, enable, disable, and configure plugins")
         m_plugins.addAction(main_window.act_plugin_manager)
         main_window.act_plugin_manager.triggered.connect(main_window._show_plugin_manager)
@@ -377,20 +377,20 @@ class MenuBuilder:
         m_help = bar.addMenu(tr("menu.help"))
         
         main_window.act_open_tutorials = QAction(tr("menu.help.tutorials"), main_window)
-        main_window.act_open_tutorials.setToolTip("Browse beginner and developer tutorials")
+        main_window.act_open_tutorials.setToolTip(tr("menu.tooltip_open_tutorials"))
         m_help.addAction(main_window.act_open_tutorials)
         main_window.act_open_tutorials.triggered.connect(main_window._show_tutorials)
         
         # AI Tutorial Assistant (v2.9.92)
         main_window.act_ai_assistant = QAction("AI Tutorial Assistant", main_window)
-        main_window.act_ai_assistant.setToolTip("Ask AI about Clarify tutorials")
+        main_window.act_ai_assistant.setToolTip(tr("menu.tooltip_ai_assistant"))
         main_window.act_ai_assistant.setStatusTip("Chat with AI assistant for Clarify tutorials and troubleshooting (requires API key)")
         m_help.addAction(main_window.act_ai_assistant)
         main_window.act_ai_assistant.triggered.connect(main_window._show_ai_assistant)
         
         # Keyboard Shortcuts Help (v2.9.33)
         main_window.act_keyboard_shortcuts_help = QAction("Keyboard Shortcuts Help", main_window)
-        main_window.act_keyboard_shortcuts_help.setToolTip("View all available keyboard shortcuts")
+        main_window.act_keyboard_shortcuts_help.setToolTip(tr("menu.tooltip_keyboard_shortcuts"))
         main_window.act_keyboard_shortcuts_help.setStatusTip("View complete list of keyboard shortcuts organized by category")
         main_window.act_keyboard_shortcuts_help.setShortcut("F1")
         m_help.addAction(main_window.act_keyboard_shortcuts_help)
@@ -398,7 +398,7 @@ class MenuBuilder:
         
         # Keyboard Shortcuts Customization (v2.9.62)
         main_window.act_customize_shortcuts = QAction("Customize Shortcuts...", main_window)
-        main_window.act_customize_shortcuts.setToolTip("Customize keyboard shortcuts")
+        main_window.act_customize_shortcuts.setToolTip(tr("menu.tooltip_customize_shortcuts"))
         main_window.act_customize_shortcuts.setStatusTip("Customize keyboard shortcuts for all actions and save custom profiles")
         main_window.act_customize_shortcuts.setShortcut("Ctrl+K Ctrl+S")
         m_help.addAction(main_window.act_customize_shortcuts)
@@ -408,13 +408,13 @@ class MenuBuilder:
         
         # View Logs (v2.9.64 - Logging System Integration)
         main_window.act_view_logs = QAction("📄 View Logs", main_window)
-        main_window.act_view_logs.setToolTip("Open log files in default editor")
+        main_window.act_view_logs.setToolTip(tr("menu.tooltip_view_logs"))
         m_help.addAction(main_window.act_view_logs)
         main_window.act_view_logs.triggered.connect(main_window._view_logs)
         
         # Update Checker (v2.9.45)
         main_window.act_check_updates = QAction("🔄 Verificar Atualizações", main_window)
-        main_window.act_check_updates.setToolTip("Check for new Clarify versions from GitHub")
+        main_window.act_check_updates.setToolTip(tr("menu.tooltip_check_updates"))
         m_help.addAction(main_window.act_check_updates)
         main_window.act_check_updates.triggered.connect(main_window._check_for_updates_manual)
     

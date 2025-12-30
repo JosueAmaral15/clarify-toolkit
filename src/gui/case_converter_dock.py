@@ -124,9 +124,9 @@ class CaseConverterDock(StandardToolDock):
             ("Clear", self._clear)
         ]
         btn_layout = self.create_action_buttons(buttons)
-        self.btn_convert.setToolTip("Convert case in files with current settings | Enter to execute | Ctrl+C to open Case Converter")
-        self.btn_interrupt.setToolTip("Stop currently running conversion | Esc to interrupt | Ctrl+C to open Case Converter")
-        self.btn_clear.setToolTip("Clear conversion results | Ctrl+C to open Case Converter")
+        self.btn_convert.setToolTip(tr("case_converter.tooltip_convert"))
+        self.btn_interrupt.setToolTip(tr("case_converter.tooltip_interrupt"))
+        self.btn_clear.setToolTip(tr("case_converter.tooltip_clear"))
         self.btn_interrupt.setEnabled(False)
         self.layout.addLayout(btn_layout)
         

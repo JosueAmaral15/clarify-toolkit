@@ -67,19 +67,19 @@ class PresetsDialog(QDialog):
         buttons_layout = QHBoxLayout()
         
         self.btn_load = QPushButton(tr("presets_dialog.btn_load"))
-        self.btn_load.setToolTip("Load selected preset into Set Operations")
+        self.btn_load.setToolTip(tr("presets.tooltip_load"))
         self.btn_load.clicked.connect(self._on_load_clicked)
         self.btn_load.setEnabled(False)
         buttons_layout.addWidget(self.btn_load)
         
         self.btn_rename = QPushButton(tr("presets_dialog.btn_rename"))
-        self.btn_rename.setToolTip("Rename selected preset")
+        self.btn_rename.setToolTip(tr("presets.tooltip_rename"))
         self.btn_rename.clicked.connect(self._on_rename_clicked)
         self.btn_rename.setEnabled(False)
         buttons_layout.addWidget(self.btn_rename)
         
         self.btn_delete = QPushButton(tr("presets_dialog.btn_delete"))
-        self.btn_delete.setToolTip("Delete selected preset")
+        self.btn_delete.setToolTip(tr("presets.tooltip_delete"))
         self.btn_delete.clicked.connect(self._on_delete_clicked)
         self.btn_delete.setEnabled(False)
         buttons_layout.addWidget(self.btn_delete)
