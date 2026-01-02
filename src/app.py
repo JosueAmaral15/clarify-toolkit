@@ -1438,11 +1438,11 @@ if _PYSIDE:
             # Buttons
             btn_layout = QHBoxLayout()
             
-            customize_btn = QPushButton("Customize...")
+            customize_btn = QPushButton(tr("app.btn_customize"))
             customize_btn.setToolTip(tooltip_tr("app.tooltip_customize"))
             customize_btn.clicked.connect(lambda: (dialog.close(), self._show_shortcuts()))
             
-            close_btn = QPushButton("Close")
+            close_btn = QPushButton(tr("app.btn_close"))
             close_btn.clicked.connect(dialog.accept)
             
             btn_layout.addWidget(customize_btn)

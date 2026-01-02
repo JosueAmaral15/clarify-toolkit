@@ -14,6 +14,7 @@ try:
     )
     from PySide6.QtCore import Qt, QTimer, Signal
     from PySide6.QtGui import QFont
+    from ..i18n.translator import tr, tooltip_tr
     _PYSIDE = True
 except ImportError:
     _PYSIDE = False
@@ -108,7 +109,7 @@ class ProcessingModal(QDialog):
         # Minimize/maximize button
         self.btn_minimize = QPushButton("−")  # Minus symbol
         self.btn_minimize.setFixedSize(30, 30)
-        self.btn_minimize.setToolTip("Minimize")
+        self.btn_minimize.setToolTip(tooltip_tr("processing_modal.tooltip_minimize"))
         self.btn_minimize.clicked.connect(self.toggle_minimize)
         header.addWidget(self.btn_minimize)
         
@@ -121,7 +122,7 @@ class ProcessingModal(QDialog):
         content_layout.setSpacing(10)
         
         # Status label with animation
-        self.lbl_status = QLabel("Initializing...")
+        self.lbl_status = QLabel(tr("processing_modal.lbl_initializing"))
         self.lbl_status.setWordWrap(True)
         content_layout.addWidget(self.lbl_status)
         
@@ -146,7 +147,7 @@ class ProcessingModal(QDialog):
         footer.addStretch()
         
         if self._show_cancel:
-            self.btn_cancel = QPushButton("Cancel")
+            self.btn_cancel = QPushButton(tr("processing_modal.btn_cancel"))
             self.btn_cancel.clicked.connect(self._on_cancel_clicked)
             footer.addWidget(self.btn_cancel)
         
