@@ -31,7 +31,7 @@ class ProgressManager(QWidget):
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(5, 2, 5, 2)
 
-        self.header_label = QLabel("<b>Active Tasks (0)</b>")
+        self.header_label = QLabel(tr("progress_manager.header_active_tasks").format(count=0))
         header_layout.addWidget(self.header_label)
 
         header_layout.addStretch()

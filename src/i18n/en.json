@@ -2304,10 +2304,30 @@
     "tooltip_remove_condition": "Remove this condition row"
   },
   "progress_manager": {
-    "tooltip_toggle": "Show/Hide progress bars"
+    "tooltip_toggle": "Show/Hide progress bars",
+    "header_active_tasks": "<b>Active Tasks ({count})</b>"
   },
   "progress_bar": {
     "tooltip_resume": "Resume task",
     "tooltip_pause": "Pause task"
+  },
+  "venn_diagram": {
+    "lbl_region_instruction": "<i>Click a region to view keys and values</i>"
+  },
+  "diff_viewer": {
+    "legend_only_a": " Only in A ",
+    "legend_only_b": " Only in B ",
+    "legend_common": " Common ",
+    "legend_modified": " Modified "
+  },
+  "transparency_dialog": {
+    "lbl_min": "0%",
+    "lbl_max": "100%"
+  },
+  "progress_details": {
+    "header_details": "<b>Processing Details:</b>"
+  },
+  "update_notification": {
+    "header_new_version": "🚀 New Version Available!"
   }
 }

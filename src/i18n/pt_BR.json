@@ -2304,10 +2304,30 @@
     "tooltip_remove_condition": "Remover esta linha de condição"
   },
   "progress_manager": {
-    "tooltip_toggle": "Mostrar/Ocultar barras de progresso"
+    "tooltip_toggle": "Mostrar/Ocultar barras de progresso",
+    "header_active_tasks": "<b>Tarefas Ativas ({count})</b>"
   },
   "progress_bar": {
     "tooltip_resume": "Retomar tarefa",
     "tooltip_pause": "Pausar tarefa"
+  },
+  "venn_diagram": {
+    "lbl_region_instruction": "<i>Clique em uma região para ver chaves e valores</i>"
+  },
+  "diff_viewer": {
+    "legend_only_a": " Apenas em A ",
+    "legend_only_b": " Apenas em B ",
+    "legend_common": " Comum ",
+    "legend_modified": " Modificado "
+  },
+  "transparency_dialog": {
+    "lbl_min": "0%",
+    "lbl_max": "100%"
+  },
+  "progress_details": {
+    "header_details": "<b>Detalhes do Processamento:</b>"
+  },
+  "update_notification": {
+    "header_new_version": "🚀 Nova Versão Disponível!"
   }
 }
