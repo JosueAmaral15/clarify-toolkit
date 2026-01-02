@@ -17,6 +17,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QDateTime
 
+from ..i18n.translator import tr
+
 
 class AdvancedFileSearchDialog(QDialog):
     """Dialog for advanced file/directory search with conditions."""
@@ -57,7 +59,7 @@ class AdvancedFileSearchDialog(QDialog):
         pattern_layout.addWidget(QLabel(tr("file_finder.lbl_pattern")))
         self.ed_pattern = QLineEdit()
         self.ed_pattern.setPlaceholderText(tr("file_finder.placeholder_pattern"))
-        self.chk_case_sensitive = QCheckBox("Case-sensitive")
+        self.chk_case_sensitive = QCheckBox(tr("file_finder.chk_case_sensitive"))
         pattern_layout.addWidget(self.ed_pattern)
         pattern_layout.addWidget(self.chk_case_sensitive)
         filter_layout.addLayout(pattern_layout)
@@ -73,7 +75,7 @@ class AdvancedFileSearchDialog(QDialog):
         
         # Size range (MB)
         size_layout = QHBoxLayout()
-        self.chk_size_filter = QCheckBox("Size range (MB):")
+        self.chk_size_filter = QCheckBox(tr("file_finder.chk_size_filter"))
         self.spin_size_min = QSpinBox()
         self.spin_size_min.setRange(0, 100000)
         self.spin_size_min.setValue(0)
@@ -90,7 +92,7 @@ class AdvancedFileSearchDialog(QDialog):
         
         # Date range
         date_layout = QHBoxLayout()
-        self.chk_date_filter = QCheckBox("Modified date range:")
+        self.chk_date_filter = QCheckBox(tr("file_finder.chk_date_filter"))
         self.date_from = QDateTimeEdit()
         self.date_from.setCalendarPopup(True)
         self.date_from.setDateTime(QDateTime.currentDateTime().addDays(-30))
@@ -106,7 +108,7 @@ class AdvancedFileSearchDialog(QDialog):
         filter_layout.addLayout(date_layout)
         
         # Recursive search
-        self.chk_recursive = QCheckBox("Recursive search (include subdirectories)")
+        self.chk_recursive = QCheckBox(tr("file_finder.chk_recursive"))
         self.chk_recursive.setChecked(True)
         filter_layout.addWidget(self.chk_recursive)
         

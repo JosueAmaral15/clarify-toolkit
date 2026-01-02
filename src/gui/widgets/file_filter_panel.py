@@ -146,8 +146,8 @@ class FileFilterPanel(QGroupBox):
         # Common excludes (checkboxes)
         exclude_layout = QVBoxLayout()
         self.chk_exclude_node_modules = QCheckBox(tr("file_filter.chk_node_modules"))
-        self.chk_exclude_git = QCheckBox(".git")
-        self.chk_exclude_pycache = QCheckBox("__pycache__")
+        self.chk_exclude_git = QCheckBox(tr("file_filter.chk_git"))
+        self.chk_exclude_pycache = QCheckBox(tr("file_filter.chk_pycache"))
         self.chk_exclude_dist = QCheckBox(tr("file_filter.chk_dist"))
         self.chk_exclude_build = QCheckBox(tr("file_filter.chk_build"))
         
