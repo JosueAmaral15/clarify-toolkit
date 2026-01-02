@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect, QRectF
 from PySide6.QtGui import QColor, QPainter, QFontMetrics, QTextDocument, QAbstractTextDocumentLayout
 
+from ...i18n import tr
+
 
 class WordWrapDelegate(QStyledItemDelegate):
     """Custom delegate to enable word wrap in QTreeWidget items (v2.9.118)."""
