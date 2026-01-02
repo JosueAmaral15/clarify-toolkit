@@ -2368,5 +2368,17 @@
   },
   "google_translate": {
     "auto_detect": "Detectar automaticamente"
+  },
+  "config_editor": {
+    "tooltip_preview": "Validar YAML antes de salvar",
+    "tooltip_reset": "Restaurar configurações padrão",
+    "tooltip_save": "Salvar configurações (cria backup)"
+  },
+  "plugin_manager": {
+    "header_enabled": "Ativado",
+    "header_name": "Nome",
+    "header_version": "Versão",
+    "header_author": "Autor",
+    "header_description": "Descrição"
   }
 }
