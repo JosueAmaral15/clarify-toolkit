@@ -108,7 +108,7 @@ from .case_converter import JSObjectCaseConverter
 from .theme_manager import ThemeManager
 
 # Internationalization: runtime language switching (Task #24 - v2.9.10)
-from .i18n import get_translator, switch_language, tr
+from .i18n import get_translator, switch_language, tr, tooltip_tr
 
 # JSON Search: search keys and values in JSON/TS/TSX files
 from .json_search import (
