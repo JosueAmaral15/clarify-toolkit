@@ -2269,5 +2269,45 @@
   "combo.separator_comma": "Comma (,)",
   "combo.separator_semicolon": "Semicolon (;)",
   "combo.separator_tab": "Tab (\\t)",
-  "window_settings.status_canceling": "Canceling active operations..."
+  "window_settings.status_canceling": "Canceling active operations...",
+  "batch_dialog": {
+    "tooltip_add_step": "Add a new step to the batch",
+    "tooltip_edit_step": "Edit the selected step",
+    "tooltip_remove_step": "Delete the selected step from batch",
+    "tooltip_save_intermediate": "Save each step's result as separate JSON file",
+    "tooltip_output_folder": "Directory where intermediate JSON files will be saved",
+    "tooltip_browse_output": "Select output directory for intermediate results",
+    "tooltip_save_batch": "Save batch definition to JSON file",
+    "tooltip_load_batch": "Load batch definition from JSON file",
+    "tooltip_execute": "Run all steps sequentially with result chaining",
+    "tooltip_cancel_exec": "Stop execution immediately",
+    "tooltip_close": "Close batch dialog without executing"
+  },
+  "operation_preview": {
+    "tooltip_slot": "Select memory slot to store result",
+    "tooltip_store": "Store result in selected slot",
+    "tooltip_discard": "Close without storing"
+  },
+  "tutorial_assistant": {
+    "tooltip_thumbs_up": "Helpful response",
+    "tooltip_thumbs_down": "Not helpful"
+  },
+  "search_replace_panel": {
+    "tooltip_regex_cond": "Use regular expression"
+  },
+  "insert_panel": {
+    "tooltip_clear_conditions": "Clear all advanced condition fields",
+    "tooltip_save_results": "Save all match results to a text file",
+    "tooltip_case": "Case sensitive",
+    "tooltip_word": "Match whole word",
+    "tooltip_regex": "Use regular expression",
+    "tooltip_remove_condition": "Remove this condition row"
+  },
+  "progress_manager": {
+    "tooltip_toggle": "Show/Hide progress bars"
+  },
+  "progress_bar": {
+    "tooltip_resume": "Resume task",
+    "tooltip_pause": "Pause task"
+  }
 }

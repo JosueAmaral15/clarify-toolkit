@@ -2269,5 +2269,45 @@
   "combo.separator_comma": "Vírgula (,)",
   "combo.separator_semicolon": "Ponto e vírgula (;)",
   "combo.separator_tab": "Tabulação (\\t)",
-  "window_settings.status_canceling": "Cancelando operações ativas..."
+  "window_settings.status_canceling": "Cancelando operações ativas...",
+  "batch_dialog": {
+    "tooltip_add_step": "Adicionar nova etapa ao lote",
+    "tooltip_edit_step": "Editar etapa selecionada",
+    "tooltip_remove_step": "Remover etapa do lote",
+    "tooltip_save_intermediate": "Salvar resultado de cada etapa como arquivo JSON separado",
+    "tooltip_output_folder": "Diretório onde arquivos JSON intermediários serão salvos",
+    "tooltip_browse_output": "Selecionar diretório de saída para resultados intermediários",
+    "tooltip_save_batch": "Salvar definição do lote em arquivo JSON",
+    "tooltip_load_batch": "Carregar definição do lote de arquivo JSON",
+    "tooltip_execute": "Executar todas as etapas sequencialmente com encadeamento de resultados",
+    "tooltip_cancel_exec": "Parar execução imediatamente",
+    "tooltip_close": "Fechar diálogo sem executar"
+  },
+  "operation_preview": {
+    "tooltip_slot": "Selecionar slot de memória para armazenar resultado",
+    "tooltip_store": "Armazenar resultado no slot selecionado",
+    "tooltip_discard": "Fechar sem armazenar"
+  },
+  "tutorial_assistant": {
+    "tooltip_thumbs_up": "Resposta útil",
+    "tooltip_thumbs_down": "Resposta não útil"
+  },
+  "search_replace_panel": {
+    "tooltip_regex_cond": "Usar expressão regular"
+  },
+  "insert_panel": {
+    "tooltip_clear_conditions": "Limpar todos os campos de condição avançada",
+    "tooltip_save_results": "Salvar todos os resultados de correspondência em arquivo de texto",
+    "tooltip_case": "Sensível a maiúsculas/minúsculas",
+    "tooltip_word": "Corresponder palavra inteira",
+    "tooltip_regex": "Usar expressão regular",
+    "tooltip_remove_condition": "Remover esta linha de condição"
+  },
+  "progress_manager": {
+    "tooltip_toggle": "Mostrar/Ocultar barras de progresso"
+  },
+  "progress_bar": {
+    "tooltip_resume": "Retomar tarefa",
+    "tooltip_pause": "Pausar tarefa"
+  }
 }
