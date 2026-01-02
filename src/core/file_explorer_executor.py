@@ -218,12 +218,31 @@ class UnifiedFileExplorerExecutor(QObject):
             # Apply non-content conditions EARLY
             if early_conditions:
                 try:
-                    from ..core.filters import filter_files_by_conditions
+                    from ..core.filters import filter_files_by_conditions, Condition
+
+                    # Convert dict conditions to Condition objects
+                    condition_objects = []
+                    for cond_dict in early_conditions:
+                        condition_obj = Condition(
+                            field=cond_dict.get("field", ""),
+                            operator=cond_dict.get("operator", ""),
+                            value=cond_dict.get("value", ""),
+                            scope_type=cond_dict.get("scope_type", ""),
+                            scope_value=cond_dict.get("scope_value", ""),
+                            case_sensitive=cond_dict.get("case_sensitive", True),
+                            whole_word=cond_dict.get("whole_word", False),
+                            use_regex=cond_dict.get(
+                                "regex", False
+                            ),  # Note: dict uses 'regex', Condition uses 'use_regex'
+                        )
+                        condition_objects.append(condition_obj)
 
                     file_paths = [f.path for f in files_to_search]
-                    filtered_paths, filtered_out = filter_files_by_conditions(
-                        file_paths, early_conditions, logic_operator
-                    )
+                    original_count = len(file_paths)
+                    
+                    filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
+                    
+                    filtered_out = original_count - len(filtered_paths)
 
                     logger.info(
                         f"Applied {len(early_conditions)} non-content conditions EARLY (before content search)",
@@ -231,7 +250,7 @@ class UnifiedFileExplorerExecutor(QObject):
                             "logic": logic_operator,
                             "filtered_out": filtered_out,
                             "remaining": len(filtered_paths),
-                            "original_count": len(file_paths),
+                            "original_count": original_count,
                         },
                     )
 
