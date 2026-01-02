@@ -1,5 +1,15 @@
 # Changelog - Clarify Project
 
+## [Unreleased]
+
+### Fixed
+- **Advanced Filters**: Fixed advanced filters in File Explorer not being applied correctly (Sprint 1 - Task 1.1)
+  - Added comprehensive debug logging in `_build_filters()` to trace filter configuration
+  - Optimized conditions application - now applied BEFORE content search for better performance  
+  - Fixed advanced conditions being applied twice (removed duplicate application)
+  - Improved exception handling with proper logging instead of silent failures
+  - Files: `src/gui/file_explorer_dock.py`, `src/core/file_explorer_executor.py`, `src/core/file_list_executor.py`
+
 ## [2.9.117] - 2024-12-26
 
 ### 🔧 File Explorer Critical Corrections (8h)

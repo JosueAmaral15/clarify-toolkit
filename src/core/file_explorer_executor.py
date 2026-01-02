@@ -198,6 +198,36 @@ class UnifiedFileExplorerExecutor(QObject):
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
 
+        # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
+        # (Sprint 1 - Task 1.1 - Fase 2)
+        # Previously conditions were applied AFTER content search (inefficient)
+        # Now applying BEFORE to filter files before reading content
+        if conditions and (not content_query):
+            # Only apply early if no content query (content-based conditions need file content)
+            try:
+                from ..core.filters import filter_files_by_conditions
+
+                file_paths = [f.path for f in files_to_search]
+                filtered_paths, filtered_out = filter_files_by_conditions(file_paths, conditions, logic_operator)
+
+                logger.info(
+                    f"Applied {len(conditions)} advanced conditions EARLY (before content search)",
+                    extra={
+                        "logic": logic_operator,
+                        "filtered_out": filtered_out,
+                        "remaining": len(filtered_paths),
+                        "original_count": len(file_paths),
+                    },
+                )
+
+                # Keep only files that passed conditions
+                files_to_search = [f for f in files_to_search if f.path in filtered_paths]
+            except Exception as e:
+                logger.error(f"Failed to apply advanced conditions early: {e}", exc_info=True)
+                # Continue without early filtering on error
+
+        logger.debug(f"Files to search after filters+conditions: {len(files_to_search)}")
+
         # Step 2: Apply filename pattern filter
         if filename_pattern:
             files_to_search = [
@@ -235,8 +265,12 @@ class UnifiedFileExplorerExecutor(QObject):
             except Exception as e:
                 self.error.emit(f"Error processing {file_info.path}: {e}")
 
-        # Step 4: Apply advanced conditions if provided
-        if conditions:
+        # Step 4: Apply advanced conditions if provided (DEPRECATED - now applied early at line 201)
+        # NOTE: Conditions are now applied BEFORE content search for performance
+        # Keeping this for content-based conditions that need file content
+        if conditions and content_query:
+            # Only apply late if there's a content query (content-based conditions)
+            logger.debug("Applying conditions late (content-based)")
             search_results = self._apply_conditions(search_results, conditions, logic_operator)
 
         # Calculate statistics
