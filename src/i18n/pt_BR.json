@@ -2281,7 +2281,14 @@
     "tooltip_load_batch": "Carregar definição do lote de arquivo JSON",
     "tooltip_execute": "Executar todas as etapas sequencialmente com encadeamento de resultados",
     "tooltip_cancel_exec": "Parar execução imediatamente",
-    "tooltip_close": "Fechar diálogo sem executar"
+    "tooltip_close": "Fechar diálogo sem executar",
+    "header_number": "#",
+    "header_description": "Descrição",
+    "header_operation": "Operação",
+    "header_file_a": "Arquivo A",
+    "header_file_b": "Arquivo B",
+    "header_mode": "Modo",
+    "header_status": "Status"
   },
   "operation_preview": {
     "tooltip_slot": "Selecionar slot de memória para armazenar resultado",
@@ -2329,5 +2336,27 @@
   },
   "update_notification": {
     "header_new_version": "🚀 Nova Versão Disponível!"
+  },
+  "statistics_dialog": {
+    "header_operation_type": "Tipo de Operação",
+    "header_original_key": "Chave Original",
+    "header_kept_key": "Chave Mantida",
+    "header_similarity": "Similaridade %",
+    "header_line_numbers": "Números de Linha",
+    "header_count": "Contagem"
+  },
+  "shortcut_customizer": {
+    "header_action": "Ação",
+    "header_description": "Descrição",
+    "header_default": "Padrão",
+    "header_custom": "Personalizado",
+    "header_status": "Status"
+  },
+  "results_tree": {
+    "header_match": "Correspondência"
+  },
+  "formula_dock": {
+    "header_step": "Etapa",
+    "header_expression": "Expressão"
   }
 }

@@ -353,7 +353,15 @@ class BatchDialog(QDialog):
         self.table_steps = QTableWidget()
         self.table_steps.setColumnCount(7)
         self.table_steps.setHorizontalHeaderLabels(
-            ["#", "Description", "Operation", "File A", "File B", "Mode", "Status"]
+            [
+                tr("batch_dialog.header_number"),
+                tr("batch_dialog.header_description"),
+                tr("batch_dialog.header_operation"),
+                tr("batch_dialog.header_file_a"),
+                tr("batch_dialog.header_file_b"),
+                tr("batch_dialog.header_mode"),
+                tr("batch_dialog.header_status"),
+            ]
         )
         self.table_steps.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.table_steps.setSelectionBehavior(QTableWidget.SelectRows)

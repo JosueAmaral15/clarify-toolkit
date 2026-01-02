@@ -2281,7 +2281,14 @@
     "tooltip_load_batch": "Load batch definition from JSON file",
     "tooltip_execute": "Run all steps sequentially with result chaining",
     "tooltip_cancel_exec": "Stop execution immediately",
-    "tooltip_close": "Close batch dialog without executing"
+    "tooltip_close": "Close batch dialog without executing",
+    "header_number": "#",
+    "header_description": "Description",
+    "header_operation": "Operation",
+    "header_file_a": "File A",
+    "header_file_b": "File B",
+    "header_mode": "Mode",
+    "header_status": "Status"
   },
   "operation_preview": {
     "tooltip_slot": "Select memory slot to store result",
@@ -2329,5 +2336,27 @@
   },
   "update_notification": {
     "header_new_version": "🚀 New Version Available!"
+  },
+  "statistics_dialog": {
+    "header_operation_type": "Operation Type",
+    "header_original_key": "Original Key",
+    "header_kept_key": "Kept Key",
+    "header_similarity": "Similarity %",
+    "header_line_numbers": "Line Numbers",
+    "header_count": "Count"
+  },
+  "shortcut_customizer": {
+    "header_action": "Action",
+    "header_description": "Description",
+    "header_default": "Default",
+    "header_custom": "Custom",
+    "header_status": "Status"
+  },
+  "results_tree": {
+    "header_match": "Match"
+  },
+  "formula_dock": {
+    "header_step": "Step",
+    "header_expression": "Expression"
   }
 }
