@@ -661,15 +661,86 @@ class FileExplorerDock(BaseDock):
             # Convert browse results (table files) to tree format (simple file list)
             self._sync_browse_to_tree()
 
+    def _matches_advanced_filters(self, file_path: str, filters: Dict[str, Any]) -> bool:
+        """
+        Check if a file matches the advanced filters.
+        Replicates logic from file_list_executor.py for consistency.
+        
+        Args:
+            file_path: Path to file to check
+            filters: Filter configuration dict
+            
+        Returns:
+            True if file passes all filters, False otherwise
+        """
+        try:
+            # Size filter
+            file_size = os.path.getsize(file_path)
+            size_config = filters.get("size", {})
+            
+            min_size = size_config.get("min")
+            if min_size is not None and file_size < min_size:
+                return False
+            
+            max_size = size_config.get("max")
+            if max_size is not None and file_size > max_size:
+                return False
+            
+            # MTime filter
+            mtime = datetime.fromtimestamp(os.path.getmtime(file_path)).date()
+            mtime_config = filters.get("mtime", {})
+            
+            after = mtime_config.get("after")
+            if after and mtime < after:
+                return False
+            
+            before = mtime_config.get("before")
+            if before and mtime > before:
+                return False
+            
+            # Extensions filter
+            extensions = filters.get("extensions", [])
+            if extensions:
+                _, ext = os.path.splitext(file_path)
+                ext = ext.lower().lstrip(".")
+                if ext not in extensions:
+                    return False
+            
+            # Regex filter (on filename)
+            regex_config = filters.get("regex", {})
+            if regex_config.get("enabled", False):
+                pattern = regex_config.get("pattern", "")
+                if pattern:
+                    try:
+                        if not re.search(pattern, os.path.basename(file_path)):
+                            return False
+                    except re.error:
+                        pass  # Invalid regex, ignore
+            
+            return True
+        except (OSError, ValueError):
+            return False
+
     def _sync_search_to_table(self):
         """Populate table view with files from search results (tree matches)."""
         if not self.last_search_results:
             return
 
+        # Get Advanced Filters if enabled
+        advanced_filters = None
+        if hasattr(self, 'filter_panel') and self.filter_panel.isChecked():
+            advanced_filters = self.filter_panel.get_filters()
+
         # Extract file paths from matches dictionary
         files_data = []
+        filtered_count = 0
         for file_path in self.last_search_results.keys():
             try:
+                # Apply Advanced Filters if enabled
+                if advanced_filters and not self._matches_advanced_filters(file_path, advanced_filters):
+                    filtered_count += 1
+                    continue
+                
                 # Get file stats
                 stat_info = os.stat(file_path)
                 is_dir = os.path.isdir(file_path)
@@ -697,7 +768,10 @@ class FileExplorerDock(BaseDock):
         human_readable = self.chk_human.isChecked()
         self.table_manager.populate(files_data, human_readable=human_readable)
 
-        logger.info(f"Synced {len(files_data)} search results to table view")
+        if filtered_count > 0:
+            logger.info(f"Synced {len(files_data)} search results to table view (filtered out {filtered_count} files)")
+        else:
+            logger.info(f"Synced {len(files_data)} search results to table view")
 
     def _sync_browse_to_tree(self):
         """Populate tree view with files from browse results (table files)."""
