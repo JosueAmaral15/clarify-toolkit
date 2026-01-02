@@ -2293,7 +2293,8 @@
   "operation_preview": {
     "tooltip_slot": "Select memory slot to store result",
     "tooltip_store": "Store result in selected slot",
-    "tooltip_discard": "Close without storing"
+    "tooltip_discard": "Close without storing",
+    "no_slots": "(No slots available)"
   },
   "tutorial_assistant": {
     "tooltip_thumbs_up": "Helpful response",
@@ -2358,5 +2359,14 @@
   "formula_dock": {
     "header_step": "Step",
     "header_expression": "Expression"
+  },
+  "history_dialog": {
+    "no_operations": "(No operations in history)"
+  },
+  "presets_dialog": {
+    "no_presets": "(No presets saved)"
+  },
+  "google_translate": {
+    "auto_detect": "Auto-detect"
   }
 }

@@ -128,7 +128,7 @@ class OperationPreviewDialog(QDialog):
         if self.available_slots:
             self.slot_combo.addItems(self.available_slots)
         else:
-            self.slot_combo.addItem("(No slots available)")
+            self.slot_combo.addItem(tr("operation_preview.no_slots"))
             self.slot_combo.setEnabled(False)
         self.slot_combo.setToolTip(tooltip_tr("operation_preview.tooltip_slot"))
         storage_layout.addWidget(self.slot_combo)

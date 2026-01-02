@@ -2293,7 +2293,8 @@
   "operation_preview": {
     "tooltip_slot": "Selecionar slot de memória para armazenar resultado",
     "tooltip_store": "Armazenar resultado no slot selecionado",
-    "tooltip_discard": "Fechar sem armazenar"
+    "tooltip_discard": "Fechar sem armazenar",
+    "no_slots": "(Nenhum slot disponível)"
   },
   "tutorial_assistant": {
     "tooltip_thumbs_up": "Resposta útil",
@@ -2358,5 +2359,14 @@
   "formula_dock": {
     "header_step": "Etapa",
     "header_expression": "Expressão"
+  },
+  "history_dialog": {
+    "no_operations": "(Nenhuma operação no histórico)"
+  },
+  "presets_dialog": {
+    "no_presets": "(Nenhuma predefinição salva)"
+  },
+  "google_translate": {
+    "auto_detect": "Detectar automaticamente"
   }
 }
