@@ -210,58 +210,8 @@ class FileListDock(BaseDock):
     
     def _build_filters(self) -> Dict[str, Any]:
         """Build filter dictionary from filter panel."""
-        panel_filters = self.filter_panel.get_filters()
-        
-        # Convert to format expected by FileListExecutor
-        filters = {}
-        
-        # Regex filter
-        if panel_filters.get('regex_enabled') and panel_filters.get('regex_pattern'):
-            filters['regex'] = {
-                'enabled': True,
-                'pattern': panel_filters['regex_pattern']
-            }
-        
-        # Size filter (convert to bytes)
-        size_config = {}
-        if panel_filters.get('size_min'):
-            min_val = panel_filters['size_min']
-            min_unit = panel_filters.get('size_min_unit', 'B')
-            size_config['min'] = min_val * FileFilterPanel.SIZE_UNITS[min_unit]
-        
-        if panel_filters.get('size_max'):
-            max_val = panel_filters['size_max']
-            max_unit = panel_filters.get('size_max_unit', 'B')
-            size_config['max'] = max_val * FileFilterPanel.SIZE_UNITS[max_unit]
-        
-        if size_config:
-            filters['size'] = size_config
-        
-        # MTime filter (convert to date objects)
-        mtime_config = {}
-        if panel_filters.get('mtime_after_enabled') and panel_filters.get('mtime_after'):
-            mtime_config['after'] = panel_filters['mtime_after']
-        
-        if panel_filters.get('mtime_before_enabled') and panel_filters.get('mtime_before'):
-            mtime_config['before'] = panel_filters['mtime_before']
-        
-        if mtime_config:
-            filters['mtime'] = mtime_config
-        
-        # Extensions filter
-        if panel_filters.get('extensions'):
-            filters['extensions'] = panel_filters['extensions']
-        
-        # Depth filter
-        if panel_filters.get('depth', 0) > 0:
-            filters['depth'] = panel_filters['depth']
-        
-        # Exclude directories
-        exclude_dirs = panel_filters.get('exclude_dirs', [])
-        if exclude_dirs:
-            filters['exclude_dirs'] = exclude_dirs
-        
-        return filters
+        # get_filters() already returns the correct format for FileListExecutor
+        return self.filter_panel.get_filters()
     
     def _get_current_filters(self) -> Dict[str, Any]:
         """Get current filter settings (for preset manager)."""
