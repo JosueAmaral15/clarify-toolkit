@@ -692,10 +692,12 @@ class FileExplorerDock(BaseDock):
             
             after = mtime_config.get("after")
             if after and mtime < after:
+                logger.debug(f"File {file_path} filtered: mtime={mtime} < after={after}")
                 return False
             
             before = mtime_config.get("before")
             if before and mtime > before:
+                logger.debug(f"File {file_path} filtered: mtime={mtime} > before={before}")
                 return False
             
             # Extensions filter
@@ -730,6 +732,9 @@ class FileExplorerDock(BaseDock):
         advanced_filters = None
         if hasattr(self, 'filter_panel') and self.filter_panel.isChecked():
             advanced_filters = self.filter_panel.get_filters()
+            logger.info(f"Advanced Filters ENABLED: {advanced_filters}")
+        else:
+            logger.info("Advanced Filters DISABLED or not available")
 
         # Extract file paths from matches dictionary
         files_data = []
