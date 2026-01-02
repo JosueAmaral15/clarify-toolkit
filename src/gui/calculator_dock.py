@@ -20,7 +20,7 @@ from ..calculator_operations import CalculatorOperations
 from ..accessibility_manager import AccessibilityManager
 from .recall_dialog import RecallDialog
 from .operation_preview_dialog import OperationPreviewDialog
-from ..i18n.translator import tr
+from ..i18n.translator import tr, tooltip_tr
 
 
 class CompareDialog(QDialog):

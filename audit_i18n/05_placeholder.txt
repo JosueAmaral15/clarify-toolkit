@@ -1,0 +1,6 @@
+src/gui/panels/search_replace_panel_NEW.py:102:        self.ed_file_name.setPlaceholderText("Search by file name (e.g., *.json, config.*)...")
+src/gui/panels/search_replace_panel_NEW.py:108:        self.ed_file_content.setPlaceholderText("Search text or regex pattern in content...")
+src/gui/panels/search_replace_panel_NEW.py:114:        self.ed_replacement.setPlaceholderText("Replacement text...")
+src/gui/panels/search_replace_panel_BACKUP.py:91:        self.ed_needle.setPlaceholderText("Search text or regex pattern...")
+src/gui/panels/search_replace_panel_BACKUP.py:97:        self.ed_replacement.setPlaceholderText("Replacement text...")
+src/gui/panels/insert_panel_BACKUP.py:122:        self.text_insert.setPlaceholderText("Enter text to insert (supports multi-line)...")

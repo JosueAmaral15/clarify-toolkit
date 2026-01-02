@@ -41,7 +41,7 @@ from .widgets import JsonTreeWidget
 from .dialogs import JsonSearchDialog
 from src.gui.panels import InsertPanel, RegexInsertPanel
 from src.core.insert import insert_at_line
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class JsonEditorTab(QWidget):

@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt
 from .base_dock import StandardToolDock, ProcessorWorkerBase
 from src.case_converter import convert_file, convert_string
 from src.i18n import tooltip_tr
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class CaseConverterWorker(ProcessorWorkerBase):

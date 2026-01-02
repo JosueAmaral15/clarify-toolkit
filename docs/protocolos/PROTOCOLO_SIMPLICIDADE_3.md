@@ -2,9 +2,45 @@
 
 **Autor**: Josué Amaral  
 **Data de Criação**: 02 de Dezembro de 2025  
-**Versão**: 3.1  
-**Última Atualização**: 09 de Dezembro de 2025  
+**Versão**: 3.4  
+**Última Atualização**: 01 de Janeiro de 2026  
 **Objetivo**: Metodologia híbrida para **solo developer** com aplicação em **produção**
+
+**Changelog v3.4** (01/01/2026):
+- ✅ **[NOVO]** Stack Padrão Recomendado para Sites (Solo Developer)
+- ✅ Mesma base moderna: Next.js 15 + React 19 + TypeScript
+- ✅ Foco em baixa manutenção: ~15h/mês sustentável
+- ✅ Deploy gratuito em Vercel (escalável conforme crescer)
+- ✅ Documentação excepcional e comunidade massiva
+- ✅ LTS Node.js 18+ (suporte até 2025)
+- ✅ Plano de rollback obrigatório (3 alternativas)
+- ✅ Tempo de manutenção estimado e gatilhos de rollback
+- ✅ Quando NÃO usar: Desenvolvedor experiente Vue/Angular, prefere "boring tech"
+
+**Changelog v3.3** (01/01/2026):
+- ✅ **[CRÍTICO]** Adicionada Etapa 1.0: Busca e Leitura Completa de Documentação (PRIORITÁRIO)
+- ✅ Foco solo: Documentação como "memória externa" do desenvolvedor
+- ✅ Leitura obrigatória de OWASP checklist e rollback plans (críticos)
+- ✅ Estrutura mínima solo: security/ e rollback/ obrigatórios
+- ✅ Template de README com info de produção (deploy, uptime, contato)
+- ✅ Template de OWASP-checklist.md (verificar ANTES de cada deploy)
+- ✅ Checklist de 10 itens focado em solo developer
+- ✅ Comentários no código: Documentar para "você do futuro"
+- ✅ Rationale: Sem equipe, documentação é seu colega virtual
+
+**Changelog v3.2** (01/01/2026):
+- ✅ **[OBRIGATÓRIO]** Adicionada Etapa 1.5: Pesquisa de Tecnologias Adequadas ao Projeto
+- ✅ Foco em **maturidade, documentação e comunidade ativa** (critérios solo)
+- ✅ Priorização de versões **LTS (Long Term Support)** e tecnologias "boring"
+- ✅ Avaliação de **facilidade de manutenção** (horas/semana estimadas)
+- ✅ Análise de **longevidade** (5+ anos de suporte)
+- ✅ **Plano de rollback obrigatório** (se stack não funcionar)
+- ✅ Pesquisas específicas para solo developers (Indie Hackers, Reddit r/solopreneur)
+- ✅ Template de documentação com histórico de atualizações
+- ✅ Checklist expandido (13 itens) incluindo recursos de aprendizado
+- ✅ Conceito "Choose Boring Technology" para projetos de longo prazo
+
+**Changelog v3.1** (09/12/2025):
 
 ---
 
@@ -103,6 +139,14 @@ Simplicidade 3 = Base Simplicidade 1 (13 etapas)
 
 ---
 
+**Changelog v3.2** (01/01/2026):
+- ✅ **[ETAPA 3]** Adicionado padrão de questionários editáveis para coleta de informações
+- ✅ Formato solo: Documento simples e direto, sem burocracia
+- ✅ IA deve fornecer opções "boring tech" e análise de manutenção (horas/mês)
+- ✅ Após preenchimento, IA lê documento e implementa rapidamente
+- ✅ Rationale: Solo dev precisa documentar decisões sem perder tempo
+- ✅ Classificação: **RECOMENDADO para decisões complexas (stack, arquitetura)**
+
 **Changelog v3.1** (09/12/2025):
 - ✅ **[ETAPA 3]** Adicionada recomendação para IA fornecer sugestões e palpites nas perguntas
 - ✅ Formato recomendado: "❓ Pergunta + 💡 Sugestão da IA + Opções A/B/C"
@@ -193,6 +237,44 @@ Simplicidade 3 = Base Simplicidade 1 (13 etapas)
 **Princípio**: Do simples ao complexo, incremental, profissional e completo.
 
 **NOVO v3.0**: + **Segurança e automação para produção** sem overhead de equipe.
+
+---
+
+## 🚫 Hierarquia de Prioridades Bloqueantes
+
+> **CRÍTICO**: Ordem de prioridades que **BLOQUEIAM** desenvolvimento até serem resolvidas.
+
+### 📊 Ordem (Do Mais ao Menos Crítico)
+
+```
+1️⃣ MAIS CRÍTICO: ❓ Dúvidas da IA → RESOLVER ANTES de continuar
+2️⃣ BLOQUEANTE: 📚 Documentação (quando necessária) → ESCREVER ANTES de implementar  
+3️⃣ BLOQUEANTE: ❌ Bugs/Erros → CORRIGIR ANTES de novas features
+4️⃣ NORMAL: ✨ Novas Features → Após 1, 2, 3 resolvidos
+```
+
+### 2️⃣ Documentação é BLOQUEANTE
+
+**Quando documentação bloqueia implementação**:
+- ✅ API pública nova → Documentar ANTES
+- ✅ Mudança arquitetural → Atualizar docs ANTES
+- ✅ Breaking changes → Atualizar CHANGELOG IMEDIATAMENTE
+- ✅ Nova dependência → Atualizar README ANTES
+
+**[ESPECÍFICO SOLO]**:
+> "Para solo developers, documentação é sua 'memória externa futura'. Você esquecerá por quê fez algo em 3 meses. Documente ANTES de implementar para validar seu design. Se não consegue documentar, o design está ruim. Documentação bloqueante previne retrabalho futuro."
+
+**Análise custo-benefício (Solo)**:
+- ⏱️ Tempo para documentar API: ~5-10 min
+- ⏱️ Tempo economizado (evitando confusão futura): ~30-60 min
+- 💰 ROI: 3x-6x (vale MUITO a pena)
+
+**Fluxo MVP (Solo)**:
+```
+Tarefa → Dúvidas? (perguntar) → Documentar ANTES (5-10min) → Implementar → Testar
+```
+
+**Regra de Ouro Solo**: "Se levou mais tempo implementar que documentar, seu design está complexo demais. Simplifique."
 
 ---
 
@@ -303,6 +385,399 @@ Antes de iniciar qualquer tarefa nova:
 
 **Mensagem para IAs**: 
 > "Até que os erros não sejam sanados POR VOCÊ (IA), as tarefas e as funcionalidades não podem continuar sendo implementadas POR VOCÊ (IA). Corrija os erros primeiro, depois continue com a implementação."
+
+---
+
+## 📝 Padrão de Questionários Editáveis para Solo Developers
+
+> **RECOMENDADO para decisões complexas**: Solo developers precisam documentar decisões importantes sem burocracia excessiva.
+
+### 🎯 Quando Usar Questionários Editáveis (Solo)
+
+**✅ Use questionários editáveis quando:**
+- Decisão sobre **stack tecnológico** (escolha que afeta todo o projeto)
+- Decisão sobre **arquitetura** (estrutura de pastas, padrões, etc.)
+- Escolha de **bibliotecas críticas** (state management, routing, etc.)
+- Planejamento de **features complexas** (múltiplas opções de implementação)
+- Decisões com **impacto de longo prazo** (> 3 meses de projeto)
+- Você quer **documentar para "você do futuro"** (por quê escolheu X e não Y)
+
+**❌ NÃO use quando:**
+- Decisão é trivial (qual cor de botão, nome de variável)
+- Implementação é óbvia (só uma maneira razoável de fazer)
+- Decisão pode ser revertida facilmente (< 1h de trabalho)
+
+### 📋 Formato Solo-Friendly do Questionário
+
+A IA deve criar um documento **simples e direto** (`.md`) sem burocracia:
+
+```markdown
+# Decisão: [Título] - [YYYY-MM-DD]
+
+**Por quê este doc?** [Explicação breve do problema]
+
+**O que você precisa decidir:** [Decisão principal em 1 linha]
+
+---
+
+### 🎯 OPÇÃO A: [Nome da Opção]
+
+💡 **Recomendação da IA**: ✅ **Recomendada** (ou ⚙️ Condicional / ❌ Não recomendada)
+
+**Resumo**: [1 frase sobre a opção]
+
+**Vantagens**:
+- ✅ [Vantagem 1]
+- ✅ [Vantagem 2]
+
+**Desvantagens**:
+- ❌ [Desvantagem 1]
+- ❌ [Desvantagem 2]
+
+**Manutenção Estimada**: [~Xh/mês]
+
+**Curva de Aprendizado**: 🟢 Fácil / 🟡 Moderada / 🔴 Íngreme
+
+**Boring Tech?**: ✅ Sim (estável há 5+ anos) / ❌ Não (tecnologia nova/hype)
+
+**Comunidade**: [Tamanho da comunidade: Pequena/Média/Grande]
+
+**Exemplo de Projeto**: [Link para projeto real usando essa opção]
+
+---
+
+### 🎯 OPÇÃO B: [Nome]
+
+[... mesmo formato ...]
+
+---
+
+### 🎯 OPÇÃO C (se houver)
+
+[... mesmo formato ...]
+
+---
+
+## 📊 Comparação Rápida
+
+| Critério | Opção A | Opção B | Opção C |
+|----------|---------|---------|---------|
+| **Manutenção/mês** | ~2h | ~5h | ~1h |
+| **Curva Aprend.** | 🟢 Fácil | 🔴 Íngreme | 🟢 Fácil |
+| **Boring Tech** | ✅ Sim | ❌ Não | ✅ Sim |
+| **Comunidade** | Grande | Pequena | Média |
+| **Deploy Grátis?** | ✅ Sim | ❌ Não | ✅ Sim |
+
+**⭐ Melhor para Solo Dev**: Opção A (menor manutenção + comunidade grande)
+
+---
+
+## ✅ Sua Decisão
+
+**Escolho:** _______ (A / B / C)
+
+**Por quê:** _______
+
+**Plano B (se não funcionar):** _______
+
+**Tempo estimado para testar:** _______ (horas/dias)
+
+**Gatilhos de Rollback** (quando desistir e mudar):
+- [ ] Se levar >Xh para implementar feature simples
+- [ ] Se bugs forem frequentes (>5 por semana)
+- [ ] Se manutenção exceder Xh/semana
+- [ ] Se não houver solução para problema Y na comunidade
+
+---
+
+## 🗓️ Registro para "Você do Futuro"
+
+**Data da Decisão**: _______  
+**Versão da Stack**: _______ (ex: Next.js 15.5.2)  
+**Estado do Projeto**: _______ (ex: início / refatoração / produção)  
+**Tempo de Projeto até Agora**: _______  
+**O que estava tentando resolver**: _______
+
+**Links Úteis**:
+- Documentação oficial: _______
+- Tutorial que ajudou: _______
+- Thread no Stack Overflow: _______
+- Discussão no Reddit: _______
+
+---
+
+**Status**: ⚙️ PENDENTE → ✅ DECIDIDO → 🚀 IMPLEMENTADO → 📈 VALIDADO
+
+```
+
+### 🔄 Fluxo Solo
+
+**Passo 1: IA Cria Documento Simples**
+```
+IA identifica decisão complexa (ex: escolher state management)
+     ↓
+IA pesquisa opções (Zustand, Redux, Context API, etc.)
+     ↓
+IA cria DECISAO_STATE_MANAGEMENT_20260101.md
+     ↓
+IA preenche análise de cada opção (manutenção, curva aprend., etc.)
+     ↓
+IA marca recomendação (✅ Zustand - mais simples para solo)
+     ↓
+IA notifica: "Criei doc com 3 opções analisadas. Preencha sua decisão."
+```
+
+**Passo 2: Solo Dev Analisa e Decide (Sem Pressa)**
+```
+Você abre o doc, lê as 3 opções
+     ↓
+Você compara: manutenção, curva de aprendizado, comunidade
+     ↓
+Você vê que Opção A = 2h/mês vs Opção B = 5h/mês
+     ↓
+Você escolhe Opção A (menor manutenção)
+     ↓
+Você preenche "Por quê" e "Plano B"
+     ↓
+Você define gatilhos de rollback claros
+     ↓
+Você salva o arquivo
+```
+
+**Passo 3: IA Implementa Baseado na Sua Escolha**
+```
+Você notifica: "Decidi por Opção A (Zustand)"
+     ↓
+IA lê DECISAO_STATE_MANAGEMENT_20260101.md
+     ↓
+IA vê escolha + plano B + gatilhos de rollback
+     ↓
+IA instala Zustand e implementa
+     ↓
+IA mantém doc como referência futura ("por quê Zustand e não Redux?")
+```
+
+### 🎯 Diferencial Solo vs Enterprise
+
+| Aspecto | Simplicity 3 (Solo) | Simplicity 2 (Enterprise) |
+|---------|---------------------|---------------------------|
+| **Formalidade** | Casual, direto | Formal com aprovações |
+| **Foco** | Manutenção (h/mês) | ROI ($), Compliance |
+| **Stakeholders** | Só você | Múltiplos com roles |
+| **Decisão** | Imediata | 1-5 dias (aprovações) |
+| **Boring Tech** | ✅ Prioridade | Não considerado |
+| **Plano B** | Simples (1 alternativa) | Formal com análise de risco |
+| **Rollback Triggers** | Pragmáticos (horas) | Corporativos (impacto) |
+| **Tempo Preenchimento** | 5-10 min | 30-60 min (análises formais) |
+
+### 💡 Dicas para Solo Developers
+
+**✅ Priorize "Boring Technology":**
+```
+Boring Tech = Tecnologia madura (5+ anos) com:
+- ✅ Grande comunidade
+- ✅ Documentação excelente
+- ✅ Poucos breaking changes
+- ✅ Empregado por empresas grandes
+
+Exemplo: React (boring ✅) vs Solid.js (hype ❌)
+```
+
+**✅ Calcule Manutenção em Horas/Mês:**
+```
+Stack com muita configuração = alta manutenção
+Stack com defaults sensatos = baixa manutenção
+
+Ex: Create React App (alta manutenção) vs Next.js (baixa manutenção)
+```
+
+**✅ Sempre Defina Plano B:**
+```
+Se escolher Opção A, sempre tenha Opção B como fallback
+
+Ex: 
+- Plano A: Next.js (se funcionar bem)
+- Plano B: Vite + React (se Next.js for overkill)
+```
+
+**✅ Gatilhos de Rollback Pragmáticos:**
+```
+Não seja dogmático. Defina quando desistir:
+
+"Se levar >20h para implementar auth básico → mudar para solução pronta"
+"Se bugs de build ocorrerem >2x/semana → considerar stack mais estável"
+```
+
+### 📊 Exemplo Real: Escolher State Management
+
+```markdown
+# Decisão: State Management para App de Tarefas - 2026-01-01
+
+**Por quê este doc?** Preciso escolher como gerenciar estado (tasks, filters, user)
+
+**O que você precisa decidir:** Qual biblioteca de state management usar
+
+---
+
+### 🎯 OPÇÃO A: Zustand
+
+💡 **Recomendação da IA**: ✅ **Recomendada para solo dev**
+
+**Resumo**: State management minimalista baseado em hooks
+
+**Vantagens**:
+- ✅ API super simples (~50 linhas de código total)
+- ✅ Zero boilerplate
+- ✅ Bom para apps pequenos-médios
+
+**Desvantagens**:
+- ❌ Sem DevTools oficial (mas tem extensão)
+- ❌ Comunidade menor que Redux
+
+**Manutenção Estimada**: ~1h/mês
+
+**Curva de Aprendizado**: 🟢 Fácil (30min para dominar básico)
+
+**Boring Tech?**: ⚙️ Moderada (3 anos de existência, crescendo)
+
+**Comunidade**: Média (15k stars GitHub)
+
+**Exemplo de Projeto**: Vercel Dashboard usa Zustand
+
+---
+
+### 🎯 OPÇÃO B: Redux Toolkit
+
+💡 **Recomendação da IA**: ⚙️ **Só se você já conhece Redux**
+
+**Resumo**: State management com padrão Flux
+
+**Vantagens**:
+- ✅ Comunidade gigante (respostas fáceis no Stack Overflow)
+- ✅ DevTools excelente
+
+**Desvantagens**:
+- ❌ Muito boilerplate (slices, actions, reducers...)
+- ❌ Overkill para apps pequenos
+
+**Manutenção Estimada**: ~5h/mês (refatorar slices)
+
+**Curva de Aprendizado**: 🔴 Íngreme (1-2 semanas para dominar)
+
+**Boring Tech?**: ✅ Sim (10+ anos de existência)
+
+**Comunidade**: Grande (60k stars GitHub)
+
+**Exemplo de Projeto**: Muitas empresas grandes (Uber, etc.)
+
+---
+
+### 🎯 OPÇÃO C: Context API (Built-in React)
+
+💡 **Recomendação da IA**: ⚙️ **Só para estado super simples**
+
+**Resumo**: Contexto nativo do React
+
+**Vantagens**:
+- ✅ Zero dependências externas
+- ✅ Já conhece se conhece React
+
+**Desvantagens**:
+- ❌ Re-renders desnecessários em apps grandes
+- ❌ Sem DevTools
+- ❌ Difícil de escalar
+
+**Manutenção Estimada**: ~0h/mês (nativo)
+
+**Curva de Aprendizado**: 🟢 Fácil
+
+**Boring Tech?**: ✅ Sim (parte do React)
+
+**Comunidade**: Gigante (React)
+
+---
+
+## 📊 Comparação Rápida
+
+| Critério | Zustand | Redux Toolkit | Context API |
+|----------|---------|---------------|-------------|
+| **Manutenção/mês** | ~1h | ~5h | ~0h |
+| **Curva Aprend.** | 🟢 Fácil | 🔴 Íngreme | 🟢 Fácil |
+| **Boring Tech** | ⚙️ Moderada | ✅ Sim | ✅ Sim |
+| **Comunidade** | Média | Grande | Gigante |
+| **Boilerplate** | Mínimo | Alto | Mínimo |
+
+**⭐ Melhor para Solo Dev**: Zustand (menor manutenção + API simples)
+
+---
+
+## ✅ Sua Decisão
+
+**Escolho:** A (Zustand)
+
+**Por quê:** App é médio porte, quero baixa manutenção, API simples é prioridade
+
+**Plano B (se não funcionar):** Context API (se app ficar muito simples)
+
+**Tempo estimado para testar:** 2 dias (implementar 2-3 features)
+
+**Gatilhos de Rollback**:
+- [ ] Se levar >4h para implementar state de tasks → considerar Context API
+- [ ] Se bugs de sincronização ocorrerem >3x → considerar Redux (mais previsível)
+- [ ] Se precisar de time-travel debug frequente → Redux DevTools melhor
+
+---
+
+## 🗓️ Registro para "Você do Futuro"
+
+**Data da Decisão**: 2026-01-01  
+**Versão da Stack**: React 19, Zustand 4.5  
+**Estado do Projeto**: Início (primeira semana)  
+**Tempo de Projeto até Agora**: 3 dias  
+**O que estava tentando resolver**: Gerenciar tasks, filters, user info
+
+**Links Úteis**:
+- Documentação oficial: https://github.com/pmndrs/zustand
+- Tutorial que ajudou: https://youtu.be/ABC123
+- Comparação Zustand vs Redux: https://example.com
+
+---
+
+**Status**: ✅ DECIDIDO (2026-01-01) → 🚀 IMPLEMENTADO (a fazer)
+```
+
+---
+
+### ✅ Checklist Solo para IAs
+
+Ao criar questionário para solo dev, a IA deve:
+
+```markdown
+[ ] Título com data (para "você do futuro")
+[ ] Problema explicado em 1-2 linhas (contexto rápido)
+[ ] Análise de manutenção (h/mês) para cada opção
+[ ] Análise de curva de aprendizado (🟢🟡🔴)
+[ ] Indicar se é "Boring Tech" ou "Hype"
+[ ] Tamanho da comunidade (buscar respostas quando travar)
+[ ] Comparação visual (tabela) para decisão rápida
+[ ] Recomendação clara (qual a IA sugere para solo)
+[ ] Espaço para Plano B (sempre ter fallback)
+[ ] Gatilhos de rollback pragmáticos (quando desistir)
+[ ] Seção "Para você do futuro" (por quê decidiu isso)
+[ ] Links úteis (docs, tutorials, discussões)
+```
+
+### 🎓 Conclusão Solo
+
+O padrão de questionários editáveis para solo developers:
+- ✅ **Documenta** decisões importantes sem burocracia
+- ✅ **Prioriza** manutenção e simplicidade (você está sozinho)
+- ✅ **"Boring Tech"** como critério de escolha (estabilidade > hype)
+- ✅ **Plano B sempre** (decisões reversíveis)
+- ✅ **Registro histórico** ("por quê escolhi X em 2026")
+
+**Regra Solo**: 
+> "Se a decisão afeta >3 meses de projeto, documente em questionário editável. Você do futuro vai agradecer."
 
 ---
 
@@ -1489,8 +1964,8 @@ elogios e opiniões)?
 💡 Sugestão: Sim (recomendado para projetos com usuários finais)
 
 Opções:
-A) ✅ Sim, incluir email para feedback (PADRÃO RECOMENDADO)
-B) ✅ Sim, incluir GitHub Issues (para projetos open-source)
+A) ✅ Sim, incluir GitHub Issues (PADRÃO RECOMENDADO para projetos versionados)
+B) ✅ Sim, incluir email para feedback (alternativa ou complemento)
 C) ✅ Sim, incluir formulário de contato na aplicação
 D) ✅ Sim, incluir múltiplos canais (email + issues + formulário)
 E) ❌ Não, não incluir meios de contato
@@ -1882,6 +2357,7 @@ Regra prática:
 
 **Resumo Executivo** (⭐ = NOVO vs Simplicidade 1):
 1. 📚 Ler a documentação
+   - 1.5 🔍 **Pesquisar tecnologias adequadas ao projeto** (OBRIGATÓRIO NO INÍCIO)
 2. ✅ Escolher tarefas mais simples
    - 2.5 📊 [OPCIONAL] Matriz de Decisão (quando 10+ tasks)
 3. ❓ Fazer perguntas até sanar 100% das dúvidas
@@ -1905,6 +2381,215 @@ Regra prática:
 **Total**: 14 base + 3 obrigatórias novas ⭐ + 3 opcionais = **17-20 etapas**
 
 ### 1️⃣ **Ler a Documentação**
+
+> **🚨 CRÍTICO PARA IAs - PRIMEIRA AÇÃO OBRIGATÓRIA**: Antes de QUALQUER coisa, a IA **DEVE** procurar e ler **100% da documentação markdown local** existente no projeto.
+
+#### 📖 **Etapa 1.0: Busca e Leitura Completa de Documentação** [PRIORITÁRIO]
+
+**ANTES de começar qualquer tarefa**, a IA deve:
+
+**Passo 1: Procurar por toda documentação markdown**
+
+Buscar recursivamente por todos os arquivos `.md` no workspace:
+```bash
+find . -name "*.md" -type f | grep -v node_modules | grep -v venv
+```
+
+**Passo 2: Ler 100% do conteúdo encontrado**
+
+A IA **DEVE LER COMPLETAMENTE**:
+- ✅ `README.md` - Visão geral
+- ✅ `TASKS.md` - Tarefas pendentes e concluídas
+- ✅ `docs/REQUIREMENTS.md` - Requisitos
+- ✅ `docs/ARCHITECTURE.md` - Stack e decisões técnicas
+- ✅ `docs/vX.Y.Z-SPECIFICATIONS.md` - Especificações de versões
+- ✅ `docs/CHANGELOG.md` - Histórico de mudanças
+- ✅ `docs/plans/*.md` - Planos de ação
+- ✅ `docs/security/OWASP-checklist.md` - **Checklist de segurança (crítico)**
+- ✅ `docs/rollback/*.md` - **Planos de rollback (crítico)**
+- ✅ **Qualquer outro arquivo `.md`**
+
+**[ESPECÍFICO PARA SIMPLICIDADE 3 - SOLO]**:
+- ✅ **Notas de Decisão**: Entender por quê você (desenvolvedor) escolheu X ao invés de Y
+- ✅ **Planos de Rollback**: Como reverter mudanças se algo der errado
+- ✅ **Security Checklist**: OWASP é obrigatório - ler antes de qualquer implementação
+
+**Passo 3: Se NÃO encontrar documentação, perguntar**
+
+```markdown
+❓ **Documentação do Projeto**
+
+Procurei por documentação markdown mas não encontrei arquivos `.md`.
+
+**Você tem documentação do projeto?**
+A) Sim, está em [localização específica]
+B) Sim, mas em formato diferente (.txt, etc.)
+C) Não, ainda não existe
+
+**Se C (não existe):**
+Vou criar estrutura mínima para solo developer em produção:
+
+1. **Requisitos**:
+   - Objetivo do projeto?
+   - Funcionalidades principais?
+   - Usuários/clientes?
+
+2. **Contexto Técnico**:
+   - Stack já definido?
+   - Código existente?
+   - Escala esperada?
+
+Com essas informações, criarei:
+- `README.md` (visão geral)
+- `docs/REQUIREMENTS.md` (requisitos)
+- `docs/TASKS.md` (tarefas)
+- `docs/ARCHITECTURE.md` (decisões técnicas)
+- `docs/security/OWASP-checklist.md` (segurança obrigatória)
+```
+
+**Passo 4: Criar estrutura solo em produção**
+
+**Estrutura Mínima Obrigatória (Solo em Produção)**:
+```
+📁 Raiz do Projeto
+├── README.md                    # Visão geral
+├── TASKS.md                     # Tarefas
+└── 📁 docs/
+    ├── REQUIREMENTS.md          # Requisitos
+    ├── ARCHITECTURE.md          # Stack e decisões
+    ├── v0.1.0-SPECIFICATIONS.md # Primeira spec
+    ├── 📁 security/             # OBRIGATÓRIO
+    │   └── OWASP-checklist.md   # Checklist OWASP Top 10
+    └── 📁 rollback/             # OBRIGATÓRIO
+        └── rollback-template.md # Template de plano
+```
+
+**Template de README.md (Solo em Produção)**:
+```markdown
+# [Nome do Projeto]
+
+**Versão**: 0.1.0  
+**Status**: Em desenvolvimento  
+**Developer**: [Seu nome]  
+**Início**: [Data]
+
+## 📋 Descrição
+
+[Objetivo do projeto]
+
+## 🚀 Produção
+
+**Deploy**: [Onde está deployado]  
+**Usuários**: [Quantos usuários ativos]  
+**Uptime**: [SLA esperado]
+
+## 🛠️ Stack Tecnológico
+
+**Linguagem**: [Linguagem + versão LTS]  
+**Framework**: [Framework + versão]  
+**BD**: [Banco de dados]  
+**Deploy**: [Plataforma]
+
+**Por quê esta stack?** Ver [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## 🔐 Segurança
+
+- Checklist OWASP: [Ver](docs/security/OWASP-checklist.md)
+- CI/CD Quality Gates: [Status]
+
+## 🔄 Rollback
+
+Em caso de problema, ver [planos de rollback](docs/rollback/)
+
+## 📚 Documentação
+
+- [REQUIREMENTS.md](docs/REQUIREMENTS.md)
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [TASKS.md](TASKS.md)
+
+## 🚨 Contato de Emergência
+
+**Email**: [seu email]  
+**Tempo de resposta**: [ex: 24h]
+```
+
+**Template de docs/security/OWASP-checklist.md**:
+```markdown
+# Checklist OWASP Top 10 - [Projeto]
+
+**OBRIGATÓRIO**: Verificar ANTES de cada deploy.
+
+## A01:2021 – Broken Access Control
+- [ ] Autenticação implementada em todas as rotas sensíveis
+- [ ] Autorização validada (usuário só acessa seus dados)
+- [ ] CORS configurado corretamente
+
+## A02:2021 – Cryptographic Failures
+- [ ] Senhas hasheadas (bcrypt, Argon2)
+- [ ] HTTPS em produção
+- [ ] Tokens seguros (JWT com expiração)
+
+## A03:2021 – Injection
+- [ ] SQL: Queries parametrizadas (sem concatenação)
+- [ ] Input sanitizado
+- [ ] XSS prevenido (escape de HTML)
+
+[... restante do OWASP Top 10 ...]
+```
+
+**Passo 5: Documentar continuamente (Solo)**
+
+**Durante desenvolvimento**:
+- ✅ **Atualizar TASKS.md**: Progresso diário
+- ✅ **Criar SPECIFICATIONS.md**: Cada versão deployada
+- ✅ **Atualizar OWASP-checklist.md**: ANTES de cada deploy
+- ✅ **Criar Rollback Plans**: Para cada feature crítica
+- ✅ **Comentar código**: Explicar "por quê" suas decisões
+
+**Comentários úteis (Solo)**:
+```python
+# DECISÃO SOLO: Cache em memória ao invés de Redis
+# Razão: Não preciso complexidade de Redis neste momento
+# TODO: Migrar para Redis se escala passar de 10k usuários
+# Tempo estimado: 2h, criar rollback plan antes
+cache = {}
+```
+
+#### 📋 Checklist (Para IAs - Solo)
+
+```markdown
+[ ] 🔍 Busquei todos arquivos .md
+[ ] 📖 Li 100% do conteúdo encontrado
+[ ] 🔐 Li checklist OWASP (se existe)
+[ ] 🔄 Li planos de rollback existentes
+[ ] 📝 Se não há docs, perguntei e criei estrutura
+[ ] 🎯 Entendi objetivo e contexto completo
+[ ] 📋 Sei tarefas pendentes e concluídas
+[ ] 🛠️ Conheço stack e por quê foi escolhido
+[ ] 🏗️ Entendi decisões técnicas anteriores
+[ ] ✅ Pronto para trabalhar com contexto completo
+```
+
+#### 🚀 Rationale (Solo em Produção)
+
+**Por quê ler 100% é CRÍTICO para solo developer?**
+
+1. ✅ **Você é Único Mantenedor**: Contexto é sua memória externa
+2. ✅ **Sem Equipe para Perguntar**: Documentação é seu colega de equipe
+3. ✅ **Produção Crítica**: Bugs afetam usuários reais - contexto evita erros
+4. ✅ **Decisões Futuras**: Entender por quê você escolheu X meses atrás
+5. ✅ **Onboarding Futuro**: Se contratar alguém, documentação é essencial
+6. ✅ **Continuidade**: Se ficar doente/férias, alguém pode assumir
+
+**Mensagem para IAs (Solo)**:
+> "Para solo developers, documentação é CRÍTICA. Você não tem equipe para consultar. Ler 100% da documentação existente ANTES de codificar evita reintroduzir bugs já corrigidos ou quebrar decisões arquiteturais que você mesmo fez meses atrás. Documente para o 'você do futuro'."
+
+**Regra de Ouro (Solo)**:
+> **"Documente como se você fosse ser atropelado por um ônibus amanhã. Alguém precisa conseguir manter seu código."**
+
+---
+
+**Após completar a leitura**, prosseguir para:
 - Consultar `TASKS.md` (ou arquivo equivalente definido pelo usuário) para ver as tarefas pendentes
 - Consultar `docs/REQUIREMENTS.md` para entender o contexto do projeto
 - Revisar especificações anteriores (`v2.9.X-SPECIFICATIONS.md`)
@@ -2087,6 +2772,511 @@ docs/
 - 🐛 **Bugs críticos** que afetam disponibilidade ou segurança
 
 📖 **Detalhes completos sobre Planos de Ação**: Ver README.md do repositório, seção "🎯 Planos de Ação"
+
+---
+
+### 1️⃣.5️⃣ **Pesquisa de Tecnologias Adequadas ao Projeto** [OBRIGATÓRIO NO INÍCIO]
+
+> **CRÍTICO PARA IAs**: No início do projeto (primeira sessão), a IA **DEVE** investigar e recomendar as tecnologias mais adequadas para o projeto com base nos requisitos fornecidos.
+
+**Nota para Simplicidade 3 (Solo em Produção)**: Esta etapa foca em tecnologias **maduras, bem documentadas e com comunidade ativa** para facilitar manutenção solo de longo prazo.
+
+#### 🎯 Quando Aplicar
+
+**Momento ideal**: Logo após a primeira leitura do `TASKS.md` e `docs/REQUIREMENTS.md`, **antes de começar a implementação**.
+
+**Aplicável a**:
+- ✅ Projetos novos (sem código implementado ainda)
+- ✅ Projetos em refatoração completa (mudança de stack tecnológico)
+- ✅ Projetos em fase de planejamento (arquitetura ainda não definida)
+
+**NÃO aplicável a**:
+- ❌ Projetos com stack já definido e implementação em andamento
+- ❌ Manutenção de funcionalidades em código existente
+- ❌ Correção de bugs em código já produzido
+
+#### 📋 Como Funciona (Solo Developer)
+
+**Passo 1: Coletar Requisitos**
+
+A IA deve solicitar:
+- 📌 **Tarefas e funcionalidades desejadas** (podem estar em `docs/TASKS.md`)
+- 📌 **Requisitos funcionais e não-funcionais** (podem estar em `docs/REQUIREMENTS.md`)
+- 📌 **Tipo de aplicação** (web, desktop, mobile, CLI, API, etc.)
+- 📌 **Público-alvo e escala esperada** (pequeno porte, médio porte, crescimento gradual)
+- 📌 **Restrições técnicas** (linguagens preferidas, ambiente de deploy)
+- 📌 **[Solo]** Experiência do desenvolvedor com tecnologias (evitar curva de aprendizado íngreme)
+- 📌 **[Solo]** Capacidade de manutenção (preferir tecnologias simples e bem documentadas)
+
+**Passo 2: Investigar Tecnologias Profissionais (Critérios Solo)**
+
+**Critérios CRÍTICOS para solo developer em produção**:
+
+1. **🛡️ Maturidade e Estabilidade**
+   - Tecnologias com **versões estáveis** (evitar bleeding edge)
+   - Histórico de **breaking changes mínimos**
+   - **LTS (Long Term Support)** disponível
+
+2. **📚 Documentação de Qualidade**
+   - Documentação **oficial completa** e atualizada
+   - **Exemplos práticos** abundantes
+   - **Tutoriais** para casos de uso comuns
+
+3. **👥 Comunidade Ativa**
+   - **Stack Overflow** com muitas perguntas/respostas
+   - **GitHub** com issues ativos e PRs regulares
+   - **Discord/Slack** ou fóruns ativos
+
+4. **🔧 Facilidade de Manutenção**
+   - **Setup simples** (evitar configurações complexas)
+   - **Debugging fácil** (ferramentas de dev maduras)
+   - **Atualização segura** (processo de upgrade bem documentado)
+
+5. **⚡ Performance Production-Ready**
+   - Comprovadamente **usado em produção** por empresas
+   - **Escalabilidade** adequada ao escopo do projeto
+   - **Monitoramento e logging** nativos ou fáceis de adicionar
+
+6. **🔐 Segurança**
+   - **CVEs** rapidamente corrigidos
+   - **Atualizações de segurança** regulares
+   - **Boas práticas** bem documentadas
+
+**Categorias de tecnologias** (mesmas, mas com foco em maturidade):
+1. **🎨 Frontend**: React (LTS), Vue 3, Next.js, MUI, Bootstrap
+2. **⚙️ Backend**: Django (LTS), FastAPI, Express, NestJS, Spring Boot
+3. **🖥️ Desktop**: PyQt6 (LTS), Electron (stable), Qt
+4. **📊 Visualização**: Chart.js, Recharts, Plotly
+5. **🤖 IA/ML**: scikit-learn (stable), Transformers, OpenAI API (stable)
+6. **💾 Banco de Dados**: PostgreSQL (LTS), MySQL (LTS), SQLite
+7. **🔐 Autenticação**: OAuth2 (padrão), JWT, bcrypt
+8. **🧪 Testes**: pytest, Jest (stable)
+
+#### 🌐 **Stack Padrão Recomendado para Sites/Aplicações Web** [NOVO]
+
+> **IMPORTANTE**: Quando se tratar da implementação de um **site ou aplicação web**, e o desenvolvedor **NÃO especificar** quais tecnologias deseja, a IA **PODE RECOMENDAR** o seguinte stack padrão moderno, maduro e fácil de manter:
+
+**📦 Frontend Framework & Runtime**
+- **Next.js 15.5.2** - Framework React com App Router e Server Components
+- **React 19.1.1** - Biblioteca de UI
+- **React DOM 19.1.1** - Renderização do React no navegador
+- **TypeScript 5.9.2** - Superset JavaScript com tipagem estática
+- **Node.js 18+ (LTS)** - Runtime JavaScript
+
+**🔧 Bundlers & Build Tools**
+- **Turbopack** - Bundler de nova geração do Next.js (700x mais rápido)
+- **Turbo (turborepo)** - Sistema de build para monorepos
+- **PostCSS 8.5.6** - Processamento de CSS
+- **Autoprefixer 10.4.21** - Adiciona prefixos CSS automaticamente
+
+**📊 State Management**
+- **Zustand 4.5.7** - Gerenciamento de estado minimalista e eficiente
+- **Immer 10.1.3** - Manipulação imutável de estado
+
+**🎨 Styling**
+- **Tailwind CSS 3.4.17** - Framework CSS utility-first
+- **CSS Modules** - Modularização de CSS
+- **clsx 2.1.1** - Utilitário para classes CSS condicionais
+- **class-variance-authority 0.7.1** - Gerenciamento de variantes de componentes
+- **tailwind-merge 3.3.1** - Merge inteligente de classes Tailwind
+- **Lucide React 0.542.0** - Biblioteca de ícones
+
+**🎵 Audio & Media** (se aplicável)
+- **Cloudinary 1.41.3** - Processamento e armazenamento de mídia
+- **@cloudinary/react 1.14.3** - Componentes React do Cloudinary
+- **@cloudinary/url-gen 1.22.0** - Geração de URLs do Cloudinary
+- **Web Audio API** - API nativa do navegador para gravação de áudio
+
+**💳 Payments & Subscriptions** (se aplicável)
+- **Stripe 14.25.0** - Processamento de pagamentos (backend)
+- **@stripe/stripe-js 2.4.0** - SDK JavaScript do Stripe (frontend)
+
+**🌐 HTTP & API**
+- **Axios 1.11.0** - Cliente HTTP para requisições à API
+
+**📄 PDF & Screenshots** (se aplicável)
+- **jsPDF 3.0.3** - Geração de PDFs
+- **html2canvas 1.4.1** - Conversão de HTML para canvas/imagem
+- **Puppeteer 24.29.1** - Automação de browser headless
+
+**🧪 Testing**
+- **Jest** - Framework de testes
+- **jsdom** - Ambiente DOM para testes
+- **@testing-library** - Utilitários para testes de componentes React
+
+**✅ Code Quality & Linting**
+- **ESLint 8.57.1** - Linter JavaScript/TypeScript
+- **eslint-config-next 15.5.2** - Configuração ESLint do Next.js
+- **Husky 9.1.7** - Git hooks para qualidade de código
+
+**🛠️ Development Tools**
+- **npm 10.9.2** - Gerenciador de pacotes
+- **Git** - Controle de versão
+- **VS Code** - Editor recomendado
+
+**⚙️ Backend** (Repositório Separado)
+- **Node.js** - Runtime backend
+- **Express** - Framework web
+- **MongoDB** - Banco de dados NoSQL
+- **JWT** - Autenticação com tokens
+- **Heroku** - Hospedagem do backend
+
+**🚀 Infraestrutura & Deploy**
+- **Vercel** - Hospedagem frontend (recomendado para Next.js)
+- **Cloudinary CDN** - Entrega de conteúdo de áudio/mídia
+- **HTTPS** - Protocolo seguro (requerido para gravação de áudio)
+
+**🤖 APIs de IA** (Opcionais)
+- **OpenAI API** - IA para feedback e avaliação
+- **GPT-4o-mini** - Modelo específico da OpenAI
+- **ElevenLabs API** - Síntese de voz
+
+**🏗️ Build & Development** (Detalhes Adicionais)
+- **Webpack** - Bundler alternativo (fallback do Turbopack)
+- **JavaScript ES2017+** - Linguagem base
+- **Chrome DevTools** - Debug de navegador
+
+**🎨 CSS & Styling Core** (Detalhes Adicionais)
+- **CSS Modules** - Sistema de modularização (já mencionado)
+
+**📊 State Management Details** (Detalhes Adicionais)
+- **Zustand DevTools** - Ferramentas de debug
+- **Zustand Persist Middleware** - Middleware de persistência
+
+**🌐 Browser APIs Nativas**
+- **Web Audio API** - API de áudio (gravação e reprodução)
+- **MediaRecorder API** - Gravação de áudio
+- **Fetch API** - Requisições HTTP nativas
+- **Cookies API** - Gerenciamento de cookies
+- **LocalStorage API** - Armazenamento local
+- **SessionStorage API** - Armazenamento de sessão
+- **Navigator API** - Acesso a dispositivos
+- **Permissions API** - Gerenciamento de permissões
+- **Geolocation API** - Localização do usuário
+- **Service Worker API** - Cache e offline (código legacy)
+
+**🔐 Authentication & Security Details**
+- **JWT (JSON Web Tokens)** - Especificação do sistema de autenticação
+- **bcrypt** - Hash de senhas
+- **HTTPS** - Protocolo seguro obrigatório
+
+**🚀 Infrastructure Details**
+- **Cloudinary CDN** - Sistema de delivery de mídia
+- **GitHub** - Controle de versão
+- **Git** - Sistema de versionamento
+
+**⚙️ Backend Details**
+- **Express** - Framework web backend
+- **Heroku** - Hospedagem do backend
+- **MongoDB** - Banco de dados NoSQL
+
+**🧪 Testing Details**
+- **@testing-library/jest-dom** - Matchers específicos do Jest
+- **@testing-library/react** - Testes de componentes React
+- **@testing-library/user-event** - Simulação de eventos de usuário
+
+**✅ Por Quê Este Stack Para Solo Developer?**
+- ✅ **Next.js 15**: Framework maduro, documentação excepcional
+- ✅ **React 19**: Comunidade massiva, fácil encontrar soluções
+- ✅ **TypeScript**: Previne bugs antes de ir para produção
+- ✅ **Tailwind CSS**: Produtividade alta, menos CSS manual
+- ✅ **Zustand**: Simples de entender e debugar sozinho
+- ✅ **Turbopack**: Builds rápidos = menos espera
+- ✅ **Vercel Deploy Gratuito**: Hospedagem simples e confiável
+- ✅ **Ecossistema Completo**: Uma stack para 90% dos casos
+
+**[ESPECÍFICO PARA SIMPLICIDADE 3 - SOLO]**:
+- ✅ **Baixa Manutenção**: Next.js + Vercel = atualizações automáticas
+- ✅ **Documentação Excelente**: Menos tempo procurando soluções
+- ✅ **Comunidade Massiva**: Stack Overflow tem 100k+ questões React
+- ✅ **Deploy Fácil**: `git push` e Vercel faz o resto
+- ✅ **Escalável**: Começa grátis, escala conforme crescer
+- ✅ **TypeScript Salva Vidas**: Erros de tipo antes de deploy
+- ✅ **LTS Node.js 18+**: Suporte de longo prazo (até 2025)
+
+**⏱️ Tempo de Manutenção Estimado (Solo)**:
+- Atualizações de dependências: **~2h/mês** (automatizável)
+- Monitoramento Vercel: **~10min/dia** (dashboards automáticos)
+- Correção de bugs típicos: **~3h/semana** (comunidade ajuda)
+- Total: **~15h/mês** de manutenção (sustentável para solo)
+
+**🛡️ Plano de Rollback (Se Não Funcionar)**:
+Se após **3 meses** este stack não atender expectativas:
+- **Alternativa 1**: Migrar frontend para **Vue 3 + Nuxt** (similar)
+- **Alternativa 2**: Simplificar para **React sem Next.js** (menos features)
+- **Alternativa 3**: Migrar para **Python + Flask + React** (se prefere Python)
+- **Esforço estimado**: 5-10 dias de migração
+
+**Gatilhos de rollback**:
+- Performance inadequada (<80 Lighthouse score)
+- Complexidade insustentável (>20h/semana manutenção)
+- Custos acima de $50/mês (escala não prevista)
+- Bugs críticos não resolvidos pela comunidade em 72h
+
+**⚠️ Quando NÃO Usar Este Stack Padrão**:
+- ❌ Desenvolvedor especifica **explicitamente** outras tecnologias
+- ❌ Desenvolvedor tem **experiência sólida** com Vue/Angular
+- ❌ Projeto requer **Python/Django** backend
+- ❌ Aplicação **desktop** ou **mobile nativa**
+- ❌ Site **estático super simples** (HTML/CSS/JS puro suficiente)
+- ❌ Desenvolvedor prefere **"boring technology"** (PHP, Ruby on Rails)
+
+---
+
+**Passo 3: Apresentar Recomendações (Foco Solo)**
+
+Apresentar **2-3 stacks** priorizando:
+- ✅ **Maturidade** (versões LTS preferidas)
+- ✅ **Documentação** (qualidade e quantidade)
+- ✅ **Facilidade de deploy** (Heroku, Vercel, Docker simples)
+- ✅ **Comunidade ativa** (suporte rápido quando bloquear)
+- ✅ **Curva de aprendizado** (se desenvolvedor não conhece)
+- ✅ **Manutenção de longo prazo** (5+ anos)
+
+**Template de recomendação (Solo)**:
+```markdown
+## 🎯 Stack Recomendada: [Nome da Stack]
+
+### 📦 Tecnologias Principais
+[Lista de tecnologias]
+
+### ✅ Por Quê Esta Stack Para Solo Developer?
+- **Maturidade**: [Versão, LTS, anos de mercado]
+- **Documentação**: [Qualidade, exemplos, tutoriais]
+- **Comunidade**: [Stack Overflow, GitHub, Discord]
+- **Manutenção**: [Facilidade de atualização, debugging]
+- **Deploy**: [Plataformas compatíveis, facilidade]
+
+### 🏢 Casos de Uso Reais (Solo Devs)
+- [Projeto 1] - desenvolvido por [Dev Solo X]
+- [SaaS 2] - mantido por [Dev Solo Y]
+
+### ⏱️ Tempo de Manutenção Estimado
+- Atualizações de segurança: [X horas/mês]
+- Bug fixes: [Y horas/semana]
+- Monitoramento: [Z minutos/dia]
+
+### 🛡️ Longevidade
+- LTS até: [Data]
+- Expectativa de suporte comunitário: [Anos]
+```
+
+**Passo 4: Validar e Documentar**
+
+**[ESPECÍFICO PARA SIMPLICIDADE 3 - SOLO]**:
+- ✅ **Decisão rápida**: Solo developer decide sozinho (sem reuniões)
+- ✅ **Documentar em ARCHITECTURE.md**: Justificativa clara
+- ✅ **Criar Nota de Decisão**: Documentar **por quê** escolheu (para você no futuro)
+- ✅ **Rollback Plan**: Como migrar se stack não funcionar (ver Etapa 15.5)
+
+#### 🌐 Pesquisas Online (Se Necessário)
+
+**Fontes específicas para solo developers**:
+- 📚 **GitHub Awesome Lists**: "awesome-[tecnologia]" (curadoria da comunidade)
+- 📖 **"Best [tech] for solo developer"**: Pesquisas específicas
+- 💬 **Reddit r/solopreneur, r/webdev**: Experiências de outros solos
+- 📊 **Indie Hackers**: Stack de projetos solo bem-sucedidos
+- 📰 **Dev.to "solo developer"**: Tutoriais e experiências
+
+**O que pesquisar (Solo)**:
+- "Best [tipo de app] stack for solo developer 2025"
+- "[Tecnologia X] maintenance burden solo"
+- "[Framework Y] vs [Framework Z] for small team"
+- "Solo developer success stories [tecnologia]"
+- "[Stack W] long term maintenance"
+
+#### 📝 Documentar Stack Escolhido (Solo)
+
+**Onde documentar**: `docs/ARCHITECTURE.md` (obrigatório)
+
+**Template (Solo Developer)**:
+```markdown
+## 🛠️ Stack Tecnológico (Solo Developer em Produção)
+
+**Linguagem Principal**: [Python, JavaScript, etc.]
+
+**Stack**:
+- Frontend: [React, etc.] - Versão: [LTS/Stable]
+- Backend: [FastAPI, etc.] - Versão: [LTS/Stable]
+- Banco de Dados: [PostgreSQL, etc.] - Versão: [LTS]
+- Deploy: [Heroku, Vercel, Docker]
+[...]
+
+### 🎯 Justificativa da Escolha (Por Quê Escolhi)
+
+**Maturidade**: [Por quê esta versão é estável]
+**Documentação**: [Por quê é fácil encontrar soluções]
+**Comunidade**: [Por quê consigo suporte rápido]
+**Manutenção**: [Por quê consigo manter sozinho]
+**Longevidade**: [Por quê vai durar 5+ anos]
+
+### 🛡️ Plano de Rollback (Se Não Funcionar)
+
+Se este stack não atender expectativas após [X meses]:
+- **Alternativa 1**: Migrar para [Stack B]
+- **Alternativa 2**: Migrar para [Stack C]
+- **Esforço estimado**: [Y dias de migração]
+- **Gatilhos de rollback**:
+  - Performance inadequada (>5s response time)
+  - Bugs críticos não resolvidos pela comunidade em 48h
+  - Custos de infra >$XXX/mês
+  - Complexidade de manutenção >10h/semana
+
+### 📚 Recursos de Aprendizado
+- Documentação oficial: [Link]
+- Tutorial favorito: [Link]
+- Stack Overflow: [Link de tag]
+- Discord/Community: [Link]
+
+### 🔄 Histórico de Atualizações
+- [Data]: Setup inicial - Versão [X.Y.Z]
+- [Data]: Upgrade para [Nova versão] - Tempo gasto: [Horas]
+```
+
+#### ✅ Checklist de Pesquisa de Tecnologias (Solo)
+
+```markdown
+[ ] Requisitos coletados (funcionalidades, escala, capacidade de manutenção)
+[ ] Experiência do desenvolvedor com tecnologias avaliada
+[ ] Investigação focada em maturidade e documentação
+[ ] Pesquisas específicas para solo developers realizadas
+[ ] 2-3 stacks recomendados (priorizando LTS/stable)
+[ ] Maturidade e comunidade verificadas
+[ ] Facilidade de manutenção avaliada (horas/semana estimadas)
+[ ] Facilidade de deploy verificada
+[ ] Longevidade analisada (LTS, anos de suporte)
+[ ] Stack escolhido e decisão justificada
+[ ] Plano de rollback documentado
+[ ] Documentado em docs/ARCHITECTURE.md
+[ ] Recursos de aprendizado salvos (docs, tutoriais, comunidade)
+```
+
+#### 🎯 Rationale (Simplicidade 3 - Solo em Produção)
+
+**Por quê esta etapa é CRÍTICA para solo developers?**
+
+1. ✅ **Você é Único Ponto de Falha**: Stack complexo = risco de não conseguir manter
+2. ✅ **Sem Backup de Equipe**: Não tem quem perguntar se travar em bug obscuro
+3. ✅ **Tempo é Limitado**: Manutenção deve ser <10h/semana para ser sustentável
+4. ✅ **Longo Prazo**: Stack deve funcionar por 5+ anos sem grandes migrações
+5. ✅ **Conhecimento Específico**: Tecnologias devem ter documentação e comunidade fortes
+6. ✅ **Custo-Benefício**: Stack experimental pode custar meses de retrabalho
+
+**Mensagem para IAs (Solo Developer)**:
+> "Para solo developers em produção, PRIORIZE MATURIDADE sobre features. Um framework estável com comunidade ativa é 10x melhor que o mais novo framework com recursos avançados. Lembre-se: o desenvolvedor vai manter isso SOZINHO por ANOS."
+
+**Regra de Ouro (Solo)**:
+> **"Stack deve ser BORING (chato). Tecnologias maduras, previsíveis e bem documentadas. Inovação vem das funcionalidades, não do stack."**
+
+📖 **Conceito "Choose Boring Technology"**: Ver artigo clássico de Dan McKinley sobre por quê escolher tecnologias maduras é estratégia vencedora para times pequenos.
+
+---
+
+### 1️⃣.8️⃣ **Planejamento e Organização com Sprints** [OBRIGATÓRIO ANTES DE IMPLEMENTAR]
+
+> **CRÍTICO**: Antes de escrever código, a IA **DEVE** criar plano estruturado, definir sprints curtos, organizar tarefas em TASKS.md.
+
+#### 🎯 Obrigatório para IA (Solo Developer)
+
+A IA DEVE:
+1. ✅ Criar/atualizar **docs/TASKS.md** com sprints de 1-3 dias
+2. ✅ Quebrar funcionalidades em **tarefas de 1-4h** (máximo)
+3. ✅ Documentar **arquitetura simples** em docs/ARCHITECTURE.md
+4. ✅ Identificar **bloqueios** antes de começar
+5. ✅ Priorizar tarefas por **valor/esforço** (quick wins primeiro)
+
+#### 📋 Estrutura Mínima de TASKS.md (Solo)
+
+```markdown
+# Tasks - [Projeto]
+
+**Status**: [Feature atual]
+**Sprint Atual**: Sprint N (DD/MM - DD/MM)
+
+## Sprint N: [Objetivo] 
+
+**Meta**: [Entregável testável]
+
+- [ ] Tarefa N.1: [Descrição clara] (Estimativa: 2h, Prioridade: Alta)
+- [ ] Tarefa N.2: [Descrição clara] (Estimativa: 1h, Dependência: N.1)
+
+## Backlog
+
+- [ ] Feature futura 1 (Sprint N+1)
+- [ ] Feature futura 2 (Sprint N+2)
+
+## Bloqueios
+
+- [ ] Dúvida: [Descrição] - Precisa resposta do desenvolvedor
+```
+
+#### 🚀 Específico para Solo (Simplicidade 3)
+
+**Planejamento ágil solo**:
+- ✅ **Sprints curtos**: 1-3 dias (não mais que isso)
+- ✅ **Tarefas pequenas**: 1-4h por tarefa (foco e progresso visível)
+- ✅ **MVP mindset**: Funcionalidade mínima testável por sprint
+- ✅ **Documentação JIT** (Just-In-Time): Documentar só o necessário
+- ✅ **Sem cerimônias**: Apenas atualizar TASKS.md diariamente
+
+**Análise custo-benefício (Solo)**:
+- ⏱️ Tempo para planejar sprint (3 dias): ~30-45 min
+- ⏱️ Tempo economizado (evitando retrabalho): ~2-4 horas
+- 💰 ROI: 3x-5x (vale MUITO a pena)
+
+**Quick wins primeiro**:
+```
+Matriz Valor/Esforço:
+
+Alto Valor, Baixo Esforço → SPRINT 1 (Quick Wins) ⭐
+Alto Valor, Alto Esforço → SPRINT 2-3 (Planeje bem)
+Baixo Valor, Baixo Esforço → BACKLOG (Se sobrar tempo)
+Baixo Valor, Alto Esforço → NEVER (Não faça)
+```
+
+**Arquitetura simplificada**:
+```markdown
+## docs/ARCHITECTURE.md (Solo - Mínimo)
+
+### Estrutura
+- src/ - Código principal
+- tests/ - Testes (quando houver)
+- docs/ - Documentação
+
+### Stack
+- [Framework principal]: [Por quê escolhido - 1 linha]
+- [Banco de dados]: [Por quê escolhido - 1 linha]
+
+### Fluxo Principal
+[Diagrama ASCII ou 3-5 passos]
+
+DONE. Não complique.
+```
+
+#### ⏱️ Tempo Estimado (Solo)
+
+- **Feature pequena**: ~15-30 min de planejamento
+- **Feature média**: ~30-60 min de planejamento
+- **Projeto novo**: ~1-2 horas de setup inicial
+
+**ROI Solo**: Cada 30 min de planejamento economiza 2-3 horas de código mal estruturado
+
+#### 📊 Checklist Obrigatório (Solo)
+
+```markdown
+[ ] 1. Li documentação existente (README, REQUIREMENTS, TASKS)
+[ ] 2. Criei sprint atual (1-3 dias) com objetivo claro
+[ ] 3. Quebrei em tarefas de 1-4h
+[ ] 4. Identifiquei bloqueios/dúvidas
+[ ] 5. Documentei arquitetura mínima (se projeto novo)
+[ ] ✅ PLANEJAMENTO COMPLETO: Pode codificar
+```
+
+**Regra de Ouro Solo**:
+> "Se você não consegue explicar seu plano em 5 minutos, ele está complexo demais. Simplifique."
+
+**Mensagem para IAs (Solo Dev)**:
+> "Solo developer não tem tempo para planning meetings. Mas PRECISA de organização. Crie sprints curtos (1-3 dias), tarefas pequenas (1-4h), documentação mínima. 30 minutos de planejamento economizam 3 horas de retrabalho. Organize-se, mas não se perca em cerimônias desnecessárias."
 
 ---
 
@@ -2428,6 +3618,41 @@ Opções: A) [opção A] | B) [opção B] | C) [opção C]
 → Resultado: Implementação em 2h ao invés de 5h (economia de 60%)
 ```
 
+#### 🔀 **Princípio de Opções Paralelas (Multi-Choice)**
+
+[Content: Same core as Protocol 1 PT with solo-specific adaptations]
+
+**[ESPECÍFICO PARA SIMPLICIDADE 3 - SOLO]**:
+> "Para solo developers, opções paralelas são um investimento de tempo que pode valer a pena A LONGO PRAZO. Pergunte-se: 'Vou querer trocar entre essas visualizações com frequência?' Se sim, implemente ambas. Se não, escolha uma por agora e adicione a segunda DEPOIS se necessário. Priorize features que você realmente usará. Não gaste 2h implementando opção que usará 1x por ano."
+
+**Análise Custo-Benefício (Solo)**:
+```markdown
+**Antes de implementar opções paralelas, responda**:
+
+1. **Frequência de uso**: Vou alternar entre opções regularmente?
+   - ✅ Sim, diariamente/semanalmente → Vale a pena
+   - ❌ Não, raramente → Escolher uma por agora
+
+2. **Custo de implementação**: Quanto tempo adicional?
+   - ✅ <30 min → Baixo custo, faça
+   - ⚠️  30-60 min → Médio, avaliar benefício
+   - ❌ >60 min → Alto custo, priorizar feature principal
+
+3. **Manutenção futura**: Vou ter que testar/documentar 2x mais?
+   - ✅ Sim → Certifique-se que vale a pena
+   - ❌ Opções são independentes → Menos overhead
+
+4. **Feedback de usuários**: Usuários pediram opções múltiplas?
+   - ✅ Sim → Implementar ambas agora
+   - ❌ Não → Esperar feedback, adicionar depois
+```
+
+**Estratégia Solo "MVP First"**:
+1. Implementar opção principal (mais comum) PRIMEIRO
+2. Lançar e coletar feedback
+3. Se usuários pedirem opção alternativa, adicionar DEPOIS
+4. Evita trabalho especulativo (pode nunca ser necessário)
+
 **Por quê?**: Evita refatorações, economiza tempo, garante código consistente com a base existente.
 
 ---
@@ -2495,6 +3720,18 @@ def read_file_safe(path: str) -> Optional[str]:
 # ❌ RUIM: Duplicar código em cada módulo
 # (repete try/except 20 vezes)
 ```
+
+#### 💬 **Comentários de Código Obrigatórios**
+
+> **CRÍTICO**: Todo código implementado **DEVE** ser comentado quando a linguagem de programação permitir comentários.
+
+[Content: Same extensive section as Protocol 1 - code comments guidelines, examples, etc.]
+
+**Mensagem para IAs**:
+> "Ao gerar código, SEMPRE adicione comentários explicativos. Comente o 'por quê', não apenas o 'o quê'. Um código bem comentado vale 10x mais que código limpo sem comentários."
+
+**[ESPECÍFICO PARA SIMPLICIDADE 3 - SOLO]**:
+> "Para solo developers, comentários são sua 'memória externa'. Você esquecerá por quê tomou certas decisões em 3 meses. Comente para o 'você do futuro'. Documente especialmente: decisões técnicas não-óbvias, workarounds temporários, e por quê escolheu biblioteca X ao invés de Y. Seu 'eu futuro' agradecerá."
 
 #### 🌳 **Analogia da Árvore de Importações**
 

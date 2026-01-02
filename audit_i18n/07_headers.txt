@@ -1,0 +1,14 @@
+src/gui/batch_dialog.py:344:        self.table_steps.setHorizontalHeaderLabels([
+src/gui/results_tree.py:43:        self.setHeaderLabels(["Match"])
+src/gui/widgets/json_tree_widget.py:56:        self.setHeaderLabels([tr("json_tree_widget.header_key"), tr("json_tree_widget.header_value"), tr("json_tree_widget.header_type")])
+src/gui/widgets/file_list_table_manager.py:76:        self.table.setHorizontalHeaderLabels([
+src/gui/panels/results_tree.py:128:        self.setHeaderLabels(["Match"])
+src/gui/panels/regex_insert_panel.py:158:        self.table_registers.setHorizontalHeaderLabels([tr("regex_insert.table_register"), tr("regex_insert.table_value"), tr("regex_insert.table_source")])
+src/gui/statistics_dialog.py:110:        self.removal_table.setHorizontalHeaderLabels([
+src/gui/statistics_dialog.py:139:        self.reference_table.setHorizontalHeaderLabels([tr("statistics_dialog.header_metric"), tr("statistics_dialog.header_value")])
+src/gui/calculator_dock.py:131:        self.table.setHorizontalHeaderLabels([
+src/gui/plugin_manager_dialog.py:61:        self.table.setHorizontalHeaderLabels(
+src/gui/formula_dock.py:213:        self.tree_steps.setHeaderLabels(['Step', 'Expression'])
+src/gui/shortcut_customizer.py:149:        self.table.setHorizontalHeaderLabels([
+src/gui/history_dock.py:66:        self.tree_history.setHeaderLabels([tr("history_dock.header_time"), tr("history_dock.header_operation"), tr("history_dock.header_details"), tr("history_dock.header_files")])
+src/gui/shortcuts_dialog.py:86:        self.table.setHorizontalHeaderLabels([

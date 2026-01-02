@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBu
 from PySide6.QtCore import Qt
 
 from .progress_bar_widget import ProgressBarWidget
+from ...i18n.translator import tr, tooltip_tr
 
 
 class ProgressManager(QWidget):

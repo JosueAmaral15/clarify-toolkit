@@ -41,7 +41,7 @@ from PySide6.QtCore import Signal
 from src.core.set_operation_executor import SetOperationExecutor
 from src.core.result_exporter import ResultExporter
 from src.i18n import tooltip_tr
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 from src.accessibility_manager import AccessibilityManager
 from .base_dock import BaseDock
 from .widgets import FileSelectionWidget, OperationOptionsWidget

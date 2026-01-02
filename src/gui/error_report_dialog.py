@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QIcon, QFont
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class ErrorReportDialog(QDialog):

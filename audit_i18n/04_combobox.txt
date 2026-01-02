@@ -1,0 +1,4 @@
+src/gui/operation_preview_dialog.py:117:            self.slot_combo.addItem("(No slots available)")
+src/gui/history_dialog.py:100:            self.list_widget.addItem("(No operations in history)")
+src/gui/presets_dialog.py:103:            self.list_widget.addItem("(No presets saved)")
+src/gui/google_translate_dock.py:150:        self.combo_from_lang.addItem("Auto-detect", "auto")

@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.memory_register import MemoryRegister
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class RegexInsertPanel(QWidget):

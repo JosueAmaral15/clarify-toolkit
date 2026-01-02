@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                 QGroupBox)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
-from src.i18n.translator import tr
+from src.i18n.translator import tr, tooltip_tr
 import json
 
 

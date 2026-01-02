@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 from ..gui.progress import ProgressManager
 from ..gui.panels import SearchReplacePanel, InsertPanel
+from ..i18n.translator import tr
 
 
 class UIBuilder:
