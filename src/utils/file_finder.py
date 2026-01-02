@@ -39,11 +39,11 @@ class AdvancedFileSearchDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Search directory
-        dir_group = QGroupBox("Search Directory")
+        dir_group = QGroupBox(tr("file_finder.group_search_directory"))
         dir_layout = QHBoxLayout()
         self.ed_directory = QLineEdit(self.initial_dir)
         self.ed_directory.setPlaceholderText(tr("file_finder.placeholder_directory"))
-        btn_browse = QPushButton("Browse...")
+        btn_browse = QPushButton(tr("file_finder.btn_browse"))
         btn_browse.clicked.connect(self._browse_directory)
         dir_layout.addWidget(self.ed_directory)
         dir_layout.addWidget(btn_browse)
@@ -51,7 +51,7 @@ class AdvancedFileSearchDialog(QDialog):
         layout.addWidget(dir_group)
         
         # Filters group
-        filter_group = QGroupBox("Search Filters")
+        filter_group = QGroupBox(tr("file_finder.group_search_filters"))
         filter_layout = QVBoxLayout()
         
         # Filename pattern (regex)
@@ -116,16 +116,21 @@ class AdvancedFileSearchDialog(QDialog):
         layout.addWidget(filter_group)
         
         # Search button
-        btn_search = QPushButton("Search")
+        btn_search = QPushButton(tr("file_finder.btn_search"))
         btn_search.clicked.connect(self._perform_search)
         layout.addWidget(btn_search)
         
         # Results table
-        results_group = QGroupBox("Results")
+        results_group = QGroupBox(tr("file_finder.group_results"))
         results_layout = QVBoxLayout()
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Name", "Path", "Size (MB)", "Modified"])
+        self.table.setHorizontalHeaderLabels([
+            tr("file_finder.header_name"),
+            tr("file_finder.header_path"),
+            tr("file_finder.header_size"),
+            tr("file_finder.header_modified")
+        ])
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSortingEnabled(True)
@@ -143,9 +148,9 @@ class AdvancedFileSearchDialog(QDialog):
         
         # Buttons
         btn_layout = QHBoxLayout()
-        btn_export = QPushButton("Export to File...")
+        btn_export = QPushButton(tr("file_finder.btn_export"))
         btn_export.clicked.connect(self._export_results)
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr("file_finder.btn_close"))
         btn_close.clicked.connect(self.accept)
         btn_layout.addWidget(btn_export)
         btn_layout.addStretch()
