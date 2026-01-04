@@ -1008,6 +1008,10 @@ class FileExplorerDock(BaseDock):
             # ENHANCEMENT: Store search results for view synchronization
             self.last_search_results = matches_dict
             self.last_was_search = True
+            
+            # BUGFIX v2.9.119: If user is in table view, also populate table with search results
+            if self._user_manually_changed_view and self.results_stack.currentIndex() == 1:
+                self._sync_search_to_table()
             logger.debug(f"Stored {len(matches_dict)} search results for view sync")
 
             # Update statistics (v2.9.117 - B.4)
