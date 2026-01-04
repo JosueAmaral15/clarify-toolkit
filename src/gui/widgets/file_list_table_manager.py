@@ -135,7 +135,9 @@ class FileListTableManager(QWidget):
             
             # Name
             name = file_info.get('name', '')
-            self.table.setItem(row, self.COL_NAME, QTableWidgetItem(name))
+            name_item = QTableWidgetItem(name)
+            name_item.setToolTip(f"{tr('table_manager.tooltip_name')}: {name}")
+            self.table.setItem(row, self.COL_NAME, name_item)
             
             # Size
             size = file_info.get('size', 0)
@@ -154,6 +156,7 @@ class FileListTableManager(QWidget):
             
             size_item = QTableWidgetItem(size_str)
             size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            size_item.setToolTip(f"{tr('table_manager.tooltip_size')}: {size_str} ({size} bytes)" if not is_dir else tr('table_manager.tooltip_size_dir'))
             self.table.setItem(row, self.COL_SIZE, size_item)
             
             # Modified time
@@ -162,18 +165,20 @@ class FileListTableManager(QWidget):
                 mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 mtime_str = str(mtime) if mtime else "-"
-            self.table.setItem(row, self.COL_MODIFIED, QTableWidgetItem(mtime_str))
+            mtime_item = QTableWidgetItem(mtime_str)
+            mtime_item.setToolTip(f"{tr('table_manager.tooltip_modified')}: {mtime_str}")
+            self.table.setItem(row, self.COL_MODIFIED, mtime_item)
             
             # Permissions
             perms = file_info.get('permissions', '')
-            self.table.setItem(row, self.COL_PERMISSIONS, QTableWidgetItem(perms))
+            perms_item = QTableWidgetItem(perms)
+            perms_item.setToolTip(f"{tr('table_manager.tooltip_permissions')}: {perms}")
+            self.table.setItem(row, self.COL_PERMISSIONS, perms_item)
             
             # Path
             path = file_info.get('path', '')
             path_item = QTableWidgetItem(path)
-            # Add tooltip for long paths (v2.9.117)
-            if len(path) > 80:
-                path_item.setToolTip(path)
+            path_item.setToolTip(f"{tr('table_manager.tooltip_path')}: {path}")
             self.table.setItem(row, self.COL_PATH, path_item)
         
         self.table.setSortingEnabled(True)

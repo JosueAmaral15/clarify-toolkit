@@ -2402,5 +2402,11 @@
     "header_version": "Versão",
     "header_author": "Autor",
     "header_description": "Descrição"
-  }
+  },
+  "table_manager.tooltip_name": "Nome",
+  "table_manager.tooltip_size": "Tamanho",
+  "table_manager.tooltip_size_dir": "Tamanho: - (diretório)",
+  "table_manager.tooltip_modified": "Modificado",
+  "table_manager.tooltip_permissions": "Permissões",
+  "table_manager.tooltip_path": "Caminho"
 }
