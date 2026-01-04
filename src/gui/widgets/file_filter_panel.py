@@ -124,11 +124,19 @@ class FileFilterPanel(QGroupBox):
         self.chk_mtime_before_enabled = QCheckBox(tr("file_filter.enable"))
         grid.addWidget(self.chk_mtime_before_enabled, 4, 3)
         
-        # Row 5: Extensions filter
+        # Row 5: Extensions filter with checkbox
         grid.addWidget(QLabel(tr("file_filter.extensions")), 5, 0)
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setPlaceholderText(tr("file_filter.placeholder_extensions"))
-        grid.addWidget(self.ed_extensions, 5, 1, 1, 3)
+        grid.addWidget(self.ed_extensions, 5, 1, 1, 2)
+        
+        self.chk_use_ext_filter = QCheckBox(tr("file_list.chk_use_ext_filter"))
+        self.chk_use_ext_filter.setChecked(False)
+        self.chk_use_ext_filter.setToolTip(tr("file_list.tooltip_use_ext_filter"))
+        grid.addWidget(self.chk_use_ext_filter, 5, 3)
+        
+        # Enable/disable extensions field based on checkbox
+        self.ed_extensions.setEnabled(False)
         
         # Row 6: Depth limit
         grid.addWidget(QLabel(tr("file_filter.max_depth")), 6, 0)
@@ -185,6 +193,7 @@ class FileFilterPanel(QGroupBox):
         self.chk_mtime_after_enabled.toggled.connect(lambda: self.filters_changed.emit())
         self.chk_mtime_before_enabled.toggled.connect(lambda: self.filters_changed.emit())
         self.ed_extensions.textChanged.connect(lambda: self.filters_changed.emit())
+        self.chk_use_ext_filter.toggled.connect(lambda checked: self._on_ext_filter_toggled(checked))
         self.spn_depth.valueChanged.connect(lambda: self.filters_changed.emit())
         self.chk_exclude_node_modules.toggled.connect(lambda: self.filters_changed.emit())
         self.chk_exclude_git.toggled.connect(lambda: self.filters_changed.emit())
@@ -192,6 +201,11 @@ class FileFilterPanel(QGroupBox):
         self.chk_exclude_dist.toggled.connect(lambda: self.filters_changed.emit())
         self.chk_exclude_build.toggled.connect(lambda: self.filters_changed.emit())
         self.ed_exclude_custom.textChanged.connect(lambda: self.filters_changed.emit())
+    
+    def _on_ext_filter_toggled(self, checked: bool) -> None:
+        """Handle extension filter checkbox toggle."""
+        self.ed_extensions.setEnabled(checked)
+        self.filters_changed.emit()
     
     # Public API
     
@@ -215,7 +229,8 @@ class FileFilterPanel(QGroupBox):
                 'after': self.dte_mtime_after.date().toPython() if self.chk_mtime_after_enabled.isChecked() else None,
                 'before': self.dte_mtime_before.date().toPython() if self.chk_mtime_before_enabled.isChecked() else None
             },
-            'extensions': self._parse_extensions(self.ed_extensions.text()),
+            'extensions': self._parse_extensions(self.ed_extensions.text()) if self.chk_use_ext_filter.isChecked() else [],
+            'use_ext_filter': self.chk_use_ext_filter.isChecked(),
             'depth': self.spn_depth.value(),
             'exclude_dirs': self._get_excluded_dirs()
         }

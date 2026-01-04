@@ -165,15 +165,6 @@ class FileExplorerDock(BaseDock):
         self.chk_sort_results.setChecked(False)
         self.chk_sort_results.setToolTip(tr("file_list.tooltip_sort_results"))
 
-        # Extension filter (from Search/Replace) - CRITICAL FEATURE
-        self.chk_use_ext_filter = QCheckBox(tr("file_list.chk_use_ext_filter"))
-        self.chk_use_ext_filter.setChecked(True)
-        self.chk_use_ext_filter.setToolTip(tr("file_list.tooltip_use_ext_filter"))
-
-        self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
-        self.ed_extensions.setPlaceholderText(tr("file_list.placeholder_extensions"))
-        self.ed_extensions.setToolTip(tr("file_list.tooltip_extensions"))
-
         # Include/Exclude globs (from Search/Replace) - CRITICAL FEATURE
         self.ed_inc = QLineEdit()
         self.ed_inc.setPlaceholderText(tr("file_list.placeholder_include_globs"))
@@ -304,7 +295,6 @@ class FileExplorerDock(BaseDock):
 
         # Update checkboxes
         self.chk_sort_results.setText(tr("file_list.chk_sort_results"))
-        self.chk_use_ext_filter.setText(tr("file_list.chk_use_ext_filter"))
         self.chk_word_wrap.setText(tr("file_list.chk_word_wrap"))
         if hasattr(self, "chk_selection_mode"):
             self.chk_selection_mode.setText(tr("file_list.chk_selection_mode"))
@@ -321,7 +311,6 @@ class FileExplorerDock(BaseDock):
         self.combo_type.setCurrentIndex(current_index)
 
         # Update placeholders
-        self.ed_extensions.setPlaceholderText(tr("file_list.placeholder_extensions"))
         self.ed_inc.setPlaceholderText(tr("file_list.placeholder_include_globs"))
 
         # Update tooltips
@@ -382,27 +371,19 @@ class FileExplorerDock(BaseDock):
         opts2_layout.addStretch()
         section1_layout.addLayout(opts2_layout)
 
-        # Options row 3: Extension filter (from Search/Replace)
-        ext_row = QHBoxLayout()
-        ext_row.addWidget(self.chk_use_ext_filter)
-        ext_row.addWidget(QLabel(tr("file_list.lbl_extensions")))
-        ext_row.addWidget(self.ed_extensions)
-        ext_row.addStretch()
-        section1_layout.addLayout(ext_row)
-
-        # Options row 4: Include globs (from Search/Replace)
+        # Options row 3: Include globs (from Search/Replace)
         inc_row = QHBoxLayout()
         inc_row.addWidget(QLabel(tr("file_list.lbl_include_globs")))
         section1_layout.addLayout(inc_row)
         section1_layout.addWidget(self.ed_inc)
 
-        # Options row 5: Exclude globs (from Search/Replace)
+        # Options row 4: Exclude globs (from Search/Replace)
         exc_row = QHBoxLayout()
         exc_row.addWidget(QLabel(tr("file_list.lbl_exclude_globs")))
         section1_layout.addLayout(exc_row)
         section1_layout.addWidget(self.ed_exc)
 
-        # Options row 6: Type filter + Selection mode
+        # Options row 5: Type filter + Selection mode
         opts3_layout = QHBoxLayout()
         opts3_layout.addWidget(self.lbl_type)
         opts3_layout.addWidget(self.combo_type)
@@ -1160,17 +1141,12 @@ class FileExplorerDock(BaseDock):
         filters = {}
 
         # ============================================================================
-        # EXTENSION FILTER (from Search/Replace) - IMPLEMENTATION
+        # EXTENSION FILTER (from Advanced Filters Panel) - IMPLEMENTATION
         # ============================================================================
-        use_ext_filter = self.chk_use_ext_filter.isChecked()
-        extensions_text = self.ed_extensions.text().strip() if use_ext_filter else ""
+        use_ext_filter = panel_filters.get("use_ext_filter", False)
 
-        if use_ext_filter and extensions_text:
-            # Parse extensions (comma or semicolon separated)
-            extensions = [ext.strip() for ext in re.split(r"[;,]", extensions_text) if ext.strip()]
-            # Ensure extensions start with dot
-            extensions = [ext if ext.startswith(".") else f".{ext}" for ext in extensions]
-            filters["extensions"] = extensions
+        if use_ext_filter and panel_filters.get("extensions"):
+            filters["extensions"] = panel_filters["extensions"]
 
         # ============================================================================
         # INCLUDE/EXCLUDE GLOBS (from Search/Replace) - IMPLEMENTATION
@@ -1411,21 +1387,44 @@ class FileExplorerDock(BaseDock):
         QMessageBox.information(self, tr("file_list.cleared_title"), tr("file_list.cleared_message"))
 
     def _show_preview_tooltip(self, item):
-        """
-        Show preview tooltip on hover (NEW from Advanced File Search).
+         """
+         Show preview tooltip on hover - displays the SPECIFIC cell value.
+         
+         Args:
+             item: QTableWidgetItem being hovered
+         """
+         if item is None:
+             return
 
-        Args:
-            item: QTableWidgetItem being hovered
-        """
-        if item is None:
-            return
+         row = item.row()
+         col = item.column()
 
-        row = item.row()
-        # Get full path from column 4 (Path)
-        path_item = self.table_manager.table.item(row, 4)
-        if path_item:
-            full_path = path_item.text()
-            item.setToolTip(full_path)
+         # Get the value from the CURRENT cell (not always Path!)
+         cell_value = item.text()
+
+         # Column 0: Name - show full name if truncated
+         if col == 0:
+             item.setToolTip(cell_value)
+
+         # Column 1: Size - show full formatted size
+         elif col == 1:
+             item.setToolTip(cell_value)
+
+         # Column 2: Modified - show full datetime
+         elif col == 2:
+             item.setToolTip(cell_value)
+
+         # Column 3: Permissions - show full permissions
+         elif col == 3:
+             item.setToolTip(cell_value)
+
+         # Column 4: Path - show full path
+         elif col == 4:
+             item.setToolTip(cell_value)
+
+         # Default: show cell value
+         else:
+             item.setToolTip(cell_value)
 
     def _accept_dialog(self):
         """Accept dialog and collect selected files (NEW - dialog mode)."""
