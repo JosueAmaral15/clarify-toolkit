@@ -100,6 +100,7 @@ class FileExplorerDock(BaseDock):
         self.last_search_results = {}  # matches_dict for tree view
         self.last_browse_results = []  # files_data for table view
         self.last_was_search = False  # Track if last operation was search or browse
+        self._user_manually_changed_view = False  # Track if user manually switched view (v2.9.118 bugfix)
 
         self._load_preferences()
 
@@ -643,7 +644,11 @@ class FileExplorerDock(BaseDock):
         Enhancement: Synchronize data between views when switching.
         - If switching to Table view after Search: populate table with matched files
         - Data from last operation is preserved in memory for seamless switching
+        - Marks that user manually changed view to prevent auto-switching (v2.9.118 bugfix)
         """
+        # Mark that user manually changed the view
+        self._user_manually_changed_view = True
+        
         view_index = self.combo_view_mode.itemData(index)
         self.results_stack.setCurrentIndex(view_index)
 
@@ -971,11 +976,13 @@ class FileExplorerDock(BaseDock):
             # ============================================================================
             # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
             # ============================================================================
-            # Switch to tree view (but respect manual override)
+            # Switch to tree view (but respect manual override - v2.9.118 bugfix)
             # Only auto-switch if user hasn't manually selected a view
-            if self.combo_view_mode.currentIndex() != 0:
+            if not self._user_manually_changed_view:
                 self.results_stack.setCurrentIndex(0)
+                self.combo_view_mode.blockSignals(True)  # Prevent triggering _switch_view_mode
                 self.combo_view_mode.setCurrentIndex(0)  # Sync combo
+                self.combo_view_mode.blockSignals(False)
 
             # Build matches dictionary for ResultsTree
             matches_dict = {}
@@ -1048,11 +1055,13 @@ class FileExplorerDock(BaseDock):
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
             logger.info(f"Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
-            # Switch to table view (but respect manual override)
+            # Switch to table view (but respect manual override - v2.9.118 bugfix)
             # Only auto-switch if user hasn't manually selected a view
-            if self.combo_view_mode.currentIndex() != 1:
+            if not self._user_manually_changed_view:
                 self.results_stack.setCurrentIndex(1)
+                self.combo_view_mode.blockSignals(True)  # Prevent triggering _switch_view_mode
                 self.combo_view_mode.setCurrentIndex(1)  # Sync combo
+                self.combo_view_mode.blockSignals(False)
             # Execute browse with UnifiedFileExplorerExecutor
             result = self.executor.execute_browse(
                 directory=directory, show_hidden=show_hidden, recursive=recursive, filters=filters
