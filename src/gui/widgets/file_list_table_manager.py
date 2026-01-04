@@ -136,7 +136,7 @@ class FileListTableManager(QWidget):
             # Name
             name = file_info.get('name', '')
             name_item = QTableWidgetItem(name)
-            name_item.setToolTip(name)
+            name_item.setToolTip(name)  # Show full name if truncated
             self.table.setItem(row, self.COL_NAME, name_item)
             
             # Size
@@ -156,33 +156,37 @@ class FileListTableManager(QWidget):
             
             size_item = QTableWidgetItem(size_str)
             size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            # Tooltip: Show formatted size + raw bytes for files, just "-" for dirs
+            # Tooltip: Just show the size value (user requirement: value only, no label)
             if is_dir:
                 size_item.setToolTip("-")
             else:
-                size_item.setToolTip(f"{size_str} ({size} bytes)")
+                # Show human-readable + raw bytes
+                size_item.setToolTip(f"{size_str} ({size:,} bytes)")
             self.table.setItem(row, self.COL_SIZE, size_item)
             
             # Modified time
             mtime = file_info.get('mtime')
             if isinstance(mtime, datetime):
                 mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+                # Tooltip: Show full datetime with milliseconds if available
+                mtime_tooltip = mtime.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Include milliseconds
             else:
                 mtime_str = str(mtime) if mtime else "-"
+                mtime_tooltip = mtime_str
             mtime_item = QTableWidgetItem(mtime_str)
-            mtime_item.setToolTip(mtime_str)
+            mtime_item.setToolTip(mtime_tooltip)  # Full datetime
             self.table.setItem(row, self.COL_MODIFIED, mtime_item)
             
             # Permissions
             perms = file_info.get('permissions', '')
             perms_item = QTableWidgetItem(perms)
-            perms_item.setToolTip(perms)
+            perms_item.setToolTip(perms)  # Show full permissions string
             self.table.setItem(row, self.COL_PERMISSIONS, perms_item)
             
             # Path
             path = file_info.get('path', '')
             path_item = QTableWidgetItem(path)
-            path_item.setToolTip(path)
+            path_item.setToolTip(path)  # Show full path (can be very long)
             self.table.setItem(row, self.COL_PATH, path_item)
         
         self.table.setSortingEnabled(True)
