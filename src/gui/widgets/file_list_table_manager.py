@@ -242,6 +242,45 @@ class FileListTableManager(QWidget):
         
         menu.exec(self.table.viewport().mapToGlobal(position))
     
+    def _open_in_editor(self):
+        """Open selected file(s) in Clarify editor."""
+        selected_rows = sorted(set(item.row() for item in self.table.selectedItems()))
+        
+        # Get main window reference
+        main_window = self._get_main_window()
+        if not main_window:
+            QMessageBox.warning(
+                self,
+                tr("table_manager.error_title"),
+                tr("table_manager.error_no_main_window")
+            )
+            return
+        
+        for row in selected_rows:
+            path_item = self.table.item(row, self.COL_PATH)
+            if path_item:
+                filepath = path_item.text()
+                # Only open files, not directories
+                if os.path.isfile(filepath):
+                    try:
+                        main_window.open_file_in_editor(filepath)
+                    except Exception as e:
+                        QMessageBox.warning(
+                            self,
+                            tr("table_manager.error_title"),
+                            tr("table_manager.error_open_editor").format(filepath, e)
+                        )
+                        break
+    
+    def _get_main_window(self):
+        """Get reference to main window."""
+        widget = self
+        while widget is not None:
+            if hasattr(widget, 'open_file_in_editor'):
+                return widget
+            widget = widget.parent()
+        return None
+    
     def _open_in_file_manager(self):
         """Open selected file(s) location in file manager."""
         selected_rows = sorted(set(item.row() for item in self.table.selectedItems()))

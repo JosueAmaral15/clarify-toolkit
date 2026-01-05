@@ -235,9 +235,11 @@ class EditorDock(BaseDock):
         ])
         dialog.setFileMode(QFileDialog.ExistingFile)
         
-        # Add checkbox for edit-only mode
+        # Add checkbox for edit-only mode using option widget
         chk_edit_only = QCheckBox(tr("editor.chk_edit_only"))
-        dialog.layout().addWidget(chk_edit_only)
+        layout = dialog.layout()
+        if layout:
+            layout.addWidget(chk_edit_only, layout.rowCount(), 0, 1, -1)
         
         if not dialog.exec_():
             return
@@ -247,7 +249,7 @@ class EditorDock(BaseDock):
             return
         
         file_path = file_paths[0]
-        edit_only = chk_edit_only.isChecked()
+        edit_only = chk_edit_only.isChecked() if layout else False
         
         # Check if already open
         for i in range(self.tab_widget.count()):

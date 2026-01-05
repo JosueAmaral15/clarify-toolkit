@@ -424,6 +424,10 @@ class ResultsTree(QTreeWidget):
         menu.addSeparator()
 
         # Open file(s) actions
+        open_editor_action = menu.addAction("📝 Open in Editor")
+        open_editor_action.setEnabled(has_selection)
+        open_editor_action.triggered.connect(self._open_in_editor)
+        
         open_file_action = menu.addAction("📂 Open File")
         open_file_action.setEnabled(has_selection)
         open_file_action.triggered.connect(self._open_selected_files)
@@ -506,6 +510,67 @@ class ResultsTree(QTreeWidget):
                 total_matches = sum(len(items) for items in self._matches_data.values())
                 self._status_label.setText(f"✅ Copied all results ({total_matches} matches) to clipboard")
                 QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+
+    def _open_in_editor(self):
+        """Open selected files in Clarify editor."""
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+        
+        # Get main window reference
+        main_window = self._get_main_window()
+        if not main_window:
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Could not find main window to open editor"
+            )
+            return
+        
+        # Collect unique file paths from selection
+        file_paths = set()
+        for item in selected_items:
+            # Skip summary header
+            if item.text(0).startswith("📊 Results:"):
+                continue
+            
+            # If it's a file item (no parent), use it directly
+            if not item.parent():
+                file_paths.add(item.text(0))
+            # If it's a match item, get parent file path
+            else:
+                parent_text = item.parent().text(0)
+                if not parent_text.startswith("📊"):
+                    file_paths.add(parent_text)
+        
+        # Open each file in editor
+        opened_count = 0
+        for path in file_paths:
+            if os.path.isfile(path):
+                try:
+                    main_window.open_file_in_editor(path)
+                    opened_count += 1
+                except Exception as e:
+                    QMessageBox.warning(
+                        self,
+                        "Error",
+                        f"Could not open file in editor: {path}\n{e}"
+                    )
+                    break
+        
+        # Show feedback
+        if self._status_label and opened_count > 0:
+            self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor")
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+    
+    def _get_main_window(self):
+        """Get reference to main window."""
+        widget = self
+        while widget is not None:
+            if hasattr(widget, 'open_file_in_editor'):
+                return widget
+            widget = widget.parent()
+        return None
 
     def _open_selected_files(self):
         """Open selected files in system default application (v2.9.2)."""
