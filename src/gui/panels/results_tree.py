@@ -543,18 +543,23 @@ class ResultsTree(QTreeWidget):
                 if not parent_text.startswith("📊"):
                     file_paths.add(parent_text)
         
+        # Ensure dock_editor exists
+        if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
+            from src.gui.dock_factory import DockFactory
+            DockFactory.create_editor_dock(main_window)
+        
         # Open each file in editor
         opened_count = 0
         for path in file_paths:
             if os.path.isfile(path):
                 try:
-                    main_window.open_file_in_editor(path)
+                    main_window.dock_editor.open_file_path(path)
                     opened_count += 1
                 except Exception as e:
                     QMessageBox.warning(
                         self,
-                        "Error",
-                        f"Could not open file in editor: {path}\n{e}"
+                        tr("results_tree.error_title"),
+                        tr("results_tree.error_open_editor").format(path, str(e))
                     )
                     break
         
@@ -567,7 +572,7 @@ class ResultsTree(QTreeWidget):
         """Get reference to main window."""
         widget = self
         while widget is not None:
-            if hasattr(widget, 'open_file_in_editor'):
+            if hasattr(widget, 'dock_editor'):
                 return widget
             widget = widget.parent()
         return None

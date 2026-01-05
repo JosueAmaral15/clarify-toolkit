@@ -261,6 +261,11 @@ class FileListTableManager(QWidget):
             )
             return
         
+        # Ensure dock_editor exists
+        if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
+            from src.gui.dock_factory import DockFactory
+            DockFactory.create_editor_dock(main_window)
+        
         for row in selected_rows:
             path_item = self.table.item(row, self.COL_PATH)
             if path_item:
@@ -268,7 +273,7 @@ class FileListTableManager(QWidget):
                 # Only open files, not directories
                 if os.path.isfile(filepath):
                     try:
-                        main_window.open_file_in_editor(filepath)
+                        main_window.dock_editor.open_file_path(filepath)
                     except Exception as e:
                         QMessageBox.warning(
                             self,
@@ -281,7 +286,7 @@ class FileListTableManager(QWidget):
         """Get reference to main window."""
         widget = self
         while widget is not None:
-            if hasattr(widget, 'open_file_in_editor'):
+            if hasattr(widget, 'dock_editor'):
                 return widget
             widget = widget.parent()
         return None
