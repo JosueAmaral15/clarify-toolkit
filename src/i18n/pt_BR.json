@@ -1790,6 +1790,7 @@
   "status.paused": "⏸ Pausado",
   "status.running": "Executando...",
   "table_manager.action_copy_path": "Copiar Caminho",
+  "table_manager.action_open_editor": "Abrir no Editor",
   "table_manager.action_open_file_manager": "Abrir no Gerenciador de Arquivos",
   "table_manager.action_open_locations": "Abrir {} Localizações no Gerenciador de Arquivos",
   "table_manager.btn_export_csv": "Exportar para CSV...",
@@ -2381,6 +2382,8 @@
     "header_status": "Status"
   },
   "results_tree": {
+    "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
+    "error_title": "Erro",
     "header_match": "Correspondência"
   },
   "formula_dock": {

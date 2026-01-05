@@ -240,6 +240,11 @@ class FileListTableManager(QWidget):
         action_copy.triggered.connect(self._copy_path)
         menu.addAction(action_copy)
         
+        # Open in editor action
+        action_editor = QAction(tr("table_manager.action_open_editor"), self)
+        action_editor.triggered.connect(self._open_in_editor)
+        menu.addAction(action_editor)
+        
         menu.exec(self.table.viewport().mapToGlobal(position))
     
     def _open_in_editor(self):

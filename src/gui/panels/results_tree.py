@@ -522,8 +522,8 @@ class ResultsTree(QTreeWidget):
         if not main_window:
             QMessageBox.warning(
                 self,
-                "Error",
-                "Could not find main window to open editor"
+                tr("results_tree.error_title"),
+                tr("results_tree.error_no_main_window")
             )
             return
         

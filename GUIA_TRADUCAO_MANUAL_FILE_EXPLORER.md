@@ -1,3 +1,4 @@
+Teste
 # Guia de Tradução Manual - File Explorer
 
 ## 📋 Status
