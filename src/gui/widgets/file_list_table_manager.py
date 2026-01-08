@@ -164,17 +164,30 @@ class FileListTableManager(QWidget):
                 size_item.setToolTip(f"{size_str} ({size:,} bytes)")
             self.table.setItem(row, self.COL_SIZE, size_item)
             
-            # Modified time
+            # Modified time - convert Unix timestamp to readable format
             mtime = file_info.get('mtime')
-            if isinstance(mtime, datetime):
-                mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
-                # Tooltip: Show full datetime with milliseconds if available
-                mtime_tooltip = mtime.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Include milliseconds
+            if mtime:
+                if isinstance(mtime, (int, float)):
+                    # Convert Unix timestamp to datetime
+                    mtime_dt = datetime.fromtimestamp(mtime)
+                    # Display format: YYYY-MM-DD HH:MM:SS (intelligible for users)
+                    mtime_str = mtime_dt.strftime("%Y-%m-%d %H:%M:%S")
+                    # Tooltip: Show full datetime with day of week for context
+                    mtime_tooltip = mtime_dt.strftime("%A, %B %d, %Y at %I:%M:%S %p")
+                elif isinstance(mtime, datetime):
+                    # Already a datetime object
+                    mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
+                    mtime_tooltip = mtime.strftime("%A, %B %d, %Y at %I:%M:%S %p")
+                else:
+                    # Fallback for other formats
+                    mtime_str = str(mtime)
+                    mtime_tooltip = mtime_str
             else:
-                mtime_str = str(mtime) if mtime else "-"
-                mtime_tooltip = mtime_str
+                mtime_str = "-"
+                mtime_tooltip = "No modification time available"
+            
             mtime_item = QTableWidgetItem(mtime_str)
-            mtime_item.setToolTip(mtime_tooltip)  # Full datetime
+            mtime_item.setToolTip(mtime_tooltip)
             self.table.setItem(row, self.COL_MODIFIED, mtime_item)
             
             # Permissions
@@ -285,10 +298,14 @@ class FileListTableManager(QWidget):
     def _get_main_window(self):
         """Get reference to main window."""
         widget = self
+        print(f"[DEBUG] Starting search for main_window from {type(self).__name__}")
         while widget is not None:
+            print(f"[DEBUG] Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
             if hasattr(widget, 'dock_editor'):
+                print(f"[DEBUG] Found main_window: {type(widget).__name__}")
                 return widget
             widget = widget.parent()
+        print("[DEBUG] Could NOT find main_window - reached None")
         return None
     
     def _open_in_file_manager(self):

@@ -571,10 +571,14 @@ class ResultsTree(QTreeWidget):
     def _get_main_window(self):
         """Get reference to main window."""
         widget = self
+        print(f"[DEBUG] Starting search for main_window from {type(self).__name__}")
         while widget is not None:
+            print(f"[DEBUG] Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
             if hasattr(widget, 'dock_editor'):
+                print(f"[DEBUG] Found main_window: {type(widget).__name__}")
                 return widget
             widget = widget.parent()
+        print("[DEBUG] Could NOT find main_window - reached None")
         return None
 
     def _open_selected_files(self):

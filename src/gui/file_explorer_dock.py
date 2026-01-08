@@ -1090,6 +1090,10 @@ class FileExplorerDock(BaseDock):
             # ENHANCEMENT: Store browse results for view synchronization
             self.last_browse_results = files_data
             self.last_was_search = False
+            
+            # BUGFIX v2.9.119: If user is in tree view, also populate tree with browse results
+            if self._user_manually_changed_view and self.results_stack.currentIndex() == 0:
+                self._sync_browse_to_tree()
             logger.debug(f"Stored {len(files_data)} browse results for view sync")
 
             # Update statistics (v2.9.117 - B.4)

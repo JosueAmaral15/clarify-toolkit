@@ -477,19 +477,30 @@ class UnifiedFileExplorerExecutor(QObject):
                 logger.error(f"Invalid regex in replace: {pattern[:50]}", exc_info=True)
                 return (text, 0)  # Return original text unchanged
 
+            # BUG FIX: Escape backslashes in replacement string when NOT using regex mode
+            # This prevents "bad escape \S" errors when user input contains backslashes
+            # In regex mode, allow backreferences like \1, \2, \g<name>
+            if not use_regex:
+                # Escape backslashes to treat them literally (e.g., \S becomes \\S)
+                # This allows users to type literal backslashes without regex interpretation
+                safe_replacement = replacement.replace("\\", "\\\\")
+            else:
+                # In regex mode, keep backslashes for backreferences (\1, \2, etc)
+                safe_replacement = replacement
+
             # Perform replacement
             if replace_all:
                 if preserve_case:
-                    new_text, count = self._replace_preserve_case(text, regex, replacement)
+                    new_text, count = self._replace_preserve_case(text, regex, safe_replacement)
                 else:
-                    new_text = regex.sub(replacement, text)
+                    new_text = regex.sub(safe_replacement, text)
                     count = len(regex.findall(text))
             else:
                 # Replace first occurrence only
                 if preserve_case:
-                    new_text, count = self._replace_preserve_case(text, regex, replacement, count=1)
+                    new_text, count = self._replace_preserve_case(text, regex, safe_replacement, count=1)
                 else:
-                    new_text = regex.sub(replacement, text, count=1)
+                    new_text = regex.sub(safe_replacement, text, count=1)
                     count = 1 if regex.search(text) else 0
 
             return new_text, count
