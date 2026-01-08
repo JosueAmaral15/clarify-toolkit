@@ -176,9 +176,10 @@ class FileExplorerDock(BaseDock):
         # File type filter
         self.lbl_type = QLabel(tr("file_list.lbl_type"))
         self.combo_type = QComboBox()
-        self.combo_type.addItems(
-            [tr("file_list.type_any"), tr("file_list.type_files_only"), tr("file_list.type_directories_only")]
-        )
+        # Store data values for i18n-safe comparison
+        self.combo_type.addItem(tr("file_list.type_any"), "any")
+        self.combo_type.addItem(tr("file_list.type_files_only"), "files")
+        self.combo_type.addItem(tr("file_list.type_directories_only"), "dirs")
         self.combo_type.setToolTip(tr("file_list.tooltip_type"))
 
         # Selection mode (dialog only)
@@ -906,16 +907,16 @@ class FileExplorerDock(BaseDock):
         recursive = self.chk_recursive.isChecked()
         long_format = self.chk_long.isChecked()
 
-        # Get file type filter
-        type_filter = self.combo_type.currentText()
+        # Get file type filter (use data for i18n-safe comparison)
+        type_filter_data = self.combo_type.currentData()
 
         # Get advanced filters
         filters = self._build_filters()
 
         # Add type filter to filters dict
-        if type_filter == "Files Only":
+        if type_filter_data == "files":
             filters["type"] = "files"
-        elif type_filter == "Directories Only":
+        elif type_filter_data == "dirs":
             filters["type"] = "dirs"
         else:
             filters["type"] = "any"

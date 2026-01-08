@@ -132,7 +132,14 @@ class UnifiedFileExplorerExecutor(QObject):
                 # Check exclude globs first (higher priority)
                 excluded = False
                 for pattern in exclude_globs:
-                    if fnmatch.fnmatch(file_path, f"*{pattern}*") or fnmatch.fnmatch(file_name, pattern):
+                    # Check if pattern exists as a path component (directory name)
+                    # This correctly handles .venv, node_modules, etc.
+                    path_components = file_path.split(os.sep)
+                    if pattern in path_components:
+                        excluded = True
+                        break
+                    # Also check if pattern matches filename (for patterns like *.pyc)
+                    if fnmatch.fnmatch(file_name, pattern):
                         excluded = True
                         break
 

@@ -348,9 +348,17 @@ class ConditionsGrid(QWidget):
 
         # Operator selector
         combo_operator = QComboBox()
-        combo_operator.addItems(
-            ["equals", "not equals", "contains", "not contains", "greater than", "<", ">=", "<=", "regex"]
-        )
+        combo_operator.addItems([
+            "equals",
+            "not equals",
+            "contains",
+            "not contains",
+            "greater than",
+            "less than",  # was "<"
+            "greater than or equal",  # was ">="
+            "less than or equal",  # was "<="
+            "regex"
+        ])
         combo_operator.setToolTip(tr("search.tooltip_operator"))
         row_layout.addWidget(combo_operator)
 
@@ -363,12 +371,12 @@ class ConditionsGrid(QWidget):
         # Options for content field
         chk_case = QCheckBox(tr("search.chk_case"))
         chk_case.setToolTip(tr("search.tooltip_case"))
-        chk_case.setEnabled(False)  # Only enabled for content field
+        chk_case.setEnabled(True)  # Enable by default, will be managed by field selection
         row_layout.addWidget(chk_case)
 
         chk_regex = QCheckBox(tr("search.chk_regex"))
         chk_regex.setToolTip(tr("search.tooltip_regex_option"))
-        chk_regex.setEnabled(False)  # Only enabled for content field
+        chk_regex.setEnabled(True)  # Enable by default, will be managed by field selection
         row_layout.addWidget(chk_regex)
 
         # Delete button
@@ -378,13 +386,18 @@ class ConditionsGrid(QWidget):
         btn_delete.clicked.connect(lambda: self._remove_condition_row(row_widget))
         row_layout.addWidget(btn_delete)
 
-        # Enable/disable options based on field
-        def on_field_changed(field):
-            is_content = field == "content"
-            chk_case.setEnabled(is_content)
-            chk_regex.setEnabled(is_content)
+        # Enable/disable options based on field type
+        def on_field_changed(index):
+            field_data = combo_field.itemData(index)
+            # Enable Case and Regex for text fields: filename, path, ext, content
+            is_text_field = field_data in ("filename", "path", "ext", "content")
+            chk_case.setEnabled(is_text_field)
+            chk_regex.setEnabled(is_text_field)
 
-        combo_field.currentTextChanged.connect(on_field_changed)
+        combo_field.currentIndexChanged.connect(on_field_changed)
+        
+        # Set initial state
+        on_field_changed(combo_field.currentIndex())
 
         # Add to layout
         self.conditions_layout.addWidget(row_widget)
