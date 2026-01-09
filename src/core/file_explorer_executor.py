@@ -26,16 +26,25 @@ from ..utils.logger import get_logger
 # Initialize logger for structured logging (Protocolo Simplicidade 3 - Etapa 6)
 logger = get_logger(__name__)
 
+# Memory optimization constants (v2.9.120 - 2026-01-09)
+MAX_SNIPPET_LENGTH = 200  # Maximum characters to store per match snippet
+MAX_TOTAL_MATCHES = 50000  # Maximum total matches across all files
+
 
 @dataclass
 class SearchMatch:
-    """Container for search match information."""
+    """Container for search match information.
+    
+    Memory optimizations (v2.9.120):
+    - snippet truncated to MAX_SNIPPET_LENGTH (was unlimited)
+    - context_before/after removed (were rarely used, 3x memory overhead)
+    """
 
     line: int
     col: int
     snippet: str
-    context_before: str = ""
-    context_after: str = ""
+    context_before: str = ""  # Deprecated: kept for compatibility but not populated
+    context_after: str = ""   # Deprecated: kept for compatibility but not populated
 
 
 @dataclass
@@ -278,9 +287,17 @@ class UnifiedFileExplorerExecutor(QObject):
         # Step 3: Apply content search
         search_results = []
         total_files = len(files_to_search)
+        total_match_count = 0  # Track total matches across all files (v2.9.120)
 
         for idx, file_info in enumerate(files_to_search, 1):
             if self._cancel:
+                break
+
+            # Check global match limit (v2.9.120 - Memory optimization)
+            if total_match_count >= MAX_TOTAL_MATCHES:
+                warning_msg = f"Maximum total matches reached ({MAX_TOTAL_MATCHES:,}). Search stopped. Refine your search for better results."
+                logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
+                self.error.emit(warning_msg)
                 break
 
             self.progress.emit(file_info.path)
@@ -302,6 +319,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
                 if matches:
                     search_results.append(SearchResult(file_info=file_info, matches=matches, match_count=len(matches)))
+                    total_match_count += len(matches)  # Update total counter
 
             except Exception as e:
                 self.error.emit(f"Error processing {file_info.path}: {e}")
@@ -319,6 +337,19 @@ class UnifiedFileExplorerExecutor(QObject):
         stats = FileListExecutor.calculate_statistics(file_infos)
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
+
+        # Log memory optimization stats (v2.9.120)
+        if stats["total_matches"] > 0:
+            logger.info(
+                f"Search completed with memory optimizations",
+                extra={
+                    "total_matches": stats["total_matches"],
+                    "files_with_matches": stats["files_with_matches"],
+                    "truncated_snippets": True,
+                    "max_snippet_length": MAX_SNIPPET_LENGTH,
+                    "hit_global_limit": total_match_count >= MAX_TOTAL_MATCHES,
+                },
+            )
 
         return {"files": search_results, "stats": stats}
 
@@ -427,13 +458,19 @@ class UnifiedFileExplorerExecutor(QObject):
                             return matches
 
                         col = match.start()
+                        
+                        # Memory optimization (v2.9.120): Truncate snippet and remove context lines
+                        # - Limits snippet to MAX_SNIPPET_LENGTH (200 chars)
+                        # - Removes context_before/after (3x memory reduction)
+                        truncated_snippet = line_text[:MAX_SNIPPET_LENGTH] if len(line_text) > MAX_SNIPPET_LENGTH else line_text
+                        
                         matches.append(
                             SearchMatch(
                                 line=line_num,
                                 col=col,
-                                snippet=line_text,
-                                context_before=lines[line_num - 2] if line_num > 1 else "",
-                                context_after=lines[line_num] if line_num < len(lines) else "",
+                                snippet=truncated_snippet,
+                                context_before="",  # Removed for memory optimization
+                                context_after="",   # Removed for memory optimization
                             )
                         )
                         match_count += 1
