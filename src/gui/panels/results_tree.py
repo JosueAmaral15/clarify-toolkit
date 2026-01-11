@@ -436,6 +436,11 @@ class ResultsTree(QTreeWidget):
         open_editor_action.setEnabled(has_selection)
         open_editor_action.triggered.connect(self._open_in_editor)
         
+        # Open and switch to editor action (v2.9.121 - new feature)
+        open_editor_switch_action = menu.addAction("🎯 " + tr("results_tree.action_open_and_switch"))
+        open_editor_switch_action.setEnabled(has_selection)
+        open_editor_switch_action.triggered.connect(self._open_in_editor_and_switch)
+        
         open_file_action = menu.addAction("📂 Open File")
         open_file_action.setEnabled(has_selection)
         open_file_action.triggered.connect(self._open_selected_files)
@@ -574,6 +579,93 @@ class ResultsTree(QTreeWidget):
         # Show feedback
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor")
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+    
+    def _open_in_editor_and_switch(self):
+        """Open selected files in Clarify editor and switch focus to editor (v2.9.121)."""
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+        
+        # Get main window reference
+        main_window = self._get_main_window()
+        if not main_window:
+            QMessageBox.warning(
+                self,
+                tr("results_tree.error_title"),
+                tr("results_tree.error_no_main_window")
+            )
+            return
+        
+        # Collect unique file paths from selection
+        file_paths = []  # Use list to preserve order
+        for item in selected_items:
+            # Skip summary header
+            if item.text(0).startswith("📊 Results:"):
+                continue
+            
+            # If it's a file item (no parent), use it directly
+            if not item.parent():
+                path = item.text(0)
+                if path not in file_paths:
+                    file_paths.append(path)
+            # If it's a match item, get parent file path
+            else:
+                parent_text = item.parent().text(0)
+                if not parent_text.startswith("📊") and parent_text not in file_paths:
+                    file_paths.append(parent_text)
+        
+        # Ensure dock_editor exists
+        if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
+            from src.gui.dock_factory import DockFactory
+            DockFactory.create_editor_dock(main_window)
+        
+        # Open each file in editor
+        opened_count = 0
+        last_opened_path = None
+        for path in file_paths:
+            if os.path.isfile(path):
+                try:
+                    main_window.dock_editor.open_file_path(path)
+                    opened_count += 1
+                    last_opened_path = path  # Track last opened
+                except Exception as e:
+                    QMessageBox.warning(
+                        self,
+                        tr("results_tree.error_title"),
+                        tr("results_tree.error_open_editor").format(path, str(e))
+                    )
+                    break
+        
+        # Switch to Editor tab in main window
+        if last_opened_path:
+            # Find Editor tab and activate it
+            if hasattr(main_window, 'tab_widget_main'):
+                tab_widget = main_window.tab_widget_main
+                # Search for Editor tab
+                for i in range(tab_widget.count()):
+                    tab_name = tab_widget.tabText(i)
+                    if 'Editor' in tab_name or tab_widget.widget(i) == main_window.dock_editor:
+                        tab_widget.setCurrentIndex(i)
+                        break
+            
+            # Show and raise editor dock
+            main_window.dock_editor.show()
+            main_window.dock_editor.raise_()
+            
+            # Focus on the last opened file's tab in editor
+            if hasattr(main_window.dock_editor, 'tab_widget'):
+                editor_tabs = main_window.dock_editor.tab_widget
+                # Find tab with matching filepath
+                for i in range(editor_tabs.count()):
+                    tab = editor_tabs.widget(i)
+                    if hasattr(tab, 'file_path') and tab.file_path == last_opened_path:
+                        editor_tabs.setCurrentIndex(i)
+                        break
+        
+        # Show feedback
+        if self._status_label and opened_count > 0:
+            self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor and switched focus")
             QTimer.singleShot(3000, lambda: self._status_label.setText(""))
     
     def _get_main_window(self):

@@ -2385,7 +2385,8 @@
         "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
         "error_title": "Erro",
         "header_match": "Correspondência",
-        "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}"
+        "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}",
+        "action_open_and_switch": "Abrir e Mudar para Editor"
     },
     "formula_dock": {
         "header_step": "Etapa",
@@ -2422,6 +2423,7 @@
         "action_open_location": "Abrir no Gerenciador de Arquivos",
         "action_copy_path": "Copiar Caminho",
         "action_open_editor": "Abrir no Editor",
+        "action_open_and_switch": "Abrir e Mudar para Editor",
         "error_title": "Erro",
         "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
         "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}"

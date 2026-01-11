@@ -261,9 +261,14 @@ class FileListTableManager(QWidget):
         menu.addAction(action_copy)
         
         # Open in editor action
-        action_editor = QAction(tr("table_manager.action_open_editor"), self)
+        action_editor = QAction("📝 " + tr("table_manager.action_open_editor"), self)
         action_editor.triggered.connect(self._open_in_editor)
         menu.addAction(action_editor)
+        
+        # Open and switch to editor action (v2.9.121 - new feature)
+        action_editor_switch = QAction("🎯 " + tr("table_manager.action_open_and_switch"), self)
+        action_editor_switch.triggered.connect(self._open_in_editor_and_switch)
+        menu.addAction(action_editor_switch)
         
         menu.exec(self.table.viewport().mapToGlobal(position))
     
@@ -300,6 +305,71 @@ class FileListTableManager(QWidget):
                             tr("table_manager.error_title"),
                             tr("table_manager.error_open_editor").format(filepath, e)
                         )
+                        break
+    
+    def _open_in_editor_and_switch(self):
+        """Open selected file(s) in Clarify editor and switch focus to editor (v2.9.121)."""
+        selected_rows = sorted(set(item.row() for item in self.table.selectedItems()))
+        
+        # Get main window reference
+        main_window = self._get_main_window()
+        if not main_window:
+            QMessageBox.warning(
+                self,
+                tr("table_manager.error_title"),
+                tr("table_manager.error_no_main_window")
+            )
+            return
+        
+        # Ensure dock_editor exists
+        if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
+            from src.gui.dock_factory import DockFactory
+            DockFactory.create_editor_dock(main_window)
+        
+        # Open all selected files
+        last_opened_filepath = None
+        for row in selected_rows:
+            path_item = self.table.item(row, self.COL_PATH)
+            if path_item:
+                filepath = path_item.text()
+                # Only open files, not directories
+                if os.path.isfile(filepath):
+                    try:
+                        main_window.dock_editor.open_file_path(filepath)
+                        last_opened_filepath = filepath  # Track last opened
+                    except Exception as e:
+                        QMessageBox.warning(
+                            self,
+                            tr("table_manager.error_title"),
+                            tr("table_manager.error_open_editor").format(filepath, e)
+                        )
+                        break
+        
+        # Switch to Editor tab in main window
+        if last_opened_filepath:
+            # Find Editor tab and activate it
+            if hasattr(main_window, 'tab_widget_main'):
+                tab_widget = main_window.tab_widget_main
+                # Search for Editor tab
+                for i in range(tab_widget.count()):
+                    tab_name = tab_widget.tabText(i)
+                    if 'Editor' in tab_name or tab_widget.widget(i) == main_window.dock_editor:
+                        tab_widget.setCurrentIndex(i)
+                        break
+            
+            # Show and raise editor dock
+            main_window.dock_editor.show()
+            main_window.dock_editor.raise_()
+            
+            # Focus on the last opened file's tab in editor
+            # Editor dock has tab_widget for multiple files
+            if hasattr(main_window.dock_editor, 'tab_widget'):
+                editor_tabs = main_window.dock_editor.tab_widget
+                # Find tab with matching filepath
+                for i in range(editor_tabs.count()):
+                    tab = editor_tabs.widget(i)
+                    if hasattr(tab, 'file_path') and tab.file_path == last_opened_filepath:
+                        editor_tabs.setCurrentIndex(i)
                         break
     
     def _get_main_window(self):
