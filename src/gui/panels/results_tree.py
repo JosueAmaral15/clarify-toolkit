@@ -133,8 +133,16 @@ class ResultsTree(QTreeWidget):
     - v2.9.5: Optional sorting by file path and line number
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, main_window=None):
+        """
+        Initialize results tree.
+        
+        Args:
+            parent: Parent widget
+            main_window: Optional explicit reference to main window (v2.9.121 bugfix)
+        """
         super().__init__(parent)
+        self._main_window_ref = main_window  # Store explicit main window reference
         self.setHeaderLabels([tr("results_tree.header_match")])
         self.setRootIsDecorated(True)
         self.setColumnCount(1)
@@ -570,15 +578,26 @@ class ResultsTree(QTreeWidget):
     
     def _get_main_window(self):
         """Get reference to main window."""
+        # Try explicit reference first (v2.9.121 bugfix)
+        if self._main_window_ref is not None:
+            print(f"[DEBUG] Using explicit main_window reference: {type(self._main_window_ref).__name__}")
+            return self._main_window_ref
+        
+        # Fallback to parent chain traversal
         widget = self
         print(f"[DEBUG] Starting search for main_window from {type(self).__name__}")
-        while widget is not None:
+        max_iterations = 20  # Safety limit
+        iteration = 0
+        
+        while widget is not None and iteration < max_iterations:
             print(f"[DEBUG] Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
             if hasattr(widget, 'dock_editor'):
                 print(f"[DEBUG] Found main_window: {type(widget).__name__}")
                 return widget
             widget = widget.parent()
-        print("[DEBUG] Could NOT find main_window - reached None")
+            iteration += 1
+        
+        print(f"[DEBUG] Could NOT find main_window - reached None after {iteration} iterations")
         return None
 
     def _open_selected_files(self):

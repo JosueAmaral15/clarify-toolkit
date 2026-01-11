@@ -501,7 +501,7 @@ class FileExplorerDock(BaseDock):
         results_tree_layout.setContentsMargins(0, 0, 0, 0)
         results_tree_layout.setSpacing(0)
 
-        self.results_tree = ResultsTree()
+        self.results_tree = ResultsTree(parent=self, main_window=self._main_window_ref)
         results_tree_layout.addWidget(self.results_tree)
 
         # Create status bar for position info (from Search/Replace)
