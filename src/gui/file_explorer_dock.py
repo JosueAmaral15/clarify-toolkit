@@ -95,6 +95,17 @@ class FileExplorerDock(BaseDock):
         self.dialog_mode = dialog_mode
         self.selected_files: List[str] = []
         self.settings = QSettings("Clarify", "FileExplorer")
+        
+        # Store reference to main window for child components (v2.9.121 bugfix)
+        self._main_window_ref = None
+        if parent is not None:
+            # Try to find main window in parent chain
+            widget = parent
+            while widget is not None:
+                if hasattr(widget, 'dock_editor'):
+                    self._main_window_ref = widget
+                    break
+                widget = widget.parent() if hasattr(widget, 'parent') else None
 
         # Store last results for view synchronization
         self.last_search_results = {}  # matches_dict for tree view
@@ -251,7 +262,7 @@ class FileExplorerDock(BaseDock):
         # Results Table
         # ============================================================================
         # Table Manager (extracted component)
-        self.table_manager = FileListTableManager()
+        self.table_manager = FileListTableManager(parent=self, main_window=self._main_window_ref)
 
         # Enable tooltips for preview
         self.table_manager.table.setMouseTracking(True)

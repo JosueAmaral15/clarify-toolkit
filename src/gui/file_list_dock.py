@@ -43,6 +43,18 @@ class FileListDock(BaseDock):
     def __init__(self, parent=None):
         self.settings = QSettings("Clarify", "FileList")
         self._load_preferences()
+        
+        # Store reference to main window for child components (v2.9.121 bugfix)
+        self._main_window_ref = None
+        if parent is not None:
+            # Try to find main window in parent chain
+            widget = parent
+            while widget is not None:
+                if hasattr(widget, 'dock_editor'):
+                    self._main_window_ref = widget
+                    break
+                widget = widget.parent() if hasattr(widget, 'parent') else None
+        
         super().__init__("File List", parent)
     
     def _setup_ui(self):
@@ -91,7 +103,7 @@ class FileListDock(BaseDock):
         )
         
         # Table Manager (extracted component)
-        self.table_manager = FileListTableManager()
+        self.table_manager = FileListTableManager(parent=self, main_window=self._main_window_ref)
     
     def _apply_tooltips(self):
         """Apply internationalized tooltips to all widgets."""
