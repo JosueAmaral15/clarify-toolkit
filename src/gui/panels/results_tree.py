@@ -637,21 +637,11 @@ class ResultsTree(QTreeWidget):
                     )
                     break
         
-        # Switch to Editor tab in main window
+        # Switch to Editor tab in main window (create if doesn't exist)
         if last_opened_path:
-            # Find Editor tab and activate it
-            if hasattr(main_window, 'tab_widget_main'):
-                tab_widget = main_window.tab_widget_main
-                # Search for Editor tab
-                for i in range(tab_widget.count()):
-                    tab_name = tab_widget.tabText(i)
-                    if 'Editor' in tab_name or tab_widget.widget(i) == main_window.dock_editor:
-                        tab_widget.setCurrentIndex(i)
-                        break
-            
-            # Show and raise editor dock
-            main_window.dock_editor.show()
-            main_window.dock_editor.raise_()
+            # Use _show_editor() which properly handles tab creation/switching
+            if hasattr(main_window, '_show_editor'):
+                main_window._show_editor()
             
             # Focus on the last opened file's tab in editor
             if hasattr(main_window.dock_editor, 'tab_widget'):
