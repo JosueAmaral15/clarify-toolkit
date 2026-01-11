@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu
+    QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu, QMainWindow
 )
 from PySide6.QtCore import Qt, QSettings, QDate
 from PySide6.QtGui import QAction
@@ -50,6 +50,12 @@ class FileListDock(BaseDock):
             # Try to find main window in parent chain
             widget = parent
             while widget is not None:
+                # Check if it's MainWindow by looking for characteristic that ALWAYS exists
+                # dock_editor is lazy-loaded, so check for QMainWindow type + tab widget
+                if isinstance(widget, QMainWindow) or hasattr(widget, 'tab_widget_main'):
+                    self._main_window_ref = widget
+                    break
+                # Fallback: check for dock_editor (if already created)
                 if hasattr(widget, 'dock_editor'):
                     self._main_window_ref = widget
                     break
