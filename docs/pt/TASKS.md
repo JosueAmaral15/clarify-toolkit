@@ -179,6 +179,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 - **[X]** Incluir tooltips na aplicação Clarify **(v2.9.3)**
 - **[]** Adicionar opções de undo e redo para mudanças feitas
 - **[]** Traduzir aplicação para idiomas mais falados do mundo
+- **[]** **Busca Visual com IA no File Explorer**: Adicionar inteligência artificial que lê imagens ou procura imagens e vídeos conforme pesquisa do usuário no File Explorer, de acordo com descrição de input do usuário. Funcionalidades: (1) Análise de conteúdo visual usando APIs de Computer Vision (Google Vision AI, Azure Computer Vision, ou modelo local como CLIP); (2) Busca por descrição em linguagem natural (ex: "fotos de cachorro", "vídeos de reunião", "imagens com texto"); (3) Filtros avançados (cor dominante, objetos detectados, faces, texto OCR, metadata EXIF); (4) Preview com highlights dos elementos encontrados; (5) Integração com File Explorer existente (novo modo "AI Visual Search" ao lado de Table/Tree); (6) Cache de análises para performance (armazenar resultados em SQLite local); (7) Batch processing para indexar diretórios grandes; (8) Suporte a formatos: imagens (JPG, PNG, GIF, WebP, HEIC) e vídeos (MP4, AVI, MOV, MKV - análise de frames-chave). Implementação sugerida: novo módulo `src/ai/visual_search.py`, componente GUI `src/gui/panels/visual_search_panel.py`, integração com FileExplorerDock, e configuração de API keys em Settings.
 
 #### Advanced Features
 
