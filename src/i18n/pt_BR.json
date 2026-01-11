@@ -1789,8 +1789,10 @@
     "status.failed": "✖ Falhou",
     "status.paused": "⏸ Pausado",
     "status.running": "Executando...",
+    "results_tree.action_open_and_switch": "Abrir e Mudar para Editor",
     "table_manager.action_copy_path": "Copiar Caminho",
     "table_manager.action_open_editor": "Abrir no Editor",
+    "table_manager.action_open_and_switch": "Abrir e Mudar para Editor",
     "table_manager.action_open_file_manager": "Abrir no Gerenciador de Arquivos",
     "table_manager.action_open_locations": "Abrir {} Localizações no Gerenciador de Arquivos",
     "table_manager.btn_export_csv": "Exportar para CSV...",
@@ -2385,8 +2387,7 @@
         "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
         "error_title": "Erro",
         "header_match": "Correspondência",
-        "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}",
-        "action_open_and_switch": "Abrir e Mudar para Editor"
+        "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}"
     },
     "formula_dock": {
         "header_step": "Etapa",
@@ -2423,7 +2424,6 @@
         "action_open_location": "Abrir no Gerenciador de Arquivos",
         "action_copy_path": "Copiar Caminho",
         "action_open_editor": "Abrir no Editor",
-        "action_open_and_switch": "Abrir e Mudar para Editor",
         "error_title": "Erro",
         "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
         "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}"
