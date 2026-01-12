@@ -975,15 +975,18 @@ class FileExplorerDock(BaseDock):
             }
             
             # Create thread and worker
+            print("🔧 DEBUG: Creating worker thread...")
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
             self._worker.moveToThread(self._worker_thread)
+            print(f"🔧 DEBUG: Worker moved to thread: {self._worker_thread}")
 
             # Connect signals
             self._worker.progress.connect(self._on_progress)
             self._worker.progress_detailed.connect(self._on_progress_detailed)
             self._worker.finished.connect(self._on_search_finished)
             self._worker.error.connect(self._on_operation_error)
+            print("🔧 DEBUG: Signals connected")
 
             # Start thread and execute search
             self._worker_thread.started.connect(
@@ -998,7 +1001,9 @@ class FileExplorerDock(BaseDock):
                     conditions=conditions
                 )
             )
+            print("🔧 DEBUG: Starting thread...")
             self._worker_thread.start()
+            print("🔧 DEBUG: Thread started, returning early")
 
             # Return early - results will be handled by _on_search_finished()
             return
@@ -1610,14 +1615,17 @@ class FileExplorerDock(BaseDock):
 
     def _on_progress(self, message: str):
         """Handle progress updates from executor (v2.9.116)."""
+        print(f"🔧 DEBUG: _on_progress() called with message: {message[:50]}...")
         # Show progress dialog if not already visible
         if not self.progress_dialog:
+            print("🔧 DEBUG: Creating progress dialog")
             self.progress_dialog = QProgressDialog(
                 tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
             )
             self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
             self.progress_dialog.setWindowModality(Qt.WindowModal)
             self.progress_dialog.canceled.connect(self.executor.cancel)
+            print("🔧 DEBUG: Progress dialog created and shown")
 
         # Update message
         self.progress_dialog.setLabelText(message)
@@ -1659,8 +1667,11 @@ class FileExplorerDock(BaseDock):
         """
         import time
         
+        print("🔧 DEBUG: _on_search_finished() called!")
+        
         # Close progress dialog
         if self.progress_dialog:
+            print("🔧 DEBUG: Closing progress dialog")
             self.progress_dialog.close()
             self.progress_dialog = None
         

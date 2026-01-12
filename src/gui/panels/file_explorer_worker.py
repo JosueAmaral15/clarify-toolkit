@@ -85,12 +85,15 @@ class FileExplorerWorker(QObject):
             conditions: Advanced conditions list
         """
         try:
+            print("🔧 DEBUG: Worker.execute_search() called - running in thread!")
             # Forward executor signals to worker signals
             # This allows UI thread to receive progress updates
             self.executor.progress.connect(self.progress)
             self.executor.progress_detailed.connect(self.progress_detailed)
+            print("🔧 DEBUG: Executor signals connected to worker")
             
             # Execute search (blocking in worker thread)
+            print(f"🔧 DEBUG: Calling executor.execute_search(directory={directory})")
             result = self.executor.execute_search(
                 directory=directory,
                 filename_pattern=filename_pattern,
@@ -101,9 +104,12 @@ class FileExplorerWorker(QObject):
                 filters=filters,
                 conditions=conditions
             )
+            print(f"🔧 DEBUG: Search complete! Found {len(result.get('files', []))} files")
             
             # Emit result to UI thread
+            print("🔧 DEBUG: Emitting finished signal...")
             self.finished.emit(result)
+            print("🔧 DEBUG: Finished signal emitted")
             
         except Exception as e:
             # Emit error to UI thread
