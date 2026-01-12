@@ -15,8 +15,10 @@ from .regex_insert_panel import RegexInsertPanel
 from .search_worker import SearchWorker
 from .results_tree import ResultsTree
 from .match_panel import MatchPanel, MatchListModel
+from .file_explorer_worker import FileExplorerWorker
 
 __all__ = [
     'SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel', 
-    'SearchWorker', 'ResultsTree', 'MatchPanel', 'MatchListModel'
+    'SearchWorker', 'ResultsTree', 'MatchPanel', 'MatchListModel',
+    'FileExplorerWorker'
 ]

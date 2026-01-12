@@ -14,14 +14,14 @@ Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 
 from PySide6.QtCore import QObject, Signal
 
-from ...core.file_explorer_executor import FileExplorerExecutor
+from ...core.file_explorer_executor import UnifiedFileExplorerExecutor
 
 
 class FileExplorerWorker(QObject):
     """
     Worker for running File Explorer operations in background thread.
     
-    This worker wraps FileExplorerExecutor operations and forwards their
+    This worker wraps UnifiedFileExplorerExecutor operations and forwards their
     signals to allow progress tracking in the UI thread. It follows the
     same pattern as SearchWorker for consistency.
     
@@ -46,12 +46,12 @@ class FileExplorerWorker(QObject):
     finished = Signal(object)                   # Result object
     error = Signal(str)                         # Error message
     
-    def __init__(self, executor: FileExplorerExecutor):
+    def __init__(self, executor: UnifiedFileExplorerExecutor):
         """
         Initialize worker with executor instance.
         
         Args:
-            executor: FileExplorerExecutor instance to use for operations
+            executor: UnifiedFileExplorerExecutor instance to use for operations
                      (already configured with all necessary settings)
         """
         super().__init__()
