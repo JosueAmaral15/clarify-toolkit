@@ -1624,8 +1624,11 @@ class FileExplorerDock(BaseDock):
             )
             self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
             self.progress_dialog.setWindowModality(Qt.WindowModal)
+            self.progress_dialog.setMinimumDuration(0)  # Show immediately
             self.progress_dialog.canceled.connect(self.executor.cancel)
-            print("🔧 DEBUG: Progress dialog created and shown")
+            self.progress_dialog.show()  # Explicitly show
+            self.progress_dialog.raise_()  # Bring to front
+            print("🔧 DEBUG: Progress dialog created, shown, and raised")
 
         # Update message
         self.progress_dialog.setLabelText(message)
