@@ -40,7 +40,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QMainWindow,
 )
-from PySide6.QtCore import Qt, QSettings, QDate, QTimer, QObject
+from PySide6.QtCore import Qt, QSettings, QDate, QTimer, QObject, QThread
 from PySide6.QtGui import QAction, QShortcut, QKeySequence
 from .base_dock import BaseDock
 from .widgets import (
@@ -54,7 +54,7 @@ from .widgets import (
     ConditionsGrid,
     CollapsibleSection,
 )
-from .panels import ResultsTree
+from .panels import ResultsTree, FileExplorerWorker
 from src.core.file_explorer_executor import UnifiedFileExplorerExecutor
 from src.i18n.translator import tooltip_tr, tr
 from src.utils.logger import get_logger
@@ -961,187 +961,93 @@ class FileExplorerDock(BaseDock):
                     "case_sensitive": search_options.get("case_sensitive", False),
                 },
             )
-            # Execute search with UnifiedFileExplorerExecutor
-            result = self.executor.execute_search(
-                directory=directory,
-                filename_pattern=filename_pattern,
-                content_query=content_query,
-                search_options=search_options,  # Pass as dict
-                show_hidden=show_hidden,
-                recursive=recursive,
-                filters=filters,
-                conditions=conditions,
-            )
-
-            # ============================================================================
-            # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
-            # ============================================================================
-            # Switch to tree view (but respect manual override - v2.9.118 bugfix)
-            # Only auto-switch if user hasn't manually selected a view
-            if not self._user_manually_changed_view:
-                self.results_stack.setCurrentIndex(0)
-                self.combo_view_mode.blockSignals(True)  # Prevent triggering _switch_view_mode
-                self.combo_view_mode.setCurrentIndex(0)  # Sync combo
-                self.combo_view_mode.blockSignals(False)
-
-            # Build matches dictionary for ResultsTree
-            matches_dict = {}
-            for search_result in result.get("files", []):
-                file_info = search_result.file_info
-                file_path = file_info.path
-
-                if search_result.matches:
-                    # Content search: show matches
-                    matches_list = []
-                    for match in search_result.matches:
-                        snippet = match.snippet if hasattr(match, "snippet") else ""
-                        matches_list.append((match.line, match.col, snippet))
-                    matches_dict[file_path] = matches_list
-                else:
-                    # Filename search: show file with line 1
-                    matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
-
-            # Populate ResultsTree with sort option from checkbox
-            sort_results = self.chk_sort_results.isChecked()
-            self.results_tree.populate(matches_dict, sort_results=sort_results)
-
-            # ENHANCEMENT: Store search results for view synchronization
-            self.last_search_results = matches_dict
-            self.last_was_search = True
             
-            # BUGFIX v2.9.119: If user is in table view, also populate table with search results
-            if self._user_manually_changed_view and self.results_stack.currentIndex() == 1:
-                self._sync_search_to_table()
-            logger.debug(f"Stored {len(matches_dict)} search results for view sync")
+            # ============================================================================
+            # v2.9.122: Use threading for progress bar support
+            # ============================================================================
+            # Store search parameters for handler (needed for history/stats)
+            self._current_search_params = {
+                "directory": directory,
+                "filename_pattern": filename_pattern,
+                "content_query": content_query,
+                "search_options": search_options,
+                "start_time": time.time()
+            }
+            
+            # Create thread and worker
+            self._worker_thread = QThread(self)
+            self._worker = FileExplorerWorker(self.executor)
+            self._worker.moveToThread(self._worker_thread)
 
-            # Update statistics (v2.9.117 - B.4)
-            files_list = result.get("files", [])
-            self._update_statistics(files_list, time.time() - start_time)
+            # Connect signals
+            self._worker.progress.connect(self._on_progress)
+            self._worker.progress_detailed.connect(self._on_progress_detailed)
+            self._worker.finished.connect(self._on_search_finished)
+            self._worker.error.connect(self._on_operation_error)
 
-            # Save to history (History Integration from Search/Replace)
-            try:
-                from src.gui.progress import OperationHistory
-
-                history = OperationHistory()
-
-                total_matches = sum(len(items) for items in matches_dict.values())
-
-                history.add_operation(
-                    "file_explorer_search",
-                    {
-                        "directory": directory,
-                        "filename_pattern": filename_pattern,
-                        "content_query": content_query,
-                        "files_matched": len(matches_dict),
-                        "total_matches": total_matches,
-                        "case_sensitive": self.search_options_panel.get_options().get("case_sensitive", False),
-                        "whole_word": self.search_options_panel.get_options().get("whole_word", False),
-                        "regex": self.search_options_panel.get_options().get("regex", False),
-                    },
+            # Start thread and execute search
+            self._worker_thread.started.connect(
+                lambda: self._worker.execute_search(
+                    directory=directory,
+                    filename_pattern=filename_pattern,
+                    content_query=content_query,
+                    search_options=search_options,
+                    show_hidden=show_hidden,
+                    recursive=recursive,
+                    filters=filters,
+                    conditions=conditions
                 )
+            )
+            self._worker_thread.start()
 
-                # Add to History Dock if available
-                if hasattr(self, "dock_history"):
-                    self.dock_history.add_operation(
-                        "File Explorer Search",
-                        {
-                            "directory": directory,
-                            "pattern": filename_pattern or content_query,
-                            "files_found": len(matches_dict),
-                            "matches_found": total_matches,
-                        },
-                    )
-            except Exception as e:
-                print(f"Failed to save history: {e}")
+            # Return early - results will be handled by _on_search_finished()
+            return
 
         else:
             # ============================================================================
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
             logger.info(f"Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
-            # Switch to table view (but respect manual override - v2.9.118 bugfix)
-            # Only auto-switch if user hasn't manually selected a view
-            if not self._user_manually_changed_view:
-                self.results_stack.setCurrentIndex(1)
-                self.combo_view_mode.blockSignals(True)  # Prevent triggering _switch_view_mode
-                self.combo_view_mode.setCurrentIndex(1)  # Sync combo
-                self.combo_view_mode.blockSignals(False)
-            # Execute browse with UnifiedFileExplorerExecutor
-            result = self.executor.execute_browse(
-                directory=directory, show_hidden=show_hidden, recursive=recursive, filters=filters
-            )
-
-            # Process SearchResult objects (browse returns SearchResult with empty matches)
-            files_data = []
-            for search_result in result.get("files", []):
-                # Access file_info from SearchResult
-                file_info = search_result.file_info
-
-                # Format permissions
-                perms = file_info.permissions
-                if long_format:
-                    perms = f"{perms} {file_info.owner}:{file_info.group}"
-
-                files_data.append(
-                    {
-                        "name": file_info.name,
-                        "size": file_info.size,
-                        "mtime": file_info.mtime,
-                        "permissions": perms,
-                        "path": file_info.path,
-                        "is_dir": file_info.is_dir,
-                    }
-                )
-
-            # Sort alphabetically if checkbox is enabled
-            if self.chk_sort_results.isChecked():
-                files_data.sort(key=lambda x: x["path"].lower())
-
-            # Enable multi-selection if in selection mode
-            if self.dialog_mode and hasattr(self, "chk_selection_mode") and self.chk_selection_mode.isChecked():
-                self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
-            else:
-                self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)
-
-            # Populate table
-            self.table_manager.populate(files_data, human_readable=human_readable)
-
-            # ENHANCEMENT: Store browse results for view synchronization
-            self.last_browse_results = files_data
-            self.last_was_search = False
             
-            # BUGFIX v2.9.119: If user is in tree view, also populate tree with browse results
-            if self._user_manually_changed_view and self.results_stack.currentIndex() == 0:
-                self._sync_browse_to_tree()
-            logger.debug(f"Stored {len(files_data)} browse results for view sync")
+            # ============================================================================
+            # v2.9.122: Use threading for progress bar support
+            # ============================================================================
+            # Store browse parameters for handler
+            self._current_browse_params = {
+                "directory": directory,
+                "show_hidden": show_hidden,
+                "recursive": recursive,
+                "filters": filters,
+                "long_format": long_format,
+                "human_readable": human_readable,
+                "start_time": time.time()
+            }
+            
+            # Create thread and worker
+            self._worker_thread = QThread(self)
+            self._worker = FileExplorerWorker(self.executor)
+            self._worker.moveToThread(self._worker_thread)
 
-            # Update statistics (v2.9.117 - B.4)
-            files_list = result.get("files", [])
-            self._update_statistics(files_list, time.time() - start_time)
+            # Connect signals
+            self._worker.progress.connect(self._on_progress)
+            self._worker.progress_detailed.connect(self._on_progress_detailed)
+            self._worker.finished.connect(self._on_browse_finished)
+            self._worker.error.connect(self._on_operation_error)
 
-            # Save to history (History Integration for browse mode)
-            try:
-                from src.gui.progress import OperationHistory
-
-                history = OperationHistory()
-
-                history.add_operation(
-                    "file_explorer_browse",
-                    {
-                        "directory": directory,
-                        "files_found": len(files_data),
-                        "recursive": recursive,
-                        "show_hidden": show_hidden,
-                    },
+            # Start thread and execute browse
+            self._worker_thread.started.connect(
+                lambda: self._worker.execute_browse(
+                    directory=directory,
+                    show_hidden=show_hidden,
+                    recursive=recursive,
+                    filters=filters
                 )
+            )
+            self._worker_thread.start()
 
-                # Add to History Dock if available
-                if hasattr(self, "dock_history"):
-                    self.dock_history.add_operation(
-                        "File Explorer Browse", {"directory": directory, "files_found": len(files_data)}
-                    )
-            except Exception as e:
-                print(f"Failed to save history: {e}")
+            # Return early - results will be handled by _on_browse_finished()
+            return
+
 
         # Show errors if any
         if result.get("errors"):
@@ -1723,6 +1629,273 @@ class FileExplorerDock(BaseDock):
             percentage = int((current / total) * 100) if total > 0 else 0
             self.progress_dialog.setValue(percentage)
             self.progress_dialog.setLabelText(f"{message}\n({current}/{total})")
+
+    def _cleanup_worker_thread(self):
+        """
+        Clean up worker thread after operation completes.
+        
+        This ensures proper thread lifecycle management and prevents resource leaks.
+        Called from _on_*_finished() and _on_operation_error() handlers.
+        
+        Version: v2.9.122
+        """
+        if hasattr(self, '_worker_thread') and self._worker_thread:
+            self._worker_thread.quit()
+            self._worker_thread.wait()
+            self._worker_thread.deleteLater()
+            self._worker_thread = None
+        
+        if hasattr(self, '_worker'):
+            self._worker = None
+
+    def _on_search_finished(self, result):
+        """
+        Handle search operation completion (runs in UI thread).
+        
+        Args:
+            result: SearchResult dict from FileExplorerExecutor
+        
+        Version: v2.9.122
+        """
+        import time
+        
+        # Close progress dialog
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
+        
+        # Retrieve stored parameters
+        params = self._current_search_params
+        directory = params["directory"]
+        filename_pattern = params["filename_pattern"]
+        content_query = params["content_query"]
+        search_options = params["search_options"]
+        start_time = params["start_time"]
+        
+        # ============================================================================
+        # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
+        # ============================================================================
+        # Switch to tree view (but respect manual override - v2.9.118 bugfix)
+        if not self._user_manually_changed_view:
+            self.results_stack.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(True)
+            self.combo_view_mode.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(False)
+        
+        # Build matches dictionary for ResultsTree
+        matches_dict = {}
+        for search_result in result.get("files", []):
+            file_info = search_result.file_info
+            file_path = file_info.path
+
+            if search_result.matches:
+                # Content search: show matches
+                matches_list = []
+                for match in search_result.matches:
+                    snippet = match.snippet if hasattr(match, "snippet") else ""
+                    matches_list.append((match.line, match.col, snippet))
+                matches_dict[file_path] = matches_list
+            else:
+                # Filename search: show file with line 1
+                matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
+
+        # Populate ResultsTree with sort option from checkbox
+        sort_results = self.chk_sort_results.isChecked()
+        self.results_tree.populate(matches_dict, sort_results=sort_results)
+
+        # ENHANCEMENT: Store search results for view synchronization
+        self.last_search_results = matches_dict
+        self.last_was_search = True
+        
+        # BUGFIX v2.9.119: If user is in table view, also populate table with search results
+        if self._user_manually_changed_view and self.results_stack.currentIndex() == 1:
+            self._sync_search_to_table()
+        logger.debug(f"Stored {len(matches_dict)} search results for view sync")
+
+        # Update statistics (v2.9.117 - B.4)
+        files_list = result.get("files", [])
+        self._update_statistics(files_list, time.time() - start_time)
+
+        # Save to history (History Integration from Search/Replace)
+        try:
+            from src.gui.progress import OperationHistory
+
+            history = OperationHistory()
+
+            total_matches = sum(len(items) for items in matches_dict.values())
+
+            history.add_operation(
+                "file_explorer_search",
+                {
+                    "directory": directory,
+                    "filename_pattern": filename_pattern,
+                    "content_query": content_query,
+                    "files_matched": len(matches_dict),
+                    "total_matches": total_matches,
+                    "case_sensitive": self.search_options_panel.get_options().get("case_sensitive", False),
+                    "whole_word": self.search_options_panel.get_options().get("whole_word", False),
+                    "regex": self.search_options_panel.get_options().get("regex", False),
+                },
+            )
+
+            # Add to History Dock if available
+            if hasattr(self, "dock_history"):
+                self.dock_history.add_operation(
+                    "File Explorer Search",
+                    {
+                        "directory": directory,
+                        "pattern": filename_pattern or content_query,
+                        "files_found": len(matches_dict),
+                        "matches_found": total_matches,
+                    },
+                )
+        except Exception as e:
+            print(f"Failed to save history: {e}")
+        
+        # Cleanup thread
+        self._cleanup_worker_thread()
+
+    def _on_browse_finished(self, result):
+        """
+        Handle browse operation completion (runs in UI thread).
+        
+        Args:
+            result: BrowseResult dict from FileExplorerExecutor
+        
+        Version: v2.9.122
+        """
+        import time
+        from PySide6.QtWidgets import QAbstractItemView
+        
+        # Close progress dialog
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
+        
+        # Retrieve stored parameters
+        params = self._current_browse_params
+        directory = params["directory"]
+        show_hidden = params["show_hidden"]
+        recursive = params["recursive"]
+        filters = params["filters"]
+        long_format = params["long_format"]
+        human_readable = params["human_readable"]
+        start_time = params["start_time"]
+        
+        # ============================================================================
+        # BROWSE MODE: Populate FileListTable (v2.9.117 - B.1)
+        # ============================================================================
+        # Auto-switch to table view (respect manual override)
+        if not self._user_manually_changed_view:
+            self.results_stack.setCurrentIndex(1)
+            self.combo_view_mode.blockSignals(True)
+            self.combo_view_mode.setCurrentIndex(1)
+            self.combo_view_mode.blockSignals(False)
+        
+        # Process SearchResult objects (browse returns SearchResult with empty matches)
+        files_data = []
+        for search_result in result.get("files", []):
+            file_info = search_result.file_info
+
+            # Format permissions
+            perms = file_info.permissions
+            if long_format:
+                perms = f"{perms} {file_info.owner}:{file_info.group}"
+
+            files_data.append(
+                {
+                    "name": file_info.name,
+                    "size": file_info.size,
+                    "mtime": file_info.mtime,
+                    "permissions": perms,
+                    "path": file_info.path,
+                    "is_dir": file_info.is_dir,
+                }
+            )
+
+        # Sort alphabetically if checkbox is enabled
+        if self.chk_sort_results.isChecked():
+            files_data.sort(key=lambda x: x["path"].lower())
+
+        # Enable multi-selection if in selection mode
+        if self.dialog_mode and hasattr(self, "chk_selection_mode") and self.chk_selection_mode.isChecked():
+            self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
+        else:
+            self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        # Populate table
+        self.table_manager.populate(files_data, human_readable=human_readable)
+
+        # ENHANCEMENT: Store browse results for view synchronization
+        self.last_browse_results = files_data
+        self.last_was_search = False
+        
+        # BUGFIX v2.9.119: If user is in tree view, also populate tree with browse results
+        if self._user_manually_changed_view and self.results_stack.currentIndex() == 0:
+            self._sync_browse_to_tree()
+        logger.debug(f"Stored {len(files_data)} browse results for view sync")
+
+        # Update statistics (v2.9.117 - B.4)
+        files_list = result.get("files", [])
+        self._update_statistics(files_list, time.time() - start_time)
+
+        # Save to history (History Integration for browse mode)
+        try:
+            from src.gui.progress import OperationHistory
+
+            history = OperationHistory()
+
+            history.add_operation(
+                "file_explorer_browse",
+                {
+                    "directory": directory,
+                    "files_found": len(files_data),
+                    "recursive": recursive,
+                    "show_hidden": show_hidden,
+                },
+            )
+
+            # Add to History Dock if available
+            if hasattr(self, "dock_history"):
+                self.dock_history.add_operation(
+                    "File Explorer Browse", {"directory": directory, "files_found": len(files_data)}
+                )
+        except Exception as e:
+            print(f"Failed to save history: {e}")
+        
+        # Cleanup thread
+        self._cleanup_worker_thread()
+
+        self.status_label.setText(f"Found {len(result.files)} file(s)")
+        
+        # Cleanup thread
+        self._cleanup_worker_thread()
+
+    def _on_operation_error(self, error_message: str):
+        """
+        Handle operation error (runs in UI thread).
+        
+        Args:
+            error_message: Error description
+        
+        Version: v2.9.122
+        """
+        from PySide6.QtWidgets import QMessageBox
+        
+        # Close progress dialog
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
+        
+        # Show error dialog
+        QMessageBox.critical(
+            self,
+            tr("file_list.error_title"),
+            f"{tr('file_list.error_operation')}\n\n{error_message}"
+        )
+        
+        # Cleanup thread
+        self._cleanup_worker_thread()
 
     def _on_execution_done(self, results: dict):
         """Handle execution completion (v2.9.116)."""
