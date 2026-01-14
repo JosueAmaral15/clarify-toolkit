@@ -46,6 +46,9 @@ class FileExplorerWorker(QObject):
     finished = Signal(object)                   # Result object
     error = Signal(str)                         # Error message
     
+    # Batch processing signal (v2.9.123)
+    batch_ready = Signal(list, int, int)        # (batch_items, batch_num, total_batches)
+    
     def __init__(self, executor: UnifiedFileExplorerExecutor):
         """
         Initialize worker with executor instance.
@@ -56,6 +59,81 @@ class FileExplorerWorker(QObject):
         """
         super().__init__()
         self.executor = executor
+        self._cancel_requested = False  # For cancellation support (v2.9.123)
+    
+    def _build_matches_dict(self, result: dict) -> dict:
+        """
+        Build matches dictionary from executor result.
+        
+        This runs in WORKER THREAD to avoid blocking UI.
+        
+        Args:
+            result: Result dict from executor with 'files' key
+        
+        Returns:
+            Dict mapping file_path → list of (line, col, snippet) tuples
+        
+        Version: v2.9.123
+        """
+        matches_dict = {}
+        
+        for search_result in result.get("files", []):
+            file_info = search_result.file_info
+            file_path = file_info.path
+            
+            if search_result.matches:
+                # Content search: collect all matches
+                matches_list = []
+                for match in search_result.matches:
+                    snippet = match.snippet if hasattr(match, "snippet") else ""
+                    matches_list.append((match.line, match.col, snippet))
+                matches_dict[file_path] = matches_list
+            else:
+                # Filename search: show file with line 1
+                matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
+        
+        return matches_dict
+    
+    def _emit_in_batches(self, matches_dict: dict, batch_size: int = 100):
+        """
+        Emit matches dictionary in batches to avoid blocking UI.
+        
+        This allows UI to process items incrementally while keeping
+        the event loop responsive.
+        
+        Args:
+            matches_dict: Complete matches dictionary
+            batch_size: Number of items per batch (default: 100)
+        
+        Version: v2.9.123
+        """
+        # Convert dict to list of items for batching
+        all_items = list(matches_dict.items())
+        total_items = len(all_items)
+        
+        if total_items == 0:
+            print("🔧 DEBUG: No items to emit")
+            return  # Nothing to emit
+        
+        # Calculate number of batches
+        total_batches = (total_items + batch_size - 1) // batch_size  # Ceiling division
+        
+        print(f"🔧 DEBUG: Emitting {total_items} items in {total_batches} batches of {batch_size}")
+        
+        # Emit batches
+        for batch_num in range(total_batches):
+            # Check for cancellation
+            if self._cancel_requested:
+                print(f"🔧 DEBUG: Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
+                break
+            
+            start_idx = batch_num * batch_size
+            end_idx = min(start_idx + batch_size, total_items)
+            
+            batch = all_items[start_idx:end_idx]
+            
+            print(f"🔧 DEBUG: Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
+            self.batch_ready.emit(batch, batch_num + 1, total_batches)
     
     def execute_search(
         self,
@@ -106,7 +184,16 @@ class FileExplorerWorker(QObject):
             )
             print(f"🔧 DEBUG: Search complete! Found {len(result.get('files', []))} files")
             
-            # Emit result to UI thread
+            # NEW v2.9.123: Process results in worker thread
+            print("🔧 DEBUG: Building matches dict in worker thread...")
+            matches_dict = self._build_matches_dict(result)
+            print(f"🔧 DEBUG: Built matches dict with {len(matches_dict)} entries")
+            
+            # NEW v2.9.123: Emit in batches for non-blocking UI
+            print("🔧 DEBUG: Emitting matches in batches...")
+            self._emit_in_batches(matches_dict, batch_size=100)
+            
+            # Emit finished with original result (for stats, history, etc.)
             print("🔧 DEBUG: Emitting finished signal...")
             self.finished.emit(result)
             print("🔧 DEBUG: Finished signal emitted")

@@ -354,6 +354,70 @@ class ResultsTree(QTreeWidget):
         finally:
             self.setUpdatesEnabled(True)
 
+    def add_file_result(self, file_path: str, matches_list: List[Tuple[int, int, str]]):
+        """
+        Add a single file result to the tree incrementally (for batch processing).
+        
+        Args:
+            file_path: Path to the file
+            matches_list: List of (line, col, snippet) tuples for this file
+        """
+        # Store in matches data for export
+        if file_path not in self._matches_data:
+            self._matches_data[file_path] = []
+        self._matches_data[file_path].extend(matches_list)
+        
+        # Create file node
+        top = QTreeWidgetItem([file_path])
+        self.addTopLevelItem(top)
+        
+        # Add match children
+        for line, col, snippet in matches_list:
+            # Truncate long snippets only if word wrap is disabled
+            snippet_clean = snippet.strip()
+            if not self._word_wrap_enabled and len(snippet_clean) > 120:
+                snippet_clean = snippet_clean[:120] + "..."
+            
+            leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
+            
+            # Store full snippet in tooltip if truncated and word wrap is off
+            if not self._word_wrap_enabled and len(snippet.strip()) > 120:
+                leaf.setToolTip(0, f"Full content:\n{snippet.strip()}")
+            
+            top.addChild(leaf)
+        
+        # Auto-expand the file node
+        top.setExpanded(True)
+
+    def sort_results(self):
+        """
+        Sort all results in the tree alphabetically by file path.
+        Called after batch processing is complete.
+        """
+        self.setUpdatesEnabled(False)
+        try:
+            # Collect all items (skip summary header if present)
+            items = []
+            for i in range(self.topLevelItemCount()):
+                item = self.topLevelItem(i)
+                text = item.text(0)
+                # Skip summary header (starts with 📊)
+                if not text.startswith("📊"):
+                    items.append((text, item))
+            
+            # Sort by file path
+            items.sort(key=lambda x: x[0])
+            
+            # Re-add items in sorted order
+            for idx, (_, item) in enumerate(items):
+                self.takeTopLevelItem(self.indexOfTopLevelItem(item))
+                # Insert after summary if it exists, otherwise at beginning
+                has_summary = self.topLevelItemCount() > 0 and self.topLevelItem(0).text(0).startswith("📊")
+                insert_pos = idx + (1 if has_summary else 0)
+                self.insertTopLevelItem(insert_pos, item)
+        finally:
+            self.setUpdatesEnabled(True)
+
     def print_message(self, message: str = ""):
         """Display a single message in the tree."""
         self.setUpdatesEnabled(False)

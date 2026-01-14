@@ -131,6 +131,12 @@ class FileExplorerDock(BaseDock):
 
         # Progress dialog for long operations
         self.progress_dialog = None
+        
+        # Batch processing state (v2.9.123)
+        self._batch_processing_active = False
+        self._total_batches_expected = 0
+        self._batches_received = 0
+        self._cancel_requested = False
 
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
@@ -984,13 +990,16 @@ class FileExplorerDock(BaseDock):
             # Connect signals
             self._worker.progress.connect(self._on_progress)
             self._worker.progress_detailed.connect(self._on_progress_detailed)
+            self._worker.batch_ready.connect(self._on_batch_ready)  # NEW v2.9.123
             self._worker.finished.connect(self._on_search_finished)
             self._worker.error.connect(self._on_operation_error)
             print("🔧 DEBUG: Signals connected")
 
             # Start thread and execute search
+            # Capture worker in local variable to avoid None issues after cleanup
+            worker = self._worker
             self._worker_thread.started.connect(
-                lambda: self._worker.execute_search(
+                lambda: worker.execute_search(
                     directory=directory,
                     filename_pattern=filename_pattern,
                     content_query=content_query,
@@ -1641,6 +1650,83 @@ class FileExplorerDock(BaseDock):
             self.progress_dialog.setValue(percentage)
             self.progress_dialog.setLabelText(f"{message}\n({current}/{total})")
 
+    def _on_batch_ready(self, batch: list, batch_num: int, total_batches: int):
+        """
+        Handle batch of results (runs in UI thread, but doesn't block!).
+        
+        This method processes one batch (100 items) then returns, allowing
+        the event loop to process other events (paint, input, etc.).
+        
+        Args:
+            batch: List of (file_path, matches_list) tuples
+            batch_num: Current batch number (1-indexed)
+            total_batches: Total number of batches
+        
+        Version: v2.9.123
+        """
+        print(f"🔧 DEBUG: _on_batch_ready() batch {batch_num}/{total_batches} ({len(batch)} items)")
+        
+        # Check for cancellation
+        if self._cancel_requested:
+            print(f"🔧 DEBUG: Cancellation requested, skipping batch {batch_num}")
+            return
+        
+        # Initialize batch processing on first batch
+        if batch_num == 1:
+            print("🔧 DEBUG: Starting batch processing...")
+            self._batch_processing_active = True
+            self._total_batches_expected = total_batches
+            self._batches_received = 0
+            self._cancel_requested = False
+            
+            # Clear tree before adding items
+            self.results_tree.clear()
+            
+            # Switch to tree view (respect manual override)
+            if not self._user_manually_changed_view:
+                self.results_stack.setCurrentIndex(0)
+                self.combo_view_mode.blockSignals(True)
+                self.combo_view_mode.setCurrentIndex(0)
+                self.combo_view_mode.blockSignals(False)
+        
+        # Update progress dialog to show batch progress
+        if self.progress_dialog:
+            progress = int((batch_num / total_batches) * 100)
+            self.progress_dialog.setValue(progress)
+            self.progress_dialog.setLabelText(
+                f"Processing results: batch {batch_num}/{total_batches}\n"
+                f"({len(batch)} items in this batch)"
+            )
+        
+        # Add batch items to tree (this is the UI operation, but only 100 items)
+        for file_path, matches_list in batch:
+            self.results_tree.add_file_result(file_path, matches_list)
+        
+        # Update batch counter
+        self._batches_received += 1
+        
+        # Check if this was the last batch
+        if batch_num == total_batches:
+            print(f"🔧 DEBUG: All {total_batches} batches received")
+            self._batch_processing_active = False
+            
+            # Store results for view sync (get from tree's internal storage)
+            self.last_search_results = self.results_tree.get_matches_data()
+            
+            # Apply sorting if enabled (only AFTER all batches)
+            if self.chk_sort_results.isChecked():
+                print("🔧 DEBUG: Sorting results...")
+                self.results_tree.sort_results()
+            
+            # Close progress dialog now that batching is complete
+            if self.progress_dialog:
+                print("🔧 DEBUG: Closing progress dialog (batching complete)")
+                self.progress_dialog.close()
+                self.progress_dialog = None
+        
+        # Return immediately - event loop can process other events!
+        print(f"🔧 DEBUG: Batch {batch_num} processed, returning to event loop")
+
     def _cleanup_worker_thread(self):
         """
         Clean up worker thread after operation completes.
@@ -1663,18 +1749,22 @@ class FileExplorerDock(BaseDock):
         """
         Handle search operation completion (runs in UI thread).
         
+        NOTE v2.9.123: Heavy processing (building matches_dict, populate) is now
+        done via batch_ready signals. This handler only does lightweight finalization.
+        
         Args:
             result: SearchResult dict from FileExplorerExecutor
         
-        Version: v2.9.122
+        Version: v2.9.123
         """
         import time
         
         print("🔧 DEBUG: _on_search_finished() called!")
         
-        # Close progress dialog
-        if self.progress_dialog:
-            print("🔧 DEBUG: Closing progress dialog")
+        # NOTE v2.9.123: Don't close progress dialog here!
+        # It will be closed by _on_batch_ready() after last batch
+        if self.progress_dialog and not self._batch_processing_active:
+            print("🔧 DEBUG: Closing progress dialog (no batching active)")
             self.progress_dialog.close()
             self.progress_dialog = None
         
@@ -1686,57 +1776,32 @@ class FileExplorerDock(BaseDock):
         search_options = params["search_options"]
         start_time = params["start_time"]
         
-        # ============================================================================
-        # SEARCH MODE: Populate ResultsTree (v2.9.117 - B.2)
-        # ============================================================================
-        # Switch to tree view (but respect manual override - v2.9.118 bugfix)
-        if not self._user_manually_changed_view:
-            self.results_stack.setCurrentIndex(0)
-            self.combo_view_mode.blockSignals(True)
-            self.combo_view_mode.setCurrentIndex(0)
-            self.combo_view_mode.blockSignals(False)
+        # ═══════════════════════════════════════════════════════════════════════
+        # NOTE: matches_dict building and populate() are now done in batch_ready!
+        # This handler only does LIGHTWEIGHT operations
+        # ═══════════════════════════════════════════════════════════════════════
         
-        # Build matches dictionary for ResultsTree
-        matches_dict = {}
-        for search_result in result.get("files", []):
-            file_info = search_result.file_info
-            file_path = file_info.path
-
-            if search_result.matches:
-                # Content search: show matches
-                matches_list = []
-                for match in search_result.matches:
-                    snippet = match.snippet if hasattr(match, "snippet") else ""
-                    matches_list.append((match.line, match.col, snippet))
-                matches_dict[file_path] = matches_list
-            else:
-                # Filename search: show file with line 1
-                matches_dict[file_path] = [(1, 0, f"📄 {file_info.name}")]
-
-        # Populate ResultsTree with sort option from checkbox
-        sort_results = self.chk_sort_results.isChecked()
-        self.results_tree.populate(matches_dict, sort_results=sort_results)
-
-        # ENHANCEMENT: Store search results for view synchronization
-        self.last_search_results = matches_dict
+        # Get count from result (lightweight)
+        files_list = result.get("files", [])
+        total_files = len(files_list)
+        total_matches = sum(len(sr.matches) for sr in files_list)
+        
+        # Update status bar (lightweight)
+        self.results_status.setText(
+            f"Found {total_files} file(s) with {total_matches} match(es)"
+        )
+        
+        # Store for view sync (lightweight)
         self.last_was_search = True
         
-        # BUGFIX v2.9.119: If user is in table view, also populate table with search results
-        if self._user_manually_changed_view and self.results_stack.currentIndex() == 1:
-            self._sync_search_to_table()
-        logger.debug(f"Stored {len(matches_dict)} search results for view sync")
-
-        # Update statistics (v2.9.117 - B.4)
-        files_list = result.get("files", [])
+        # Update statistics (lightweight - just counters)
         self._update_statistics(files_list, time.time() - start_time)
 
-        # Save to history (History Integration from Search/Replace)
+        # Save to history (I/O but fast)
         try:
             from src.gui.progress import OperationHistory
 
             history = OperationHistory()
-
-            total_matches = sum(len(items) for items in matches_dict.values())
 
             history.add_operation(
                 "file_explorer_search",
@@ -1744,11 +1809,11 @@ class FileExplorerDock(BaseDock):
                     "directory": directory,
                     "filename_pattern": filename_pattern,
                     "content_query": content_query,
-                    "files_matched": len(matches_dict),
+                    "files_matched": total_files,
                     "total_matches": total_matches,
-                    "case_sensitive": self.search_options_panel.get_options().get("case_sensitive", False),
-                    "whole_word": self.search_options_panel.get_options().get("whole_word", False),
-                    "regex": self.search_options_panel.get_options().get("regex", False),
+                    "case_sensitive": search_options.get("case_sensitive", False),
+                    "whole_word": search_options.get("whole_word", False),
+                    "regex": search_options.get("regex", False),
                 },
             )
 
@@ -1759,12 +1824,14 @@ class FileExplorerDock(BaseDock):
                     {
                         "directory": directory,
                         "pattern": filename_pattern or content_query,
-                        "files_found": len(matches_dict),
+                        "files_found": total_files,
                         "matches_found": total_matches,
                     },
                 )
         except Exception as e:
             print(f"Failed to save history: {e}")
+        
+        print("🔧 DEBUG: _on_search_finished() completed (lightweight operations only)")
         
         # Cleanup thread
         self._cleanup_worker_thread()
@@ -1880,7 +1947,7 @@ class FileExplorerDock(BaseDock):
         # Cleanup thread
         self._cleanup_worker_thread()
 
-        self.status_label.setText(f"Found {len(result.files)} file(s)")
+        self.results_status.setText(f"Found {len(result.files)} file(s)")
         
         # Cleanup thread
         self._cleanup_worker_thread()
