@@ -814,6 +814,581 @@ git branch -d COM2-add-feature
 
 ---
 
+## 🤖 AI-Assisted Workflows (Optional)
+
+**For projects using AI pair programming or automation:**
+
+### AI-Assisted Merge
+
+**Request AI to merge your branch (if supported by your tooling):**
+
+```markdown
+"Please merge my COM2-add-authentication branch into main after verifying:
+- [ ] All tests pass
+- [ ] No conflicts with main
+- [ ] Files follow naming conventions
+- [ ] Commit messages are descriptive"
+```
+
+**AI merge workflow:**
+```bash
+# AI performs these steps:
+
+# 1. Switch to target branch
+git checkout main
+
+# 2. Merge source branch
+git merge COM2-add-authentication
+
+# 3. If conflicts, resolve intelligently or ask user
+
+# 4. If no conflicts, push
+git push origin main
+
+# 5. Optionally delete merged branch
+git branch -d COM2-add-authentication
+git push origin --delete COM2-add-authentication
+```
+
+**Merge options:**
+```bash
+# Standard merge (preserves branch history)
+git merge COM2-add-authentication
+
+# No fast-forward (creates merge commit)
+git merge --no-ff COM2-add-authentication
+
+# Squash commits (single commit in main)
+git merge --squash COM2-add-authentication
+```
+
+**AI pre-merge verification:**
+1. ✅ Fetch latest main: `git fetch origin main`
+2. ✅ Check for conflicts: `git merge --no-commit --no-ff origin/main`
+3. ✅ Run tests (if available)
+4. ✅ Verify file naming conventions
+5. ✅ Check commit message quality
+6. ✅ Confirm no debug statements
+
+**AI MUST ask user for approval before executing merge.**
+
+**Manual approval required for:**
+- Breaking changes
+- Large refactors (>500 lines)
+- Production-critical code
+- Database migrations
+- Security-related changes
+
+### AI Conflict Resolution Strategy
+
+**When AI encounters conflicts, it can consider:**
+
+1. **Code Quality:**
+   - Linter scores (prefer higher scores)
+   - Follows project patterns
+   - Better error handling
+   - More comprehensive tests
+
+2. **Functionality:**
+   - More complete implementation
+   - Fewer bugs/edge cases
+   - Better performance
+   - Clearer code
+
+3. **Recency:**
+   - Latest main branch changes (usually preferred)
+   - Unless older code is objectively better
+
+4. **Context:**
+   - Project conventions
+   - Related code patterns
+   - Documentation references
+
+**AI MUST ask user when:**
+- Both versions equally good
+- Breaking changes involved
+- Business logic differences
+- Security implications
+- Unclear which approach is better
+
+---
+
+## 📊 Verification Commands
+
+**After completing workflow steps, verify success:**
+
+### Check Branch Status
+```bash
+# Verify current branch
+git branch --show-current
+# Output: COM2-add-authentication
+
+# List all branches
+git branch -a
+
+# Check if branch exists on remote
+git ls-remote --heads origin COM2-add-authentication
+```
+
+### Verify Commits
+```bash
+# Count commits in your branch not in main
+git rev-list --count main..COM2-add-authentication
+
+# List commits with one-line summaries
+git log --oneline main..COM2-add-authentication
+
+# Show full commit details
+git log main..COM2-add-authentication
+```
+
+### Check for Uncommitted Changes
+```bash
+# Verify working tree is clean
+git status
+# Output should be: "nothing to commit, working tree clean"
+
+# Check for unstaged changes
+git diff
+
+# Check for staged changes
+git diff --cached
+```
+
+### Verify Remote Sync
+```bash
+# Check if local branch is up-to-date with remote
+git fetch origin
+git status
+# Output: "Your branch is up to date with 'origin/COM2-add-authentication'"
+
+# Check if main is ahead of your branch
+git fetch origin main
+git log COM2-add-authentication..origin/main
+# Empty output = you're up-to-date
+```
+
+### Verify Merge Success
+```bash
+# After merging to main, verify your commits are there
+git checkout main
+git log --oneline -10
+
+# Verify file changes merged correctly
+git diff HEAD~5..HEAD -- path/to/your/file
+
+# Check that branch was deleted (after cleanup)
+git branch -a | grep COM2-add-authentication
+# Should return nothing if deleted
+```
+
+---
+
+## 🎯 Benefits and Outcomes
+
+**What you gain from this workflow:**
+
+### 1. **Parallel Development** ✅
+- Multiple programmers work simultaneously without stepping on each other
+- No waiting for others to finish
+- Branch isolation prevents interference
+
+### 2. **Clean Repository** ✅
+- File names describe content, not authorship
+- Standard directory structure (no programmer folders)
+- Easy to find files
+- Professional appearance
+
+### 3. **Git History Preservation** ✅
+- Track who created/modified files via `git log`
+- Understand why changes were made via commit messages
+- Easy to revert specific changes if needed
+- Blame/credit properly attributed
+
+### 4. **Code Review Culture** ✅
+- Pull requests enable peer review
+- Catch bugs before merge
+- Share knowledge across team
+- Improve code quality
+
+### 5. **Easy Rollback** ✅
+- Can delete branch if experiment fails
+- Revert merge if issues found
+- Main branch stays stable
+- Low-risk experimentation
+
+### 6. **Conflict Resolution** ✅
+- Conflicts happen in programmer's branch (not main)
+- Easier to resolve (smaller scope)
+- Main branch unaffected during resolution
+- Learn git conflict resolution skills
+
+### 7. **Documentation** ✅
+- Commit messages document intent
+- PR descriptions explain why
+- Git history becomes project documentation
+- Future developers understand decisions
+
+---
+
+## 🔒 Common Mistakes and Lessons Learned
+
+**Learn from these common pitfalls:**
+
+### Mistake 1: Working Directly on Main ❌
+
+**What NOT to do:**
+```bash
+git checkout main
+vim important_file.py
+git commit -m "fix bug"
+git push origin main  # ❌ WRONG
+```
+
+**Why it's bad:**
+- No code review
+- Breaks others' work immediately
+- Can't easily revert
+- No isolation for testing
+
+**Correct approach:**
+```bash
+git checkout -b COM2-fix-bug
+vim important_file.py
+git commit -m "fix: resolve memory leak in auth module"
+git push origin COM2-fix-bug
+# Create PR, get review, then merge
+```
+
+---
+
+### Mistake 2: Large, Infrequent Commits ❌
+
+**What NOT to do:**
+```bash
+# Work for 2 weeks...
+git add -A
+git commit -m "various changes"  # ❌ WRONG
+```
+
+**Why it's bad:**
+- Hard to review
+- Hard to revert specific changes
+- Loses granular history
+- Difficult to find bugs
+
+**Correct approach:**
+```bash
+# Commit after each logical change
+git commit -m "feat: add user login endpoint"
+# ... work more ...
+git commit -m "test: add login endpoint tests"
+# ... work more ...
+git commit -m "docs: document authentication API"
+```
+
+---
+
+### Mistake 3: Ignoring Conflicts ❌
+
+**What NOT to do:**
+```bash
+git merge origin/main
+# CONFLICT in file.py
+git add file.py  # ❌ Without resolving!
+git commit
+```
+
+**Why it's bad:**
+- Code might not compile
+- Introduces bugs
+- Breaks functionality
+- Wastes team time
+
+**Correct approach:**
+```bash
+git merge origin/main
+# CONFLICT in file.py
+
+# Open file and resolve conflicts
+vim file.py
+# Remove markers, choose correct code
+
+# Test that it works
+npm test
+
+# Then commit
+git add file.py
+git commit -m "merge: resolve conflicts with main"
+```
+
+---
+
+### Mistake 4: Force Pushing to Main ❌
+
+**What NOT to do:**
+```bash
+git push --force origin main  # ❌ CATASTROPHIC!
+```
+
+**Why it's bad:**
+- **DESTROYS other people's work**
+- Rewrites shared history
+- Breaks everyone's local repos
+- Can lose critical commits
+
+**Correct approach:**
+```bash
+# Only force push YOUR branch if necessary
+git push --force origin COM2-add-feature  # ⚠️ OK (your branch)
+
+# NEVER force push main
+# NEVER force push shared branches
+```
+
+---
+
+### Mistake 5: Not Syncing with Main ❌
+
+**What NOT to do:**
+```bash
+# Work on branch for 3 weeks without syncing
+git checkout COM2-add-feature
+# ... work work work ...
+# Now merge to main
+git checkout main
+git merge COM2-add-feature  # ❌ HUGE CONFLICTS!
+```
+
+**Why it's bad:**
+- Massive conflicts
+- Hard to resolve
+- Duplicated work
+- Integration nightmares
+
+**Correct approach:**
+```bash
+# Sync with main every 1-3 days
+git checkout COM2-add-feature
+git fetch origin main
+git merge origin/main
+# Resolve small conflicts as they appear
+
+# When ready to merge, conflicts are minimal
+```
+
+---
+
+### Mistake 6: Poor Commit Messages ❌
+
+**What NOT to do:**
+```bash
+git commit -m "fix"  # ❌ What fix?
+git commit -m "update"  # ❌ Update what?
+git commit -m "wip"  # ❌ Not descriptive
+```
+
+**Why it's bad:**
+- Future you won't understand
+- Hard to find specific changes
+- No context for reviewers
+- Looks unprofessional
+
+**Correct approach:**
+```bash
+git commit -m "fix: resolve null pointer exception in user login"
+git commit -m "feat: add password reset functionality"
+git commit -m "docs: update API documentation for new endpoints"
+```
+
+---
+
+### Mistake 7: Forgetting to Delete Branches ❌
+
+**What happens:**
+```bash
+git branch -a
+# 50 old branches cluttering your repo!
+```
+
+**Why it's bad:**
+- Hard to find active branches
+- Wastes mental energy
+- Looks messy
+- Confuses new contributors
+
+**Correct approach:**
+```bash
+# After merge, delete branch
+git branch -d COM2-add-feature
+git push origin --delete COM2-add-feature
+
+# Periodically clean up
+git fetch --prune
+git branch -d $(git branch --merged | grep -v main)
+```
+
+---
+
+### Real Incident Example: `.git/index.lock`
+
+**Scenario:** During a git operation, an error occurred:
+```
+fatal: Unable to create '.git/index.lock': File exists
+```
+
+**Wrong response (don't do this):**
+```bash
+rm -f .git/index.lock  # ❌ Did this without asking
+git add -A
+git commit
+```
+
+**Why it was wrong:**
+- Didn't investigate if git process was still running
+- Removed system file without permission
+- Could have corrupted repository
+- Didn't explain risks
+
+**Correct response:**
+1. **STOP** - Don't immediately delete system files
+2. **Investigate** - Check if git process is running: `ps aux | grep git`
+3. **Inform user** - Explain the situation and risks
+4. **Ask permission** - Request approval before removing lock file
+5. **Document** - Explain what happened and why
+
+**Lesson:** Always ask before risky operations, especially on shared repositories or system files.
+
+---
+
+## 📈 Success Metrics
+
+**How to measure workflow success:**
+
+### Team Health
+- ✅ Merge conflicts < 10% of PRs
+- ✅ PR review time < 24 hours
+- ✅ All programmers can work simultaneously without blocking
+- ✅ No "waiting for someone" delays
+
+### Code Quality
+- ✅ Test coverage maintained or improved
+- ✅ Linter scores stable or improving
+- ✅ Bug reports decreasing over time
+- ✅ Code review finds issues before merge
+
+### Git Hygiene
+- ✅ Commit messages descriptive (can understand 6 months later)
+- ✅ Branches short-lived (< 1 week average)
+- ✅ Clean repository (< 10 active branches)
+- ✅ No force pushes to main
+
+### Knowledge Sharing
+- ✅ PR discussions help team learn
+- ✅ Git history documents decisions
+- ✅ New team members can onboard via PR history
+- ✅ Everyone understands the workflow
+
+---
+
+## 📝 Real Workflow Example
+
+**Scenario:** Adding a user authentication feature
+
+### Complete Flow
+
+**Day 1: Start**
+```bash
+# 1. Create feature branch
+git checkout main
+git pull origin main
+git checkout -b COM2-add-authentication
+
+# 2. Implement basic login
+vim src/auth/login.py
+vim src/auth/jwt_utils.py
+
+# 3. Commit
+git add src/auth/
+git commit -m "feat: add JWT login implementation"
+
+# 4. Push to remote
+git push -u origin COM2-add-authentication
+```
+
+**Day 2: Continue**
+```bash
+# 5. Add tests
+vim tests/test_login.py
+
+# 6. Commit
+git add tests/
+git commit -m "test: add login endpoint tests"
+
+# 7. Sync with main (good practice)
+git fetch origin main
+git merge origin/main
+# No conflicts
+
+# 8. Push
+git push origin COM2-add-authentication
+```
+
+**Day 3: Complete**
+```bash
+# 9. Add documentation
+vim docs/API_AUTHENTICATION.md
+
+# 10. Commit
+git add docs/
+git commit -m "docs: document authentication API"
+
+# 11. Final sync
+git fetch origin main
+git merge origin/main
+
+# 12. Push
+git push origin COM2-add-authentication
+
+# 13. Run pre-merge checklist
+pytest tests/
+pylint src/auth/
+black src/auth/ --check
+
+# 14. Create Pull Request
+# Go to GitHub/GitLab
+# Title: "Add JWT authentication system"
+# Description: [detailed PR template filled out]
+```
+
+**Day 4: Review and Merge**
+```bash
+# 15. Address review comments
+vim src/auth/login.py  # Fix requested changes
+git add src/auth/login.py
+git commit -m "refactor: improve error handling per review feedback"
+git push origin COM2-add-authentication
+
+# 16. After approval, merge (via web UI or CLI)
+git checkout main
+git merge COM2-add-authentication
+git push origin main
+
+# 17. Cleanup
+git branch -d COM2-add-authentication
+git push origin --delete COM2-add-authentication
+```
+
+**Result:**
+- ✅ Feature implemented in 3 days
+- ✅ 4 clear commits with good messages
+- ✅ Tests and documentation included
+- ✅ Code reviewed and approved
+- ✅ Main branch stayed stable throughout
+- ✅ Clean git history
+
+---
+
 ## 🎯 Summary
 
 **Key Takeaways:**
@@ -833,11 +1408,27 @@ git branch -d COM2-add-feature
 - **Pull requests** for code review
 - **Branch cleanup** after merge
 
+**Avoid common mistakes:**
+- ❌ Never work directly on main
+- ❌ Never force push to shared branches
+- ❌ Don't let branches get stale (sync often)
+- ❌ Don't ignore merge conflicts
+- ❌ Don't write vague commit messages
+
+**Measure success:**
+- Few merge conflicts
+- Fast PR reviews
+- Good code quality
+- Clean git history
+- Happy team
+
 ---
 
-**Document Purpose**: General template for multi-programmer git workflows  
-**Adapt**: Customize for your project's needs  
-**Questions**: Refer to [Git documentation](https://git-scm.com/doc)
+**Document Purpose**: Universal template for multi-programmer git workflows  
+**Target Audience**: 2-12 programmer teams, open source, educational projects  
+**Adapt**: Customize branch names, directories, commands for your stack  
+**Questions**: Refer to [Git documentation](https://git-scm.com/doc) or ask your team lead
 
-**Version**: 1.0 (2026-01-18)  
-**License**: CC0 1.0 Universal (Public Domain) - Use freely!
+**Version**: 1.1 (2026-01-18)  
+**License**: CC0 1.0 Universal (Public Domain) - Use freely!  
+**Changelog**: v1.1 added AI workflows, verification commands, common mistakes, real example
