@@ -1424,11 +1424,520 @@ git push origin --delete COM2-add-authentication
 
 ---
 
+## 🔧 Automation and Bulk Operations
+
+**Automate repetitive git tasks with scripts:**
+
+### Example: Bulk File Renaming Script
+
+**Scenario:** Standardize file naming (remove programmer suffixes, change case, etc.)
+
+```bash
+#!/bin/bash
+# bulk_rename.sh - Rename files following standard convention
+
+# Function to rename file
+rename_file() {
+    local file="$1"
+    local dir=$(dirname "$file")
+    local filename=$(basename "$file")
+    
+    # Example: Remove _N suffix before extension
+    # Adjust regex for your needs
+    local newname=$(echo "$filename" | sed -E 's/_[0-9]+\.([^.]+)$/.\1/')
+    
+    if [ "$filename" != "$newname" ]; then
+        local newpath="$dir/$newname"
+        
+        # Check if target already exists (conflict)
+        if [ -f "$newpath" ]; then
+            echo "⚠️  CONFLICT: $newpath already exists"
+            echo "   Keeping: $file"
+            echo "   Existing: $newpath"
+        else
+            # Use git mv to preserve history
+            git mv "$file" "$newpath"
+            echo "✅ RENAMED: $file → $newpath"
+        fi
+    fi
+}
+
+# Find and rename all matching files
+find . -maxdepth 1 -name "*_[0-9]*.*" -type f | while read file; do
+    rename_file "$file"
+done
+
+# Also search subdirectories
+find docs/ -name "*_[0-9]*.*" -type f 2>/dev/null | while read file; do
+    rename_file "$file"
+done
+
+echo ""
+echo "✅ Renaming complete! Review changes with: git status"
+echo "⚠️  If satisfied, commit with: git commit -m 'refactor: standardize file names'"
+```
+
+**Usage:**
+```bash
+# 1. Make script executable
+chmod +x bulk_rename.sh
+
+# 2. TEST first (dry-run)
+git checkout -b test-rename
+./bulk_rename.sh
+git status  # Review changes
+
+# 3. If good, commit
+git add -A
+git commit -m "refactor: standardize file naming convention"
+
+# 4. If bad, abort
+git checkout main
+git branch -D test-rename
+```
+
+**Key features:**
+- ✅ Uses `git mv` (preserves history)
+- ✅ Detects conflicts (doesn't overwrite)
+- ✅ Works recursively
+- ✅ Customizable regex pattern
+
+---
+
+### Example: Bulk Branch Cleanup Script
+
+**Scenario:** Delete all merged branches locally and remotely
+
+```bash
+#!/bin/bash
+# cleanup_branches.sh - Remove merged branches
+
+echo "🧹 Cleaning up merged branches..."
+
+# Update remote tracking
+git fetch --prune
+
+# Get list of merged branches (exclude main and current)
+merged_branches=$(git branch --merged main | grep -v "main\|*")
+
+if [ -z "$merged_branches" ]; then
+    echo "✅ No merged branches to delete"
+    exit 0
+fi
+
+echo "📋 Found merged branches:"
+echo "$merged_branches"
+echo ""
+
+read -p "❓ Delete these branches? (y/n): " confirm
+
+if [ "$confirm" = "y" ]; then
+    # Delete local branches
+    echo "$merged_branches" | xargs git branch -d
+    
+    # Delete remote branches (optional)
+    read -p "❓ Also delete from remote? (y/n): " delete_remote
+    
+    if [ "$delete_remote" = "y" ]; then
+        echo "$merged_branches" | xargs -I {} git push origin --delete {}
+    fi
+    
+    echo "✅ Cleanup complete!"
+else
+    echo "❌ Cleanup cancelled"
+fi
+```
+
+**Usage:**
+```bash
+chmod +x cleanup_branches.sh
+./cleanup_branches.sh
+```
+
+---
+
+### Example: Commit Message Validation Hook
+
+**Scenario:** Enforce commit message format (type: description)
+
+```bash
+#!/bin/bash
+# .git/hooks/commit-msg - Validate commit messages
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Pattern: type: description
+# Valid types: feat, fix, docs, refactor, test, chore
+pattern="^(feat|fix|docs|refactor|test|chore|style|perf): .{10,}$"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo "❌ Invalid commit message format!"
+    echo ""
+    echo "Format: <type>: <description>"
+    echo ""
+    echo "Valid types: feat, fix, docs, refactor, test, chore, style, perf"
+    echo "Description must be at least 10 characters"
+    echo ""
+    echo "Examples:"
+    echo "  feat: add user authentication system"
+    echo "  fix: resolve memory leak in API client"
+    echo "  docs: update installation instructions"
+    echo ""
+    exit 1
+fi
+
+exit 0
+```
+
+**Install:**
+```bash
+# Copy to git hooks directory
+cp commit-msg .git/hooks/
+chmod +x .git/hooks/commit-msg
+
+# Now all commits must follow format
+git commit -m "update"  # ❌ Fails
+git commit -m "fix: resolve null pointer bug"  # ✅ Success
+```
+
+---
+
+### Example: Auto-sync Script
+
+**Scenario:** Automatically sync branch with main daily
+
+```bash
+#!/bin/bash
+# auto_sync.sh - Keep branch up-to-date with main
+
+current_branch=$(git branch --show-current)
+
+if [ "$current_branch" = "main" ]; then
+    echo "❌ Already on main, nothing to sync"
+    exit 1
+fi
+
+echo "🔄 Syncing $current_branch with main..."
+
+# Stash uncommitted changes if any
+if ! git diff-index --quiet HEAD --; then
+    echo "💾 Stashing uncommitted changes..."
+    git stash save "Auto-stash before sync"
+    stashed=1
+fi
+
+# Fetch and merge main
+git fetch origin main
+git merge origin/main
+
+if [ $? -ne 0 ]; then
+    echo "❌ Merge conflicts detected!"
+    echo "⚠️  Resolve conflicts manually, then run:"
+    echo "   git add <resolved_files>"
+    echo "   git commit"
+    exit 1
+fi
+
+# Restore stashed changes
+if [ "$stashed" = "1" ]; then
+    echo "♻️  Restoring stashed changes..."
+    git stash pop
+fi
+
+echo "✅ Sync complete!"
+```
+
+**Usage:**
+```bash
+chmod +x auto_sync.sh
+./auto_sync.sh
+
+# Or add to cron for daily sync
+# crontab -e
+# 0 9 * * * cd /path/to/repo && ./auto_sync.sh
+```
+
+---
+
+## 🎓 Advanced Git Techniques
+
+**Beyond basic workflow:**
+
+### Interactive Rebase (Clean Up Commits)
+
+**Scenario:** You have messy commits before creating PR
+
+```bash
+# View last 5 commits
+git log --oneline -5
+
+# Interactive rebase last 5 commits
+git rebase -i HEAD~5
+
+# Editor opens with:
+# pick abc1234 fix typo
+# pick def5678 fix another typo
+# pick ghi9012 add feature
+# pick jkl3456 fix feature bug
+# pick mno7890 update docs
+
+# Change to:
+# pick abc1234 fix typo
+# squash def5678 fix another typo  # Combine with previous
+# pick ghi9012 add feature
+# fixup jkl3456 fix feature bug    # Combine with previous, discard message
+# reword mno7890 update docs       # Change commit message
+
+# Save and close editor
+# Git will squash commits and let you edit messages
+```
+
+**Use cases:**
+- Combine multiple "fix typo" commits
+- Reorder commits logically
+- Edit commit messages
+- Remove commits (use `drop`)
+
+**⚠️ Warning:** Only rebase commits NOT yet pushed, or only on YOUR branch!
+
+---
+
+### Git Worktree (Parallel Work)
+
+**Scenario:** Work on two features simultaneously without switching branches
+
+```bash
+# Main repo at: ~/project
+cd ~/project
+
+# Create worktree for feature 1
+git worktree add ../project-feature1 COM2-feature1
+
+# Create worktree for feature 2
+git worktree add ../project-feature2 COM2-feature2
+
+# Now you have 3 directories:
+# ~/project          (main branch)
+# ~/project-feature1 (COM2-feature1 branch)
+# ~/project-feature2 (COM2-feature2 branch)
+
+# Work in feature1
+cd ../project-feature1
+vim src/feature1.py
+git commit -m "feat: implement feature 1"
+
+# Switch to feature2 (no checkout needed!)
+cd ../project-feature2
+vim src/feature2.py
+git commit -m "feat: implement feature 2"
+
+# List worktrees
+git worktree list
+
+# Remove worktree when done
+git worktree remove ../project-feature1
+```
+
+**Benefits:**
+- No branch switching (save time)
+- Both features visible simultaneously
+- Test interactions between branches
+- Run tests on both branches in parallel
+
+---
+
+### Git Filter-Repo (Rewrite History)
+
+**Scenario:** Remove sensitive data or large files from history
+
+**⚠️ DESTRUCTIVE - Use with extreme caution!**
+
+```bash
+# Install git-filter-repo (not built-in)
+# pip install git-filter-repo
+
+# Remove file from all history
+git filter-repo --path secrets.txt --invert-paths
+
+# Remove directory from all history
+git filter-repo --path old-data/ --invert-paths
+
+# Replace text in all commits (e.g., leaked password)
+git filter-repo --replace-text <(echo "oldpassword==>***REMOVED***")
+
+# Force push (necessary after rewriting history)
+git push --force origin main
+```
+
+**Use cases:**
+- Remove accidentally committed secrets
+- Remove large binary files
+- Clean up before open-sourcing
+- GDPR data removal requests
+
+**⚠️ Warn team before doing this - breaks everyone's repos!**
+
+---
+
+### Cherry-Pick (Apply Specific Commits)
+
+**Scenario:** Want one commit from another branch, not the whole branch
+
+```bash
+# You're on COM2-feature1
+# Want commit abc1234 from COM5-feature2
+
+# Find the commit you want
+git log COM5-feature2 --oneline
+
+# Cherry-pick it
+git cherry-pick abc1234
+
+# Or cherry-pick range
+git cherry-pick abc1234..def5678
+
+# If conflicts occur
+vim <conflicted_file>
+git add <conflicted_file>
+git cherry-pick --continue
+```
+
+**Use cases:**
+- Copy bug fix to multiple branches
+- Apply hotfix to release branches
+- Backport features
+- Extract specific changes
+
+---
+
+### Bisect (Find Bug Introduction)
+
+**Scenario:** Find which commit introduced a bug
+
+```bash
+# Start bisect
+git bisect start
+
+# Mark current commit as bad (has bug)
+git bisect bad
+
+# Mark commit where it worked as good
+git bisect good abc1234
+
+# Git checks out middle commit
+# Test if bug exists
+npm test  # or manual testing
+
+# If bug exists:
+git bisect bad
+
+# If bug doesn't exist:
+git bisect good
+
+# Repeat until git finds the commit
+# Git will output: "abc1234 is the first bad commit"
+
+# View the problematic commit
+git show abc1234
+
+# End bisect
+git bisect reset
+```
+
+**Use cases:**
+- Find which commit broke tests
+- Identify performance regression
+- Locate security vulnerability introduction
+
+---
+
+### Reflog (Recover Lost Commits)
+
+**Scenario:** Accidentally deleted branch or reset hard
+
+```bash
+# Oh no! Accidentally did:
+git reset --hard HEAD~5
+
+# View reflog (history of HEAD movements)
+git reflog
+
+# Output:
+# abc1234 HEAD@{0}: reset: moving to HEAD~5
+# def5678 HEAD@{1}: commit: important feature
+# ghi9012 HEAD@{2}: commit: critical fix
+
+# Recover lost commit
+git checkout def5678
+
+# Or create new branch from it
+git checkout -b recovery-branch def5678
+
+# Or reset to it
+git reset --hard def5678
+```
+
+**Use cases:**
+- Recover deleted branches
+- Undo bad reset/rebase
+- Find lost commits
+- Time travel through repo state
+
+**Note:** Reflog is local-only, expires after 90 days (default)
+
+---
+
+## 🎯 Summary
+
+**Key Takeaways:**
+
+1. **Use branches** - One per programmer or per feature
+2. **Standard naming** - No programmer suffixes in files
+3. **Standard structure** - No programmer folders
+4. **Commit often** - Small, focused commits
+5. **Sync regularly** - Merge main into your branch frequently
+6. **Code review** - Always use pull requests
+7. **Git tracks ownership** - Use `git log` and `git blame`
+8. **Automate** - Use scripts for repetitive tasks
+9. **Learn advanced** - Interactive rebase, worktree, cherry-pick
+
+**Recommended workflow:**
+- **Pattern 2 (COM<N>-feature)** for branches
+- **Standard naming** for files and folders
+- **Regular commits** with clear messages
+- **Pull requests** for code review
+- **Branch cleanup** after merge
+- **Automation scripts** for bulk operations
+- **Advanced techniques** when needed
+
+**Avoid common mistakes:**
+- ❌ Never work directly on main
+- ❌ Never force push to shared branches
+- ❌ Don't let branches get stale (sync often)
+- ❌ Don't ignore merge conflicts
+- ❌ Don't write vague commit messages
+- ❌ Don't rebase pushed commits
+- ❌ Don't filter-repo without team coordination
+
+**Measure success:**
+- Few merge conflicts
+- Fast PR reviews
+- Good code quality
+- Clean git history
+- Happy team
+
+---
+
 **Document Purpose**: Universal template for multi-programmer git workflows  
 **Target Audience**: 2-12 programmer teams, open source, educational projects  
 **Adapt**: Customize branch names, directories, commands for your stack  
 **Questions**: Refer to [Git documentation](https://git-scm.com/doc) or ask your team lead
 
-**Version**: 1.1 (2026-01-18)  
+**Version**: 1.2 (2026-01-18)  
 **License**: CC0 1.0 Universal (Public Domain) - Use freely!  
-**Changelog**: v1.1 added AI workflows, verification commands, common mistakes, real example
+
+**Changelog**:
+- v1.0: Initial release (basic workflow)
+- v1.1: Added AI workflows, verification, mistakes, real example
+- v1.2: Added automation scripts, bulk operations, advanced git techniques (rebase, worktree, filter-repo, cherry-pick, bisect, reflog)
