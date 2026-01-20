@@ -633,3 +633,169 @@
 
 **Next Session 4**: Additional documentation files (estimated 30-45 minutes)
 
+## SESSION 4: Remaining Root Documentation Files
+
+**Goal**: Read remaining root-level markdown files not covered in Sessions 1-3
+**Estimated Time**: 40-50 minutes
+
+### Strategy: Identify Unread Root Files
+
+Total root .md files: 53
+
+Already read in Session 1 (24 files):
+- ACTION_PLAN_*.md (11 files)
+- EXECUTION_PLAN_*.md (3 files)
+- INVESTIGATION_*.md (2 files)
+- MEMORY_*.md (2 files)
+- PROJECT_UPDATE_*.md (1 file)
+- ROOT_CAUSE_ANALYSIS.md, SOLUTION_DESIGN.md
+- TESTE_OPEN_IN_EDITOR.md, TEST_FIX_SUMMARY.md
+
+Already read in Session 2 (16 files):
+- FINAL_COMPREHENSIVE_READING_SUMMARY.md
+- READING_*.md (2 files)
+- SESSION_*_READING_REPORT*.md (6 files)
+- SPRINT_*_READING_REPORT.md (6 files)
+
+Already read in Session 3 (4 files):
+- CODE_STUDY_PHASE*.md (4 files)
+
+Total read from root: 44 files
+Remaining root files: 53 - 44 = 9 files
+
+Let me identify the remaining files:
+
+### Files to Read in Session 4 (10 files):
+1. CHANGELOG.md
+2. COMO_PESQUISAR_PASTAS.md
+3. CONTRIBUTING.md
+4. FRAGMENT_TEMP2.md (already read - skip)
+5. FRAGMENT_TEMP.md
+6. GIT_WORKFLOW_QUICK_REFERENCE.md
+7. LAUNCHERS_README.md
+8. OPEN_IN_EDITOR_FIX.md (already read in Session 1 - skip)
+9. README.md
+10. SECURITY.md
+
+Actual new files to read: 8 files
+
+---
+
+### 📚 SESSION 4 READINGS - Root Documentation Files
+
+#### 45. README.md (527 lines)
+**Summary**: Main project README in Portuguese. Clarify v2.9.111 - 100% Feature Complete! Advanced text processing & JSON manipulation system with GUI/CLI. Key stats: 70K+ LOC, 97% test coverage, 212+ commits, 7 languages i18n. 13 major features: Search & Replace, Insert, JSON Rewriter, JSON Translator, Case Converter, JSON Search, JSX Extractor, AI Processor (OpenAI/Gemini), Placeholder Replacer, Plugin System (v2.9.109), Reusable Panels (v2.9.110), Regex Insert + Memory Register (v2.9.111). Documentation: Wiki (6 pages), API docs (Sphinx), Contributing guide.
+
+**Key Insights**:
+- **Feature complete**: 100% COULD HAVE tasks (36/36) implemented
+- **Architecture**: Modular src/ organization, 4 entry points (clarify.py, main.py, src/__main__.py, launchers)
+- **Plugin system**: 2 included plugins (PostgreSQL Export, Slack Notifications), hot reload support
+- **CI/CD**: GitHub Actions, codecov, badges for coverage (97%), Python 3.12+, PySide6 6.10.1+
+- **Directory structure**: Comprehensive tree showing src/, docs/, tests/, archive/
+
+#### 46. CONTRIBUTING.md (613 lines)
+**Summary**: Complete contributing guidelines following Simplicity Protocol 3. Sections: Code of Conduct, Bug Reports, Feature Requests, Development Setup, i18n Contributions (7 languages), Code Style (black, isort, pylint >9.0), Testing Requirements (3 categories: GUI Safety, Performance, Load), PR Process (Conventional Commits), Changelog Automation. Critical Protocol Rule Step 9.1: MANDATORY timeout protection for GUI tests (@pytest.mark.timeout(5), QT_QPA_PLATFORM=offscreen).
+
+**Key Insights**:
+- **i18n contribution workflow**: 2 options (GitHub web editor for quick edits, fork & PR for multiple changes)
+- **7 languages supported**: EN (complete), PT-BR (complete), ES/FR/DE/ZH/JA (need review)
+- **Testing tiers**: GUI Safety (5 tests), Performance (14 tests), Load (4 tests) = 23 QA tests
+- **Performance baselines**: JSON parsing 75-90 MB/s, Rewriter 32-38 MB/s, Search 5-6M items/s
+- **Protocol Simplicidade 3**: Critical infinite loop prevention rules from v2.9.53 bug
+- **Conventional Commits**: feat/fix/docs/refactor/test/chore with scope
+
+#### 47. SECURITY.md (133 lines)
+**Summary**: OWASP Top 10 security checklist for Google Translate Dock (Sprint A). All 10 requirements ✅ APPROVED: (1) No injection (no SQL/Shell/Code), (2) Rate limiting 1 req/sec, (3) Logs clean/cache secure, (4) No XML (JSON only), (5) Path traversal prevention with pathlib, (6) Dependencies updated (CVE-2025-68146 fixed), (7) Qt auto-escapes XSS, (8) JSON only (no pickle), (9) pip-audit clean + bandit analysis, (10) Operations logged without sensitive data.
+
+**Key Insights**:
+- **Security tools used**: pip-audit (vulnerability scanning), bandit (static analysis)
+- **CVE-2025-68146**: filelock vulnerability fixed (3.20.0 → 3.20.1)
+- **Privacy layer**: Logs don't contain translation content, only metadata
+- **Cache security**: ~/.clarify/cache/ with pathlib validation (no path traversal)
+- **JSON-only approach**: Avoids deserialization attacks (no pickle)
+- **15-minute security review**: Complete OWASP checklist documented
+
+#### 48. CHANGELOG.md (8,867 lines total, read first 150)
+**Summary**: Detailed version history starting with Unreleased section (i18n implementation 2026-01-02) and v2.9.117 (File Explorer corrections 2024-12-26). Unreleased adds 257 GUI element translations (26 tooltips, 10 labels, 21 table headers, 4 combobox items), comprehensive test checklist, automated pre-test validation. v2.9.117 fixes 6 critical issues in 8 hours: Maximize button fix (Linux), QSplitter horizontal layout, ResultsTree integration via QStackedWidget, separate Browse/Search buttons, statistics panel (4 metrics), CSV export, CollapsibleSection widget (300ms animation), hover expansion (75%→85%), enhanced context menu.
+
+**Key Insights**:
+- **Conventional Commits format**: Clear categorization (Added/Fixed/Changed/Technical Details)
+- **Time tracking**: Explicit time estimates per task (e.g., v2.9.117: 8h total breakdown)
+- **Commit references**: All changes linked to git commit hashes
+- **Phase-based development**: FASE A (critical), FASE B (features 5h), FASE C (polish 1h), FASE D (testing)
+- **Detailed technical notes**: File locations, line numbers, pattern explanations
+- **Platform-specific fixes**: Linux maximize button issue (WindowFlags on QTabWidget interference)
+
+
+#### 49. COMO_PESQUISAR_PASTAS.md (367 lines)
+**Summary**: User guide in Portuguese for searching directories with File Explorer. Created for v2.9.120 (2026-01-09). Step-by-step instructions: (1) Open File Explorer, (2) Set Directory base, (3) Select Type: "Directories Only", (4) Mark "Recursive" for subdirectories, (5) Click Browse/Search. Additional filters: Filename Pattern (wildcards), Exclude Globs (node_modules;.git;.venv), Advanced Conditions (Modified Time, Path contains). Examples: Find all `src` folders recursively, Find test folders at root level, Find `.cache` excluding node_modules, Folders created last week. Technical implementation in `src/core/file_explorer_executor.py` lines 123-129. Features keyboard shortcuts (Ctrl+B/F/E, F5), CSV export, limitations (no content search in dirs, permission blocks, symlinks).
+
+**Key Insights**:
+- **Type filter options**: "any" (all), "files" (files only), "dirs" (directories only)
+- **Wildcard patterns**: `test*`, `*cache*`, `.*` (hidden folders)
+- **Common exclusions**: `node_modules;.venv;venv;.git;dist;build;__pycache__` for faster searches
+- **Use cases**: Structure mapping, directory audits, documentation, automation scripts
+- **Limitations**: Cannot search folder content, cannot Replace in folders (files only), symlinks followed (loop risk)
+
+#### 50. FRAGMENT_TEMP.md (150 lines read, multi-programmer workflow guide)
+**Summary**: Project update document by Programmer #9 on file renaming standardization (2026-01-14). Objective: Remove programmer-specific numeric suffixes (_2, _3, etc.) from documentation files to standardize naming convention. Execution: 60 files renamed (16 root, 44 docs/), 4 conflicts preserved when base name already exists. Git operations: 2 commits (1d766e1: Add all docs from programmers 1-12, 31586a8: Rename files), all pushed to origin/main. Automated bash script using regex `s/_[0-9]+(COM)?\.md$/.md/`, conflict detection, `git mv` for history preservation. Files renamed include ACTION_PLAN_CODE_STUDY_2.md → ACTION_PLAN_CODE_STUDY.md, SESSION_*_READING_REPORT_*.md, SPRINT_*_READING_REPORT_*.md. Standard naming: SCREAMING_SNAKE_CASE, no suffixes unless conflicts exist.
+
+**Key Insights**:
+- **Conflict strategy**: Keep both versions when base name already exists (preserve work from multiple programmers)
+- **Git best practice**: `git mv` instead of `mv` to maintain rename tracking in history
+- **Script safety**: Dry-run capability, explicit conflict reporting before renaming
+- **Scope**: 60 files affected across root and docs/ directories
+- **Naming convention**: SCREAMING_SNAKE_CASE, no programmer folders, git tracks ownership
+
+#### 51. GIT_WORKFLOW_QUICK_REFERENCE.md (313 lines)
+**Summary**: Git workflow quick reference card (updated 2026-01-18) for Clarify's branch-based workflow. Daily workflow: (1) Switch branch, (2) Make changes, (3) Stage all (git add -A), (4) Commit (conventional format), (5) Push. Branch patterns: COM-UUID (protocol standard) or COM<N>-feature (recommended ⭐). Common tasks: Sync with main (fetch/merge/rebase), Save WIP (stash), View status (status/log/diff), Undo changes (checkout/reset). Merge workflow: ensure up-to-date, push branch, merge to main, resolve conflicts if needed. File naming: SCREAMING_SNAKE_CASE, no suffixes except conflicts. Commit message format: `<type>: <description>` (feat/fix/docs/refactor/test/chore). Emergency commands: abort merge, undo commit, restore deleted file. Pre-merge checklist: tests pass, code quality, no debug statements, docs updated, CHANGELOG updated, no conflicts.
+
+**Key Insights**:
+- **Recommended pattern**: COM<N>-feature (e.g., COM2-add-search-filter) over COM-UUID for readability
+- **Conflict resolution**: Open conflicted files, resolve markers, stage files, commit merge, push
+- **Force push safety**: Only on YOUR branch, NEVER on main
+- **Cleanup after merge**: Switch to main, pull, delete local branch (-d), delete remote (--delete)
+- **Useful one-liners**: `git log COM2..origin/main` (check if up-to-date), `git blame` (line-by-line authors)
+- **Pre-merge verification**: pytest tests/, pylint quality check, git diff review
+
+#### 52. LAUNCHERS_README.md (213 lines)
+**Summary**: Launcher scripts documentation for Clarify (created 2026-01-07, Protocol Simplicidade 3 v1.0.0). Platform-specific launchers: Windows (clarify.bat), Linux (clarify.sh), macOS (clarify.command) - just double-click! All scripts automatically: (1) Verify Python 3.10+, (2) Check PySide6, (3) Offer auto-install if missing, (4) Launch GUI, (5) Display error messages, (6) Verify project structure. Features: Automatic dependency management, clear error handling, platform-specific support (Windows uses `python`, Linux/macOS use `python3`). Troubleshooting: "Python not found" (add to PATH), "PySide6 not installed" (auto-install or manual pip), macOS security warning (right-click Open), Linux permission denied (chmod +x). Alternative launch methods: `python3 -m src` (recommended for devs), `python3 clarify.py`, `python3 main.py`. Additional launchers in `launchers/` directory for compatibility.
+
+**Key Insights**:
+- **Protocol compliance**: No system modifications without consent, comprehensive error handling, cross-platform support
+- **Dependency automation**: Detects missing PySide6, offers one-click installation with fallback to manual instructions
+- **Platform differences**: Windows uses PATH detection, Linux supports multiple distros (apt), macOS is Homebrew-friendly
+- **Troubleshooting coverage**: Python PATH issues, PySide6 installation (4 methods), macOS security prompts, Linux permissions, X11/Wayland display
+- **Desktop shortcuts**: Platform-specific instructions for creating shortcuts/aliases
+- **Alternative entry points**: 4 ways to launch (launchers, clarify.py, main.py, python -m src)
+
+---
+
+### 📊 SESSION 4 SUMMARY
+
+**Files Read**: 8 files (README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md [first 150 lines], COMO_PESQUISAR_PASTAS.md, FRAGMENT_TEMP.md [first 150 lines], GIT_WORKFLOW_QUICK_REFERENCE.md, LAUNCHERS_README.md)
+
+**Total Lines**: ~2,200 lines (CHANGELOG.md and FRAGMENT_TEMP.md are much longer but read first portions)
+
+**Time Invested**: ~45 minutes
+
+**Key Learnings**:
+1. **Project maturity**: v2.9.111 - 100% Feature Complete! 70K+ LOC, 97% test coverage, 212+ commits
+2. **Architecture**: Modular src/ organization, 4 entry points, plugin system (v2.9.109), reusable panels (v2.9.110)
+3. **Contributing workflow**: Simplicity Protocol 3 compliance, GUI timeout protection (@pytest.mark.timeout(5)), conventional commits
+4. **Security**: OWASP Top 10 checklist, pip-audit + bandit analysis, no injection/XSS/deserialization attacks
+5. **Changelog discipline**: Detailed version history, time tracking, commit references, phase-based development (FASE A/B/C/D)
+6. **File Explorer features**: Directory-only search (Type: "dirs"), wildcards, exclude globs, CSV export, keyboard shortcuts
+7. **Git workflow standardization**: COM<N>-feature branches (recommended), conventional commits, no suffixes in files (git tracks ownership), pre-merge checklist
+8. **Launcher convenience**: Cross-platform double-click launchers, automatic dependency detection/installation, comprehensive troubleshooting
+
+**Progress Update**:
+- **Session 1**: 24 files (root analysis files) ✅
+- **Session 2**: 16 files (reading progress reports) ✅
+- **Session 3**: 4 files (code study reports) ✅
+- **Session 4**: 8 files (remaining root documentation) ✅
+- **Total so far**: 52/243 files = 21.4% complete
+- **Remaining**: Sessions 5-9 (191 files in docs/ folder)
+
+**Next Session**: Session 5 - docs/ folder architecture, specifications, guides (~30-40 files)
+
