@@ -799,3 +799,199 @@ Actual new files to read: 8 files
 
 **Next Session**: Session 5 - docs/ folder architecture, specifications, guides (~30-40 files)
 
+
+---
+
+### 📚 SESSION 5 READINGS - docs/ Architecture & Specifications
+
+#### 53. docs/README.md (108 lines)
+**Summary**: Documentation navigation index (last reorganization Dec 2, 2025). Organized by category: **protocolos/** (SIMPLICIDADE_1/2/3 - 13/23/16 steps), **specifications/** (v2.9.X version specs, Task 23 orphaned keys), **sprints/** (Sprint 9 plan, Sprint 7.2 summary), **plans/** (ROADMAP, INTEGRATION_PLAN, REFACTORING_v3.0.0), **guides/** (USER_MANUAL, THEME_SYSTEM_GUIDE, LAUNCHERS, LANGUAGE_ORGANIZATION_FIX), **reports/** (BUG_REPORT, CODE_BUG_REPORT, TESTING_REPORT), **architecture/** (ARCHITECTURE entry points, ARCHITECTURE_DIAGRAM, STRUCTURE tree), **add_features/** (by category), **tutorials/** (beginner, developers, quickstart), **en/** (English docs), **pt/** (Portuguese docs), **archive/** (historical docs). Last updated Nov 23, 2025, v2.1.0.
+
+**Key Insights**:
+- **3 Protocol variants**: SIMPLICITY_1 (13 mandatory steps, prototypes), SIMPLICITY_2 (23 steps, enterprise), SIMPLICITY_3 (16 steps, solo dev production ⭐)
+- **Documentation categories**: 11 major folders organizing all project knowledge
+- **Bilingual support**: Complete en/ and pt/ documentation trees
+- **Quick navigation sections**: For Developers (TASKS, STRUCTURE, ARCHITECTURE), Code Review (BUG reports, CODE_REVIEW), Project History (MIGRATION, LANGUAGE_FIX, REORGANIZATION)
+- **Recent reorganization**: Dec 2, 2025 - Grouped by category (before: flat structure)
+
+#### 54. docs/PROJECT_STRUCTURE.md (150 lines read, comprehensive project tree)
+**Summary**: Complete Clarify project structure (v2.9.115 era). Main directories: **src/** (modular GUI components in gui/, extractors/, ai_processor/, json_search/, rewriter/, translators/, core/, cli/, utils/, app.py 3606 lines), **tests/** (test_ai/, test_placeholder/, test_advanced_extractor.py 24 tests, test_docks_factory_pytest.py), **benchmarks/** (performance system with run.py, generators.py, metrics_collector.py, README.md 600 lines), **load_tests/** (v2.9.82 load testing with scenarios.py, report_generator.py), **docs/** (INTEGRATION_SUMMARY, ADVANCED_EXTRACTOR_INTEGRATION, specifications/, plans/, architecture/), **.github/workflows/** (benchmarks.yml CI/CD), **scripts/** (generate_changelog.py, ci_quality_check.sh), **config/** (config.yaml.example), **launchers/** (sh/bat files), **archive/** (deprecated orphaned code integrated in v2.9.115). Architecture overview: BaseDock, StandardToolDock, ProcessorWorkerBase, Mixins (FileInputMixin, ResultsOutputMixin, ActionButtonsMixin, OptionsGroupMixin, ValidationMixin).
+
+**Key Insights**:
+- **Modular GUI architecture**: 10 dock classes (advanced_extractor_dock 700 lines, ai_processor_dock 456 lines, file_explorer_dock, json_rewriter_dock, etc.)
+- **Extraction engines**: Dedicated extractors/ folder for advanced_extractor.py (708 lines) - NEW v2.9.115
+- **Complete testing stack**: Unit tests, benchmarks (performance), load_tests (stress testing)
+- **Orphaned code integration**: archive/add/main.py → Advanced Extractor (Sprint 2) documented in v2.9.115
+- **Mixin-based composition**: Reusable components for common dock features (file input, results output, action buttons, validation)
+- **Entry points**: main.py (legacy), clarify.py (main), src/__main__.py, launchers/
+
+#### 55. docs/FILE_EXPLORER_SPECIFICATION.md (150 lines read, security audit doc)
+**Summary**: File Explorer v2.9.117 specification & OWASP security audit (Dec 28, 2025). Sprint goal: Apply Simplicity Protocol 3 for production security. Tasks completed: (1) ✅ Structured logging (docs/LOGGING.md), (2) ✅ OWASP checklist (docs/ERROR_HANDLING.md), (3) ✅ Path traversal validation (CWE-22), (4) ✅ Regex DoS prevention, (5) ✅ Unit tests (35 tests 100% pass), (6) ✅ Black formatting, (7) ✅ pip-audit NO VULNERABILITIES, (8) ✅ Complete documentation. Feature implementation: Extension Filter + Include/Exclude Globs (commit b7ebac7, Dec 25, 2025) - extension parsing `.py,.js,.tsx`, include globs `*.test.*`, exclude globs higher priority, multi-delimiter `,` and `;` support. Logging: get_logger(__name__), warnings for empty directory, errors for invalid path/permissions, info for operation start/complete with duration. Security: Path traversal prevention with os.path.abspath(), directory validation os.path.isdir(), permission check os.access(os.R_OK).
+
+**Key Insights**:
+- **OWASP A01 mitigation**: Path Traversal (CWE-22) blocked with abspath() normalization, exists validation, permission checks
+- **Extension filter logic**: Auto-adds dot prefix if missing, supports multiple delimiters (`,` and `;`)
+- **Glob filtering order**: (1) Exclude first (skip if matches), (2) Include second (skip if no match), (3) Result if passes both
+- **Structured logging integration**: Import get_logger from src.utils, logger in file_explorer_dock.py + file_explorer_executor.py
+- **Security tools**: pip-audit (vulnerability scanning), bandit (static analysis), Black (code formatting)
+- **Protocol compliance**: Simplicidade 3 Etapa 6 (logging) + 6.5 (security) MANDATORY
+
+#### 56. docs/INDEX.md (231 lines)
+**Summary**: Complete Clarify documentation index (v2.9.111, updated Dec 23, 2025). Documentation structure tree showing all folders and key files. Directories: **guides/** (jsx-extractor, shortcuts, tooltips), **architecture/** (components, patterns, design), **specifications/** (v2.9/ specs for v2.9.108-111, v2.10/ planning), **releases/** (RELEASE_v2.9.109, FINAL_REPORT_v2.9), **changelog/** (CHANGELOG_AUTOMATION), **processes/** (CI_CD_SETUP, ERROR_HANDLING, LOGGING, TEST_LOOP_INFINITY_FIX), **protocols/** (PROTOCOL_CHECKLIST, protocolos/ detailed protocols), **patches/** (insert_panel_integration.patch, ROLLBACK), **tutorials/** (step-by-step), **reports/** (analysis), **plans/** (roadmaps), **sprints/** (sprint docs), **en/** (English), **pt/** (Portuguese). Specifications table: Plugin System (v2.9.109, 800 LOC, 15 tests ✅), Reusable Panels (v2.9.110, 1,140 LOC, 18 tests ✅), Regex Insert (v2.9.111, 1,140 LOC, 14 tests ✅). Project metrics: v2.9.111, 70,590+ LOC, 91/94 tests (97%), 97% coverage, 215+ commits, 50+ documents. Quick links: GitHub repo, Issues, PRs.
+
+**Key Insights**:
+- **v2.9 100% Complete**: All 3 major features (Plugin System, Reusable Panels, Regex Insert) implemented with tests
+- **v2.10 Planned**: JSON Translation (8h SHOULD), Reverse Conversion (6h SHOULD), Schema Validation (12h SHOULD)
+- **Documentation structure**: 13 major categories (guides, architecture, specifications, releases, changelog, processes, protocols, patches, tutorials, reports, plans, sprints, multilingual)
+- **Contribution checklist**: kebab-case.md naming, header with title/date, TOC if >500 lines, code blocks with highlighting, working links, practical examples, update INDEX.md
+- **Search by category**: Installation (README), Features (PROJECT_SUMMARY), API (api/), Architecture (architecture/), Tests (processes/)
+- **Multilingual organization**: Complete en/ and pt/ trees for all documentation
+
+
+#### 57. docs/RECIPES.md (150 lines read, practical use cases guide)
+**Summary**: Clarify Recipes - 20 practical use cases (v1.0, Dec 8, 2025) by Josué Amaral. Format: Problem → Solution → Result. Categories: **Set Operations (∩ ∪ − ⊕)** - merge config files (Union, keys+values, JSON nested output ~2min), find i18n differences (Difference A-B, keys only, display untranslated keys ~1min), validate schema consistency (5 microservices User object, intersection to find common fields), create union of API endpoints. **JSON Rewriter** - clean i18n duplicates, normalize config structure, convert arrays to objects with smart keys, remove serial hierarchies (keys without siblings). **JSON Search** - find orphaned keys in large projects, search values in corpus, validate translation consistency. **AI Processing** - AI-assisted code refactoring, automated documentation translation, generate unit tests from code. **Text Extractor** - extract JSX texts for i18n, convert React components to JSON. **Case Converter** - standardize code naming conventions. **Text to JSON** - convert analytics CSV to JSON. **Editor** - edit configs without losing formatting. **Placeholder Replacer** - replace variables in templates.
+
+**Key Insights**:
+- **Practical examples**: Each recipe includes step-by-step instructions with exact menu paths, settings, and expected results
+- **Time estimates**: Realistic time estimates for each task (~1-2 minutes for simple operations)
+- **Use case oriented**: Solves real-world problems (i18n tracking, schema validation, config merging, orphaned keys)
+- **Operation types**: Set operations use comparison modes (keys only vs keys+values), output formats (display only, JSON nested, single file)
+- **Tip integration**: Quick tips like "Use 'Display only' first to preview before saving"
+
+#### 58. docs/PROJECT_TEMPLATES.md (39 lines)
+**Summary**: Quick project setup with pre-configured templates. 5 built-in templates: **json_translation** (multi-language JSON with English/Portuguese files), **text_processing** (pipeline with input/output folders + sample data), **json_rewriter** (JSON cleanup and reformatting project structure), **ai_processing** (AI text processing project with prompts folder), **blank** (basic project structure with input/output folders + README). Usage: File → New from Template... (Ctrl+Shift+N). Custom templates: Use `get_template_manager().create_template_from_directory(source_dir, "My Template", "custom")`. Storage: `~/.config/clarify/templates/`.
+
+**Key Insights**:
+- **Quick start feature**: Reduces project setup time with pre-configured structures
+- **Template variety**: Covers common use cases (translation, text processing, JSON cleanup, AI processing, blank slate)
+- **Custom template support**: API available for creating user-defined templates
+- **XDG compliance**: Templates stored in standard config directory (~/.config/clarify/)
+- **Keyboard shortcut**: Ctrl+Shift+N for quick access
+
+#### 59. docs/jsx-extractor-guide.md (150 lines read, comprehensive feature guide)
+**Summary**: JSX Parameter Extractor complete guide. Features: (1) Dual parsing modes (attribute extraction key="value" vs tag-content extraction), (2) Smart filtering (only_strings, avoid_keys, no standard HTML tags), (3) Case conversion (snake_case, camelCase, PascalCase, kebab-case), (4) Hierarchical JSON output (mirrors component tree), (5) File/directory support (single file or recursive), (6) Generic mode (custom regex delimiters for non-JSX), (7) Security (path traversal prevention, file extension validation). Quick start example: Button.tsx with label parameter → JSON output `{"Button": {"button": {"label": {"label": "label"}}}}`. UI sections: Path selection (file/directory picker, "Is file?" checkbox), Parameter & Mode (parameter name field, JSX/Generic mode, Attribute/Tag-Content checkbox), Generic delimiters (start/end regex for non-JSX), Extensions filter (default `.tsx .jsx .js .ts`), Options (include key, include value, drop HTML tags, only strings, include quotation marks), Normalization (case style, uppercase, limit).
+
+**Key Insights**:
+- **80+ standard HTML tags filtered**: div, span, p, h1-h6, html, head, body, section, nav, article, etc.
+- **Only strings validation**: Filters out expressions `{handleClick}`, variables `{user.name}`, function calls `{count + 1}` using regex (no `{}`, `+`, `*`, `/`, property access)
+- **Hierarchical structure**: JSON output mirrors component tree with nested objects
+- **Generic mode flexibility**: Custom regex delimiters allow parsing non-JSX formats (JSON, templates, custom syntax)
+- **Security measures**: Path traversal prevention, file extension validation for safety
+- **Case normalization**: 4 styles + optional uppercase transform + character limit
+
+#### 60. docs/SHORTCUTS_CUSTOMIZATION.md (59 lines)
+**Summary**: Keyboard shortcuts customization system (Sprint v2.9.62). Features: ✅ Visual customizer (dialog UI for editing), ✅ Conflict detection (detects shortcut conflicts), ✅ Import/Export (save/load shortcuts from JSON), ✅ Category filtering (File, Edit, Tools, etc.), ✅ Search (by name or description), ✅ OS conflict warning (warns about system shortcut conflicts), ✅ Real-time validation (validates while editing). Usage: Open via Help → Customize Shortcuts... or Ctrl+K Ctrl+S. Customize shortcut: (1) Double-click row, (2) Press desired key combo, (3) Check for conflicts (shown in red), (4) Click OK. Import/Export: Export customizations to .json file, import from .json file. Testing: `python -m unittest tests.test_shortcut_customizer -v` (23 tests, all passing). Protocol: Simplicidade 3 v3.1 (COULD HAVE task #4/23).
+
+**Key Insights**:
+- **Visual customization**: No manual JSON editing required, UI-driven workflow
+- **Conflict management**: Real-time detection with visual indicators (red = conflict)
+- **Portability**: JSON import/export allows sharing shortcuts between installations
+- **OS awareness**: Warns about conflicts with system-level shortcuts
+- **Search & filter**: Category filtering + search helps find shortcuts in large lists
+- **Test coverage**: 23 unit tests ensure reliability
+
+#### 61. docs/LAUNCHERS.md (100 lines read, platform-specific launcher docs)
+**Summary**: Clarify GUI launchers for all platforms (Portuguese). Files: **Linux** (clarify_gui.sh, chmod +x, double-click or ./clarify_gui.sh), **Windows** (clarify_gui.bat, double-click or run via CMD/PowerShell), **macOS** (clarify_gui.command, chmod +x, double-click in Finder, handle security prompts via System Preferences → Security & Privacy → Open Anyway). Pre-requisites: (1) Python 3.10+ (auto-check), (2) PySide6 (auto-install offer). Script features: ✅ Verify Python installed, ✅ Check PySide6, ✅ Offer auto-install if missing, ✅ Navigate to project directory, ✅ Execute `python -m src` (GUI mode), ✅ Display error messages, ✅ Pause before close on error. Troubleshooting: Python not found (add to PATH), PySide6 not installed (auto-install or manual pip install), macOS security warning (right-click Open), Linux permission denied (chmod +x).
+
+**Key Insights**:
+- **Multi-platform support**: Dedicated scripts for Linux (.sh), Windows (.bat), macOS (.command)
+- **Dependency automation**: Scripts detect missing PySide6 and offer one-click installation
+- **User-friendly**: Clear error messages, pause before close (Windows), security prompt guidance (macOS)
+- **Manual installation fallback**: Provides pip install commands if auto-install fails
+- **No system modification**: Scripts don't modify system beyond installing PySide6 if requested
+- **Entry point**: Uses `python -m src` for GUI mode execution
+
+#### 62. docs/ROOT_STRUCTURE.md (262 lines)
+**Summary**: Clarify project root organization reference. Root structure: **Core Files** (README, CHANGELOG, CONTRIBUTING, PROJECT_STRUCTURE, SECURITY, pyproject.toml, poetry.lock, requirements-docs.txt), **Configuration** (.gitignore, .pylintrc, .coveragerc, .pre-commit-config.yaml, cliff.toml, config/), **Launchers** (main.py, launchers/ with clarify.py/sh/bat), **Source Code** (src/ with core/, gui/, cli/, plugins/, converters/, translators/, extractors/, i18n/, utils/), **Testing** (tests/ with 94 test files), **Documentation** (docs/ with INDEX.md, guides/, architecture/, specifications/, releases/, processes/, tutorials/), **Plugins** (plugins/ with export_to_postgresql/, slack_notifications/), **Scripts** (scripts/ with generate_changelog.py, automation/), **Assets** (assets/, beeps/, benchmarks/), **Testing & Quality** (load_tests/, .github/workflows/), **Archive** (.archive/ for deprecated files). Organization principles: Keep root clean (only essential configs + entry points), docs organized by type, src modular structure, 97% test coverage. File locations reference tables for config files, entry points, documentation. Recent changes (Dec 23, 2025): Removed temp file, organized docs/ into folders, moved obsolete to .archive/, created INDEX.md, structured specs by version.
+
+**Key Insights**:
+- **Root cleanliness policy**: Only essential files at root (configs, entry points, CI/CD), temporary/obsolete moved to .archive/
+- **Documentation organization**: 11 categories (guides, architecture, specifications, releases, changelog, processes, protocols, patches, tutorials, reports, plans, sprints, multilingual)
+- **Modular src/ structure**: Clear responsibility per module, plugin system for extensibility, converters follow Strategy pattern, reusable GUI components
+- **4 entry points**: main.py (main), launchers/clarify.py (CLI), clarify_gui.sh/bat (platform launchers), src/__main__.py (module execution)
+- **Archive policy**: Files moved when obsolete, superseded, or historical reference only
+- **Maintenance commands**: Cleanup commands for .pyc, __pycache__, .pytest_cache, coverage artifacts, build artifacts
+- **Naming standards**: kebab-case for folders/files, .md extension for markdown, snake_case for Python modules, PascalCase for classes
+
+#### 63. docs/PHASE_3_COMPLETION_NOTE.md (167 lines)
+**Summary**: Phase 3 extended reading completion note by Programmer #8 (Jan 14, 2026). Additional 6 action plans read: (1) BUG_FIXES_RETROSPECTIVE (protocol violation: fix-first plan-later, lesson: 5min planning > 4h debugging), (2) FILE_EXPLORER_FIXES (5 bugs, priority CRITICAL→HIGH→MEDIUM→LOW, 3h timeline), (3) FILE_EXPLORER_THREADING (restore progress bar, FileExplorerWorker pattern, QThread+Worker+Signals), (4) FIX_OPEN_AND_SWITCH (tr() object display bug, tab overwrite, use main_window._show_editor(), 20min), (5) UI_BLOCKING_IN_BATCH_PROCESSING (_on_batch_ready() processes 100 items without yielding, Options A/B/C/D, Option D Hybrid recommended), (6) ROOT_CAUSE_ANALYSIS (Issue #2 path filter = FALSE ALARM, code is correct!). Additional 3 context docs: OPEN_IN_EDITOR_FIX (dual-layer approach, 3 files modified, v2.9.121, 22/24 tests), TESTE_OPEN_IN_EDITOR (MUST restart Clarify after code changes - Python caching!). Key insights: Protocol violation pattern (stop→plan→fix→test, not fix→document), layered solution strategy (Quick Fix 30min vs Proper Fix 3h vs Architectural 6h+), Python module caching (sys.modules, no auto-reload, ALWAYS restart), root cause vs symptoms (investigate before assuming bug), UI thread blocking nuance (worker thread non-blocking BUT signal handlers in UI thread CAN STILL BLOCK). Total Phase 3: 18 files (3 investigations, 3 execution plans, 7 action plans, 3 memory/testing, 2 docs, 1 testing). Time: 100min (18 files <2h, very high efficiency).
+
+**Key Insights**:
+- **Protocol violation documented**: Even violations are transparently documented (fix-first, plan-later acknowledged as wrong)
+- **Correct flow**: Bug discovered → STOP → Create ACTION_PLAN → Fix → Test (vs wrong flow: Fix immediately → Document later)
+- **Layered solutions table**: Quick Fix (30min, Medium risk, urgent solo dev), Proper Fix (3h, Low risk, production quality), Architectural (6h+, High risk, overkill)
+- **Python caching critical**: Code changes NOT reflected until restart due to sys.modules caching ALL imports, no auto-reload in production
+- **UI blocking nuance**: Threading solves worker execution (✅) but signal handlers in UI thread CAN STILL BLOCK (❌), _on_batch_ready() processing 100 items blocks event loop, progress bar exists but can't render
+- **False alarm lesson**: Issue #2 (path filter) reported as bug but actually works correctly, real cause was Issue #3 (checkboxes disabled)
+- **Efficiency metric**: 18 files in <2h = high efficiency reading with deep understanding
+
+#### 64. docs/REMAINING_TRANSLATIONS.md (150 lines read, i18n audit)
+**Summary**: Levantamento de traduções restantes (Dec 30, 2025, v2.9.114, Fase 33 after Window Titles). Executive summary: **~470 strings × 7 languages = ~3,290 translations** remaining. Categories: Botões com Emojis (14 strings, 🔴 Alta priority, ⭐ Fácil difficulty), Placeholders (19 strings, 🟡 Média, ⭐ Fácil), QGroupBox (2, 🟡 Média, ⭐ Fácil), Tabs addTab (4, 🟡 Média, ⭐ Fácil), QLabel (6, 🟢 Baixa, ⭐ Fácil), setText() (40, 🟢 Baixa, ⭐⭐ Médio), Tooltips (214, 🟢 Baixa, ⭐⭐ Médio), QMessageBox (~171, 🟢 Baixa, ⭐⭐⭐ Difícil). Prioritization: **Fase 33** - Emoji buttons (14×7=98, high visual impact, already planned, 8 files affected), **Fase 34** - Placeholders (19×7=133, appear when empty, improve UX, 5 main files), **Fase 35** - QGroupBox + Tabs (6×7=42, visual groupings), **Fase 36-40** - QLabel + setText() (46×7=322, many dynamic f-strings, case-by-case analysis), **Fase 41+** - Tooltips (214×7=1,498, large volume, lower priority, appear on hover only, use tooltip_tr()), **Fase 45+** - QMessageBox (~171 occurrences, dynamic formatting, context important, by file/dock not all at once). Files with most untranslated: batch_dialog.py (~35), search_replace_panel.py (~8), error_report_dialog.py (~6), google_translate_dock.py (~15), tutorials_dock.py (~10), progress widgets (~8).
+
+**Key Insights**:
+- **Massive scale**: 3,290 total translations across 7 languages shows comprehensive i18n effort
+- **Strategic prioritization**: High visual impact first (emoji buttons), then UX improvements (placeholders), then lower priority (tooltips, message boxes)
+- **Difficulty assessment**: Emoji buttons/placeholders easy (⭐), setText() medium (⭐⭐ dynamic f-strings), QMessageBox difficult (⭐⭐⭐ context + formatting)
+- **Implementation patterns**: QPushButton emoji `f"📤 {tr('recall_dialog.btn_export')}"`, placeholders `setPlaceholderText(tr("..."))`, tooltips use `tooltip_tr()` not `tr()`
+- **Challenge areas**: Many setText() for dynamic values (paths, numbers) that shouldn't be translated, QMessageBox has dynamic formatting requiring careful analysis
+- **Phase organization**: 13+ phases planned (33-45+), each targeting specific UI element types
+
+#### 65. docs/I18N_AUDIT_HONEST_FILE_EXPLORER.md (171 lines)
+**Summary**: Honest i18n audit for File Explorer (Jan 4, 2026). Status: 🔴 INCOMPLETO - Strings hardcoded found. **Reconhecimento da falha**: Previously claimed completion was FALSE, didn't audit honestly before declaring. Hardcoded strings found: **file_explorer_dock.py** - (1) Line 119 title "File Explorer" should use tr("file_list.title"), (2) Lines 1540/1643 dialog "Replace Complete" should use tr("file_explorer.replace_complete_title"), (3) Lines 916-918 type filter comparison with hardcoded strings "Files Only"/"Directories Only" instead of itemData() breaks in other languages. **file_list_table_manager.py** - Line 321 CSV headers ["Name", "Size", "Modified", "Permissions", "Path"] hardcoded, should use tr() for each. **file_filter_panel.py** - Line 51 default title "Advanced Filters" hardcoded, Lines 324/331/338 error messages hardcoded. Action plan Sprint 2: Task 2.1 (CRÍTICA 15min fix file_explorer_dock), Task 2.2 (MÉDIA 10min fix CSV headers), Task 2.3 (MÉDIA 15min fix filter panel), Task 2.4 (BAIXA 30min audit other components). **Lesson learned**: What I did WRONG (declared without audit, didn't follow Etapa 1, didn't test manually, didn't grep for hardcoded strings, overconfidence without validation), What I SHOULD have done (audit ALL files with grep, search patterns `"[A-Z]`, `setText("`, `setTitle("`, test EACH component, validate exports/dialogs/errors, declare ONLY after verification). **Commitment**: Be HONEST about real code state, AUDIT before declaring, TEST each change, DOCUMENT what was actually done, FOLLOW Protocol rigorously.
+
+**Key Insights**:
+- **Honest failure acknowledgment**: Explicitly admits previous false completion claim, transparent about what went wrong
+- **Type filter bug**: Comparing with translated currentText() breaks functionality in non-English languages, should use itemData() for internal values
+- **CSV export i18n issue**: Exported CSV always in English regardless of UI language due to hardcoded headers
+- **Grep patterns for audit**: `"[A-Z]`, `setText("`, `setTitle("` to find hardcoded strings
+- **Protocol Step 1 violation**: Didn't investigate before declaring success (Etapa 1: investigação)
+- **Systematic audit approach**: (1) Grep for patterns, (2) Test each component manually, (3) Validate exports/dialogs/errors, (4) Declare only after verification
+- **Sprint organization**: Tasks prioritized by impact (CRÍTICA for dock title → MÉDIA for CSV/filter → BAIXA for other components)
+
+
+#### 66. docs/processes/LOGGING.md (100 lines read, logging system documentation)
+**Summary**: Clarify Logging System provides structured production-ready logging. Features: Multiple log levels (DEBUG/INFO/WARNING/ERROR/CRITICAL), automatic file rotation (10 MB max, 5 backups), dual output (console with colors + file), thread-safe operations, runtime configuration. Quick start: `from src.utils.logger import get_logger`, `logger = get_logger(__name__)`, `logger.info/warning/error/critical()`. Configuration via CLARIFY_LOG_LEVEL environment variable (DEBUG/INFO/WARNING/ERROR/CRITICAL, default INFO). Runtime: `set_log_level("DEBUG")`. Log files location: Linux/Mac `~/.clarify/logs/clarify.log`, Windows `C:\Users\<username>\.clarify\logs\clarify.log`. File rotation: 10 MB per file, 5 backups (clarify.log.1-5), ~50 MB total storage.
+
+**Key Insights**:
+- **Dual output**: Console (colored) + file (persistent) for both development and production debugging
+- **Automatic rotation**: 10 MB × 5 backups prevents log files from consuming excessive disk space
+- **Thread-safe**: Critical for multithreaded GUI application (worker threads logging safely)
+- **Runtime reconfiguration**: Change log level without restart via `set_log_level()`
+- **Exception logging**: `logger.error("msg", exc_info=True)` includes stack trace
+- **Context support**: `extra={"user_id": 123, "action": "file_save", "duration_ms": 45}` for structured logging
+
+#### 67. docs/processes/ERROR_HANDLING.md (100 lines read, crash reporting system)
+**Summary**: Error Handling & Crash Reporting system (Sprint v2.9.61). Features: ✅ Global exception handler (captures all unhandled exceptions), ✅ User-friendly dialogs (shows error messages), ✅ Crash reports (saves to ~/.config/clarify/crashes/), ✅ Privacy-aware (removes sensitive paths), ✅ Context manager (handle errors in specific code blocks), ✅ Logging integration (integrates with v2.9.58 logging), ✅ Opt-in reporting (sending reports is optional). Installation: `install_crash_handler(show_dialog=True, report_crashes=False)` at app startup. Usage: (1) Global handler automatically captures unhandled exceptions → logs error → saves crash report crash_YYYYMMDD_HHMMSS.txt → shows dialog → calls original handler, (2) Context manager `with CrashHandler.handle_errors(show_dialog=False):` for specific blocks, (3) Custom callback `install_crash_handler(callback=custom_error_handler)`.
+
+**Key Insights**:
+- **4-layer error handling**: (1) Logging via logger, (2) Crash report to disk, (3) Error dialog to user, (4) Original handler (stderr)
+- **Privacy protection**: Removes sensitive paths from crash reports before saving
+- **Opt-in philosophy**: report_crashes=False by default, user must explicitly enable
+- **Context manager flexibility**: Can disable dialogs for non-critical sections with custom callbacks
+- **Crash report location**: ~/.config/clarify/crashes/ (XDG-compliant)
+- **Integration point**: src/app.py MainWindow.__init__ installs handler globally
+
+#### 68. docs/processes/CI_CD_SETUP.md (100 lines read, CI/CD quality gates)
+**Summary**: CI/CD Quality Gates setup for Clarify JSX Parameter Extractor feature. Tools: (1) **Black** (code formatter, 120 char line length, `python -m black src/extractors/`), (2) **isort** (import sorter, black-compatible profile, `python -m isort src/extractors/`), (3) **Pylint** (code quality linter, 9.0/10 minimum threshold, disabled checks: C0111 missing-docstring, C0103 invalid-name, R0913 too-many-arguments, `python -m pylint src/extractors/ --rcfile=.pylintrc`), (4) **Pre-commit hooks** (automatic quality checks before commits, `pre-commit install`, `pre-commit run --all-files`). Local CI script: `./ci_quality_check.sh` runs 5 steps: (1) Black formatter check (auto-fix), (2) isort import sorting (auto-fix), (3) Pylint code quality (>=9.0/10), (4) Python syntax validation, (5) Functional tests (6 tests must pass). Quality standards: Line length 120, indentation 4 spaces, import organization (stdlib → third-party → first-party → local), max 10 function args, max 15 class attributes, max 6 nested blocks. Testing: 6 functional tests (attribute extraction, standard tag filtering, string-only filtering, case conversions, avoid-keys filtering, text truncation).
+
+**Key Insights**:
+- **Automated quality gates**: Black + isort + Pylint + pre-commit ensures consistent code quality
+- **High quality threshold**: 9.0/10 Pylint score (most projects use 7.0-8.0)
+- **Auto-fix capability**: Black and isort fix issues automatically (not just report)
+- **Local CI script**: Developers can run full CI pipeline locally before pushing
+- **Integration with Git**: Pre-commit hooks prevent committing non-compliant code
+- **Test coverage categories**: 6 functional areas tested for JSX extractor
+- **Configuration files**: .pre-commit-config.yaml, pyproject.toml, .pylintrc for centralized config
+
+#### 69. docs/processes/TEST_LOOP_INFINITY_FIX.md (100 lines read, infinite loop bug fix)
+**Summary**: GUI test infinite loop bug analysis and fix (Dec 4, 2025). Problem: pytest tests/gui/test_editor_dock.py never finalized (10+ hours, 0% CPU, blocked). Root cause: 3 combined factors - (1) Fixture `main_window` WITHOUT mock_message_box dependency (tests/gui/conftest.py), (2) MainWindow.closeEvent() shows QMessageBox.question() confirmation dialog, (3) QMessageBox blocks infinitely in headless environment (no X11 display, no user response). Loop: fixture cleanup calls window.close() → closeEvent() → QMessageBox.question() → blocks forever → pytest waits for cleanup → infinite loop. Solution: (1) Fix main_window fixture to depend on mock_message_box + mock_file_dialog, QMessageBox.question() now returns QMessageBox.Yes automatically, window.close() completes instantly, (2) Fix undefined variables in tests (window/editor_dock not defined).
+
+**Key Insights**:
+- **Headless testing danger**: QMessageBox/QFileDialog block infinitely without display, MUST be mocked
+- **Fixture dependency critical**: Forgetting to include mock fixtures causes blocking behavior
+- **Cleanup trap**: Even cleanup code (teardown) can cause infinite loops if not properly mocked
+- **Symptom**: 0% CPU usage indicates blocking (not processing), vs high CPU for busy-wait loops
+- **pytest behavior**: pytest waits for fixture cleanup before proceeding to next test
+- **Solution pattern**: Always depend on mock_message_box/mock_file_dialog fixtures in GUI tests
+- **Documentation value**: This bug consumed 10+ hours of investigation, detailed documentation prevents recurrence
+
