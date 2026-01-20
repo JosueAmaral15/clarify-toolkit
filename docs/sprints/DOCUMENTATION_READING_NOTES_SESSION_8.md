@@ -1070,3 +1070,562 @@ json_editor_tab.py (957 lines)
 **Programmer**: #7  
 **Branch**: COM7-read-docs  
 **Worktree**: clarify-COM7-read-docs
+
+---
+
+## 📁 Additional Files Read (Continuation)
+
+### Portuguese Feature Documentation (7 files)
+
+28. ✅ **CHECKBOX_FEATURE.md** (pt/) - Advanced conditions matching options (v2.2.0)
+29. ✅ **RENAMING.md** (pt/) - File renaming history (clarify.py restructuring)
+30. ✅ **LINE_LOOKUP_FEATURE.md** (pt/) - Dynamic line insertion (v2.3.0)
+31. ✅ **CONTEXT_MENU_GUIDE.md** (pt/) - Results panel context menu (v2.9.2)
+32. ✅ **POSITION_TOOLTIP.md** (pt/) - Position tooltips in results (v2.5.1)
+33. ✅ **SAVE_RESULTS_FEATURE.md** (pt/) - Export search results (v2.4.0)
+
+### Tutorial Files (4 files)
+
+34. ✅ **tutorials/README.md** - Tutorial index and structure
+35. ✅ **tutorials/quickstart.md** - 5-minute quick start guide
+36. ✅ **tutorials/beginner/basic/01-json-translate.md** - JSON translation tutorial
+37. ✅ (Partial) **tutorials/beginner/basic/02-search-replace.md** - Search/replace tutorial
+
+### Version Specifications (1 file)
+
+38. ✅ **v2.9.26-SPECIFICATION.md** - AI Processor advanced file filters (Task #51)
+
+**Total Files This Continuation**: 11 additional files  
+**Session 8 Total**: 28 files  
+**Cumulative Total**: 82 of 242 files (34%)  
+**Remaining**: 160 files (66%)
+
+**Note**: File count increased from 206 to 242 (discovered subdirectories in specifications/)
+
+---
+
+## 🔑 Additional Key Findings
+
+### 15. Checkbox Feature - Advanced Conditions Options
+
+**Version**: v2.2.0  
+**Date**: November 24, 2025  
+
+**Three Independent Checkboxes**:
+
+**1. Case Sensitive**:
+- Default: ✅ Active (case-sensitive)
+- Active: "Hello" ≠ "hello" ≠ "HELLO"
+- Inactive: "Hello" = "hello" = "HELLO" (flexible search)
+
+**2. Match Whole Word**:
+- Default: ❌ Inactive
+- Active: Uses word boundaries (`\b`), prevents partial matches
+  - Example: "cat" matches "cat" but NOT "category"
+  - Special: Hyphens and underscores considered delimiters
+- Inactive: Substring matching, finds anywhere
+
+**3. Use Regex**:
+- Default: ❌ Inactive
+- Active: Interprets value as Python regex pattern (full `re` module support)
+- Inactive: Literal string search
+
+**Combination**: All three can be combined for sophisticated search patterns
+
+---
+
+### 16. Project File Renaming History
+
+**Date**: November 23, 2025  
+
+**Major Restructuring**:
+
+| Old | New | Size | Purpose |
+|-----|-----|------|---------|
+| clarify.py | src/app.py | 116 KB (2,719 lines) | Complete GUI+CLI application |
+| clarify_app.py | clarify.py | 1.5 KB (46 lines) | New main entry point |
+| clarify_app_old.py | (removed) | 669 bytes | Obsolete wrapper |
+
+**Rationale**:
+1. **Clarity of Purpose**: Entry point has simple name, implementation has descriptive name
+2. **Project Conventions**: Entry point = `clarify.py`, implementation = `src/app.py`
+3. **Developer Experience**: Descriptive naming for new contributors
+4. **Hierarchical Organization**: clarify.py → src/app.py → organized modules
+
+**Compatibility Maintained**:
+- Command: `python clarify.py` (unchanged)
+- CLI arguments: Still work (`search`, `replace`, `dedupe`)
+- Imports: No breaking changes
+
+**Final Structure**:
+```
+clarify.py (entry point, 46 lines)
+  ↓
+src/app.py (full app, 2,719 lines)
+  ↓
+Organized modules (core/, utils/, rewriter/)
+```
+
+---
+
+### 17. Line Lookup Feature - Dynamic Insertion
+
+**Version**: v2.3.0  
+**Date**: November 24, 2025  
+
+**Problem Solved**:
+- **Before (v2.2.0)**: Required exact line numbers (breaks when file changes)
+- **After (v2.3.0)**: Search patterns find lines dynamically
+
+**Two Modes**:
+
+**Mode 1 - Manual** (Search query empty):
+- Uses line number from spin box
+- Traditional behavior preserved
+
+**Mode 2 - Lookup** (Search query has text):
+- Searches pattern in file
+- Ignores manual line number
+- Inserts at all found lines
+
+**Search Options**:
+1. Case Sensitive (☑/☐)
+2. Whole Word (☑/☐)
+3. Regex (☑/☐)
+
+**Occurrence Modes**:
+- **First**: Insert only at first match
+- **Last**: Insert only at last match
+- **All**: Insert at every match
+- **Nth**: Insert at specific occurrence number
+
+**Use Cases**:
+- Insert after imports: Search "import" + occurrence "Last"
+- Insert before function: Search "def main()" + occurrence "First"
+- Insert in multiple locations: Search pattern + occurrence "All"
+
+---
+
+### 18. Context Menu & Multi-Select in Results
+
+**Version**: v2.9.2  
+
+**Multi-Select Shortcuts**:
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Click | Add/remove item from selection |
+| Shift+Click | Select range between clicks |
+| Ctrl+A | Select all items |
+
+**Context Menu Options**:
+
+**1. Copy** (Ctrl+C):
+- Copies selected items to clipboard
+- Format: File paths + line:col + code snippets
+- Feedback: "✅ Copied X item(s) to clipboard"
+
+**2. Copy All Results**:
+- Copies all search results
+- Format: Complete report with header and statistics
+- Includes:
+  - Title: "CLARIFY - SEARCH RESULTS"
+  - Statistics: Total files, total matches
+  - Per-file breakdown with matches
+
+**3. Select All** (Ctrl+A):
+- Selects all items in panel
+
+**4. Open File**:
+- Opens selected file(s) in default editor
+- Multi-select: Opens multiple files
+
+**Benefits**:
+- Efficient result management
+- Easy export to documentation
+- Quick access to source files
+
+---
+
+### 19. Position Tooltips in Results
+
+**Version**: v2.5.1  
+
+**Functionality**:
+- **Hover Tooltip**: Shows file path, line number, column number
+- **Status Bar**: Continuously updates with position of item under mouse
+
+**Tooltip Format**:
+```
+File: /home/user/project/src/main.py
+Line: 42
+Column: 15
+```
+
+**Status Bar Format**:
+```
+📍 Position: Line 42, Column 15 | File: /home/user/project/src/main.py
+```
+
+**Implementation**:
+- Signal: `itemEntered` connected to `_on_item_hover`
+- Parser: Extracts "line:col" from item text (format: "10:5  code snippet...")
+- Status widget: Passed to ResultsTree via `set_status_label()`
+
+**Benefits**:
+1. No need to open file to see position
+2. Quick reference for navigation
+3. Copy position info from tooltip
+4. Visual feedback (non-intrusive)
+5. Useful for code review and documentation
+
+---
+
+### 20. Save Results Feature - Export to File
+
+**Version**: v2.4.0  
+
+**Location**: Save button in results panel header  
+**Availability**: Both Search/Replace and Insert panels  
+
+**Export Format** (`.txt`):
+```
+================================================================================
+CLARIFY - SEARCH RESULTS
+================================================================================
+Total files with matches: 3
+Total matches: 15
+================================================================================
+
+📁 /home/user/project/src/main.py
+   Matches: 8
+--------------------------------------------------------------------------------
+   Line 10, Col 5:
+      def calculate_total():
+   Line 15, Col 8:
+      return sum(values)
+   ...
+```
+
+**Format Elements**:
+1. Header with statistics
+2. Per-file sections with emoji 📁
+3. Match details: line, column, code snippet
+4. Preserved indentation
+
+**Workflow**:
+1. Execute search/insert operation
+2. Review results in tree
+3. Click "💾 Save Results" button
+4. Choose save location and filename
+5. Confirmation message on success
+
+**Use Cases**:
+- Document changes for code review
+- Share search results with team
+- Archive refactoring plans
+- Create issue descriptions
+
+---
+
+### 21. Tutorial System Structure
+
+**Organization**:
+- **Beginner Tutorials**: Step-by-step with visual instructions
+  - Basic: Essential features
+  - Advanced: Complex workflows (coming soon)
+- **Developer Tutorials**: Technical docs, APIs, integration
+  - Basic: Core concepts (coming soon)
+  - Advanced: Extension development (coming soon)
+
+**Currently Available** (3 tutorials):
+1. JSON Translate (10 min, easy)
+2. Search & Replace (15 min, easy)
+3. JSON Rewriter (12 min, easy)
+
+**Tutorial Features**:
+- YAML frontmatter (title, category, difficulty, time, keywords, prerequisites)
+- Step-by-step screenshots
+- Before/after code examples
+- Tips & tricks sections
+- Success criteria
+
+**Built-in AI Assistant**:
+- Menu: Help → AI Assistant
+- Real-time answers about features
+- Code examples and best practices
+- Troubleshooting guidance
+
+---
+
+### 22. Quick Start Guide - First Impression
+
+**Target Time**: 5 minutes  
+**Focus**: Immediate productivity  
+
+**What is Clarify** (5 tools):
+1. JSON Translation (extract text → i18n JSON)
+2. Search & Replace (batch find/replace with regex)
+3. JSON Rewriting (transform, clean, deduplicate)
+4. Case Conversion (camelCase ↔ snake_case ↔ kebab-case ↔ PascalCase)
+5. AI Processing (ChatGPT/Gemini integration)
+
+**Prerequisites**:
+- Python 3.8+
+- PySide6
+
+**Installation**: 2 commands
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+**Example Workflows**:
+
+**Workflow 1 - Internationalize React App**:
+1. JSON Translate: Extract `.tsx` → `en.json`
+2. Translate `en.json` → `pt.json` (manual or AI)
+3. Search & Replace: Replace strings with `{t.key.path}`
+
+**Workflow 2 - Clean Messy JSON**:
+1. Load messy JSON with duplicates
+2. Enable "Eliminate Duplicates" + "Remove Empty Values"
+3. Apply "Consistent Case" (camelCase)
+4. Save clean output
+
+**Workflow 3 - Bulk Rename Variables**:
+1. Load `.ts` files
+2. Select snake_case → camelCase
+3. Process automatically
+
+**Keyboard Shortcuts Highlighted**:
+- Ctrl+Z / Ctrl+Y: Undo/Redo
+- Ctrl+Shift+F: Advanced File Search
+- Ctrl+S: Save results
+- Ctrl+Q: Quit
+
+---
+
+### 23. JSON Translate Tutorial - Detailed Walkthrough
+
+**Format**: Step-by-step with visuals  
+**Time**: ~10 minutes  
+**Difficulty**: Easy  
+
+**What You Learn**:
+1. Open JSON Translate tool
+2. Extract text from React/Vue/HTML
+3. Generate structured JSON
+4. Understand output format
+
+**Supported File Types**:
+- `.tsx`, `.jsx` (React)
+- `.vue` (Vue.js)
+- `.html` (Plain HTML)
+- `.ts`, `.js` (JavaScript/TypeScript)
+
+**Configuration Options**:
+
+**1. Root Variable Name**:
+- Default: `t` (most common)
+- Example: If using `i18n.pages.home.title`, set root to `i18n`
+
+**2. Emit Export Const**:
+- Checked: TypeScript format (`export const translations = { ... }`)
+- Unchecked: Plain JSON
+
+**3. Is File**:
+- Checked: Single file processing
+- Unchecked: Directory processing
+
+**Step-by-Step**:
+1. Tools → Open JSON Translate
+2. Browse → Select input file
+3. Browse → Choose output location (`locales/en.json`)
+4. Configure root variable (default: `t`)
+5. Click "Process"
+6. Review results panel for success
+7. Open output file to verify structure
+
+**Output Structure**:
+```json
+{
+  "t": {
+    "homepage": {
+      "title": "Welcome",
+      "subtitle": "Start today"
+    }
+  }
+}
+```
+
+**Tutorial Quality**: Excellent - clear screenshots, numbered steps, success criteria, common pitfalls
+
+---
+
+### 24. AI Processor Advanced File Filters
+
+**Version**: v2.9.26  
+**Date**: December 1, 2025  
+**Task**: #51  
+**Protocol**: Simplicity 1 v1.6 (Steps 1-12)  
+
+**Problem Solved**:
+- **Before**: AI processed ALL files in directory (token waste)
+- **After**: Granular filtering before sending to AI
+
+**Filter Types** (6):
+1. filename
+2. path
+3. ext (extension)
+4. size
+5. mtime (modified time)
+6. content
+
+**Operators Supported**:
+- Text: contains, not contains, equals, not equals, starts with, ends with
+- Numeric: >, <, >=, <=
+- Regex: Full Python `re` module support
+
+**Scope Filtering**:
+- none, brackets, braces, parentheses, custom, tag, specific-tag, hierarchical
+
+**Logic Operators**: AND/OR for combining conditions
+
+**UI Components**:
+- QGroupBox (collapsible)
+- 3 initial condition rows
+- Dynamic row addition ("➕ Add Condition" button, no limit)
+- "🗑️ Clear All" button
+- Per-row controls: Field, Operator, Value, Scope, Case Sensitive, Regex
+
+**Backend Integration**:
+- `_get_conditions()`: Builds Condition objects from UI
+- `_apply_advanced_conditions(files)`: Filters using `filter_files_by_conditions()`
+- Feedback: "📊 Processing 3 of 10 files (7 filtered out)"
+- Warning if no files match
+
+**Persistence** (QSettings):
+- Keys: `adv_cond/enabled`, `adv_cond/logic`, `adv_cond/rowN/*`, `adv_cond/row_count`
+- Saves on process, loads on startup
+
+**Testing**: 21 unit tests, 100% passing (0.33s)
+- Filename filtering (3 tests)
+- Size filtering (3 tests)
+- Extension filtering (2 tests)
+- Content filtering, AND/OR logic, Scope filtering, etc.
+
+**Code Reuse**: Imports from `src.core.filters` (Condition dataclass, filter_files_by_conditions())
+
+---
+
+## 💡 Additional Insights
+
+### Feature Version Timeline Clarified
+
+**v2.1** (Late 2025): Scope Feature  
+**v2.2** (Nov 24, 2025): Checkbox Feature (Advanced Conditions Options)  
+**v2.3** (Nov 24, 2025): Line Lookup Feature  
+**v2.4** (Unknown): Save Results Feature  
+**v2.5.0** (Unknown): Progress Bars System  
+**v2.5.1** (Unknown): Position Tooltips  
+**v2.8.0** (Unknown): Multi-Query Search  
+**v2.9.2** (Unknown): Context Menu & Multi-Select  
+**v2.9.26** (Dec 1, 2025): AI Processor Advanced Filters  
+**v2.9.61** (Unknown): Error Handling & Crash Reporting  
+
+**Observation**: Many features implemented on same date (Nov 24, 2025) suggests sprint-based development
+
+### Documentation Language Strategy
+
+**English Documentation**:
+- Wiki (getting-started, troubleshooting, etc.)
+- Tutorials (all 3 current tutorials)
+- Specifications (version specs)
+- Planning docs (integration plans, refactoring)
+
+**Portuguese Documentation** (docs/pt/):
+- Feature implementation details (progress system, checkboxes, etc.)
+- Migration guides (extension filter, reorganization)
+- Code review reports
+- Detailed technical specs
+
+**Observation**: Portuguese docs are more technical/implementation-focused, English docs are user-facing
+
+### Tutorial Quality & Maturity
+
+**Strengths**:
+- Clear structure (YAML frontmatter with metadata)
+- Realistic time estimates (10-15 min)
+- Difficulty ratings
+- Keywords for searchability
+- Prerequisites tracking
+
+**Gaps**:
+- Only 3 tutorials completed (basic beginner level)
+- No advanced tutorials yet
+- No developer tutorials yet
+- Missing tutorials for many major features (Set Operations, AI Processor, Case Converter)
+
+**Opportunity**: Massive tutorial expansion potential (40+ features × 2 skill levels = 80+ tutorials possible)
+
+### Code Architecture Patterns Confirmed
+
+**Consistent Reuse**:
+- `src.core.filters` used by Search/Replace, Insert, AND AI Processor
+- `Condition` dataclass standardized across features
+- `filter_files_by_conditions()` central filtering function
+- QSettings persistence pattern repeated
+
+**Design Quality**:
+- DRY principle applied (Don't Repeat Yourself)
+- Modular architecture enables feature composition
+- Protocol-based development (Simplicity 1 v1.6)
+- Test-driven (21 tests for AI filters alone)
+
+---
+
+## 🤔 Questions Identified (Updated)
+
+### Tutorial Questions:
+24. When will Advanced beginner tutorials be created?
+25. What is the plan for developer tutorials?
+26. Are there video tutorials planned?
+
+### Version Questions:
+27. Why are many features dated November 24, 2025? (Sprint day? Batch update?)
+28. Is current version really v2.9.111 or higher (v2.9.26 documented)?
+29. What versions exist between v2.9.26 and v2.9.111?
+
+### Documentation Questions:
+30. Why is Portuguese used for technical/implementation docs?
+31. Is there a translation strategy for docs (not just UI)?
+32. Are Portuguese docs complete or partial translations?
+
+### Feature Questions:
+33. How many files have been saved using Save Results feature?
+34. What percentage of users customize advanced conditions?
+35. Is Line Lookup feature widely adopted?
+
+---
+
+## 📊 Session 8 Final Progress
+
+**Files Read This Session**: 28 files  
+**Cumulative Total**: 82 of 242 (34%)  
+**Remaining**: 160 files (66%)  
+
+**Categories Progress**:
+- Portuguese features: 11/20+ (55%)
+- Tutorials: 4/5 (80% discovered so far)
+- Specifications: 1/40+ (2.5% - many version specs remain)
+- Wiki: 4/7 (57%)
+- Process docs: 2/3 (67%)
+
+**Status**: 🔄 **IN PROGRESS** - Continuing toward 100%
+
+---
+
+**Last Updated**: 2026-01-20 20:20:00  
+**Programmer**: #7  
+**Branch**: COM7-read-docs  
+**Worktree**: clarify-COM7-read-docs
