@@ -876,3 +876,740 @@ Simple ternary handles both modes cleanly.
 **Programmer**: #7  
 **Branch**: COM7-read-docs  
 **Worktree**: clarify-COM7-read-docs
+
+---
+
+## 📁 Additional Files Read (Continuation)
+
+### Version Specifications (4 files)
+
+46. ✅ **v2.9.111-SPECIFICATION.md** - Regex Insert with Memory Register System
+47. ✅ **v2.9.108-SPECIFICATION.md** - Formula Builder (multi-step set operations)
+48. ✅ **v2.9.64-SPECIFICATION.md** - Logging System GUI integration
+49. ✅ **v2.9.78-SPECIFICATION.md** - Google Translate integration (web scraping)
+50. ✅ **v2.9.27-SPECIFICATION.md** - Remove duplicate objects in JSON Rewriter
+
+### Wiki Files (1 file)
+
+51. ✅ **faq.md** - Frequently Asked Questions (comprehensive guide)
+
+### Sprint Documentation (1 file)
+
+52. ✅ **SPRINT1_TASK1_QA.md** - Advanced Filters bug Q&A analysis
+
+**Total This Continuation**: 7 additional files  
+**Session 9 Total**: 14 files  
+**Cumulative Total**: 96 of 242 (40%)  
+**Remaining**: 146 files (60%)
+
+---
+
+## 🔑 Additional Key Findings
+
+### 32. Regex Insert with Memory Register System
+
+**Version**: v2.9.111  
+**Status**: ✅ Implemented  
+**Lines of Code**: 920 total (370 core + 550 GUI)  
+
+**Problem Solved**: Manual JSON key/value insertion was error-prone, no way to reuse regex-captured values
+
+**Solution**: Memory Register System + RegexInsertPanel with 2-step workflow (Capture → Insert)
+
+**Architecture**:
+
+**1. Memory Register Core** (`src/core/memory_register.py` - 370 LOC):
+```python
+@dataclass
+class RegisterEntry:
+    index: int
+    value: str
+    source_text: str
+    pattern: str
+    timestamp: datetime
+
+class MemoryRegister:
+    def capture(text, pattern, flags) -> Tuple[int, List[str]]
+    def get(index, default) -> Any
+    def replace_in_text(template) -> str
+    def export_to_dict() -> Dict
+    def import_from_dict(data) -> None
+```
+
+**Patterns Used**:
+- **Memento (GoF)**: RegisterEntry stores captured state
+- **Command (GoF)**: Encapsulated operations
+- **Singleton**: `get_global_register()`
+
+**2. RegexInsertPanel** (`src/gui/panels/regex_insert_panel.py` - 550 LOC):
+
+**Step 1 - Capture Phase**:
+- Pattern input (regex)
+- Flags: case_insensitive, multiline
+- Capture button → populate registers ($0-$99)
+- Registers table display (Register, Value, Source preview)
+
+**Step 2 - Insert Phase**:
+- Target key (where to insert)
+- Position combo: "Inside as child", "Before as sibling", "After as sibling"
+- New key input
+- New value template (with $N placeholders)
+- Insert button → emit `insert_requested` signal
+- Preview button → show resulting JSON
+
+**QSettings**: Persists last pattern, keys, values, flags
+
+**3. JSON Editor Integration** (`src/gui/json_editor_tab.py` +220 LOC):
+- Button: "🎯 Regex Insert" in toolbar
+- `_toggle_regex_insert_panel()`: Show/hide panel
+- `_handle_regex_insert()`: Main handler
+  - JSON validation
+  - `_find_key_in_json()`: Recursive search
+  - `_insert_inside/before/after()`: JSON manipulation
+  - `_parse_value()`: Smart type detection (JSON, number, boolean, null, string)
+
+**Use Case Example**: Extract email domain → create username field
+```json
+// Before
+{"user": {"email": "john@example.com"}}
+
+// Step 1 - Capture: Pattern: "email": "(.*?)@(.*?)"
+// Result: $0 = full match, $1 = "john", $2 = "example.com"
+
+// Step 2 - Insert: Target: "user", Position: "Inside", New key: "username", Value: "$1"
+
+// After
+{"user": {"email": "john@example.com", "username": "john"}}
+```
+
+**Features**:
+1. Regex capture: Groups $0-$99, flags support, pattern validation
+2. Memory registers: Storage $0-$99, history stack, export/import JSON
+3. Template replacement: $N placeholders, descending order (avoids $1 vs $10 conflicts)
+4. JSON insertion: Inside (child), Before/After (sibling), path-based navigation
+5. Smart value parsing: JSON objects/arrays, numbers, booleans, null, strings
+6. UI: 2-step workflow, sortable registers table, preview, QSettings persistence
+
+**Tests**: `test_regex_insert.py` (14/20 passing)
+- 13 passing tests for MemoryRegister
+- Tests: initialization, capture (simple/multi-group/no-match), replace, get, history, export/import
+
+---
+
+### 33. Formula Builder - Multi-Step Set Operations
+
+**Version**: v2.9.108  
+**Date**: December 23, 2025  
+**Status**: ✅ Complete  
+**Lines of Code**: 1,060 total (502 backend + 558 GUI)  
+
+**Problem**: Users needed complex multi-step set operations like `(A ∩ B) ∪ (C − D)`, but Set Operations v2.9.32 only supported simple operations or linear pipelines
+
+**Solution**: 3-layer architecture with formula templates and visual builder
+
+**Architecture**:
+
+**1. Backend - Formula Manager** (`src/formula_manager.py` - 502 LOC):
+
+**FormulaStep Class**:
+- Attributes: operation, input_a/b, file paths, output_variable, comparison_mode, options, result
+- Methods: `to_dict()`, `from_dict()`, `get_display_text()`
+
+**Formula Class**:
+- Attributes: name, description, steps (List[FormulaStep])
+- Methods: `add_step()`, `remove_step()`, `get_formula_text()`, `to_dict()`/`from_dict()`
+
+**FormulaManager Class** (Singleton-like):
+- Persistence: QSettings key `"formula_templates"`
+- DEFAULT_FORMULAS: 2 templates auto-created
+  1. "Simple Merge" - 1 step: A ∩ B
+  2. "Config Merge with Exclusions" - 3 steps: (A ∩ B) ∪ C − D
+- Methods: `get_formulas()`, `get_formula(name)`, `save_formula()`, `delete_formula()`, `rename_formula()`
+
+**FormulaExecutor Class**:
+- Sequential execution engine
+- Workflow:
+  1. Validate formula not empty
+  2. Loop through steps
+  3. For each step:
+     - Resolve input_a via `_get_input_data()`
+     - Resolve input_b
+     - Prepare options dict
+     - Execute operation via `set_operations.py`
+     - Store result in `variables[output_variable]`
+     - Update `previous_result`
+  4. Return `{'success': True, 'result': data, 'variables': dict, 'steps_executed': int}`
+- Error handling: Try-except for FileNotFoundError, JSONDecodeError
+- Reuses `set_operations.py` v2.9.32 (consistency)
+
+**2. Frontend - Formula Dock** (`src/gui/formula_dock.py` - 558 LOC):
+
+**AddStepDialog** (nested):
+- Modal dialog for add/edit step
+- Components: Operation combo (∩∪−⊕), Input A/B combos, File paths, Output variable, Comparison mode, Options (4 checkboxes)
+- Methods: `_load_step()`, `get_step_config()`
+
+**FormulaDock** (QDockWidget):
+- Layout: Vertical with 4 sections
+  1. Header: Formula Name input
+  2. Main Area (QSplitter 300/400):
+     - Left: QTreeWidget steps (2 columns: "Step", "Expression")
+     - Right Panel: Formula preview, Execution result, Result status
+  3. Step Buttons: Add, Edit, Remove, Move Up/Down
+  4. Action Buttons: Execute, Save Template, Load Template, Clear
+- Signal: `formula_executed = Signal(dict)` for dock integration
+- Methods: `_add_step()`, `_edit_step()`, `_remove_step()`, `_move_step_up/down()`, `_execute_formula()`, `_save_template()`, `_load_template()`, `_refresh_tree()`, `_update_preview()`
+
+**3. Integration** (app.py +5 edits):
+- Menu: `Tools → 📐 Formula Builder...`
+- Lazy loading pattern
+- Status tip: "Build complex formulas with multiple operations (v2.9.108)"
+
+**Features**:
+1. **Multi-step formulas**: Sequential execution (Step 1 → 2 → 3)
+2. **Chaining**: Previous result available via `previous` input
+3. **Variables**: Named outputs (r1, r2, r3, custom)
+4. **Reuse**: Variables reusable in later steps
+5. **Input sources** (6 types): File Path, Previous Result, Slot A/B, Variables r1/r2/r3
+6. **Operations** (4): Intersection (∩), Union (∪), Difference (−), Symmetric Difference (⊕)
+7. **Comparison modes** (3): key_value, full_path_value, key_only
+8. **Options** (4 flags): ignore_case_keys/values, skip_empty, arrays_ignore_order
+9. **Templates**: Save/load/rename/delete formulas
+10. **Visual preview**: Real-time formula text display
+
+**Example**:
+```
+Step 1: A ∩ B → r1
+Step 2: C ∪ r1 → r2
+Step 3: D − r2 → final
+```
+
+---
+
+### 34. Logging System GUI Integration
+
+**Version**: v2.9.64  
+**Date**: December 11, 2025  
+**Type**: COULD HAVE (Architecture & Maintenance)  
+**Effort**: 30 minutes  
+**Status**: ✅ COMPLETE  
+
+**Discovery**: Logging system already existed since v2.9.58 (`src/utils/logger.py`, 330 LOC) but was incorrectly marked pending in TASKS.md. This sprint only implemented missing GUI integration.
+
+**Existing Logging System** (v2.9.58):
+- Singleton pattern (`ClarifyLogger`)
+- 5 levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- RotatingFileHandler: 10MB max, 5 backups
+- Colored console output
+- Path: `~/.clarify/logs/clarify.log`
+- API: `get_logger(__name__)`, `set_log_level()`, `clear_all_logs()`
+
+**What Was Missing**:
+- ❌ GUI integration: Help menu option "View Logs"
+- ❌ Task incorrectly marked as pending
+
+**Solution Implemented**:
+
+**Menu Integration** (app.py lines ~5033-5038):
+```python
+m_help.addSeparator()
+self.act_view_logs = QAction("📄 View Logs", self)
+self.act_view_logs.setToolTip("Open log files in default editor")
+m_help.addAction(self.act_view_logs)
+self.act_view_logs.triggered.connect(self._view_logs)
+```
+
+**Method Implementation** (~50 LOC):
+```python
+def _view_logs(self):
+    from .utils.logger import get_log_file
+    log_file = get_log_file()
+    
+    if not log_file.exists():
+        QMessageBox.warning(...)
+        return
+    
+    system = platform.system()
+    if system == "Linux":
+        subprocess.run(["xdg-open", str(log_file)])
+    elif system == "Darwin":  # macOS
+        subprocess.run(["open", str(log_file)])
+    elif system == "Windows":
+        os.startfile(str(log_file))
+```
+
+**Features**:
+- Cross-platform support (Linux/macOS/Windows)
+- Warning if log file doesn't exist
+- Error handling for open failures
+- Opens in OS default text editor
+
+**Out of Scope** (Won't Have):
+- In-app log viewer
+- Log filtering/searching
+- Log file size/age information
+- Clear logs option from GUI
+
+---
+
+### 35. Google Translate Integration
+
+**Version**: v2.9.78  
+**Date**: December 21, 2025  
+**Sprint**: Google Translate Implementation (COULD HAVE)  
+**Methodology**: Simplicity Protocol 3 (Solo Developer in Production)  
+**Total Time**: ~4 hours  
+**Status**: ✅ COMPLETE  
+
+**Problem**: Need to translate texts without paid API costs, support 7 i18n languages
+
+**Solution**: Web scraping Google Translate public endpoint
+
+**Features Implemented**:
+
+**1. Google Translate API** (Web Scraping):
+- ✅ Endpoint: `translate.googleapis.com` (free public endpoint)
+- ✅ Local cache: JSON cache in `~/.clarify/translate_cache/`
+- ✅ Retry mechanism: 3 attempts with exponential backoff
+- ✅ Rate limiting: Minimum 0.5s between requests
+- ✅ 7 languages: EN, PT-BR, ES, FR, DE, ZH, JA (aligned with i18n)
+- ✅ Auto-detect: Automatic source language detection
+- ✅ Text translation: Any size (automatic chunking)
+- ✅ File translation: Support for .txt files with structure preservation
+- ✅ Intelligent cache: Identical translations reused
+- ✅ Error handling: Descriptive messages for network errors, invalid language, etc.
+
+**Architecture**:
+- **Pattern Strategy**: Separation between API (logic) and GUI/CLI (interface)
+- **Pattern Observer**: Qt Signals for async GUI communication
+- **Worker Thread**: `TranslationWorker` prevents UI freezing
+- **Modules Created**:
+  - `src/translation/google_translate.py`: API core (GoogleTranslateAPI, TranslationResult)
+  - `src/gui/google_translate_dock.py`: GUI interface (GoogleTranslateDock, TranslationWorker)
+  - CLI integration: New subcommand `gtranslate` in `src/app.py`
+
+**Technical Decision - Web Scraping vs Paid API**:
+- **Choice**: Web scraping of Google Translate public endpoint
+- **Justification**:
+  - Zero cost (paid API: $20/1M characters)
+  - Sufficient for internal/solo developer use
+  - Cache reduces network dependency
+  - Retry mechanism ensures reliability
+- **Trade-off**: Lower SLA guarantee vs paid API, but acceptable for personal use
+
+**2. GUI - Google Translate Dock**:
+- ✅ BaseDock pattern (project standard)
+- ✅ Dual mode: Direct text or file translation
+- ✅ Language selection: ComboBoxes for source/target with auto-detect
+- ✅ Progress feedback: QProgressBar + status messages
+- ✅ Cache info: Button to show cache statistics
+- ✅ Copy to clipboard: Copy result with Ctrl+C
+- ✅ Clear function: Clear input/output with Ctrl+L
+
+**Integration**:
+- Menu: Tools → Google Translate
+- Dock position: Right area (tabbed)
+- i18n: Complete EN/PT-BR translations (8 tooltips)
+- Icon: Preparation for SVG icon (Step 6.6)
+
+**Thread-Safe**:
+- `TranslationWorker` executes translation in background
+- Signals: `progress_updated`, `translation_completed`
+- Cancellation: Worker can be interrupted before completion
+- UI remains responsive during translation
+
+**3. CLI - gtranslate Subcommand**:
+```bash
+python -m src gtranslate --text "Hello World" --source en --target pt
+python -m src gtranslate --file input.txt --target es --output output.txt
+python -m src gtranslate --text "Bonjour" --target en  # auto-detect
+```
+
+**Arguments**:
+- `-t/--text`: Text to translate
+- `-f/--file`: File to translate (mutually exclusive with --text)
+- `-s/--source`: Source language (default: auto)
+- `-T/--target`: Target language (default: pt)
+- `-o/--output`: Output file (default: stdout)
+
+**Tests**:
+- **Total**: 37 tests (32 unit + 5 integration)
+- **Result**: 100% passing (0 failures)
+- **Time**: 8.67s
+- **Coverage**:
+  - Happy path (8 tests): Simple text, long text with chunking, cache hit/miss, multiple languages
+  - Edge cases (6 tests): Empty text, invalid language, same source/target, very long text (>5000 chars)
+  - Error handling (8 tests): Network error, invalid JSON, timeout, file not found
+  - Integration (5 tests): CLI end-to-end, GUI init, imports, API+CLI+GUI together
+  - Quality validation (5 tests): 9 quality criteria, naming consistency, robust error handling
+
+**Test Files**:
+- `tests/test_google_translate.py` (16 tests - API)
+- `tests/test_google_translate_dock.py` (16 tests - GUI)
+- Integration tests: CLI validation (5 tests)
+
+---
+
+### 36. Remove Duplicate Objects in JSON Rewriter
+
+**Version**: v2.9.27  
+**Date**: December 1, 2025  
+**Task**: #52  
+**Lines Added**: 635 total (220 core + 85 GUI + 330 tests)  
+**Protocol**: Simplicity 1 v1.6 (Steps 1-12)  
+**Status**: ✅ COMPLETE  
+
+**Problem**: JSON files with duplicate objects scattered, manual identification needed, wasted space
+
+**Solution**: Automatic duplicate object detection with configurable threshold and modes
+
+**Features**:
+- **Automatic detection**: Objects with identical values
+- **Threshold configurable**: 50-100% (allows partial matching)
+- **Mode Remove** (default): Deletes duplicates, keeps first occurrence
+- **Mode Reference** (optional): Replaces with `$ref:path.to.original`
+- **Include Arrays**: Optionally compare arrays too
+- **Statistics**: Detailed feedback on removed objects
+
+**Core Logic** (`src/rewriter/operations.py`):
+```python
+def remove_duplicate_objects(
+    node: JSONNode,
+    threshold: float = 1.0,
+    include_arrays: bool = False,
+    mode: str = 'remove'
+) -> Tuple[JSONNode, int, dict]:
+```
+
+**Algorithm**:
+1. Traverse JSON tree recursively
+2. For each object:
+   - Calculate `frozen_val = freeze(obj)` for hashing
+   - Search `seen_objects` for visited objects
+   - Calculate similarity score
+   - If `similarity >= threshold`:
+     - Mode 'remove': return None
+     - Mode 'reference': return "$ref:path"
+     - Increment removed_count
+   - If not duplicate:
+     - Add to `seen_objects[frozen_val] = (path, key, obj)`
+     - Process children recursively
+3. For arrays (if include_arrays=True): Same logic, 100% identical required
+4. For primitives: No deduplication
+
+**Similarity Calculation**:
+```python
+def calculate_similarity(obj1, obj2):
+    # For Obj: % of matching fields
+    # For list: 1.0 if identical, 0.0 otherwise
+    # For primitives: 1.0 if equal, 0.0 otherwise
+```
+
+**Data Structures**:
+```python
+seen_objects: Dict[Any, Tuple[str, str, JSONNode]]
+# Key: frozen value (immutable tuple)
+# Value: (path, key, original_obj)
+
+stats_dict = {
+    'duplicates_found': [{...}],
+    'references_created': [{...}],
+    'kept_objects': [{...}]
+}
+```
+
+**UI Integration** (`src/gui/json_rewriter_dock.py` +85 lines):
+
+**Widgets Added** (Row 7):
+- `chk_remove_dup_objects`: Main checkbox
+- `chk_include_dup_arrays`: Include arrays checkbox
+- `spin_dup_threshold`: Similarity slider (50-100%, default 100%)
+- `combo_dup_mode`: Mode selector ("Remove (default)", "Reference ($ref)")
+
+**Tooltips**:
+- Remove duplicate objects: "Remove objects with identical or similar values, keeping first occurrence (smallest line number)"
+- Include arrays: "Also check arrays for duplicates (only when all elements match)"
+- Similarity: "Minimum similarity percentage (100% = exact match, 80% = allow 20% field differences)"
+- Mode: "Remove: delete duplicates | Reference: replace with $ref:path to original"
+
+**CLI Integration**:
+```python
+if args.remove_duplicate_objects:
+    threshold = args.duplicate_threshold / 100.0
+    include_arrays = args.include_duplicate_arrays
+    mode = args.duplicate_mode
+    obj, stats['duplicate_objects'], dup_stats = rw.remove_duplicate_objects(
+        obj, threshold=threshold, include_arrays=include_arrays, mode=mode
+    )
+```
+
+---
+
+### 37. FAQ - Comprehensive User Guide
+
+**Status**: ✅ Complete  
+**Categories**: 8 major sections  
+
+**1. Getting Started** (4 Q&A):
+- What is Clarify: Advanced text/JSON manipulation system with 10+ tools
+- Free?: Yes, MIT License
+- Platforms: Windows 10+, macOS 10.15+, Linux (Ubuntu 20.04+)
+- Programming knowledge?: No, GUI designed for anyone
+
+**2. Installation & Setup** (4 Q&A):
+- Requirements: Python 3.12+, 4GB RAM (8GB recommended), 500MB disk
+- Install: git clone + venv + pip install + python main.py
+- pip install?: Not yet (planned)
+- Why Python 3.12+?: Modern features (match, type hints with |, performance)
+
+**3. Features & Usage** (5 Q&A):
+- JSON Rewriter vs Set Operations: Rewriter cleans single files, Set Ops compares multiple
+- Batch processing?: Yes (recursive directory search, entire folders, 100+ files)
+- Backups?: Yes, optional "Create Backup" in each dock (filename.ext.bak)
+- File types: Text, JSON, Code, Web, Config (any text-based format)
+
+**4. AI Features** (5 Q&A):
+- Providers: OpenAI (GPT-4o, 4 Turbo, 3.5), Gemini (Flash 2.0, Pro 2.0, Flash 1.5), Claude (Opus 4, Sonnet 4, Haiku 4), Perplexity (Llama 3.1 70B, Mixtral 8x22B)
+- API key?: Yes (links provided for each)
+- Cost?: $0.001-0.05 per file (Gemini cheapest, Claude most expensive)
+- Real-time cost estimates shown
+- Offline?: AI requires internet, all other features work offline
+
+**5. Configuration** (4 Q&A):
+- Theme: Settings → Themes (Light/Dark/System)
+- Shortcuts: Settings → Keyboard Shortcuts (45+, full customization, conflict detection)
+- Settings location: Linux (~/.config/Clarify/), macOS (~/Library/Preferences/), Windows (%APPDATA%\Clarify\)
+- Export/import?: Not yet (planned v3.0), workaround: copy settings folder
+
+**6. Internationalization** (3 Q&A):
+- Languages: 7 (🇺🇸 EN, 🇧🇷 PT-BR, 🇪🇸 ES, 🇫🇷 FR, 🇩🇪 DE, 🇨🇳 ZH, 🇯🇵 JA)
+- Change language: Settings → Language (immediate update)
+- Contribute translations?: Yes (GitHub repo)
+
+**7. Performance** (covered separately)
+**8. Troubleshooting** (covered separately)
+
+**Quality**: Comprehensive, well-organized, practical examples, links to other docs
+
+---
+
+### 38. Advanced Filters Bug - Q&A Analysis
+
+**Date**: January 2, 2026  
+**Stage**: Step 3 of Simplicity Protocol 3 (Q&A with AI)  
+**Status**: ✅ ANALYSIS COMPLETE  
+
+**Context**: Advanced filters in File Explorer not working properly
+
+**15 Questions Asked & Answered**:
+
+**Q1-4: Execution Flow** ✅
+- Flow: FileExplorerDock → _build_filters() → executor.execute_browse/search() → FileListExecutor → _matches_filters()
+- Filters built at line 1052, components: extension, include/exclude globs, panel filters
+- Passed correctly to executor
+- Executor receives and applies correctly (code is correct!)
+
+**Q5: Debug Logs?** ❌ NO - **THIS IS THE PROBLEM!**
+- No logs in _build_filters()
+- No logs in _matches_filters()
+- Impossible to debug if filters empty or malformed
+
+**Q6: Conditions Grid Connected?** ⚠️ PARTIALLY
+- ConditionsGrid separate from basic filters
+- Passed as `conditions` parameter
+- **PROBLEM #1: No code applying conditions!**
+
+**Q7: Validation Before Apply?** ❌ NO
+- Invalid regex → passes silently
+- Invalid size values → no validation
+
+**Q8: Works in Browse and Search?** ✅ YES
+- Both modes share filters
+
+**Q9: Automated Tests?** ❌ NOT VERIFIED (probably none)
+
+**Q10: filters vs conditions?** ✅
+- `filters` (dict): Basic filters (size, mtime, regex, extensions)
+- `conditions` (list): Advanced conditions (AND/OR logic)
+- **PROBLEM #2: conditions NOT being applied!**
+
+**Q11: FileFilterPanel Connected?** ✅ YES
+- `self.filter_panel.get_filters()` called correctly
+
+**Q12: Conflict Between Basic and Advanced?** ⚠️ POSSIBLE
+- Filters applied, conditions NOT applied
+- No conflict because conditions do nothing
+
+**Q13: Extension Filter Overwriting?** ❌ NO
+- Extension filter part of advanced filters
+- All coexist
+
+**Q14: Recursive Flag Affects?** ✅ NO
+- Recursion only controls depth
+- Filters applied independently
+
+**Q15: Silent Errors?** ✅ YES - **PROBLEM #3!**
+- Regex error → `pass` (line 192)
+- OSError in size → `pass` (line 207)
+- OSError in mtime → `pass` (line 222)
+- Errors silenced without logging!
+
+**Problems Identified**:
+
+**🔴 PROBLEM #1: Advanced Conditions NOT Applied**
+- Location: `file_explorer_executor.py` line 165-300
+- Cause: `conditions` parameter received but NEVER used
+- Solution: Apply conditions after execute_browse, before returning results
+
+**🟡 PROBLEM #2: Lack of Logging for Debug**
+- Location: Multiple points
+- Cause: No instrumentation
+- Solution: Add logs in _build_filters(), _matches_filters(), execute_browse/search()
+
+**🟡 PROBLEM #3: Exceptions Silenced Without Logging**
+- Location: lines 192, 207, 222
+- Cause: try/except with `pass`
+- Solution: Replace `pass` with `logger.debug(f"Filter error: {e}")`
+
+**Correction Plan**: (Documented in separate section of original file)
+
+---
+
+## 💡 Additional Insights
+
+### Feature Complexity Tiers
+
+**Tier 1 - Simple** (1-2 hours):
+- Logging GUI integration (v2.9.64) - 30 min
+- Position tooltips (v2.5.1) - ~1h
+- "Is File" checkbox - ~1h
+
+**Tier 2 - Medium** (2-6 hours):
+- Google Translate (v2.9.78) - 4h
+- Multi-query search (v2.8.0) - ~3h
+- Extension filter (v2.9.0) - ~2h
+
+**Tier 3 - Complex** (6+ hours):
+- Formula Builder (v2.9.108) - ~8-10h
+- Regex Insert with Memory Register (v2.9.111) - ~8h
+- Remove Duplicate Objects (v2.9.27) - ~6h
+- Refactoring Phase 2.3 (Set Operations) - ~12h
+
+**Observation**: Even "simple" features have complete specs, tests, and documentation
+
+### Web Scraping Strategy
+
+**Google Translate Decision**:
+- Free endpoint scraping vs $20/1M chars paid API
+- Solo developer pragmatism (Simplicity Protocol 3)
+- Cache + retry = acceptable reliability
+- Trade-off acknowledged explicitly in spec
+
+**Risk Mitigation**:
+- Local cache (reduces dependency)
+- Retry mechanism (handles transient failures)
+- Rate limiting (avoids getting blocked)
+- Error messages guide user if scraping fails
+
+**Philosophy**: "Good enough for solo use" > "Perfect enterprise solution"
+
+### Testing Culture Evidence
+
+**Comprehensive Testing Observed**:
+- Google Translate: 37 tests (100% pass, 8.67s)
+- Regex Insert: 14/20 tests (70% pass)
+- Remove Duplicate Objects: 330 lines of tests
+- Multi-query: 10 tests (100% pass)
+
+**Test Categories**:
+- Happy path (basic functionality)
+- Edge cases (empty input, invalid data)
+- Error handling (network, parsing, file errors)
+- Integration (end-to-end CLI/GUI)
+- Quality validation (9 quality criteria)
+
+**Observation**: Production-level testing for solo developer project
+
+### Design Patterns Usage
+
+**GoF Patterns Identified**:
+- **Memento**: RegisterEntry stores captured state (Regex Insert)
+- **Command**: Encapsulated operations (Regex Insert, Formula Builder)
+- **Singleton**: Global instances (MemoryRegister, FormulaManager, ClarifyLogger)
+- **Strategy**: API vs GUI separation (Google Translate)
+- **Observer**: Qt Signals for async communication
+- **Factory**: (Implied in multiple docks)
+
+**Qt Patterns**:
+- BaseDock inheritance (all docks)
+- Worker threads (TranslationWorker, SearchWorker, etc.)
+- Signal/Slot architecture
+- QSettings for persistence
+
+### Bug Investigation Methodology
+
+**Systematic Approach** (Sprint 1 Task 1.1 Q&A):
+1. Ask 15 structured questions
+2. Trace execution flow
+3. Verify each component
+4. Identify root causes
+5. Classify problems by severity
+6. Create correction plan
+
+**Problem Classification**:
+- 🔴 Red (critical): Functionality broken
+- 🟡 Yellow (important): Quality/maintainability issues
+- ✅ Green (working): No issues
+
+**Transparency**: Document what's NOT working (technical debt acknowledged)
+
+---
+
+## 🤔 Questions Identified (Updated)
+
+### Implementation Questions:
+49. Is Regex Insert fully working? (14/20 tests passing = 30% failing)
+50. What are the 6 failing Regex Insert tests?
+51. Were Advanced Filters bugs fixed? (Sprint 1 Task 1.1 identified 3 problems)
+
+### Testing Questions:
+52. Why 30% test failure rate accepted in Regex Insert?
+53. Are there tests for Formula Builder?
+54. What is overall test coverage across all features?
+
+### Architecture Questions:
+55. How many docks total now? (10+ mentioned earlier, seeing more: Formula Builder, Google Translate, etc.)
+56. Is there a dock factory pattern? (BaseDock inheritance suggests yes)
+57. How many total workers? (TranslationWorker, SearchWorker, AIProcessorWorker, etc.)
+
+### Product Questions:
+58. Is Google Translate still working? (Web scraping can break)
+59. How many users actually use Formula Builder? (Complex feature)
+60. Is there analytics/telemetry to measure feature usage?
+
+---
+
+## 📊 Session 9 Final Progress
+
+**Files Read This Session**: 14 files  
+**Cumulative Total**: 96 of 242 (40%)  
+**Remaining**: 146 files (60%)  
+
+**Categories Progress**:
+- Version specifications: 6/29 (21%)
+- Portuguese docs: 15/25 (60%)
+- Refactoring docs: 3/14 (21%)
+- Wiki: 5/7 (71%)
+- Sprints: 1/20 (5%)
+- Tutorials: 4/5 (80%)
+
+**Notable Milestone**: 🎉 **40% COMPLETE!** (96 files read)
+
+**Status**: 🔄 **IN PROGRESS** - Continuing toward 100%
+
+---
+
+**Last Updated**: 2026-01-20 21:40:00  
+**Programmer**: #7  
+**Branch**: COM7-read-docs  
+**Worktree**: clarify-COM7-read-docs
