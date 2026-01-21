@@ -669,3 +669,252 @@ python clarify.py dedupe en.ts --from-ts --join-keys --eliminate-duplicates --no
 
 ---
 
+
+### File 4: src/core/filters.py (343 lines) ✅
+
+**Purpose**: Advanced file filtering with conditions on filename, path, extension, size, mtime, and content. Supports hierarchical HTML/XML scope extraction.
+
+**Key Features**:
+- **AND/OR logic operators** for condition combining
+- **Scope extraction**: brackets, braces, parentheses, custom delimiters, HTML tags, hierarchical ranges
+- **Hierarchical filtering**: Include/exclude directives with CSS-like selectors (#id, tag#id)
+- **Regex support**: Treat patterns as regex with flags
+- **Case sensitivity**: Toggle for string matching
+- **Whole word matching**: Word boundary support
+- **Content filtering**: Reads files once per content-condition
+
+**Global Operators** (line 11):
+```python
+OPS = {
+    "contains", "not contains", "equals", "not equals",
+    "starts with", "ends with", ">", "<", ">=", "<="
+}
+```
+
+**Key Functions**:
+
+**parse_hierarchical_ranges()** (line 25):
+- Parses: `"include div#test1, exclude #test2, include #test3"`
+- Returns: `[("include", "div#test1"), ("exclude", "#test2"), ("include", "#test3")]`
+- Supports: #id, tag#id, tag, regex patterns
+
+**apply_hierarchical_filter()** (line 62):
+- Applies include/exclude filtering to HTML/XML
+- **Regex mode**: Treats selectors as regex patterns
+- **Selector mode**: Parses #id, tag#id, tag
+- **Logic**: Include matches, then remove excluded matches
+- Returns filtered text joined by newlines
+
+**extract_scope_content()** (line 120):
+- **Scope types**:
+  - `"none"`: Return full text
+  - `"hierarchical"`: Call apply_hierarchical_filter()
+  - `"brackets"`: Extract [...] content (simple regex)
+  - `"braces"`: Extract {...} content (depth-based parsing)
+  - `"parentheses"`: Extract (...) content (depth-based)
+  - `"custom"`: Custom delimiters (format: "begin,end")
+  - `"tag"`: Extract any HTML/XML tag content
+  - `"specific-tag"`: Extract specific tag content (e.g., "div")
+- **Nested handling**: Braces/parentheses use depth counter (correct nesting)
+- Returns concatenated content from all matches
+
+**Condition** (dataclass, line 207):
+- **Fields**:
+  - field: filename, path, ext, size, mtime, content
+  - operator: Any from OPS
+  - value: Comparison value (string or numeric)
+  - scope_type: Scope to extract before matching
+  - scope_value: Additional parameter for scope
+  - case_sensitive: Toggle (default True)
+  - whole_word: Word boundary matching (default False)
+  - use_regex: Treat value as regex (default False)
+
+**_apply_string_matching()** (line 218):
+- Handles regex + non-regex modes
+- **Regex mode**:
+  - Compiles pattern with flags (case insensitive if needed)
+  - Adds word boundaries (\b) if whole_word enabled
+  - Uses search() for contains, fullmatch() for equals, match() for starts with
+- **Non-regex mode**:
+  - Case-insensitive: lower() both strings
+  - Whole word: Use \b regex even in non-regex mode
+  - Standard string operations (in, ==, startswith, endswith)
+- Returns boolean match result
+
+**matches()** (line 280):
+- Evaluates condition against file path
+- **Field handlers**:
+  - `filename`: Extract basename, call _apply_string_matching
+  - `path`: Full path, call _apply_string_matching
+  - `ext`: Extract extension (no dot), call _apply_string_matching
+  - `size/mtime`: os.stat(), numeric comparison via OPS dict
+  - `content`: read_text(), apply scope extraction, call _apply_string_matching
+- **Scope integration**: Extracts scope content before matching (line 302-303)
+- Exception-safe: Returns False on any error
+
+**filter_files_by_conditions()** (line 312):
+- Main filtering function
+- **Logic operators**:
+  - `"AND"`: all(c.matches(p) for c in conds) - default
+  - `"OR"`: any(c.matches(p) for c in conds)
+- Filters empty conditions (line 322)
+- Exception-safe per file: skips failed files
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- **Sophisticated scope extraction**: Hierarchical HTML parsing with include/exclude
+- **Flexible matching**: Regex, case-insensitive, whole word, scoped
+- **Correct nesting**: Depth-based parsing for braces/parentheses
+- **Performance**: Reads content once per file if needed
+- **Error handling**: Try-except around all operations
+
+**Security**: ✅
+- Regex compilation in try-except (line 224-250)
+- Exception-safe matches() (line 307)
+- Exception-safe filter_files_by_conditions() (line 340)
+
+**Design Patterns**:
+- **Strategy Pattern**: Different scope extraction strategies
+- **Composite Pattern**: Hierarchical filtering (include/exclude)
+
+---
+
+
+### File 5: src/core/command_manager.py (184 lines) ✅
+
+**Purpose**: Command Pattern Implementation for Undo/Redo System (v2.9.8, Task #12)
+
+**Design Pattern**: **Command (GoF)** + **Memento (GoF)**
+- Encapsulates operations as objects
+- Maintains history stack with configurable depth (default: 10 levels)
+
+**Key Classes**:
+
+**Command** (ABC, line 15):
+- **Abstract methods**: execute(), undo()
+- **Optional**: redo() (default: calls execute())
+- **Utility**: get_description() → human-readable string
+
+**FileModificationCommand** (line 40):
+- Concrete command for single file modifications
+- **State**: filepath, original_content, new_content, description
+- **execute()**: Write new_content to file
+- **undo()**: Restore original_content
+- **redo()**: Re-execute (write new_content again)
+
+**MultiFileCommand** (line 70):
+- **Composite Pattern**: Aggregates multiple FileModificationCommand instances
+- **execute()**: Execute all sub-commands
+- **undo()**: Undo in **reverse order** (line 87) - Critical for correctness
+- **redo()**: Redo all sub-commands
+- **Description**: Shows file count
+
+**CommandManager** (line 99):
+- **Attributes**:
+  - max_history: Bounded depth (default 10)
+  - undo_stack: deque with maxlen (automatic eviction)
+  - redo_stack: deque with maxlen
+
+**execute_command()** (line 115):
+- Executes command, adds to undo_stack
+- **Clears redo_stack** (line 122) - branching timeline, can't redo after new action
+
+**undo()** (line 124):
+- Pops from undo_stack, calls command.undo()
+- Pushes to redo_stack
+- Returns True/False (success indicator)
+
+**redo()** (line 137):
+- Pops from redo_stack, calls command.redo()
+- Pushes to undo_stack
+- Returns True/False
+
+**Utility Methods**:
+- can_undo(), can_redo(): Boolean checks
+- get_undo_description(), get_redo_description(): Preview next operation
+- clear_history(): Empties both stacks
+- get_history_stats(): Returns dict with availability, counts, max_history
+
+**Memory Management** ✅:
+- **Bounded history**: deque(maxlen=10) - automatic eviction of oldest
+- Prevents infinite memory growth
+- User-configurable max_history
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- Textbook Command pattern
+- Correct Composite implementation (reverse undo)
+- Bounded memory with deque
+- Clean ABC design
+- Exception-safe (caller handles exceptions)
+
+**Usage in app.py**:
+- Integrated in v2.9.8
+- Ctrl+Z / Ctrl+Y shortcuts
+- Menu items show descriptions (get_undo_description)
+
+---
+
+
+### File 6: src/core/insert.py (53 lines) ✅
+
+**Purpose**: Text insertion at specific lines with multiple modes
+
+**InsertMode** (class constants, line 4):
+- LEFT: Insert left of line (prepend)
+- RIGHT: Insert right of line (append)
+- REPLACE: Replace entire line
+- INSERT_ABOVE: Push line down and insert above
+- INSERT_BELOW: Insert on next line (push rest down)
+
+**insert_at_line()** (line 12):
+- Inserts/modifies text at 1-based line_no
+- Handles out-of-bounds: fills with empty lines
+- Preserves trailing newline if original had one (line 52)
+- Index clamping: max(0, min(len(lines), line_no - 1))
+
+**Logic**:
+- LEFT/RIGHT/REPLACE: Extend lines if idx >= len (lines 20-23, 28-31, 36-39)
+- INSERT_ABOVE: lines.insert(idx, text) - shifts existing line down
+- INSERT_BELOW: lines.insert(min(idx + 1, len(lines)), text) - after current line
+- Raises ValueError for unknown modes
+
+---
+
+### File 7: src/core/search_replace.py (65 lines) ✅
+
+**Purpose**: Search and replace with regex, case sensitivity, whole word options
+
+**SearchOptions** (dataclass, line 8):
+- case_sensitive: bool (default False)
+- whole_word: bool (default False)
+- regex: bool (default False)
+
+**compile()** (line 14):
+- Builds re.Pattern from user input + options
+- **Flags**: IGNORECASE if not case_sensitive
+- **Regex mode**: Use needle as-is
+- **Non-regex mode**: re.escape(needle), add \b if whole_word
+- Try-except: Raises ValueError on invalid regex
+
+**preserve_case_like()** (line 29):
+- Mimics case pattern from matched_text
+- **ALL CAPS**: replacement.upper()
+- **all lowercase**: replacement.lower()
+- **Capitalized** (first upper, rest lower): capitalize()
+- **Mixed**: Return as-is (no clear pattern)
+
+**replace_in_text()** (line 48):
+- Replaces occurrences using compiled pattern
+- **Parameters**:
+  - content: Text to search
+  - pattern: Compiled re.Pattern
+  - repl: Replacement string
+  - preserve_case: Apply case mimicking
+  - count: Max replacements (0 = all)
+- **Returns**: (new_content, num_replacements)
+- **Implementation**: Uses pattern.sub() with callback _repl
+  - Callback increments counter, applies preserve_case_like if enabled
+
+**Used by**: file_explorer_executor.py _replace_preserve_case()
+
+---
+
