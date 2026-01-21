@@ -1337,3 +1337,45 @@ Portuguese usage guide for Extension Filter v2.9.1 with optional checkbox contro
 **Total Progress**: 96/243 files = 39.5% complete
 **Remaining**: 147 files (60.5%)
 **Session 5 Total**: 40 files
+
+### File 97: docs/pt/IS_FILE_FEATURE.md (188 lines)
+Portuguese documentation for "Is File?" checkbox feature available in all main panels (Search/Replace line 1814, Insert line 2221, JSON Translate line 3273). Checkbox controls Browse button behavior: **Unchecked (default - Directory mode)** Browse opens directory dialog, operation applied recursively to ALL files inside, respects include/exclude patterns, filters with Advanced Conditions if configured. **Checked (File mode)** Browse opens file selection dialog, operation applied only to specific selected file, ignores include/exclude patterns (not applicable to single file), Advanced Conditions disabled (directory-specific). Implementation shows `_browse()` method checking `is_file.isChecked()` to call either `QFileDialog.getOpenFileName()` (file) or `QFileDialog.getExistingDirectory()` (folder). Processing logic: if `os.path.isfile(path)` then `paths = [path]` (single file), else `paths = list(walk_files(path, includes, excludes))` (recursive directory). Use cases: (1) Search entire project (uncheck, select root dir, configure includes), (2) Replace in specific file (check, select config.json), (3) Translate multiple i18n/ files (uncheck, select i18n/), (4) Translate single en.json (check, select en.json). Advanced Conditions integration: checkbox also controls enabling conditions - when checked conditions DISABLED (single file needs no filters), when unchecked conditions ENABLED (useful for filtering subset of directory files).
+
+**Key Insights:**
+- **Dual Mode Operation**: Single checkbox controls both Browse dialog type (file vs directory) AND Advanced Conditions availability
+- **Smart Processing**: Runtime detection via `os.path.isfile()` with fallback if checkbox marked but path is directory
+- **Advanced Conditions Link**: File mode disables conditions (no filters needed for single file), directory mode enables conditions (filter subsets)
+- **Cross-Platform Dialogs**: Uses Qt file dialogs (QFileDialog) that work on Windows/Linux/macOS consistently
+- **Default State**: Always unchecked (directory mode default), not persisted between sessions
+
+### File 98: docs/pt/LINE_LOOKUP_FEATURE.md (602 lines)
+Portuguese comprehensive documentation for Line Lookup feature in Insert Panel v2.3.0. Solves problem of static line numbers breaking when files change - now can insert based on search patterns instead. **2 Operation Modes**: (1) Manual (traditional) when Search query EMPTY uses spin box line number, (2) Lookup (new) when Search query has TEXT searches pattern in lines and ignores manual number. **3 Search Options**: Case Sensitive (☑=exact "Function"≠"function", ☐=ignore case), Whole Word (☑=uses `\b` boundaries "test" not "testing", ☐=substring match), Regex (☑=interprets as regex pattern with `re` module, ☐=literal string). **3 Occurrence Modes**: First (inserts only at first line matching pattern), Last (inserts only at last matching line), All (inserts at ALL matching lines, processes bottom-to-top to avoid line number changes). Implementation shows `_find_line_by_query()` returns list of 1-based line numbers, `_line_matches_query()` checks match with flags, `_apply()` determines target_lines based on query/occurrence then calls `insert_at_line()` for each in sorted reverse order. Practical cases: (1) Add docstring before all "def " functions (query="def ", occurrence=All, mode=INSERT_ABOVE), (2) Add import after last "^import " (query="^import ", regex=☑, occurrence=Last, mode=INSERT_BELOW), (3) Add priority to all "TODO" lines (query="TODO", whole_word=☑, occurrence=All, mode=RIGHT), (4) Comment version lines with regex "version.*\d+\.\d+\.\d+" (regex=☑, occurrence=All, mode=LEFT). 10 tests validate all scenarios with 100% coverage.
+
+**Key Insights:**
+- **Dynamic vs Static**: Lookup mode (pattern-based) solves brittleness of Manual mode (static line numbers) when files change frequently
+- **Bottom-to-Top Processing**: All mode inserts from highest to lowest line number to prevent line shifting during multi-insertion
+- **3×3 Configuration**: 3 search options (Case/Word/Regex) × 3 occurrence modes (First/Last/All) = 9 possible combinations
+- **Regex Power**: Enables complex patterns like `^import `, `def \w+\(.*\):`, `^\s*print\(` for precise matching
+- **Fallback Safety**: Files with no matches are skipped (not errors), counted as "skipped" in summary message
+- **Performance Consideration**: All mode with many matches = multiple insertions, regex complexity impacts speed
+
+### File 99: docs/pt/MIGRATION_CHECKLIST.md (247 lines)
+Portuguese migration completion checklist dated 2025-11-23, status ✅ COMPLETE. Verifies all migrations from clarify.py to organized files. **Completed migrations (11 items)**: (1) SearchOptions/replace_in_text → core/search_replace.py 70 lines, (2) InsertMode/insert_at_line → core/insert.py 55 lines, (3) Condition/filter_files → core/filters.py 132 lines, (4) walk_files/read_write_text → utils/file_utils.py 80 lines, (5) parse_exclusion/mask_unmask → utils/text_utils.py 60 lines, (6) load_ts_object/dump_ts_object → utils/ts_utils.py 131 lines, (7) Obj/JSONNode/parse_json → rewriter/types.py 80 lines, (8) sanitize_keys_and_values WITH BUG FIX → rewriter/rewriter.py 90 lines, (9) find_object_block/extract_balanced → rewriter/ts_parser.py 200 lines, (10) dedupe/join_keys/eliminate → rewriter/operations.py 150 lines, (11) dump_ts_node/collapse_blank_lines → rewriter/serializer.py 90 lines. **Total migrated**: 1,218 lines (34% of 3,578 original lines). **Intentionally NOT migrated (66%)**: JSON Translator (~600 lines complex/interdependent), GUI Qt interface (~1000 lines highly coupled), CLI commands (~400 lines argparse dependencies), Workers/threads (~100 lines Qt integrated), Config/preferences (~50 lines too small), Themes (~100 lines QPalette coupled), Auxiliary functions (~300 lines app-specific). **Justifications**: Risk vs Benefit (migrating GUI could break tested functionality), Qt coupling (UI depends integrally on PySide6), 100% functionality (works perfectly as is), retrocompatibility (existing users unaffected), incremental migration (structure allows future gradual migration). **Statistics**: 34% migrated to reusable modules, 118 lines TODO moved to TASKS.md, 1 critical bug fixed, 100% functionality preserved, 6 documentation files created, 9 directories organized, 15 modular Python files, 21 total new files.
+
+**Key Insights:**
+- **Strategic Partial Migration**: 34% migrated (critical reusable code) vs 66% kept in place (GUI/CLI/Translator working perfectly)
+- **Risk Management**: Intentionally avoided migrating highly-coupled GUI (~1000 lines) and complex JSON Translator (~600 lines) to prevent breaking working features
+- **Critical Bug Fixed**: sanitize_keys_and_values Obj type handling corrected during migration (lines 40-55 in rewriter/rewriter.py)
+- **Professional Structure**: 9 organized directories (core/utils/rewriter/translators/ui/cli/docs/backup/old) with 15 modular Python files
+- **100% Verification**: All 10 quality checklist items passed, 4 validation tests successful (module imports, GUI launch, CLI execution, wrapper redirect)
+- **Hybrid Approach**: Maintains monolithic app (66%) for stability while providing reusable modules (34%) for developers
+
+---
+
+## 📊 SESSION 5 UPDATE
+
+**Files Read**: 97-99 (IS_FILE_FEATURE, LINE_LOOKUP_FEATURE, MIGRATION_CHECKLIST)
+**Total Progress**: 99/243 files = 40.7% complete
+**Remaining**: 144 files (59.3%)
+**Session 5 Total**: 43 files
+**Milestone**: Almost at 100 files (41%)!
