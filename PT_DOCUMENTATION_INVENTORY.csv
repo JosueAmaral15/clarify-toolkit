@@ -1,0 +1,27 @@
+File#,Filename,Size (KB),Lines,Type,Date,Version,HasEnglish,Topics,Status
+1,ADVANCED_CONDITIONS_AND_OR.md,7.6,250,Feature,N/A,v2.0+,NO,Operators;AND;OR;Conditions,Complete
+2,ADVANCED_CONDITIONS_CHECKBOXES.md,7.0,262,Feature,25-Nov,v2.2.0,NO,Case Sensitive;Whole Word;Regex,Complete
+3,CHECKBOX_FEATURE.md,11.5,403,Feature,24-Nov,v2.2.0,NO,Checkbox Options;Matching;Search,Complete
+4,CODE_REVIEW_DETAILED.md,14.6,553,Analysis,23-Nov,N/A,NO,Code Quality;Metrics;Findings,Complete
+5,CODE_REVIEW_FINAL.md,10.4,335,Analysis,23-Nov,N/A,NO,Executive Summary;Architecture,Complete
+6,CONTEXT_MENU_GUIDE.md,8.4,281,Feature,N/A,v2.9.2,NO,Context Menu;Selection;UI,Complete
+7,EXTENSION_FILTER.md,7.5,330,Feature,N/A,v2.9.0,NO,Filter;Extensions;Syntax,Complete
+8,EXTENSION_FILTER_ANALYSIS.md,3.6,124,Analysis,N/A,N/A,NO,Analysis;Use Cases,Brief
+9,EXTENSION_FILTER_USAGE.md,4.8,214,Feature,N/A,v2.9.1,NO,Usage;Interface;GUI,Complete
+10,IS_FILE_FEATURE.md,6.6,188,Feature,N/A,N/A,NO,File Checkbox;Implementation,Complete
+11,LINE_LOOKUP_FEATURE.md,14.6,602,Feature,N/A,v2.3.0,NO,Line Lookup;Insert Panel;Modes,Comprehensive
+12,MIGRATION_CHECKLIST.md,9.7,247,Project,23-Nov,N/A,NO,Checklist;Verification;Status,Complete
+13,MIGRATION_COMPLETE.md,11.6,370,Project,N/A,N/A,NO,Migration;Completion;Statistics,Complete
+14,MIGRATION_FINAL_STATUS.md,10.1,270,Project,23-Nov,N/A,NO,Migration;Status;Hybrid Approach,Complete
+15,MULTI_QUERY_EXAMPLES.txt,4.5,201,Examples,N/A,v2.8.0,NO,Examples;Use Cases;Queries,Complete
+16,MULTI_QUERY_IMPLEMENTATION.md,9.9,254,Feature,N/A,v2.8.0,NO,Implementation;Architecture;Code,Complete
+17,MULTI_QUERY_SEARCH.md,5.0,255,Feature,N/A,v2.8.0,NO,Multi-Query;Syntax;Usage,Complete
+18,POSITION_TOOLTIP.md,6.1,153,Feature,N/A,v2.5.1,NO,Tooltip;Position;UI,Standard
+19,PROGRESS_SYSTEM.md,17.4,524,Feature,N/A,v2.5.0,NO,Progress Bars;UI;Threading,Comprehensive
+20,README.md,1.2,28,Index,N/A,N/A,YES,Navigation;Index;Links,Brief
+21,RENAMING.md,8.6,294,Project,23-Nov,N/A,NO,Renaming;Files;Structure,Complete
+22,REORGANIZATION_STATUS.md,5.2,139,Project,N/A,N/A,NO,Reorganization;Structure,Standard
+23,REVIEW_REPORT.md,11.1,305,Analysis,23-Nov,N/A,NO,Code Duplication;Problems;Solutions,Complete
+24,SAVE_RESULTS_FEATURE.md,6.8,204,Feature,N/A,v2.4.0,NO,Save;Export;Results,Complete
+25,SCOPE_FEATURE.md,6.9,263,Feature,24-Nov,v2.1,NO,Scope;Delimiters;Filtering,Complete
+26,TASKS.md,19.6,281,Project,24-Nov,N/A,YES,Tasks;Moscow Method;Priority,Complete
