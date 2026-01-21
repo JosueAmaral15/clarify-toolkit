@@ -918,3 +918,327 @@ OPS = {
 
 ---
 
+
+### File 8: src/core/file_list_executor.py (331 lines) ✅
+
+**Purpose**: Core file listing logic extracted from file_list_dock.py (v2.9.114 Phase 2.4.2)
+
+**Separation of Concerns**: Business logic separated from GUI
+
+**Key Classes**:
+
+**FileInfo** (dataclass, line 30):
+- Fields: name, path, size, mtime, permissions, owner, group, is_dir
+- Directories have size=0, name appended with "/" (line 149)
+
+**ListResult** (line 44):
+- Attributes: files (List[FileInfo]), errors (List[str])
+- **Auto-calculated** (line 57-59): total_size, file_count, dir_count
+- Statistics computed in constructor (single-pass)
+
+**FileListExecutor** (line 62):
+- Static methods only - pure functional style
+
+**list_files()** (line 66):
+- **Parameters**: directory, show_hidden, recursive, filters (Dict)
+- **Process**:
+  1. Validate directory exists (line 81-82)
+  2. Collect file paths via _collect_files
+  3. Convert to FileInfo objects
+  4. Handle errors (PermissionError, FileNotFoundError)
+- **Returns**: ListResult with files and errors
+
+**_collect_files()** (line 103):
+- Recursive depth tracking (depth parameter)
+- **Process**:
+  1. List directory entries (sorted)
+  2. Skip hidden files if not show_hidden
+  3. Check directory exclusion (_should_exclude_directory)
+  4. Apply filters to files (_matches_filters)
+  5. Recurse into subdirectories respecting depth limit
+- **Error handling**: Catches PermissionError, returns partial results
+
+**_matches_filters()** (line 163):
+- **Filters supported**:
+  - **Regex**: filename pattern matching (try-except for invalid regex)
+  - **Size**: min/max in bytes
+  - **MTime**: after/before dates
+  - **Extensions**: List of allowed extensions (normalized - no dots)
+  - **Depth**: Max recursion depth
+- **All filters are AND logic** (must match all)
+- Exception-safe: Catches OSError on stat operations
+
+**_should_exclude_directory()** (line 230):
+- **Exclusion patterns**:
+  - Direct match: dirname in exclude_dirs
+  - Prefix match: "pattern*" → dirname.startswith(pattern)
+  - Suffix match: "*pattern" → dirname.endswith(pattern)
+- Used to skip .venv, node_modules, __pycache__, etc.
+
+**_get_file_info()** (line 142):
+- Calls os.stat() once per file
+- Extracts: name, path, size, mtime, permissions, owner, group, is_dir
+- Calls _format_permissions, _get_owner, _get_group
+
+**_format_permissions()** (line 253):
+- Unix-style permissions string (10 chars)
+- Format: `drwxr-xr-x`
+- File type: d (dir), l (link), - (file)
+- Owner/Group/Other: rwx bits via stat.S_I* constants
+
+**_get_owner()** / **_get_group()** (line 283, 291):
+- Uses pwd.getpwuid() / grp.getgrgid()
+- Falls back to UID/GID string if not found (KeyError/AttributeError)
+- Platform: Unix/Linux-specific (uses pwd/grp modules)
+
+**format_size_human()** (line 299):
+- Converts bytes to B, KB, MB, GB, TB, PB
+- 1024-based divisions
+- Static utility method
+
+**calculate_statistics()** (line 308):
+- **Returns dict**:
+  - total_size, total_size_human
+  - file_count, dir_count, total_count
+  - extensions: Dict[str, int] (extension → count)
+- Extension breakdown for analysis
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- Clean separation of business logic from UI
+- Exception-safe throughout
+- Single-pass statistics
+- Efficient depth tracking
+- Platform-aware (pwd/grp for Unix)
+
+**Design Patterns**:
+- **Strategy Pattern**: Pluggable filters via dict
+- **Template Method**: _collect_files recursive template
+
+**Used by**: File Explorer, File List dock, possibly search operations
+
+---
+
+
+### File 9: src/core/multi_query.py (190 lines) ✅
+
+**Purpose**: Support for multiple queries (one per line) for parallel searching
+
+**QueryLine** (dataclass, line 14):
+- Fields: raw_text, pattern (compiled), line_number (1-based)
+
+**MultiQueryProcessor** (line 21):
+- **Purpose**: Process multiple queries separated by lines
+- **Features**: Comments (#), empty lines skipped, regex + non-regex modes, case sensitivity, whole word
+- **Attributes**: multi_line_text, case_sensitive, whole_word, use_regex, queries (List[QueryLine])
+
+**_parse_queries()** (line 49):
+- Splits by newline, strips whitespace
+- Skips empty lines and comments (line 57)
+- **Error handling**: If regex compilation fails, escape as literal (line 67-75)
+- Appends QueryLine with compiled pattern
+
+**_compile_pattern()** (line 77):
+- Non-regex: re.escape() (line 81)
+- Whole word: Add \b boundaries (line 85)
+- Flags: IGNORECASE if not case_sensitive
+
+**search_in_text()** (line 91):
+- Searches all queries via finditer()
+- **Returns**: List[(line, col, snippet, query_line_number)]
+- Calculates line/col from match positions
+- Snippet: Full line containing match
+
+**Utility Methods**:
+- get_query_count(): len(queries)
+- get_query_summary(): Display text ("1 query: ...", "N queries")
+- validate(): Checks query length (<500 chars), returns (is_valid, error_message)
+
+**split_multi_query()** (line 149):
+- Utility to split text into query list (removes empty + comments)
+
+**combine_query_results()** (line 165):
+- Combines results from multiple queries
+- **Deduplication**: Uses (line, col) as unique key
+- Sorts by (line, col)
+- Returns combined list without duplicates
+
+**Used by**: Multi-query search dock (parallel search feature)
+
+---
+
+### File 10: src/core/result_exporter.py (197 lines) ✅
+
+**Purpose**: Export results to multiple formats (CSV, Excel, YAML, TOML, JSON) - v2.9.114 Phase 2.3.4
+
+**ResultExporter** (line 27):
+- Static methods only
+
+**FORMAT_MAP** (line 31):
+- Maps filter strings to format codes: "CSV Files (*.csv)" → "csv"
+- Formats: csv, xlsx, yaml, toml, json
+
+**save_json()** (line 43):
+- Saves JSON text string to file
+- Returns (success, message) tuple
+
+**export_multi_format()** (line 65):
+- **Parameters**: data (dict), file_path, selected_filter, parent_widget (optional)
+- **Process**:
+  1. Determine format from filter
+  2. Ensure correct extension (.csv, .xlsx, etc.)
+  3. Call ExportManager.export() with:
+     - flatten=True (for CSV/Excel/TOML)
+     - include_metadata=True (timestamp + operation type)
+     - parent_widget (for progress modal)
+- **Error handling**: ImportError for missing dependencies (openpyxl, tomli-w)
+- Returns (success, message)
+
+**validate_export_data()** (line 115):
+- Validates data before export
+- Checks for None, empty data
+- Returns (is_valid, error_message)
+
+**ensure_extension()** (line 147):
+- Adds extension if missing (.csv, .xlsx, etc.)
+- Returns Path object
+
+**save_json_dict()** (line 164):
+- Saves dict as JSON with json.dump()
+- indent=2, ensure_ascii=False
+
+**format_json_for_display()** (line 183):
+- Formats dict as pretty JSON string for UI display
+
+**Used by**: Set operations dock, other result-generating features
+
+---
+
+### File 11: src/core/set_operation_executor.py (224 lines) ✅
+
+**Purpose**: Core execution logic for set operations (∩, ∪, −, ⊕) - v2.9.114 Phase 2.3.3
+
+**ExecutionResult** (line 32):
+- Container for results + metadata
+- Fields: success, results (dict), stats_lines, file_a_data, file_b_data, error
+
+**SetOperationExecutor** (line 63):
+- Static methods only
+
+**validate_and_load_files()** (line 67):
+- **Security**: Calls validate_file_path() for CWE-22 prevention
+- Checks: file exists, readable, .json extension
+- Loads JSON with json.load()
+- Returns (success, file_dicts, error_message)
+- **Error handling**: FileNotFoundError, JSONDecodeError, generic Exception
+
+**execute_operations()** (line 104):
+- **Parameters**: file_dicts, operations (list of symbols), comparison_mode, options (dict)
+- **Comparison mode translation**: "full_path" → "full_path_value" (line 129-130)
+- **Operations**:
+  - ∩ (intersection): intersection(file_dicts, **exec_options)
+  - ∪ (union): union(file_dicts, **exec_options)
+  - − (difference): difference(file_dicts, **exec_options)
+  - ⊕ (symmetric_difference): symmetric_difference(file_dicts[0], file_dicts[1], **exec_options) - requires exactly 2 files
+- **Stats lines**: "✓ Intersection: N items"
+- Stores file_a_data, file_b_data for diff viewer
+- Returns ExecutionResult with success/error
+
+**format_results_json()** (line 191):
+- Pretty JSON formatting (indent=2, ensure_ascii=False)
+
+**calculate_result_count()** (line 204):
+- Sums item counts from all operation results
+- Exception-safe
+
+**Used by**: Set operations dock
+
+---
+
+### File 12: src/core/rewriter_cli.py (195 lines) ✅
+
+**Purpose**: CLI execution logic for JSON/TS dedupe/rewrite operations - v2.9.114 Phase 2.2.2
+
+**cli_dedupe()** (line 20):
+- **Purpose**: Execute dedupe/rewrite based on args
+- **Parameters**:
+  - args: argparse.Namespace (or GUI-generated)
+  - advanced_conditions: Optional list of Condition objects (Sprint B Feature #1)
+  - apply_all_types: If True, apply filters to all files; if False, auto-detect .json
+- **Returns**: (output_text, substitution_map, removal_stats, detailed_stats)
+
+**Statistics Tracking** (line 45-56):
+- Counters: dedupe, eliminate, numeric_keys, empty_values, duplicate_child, array_duplicates_consecutive, array_duplicates_all, no_siblings, advanced_filters_filtered
+
+**Advanced Filters** (line 59-77, Sprint B Feature #1):
+- Apply BEFORE processing
+- Auto-detect JSON files unless apply_all_types=True
+- Skip processing if file filtered out
+
+**Processing Pipeline**:
+1. **Read input** (line 79-81)
+2. **Parse**: ts_process_full_preserving() or parse_json_preserving_duplicates_text() (line 84-89)
+3. **Resolve references** (Sprint A v2.9.29, line 92-95) - if enabled
+4. **Transformations** (line 98-136):
+   - dedupe() - always
+   - join_keys() - if enabled
+   - eliminate_duplicates() + build substitution map (Task #23 v2.9.14, line 105-112)
+   - exclude_numeric_keys() - if enabled
+   - skip_empty_values() - if enabled
+   - avoid_duplicate_child_keys() - if enabled
+   - remove_duplicate_array_values() - consecutive or all (Task #8 v2.9.8, line 127-131)
+   - skip_keys_without_siblings() (Task #35 v2.9.11, line 134-135)
+   - **remove_duplicate_objects** (Task #52 v2.9.27 + Sprint A v2.9.29 + Sprint B Feature #4 v2.9.30, line 138-162):
+     - **Reference mode** (Sprint A): create_references() with format types ($ref, #/path, etc.), relative paths
+     - **Delete mode** (legacy): remove_duplicate_objects() with threshold, include_arrays, mode
+   - enforce_consistent_case() (Task #9 v2.9.8, line 165-173) - camel, snake, pascal, kebab
+5. **Serialize**: dump_ts_node() or dump_ts_obj() (line 176-181)
+6. **Write output** (line 184-186)
+7. **Collect detailed stats** (Sprint B Feature #3, line 189-190)
+
+**Substitution Map** (Task #23, line 104-112):
+- Extract keys+values BEFORE elimination
+- Extract keys+values AFTER elimination
+- Build map by VALUE EQUALITY (not string similarity)
+- Maps removed keys to their replacements
+
+**Reference Resolver** (Sprint A v2.9.29 + Sprint B Feature #4 v2.9.30):
+- **create_references()**: Creates $ref, #/path references to duplicate objects
+- **resolve_references()**: Resolves existing references FIRST
+- **Formats**: "$ref", "#/path" (JSON Pointer), relative paths
+- **Stats**: references_created, references_resolved, references_invalid
+
+**Case Styles** (Task #9 v2.9.8):
+- camel, snake, pascal, kebab
+- Warns inconsistencies (prints first 10 warnings)
+
+**Used by**: JSON Rewriter dock, CLI interface
+
+---
+
+## 📊 CORE MODULE SUMMARY (12 files, 4,732 lines) ✅
+
+**Architecture**: Clean separation of business logic from UI (v2.9.114 Phase 2)
+
+**Key Patterns**:
+- **Command Pattern**: command_manager.py (undo/redo)
+- **Memento Pattern**: memory_register.py (capture state)
+- **Strategy Pattern**: filters.py (pluggable filtering), file_list_executor.py
+- **Composite Pattern**: command_manager.py (MultiFileCommand)
+- **Static Executors**: Separation of concerns (pure functions)
+
+**Security** ✅:
+- ReDoS prevention (file_explorer_executor.py, filters.py)
+- Path validation (set_operation_executor.py - CWE-22)
+- Exception-safe operations throughout
+- Memory limits (file_explorer_executor.py)
+
+**Notable Features**:
+- Hierarchical HTML/XML filtering (filters.py)
+- Memory Register with $N placeholders (memory_register.py)
+- Multi-query parallel search (multi_query.py)
+- Reference resolver for duplicate objects (rewriter_cli.py)
+- Undo/Redo with bounded history (command_manager.py)
+- Multi-format export (result_exporter.py)
+
+---
+
