@@ -1087,3 +1087,63 @@ Actual new files to read: 8 files
 - **42 GUI files**: Modular dock architecture, largest dock 2,066 lines (file explorer)
 - **Memory register system**: $0-$99 storage in calculator_memory for formula operations
 
+
+#### 78. docs/specifications/v2.10/v2.10.0-PLANNING.md (150 lines read, v2.10 roadmap)
+**Summary**: v2.10.0 Planning & Feature Roadmap. v2.9 Status: ✅ 100% COULD HAVE complete (36/36), ✅ 91/94 tests passing (97%), ✅ Plugin System (v2.9.109), ✅ Search/Replace & Insert Panels (v2.9.110), ✅ Regex Insert + Memory Register (v2.9.111), ✅ 70,000+ LOC, ✅ 212+ commits. TODOs Pending from v2.9: (1) **JSON Translation** (src/gui/json_translate_dock.py, interface exists but no translation logic, v2.10.1 proposes Google Translate API or LibreTranslate integration, recursive translation of string values, preserve JSON structure, selective translation option keys/values, translation cache to avoid duplicate API calls, ~8h estimate: API integration 2h + recursive translation 2h + cache 2h + UI polish 1h + tests 1h), (2) **Text-to-JSON Reverse Conversion** (src/gui/text_to_json_dock.py, text→JSON exists but JSON→text doesn't, v2.10.2 proposes JSON→custom text format, template-based formatting, multiple formats CSV/TSV/key:value, preview before export, ~6h estimate: template engine 2h + format strategies 2h + UI 1h + tests 1h). New features v2.10: (3) **Advanced Search with Filters** (v2.10.3, filter panel: type string/number/boolean, range min/max, regex, date range, combined filters AND/OR, saved searches presets, export results, ~10h estimate, Patterns: Strategy for filter strategies, Chain of Responsibility for pipeline, Command for saved searches), (4) **JSON Schema Validation** (v2.10.4, JSON Schema Draft 7 support, schema editor GUI, real-time validation while typing, error highlighting, schema library for common schemas, ~12h estimate, dependency: jsonschema library), (5) **Diff & Merge Tool** (v2.10.5, side-by-side diff viewer, 3-way merge base/local/remote, conflict resolution UI, merge strategies ours/theirs/manual, ~15h estimate, Patterns: Composite for diff tree, Strategy for merge strategies, Memento for undo merge), (6) **Batch Operations UI** (v2.10.6, batch panel with multiple files list, operation selector search/replace/insert/delete/transform, real-time progress bar, rollback all if failure, ~8h estimate, Patterns: Command for batch ops, Observer for progress, Memento for rollback), (7) **Cloud Sync Enhancement** (v2.10.7, conflict detection last-write-wins vs merge, offline mode with operation queue, sync history audit log, multiple providers Dropbox/OneDrive/S3, ~12h estimate).
+
+**Key Insights**:
+- **v2.9 complete**: 100% COULD HAVE tasks done (36/36), 97% test success rate (91/94), major features delivered
+- **Pending TODOs**: 2 features with interfaces but no logic (JSON Translation 8h, Reverse Conversion 6h) = 14h quick wins
+- **v2.10 total effort**: ~71h across 7 new features (10h + 12h + 15h + 8h + 12h + others)
+- **Design patterns**: Every feature explicitly maps to GoF patterns (Strategy, Chain of Responsibility, Command, Observer, Composite, Memento)
+- **Priority ordering**: TODO fixes (14h) likely before new features (71h)
+- **External dependencies**: jsonschema library required for v2.10.4 Schema Validation
+
+#### 79. docs/specifications/TASK_23_ORPHANED_KEYS_SPECIFICATION.md (150 lines read, orphaned keys system)
+**Summary**: Task #23 Orphaned Keys/References Update System (Status: ⚠️ PARTIALLY IMPLEMENTED v2.9.10, Priority: SHOULD HAVE, Complexity: HIGH, Sprint Target: v2.9.14 COMPLETE). Original problem: When JSON Rewriter eliminates redundant translation dictionary keys (en.ts, pt.ts) with identical values, .tsx/.jsx files referencing eliminated keys have orphaned references causing `undefined` runtime error. Real example: en.ts has duplicate "Looking for quick answers?" at `pages.contact.lookingForQuickAnswers` (line 44) and `pages.contactPage.lookingForQuickAnswers` (line 266), rewriter eliminates `contactPage` (line 266 > line 44 = lower priority), page.tsx references `t.pages.contactPage.lookingForQuickAnswers` → runtime `undefined` because key eliminated. **Complete solution workflow**: (1) SCAN PHASE before elimination (read original dictionary, extract ALL keys+values, old_keys = all paths, old_values = key→value map), (2) ELIMINATION (detect duplicate values, priority: lower line wins, result: contactPage eliminated), (3) BUILD SUBSTITUTION MAP (extract new_keys after elimination, removed_keys = old_keys - new_keys, for each removed_key find new_key with SAME VALUE not similarity, map removed→new), (4) SCAN PROJECT FILES discovery phase (recursive search in PROJECT_DIR for .tsx/.jsx/.ts/.js, detect patterns {t.pages.contactPage.X} and t.pages.contactPage.X, generate affected files list), (5) APPLY SUBSTITUTIONS automatic (for each file: create .bak backup if enabled, replace ALL occurrences, save updated file, generate substitution report). Technical implementation problem: `extract_all_keys_from_dict()` only works with `dict` but rewriter uses `Obj` type (list of tuples), line 317-344 in reference_updater.py needs fix to handle `Obj` recursion.
+
+**Key Insights**:
+- **Critical production issue**: Orphaned references cause runtime `undefined` errors after JSON optimization
+- **5-phase solution**: Scan → Eliminate → Map → Discover → Replace (comprehensive workflow)
+- **Type mismatch bug**: Current implementation uses `dict` but rewriter uses `Obj` type (list of tuples)
+- **Priority algorithm**: Lower line number wins when duplicate values found (44 < 266 → keep line 44)
+- **Value-based matching**: Substitution map matches by SAME VALUE, not similarity (exact match required)
+- **Backup system**: .bak file creation optional before applying substitutions
+- **Status incomplete**: Partially implemented in v2.9.10, needs completion in v2.9.14
+
+---
+
+### 📊 SESSION 5 SUMMARY (Partial)
+
+**Files Read So Far in Session 5**: 27 files
+- Root docs/ files (17): README, PROJECT_STRUCTURE, FILE_EXPLORER_SPEC, INDEX, RECIPES, PROJECT_TEMPLATES, jsx-extractor-guide, SHORTCUTS_CUSTOMIZATION, LAUNCHERS, ROOT_STRUCTURE, PHASE_3_COMPLETION_NOTE, REMAINING_TRANSLATIONS, I18N_AUDIT_HONEST_FILE_EXPLORER, FILE_EXPLORER_I18N_INVESTIGATION, ORPHANED_CODE_INTEGRATION_PLAN, PROGRAMMER_3_QUICK_REFERENCE, STEP_1_2_CODE_COMPREHENSION_STUDY
+- processes/ (4): LOGGING, ERROR_HANDLING, CI_CD_SETUP, TEST_LOOP_INFINITY_FIX
+- tutorials/ (2): README, quickstart
+- architecture/ (2): ARCHITECTURE, IMPORT_TREE_ANALOGY
+- specifications/ (2): v2.10.0-PLANNING, TASK_23_ORPHANED_KEYS_SPECIFICATION
+
+**Total Progress**: 79/243 files = 32.5% complete
+**Remaining**: 164 files (67.5%)
+
+**Next Areas**: specifications/ (27 more files), pt/ (25 files), en/ (14 files), guides/ (4 files), other subdirectories
+
+
+#### 80. docs/pt/README.md (27 lines)
+**Summary**: Portuguese documentation index. Available documents organized by category: **Code Reviews** (CODE_REVIEW_DETAILED.md comprehensive analysis, CODE_REVIEW_FINAL.md executive summary, REVIEW_REPORT.md duplication analysis), **Migration & Refactoring** (MIGRATION_COMPLETE.md full report, MIGRATION_FINAL_STATUS.md final status, MIGRATION_CHECKLIST.md checklist, REORGANIZATION_STATUS.md code reorganization status, RENAMING.md file renaming documentation). Important note: TASKS.md always in English (official task list maintained in English for consistency, found in ../en/TASKS.md). Other languages: English Documentation (../en/), Main Documentation (../).
+
+**Key Insights**:
+- **Language policy**: TASKS.md maintained in English for consistency (single source of truth)
+- **Documentation split**: pt/ has migration/review docs, en/ has roadmap/tasks
+- **Migration focus**: 5 migration-related documents (complete, final status, checklist, reorganization, renaming)
+- **Code quality docs**: 3 review documents (detailed, final, duplication report)
+
+#### 81. docs/en/README.md (44 lines)
+**Summary**: English documentation index. Core documentation: TASKS.md (project tasks organized by MoSCoW priority, development roadmap). Note: Most documentation originally in Portuguese, moved to docs/pt/, comprehensive documentation in Portuguese at ../pt/, English translations planned for future. Getting started guides: **For New Users** (1. CODE_REVIEW_FINAL.md project overview, 2. TASKS.md planned/completed, 3. MIGRATION_COMPLETE.md project history), **For Developers** (1. CODE_REVIEW_DETAILED.md code quality deep dive, 2. REORGANIZATION_STATUS.md module structure, 3. TASKS.md current priorities/roadmap), **For Understanding History** (1. MIGRATION_COMPLETE.md full migration story, 2. RENAMING.md file structure changes, 3. REVIEW_REPORT.md duplication elimination). Other languages: Documentação em Português (../pt/), Main Documentation Index (../).
+
+**Key Insights**:
+- **MoSCoW prioritization**: TASKS.md uses MoSCoW method (Must/Should/Could/Won't have)
+- **3 audience types**: New Users (overview), Developers (contribute), History (understand evolution)
+- **Progressive learning paths**: 3-step sequences for each audience type
+- **Translation status**: Most docs in Portuguese, English translations planned (not yet complete)
+- **Historical focus**: 3 history docs (migration complete, renaming, duplication elimination)
+
