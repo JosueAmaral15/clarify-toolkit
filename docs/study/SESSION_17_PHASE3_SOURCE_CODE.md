@@ -1242,3 +1242,214 @@ OPS = {
 
 ---
 
+
+---
+
+# GUI LAYER (BRANCHES) - Architecture Analysis
+
+## 📖 File 13: src/gui/base_dock.py (596 lines) ✅
+
+**Purpose**: Foundation for Mixin Composition pattern - reusable components for tool docks
+
+**Critical Architecture Pattern**: **Mixin Composition (75% code reduction)**
+
+### Utility Functions:
+
+**parse_extensions_to_globs()** (line 21):
+- Converts ".py,.js" → ["*.py", "*.js"]
+- Handles with/without dots, comma/semicolon separators
+- Used for extension filtering (v2.9.0)
+
+### Base Class:
+
+**BaseDock** (line 47, extends QDockWidget):
+- Foundation for all tool docks
+- Attributes: main_widget, layout (QVBoxLayout)
+- Template methods: _setup_ui(), _connect_signals() (override in subclasses)
+- Utility methods: show_error(), show_info(), show_warning()
+
+---
+
+### Mixin 1: FileInputMixin (line 79)
+
+**Purpose**: File/directory input with browse button
+
+**create_file_input()** (line 82):
+- Returns: (label, line_edit, browse_button, is_file_checkbox)
+- is_file_checkbox optional (toggle file vs directory)
+
+**create_extension_filter()** (line 107, v2.9.0):
+- Default: ".py,.js,.tsx,.jsx,.ts,.md"
+- Returns: (label, line_edit)
+- Tooltip with usage instructions
+
+**browse_file_or_directory()** (line 126):
+- Opens QFileDialog (getOpenFileName or getExistingDirectory)
+- Sets selected path to line_edit
+
+---
+
+### Mixin 2: ResultsOutputMixin (line 178)
+
+**Purpose**: Results output panel with search, context menu, "Open in Editor"
+
+**create_results_panel()** (line 181):
+- Returns: (label, text_edit)
+- QTextEdit with readOnly=True
+- **Ctrl+F shortcut**: Opens search dialog
+- **Context menu** (Qt.CustomContextMenu): "Open in Editor", Copy, Select All
+
+**_show_search_dialog()** (line 208):
+- Find Next/Previous with QTextEdit.find()
+- Find Backward with QTextDocument.FindBackward
+- Return key triggers Find Next
+
+**_open_results_in_editor()** (line 288, Task #6 v2.9.19):
+- **Auto-detects extension** via _detect_content_extension()
+- Creates **temporary file** (tempfile.NamedTemporaryFile, delete=False)
+- Opens in EditorDock with **edit_only=True** (sandbox mode)
+- Cleans up temp file if editor not found
+
+**_detect_content_extension()** (line 348):
+- **JSON**: starts with { or [, validates with json.loads()
+- **HTML**: starts with <, contains <html/<div/<span/<body
+- **XML**: starts with <, generic fallback
+- **TypeScript/JS**: contains const/let/function/=>
+- **Python**: contains def/import/class/from
+- **Default**: .txt
+
+**_get_editor_dock()** (line 386):
+- Traverses parent hierarchy to find main window
+- Uses parent.findChild(EditorDock)
+
+**add_open_in_editor_button()** (line 406):
+- Adds button to layout, connects to _open_results_in_editor()
+- Returns button instance
+
+---
+
+### Mixin 3: ActionButtonsMixin (line 433)
+
+**Purpose**: Common action buttons creation
+
+**create_action_buttons()** (line 436):
+- Input: List[(button_text, callback), ...]
+- Creates QHBoxLayout with QPushButtons
+- **Stores references** as attributes: `btn_{text.lower().replace(' ', '_')}`
+- Example: "Process File" → self.btn_process_file
+
+---
+
+### Mixin 4: OptionsGroupMixin (line 464)
+
+**Purpose**: Option groups (checkboxes, spinboxes)
+
+**create_checkbox_group()** (line 467):
+- Input: List[(text, default_checked, tooltip), ...]
+- Returns: List[QCheckBox]
+- Applies default state and tooltips
+
+**create_spinbox_input()** (line 491):
+- Returns: (label, spinbox)
+- Parameters: label_text, min_val, max_val, default, step
+
+---
+
+### Mixin 5: ValidationMixin (line 513)
+
+**Purpose**: Input validation helpers
+
+**validate_file_path()** (line 516):
+- Checks: not empty, exists (if must_exist=True)
+- Returns: (is_valid, error_message)
+
+**validate_not_empty()** (line 531):
+- Checks: text not empty
+- Returns: (is_valid, error_message)
+
+**validate_file_writable()** (line 542):
+- Creates directory if missing (os.makedirs)
+- Checks: os.access(path, os.W_OK)
+- Returns: (is_valid, error_message)
+
+---
+
+### Composite Class:
+
+**StandardToolDock** (line 563):
+- **Multiple Inheritance**: BaseDock + 5 Mixins
+- **75% code reduction** - shared logic extracted
+- **_setup_enter_key_execution()** (line 578): Connects Enter key to _execute_action()
+- **_execute_action()** (line 591): Template method for execution (override in subclasses)
+
+**Usage Pattern**:
+```python
+class MyDock(StandardToolDock):
+    def __init__(self, parent=None):
+        super().__init__("My Tool", parent)
+    
+    def _setup_ui(self):
+        # Use mixin methods
+        lbl, edit, btn, chk = self.create_file_input("Input:")
+        lbl2, results = self.create_results_panel()
+        actions = self.create_action_buttons([("Process", self._process)])
+        # ... layout composition
+    
+    def _process(self):
+        # Validation
+        valid, msg = self.validate_file_path(self.edit.text())
+        if not valid:
+            self.show_error("Error", msg)
+            return
+        # ... processing logic
+```
+
+---
+
+### ProcessorWorkerBase (line 146):
+
+**Purpose**: Base class for background QThread workers
+
+**Signals**:
+- progress (str): Progress messages
+- finished_ok (object): Result data on success
+- failed (str): Error message on failure
+
+**Methods**:
+- request_interrupt(): Sets interrupt_requested flag
+- emit_progress(), emit_error(), emit_success(): Signal emitters
+- check_interrupt(): Returns interrupt status
+
+**Used by**: AI processor, file explorer, batch processing workers
+
+---
+
+### Design Patterns Validated:
+
+1. **Mixin Composition** (GoF Decorator-like):
+   - 5 mixins with single responsibility
+   - Multiple inheritance for feature composition
+   - No diamond problem (each mixin independent)
+
+2. **Template Method** (GoF):
+   - _setup_ui(), _connect_signals(), _execute_action() - overridden by subclasses
+
+3. **Observer** (GoF):
+   - Qt Signals/Slots for thread communication
+
+4. **DRY Principle**:
+   - 75% code reduction via mixins
+   - Shared validation, UI components, patterns
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- Clean mixin design
+- Single responsibility per mixin
+- Comprehensive helper methods
+- Task #6 (Open in Editor) fully integrated
+- Auto-detection logic for extensions
+- Proper error handling
+
+**Used by**: 20+ dock classes (all tool docks inherit from StandardToolDock or BaseDock+mixins)
+
+---
+
