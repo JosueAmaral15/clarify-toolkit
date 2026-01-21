@@ -1453,3 +1453,59 @@ class MyDock(StandardToolDock):
 
 ---
 
+
+## 📖 File 14: src/gui/dock_factory.py (253 lines) ✅
+
+**Purpose**: Factory pattern for creating and configuring GUI dock widgets (v2.9.114 Phase 3.3)
+
+**Refactoring**: Extracted from app.py MainWindow class (lines 1266-1360, ~95 lines)
+
+**DockFactory** (line 25):
+- Static methods only
+- Centralizes dock creation logic
+- Reduces duplication
+
+**create_dock()** (line 37):
+- **Standard pattern**:
+  1. Create dock instance (dock_class)
+  2. Store in main_window as attribute (setattr)
+  3. Add to main window (addDockWidget)
+  4. Connect signals (optional)
+  5. Set visibility (hide by default)
+- **Parameters**:
+  - main_window: QMainWindow
+  - dock_class: Class to instantiate
+  - dock_attr_name: Attribute name (e.g., 'dock_translate')
+  - area: Qt.DockWidgetArea (default: RightDockWidgetArea)
+  - hide: Initial visibility (default: True)
+  - signal_connections: Dict[signal_name, slot]
+  - **dock_kwargs: Constructor arguments
+- **Returns**: Created dock widget
+
+**create_dock_lazy()** (line 92):
+- **Lazy initialization**: Creates dock only if not exists
+- Checks: hasattr(main_window, dock_attr_name)
+- Falls back to create_dock() if missing
+
+**Convenience Methods** (lines 118-252):
+- **14+ dock types**: translate, rewriter, text_extractor, placeholder_replacer, ai_processor, json_search, case_converter, jsx_extractor, text_to_json, file_list, file_explorer, history, tutorials, editor, google_translate, advanced_extractor
+- **Pattern**: Import dock class, call create_dock/create_dock_lazy
+- **Special cases**:
+  - history_dock: BottomDockWidgetArea, max_entries=10, lazy
+  - tutorials_dock, editor_dock: Lazy initialization
+
+**Design Pattern**: **Factory (GoF)**
+- Encapsulates object creation
+- Centralizes configuration
+- Reduces coupling
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- Clean separation of concerns
+- Consistent API
+- Lazy initialization support
+- Signal connections support
+
+**Used by**: app.py MainWindow (reduces ~95 lines of duplicated code)
+
+---
+
