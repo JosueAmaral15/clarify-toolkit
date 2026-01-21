@@ -1658,3 +1658,34 @@ Project templates system documentation. **Overview**: Quick project setup with p
 - **Custom Template API**: `create_template_from_directory()` method enables template creation from existing projects (capture proven structures for reuse)
 - **Standard Config Location**: Templates in `~/.config/clarify/` follows Linux XDG Base Directory spec (respects OS conventions, predictable location)
 
+
+### File 121: docs/CODE_COMPREHENSION_SUMMARY.md (100 lines viewed, file continues)
+Code comprehension summary for COM3-documentation-study branch dated 2026-01-20, Simplicity Protocol 3 Step 1.2 ✅ 100% COMPLETE, time 1h 15m (38% faster than estimated). **Mission accomplished**: Step 1.0 Documentation Reading ✅ COMPLETE (100%), Step 1.2 Deep Code Comprehension ✅ COMPLETE (100%), Result READY FOR DEVELOPMENT ✅. **All 7 steps complete**: (1) ✅ Quick Overview (20 min - 196 files, 58K LOC mapped), (2) ✅ Mental Dependency Map (15 min - 4 major flows traced), (3) ✅ Read Critical Code (25 min - 8 critical files read), (4) ✅ Run Tests (10 min - 48/54 tests 89% pass rate), (5) ✅ Identify Don't Touch (5 min - 1 critical area verified), (6) ✅ Find Patterns (10 min - 12+ GoF patterns documented), (7) ✅ Read Comments (5 min - 8 TODOs, 0 FIXMEs found). **Architecture understanding**: Clean layered architecture (Entry main.py→__main__.py→app.py MainWindow, GUI Layer gui/ docks/panels/widgets, Business Logic core/ search_replace/insert/filters/memory_register, Infrastructure utils/ file_utils/text_utils/logger, Specialized rewriter/ JSON/TS processing with CRITICAL bug fix). **KEY INSIGHT**: core/ has ZERO GUI dependencies = perfect separation ✅. **Import chains traced (4 major flows)**: (1) Search/Replace (panel→search_worker→core/search_replace→utils/file_utils), (2) JSON Rewriter (dock→rewriter/rewriter ⚠️ CRITICAL→operations→serializer), (3) File Explorer (dock→executor→core/filters→utils/file_utils), (4) Plugin System (loader→plugin_base→event system Observer pattern). **Critical areas DO NOT TOUCH**: src/rewriter/rewriter.py lines 40-55 ⚠️ (Bug Fix handles Obj type tuple lists to prevent data loss, verified in code walk() function handles Obj instances, production-critical used by real users, NEVER MODIFY without extensive testing). **Code verified shows Obj type handling**: `if isinstance(v, Obj)` first, then iterate `for k, x in v`, clean key, walk recursively, drop empty values if configured, append `out.append((nk, vx))`. **Code patterns documented**: Naming Conventions 100% consistent (files snake_case.py, classes PascalCase, functions snake_case(), private _method_name(), tests test_*.py→TestClassName→test_method_name), Design Patterns 12+ GoF verified (Strategy SearchOptions different modes, Template Method Formula Builder workflow, Observer Plugin event system file_opened/search_completed, Singleton ThemeManager/global MemoryRegister).
+
+**Key Insights:**
+- **Dual Completion**: Step 1.0 (documentation reading) + Step 1.2 (code comprehension) both 100% = comprehensive understanding before development
+- **38% Time Savings**: Completed in 1h 15m vs estimated time (faster than planned due to structured approach)
+- **Perfect Layer Separation**: core/ has ZERO GUI dependencies (business logic completely decoupled from presentation layer = testable, portable, maintainable)
+- **Four Critical Flows Mapped**: Search/Replace, JSON Rewriter, File Explorer, Plugin System (traces complete dependency chains from UI to infrastructure)
+- **Production-Critical Code Identified**: rewriter.py lines 40-55 Obj type bug fix (prevents data loss, in production use, requires extreme caution)
+- **12+ GoF Patterns Verified**: Not just claimed but verified in actual code (Strategy, Template Method, Observer, Singleton + 8 more) = professional architecture
+
+### File 122: docs/TOOLTIP_GUIDELINES.md (100 lines viewed, file continues)
+Tooltip standards document v2.9.47 dated December 9, 2025 by Josué Amaral. **Purpose**: Provide consistent, helpful, accessible tooltip experiences for all users. **Scope**: All interactive UI widgets (buttons, checkboxes, input fields, combo boxes, sliders, etc) in Clarify's GUI docks. **Format standard basic structure**: `Description | Keyboard Shortcut (optional)` with examples ("Browse for first JSON file | Ctrl+O", "Remove duplicate key-value pairs", "Execute selected set operations | F5"). **Components**: (1) Description required (clear concise widget purpose, active voice "Remove duplicates" not "Removes duplicates", include context what/why/when), (2) Separator optional ` | ` space-pipe-space, (3) Keyboard Shortcut optional (format Ctrl+X/F5/Ctrl+Shift+S, only if direct keyboard mapping, OS-agnostic format Ctrl not Cmd). **Good examples** ✅: "Compare keys + values with strict type checking (e.g., 1 ≠ '1') | F5 to execute", "∩ Intersection: Find items present in ALL files (A ∩ B ∩ C...) | F5", "Path to file or directory containing code to convert | Ctrl+O". **Avoid** ❌: "This button executes operations" (too vague), "Click here to browse files" (redundant click implied), "File A input field" (missing purpose/context). **Length guidelines English**: Maximum 150 chars hard limit, Recommended 80-120 chars optimal readability, Strategy for long (prioritize essential info, use abbreviations sparingly like "config", split complex into 2 sentences max, use examples `(e.g., {a: 1} → {a: 1})`). **Translations non-English**: No strict character limit (can be 10-30% longer), Rationale (Romance languages PT-BR/ES/FR 15-25% longer, German compounds extend significantly, Chinese/Japanese shorter but need extra clarification), Quality over brevity (ensure full meaning conveyed). **When to use examples**: ✅ Complex operations ("∩ Intersection: Find items present in ALL files (A ∩ B ∩ C...)"), ✅ Format transformations.
+
+**Key Insights:**
+- **Active Voice Standard**: "Remove duplicates" not "Removes duplicates" (directive style, consistent command tone across UI)
+- **Optional Keyboard Shortcuts**: Include only if direct mapping exists (prevents cluttering tooltips with irrelevant shortcuts)
+- **Hard 150-Character Limit (English)**: Enforces brevity and clarity (forces prioritization of essential information)
+- **Translation Flexibility**: Non-English can be 10-30% longer (acknowledges linguistic reality: Romance languages inherently longer than English)
+- **Example-Driven Clarity**: Use examples for complex operations and format transformations (concrete examples > abstract descriptions)
+- **OS-Agnostic Format**: "Ctrl" not "Cmd" (cross-platform consistency, application handles platform-specific rendering)
+
+---
+
+## 🎉 MILESTONE: 50% THRESHOLD CROSSED!
+
+**Progress**: 122/243 files (50.2%)
+**Session 6 stats**: 22 files read this session (100→122)
+**Halfway milestone achieved!** ✅
+
