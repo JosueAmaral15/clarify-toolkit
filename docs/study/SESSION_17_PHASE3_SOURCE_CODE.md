@@ -579,3 +579,93 @@ python clarify.py dedupe en.ts --from-ts --join-keys --eliminate-duplicates --no
 
 ---
 
+
+## 📖 BATCH 3: Core Modules - memory_register.py ✅ (303 lines read)
+
+### File 3: src/core/memory_register.py (303 lines) ✅
+
+**Purpose**: Memory Register System for Regex Capture & Reuse (v2.9.111)
+
+**Design Patterns**:
+- **Memento (GoF)**: Stores captured state (RegisterEntry)
+- **Command (GoF)**: Encapsulated operations
+- **Singleton**: Global register instance via get_global_register()
+
+**Use Case**:
+1. User defines regex to capture values: `r'"name": "(.*?)"'`
+2. System finds matches and stores in registers ($0, $1, $2, ...)
+3. User uses registers to insert new fields: `"fullName": "$1"`
+
+**Key Classes**:
+
+**RegisterEntry** (dataclass, line 36):
+- Fields: index, value, source_text, pattern, timestamp
+- Methods: to_dict(), from_dict() (serialization)
+- Truncates source_text to 100 chars when exporting (memory optimization)
+
+**MemoryRegister** (line 75):
+- **Attributes**:
+  - max_registers: Maximum number (default 100)
+  - registers: Dict[int, RegisterEntry] - active registers
+  - history: List[List[RegisterEntry]] - capture history
+  - last_pattern: Last used regex pattern
+
+**Key Methods**:
+
+**capture()** (line 102):
+- Captures values from text using regex with capture groups
+- **Process**:
+  1. Compile regex pattern (try-except for validation)
+  2. Find all matches via finditer()
+  3. **Clear current registers** (line 133)
+  4. Process matches:
+     - $0 = whole match (line 140-148)
+     - $1, $2, ... = capture groups (line 151-164)
+     - Limit to max_registers
+     - Handle None groups (empty string)
+  5. Store in history
+  6. Return (num_captures, captured_values)
+- **Example**: `text = '{"name": "John"}'`, `pattern = r'"name": "(.*?)"'` → $0 = `"name": "John"`, $1 = `"John"`
+
+**get()** (line 174):
+- Retrieves value from register by index
+- Returns default if not found
+
+**get_all()** (line 188):
+- Returns all register values as Dict[int, str]
+
+**replace_in_text()** (line 192):
+- Replaces $N placeholders in template with register values
+- **Critical**: Sorts indices descending (line 210) - avoids replacing $1 before $10
+- Example: `template = '"fullName": "$1"'` → `'"fullName": "John"'`
+
+**History Management**:
+- **restore_from_history()** (line 233): Restores registers from history (index -1 = last)
+- **get_history_count()** (line 229): Returns history entry count
+
+**Persistence**:
+- **export_to_dict()** (line 255): Exports to dictionary
+- **import_from_dict()** (line 263): Imports from dictionary
+- **export_to_json()** (line 272): Exports to JSON string
+- **import_from_json()** (line 276): Imports from JSON string
+
+**Global Singleton**:
+- **get_global_register()** (line 292): Returns/creates global instance
+- **reset_global_register()** (line 300): Resets global instance
+- Pattern: Lazy initialization
+
+**Implementation Quality**: ⭐⭐⭐⭐⭐
+- Clean dataclass usage
+- Proper error handling (re.error)
+- History tracking for undo
+- Serialization support (dict/JSON)
+- Memory-conscious (truncate source_text in export)
+- Descending sort prevents placeholder collision
+
+**Security**: ✅
+- Regex compilation in try-except
+- Limits: max_registers = 100
+- None-safe (handles None capture groups)
+
+---
+
