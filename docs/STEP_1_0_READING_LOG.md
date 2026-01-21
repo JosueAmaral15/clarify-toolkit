@@ -1198,3 +1198,52 @@ Actual new files to read: 8 files
 - **Practical use case**: Email domain extraction demonstrates real-world value
 - **14/20 tests passing**: 70% test coverage, 13/13 core MemoryRegister tests passing
 
+
+### File 86: docs/PROJECT_SUMMARY.md (273 lines)
+Executive summary of Clarify project v2.9.111 status. Shows project is 100% feature complete (36/36 COULD HAVE items), 91/94 tests passing (97%), 70K+ LOC, 212+ commits. Architecture overview shows 7 src/ folders (core, gui, cli, plugins, converters, translators, extractors). Major features v2.9.109-111 detailed: Plugin System (15 tests), Reusable Panels (18 tests), Regex Insert + Memory Register (14 tests, $0-$99 groups). Also documents 15 format converters, JSX parameter extractor, AI Processor (OpenAI/Gemini), performance benchmarks (<50ms JSON parsing). v2.10 roadmap: 59h total (JSON Translation 8h, Reverse Conversion 6h, Schema Validation 12h, Advanced Search 10h, Diff & Merge 15h, Batch Ops UI 8h). Quality metrics: Pylint 9.0+/10, Black formatted, 80%+ type hints, 90%+ docstrings, 18+ GoF patterns, SOLID principles applied.
+
+**Key Insights:**
+- **Production Ready**: v2.9.111 is 100% COULD HAVE complete with 97% test coverage (91/94 tests passing)
+- **Major Features**: Plugin System (dynamic loading, 2 plugins), Reusable Panels (SearchReplacePanel + InsertPanel), Regex Insert + Memory ($0-$99 registers), 15 format converters
+- **Performance**: <50ms JSON parsing (10MB), ~10ms regex capture, <1ms template replacement, <100ms schema validation
+- **Architecture**: 70K+ LOC across 7 main folders, 18+ design patterns (Strategy, Factory, Observer, Command, Memento, etc.)
+- **v2.10 Roadmap**: 59h estimated (26h SHOULD HAVE: translation/conversion/validation, 33h COULD HAVE: search/diff/batch UI)
+
+### File 87: docs/protocols/PROTOCOL_CHECKLIST.md (439 lines)
+Executable checklist for Simplicity Protocol 3 v3.0 ensuring compliance with all 16 mandatory steps for solo developer in production. Critical warnings: violating mandatory steps can cause loop infinite test infinity (Step 9.1), commits with cache files (Step 11), vulnerabilities in production (Step 6.5), deploys without rollback (Step 12.5). Etapa 9.1 (Test Safety) is MANDATORY: `pytest --timeout=30`, `QT_QPA_PLATFORM=offscreen`, mock QMessageBox/QFileDialog, dry-run with `--collect-only`. Etapa 11 (Root Cleanup) MANDATORY before commit: remove `__pycache__/`, `.pytest_cache/`, `*.pyc/pyo`, backup files. Historical violations documented: v2.9.40.4 loop infinite (10+ hours) from violating 9.1, 70 `__pycache__` files committed from skipping Etapa 11. Includes 13-step checklist with optional steps 2.5 (Decision Matrix), 10.5 (Profiling), 11.5 (ADR notes). Minimum absolute before commit: Security check 6.5, Tests with timeout 9.1, Organize root 11, Rollback plan 12.5, Commit+Tag+Push+Beeps 13.
+
+**Key Insights:**
+- **16 Mandatory Steps**: Protocol defines 16 etapas for solo dev, with 5 marked as MANDATORY (⭐) that CANNOT be skipped
+- **Critical Violations**: Historical evidence shows skipping Etapa 9.1 caused 10+ hour loop infinite, skipping Etapa 11 resulted in 70 cache files committed
+- **Etapa 9.1 (Test Safety)**: MANDATORY timeout (`--timeout=30`), headless GUI (`QT_QPA_PLATFORM=offscreen`), mocked dialogs (QMessageBox/QFileDialog)
+- **Etapa 11 (Root Cleanup)**: MANDATORY before commit - remove `__pycache__/`, `.pytest_cache/`, `*.pyc`, backups, verify with `git status`
+- **Rollback Plans**: Etapa 12.5 MANDATORY - document how to revert changes, test rollback locally, include commands in CHANGELOG
+
+### File 88: docs/pt/ADVANCED_CONDITIONS_AND_OR.md (250 lines)
+Portuguese documentation for AND/OR logical operators in Advanced Conditions (v2.6.0). Operador AND (conjunção): all conditions must match, default operator if none specified. Operador OR (disjunção): at least one condition must match. UI shows dropdown at top of Advanced Conditions section with tooltip "AND: All conditions must match / OR: At least one condition must match". Examples: AND for "test files that are .py" (filename contains "test" AND ext equals "py"), OR for "Python files OR test files" (filename contains "test" OR ext equals "py"). Truth tables provided for both operators. Works perfectly with checkboxes (Case, Word, Regex). Backend implementation in `filters.py` uses `all()` for AND, `any()` for OR with short-circuit evaluation. 10 tests validating feature: AND with all/one match, OR with one/all/none match, multiple files, content conditions, default operator. Available in Search/Replace Panel, Insert Panel with live preview.
+
+**Key Insights:**
+- **Logical Operators**: AND (all conditions must match, default) and OR (at least one condition must match) for combining multiple Advanced Conditions
+- **Truth Tables**: AND excludes unless ALL match, OR includes if ANY match - clear boolean logic documented
+- **Integration**: Works seamlessly with Case/Word/Regex checkboxes, Scope feature, all field types (filename/content/path/ext)
+- **Examples**: AND for "test.py files" (name+ext), OR for "images" (png OR jpg OR gif), AND for "Python scripts with numpy but not tests"
+- **Testing**: 10 comprehensive tests (AND/OR operators, multiple files, content conditions, default behavior, live preview)
+
+### File 89: docs/pt/ADVANCED_CONDITIONS_CHECKBOXES.md (262 lines)
+Portuguese documentation for three powerful checkboxes in Advanced Conditions (v2.2.0): Case Sensitive (default ON), Whole Word (default OFF), Regex (default OFF). Case Sensitive when active differentiates "Hello" ≠ "hello", when inactive treats them as equal. Whole Word when active uses `\b` word boundaries to match complete words only (not "cat" within "category"), when inactive matches substrings. Regex when active treats value as Python regex pattern (supports `\w+@\w+\.\w+` for emails, `\d+` for numbers), when inactive treats as literal text. Checkboxes can be combined: Case Insensitive + Whole Word for flexible matching, Regex + Case Insensitive for pattern matching ignoring case, all three together for maximum power. Implementation in `Condition` dataclass with three bool fields (case_sensitive=True, whole_word=False, use_regex=False). Method `_match_text()` handles all combinations. 8 automated tests validate functionality: case sensitive/insensitive, whole word boundaries, regex patterns, combined options.
+
+**Key Insights:**
+- **Three Checkboxes**: Case Sensitive (default ON), Whole Word (default OFF), Regex (default OFF) in Advanced Conditions v2.2.0
+- **Case Sensitive**: ON = "Hello" ≠ "hello", OFF = "Hello" = "hello" = "HELLO" (flexible searching)
+- **Whole Word**: ON = uses `\b` boundaries (matches "cat" but not within "category"), OFF = substring matching (matches both)
+- **Regex**: ON = interprets as Python regex pattern (`\w+@\w+\.\w+` for emails), OFF = literal text matching
+- **Combinations**: Can combine all three for powerful filtering (e.g., case-insensitive regex with word boundaries for flexible pattern matching)
+
+---
+
+## 📊 SESSION 5 UPDATE
+
+**Total Files Read in Session 5**: 33 files
+**Session 5 Progress**: 81 → 89 files (8 more files)
+**Total Progress**: 89/243 files = 36.6% complete
+**Remaining**: 154 files (63.4%)
