@@ -753,3 +753,227 @@ This analogy was **validated** in CODE_INVENTORY.md analysis.
 
 ---
 
+
+## 📖 BATCH 3: Guides (4 files) - Reading in progress...
+
+### File 8: USER_MANUAL.md (~95 lines) ✅
+
+**Clarify User Manual** (Portuguese):
+
+**9 Main Sections**:
+
+1. **Introduction**: Desktop app for JSON manipulation, translation, management with modular dock interface
+
+2. **Installation**:
+   - Requirements: Python 3.9+, PySide6
+   - PyPI: `pip install clarify-json` (coming soon)
+   - Local: Clone repo, install requirements, run `python clarify.py`
+
+3. **Getting Started**:
+   - Open Clarify, load JSON file
+   - Use docks for translate/rewrite/replace
+   - Save and manage recent files via menu
+
+4. **Main Features**:
+   - **JSON Translation**: Auto/manual translation to multiple languages
+   - **JSON Rewrite**: Rewrite keys/values with custom rules
+   - **Placeholder Replacement**: Replace variables/markers in JSON text
+   - **Recent Files Management**: Quick access to recently opened files
+   - **Persistent Preferences**: Theme, language, shortcuts auto-saved
+   - **Keyboard Shortcuts**:
+     - **ENTER**: Execute main action in any input field
+     - **Ctrl+F**: Open search in results panels
+     - Full list: Help > Shortcuts
+     - Customizable in settings
+   - **Status Bar**: Tips, progress, operation status
+
+5. **Productivity Features** (v1.9.0+):
+   - Quick execution with ENTER (no mouse needed)
+   - Search in results with Ctrl+F
+   - Enhanced parser: GenericScopeParser rewritten with multi-pattern support
+
+6. **Plugin System** (v2.0.0+):
+   - Extend functionality via Python plugins
+   - Install via menu or manually in `plugins/` folder
+
+7. **REST API** (v2.0.0+):
+   - HTTP interface for automation/integration
+   - Documentation provided in v2.0.0
+
+8. **Cloud Sync** (v2.0.0+):
+   - Sync settings/recent files across devices
+   - Support for Google Drive, Dropbox, etc.
+
+9. **Tips & Troubleshooting**:
+   - Check logs: `logs/clarify.log`
+   - Interface problems: Restart app
+   - FAQ available
+
+10. **Credits**: Developed by Josue Amaral + collaborators, MIT License
+
+---
+
+### File 9: THEME_SYSTEM_GUIDE.md (~150+ lines) ✅
+
+**Theme System Guide** (v2.9.4, Nov 28 2025):
+
+**3 Theme Modes**:
+1. ☀️ **Light Theme**: Clean, professional, bright colors
+2. 🌙 **Dark Theme**: Modern dark for reduced eye strain
+3. 🖥️ **System Theme**: Auto-matches OS settings (default)
+
+**How to Change**: Menu Bar → Themes → Select (auto-saved, persists across restarts)
+
+**Light Theme Details**:
+- **Best for**: Bright environments, daytime, printed docs
+- **Colors**: White bg (#FAFAFA), dark gray text (#1E1E1E), MS blue accents (#0078D7)
+- **Features**: Focus indicators, hover/pressed states, rounded corners, clean scrollbars, shadows
+
+**Dark Theme Details**:
+- **Best for**: Low-light, extended use, reduced eye strain
+- **Colors**: Charcoal bg (#2D2D30), light gray text (#F0F0F0), azure blue accents (#007ACC)
+- **Features**: High contrast, reduced brightness, IDE-like appearance, optimized for long sessions
+
+**System Theme Details**:
+- **Best for**: OS consistency
+- **Features**: Auto-matches OS, Qt Fusion style, respects accessibility, auto-changes with OS
+
+**Component Styling** (all themes include):
+- **Input**: QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox
+- **Buttons/Controls**: QPushButton, QCheckBox, QRadioButton, QComboBox
+- **Containers**: QGroupBox, QTabWidget, QDockWidget
+- **Lists/Trees**: QTreeView, QListView
+- **Navigation**: QMenuBar, QMenu, QScrollBar, QStatusBar
+
+**Technical Details**:
+- **Manager**: `ThemeManager` class handles all themes
+- **Usage**: `ThemeManager.apply_theme(app, "dark")`
+- **Persistence**: Stored in `~/.config/clarify.conf`
+- **Format**: INI-style `[THEME] mode = dark`
+- **Custom Stylesheets**: QSS includes colors, borders, hover/focus states, disabled states, selection, padding/margins
+
+---
+
+
+## 📖 BATCH 4: Wiki Documentation (7 files) - Reading samples...
+
+### File 10: features-overview.md (~200+ lines, sampled first 200) ✅
+
+**10+ Specialized Tools Overview**:
+
+**1. Editor Dock** (`Ctrl+E`):
+- Syntax highlighting (JSON, JS, TS, HTML, XML)
+- Line numbers, code folding, find/replace
+- Auto-save, multiple tabs
+- Use: Quick edits, manual JSON mods, review AI content
+
+**2. Search & Replace** (`Ctrl+F`):
+- **Modes**: Case-sensitive, whole-word, regex
+- **Filters**: Extension, size, date, content patterns
+- **Bulk**: Replace in 100+ files simultaneously
+- **Advanced**: AND/OR logic, field operators (>, <, contains)
+- **Preview**: See matches before replacing
+- **Undo**: Restore from backup
+- Example: Update 42 API endpoints across 12 files
+
+**3. Insert Panel**:
+- **5 Modes**: Left, Right, Replace, Above, Below
+- Conditional insertion, batch processing, pattern matching
+- Use: Add headers/footers, insert imports, logging statements
+
+**4. JSON Rewriter** (`Ctrl+Shift+R`):
+- Deduplicate, join duplicates, global cleanup
+- Format, validate, TypeScript support
+- Performance: 10 MB files in <2 seconds
+- Use: Clean configs, merge git conflicts, normalize i18n
+
+**5. Set Operations** (`Ctrl+Shift+S`):
+- **4 Operations**: ∩ (intersection), ∪ (union), − (difference), ⊕ (symmetric difference)
+- Comparison modes: keys only, values only, both
+- Nested support, multiple files (2-10)
+- Use: Compare prod vs dev configs, merge translations, find missing i18n keys
+
+**6. AI Processor** (`Ctrl+Shift+A`):
+- **4 Providers**: OpenAI, Gemini, Claude, Perplexity
+- **10+ Models**: GPT-4o, Gemini Flash 2.0, Claude Sonnet 4
+- Batch processing (100+ files), advanced filters
+- Token tracking, cost estimation, interrupt support
+- Use: Refactor code, generate docs, translate comments, analyze security, generate tests
+- Example: 50 JS → TS files, $2.15, 3.5 minutes
+
+**7. JSON Translator** (`Ctrl+Shift+J`) - [continued in full file]
+
+---
+
+### File 11: getting-started.md (~150+ lines, sampled first 150) ✅
+
+**Getting Started Guide**:
+
+**Requirements**:
+- **OS**: Windows 10+, macOS 10.15+, Linux (Ubuntu 20.04+)
+- **Python**: 3.12+ (note: higher than inventory's 3.9+)
+- **RAM**: 4 GB min (8 GB recommended for large files)
+- **Disk**: 500 MB for app + files
+- **Dependencies**: PySide6 6.9.3+, pytest
+
+**Installation Option 1** (Recommended - From Source):
+```bash
+git clone https://github.com/JosueAmaral15/clarify.git
+cd clarify
+python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
+pip install -r requirements.txt
+python main.py
+```
+
+**Installation Option 2**: `pip install clarify-app` (Coming soon!)
+
+**First Run**:
+1. Main window opens with multiple docks
+2. Default layout: "Standard"
+3. Language: System or English
+
+**Initial Configuration**:
+1. **Language**: Settings → Language (7 available)
+2. **Layout**: View → Layouts (Compact/Standard/Advanced or custom)
+3. **Shortcuts**: Settings → Keyboard Shortcuts (45+ customizable)
+
+**Interface Layout**:
+```
+┌─────────────────────────────────────────────┐
+│  Menu Bar (File, Edit, View, Tools, Help)  │
+├─────────────────────────────────────────────┤
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │  Search    │  │   Editor (Center)    │  │
+│  │  Replace   │  │                      │  │
+│  │  Insert    │  │                      │  │
+│  │  Set Ops   │  │                      │  │
+│  └────────────┘  └──────────────────────┘  │
+│  ┌────────────┐  ┌──────────────────────┐  │
+│  │ Rewriter   │  │   JSON Search        │  │
+│  │ Translate  │  │   (Right)            │  │
+│  │ AI Proc    │  │                      │  │
+│  └────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+**Dock Panels**: Movable, resizable, hideable, floatable
+
+**Key Docks**:
+1. Editor (`Ctrl+E`) - Syntax highlighting
+2. Search/Replace (`Ctrl+F`) - Multi-file find/replace
+3. JSON Rewriter (`Ctrl+Shift+R`) - Clean/deduplicate
+4. Set Operations (`Ctrl+Shift+S`) - Set logic
+5. AI Processor (`Ctrl+Shift+A`) - AI processing
+
+**File Management**:
+- **Open**: File → Open (`Ctrl+O`), drag & drop, Recent Files (last 10)
+- **Supported**: .txt, .md, .log, .csv, .json, .jsonc, .js, .jsx, .ts, .tsx, .html, .xml, .svg, .yaml, .yml, .ini, .conf
+
+**Settings Location**:
+- Linux: `~/.config/Clarify/`
+- macOS: `~/Library/Preferences/com.clarify/`
+- Windows: `%APPDATA%\Clarify\`
+
+---
+
