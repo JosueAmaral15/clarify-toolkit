@@ -436,3 +436,146 @@ python clarify.py dedupe en.ts --from-ts --join-keys --eliminate-duplicates --no
 
 ---
 
+
+## 📖 BATCH 2: Core Modules - file_explorer_executor.py ✅ (683 lines read)
+
+### File 2: src/core/file_explorer_executor.py (683 lines) ✅
+
+**Purpose**: Unified File Explorer Executor - Merges List + Search + Replace logic (v2.9.116)
+
+**Key Classes**:
+
+1. **SearchMatch** (dataclass, line 34):
+   - Fields: line, col, snippet, context_before (deprecated), context_after (deprecated)
+   - Memory optimizations (v2.9.120):
+     - snippet truncated to MAX_SNIPPET_LENGTH (200 chars, was unlimited)
+     - context_before/after removed (rarely used, 3x memory overhead)
+     - Fields kept for compatibility but not populated
+
+2. **SearchResult** (dataclass, line 50):
+   - Fields: file_info (FileInfo), matches (List[SearchMatch]), match_count (int)
+
+3. **UnifiedFileExplorerExecutor** (QObject, line 59):
+   - **Signals**: progress, progress_detailed, done, error
+   - **State**: _cancel, _paused flags
+   - **Methods**: cancel(), pause(), resume()
+
+**Key Methods**:
+
+**execute_browse** (line 101):
+- Lists files with advanced filters
+- Steps:
+  1. Get base file list via FileListExecutor
+  2. Apply type filter (files/dirs/any)
+  3. Apply include/exclude glob filters
+  4. Check exclude globs first (higher priority)
+  5. **Path component check** (line 146): Correctly handles .venv, node_modules by checking if pattern exists as path component (fixes fnmatch issue)
+  6. Create SearchResult objects with empty matches
+  7. Calculate statistics
+
+**execute_search** (line 181):
+- Unified search operation (filename + content)
+- **Critical Optimization** (line 217-278): Early vs Late conditions
+  - **Early conditions** (size, ext, filename, path, mtime): Applied BEFORE content search to avoid unnecessary file I/O
+  - **Late conditions** (content): Applied AFTER reading files
+  - Separates conditions by type (line 223-232)
+  - Logs filtered counts (line 263-271)
+- **Memory Optimization** (v2.9.120):
+  - MAX_TOTAL_MATCHES = 50,000 global limit (line 31)
+  - Checks limit at line 296-301, emits warning and stops search
+  - Logs memory optimization stats (line 341-352)
+- Steps:
+  1. List files (calls execute_browse)
+  2. Apply early conditions (non-content)
+  3. Apply filename pattern filter
+  4. Content search with progress tracking
+  5. Apply late conditions (content-based)
+  6. Calculate statistics
+
+**execute_replace** (line 356):
+- Replace operation with progress tracking
+- Opens files, calls _replace_in_text, writes back
+- Tracks replaced_count, files_modified, errors
+- Error handling per file (continues on error)
+
+**_search_in_text** (line 412):
+- Core search logic with regex support
+- **Security**: ReDoS prevention (line 432-444)
+  - Regex compilation with try-except
+  - MAX_MATCHES_PER_FILE = 10,000 limit (line 447)
+  - Allow cancellation in loop (line 450)
+  - Catch regex matching errors (catastrophic backtracking) (line 478-482)
+- **Memory Optimization** (v2.9.120, line 462-475):
+  - Truncate snippets to 200 chars
+  - Remove context_before/after
+  - Comments explain 3x memory reduction
+- Error handling: continues with next line on regex error
+
+**_replace_in_text** (line 493):
+- Replace with case sensitivity, whole word, regex support
+- **Bug Fix** (line 524-533): Backslash escaping
+  - In non-regex mode: escape backslashes (\S becomes \\\\S)
+  - In regex mode: keep backslashes for backreferences (\1, \2)
+  - Prevents "bad escape" errors
+- **Security**: Regex DoS prevention (line 516-522)
+- Supports preserve_case and replace_all flags
+
+**_replace_preserve_case** (line 556):
+- Iterates through matches
+- Applies case pattern from original to replacement
+- Respects count limit (first-only vs all)
+
+**_apply_case_pattern** (staticmethod, line 586):
+- **All uppercase**: UPPER() replacement
+- **All lowercase**: lower() replacement
+- **Title case**: Upper first, lower rest
+- **Mixed**: return as-is
+
+**_apply_conditions** (line 597):
+- Filters results by advanced conditions
+- Supports AND/OR logic operators
+- Calls _check_condition for each condition
+- Returns filtered list
+
+**_check_condition** (line 639):
+- Checks single condition against SearchResult
+- **Fields supported**: filename, path, ext, size, mtime, content
+- **Operators**: =, !=, contains, >, <, >=, <=
+- Content field: checks match_count > 0 (already searched)
+- Type-aware comparisons (string vs numeric)
+
+**Critical Constants**:
+- MAX_SNIPPET_LENGTH = 200 (line 30)
+- MAX_TOTAL_MATCHES = 50,000 (line 31)
+- MAX_MATCHES_PER_FILE = 10,000 (line 447)
+
+**Security Considerations** ✅:
+1. **ReDoS Prevention** (OWASP A03):
+   - Regex compilation with try-except
+   - MAX_MATCHES_PER_FILE limit
+   - Cancellation support
+   - Catch catastrophic backtracking errors
+2. **Memory Protection**:
+   - Global match limits
+   - Snippet truncation
+   - Context removal
+3. **Error Handling**:
+   - Try-except around regex operations
+   - Continue on error (don't fail entire operation)
+   - Detailed error logging
+
+**Design Patterns** ✅:
+- **Strategy Pattern**: Different search/replace strategies via options dict
+- **Command Pattern**: execute_browse, execute_search, execute_replace as commands
+- **Observer Pattern**: Qt Signals for progress/error reporting
+- **Early Optimization**: Condition filtering before expensive I/O
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Excellent security consciousness (ReDoS prevention)
+- Memory-aware design (limits, truncation)
+- Comprehensive error handling
+- Clear separation of concerns
+- Well-documented with comments explaining WHY
+
+---
+
