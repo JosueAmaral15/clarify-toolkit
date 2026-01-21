@@ -1287,3 +1287,53 @@ Portuguese executive code review dated 2025-11-23, status ✅ Complete and Produ
 **Files Added**: 90-92 (CHECKBOX_FEATURE, CODE_REVIEW_DETAILED, CODE_REVIEW_FINAL)
 **Total Progress**: 92/243 files = 37.9% complete
 **Remaining**: 151 files (62.1%)
+
+### File 93: docs/pt/CONTEXT_MENU_GUIDE.md (281 lines)
+Portuguese guide for Context Menu feature in Results Panel v2.9.2. Multi-selection with CTRL+Click (add/remove item), Shift+Click (select range), CTRL+A (select all). Right-click menu options: **Copy** (copies selected items to clipboard with formatted text including file paths and line:col matches, feedback "✅ Copied X item(s)"), **Copy All Results** (copies ALL search results with header/statistics, format includes "CLARIFY - SEARCH RESULTS" header with totals), **Select All** (CTRL+A shortcut), **Open File** (opens selected file(s) in system default app, uses `open`/`start`/`xdg-open` by OS, opens each file once even if multiple matches), **Open All Files** (opens ALL files from results, confirms if >10 files with dialog). Feedback via status bar (green=success, red=error, auto-hide after 3s). Practical use cases: copy specific results (CTRL+Click → Copy → paste), open relevant files (Shift+Click → Open File), export all results (Copy All → paste in report), review all files (Open All → confirm). System integration: files open in default app, configure with xdg-mime (Linux), defaults (macOS), file associations (Windows).
+
+**Key Insights:**
+- **Multi-Selection**: CTRL+Click (individual), Shift+Click (range), CTRL+A (all) - standard desktop selection behavior
+- **Copy Formats**: Selected items show file path + line:col + text, Copy All includes statistics header with totals
+- **Open File Safety**: Confirms before opening >10 files, opens each file once (deduplicates if multiple matches from same file)
+- **Cross-Platform**: Uses OS-specific commands (macOS=open, Windows=start, Linux=xdg-open) for file opening
+- **Visual Feedback**: Status bar shows green success/red error messages that auto-dismiss after 3 seconds
+- **v2.9.2 Features**: Before this version had single selection only, no copy, no context menu, manual open button
+
+### File 94: docs/pt/EXTENSION_FILTER_ANALYSIS.md (124 lines)
+Portuguese analysis document deciding where Extension Filter makes sense. Makes sense (✅ KEEP) in 6 generic modules: (1) Search/Replace Panel (processes any text file, common: .py/.js/.tsx/.md), (2) Insert Panel (inserts text in any file type), (3) Case Converter (converts case in any language), (4) AI File Processor (processes multiple file types with AI), (5) Placeholder Replacer (replaces in HTML/JSX/templates), (6) Text Extractor (extracts from HTML/JSX multiple extensions). Does NOT make sense (❌ REMOVE) in 3 JSON-specific modules: (1) JSON Search (works ONLY with .json/.ts/.tsx/.js/.jsx hardcoded), (2) JSON Translate (translates JSON/TS with JSON/TS dictionary, fixed extensions), (3) JSON Rewriter (rewrites ONLY JSON/TS files, hardcoded extensions). Decision summary table shows 6 generic modules keep filter, 3 JSON modules remove (redundant). Implementation for generic modules: add checkbox "Use extension filter" (default enabled), only apply if checked. For JSON modules: REMOVE completely (field, label, parsing logic), KEEP only include/exclude globs for advanced patterns.
+
+**Key Insights:**
+- **Clear Distinction**: Generic modules (any file type) need extension filter, JSON-specific modules (fixed .json/.ts) don't need it (redundant)
+- **6 Keep vs 3 Remove**: Search/Replace/Insert/CaseConverter/AIProcessor/PlaceholderReplacer keep it, JSONSearch/Translate/Rewriter remove it
+- **Redundancy Reason**: JSON modules have hardcoded extensions (.json/.ts/.tsx/.js/.jsx), adding extension filter would be duplicate filtering
+- **Migration Path**: v2.9.0→v2.9.1 removes extension field from JSON panels, keeps checkbox-controlled filter in generic panels
+
+### File 95: docs/pt/EXTENSION_FILTER.md (330 lines)
+Portuguese comprehensive documentation for Extension Filter feature v2.9.0. Allows filtering files by extensions in all modules, complements existing glob system. Syntax accepts comma/semicolon separated extensions with/without leading dot (`.py,.js,.tsx` or `py,js,tsx` or `.py;.js;.tsx`). Characteristics: accepts with/without dot (equivalent), flexible separators (comma/semicolon), whitespace tolerant, empty=all file types. Integration with globs: extension filter works IN CONJUNCTION with include/exclude globs, processing order: (1) Extensions→globs (convert to `*.py` `*.js`), (2) Merge with Include Globs, (3) Walk Files uses combined globs, (4) Exclude Globs applied, (5) Advanced Conditions applied last. Implementation: `parse_extensions_to_globs()` function converts extensions to glob patterns, SearchReplacePanel/InsertPanel split by regex `[;,]`, normalize to add leading dot, convert to `*{ext}` globs, merge with include globs if present. Performance minimal impact (~0.001ms for 5 extensions, ~0.003ms for 20 extensions, walk 1000 files ~100ms same as before). Comparison: Extensions (`.py,.js,.tsx`) rated ⭐⭐⭐⭐⭐ very simple but ⭐⭐ flexibility (only extensions), Include Globs (`*.py;*.js`) rated ⭐⭐⭐ medium simplicity but ⭐⭐⭐⭐⭐ flexibility (any pattern).
+
+**Key Insights:**
+- **Simplified Syntax**: Extensions field (`.py,.js,.tsx`) much simpler than glob patterns (`*.py;*.js;*.tsx`) for common use case
+- **5-Step Processing**: Extensions→globs→merge→walk→exclude→conditions pipeline ensures proper filtering order
+- **Flexible Input**: Accepts multiple formats (.py vs py, comma vs semicolon), auto-normalizes to standard form
+- **Backward Compatible**: Optional field, globs continue working, no impact on existing code, default pre-filled with common extensions
+- **Performance**: Negligible overhead (<0.003ms parsing), same walk speed (uses fnmatch like before)
+- **Recommendations**: Beginners use Extensions, advanced users combine Extensions+Globs, power users use Globs directly for maximum control
+
+### File 96: docs/pt/EXTENSION_FILTER_USAGE.md (214 lines)
+Portuguese usage guide for Extension Filter v2.9.1 with optional checkbox control. GUI interface shows `☑ Use extension filter` checkbox with Extensions field `[.ts,.tsx,.js,.jsx,.py,.md]`. Checkbox marked=filter active (extensions filtered), unmarked=filter inactive (all files processed). Available in 2 modules: Search/Replace (processes any text file), Insert (inserts in any file) - generic modules that can work with any extension. NOT available in 3 modules: JSON Search/Translate/Rewriter (fixed extensions .json/.ts/.tsx/.js/.jsx already hardcoded, adding filter would be redundant). Integration with globs: Example 1 Extensions+Directory (`☑ filter, .py, Include: src/**` = only .py in src/), Example 2 Disable filter+glob only (`☐ filter, Include: tests/**/*.test.js` = manual filtering via glob), Example 3 Combine both (`☑ filter, .tsx/.jsx, Include: src/components/**, Exclude: **/*.test.*` = React components excluding tests). Default: checkbox marked, extensions `.ts,.tsx,.js,.jsx,.py,.md` for retrocompatibility with v2.9.0. Performance: helps on large projects (reduces time 50-80%), disable on small projects (<100 files) or when using advanced globs.
+
+**Key Insights:**
+- **Optional Control**: v2.9.1 adds checkbox to enable/disable filter (v2.9.0 was always on), maintains retrocompatibility with default=enabled
+- **2 vs 3 Modules**: Available in Search/Replace+Insert (generic), not in JSON Search/Translate/Rewriter (fixed extensions, redundant)
+- **Integration Patterns**: Can use Extensions alone, Globs alone (uncheck filter), or combine both for precise targeting
+- **Performance Impact**: 50-80% time reduction on large projects by skipping irrelevant files (images, binaries, etc.)
+- **Default Values**: Pre-filled with common extensions (.ts/.tsx/.js/.jsx/.py/.md) for convenience and backward compatibility
+
+---
+
+## 📊 SESSION 5 CONTINUED
+
+**Files Read**: 93-96 (Context Menu, Extension Filter analysis/docs/usage)
+**Total Progress**: 96/243 files = 39.5% complete
+**Remaining**: 147 files (60.5%)
+**Session 5 Total**: 40 files
