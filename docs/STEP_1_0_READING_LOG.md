@@ -995,3 +995,95 @@ Actual new files to read: 8 files
 - **Solution pattern**: Always depend on mock_message_box/mock_file_dialog fixtures in GUI tests
 - **Documentation value**: This bug consumed 10+ hours of investigation, detailed documentation prevents recurrence
 
+
+#### 70. docs/tutorials/README.md (65 lines)
+**Summary**: Clarify Tutorials directory structure. Tutorial organization: **Beginner** (step-by-step guides with visual instructions for new users - Basic: essential features, Advanced: complex workflows), **Developer** (technical documentation with algorithms/APIs/integrations - Basic: core concepts/architecture, Advanced: extension development). Available tutorials: Beginner/Basic - (1) JSON Translate (convert code to i18n JSON), (2) Search & Replace (find/replace across files), (3) JSON Rewriter (transform JSON structures). Beginner/Advanced, Developers/Basic, Developers/Advanced coming soon. Quick start: New users start with Quick Start Guide. AI Assistant: Help → AI Assistant for real-time answers, code examples, troubleshooting. Last updated Nov 30, 2025.
+
+**Key Insights**:
+- **User segmentation**: Beginner (UI-focused) vs Developer (API-focused) tutorials
+- **Progressive complexity**: Basic → Advanced within each segment
+- **3 core tutorials**: JSON Translate, Search & Replace, JSON Rewriter (foundation features)
+- **AI integration**: Built-in chatbot for just-in-time help
+- **GitHub contribution**: Open for community improvements
+
+#### 71. docs/tutorials/quickstart.md (150 lines read, 5-minute getting started)
+**Summary**: Clarify Quick Start Guide. What is Clarify: Professional desktop app for JSON Translation (extract text → i18n JSON), Search & Replace (batch find/replace with regex), JSON Rewriting (transform/clean/deduplicate), Case Conversion (camelCase/PascalCase/snake_case/kebab-case), AI Processing (ChatGPT/Gemini). Installation: Python 3.8+, PySide6, `pip install -r requirements.txt`, `python main.py`. First steps: (1) Launch `python main.py`, (2) Choose tool from menu (5 main tools table), (3) Try JSON Translate example (extract "Hello World" from TSX → JSON with t.hello_world/t.welcome_to_our_app). Next steps: 3 beginner tutorials (JSON Translate 10min, Search & Replace 15min, JSON Rewriter 12min), Advanced features (advanced conditions, scope filtering, batch processing, undo/redo Ctrl+Z/Y 10 levels). Tips: Keyboard shortcuts (Ctrl+Shift+F advanced search, Ctrl+S save, Ctrl+Q quit), Common workflows (Workflow 1: Internationalize React app, Workflow 2: Clean messy JSON, Workflow 3: Bulk rename variables). Help: AI Assistant (Help menu), Tutorials index, Full docs, GitHub issues.
+
+**Key Insights**:
+- **5-minute promise**: Quick start designed for immediate productivity
+- **Tool comparison table**: Clear purpose and best-use-case for each of 5 main tools
+- **Concrete example**: Before/after code showing TSX → JSON transformation
+- **3 practical workflows**: Real-world scenarios (i18n React app, clean JSON, bulk rename)
+- **Keyboard shortcuts**: Power user features (Ctrl+Z/Y undo/redo 10 levels)
+- **Multiple entry points**: Main.py, python -m src, GUI launchers
+
+#### 72. docs/architecture/ARCHITECTURE.md (150 lines read, entry points explanation)
+**Summary**: Why multiple entry points in Clarify project. **clarify.py** (User Entry Point - convenience wrapper, ~50 LOC mostly comments, imports and calls src.main(), like desktop shortcut icon), **main.py** (Developer Testing Tool, tests imports/validates architecture, ~150 LOC, quality control inspector), **src/app.py** (The Real Application, contains ALL actual code - GUI/CLI/search/replace/etc, ~2,700 LOC, the engine), **src/__main__.py** (Python Module Entry, enables `python -m src` execution, ~15 LOC, "official" Python way). When to use: Users (python clarify.py easiest, python -m src proper Python way, ./clarify_gui.sh double-click), Developers (python main.py test for module architecture, python -m pytest tests/ for unit tests). Could eliminate files? Option 1 remove clarify.py (users need python -m src less intuitive), Option 2 remove main.py (no easy import testing), Option 3 remove both (not user-friendly). Current structure: Best of both worlds (user convenience + developer testing + proper organization). Restaurant analogy: src/app.py = Kitchen, clarify.py = Front door, src/__main__.py = Side entrance, main.py = Quality inspector, launchers = Valet service. Benefits: Users run familiar command, Python packages work properly, Developers test modules, Code organized in src/, Easy to add tests.
+
+**Key Insights**:
+- **4 entry points with distinct purposes**: User convenience, developer testing, Python module standard, GUI launchers
+- **Not over-engineered**: Standard Python practice for growing projects
+- **Restaurant analogy**: Different doors to same kitchen serving different needs
+- **User expectation management**: clarify.py exists because users expect to find it (like README.md)
+- **TL;DR summary**: clarify.py = "Run me!", main.py = "Test me!", src/app.py = "I'm the actual code!"
+- **Architecture validation**: main.py tests that modules load correctly during development
+
+#### 73. docs/architecture/IMPORT_TREE_ANALOGY.md (388 lines, comprehensive architecture model)
+**Summary**: Import Tree Analogy by Josué Amaral (Dec 24, 2025, Phase 3.0 Refactoring, universal to all programming languages). Model: Project import structure as hierarchical tree. Elements: **Root** (main file like app.py/main.py/index.js - most complex, orchestrator, imports multiple project modules, coordinates components, decides "what" delegating "how"), **Branches** (intermediate modules like gui/, core/, utils/ - medium complexity, import other project modules, provide specialized functionality, abstract implementation details), **Leaves** (terminal modules like button.py, validator.py, helpers.py - simplest, DO NOT import project files, DO import external libraries, provide atomic functionality, independently testable/reusable). Example hierarchy: A.py (root) imports B/C → B.py (branch) imports D/E/F → D.py (leaf) imports only external libs (re, numpy). Characteristics table: Level 0 Root (imports B/C, rarely external, high complexity, orchestrator), Level 1 Branch (imports D/E/F/G, sometimes external, medium complexity, coordinator), Level 2 Leaf (NEVER project, ALWAYS external, low complexity, executor). Development approaches: **Top-Down** (start root → down to leaves, clear architecture early, facilitates planning, risk of over-engineering), **Bottom-Up** (start leaves → up to root, testable from start, natural reuse, architecture emerges late), **Middle-Out** (start branches → expand both ways, balances overview and details, iterative/adaptable, ideal for new modules in Clarify). Design principles: (1) Depth Principle (closer to root = more complex orchestrator, closer to leaves = simpler executor), (2) Independence Principle (leaves don't depend on other leaves, only external libs, branches coordinate leaves), (3) Single Responsibility (Root: "what system does?", Branch: "how parts connect?", Leaf: "how to do X specifically?"). Quality metrics: Good (balanced tree 2-4 levels, clear separation root=high complexity+low execution / leaf=low complexity+high execution, easy testing), Bad (linear degeneration A→B→C→D→E→F too deep, fat leaves 500 LOC importing E/F/G, thin root 10 LOC should orchestrate more). Clarify current state: app.py 2636 lines with MainWindow 1555 lines (root), gui/ managers (branches), dialogs (leaves), BUT ResultsTree 330 lines + JSXProcessor 370 lines should be extracted to leaves. Universal applicability: Python (import/from), JavaScript (import/from), Java (import), C++ (#include).
+
+**Key Insights**:
+- **Universal mental model**: Applies to ALL languages (Python/JS/Java/C++), not language-specific
+- **3-tier hierarchy**: Root (orchestrator "what") → Branch (coordinator "how connect") → Leaf (executor "how do")
+- **Critical leaf rule**: Leaves NEVER import other project files, ONLY external libraries
+- **Wrong pattern example**: D.py (leaf) importing E.py (leaf) = violation, B.py (branch) should coordinate both
+- **Development approach choice**: Top-Down for refactoring (Clarify Phase 3.0), Bottom-Up for docks/utilities, Middle-Out ideal for new modules
+- **Quality indicators**: Depth 2-4 levels optimal, balanced width, no leaf-to-leaf imports, testability pyramid (leaves isolated, branches with mocks, root integration)
+- **Clarify opportunities**: Extract ResultsTree + JSXProcessor to leaves → reduce app.py from 2636 to ~1900 lines
+- **Living document**: Should be updated as architecture evolves
+
+
+#### 74. docs/FILE_EXPLORER_I18N_INVESTIGATION_2026_01.md (150 lines read, i18n runtime investigation)
+**Summary**: File Explorer i18n investigation (Jan 4, 2026). Objective: Investigate why strings appear in English despite user report. Investigation: User reported 18 untranslated strings (Name/Size/Modified/Permissions/Path columns, Export buttons, No File Listed, Quick Filter, Options, etc.). Code verification: **FileListTableManager** lines 76-82 headers USING tr() ✅, line 64 Quick Filter tr() ✅, line 111 Export button tr() ✅, line 108 No Files Listed tr() ✅. **FileFilterPanel** all labels using tr() ✅ (regex_pattern, size_min/max, modified_after/before, extensions, max_depth). PT_BR.json verification: ALL translations EXIST ✅ (table_manager.header_name = "Nome", etc.). **SURPRISING CONCLUSION**: Code correct (all strings use tr()), translations exist in pt_BR.json, BUT USER SEES ENGLISH = runtime problem! Possible causes: (Hypothesis 1) Language not set to PT_BR (verify TranslationManager.set_language() called), (Hypothesis 2) Translation cache not invalidated after adding keys, (Hypothesis 3) Initialization order (widgets created BEFORE i18n ready, tr() returns original key), (Hypothesis 4) Fallback to EN (but keys exist). Next steps: (1) Verify language config, (2) Add debug in i18n system (print when key not found), (3) Verify initialization order (ensure TranslationManager before widgets), (4) Force reload TranslationManager.reload(), (5) Create manual test (set pt_BR, print tr() result).
+
+**Key Insights**:
+- **Code vs Runtime issue**: All code correct with tr(), all translations exist, but runtime doesn't load PT_BR
+- **Initialization order hypothesis**: Widgets may be created before i18n system ready, causing tr() to return untranslated keys
+- **Debug strategy**: Add prints to track when keys aren't found, verify set_language() called, test reload functionality
+- **Cache theory**: New keys added but cache not invalidated (need reload after changes)
+- **Language config critical**: Application may be loading en.json by default despite PT_BR being installed
+
+#### 75. docs/ORPHANED_CODE_INTEGRATION_PLAN.md (150 lines read, unused code integration)
+**Summary**: Orphaned code integration action plan by Sistema de Análise (Dec 25, 2025). Executive summary: ~2,500 LOC of implemented but unused code, 5 features ready, 16-24h development estimated, high ROI (code exists, just needs integration). **PRIORITY HIGH (3-5h)**: (1) **MinimalProcessingModal** (src/ui/processing_modal.py lines 326-383, 58 LOC, NEVER USED) - Frameless modal for quick operations, modern design rounded borders, WindowStaysOnTopHint, FramelessWindowHint, indeterminate progress bar, integrate in ExportManager (Excel/CSV export), Plugin PostgreSQL (DB connection/insert), CloudSync (upload/download), Auto-save (future silent save), 1-2h estimate, low complexity ⚡, better UX for fast operations. (2) **ManualCheckDialog** (src/gui/update_notification_dialog.py line 176, ~100 LOC estimated, NEVER USED) - Manual update check dialog on GitHub, integrate in Menu Help ("Check for Updates Now..." + Ctrl+U shortcut), Welcome Screen button (future), 1h estimate, low complexity ⚡, complete update check feature. (3) **test_docks_factory.py** (tests/, 38 LOC, isolated test script) - Integration test validates 14 docks creation via DockFactory, integrate in CI/CD pipeline (.github/workflows/), convert to pytest format with fixtures, 1-2h estimate, medium complexity 🔧, ensures DockFactory working.
+
+**Key Insights**:
+- **High ROI opportunity**: ~2,500 LOC already implemented, just need integration (16-24h total)
+- **MinimalProcessingModal use cases**: 4 integration points (ExportManager, PostgreSQL plugin, CloudSync, Auto-save) for non-blocking UX
+- **Update checker feature**: Complete implementation ready, just needs menu entry (1h work)
+- **Test infrastructure**: DockFactory integration test exists but not in pytest suite (needs conversion)
+- **Priority levels**: HIGH (3-5h easy wins), subsequent priorities likely MEDIUM and LOW
+- **Implementation pattern**: Modal + try/finally pattern ensures cleanup even on errors
+
+#### 76. docs/PROGRAMMER_3_QUICK_REFERENCE.md (143 lines, comprehensive quick reference)
+**Summary**: Programmer #3 Quick Reference Card (Jan 14, 2026). Status: Documentation Reading COMPLETE 100%, 6h 45m invested, 53 files read (~35,000 lines). Where to find info: Architecture & Safety (SESSION_1), Features & v2.10 Roadmap (SESSION_2), Migration History & Workflows (SESSION_3), Executive Summary (COMPLETE_SUMMARY). **CRITICAL don't touch**: (1) src/rewriter/rewriter.py lines 40-55 (Obj type bug fix, production critical), (2) GUI tests without timeouts (ALWAYS use @pytest.mark.timeout(5), 10h loop risk!), (3) Root cleanup before commit (MANDATORY, 70+ binaries committed without it). Before every commit Protocol 3: Step 6.5 security check (input validation, path traversal, no secrets), Step 9.1 GUI tests with timeouts (QT_QPA_PLATFORM=offscreen, pytest --collect-only dry-run, timeout 30s), Step 11 root cleanup (find __pycache__/.pytest_cache/*.pyc delete, git status verify), Step 12.5 document rollback in CHANGELOG, Step 13 quality gates (black 120 chars, isort black profile, pylint >=9.0). Architecture import tree: Root (app.py orchestrator "what to do?") → Branches (gui/core coordinators "how to connect?") → Leaves (widgets/utils executors "how to do X?"), rule: leaves NEVER import other project files. Major features index: Formula Builder (v2.9.108, 1,433 LOC, 19/19 tests, Template Method), Plugin System (v2.9.109, ~1,200 LOC, 15/15 tests, Observer), Reusable Panels (v2.9.110, 700+ LOC, 18/18 tests, Composite), Regex Insert + Memory (v2.9.111, 1,140 LOC, 14/20 tests, Memento). v2.10 Roadmap 59h: SHOULD HAVE 26h (JSON Translation 8h Google Translate API, Reverse Conversion 6h JSON→CSV/TSV, Schema Validation 12h JSON Schema Draft 7), COULD HAVE 33h (Advanced Search 10h, Diff & Merge 15h, Batch Operations UI 8h). Design patterns 12+: GoF (Strategy, Template Method, Observer, Singleton, Memento, Factory, Composite, Command, Facade), GRASP (Information Expert, Controller, Low Coupling, High Cohesion). Quality metrics: 70,000+ LOC, 97% test coverage, Pylint ≥9.0, Type Hints 91.3%, 7 languages (EN/PT-BR/ES/FR/DE/ZH/JA).
+
+**Key Insights**:
+- **Complete documentation reading**: 53 files, 35,000 lines in 6h 45m = systematic comprehensive approach
+- **Production-critical areas documented**: 3 specific areas with exact line numbers that must not be touched
+- **Protocol 3 checklist**: 6 specific steps with exact commands before every commit (security, tests, cleanup, rollback, quality)
+- **Architecture mental model**: Import tree analogy with clear rule (leaves NEVER import project files)
+- **Feature tracking**: 4 major features with exact LOC, test counts, design patterns used
+- **v2.10 roadmap**: 59h total, prioritized into SHOULD (26h) vs COULD (33h) with time estimates per feature
+- **12+ design patterns**: Both GoF (classic) and GRASP (responsibility assignment) patterns identified
+
+#### 77. docs/STEP_1_2_CODE_COMPREHENSION_STUDY.md (150 lines read, codebase study guide)
+**Summary**: Step 1.2 Deep Comprehension of Existing Codebase by COM2 branch (Jan 20, 2026). Status: IN PROGRESS, Protocol: Simplicity Protocol 3 Step 1.2 MANDATORY. Objective: Practical knowledge - What (files exist, what each does), Where (find implementation locations), How (patterns/conventions), Why (past decisions), Impact (predict breakage), Reuse (identify reusable code). **Step 1: Quick Overview 15-30min COMPLETE** - Folder structure: src/ with 196 Python files, ~58,165 LOC, largest file src/gui/file_explorer_dock.py (2,066 lines), critical files app.py (1,967 lines main application), rewriter/rewriter.py (CRITICAL bug fix lines 40-55), core/ (business logic), gui/panels/ (reusable UI). Key directories: accessibility_manager, ai_processor/ (template engine, token counter), app.py ⭐ MAIN GUI, batch_manager, calculator_memory/operations, case_converter, cli/ (commands/parser), cloud_sync, config_manager, converters/ (BSON/TOON/Factory), core/ ⭐ (file_explorer_executor, file_list_executor, filters advanced conditions, insert, memory_register $0-$99, multi_query, result_exporter, search_replace, set_operation_executor), extractors/ (JSX/generic), formula_manager, gui/ ⭐ 42 files (advanced_extractor_dock, ai_processor_dock 1,193 lines, base_dock, file_explorer_dock 2,066 lines LARGEST, json_rewriter_dock 1,054 lines, panels/ with search_replace 957 lines + insert 818 lines + results_tree 936 lines, progress/, widgets/, workers/), i18n/ (7 languages), json_search/, rewriter/ ⭐ CRITICAL (operations 1,009 lines, rewriter.py CRITICAL BUG FIX, serializer, ts_parser, types), utils/ ⭐ (advanced_conditions, error_handler, logger, file_utils, text_utils, ts_utils). **Step 2: Mental Dependency Map 15min COMPLETE** - Entry points traced: main.py OR python -m src → src/__main__.py (16 lines) imports main() → src/app.py (1,967 lines MainWindow) imports from core/ (SearchOptions, InsertMode, Condition) + utils/ (walk_files, logger) + rewriter/ (Obj, dedupe) + gui/ (DockFactory) + i18n/ (tr) + ai_processor/ → Creates GUI (Docks, Panels, Widgets). Core module import chain traced: src/core/__init__.py exports search_replace, insert, filters, rewriter_cli.
+
+**Key Insights**:
+- **Systematic comprehension approach**: Step 1 (Quick Overview 15-30min) → Step 2 (Dependency Map 15min) → Progressive understanding
+- **Size metrics**: 196 Python files, ~58,165 LOC, largest file 2,066 lines (file_explorer_dock)
+- **Critical areas identified**: app.py (1,967 main GUI), rewriter/rewriter.py (CRITICAL bug fix lines 40-55), core/ (business logic), gui/panels/ (reusable UI)
+- **Folder organization clarity**: 5 ⭐ critical areas (app.py, core/, gui/, rewriter/, utils/), clear separation of concerns
+- **Entry point chain**: 3-level flow (main.py → __main__.py 16 lines → app.py 1,967 lines) with imports mapped
+- **42 GUI files**: Modular dock architecture, largest dock 2,066 lines (file explorer)
+- **Memory register system**: $0-$99 storage in calculator_memory for formula operations
+
