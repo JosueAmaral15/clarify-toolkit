@@ -1838,3 +1838,145 @@ Uses **UnifiedFileExplorerExecutor** (from core):
 
 ---
 
+
+## 📖 File 17: src/gui/initialization_manager.py (166 lines) ✅
+
+**Purpose**: Centralizes MainWindow initialization logic (Phase 3.7 refactoring, v2.9.114)
+
+**Problem Solved**: Reduced MainWindow.__init__ from 1106 lines to organized sections
+
+**InitializationManager** (static class):
+- No instance methods - all static
+- Groups initialization into 4 logical sections
+
+### Methods:
+
+**initialize_core_systems()** (line 34):
+- **Logging**: get_logger("clarify.app.MainWindow") (v2.9.58)
+- **Error Reporter**: install_error_reporter(app_version="2.9.89") with ErrorReportDialog
+- **Crash Handler**: install_crash_handler(show_dialog=True, report_crashes=False) - opt-in only (v2.9.61)
+
+**initialize_configuration()** (line 64):
+- **Migrations**: run_migrations() BEFORE loading config/settings (v2.9.91)
+  - Returns migrations_ok bool
+  - Logs warning if failed, continues anyway
+- **Translator**: get_translator(), connects languageChanged signal (Task #24 v2.9.10)
+- **Settings**: get_settings(), creates QSettings("Clarify", "ClarifyApp") for accessibility (v2.9.40)
+
+**initialize_managers()** (line 92):
+- **ShortcutManager**: Loads custom shortcuts (v2.9.33)
+- **CommandManager**: Undo/Redo with max_history=10 (Task #12 v2.9.8)
+- **PluginLoader**: Discovers + activates plugins (v2.9.109)
+  - discover_plugins() → count
+  - activate_all_plugins() → activated count
+  - Prints plugin counts
+- **tool_tabs**: Dict[str, (widget, tab_index)] for tracking tabs (v2.9.40)
+- **LayoutManager**: Initialized (v2.9.84)
+
+**build_ui_components()** (line 128):
+- Sets window title via tr("app.title")
+- Calls _build_icon(), _build_ui(), _build_menu()
+- Restores preferences via _restore_prefs(), _apply_saved_settings()
+- Registers docks with LayoutManager (_register_docks_with_layout_manager)
+
+**initialize_all()** (line 151):
+- **Master method**: Runs all steps in correct order
+- Stores app reference
+- Order matters for dependencies!
+- Single entry point for complete initialization
+
+### Design Pattern: **Facade (GoF)**
+- Simplifies complex initialization
+- Provides single interface for multi-step process
+- Makes MainWindow cleaner and more testable
+
+---
+
+## 📖 File 18: src/gui/menu_builder.py (458 lines) ✅
+
+**Purpose**: Centralizes menu creation logic (Phase 3.4 refactoring, v2.9.114)
+
+**Problem Solved**: Extracts menu building from MainWindow, reducing coupling
+
+**MenuBuilder** (static class):
+- No instance methods - all static
+- Builds 8 menus + shortcuts
+
+### Master Method:
+
+**build_all_menus()** (line 25):
+- Entry point - calls all menu builders
+- Builds: File, Edit, Tools, View, Themes, Settings, Plugins, Help, About
+- Sets up shortcuts
+
+### Menu Builders:
+
+**_build_file_menu()** (line 46):
+- **New from Template** (v2.9.63): Ctrl+Shift+N
+- **Open Editor**: Ctrl+E → _show_editor()
+- **Exit**: closes window
+
+**_build_edit_menu()** (line 74, Task #12 v2.9.8):
+- **Undo**: Ctrl+Z → _undo(), initially disabled
+- **Redo**: Ctrl+Y → _redo(), initially disabled
+- **Clear History**: → _clear_undo_history()
+
+**_build_tools_menu()** (line 99):
+- **16+ tool actions**: Search/Replace, Insert, Translate, Rewriter, Text Extractor, Placeholder Replacer, AI Processor, JSON Search, Case Converter, Text to JSON, Google Translate, Set Operations, Calculator, Formula Builder, File Explorer (Ctrl+Shift+F), Advanced Extractor (Ctrl+Shift+E)
+- **Fixed tabs accessibility** (v2.9.40.2 - Task: menu for closed tabs)
+- All tools have act_open_* actions with tooltips/shortcuts
+- Connected to _show_* methods
+
+**_build_view_menu()** (line 170):
+- **Toggle History**: checkable action → _toggle_history()
+- **Layouts submenu** (v2.9.84):
+  - Presets: Compact, Standard, Advanced
+  - Save current layout
+  - Manage layouts dialog
+  - Connected to layout_manager.apply_preset()
+
+**_build_themes_menu()** (line 204):
+- **3 themes**: System (default), Light, Dark
+- Checkable actions (QAction with checkable=True)
+- Mutually exclusive (not shown in excerpt, likely QActionGroup)
+- Connected to _apply_theme_action()
+
+**_build_settings_menu()** (line 223):
+- **Preferences**: General settings
+- **Shortcuts**: Customization
+- **Transparency**: Window opacity
+- **Language submenu** (Task #24 v2.9.10, expanded v2.9.43):
+  - **7 languages**: English, Português (Brasil), Español, Français, Deutsch, 中文 (简体), 日本語
+  - **QActionGroup**: Radio button behavior (exclusive, only one selected)
+  - Checkable actions (act_lang_en, act_lang_pt, act_lang_es, act_lang_fr, act_lang_de, act_lang_zh, act_lang_ja)
+
+### Pattern Observations:
+
+**Action Creation Pattern**:
+```python
+act_name = QAction(tr("menu.key"), main_window)
+act_name.setShortcut("Ctrl+X")
+act_name.setToolTip(tr("menu.tooltip_key"))
+menu.addAction(act_name)
+act_name.triggered.connect(main_window._method)
+```
+
+**Exclusive Actions (Radio Buttons)**:
+- Use QActionGroup with setExclusive(True)
+- Add all related actions to group
+- Only one can be checked at a time
+
+**Design Pattern**: **Builder (GoF)**
+- Step-by-step construction of complex menus
+- Separates construction from representation
+- Each _build_*_menu() is a builder step
+
+### Code Quality: ⭐⭐⭐⭐⭐
+- Clean separation of concerns
+- i18n support (tr() for all strings)
+- Consistent naming (act_*, m_*)
+- Object names for plugin access (setObjectName)
+- Tooltips and shortcuts well-documented
+
+---
+
