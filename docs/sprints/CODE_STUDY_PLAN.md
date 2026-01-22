@@ -11,8 +11,8 @@
 
 **Total Source Files**: 196 Python files
 **Total Lines of Code**: ~58,165 lines
-**Files Studied**: 32 / 196 (16.3%)
-**Lines Studied**: ~6,888 / 58,165 (11.8%)
+**Files Studied**: 41 / 196 (20.9%)
+**Lines Studied**: ~9,185 / 58,165 (15.8%)
 **Estimated Study Time**: 4-8 hours (per protocol)
 
 ---
@@ -35,28 +35,21 @@
 - [x] JSON rewriting pipeline (17 stages, rewriter_cli)
 
 ### Phase 3: Feature Modules 🔄 **IN PROGRESS**
-**Session 6-7** | 9/~50 files | ~1,829/~20,000 lines
+**Session 6-8** | 18/~50 files | ~4,126/~20,000 lines
 - [x] Utilities (`src/utils/`) - ✅ **100% COMPLETE** (9/9 files, ~2,304 lines) 🎉
-  - [x] file_utils.py (walk, read/write, backup)
-  - [x] text_utils.py (masking, regex compilation)
-  - [x] normalization.py (token normalization, case styles)
-  - [x] logger.py (structured logging, rotation, colors)
-  - [x] advanced_conditions.py (UI-Core bridge)
-  - [x] error_handler.py (crash handler, privacy-aware) 
-  - [x] error_reporter.py (GitHub issue integration)
-  - [x] update_checker.py (version checking, caching)
-  - [x] file_finder.py (advanced search dialog)
-- [ ] Rewriter operations (`src/rewriter/`) - 9 files, ~2,297 lines
-  - [ ] operations.py (36K lines!)
-  - [ ] reference_resolver.py
-  - [ ] reference_updater.py
-  - [ ] deduplicator.py
-  - [ ] key_joiner.py
-  - [ ] substitution.py
-  - [ ] advanced_filters.py
-  - [ ] ts_parser.py
-  - [ ] json_serializer.py
-- [ ] GUI docks (`src/gui/docks/`) - many files
+  - [x] file_utils.py, text_utils.py, normalization.py, logger.py, advanced_conditions.py
+  - [x] error_handler.py, error_reporter.py, update_checker.py, file_finder.py
+- [x] Rewriter operations (`src/rewriter/`) - ✅ **100% COMPLETE** (9/9 files, ~2,297 lines) 🎉
+  - [x] types.py (Obj type, duplicate key preservation)
+  - [x] __init__.py (module exports)
+  - [x] detailed_stats.py (statistics tracking)
+  - [x] serializer.py (TS/JS serialization)
+  - [x] rewriter.py (pipeline coordinator, CRITICAL BUG FIX)
+  - [x] ts_parser.py (TypeScript/JavaScript parser)
+  - [x] operations.py (13 transformation operations)
+  - [x] reference_resolver.py (reference system)
+  - [x] reference_updater.py (cross-project updates)
+- [ ] GUI docks (`src/gui/docks/`) - 40+ files
   - [ ] json_rewriter_dock.py
   - [ ] file_explorer_dock.py
   - [ ] json_translate_dock.py
@@ -88,12 +81,12 @@
 
 ## 📋 Study Checklist (Protocol Step 1.2)
 
-- [~] Study ALL source code (16.3% done) 🔄
+- [~] Study ALL source code (20.9% done) 🔄
 - [x] Study ALL documentation (100% DONE ✅)
 - [ ] Study ALL git history (commits, not just specs)
 - [ ] Study ALL tests (implementation code)
 - [x] Identify "don't touch" code (partially done) 🔄
-- [~] Understand complete architecture (55% done) 🔄
+- [~] Understand complete architecture (60% done) 🔄
 - [ ] Find reuse opportunities (ongoing)
 - [ ] Create docs/NOTES.md with findings
 
@@ -105,6 +98,7 @@
 - [x] CODE_STUDY_SESSION_5_NOTES.md (Executors, 5 files)
 - [x] CODE_STUDY_SESSION_6_NOTES.md (Utils 1-5, 5 files)
 - [x] CODE_STUDY_SESSION_7_NOTES.md (Utils 6-9, 4 files) - **Utils 100%!** ✅
+- [x] CODE_STUDY_SESSION_8_NOTES.md (Rewriter, 9 files) - **Rewriter 100%!** ✅
 
 ---
 
@@ -133,7 +127,7 @@ For each session, document:
 
 ---
 
-**Status**: 🔄 **IN PROGRESS** (Session 7 - Utils Module COMPLETE! ✅)
-**Current Phase**: Phase 3 - Feature Modules (Utils 100%, next: rewriter/)
-**Overall Progress**: 16.3% of source code studied (32/196 files)
-**Next Target**: rewriter/ module (9 files, operations.py is massive at 36K lines!)
+**Status**: 🔄 **IN PROGRESS** (Session 8 - Rewriter Module COMPLETE! ✅)
+**Current Phase**: Phase 3 - Feature Modules (Utils & Rewriter both 100%!)
+**Overall Progress**: 20.9% of source code studied (41/196 files)
+**Next Target**: GUI docks (40+ files) or AI processor module
