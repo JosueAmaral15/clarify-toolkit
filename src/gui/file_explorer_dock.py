@@ -953,6 +953,7 @@ class FileExplorerDock(BaseDock):
         content_query = self.content_panel.get_query()
         search_options = self.search_options_panel.get_options()
         conditions = self.conditions_grid.get_conditions()
+        logic_operator = self.conditions_grid.get_logic_operator()
 
         # Determine if this is a search or browse operation
         is_search = bool(filename_pattern or content_query)
@@ -1007,7 +1008,8 @@ class FileExplorerDock(BaseDock):
                     show_hidden=show_hidden,
                     recursive=recursive,
                     filters=filters,
-                    conditions=conditions
+                    conditions=conditions,
+                    logic_operator=logic_operator
                 )
             )
             print("🔧 DEBUG: Starting thread...")
@@ -1054,7 +1056,9 @@ class FileExplorerDock(BaseDock):
                     directory=directory,
                     show_hidden=show_hidden,
                     recursive=recursive,
-                    filters=filters
+                    filters=filters,
+                    conditions=conditions,
+                    logic_operator=logic_operator
                 )
             )
             self._worker_thread.start()
@@ -1944,10 +1948,8 @@ class FileExplorerDock(BaseDock):
         except Exception as e:
             print(f"Failed to save history: {e}")
         
-        # Cleanup thread
-        self._cleanup_worker_thread()
-
-        self.results_status.setText(f"Found {len(result.files)} file(s)")
+        # Update status label
+        self.results_status.setText(f"Found {len(files_list)} file(s)")
         
         # Cleanup thread
         self._cleanup_worker_thread()
