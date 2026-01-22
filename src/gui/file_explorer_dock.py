@@ -1051,8 +1051,10 @@ class FileExplorerDock(BaseDock):
             self._worker.error.connect(self._on_operation_error)
 
             # Start thread and execute browse
+            # Capture worker in local variable to avoid None issues after cleanup
+            worker = self._worker
             self._worker_thread.started.connect(
-                lambda: self._worker.execute_browse(
+                lambda: worker.execute_browse(
                     directory=directory,
                     show_hidden=show_hidden,
                     recursive=recursive,
