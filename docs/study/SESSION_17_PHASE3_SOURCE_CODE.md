@@ -1509,3 +1509,178 @@ class MyDock(StandardToolDock):
 
 ---
 
+
+## 📖 File 15: src/gui/file_explorer_dock.py (2,066 lines) ✅
+
+**Purpose**: Unified File List + Advanced File Search (v2.9.115, 80% overlap consolidation)
+
+**Major Achievement**: Consolidates two separate tools with 80% code overlap
+
+**Key Features**:
+- **Dual mode**: Dock (normal) or Dialog (modal selection)
+- **Smart detection**: Auto-detects Browse vs Search mode based on filters
+- **File type filter**: Files Only / Directories Only / Any
+- **Selection mode**: Multi-select and return selected files
+- **Unix-style options**: -la (all+long), -lh (human readable), -R (recursive)
+- **Advanced filters**: regex, size, mtime, extensions, depth, excludes
+- **Presets system**: Save/load/export/import filter configurations
+- **Dual view**: Tree view (search results) vs Table view (file listings)
+- **Collapsible sections**: Directory, Search/Replace, Filters, Conditions, Presets (v2.9.117 B.6)
+- **Threading**: QThread worker for non-blocking UI (v2.9.122)
+- **Batch processing**: Process results in batches of 100 items (v2.9.123)
+- **Replace operations**: Replace first/all with search+replace integration
+
+### Architecture:
+
+**Composition** (extracted components - v2.9.116):
+- FileFilterPanel: Advanced filters UI
+- PresetManager: Save/load/export/import presets
+- FileListTableManager: Table display management
+- FileNameQueryPanel: Filename pattern input
+- ContentQueryPanel: Content search input
+- SearchOptionsPanel: Case, whole word, regex options
+- ReplacePanel: Replacement text + buttons
+- ConditionsGrid: AND/OR logic with multiple conditions
+- CollapsibleSection: Animated section collapse/expand
+
+**Worker Threading** (v2.9.122):
+- FileExplorerWorker: QThread worker for executor
+- Signals: progress, progress_detailed, batch_ready, finished, error
+- Non-blocking UI during long operations
+
+**Signals & Slots**:
+```python
+# From executor
+executor.progress.connect(_on_progress)
+executor.progress_detailed.connect(_on_progress_detailed)
+executor.done.connect(_on_execution_done)
+executor.error.connect(_on_execution_error)
+
+# From worker
+worker.progress.connect(_on_progress)
+worker.batch_ready.connect(_on_batch_ready)  # NEW v2.9.123
+worker.finished.connect(_on_search_finished)
+worker.error.connect(_on_operation_error)
+```
+
+### Key Methods:
+
+**_list_files_smart()** (line 857):
+- Auto-detects mode: Search (if filename/content filters) or Browse (no filters)
+- Unified button behavior (v2.9.117 B.7)
+
+**_list_files()** (line 883):
+- Main execution method
+- **Security**: OWASP A01 Path Traversal Prevention (CWE-22, line 895-918)
+  - os.path.abspath() normalization
+  - os.path.isdir() validation
+  - os.access(R_OK) permission check
+- Threading integration (v2.9.122, line 972-1000)
+- Creates QThread + FileExplorerWorker
+- Connects signals for progress tracking
+
+**_on_batch_ready()** (line 1653, v2.9.123):
+- **Purpose**: Process results in batches to prevent UI freezing
+- **Batch size**: 100 items per batch
+- **Process**: Runs in UI thread, but doesn't block (processes one batch then returns)
+- Allows event loop to handle paint, input events between batches
+- Updates progress dialog with batch progress
+- Cancellation support
+
+**_on_replace_first()** / **_on_replace_all()** (lines 1439, 1519):
+- Replace operations with executor
+- History integration (OperationHistory)
+- Confirmation dialogs
+- Refresh file list after replace
+
+**_format_permissions()** (line 813):
+- Unix-style permissions: drwxr-xr-x
+- Uses pwd/grp modules for owner:group
+- Fallback for Windows (no pwd/grp)
+
+### UI Sections (Collapsible with Animation - v2.9.117 B.6):
+
+1. **Directory & Type** (📁): Directory input, Unix options, type filter
+2. **Search & Replace** (🔍): Filename, content, options, replacement
+3. **Filters** (⚙️): Advanced filters panel
+4. **Advanced Conditions** (🎯): AND/OR logic conditions grid
+5. **Presets** (💾, Dock only): Save/load/export/import presets
+
+### View Modes (v2.9.118):
+
+**Tree View** (default for search):
+- Hierarchical display of search results
+- Shows matches with context
+- Word wrap control
+
+**Table View** (default for browse):
+- Columns: Name | Size | Modified | Permissions | Path
+- Sort/filter capabilities
+- Context menu: "Open in File Manager"
+
+**Smart View Switching**:
+- Auto-switches based on operation (unless user manually changed)
+- User manual override respected (_user_manually_changed_view flag)
+
+### Security & Quality:
+
+**Security** ✅:
+- Path Traversal Prevention (OWASP A01, CWE-22)
+- Path normalization (os.path.abspath)
+- Permission validation (os.access)
+- Directory validation (os.path.isdir)
+
+**Performance** ✅:
+- Threading for non-blocking UI (v2.9.122)
+- Batch processing (100 items/batch, v2.9.123)
+- Progress dialogs with cancellation
+- Lazy initialization of dialogs
+
+**Structured Logging** ✅:
+- logger.info/warning/error with extra context
+- Logs directory, filters, operation mode
+- Exception logging with exc_info=True
+
+### Dialog Mode:
+
+When dialog_mode=True:
+- Adds OK/Cancel buttons (QDialogButtonBox)
+- Selection mode enabled by default
+- Multi-select file selection
+- Returns selected_files list via _accept_dialog()
+
+### State Management:
+
+**Preferences** (QSettings):
+- Last directory
+- Recent directories list
+- Unix options state
+- View mode preference
+- Filter configurations
+
+**Synchronization**:
+- last_search_results: Dict for tree view
+- last_browse_results: List for table view
+- last_was_search: Track operation type
+- View synchronization methods
+
+### Integration with Executor:
+
+Uses **UnifiedFileExplorerExecutor** (from core):
+- execute_browse(): List files with filters
+- execute_search(): Search with filename/content patterns
+- execute_replace(): Replace operations
+- Unified API for both browse and search
+
+### Code Quality: ⭐⭐⭐⭐⭐
+
+- Excellent component extraction (8+ extracted components)
+- Clean separation of concerns
+- Security-conscious (OWASP compliance)
+- Performance-aware (threading, batching)
+- Comprehensive logging
+- i18n support with retranslateUi()
+- Accessibility considerations
+
+---
+
