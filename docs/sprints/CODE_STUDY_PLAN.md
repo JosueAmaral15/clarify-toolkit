@@ -11,8 +11,8 @@
 
 **Total Source Files**: 196 Python files
 **Total Lines of Code**: ~58,165 lines
-**Files Studied**: 48 / 196 (24.5%)
-**Lines Studied**: ~10,538 / 58,165 (18.1%)
+**Files Studied**: 52 / 196 (26.5%)
+**Lines Studied**: ~11,922 / 58,165 (20.5%)
 **Estimated Study Time**: 4-8 hours (per protocol)
 
 ---
@@ -35,20 +35,24 @@
 - [x] JSON rewriting pipeline (17 stages, rewriter_cli)
 
 ### Phase 3: Feature Modules 🔄 **IN PROGRESS**
-**Session 6-10** | 25/~50 files | ~5,479/~20,000 lines
+**Session 6-11** | 29/~73 files | ~6,863/~23,000 lines
 - [x] Utilities (`src/utils/`) - ✅ **100% COMPLETE** (9/9 files, ~2,304 lines) 🎉
 - [x] Rewriter operations (`src/rewriter/`) - ✅ **100% COMPLETE** (9/9 files, ~2,297 lines) 🎉
 - [x] AI Processor (`src/ai_processor/`) - ✅ **100% COMPLETE** (5/5 files, ~1,061 lines) 🎉
 - [x] i18n system (`src/i18n/`) - ✅ **100% COMPLETE** (2/2 files, ~292 lines) 🎉
-  - [x] __init__.py (module exports, public API)
-  - [x] translator.py (Translator singleton, runtime switching)
-- [ ] GUI docks (`src/gui/docks/`) - 40+ files
-  - [ ] json_rewriter_dock.py
-  - [ ] file_explorer_dock.py
-  - [ ] json_translate_dock.py
-  - [ ] set_operation_dock.py
-  - [ ] ai_processor_dock.py
-  - [ ] ... (40+ docks total)
+- [ ] GUI docks (`src/gui/`) - 🔄 **IN PROGRESS** (4/21 files, ~1,384/13,291 lines)
+  - [x] base_dock.py (596 lines) - Foundation, 7 mixins
+  - [x] dock_factory.py (252 lines) - Factory pattern
+  - [x] case_converter_dock.py (260 lines) - Case conversion
+  - [x] history_dock.py (278 lines) - Operation tracking
+  - [ ] editor_dock.py (583 lines)
+  - [ ] json_search_dock.py (647 lines)
+  - [ ] set_operations_dock.py (734 lines)
+  - [ ] json_translate_dock.py (592 lines)
+  - [ ] json_rewriter_dock.py (1,054 lines)
+  - [ ] ai_processor_dock.py (1,193 lines)
+  - [ ] file_explorer_dock.py (2,066 lines)
+  - [ ] ... (10 more smaller docks)
 
 ### Phase 4: Support Systems ⏳ **PENDING**
 **Estimated**: ~20 files, ~3,000 lines
@@ -73,12 +77,12 @@
 
 ## 📋 Study Checklist (Protocol Step 1.2)
 
-- [~] Study ALL source code (24.5% done) 🔄
+- [~] Study ALL source code (26.5% done) 🔄
 - [x] Study ALL documentation (100% DONE ✅)
 - [ ] Study ALL git history (commits, not just specs)
 - [ ] Study ALL tests (implementation code)
 - [x] Identify "don't touch" code (partially done) 🔄
-- [~] Understand complete architecture (62% done) 🔄
+- [~] Understand complete architecture (63% done) 🔄
 - [ ] Find reuse opportunities (ongoing)
 - [ ] Create docs/NOTES.md with findings
 
@@ -93,6 +97,7 @@
 - [x] CODE_STUDY_SESSION_8_NOTES.md (Rewriter, 9 files) - **Rewriter 100%!** ✅
 - [x] CODE_STUDY_SESSION_9_NOTES.md (AI Processor, 5 files) - **AI Processor 100%!** ✅
 - [x] CODE_STUDY_SESSION_10_NOTES.md (i18n, 2 files) - **i18n 100%!** ✅
+- [x] CODE_STUDY_SESSION_11_NOTES.md (GUI Docks Part 1, 4 files) - **Dock Architecture!** 🎉
 
 ---
 
@@ -121,7 +126,7 @@ For each session, document:
 
 ---
 
-**Status**: 🔄 **IN PROGRESS** (Session 10 - i18n Module COMPLETE! ✅)
-**Current Phase**: Phase 3 - Feature Modules (Utils, Rewriter, AI Processor, i18n all 100%!)
-**Overall Progress**: 24.5% of source code studied (48/196 files)
-**Next Target**: GUI docks (40+ files - largest remaining component)
+**Status**: 🔄 **IN PROGRESS** (Session 11 - GUI Docks Architecture Complete! 🎉)
+**Current Phase**: Phase 3 - Feature Modules (Utils, Rewriter, AI Processor, i18n all 100%! Docks 19%!)
+**Overall Progress**: 26.5% of source code studied (52/196 files)
+**Next Target**: GUI docks continued (17 remaining docks)
