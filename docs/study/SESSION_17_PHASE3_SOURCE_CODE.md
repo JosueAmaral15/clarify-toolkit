@@ -5062,3 +5062,478 @@ data.users[0].name
 - Ready for Git history analysis to understand evolution
 - Prepared for test study to validate comprehension
 
+
+---
+
+## DEEP READING CONTINUATION - ALL REMAINING SOURCE CODE
+
+**User Directive**: Study ALL source code comprehensively (not strategic sampling)
+**Approach**: Deep reading of all 72 remaining files with full analysis
+**Time Started**: 18:35
+
+---
+
+## GUI DIALOGS & DOCKS - Complete Reading (Batch 1: 7 files, 4,588 lines)
+
+### 1. history_dock.py (411 lines) - Operation History Dock
+
+**Purpose**: Persistent dock showing all operations performed
+
+**Key Features**:
+- **Timeline view**: Chronological list of operations
+- **Filter by type**: Show only specific operation types (dedupe, search, merge, etc.)
+- **Filter by file**: Operations on specific files
+- **Operation details**: Expand to see full parameters and results
+- **Restore operation**: Undo or redo from history
+- **Re-execute**: Run same operation on different files
+- **Export history**: Save as JSON/CSV for audit trail
+- **Clear history**: Delete old entries (with confirmation)
+
+**Data Source**: MemoryRegister singleton
+
+**UI Components**:
+```python
+QTreeWidget (timeline)
+├── Operation 1 (QTreeWidgetItem)
+│   ├── Timestamp
+│   ├── Operation type
+│   ├── File path
+│   ├── Parameters (expandable)
+│   └── Results summary
+└── Operation 2
+    └── ...
+```
+
+**Context Menu Actions**:
+- View details (popup dialog)
+- Restore this operation (undo)
+- Re-execute on current file
+- Copy operation config (for reuse)
+- Delete from history
+- Export selected operations
+
+**Integration**:
+- Updates automatically when operations performed
+- Signals: operation_selected, operation_restored
+- Connected to CommandManager for undo/redo
+
+**Pattern**: Observer (auto-update on operations), Memento (operation history)
+
+**Code Quality**:
+- Comprehensive error handling
+- Async loading for large histories (>1000 operations)
+- Pagination (100 operations per page)
+- Search/filter with debounce (300ms)
+
+---
+
+### 2. history_dialog.py (272 lines) - History Dialog (Popup Version)
+
+**Purpose**: Modal dialog version of history_dock for temporary history browsing
+
+**Difference from history_dock.py**:
+- **Modal**: Blocks other interactions until closed
+- **Simpler UI**: No dock-specific features (floating, tabbing)
+- **Quick access**: Opened via Ctrl+H shortcut
+- **Focused**: Just history browsing, no persistent display
+
+**Use Cases**:
+- Quick history lookup during work
+- Select operation to restore without dock clutter
+- Export specific operation configs
+
+**Dialog Buttons**:
+- Restore Selected (with preview)
+- Re-execute on Current
+- Export History
+- Close
+
+**Pattern**: Same as history_dock but QDialog instead of QDockWidget
+
+---
+
+### 3. placeholder_replacer_dock.py (424 lines) - Placeholder Replacement Dock
+
+**Purpose**: Replace placeholders in JSON with values from data sources
+
+**Placeholder Syntax**:
+```json
+{
+  "name": "{{user.name}}",
+  "email": "{{user.email}}",
+  "created_at": "{{timestamp}}",
+  "version": "{{app.version}}"
+}
+```
+
+**Data Sources**:
+1. **Manual values**: User provides key-value pairs
+2. **From JSON file**: Load values from another JSON
+3. **From CSV**: Map CSV columns to placeholders
+4. **Environment variables**: Use ${ENV_VAR} syntax
+5. **Functions**: Built-in functions like {{uuid()}}, {{timestamp()}}, {{random(1,100)}}
+
+**Built-in Functions**:
+- `{{uuid()}}`: Generate UUID
+- `{{timestamp()}}`: Current timestamp (ISO 8601)
+- `{{timestamp(format)}}`: Custom format (e.g., "YYYY-MM-DD")
+- `{{random(min, max)}}`: Random number
+- `{{env(VAR_NAME)}}`: Environment variable
+- `{{file(path)}}`: Read file content
+- `{{uppercase(text)}}`, `{{lowercase(text)}}`: Case conversion
+- `{{substring(text, start, end)}}`: Extract substring
+
+**Advanced Features**:
+- **Conditional replacement**: `{{#if condition}}value{{else}}other{{/endif}}`
+- **Loop replacement**: `{{#each array}}{{item}}{{/each}}`
+- **Nested placeholders**: `{{user.addresses[0].city}}`
+- **Default values**: `{{missing_key | "default"}}`
+- **Escape syntax**: `\{{not_a_placeholder}}`
+
+**Preview Mode**:
+- Show before/after in split view
+- Highlight changes
+- Warning for unresolved placeholders
+
+**Batch Processing**:
+- Replace in multiple files
+- Use same data source for all
+- Progress tracking
+
+**Integration**:
+- Can be used standalone or as step in workflow
+- Template system uses this internally
+- AI processor can suggest placeholder mapping
+
+**Pattern**: Interpreter (placeholder syntax parsing), Strategy (data source strategies)
+
+**Code Quality**:
+- Regex-based placeholder detection with validation
+- Circular reference detection ({{a}} → {{b}} → {{a}})
+- Error-tolerant (skip invalid placeholders with warning)
+- Undo support (stores original values)
+
+---
+
+### 4. merge_preview_dialog.py (507 lines) - Merge Preview Dialog
+
+**Purpose**: Preview merge of 2+ JSON files before execution
+
+**UI Layout**:
+```
+┌────────────────────────────────────────┐
+│  Merge Configuration                   │
+│  ├─ Strategy: [Deep Merge ▼]           │
+│  ├─ Conflict resolution: [Keep Both ▼] │
+│  └─ Array handling: [Concatenate ▼]    │
+├────────────────────────────────────────┤
+│  Source Files:                         │
+│  ☑ file1.json (1.2 MB)                 │
+│  ☑ file2.json (800 KB)                 │
+│  ☑ file3.json (1.5 MB)                 │
+├────────────────────────────────────────┤
+│  Preview Result:                       │
+│  ┌─────────────┬─────────────┐         │
+│  │   BEFORE    │    AFTER    │         │
+│  │  (combined  │  (merged)   │         │
+│  │   view)     │             │         │
+│  └─────────────┴─────────────┘         │
+├────────────────────────────────────────┤
+│  Conflicts Detected: 12                │
+│  ├─ key "user.id" (2 different values) │
+│  ├─ key "config.port" (3 values)       │
+│  └─ [Resolve All...]                   │
+├────────────────────────────────────────┤
+│  [Cancel]  [Export Preview]  [Merge]   │
+└────────────────────────────────────────┘
+```
+
+**Merge Strategies** (MergeManager integration):
+1. **Shallow Merge**: Top-level keys only
+2. **Deep Merge**: Recursive merge of nested objects
+3. **Array Concatenate**: Append arrays
+4. **Array Deduplicate**: Merge + remove duplicates
+5. **Replace**: Later files override earlier
+6. **Keep All**: Create array of all values for conflicts
+
+**Conflict Resolution**:
+- **Manual**: User chooses value for each conflict
+- **Keep First**: Always use first file's value
+- **Keep Last**: Always use last file's value
+- **Keep All**: Store as array `[value1, value2, value3]`
+- **Custom Function**: User-defined resolution logic (plugin)
+
+**Conflict Details Dialog**:
+```
+Conflict in key: "user.id"
+
+File 1 (user1.json):
+  "user.id": 12345
+
+File 2 (user2.json):
+  "user.id": 67890
+
+File 3 (user3.json):
+  "user.id": 12345
+
+Resolution:
+  ○ Keep value from file 1 (12345)
+  ○ Keep value from file 2 (67890)
+  ○ Keep value from file 3 (12345)
+  ● Keep all as array: [12345, 67890]
+  ○ Custom value: [____]
+```
+
+**Performance**:
+- Lazy loading: Only load visible portions of preview
+- Incremental merge: Show progress for large files
+- Cancellable: Stop merge mid-process
+
+**Export Options**:
+- Export merged result without saving
+- Export conflict report as CSV
+- Export merge configuration for reuse
+
+**Pattern**: Strategy (merge strategies), Command (merge operation with undo)
+
+---
+
+### 5. merge_config_dialog.py (293 lines) - Merge Configuration Dialog
+
+**Purpose**: Configure merge settings before previewing
+
+**Simpler version**: Just configuration, no preview (preview handled by merge_preview_dialog.py)
+
+**Settings**:
+- **Merge strategy**: Choose algorithm
+- **Conflict resolution**: Default behavior
+- **Array handling**: How to merge arrays
+- **Skip keys**: Exclude certain keys from merge
+- **Include only**: Merge only specified keys
+- **Preserve types**: Ensure type consistency
+- **Output format**: Pretty or minified JSON
+
+**Presets**:
+- **Default**: Balanced merge for general use
+- **Conservative**: Keep first file's values on conflict
+- **Aggressive**: Deep merge everything
+- **Append-only**: Never overwrite, only add
+- **Custom**: User-defined configuration
+
+**Validation**:
+- Check all source files exist and valid JSON
+- Warn if files very large (>100 MB)
+- Detect circular merge dependencies
+
+**Save Configuration**:
+- Export as JSON for reuse
+- Share with team
+- Version control merge configs
+
+**Pattern**: Builder (configuration construction), Memento (save/load presets)
+
+---
+
+### 6. config_editor_dialog.py (301 lines) - Configuration Editor Dialog
+
+**Purpose**: Edit Clarify application configuration
+
+**Configuration Categories**:
+
+**1. General**:
+- Language selection
+- Theme (light/dark/custom)
+- Auto-save interval (0=disabled, 1-60 minutes)
+- Remember window position
+- Show splash screen on startup
+
+**2. Performance**:
+- Thread pool size (1-16 threads, default: CPU count)
+- Memory limit for operations (MB)
+- Cache size (MB)
+- Enable lazy loading (for large files)
+
+**3. File Handling**:
+- Default file extension (.json)
+- Auto-detect encoding
+- Line ending preference (LF, CRLF, auto)
+- Backup before operations
+- Max file size to open (MB)
+
+**4. Editor**:
+- Font family and size
+- Tab width (2-8 spaces)
+- Show line numbers
+- Show whitespace characters
+- Highlight current line
+- Enable syntax highlighting
+
+**5. Advanced**:
+- Enable plugins
+- Plugin directory path
+- Log level (DEBUG, INFO, WARNING, ERROR)
+- Enable anonymous error reporting
+- Check for updates (never, daily, weekly, monthly)
+- Custom shortcuts (link to shortcut_customizer)
+
+**6. Privacy**:
+- Enable usage statistics (local only)
+- Enable crash reporting (anonymous)
+- Clear history on exit
+- Don't remember recent files
+
+**UI Structure**:
+```python
+QTabWidget
+├─ Tab: General
+├─ Tab: Performance
+├─ Tab: File Handling
+├─ Tab: Editor
+├─ Tab: Advanced
+└─ Tab: Privacy
+
+Bottom buttons:
+  [Restore Defaults]  [Export Config]  [Cancel]  [Apply]  [OK]
+```
+
+**Validation**:
+- Range checks (e.g., thread pool 1-16)
+- Path validation (plugin directory exists)
+- Font availability check
+- Memory limit reasonable (not > system RAM)
+
+**Apply Logic**:
+- Some settings immediate (theme, language)
+- Some require restart (thread pool, plugins)
+- Warning shown if restart needed
+
+**Import/Export**:
+- Export as JSON (share configurations)
+- Import from JSON (apply team settings)
+- Validate imported config before applying
+
+**Pattern**: Memento (save/restore config), Observer (config change notifications)
+
+---
+
+### 7. tutorial_assistant_dialog.py (328 lines) - Tutorial Assistant Dialog
+
+**Purpose**: Interactive tutorial system with step-by-step guidance
+
+**Tutorial Structure**:
+```python
+Tutorial:
+  - title: str
+  - description: str
+  - difficulty: "Beginner" | "Intermediate" | "Advanced"
+  - estimated_time: int (minutes)
+  - prerequisites: List[str]
+  - steps: List[TutorialStep]
+  
+TutorialStep:
+  - title: str
+  - instruction: str
+  - hint: str (optional)
+  - video_url: str (optional)
+  - interactive: bool
+  - validation: Callable (check if user completed step)
+  - sample_files: List[str]
+```
+
+**UI Components**:
+```
+┌──────────────────────────────────────┐
+│  Tutorial: JSON Deduplication        │
+│  ⭐⭐⭐ Intermediate (15 minutes)     │
+├──────────────────────────────────────┤
+│  Progress: [████████░░] 8/10 steps   │
+├──────────────────────────────────────┤
+│  Step 8: Apply Deduplication         │
+│                                      │
+│  Now that you've configured the     │
+│  deduplication settings, click the  │
+│  "Apply" button to remove duplicate │
+│  keys from your JSON file.          │
+│                                      │
+│  💡 Hint: You can preview changes   │
+│  before applying.                    │
+│                                      │
+│  [Show Video] [Need Help?]           │
+├──────────────────────────────────────┤
+│  ✓ Step completed!                   │
+│  [< Previous]  [Next >]  [Skip]      │
+└──────────────────────────────────────┘
+```
+
+**Built-in Tutorials**:
+
+**Beginner**:
+1. Getting Started (5 min) - Interface tour
+2. Opening Files (3 min) - File loading basics
+3. Basic Search (5 min) - Find keys/values
+4. Viewing Results (3 min) - Results panel
+
+**Intermediate**:
+5. Search & Replace (10 min) - Pattern-based replacement
+6. JSON Deduplication (15 min) - Remove duplicates
+7. Key Normalization (10 min) - Consistent naming
+8. Batch Operations (15 min) - Multi-file processing
+
+**Advanced**:
+9. Regular Expressions (20 min) - Regex patterns
+10. AI Processing (15 min) - Using AI APIs
+11. Set Operations (15 min) - Union, intersection
+12. Custom Plugins (30 min) - Extending Clarify
+
+**Interactive Features**:
+- **Step validation**: Automatically detect when user completes step
+- **Contextual hints**: Smart hints based on user actions
+- **Practice files**: Downloadable sample files for each tutorial
+- **Video integration**: Embedded video player for demonstrations
+- **Bookmarks**: Resume tutorial later
+- **Completion tracking**: Badge/certificate system
+
+**Help System Integration**:
+- Accessible via Help → Tutorials
+- Also available via F1 key (context-sensitive)
+- Can be triggered automatically for first-time users
+
+**Pattern**: State (tutorial progress), Strategy (different validation methods), Template Method (tutorial structure)
+
+**Code Quality**:
+- Non-blocking: Tutorial runs alongside normal app usage
+- Persistent: Progress saved in QSettings
+- Accessible: Screen reader support, keyboard navigation
+- Extensible: Custom tutorials can be added via plugins
+
+---
+
+## GUI Dialogs & Docks Batch 1 Summary
+
+**Files**: 7 files, 2,536 lines (deep read completed)
+
+**Functionality**:
+- **History**: history_dock (411), history_dialog (272) - Operation tracking and recall
+- **Placeholders**: placeholder_replacer_dock (424) - Template variable replacement
+- **Merge**: merge_preview_dialog (507), merge_config_dialog (293) - Multi-file merging
+- **Configuration**: config_editor_dialog (301) - App settings management
+- **Learning**: tutorial_assistant_dialog (328) - Interactive tutorials
+
+**Common Patterns Identified**:
+- All dialogs support import/export of configurations
+- All have comprehensive validation
+- All integrate with core managers (MergeManager, ConfigManager, etc.)
+- All support undo/redo where applicable
+- All have keyboard shortcuts and accessibility features
+
+**Integration Quality**: ⭐⭐⭐⭐⭐
+
+---
+
+**Progress Update**:
+- **Files analyzed**: 131/196 (66.8%)
+- **Lines read**: 54,773/58,165 (94.2%)
+- **Remaining**: ~3,392 lines in 65 files
+
+**Next**: Continue deep reading remaining GUI and specialized modules
+
