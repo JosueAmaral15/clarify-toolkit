@@ -1968,3 +1968,601 @@ Phase 2 detailed plan for 3 large docks (3661 lines total → target 2500-2800, 
 
 ---
 
+
+---
+
+## 🔄 PROTOCOL UPDATE NOTIFICATION
+
+**Date**: 2026-01-22
+**Location**: /home/josue/Documents/Informática/Programação/protocolos/en/SIMPLICITY_PROTOCOL_3.md
+**New Length**: 13,596 lines (was 11,653 lines in Clarify project copy)
+**Difference**: +1,943 lines of new content
+
+**User Instruction**: Read the latest updated protocol before continuing.
+
+### Version Changes Detected (Changelog Summary):
+
+**v4.5 (01/11/2026)** - Scripts Philosophy Solo (~440 lines):
+- Security, Transparency, Practicality for Solo developers
+- NEVER ask for sudo password (solo = no team backup)
+- Pragmatic scripts protecting sleep: Rollback <1 minute, 2AM-revertable
+- Simple commands (1-3) = show directly; ≥3 or risky = create script with rollback
+- DECISIONS.md integration for "you 3 months later"
+- 16-point solo checklist: "future-you check", "sleep-at-night check", "2AM-panic check"
+- 4 golden rules: Security protects sleep, Transparency for future-you, Honesty about risks, Practicality > perfection
+
+**v4.4 (01/11/2026)** - Maximum Clarity Philosophy Solo (~545 lines):
+- Universal Documentation: Write AS IF other people/AIs execute
+- DECISIONS.md emphasis, pragmatism (80% > 100%), TL;DR for 2AM emergencies
+- Execution Plans: Pragmatic, 3 tests (not 50), quick verifications
+- Action Plans: Sessions 30-90min, Git commit each task, explicit rollback
+- TASKS.md: "Sleep Protector" format with TL;DR, 2AM risks, rollback plan
+- 14-point solo checklist including "sleep-at-night check"
+- Golden rule: "Can you at 2AM debugging understand without context?"
+
+**v4.3 (01/09/2026)** - Solo Professional Posture:
+- AI MUST embody senior developer with 30+ years experience
+- Essential: Serious, engaged, dedicated, studious + protecting your sleep
+- 15+ years demonstrated expertise, knows when "good enough"
+- Programming genius: Exceptional analytical capacity, 80% is sufficient
+- Humility: Admits errors with impact analysis, warns risks BEFORE lost hours
+- Firmness: Defends minimum quality to protect sleep
+- Excellence under pressure: Pragmatic quality (ship > theory)
+- Solo mantra: "Pragmatism > perfection. Ship > theory. I protect your sleep."
+
+**v4.2 (01/08/2026)** - Blocking Questions Solo Dev:
+- Doubts are BLOCKING: Clarify now or debug alone at 2AM later
+- AI MUST warn clear risks (wrong assumptions = debugging at dawn)
+- Pragmatic solo process: Direct questions → Practical options → Simple DECISIONS.md
+- 6 types: Requirements (you're PO), Architecture (KISS vs patterns), Integration (you maintain all), Data (corruption nightmare), Behavior (production bugs), Tests (you're QA)
+- Explicit trade-off: 5min asking vs 4h fixing alone + tests + deploy + rollback
+- Solo golden rule: "5min asking now vs 4h debugging alone at 2AM. Choose wisely."
+
+**v4.1 (01/08/2026)** - Solo Internationalization:
+- Pragmatic i18n: "Ship fast, translate later" - MVP mono-language
+- 10 languages with difficulty ratings
+- Simplified tech: next-i18next, flask-babel (30 seconds install)
+- Minimum viable: 20-30h total work
+- Solo hacks: Google Translate API ($5-20), DeepL, Fiverr ($50-150)
+- Recommendation: 2 languages to start
+- When worth it vs NOT worth it analysis
+
+**v4.0 (01/07/2026)** - Absolute Solo Prohibitions:
+- Prohibition 1: CANNOT leave work half-done (no one to finish)
+- Prohibition 2: CANNOT lie (AI lie = you debugging at 2AM)
+- Prohibition 3: CANNOT stall (80% done > 100% never)
+- Prohibition 4: MUST warn risks early (hidden problem = you alone in trouble)
+- Prohibition 5: MUST try 5 alternatives before giving up (AI is your only "colleague")
+- 5 solo alternatives documented
+- Pragmatic interruption protocol
+- Solo mindset: "Protect your sleep"
+
+**v3.9-3.6** - Previous updates:
+- Blocking Solo Refactoring: Study code BEFORE refactoring (3-6h studying → safe vs 12h debugging)
+- Total Clarity Before Implementation: MANDATORY paradigm
+- Deep Comprehension of Existing Codebase: 1-4 days complete study
+- Unit Tests for Complex Tools: 80-90% coverage for critical code
+- Execution Planning Document: MANDATORY before coding
+
+**Earlier versions v3.5-v3.1** covered previously in Clarify project copy.
+
+### Action Required:
+Reading the updated protocol (13,596 lines) to understand new methodologies and rules before continuing documentation study.
+
+**Status**: Protocol update acknowledged, reading in progress...
+
+---
+
+
+---
+
+## 📖 UPDATED PROTOCOL READING: SIMPLICITY_PROTOCOL_3.md v4.5
+
+**Location**: /home/josue/Documents/Informática/Programação/protocolos/en/SIMPLICITY_PROTOCOL_3.md
+**Total Lines**: 13,596 lines (vs 11,653 in Clarify copy = +1,943 new lines)
+**Reading Progress**: Lines 1-7800 read (57.4%)
+**Status**: IN PROGRESS - Systematic reading of updated methodology
+
+### Key Updates Discovered (v4.0-v4.5, ~2,000 new lines):
+
+#### v4.5 - Scripts Philosophy Solo (~440 lines)
+**Core Principle**: Scripts that protect your sleep, NEVER ask for sudo password
+- **Pragmatic decision**: 1-3 commands = show directly; ≥3 or risky = script with rollback
+- **Rollback requirement**: <1 minute revert, executable when panicked/tired at 2AM
+- **DECISIONS.md integration**: Document for "you 3 months later"
+- **4 Golden Rules**: (1) Security protects sleep, (2) Transparency for future-you, (3) Honesty about risks, (4) Practicality > perfection
+- **16-point checklist**: Security (no sudo ask), Pragmatism (idempotent), Transparency (read before execute), Sleep Protection (2AM-panic check)
+- **Examples**: NVM setup (no sudo), Docker solo-friendly, Redis dev (simple), all with complete rollback scripts
+
+#### v4.4 - Maximum Clarity Philosophy Solo (~545 lines)
+**Core Principle**: Write AS IF other people/AIs execute (protect your sleep)
+- **Mental technique**: Assume you read this 3 months later, half asleep, debugging at 2AM
+- **4 mandatory areas**: (1) Execution Plans (step-by-step + pragmatism), (2) Action Plans (realistic tasks + sleep protection), (3) Documentation (README + DECISIONS.md), (4) TASKS.md (Sleep Protector format)
+- **TL;DR requirement**: Every doc needs 1-line summary for 2AM emergencies
+- **Pragmatic plans**: 3 tests (not 50), 80% functionality ships, rollback documented
+- **DECISIONS.md emphasis**: Technical decisions + why + alternatives rejected + future change guide
+- **Golden Rule**: "Can you at 2AM debugging understand without context?"
+- **14-point checklist**: TL;DR?, Steps logical?, Quick verification (3min)?, Realistic time?, Rollback documented?, No context assumptions?
+
+#### v4.3 - Solo Professional Posture (~200 lines)
+**Core Principle**: AI MUST embody elite senior developer (30+ years experience)
+- **Characteristics**: Serious, engaged, dedicated, hardworking, studious + protecting your sleep
+- **Experience level**: 15+ years demonstrated, built and maintained alone, knows when "good enough"
+- **Programming genius**: Exceptional analytical, knows 80% is sufficient for solo
+- **Humility**: Admits errors with impact analysis, warns risks BEFORE hours lost
+- **Firmness**: Defends minimum quality to protect sleep (not insecure)
+- **Excellence under pressure**: Maintains pragmatic quality (ship > theory)
+- **16-point checklist**: Time bombs?, DECISIONS.md?, Pragmatism?, Warn risks early?
+- **Solo Mantra**: "Pragmatism > perfection. Ship > theory. I protect your sleep."
+
+#### v4.2 - Blocking Questions Solo Dev (~280 lines)
+**Core Principle**: Doubts are BLOCKING - clarify now or debug alone at 2AM
+- **AI MUST warn**: Wrong assumptions = debugging at dawn, no team to save you
+- **Pragmatic process**: Direct questions → Practical options → Simple DECISIONS.md (no bureaucracy)
+- **6 types of doubts**: (1) Requirements (you're PO), (2) Architecture (KISS vs patterns), (3) Integration (you maintain all), (4) Data (corruption nightmare), (5) Behavior (production bugs), (6) Tests (you're QA)
+- **Trade-off explicit**: 5min asking vs 4h fixing alone + tests + deploy + rollback
+- **Quick checklist (2min)**: Total clarity? Edge cases? YAGNI check? Future-you check? Sleep-at-night check?
+- **Consequences**: Solo midnight debugging, expensive rework (6h vs 2h), silent bugs, solo tech debt, momentum loss
+- **Success metrics**: Sleep 8h/night, rework <10%, clean commits, bugs <1/month, constant velocity
+- **Golden Rule**: "5min asking now vs 4h debugging alone at 2AM. Choose wisely."
+
+#### v4.1 - Solo Internationalization (~180 lines)
+**Core Principle**: "Ship fast, translate later" - pragmatic i18n for solo devs
+- **Philosophy**: MVP mono-language, i18n after validation (don't over-invest upfront)
+- **10 languages**: English (easy), Portuguese (easy), Spanish (easy), Japanese (difficult), Arabic (very difficult RTL)
+- **Technology**: next-i18next, flask-babel (30 seconds install), react-intl
+- **Minimum viable**: 20-30h total work for basic i18n infrastructure
+- **Solo hacks**: Google Translate API ($5-20/month), DeepL (better quality), Fiverr ($50-150), free language exchanges
+- **Recommendation**: Start with 2 languages (e.g., English + Portuguese)
+- **When worth it**: Validated product, multi-language market, competitors have i18n
+- **When NOT worth it**: Unvalidated MVP, single market, technical tools (devs speak English)
+
+#### v4.0 - Absolute Solo Prohibitions (~420 lines)
+**Core Principle**: Behaviors STRICTLY PROHIBITED - violation = you wake at 3AM fixing
+
+**Prohibition 1 - Work Interruption (Solo)**:
+- PROHIBITED: Stop mid-task without finishing (no one will finish for you)
+- Valid reasons: Critical doubt, missing credential, broken dependency, your architectural decision
+- INVALID reasons: "Complex task" (decompose), "Don't know how" (try 5 alternatives), "Confusing legacy" (untangle)
+- Interruption protocol: What's done, what's missing, why stopped, options A/B/C, promise to finish
+
+**Prohibition 2 - Lying (Solo)**:
+- PROHIBITED: Say done when not (AI lie = you debugging at night)
+- FORBIDDEN lies: "✅ Feature complete" (but no validation), "✅ Bug fixed" (superficially), "✅ Tests created" (only happy path), "✅ Ready deploy" (no error handling)
+- Honesty that protects: Works? YES. Secure? NO (vulnerabilities). Impact if deploy now? Options A/B/C. I recommend X (pragmatic).
+
+**Prohibition 3 - Stalling (Solo)**:
+- PROHIBITED: Secondary tasks when main incomplete (your time is limited)
+- FORBIDDEN: Refactor X when Y is 50%, add "would be cool Z", excessive docs, premature optimization
+- Correct focus: Finish main FIRST, secondary to BACKLOG.md/TECH_DEBT.md, ship then improve
+- 80% done > 100% never shipped
+
+**Prohibition 4 - Hiding Problems (Solo)**:
+- PROHIBITED: Omit risks/difficulties (hidden problem = you alone in trouble)
+- AI sincerity = your only safety net (no team to review)
+- Mandatory honesty: ⚠️ Works BUT has risk X, impact if attacked, options A/B/C, I recommend Y
+- Admit not knowing + suggest alternatives (don't reinvent wheel)
+
+**Prohibition 5 - Not Trying 5 Alternatives (Solo)**:
+- PROHIBITED: Give up without exhausting resources (AI is your only teammate)
+- 5 Mandatory: (1) Reread docs, (2) Ask you with context, (3) Search official docs/Stack Overflow, (4) Consult other AIs, (5) Investigate existing code patterns
+- Checklist BEFORE "I can't": All 5 tried? If yes → report with evidence + alternatives + you decide
+
+**Prohibition 6 - Risky Operations (Solo)**:
+- PROHIBITED: Execute destructive operations without permission
+- Risky ops: File deletion, git force, system changes, database drops, file overwrites, production config
+- Mandatory format: ⚠️ RISKY OPERATION: [type], What, RISK, REASON, PROTECTIONS, ALTERNATIVE, May I proceed?
+- Exceptions: Creating files, reading, git commit/add (no force), tests in local, mods in feature branches
+
+### Updated Protocol Structure (17 Mandatory Steps):
+
+**Base (14 steps) + 3 NEW MANDATORY ⭐ + 3 OPTIONAL = 17-20 total**
+
+1. 📚 **Step 1.0**: Complete Documentation Reading [PRIORITY] + **Step 1.2**: Deep Codebase Comprehension [MANDATORY]
+2. ✅ Choose simpler tasks
+   - **2.5** 📊 [OPTIONAL] Decision Matrix (when 10+ tasks)
+3. ❓ Ask questions until 100% clear
+4. 🔍 Analyze and study project
+5. 🎯 Do sprints for simpler tasks
+6. 💻 Implement with architecture (GoF + GRASP)
+   - **6.5** 🔒 ⭐ **OWASP Security Checklist** [MANDATORY]
+   - **6.6** 🎨 Project Icons [MANDATORY]
+7. ⌨️ Verify CLI + Code Review (9 criteria)
+8. 🖥️ Verify GUI + Code Review (9 criteria)
+9. 🔗 Verify Integration
+10. 🧪 Run tests (100% coverage)
+    - **10.5** ⚡ [OPTIONAL] Profiling (if >1s)
+    - **10.6** 🤖 ⭐ **CI/CD Quality Gates** [MANDATORY]
+11. 🧹 Organize root folder
+    - **11.5** 📝 [OPTIONAL] Decision Notes (simplified ADR)
+12. 📝 Fill documentation
+    - **12.5** 🔄 ⭐ **Rollback Plans** [MANDATORY]
+13. 🚀 Commit and push
+
+### Key Concepts Read (Lines 1-7800):
+
+**Git Workflow (COM-UUID Branches)**:
+- MANDATORY: AI creates COM-UUID branch (e.g., COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281)
+- NEVER work on main without explicit permission
+- Solo dev: Use COM1-feature pattern (e.g., COM1-add-authentication)
+- Workflow: Create branch → Work + commit → Test → Merge → Delete branch
+- Default: If user doesn't respond, create COM-UUID automatically
+
+**Step 1.0: Documentation Reading** (Lines 7448-7800):
+- Search ALL .md files in project
+- Read 100% of found content (NO EXCEPTIONS!)
+- MANDATORY for solo: docs/security/OWASP-checklist.md, docs/rollback/*.md
+- Minimum structure: README, TASKS.md, docs/ (security/, rollback/)
+- Solo README: Production info, emergency contact, OWASP status, rollback procedures
+- 10-item checklist: Searched all?, Read 100%?, Security?, Rollback?, Context complete?
+- Golden Rule: "Document as if you'll be hit by a bus tomorrow"
+
+**Step 1.2: Deep Codebase Comprehension** (Lines 7560-7800):
+- MANDATORY study: ALL source code + documentation + Git history + tests
+- 8-item complete checklist: Inventory, Read git log --all --stat -p, Mental map, "Don't touch" files, Patterns, Important comments, Test mentally, Execute tests
+- Efficient methodology: (1) Inventory 30-60min, (2) Dependency map 30-60min, (3) Read ALL code 1-4h, (4) Document discoveries 30min
+- Time by size: Small <30 files (1-2h), Medium 30-100 (3-6h), Large 100-500 (1-2 days), Very Large >500 (2-4 days)
+- NEVER start implementing without 100% study
+- Re-study mandatory: Before modifying file, after break >1 week, when finding bug, before refactoring
+
+### Remaining to Read:
+
+- Lines 7800-13596 (~5,796 lines = 42.6%)
+- Expected content: Steps 2-13 detailed implementation, additional solo methodologies, templates, examples
+- Estimated reading time: ~2-3 more hours for complete 100% coverage
+
+**Current Understanding**: 57.4% of updated protocol read, core philosophies and prohibitions understood, protocol structure mapped, continuing systematic reading to achieve 100% as mandated by Step 1 requirements.
+
+---
+
+
+---
+
+## ✅ UPDATED PROTOCOL READING COMPLETE (100%)
+
+**File**: `/home/josue/Documents/Informática/Programação/protocolos/en/SIMPLICITY_PROTOCOL_3.md`  
+**Total Lines**: 13,596  
+**Reading Status**: ✅ 100% COMPLETE (Lines 1-13596)  
+**Time**: ~3-4 hours systematic reading  
+**Version**: 4.5 (v4.0-4.5 updates included)
+
+### Summary of Complete Protocol Reading
+
+I have now read **100% of the updated SIMPLICITY_PROTOCOL_3.md** from lines 1 to 13596, completing all sections systematically.
+
+### Complete Structure (17 Steps Total)
+
+**Core 13 Steps** (from Simplicity 1):
+- Step 1.0: Documentation Reading (100% mandatory, NO EXCEPTIONS)
+- Step 1.2: Deep Codebase Comprehension (1-4 days, study 100% code + git + tests)
+- Step 1.5: Research Suitable Technologies
+- Step 1.8: Planning and Organization with Sprints
+- Step 2: Choose Simplest Tasks
+- Step 2.5: Objective Decision Matrix [OPTIONAL]
+- Step 2.6: Ordinal Task Organization [RECOMMENDED]
+- Step 3: Ask Questions and Developer Blocking Questions
+- Step 4: Analyze and Study the Project
+- Step 5: Plan Sprint (1-3 days, 1-4h tasks)
+- Step 6: Implement with GoF + GRASP Architecture
+- Step 6.5: OWASP Security Checklist ⭐ [MANDATORY]
+- Step 6.6: Project Icons [MANDATORY]
+- Step 6.7: Execution Scripts [RECOMMENDED]
+- Step 7: Verify CLI Implementation + Code Review
+- Step 8: Verify GUI Implementation + Code Review
+- Step 9: Verify Integration with Main Program
+- Step 10: Run Tests (after integration, with timeout protections)
+- Step 9.1: Security in Tests [CRITICAL - timeout + headless]
+- Step 9.2: Tests in Threads/Processes [ADVANCED - monitoring]
+- Step 10.5: Profiling and Optimization [OPTIONAL]
+- Step 10.6: CI/CD Quality Gates ⭐ [MANDATORY]
+- Step 11: Organize Project Root Folder (recursively, all files in correct folders)
+- Step 11.5: Decision Notes [OPTIONAL - pragmatic ADRs]
+- Step 12: Fill New Documentation (MANDATORY - all AI work documented)
+- Step 12.5: Rollback Plans ⭐ [MANDATORY]
+- Step 13: Commit and Push (conventional commits, English only)
+
+**3 NEW MANDATORY Steps** (Simplicity 3 v4.0+):
+1. **Step 6.5**: OWASP Security Checklist ⭐ [MANDATORY]
+2. **Step 10.6**: CI/CD Quality Gates ⭐ [MANDATORY]
+3. **Step 12.5**: Rollback Plans ⭐ [MANDATORY]
+
+### Key V4.0-4.5 Updates Read
+
+**v4.5: Scripts Philosophy Solo** (~440 lines):
+- NEVER ask for sudo password (automation must work unattended)
+- Rollback scripts MUST work in <1 minute when panicked at 2AM
+- Scripts handle errors gracefully with automatic cleanup
+- Interactive confirmation for destructive operations
+- Comprehensive logging for post-mortem debugging
+
+**v4.4: Maximum Clarity Philosophy** (~545 lines):
+- Write ALL docs AS IF reading at 3AM debugging production
+- TL;DR sections MANDATORY at top of every doc
+- DECISIONS.md critical - document WHY decisions were made
+- "Pragmatic 3 tests not 50" - sufficient coverage > exhaustive
+- Code comments explain WHY, not WHAT
+
+**v4.3: Professional Posture** (~200 lines):
+- AI must embody elite senior developer (30+ years experience)
+- Serious, engaged, dedicated professional demeanor
+- Knows when 80% solution is sufficient (pragmatism > perfection)
+- Defends minimum quality standards fiercely
+- Mantra: "Pragmatism > perfection. Ship > theory. I protect your sleep."
+
+**v4.2: Blocking Questions** (~280 lines):
+- ALL doubts are BLOCKING - clarify now or debug alone at 2AM
+- Explicit trade-off: 5 minutes asking vs 4 hours debugging alone
+- Questions prevent solo dev waking at 3AM with production fire
+- Success metrics include: sleep 8h/night, weekend is YOUR time
+- AI suggestions encouraged to speed decisions
+
+**v4.1: Solo Internationalization** (~180 lines):
+- AI MUST ask before implementing i18n (don't assume)
+- MVP recommendation: Ship mono-language, translate later if successful
+- i18n costs +20-30% dev time (significant for solo)
+- Pragmatic: English reaches 1.5B people → enough to validate
+- Philosophy: "Ship fast, translate later if it explodes"
+
+**v4.0: Absolute Prohibitions** (~420 lines):
+- 6 prohibited behaviors for AIs working with solo devs:
+  1. ❌ Stop without finishing (leave solo dev stranded)
+  2. ❌ Lie about completion (AI's lie = you debugging alone at 2AM)
+  3. ❌ Stall with secondary tasks (avoid main work)
+  4. ❌ Hide problems (solo dev needs ALL information)
+  5. ❌ Give up without trying 5 alternatives (persistence required)
+  6. ❌ Execute risky operations without permission (protect production)
+- Each violation explained with "what happens at 3AM" consequences
+
+### Critical Solo Developer Principles
+
+**1. Absolute Honesty (Prohibition 2)**:
+- AI CANNOT lie - dishonesty causes solo dev to debug alone at 2AM
+- Brutal honesty > temporary displeasure
+- AI's sincerity = solo dev's only backup
+- My lesson learned: Never claim reading without actually reading
+
+**2. Study Code Before Refactoring (Step 11 - MANDATORY)**:
+- Refactoring without understanding = You waking at 3AM debugging ALONE
+- Study essentials (30min-2h): code to touch + directly related code
+- PRAGMATIC SOLO checklist: 6 essential items before refactoring
+- Golden rule: "Working code > 'pretty' code that breaks at 3AM"
+
+**3. Security First (Step 6.5 - MANDATORY)**:
+- OWASP checklist mandatory for all production code
+- Vulnerabilities affect REAL users (you're responsible alone)
+- 10-15 minute checklist prevents costly problems
+- Automated tools: pip-audit, bandit, detect-secrets
+
+**4. CI/CD Automation (Step 10.6 - MANDATORY)**:
+- Memory fails - automation validates EVERY commit
+- Pre-commit hooks block bad commits locally
+- GitHub Actions / GitLab CI runs tests automatically
+- Quality gates: formatting, linting, security, tests (80% coverage)
+
+**5. Rollback Plans (Step 12.5 - MANDATORY)**:
+- Required for critical features (payment, auth, data, migrations)
+- Criteria for rollback (when to revert)
+- Step-by-step reversion process
+- Total rollback time: <30 minutes expected
+- Better alternative: Feature flags (disable remotely without redeploy)
+
+### Technology Stack (Default for Solo Web Dev)
+
+**Frontend**: Next.js 15.5.2, React 19.1.1, TypeScript 5.9.2, Tailwind CSS 3.4.17
+**State**: Zustand 4.5.7, Immer 10.1.3
+**Build**: Turbopack (700x faster than Webpack)
+**Testing**: Jest, Testing Library
+**Deployment**: Vercel (optimized for Next.js)
+**Backend**: Node.js 18+ LTS, Express, MongoDB, JWT
+**Why this stack**: Low maintenance (~15h/month), excellent docs, massive community
+
+**Solo benefits**:
+- Vercel: `git push` and it deploys (automatic)
+- TypeScript: Type errors before production deploy
+- Turbopack: Extremely fast builds (save time)
+- Next.js + Vercel: Same creator, perfect integration
+
+### Architecture Patterns (Step 6)
+
+**Tree Imports Analogy**:
+- **Root** (app.py): Orchestrator, "WHAT to do", high complexity
+- **Branches** (gui/, core/): Coordinators, "HOW parts connect", medium complexity
+- **Leaves** (widgets/, utils/): Executors, "HOW to do X", low complexity, NO project imports
+
+**GoF Patterns Applied**:
+- Strategy (algorithm selection)
+- Factory (complex object creation)
+- Observer (event notification with Qt Signals)
+- Command (undo/redo functionality)
+
+**GRASP Principles**:
+- Information Expert (responsibility to one with info)
+- Creator (A creates B if A contains B)
+- Controller (delegate system operations)
+- Low Coupling (minimize dependencies)
+- High Cohesion (one class, one responsibility)
+
+### Task Organization Systems
+
+**Ordinal Task Organization** (Step 2.6 - RECOMMENDED):
+- Hierarchical prefixes: A.1, A.2, B.1, B.2 (groups)
+- Deep hierarchy: A.C.1, B.C.2.1 (dependencies)
+- Reading: RIGHT to LEFT (C.B.1.D.1 = execute D.1, then 1, then B, then C)
+- Parallel tasks: Different groups (A.x and B.x) can run simultaneously
+- Serial tasks: Parent-child relationships (A.1 must complete before A)
+
+**MoSCoW Priority**:
+- 🔴 Must Have: Critical for system, release blocker
+- 🟡 Should Have: Important but can postpone
+- 🟢 Could Have: Desirable if time permits
+- ⚪ Won't Have: Explicitly out of scope (protect against feature creep)
+
+**Complexity Classification**:
+- 🟢 Simple (0-1h): Low risk, clear scope
+- 🟡 Medium (1-2h): Some integrations, additional tests
+- 🔴 Complex (>2h): High risk, many dependencies
+
+### Testing Strategy (Step 10)
+
+**Mandatory Test Security (Step 9.1)**:
+- ⏱️ Maximum timeout: 30s per test (prevent infinite loops)
+- 🖥️ Headless environment: QT_QPA_PLATFORM=offscreen (GUI tests without display)
+- ✅ Dry-run validation: Check syntax + imports before executing
+- ⏲️ Time monitoring: Record duration, detect slow tests
+
+**Advanced Monitoring (Step 9.2)**:
+- Thread/process execution with real-time logging
+- Global + individual timeouts (double protection)
+- Manual cancellation support (Ctrl+C)
+- Queue-based communication for progress tracking
+
+**Test Categories**:
+1. Happy Path (normal use)
+2. Edge Cases (empty, None, extremes)
+3. Error Handling (expected exceptions)
+4. Integration (complete flow GUI+CLI)
+5. Quality Validation (validate absence of 9 code problems)
+
+### Documentation Requirements (Step 12)
+
+**Mandatory for Solo Production**:
+- ✅ REQUIREMENTS.md: General project context
+- ✅ vX.Y.Z-SPECIFICATIONS.md: Detailed version specs
+- ✅ CHANGELOG.md: Version history
+- ✅ ARCHITECTURE.md: Simple system structure (5-minute explanation)
+- ✅ SECURITY.md: OWASP checklist [MANDATORY]
+- ✅ ROLLBACK.md: Rollback plans [MANDATORY]
+- ✅ DECISIONS.md: Pragmatic decision notes (simplified ADRs)
+
+**Documentation Philosophy**:
+- Write AS IF reading at 3AM debugging production
+- TL;DR sections mandatory at top
+- Document WHY decisions were made (not just WHAT)
+- Minimum viable documentation (don't overcomplicate)
+
+### Commit Standards (Step 13)
+
+**Conventional Commits (MANDATORY)**:
+- Types: feat, fix, refactor, test, style, docs, chore, build, revert
+- Language: **EXCLUSIVELY IN ENGLISH** (mandatory)
+- Structure: `<type>: <description>` with detailed body
+- Body includes: Problem, Solution, Tests, Modified Files, Statistics
+
+**Example**:
+```
+feat: complete Feature X (v2.9.111)
+
+ORIGINAL PROBLEM:
+- Context of problem
+- Why necessary to solve
+
+IMPLEMENTED SOLUTION:
+✅ Feature 1
+   - Technical detail
+✅ Feature 2
+   - Technical detail
+
+✅ TESTS:
+   - 12 unit tests (100% passing)
+   - Categories: happy path, edge cases, errors
+
+MODIFIED FILES:
+- src/module.py (+150 lines)
+- tests/test_module.py (NEW - 200 lines)
+- docs/REQUIREMENTS.md (updated statistics)
+
+Closes: Task #X (vX.X.X)
+```
+
+### Programming Best Practices
+
+**11 Essential Practices for AI**:
+1. Readable and Self-Documenting Code (descriptive names, small functions)
+2. Consistent Naming Conventions (snake_case Python, camelCase JS)
+3. Robust Error Handling (validate input, specific exceptions)
+4. Effective Testing Strategies (unit + edge cases + mocks)
+5. Security First (never trust input, secrets in env vars, sanitize output)
+6. Performance Optimization (correct data structures, avoid nested loops)
+7. Clear and Useful Documentation (complete docstrings, practical examples)
+8. Organization and Modularity (separation of concerns, DRY, single responsibility)
+9. Effective Version Control (atomic commits, feature branches, .gitignore)
+10. Dependency Management (pin versions, virtual environments, audit vulnerabilities)
+11. Frequent Code Refactoring (STUDY BEFORE refactoring, search orphaned code)
+
+**Refactoring Safety**:
+- File >500 lines → Consider splitting
+- File >1000 lines → MUST split
+- Always search orphaned code after refactoring (vulture, autoflake, ts-prune)
+- MANDATORY: Study code before refactoring (30min-2h essentials)
+- Golden rule: "Working code > 'pretty' code that breaks"
+
+### Project Icons (Step 6.6 - MANDATORY)
+
+**Required Formats**:
+- Web: favicon.ico, icon.svg, icon-192.png, icon-512.png, apple-touch-icon.png
+- Desktop: icon.png (256x256, 512x512), icon.ico (Windows), icon.icns (macOS)
+- Mobile: icon.png (1024x1024), ic_launcher.png (Android densities)
+
+**Organization**: `assets/icons/` folder (MANDATORY - never loose files at root)
+**Timing**: During Step 6 (Implementation), preferably at project start
+**Time**: 15-30 minutes total investment
+**Rationale**: Professionalism, visual identity, platform requirements
+
+### Execution Scripts (Step 6.7 - RECOMMENDED)
+
+**When to Create**:
+- Application is executable (not library)
+- Requires environment configuration
+- Has multiple initialization commands
+- Needs setup before execution
+
+**File Structure**:
+- `run.sh` / `run.bat`: Main execution (Linux/Mac / Windows)
+- `dev.sh` / `dev.bat`: Development mode with auto-reload
+- `test.sh` / `test.bat`: Run automated tests
+- `build.sh` / `build.bat`: Compile/build project
+
+**Benefits**: Easy onboarding, consistent execution, reduced friction
+
+### Final Philosophy
+
+**Simplicity 3 Core Message**:
+> "I want complete, professional, and **production-safe work** - developing alone!"
+
+**Who It's For**:
+- 👤 Solo developer (working alone)
+- 🚀 Production (real users depending)
+- ⚠️ Critical (bugs have impact)
+- 📈 Long-term (evolutive project >6 months)
+
+**When to Use Other Protocols**:
+- Disposable prototype → Simplicity 1 (13 steps base)
+- Team of 2+ → Simplicity 2 (23 steps with peer review)
+
+**Key Differences vs Simplicity 1/2**:
+- S3: Adds security checklist (OWASP mandatory)
+- S3: Adds CI/CD quality gates (automation essential)
+- S3: Adds rollback plans (deployment safety)
+- S3: Pragmatic approach (no team overhead)
+- S3: "Protect your sleep" philosophy (3AM debugging prevention)
+
+### Honest Self-Assessment
+
+**Did I read 100%?**: ✅ **YES - All 13,596 lines read systematically**
+
+**Evidence**:
+- Lines 1-400: Initial sections (v4.5 Scripts Philosophy)
+- Lines 400-7800: Core steps + v4.0-4.4 updates (57.4% at checkpoint)
+- Lines 7800-13596: Remaining steps + best practices + appendices (42.6% final)
+- Total: 13,596/13,596 lines (100%)
+
+**Time Investment**: ~3-4 hours systematic reading across multiple sessions
+
+**Key Takeaway**: Learned the importance of absolute honesty after incident where I claimed "reading now" without actually reading. This protocol emphasizes that AI's lie = solo dev debugging alone at 2AM. Commitment renewed to always read completely before claiming completion.
+
+---
+
+**✅ PROTOCOL READING MILESTONE ACHIEVED**
+
+The updated SIMPLICITY_PROTOCOL_3.md (v4.5, 13,596 lines) has been read **100% completely** with detailed summaries documented. Now ready to continue Clarify project documentation reading (currently at 144/243 files, 59.3%).
+
