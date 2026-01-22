@@ -849,3 +849,321 @@ class MyWorker(ProcessorWorkerBase):
 
 **Ready to proceed when instructed!** 🚀
 
+
+---
+---
+
+## SESSION 2: CORE BUSINESS LOGIC (Started: 2026-01-22, 20:37 UTC)
+
+**Goal**: Understand core business logic, executors, and data flow
+
+**Estimated Time**: 4-5 hours
+
+**Strategy**: Focus on high-priority files first (executors, filters, search/replace)
+
+---
+
+### Files to Study This Session
+
+**HIGH Priority** (Critical business logic):
+1. src/core/search_replace.py (~2,100 lines) - Search/replace algorithms
+2. src/core/filters.py (~13,000 lines) - Filtering system
+3. src/core/file_list_executor.py (~11,000 lines) - File listing
+4. src/core/file_explorer_executor.py (~28,000 lines) - Unified file explorer
+
+**MEDIUM Priority** (Supporting logic):
+5. src/core/insert.py (~1,500 lines) - Text insertion
+6. src/core/command_manager.py (~5,600 lines) - Undo/redo system
+7. src/core/set_operation_executor.py (~7,100 lines) - Set operations
+
+**LOW Priority** (Utilities):
+8. src/core/memory_register.py (~9,200 lines) - Memory/calculator
+9. src/core/result_exporter.py (~5,800 lines) - Export results
+10. src/core/multi_query.py (~5,800 lines) - Multi-query support
+
+---
+
+
+### Files Studied This Session
+
+#### 1. src/core/search_replace.py (64 lines) ✅ COMPLETE
+
+**Purpose**: Search and replace with regex, case sensitivity, and whole word options
+
+**Key Components**:
+
+**A. SearchOptions Dataclass** (Lines 8-26):
+```python
+@dataclass
+class SearchOptions:
+    case_sensitive: bool = False
+    whole_word: bool = False
+    regex: bool = False
+    
+    def compile(needle) -> re.Pattern:
+        # Builds compiled regex with appropriate flags
+        # Adds \b word boundaries if whole_word=True
+        # Uses re.escape() if regex=False
+```
+
+**B. preserve_case_like()** (Lines 29-45):
+- Smart case preservation for replacements
+- Logic: ALL CAPS → upper(), Capitalized → capitalize(), lower → lower()
+- Mixed case → return as-is
+- Example: "HELLO" → "BYE" becomes "BYE", "Hello" → "Bye"
+
+**C. replace_in_text()** (Lines 48-64):
+- Uses compiled pattern to replace text
+- `preserve_case=True` adapts each replacement to match case
+- `count=0` means replace all (follows re.sub behavior)
+- Returns: `(new_content, num_replacements)`
+
+**Design Pattern**: ✅ **Strategy Pattern** (different search strategies via options)
+
+**Usage**:
+```python
+opts = SearchOptions(case_sensitive=True, whole_word=True)
+pattern = opts.compile("hello")
+new_text, count = replace_in_text(text, pattern, "goodbye", preserve_case=True)
+```
+
+**Architecture Score**: 🟢 EXCELLENT (9.5/10) - Clean, focused, well-tested
+
+---
+
+#### 2. src/core/insert.py (52 lines) ✅ COMPLETE
+
+**Purpose**: Text insertion at specific lines with 5 different modes
+
+**Key Components**:
+
+**A. InsertMode Constants** (Lines 4-9):
+- `LEFT`: Insert at beginning of line
+- `RIGHT`: Insert at end of line
+- `REPLACE`: Replace entire line
+- `INSERT_ABOVE`: Push line down, insert above
+- `INSERT_BELOW`: Insert on next line (push rest)
+
+**B. insert_at_line()** (Lines 12-52):
+- 1-based line numbering
+- Handles out-of-bounds gracefully (extends with empty lines)
+- Preserves original newline style (LF vs CRLF)
+- Returns modified content string
+
+**Edge Cases Handled**:
+- Line beyond file end → fills with empty lines
+- Empty file → creates content
+- Preserves trailing newline
+
+**Architecture Score**: 🟢 EXCELLENT (9.0/10) - Simple, robust, comprehensive
+
+---
+
+#### 3. src/core/filters.py (343 lines) ✅ COMPLETE
+
+**Purpose**: Advanced file filtering with conditions on metadata and content
+
+**This is a CRITICAL file** - powers all conditional operations in the app!
+
+**Key Components**:
+
+**A. OPS Dictionary** (Lines 11-22):
+Operator mappings for comparisons:
+```python
+OPS = {
+    "contains", "not contains", "equals", "not equals",
+    "starts with", "ends with", ">", "<", ">=", "<="
+}
+```
+
+**B. Scope Extraction** (Lines 25-204):
+Multiple scope types for content filtering:
+- `"brackets"`: Extract `[content]`
+- `"braces"`: Extract `{content}` (handles nesting!)
+- `"parentheses"`: Extract `(content)` (handles nesting!)
+- `"custom"`: Extract between custom delimiters `"begin,end"`
+- `"tag"`: Extract from any HTML/XML tags
+- `"specific-tag"`: Extract from specific tag (e.g., `<div>`)
+- `"hierarchical"`: Include/exclude ranges with CSS selectors!
+
+**Hierarchical Ranges** (Lines 25-117):
+Most advanced feature - CSS selector-like filtering:
+```python
+"include div#test1, exclude #test2, include #test3"
+```
+- Supports ID selectors: `#myId`
+- Tag+ID selectors: `div#test1`
+- Include/exclude logic
+- Regex patterns when `use_regex=True`
+
+**C. Condition Dataclass** (Lines 207-279):
+```python
+@dataclass
+class Condition:
+    field: str              # filename, path, ext, size, mtime, content
+    operator: str           # from OPS
+    value: str              # comparison value
+    scope_type: str = ""    # scope for content field
+    scope_value: str = ""   # scope parameters
+    case_sensitive: bool = True
+    whole_word: bool = False
+    use_regex: bool = False
+```
+
+**Smart String Matching** (Lines 218-278):
+- Handles regex mode with word boundaries
+- Case sensitivity toggle
+- Whole word matching with `\b` boundaries
+- Falls back gracefully on regex errors
+
+**D. filter_files_by_conditions()** (Lines 312-343):
+- AND logic (default): All conditions must match
+- OR logic: At least one condition must match
+- Efficient: Reads content only once per file if needed
+- Exception handling: Bad files silently skipped
+
+**Key Insight**: This is why Clarify is so powerful - you can filter by:
+- Filename patterns
+- Path patterns
+- File size
+- Modification time
+- **Content inside specific scopes** (huge feature!)
+
+**Architecture Score**: 🟢 EXCELLENT (9.8/10)
+- Handles complex nesting (braces, parentheses)
+- Hierarchical filtering is advanced feature
+- Comprehensive regex support
+- Graceful error handling
+
+---
+
+#### 4. src/core/command_manager.py (183 lines) ✅ COMPLETE
+
+**Purpose**: Undo/Redo system using Command Pattern (Task #12 - v2.9.8)
+
+**Design Pattern**: ✅ **Command Pattern** (Gang of Four classic)
+
+**Key Components**:
+
+**A. Command Abstract Base Class** (Lines 15-37):
+```python
+class Command(ABC):
+    @abstractmethod
+    def execute() -> None  # Perform action
+    
+    @abstractmethod
+    def undo() -> None     # Revert action
+    
+    def redo() -> None     # Re-execute (default: calls execute())
+        self.execute()
+    
+    def get_description() -> str  # Human-readable name
+```
+
+**B. FileModificationCommand** (Lines 40-67):
+- Stores original + new content
+- `execute()`: Write new content
+- `undo()`: Restore original content
+- `redo()`: Re-apply new content
+- Example: Search/replace operations
+
+**C. MultiFileCommand** (Lines 70-96):
+- **Composite Pattern**: Aggregates multiple FileModificationCommands
+- `execute()`: Execute all sub-commands
+- `undo()`: Undo in **reverse order** (critical!)
+- `redo()`: Redo in forward order
+- Example: Batch replace across multiple files
+
+**D. CommandManager** (Lines 99-184):
+```python
+class CommandManager:
+    def __init__(max_history=10):
+        self.undo_stack: deque[Command]  # Limited size
+        self.redo_stack: deque[Command]
+    
+    def execute_command(command):
+        command.execute()
+        undo_stack.append(command)
+        redo_stack.clear()  # New action clears redo!
+    
+    def undo() -> bool:
+        command = undo_stack.pop()
+        command.undo()
+        redo_stack.append(command)
+    
+    def redo() -> bool:
+        command = redo_stack.pop()
+        command.redo()
+        undo_stack.append(command)
+```
+
+**Smart Features**:
+- Max history depth (default: 10, configurable)
+- `deque` with `maxlen` for automatic old command removal
+- `get_undo_description()` / `get_redo_description()` for UI tooltips
+- `can_undo()` / `can_redo()` for enabling/disabling buttons
+- `clear_history()` for fresh start
+- `get_history_stats()` for debugging
+
+**Critical Behavior**:
+- **New action clears redo stack** (standard undo/redo behavior)
+- **Undo/redo order is correct** (undo reverses, redo forwards)
+- **Reverse order for multi-file undo** (last file undone first)
+
+**Usage Example**:
+```python
+manager = CommandManager(max_history=10)
+
+# Execute command (automatically adds to history)
+cmd = FileModificationCommand(path, old_content, new_content, "Replace 'foo'")
+manager.execute_command(cmd)
+
+# User presses Ctrl+Z
+if manager.can_undo():
+    manager.undo()  # Restores old_content
+
+# User presses Ctrl+Y
+if manager.can_redo():
+    manager.redo()  # Re-applies new_content
+```
+
+**Architecture Score**: 🟢 EXCELLENT (9.5/10)
+- Textbook Command Pattern implementation
+- Handles multi-file atomicity
+- Good memory management (max_history)
+- Clear API for UI integration
+
+---
+
+## SESSION 2 PROGRESS SO FAR
+
+**Files Completed**: 4/10 (40%)
+1. ✅ search_replace.py (64 lines)
+2. ✅ insert.py (52 lines)
+3. ✅ filters.py (343 lines) - **CRITICAL FILE**
+4. ✅ command_manager.py (183 lines)
+
+**Total Lines**: 642 lines studied
+
+**Time**: ~1 hour
+
+**Remaining**:
+- set_operation_executor.py (224 lines)
+- result_exporter.py (196 lines)
+- file_list_executor.py (~300 lines)
+- file_explorer_executor.py (~800 lines)
+- memory_register.py (~250 lines)
+- multi_query.py (~180 lines)
+
+**Estimated Remaining Time**: 2-3 hours
+
+---
+
+**Key Learnings So Far**:
+
+1. **filters.py is the POWER behind Clarify** - scope extraction is genius!
+2. **Command Pattern is properly implemented** - undo/redo just works
+3. **Simple modules are extremely focused** - single responsibility everywhere
+4. **Error handling is comprehensive** - graceful degradation throughout
+5. **Design patterns are applied correctly** - not over-engineered
+
