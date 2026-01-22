@@ -2901,3 +2901,119 @@ The updated SIMPLICITY_PROTOCOL_3.md (v4.5, 13,596 lines) has been read **100% c
 
 **Current Progress**: 160/243 files (65.8%) - crossed 65% threshold! Strong momentum continues.
 
+
+---
+
+### File #161: USER_MANUAL.md (95 lines)
+**Location**: `docs/guides/USER_MANUAL.md`
+**Language**: Portuguese
+**Status**: ✅ Read 100%
+
+**Summary**: Complete user manual (Portuguese) covering introduction, installation, first steps, main features (JSON translation/rewriting, placeholder replacement, recent files, preferences, keyboard shortcuts, status bar), plugin system (v2.0.0+), REST API (v2.0.0+), cloud sync (v2.0.0+), troubleshooting tips, and credits/license.
+
+**Key Insights**:
+- **Installation**: Python 3.9+, PySide6 required. Install via PyPI (future) or local clone with requirements.txt
+- **Main Features**: Modular dock-based interface. Keyboard shortcuts: ENTER (execute main action in any dock), Ctrl+F (quick search in result panels), full list in Help > Shortcuts with customization
+- **Productivity Resources (v1.9.0+)**: Quick execution with ENTER, Ctrl+F result search, GenericScopeParser rewritten with multiple attribute patterns and balanced expressions
+- **Future v2.0.0 Features**: Plugin system (Python extensions installed in plugins/ folder), REST API (HTTP interface for automation), Cloud sync (settings/recent files across devices - Google Drive, Dropbox support)
+- **Troubleshooting**: Logs in logs/clarify.log, restart app for interface issues, FAQ available
+
+---
+
+### File #162: THEME_SYSTEM_GUIDE.md (235 lines)
+**Location**: `docs/guides/THEME_SYSTEM_GUIDE.md`
+**Version**: 2.9.4
+**Date**: November 28, 2025
+**Status**: ✅ Read 100%
+
+**Summary**: Comprehensive guide for Clarify's theme system with three visual modes (Light ☀️, Dark 🌙, System 🖥️). Documents color palettes, styled components, technical architecture, persistence, and best practices for each theme.
+
+**Key Insights**:
+- **Three Themes**: Light (clean white #FAFAFA, best for bright environments), Dark (charcoal #2D2D30, reduced eye strain for low-light), System (auto-matches OS settings via Qt Fusion with system palette)
+- **Styled Components**: All themes include comprehensive styling for Input components (QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox), Buttons/Controls (QPushButton, QCheckBox, QRadioButton, QComboBox), Containers (QGroupBox, QTabWidget, QDockWidget), Lists/Trees (QTreeView, QListView), Navigation (QMenuBar, QMenu, QScrollBar, QStatusBar)
+- **Technical Architecture**: ThemeManager class with `apply_theme(app, "light"|"dark"|"system")`, persistence in ~/.config/clarify.conf (INI format: [THEME] mode=dark), comprehensive QSS (Qt Style Sheets) for colors/borders/hover/focus/disabled/selection/padding
+- **Best Practices**: Light (well-lit environments, reduces glare, professional presentations, high contrast accessibility), Dark (late-night coding, extended use eye strain reduction, OLED burn-in reduction, lower power consumption), System (OS consistency, auto-adapts to time of day, respects accessibility preferences, no manual switching)
+- **Future Enhancements**: Custom theme editor, additional presets (Solarized, Monokai), per-panel overrides, high contrast accessibility mode, import/export, animated transitions
+
+---
+
+### File #163: LAUNCHERS.md (94 lines)
+**Location**: `docs/guides/LAUNCHERS.md`
+**Status**: ✅ Read 100%
+
+**Summary**: Documentation for convenient GUI launcher scripts for Windows (clarify_gui.bat) and Linux/macOS (clarify_gui.sh). Both scripts automatically check Python installation, verify PySide6 dependency, offer installation if missing, and show helpful error messages.
+
+**Key Insights**:
+- **Windows (clarify_gui.bat)**: Double-click in Explorer or run from CMD. Features: Auto-checks Python, verifies PySide6, offers to install PySide6 if missing, shows error messages, pauses on error for troubleshooting
+- **Linux/macOS (clarify_gui.sh)**: First-time setup needs `chmod +x clarify_gui.sh`. Double-click in file manager or run `./clarify_gui.sh`. Features: Auto-checks Python 3, verifies PySide6, offers installation, shows errors, pauses for troubleshooting
+- **Workflow**: 1) Check Python installed, 2) Display Python version, 3) Check PySide6 installed, 4) Offer to install PySide6 if missing, 5) Launch `python clarify.py` (GUI mode), 6) Show any errors
+- **Requirements**: Python 3.10+ must be installed, PySide6 required (scripts can install it). Manual install: `pip install PySide6` or `poetry install`
+- **Alternative Methods**: Direct `python clarify.py`, as module `python -m src`, using Poetry `poetry run python clarify.py`
+
+---
+
+### File #164: LANGUAGE_ORGANIZATION_FIX.md (131 lines)
+**Location**: `docs/guides/LANGUAGE_ORGANIZATION_FIX.md`
+**Date**: November 23, 2025
+**Status**: ✅ Read 100%
+
+**Summary**: Documentation correction addressing files placed in wrong language folders. English files (CODE_REVIEW_DETAILED.md, CODE_REVIEW_FINAL.md) were incorrectly in docs/pt/ folder and have been moved to docs/en/.
+
+**Key Insights**:
+- **Problem Discovered**: During Portuguese→English translation attempt, discovered several files in docs/pt/ were already in ENGLISH! CODE_REVIEW_DETAILED.md and CODE_REVIEW_FINAL.md were in wrong location.
+- **Correction Applied**: MOVED from docs/pt/ to docs/en/: CODE_REVIEW_DETAILED.md, CODE_REVIEW_FINAL.md. COPIED and TRANSLATED from docs/pt/ to docs/en/: REVIEW_REPORT.md (translated), MIGRATION_CHECKLIST.md, MIGRATION_COMPLETE.md, MIGRATION_FINAL_STATUS.md, RENAMING.md, REORGANIZATION_STATUS.md (technical, mostly code)
+- **Final Structure**: docs/pt/ has 7 files (all Portuguese), docs/en/ has 10 files (all English). Before fix: pt/ had 9 files (2 wrong language!), en/ had 2 files. After fix: Both correctly organized ✅
+- **Root Cause**: Issue occurred during previous reorganizations - English docs created, placed in docs/pt/ by mistake, no language verification performed, went unnoticed until systematic review
+- **Lesson Learned**: Always verify file language matches folder purpose! Prevention: Check headers for language indicators, use consistent naming (*_PT.md suffix), verify folder contents, automate language detection in CI/CD
+- **Impact**: Better organization, complete English docs, clearer structure for bilingual support. NO breaking changes (no functionality affected, no code changes, only docs moved/copied, all links valid)
+
+---
+
+### File #165: docs/en/README.md (44 lines)
+**Location**: `docs/en/README.md`
+**Status**: ✅ Read 100%
+
+**Summary**: English documentation folder README explaining available documents and navigation. Notes that most documentation originally in Portuguese has been moved to docs/pt/, with English translations planned for future releases.
+
+**Key Insights**:
+- **Available Documents**: Core - TASKS.md (MoSCoW priority roadmap). Note: Most docs originally Portuguese, now in docs/pt/. English translations planned for future.
+- **Getting Started Paths**: New Users (1. CODE_REVIEW_FINAL.md overview, 2. TASKS.md planned/completed, 3. MIGRATION_COMPLETE.md history), Developers (1. CODE_REVIEW_DETAILED.md deep dive, 2. REORGANIZATION_STATUS.md structure, 3. TASKS.md priorities), Understanding History (1. MIGRATION_COMPLETE.md story, 2. RENAMING.md changes, 3. REVIEW_REPORT.md duplication elimination)
+- **Bilingual Support**: Links to Documentação em Português (../pt/), Main Documentation Index (../)
+
+---
+
+### File #166: SCOPE_FEATURE.md (first 150 lines of 262)
+**Location**: `docs/en/SCOPE_FEATURE.md`
+**Implementation Date**: November 24, 2025
+**Version**: 2.1
+**Status**: ✅ Read partial (usage section)
+
+**Summary**: Comprehensive documentation for scope determination feature in Advanced Conditions allowing filtering within specific delimiters (brackets, braces, tags, custom). Extremely useful for searching specific code blocks, HTML/XML tags, or custom-delimited sections.
+
+**Key Insights**:
+- **Available Scope Types**: none (default, entire file), brackets ([...]), braces ({...}), parentheses ((...)), custom (requires param "begin,end"), tag (any HTML/XML <any>text</any>), specific-tag (requires param "div" for <div>text</div>)
+- **GUI Interface**: Advanced Conditions in Search/Replace and Insert panels have two new fields: 1) Scope dropdown (type selection), 2) Scope Param text field (additional parameters when needed like "BEGIN,END" or "script")
+- **Example 1 - JSON Blocks**: Search only within braces - Field: content, Operator: contains, Value: "translation", Scope: braces. Result: Searches only within {...} ignoring text outside
+- **Example 2 - Script Tags**: Find console.log only in <script> tags - Field: content, Operator: contains, Value: console.log, Scope: specific-tag, Scope Param: script. Result: Searches only within <script>...</script>
+- **Example 3 - Custom Delimiters**: Search TODO between BEGIN/END - Field: content, Operator: contains, Value: TODO, Scope: custom, Scope Param: BEGIN,END. Result: Searches only between BEGIN and END
+- **Combination**: Can combine scope with other conditions. Example: Line 1 (ext equals tsx), Line 2 (content contains useState with scope braces). Result: .tsx files with useState in {...} blocks
+- **Nesting Support**: Properly handles nested braces/parentheses. Example: {outer: {inner: "nested"}} extracts all content from outer block including inner. Brackets extract separately for non-nested.
+- **Technical Implementation**: Modified src/core/filters.py (added extract_scope_content(), Condition class accepts scope_type/scope_value, matching logic updated), Modified src/app.py (SearchReplacePanel and InsertPanel updated with Scope/Scope Param UI fields)
+
+---
+
+## Session 7 Continued - Guides & English Documentation
+
+**Files Read in This Batch**: 6 files (161-166)
+**Categories**: User guides (4 files), English documentation navigation (2 files)
+**Total Lines**: ~800 lines across guides and documentation
+
+**Major Topics Covered**:
+- Complete user manual with v2.0.0 future features (plugins, REST API, cloud sync)
+- Comprehensive theme system with 3 modes and technical architecture
+- Launcher scripts for cross-platform GUI startup with dependency management
+- Language organization correction (bilingual support properly structured)
+- Scope feature for advanced filtering within specific delimiters
+
+**Current Progress**: 166/243 files (68.3%) - crossed 68% threshold and approaching 70%!
+
