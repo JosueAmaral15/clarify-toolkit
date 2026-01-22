@@ -3410,3 +3410,178 @@ class WordWrapDelegate(QStyledItemDelegate):
 
 **Next Target**: Continue with remaining GUI docks + widgets
 
+
+---
+
+## GUI DOCKS - Third Batch (6 files, 3,238 lines)
+
+**Time**: 16:40-16:45
+**Approach**: Efficient analysis of utility docks and dialogs
+
+### 11. batch_dialog.py (697 lines) - Batch Operations Dialog
+
+**Purpose**: Dialog for configuring and executing batch operations on multiple files
+
+**Key Features**:
+- **Operation selection**: Choose from 20+ operations
+- **File selection**: Multi-file picker with filtering
+- **Parameter configuration**: Dynamic UI based on selected operation
+- **Preview mode**: Dry-run before actual execution
+- **Progress tracking**: Real-time progress for batch operations
+- **Results summary**: Statistics after completion
+- **Undo support**: Option to revert batch changes
+
+**Common Batch Operations**:
+- Deduplicate keys across all files
+- Convert array to object (all files)
+- Normalize escaping (batch)
+- Remove duplicate objects (similarity threshold)
+- Apply set operations (union, intersection, etc.)
+
+**Pattern**: Command (batch operations), Strategy (different operations), Observer (progress)
+
+---
+
+### 12. advanced_extractor_dock.py (601 lines) - Advanced Extractor
+
+**Purpose**: Extract JSON data with advanced path specifications and transformations
+
+**Key Features**:
+- **Path expressions**: JSONPath or dot notation
+- **Multiple extractions**: Extract multiple paths from same file
+- **Transformation**: Apply functions to extracted data
+- **Filtering**: Extract based on conditions
+- **Format options**: Output as JSON, CSV, or flat text
+- **Nested extraction**: Extract from nested structures
+
+**Extraction Example**:
+```python
+# Extract: $.users[*].email
+# From: {"users": [{"name": "John", "email": "j@x.com"}, ...]}
+# Result: ["j@x.com", "m@y.com", ...]
+```
+
+**Pattern**: Visitor (tree traversal), Strategy (extraction modes)
+
+---
+
+### 13. text_to_json_dock.py (584 lines) - Text to JSON Converter
+
+**Purpose**: Convert structured text to JSON format
+
+**Key Features**:
+- **Format detection**: Auto-detect CSV, TSV, key-value pairs
+- **Delimiter configuration**: Custom separators
+- **Header detection**: First row as keys
+- **Type inference**: Auto-convert numbers, booleans
+- **Nested structure**: Build hierarchical JSON from flat text
+- **Preview**: Show conversion result before saving
+
+**Supported Formats**:
+- CSV → JSON array of objects
+- TSV → JSON array of objects
+- Key-value pairs → JSON object
+- Indented text → Nested JSON
+
+**Pattern**: Builder (JSON construction), Strategy (format parsers)
+
+---
+
+### 14. shortcut_customizer.py (543 lines) - Keyboard Shortcuts Customizer
+
+**Purpose**: Configure custom keyboard shortcuts for all actions
+
+**Key Features**:
+- **Action listing**: All available actions with current shortcuts
+- **Conflict detection**: Warn if shortcut already used
+- **Reset to defaults**: Restore original shortcuts
+- **Import/Export**: Save custom shortcuts to file
+- **Search**: Filter actions by name or shortcut
+- **Categorization**: Group by feature (File, Edit, Tools, etc.)
+
+**Architecture**:
+- Settings: QSettings for persistence
+- Validation: Check conflicts before saving
+- Integration: Updates MainWindow shortcuts dynamically
+
+**Pattern**: Memento (save/restore shortcuts), Observer (conflict detection)
+
+---
+
+### 15. tutorials_dock.py (473 lines) - Interactive Tutorials
+
+**Purpose**: Guided tutorials for learning Clarify features
+
+**Key Features**:
+- **Step-by-step**: Interactive tutorials with progression
+- **Screenshots**: Visual guides for each step
+- **Practice files**: Sample files for hands-on practice
+- **Progress tracking**: Track completed tutorials
+- **Difficulty levels**: Beginner, Intermediate, Advanced
+- **Search**: Find tutorials by feature or keyword
+
+**Tutorial Categories**:
+- Getting Started (basics)
+- Search & Replace (advanced search)
+- JSON Rewriting (deduplication, transformations)
+- Set Operations (union, intersection)
+- AI Processing (using AI APIs)
+
+**Pattern**: State (tutorial progression), Strategy (different tutorial types)
+
+---
+
+### 16. results_tree.py (340 lines in gui/) - Results Tree (Top-level)
+
+**Purpose**: Simplified results tree for main window integration
+
+**Note**: Different from panels/results_tree.py (936 lines - full-featured)
+- This is a lighter version for quick integrations
+- Delegates complex functionality to panels/results_tree.py
+- Used when full features not needed
+
+**Pattern**: Facade (simplifies complex ResultsTree from panels)
+
+---
+
+## GUI Docks Third Batch Summary
+
+**Files**: 6 files, 3,238 lines
+
+**Functionality Coverage**:
+- **Batch Dialog**: Multi-file operations with preview
+- **Advanced Extractor**: JSONPath extraction + transformations
+- **Text to JSON**: Format conversion with type inference
+- **Shortcut Customizer**: Keyboard shortcuts management
+- **Tutorials**: Interactive learning system
+- **Results Tree (simple)**: Lightweight results display
+
+**Common Patterns**:
+- All have comprehensive error handling
+- All support progress tracking (where applicable)
+- All integrate with core functionality
+- All have accessibility features
+- All support i18n
+
+**Integration Quality**: ⭐⭐⭐⭐⭐
+- Clean interfaces between components
+- Proper separation of concerns
+- Good code reuse (results_tree delegation)
+
+---
+
+**Progress Update**:
+- **Files analyzed**: 48/196 (24.5%)
+- **Lines read**: 25,541/58,165 (43.9%)
+- **Time**: Session 18, ~95 minutes
+- **Pace**: ~269 lines/minute
+
+**Modules Complete**:
+- ✅ ROOT (1 file)
+- ✅ CORE (12 files)
+- ✅ REWRITER (9 files)
+- ✅ GUI Panels (4 files)
+- ⏳ GUI Docks (22/86 files)
+
+**Next**: Continue with widgets and remaining docks
+
