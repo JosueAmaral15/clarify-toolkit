@@ -292,3 +292,186 @@ def main(argv):
 
 **Next file**: src/gui/main_window.py (if it exists) or src/gui/base_dock.py
 
+
+---
+
+#### 2. src/gui/base_dock.py (596 lines) ✅ COMPLETE
+
+**Purpose**: Foundation class system for all tool docks with reusable mixins
+
+**Architecture Pattern**: **Mixin-based composition** (excellent design!)
+
+**Class Hierarchy**:
+```python
+BaseDock (QDockWidget)           # Core dock functionality
+  ├─ FileInputMixin              # File/dir browser widgets
+  ├─ ResultsOutputMixin          # Results panel with search
+  ├─ ActionButtonsMixin          # Action button creation
+  ├─ OptionsGroupMixin           # Checkbox/spinbox groups
+  └─ ValidationMixin             # Input validation
+
+StandardToolDock                 # Combines all mixins
+  └─ Most tool docks inherit this
+```
+
+**Key Components**:
+
+**A. BaseDock** (Lines 47-76):
+- Base class for all QDockWidgets
+- Standardized structure: `main_widget`, `layout`
+- Template methods: `_setup_ui()`, `_connect_signals()`
+- Helper dialogs: `show_error()`, `show_info()`, `show_warning()`
+
+**B. FileInputMixin** (Lines 79-143):
+- `create_file_input()`: Label + LineEdit + Browse button + "Is File" checkbox
+- `create_extension_filter()`: Extension filter widget (v2.9.0)
+- `browse_file_or_directory()`: File/directory picker
+- `parse_extensions_to_globs()`: Convert ".py,.js" → ["*.py", "*.js"]
+
+**C. ProcessorWorkerBase** (Lines 146-175):
+- Base class for all background workers (QThread)
+- Signals: `progress`, `finished_ok`, `failed`
+- Interrupt support: `request_interrupt()`, `check_interrupt()`
+- Standardized emit methods: `emit_progress()`, `emit_error()`, `emit_success()`
+
+**D. ResultsOutputMixin** (Lines 178-430):
+- `create_results_panel()`: QTextEdit with search (Ctrl+F)
+- Context menu: "Open in Editor" (Task #6 - v2.9.19)
+- Auto-detect content type: JSON, HTML, TS, Python, plain text
+- Temp file creation for editor integration
+- `_open_results_in_editor()`: Opens results in EditorDock sandbox mode
+- `_detect_content_extension()`: Smart extension detection
+
+**E. ActionButtonsMixin** (Lines 433-461):
+- `create_action_buttons()`: Create button layout from list
+- Auto-stores buttons as attributes: `btn_process`, `btn_clear`, etc.
+
+**F. OptionsGroupMixin** (Lines 464-510):
+- `create_checkbox_group()`: Create multiple checkboxes
+- `create_spinbox_input()`: Labeled spinbox with range
+
+**G. ValidationMixin** (Lines 513-559):
+- `validate_file_path()`: Path existence validation
+- `validate_not_empty()`: Non-empty text validation
+- `validate_file_writable()`: Write permission validation
+- Auto-creates directories if needed
+
+**H. StandardToolDock** (Lines 562-596):
+- **Combines ALL mixins** into single base class
+- `_setup_enter_key_execution()`: Enable Enter key on input fields
+- Template method: `_execute_action()` for Enter key handling
+
+**Design Patterns Identified**:
+1. ✅ **Mixin Pattern**: Compose functionality without deep inheritance
+2. ✅ **Template Method**: `_setup_ui()`, `_connect_signals()`, `_execute_action()`
+3. ✅ **Factory Method**: Helper functions create widgets consistently
+4. ✅ **Observer Pattern**: QThread signals for async operations
+
+**Reuse Opportunities**:
+1. **New tool dock?** Inherit from `StandardToolDock`
+2. **Need file input?** `create_file_input()` handles everything
+3. **Background processing?** Inherit worker from `ProcessorWorkerBase`
+4. **Results output?** `create_results_panel()` with search built-in
+5. **Action buttons?** `create_action_buttons()` from list of tuples
+
+**Critical "Don't Touch" Code**:
+- Lines 288-346: `_open_results_in_editor()` - Editor integration (temp files)
+- Lines 348-384: `_detect_content_extension()` - Content type detection logic
+- Lines 386-404: `_get_editor_dock()` - Parent traversal to find EditorDock
+
+**Key Insights**:
+- **Mixin design is EXCELLENT**: Clean separation of concerns, easy to compose
+- All docks share consistent behavior (browse, validate, results, etc.)
+- Smart editor integration: temp files + sandbox mode + auto-detect extension
+- Context menus on results (Ctrl+F search, Open in Editor)
+- Worker base class standardizes async operations
+
+**Architecture Score**: 🟢 EXCELLENT (9.8/10)
+
+---
+
+#### 3. src/utils/logger.py (330 lines) ✅ COMPLETE
+
+**Purpose**: Centralized logging system with file rotation and colored console output
+
+**Pattern**: **Singleton** pattern for logger manager
+
+**Key Components**:
+
+**A. Configuration** (Lines 39-48):
+- Default level: INFO
+- File rotation: 10MB max, 5 backups
+- Log directory: `~/.clarify/logs/clarify.log`
+- Environment override: `CLARIFY_LOG_LEVEL`
+
+**B. ColoredFormatter** (Lines 51-79):
+- ANSI color codes for console
+- DEBUG=Cyan, INFO=Green, WARNING=Yellow, ERROR=Red, CRITICAL=Magenta
+- Colors applied only to console, not file
+
+**C. ClarifyLogger** (Lines 82-227):
+- **Singleton pattern** (`_instance`, `_initialized`)
+- `_setup_logging()`: Configure root logger with handlers
+- Two handlers: RotatingFileHandler + StreamHandler (console)
+- `get_logger(name)`: Returns logger with "clarify." prefix
+- `set_level(level)`: Runtime level change
+- `clear_logs()`: Delete all log files (warning: permanent!)
+
+**D. Module-Level Functions** (Lines 230-294):
+- `get_logger(name)`: Primary function for getting loggers
+- `set_log_level(level)`: Change global level
+- `get_log_file()`: Get log file path
+- `clear_all_logs()`: Clear all logs (with caution!)
+
+**Usage Pattern**:
+```python
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Module loaded")
+logger.debug("Debug info", extra={"key": "value"})
+logger.error("Error occurred", exc_info=True)
+```
+
+**Key Features**:
+- Thread-safe (Python logging is thread-safe by default)
+- Automatic log rotation (10MB → rotate → keep 5 backups)
+- Colored console output for readability
+- Structured logging with timestamps and context
+- Can log exceptions with stack traces (`exc_info=True`)
+
+**Design Patterns**:
+1. ✅ **Singleton**: Only one ClarifyLogger instance
+2. ✅ **Factory Method**: `get_logger()` creates loggers consistently
+
+**Reuse Opportunities**:
+- Use `get_logger(__name__)` at module top
+- Log at appropriate levels: DEBUG (dev), INFO (status), WARNING (issues), ERROR (problems)
+- Use `exc_info=True` for exception logging
+- View logs via Help→View Logs (opens in default editor)
+
+**Architecture Score**: 🟢 EXCELLENT (9.5/10)
+
+---
+
+**Session 1 Progress**: 3/6 files complete (50%)
+- ✅ src/app.py (1,967 lines)
+- ✅ src/gui/base_dock.py (596 lines)
+- ✅ src/utils/logger.py (330 lines)
+- ⏳ Remaining: config_manager.py, other foundation files
+
+**Time Spent**: ~1.5 hours so far
+
+**Key Architecture Learnings**:
+1. **Orchestrator Pattern**: MainWindow delegates to specialists (DockFactory, MenuBuilder)
+2. **Mixin Composition**: base_dock.py uses mixins brilliantly (avoid deep inheritance)
+3. **Singleton Services**: Logger, SettingsManager, ThemeManager are global services
+4. **Factory Everywhere**: Consistent creation patterns (docks, menus, widgets)
+5. **Lazy Loading**: Tools created on-demand (memory efficient)
+6. **Template Methods**: Base classes define structure, subclasses fill in details
+
+**Next Files to Study**:
+- src/config_manager.py (548 lines) - Settings/configuration system
+- src/core files - Business logic and data models
+- src/gui/docks/* - Actual tool implementations
+
