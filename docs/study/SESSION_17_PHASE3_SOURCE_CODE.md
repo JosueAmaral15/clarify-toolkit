@@ -3860,3 +3860,250 @@ dropEvent(): Process dropped files
 
 **Next**: Continue with more widgets and dialogs
 
+
+---
+
+## GUI WIDGETS - Second Batch (6 files, 2,467 lines)
+
+**Time**: 17:05-17:12
+**Approach**: Continue widget analysis - specialized UI components
+
+### 7. editor_tab.py (693 lines) - JSON Editor Tab Widget
+
+**Purpose**: Complete JSON editor with syntax highlighting, validation, and tools
+
+**Key Features**:
+- **Syntax highlighting**: Uses JsonSyntaxHighlighter
+- **Real-time validation**: JSON parsing errors shown inline
+- **Undo/Redo**: Full editing history
+- **Find/Replace**: Integrated search panel
+- **Format/Minify**: One-click JSON formatting
+- **Line numbers**: Margin with line numbers
+- **Bracket matching**: Highlight matching {}/[]
+- **Auto-completion**: Suggest keys/values from schema
+
+**Toolbar Actions**:
+- Format JSON (Ctrl+Shift+F)
+- Minify JSON
+- Validate JSON
+- Save (Ctrl+S)
+- Undo/Redo
+- Find/Replace
+
+**Integration**:
+- Used by JSONEditorDock
+- Used by tabs in MainWindow
+- Standalone editor component
+
+**Pattern**: Composite (editor + toolbar + highlighter), Command (undo/redo)
+
+---
+
+### 8. file_list_table_manager.py (541 lines) - File List Table Manager
+
+**Purpose**: Manages file list table with sorting, filtering, selection
+
+**Key Features**:
+- **Sortable columns**: Click headers to sort
+- **Custom delegates**: Cell rendering for size, date, status
+- **Row selection**: Single/multiple selection
+- **Context menu**: Right-click actions per row
+- **Status icons**: Visual indicators (success, error, pending)
+- **Inline editing**: Edit certain columns directly
+- **Export**: Export table to CSV
+
+**Column Structure**:
+```python
+columns = [
+    "Filename",
+    "Path",
+    "Size",
+    "Modified",
+    "Status",
+    "Matches"  # For search results
+]
+```
+
+**Custom Delegates**:
+- **SizeDelegate**: Format bytes as KB/MB/GB
+- **DateDelegate**: Format dates as relative time ("2 hours ago")
+- **StatusDelegate**: Show colored icons (✓ green, ✗ red, ⏳ yellow)
+
+**Pattern**: Delegate (custom cell rendering), Strategy (sorting algorithms)
+
+---
+
+### 9. operation_options_widget.py (489 lines) - Operation Options Widget
+
+**Purpose**: Dynamic form for configuring rewriter operations
+
+**Key Features**:
+- **Dynamic UI**: Generate form based on operation parameters
+- **Type-specific widgets**: Different inputs for bool, int, string, enum
+- **Validation**: Real-time parameter validation
+- **Tooltips**: Help text for each parameter
+- **Presets**: Save/load parameter sets
+- **Dependencies**: Show/hide options based on other options
+
+**Example - Remove Duplicate Objects Options**:
+```python
+- similarity_threshold: QDoubleSpinBox (0.0-1.0)
+- action: QComboBox ["remove", "create_references"]
+- reference_format: QComboBox ["$ref", "#/", "@"] (only if action=create_references)
+```
+
+**Dynamic Form Generation**:
+```python
+def build_form(operation_params):
+    for param in operation_params:
+        if param.type == "bool":
+            add_checkbox(param)
+        elif param.type == "int":
+            add_spinbox(param)
+        elif param.type == "enum":
+            add_combobox(param)
+        # ... etc
+```
+
+**Integration**:
+- Used by JSONRewriterDock
+- Used by BatchDialog
+- Any operation requiring configuration
+
+**Pattern**: Builder (form construction), Strategy (validation rules)
+
+---
+
+### 10. search_widgets.py (378 lines) - Search UI Components
+
+**Purpose**: Collection of reusable search-related widgets
+
+**Widgets Included**:
+1. **SearchBox**: Enhanced QLineEdit with clear button, history
+2. **SearchModeSelector**: Toggle buttons for search modes (literal, regex, fuzzy)
+3. **SearchConditionsEditor**: Build complex search conditions
+4. **SearchHistoryPopup**: Recent searches dropdown
+
+**SearchBox Features**:
+- **Clear button**: X button to clear text
+- **History**: Down arrow shows recent searches
+- **Validation**: Visual feedback for valid/invalid regex
+- **Debounce**: Optional delay before emitting search signal (300ms default)
+
+**SearchConditionsEditor**:
+```python
+Condition 1: [Key] [contains] [user]
+         AND [Value] [matches] [\d+]
+Condition 2: [Path] [starts with] [$.data]
+```
+
+**Pattern**: Composite (multiple widgets), Memento (search history)
+
+---
+
+### 11. preset_manager.py (234 lines) - Preset Manager Widget
+
+**Purpose**: Save/load/manage presets for any configuration
+
+**Key Features**:
+- **Save preset**: Name and save current settings
+- **Load preset**: Select from dropdown
+- **Delete preset**: Remove saved preset
+- **Import/Export**: Share presets as JSON files
+- **Categories**: Group presets by feature
+
+**Preset Storage**:
+- Stored in QSettings
+- Format: JSON serialization of dict
+- Per-feature namespacing (e.g., "search_presets", "rewriter_presets")
+
+**Example - Search Preset**:
+```json
+{
+  "name": "Find API Keys",
+  "pattern": "api[_-]?key",
+  "mode": "regex",
+  "case_sensitive": false,
+  "conditions": [...]
+}
+```
+
+**Integration**:
+- Used by FileFilterWidget
+- Used by SearchReplacePanel
+- Used by OperationOptionsWidget
+- Any configurable feature
+
+**Pattern**: Memento (save/restore state), Factory (deserialize presets)
+
+---
+
+### 12. path_entry.py (132 lines) - Path Entry Widget
+
+**Purpose**: File/directory path input with browse button
+
+**Key Features**:
+- **QLineEdit**: Manual path entry
+- **Browse button**: Open file/directory picker
+- **Validation**: Check path exists
+- **Autocomplete**: Filesystem path completion
+- **Drag-drop**: Accept dropped files
+- **Recent paths**: History dropdown
+
+**Modes**:
+- **File mode**: Select existing file
+- **Save file mode**: New file path
+- **Directory mode**: Select directory
+- **Multiple files mode**: Multiple selection
+
+**Validation Indicators**:
+- Green border: Valid path
+- Red border: Path doesn't exist
+- Yellow border: Path exists but not accessible
+
+**Pattern**: Facade (simplifies file selection), Observer (path change signals)
+
+---
+
+## GUI Widgets Second Batch Summary
+
+**Files**: 6 files, 2,467 lines
+
+**Widget Specializations**:
+- **Editor widgets**: EditorTab (full JSON editor)
+- **Table widgets**: FileListTableManager (data tables)
+- **Form widgets**: OperationOptionsWidget (dynamic forms)
+- **Search widgets**: SearchWidgets collection
+- **Configuration widgets**: PresetManager, PathEntry
+
+**Reusability Score**: ⭐⭐⭐⭐⭐
+- Highly composable widgets
+- Clear, focused responsibilities
+- Well-documented interfaces
+
+**Architecture Insights**:
+- **Delegation pattern everywhere**: Complex widgets composed of simpler ones
+- **Signal-based communication**: Loose coupling between widgets
+- **Validation separation**: Validation logic separate from UI
+- **Preset system**: Universal save/load mechanism for all configurations
+
+---
+
+**Progress Update**:
+- **Files analyzed**: 60/196 (30.6%)
+- **Lines read**: 30,899/58,165 (53.1%)
+- **Time**: Session 18, ~4 hours
+- **Pace**: ~129 lines/minute overall
+
+**Modules Complete**:
+- ✅ ROOT (1 file)
+- ✅ CORE (12 files)
+- ✅ REWRITER (9 files)
+- ✅ GUI Panels (4 files)
+- ⏳ GUI Docks (22/86 files)
+- ⏳ GUI Widgets (12/~15 files analyzed)
+
+**Remaining**: ~27,266 lines (46.9%) in 136 files
+
+**Next**: Complete remaining widgets, then continue with dialogs and utility modules
+
