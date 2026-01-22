@@ -3256,3 +3256,93 @@ The updated SIMPLICITY_PROTOCOL_3.md (v4.5, 13,596 lines) has been read **100% c
 
 **ALL ENGLISH DOCUMENTATION (docs/en/) COMPLETE**: 14/14 files read ✅
 
+
+---
+
+## Session 7 Continued - Specifications Begin
+
+**Starting specifications reading**: v2.9.27-v2.9.30 (4 files)
+
+---
+
+### File #179: v2.9.27-SPECIFICATION.md (622 lines)
+**Location**: `docs/specifications/v2.9.27-SPECIFICATION.md`
+**Task**: #52 - Remove Duplicate Objects in JSON Rewriter
+**Date**: December 1, 2025
+**Protocol**: Simplicidade 1 v1.6 applied (Steps 1-12)
+**Status**: ✅ Read 100%
+
+**Summary**: Complete specification for Remove Duplicate Objects feature in JSON Rewriter with configurable similarity threshold (50-100%), two modes (Remove/Reference), array support, and comprehensive statistics. 19/19 tests passing in 0.21s with 100% coverage.
+
+**Key Insights**:
+- **Architecture**: Core logic in src/rewriter/operations.py (remove_duplicate_objects function 220 LOC), UI integration src/gui/json_rewriter_dock.py (85 LOC with 5 widgets Row 7), exports src/rewriter/__init__.py (+2 LOC), tests test_remove_duplicate_objects.py (330 LOC new file with 19 tests in 10 classes)
+- **Algorithm**: (1) Traverse recursively all JSON tree nodes, (2) For each Obj calculate frozen_val = freeze(obj) for hashing, search in seen_objects for already visited, calculate similarity score (for Obj % of matching fields, for list 1.0 if identical else 0.0), if similarity >= threshold then Mode 'remove' return None OR Mode 'reference' return "$ref:path" and increment removed_count, if not duplicate add to seen_objects and process children recursively, (3) For arrays (if include_arrays=True) same dedup logic arrays must be 100% identical, (4) For primitives no deduplication
+- **UI Widgets Row 7**: chk_remove_dup_objects (main checkbox "Remove duplicate objects"), chk_include_dup_arrays (secondary checkbox "Include arrays"), spin_dup_threshold (SpinBox 50-100% default 100%), combo_dup_mode (ComboBox "Remove (default)" or "Reference ($ref)"), comprehensive tooltips explaining each option
+- **Tests Coverage**: 19 tests 100% passing in 0.21s - TestExactMatchSimple (2 tests exact match remove + no duplicates keep), TestExactMatchNested (2 tests nested objects + 3 levels deep), TestPartialMatch (3 tests 80%/100%/50% thresholds), TestArrayHandling (3 tests include/exclude/different elements), TestReferenceMode (2 tests creates $ref + nested path), TestEmptyValues (2 tests empty objects + null values), TestKeepFirstOccurrence (1 test keeps first removes 2), TestMixedTypes (2 tests primitives + mixed obj/array), TestStatistics (2 tests structure + paths/similarity). Bugs fixed: reference mode not incrementing removed_count, empty objects returning None
+- **Use Cases**: (1) Configurations duplicates (database/cache same host:port removed), (2) Similarity threshold 80% (user1/user2 with 4/5 fields match = 80% removed), (3) Reference mode (original/duplicate1/duplicate2 become original + $ref:root.original + $ref:root.original), (4) Arrays included (tags1/tags2 identical arrays removed)
+- **Design Patterns**: Strategy (remove vs reference modes), Visitor (process_node recursive traversal), Flyweight (freeze() immutable shared representation), Template Method (fixed traversal algorithm with customizable substeps), Information Expert (calculate_similarity encapsulates comparison), Low Coupling (standalone function no GUI dependency), High Cohesion (focuses exclusively on deduplication), Protected Variations (stable interface threshold/mode/include_arrays)
+
+---
+
+### File #180: v2.9.28-SPECIFICATION.md (442 lines)
+**Location**: `docs/specifications/v2.9.28-SPECIFICATION.md`
+**Task**: #52 Sprint B Feature #1 - Advanced Conditions Integration
+**Date**: December 1, 2025
+**Protocol**: Simplicidade 1 v1.6 applied (Steps 1-13)
+**Parent Task**: #52 - Remove Duplicate Objects (v2.9.27)
+**Status**: ✅ Read 100%
+
+**Summary**: Integration of Advanced File Filters (Task #51) into JSON Rewriter allowing file filtering BEFORE processing with remove_duplicate_objects(). Maximized modularity by extracting shared logic to src/utils/advanced_conditions.py (112 LOC). 11/11 tests passing in 152.01s.
+
+**Key Insights**:
+- **Problem Solved**: Before v2.9.27 removed duplicate objects processed ALL selected files with no granular control. After v2.9.28 filters BEFORE processing with Advanced Conditions, total modularity with shared module src/utils/advanced_conditions.py, auto-detection of .json files, QSettings persistence remembers last filter configuration, detailed feedback "X files filtered Y processed", zero redundancy as AI Processor refactored to use same module
+- **Shared Module src/utils/advanced_conditions.py (112 LOC)**: (1) get_conditions_from_ui(cond_rows) builds list of Condition objects from UI rows skipping empty rows, (2) apply_conditions_to_files(files, conditions, logic_op, enabled) applies filters returning (filtered_files, num_filtered_out), uses filter_files_by_conditions from core module
+- **AI Processor Refactoring**: ~20 LOC changes (import + 2 delegated methods _get_conditions() and _apply_advanced_conditions()), zero duplication maximum modularity, AI Processor refactored in minutes just imports + delegates
+- **JSON Rewriter Integration (~150 LOC)**: UI widgets Row 8 (btn_advanced_filters "🔍 Advanced Filters..." button, chk_apply_all_types "Apply to all file types" checkbox default OFF for auto-detect .json), Dialog _open_advanced_filters_dialog() (~100 LOC with 3 condition rows same UI as AI Processor), Integration with cli_dedupe() (signature modified accepting advanced_conditions param, applies filters BEFORE processing with auto-detect .json unless apply_all_types=True), QSettings persistence (3 keys: advanced_filters_apply_all_types, advanced_filters_enabled, advanced_filters_conditions as JSON string with load/save logic)
+- **Tests 11/11 PASSED in 152.01s (100%)**: TestModuleExtraction (5 tests - valid conditions extraction, empty rows skipped, filtering when enabled/disabled, no conditions returns all), TestAutoDetectExtension (2 tests - .json and .JSON detected, fallback to apply_all_types), TestJSONRewriterIntegration (2 tests mock-based - cli_dedupe receives advanced_conditions param, QSettings persistence works), TestIntegration (2 tests with real components - filters applied BEFORE remove_duplicates, statistics include advanced_filters_filtered)
+- **Lessons Learned**: (1) Modularidade Paga Dividendos - extracting to shared module reduced ~60 LOC duplication, (2) Tests Integration + Mocks = Best of Both Worlds (9 fast mock tests + 2 slower integration tests), (3) QSettings JSON Serialization works well (json.dumps/loads with try/except ensures robustness), (4) Auto-Detection Smart (.endswith(('.json', '.JSON')) + fallback checkbox), (5) Feedback Early (MessageBox when configuring filters reduces user errors, stats complete feedback loop)
+
+---
+
+### File #181: v2.9.29-SPECIFICATION.md (463 lines)
+**Location**: `docs/specifications/v2.9.29-SPECIFICATION.md`
+**Task**: Reference Resolver - Sprint A
+**Status**: ✅ COMPLETE
+**Tests**: 13/13 PASSING
+**LOC**: ~430 total (~220 backend + ~40 UI + ~170 tests)
+**Status**: ✅ Read 100%
+
+**Summary**: Reference Resolver Sprint A implementing radio buttons (Delete duplicates | Use references) with two modes for duplicate handling: Delete (removes entirely keeping first) and Use References (replaces with $ref:path:line). Includes Resolve References feature to expand existing $ref back to actual values.
+
+**Key Insights**:
+- **Execution Order**: (1) resolve_references() if enabled FIRST, (2) dedupe() + join_keys(), (3) create_references() OR remove_duplicate_objects(), (4) Other operations (exclude_numeric, skip_empty), (5) enforce_consistent_case(), (6) Serialize and save. Key Rule: References MUST be resolved BEFORE creating new ones to avoid circular dependencies
+- **Backend create_references()**: Replace duplicate objects with references or delete them. Modes: 'delete' removes duplicates (legacy), 'references' replaces with "$ref:path:line". Algorithm: (1) Traverse JSON tree recursively, (2) Build index {frozen_value: (path, line, obj)}, (3) On duplicate detection Delete mode returns None OR References mode returns "$ref:path:line" string, (4) First occurrence (lowest line) always kept. Output formats: with line numbers "$ref:root.user.profile:42" or without "$ref:root.user.profile". Return stats: {created: 5, deleted: 3, kept: 12}
+- **Backend resolve_references()**: Expand $ref references to actual values. Algorithm: (1) Build path index {path: value} for all objects, (2) Traverse tree detect $ref:... strings, (3) Parse reference format (supports with/without line numbers), (4) Lookup referenced value in index, (5) Replace $ref string with actual object, (6) Log warnings for invalid references. Supported formats: $ref:path.to.key:123 (with line) or $ref:path.to.key (without line). Error handling: invalid format → warning + keep as-is, path not found → warning + keep as-is. Return stats: {resolved: 8, invalid: 2}
+- **UI Implementation Rows 9-10**: Row 9 Duplicate Handling Mode (lbl_ref_mode label, radio_delete_dups "Delete duplicates" default checked, radio_use_refs "Use references ($ref)"), Row 10 Resolve Existing (chk_resolve_refs "Resolve existing references" checkbox). Integration in _rewrite() passes resolve_references and use_references to namespace. Integration in cli_dedupe(): Step 1 resolve existing refs FIRST if enabled, dedupe + join_keys, Step 3 create refs or delete duplicates (if use_references calls create_references mode='references' else calls legacy remove_duplicate_objects)
+- **Tests 13/13 PASSING**: TestCreateReferencesDelete (2 tests - delete mode removes + preserves first), TestCreateReferencesMode (2 tests - references mode creates refs + with line numbers), TestResolveReferences (3 tests - resolve basic + with line number + invalid warning), TestReferenceResolverIntegration (3 tests - full pipeline create then resolve + stats accuracy + nested objects), TestEdgeCases (3 tests - empty object + no duplicates + primitives ignored). 100% coverage: both modes, stats, line numbers, valid/invalid refs, warnings, integration, edge cases
+- **Known Limitations Sprint A**: (1) Single-file only (cannot resolve to other files), (2) One format only ($ref:path and $ref:path:line), (3) No relative paths (all paths absolute from root), (4) Non-recursive expansion (references always point to original key no cascading), (5) No preview (references created/resolved immediately without confirmation). Sprint B roadmap: cross-file refs, multi-format (#/, @), detailed stats dialog, format preference configuration
+
+---
+
+### File #182: v2.9.30-SPECIFICATION.md (601 lines)
+**Location**: `docs/specifications/v2.9.30-SPECIFICATION.md`
+**Task**: Reference Resolver - Sprint B Feature #4
+**Status**: ✅ COMPLETE
+**Tests**: 25/25 PASSING (12 new + 13 from Sprint A)
+**LOC**: ~180 total (~60 backend + ~90 UI + ~30 tests)
+**Protocol**: Protocolo Simplicidade 1 v1.6 (16 Q&A + 9 tasks)
+**Status**: ✅ Read 100%
+
+**Summary**: Sprint B Feature #4 extends Reference Resolver (v2.9.29) with multi-format support (3 reference formats $ref:, #/, @ instead of just $ref:), format configuration UI dialog, relative path support (removes 'root.' prefix), and QSettings persistence for user preferences.
+
+**Key Insights**:
+- **Backend New Function format_reference()**: Format reference string in specified style. Parameters: path (dot-notation e.g. 'root.users.admin'), line (optional line number), format_type ('$ref', '#/', or '@'), use_relative_path (if True remove 'root.' prefix). Three formats: (1) $ref: (Default fully resolvable explicit prefix) "$ref:root.users.admin:123" or "$ref:users.admin" relative, (2) #/ (JSON Pointer RFC 6901 standard notation) "#/root.users.admin:456" or "#/users.admin" relative, (3) @ (Compact custom shorthand) "@root.users.admin:789" or "@users.admin" relative. Algorithm: remove 'root.' prefix if relative, format based on type with fallback to $ref:, append line number if provided
+- **Backend Updated create_references()**: Added format_type parameter (default '$ref' backward compatible), added use_relative_path parameter (default False), now uses format_reference() helper instead of manual f-strings. Backward compatibility: default parameters maintain Sprint A behavior always $ref: format with absolute paths
+- **Backend Updated resolve_references()**: Multi-format detection checks for $ref:, #/, or @ prefixes with unified regex `^(?:\$ref:|#/|@)([^:]+)(?::(\d+))?$`. Relative path resolution tries both exact path and with 'root.' prefix. Algorithm: check if string starts with any reference prefix, parse with multi-format regex (invalid format → warning + keep as-is), extract ref_path and optional ref_line, try to resolve (try exact path first, if not found and doesn't start with 'root.' try adding it for relative path), return resolved value or keep as-is with warning. Supported formats all with optional :line: $ref:root.users.admin:123, #/root.users.admin, @users.admin (tries 'users.admin' then 'root.users.admin' relative)
+- **UI Configure Format Button**: Location Row 10 between chk_resolve_refs and indent spinner. btn_configure_format "⚙️ Configure Format..." tooltip "Configure reference format style and options". Signal connects to _open_format_config_dialog(). New Dialog FormatConfigDialog structure: Active Options Group (Format dropdown 3 choices $ref:/#/@, Checkbox Include line numbers, Checkbox Use relative paths, Preview label live example with current settings), Future Features Group grayed out (Enable cross-file references, Use absolute file paths), Buttons (OK save settings close, Cancel discard, Restore Defaults reset to $ref: line numbers ON relative OFF). Preview logic updates dynamically: Example formats "Example: $ref:root.users.admin:123" default, "Example: #/users.admin:123" JSON Pointer + relative, "Example: @root.users.admin" Compact + no line
+- **QSettings Integration**: Keys (Group "Clarify/JsonRewriter"): reference_format String ('$ref', '#/', or '@') default '$ref', include_line_numbers_ref Boolean default True, use_relative_paths Boolean default False. Save on Dialog Accept, Load in _rewrite(), Pass to cli_dedupe() with format_type, include_line_numbers, use_relative_paths parameters to create_references()
+- **Tests 25/25 PASSING in 0.23s**: TestFormatReference (8 tests - format_ref with/without line, format_pointer with/without line, format_at with/without line, format_relative_path removes 'root.', format_relative_no_root_prefix), TestResolveMultiFormat (4 tests - resolve all three formats, resolve with line numbers parsed but don't affect lookup, resolve relative paths try both with/without 'root.' prefix, resolve invalid format kept as-is with warning). All Sprint A tests (13) continue passing ensuring backward compatibility
+- **Protocolo Simplicidade 1 v1.6 Applied**: Etapa 3 Q&A Phase (16 questions answered - clarifications functionalities formats UI paths line numbers, technical implementation QSettings backend labels, architectural decisions parameters tests priority scope, final details relative paths dialog resolution), Etapa 5 Planning (9 tasks created - Backend helper format_reference ~20 LOC, Backend update create_references ~15 LOC, Backend update resolve_references ~20 LOC, Backend export format_reference ~1 LOC, UI Button Configure Format ~5 LOC, UI FormatConfigDialog ~90 LOC, QSettings Persistence ~15 LOC, Tests Format tests ~40 LOC, Tests Multi-format resolution ~40 LOC). Total 9/9 tasks complete ~246 LOC (target ~180 LOC +37% extra features)
+
+**Current Progress**: 182/243 files (74.9%) - crossed 74% threshold approaching 75%!
+
