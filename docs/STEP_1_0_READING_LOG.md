@@ -3423,3 +3423,145 @@ The updated SIMPLICITY_PROTOCOL_3.md (v4.5, 13,596 lines) has been read **100% c
 
 **Current Progress**: 186/243 files (76.5%) - crossed 76% threshold approaching 77%!
 
+
+### File #187: v2.9.40-SPECIFICATION.md (844 lines)
+**Location**: `docs/specifications/v2.9.40-SPECIFICATION.md`
+**Sprint**: v2.9.40
+**Date**: December 3, 2025
+**Feature**: Tools as Tabs System
+**Task Origin**: TASKS.md line 992
+**Protocol**: Simplicidade 3 v3.0 (16 steps)
+**Status**: ✅ Read 100%
+
+**Summary**: Transform all tools from QDockWidget (occupying entire screen right side) to QTabWidget tabs (integrated with Search/Replace/Insert tabs), enabling close buttons, state persistence across sessions, and data preservation when reopening closed tools using lazy-loading pattern.
+
+**Key Insights**:
+- **Problem Statement**: (1) Docks occupy entire screen (tools opened as QDockWidget in RightDockWidgetArea filled entire right side), (2) No close control (no close buttons, once opened stayed open), (3) State doesn't persist (open tools lost when closing/reopening app), (4) Data not preserved (reopening closed tool lost configuration and data). User pain points: tools taking too much space full width, inability to close unwanted tools, lost work when reopening, no visibility which tools previously open
+- **Requirements (6 critical questions)**: Q1 Which tools open as tabs? A1 "all Tools menu items open as tabs". Q2 Integrate into same QTabWidget as Search/Replace/Insert? A2 "Yes, integrated into same QTabWidget". Q3 Avoid duplicates? A3 "only one instance per tool, if already open just switch to tab". Q4 Close button X color? A4 "gray X matching theme, light gray for dark theme and dark gray for light theme". Q5 Search/Replace/Insert also have X button? A5 "Yes, all tabs have X button with confirmation for fixed tabs". Q6 Persistence and data? A6 "state persists when closing app, Option B chosen 'Reopen same tab with preserved data' lazy-loading keeps widgets in memory, only Editor needs confirmation when closing with unsaved data"
+- **Acceptance Criteria (10 total)**: AC1 All 13 tools (11 Tools menu + Editor + Tutorials) open as tabs, AC2 Tools integrated into central QTabWidget (same as Search/Replace/Insert), AC3 Only one instance per tool (no duplicates), AC4 X buttons theme-aware colors (#B0B0B0 dark, #505050 light), AC5 All tabs have X button (including Search/Replace/Insert), AC6 Confirmation when closing fixed tabs (Search/Replace, Insert), AC7 Confirmation when closing Editor with unsaved data (Save/Discard/Cancel), AC8 State persists between sessions (QSettings), AC9 Data preserved when reopening closed tool (lazy-loading), AC10 Active tab restored when reopening app
+- **Architecture Decision Factory Method + Strategy**: Pattern rationale (Factory Method: _show_*() methods act as factories creating tool widgets on-demand, Strategy: _add_tool_tab() encapsulates tab addition logic allowing different behaviors duplicate prevention/persistence, Lazy Loading: widgets created once and kept in memory data preservation). Before QDockWidget approach: _show_translate() creates JsonTranslateDock, addDockWidget(Qt.RightDockWidgetArea, dock) fills entire right side, no close button on dock. After QTabWidget approach: _show_translate() creates widget if not exists, _add_tool_tab(widget, "JSON Translate", closable=True) adds to tabs, tab with close button, only one instance switch if exists
+- **Implementation Details**: 13 tools converted (JSON Translate, JSON Rewriter, JSON Search, AI Processor, Set Operations, JSX Extractor, Text Extractor, Case Validator, Google Translate, TOON/BSON Converter, Format Converter, MongoDB Manager, Tutorials Viewer, plus Editor special handling). QSettings persistence saves (open_tools list, active_tab index, tab_data per tool individual widget state). Close button styling theme-aware QPushButton stylesheet #B0B0B0 dark #505050 light 16x16 px centered. Confirmation dialogs fixed tabs (Search/Replace Insert) "Close Search/Replace tab? Results will be lost", Editor special "Save changes before closing?" Save/Discard/Cancel
+
+---
+
+### File #188: v2.9.78-SPECIFICATION.md (404 lines)
+**Location**: `docs/specifications/v2.9.78-SPECIFICATION.md`
+**Date**: December 21, 2025
+**Sprint**: Google Translate Implementation (COULD HAVE task)
+**Protocol**: Simplicidade 3 (Solo Developer in Production)
+**Total Time**: ~4 hours
+**Status**: ✅ Read 100%
+
+**Summary**: Integration with Google Translate using free web scraping (no API costs), supporting 7 system i18n languages (EN, PT-BR, ES, FR, DE, ZH, JA) with local cache and retry mechanism, complete CLI and GUI interfaces, 100% test coverage.
+
+**Key Insights**:
+- **Problem**: Need to translate texts in application without paid API costs, support 7 existing i18n languages, performance and reliability with rate limiting
+- **Solution Implemented**: ✅ Google Translate API web scraping from public endpoint translate.googleapis.com, ✅ Local Cache JSON system in ~/.clarify/translate_cache/, ✅ Retry Mechanism 3 attempts with exponential backoff, ✅ Rate Limiting minimum 0.5s between requests, ✅ 7 Languages EN/PT-BR/ES/FR/DE/ZH/JA aligned with i18n, ✅ Auto-detect automatic source language detection
+- **New Behaviors**: Text Translation (API accepts texts of any size automatic chunking), File Translation (support for .txt files with structure preservation), Intelligent Cache (identical translations reused from cache), Error Handling (descriptive messages for network errors/invalid language/etc)
+- **Architecture**: Pattern Strategy (separation between API logic and GUI/CLI interface), Pattern Observer (Qt Signals for asynchronous GUI communication), Worker Thread (TranslationWorker avoids UI freezing), Modules created (src/translation/google_translate.py API core GoogleTranslateAPI/TranslationResult, src/gui/google_translate_dock.py GUI interface GoogleTranslateDock/TranslationWorker, CLI integration new subcommand gtranslate in src/app.py)
+- **Technical Decision Web Scraping vs Paid API**: Choice web scraping from Google Translate public endpoint, Justification (zero cost paid API $20/1M characters, sufficient for internal/solo developer use, cache reduces network dependency, retry mechanism ensures reliability), Trade-off: lower SLA guarantee vs paid API but acceptable for personal use
+- **GUI Implementation**: ✅ BaseDock Pattern inherits from BaseDock project standard, ✅ Dual Mode text translation direct or file, ✅ Language Selection ComboBoxes for source/destination with auto-detect, ✅ Progress Feedback QProgressBar + status messages, ✅ Cache Info button to show cache statistics, ✅ Copy to Clipboard copy result with Ctrl+C shortcut, ✅ Clear Function clear input/output with Ctrl+L. Integration: Menu Tools → Google Translate, Dock Position Right area tabbed, i18n translations EN/PT-BR complete 8 tooltips, Icon preparation for SVG icon Step 6.6
+- **CLI gtranslate Subcommand**: ✅ Subcommand python -m src gtranslate, ✅ Arguments (-t/--text text to translate, -f/--file file to translate mutually exclusive with --text, -s/--source source language default auto, -T/--target target language default pt, -o/--output output file default stdout), ✅ Help Text complete documentation with argparse, ✅ Exit Codes 0=success 1=error. Examples: "python -m src gtranslate --text 'Hello World' --source en --target pt" or "python -m src gtranslate --file input.txt --target es --output output.txt"
+
+---
+
+### File #189: v2.9.79-SPECIFICATION.md (668 lines)
+**Location**: `docs/specifications/v2.9.79-SPECIFICATION.md`
+**Version**: 2.9.79
+**Date**: December 21, 2025
+**Type**: Feature Enhancement (COULD HAVE)
+**Complexity**: Medium
+**Estimated Time**: 3-4 hours
+**Actual Time**: 3.5 hours
+**Protocol**: Protocolo Simplicidade 3 (17 mandatory steps)
+**Status**: ✅ Read 100%
+
+**Summary**: Implementation of dynamic template system in AI Processor allowing use of reserved variables like {{count}}, {{filename}}, {{total}} with support for arithmetic operations (+, -, *, /) in prompts, enabling personalized instructions for batch file processing.
+
+**Key Insights**:
+- **Problem Solved Before/After**: Before users needed to manually create repetitive prompts for multiple files ("Process chapter 1" file 1, "Process chapter 2" file 2...). After single dynamic template works for all: "Process chapter {{count+1}} of {{total}}: {{filename}}" → "Process chapter 1 of 10: chapter1.txt" → "Process chapter 2 of 10: chapter2.txt"...
+- **Requirements (8 total)**: ✅ Support variables {{count}}, {{filename}}, {{filepath}}, {{total}}, ✅ Support arithmetic +/-/*// (integer division), ✅ Security validation (operator whitelist, no eval()), ✅ GUI checkbox to enable/disable templates, ✅ Preview button to visualize first prompt, ✅ Error handling (undefined vars, division by zero), ✅ Compatibility with line-by-line mode, ✅ 100% backward compatible (opt-in)
+- **Design Patterns Applied**: (1) Strategy Pattern GoF (TemplateEngine different substitution strategies: Simple {{count}} → direct lookup, Arithmetic {{count+1}} → parsing + calculation), (2) Template Method Pattern GoF (_substitute() defines substitution algorithm: detect type → evaluate → format result), (3) Facade Pattern GoF (render_prompt() simplifies complex API, hides TemplateEngine + create_context + render), (4) Low Coupling GRASP (template_engine.py independent module, reusable outside AI Processor), (5) High Cohesion GRASP (all template-related functions in 1 file)
+- **Component Diagram**: AIProcessorDock GUI (chk_enable_templates, btn_preview_template) → AIProcessorWorker (template_enabled bool) → src/ai_processor/processor.py (process_multiple_files()) → src/ai_processor/template_engine.py (TemplateEngine class with render_prompt() method, ArithmeticParser class for expression evaluation, safe_eval() security whitelist)
+- **Implementation**: TemplateEngine class (render_prompt(template, context) main API, _find_variables(template) regex detection {{...}}, _substitute(var_name, context) replace logic, _evaluate_arithmetic(expr, context) safe math). Security measures: whitelist operators [+, -, *, //, (, )], no eval() or exec(), regex validation pattern, undefined variable detection raises TemplateError with clear message. Examples: {{count}} → 0 (simple lookup), {{count+1}} → 1 (arithmetic), {{total-count}} → 9 (subtraction if total=10 count=1), {{filename}} → "chapter1.txt" (string interpolation), {{filepath}} → "/path/to/chapter1.txt" (full path)
+
+---
+
+### File #190: v2.9.80-SPECIFICATION.md (692 lines)
+**Location**: `docs/specifications/v2.9.80-SPECIFICATION.md`
+**Version**: 2.9.80
+**Date**: December 21, 2025
+**Type**: Feature Enhancement (COULD HAVE)
+**Complexity**: Medium-High
+**Estimated Time**: 6-8 hours
+**Protocol**: Protocolo Simplicidade 3 (17 mandatory steps)
+**Status**: ✅ Read 100%
+
+**Summary**: Implementation of complete support for TOON (Token-Oriented Object Notation) and BSON (Binary JSON) formats, allowing bidirectional conversions between JSON↔TOON↔BSON in complete graph, with dedicated TOON editor and CLI support for batch operations.
+
+**Key Insights**:
+- **Problem Solved Before/After**: Before Clarify worked exclusively with JSON/TS/TSX without support for alternative formats like TOON (optimized for LLMs) or BSON (used in MongoDB). After users can: Convert JSON ↔ TOON ↔ BSON (complete graph 6 directions), Open/edit .toon and .bson files natively, Reduce 30-60% tokens in LLM prompts using TOON, Import/export MongoDB data via BSON, Batch convert via CLI
+- **Requirements (9 total)**: ✅ TOON Library toon-llm (davidpirogov) complete parsing, ✅ BSON Library pymongo (includes native bson) MongoDB format, ✅ Complete graph converter JSON↔TOON/JSON↔BSON/TOON↔BSON (6 directions), ✅ GUI dropdown for source/destination format selection, ✅ TOON Editor syntax highlighting based on editor_dock.py, ✅ Open .toon and .bson files natively in EditorDock, ✅ CLI convert subcommand with --from and --to flags, ✅ AI Processor integration option to use TOON as intermediate format, ✅ MongoDB export/import specialized dialog for connection and collections
+- **Design Patterns Applied**: (1) Strategy Pattern GoF (ConverterStrategy abstract interface for converters, JsonToToonConverter/ToonToJsonConverter/etc 6 implementations), (2) Factory Pattern GoF (ConverterFactory.create(from_format, to_format) returns appropriate converter, centralizes selection logic based on origin/destination), (3) Adapter Pattern GoF (ToonAdapter adapts toon-llm interface to internal API, BsonAdapter adapts pymongo.bson to internal API), (4) Facade Pattern GoF (FormatConverter.convert(data, from_fmt, to_fmt) simplified API, hides complexity of conversion graph), (5) Low Coupling GRASP (independent modules src/converters/toon.py, src/converters/bson.py, reusable outside Clarify), (6) High Cohesion GRASP (all TOON functionalities in toon.py, BSON in bson.py)
+- **Component Diagram**: Clarify Application Main Window → Menu Tools → TOON/BSON Converter → FormatConverterDock GUI (combo_from [JSON/TOON/BSON], combo_to [JSON/TOON/BSON], btn_convert/btn_batch_convert, text_input QPlainTextEdit, text_output QPlainTextEdit, Events: btn_convert.clicked → _perform_conversion(), btn_batch.clicked → _batch_convert_dir(), combo_from/to.changed → _update_preview()) → src/converters/format_converter.py (FormatConverter facade class with convert() method, ConverterFactory factory class with create() method, ConverterStrategy base class, 6 concrete converters: JsonToToonConverter, ToonToJsonConverter, JsonToBsonConverter, BsonToJsonConverter, ToonToBsonConverter, BsonToToonConverter)
+- **TOON Format Benefits**: Token reduction 30-60% compared to JSON (critical for LLM prompts with token limits), Human readable (unlike BSON binary), Hierarchical structure preservation (better than flat JSON in some cases), LLM optimized (designed specifically for language model consumption). Example: JSON 150 tokens → TOON 75 tokens (50% reduction)
+
+---
+
+### File #191: v2.9.81-SPECIFICATION.md (403 lines)
+**Location**: `docs/specifications/v2.9.81-SPECIFICATION.md`
+**Version**: 2.9.81
+**Date**: December 21, 2025
+**Type**: Quality Assurance Enhancement (COULD HAVE)
+**Complexity**: Medium
+**Estimated Time**: 3-4 hours
+**Protocol**: Protocolo Simplicidade 3 (17 mandatory steps)
+**Status**: ✅ Read 100%
+
+**Summary**: Performance benchmarks system for critical Clarify operations measuring execution time, RAM memory usage, and CPU usage on JSON files of different sizes (1MB, 10MB, 50MB, 100MB), enabling objective metrics, regression identification, and bottleneck discovery.
+
+**Key Insights**:
+- **Problem Solved Before/After**: Before no objective performance metrics impossible to identify regressions or optimize critical operations. After: automated benchmarks for core operations, detailed metrics (time/memory/CPU), historical results for version comparison, bottleneck identification in slow operations
+- **Requirements (8 total)**: ✅ Benchmark suite for 5 critical operations, ✅ Test with files 1MB/10MB/50MB/100MB, ✅ Metrics time (s)/peak memory (MB)/average CPU %, ✅ Automatic generation of JSON test files, ✅ Results storage in benchmarks/results.json, ✅ Historical comparison between versions, ✅ CLI to execute benchmarks python -m benchmarks.run, ✅ Formatted report (table + textual graph)
+- **Operations Benchmarked (5 categories)**: (1) Set Operations src/set_operations.py (union of 2 large files, intersection with deep comparison, difference with nested keys, symmetric difference), (2) JSON Rewriter src/rewriter/json_rewriter.py (deduplicate in large arrays 10k+ items, normalize structure flatten/unflatten, remove empty values recursively), (3) JSON Search src/json_search/ (search by key in deep structure depth 20+, search by value with regex, search in multiple files), (4) Text Extractor src/text_extractor/ (extract text from large HTML 1MB+, JSX parsing with 1000+ components), (5) TOON/BSON Converters src/converters/ (JSON → TOON encoding, TOON → JSON decoding, JSON → BSON → JSON roundtrip)
+- **Component Structure**: benchmarks/ package (__init__.py package marker, run.py main CLI runner, benchmark_runner.py core benchmark engine, generators.py test data generators, reporters.py result formatters, results.json historical results). Workflow: (1) Generate test data 1MB/10MB/50MB/100MB, (2) Run each operation 3 times (warm-up + 2 runs), (3) Measure time/peak memory/average CPU, (4) Store results with metadata (version/date/OS), (5) Compare with previous runs if exists, (6) Generate report console + JSON
+- **BenchmarkRunner Class**: Methods (__init__(output_file, num_runs), register_benchmark(name, func, sizes), run_all_benchmarks(), _run_single_benchmark(name, func, size), _measure_resources(func) returns time/memory/cpu, _store_results(results) save to JSON, _compare_with_previous() load historical, _generate_report() format table). Measurement techniques: time.perf_counter() for precise timing, tracemalloc.get_traced_memory() for peak memory, psutil.cpu_percent(interval=0.1) for CPU average
+
+---
+
+### File #192: v2.9.82-SPECIFICATION.md (547 lines)
+**Location**: `docs/specifications/v2.9.82-SPECIFICATION.md`
+**Author**: Josué Amaral
+**Date**: December 21, 2024
+**Version**: 1.0
+**Protocol**: Simplicidade 3
+**Status**: ✅ Read 100%
+
+**Summary**: Automated load testing system to identify performance limits and bottlenecks of Clarify in intensive usage scenarios, complementing benchmark system (v2.9.81) with stress tests on parallel operations, documenting real system limits to guide optimizations and define hardware requirements.
+
+**Key Insights**:
+- **Functional Requirements RF1-5**: RF1 Realistic Load Scenarios (Scenario 1 process 1000+ JSON files simultaneously batch operation, Scenario 2 Set Operations union/intersection with 100+ large files, Scenario 3 Search in 5-10GB corpus thousands of files, Scenario 4 Rewriter in massive operations deduplicate/normalize). RF2 Performance Metrics (Throughput files processed/second, Latency average time per operation min/max/p50/p95/p99, Resources CPU usage %/RAM usage MB/Disk I/O MB/s, Concurrency maximum number of simultaneous workers, Error rate failures/timeouts %). RF3 Progressive Load Simulation (Warmup 10% load system warmup, Ramp-up gradual increase 10% → 100% in 30s, Sustain maximum load for 60s, Cooldown gradual reduction to monitor recovery). RF4 Limit Detection (CPU Saturation detect when CPU > 95% sustained, Memory Pressure warn when RAM > 90% available, Disk I/O Bottleneck identify disk saturation, Thrashing detect performance degradation latency > 2x baseline). RF5 Detailed Report (Console real-time progress with progress bar, JSON complete results saved in load_tests/results/, Markdown executive report in docs/PERFORMANCE.md, Comparison historical executions previous versions)
+- **Main Components Structure**: load_tests/ package (__init__.py package marker, load_runner.py main engine 300 LOC, scenarios.py test scenarios 250 LOC, metrics_collector.py metrics collection 200 LOC, report_generator.py report generation 150 LOC, results/ subdirectory with v2.9.82_20241221.json). tests/test_load_tests.py 12 unit tests 250 LOC. docs/PERFORMANCE.md generated report created
+- **Execution Flow (9 steps)**: (1) LoadRunner.setup(), (2) Create test data generate_test_corpus(), (3) Warmup 10% load 10s, (4) Ramp-up 10→100% 30s, (5) Sustain 100% 60s, (6) Cooldown 100→0% 20s, (7) MetricsCollector.analyze(), (8) ReportGenerator.generate(), (9) Save results/ + docs/PERFORMANCE.md
+- **Files to Create**: load_tests/load_runner.py (LoadRunner class with methods setup/run/teardown/warmup/rampup/sustain/cooldown), load_tests/scenarios.py (Scenario1BatchProcessing/Scenario2SetOperations/Scenario3MassiveSearch/Scenario4RewriterStress classes each with run/validate methods), load_tests/metrics_collector.py (MetricsCollector class with methods start_collection/stop_collection/analyze/detect_cpu_saturation/detect_memory_pressure/detect_thrashing), load_tests/report_generator.py (ReportGenerator class with methods generate_console_report/generate_json_report/generate_markdown_report/plot_metrics_ascii), tests/test_load_tests.py (12 tests covering LoadRunner/Scenarios/MetricsCollector/ReportGenerator)
+
+---
+
+### File #193: TASK_23_ORPHANED_KEYS_SPECIFICATION.md (641 lines)
+**Location**: `docs/specifications/TASK_23_ORPHANED_KEYS_SPECIFICATION.md`
+**Status**: ⚠️ PARTIALLY IMPLEMENTED (v2.9.10)
+**Priority**: SHOULD HAVE
+**Complexity**: HIGH
+**Sprint Target**: v2.9.14 (COMPLETE)
+**Status**: ✅ Read 100%
+
+**Summary**: System to update orphaned keys/references in .tsx/.jsx files when JSON Rewriter eliminates redundant translation dictionary keys (identical values), preventing runtime "undefined" errors by automatically updating file references to point to preserved keys.
+
+**Key Insights**:
+- **Original Problem Context**: When JSON Rewriter eliminates redundancies from translation dictionaries (ex: en.ts, pt.ts), it removes duplicate keys whose values are identical. However .tsx/.jsx files referencing eliminated keys are left with orphaned references causing "undefined" error in runtime
+- **Real Example**: Dictionary BEFORE tests/files/en.ts (pages.contact.lookingForQuickAnswers: "Looking for quick answers? Check out our", pages.contactPage.lookingForQuickAnswers: "Looking for quick answers? Check out our" ❌ DUPLICATE). Dictionary AFTER redundancy elimination (pages.contact.lookingForQuickAnswers preserved, contactPage REMOVED because longer line = lower priority). Affected JSX file tests/files/page.tsx (t.pages.contactPage.lookingForQuickAnswers ❌ ORPHANED REFERENCE doesn't exist anymore). Result: undefined in runtime because t.pages.contactPage was eliminated
+- **Complete Solution Workflow (5 phases)**: (1) SCAN PHASE before eliminating redundancies (read original dictionary en.ts/pt.ts, extract ALL keys with values, old_keys = {t.pages.contact.lookingForQuickAnswers, t.pages.contactPage.lookingForQuickAnswers}, old_values map each key to its value). (2) REDUNDANCY ELIMINATION (detect duplicate values contact.lookingForQuickAnswers line 44 vs contactPage.lookingForQuickAnswers line 266, priority LOWER line wins 44 < 266, result contactPage IS ELIMINATED). (3) BUILD SUBSTITUTION MAP (extract new_keys after elimination, removed_keys = old_keys - new_keys, for each removed_key search new_key with SAME VALUE not similarity, map removed_key → new_key, substitution_map = {t.pages.contactPage.lookingForQuickAnswers → t.pages.contact.lookingForQuickAnswers}). (4) SCAN TSX/JSX FILES (parse all .tsx/.jsx files in project directory, extract translation references t.* using regex, identify orphaned references check if reference exists in new_keys, orphaned_references = {file: page.tsx, line 8, old: t.pages.contactPage.lookingForQuickAnswers, new: t.pages.contact.lookingForQuickAnswers}). (5) UPDATE FILES (for each orphaned reference apply substitution using substitution_map, preserve formatting indentation/quotes/spacing, create backup .bak before modifications, generate UPDATE_REPORT.md with all changes made)
+- **Implementation Status v2.9.10 Partial**: ✅ IMPLEMENTED Phase 1 Scan (extract_keys() function extracts all keys from dictionary, build_value_map() maps keys → values). ✅ IMPLEMENTED Phase 2 Elimination (detect_duplicates() identifies identical values, eliminate_redundancies() removes lower priority keys). ❌ NOT IMPLEMENTED Phase 3 Substitution Map (build_substitution_map() function missing, no mapping between removed → preserved keys). ❌ NOT IMPLEMENTED Phase 4 Scan TSX/JSX (scan_tsx_files() function missing, no orphaned reference detection). ❌ NOT IMPLEMENTED Phase 5 Update Files (update_references() function missing, no automatic file updates). Current behavior: Keys eliminated but references NOT updated, users must manually fix orphaned references, high error risk in production
+
+**Current Progress**: 193/243 files (79.4%) - crossed 79% threshold approaching 80% milestone! 🎯
+
