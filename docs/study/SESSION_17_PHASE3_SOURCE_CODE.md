@@ -1980,3 +1980,165 @@ act_name.triggered.connect(main_window._method)
 
 ---
 
+
+## 📖 File 19: src/rewriter/operations.py (1,009 lines) ✅
+
+**Purpose**: Core JSON/TS rewriting algorithms - the heart of dedupe/rewrite operations
+
+**Critical File**: Contains all transformation logic used by cli_dedupe() and JSON Rewriter
+
+### Key Operations:
+
+**dedupe()** (line 8):
+- Removes duplicate (key, value) pairs in Obj nodes
+- **Algorithm**: Uses set with frozen signatures `(key, freeze(value))`
+- **Recursive**: Processes children first, then removes duplicates
+- **Stats tracking**: Adds DetailedStatEntry via get_global_collector()
+- Returns: (processed_node, removed_count)
+
+**join_keys()** (line 69):
+- Combines duplicate keys in Obj nodes
+- **Strategies**:
+  1. All values identical → keep one
+  2. All values are Obj → merge recursively via merge_obj_values()
+  3. Otherwise → deduplicate, keep first unique
+- **Preserves order**: Maintains first occurrence order
+- Returns: (processed_node, merged_count)
+
+**eliminate_duplicates()** (line 125):
+- **Global deduplication**: Removes duplicate values across entire tree
+- **Algorithm**: Single pass with global seen set
+- Only first occurrence kept
+- Returns: (processed_node, removed_duplicate_values_count)
+
+**exclude_numeric_keys()** (line 168):
+- Removes keys that are purely numeric (e.g., '0', '123')
+- Uses `k.isdigit()` check
+- Returns: (processed_node, removed_numeric_keys_count)
+
+**skip_empty_values()** (line 200):
+- Removes key-value pairs with empty values
+- **Empty definition**: "", None, empty list, empty dict
+- Returns: (processed_node, removed_empty_count)
+
+**avoid_duplicate_child_keys()** (line ~230):
+- Prevents duplicate keys in nested child objects
+- Recursively processes and tracks seen keys per level
+
+**skip_keys_without_siblings()** (line ~260):
+- Removes object keys that have no sibling keys
+- **Definition**: Object with single key is considered "no siblings"
+
+**remove_duplicate_array_values()** (line ~290):
+- **Two modes**:
+  - consecutive_only=True: Only removes consecutive duplicates ([1, 1, 2] → [1, 2])
+  - consecutive_only=False: Removes all duplicates ([1, 2, 1] → [1, 2])
+- Uses freeze() for comparison
+- Returns: (processed_node, removed_count)
+
+**enforce_consistent_case()** (line ~360):
+- Converts all keys to consistent naming convention
+- **Styles**: camelCase, PascalCase, snake_case, kebab-case
+- **Algorithm** (line 400-428):
+  - split_words(): Handles kebab/snake/camelCase/PascalCase splitting
+  - to_camel(): First word lowercase, rest capitalized
+  - to_pascal(): All words capitalized
+  - to_snake(): All lowercase with underscores
+  - to_kebab(): All lowercase with hyphens
+- **Warnings**: Collects list of changed keys if warn_inconsistencies=True
+- Returns: (processed_node, warnings_list)
+
+**normalize_escaping()** (line 468, Task #22):
+- Normalizes excessive backslash escaping
+- **Patterns**:
+  - `\\\\' (2+ backslashes before quote) → \\'`
+  - `\\\\" (2+ backslashes before double quote) → \\"`
+- Regex: `r"\\{2,}'"` and `r'\\{2,}"'`
+- Recursively processes keys and values
+- Returns: processed_node
+
+**array_to_object_conversion()** (line 530, Task #21):
+- Converts arrays to objects with intelligently generated keys
+- **Strategy** (line 596-650):
+  1. Take first max_key_length characters (default 30)
+  2. Remove accents via unicodedata.normalize('NFD')
+  3. Remove special characters, keep alphanumeric
+  4. Convert to target case style
+  5. Handle conflicts by adding more words until unique
+  6. Fallback: Add numeric suffix if still not unique
+- **Example**: `["O usuario pode seguir..."]` → `{oUsuarioPodeSeguir: "O usuario pode seguir..."}`
+- Returns: processed_node
+
+**remove_duplicate_objects()** (line 806, Task #52):
+- **Most complex operation**: Removes duplicate objects based on similarity
+- **Parameters**:
+  - threshold: 0.0-1.0 (1.0 = exact match only)
+  - include_arrays: Also compare arrays for duplicates
+  - mode: 'remove' (delete) or 'reference' (replace with $ref:path)
+- **Algorithm**:
+  - calculate_similarity() (line 846-874):
+    - For Obj: Percentage of matching fields
+    - For list: Exact match only (1.0 or 0.0)
+    - For primitives: Exact match only
+  - process_node() (line 876-1005):
+    - Tracks seen_objects: {frozen_value: (path, key, obj)}
+    - For each object:
+      - Check similarity against all seen objects
+      - Find best match >= threshold
+      - If duplicate:
+        - mode='reference': Return "$ref:path" string
+        - mode='remove': Return None (removes object)
+      - If not duplicate: Add to seen_objects, process children
+- **Returns**: (processed_node, removed_count, stats_dict)
+  - stats_dict contains: duplicates_found, references_created, kept_objects
+
+### Helper Functions:
+
+**freeze()** (from types):
+- Converts JSONNode to hashable type for set/dict operations
+- Handles Obj, list, primitives
+- Essential for deduplication
+
+### Design Patterns:
+
+**Visitor Pattern**:
+- All operations use recursive tree traversal
+- process_node() or _visit() inner functions
+- Common pattern: process children, then current node
+
+**Algorithm Characteristics**:
+- **Recursive**: All operations handle Obj, list, primitives recursively
+- **Immutable**: Return new nodes, don't modify originals
+- **Tuple returns**: (result, count) for tracking statistics
+- **Path tracking**: Most functions track path for debugging/stats
+
+### Performance:
+
+**Time Complexity**:
+- dedupe: O(n) with set operations
+- join_keys: O(n) with dict grouping
+- eliminate_duplicates: O(n) global pass
+- remove_duplicate_objects: O(n²) in worst case (comparing all pairs)
+
+**Space Complexity**:
+- All use seen sets/dicts: O(n) space
+- freeze() creates hashable copies: O(n) additional space
+
+### Code Quality: ⭐⭐⭐⭐⭐
+
+**Strengths**:
+- Clean recursive algorithms
+- Consistent API (all return tuples)
+- Comprehensive feature set
+- Well-documented with examples
+- Type hints throughout
+- Stats tracking integration
+
+**Notable Implementation Details**:
+- reverse=True in join_keys() order preservation (line 96)
+- Descending sort for $ref replacement (line 210 in file_explorer_executor)
+- Similarity calculation for fuzzy matching
+- Reference mode vs remove mode for duplicates
+
+---
+
