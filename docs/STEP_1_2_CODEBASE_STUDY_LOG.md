@@ -475,3 +475,377 @@ logger.error("Error occurred", exc_info=True)
 - src/core files - Business logic and data models
 - src/gui/docks/* - Actual tool implementations
 
+
+---
+
+#### 4. src/config_manager.py (548 lines) ✅ COMPLETE
+
+**Purpose**: Centralized YAML-based configuration with validation and legacy migration
+
+**Pattern**: **Singleton** with lazy initialization + **Migration Strategy** pattern
+
+**Key Components**:
+
+**A. Configuration Structure** (Lines 46-85):
+```python
+DEFAULTS = {
+    "app": {theme, language, max_recent_files, confirm_on_exit, ...},
+    "logging": {level, max_file_size_mb, backup_count, ...},
+    "performance": {thread_pool_size, max_file_size_mb, cache_duration, ...},
+    "ai": {default_provider, remember_api_keys, max_tokens, temperature},
+    "editor": {font_family, font_size, tab_width, auto_save_interval, ...},
+    "paths": {default_directory, custom_extensions},
+}
+```
+
+**B. JSON Schema Validation** (Lines 88-149):
+- Validates configuration structure
+- Enforces data types and constraints
+- Example: theme must be "system"|"light"|"dark"
+- Uses jsonschema library (optional - graceful degradation)
+
+**C. ConfigManager Class** (Lines 151-500):
+
+**Core Methods**:
+- `get(key, default)`: Dot notation access → `config.get("app.theme", "system")`
+- `set(key, value, save=True)`: Dot notation update → `config.set("app.theme", "dark")`
+- `update(updates, save=True)`: Batch update multiple settings
+- `save()`: Write to YAML with comments and timestamp
+- `reset_to_defaults()`: Clear all customizations
+
+**Smart Loading** (Lines 168-203):
+- Auto-creates config if not exists
+- Merges loaded config with defaults (new settings auto-added)
+- Validates against JSON schema
+- Backs up invalid files before replacing
+
+**Backup Strategy** (Lines 352-375):
+- Automatic backup before overwrite
+- Timestamp naming: `config_20260122_202855.yaml.bak`
+- Keeps only last 5 backups (auto-cleanup old ones)
+- Special backups: `_invalid`, `_before_reset`
+
+**D. Legacy Migration** (Lines 377-500):
+Three migration paths (in priority order):
+1. **QSettings** (Qt binary format) → YAML
+2. **JSON** (`~/.clarify_settings.json`) → YAML
+3. **ConfigParser** (`~/.config/clarify.conf`) → YAML
+
+Migration process:
+- Detects legacy format
+- Maps old keys to new structure
+- Moves old files to `*.migrated` backups
+- Prints migration success message
+
+**E. Global Instance** (Lines 503-518):
+```python
+_config_instance = None  # Singleton
+
+def get_config() -> ConfigManager:
+    """Get/create global instance."""
+    global _config_instance
+    if _config_instance is None:
+        _config_instance = ConfigManager()
+    return _config_instance
+```
+
+**Key Features**:
+- **YAML format**: Human-readable, comment-friendly
+- **Dot notation**: `"app.theme"` instead of nested dict access
+- **Auto-merge**: New defaults added without losing custom settings
+- **Safe updates**: Backup before every write
+- **Validation**: JSON schema ensures correctness
+- **Migration**: Seamless upgrade from old formats
+- **Thread-safe**: YAML operations are atomic (file-level)
+
+**Design Patterns**:
+1. ✅ **Singleton**: Global config instance (`get_config()`)
+2. ✅ **Strategy**: Multiple migration strategies (QSettings, JSON, ConfigParser)
+3. ✅ **Template Method**: `_migrate_from_*()` methods follow same pattern
+4. ✅ **Facade**: Simple API (`get/set`) hides YAML complexity
+
+**Usage Example**:
+```python
+from src.config_manager import get_config
+
+config = get_config()
+theme = config.get("app.theme", "system")
+config.set("editor.font_size", 14)
+config.update({
+    "app.theme": "dark",
+    "logging.level": "DEBUG"
+})
+```
+
+**Reuse Opportunities**:
+- Use `get_config().get()` for reading settings
+- Use `get_config().set()` for writing settings
+- Config auto-saves (no manual save needed)
+- Validation is automatic (JSON schema)
+- New settings: Add to DEFAULTS + SCHEMA
+
+**Critical Code**:
+- Lines 237-261: `get()` with dot notation navigation
+- Lines 263-289: `set()` with nested dict creation
+- Lines 322-341: `_merge_configs()` recursive merge (preserves custom settings)
+- Lines 377-405: `_migrate_from_legacy()` auto-migration logic
+
+**Architecture Score**: 🟢 EXCELLENT (9.7/10)
+- Clean API with dot notation
+- Comprehensive validation
+- Safe updates with backups
+- Seamless migration from legacy
+
+---
+
+#### 5. src/core/__init__.py (19 lines) ✅ COMPLETE
+
+**Purpose**: Public API exports for core functionality
+
+**Exports**:
+```python
+# Search/Replace operations
+SearchOptions, preserve_case_like, replace_in_text
+
+# Insert operations  
+InsertMode, insert_at_line
+
+# Filtering operations
+Condition, filter_files_by_conditions, OPS, extract_scope_content
+
+# CLI operations
+cli_dedupe
+
+# Executors
+FileListExecutor, FileInfo, ListResult
+SetOperationExecutor
+
+# Export utilities
+ResultExporter
+```
+
+**Key Insight**: Clean API surface - only export what's needed externally
+
+---
+
+## 🎯 SESSION 1 COMPLETE SUMMARY
+
+**Files Studied**: 5 foundation files
+1. ✅ src/app.py (1,967 lines)
+2. ✅ src/gui/base_dock.py (596 lines)
+3. ✅ src/utils/logger.py (330 lines)
+4. ✅ src/config_manager.py (548 lines)
+5. ✅ src/core/__init__.py (19 lines)
+
+**Total Lines Read**: 3,460 lines
+
+**Time Spent**: ~2.5 hours
+
+---
+
+## 🏆 KEY ARCHITECTURAL PATTERNS DISCOVERED
+
+### **1. Orchestrator Pattern** (app.py)
+- MainWindow = conductor, not implementer
+- Delegates to: DockFactory, MenuBuilder, TabManager, WindowSettings
+- Keeps main class clean and focused
+
+### **2. Mixin Composition** (base_dock.py)
+- 7 mixins provide focused functionality
+- StandardToolDock combines all mixins
+- Avoids deep inheritance hell
+- **Best Practice**: Favor composition over inheritance
+
+### **3. Singleton Services** (logger.py, config_manager.py)
+- Global instances: Logger, Config, Settings, ThemeManager
+- Lazy initialization pattern
+- Thread-safe operations
+- Consistent access: `get_logger()`, `get_config()`
+
+### **4. Factory Pattern** (everywhere)
+- DockFactory creates all docks
+- MenuBuilder creates menus
+- Mixins provide widget factories
+- Ensures consistency and reduces boilerplate
+
+### **5. Template Method Pattern** (base_dock.py)
+- Base classes define structure: `_setup_ui()`, `_connect_signals()`
+- Subclasses fill in specifics
+- Standardized lifecycle
+
+### **6. Strategy Pattern** (config_manager.py)
+- Multiple migration strategies
+- Multiple export strategies (ResultExporter)
+- Same interface, different implementations
+
+### **7. Observer Pattern** (Qt signals/slots)
+- Loose coupling between components
+- Event-driven architecture
+- Progress updates, async operations
+
+### **8. Lazy Loading** (app.py)
+- Tools created on first access
+- Reduces startup time and memory
+- Tab restoration uses lazy loading
+
+---
+
+## 📊 ARCHITECTURE QUALITY ASSESSMENT
+
+**Overall Score**: 🟢 **EXCELLENT** (9.6/10 average)
+
+**Strengths**:
+- ✅ Clear separation of concerns
+- ✅ Consistent patterns throughout
+- ✅ Excellent documentation (docstrings, inline comments)
+- ✅ Smart defaults everywhere
+- ✅ Comprehensive error handling
+- ✅ Backward compatibility (migration support)
+- ✅ Thread-safe operations
+- ✅ Cross-platform awareness
+- ✅ Accessibility features
+- ✅ Testing-friendly design
+
+**Minor Areas for Improvement**:
+- app.py is large (1,967 lines) - could split MainWindow + CLI
+- Some global singletons (acceptable trade-off for convenience)
+- Dock discovery uses naming convention (`dir(self)` + `dock_*`)
+
+---
+
+## 🔧 PRACTICAL DEVELOPMENT GUIDELINES
+
+### **Adding New Features - Checklist**
+
+**New Tool Dock?**
+```python
+from src.gui.base_dock import StandardToolDock
+
+class MyToolDock(StandardToolDock):
+    def __init__(self, parent):
+        super().__init__("My Tool", parent)
+    
+    def _setup_ui(self):
+        # Create widgets using mixins
+        self.lbl_input, self.ed_input, self.btn_browse, _ = \
+            self.create_file_input("Input File")
+        self.lbl_result, self.ed_result = \
+            self.create_results_panel()
+        # Add to layout
+        self.layout.addWidget(self.lbl_input)
+        # etc...
+    
+    def _connect_signals(self):
+        self.btn_browse.clicked.connect(self._browse)
+    
+    def _browse(self):
+        self.browse_file_or_directory(self.ed_input, is_file=True)
+```
+
+**Need Settings?**
+```python
+from src.config_manager import get_config
+
+config = get_config()
+theme = config.get("app.theme", "system")
+config.set("app.theme", "dark")
+```
+
+**Need Logging?**
+```python
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.info("Operation started")
+logger.error("Error occurred", exc_info=True)
+```
+
+**Background Work?**
+```python
+from src.gui.base_dock import ProcessorWorkerBase
+
+class MyWorker(ProcessorWorkerBase):
+    def run(self):
+        try:
+            self.emit_progress("Processing...")
+            result = do_work()
+            if self.check_interrupt():
+                return
+            self.emit_success(result)
+        except Exception as e:
+            self.emit_error(str(e))
+```
+
+---
+
+## ⚠️ CRITICAL "DON'T TOUCH" CODE
+
+### **Sections that MUST NOT be modified** (breaking these breaks the app):
+
+1. **Window Flags Restoration** (app.py: 390-402, 1052-1073)
+   - Linux maximize button fix
+   - Must be called after tab operations
+   - Breaking this: No maximize button on Linux
+
+2. **Tab Initialization Loop** (app.py: 1012-1050)
+   - Fixes Qt lazy rendering (invisible widgets bug)
+   - Must activate all tabs on startup
+   - Breaking this: Widgets invisible until tab clicked
+
+3. **PySide6 Import Wrapper** (app.py: 169-194)
+   - Enables CLI mode without GUI
+   - Creates stub classes when PySide6 unavailable
+   - Breaking this: CLI commands won't work
+
+4. **Editor Integration** (base_dock.py: 288-346)
+   - Temp file handling for "Open in Editor"
+   - Sandbox mode protection
+   - Breaking this: Editor crashes or file leaks
+
+5. **Config Migration Logic** (config_manager.py: 377-500)
+   - Auto-migrates from legacy formats
+   - One-time migration on first run
+   - Breaking this: Users lose settings on upgrade
+
+6. **Logger Singleton** (logger.py: 82-227)
+   - Only one instance allowed
+   - File rotation logic
+   - Breaking this: Duplicate log entries or file locks
+
+---
+
+## 🎓 LESSONS FOR FUTURE DEVELOPMENT
+
+### **When Implementing New Features:**
+
+1. **Follow Existing Patterns**: Don't invent new patterns when good ones exist
+2. **Use Mixins**: Compose functionality, don't inherit deeply
+3. **Factory Everything**: Use DockFactory, MenuBuilder, etc. for consistency
+4. **Settings First**: Add new settings to ConfigManager DEFAULTS + SCHEMA
+5. **Log Appropriately**: DEBUG for dev, INFO for status, ERROR for problems
+6. **Validate Inputs**: Use ValidationMixin methods
+7. **Test Independently**: Design for testability (dependency injection, mocking)
+8. **Document Inline**: Explain WHY, not just WHAT (especially for fixes)
+
+### **Common Pitfalls to Avoid:**
+
+- ❌ Don't bypass DockFactory (creates inconsistent docks)
+- ❌ Don't access config directly (use get_config())
+- ❌ Don't create new global singletons (use existing ones)
+- ❌ Don't forget to add i18n strings (use tr())
+- ❌ Don't block UI thread (use ProcessorWorkerBase for async)
+- ❌ Don't forget window flags restoration on Linux
+- ❌ Don't skip validation (always validate user input)
+
+---
+
+**SESSION 1 STATUS**: ✅ **COMPLETE**
+
+**Next Session**: Session 2 - Core Business Logic (4-5 hours)
+- Study core/ modules in detail
+- Understand executors and processors
+- Learn data flow patterns
+- Map dependencies
+
+**Ready to proceed when instructed!** 🚀
+
