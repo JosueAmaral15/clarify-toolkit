@@ -1782,3 +1782,189 @@ Orphaned code integration action plan by Code Analysis System dated 2025-12-25 v
 - **MinimalProcessingModal Pattern**: Frameless always-on-top modal for quick non-interactive operations (elegant UX pattern for exports/syncs/auto-saves)
 - **14 Docks Integration Test**: test_docks_factory validates all 14 docks creatable via factory (comprehensive factory method testing)
 
+
+## File #131: docs/refactoring/REFACTORING_INVESTIGATION_REPORT.md (339 lines)
+
+Comprehensive investigation report after Phase 1 refactoring revealed integration issues and subsequent fixes. Found 4 problems: (1) SearchReplacePanel missing `replace_requested` signal, (2) InsertPanel missing `insert_requested` signal, (3) ai_processor_dock incomplete integration, (4) InsertPanel.emit_insert_request() using incorrect field names. All issues resolved across 4 commits (9923492, 9e789a7, 8617100, bbf93e5). Final validation: 20/20 modules import correctly, 3/3 docks instantiate, all references correct, application stable. AIProcessorDock reduced from 1284 → 1177 lines (-107 lines, -8.3%). Phase 2.1 fully validated and production-ready.
+
+**Key Insights:**
+- Investigation methodology: 6 test categories (imports, instantiation, duplicates, usage scenarios, full app, integrity)
+- Signal architecture critical: Qt signals must be both defined AND emitted for proper integration
+- Temporary disable strategy: Comment incomplete code rather than ship broken features
+- Two-pass validation: Initial fix + comprehensive second investigation found remaining issue
+- Import ≠ Duplication lesson: Namespace imports are correct and expected behavior
+
+---
+
+## File #132: docs/refactoring/REFACTORING_PHASE2.3.1_DONE.md (83 lines)
+
+Phase 2.3.1 completion report: Extracted FileSelectionWidget (279 lines) from SetOperationsDock. Reduced dock from 1148 → 1001 lines (-147 lines, -13%). Widget handles file A/B inputs, browse buttons, multiple files mode, file list management. Extracted 6 methods: browse, toggle, add, remove, clear, get_files. Public API: get_files(), set_files(), clear(), is_multiple_mode(). Signal: files_changed(list). All integrations updated: _execute(), _clear_all(), _load_preset(), _save_current_as_preset(). Validation: 8/8 imports, 2/2 cross-references, code compiles, integration functional. Commit 434d889. Next: Phase 2.3.2 OperationOptionsWidget (~100 lines).
+
+**Key Insights:**
+- Extraction pattern: UI components + business logic + signals + public API
+- Integration point tracking: Updated 5 methods that consumed old internal methods
+- Accessibility delegation: Labels for file selection moved to widget
+- Reusability gain: Widget can be used in other docks requiring file selection
+- Progressive reduction: Each phase builds on previous, steady progress toward ~600 line target
+
+---
+
+## File #133: docs/refactoring/REFACTORING_PHASE2.3.2_DONE.md (69 lines)
+
+Phase 2.3.2 completion: Extracted OperationOptionsWidget (319 lines) with 4 operation checkboxes (∩, ∪, −, ⊕), 3 comparison mode radio buttons (key_value, full_path, key_only), 4 option checkboxes (ignore_case_keys, ignore_case_values, skip_empty, arrays_ignore_order), 1 output format combo (nested, separate, display). SetOperationsDock reduced 1001 → 818 lines (-183 lines, -18.3%). Public API: get_selected_operations(), get_comparison_mode(), get_options(), get_output_format(), set_configuration(), clear(). Signal: options_changed(). Updated 10 integration points. Cleaned imports: removed QCheckBox, QRadioButton, QButtonGroup, QComboBox. Commit bfdee34. Next: Phase 2.3.3 SetOperationExecutor (~220 lines).
+
+**Key Insights:**
+- Complex widget extraction: 12 UI components consolidated into single widget
+- Configuration management: set_configuration() enables preset/history restoration
+- Import cleanup opportunity: Removing unnecessary imports after extraction improves maintainability
+- API design: Getters return typed data (List, str, Dict) for type safety
+- Integration surface: 10 methods updated shows high coupling before refactoring, now centralized
+
+---
+
+## File #134: docs/refactoring/REFACTORING_PHASE2.3.3_DONE.md (69 lines)
+
+Phase 2.3.3: Extracted SetOperationExecutor (224 lines) to src/core/set_operation_executor.py (not gui/). Contains SetOperationExecutor class (pure logic) and ExecutionResult container class. Static methods: validate_and_load_files(), execute_operations(), format_results_json(), calculate_result_count(). Separation achieved: Before = SetOperationsDock did GUI + validation + execution; After = Dock coordinates UI, Executor handles business logic (no Qt dependencies). SetOperationsDock reduced 818 → 761 lines (-57 lines, -7.0%). Benefits: Testable without GUI, reusable in CLI/batch contexts, centralized security validation (CWE-22), isolated maintenance. Commit d120881. Cumulative Phase 2.3: 387 lines extracted, dock reduced 33.7%. Next: Phase 2.3.4 ResultExporter (~90 lines).
+
+**Key Insights:**
+- Core vs GUI separation: Executor placed in src/core/ not src/gui/ for architecture clarity
+- Zero Qt dependencies: Enables pure Python unit testing without GUI framework
+- Container pattern: ExecutionResult class cleanly packages results + metadata
+- Security centralization: CWE-22 path traversal validation in single location
+- Method simplification: _execute() reduced from 130+ lines to ~70 lines by delegating to executor
+
+---
+
+
+## File #135: docs/refactoring/REFACTORING_PHASE2.3_COMPLETE.md (124 lines)
+
+Comprehensive summary of Phase 2.3 completion: SetOperationsDock refactored from 1148 → 732 lines (-416 lines, -36.2%) across 4 sub-phases. Extracted components: (2.3.1) FileSelectionWidget 279 lines, (2.3.2) OperationOptionsWidget 319 lines, (2.3.3) SetOperationExecutor 224 lines, (2.3.4) ResultExporter 190 lines. Total: 1012 lines extracted into 4 reusable components. Architectural improvements: GUI widgets isolated (file_selection_widget.py, operation_options_widget.py), core logic separated with zero Qt dependencies (set_operation_executor.py, result_exporter.py), dock now only coordinates. Benefits: SRP separation, reusability (widgets in other docks, core in CLI/batch), testability (core testable without GUI), maintainability (single responsibility per component). All 4 commits successful (434d889, bfdee34, d120881, 266beb1). Progress: Fase 1 (2500 lines) + Fase 2 partial (746 lines) = 3246 lines total extracted. Status: Phase 2.3 COMPLETE, ready for Phase 2.4+.
+
+**Key Insights:**
+- 36.2% reduction: Largest single-dock reduction so far (416 lines extracted vs 330 for json_rewriter_dock)
+- Four-component architecture: File selection, Operation options (UI) + Executor, Exporter (core)
+- Qt-free core modules: Executor and Exporter have zero Qt dependencies for pure Python testing
+- Progressive extraction: 4 sub-phases completed sequentially with validation at each step
+- Cumulative impact: 3246 lines across 12 components in Phases 1-2 demonstrates refactoring momentum
+
+---
+
+## File #136: docs/refactoring/REFACTORING_PHASE2.3_PLAN.md (285 lines)
+
+Detailed plan for Phase 2.3 SetOperationsDock refactoring. Analysis: 1148 lines with 22 methods, _setup_ui (232 lines) and _execute (167 lines) identified as largest. Four high-priority extractions identified: (1) FileSelectionWidget ~120 lines with file A/B inputs + multiple files mode, (2) OperationOptionsWidget ~80 lines with operations/comparison/options, (3) SetOperationExecutor ~200 lines with validation + pipeline + execution + stats, (4) ResultExporterHelper ~90 lines with save/export multi-format. Medium priority: AccessibilityHelper (92 lines), HistoryPresetsManager (100 lines). Execution strategy: 4 sequential phases with validation after each. Expected reduction: 1148 → ~600 lines (-48%). Risks identified: Qt signals integrity, history/presets integration, calculator signal, batch dialog dependencies. Mitigation: Test each extraction individually, maintain backward compatibility, document public APIs, create integration tests.
+
+**Key Insights:**
+- Analysis-first approach: Detailed method-by-method breakdown (22 methods listed with line counts)
+- Extraction prioritization: High (>50 lines), Medium (20-50 lines) categories for staged implementation
+- API design documented upfront: Each component's public methods and signals defined in plan
+- Risk assessment: 4 specific risks identified with corresponding precautions
+- Realistic estimates: 48% reduction target vs actual 36.2% shows conservative planning
+
+---
+
+## File #137: docs/refactoring/REFACTORING_PHASE2.4_PLAN.md (178 lines)
+
+Phase 2.4 plan for file_list_dock.py (966 lines, high complexity). Five components identified: (1) FilterPanel ~250 lines with regex, size filters, mtime, extensions, depth, exclude dirs; (2) FileListExecutor ~200 lines with listing logic, filter application, parsing, statistics; (3) PresetManager ~150 lines with CRUD, import/export, validation; (4) TableManager ~100 lines with population, sorting, context menu, quick filter; (5) ExportManager ~50 lines with CSV export. Extraction strategy: FilterPanel first (visual impact), then FileListExecutor (core), PresetManager (independent), TableManager (finalization). Target reduction: 966 → ~430 lines (-55%, ~530 lines extracted). Total: ~700 lines extracted into 4 reusable components. Benefits: Filters reusable, executor testable without GUI, preset system shareable, table widget reusable. Status: Planning complete, ready for execution.
+
+**Key Insights:**
+- High complexity acknowledged: 966 lines with "many filters and options" requires careful decomposition
+- Five-component extraction: Most ambitious plan so far (vs 4 for Phase 2.3)
+- Strategic ordering: FilterPanel first for immediate UI impact, executor second for logic isolation
+- Reusability focus: Filters, presets, table widgets explicitly designed for other contexts
+- 55% reduction target: Most aggressive reduction percentage planned (vs 36.2% actual in Phase 2.3)
+
+---
+
+## File #138: docs/refactoring/REFACTORING_PHASE2.5_PLAN.md (198 lines)
+
+Phase 2.5 plan for editor_dock.py (1069 lines). Three classes identified: (1) SyntaxHighlighter 148 lines supporting HTML/JSX/TSX, JSON, Python, JS/TS with _setup_formats, _setup_rules, highlightBlock; (2) EditorTab 344 lines with load/save, modified state, edit-only mode, toolbar (~15 methods); (3) EditorDock 535 lines with tab management, recent files, find/replace, JSON editor (main container). Two-phase extraction: 2.5.1 extracts SyntaxHighlighter (~180 lines to src/gui/widgets/), 2.5.2 extracts EditorTab (~370 lines to src/gui/widgets/). EditorDock maintained as principal class but simplified. Expected reduction: 1069 → ~520 lines (-51%, ~550 lines extracted). Status: COMPLETE - Commits 89ddc25, ab8c67b, 6cf2a3c. Actual: 1069 → 581 lines (-45.8%, -488 lines). Components: SyntaxHighlighter 190 lines, EditorTab 397 lines, total 587 lines extracted. Next phases: 2.6 (json_editor_tab 957 lines), 2.7 (search_replace_panel 910 lines), 3.0 (app.py 4533 lines CRITICAL).
+
+**Key Insights:**
+- Simple extraction pattern: Clean class-level extractions (vs method-level decomposition)
+- Syntax highlighter reusability: Supports 4+ languages, easily extensible for new file types
+- Plan vs actual: -51% target vs -45.8% actual shows realistic estimation
+- Completion tracking: Plan updated with actual metrics (190 vs 180 estimated for highlighter)
+- Next phase priorities: 2.6 and 2.7 are large (957, 910 lines), Phase 3.0 app.py marked CRITICAL (4533 lines)
+
+---
+
+
+## File #139: docs/refactoring/REFACTORING_PHASE2.6_PLAN.md (250 lines)
+
+Phase 2.6 plan for json_editor_tab.py (957 lines). Three classes identified: (1) JsonTreeWidget 116 lines with Composite pattern (GoF) for recursive tree building, click node → jump to line, visual indicators for JSON types with color coding (objects light blue, arrays teal, strings orange, etc.), signal node_clicked(int); (2) JsonSearchDialog 176 lines with Command pattern (GoF), find all with regex support, case sensitive option, keys/values filters, next/previous navigation, yellow highlights; (3) JsonEditorTab 625 lines with Facade pattern (maintains as main class). Two-phase extraction: 2.6.1 extracts JsonTreeWidget (~130 lines to src/gui/widgets/), 2.6.2 extracts JsonSearchDialog (~190 lines to src/gui/dialogs/). Expected reduction: 957 → ~650 lines (-32%, ~307 lines extracted). Benefits: SRP separation, JsonTreeWidget reusable in other editors, JsonSearchDialog reusable with any QTextEdit, facilitates unit testing. Pattern annotations: Composite (tree), Command (search), Facade (editor), Observer (signals).
+
+**Key Insights:**
+- GoF patterns documented: Composite for tree structure, Command for search encapsulation, Facade for simplification
+- Color scheme specification: 6 JSON types with hex colors for visual differentiation
+- New directory creation: src/gui/dialogs/ introduced for dialog components
+- Reusability emphasis: Tree and search components designed for use beyond JSON editor
+- Architectural separation: Widgets (UI components) vs Dialogs (modal/interaction) distinction
+
+---
+
+## File #140: docs/refactoring/REFACTORING_PHASE2.7_PLAN.md (408 lines)
+
+Phase 2.7 plan for search_replace_panel.py (910 lines). Major issue: __init__ extremely large (244 lines, lines 74-317) containing path inputs (~20), extension filters (~15), include/exclude globs (~15), search group (~40), replace group (~20), advanced conditions UI (~60), results tree (~20), splitter (~20), signal connections (~10). Challenge: Extreme coupling with highly interdependent UI components, shared state across widgets, cross-references (self.cond_list, self.buttons_layout_ref), complex signals, integrated threading. **STRATEGIC DECISION: SKIP PHASE 2.7** due to: (1) High technical complexity with 244-line __init__, high risk of bugs in critical functionality, time > marginal benefit; (2) Low ROI - already reasonably structured (17 methods), ResultsTree previously extracted, functionality complex but stable; (3) Prioritization - Phase 3.0 app.py (4533 lines) is MUCH MORE CRITICAL. Cost-benefit analysis: Refactor 2.7 = 3-4 hours + high risk vs Skip to 3.0 = 0 hours + no risk. Alternative approach documented: Extract methods from __init__ (9 private methods: _setup_path_inputs, _setup_extension_filter, etc.) to reduce __init__ from 244 → ~50 lines (-79%) without class extraction. Status: SKIPPED with complete analysis. Cumulative progress: Phases 1-2.6 = 4658 lines reduced, 38 commits. Next: Phase 3.0 app.py (4533 lines) CRITICAL.
+
+**Key Insights:**
+- Pragmatic skip decision: Technical analysis complete but execution deemed inefficient
+- ROI quantification: 3-4 hours + high risk for ~10 line reduction = poor investment
+- Alternative strategy documented: Extract Method pattern (Fowler) for future improvement
+- Prioritization rationale: app.py 5x larger (4533 vs 910) with higher project impact
+- Analysis thoroughness: 244-line __init__ breakdown shows investigation depth despite skip decision
+
+---
+
+## File #141: docs/refactoring/REFACTORING_PHASE2_REPORT.md (280 lines)
+
+Comprehensive Phase 2 report summarizing refactoring status. Executive summary: Phase 1 complete (2500 lines), Phase 2.1 AI Processor complete (110 lines: PathEntry widget 78 lines, AIProcessorWorker 58 lines), Phase 2.2 JSON Rewriter complete (220 lines: format_removal_statistics 60 lines, cli_dedupe 210 lines), Phase 2.3 Set Operations pending. Total extracted: 2830 lines across 12 modules in 15 commits with 100% test success rate. Detailed breakdowns per phase with commits, file locations, line counts. Architecture created: src/gui/widgets/, src/gui/workers/, src/utils/, src/core/ directories. Integrity verification: 19/19 modules import (100%), 4/4 cross-references correct (100%), 3/3 usage scenarios passing (100%), application functional with non-critical warnings. Problems resolved: InsertPanel field names (bbf93e5), BaseProgressDialog export issue. Metrics tables: Fase 2.1 reduced 1284 → 1197 (-87 lines), Fase 2.2 reduced 1230 → 1010 (-220 lines). Impact: Improved maintainability (smaller focused components), reusability (shared widgets/workers), testability (independent modules), performance (no negative impact). Next: Phase 2.3 Set Operations (1148 lines, estimated -200 lines).
+
+**Key Insights:**
+- Comprehensive testing methodology: 4-level verification (imports, cross-references, usage, full app)
+- 100% success metrics: All tests passing demonstrates refactoring quality
+- Incremental commit strategy: 15 commits for trackable progress and rollback capability
+- Architecture evolution: New directory structure (widgets/, workers/, dialogs/) introduced systematically
+- Problem documentation: 2 issues found and resolved with commit hashes for traceability
+
+---
+
+## File #142: docs/refactoring/REFACTORING_PHASE3.0_PLAN.md (273 lines)
+
+CRITICAL Phase 3.0 plan for app.py (4533 lines) - largest, most critical file. Structural analysis: 25 module-level functions (~1650 lines) + MainWindow class (2566 lines, 107 methods, __init__ ~130 lines). Module-level breakdown: (Group 1) JSON Translate Helpers ~400 lines with 12 functions (escape, regex compilation, scoped translation, masking, theme, dictionary loading); (Group 2) CLI Command Handlers ~400 lines with 6 commands (search, replace, insert, translate, gtranslate, dedupe); (Group 3) CLI Utilities ~100 lines (split_globs, parse_conditions, build_file_list); (Group 4) build_parser ~100 lines; (Group 5) main() ~30 lines. MainWindow methods: Setup/initialization ~400 lines (12 methods), Dock opening ~200 lines (~15 methods), Event handlers ~1000 lines, Utilities ~500 lines, closeEvent ~61 lines. REFACTORING STRATEGY: 7 phases planned - 3.1 CLI Module (~530 lines, -11.7%, LOW complexity, HIGH ROI), 3.2 JSON Translate Helpers (~400 lines, -8.8%, MEDIUM complexity, HIGH ROI), 3.3 Dock Factory (~200 lines, -4.4%, LOW complexity, MEDIUM ROI), 3.4 Menu Builder (~150 lines, -3.3%, MEDIUM complexity, MEDIUM ROI), 3.5 Settings Manager (~150 lines, -3.3%), 3.6 Event Handlers (~300 lines, -6.6%, HIGH complexity, LOW-MEDIUM ROI), 3.7 Final Cleanup (~100 lines). Projected reduction: 4533 → 2700 lines (-1833 lines, -40.4%). Target: 2000-2500 lines achievable. Risks: Circular imports, shared state (self.app, self.settings), signal/slot connections, testing criticality. Mitigations: Dependency injection, interfaces/protocols, isolated phase testing, frequent backups/commits. Status: ANALYSIS COMPLETE, ready for Phase 3.1.
+
+**Key Insights:**
+- Largest refactoring target: 4533 lines dwarfs previous largest (1148 lines Phase 2.3)
+- Methodical phasing: 7 sub-phases prioritized by complexity and ROI (HIGH/MEDIUM/LOW ratings)
+- Complexity assessment: LOW/MEDIUM/HIGH classifications guide execution order
+- ROI-driven prioritization: Phase 3.1 (HIGH ROI, LOW complexity) first vs Phase 3.6 (LOW-MEDIUM ROI, HIGH complexity) last
+- Projected metrics: Detailed line count projections after each phase (4533 → 4000 → 3600 → ... → 2700)
+
+---
+
+
+## File #143: docs/refactoring/REFACTORING_PLAN.md (150 lines)
+
+Master refactoring plan overview. Objective: Reduce app.py from ~7000 → 2500-3000 lines for improved maintainability. **PHASE 1 COMPLETE**: app.py reduced 6935 → 4530 lines (-2405 lines, -35%). Phase 1.1 Progress Management (4 files, 482 lines: OperationHistory 57, ProgressDetailsDialog 130, ProgressBarWidget 210, ProgressManager 123) commit 82db731. Phase 1.2 Search/Replace Components (4 files, 1066 lines: SearchWorker 140, ResultsTree 337, MatchPanel 95, SearchReplacePanel 861) commits 817e36f, 8b177dc, 5f7f716, 900b08a. Phase 1.3 InsertPanel (763 lines) commit e022313. Phase 1.4 Translation NOT NECESSARY (already well organized). Total Phase 1: 2500 lines reduced. Modules created: 9 files in src/gui/progress/ (4) + src/gui/panels/ (5). Benefits achieved: Maintainability (SRP modules), Testability (isolated classes), Reusability, Performance (35% smaller file), Clarity (modular architecture), Git (fewer conflicts), Onboarding. All functionalities preserved: Progress system, search/replace with regex, insert 5 modes, conditional filters AND/OR, multi-query, context menus, export results, notifications, pause/resume. Next steps: Phase 2 (ai_processor 1284, json_rewriter 1229, set_operations 1148), Phase 3 (utilities, import consolidation). 7 commits total including 1 bug fix (52401ff missing imports).
+
+**Key Insights:**
+- Phase 1 exceeded target: -35% reduction vs -30% typical target shows effective extraction
+- Comprehensive preservation: 14 major features explicitly verified as maintained post-refactoring
+- Architecture evolution: New directory structure (progress/, panels/) created with organized responsibilities
+- Bug tracking: 1 bug fix commit documented (missing imports) shows transparent issue handling
+- Multi-phase vision: Phases 2-3 planned with specific file targets (1284, 1229, 1148 lines)
+
+---
+
+## File #144: docs/refactoring/REFACTORING_PLAN_PHASE2.md (150 lines)
+
+Phase 2 detailed plan for 3 large docks (3661 lines total → target 2500-2800, -25%). Phase 2.1 AI Processor (1284 lines → 850, -430 lines, -33%): Extract (2.1.1) PathEntry widget 64 lines ✅ DONE, (2.1.2) AIProcessorWorker 47 lines, (2.1.3) Stats manager 100 lines (_load_lifetime_stats_early/load/save, _update_stats_display, _strip_code_fences), (2.1.4) Models manager 70 lines (_load/save_models_cache, _refresh_models, _on_provider_changed), (2.1.5) Conditions UI 150 lines (_add_condition_row, _clear_all_conditions, _get_conditions, _apply/save/load_advanced_conditions_preferences). Phase 2.2 JSON Rewriter (1229 lines → 850, -380 lines, -31%): Extract (2.2.1) JSONRewriterWorker 50 lines, (2.2.2) Rules manager 200 lines, (2.2.3) Preview panel 150 lines. Phase 2.3 Set Operations (1148 lines → 800, -350 lines, -30%): Extract (2.3.1) SetOperationsWorker 45 lines, (2.3.2) Venn widget 150 lines, (2.3.3) Operations manager 200 lines. Total expected: 3661 → 2500 lines (-1160 lines, -32%). New directories: src/gui/ai_processor/, src/gui/json_rewriter/, src/gui/set_operations/.
+
+**Key Insights:**
+- Consistent reduction targets: All 3 docks target 30-33% reduction demonstrating uniform refactoring approach
+- Worker pattern: All 3 docks have background workers (47-50 lines each) as first extraction candidates
+- UI separation strategy: Stats/Models/Conditions (AI), Rules/Preview (JSON), Venn/Operations (Set) show UI-logic decoupling
+- Sub-directory organization: Each dock gets dedicated subdirectory for extracted components (ai_processor/, json_rewriter/, set_operations/)
+- Status tracking: Phase 2.1.1 marked ✅ DONE (PathEntry extracted) shows incremental progress
+
+---
+
