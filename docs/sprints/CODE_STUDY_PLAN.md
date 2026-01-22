@@ -9,62 +9,103 @@
 
 ## 📊 Scope Analysis
 
-**Total Source Files**: TBD (counting...)
-**Total Lines of Code**: ~70,000 (from documentation)
+**Total Source Files**: 196 Python files
+**Total Lines of Code**: ~58,165 lines
+**Files Studied**: 28 / 196 (14.3%)
+**Lines Studied**: ~5,459 / 58,165 (9.4%)
 **Estimated Study Time**: 4-8 hours (per protocol)
 
 ---
 
 ## 🎯 Study Strategy
 
-### Phase 1: Architecture Overview (30 min)
-- [ ] Read main entry point (`main.py`, `src/app.py`)
-- [ ] Understand application initialization
-- [ ] Map module structure
-- [ ] Identify key dependencies
+### Phase 1: Architecture Overview ✅ **COMPLETE**
+**Session 1-3** | 12 files | ~1,250 lines
+- [x] Read main entry point (`main.py`, `src/app.py`)
+- [x] Understand application initialization (InitializationManager)
+- [x] Map module structure (BaseDock, DockFactory, TabManager)
+- [x] Identify key dependencies (PySide6, Qt architecture)
 
-### Phase 2: Core Systems (2-3 hours)
-- [ ] Base classes (`BaseDock`, `BaseDialog`)
-- [ ] Main window (`app.py` deep dive)
+### Phase 2: Core Systems ✅ **COMPLETE**
+**Session 4-5** | 11 files | ~2,809 lines
+- [x] Core business logic (search_replace, filters, insert)
+- [x] Command pattern (CommandManager, undo/redo)
+- [x] Memory system (MemoryRegister, regex capture)
+- [x] Executors (FileListExecutor, SetOperationExecutor, UnifiedFileExplorerExecutor)
+- [x] JSON rewriting pipeline (17 stages, rewriter_cli)
+
+### Phase 3: Feature Modules 🔄 **IN PROGRESS**
+**Session 6+** | 5/~50 files | ~400/~20,000 lines
+- [~] Utilities (`src/utils/`) - **42% done** (5/12 files) 🔄
+  - [x] file_utils.py (walk, read/write, backup)
+  - [x] text_utils.py (masking, regex compilation)
+  - [x] normalization.py (token normalization, case styles)
+  - [x] logger.py (structured logging, rotation, colors)
+  - [x] advanced_conditions.py (UI-Core bridge)
+  - [ ] error_handler.py (471 lines)
+  - [ ] error_reporter.py (255 lines)
+  - [ ] update_checker.py (286 lines)
+  - [ ] file_finder.py (417 lines)
+  - [ ] stats_formatter.py
+  - [ ] ts_utils.py
+- [ ] Rewriter operations (`src/rewriter/`) - 9 files, ~2,297 lines
+  - [ ] operations.py (36K lines!)
+  - [ ] reference_resolver.py
+  - [ ] reference_updater.py
+  - [ ] deduplicator.py
+  - [ ] key_joiner.py
+  - [ ] substitution.py
+  - [ ] advanced_filters.py
+  - [ ] ts_parser.py
+  - [ ] json_serializer.py
+- [ ] GUI docks (`src/gui/docks/`) - many files
+  - [ ] json_rewriter_dock.py
+  - [ ] file_explorer_dock.py
+  - [ ] json_translate_dock.py
+  - [ ] set_operation_dock.py
+  - [ ] ... (40+ docks total)
+- [ ] AI Processor (`src/ai_processor/`)
+- [ ] i18n system (`src/i18n/`) - 7 languages, runtime switching
+
+### Phase 4: Support Systems ⏳ **PENDING**
+**Estimated**: ~20 files, ~3,000 lines
 - [ ] Plugin system (`plugins/`)
-- [ ] Settings management
-- [ ] Theme manager
+- [ ] Theme manager (deep dive)
+- [ ] Settings management (deep dive)
+- [ ] Worker threads
+- [ ] Export/import managers
 - [ ] Accessibility manager
 
-### Phase 3: Feature Modules (2-3 hours)
-- [ ] Translation system (`json_translate_dock.py`)
-- [ ] JSON Rewriter (`json_rewriter_dock.py`)
-- [ ] File Explorer (`file_explorer_dock.py`)
-- [ ] AI Processor (`ai_processor_dock.py`)
-- [ ] Search/Replace systems
-- [ ] Set operations
-
-### Phase 4: Utilities & Support (1-2 hours)
-- [ ] Utilities (`src/utils/`)
-- [ ] i18n system (`src/i18n/`)
-- [ ] Rewriter operations (`src/rewriter/`)
-- [ ] Core filters (`src/core/`)
-- [ ] Worker threads
-
-### Phase 5: Documentation (30 min)
-- [ ] Create comprehensive NOTES.md
+### Phase 5: Documentation & Synthesis ⏳ **PENDING**
+**Final Session** | 1 file | Comprehensive NOTES.md
+- [ ] Create comprehensive docs/NOTES.md
 - [ ] Map features → code locations
 - [ ] Identify "don't touch" sections
 - [ ] Document reuse opportunities
 - [ ] List critical dependencies
+- [ ] Architecture diagram/overview
+- [ ] Update COMPREHENSION_ASSESSMENT.md to 100%
 
 ---
 
 ## 📋 Study Checklist (Protocol Step 1.2)
 
-- [ ] Study ALL source code
-- [ ] Study ALL documentation (DONE ✅)
+- [~] Study ALL source code (14.3% done) 🔄
+- [x] Study ALL documentation (100% DONE ✅)
 - [ ] Study ALL git history (commits, not just specs)
 - [ ] Study ALL tests (implementation code)
-- [ ] Identify "don't touch" code
-- [ ] Understand complete architecture
-- [ ] Find reuse opportunities
+- [x] Identify "don't touch" code (partially done) 🔄
+- [~] Understand complete architecture (50% done) 🔄
+- [ ] Find reuse opportunities (ongoing)
 - [ ] Create docs/NOTES.md with findings
+
+**Session Notes Created**:
+- [x] CODE_STUDY_SESSION_1_NOTES.md (Entry points, 4 files)
+- [x] CODE_STUDY_SESSION_2_NOTES.md (MainWindow, 3 files)
+- [x] CODE_STUDY_SESSION_3_NOTES.md (Core managers, 5 files)
+- [x] CODE_STUDY_SESSION_4_NOTES.md (Business logic, 6 files)
+- [x] CODE_STUDY_SESSION_5_NOTES.md (Executors, 5 files)
+- [x] CODE_STUDY_SESSION_6_NOTES.md (Utils module, 5 files)
 
 ---
 
@@ -93,5 +134,7 @@ For each session, document:
 
 ---
 
-**Status**: STARTING
-**Current Phase**: Phase 1 - Architecture Overview
+**Status**: 🔄 **IN PROGRESS** (Session 6 - Phase 3)
+**Current Phase**: Phase 3 - Feature Modules (Utils ~42% done)
+**Overall Progress**: 14.3% of source code studied (28/196 files)
+**Next Target**: Complete utils/, then rewriter/ module
