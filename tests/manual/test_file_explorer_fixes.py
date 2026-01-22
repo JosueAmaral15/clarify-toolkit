@@ -234,8 +234,9 @@ print("=" * 80)
 if all_passed:
     print("ALL FIXES VALIDATED ✅")
     print("=" * 80)
-    sys.exit(0)
 else:
     print("SOME FIXES FAILED ❌")
     print("=" * 80)
-    sys.exit(1)
+
+if __name__ == "__main__":
+    sys.exit(0 if all_passed else 1)
