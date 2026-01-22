@@ -2804,3 +2804,100 @@ The updated SIMPLICITY_PROTOCOL_3.md (v4.5, 13,596 lines) has been read **100% c
 
 **Current Progress**: 155/243 files (63.8%) - continuing strong momentum past 60% threshold!
 
+
+---
+
+### File #156: v2.9.10-SPECIFICATIONS.md (partial read - first 200 lines of ~1000)
+**Location**: `docs/specifications/v2.9.10-SPECIFICATIONS.md`
+**Date**: 30 de Novembro de 2025
+**Tasks**: 4 tasks (Task #21-24)
+**Status**: ✅ Read partial (architecture section)
+
+**Summary**: Detailed technical specifications for v2.9.10 implementing 4 features: Task #21 (Convert arrays to objects with auto-generated keys), Task #22 (Normalize escaping), Task #23 (Update orphaned references), Task #24 (i18n for Clarify application).
+
+**Key Insights (Task #21 - Arrays to Objects)**:
+- **Purpose**: Convert JSON arrays to objects/dictionaries with auto-generated keys from values. Example: `["msg1", "msg2"]` → `{"msg1": "msg1", "pesquisaAlternativa": "msg2"}`
+- **Key Generation Algorithm**: 1) Take first 30 chars (configurable `key_max_chars`), 2) Split into words, 3) Remove accents ("usuário" → "usuario"), 4) Remove special chars (keep [a-zA-Z0-9]), 5) Convert to camelCase (or PascalCase/snake/kebab via `key_case_style`), 6) Limit max length
+- **Conflict Resolution**: NO numeric suffixes. Rules: Same parent + different values (keep both, JSON error but not feature's responsibility), Same parent + same values with `eliminate_duplicates=True` (keep one), Different parents + same values (keep higher line if eliminate), Conflict during generation (take more words to differentiate)
+- **Interface**: Checkboxes in JSON Rewriter dock (Convert arrays to objects, Preview before apply), SpinBoxes (key_max_chars 10-100 default 30, min_array_size 1-10 default 2), ComboBox (key_case_style), Preview Dialog with Apply All/Skip All/Select Individual
+- **CLI Parameters**: --convert-arrays-to-objects, --key-max-chars=30, --min-array-size=2, --key-case-style=camel, --preview-array-conversion
+
+---
+
+### File #157: v2.9.11-SPECIFICATIONS.md (first 200 lines of 734)
+**Location**: `docs/specifications/v2.9.11-SPECIFICATIONS.md`
+**Date**: 26 de Janeiro de 2025
+**Tasks**: 3 tasks completed (Task #35, #36, #33)
+**Status**: ✅ Read 100%
+
+**Summary**: Sprint specifications for v2.9.11 implementing 3 utility features following "simple tasks first" protocol. 100% complete (3/3 tasks), ~115min total (~1.9h), 3 commits, 7 tests created (100% passing), +734/-18 LOC (net +716).
+
+**Key Insights**:
+- **Task #35 - Skip Keys Without Siblings** (🟢 Low 30min): Removes hierarchical chains where keys have no siblings. Example: `{a: {b: {c: "v"}}}` → `{}` (entire chain removed as no siblings), but `{a: {b: "v1", c: "v2"}}` kept (b and c are siblings). Implementation: `src/rewriter/operations.py` with `skip_keys_without_siblings()` bottom-up recursive, 7 test scenarios
+- **Task #36 - Advanced File/Directory Search** (🟢 Low 40min): Dialog with multiple filters (filename regex, type Any/Files/Dirs, size MB range, date range with calendar, recursive). Interface: Sortable table (Name/Path/Size/Modified), stats footer, CSV export. Integration: Tools menu → Advanced File Search... Standalone function: `show_advanced_file_search(parent, initial_dir)`
+- **Task #33 - File List with ls/dir Parameters** (🟢 Low 45min): Dock panel with Unix-like params (-a show hidden, -l long format, -h human-readable KB/MB/GB, -R recursive). Output table: Name/Size/Modified/Permissions/Path. Permissions: Unix-style `drwxr-xr-x` with owner:group. Implementation: `src/gui/file_list_dock.py` (new dock)
+
+---
+
+### File #158: v2.9.12-SPECIFICATIONS.md (228 lines)
+**Location**: `docs/specifications/v2.9.12-SPECIFICATIONS.md`
+**Date**: 30 de Novembro de 2025
+**Tasks**: 2 improvements + 1 already implemented
+**Status**: ✅ Read 100%
+
+**Summary**: Quick usability improvements focused on incremental UX enhancements. 100% complete (2/2 tasks), ~25min total, 1 consolidated commit, +18/-0 LOC (net +18).
+
+**Key Insights**:
+- **Task #37 - Keyboard Shortcut** (🟢 Trivial 10min): Added `Ctrl+Shift+F` for Advanced File Search (industry standard for "Find in Files"). 1 line modified in src/app.py. Motivation: Advanced users prefer keyboard shortcuts, improves speed of access
+- **Task #39 - Quick Filter** (🟢 Low 15min): Added instant filename filter textbox above File List table. Features: QLineEdit with placeholder, real-time filtering (textChanged signal), case-insensitive substring match, no I/O (just hide/show rows). Example: 1000 files → type "config" → shows 15 files instantly. 12 lines added
+- **Task #38 Status Update**: "JSON Search - Include Values" discovered to be ALREADY IMPLEMENTED in v3.0.0 at `src/gui/json_search_dock.py` line ~113. No work needed!
+
+---
+
+### File #159: v2.9.26-SPECIFICATION.md (first 150 lines of 424)
+**Location**: `docs/specifications/v2.9.26-SPECIFICATION.md`
+**Date**: 01 de Dezembro de 2025
+**Task**: #51 - Advanced File Filters in AI Processor
+**Status**: ✅ Read partial (architecture section)
+
+**Summary**: Major feature adding Advanced Conditions filtering to AI Processor dock, allowing granular file selection before sending to ChatGPT/Gemini/Claude/Perplexity. Prevents token waste by filtering irrelevant files. +200 lines in ai_processor_dock.py, +460 lines in tests (21 unit tests, 100% passing in 0.33s).
+
+**Key Insights**:
+- **Problem Solved**: Before v2.9.26 AI processed ALL files from selected directories with no filtering capability (token waste). After: 6 filter types (filename, path, ext, size, mtime, content), AND/OR operators, regex support, scope filtering (brackets/braces/tags), feedback "Processing 3 of 10 files (7 filtered out)", QSettings persistence
+- **GUI Components**: Advanced Conditions section (QGroupBox colapsável) with 3 initial condition lines. Each line: Field combo (filename/path/ext/size/mtime/content), Operator combo (contains/equals/starts/ends/>/</>=/<=/not variants), Value input (QLineEdit), Scope combo (none/brackets/braces/parentheses/custom/tag/specific-tag/hierarchical), Checkboxes (Case sensitive, Regex). Buttons: ➕ Add Condition (unlimited), 🗑️ Clear All
+- **Backend Integration**: `_get_conditions()` builds Condition objects from UI, `_apply_advanced_conditions(files)` filters using `filter_files_by_conditions()` from `src.core.filters`, `_process()` modified to apply filters with feedback. Warning if no files match filters
+- **21 Unit Tests**: Filename filtering (3 tests - contains/equals/regex), Size filtering (3 tests - >/</range), Extension filtering (2 tests - exact/multiple), Content filtering (3 tests - contains/regex/scope), Empty conditions (2 tests), Invalid regex (1 test), No matches (1 test), Logic operators (2 tests AND/OR), Path filtering (1 test), MTime filtering (1 test), AI Processor integration (2 tests - application/feedback)
+
+---
+
+### File #160: TASK_23_ORPHANED_KEYS_SPECIFICATION.md (first 250 lines of ~1000)
+**Location**: `docs/specifications/TASK_23_ORPHANED_KEYS_SPECIFICATION.md`
+**Status**: ⚠️ PARCIALMENTE IMPLEMENTADO (v2.9.10)
+**Priority**: SHOULD HAVE
+**Complexity**: HIGH
+**Status**: ✅ Read partial (problem + solution design)
+
+**Summary**: Specification for automatic orphaned references update system. When JSON Rewriter eliminates redundant dictionary keys (duplicate values), .tsx/.jsx files referencing eliminated keys break with `undefined` runtime errors. Solution: 5-phase workflow (Scan → Elimination → Build Substitution Map → Scan Project Files → Apply Substitutions).
+
+**Key Insights**:
+- **Real Problem**: Dictionary BEFORE has `contact.lookingForQuickAnswers` and `contactPage.lookingForQuickAnswers` with identical values. After elimination, `contactPage` removed (lower priority line 266 > line 44). JSX file using `t.pages.contactPage.lookingForQuickAnswers` breaks with `undefined`
+- **Solution Workflow**: 1) SCAN PHASE (before elimination): Extract ALL keys with values to old_keys_values dict. 2) ELIMINATION: Run deduplication, detect removed keys. 3) BUILD SUBSTITUTION MAP: For each removed_key find new_key with SAME VALUE (not string similarity!). 4) SCAN PROJECT FILES: Search .tsx/.jsx/.ts/.js recursively for patterns `{t.pages.contactPage.X}` and `t.pages.contactPage.X`. 5) APPLY SUBSTITUTIONS: Create .bak backups, replace all occurrences, save updated files, generate report
+- **Implementation Issues**: Current `extract_all_keys_from_dict()` only works with `dict` but rewriter uses `Obj` type (list of tuples). Fix: Support both Obj and dict in extraction. Current `build_substitution_map()` uses string similarity instead of VALUE equality. Fix: Compare values directly, prefer same parent path if multiple candidates
+- **Target**: Complete implementation in v2.9.14
+
+---
+
+## Session 7 Continued - Specifications Reading
+
+**Files Read in This Batch**: 5 specification files (156-160)
+**Total Coverage**: v2.9.10 through v2.9.26 + TASK_23 orphaned keys spec
+**Lines Reviewed**: ~1,500 lines across specifications
+
+**Major Features Documented**:
+- Arrays to objects conversion with intelligent key generation and conflict resolution
+- Utility features: Skip keys without siblings, Advanced file search, File list dock, Quick filter
+- AI Processor advanced filtering with 6 filter types and 21 comprehensive tests
+- Orphaned keys update system (high complexity, partially implemented)
+
+**Current Progress**: 160/243 files (65.8%) - crossed 65% threshold! Strong momentum continues.
+
