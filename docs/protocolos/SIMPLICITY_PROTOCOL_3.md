@@ -1986,6 +1986,143 @@ If ALL = ✅ and still couldn't:
 | 3️⃣ | Stall with secondary | ❌ Wastes your limited time | ✅ Focus on main task |
 | 4️⃣ | Hide problems | ❌ You alone in trouble | ✅ Warn risks clearly |
 | 5️⃣ | Give up without trying 5 | ❌ Lazy AI | ✅ Exhaust resources first |
+| 6️⃣ | Execute risky operation without permission | ❌ Irreversible damage | ✅ Inform risks and ask for explicit permission |
+
+### 🛑 Prohibition 6: Execute Risky Operations Without Permission
+
+**PROHIBITED**: Execute potentially destructive or dangerous operations without informing the user and obtaining explicit permission.
+
+**Rule**:
+> The artificial intelligence **MUST** inform the user BEFORE any risky operation, explain the danger, and ask for explicit permission. **NEVER** assume it can execute destructive operations.
+
+**Risky Operations that REQUIRE Prior Permission**:
+
+1. **File Deletion**:
+   - `rm -rf`, `git rm`, deletion of folders/files
+   - Mandatory QUESTION example:
+     ```
+     ⚠️ RISKY OPERATION: File deletion
+     
+     Need to remove the following files:
+     - src/old_module.py (unused for 6 months)
+     - tests/deprecated_test.py
+     
+     RISK: Permanent code loss. If there are hidden dependencies, may break system.
+     
+     BACKUP: Can I create backup in .backup/ before removing?
+     
+     May I proceed? (yes/no)
+     ```
+
+2. **Git Force Operations**:
+   - `git push --force`, `git reset --hard`, `git clean -fd`
+   - Example:
+     ```
+     ⚠️ RISKY OPERATION: Git force push
+     
+     Need to do: git push --force origin main
+     
+     RISK: Rewrites history. May cause loss of team commits.
+     
+     REASON: [Explain why force is necessary]
+     
+     ALTERNATIVE: Can I do interactive rebase instead of force?
+     
+     May I proceed with force? (yes/no)
+     ```
+
+3. **System Changes**:
+   - Package installation (`npm install`, `pip install`)
+   - System configuration modification
+   - Environment variable changes
+   - Example:
+     ```
+     ⚠️ RISKY OPERATION: Dependency installation
+     
+     Need to install: requests==2.31.0
+     
+     RISK: New dependency. May conflict with existing versions.
+     
+     VERIFICATION: requirements.txt doesn't specify version for requests.
+     
+     May I install? (yes/no)
+     ```
+
+4. **Destructive Database Operations**:
+   - `DROP TABLE`, `TRUNCATE`, `DELETE FROM` without WHERE
+   - Example:
+     ```
+     ⚠️ RISKY OPERATION: Data removal
+     
+     Need to execute: TRUNCATE TABLE temp_cache;
+     
+     RISK: Removes ALL data from temp_cache table.
+     
+     CONTEXT: Temporary cache table (can be recreated).
+     
+     BACKUP: Want backup first? (yes/no)
+     May I proceed? (yes/no)
+     ```
+
+5. **File Overwriting Without Backup**:
+   - Massive modifications, large refactorings
+   - Example:
+     ```
+     ⚠️ RISKY OPERATION: Massive refactoring
+     
+     Need to refactor 15 files to migrate from JS to TS.
+     
+     RISK: Changes in multiple files. If error occurs, complex rollback.
+     
+     PROTECTION: Will create branch feature/ts-migration first.
+     
+     May I proceed? (yes/no)
+     ```
+
+6. **Production Configuration Changes**:
+   - `.env`, `config.prod.js`, deployment variables
+   - Example:
+     ```
+     ⚠️ RISKY OPERATION: Production config change
+     
+     Need to change DATABASE_URL in .env.production
+     
+     RISK: HIGH - Affects production environment. Error can crash system.
+     
+     RECOMMENDATION: Test in staging first?
+     
+     ARE YOU SURE I can modify production? (yes/no)
+     ```
+
+**Mandatory Format for Requesting Permission**:
+```markdown
+⚠️ RISKY OPERATION: [Operation type]
+
+**What I need to do**: [Specific command/action]
+
+**RISK**: [Clear explanation of what can go wrong]
+
+**REASON**: [Why this operation is necessary]
+
+**PROTECTIONS**: [Backups, branches, rollback plans available]
+
+**ALTERNATIVE**: [If there's a safer option]
+
+May I proceed? (yes/no/alternative)
+```
+
+**Exceptions** (operations that DO NOT require permission):
+- ✅ Creating new files
+- ✅ Reading files
+- ✅ `git commit`, `git add` (without force)
+- ✅ Tests in isolated/local environment
+- ✅ Installing dev dependencies in new project
+- ✅ Modifications in feature branches (not main/master)
+
+**Golden Rule**:
+> **"When in doubt if an operation is risky, ASK the user. Better one extra question than an avoidable disaster."**
+
+---
 
 ### 🎯 Correct Solo Pragmatic Mindset
 
@@ -2001,6 +2138,129 @@ If ALL = ✅ and still couldn't:
 
 **Mantra**:
 > "I prefer you slightly disappointed with **the truth now** than you extremely frustrated **alone debugging at 2AM** because I hid a problem."
+
+---
+
+## 🌿 Mandatory Git Workflow: COM-UUID Branches
+
+> **MANDATORY FOR AIs**: Before starting any task, the artificial intelligence **MUST** create a work branch following the COM-UUID pattern. **NEVER** work directly on the `main` branch without explicit user permission.
+
+### 📋 Branch Rule
+
+**AI MUST ask the user at the beginning of each task:**
+
+```markdown
+🌿 **Git Workflow**
+
+I will create a new branch to work on this task.
+
+**Options:**
+1. ✅ **[RECOMMENDED]** Create branch `COM-[UUID]` (e.g.: COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281)
+2. ⚠️  Work directly on `main` branch (not recommended)
+
+**Which option do you prefer?** (default: option 1)
+```
+
+### 🎯 Branch Format
+
+**MANDATORY**: Branch must follow the pattern:
+- **Format**: `COM-[UUID]`
+- **UUID**: UUID v4 (random, generated by AI)
+- **Separator**: Hyphen after `COM`
+
+**Valid examples**:
+- `COM-123e4567-e89b-12d3-a456-426614174000`
+- `COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281`
+- `COM-f47ac10b-58cc-4372-a567-0e02b2c3d479`
+
+### 📝 Mandatory Procedure
+
+**Step 1: Ask the User**
+```markdown
+🌿 Before starting, I will create a work branch.
+
+**Proposed branch**: COM-[generated UUID]
+
+Would you like me to:
+- [1] Create this branch and work on it? (RECOMMENDED)
+- [2] Work directly on main? (only if you request)
+
+Default response: option 1
+```
+
+**Step 2: Create Branch (if user agrees or doesn't respond)**
+```bash
+# Generate random UUID v4
+# Example: a5e531b2-5d4f-a827-b3c8-24a52b27f281
+
+# Create and switch to new branch
+git checkout -b COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+```
+
+**Step 3: Work on Branch**
+- Make all modifications on COM-UUID branch
+- Regular commits as progress is made
+- **NEVER** commit directly to main
+
+**Step 4: After Completing Task**
+```bash
+# 1. Ensure all changes are committed
+git add -A
+git commit -m "feat: clear description of changes"
+
+# 2. Push branch to remote
+git push origin COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+
+# 3. Inform user and suggest PR
+```
+
+**Step 5: Create Pull Request**
+```markdown
+✅ **Task completed on branch COM-[UUID]**
+
+**Next steps:**
+1. Branch `COM-[UUID]` has been pushed to remote
+2. **Recommendation**: Create Pull Request to merge into `main`
+3. After approval and merge, branch can be deleted
+
+**Should I create Pull Request now?** (yes/no)
+
+If yes, what title and description would you like for the PR?
+```
+
+### 🚫 Exceptions (when to work on main)
+
+**Only work directly on `main` if:**
+1. ✅ User **explicitly** requests: "work on main"
+2. ✅ P0 production emergency (with user confirmation)
+3. ✅ Critical hotfix approved by user
+
+**In all other cases**: Create COM-UUID branch
+
+### ⚠️ Default Behavior
+
+**If user does NOT respond about branch:**
+- ✅ **DEFAULT**: Create COM-UUID branch automatically
+- ✅ Inform: "Creating branch COM-[UUID] for this task"
+- ✅ Proceed normally
+
+**If user says "use main":**
+- ⚠️  Confirm: "Confirm work on main? This is not recommended."
+- ⚠️  If confirmed: work on main
+- ✅ If not confirmed: create COM-UUID branch
+
+### 🎯 Rationale
+
+**Why COM-UUID branches?**
+- ✅ **Isolation**: Changes isolated, without affecting main
+- ✅ **Traceability**: Unique UUID identifies specific work
+- ✅ **Security**: Main protected from experimental changes
+- ✅ **Code Review**: PR allows review before merge
+- ✅ **Easy Rollback**: Can delete branch if something goes wrong
+- ✅ **Parallel Work**: Multiple branches for multiple tasks
+
+**Git Golden Rule**:
+> **"Main is sacred. Always work on COM-UUID branches, except if user explicitly asks to use main."**
 
 ---
 
@@ -5593,6 +5853,27 @@ Rule of thumb:
         └── rollback-template.md
 ```
 
+### 📁 Organization Rule: Documents in `docs/` Folder
+
+**MANDATORY**: All documentation markdown files **MUST** be placed in the `docs/` folder to keep the project root organized.
+
+**✅ Allowed in Project Root**:
+- `README.md` (project overview)
+- Project structure files: `CONTRIBUTING.md`, `LICENSE.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`
+
+**❌ Must go to `docs/`**:
+- `TASKS.md` → `docs/TASKS.md`
+- `ACTION_PLANS.md` → `docs/ACTION_PLANS.md`
+- Execution plans → `docs/plans/`
+- Phase/sprint files → `docs/`
+- Reports → `docs/reports/`
+- Specifications → `docs/v*.*.*.md`
+- Any other documentation file
+
+**Rationale**: Keeping the project root clean and organized facilitates navigation and professionalism.
+
+---
+
 **Solo README template** includes:
 - Production info (deploy, active users, uptime)
 - Emergency contact (your email, response time)
@@ -5686,30 +5967,46 @@ AI must have **practical knowledge** of the codebase:
     - Focus on: code you'll touch + related code
     - Basic folder structure (src/, tests/, config/)
 
-[ ] **2. Simple Mental Map**
+[ ] **2. Read Complete Git History**
+    - **MANDATORY**: Read entire commit history from main/master branch
+    - Execute: `git log --all --stat -p` to see complete changes with diffs
+    - Understand feature evolution over time
+    - Study refactoring history and why they were done
+    - Analyze bug fixes and their context (what broke and how it was fixed)
+    - Understand all project changes since inception
+    - **Rationale**: Git history documents decisions, mistakes and learnings
+
+[ ] **3. Simple Mental Map**
     - Which file calls which? (main imports)
     - Where's the critical business logic?
     - Where's infrastructure code (DB, APIs)?
 
-[ ] **3. Identify "Don't Touch"**
+[ ] **4. Identify "Don't Touch"**
     - Critical code that works (don't break it!)
     - Complex legacy code (avoid if possible)
     - Files with "DO NOT MODIFY" warnings
 
-[ ] **4. Find Patterns**
+[ ] **5. Find Patterns**
     - How are other files structured?
     - What naming convention is being used?
     - Where do tests go? Where do new files go?
 
-[ ] **5. Read Important Comments**
+[ ] **6. Read Important Comments**
     - TODOs, FIXMEs, WARNINGs in code
     - Comments explaining "why" (not "what")
     - Notes about technical decisions or limitations
 
-[ ] **6. Test Mentally**
+[ ] **7. Test Mentally**
     - If I modify file X, what breaks?
     - Where do I need to add tests?
     - Is there duplicate code I can reuse?
+
+[ ] **8. Execute Existing Tests (If Present)**
+    - Check if `tests/` folder exists in the project
+    - If exists: run all tests to understand code behavior
+    - Observe which scenarios are tested and how the system behaves
+    - Identify testing patterns and existing coverage
+    - Use test results to validate code comprehension
 ```
 
 **Don't stress about 100% - focus on essentials for current task!**
