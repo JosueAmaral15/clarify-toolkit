@@ -2887,3 +2887,276 @@ result = set(A) ^ set(B)
 
 **Next Target**: Continue with remaining GUI docks + panels + widgets
 
+
+---
+
+## GUI DOCKS - Second Batch (6 files, 3,392 lines)
+
+**Time**: 15:30-15:35
+**Files**: calculator, editor, formula, google_translate, json_translate, jsx_extractor
+
+### 5. calculator_dock.py (601 lines) - Memory-based Calculator
+
+**Purpose**: Calculator with statistics for JSON result sets
+
+**Version**: v2.9.98  
+**Author**: Josué Amaral  
+**Date**: 2025/12/22
+
+**Key Features**:
+- **Memory registers**: Store values for reuse
+- **Statistics mode**: Calculate stats on JSON arrays
+- **Operations**: +, -, *, /, %, sqrt, pow, etc.
+- **History**: Track calculation history
+- **Result sets**: Work with JSON arrays (sum, avg, min, max, count)
+
+**Architecture**:
+- Extends: `QDockWidget` (custom implementation)
+- Components: QTableWidget for history, buttons for operations
+- Integration: Can read JSON arrays from main app
+
+**Pattern**: Calculator pattern with memory registers, Observer (signals for results)
+
+---
+
+### 6. editor_dock.py (583 lines) - Integrated File Editor
+
+**Purpose**: Simple text editor with syntax highlighting
+
+**Key Features**:
+- **File types**: .txt, .json, .html, .tsx, .py, etc.
+- **Syntax highlighting**: Scope-based with colors by file type
+- **Line numbers**: Gutter with line numbering
+- **Tab support**: Multiple files open simultaneously
+- **Color schemes**: HTML tags, JSON keys, Python keywords
+- **Auto-save**: Option to auto-save on changes
+- **Find/Replace**: Basic text search functionality
+
+**Architecture**:
+- Extends: `QDockWidget`
+- Editor widget: QPlainTextEdit with custom highlighter
+- Highlighters: File-specific (HTML, JSON, Python, etc.)
+- Tab widget: QTabWidget for multiple files
+
+**Syntax Highlighting**:
+- HTML: Tags in blue, attributes in green, values in red
+- JSON: Keys in blue, values in different colors by type
+- Python: Keywords in blue, strings in green, comments in gray
+
+**Pattern**: Strategy (different highlighters), Observer (file changes)
+
+---
+
+### 7. formula_dock.py (530 lines) - Visual Formula Builder
+
+**Purpose**: Visual interface for building complex set operation formulas
+
+**Version**: v2.9.108  
+**Author**: Josué Amaral  
+**Date**: 2025/12/23
+
+**Key Features**:
+- **Drag-and-drop**: Build formulas visually
+- **Set operations**: ∪, ∩, −, △ (union, intersection, difference, symmetric)
+- **Nested operations**: ((A∪B)∩C)−D
+- **Formula validation**: Check syntax before execution
+- **Preview**: See formula structure visually
+- **Export**: Save formula for reuse
+
+**Architecture**:
+- Extends: `QDockWidget`
+- Formula builder: Custom widget tree for nested operations
+- Executor: Converts visual formula to set_operation_executor calls
+
+**Formula Syntax Example**:
+```
+((FileA ∪ FileB) ∩ FileC) − FileD
+# Union of A and B, intersect with C, subtract D
+```
+
+**Pattern**: Builder (visual formula construction), Composite (nested operations)
+
+---
+
+### 8. google_translate_dock.py (518 lines) - Google Translate Integration
+
+**Purpose**: Translation interface using Google Translate
+
+**Key Features**:
+- **7 languages**: EN, PT-BR, ES, FR, DE, ZH, JA (Clarify's i18n system)
+- **Text translation**: Direct text input for translation
+- **File translation**: Translate entire files
+- **Auto-detect**: Automatically detect source language
+- **Caching**: Cache translations to reduce API calls
+- **Retry mechanism**: Handle network errors gracefully
+- **Progress tracking**: For large files with many translations
+- **Batch translation**: Multiple files at once
+
+**Architecture**:
+- Extends: `QDockWidget`
+- Translation engine: Google Translate API wrapper
+- Cache: Local cache file for translations
+- Worker: Threaded translation for non-blocking UI
+
+**Languages Supported** (aligned with Clarify i18n):
+- English (EN)
+- Portuguese Brazil (PT-BR)
+- Spanish (ES)
+- French (FR)
+- German (DE)
+- Chinese (ZH)
+- Japanese (JA)
+
+**Pattern**: Proxy (API wrapper), Cache (reduce API calls), Worker (threading)
+
+---
+
+### 9. json_translate_dock.py (592 lines) - JSON Dictionary Translation
+
+**Purpose**: Translate text using JSON/TS dictionary, replacing with variable references
+
+**Key Features**:
+- **Dictionary-based**: Use JSON/TS file as translation source
+- **Variable references**: Replace text with `{t.key.path}`
+- **Scope filtering**: Apply to specific sections only
+- **Backup creation**: Auto-backup before translation
+- **Reverse translation**: Convert references back to text
+- **Batch processing**: Multiple files with progress
+- **Path preservation**: Maintain directory structure
+
+**Architecture**:
+- Extends: `QDockWidget`
+- Dictionary loader: Parse JSON/TS translation files
+- Translator: Text → variable reference conversion
+- Reverse mode: Variable reference → text conversion
+
+**Translation Example**:
+```python
+# Input text:
+"Welcome to our site"
+
+# Dictionary (t.json):
+{
+  "messages": {
+    "welcome": "Welcome to our site"
+  }
+}
+
+# Output:
+"{t.messages.welcome}"
+```
+
+**Use Cases**:
+- Internationalization (i18n) setup
+- Extract hardcoded strings to dictionary
+- Reverse: Convert references back to text for review
+
+**Pattern**: Strategy (forward/reverse translation), Dictionary (translation source)
+
+---
+
+### 10. jsx_extractor_dock.py (568 lines) - JSX Parameter Extractor
+
+**Purpose**: Extract parameters and attributes from JSX/TSX files, generate hierarchical JSON
+
+**Based on**: add/main.py functionality
+
+**Key Features**:
+- **Path selection**: File or directory with Browse button
+- **2 parsing modes**: JSX mode or Generic mode
+- **Attribute extraction**: Extract `key="value"` pairs
+- **Tag content extraction**: Extract text between tags
+- **Hierarchical paths**: Build nested paths (e.g., root.component.prop)
+- **Customizable options**: Prefix, separator, depth control
+- **Output formats**: Text paths + JSON structure
+- **Recursive processing**: Process entire directory trees
+
+**Architecture**:
+- Extends: `QDockWidget`
+- Parser: JSX/TSX syntax parser
+- Path builder: Hierarchical path construction
+- Output generator: Both text and JSON outputs
+
+**Parsing Modes**:
+1. **JSX Mode**: Parse React/JSX syntax
+   - Extracts: `<Component prop="value">`
+   - Output: `root.Component.prop = "value"`
+
+2. **Generic Mode**: Parse any XML-like syntax
+   - Extracts: `<tag attribute="value">content</tag>`
+   - Output: `root.tag.attribute = "value"`, `root.tag._content = "content"`
+
+**Output Example**:
+```javascript
+// Input JSX:
+<Button color="primary" size="large">Click Me</Button>
+
+// Output paths:
+root.Button.color = "primary"
+root.Button.size = "large"
+root.Button._content = "Click Me"
+
+// Output JSON:
+{
+  "Button": {
+    "color": "primary",
+    "size": "large",
+    "_content": "Click Me"
+  }
+}
+```
+
+**Use Cases**:
+- Extract props from React components
+- Generate JSON config from JSX
+- Analyze component usage patterns
+- Document component APIs
+
+**Pattern**: Visitor (JSX tree traversal), Builder (hierarchical structure)
+
+---
+
+## GUI Docks Second Batch Summary
+
+**Files**: 6 docks, 3,392 lines  
+**Functionality Coverage**:
+- Calculator: Computation + statistics
+- Editor: Text editing with syntax highlighting
+- Formula: Visual formula builder
+- Google Translate: External API translation
+- JSON Translate: Dictionary-based i18n
+- JSX Extractor: React/JSX parameter extraction
+
+**Common Patterns**:
+1. All extend QDockWidget or StandardToolDock
+2. Threading for non-blocking operations (where applicable)
+3. Progress reporting for long operations
+4. Input validation before execution
+5. Export functionality (save results)
+6. Accessibility (labeled widgets)
+7. i18n support (tr() calls)
+
+**Integration Points**:
+- Calculator: JSON arrays from main app
+- Editor: Open files from app, syntax highlighting per type
+- Formula: Uses set_operation_executor
+- Google Translate: External API, caching
+- JSON Translate: Dictionary files, scope filtering
+- JSX Extractor: File system traversal, JSON output
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Well-documented docstrings
+- Clean code structure
+- Proper error handling
+- User-friendly interfaces
+
+---
+
+**Cumulative Progress**:
+- **Files analyzed**: 38/196 (19.4%)
+- **Lines read**: 19,174/58,165 (33.0%)
+- **Time**: Session 18, ~70 minutes
+- **Modules complete**: ROOT (1), CORE (12), REWRITER (9), GUI (16)
+
+**Next Target**: Panels (SearchReplacePanel, InsertPanel, ResultsTree) + Widgets
+
