@@ -2142,3 +2142,458 @@ act_name.triggered.connect(main_window._method)
 
 ---
 
+
+---
+
+## REWRITER MODULE (Complete - 9 files, 2,297 lines)
+
+**Date**: January 22, 2026 13:14  
+**Files read**: 9/9 (100% of rewriter/)  
+**Lines analyzed**: 2,297 lines  
+**Status**: ✅ COMPLETE
+
+### Files Analyzed:
+
+1. **types.py** (30 lines) - Core data types
+2. **__init__.py** (38 lines) - Module exports
+3. **operations.py** (1,009 lines) - ✅ Previously completed
+4. **reference_resolver.py** (310 lines) - Sprint A/B reference system
+5. **reference_updater.py** (377 lines) - Task #23 orphaned references
+6. **serializer.py** (111 lines) - TS/JS output generation
+7. **ts_parser.py** (186 lines) - TypeScript parsing utilities
+8. **detailed_stats.py** (110 lines) - Sprint B Feature #3
+9. **rewriter.py** (126 lines) - Main coordinator with CRITICAL BUG FIX
+
+---
+
+### 1. types.py (30 lines) - Foundation
+
+**Purpose**: Core data types for duplicate key preservation
+
+**Key Types**:
+```python
+class Obj(list):
+    """Object as list [(key, value), ...], preserving order and duplicate keys."""
+    pass
+
+JSONNode = Union[Obj, list, dict, str, int, float, bool, None]
+```
+
+**Functions**:
+- `parse_json_preserving_duplicates_text()`: Parse JSON with object_pairs_hook → Obj
+- `freeze()`: Convert to immutable form for hashing (tuple-based recursion)
+
+**Design Pattern**: Custom type system for duplicate-key handling
+
+**Critical for**: All rewriter operations depend on Obj type
+
+---
+
+### 2. __init__.py (38 lines) - Public API
+
+**Purpose**: Module exports and public interface
+
+**Exports**:
+- Types: Obj, JSONNode, freeze
+- TS Parser: find_object_block, ts_block_to_json_text, 7+ helpers
+- Operations: dedupe, join_keys, eliminate_duplicates, 9+ transformations
+- Serializer: dump_ts_node, dump_ts_obj, dump_ts_array, collapse_blank_lines
+- Rewriter: sanitize_keys_and_values, ts_process_full_preserving, load_translation_dict
+- Reference System: create_references, resolve_references, format_reference, scan_project_references, update_references_in_project
+
+**Total**: 37 exported functions/classes
+
+**Critical Comment**: "This module includes the CRITICAL BUG FIX for data loss in sanitize_keys_and_values."
+
+---
+
+### 3. reference_resolver.py (310 lines) - Sprint A/B
+
+**Purpose**: Reference system for duplicate object handling
+
+**Sprint A** (v2.9.29): Basic $ref:path:line support (single-file)
+**Sprint B Feature #4** (v2.9.30+): Multi-format + relative paths
+
+**Key Functions**:
+
+1. **format_reference()** (lines 15-60):
+   - Supports 3 formats: '$ref', '#/', '@'
+   - Optional line numbers: `$ref:root.users.admin:123`
+   - Relative paths: Remove 'root.' prefix
+   - Examples:
+     - `$ref:root.users.admin:123` (default)
+     - `#/users.admin` (JSON Pointer, relative)
+     - `@users.admin:456` (custom format)
+
+2. **create_references()** (lines 63-183):
+   - Replace duplicate objects with refs OR delete them
+   - Mode: 'delete' (remove) or 'references' (create refs)
+   - Track seen objects: {frozen_value: (path, line, original)}
+   - Recursive processing with path tracking
+   - Stats: created, deleted, kept
+   - Uses format_reference() for Sprint B multi-format support
+
+3. **resolve_references()** (lines 186-310):
+   - Expand references to actual values
+   - Supports all 3 formats + with/without line numbers
+   - Relative path support (auto-prepend 'root.' if needed)
+   - Build index: {path: value} for lookups
+   - Recursive resolution
+   - Stats: resolved, invalid (warnings for broken refs)
+   - Error handling: Keep as-is if ref not found
+
+**Design Pattern**: Two-phase operation (create → resolve)
+
+**Algorithm**:
+- Phase 1: Traverse tree, freeze values, track first occurrence
+- Phase 2: Replace duplicates with formatted references
+- Phase 3: Build path index, resolve all reference strings
+
+**Integration**: Used by operations.py remove_duplicate_objects()
+
+**Security**: No path traversal issues (internal paths only)
+
+---
+
+### 4. reference_updater.py (377 lines) - Task #23
+
+**Purpose**: Update orphaned references in project files (v2.9.10)
+
+**Problem Statement** (lines 6-19):
+```
+Dictionary before: {pages: {contact: {...}, contactPage: {...}}}
+After eliminate: {pages: {contact: {...}}}  // contactPage removed (duplicate)
+TSX file: {t.pages.contactPage.title}  // Now undefined! Runtime error!
+```
+
+**Solution**: 4-step process
+1. Scan project BEFORE eliminating duplicates
+2. Build substitution map (contactPage → contact)
+3. Update all references in files
+4. Preview changes before applying
+
+**Data Classes**:
+- `ReferenceMatch`: Found reference in file (filepath, line_number, reference, positions)
+- `Substitution`: Mapping to apply (old_ref, new_ref, affected_files, count)
+
+**Key Functions**:
+
+1. **scan_project_references()** (lines 49-128):
+   - Scan TS/JS/TSX/JSX files for translation refs
+   - Patterns: `{t.pages.contact.title}` or `t.pages.contact.title`
+   - Returns: Dict[reference, List[ReferenceMatch]]
+   - Uses regex with proper escaping
+
+2. **build_substitution_map_by_value()** (lines 131-216):
+   - Strategy: VALUE EQUALITY (not string similarity!)
+   - Compare old vs new key dictionaries
+   - Find removed keys with IDENTICAL values in new dict
+   - Priority rules:
+     a) Prefer same parent path
+     b) Multiple candidates: first one wins (linha menor vence)
+     c) Don't touch if values differ
+     d) Different paths OK if values identical
+   - Returns: Dict[removed_path, kept_path]
+
+3. **apply_substitutions_to_file()** (lines 219-278):
+   - Update single file with substitutions
+   - Both formats: `{t.path}` and `t.path`
+   - Create .bak backup (optional)
+   - Only write if changes made
+   - Returns: substitution count
+
+4. **update_references_in_project()** (lines 281-315):
+   - Walk directory, apply to all matching files
+   - Returns: Dict[filepath, count]
+
+5. **extract_all_keys_from_obj()** (lines 318-377):
+   - Extract full path → value from Obj/dict
+   - Supports both dict and Obj (list of tuples)
+   - Recursive traversal
+   - Returns: Dict[path, value] (leaf nodes only)
+   - Example: `{'t.pages.contact.title': 'Contact Us'}`
+
+**User Requirements** (lines 155-164):
+- "linha menor vence" (first occurrence kept)
+- Eliminate duplicates even if different parent paths
+- Don't touch if same key, different values
+- Only touch if same parent key for safety
+
+**Integration**: Used by GUI for eliminate_duplicates preview/apply
+
+**Backup Strategy**: .bak files for rollback
+
+---
+
+### 5. serializer.py (111 lines) - Output Generation
+
+**Purpose**: Serialize Obj/dict to TypeScript/JavaScript format
+
+**Key Functions**:
+
+1. **esc_single()** (lines 13-26):
+   - Escape strings for single-quoted TS/JS
+   - CRITICAL BUG FIX (lines 16-19):
+     - Normalize escaping: unescape → escape (avoid double-escaping)
+     - Placeholder technique: Replace \\\\ temporarily
+     - Fixes: `\'` becomes `\\'` or `\\\\'` bug
+   - Standard escaping: backslash, single quote, \r, \n, \t
+
+2. **dump_ts_scalar()** (lines 29-39):
+   - Serialize primitives: strings, bool, null, numbers
+   - Strings: single-quoted with esc_single()
+   - JSON fallback for numbers
+
+3. **dump_ts_key()** (lines 42-49):
+   - Smart key quoting
+   - Identifiers: no quotes (e.g., `userName`)
+   - Numbers: no quotes (e.g., `123`)
+   - Others: quoted (e.g., `'user-name'`)
+
+4. **dump_ts_obj()** (lines 52-73):
+   - Serialize Obj to `{key: value, ...}`
+   - Two modes:
+     - Compact: `{a:1,b:2}` (no spaces)
+     - Pretty: Multi-line with indentation
+   - Recursive: calls dump_ts_node() for values
+
+5. **dump_ts_array()** (lines 76-97):
+   - Serialize arrays to `[item1, item2, ...]`
+   - Two modes: compact or pretty
+   - Recursive: dump_ts_node() for items
+
+6. **dump_ts_node()** (lines 100-106):
+   - Polymorphic dispatcher (Visitor pattern)
+   - Routes to: dump_ts_obj, dump_ts_array, or dump_ts_scalar
+   - Entry point for recursive serialization
+
+7. **collapse_blank_lines()** (lines 109-111):
+   - Cleanup: multiple blank lines → single blank line
+   - Regex: `\n[ \t]*\n+` → `\n`
+
+**Design Pattern**: Visitor pattern for polymorphic serialization
+
+**Output Quality**:
+- Valid TypeScript/JavaScript syntax
+- Preserves duplicate keys (Obj → object literal)
+- Readable indentation (optional)
+- Proper escaping
+
+**Integration**: Used by operations.py and rewriter.py for final output
+
+---
+
+### 6. ts_parser.py (186 lines) - TypeScript Parsing
+
+**Purpose**: Find and extract object blocks from TS/JS files
+
+**Key Functions**:
+
+1. **strip_bom()** (lines 7-9):
+   - Remove BOM (Byte Order Mark) `\ufeff`
+
+2. **scan_find_next_lbrace()** (lines 12-34):
+   - Find next `{` in string
+   - Skip over: comments (// and /* */), string literals
+   - Proper state machine: in_str, in_line, in_block, esc
+
+3. **extract_balanced_from()** (lines 37-68):
+   - Extract balanced `{...}` block
+   - Depth tracking: +1 for `{`, -1 for `}`
+   - Skip comments and strings (same state machine)
+   - Returns: (start, end, block_content)
+
+4. **find_object_block()** (lines 71-101):
+   - Find main object block in TS/JS source
+   - Strategy 1: `export default {...}` (preferred)
+   - Strategy 2: `= {...}` (assignment)
+   - Strategy 3: Largest block with colons (fallback)
+   - Heuristic: Most colons + largest size
+   - Raises ValueError if no block found
+
+5. **strip_comments_code()** (lines 104-128):
+   - Remove comments while preserving strings
+   - Output: code without // or /* */ comments
+   - State machine preserves string content
+
+6. **lift_strings_to_placeholders()** (lines 131-154):
+   - Replace string literals with `@@S0@@`, `@@S1@@`, etc.
+   - Protect strings during transformation
+   - Returns: (transformed_code, token_list)
+
+7. **restore_placeholders()** (lines 157-161):
+   - Restore strings from placeholders
+   - Replace `@@S0@@` → original string
+
+8. **quote_bare_and_numeric_keys()** (lines 164-169):
+   - Convert bare identifiers to quoted keys
+   - `{userName: 'John'}` → `{"userName": "John"}`
+   - `{123: 'abc'}` → `{"123": "abc"}`
+   - Regex: match identifier or digit followed by `:`
+
+9. **remove_trailing_commas()** (lines 172-174):
+   - Remove trailing commas: `{a: 1,}` → `{a: 1}`
+   - JSON doesn't allow trailing commas
+
+10. **ts_block_to_json_text()** (lines 177-186):
+    - Complete pipeline: TS/JS → JSON
+    - Steps:
+      1. Strip comments
+      2. Lift strings (protect them)
+      3. Quote keys
+      4. Remove trailing commas
+      5. Restore strings
+    - Output: Valid JSON text
+
+**Design Pattern**: Pipeline processing with state machines
+
+**Algorithm Quality**:
+- Proper state tracking (strings, comments, escaping)
+- Handles edge cases (nested strings, multiple quote types)
+- Idempotent transformations
+
+**Integration**: Used by rewriter.py for file loading
+
+---
+
+### 7. detailed_stats.py (110 lines) - Sprint B Feature #3
+
+**Purpose**: Track detailed statistics during JSON operations (v2.9.31)
+
+**Data Class**:
+
+`DetailedStatEntry` (lines 8-38):
+- Fields: operation, original_key, kept_key, similarity, line_numbers, count, details
+- Method: `to_dict()` for export (formatted similarity: "85.5%")
+
+**Class**:
+
+`DetailedStatsCollector` (lines 41-101):
+- Fields: entries (list), enabled (bool)
+- Methods:
+  - `enable()` / `disable()`: Toggle collection
+  - `add_entry()`: Record operation detail
+  - `get_entries()`: Retrieve all entries
+  - `clear()`: Reset collector
+  - `get_summary()`: Count by operation type
+
+**Global Instance**:
+- `_global_collector`: Singleton instance
+- `get_global_collector()`: Accessor function
+
+**Usage Pattern**:
+```python
+collector = get_global_collector()
+collector.enable()
+collector.add_entry('dedupe', 'root.user.name', 'root.admin.name', 100.0, '10, 25')
+entries = collector.get_entries()
+summary = collector.get_summary()  # {'dedupe': 42, 'eliminate': 15}
+```
+
+**Integration**: Used by operations.py for detailed tracking (Sprint B)
+
+**Design Pattern**: Singleton collector with enable/disable toggle
+
+**Performance**: Low overhead when disabled (early return)
+
+---
+
+### 8. rewriter.py (126 lines) - Main Coordinator
+
+**Purpose**: Main pipeline coordinator with CRITICAL BUG FIX
+
+**Key Functions**:
+
+1. **sanitize_keys_and_values()** (lines 16-71):
+   - CRITICAL BUG FIX: Handles both dict and Obj types correctly
+   - Options:
+     - `allow_numeric_keys`: Keep numeric keys (default: False)
+     - `strip_leading_numeric_segment`: Remove "123.key" → "key" (default: True)
+     - `drop_empty_values`: Remove empty strings (default: True)
+   - Recursive transformation
+   - Lines 42-54: **THE CRITICAL BUG FIX** - Obj type handling
+   - Before fix: Obj treated as list → data loss
+   - After fix: Obj handled correctly with key-value tuples
+
+2. **ts_process_full_preserving()** (lines 74-111):
+   - Complete pipeline: find → parse → transform → serialize
+   - Steps:
+     1. find_object_block() - locate main object
+     2. ts_block_to_json_text() - convert to JSON
+     3. parse_json_preserving_duplicates_text() - parse as Obj
+     4. dedupe() - always applied
+     5. join_keys() - if join=True
+     6. eliminate_duplicates() - if elim=True
+     7. normalize_escaping() - if normalize_esc=True (Task #22)
+     8. array_to_object_conversion() - if convert_arrays=True (Task #21)
+     9. dump_ts_node() - serialize back to TS/JS
+     10. Reconstruct full file (before + block + after)
+   - Simplified: statistics discarded (use cli_dedupe for full stats)
+
+3. **load_translation_dict()** (lines 114-126):
+   - Load JSON or TS/JS dictionary file
+   - JSON: Direct json.loads()
+   - TS/JS: find_object_block() → ts_block_to_json_text() → json.loads()
+   - Returns: dict (not Obj)
+
+**Critical Bug** (Fixed):
+- Obj type wasn't recognized in sanitize_keys_and_values()
+- Result: Data loss when processing with operations
+- Fix: Lines 42-54 explicitly handle Obj with isinstance() check
+
+**Integration**: Entry point for GUI and CLI
+
+**Design Pattern**: Facade pattern (simplifies complex pipeline)
+
+---
+
+### REWRITER MODULE - Overall Assessment
+
+**Architecture Quality**: ⭐⭐⭐⭐⭐
+- Clean separation: types → parser → operations → serializer → coordinator
+- Each file has single responsibility
+- Well-documented (docstrings explain problems + solutions)
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Comprehensive error handling
+- Critical bug fixes documented
+- Clear function names and parameters
+- Proper type hints
+
+**Algorithm Complexity**:
+- **Parsing**: O(n) state machine (efficient)
+- **Operations**: O(n) to O(n²) depending on operation
+- **Serialization**: O(n) recursive traversal
+- **Reference system**: O(n) build + O(n) resolve
+
+**Sprint Integration**:
+- **Sprint A** (v2.9.29): Basic $ref system ✅
+- **Sprint B Feature #3** (v2.9.31): Detailed stats ✅
+- **Sprint B Feature #4** (v2.9.30+): Multi-format refs ✅
+- **Task #21** (v2.9.10): Array to object conversion ✅
+- **Task #22** (v2.9.10): Normalize escaping ✅
+- **Task #23** (v2.9.10): Update orphaned references ✅
+
+**Security Considerations**:
+- ✅ No eval() or exec() used
+- ✅ Proper escaping (esc_single fix)
+- ✅ State machine parsing (no injection)
+- ✅ Backup files (.bak) for rollback
+
+**Testing Coverage** (from documentation):
+- 97% overall coverage
+- All rewriter functions tested
+- Edge cases covered (empty, nested, duplicates)
+
+**Maintenance Burden**: Low
+- Clear code structure
+- Good documentation
+- No technical debt
+- Isolated bug fixes (non-breaking)
+
+---
+
+**REWRITER Module Complete**: ✅ 100% (9/9 files, 2,297 lines analyzed)
+
+**Next Target**: GUI panels (results_tree.py, insert_panel.py, etc.)
+
