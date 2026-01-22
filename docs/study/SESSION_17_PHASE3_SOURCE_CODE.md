@@ -1684,3 +1684,157 @@ Uses **UnifiedFileExplorerExecutor** (from core):
 
 ---
 
+
+## 📖 File 16: src/gui/json_rewriter_dock.py (1,054 lines) ✅
+
+**Purpose**: JSON/TypeScript rewriter with deduplication, format conversion, and reference management
+
+**Extends**: BaseDock
+
+**Major Features**:
+1. **Basic Options**:
+   - From TS/JS: Parse TypeScript/JavaScript object literals
+   - Emit export default: Add TS export wrapper
+   - Join keys: Merge nested keys (user.name)
+   - Eliminate duplicates: Remove duplicate values
+   - No blank lines: Compact formatting
+   - Configurable indentation (-1 to 16 spaces)
+
+2. **Advanced Filtering** (10+ options):
+   - Exclude numeric keys
+   - Skip empty values
+   - Avoid duplicate child keys
+   - Normalize escaping
+   - Convert arrays to objects
+   - Skip keys without siblings
+   - Remove consecutive array duplicates
+   - Remove all array duplicates
+   - Enforce consistent case (camelCase, PascalCase, snake_case, kebab-case)
+   - Case validation with preview (chk_validate_case)
+
+3. **Duplicate Objects** (Task #52):
+   - Remove duplicate objects (chk_remove_dup_objects)
+   - Include arrays in detection (chk_include_dup_arrays)
+   - Similarity threshold (50-100%)
+   - Mode: Remove or References
+
+4. **Reference System**:
+   - **Task #23**: Update orphaned references across project
+   - **Sprint A v2.9.29**: Reference resolver
+     - Radio: Delete duplicates (default) or Use references
+     - Resolve existing references first (chk_resolve_refs)
+   - **Sprint B Feature #4 v2.9.30**: Reference format configuration
+     - Formats: $ref, #/ (JSON Pointer), @ (custom)
+     - Include line numbers option
+     - Use relative paths option
+   - Project directory scanning with backup creation
+
+5. **Advanced Filters** (Sprint B Feature #1):
+   - Configure conditions BEFORE processing
+   - 3 condition rows with AND logic
+   - Fields: filename, path, ext, size, mtime, content
+   - Operators: contains, equals, starts with, ends with, >, <, >=, <=
+   - Scope: none, brackets, braces, parentheses, custom, tag, specific-tag, hierarchical
+   - Case sensitive + regex toggles
+   - Apply to all file types (chk_apply_all_types)
+
+### Key Methods:
+
+**_rewrite()** (line 524):
+- Main execution method
+- **Case validation flow** (line 535-599):
+  - If chk_validate_case enabled:
+    - Parses input file
+    - Shows case_validator_dialog with preview + warnings
+    - User accepts/cancels
+    - Writes converted object directly (bypasses cli_dedupe case conversion)
+    - Temporarily disables enforce_case to avoid double conversion
+  - Returns early if validated
+- **Normal flow**: Builds argparse.Namespace, calls cli_dedupe()
+- Advanced filters integration (Sprint B Feature #1, line 615-635):
+  - apply_conditions_to_files() filters files BEFORE processing
+  - Logs filtered count
+- Reference resolver integration (Sprint A, line 641-649)
+- Shows removal statistics dialog with format_removal_statistics()
+- Logs operation with structured logging
+
+**_configure_reference_format()** (line 366, Sprint B Feature #4):
+- QDialog with 3 format types: $ref, #/ (JSON Pointer), @ (custom)
+- Include line numbers checkbox
+- Use relative paths checkbox
+- Saves to QSettings
+
+**_open_advanced_filters_dialog()** (line 409, Sprint B Feature #1):
+- QDialog with 3 condition rows
+- Fields: filename, path, ext, size, mtime, content
+- Operators: 11 options (contains, equals, comparisons)
+- Scope: 8 types (none, brackets, braces, etc.)
+- Case sensitive + regex toggles
+- Loads existing conditions into UI
+- Saves via get_conditions_from_ui(cond_rows)
+- Feedback message shows configured filter count
+
+**_open_input_file() / _open_output_file()** (line 329, 339):
+- QFileDialog.getOpenFileName / getSaveFileName
+- Filter: JSON files (*.json) or TypeScript files (*.ts, *.js)
+- Sets ed_in / ed_out text
+
+**_browse_project_directory()** (line 349):
+- QFileDialog.getExistingDirectory for reference updates
+- Sets ed_project_dir text
+
+### Accessibility:
+
+**Comprehensive Accessibility** (line 830-1054):
+- AccessibilityManager.set_accessible_widget() for ALL widgets
+- Names: "JSON Rewriter - Type - Widget Name"
+- Descriptions: Detailed usage instructions
+- Examples:
+  - "JSON Rewriter - Checkbox - Eliminate Duplicates" / "Remove duplicate values and consolidate keys"
+  - "JSON Rewriter - SpinBox - Similarity Threshold Percentage" / "Percentage threshold for detecting similar objects (0-100)"
+- 60+ widgets with accessibility labels
+
+### State Persistence:
+
+**QSettings** (load/save preferences):
+- Input/output file paths
+- All checkbox states (20+ options)
+- Indentation value
+- Case style selection
+- Duplicate threshold
+- Reference format configuration (Sprint B Feature #4)
+- Advanced filters configuration (Sprint B Feature #1)
+  - Serializes Condition objects to JSON
+  - Stores in QSettings as JSON string
+
+### Integration with Core:
+
+**cli_dedupe()** (from core):
+- Builds argparse.Namespace with all options
+- Passes advanced_conditions (Sprint B Feature #1)
+- Passes apply_all_types flag
+- Returns: (output_text, substitution_map, removal_stats, detailed_stats)
+
+**format_removal_statistics()** (from utils):
+- Displays removal statistics in dialog
+- Shows counts for each transformation type
+
+### Code Quality: ⭐⭐⭐⭐⭐
+
+**Strengths**:
+- Comprehensive feature coverage (20+ transformation options)
+- Sprint A/B features fully integrated
+- Excellent accessibility (60+ labeled widgets)
+- State persistence with QSettings
+- Clear separation of concerns (dialogs, core logic, UI)
+- Structured logging
+- Case validation with preview (chk_validate_case)
+
+**Notable Patterns**:
+- Radio buttons for mode selection (delete vs references)
+- Conditional widgets (disable when parent unchecked)
+- Dialog reuse for configuration
+- Comprehensive error handling
+
+---
+
