@@ -3160,3 +3160,253 @@ root.Button._content = "Click Me"
 
 **Next Target**: Panels (SearchReplacePanel, InsertPanel, ResultsTree) + Widgets
 
+
+---
+
+## GUI PANELS - Core UI Components (4 files, 3,129 lines)
+
+**Time**: 16:32-16:40
+**Location**: src/gui/panels/
+**Purpose**: Reusable UI panels for search, insert, and results display
+
+### 1. search_replace_panel.py (957 lines) - Search/Replace Interface
+
+**Purpose**: Main search and replace interface panel for Clarify
+
+**Author**: Josué Amaral  
+**Date**: 2025
+
+**Key Features**:
+- **Path selection**: File/directory with Browse button
+- **Extension filtering**: Include/exclude patterns (glob support)
+- **Advanced search**: Case sensitivity, whole word, regex support
+- **Multi-line queries**: Separate file name and content queries
+- **Replace operations**: Single or all occurrences
+- **Preserve case**: Maintain original case during replace
+- **Advanced conditions**: Filename, path, ext, size, mtime, content filters
+- **Dynamic conditions**: AND/OR logic operators
+- **Progress tracking**: Real-time progress with cancellation
+- **Results display**: Tree view with save to file
+- **Search history**: Track previous searches
+
+**Architecture**:
+- Widget: QWidget with complex layout (splitter, groups, conditions)
+- Worker: SearchWorker (threaded search in panels/search_worker.py)
+- Signals: search_completed, replace_completed, progress_update, cancelled
+- Integration: Used by File Explorer Dock, AI Processor Dock
+
+**Condition System**:
+```python
+conditions = [
+    {'type': 'filename', 'operator': 'contains', 'value': 'test'},
+    {'logic': 'AND'},
+    {'type': 'size', 'operator': '>', 'value': '1000'},
+]
+# Finds files: name contains "test" AND size > 1000 bytes
+```
+
+**Replace Modes**:
+- **Single**: Replace first occurrence
+- **All**: Replace all occurrences
+- **Preserve case**: Match original case pattern
+
+**Pattern**: Observer (signals), Worker (threading), Composite (conditions)
+
+---
+
+### 2. insert_panel.py (818 lines) - Insert Interface
+
+**Purpose**: Main insert interface panel for line-based text insertion
+
+**Author**: Josué Amaral  
+**Date**: 2025
+
+**Key Features**:
+- **Path selection**: File/directory browsing
+- **Extension filtering**: Include/exclude patterns
+- **Line lookup**: Find lines with search query
+- **Manual line number**: Specify exact line number
+- **5 insertion modes**: 
+  - Insert left (prepend)
+  - Insert right (append)
+  - Replace line
+  - Insert above line
+  - Insert below line
+- **Advanced conditions**: Multiple filter types with AND/OR logic
+- **Live preview**: Search with match highlighting
+- **Progress tracking**: Real-time progress + cancellation
+- **Results display**: Save to file capability
+- **Sort results**: Alphabetically option
+
+**Architecture**:
+- Widget: QWidget with splitter layout
+- Executor: Uses src/core/insert.py (insert_at_line function)
+- Live search: QTimer-based debounce for preview
+- Integration: Used by AI Processor Dock, other tools
+
+**Insertion Modes**:
+```python
+# Original line 10: "Hello World"
+modes = {
+    'left': "PREFIX Hello World",        # Prepend
+    'right': "Hello World SUFFIX",       # Append
+    'replace': "NEW LINE",                # Replace entire line
+    'insert-above': "NEW LINE\nHello World",  # Insert before
+    'insert-below': "Hello World\nNEW LINE"   # Insert after
+}
+```
+
+**Live Preview**:
+- Uses QTimer with 300ms debounce
+- Highlights matching lines in preview area
+- Shows exactly what will be inserted
+
+**Pattern**: Observer (signals), Strategy (insertion modes), Composite (conditions)
+
+---
+
+### 3. results_tree.py (936 lines) - Results Display Widget
+
+**Purpose**: Tree widget for displaying search matches and results
+
+**Extracted from**: app.py (v2.9.114 - Phase 1.2 refactoring)
+
+**Key Features**:
+- **Tree structure**: Hierarchical display (file → matches)
+- **Word wrap**: Custom delegate for long text (v2.9.118)
+- **Syntax highlighting**: Color-coded results
+- **Context menu**: Right-click actions (copy, open, expand all)
+- **Checkboxes**: Select specific results for batch operations
+- **Expand/Collapse**: All, by level, or individual items
+- **Export**: Save to CSV, JSON, TXT
+- **Copy to clipboard**: Selected items or all
+- **Open in editor**: Double-click to open file at line
+- **Statistics**: Show count of matches per file
+
+**Architecture**:
+- Widget: QTreeWidget with custom delegate
+- Delegate: WordWrapDelegate (QStyledItemDelegate) - v2.9.118
+- Rendering: QTextDocument for proper word wrap with HTML support
+- Context menu: QMenu with dynamic actions
+- Integration: Used by all search/filter tools
+
+**WordWrapDelegate** (v2.9.118):
+```python
+class WordWrapDelegate(QStyledItemDelegate):
+    """Custom delegate to enable word wrap in QTreeWidget items."""
+    
+    def paint(self, painter, option, index):
+        # Uses QTextDocument for proper HTML rendering
+        # Supports word wrap with multi-line text
+        # Calculates dynamic row height
+        pass
+    
+    def sizeHint(self, option, index):
+        # Returns appropriate height for wrapped text
+        pass
+```
+
+**Tree Structure Example**:
+```
+📄 file1.json (3 matches)
+  └─ Line 10: "match text" (context: ...)
+  └─ Line 25: "another match" (context: ...)
+  └─ Line 42: "final match" (context: ...)
+📄 file2.json (1 match)
+  └─ Line 5: "single match" (context: ...)
+```
+
+**Context Menu Actions**:
+- Copy Path
+- Copy Match Text
+- Copy All Results
+- Open File in Editor
+- Open File Location
+- Expand All / Collapse All
+- Export Results (CSV/JSON/TXT)
+
+**Pattern**: Composite (tree structure), Delegate (custom rendering), Observer (context menu)
+
+---
+
+### 4. regex_insert_panel.py (418 lines) - Regex-based Insertion
+
+**Purpose**: Insert text using regex pattern matching for dynamic content
+
+**Key Features**:
+- **Regex patterns**: Use capture groups for dynamic insertion
+- **Pattern templates**: Predefined regex patterns
+- **Group substitution**: Use $1, $2, etc. in replacement text
+- **Preview**: Show matched groups before insertion
+- **Validation**: Check regex syntax before execution
+- **Multiple files**: Batch processing with progress
+
+**Architecture**:
+- Widget: QWidget extending InsertPanel with regex-specific UI
+- Pattern validator: Check regex syntax real-time
+- Group preview: Show captured groups before insert
+
+**Regex Insertion Example**:
+```python
+# Original line: "Name: John Doe"
+# Pattern: r"Name: (\w+) (\w+)"
+# Replacement: "First: $1, Last: $2"
+# Result: "First: John, Last: Doe"
+```
+
+**Use Cases**:
+- Extract and reformat data
+- Transform structured text
+- Dynamic content generation
+- Pattern-based text manipulation
+
+**Pattern**: Strategy (regex insertion), Observer (validation)
+
+---
+
+## GUI Panels Summary
+
+**Total**: 4 panels, 3,129 lines
+
+**Core Functionality**:
+1. **SearchReplacePanel**: Advanced search with filters + replace operations
+2. **InsertPanel**: Line-based insertion with 5 modes + live preview
+3. **ResultsTree**: Hierarchical results display with word wrap + export
+4. **RegexInsertPanel**: Regex-based insertion with group substitution
+
+**Common Patterns**:
+- All use Worker pattern for threading (non-blocking UI)
+- All support advanced conditions (AND/OR logic)
+- All have progress tracking + cancellation
+- All integrate with core executors (search_replace, insert, etc.)
+- All have comprehensive error handling
+
+**Integration Points**:
+- **SearchReplacePanel**: Used by File Explorer, AI Processor
+- **InsertPanel**: Used by AI Processor, other tools
+- **ResultsTree**: Used by all search/filter tools
+- **RegexInsertPanel**: Standalone tool + integration option
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Well-documented (comprehensive docstrings)
+- Clean separation of concerns
+- Proper signal/slot connections
+- Memory-efficient (streaming results)
+- User-friendly (live preview, validation)
+
+**v2.9.118 Enhancement**: WordWrapDelegate
+- Custom QStyledItemDelegate for proper word wrap
+- Uses QTextDocument for HTML rendering
+- Dynamic row height calculation
+- Significant UX improvement for long text
+
+---
+
+**Cumulative Progress**:
+- **Files analyzed**: 42/196 (21.4%)
+- **Lines read**: 22,303/58,165 (38.3%)
+- **Time**: Session 18, ~90 minutes
+- **Modules complete**: ROOT (1), CORE (12), REWRITER (9), GUI (16 docks + 4 panels = 20)
+
+**Next Target**: Continue with remaining GUI docks + widgets
+
