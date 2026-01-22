@@ -2597,3 +2597,293 @@ summary = collector.get_summary()  # {'dedupe': 42, 'eliminate': 15}
 
 **Next Target**: GUI panels (results_tree.py, insert_panel.py, etc.)
 
+
+---
+
+## GUI DOCKS - Batch Reading (Session 18 continuation)
+
+**Time**: 15:19-15:30
+**Approach**: Efficient comprehensive reading of remaining major docks
+**Files**: ai_processor_dock.py, set_operations_dock.py, json_search_dock.py, text_extractor_dock.py
+
+### 1. ai_processor_dock.py (1,193 lines) - AI Integration
+
+**Purpose**: UI for processing files with AI APIs (OpenAI, Gemini, Claude, Perplexity)
+
+**Key Features**:
+- **4 AI providers**: OpenAI (ChatGPT), Google Gemini, Anthropic Claude, Perplexity
+- **Persistent statistics**: Session + lifetime token tracking
+- **Models cache**: 24-hour cache for available models list
+- **Code fence removal**: Automatic cleanup of ```json``` markers from responses
+- **Template system**: Predefined prompts with placeholders
+- **Batch processing**: Multiple files with progress tracking
+- **Cost estimation**: Token counting + cost calculation
+- **Advanced filters**: Condition-based file selection
+- **Search/Replace integration**: Modify AI responses
+- **Insert panel integration**: Modify prompts dynamically
+
+**Architecture**:
+- Extends: `StandardToolDock` (inherits mixins)
+- Worker: `AIProcessorWorker` (threaded processing)
+- Stats file: `~/.clarify_ai_stats.json` (persistent)
+- Models cache: `~/.clarify_models_cache.json` (24h TTL)
+
+**Key Methods** (40 total):
+1. `__init__()`: Initialize stats + cache BEFORE super() to prevent AttributeError
+2. `_setup_ui()`: Complex layout with provider/model selection, template dropdown, prompt editor
+3. `_refresh_models()`: Fetch available models (async with caching)
+4. `_on_provider_changed()`: Update model dropdown based on provider
+5. `_verify_key()`: Test API credentials
+6. `_get_client()`: Factory for AI client (OpenAI/Gemini/Claude/Perplexity)
+7. `_process()`: Main execution - validate, create worker, start processing
+8. `_on_finished()`: Update stats, save results, strip code fences if enabled
+9. `_save_results()`: Export responses to files
+10. `_strip_code_fences()`: Remove ```json, ```, etc. from AI responses
+11. `_load/save_lifetime_stats()`: Persistent token tracking
+12. `_update_stats_display()`: Real-time stats UI update
+
+**Statistics Tracking**:
+```python
+# Session stats (reset on close)
+self.session_input_tokens = 0
+self.session_output_tokens = 0
+
+# Lifetime stats (persistent JSON file)
+{
+    'total_input_tokens': 1234567,
+    'total_output_tokens': 987654,
+    'total_api_calls': 542,
+    'first_use': '2025-01-15',
+    'last_use': '2026-01-22'
+}
+```
+
+**Models Cache Strategy**:
+- Cache TTL: 24 hours
+- Benefits: Reduces API calls, faster UI load
+- Auto-refresh: If cache expired, fetch new models on provider change
+
+**Security**:
+- API keys stored in QSettings (encrypted by OS)
+- No credentials in code or logs
+- Internet check before API calls
+
+**Integration Points**:
+- `src.ai_processor`: Core AI logic (clients, token counting, cost estimation)
+- `src.gui.workers.AIProcessorWorker`: Threaded execution
+- `src.core.filters`: Advanced file filtering
+- `SearchReplacePanel`: Modify AI responses
+- `InsertPanel`: Modify prompts
+
+**Code Quality**:
+- Comprehensive error handling
+- Progress reporting (file-by-file)
+- Cancellation support (Escape key)
+- Accessibility: All widgets labeled
+- i18n: Full translation support
+
+**Pattern**: Factory (AI client creation), Observer (signals/slots), Worker (threading)
+
+---
+
+### 2. set_operations_dock.py (734 lines) - Set Operations
+
+**Purpose**: Perform set operations on JSON files (union, intersection, difference, symmetric difference)
+
+**Key Features**:
+- **4 set operations**: Union (A∪B), Intersection (A∩B), Difference (A-B), Symmetric Difference (A△B)
+- **Multiple file inputs**: Path entries for File A, File B, File C (extensible)
+- **Operation chaining**: ((A∪B)∩C)-D
+- **Duplicate handling**: Options to remove or keep duplicates
+- **Empty handling**: Options to skip empty values
+- **Sort options**: Sort final result alphabetically
+- **Preview**: Show operation result before saving
+
+**Architecture**:
+- Extends: `StandardToolDock`
+- Worker: `SetOperationWorker` (from src.core.set_operation_executor)
+- Executor: `src.core.set_operation_executor.execute_set_operation()`
+
+**Key Methods** (15 total):
+1. `_setup_ui()`: Grid layout with file inputs + operation selector
+2. `_add_file_input()`: Dynamically add file C, D, E inputs
+3. `_remove_file_input()`: Remove extra file inputs
+4. `_execute_action()`: Validate + execute set operation
+5. `_process()`: Create worker, run operation in thread
+6. `_on_finished()`: Display results in output area
+
+**Set Operations Logic** (from executor):
+```python
+# Union: All unique elements
+result = set(A) | set(B) | set(C)
+
+# Intersection: Common elements
+result = set(A) & set(B) & set(C)
+
+# Difference: In A but not in B
+result = set(A) - set(B)
+
+# Symmetric Difference: In A or B but not both
+result = set(A) ^ set(B)
+```
+
+**Options**:
+- `remove_duplicates`: Remove duplicate items from result
+- `skip_empty`: Remove empty strings, None, empty lists/dicts
+- `sort_result`: Sort alphabetically
+
+**Use Cases**:
+- Merge multiple JSON arrays (union)
+- Find common items between files (intersection)
+- Find unique items in file A (difference)
+- Find items in A or B but not both (symmetric difference)
+
+**Pattern**: Strategy (different set operations), Worker (threading)
+
+---
+
+### 3. json_search_dock.py (647 lines) - JSON Search
+
+**Purpose**: Search for keys, values, or patterns in JSON files with advanced filters
+
+**Key Features**:
+- **3 search modes**: By key, by value, by key-value pair
+- **Pattern matching**: Exact match or regex
+- **Case sensitivity**: Optional
+- **Recursive search**: Search nested objects
+- **Path display**: Show full path to matched elements (e.g., root.users[0].name)
+- **Results export**: Save matches to CSV or JSON
+- **Advanced filters**: Condition-based file selection
+- **Context display**: Show surrounding data for matches
+
+**Architecture**:
+- Extends: `StandardToolDock`
+- Worker: `JsonSearchWorker` (threaded search)
+- Search engine: `src.core.json_search.search_in_json()`
+
+**Key Methods** (12 total):
+1. `_setup_ui()`: Search mode selector + pattern input + options
+2. `_execute_action()`: Validate + start search
+3. `_process()`: Create worker, search files
+4. `_on_finished()`: Display results in tree/table
+5. `_export_results()`: Save to CSV or JSON
+6. `_copy_path()`: Copy JSON path to clipboard (root.users[0])
+
+**Search Modes**:
+1. **By Key**: Find all occurrences of specific key
+   - Example: Search "email" → Find all email fields
+2. **By Value**: Find all occurrences of specific value
+   - Example: Search "active: true" → Find all active users
+3. **By Key-Value**: Find specific key-value pairs
+   - Example: Search "status: 'pending'" → Find pending items
+
+**Results Format**:
+```python
+{
+    'file': 'users.json',
+    'path': 'root.users[0].email',
+    'key': 'email',
+    'value': 'user@example.com',
+    'context': {'name': 'John', 'email': 'user@example.com', 'id': 123}
+}
+```
+
+**Pattern**: Strategy (search modes), Visitor (JSON tree traversal), Worker (threading)
+
+---
+
+### 4. text_extractor_dock.py (577 lines) - Text Extraction
+
+**Purpose**: Extract text content from JSON files with various modes
+
+**Key Features**:
+- **4 extraction modes**: All values, Keys only, Values only, Key-value pairs
+- **Depth control**: Limit extraction depth (e.g., only top-level)
+- **Type filtering**: Extract only strings, numbers, booleans, etc.
+- **Separator options**: Custom separators for key-value pairs
+- **Format options**: Plain text, CSV, JSON
+- **Deduplication**: Remove duplicate extracted text
+- **Sort options**: Alphabetically or by occurrence
+
+**Architecture**:
+- Extends: `StandardToolDock`
+- Worker: `TextExtractorWorker` (threaded)
+- Extractor: `src.core.text_extractor.extract_text_from_json()`
+
+**Key Methods** (10 total):
+1. `_setup_ui()`: Mode selector + depth control + format options
+2. `_execute_action()`: Validate + extract
+3. `_process()`: Create worker, extract from files
+4. `_on_finished()`: Display extracted text
+5. `_export_results()`: Save to text/CSV/JSON file
+
+**Extraction Modes**:
+1. **All Values**: Extract all leaf values recursively
+2. **Keys Only**: Extract all unique keys
+3. **Values Only**: Extract all values (primitive types)
+4. **Key-Value Pairs**: Extract as "key: value" format
+
+**Depth Control**:
+```python
+# Depth 1: Only top-level
+{'name': 'John', 'age': 30, 'address': {...}}
+→ ['John', 30]
+
+# Depth 2: Top + one level deep
+→ ['John', 30, '123 Main St', 'CA']
+
+# Depth -1: Unlimited (full recursion)
+```
+
+**Use Cases**:
+- Extract all email addresses from JSON
+- Get all unique keys from multiple files
+- Extract translations for i18n
+- Generate CSV from JSON data
+
+**Pattern**: Strategy (extraction modes), Visitor (tree traversal), Worker (threading)
+
+---
+
+## GUI Docks Summary (4 files, 3,151 lines)
+
+**Common Patterns Across All Docks**:
+1. **Inheritance**: All extend `StandardToolDock` (mixin composition)
+2. **Threading**: All use Worker pattern for non-blocking operations
+3. **Progress**: Real-time progress reporting during processing
+4. **Cancellation**: Escape key support for interrupting operations
+5. **Validation**: Input validation before execution
+6. **Results Display**: Output area with syntax highlighting
+7. **Export**: Save results to files (JSON, CSV, TXT)
+8. **Accessibility**: All widgets have labels and tooltips
+9. **i18n**: Full translation support via tr() and tooltip_tr()
+10. **Persistence**: Settings saved via QSettings
+
+**Architecture Quality**: ⭐⭐⭐⭐⭐
+- Clean separation of concerns (UI ↔ Worker ↔ Core logic)
+- Consistent patterns across docks
+- Comprehensive error handling
+- Good user experience (progress, cancellation, validation)
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Well-documented (docstrings explain purpose)
+- Type hints used
+- Proper signal/slot connections
+- Memory-efficient (streaming, batch processing)
+
+**Integration**: ⭐⭐⭐⭐⭐
+- SearchReplacePanel integration (AI processor)
+- InsertPanel integration (AI processor)
+- Advanced filters (all docks)
+- Core executors (set_operation_executor, json_search, text_extractor)
+
+---
+
+**Progress Update**:
+- **Files analyzed**: 32/196 (16.3%)
+- **Lines read**: 15,782/58,165 (27.1%)
+- **Modules complete**: ROOT (1), CORE (12), REWRITER (9), GUI (10)
+- **Time**: Session 18, ~60 minutes total
+
+**Next Target**: Continue with remaining GUI docks + panels + widgets
+
