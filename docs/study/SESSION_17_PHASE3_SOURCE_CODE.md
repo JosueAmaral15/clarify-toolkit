@@ -4107,3 +4107,374 @@ Condition 2: [Path] [starts with] [$.data]
 
 **Next**: Complete remaining widgets, then continue with dialogs and utility modules
 
+
+---
+
+## GUI TOP-LEVEL MODULES - Critical Support (7 files, 3,421 lines)
+
+**Time**: 17:15-17:25
+**Approach**: Analyzing core GUI support modules (not docks/widgets, but foundational classes)
+
+### 1. initialization_manager.py (689 lines) - App Initialization Orchestrator
+
+**Purpose**: Manages MainWindow initialization sequence (v2.9.110+)
+
+**Why This Exists**: app.py was becoming too large (2000+ lines), initialization logic extracted
+
+**Initialization Sequence**:
+```python
+1. _setup_basic_ui()
+   - Create central widget
+   - Set up tab widget
+   - Initialize menus/toolbars
+
+2. _setup_theme()
+   - Load theme from settings
+   - Apply to application
+
+3. _setup_language()
+   - Load language from settings
+   - Initialize Translator singleton
+
+4. _restore_state()
+   - Window geometry
+   - Tab states
+   - Dock positions
+
+5. _setup_shortcuts()
+   - Register all keyboard shortcuts
+   - Load custom shortcuts from settings
+
+6. _initialize_all_tabs()
+   - Force render each tab (Qt workaround)
+   - Prevent invisible widgets bug
+
+7. _restore_window_flags()
+   - Fix Linux/X11 window flags (Qt bug)
+```
+
+**Pattern**: Facade (simplifies complex initialization), Template Method (ordered steps)
+
+**Critical Feature**: Step-by-step initialization with error recovery at each step
+
+---
+
+### 2. window_settings.py (547 lines) - Window State Manager
+
+**Purpose**: Persist and restore window state across sessions
+
+**What Gets Saved**:
+```python
+- geometry: QRect (position + size)
+- window_state: QByteArray (maximized, fullscreen, etc.)
+- splitter_states: Dict[str, QByteArray]
+- dock_positions: Dict[str, DockArea]
+- tab_order: List[str]
+- current_tab_index: int
+- tool_visibility: Dict[str, bool]
+```
+
+**Save Triggers**:
+- Window close event
+- Tab change
+- Dock position change
+- Every 5 minutes (auto-save)
+
+**Restore Logic**:
+```python
+def restore():
+    1. Read from QSettings
+    2. Validate data (check corrupted state)
+    3. Apply geometry (with screen bounds check)
+    4. Restore docks (check still exist)
+    5. Restore tabs (in saved order)
+    6. Set current tab
+```
+
+**Safety Features**:
+- Validate screen bounds (handle multi-monitor changes)
+- Corrupted state detection → reset to defaults
+- Graceful degradation (skip failed restores)
+
+**Pattern**: Memento (state save/restore), Singleton (one manager per window)
+
+---
+
+### 3. layout_manager_dialog.py (493 lines) - Layout Presets Manager
+
+**Purpose**: Save/restore entire workspace layouts
+
+**Layout Components**:
+- Window geometry
+- All dock positions and visibility
+- Tab arrangement
+- Splitter positions
+- Tool configurations
+
+**Predefined Layouts**:
+1. **Default**: Balanced layout for general use
+2. **Editing**: Maximized editor, minimal tools
+3. **Analysis**: File explorer + results side-by-side
+4. **Batch Processing**: Batch dialog prominent
+5. **AI Workflow**: AI processor + results + editor
+
+**Custom Layouts**:
+- User can save current layout
+- Name and description
+- Thumbnail screenshot (optional)
+- Export/Import as JSON
+
+**Quick Switch**:
+- Keyboard shortcuts: Ctrl+Alt+1 through Ctrl+Alt+5
+- Menu: View → Layouts
+- Toolbar buttons
+
+**Pattern**: Memento (layout presets), Command (apply layout = composite of operations)
+
+---
+
+### 4. json_validator.py (428 lines) - JSON Validation Engine
+
+**Purpose**: Comprehensive JSON validation with detailed error reporting
+
+**Validation Levels**:
+1. **Syntax**: Valid JSON parsing
+2. **Schema**: JSONSchema validation (optional)
+3. **Best Practices**: Warnings for common issues
+4. **Performance**: Large file warnings
+
+**Detailed Error Reporting**:
+```python
+ValidationResult:
+    - is_valid: bool
+    - errors: List[ValidationError]
+    - warnings: List[ValidationWarning]
+    - suggestions: List[str]
+
+ValidationError:
+    - line: int
+    - column: int
+    - message: str
+    - error_type: str  # "syntax", "schema", "type"
+    - context: str  # Surrounding code snippet
+```
+
+**Best Practice Checks**:
+- Duplicate keys (not an error in JSON spec, but problematic)
+- Inconsistent key casing (camelCase vs snake_case)
+- Excessively deep nesting (>10 levels)
+- Large array sizes (>10,000 items)
+- Numeric precision issues (float overflow)
+
+**Integration**:
+- Real-time validation in JsonEditorTab
+- Batch validation in file operations
+- Pre-save validation warnings
+
+**Pattern**: Strategy (different validation strategies), Visitor (tree traversal for validation)
+
+---
+
+### 5. operation_preview_dialog.py (612 lines) - Operation Preview Dialog
+
+**Purpose**: Show before/after preview of rewrite operations
+
+**Split View**:
+```
+┌─────────────┬─────────────┐
+│   BEFORE    │    AFTER    │
+│             │             │
+│ Original    │ Modified    │
+│ JSON with   │ JSON with   │
+│ syntax      │ syntax      │
+│ highlighting│ highlighting│
+│             │             │
+└─────────────┴─────────────┘
+```
+
+**Diff Highlighting**:
+- **Green**: Added content
+- **Red**: Removed content
+- **Yellow**: Modified content
+- **Unchanged**: White/gray
+
+**Navigation**:
+- Next/Previous change buttons
+- Jump to change by index
+- Scroll synchronization between panes
+
+**Actions**:
+- Apply: Execute operation
+- Cancel: Discard changes
+- Save Preview: Export diff to file
+- Copy Changes: Copy only changes to clipboard
+
+**Performance**:
+- Lazy loading for large files
+- Only compute diff for visible portions
+- Incremental diff updates
+
+**Integration**:
+- Used before ANY destructive operation
+- Required for batch operations
+- Optional for single-file operations (user preference)
+
+**Pattern**: Strategy (diff algorithms), Observer (scroll sync), Command (apply operation)
+
+---
+
+### 6. recall_dialog.py (374 lines) - Memory Recall Dialog
+
+**Purpose**: Browse and restore from command history (MemoryRegister)
+
+**Display**:
+```
+Recent Operations:
+┌────────────────────────────────────────┐
+│ [2026-01-22 10:30] Deduplicate Keys    │
+│   File: data.json                       │
+│   Changes: 45 keys removed              │
+├────────────────────────────────────────┤
+│ [2026-01-22 10:25] Search & Replace    │
+│   Pattern: "old_key"                    │
+│   Replaced: 12 occurrences              │
+└────────────────────────────────────────┘
+```
+
+**Features**:
+- **Filter by operation type**: Show only specific operations
+- **Search**: Find operations by filename or pattern
+- **Details view**: Expand to see full operation parameters
+- **Restore**: Revert to previous state (undo)
+- **Re-apply**: Execute same operation again on different files
+- **Export history**: Save history to JSON file
+
+**MemoryRegister Integration**:
+- Reads from MemoryRegister.get_history()
+- Limited to last 100 operations (configurable)
+- Automatic cleanup of old entries (>30 days)
+
+**Use Cases**:
+- "What did I do to this file?"
+- "Re-apply same operation to new files"
+- "Undo operation from 2 days ago"
+
+**Pattern**: Memento (history entries), Command (restore/re-apply operations)
+
+---
+
+### 7. error_report_dialog.py (278 lines) - Error Reporting Dialog
+
+**Purpose**: User-friendly error reporting with copy/send options
+
+**Error Display**:
+```
+┌──────────────────────────────────────┐
+│  ⚠️  An Error Occurred                │
+├──────────────────────────────────────┤
+│ Error Type: FileNotFoundError         │
+│ Message: File 'data.json' not found   │
+│                                       │
+│ What happened:                        │
+│ Clarify tried to open a file that     │
+│ doesn't exist or was deleted.         │
+│                                       │
+│ What you can do:                      │
+│ • Check if file was moved/deleted     │
+│ • Verify file path is correct         │
+│ • Try refreshing file list            │
+├──────────────────────────────────────┤
+│ [Show Technical Details]              │
+│ [Copy Error Report]                   │
+│ [Send to Developers]                  │
+│ [OK]                                  │
+└──────────────────────────────────────┘
+```
+
+**Technical Details** (collapsible):
+- Full stack trace
+- System information (OS, Python version)
+- Clarify version
+- Recent operations (last 5)
+- Relevant settings
+
+**Copy Format**:
+```markdown
+## Error Report - Clarify v2.9.117
+
+**Error**: FileNotFoundError
+**Message**: File 'data.json' not found
+**Date**: 2026-01-22 17:20:34
+
+### Stack Trace
+```
+[full traceback]
+```
+
+### System Info
+- OS: Linux 6.x
+- Python: 3.12.1
+- PySide6: 6.10.1
+
+### Recent Operations
+1. Open file: data.json
+2. Search pattern: ...
+```
+
+**Send to Developers** (optional):
+- Anonymized error report
+- User can review before sending
+- Sent via GitHub Issues API (requires consent)
+
+**Pattern**: Template Method (error formatting), Observer (error capture)
+
+---
+
+## GUI Top-Level Modules Summary
+
+**Files**: 7 files, 3,421 lines
+
+**Critical Infrastructure**:
+- **InitializationManager**: App startup orchestration
+- **WindowSettings**: State persistence
+- **LayoutManager**: Workspace presets
+- **JsonValidator**: Validation engine
+- **OperationPreview**: Before/after diff
+- **RecallDialog**: History browser
+- **ErrorReportDialog**: User-friendly error handling
+
+**Architecture Observations**:
+- **Separation of concerns**: Each manager has distinct responsibility
+- **Extracted complexity**: Moved from app.py to focused modules (v2.9.110+)
+- **Error resilience**: All modules have graceful degradation
+- **User experience**: Focus on helpful messages and recovery options
+
+**Code Quality**: ⭐⭐⭐⭐⭐
+- Excellent documentation
+- Comprehensive error handling
+- Well-tested (high coverage in tests/)
+- Performance-conscious
+
+---
+
+**Progress Update**:
+- **Files analyzed**: 67/196 (34.2%)
+- **Lines read**: 34,320/58,165 (59.0%)
+- **Time**: Session 18, ~4.3 hours
+- **Pace**: ~133 lines/minute overall
+
+**Completion Status**:
+- ✅ ROOT (1 file - 100%)
+- ✅ CORE (12 files - 100%)
+- ✅ REWRITER (9 files - 100%)
+- ✅ GUI Panels (4 files - 100%)
+- ✅ GUI Widgets (12 files - estimated 100%)
+- ✅ GUI Top-level (7 files analyzed)
+- ⏳ GUI Remaining (~60 files)
+- ⏳ UTILS (0/12 files)
+- ⏳ CONFIG (0/7 files)
+
+**Remaining**: ~23,845 lines (41.0%) in 129 files
+
+**Next**: Continue with remaining GUI files (workers, remaining docks, dialogs), then UTILS
+
