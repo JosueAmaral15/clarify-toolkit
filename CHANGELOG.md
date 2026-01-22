@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### Added (2026-01-22) - Phase 4: Advanced Conditions Logic Operator (v2.9.116)
+- **File Explorer**: Integrated logic_operator (AND/OR) with Advanced Conditions in browse and search modes
+  - Added `logic_operator` parameter to `execute_browse()` and `execute_search()` in UnifiedFileExplorerExecutor
+  - Extended browse mode to support conditions filtering (previously only search mode had it)
+  - Updated FileExplorerWorker signatures to match executor (browse and search methods)
+  - GUI now retrieves and passes logic_operator from ConditionsGrid widget
+  - Programmer #8 (Josué Amaral) - Following Simplicity Protocol 3 v4.5
+  - Files: `src/core/file_explorer_executor.py`, `src/gui/file_explorer_dock.py`, `src/gui/panels/file_explorer_worker.py`
+  - Tests: Added 10 unit tests for logic_operator integration (all passing)
+  - Time: 3.5 hours (125 min study + 45 min implementation + 30 min testing)
+
+### Fixed (2026-01-22) - Phase 4 Bug Fixes
+- **File Explorer**: Fixed browse result format bug (dict vs object attribute access)
+  - Changed `result.files` to `result["files"]` in `_on_browse_finished()`
+  - Removed duplicate `_cleanup_worker_thread()` call
+  - File: `src/gui/file_explorer_dock.py`
+
 ### Added (2026-01-02) - i18n Implementation
 - **i18n**: Comprehensive Portuguese (Brazil) translations for 257 GUI elements
   - 26 tooltips translated across 7 files (Task 1)
