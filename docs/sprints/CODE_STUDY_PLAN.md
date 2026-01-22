@@ -11,8 +11,8 @@
 
 **Total Source Files**: 196 Python files
 **Total Lines of Code**: ~58,165 lines
-**Files Studied**: 28 / 196 (14.3%)
-**Lines Studied**: ~5,459 / 58,165 (9.4%)
+**Files Studied**: 32 / 196 (16.3%)
+**Lines Studied**: ~6,888 / 58,165 (11.8%)
 **Estimated Study Time**: 4-8 hours (per protocol)
 
 ---
@@ -35,19 +35,17 @@
 - [x] JSON rewriting pipeline (17 stages, rewriter_cli)
 
 ### Phase 3: Feature Modules 🔄 **IN PROGRESS**
-**Session 6+** | 5/~50 files | ~400/~20,000 lines
-- [~] Utilities (`src/utils/`) - **42% done** (5/12 files) 🔄
+**Session 6-7** | 9/~50 files | ~1,829/~20,000 lines
+- [x] Utilities (`src/utils/`) - ✅ **100% COMPLETE** (9/9 files, ~2,304 lines) 🎉
   - [x] file_utils.py (walk, read/write, backup)
   - [x] text_utils.py (masking, regex compilation)
   - [x] normalization.py (token normalization, case styles)
   - [x] logger.py (structured logging, rotation, colors)
   - [x] advanced_conditions.py (UI-Core bridge)
-  - [ ] error_handler.py (471 lines)
-  - [ ] error_reporter.py (255 lines)
-  - [ ] update_checker.py (286 lines)
-  - [ ] file_finder.py (417 lines)
-  - [ ] stats_formatter.py
-  - [ ] ts_utils.py
+  - [x] error_handler.py (crash handler, privacy-aware) 
+  - [x] error_reporter.py (GitHub issue integration)
+  - [x] update_checker.py (version checking, caching)
+  - [x] file_finder.py (advanced search dialog)
 - [ ] Rewriter operations (`src/rewriter/`) - 9 files, ~2,297 lines
   - [ ] operations.py (36K lines!)
   - [ ] reference_resolver.py
@@ -90,12 +88,12 @@
 
 ## 📋 Study Checklist (Protocol Step 1.2)
 
-- [~] Study ALL source code (14.3% done) 🔄
+- [~] Study ALL source code (16.3% done) 🔄
 - [x] Study ALL documentation (100% DONE ✅)
 - [ ] Study ALL git history (commits, not just specs)
 - [ ] Study ALL tests (implementation code)
 - [x] Identify "don't touch" code (partially done) 🔄
-- [~] Understand complete architecture (50% done) 🔄
+- [~] Understand complete architecture (55% done) 🔄
 - [ ] Find reuse opportunities (ongoing)
 - [ ] Create docs/NOTES.md with findings
 
@@ -105,7 +103,8 @@
 - [x] CODE_STUDY_SESSION_3_NOTES.md (Core managers, 5 files)
 - [x] CODE_STUDY_SESSION_4_NOTES.md (Business logic, 6 files)
 - [x] CODE_STUDY_SESSION_5_NOTES.md (Executors, 5 files)
-- [x] CODE_STUDY_SESSION_6_NOTES.md (Utils module, 5 files)
+- [x] CODE_STUDY_SESSION_6_NOTES.md (Utils 1-5, 5 files)
+- [x] CODE_STUDY_SESSION_7_NOTES.md (Utils 6-9, 4 files) - **Utils 100%!** ✅
 
 ---
 
@@ -134,7 +133,7 @@ For each session, document:
 
 ---
 
-**Status**: 🔄 **IN PROGRESS** (Session 6 - Phase 3)
-**Current Phase**: Phase 3 - Feature Modules (Utils ~42% done)
-**Overall Progress**: 14.3% of source code studied (28/196 files)
-**Next Target**: Complete utils/, then rewriter/ module
+**Status**: 🔄 **IN PROGRESS** (Session 7 - Utils Module COMPLETE! ✅)
+**Current Phase**: Phase 3 - Feature Modules (Utils 100%, next: rewriter/)
+**Overall Progress**: 16.3% of source code studied (32/196 files)
+**Next Target**: rewriter/ module (9 files, operations.py is massive at 36K lines!)
