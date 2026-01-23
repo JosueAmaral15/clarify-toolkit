@@ -145,6 +145,24 @@ class GoogleTranslateDock(BaseDock):
         self._finished_workers = []  # Keep references to finished workers
         super().__init__(tr("menu.tools.google_translate"), parent)
 
+    def __del__(self):
+        """Destructor - ensure threads are stopped before deletion."""
+        import sys
+        print("=== GoogleTranslateDock.__del__() called ===", file=sys.stderr)
+        try:
+            if hasattr(self, 'translation_worker') and self.translation_worker:
+                if self.translation_worker.isRunning():
+                    print("CRITICAL: Worker still running in destructor! Stopping...", file=sys.stderr)
+                    self.translation_worker.cancel()
+                    self.translation_worker.wait(2000)
+                    if self.translation_worker.isRunning():
+                        print("CRITICAL: Terminating worker in destructor", file=sys.stderr)
+                        self.translation_worker.terminate()
+                        self.translation_worker.wait()
+            print("__del__() completed safely", file=sys.stderr)
+        except Exception as e:
+            print(f"ERROR in __del__(): {e}", file=sys.stderr)
+
     def _setup_ui(self):
         """Setup the user interface."""
         self._create_widgets()
