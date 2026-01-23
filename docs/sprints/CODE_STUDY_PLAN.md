@@ -106,6 +106,7 @@
 - [x] CODE_STUDY_SESSION_17_NOTES.md (Panels, 7 files) - **Panels 70%!** ✅
 - [x] CODE_STUDY_SESSION_18_NOTES.md (Dialogs, 23 files) - **Dialogs 100%!** ✅
 - [x] CODE_STUDY_SESSION_19_NOTES.md (Other Support, 10 files) - **Phase 4 COMPLETE!** ✅ 🎉
+- [x] CODE_STUDY_SESSION_20_NOTES.md (Core Business Logic, 10 files, 2,578 lines) - **COMPLETE!** ✅
 
 ---
 
@@ -134,9 +135,9 @@ For each session, document:
 
 ---
 
-**Status**: ✅ **Phase 4 100% Complete!** 🎉 (Session 19 - Other support files studied)
-**Current Phase**: Phase 5 - Documentation & Synthesis
-**Overall Progress**: 63.8% of source code studied (125/196 files)
-**Next Target**: Create comprehensive docs/NOTES.md with all findings
+**Status**: ✅ **Phase 5 Complete + Session 20 Done!** 🎉 (Core business logic studied)
+**Current Phase**: Phase 6 - Continued Study (Adjusted after project refactoring discovered)
+**Overall Progress**: 19.9% of source code studied (39/196 files - CORRECTED)
+**Next Target**: Root-level managers and converters (Session 21)
 
-**Estimated Remaining**: ~1 hour (NOTES.md synthesis)
+**Note**: Discovered project was heavily refactored - only 29 of 129 previously studied files still exist. Progress corrected to 39/196 (19.9%).
