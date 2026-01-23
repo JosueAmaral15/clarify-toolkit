@@ -486,6 +486,15 @@ class GoogleTranslateDock(BaseDock):
             self.progress_bar.setVisible(False)
             self.lbl_status.setText(tr("google_translate.text_cancelled"))
 
+    def _clear(self):
+        """Clear all input and output fields."""
+        self.text_input.clear()
+        self.text_output.clear()
+        self.ed_file_path.clearEditText()
+        self.btn_copy_result.setEnabled(False)
+        self.lbl_status.setText(tr("google_translate.status_ready"))
+        self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
+
     def _copy_result(self):
         """Copy translation result to clipboard."""
         result = self.text_output.toPlainText()
@@ -498,12 +507,6 @@ class GoogleTranslateDock(BaseDock):
             original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
-        self.text_input.clear()
-        self.text_output.clear()
-        self.ed_file_path.clearEditText()
-        self.btn_copy_result.setEnabled(False)
-        self.lbl_status.setText(tr("google_translate.status_ready"))
-        self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
 
     def _update_cache_info(self):
         """Update cache information display."""
