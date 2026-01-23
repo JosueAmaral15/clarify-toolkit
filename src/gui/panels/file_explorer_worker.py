@@ -144,7 +144,8 @@ class FileExplorerWorker(QObject):
         show_hidden: bool,
         recursive: bool,
         filters: dict,
-        conditions: list
+        conditions: list,
+        logic_operator: str = "AND"
     ):
         """
         Execute search operation in worker thread.
@@ -161,6 +162,7 @@ class FileExplorerWorker(QObject):
             recursive: Search recursively
             filters: Filters dict
             conditions: Advanced conditions list
+            logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
         """
         try:
             print("🔧 DEBUG: Worker.execute_search() called - running in thread!")
@@ -180,7 +182,8 @@ class FileExplorerWorker(QObject):
                 show_hidden=show_hidden,
                 recursive=recursive,
                 filters=filters,
-                conditions=conditions
+                conditions=conditions,
+                logic_operator=logic_operator
             )
             print(f"🔧 DEBUG: Search complete! Found {len(result.get('files', []))} files")
             
@@ -215,7 +218,9 @@ class FileExplorerWorker(QObject):
         directory: str,
         show_hidden: bool,
         recursive: bool,
-        filters: dict
+        filters: dict,
+        conditions: list = None,
+        logic_operator: str = "AND"
     ):
         """
         Execute browse operation in worker thread.
@@ -225,6 +230,8 @@ class FileExplorerWorker(QObject):
             show_hidden: Show hidden files
             recursive: Browse recursively
             filters: Filters dict
+            conditions: Advanced conditions list (v2.9.116 - Phase 4)
+            logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
         """
         try:
             # Forward signals
@@ -236,7 +243,9 @@ class FileExplorerWorker(QObject):
                 directory=directory,
                 show_hidden=show_hidden,
                 recursive=recursive,
-                filters=filters
+                filters=filters,
+                conditions=conditions,
+                logic_operator=logic_operator
             )
             
             # Emit result to UI thread

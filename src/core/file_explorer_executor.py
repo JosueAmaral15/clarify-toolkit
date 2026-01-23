@@ -99,7 +99,8 @@ class UnifiedFileExplorerExecutor(QObject):
         self._paused = False
 
     def execute_browse(
-        self, directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None
+        self, directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None,
+        conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND"
     ) -> Dict[str, Any]:
         """
         Execute browse operation (list files).
@@ -109,6 +110,8 @@ class UnifiedFileExplorerExecutor(QObject):
             show_hidden: Show hidden files
             recursive: Recurse into subdirectories
             filters: Filter configuration (includes include_globs, exclude_globs)
+            conditions: Advanced conditions list (v2.9.116 - Phase 4)
+            logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
 
         Returns:
             Dict with files and statistics
@@ -127,6 +130,40 @@ class UnifiedFileExplorerExecutor(QObject):
         elif type_filter == "dirs":
             file_list = [f for f in file_list if f.is_dir]
         # "any" or other values: keep all files
+
+        # Step 2.5: Apply advanced conditions if provided (v2.9.116 - Phase 4)
+        if conditions:
+            try:
+                from ..core.filters import filter_files_by_conditions, Condition
+
+                # Convert dict conditions to Condition objects
+                condition_objects = []
+                for cond_dict in conditions:
+                    condition_obj = Condition(
+                        field=cond_dict.get("field", ""),
+                        operator=cond_dict.get("operator", ""),
+                        value=cond_dict.get("value", ""),
+                        scope_type=cond_dict.get("scope_type", ""),
+                        scope_value=cond_dict.get("scope_value", ""),
+                        case_sensitive=cond_dict.get("case_sensitive", True),
+                        whole_word=cond_dict.get("whole_word", False),
+                        use_regex=cond_dict.get("regex", False),
+                    )
+                    condition_objects.append(condition_obj)
+
+                file_paths = [f.path for f in file_list]
+                original_count = len(file_paths)
+                
+                filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
+                
+                # Convert back to FileInfo objects
+                filtered_paths_set = set(filtered_paths)
+                file_list = [f for f in file_list if f.path in filtered_paths_set]
+                
+                filtered_count = original_count - len(file_list)
+                logger.info(f"Advanced conditions filtered {filtered_count} files in browse mode")
+            except Exception as e:
+                logger.error(f"Error applying conditions in browse mode: {e}", exc_info=True)
 
         # Step 3: Apply include/exclude glob filters (from Search/Replace)
         include_globs = filters.get("include_globs", [])
