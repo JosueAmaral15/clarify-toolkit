@@ -526,19 +526,30 @@ class GoogleTranslateDock(BaseDock):
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
+        import sys
+        print("=== GoogleTranslateDock.closeEvent() called ===", file=sys.stderr)
+        print(f"translation_worker: {self.translation_worker}", file=sys.stderr)
+        
         if self.translation_worker and self.translation_worker.isRunning():
+            print(f"Worker is running, cancelling...", file=sys.stderr)
             # Cancel and wait for thread to finish
             self.translation_worker.cancel()
             if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
+                print("Worker did not finish in 3s, terminating...", file=sys.stderr)
                 self.translation_worker.terminate()
                 self.translation_worker.wait()
+            print("Worker stopped successfully", file=sys.stderr)
         
         # Wait for any finished workers
+        print(f"Finished workers count: {len(self._finished_workers)}", file=sys.stderr)
         for worker in self._finished_workers:
             if worker.isRunning():
+                print(f"Waiting for finished worker...", file=sys.stderr)
                 worker.wait(1000)
         
+        print("Calling super().closeEvent()", file=sys.stderr)
         super().closeEvent(event)
+        print("closeEvent() completed", file=sys.stderr)
 
     def _update_cache_info(self):
         """Update cache information display."""
