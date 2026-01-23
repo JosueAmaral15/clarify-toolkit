@@ -437,8 +437,15 @@ class GoogleTranslateDock(BaseDock):
 
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
+        
+        # Connect signals BEFORE starting thread
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
+        
+        # CRITICAL: Connect finished signal to deleteLater (Qt best practice)
+        # This ensures the thread is properly cleaned up when it finishes
+        self.translation_worker.finished.connect(self.translation_worker.deleteLater)
+        
         self.translation_worker.start()
 
     def _on_progress_updated(self, progress: int, status: str):
@@ -470,21 +477,9 @@ class GoogleTranslateDock(BaseDock):
         # Reset status color after delay
         QTimer.singleShot(5000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
-        # Clean up worker - MUST wait for thread to finish, then disconnect signals
-        if self.translation_worker:
-            try:
-                # Wait for thread to finish (it should be done, but be safe)
-                if self.translation_worker.isRunning():
-                    self.translation_worker.wait(100)  # Wait up to 100ms
-                
-                # Disconnect signals before deletion
-                self.translation_worker.progress_updated.disconnect(self._on_progress_updated)
-                self.translation_worker.translation_completed.disconnect(self._on_translation_completed)
-            except:
-                pass  # Signals may already be disconnected or thread already finished
-            
-            self.translation_worker.deleteLater()
-            self.translation_worker = None
+        # Worker cleanup is handled automatically by finished->deleteLater connection
+        # Just clear our reference
+        self.translation_worker = None
 
     def _cancel_translation(self):
         """Cancel ongoing translation."""
