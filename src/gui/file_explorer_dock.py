@@ -739,6 +739,11 @@ class FileExplorerDock(BaseDock):
         if not self.last_search_results:
             return
 
+        # DEBUG: Log total files in search results
+        total_files_in_results = len(self.last_search_results)
+        logger.info(f"[DEBUG] _sync_search_to_table() called with {total_files_in_results} files in last_search_results")
+        logger.info(f"[DEBUG] File paths: {list(self.last_search_results.keys())}")
+
         # Get Advanced Filters if enabled
         advanced_filters = None
         if hasattr(self, 'filter_panel') and self.filter_panel.isChecked():
@@ -750,11 +755,15 @@ class FileExplorerDock(BaseDock):
         # Extract file paths from matches dictionary
         files_data = []
         filtered_count = 0
+        loop_iterations = 0
         for file_path in self.last_search_results.keys():
+            loop_iterations += 1
+            logger.debug(f"[DEBUG] Loop iteration {loop_iterations}: Processing {file_path}")
             try:
                 # Apply Advanced Filters if enabled
                 if advanced_filters and not self._matches_advanced_filters(file_path, advanced_filters):
                     filtered_count += 1
+                    logger.debug(f"[DEBUG] File {file_path} REJECTED by advanced filters")
                     continue
                 
                 # Get file stats
@@ -772,9 +781,13 @@ class FileExplorerDock(BaseDock):
                         "is_dir": is_dir,
                     }
                 )
+                logger.debug(f"[DEBUG] File {file_path} ADDED to files_data (total now: {len(files_data)})")
             except (OSError, FileNotFoundError) as e:
                 logger.warning(f"Failed to stat file {file_path}: {e}")
                 continue
+
+        # DEBUG: Log final counts
+        logger.info(f"[DEBUG] Loop completed: {loop_iterations} iterations, {len(files_data)} files added, {filtered_count} filtered")
 
         # Sort if checkbox is enabled
         if self.chk_sort_results.isChecked():
@@ -782,6 +795,7 @@ class FileExplorerDock(BaseDock):
 
         # Populate table
         human_readable = self.chk_human.isChecked()
+        logger.info(f"[DEBUG] Calling table_manager.populate() with {len(files_data)} files")
         self.table_manager.populate(files_data, human_readable=human_readable)
 
         if filtered_count > 0:
