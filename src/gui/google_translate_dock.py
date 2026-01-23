@@ -142,6 +142,7 @@ class GoogleTranslateDock(BaseDock):
     def __init__(self, parent=None):
         self.api = GoogleTranslateAPI()
         self.translation_worker = None
+        self._finished_workers = []  # Keep references to finished workers
         super().__init__(tr("menu.tools.google_translate"), parent)
 
     def _setup_ui(self):
@@ -442,9 +443,9 @@ class GoogleTranslateDock(BaseDock):
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
         
-        # CRITICAL: Connect finished signal to deleteLater (Qt best practice)
-        # This ensures the thread is properly cleaned up when it finishes
-        self.translation_worker.finished.connect(self.translation_worker.deleteLater)
+        # Store finished workers to prevent premature deletion
+        # For QThread subclass, do NOT use finished->deleteLater pattern
+        self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
         
         self.translation_worker.start()
 
@@ -477,9 +478,18 @@ class GoogleTranslateDock(BaseDock):
         # Reset status color after delay
         QTimer.singleShot(5000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
-        # Worker cleanup is handled automatically by finished->deleteLater connection
-        # Just clear our reference
+        # Worker cleanup handled by _on_worker_finished
         self.translation_worker = None
+
+    def _on_worker_finished(self, worker):
+        """Handle worker thread finishing - keep reference alive."""
+        self._finished_workers.append(worker)
+        # Clean up old finished workers after delay to allow proper Qt cleanup
+        QTimer.singleShot(1000, self._cleanup_old_workers)
+
+    def _cleanup_old_workers(self):
+        """Clean up finished worker references."""
+        self._finished_workers = [w for w in self._finished_workers if w.isRunning()]
 
     def _cancel_translation(self):
         """Cancel ongoing translation."""
@@ -513,6 +523,22 @@ class GoogleTranslateDock(BaseDock):
             original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+
+    def closeEvent(self, event):
+        """Handle dock close event - wait for running threads."""
+        if self.translation_worker and self.translation_worker.isRunning():
+            # Cancel and wait for thread to finish
+            self.translation_worker.cancel()
+            if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
+                self.translation_worker.terminate()
+                self.translation_worker.wait()
+        
+        # Wait for any finished workers
+        for worker in self._finished_workers:
+            if worker.isRunning():
+                worker.wait(1000)
+        
+        super().closeEvent(event)
 
     def _update_cache_info(self):
         """Update cache information display."""
