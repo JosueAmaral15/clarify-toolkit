@@ -77,12 +77,12 @@
 
 ## 📋 Study Checklist (Protocol Step 1.2)
 
-- [~] Study ALL source code (41.3% done) 🔄
+- [~] Study ALL source code (43.4% done) 🔄
 - [x] Study ALL documentation (100% DONE ✅)
 - [ ] Study ALL git history (commits, not just specs)
 - [ ] Study ALL tests (implementation code)
 - [x] Identify "don't touch" code (partially done) 🔄
-- [~] Understand complete architecture (72% done) 🔄
+- [~] Understand complete architecture (74% done) 🔄
 - [~] Find reuse opportunities (widgets identified) 🔄
 - [ ] Create docs/NOTES.md with findings
 
@@ -102,6 +102,7 @@
 - [x] CODE_STUDY_SESSION_13_NOTES.md (GUI Docks Part 3, 14 docks) - **Phase 3 COMPLETE!** ✅
 - [x] CODE_STUDY_SESSION_14_NOTES.md (Phase 4 Overview, 66 files identified) - **Phase 4 Start!** 📋
 - [x] CODE_STUDY_SESSION_15_NOTES.md (Widgets, 12 files) - **Widgets 100%!** ✅
+- [x] CODE_STUDY_SESSION_16_NOTES.md (Progress System, 4 files) - **Progress 100%!** ✅
 
 ---
 
@@ -130,9 +131,9 @@ For each session, document:
 
 ---
 
-**Status**: ✅ **Widgets Module Complete!** (Session 15 - 12 widgets studied)
-**Current Phase**: Phase 4 - Support Systems (12/66 files, 18.2% complete)
-**Overall Progress**: 41.3% of source code studied (81/196 files)
-**Next Target**: Progress System (4 files), Key Panels (3 files), Dialogs (24 files)
+**Status**: ✅ **Progress System Complete!** (Session 16 - 4 progress files studied)
+**Current Phase**: Phase 4 - Support Systems (16/66 files, 24.2% complete)
+**Overall Progress**: 43.4% of source code studied (85/196 files)
+**Next Target**: Key Panels (3 files, ~2,900 lines), Remaining Panels (7 files), Dialogs (24 files)
 
 **Estimated Remaining**: ~5-6 hours (4-5 hours Phase 4 + 1 hour NOTES.md)
