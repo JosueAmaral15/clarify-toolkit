@@ -1693,6 +1693,9 @@ class FileExplorerDock(BaseDock):
         
         # Initialize batch processing on first batch
         if batch_num == 1:
+            print("=" * 80)
+            print("[COM1-DEBUG] BATCH 1 - START OF PROCESSING")
+            print("=" * 80)
             logger.debug("Starting batch processing...")
             self._batch_processing_active = True
             self._total_batches_expected = total_batches
@@ -1700,19 +1703,26 @@ class FileExplorerDock(BaseDock):
             self._cancel_requested = False
             
             # Store user's current view mode for restoration later
-            self._user_view_before_search = self.results_stack.currentIndex()
+            current_view = self.results_stack.currentIndex()
+            print(f"[COM1-DEBUG] Current view BEFORE save: {current_view} (0=Tree, 1=Table)")
+            self._user_view_before_search = current_view
+            print(f"[COM1-DEBUG] Saved to _user_view_before_search: {self._user_view_before_search}")
             logger.debug(f"User's view mode before search: {self._user_view_before_search} (0=Tree, 1=Table)")
             
             # Clear tree before adding items
+            print("[COM1-DEBUG] Clearing tree...")
             self.results_tree.clear()
+            print("[COM1-DEBUG] Tree cleared")
             
             # CRITICAL: Temporarily switch to Tree view for batch processing
             # Qt's QTreeWidget requires visibility to properly add items
             # We'll restore user's view mode after all batches complete
+            print("[COM1-DEBUG] Switching to Tree view (index 0)...")
             self.results_stack.setCurrentIndex(0)
             self.combo_view_mode.blockSignals(True)
             self.combo_view_mode.setCurrentIndex(0)
             self.combo_view_mode.blockSignals(False)
+            print(f"[COM1-DEBUG] Switched! Current view NOW: {self.results_stack.currentIndex()}")
             logger.debug("Temporarily switched to Tree view for batch processing")
         
         # Update progress dialog to show batch progress
@@ -1744,19 +1754,33 @@ class FileExplorerDock(BaseDock):
                 logger.debug("Sorting results...")
                 self.results_tree.sort_results()
             
+            print("=" * 80)
+            print("[COM1-DEBUG] ALL BATCHES COMPLETE - RESTORATION PHASE")
+            print(f"[COM1-DEBUG] _user_view_before_search value: {self._user_view_before_search}")
+            print(f"[COM1-DEBUG] Current view index: {self.results_stack.currentIndex()}")
+            print("=" * 80)
+            
             # BUGFIX: Restore user's view mode and sync table if needed
             # Tree was populated during batch processing (requires visibility)
             # Now restore user's original view and sync table if they were in Table mode
             if self._user_view_before_search == 1:  # User was in Table mode
+                print("[COM1-DEBUG] User WAS in Table mode! Starting restoration...")
                 logger.info("[BUGFIX] User was in Table mode, syncing results and restoring view")
+                
+                print("[COM1-DEBUG] Calling _sync_search_to_table()...")
                 self._sync_search_to_table()
+                print("[COM1-DEBUG] _sync_search_to_table() completed")
+                
                 # Restore Table view
+                print("[COM1-DEBUG] Restoring Table view (index 1)...")
                 self.results_stack.setCurrentIndex(1)
                 self.combo_view_mode.blockSignals(True)
                 self.combo_view_mode.setCurrentIndex(1)
                 self.combo_view_mode.blockSignals(False)
+                print(f"[COM1-DEBUG] Restored! Current view NOW: {self.results_stack.currentIndex()}")
                 logger.debug("Restored Table view mode")
             else:
+                print(f"[COM1-DEBUG] User was in Tree mode (value={self._user_view_before_search}), no restoration needed")
                 logger.debug("User was in Tree mode, results already visible")
             
             # Close progress dialog now that batching is complete

@@ -304,3 +304,57 @@ if current_view_index == 1:  # Table view
 
 ### ⚠️ BLOCKING - NEED USER FEEDBACK TO CONTINUE
 
+
+---
+
+## ✅ CRITICAL FIX APPLIED (2026-01-23 17:35)
+
+### 🔥 Root Cause Discovery:
+
+**Qt QTreeWidget requires VISIBILITY to accept items!**
+
+When user is in Table mode (QStackedWidget index 1), Tree widget is INVISIBLE.
+Calling `results_tree.addTopLevelItem()` on an invisible widget silently FAILS!
+
+### 💡 Evidence:
+
+User reported: "Both Tree AND Table show no results"
+- Progress dialog completes normally
+- No errors or exceptions
+- Empty tree AND empty table
+
+This proved the Tree was never populated, not just a rendering issue.
+
+### ✅ Final Solution:
+
+```python
+# On first batch:
+1. Save user's current view: self._user_view_before_search
+2. Force switch to Tree view (make it visible)
+3. Populate tree during batch processing (now works!)
+
+# On last batch:
+4. If user was in Table mode:
+   - Sync results to table
+   - Restore Table view
+5. If user was in Tree mode:
+   - Results already visible
+```
+
+### 🎯 Benefits:
+
+✅ Tree population always works (visible during processing)
+✅ User's view preference respected (restored at end)
+✅ No visual flicker (happens during progress dialog)
+✅ Table mode users see results immediately
+✅ Tree mode users see results immediately
+
+### 📊 Commits:
+
+1. `1bd5d4b` - Debug logging (safe)
+2. `dcfa55f` - First fix attempt (BROKE search - removed visibility)
+3. `35ad9e7` - Documentation (premature)
+4. `a869cfb` - **CRITICAL FIX** - Restore visibility, save/restore view
+
+### 🚀 Status: READY FOR USER TESTING
+
