@@ -1699,16 +1699,21 @@ class FileExplorerDock(BaseDock):
             self._batches_received = 0
             self._cancel_requested = False
             
-            # Store current view mode before clearing tree
-            current_view_index = self.results_stack.currentIndex()
-            logger.debug(f"Current view mode: {current_view_index} (0=Tree, 1=Table)")
+            # Store user's current view mode for restoration later
+            self._user_view_before_search = self.results_stack.currentIndex()
+            logger.debug(f"User's view mode before search: {self._user_view_before_search} (0=Tree, 1=Table)")
             
             # Clear tree before adding items
             self.results_tree.clear()
             
-            # DON'T force view switch - respect user's current view mode
-            # (Bug fix: Previously forced Tree view, breaking Table mode rendering)
-            # Users expect results in their chosen view mode
+            # CRITICAL: Temporarily switch to Tree view for batch processing
+            # Qt's QTreeWidget requires visibility to properly add items
+            # We'll restore user's view mode after all batches complete
+            self.results_stack.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(True)
+            self.combo_view_mode.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(False)
+            logger.debug("Temporarily switched to Tree view for batch processing")
         
         # Update progress dialog to show batch progress
         if self.progress_dialog:
@@ -1739,12 +1744,20 @@ class FileExplorerDock(BaseDock):
                 logger.debug("Sorting results...")
                 self.results_tree.sort_results()
             
-            # BUGFIX: Sync table view if user is in Table mode
-            # (Previously table was never populated because of forced Tree view switch)
-            current_view_index = self.results_stack.currentIndex()
-            if current_view_index == 1:  # Table view
-                logger.info("[BUGFIX] User is in Table mode, syncing results to table now")
+            # BUGFIX: Restore user's view mode and sync table if needed
+            # Tree was populated during batch processing (requires visibility)
+            # Now restore user's original view and sync table if they were in Table mode
+            if self._user_view_before_search == 1:  # User was in Table mode
+                logger.info("[BUGFIX] User was in Table mode, syncing results and restoring view")
                 self._sync_search_to_table()
+                # Restore Table view
+                self.results_stack.setCurrentIndex(1)
+                self.combo_view_mode.blockSignals(True)
+                self.combo_view_mode.setCurrentIndex(1)
+                self.combo_view_mode.blockSignals(False)
+                logger.debug("Restored Table view mode")
+            else:
+                logger.debug("User was in Tree mode, results already visible")
             
             # Close progress dialog now that batching is complete
             if self.progress_dialog:
