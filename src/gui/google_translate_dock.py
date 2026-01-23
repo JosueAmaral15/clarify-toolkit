@@ -470,13 +470,18 @@ class GoogleTranslateDock(BaseDock):
         # Reset status color after delay
         QTimer.singleShot(5000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
-        # Clean up worker - MUST disconnect signals first to prevent segfault
+        # Clean up worker - MUST wait for thread to finish, then disconnect signals
         if self.translation_worker:
             try:
+                # Wait for thread to finish (it should be done, but be safe)
+                if self.translation_worker.isRunning():
+                    self.translation_worker.wait(100)  # Wait up to 100ms
+                
+                # Disconnect signals before deletion
                 self.translation_worker.progress_updated.disconnect(self._on_progress_updated)
                 self.translation_worker.translation_completed.disconnect(self._on_translation_completed)
             except:
-                pass  # Signals may already be disconnected
+                pass  # Signals may already be disconnected or thread already finished
             
             self.translation_worker.deleteLater()
             self.translation_worker = None
