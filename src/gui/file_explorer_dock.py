@@ -1699,15 +1699,16 @@ class FileExplorerDock(BaseDock):
             self._batches_received = 0
             self._cancel_requested = False
             
+            # Store current view mode before clearing tree
+            current_view_index = self.results_stack.currentIndex()
+            logger.debug(f"Current view mode: {current_view_index} (0=Tree, 1=Table)")
+            
             # Clear tree before adding items
             self.results_tree.clear()
             
-            # Switch to tree view (respect manual override)
-            if not self._user_manually_changed_view:
-                self.results_stack.setCurrentIndex(0)
-                self.combo_view_mode.blockSignals(True)
-                self.combo_view_mode.setCurrentIndex(0)
-                self.combo_view_mode.blockSignals(False)
+            # DON'T force view switch - respect user's current view mode
+            # (Bug fix: Previously forced Tree view, breaking Table mode rendering)
+            # Users expect results in their chosen view mode
         
         # Update progress dialog to show batch progress
         if self.progress_dialog:
@@ -1737,6 +1738,13 @@ class FileExplorerDock(BaseDock):
             if self.chk_sort_results.isChecked():
                 logger.debug("Sorting results...")
                 self.results_tree.sort_results()
+            
+            # BUGFIX: Sync table view if user is in Table mode
+            # (Previously table was never populated because of forced Tree view switch)
+            current_view_index = self.results_stack.currentIndex()
+            if current_view_index == 1:  # Table view
+                logger.info("[BUGFIX] User is in Table mode, syncing results to table now")
+                self._sync_search_to_table()
             
             # Close progress dialog now that batching is complete
             if self.progress_dialog:

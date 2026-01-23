@@ -176,3 +176,73 @@ Since the table sync code loops correctly through all files, the bug must be:
 
 **Next**: User runs Clarify with debug mode to capture logs showing where files are lost.
 
+
+---
+
+## ✅ USER TEST RESULTS RECEIVED
+
+**Date**: 2026-01-23 17:18  
+**Test**: Content search in File Explorer Tool (GUI)
+
+### 🎯 ACTUAL BUG IDENTIFIED:
+
+**NOT a data loss bug!** It's a **rendering bug**!
+
+### Observed Behavior:
+
+1. User performs content search in **Table mode**
+2. Clicks **Browse/Search** button
+3. **Table appears empty** (no results displayed)
+4. User switches to **Tree mode** → results appear in tree ✅
+5. User switches back to **Table mode** → results NOW appear in table ✅
+
+### 🔍 Root Cause Analysis:
+
+**The table is NOT being populated/rendered on first search completion!**
+
+Possible causes:
+1. `_sync_search_to_table()` is NOT being called after search
+2. Table is populated but NOT repainted/updated visually
+3. View mode auto-switch is interfering with table population
+4. Batch processing completes BEFORE table sync happens
+
+### 📊 Expected Flow (CORRECT):
+
+```
+Search completes → _on_search_finished() 
+                 → Store results in last_search_results
+                 → IF in Table mode: Call _sync_search_to_table()
+                 → Table populates and renders
+```
+
+### 📊 Actual Flow (BUG):
+
+```
+Search completes → _on_search_finished()
+                 → Store results in last_search_results
+                 → Force switch to Tree view (line 1693)
+                 → Table NOT populated (because not in table view)
+                 → User switches manually → _sync_search_to_table() called
+                 → Table NOW shows results
+```
+
+### 🎯 THE REAL BUG:
+
+**Line 1692-1696 in file_explorer_dock.py:**
+
+```python
+# Switch to tree view (respect manual override)
+if not self._user_manually_changed_view:
+    self.results_stack.setCurrentIndex(0)  # ← FORCES TREE VIEW!
+```
+
+**This FORCES Tree view after search**, so table is never populated automatically!
+
+### 💡 FIX STRATEGY:
+
+**Option A**: Remember user's preferred view mode and restore it after search  
+**Option B**: Populate BOTH views after search (sync table even when not visible)  
+**Option C**: Don't force Tree view if user is already in Table mode
+
+**Recommendation**: **Option C** (simplest, respects user choice)
+
