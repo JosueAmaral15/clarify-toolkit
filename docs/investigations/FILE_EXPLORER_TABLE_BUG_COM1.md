@@ -144,3 +144,35 @@ Since the table sync code loops correctly through all files, the bug must be:
 3. **Check filters** - are they accidentally rejecting files?
 4. **Inspect table manager** - does it have row limits?
 
+
+---
+
+## ✅ PROTOCOL CORRECTION APPLIED
+
+**Date**: 2026-01-23 16:45  
+**Action**: Moved work to COM1 worktree per SIMPLICITY_PROTOCOL_3
+
+### Context:
+- **Scenario**: Multiple AIs (COM1-COM9) working on Clarify project
+- **Protocol**: SIMPLICITY_PROTOCOL_3.md (Solo Dev + Multiple AIs)
+- **Requirement**: Each AI must work in isolated worktree
+- **Communication**: Option C (tmux + daemon) for coordination
+
+### Correction Made:
+- ❌ Was working in: Main worktree (`/clarify/`)
+- ✅ Now working in: COM1 worktree (`/clarify-COM1/`)
+- ✅ Branch: `COM1-file-explorer-fixes`
+- ✅ Isolated workspace: No conflicts with COM2-COM9
+
+### Files in This Branch:
+1. `docs/investigations/FILE_EXPLORER_TABLE_BUG_COM1.md` (this file)
+2. `docs/investigations/REPRODUCTION_INSTRUCTIONS.md`
+3. Debug logging in `src/gui/file_explorer_dock.py` (_sync_search_to_table)
+
+### Status:
+- ✅ Protocol compliant (worktree isolation)
+- ⏳ Awaiting user to reproduce bug with debug logging
+- 🔍 Investigation ongoing (Step 2/7)
+
+**Next**: User runs Clarify with debug mode to capture logs showing where files are lost.
+
