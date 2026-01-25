@@ -299,3 +299,28 @@ self.tabs.setCurrentIndex(0)
 **Status**: ✅ ROOT CAUSE CONFIRMED + 2 BUGS FOUND  
 **User Solution**: Use menu Tools → Search/Replace  
 **Dev Fix Needed**: Fix translation bug + index assumption
+
+---
+
+## ✅ SESSION 1: Bug #1 Fixed (Translation Bug)
+
+**Date**: 2026-01-25 19:08 UTC  
+**Commit**: a1dadd9
+
+**Changes Made**:
+1. `src/app.py:_show_search_replace()` - Use `tr("ui_builder.tab_search")` instead of hardcoded "Search / Replace"
+2. `src/app.py:_show_insert()` - Use `tr("ui_builder.tab_insert")` instead of hardcoded "Insert"
+
+**Files Modified**: 1
+- `src/app.py` (+4 lines, -4 lines)
+
+**Result**: ✅ Tab names now consistent across UIBuilder and show methods, works in all languages
+
+**Testing Needed**: 
+- Verify in non-English locale (Portuguese, Spanish, etc.)
+- Close Search/Replace tab and reopen via Tools menu
+- Should detect existing tab correctly
+
+**Status**: Bug #1 FIXED ✅  
+**Next Session**: Fix Bug #2 (Index Assumption)
+
