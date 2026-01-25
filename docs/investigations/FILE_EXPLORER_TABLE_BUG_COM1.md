@@ -358,3 +358,102 @@ This proved the Tree was never populated, not just a rendering issue.
 
 ### 🚀 Status: READY FOR USER TESTING
 
+
+---
+
+## 🚨 NEW ISSUE DISCOVERED (2026-01-23 16:16 UTC)
+
+### User Report:
+> "After the first search with success, the second search is not functioning."
+
+### Symptoms:
+- ✅ **First search**: Works perfectly (Table mode shows results)
+- ❌ **Second search**: Not functioning (unclear what happens)
+
+### Critical Questions for User:
+1. What EXACTLY happens on second search?
+   - A) Progress dialog appears but no results?
+   - B) Nothing happens when clicking Search button?
+   - C) Error message appears?
+   - D) Table becomes empty?
+   - E) Application freezes?
+
+2. Are you staying in Table mode between searches?
+   - Or switching views?
+
+3. What search parameters are you using?
+   - Same directory + same text?
+   - Or different parameters?
+
+### Hypothesis 1: View State Not Reset
+**Theory**: `_user_view_before_search` variable not reset after first search
+- First search: Variable saved correctly
+- After first search: Variable retains old value
+- Second search: Uses stale value, breaks logic
+
+**Test**: Check if variable is reset in `_on_search_finished()`
+
+### Hypothesis 2: View Mode Corrupted
+**Theory**: After restoration, view mode index is incorrect
+- First search restores to index 1 (Table)
+- But internal state doesn't match
+- Second search reads wrong value
+
+**Test**: Log view index at start of second search
+
+### Investigation Plan:
+1. Ask user for exact symptoms
+2. Check variable initialization
+3. Check cleanup after search completes
+4. Add logging to track state between searches
+5. Test consecutive searches
+
+
+---
+
+## 🔍 SECOND SEARCH ISSUE - User Answers (2026-01-25 16:06 UTC)
+
+### User Answers to Blocking Questions:
+
+**Q1: What happens on second search?**
+- ✅ **Answer: B** - Nothing happens when clicking Search button
+
+**Q2: Between searches:**
+- ✅ **Answer: A** - Stays in Table mode (doesn't touch view selector)
+
+**Q3: Test sequence:**
+1. Fresh Clarify start ✅
+2. Switch to Table mode ✅
+3. Search #1 works ✅
+4. Search #2: SAME parameters
+5. **Result**: Nothing happens when clicking Search button ❌
+
+**Q4: Logs provided** ✅
+
+### Critical Finding:
+**Search button becomes unresponsive after first search!**
+
+This is NOT a rendering issue - the search is **not executing at all**.
+
+### Hypothesis 3: Worker Thread Not Cleaned Up
+**Theory**: After first search, worker thread is still active/blocked
+- First search: Worker created, executes, finishes
+- Worker not properly terminated/cleaned
+- Second search: Cannot create new worker (old one still running?)
+- Button click ignored
+
+**Check locations**:
+- `_on_search_finished()` - Does it clean up worker?
+- `_cleanup_worker_thread()` - Is it called?
+- Thread state after first search completes
+
+### Hypothesis 4: UI State Not Reset
+**Theory**: Some flag prevents second search
+- `_batch_processing_active` still True?
+- `_worker` still exists?
+- Progress dialog still active?
+
+**Check locations**:
+- Line 920: `Starting file explorer operation` log
+- Does this appear for second search?
+

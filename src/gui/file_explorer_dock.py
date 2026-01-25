@@ -996,10 +996,18 @@ class FileExplorerDock(BaseDock):
             }
             
             # Create thread and worker
+            print(f"DEBUG 999 _list_files() | SEARCH MODE: Creating worker thread")
+            print(f"DEBUG 1000 _list_files() | Checking if _worker exists: {hasattr(self, '_worker')}")
+            if hasattr(self, '_worker'):
+                print(f"DEBUG 1002 _list_files() | _worker value: {self._worker}")
+                print(f"DEBUG 1003 _list_files() | _worker type: {type(self._worker)}")
+            
             logger.debug("Creating worker thread...")
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
             self._worker.moveToThread(self._worker_thread)
+            print(f"DEBUG 1010 _list_files() | Worker created: {self._worker}")
+            print(f"DEBUG 1011 _list_files() | Worker thread: {self._worker_thread}")
             logger.debug(f"Worker moved to thread: {self._worker_thread}")
 
             # Connect signals
