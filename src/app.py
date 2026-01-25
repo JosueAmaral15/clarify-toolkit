@@ -561,27 +561,29 @@ if _PYSIDE:
         
         def _show_search_replace(self):
             """Show Search/Replace tab (v2.9.40.2 - reopen if closed)."""
+            tab_name = tr("ui_builder.tab_search")
             # Check if tab exists at index 0
-            if self.tabs.count() > 0 and self.tabs.tabText(0) == "Search / Replace":
+            if self.tabs.count() > 0 and self.tabs.tabText(0) == tab_name:
                 self.tabs.setCurrentIndex(0)
             else:
                 # Tab was closed, recreate at index 0 using internal SearchReplacePanel class
                 self.tab_search = SearchReplacePanel(parent=self, progress_manager=self.progress_manager)
-                self.tabs.insertTab(0, self.tab_search, "Search / Replace")
+                self.tabs.insertTab(0, self.tab_search, tab_name)
                 self.tabs.setCurrentIndex(0)
                 QApplication.processEvents()
         
         def _show_insert(self):
             """Show Insert tab (v2.9.40.2 - reopen if closed)."""
+            tab_name = tr("ui_builder.tab_insert")
             # Check if tab exists at index 1
             expected_index = 1
-            if self.tabs.count() > expected_index and self.tabs.tabText(expected_index) == "Insert":
+            if self.tabs.count() > expected_index and self.tabs.tabText(expected_index) == tab_name:
                 self.tabs.setCurrentIndex(expected_index)
             else:
                 # Tab was closed, recreate at index 1
                 # InsertPanel is an internal class defined in this file, no import needed
                 self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
-                self.tabs.insertTab(expected_index, self.tab_insert, "Insert")
+                self.tabs.insertTab(expected_index, self.tab_insert, tab_name)
                 self.tabs.setCurrentIndex(expected_index)
                 QApplication.processEvents()
         
