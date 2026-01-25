@@ -498,6 +498,9 @@ class GoogleTranslateDock(BaseDock):
             original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+    
+    def _clear(self):
+        """Clear input and output fields."""
         self.text_input.clear()
         self.text_output.clear()
         self.ed_file_path.clearEditText()
