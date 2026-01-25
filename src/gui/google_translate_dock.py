@@ -456,6 +456,13 @@ class GoogleTranslateDock(BaseDock):
 
     def _start_translation(self, text: str, from_lang: str, to_lang: str):
         """Start background translation."""
+        import sys
+        print("\n" + "=" * 80, file=sys.stderr, flush=True)
+        print("=== _start_translation() CALLED ===", file=sys.stderr, flush=True)
+        print(f"    Text: '{text}'", file=sys.stderr, flush=True)
+        print(f"    From: {from_lang}, To: {to_lang}", file=sys.stderr, flush=True)
+        print("=" * 80, file=sys.stderr, flush=True)
+        
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
@@ -463,19 +470,27 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setValue(0)
         self.lbl_status.setText(tr("google_translate.status_starting"))
         self.text_output.clear()
+        
+        print("    UI updated, creating worker...", file=sys.stderr, flush=True)
 
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
+        print(f"    Worker created: {self.translation_worker}", file=sys.stderr, flush=True)
         
         # Connect signals BEFORE starting thread
+        print("    Connecting signals...", file=sys.stderr, flush=True)
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
         
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
         self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
+        print("    Signals connected", file=sys.stderr, flush=True)
         
+        print("    About to call worker.start()...", file=sys.stderr, flush=True)
         self.translation_worker.start()
+        print("    ✓ worker.start() called successfully", file=sys.stderr, flush=True)
+        print("=" * 80 + "\n", file=sys.stderr, flush=True)
 
     def _on_progress_updated(self, progress: int, status: str):
         """Handle progress updates."""
