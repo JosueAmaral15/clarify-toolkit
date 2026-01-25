@@ -69,21 +69,11 @@ class TranslationWorker(QThread):
 
     def run(self):
         """Run translation in background."""
-        import sys
-        print("=" * 80, file=sys.stderr, flush=True)
-        print("=== PHASE 1: TranslationWorker.run() STARTED ===", file=sys.stderr, flush=True)
-        print(f"    Text: '{self.text}'", file=sys.stderr, flush=True)
-        print(f"    From: {self.from_lang}, To: {self.to_lang}", file=sys.stderr, flush=True)
-        print("=" * 80, file=sys.stderr, flush=True)
-        
         try:
             if self.is_cancelled:
-                print("    CANCELLED before start", file=sys.stderr, flush=True)
                 return
 
-            print("    About to emit progress 25%...", file=sys.stderr, flush=True)
             self.progress_updated.emit(25, "Preparing translation...")
-            print("    ✓ Progress 25% emitted successfully", file=sys.stderr, flush=True)
             time.sleep(0.1)  # Allow UI update
 
             if self.is_cancelled:
@@ -154,24 +144,6 @@ class GoogleTranslateDock(BaseDock):
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
         super().__init__(tr("menu.tools.google_translate"), parent)
-
-    def __del__(self):
-        """Destructor - ensure threads are stopped before deletion."""
-        import sys
-        print("=== GoogleTranslateDock.__del__() called ===", file=sys.stderr)
-        try:
-            if hasattr(self, 'translation_worker') and self.translation_worker:
-                if self.translation_worker.isRunning():
-                    print("CRITICAL: Worker still running in destructor! Stopping...", file=sys.stderr)
-                    self.translation_worker.cancel()
-                    self.translation_worker.wait(2000)
-                    if self.translation_worker.isRunning():
-                        print("CRITICAL: Terminating worker in destructor", file=sys.stderr)
-                        self.translation_worker.terminate()
-                        self.translation_worker.wait()
-            print("__del__() completed safely", file=sys.stderr)
-        except Exception as e:
-            print(f"ERROR in __del__(): {e}", file=sys.stderr)
 
     def _setup_ui(self):
         """Setup the user interface."""
@@ -456,17 +428,8 @@ class GoogleTranslateDock(BaseDock):
 
     def _start_translation(self, text: str, from_lang: str, to_lang: str):
         """Start background translation."""
-        import sys
-        print("\n" + "=" * 80, file=sys.stderr, flush=True)
-        print("=== _start_translation() CALLED ===", file=sys.stderr, flush=True)
-        print(f"    Text: '{text}'", file=sys.stderr, flush=True)
-        print(f"    From: {from_lang}, To: {to_lang}", file=sys.stderr, flush=True)
-        print("=" * 80, file=sys.stderr, flush=True)
-        
-        # CRITICAL FIX: Prevent starting new worker while one is running
+        # Prevent starting new worker while one is running (fixes crash on duplicate calls)
         if self.translation_worker and self.translation_worker.isRunning():
-            print("    ⚠️  Translation already in progress, ignoring duplicate call", file=sys.stderr, flush=True)
-            print("=" * 80 + "\n", file=sys.stderr, flush=True)
             return
         
         # Update UI for translation in progress
@@ -476,27 +439,19 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setValue(0)
         self.lbl_status.setText(tr("google_translate.status_starting"))
         self.text_output.clear()
-        
-        print("    UI updated, creating worker...", file=sys.stderr, flush=True)
 
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
-        print(f"    Worker created: {self.translation_worker}", file=sys.stderr, flush=True)
         
         # Connect signals BEFORE starting thread
-        print("    Connecting signals...", file=sys.stderr, flush=True)
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
         
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
         self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
-        print("    Signals connected", file=sys.stderr, flush=True)
         
-        print("    About to call worker.start()...", file=sys.stderr, flush=True)
         self.translation_worker.start()
-        print("    ✓ worker.start() called successfully", file=sys.stderr, flush=True)
-        print("=" * 80 + "\n", file=sys.stderr, flush=True)
 
     def _on_progress_updated(self, progress: int, status: str):
         """Handle progress updates."""
@@ -575,30 +530,19 @@ class GoogleTranslateDock(BaseDock):
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
-        import sys
-        print("=== GoogleTranslateDock.closeEvent() called ===", file=sys.stderr)
-        print(f"translation_worker: {self.translation_worker}", file=sys.stderr)
-        
         if self.translation_worker and self.translation_worker.isRunning():
-            print(f"Worker is running, cancelling...", file=sys.stderr)
             # Cancel and wait for thread to finish
             self.translation_worker.cancel()
             if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
-                print("Worker did not finish in 3s, terminating...", file=sys.stderr)
                 self.translation_worker.terminate()
                 self.translation_worker.wait()
-            print("Worker stopped successfully", file=sys.stderr)
         
         # Wait for any finished workers
-        print(f"Finished workers count: {len(self._finished_workers)}", file=sys.stderr)
         for worker in self._finished_workers:
             if worker.isRunning():
-                print(f"Waiting for finished worker...", file=sys.stderr)
                 worker.wait(1000)
         
-        print("Calling super().closeEvent()", file=sys.stderr)
         super().closeEvent(event)
-        print("closeEvent() completed", file=sys.stderr)
 
     def _update_cache_info(self):
         """Update cache information display."""
