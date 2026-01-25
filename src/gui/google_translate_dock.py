@@ -69,11 +69,21 @@ class TranslationWorker(QThread):
 
     def run(self):
         """Run translation in background."""
+        import sys
+        print("=" * 80, file=sys.stderr, flush=True)
+        print("=== PHASE 1: TranslationWorker.run() STARTED ===", file=sys.stderr, flush=True)
+        print(f"    Text: '{self.text}'", file=sys.stderr, flush=True)
+        print(f"    From: {self.from_lang}, To: {self.to_lang}", file=sys.stderr, flush=True)
+        print("=" * 80, file=sys.stderr, flush=True)
+        
         try:
             if self.is_cancelled:
+                print("    CANCELLED before start", file=sys.stderr, flush=True)
                 return
 
+            print("    About to emit progress 25%...", file=sys.stderr, flush=True)
             self.progress_updated.emit(25, "Preparing translation...")
+            print("    ✓ Progress 25% emitted successfully", file=sys.stderr, flush=True)
             time.sleep(0.1)  # Allow UI update
 
             if self.is_cancelled:
