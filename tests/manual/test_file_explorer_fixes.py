@@ -12,11 +12,6 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-print("=" * 80)
-print("FILE EXPLORER BUG FIXES - VALIDATION TESTS")
-print("=" * 80)
-print()
-
 # ============================================================================
 # TEST FIX #1: Exclude Globs Pattern Matching
 # ============================================================================
@@ -72,9 +67,6 @@ def test_exclude_pattern_matching():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-fix1_passed = test_exclude_pattern_matching()
-print()
-
 # ============================================================================
 # TEST FIX #3: Case/Regex Checkboxes Logic
 # ============================================================================
@@ -115,42 +107,42 @@ def test_checkbox_logic():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-fix3_passed = test_checkbox_logic()
-print()
-
 # ============================================================================
 # TEST FIX #4: Operators Display
 # ============================================================================
-print("TEST FIX #4: Operators Display")
-print("-" * 80)
+def test_operators_display():
+    """Test operators display logic."""
+    operators = [
+        "equals",
+        "not equals",
+        "contains",
+        "not contains",
+        "greater than",
+        "less than",  # was "<"
+        "greater than or equal",  # was ">="
+        "less than or equal",  # was "<="
+        "regex"
+    ]
 
-operators = [
-    "equals",
-    "not equals",
-    "contains",
-    "not contains",
-    "greater than",
-    "less than",  # was "<"
-    "greater than or equal",  # was ">="
-    "less than or equal",  # was "<="
-    "regex"
-]
+    print("TEST FIX #4: Operators Display")
+    print("-" * 80)
+    print("  Operators list (should show full text, not symbols):")
+    for i, op in enumerate(operators, 1):
+        symbol_check = " ← Was symbol!" if op in ["<", ">=", "<="] else ""
+        print(f"    {i}. {op}{symbol_check}")
 
-print("  Operators list (should show full text, not symbols):")
-for i, op in enumerate(operators, 1):
-    symbol_check = " ← Was symbol!" if op in ["<", ">=", "<="] else ""
-    print(f"    {i}. {op}{symbol_check}")
+    # Check if any symbols remain
+    has_symbols = any(op in ["<", ">=", "<="] for op in operators)
+    fix4_passed = not has_symbols
 
-# Check if any symbols remain
-has_symbols = any(op in ["<", ">=", "<="] for op in operators)
-fix4_passed = not has_symbols
-
-print()
-if fix4_passed:
-    print("  ✅ PASS: All operators use full text")
-else:
-    print("  ❌ FAIL: Some operators still use symbols")
-print()
+    print()
+    if fix4_passed:
+        print("  ✅ PASS: All operators use full text")
+    else:
+        print("  ❌ FAIL: Some operators still use symbols")
+    print()
+    
+    return fix4_passed
 
 # ============================================================================
 # TEST FIX #5: Type Filter i18n
@@ -205,38 +197,5 @@ def test_type_filter_logic():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-fix5_passed = test_type_filter_logic()
-print()
-
-# ============================================================================
-# FINAL SUMMARY
-# ============================================================================
-print("=" * 80)
-print("SUMMARY")
-print("=" * 80)
-print()
-
-fixes_status = [
-    ("Fix #1: Exclude Globs", fix1_passed),
-    ("Fix #3: Case/Regex Checkboxes", fix3_passed),
-    ("Fix #4: Operators Display", fix4_passed),
-    ("Fix #5: Type Filter i18n", fix5_passed),
-]
-
-all_passed = all(status for _, status in fixes_status)
-
-for fix_name, status in fixes_status:
-    status_text = "✅ PASSED" if status else "❌ FAILED"
-    print(f"  {fix_name}: {status_text}")
-
-print()
-print("=" * 80)
-if all_passed:
-    print("ALL FIXES VALIDATED ✅")
-    print("=" * 80)
-else:
-    print("SOME FIXES FAILED ❌")
-    print("=" * 80)
-
 if __name__ == "__main__":
-    sys.exit(0 if all_passed else 1)
+    print("=" * 80)

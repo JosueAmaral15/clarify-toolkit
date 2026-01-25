@@ -5,6 +5,7 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 
 import os
 import sys
+import subprocess
 from typing import Dict, List, Tuple
 
 from PySide6.QtWidgets import (
@@ -777,11 +778,11 @@ class ResultsTree(QTreeWidget):
             if os.path.isfile(path):
                 try:
                     if sys.platform.startswith("darwin"):
-                        os.system(f'open "{path}"')
+                        subprocess.run(["open", path], check=False)
                     elif os.name == "nt":
-                        os.system(f'start "" "{path}"')
+                        subprocess.run(["cmd", "/c", "start", "", path], check=False)
                     else:
-                        os.system(f'xdg-open "{path}"')
+                        subprocess.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
                     print(f"Error opening {path}: {e}")
@@ -815,11 +816,11 @@ class ResultsTree(QTreeWidget):
             if os.path.isfile(path):
                 try:
                     if sys.platform.startswith("darwin"):
-                        os.system(f'open "{path}"')
+                        subprocess.run(["open", path], check=False)
                     elif os.name == "nt":
-                        os.system(f'start "" "{path}"')
+                        subprocess.run(["cmd", "/c", "start", "", path], check=False)
                     else:
-                        os.system(f'xdg-open "{path}"')
+                        subprocess.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
                     print(f"Error opening {path}: {e}")

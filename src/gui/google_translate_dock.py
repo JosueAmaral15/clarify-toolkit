@@ -142,7 +142,26 @@ class GoogleTranslateDock(BaseDock):
     def __init__(self, parent=None):
         self.api = GoogleTranslateAPI()
         self.translation_worker = None
+        self._finished_workers = []  # Keep references to finished workers
         super().__init__(tr("menu.tools.google_translate"), parent)
+
+    def __del__(self):
+        """Destructor - ensure threads are stopped before deletion."""
+        import sys
+        print("=== GoogleTranslateDock.__del__() called ===", file=sys.stderr)
+        try:
+            if hasattr(self, 'translation_worker') and self.translation_worker:
+                if self.translation_worker.isRunning():
+                    print("CRITICAL: Worker still running in destructor! Stopping...", file=sys.stderr)
+                    self.translation_worker.cancel()
+                    self.translation_worker.wait(2000)
+                    if self.translation_worker.isRunning():
+                        print("CRITICAL: Terminating worker in destructor", file=sys.stderr)
+                        self.translation_worker.terminate()
+                        self.translation_worker.wait()
+            print("__del__() completed safely", file=sys.stderr)
+        except Exception as e:
+            print(f"ERROR in __del__(): {e}", file=sys.stderr)
 
     def _setup_ui(self):
         """Setup the user interface."""
@@ -437,8 +456,15 @@ class GoogleTranslateDock(BaseDock):
 
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
+        
+        # Connect signals BEFORE starting thread
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
+        
+        # Store finished workers to prevent premature deletion
+        # For QThread subclass, do NOT use finished->deleteLater pattern
+        self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
+        
         self.translation_worker.start()
 
     def _on_progress_updated(self, progress: int, status: str):
@@ -470,10 +496,18 @@ class GoogleTranslateDock(BaseDock):
         # Reset status color after delay
         QTimer.singleShot(5000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
-        # Clean up worker
-        if self.translation_worker:
-            self.translation_worker.deleteLater()
-            self.translation_worker = None
+        # Worker cleanup handled by _on_worker_finished
+        self.translation_worker = None
+
+    def _on_worker_finished(self, worker):
+        """Handle worker thread finishing - keep reference alive."""
+        self._finished_workers.append(worker)
+        # Clean up old finished workers after delay to allow proper Qt cleanup
+        QTimer.singleShot(1000, self._cleanup_old_workers)
+
+    def _cleanup_old_workers(self):
+        """Clean up finished worker references."""
+        self._finished_workers = [w for w in self._finished_workers if w.isRunning()]
 
     def _cancel_translation(self):
         """Cancel ongoing translation."""
@@ -507,6 +541,33 @@ class GoogleTranslateDock(BaseDock):
             original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+
+    def closeEvent(self, event):
+        """Handle dock close event - wait for running threads."""
+        import sys
+        print("=== GoogleTranslateDock.closeEvent() called ===", file=sys.stderr)
+        print(f"translation_worker: {self.translation_worker}", file=sys.stderr)
+        
+        if self.translation_worker and self.translation_worker.isRunning():
+            print(f"Worker is running, cancelling...", file=sys.stderr)
+            # Cancel and wait for thread to finish
+            self.translation_worker.cancel()
+            if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
+                print("Worker did not finish in 3s, terminating...", file=sys.stderr)
+                self.translation_worker.terminate()
+                self.translation_worker.wait()
+            print("Worker stopped successfully", file=sys.stderr)
+        
+        # Wait for any finished workers
+        print(f"Finished workers count: {len(self._finished_workers)}", file=sys.stderr)
+        for worker in self._finished_workers:
+            if worker.isRunning():
+                print(f"Waiting for finished worker...", file=sys.stderr)
+                worker.wait(1000)
+        
+        print("Calling super().closeEvent()", file=sys.stderr)
+        super().closeEvent(event)
+        print("closeEvent() completed", file=sys.stderr)
 
     def _update_cache_info(self):
         """Update cache information display."""
