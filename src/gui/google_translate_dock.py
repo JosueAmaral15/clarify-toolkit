@@ -463,6 +463,12 @@ class GoogleTranslateDock(BaseDock):
         print(f"    From: {from_lang}, To: {to_lang}", file=sys.stderr, flush=True)
         print("=" * 80, file=sys.stderr, flush=True)
         
+        # CRITICAL FIX: Prevent starting new worker while one is running
+        if self.translation_worker and self.translation_worker.isRunning():
+            print("    ⚠️  Translation already in progress, ignoring duplicate call", file=sys.stderr, flush=True)
+            print("=" * 80 + "\n", file=sys.stderr, flush=True)
+            return
+        
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
