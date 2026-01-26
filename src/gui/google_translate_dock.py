@@ -534,9 +534,8 @@ class GoogleTranslateDock(BaseDock):
                 clipboard.setText(result)
 
             # Visual feedback
-            original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
-            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+            QTimer.singleShot(3000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
