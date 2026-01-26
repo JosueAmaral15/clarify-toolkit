@@ -539,10 +539,7 @@ class GoogleTranslateDock(BaseDock):
         from_lang = self.combo_from_lang.currentText()
         to_lang = self.combo_to_lang.currentText()
         
-        if "Auto-detect" in from_lang or "Auto-detect" in to_lang:
-            # Can't reverse with auto-detect, just swap text
-            pass
-        else:
+        if "Auto-detect" not in from_lang and "Auto-detect" not in to_lang:
             # Swap the combo box selections
             self.combo_from_lang.setCurrentText(to_lang)
             self.combo_to_lang.setCurrentText(from_lang)
@@ -554,9 +551,8 @@ class GoogleTranslateDock(BaseDock):
         self.text_input.setPlainText(output_text)
         self.text_output.setPlainText(input_text)
         
-        # Update button states
-        self.btn_reverse.setEnabled(False)
-        self.btn_copy_result.setEnabled(bool(input_text))  # Enable if there's now output
+        # Update button states - keep reverse enabled, update copy based on new output
+        self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
