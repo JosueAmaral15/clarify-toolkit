@@ -143,3 +143,68 @@ Q4: ✅ If text changed without new translate: Keep auto-detect, just swap text
 6. Remove debug prints
 7. Test and commit
 
+
+## Session 2 Results
+
+✅ **Implementation Complete**: Detected language passed from worker to dock  
+✅ **User Confirmed**: Auto-detect reverse swap working correctly!  
+✅ **Changes Made**:
+   - Modified TranslationWorker signal to include detected_lang parameter
+   - Worker captures source_language from TranslationResult (first chunk)
+   - Dock stores detected language in self._last_detected_lang
+   - Reverse button uses detected language when From="auto"
+
+**Next Step**: Remove debug prints and close this session
+
+---
+
+## New Feature Request: Save As Button
+
+**Goal**: Add "Save As..." button to save Translation Result to .txt file
+
+**Questions Before Implementation**:
+
+1. **Button placement**: Where should button be located?
+   - (A) Next to "Copy Result" button in same row?
+   - (B) Separate row?
+   - (C) Other location?
+
+2. **Save behavior**:
+   - Should it save ONLY the translation result (output text)?
+   - Or should it offer option to save both input + output?
+
+3. **Default filename**: What should be suggested filename?
+   - (A) "translation_TIMESTAMP.txt"
+   - (B) Ask user for filename (empty dialog)
+   - (C) Based on first words of translation (e.g., "hello_translation.txt")
+
+4. **File encoding**: Should it save as UTF-8 (supports all languages)?
+
+5. **Button state**: When should button be enabled?
+   - Same as "Copy Result" (only after successful translation)?
+
+Please answer these 5 questions so I can implement correctly.
+
+
+## Question Answers for Save As Feature
+
+✅ Q1: Button placement - Next to "Copy Result"
+✅ Q2: Save behavior - ONLY translation result
+✅ Q3: Default filename - "translation_TIMESTAMP.txt"
+✅ Q4: File encoding - UTF-8
+✅ Q5: Button state - Enable after successful translation
+
+**Protocol Requirement**: Must remove debug prints from Session 2 BEFORE starting new feature
+
+---
+
+## Session 3: Remove Debug Prints
+
+**Goal**: Clean up code per protocol before moving to new feature
+
+**Steps**:
+1. Remove all print() statements from _reverse_translation()
+2. Remove guard debug message
+3. Commit clean code
+4. Mark Session 2 as complete
+
