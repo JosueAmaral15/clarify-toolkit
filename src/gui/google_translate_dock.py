@@ -432,6 +432,16 @@ class GoogleTranslateDock(BaseDock):
         if self.translation_worker and self.translation_worker.isRunning():
             return
         
+        # Disconnect signals from previous worker if it exists
+        if self.translation_worker:
+            try:
+                self.translation_worker.progress_updated.disconnect()
+                self.translation_worker.translation_completed.disconnect()
+                self.translation_worker.finished.disconnect()
+            except (TypeError, RuntimeError):
+                # Signals already disconnected or worker deleted
+                pass
+        
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
