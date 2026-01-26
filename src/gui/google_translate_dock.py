@@ -54,7 +54,7 @@ class TranslationWorker(QThread):
     """Background worker for translation operations."""
 
     progress_updated = Signal(int, str)  # progress, status
-    translation_completed = Signal(str, bool, str)  # result, success, error
+    translation_completed = Signal(str, bool, str, str)  # result, success, error, detected_lang
 
     def __init__(self, api: GoogleTranslateAPI, text: str, from_lang: str, to_lang: str):
         super().__init__()
@@ -105,6 +105,7 @@ class TranslationWorker(QThread):
             self.progress_updated.emit(50, f"Translating {len(text_chunks)} chunk(s)...")
 
             translated_chunks = []
+            detected_language = self.from_lang  # Default to input language
             total_chunks = len(text_chunks)
 
             for i, chunk in enumerate(text_chunks):
@@ -117,19 +118,23 @@ class TranslationWorker(QThread):
                 result = self.api.translate_text(chunk, self.from_lang, self.to_lang)
 
                 if not result.success:
-                    self.translation_completed.emit("", False, result.error_message)
+                    self.translation_completed.emit("", False, result.error_message, self.from_lang)
                     return
 
                 translated_chunks.append(result.translated_text)
+                
+                # Capture detected language from first chunk
+                if i == 0 and result.source_language:
+                    detected_language = result.source_language
 
             # Combine translated chunks
             final_result = "\n\n".join(translated_chunks)
 
             self.progress_updated.emit(100, "Translation completed!")
-            self.translation_completed.emit(final_result, True, "")
+            self.translation_completed.emit(final_result, True, "", detected_language)
 
         except Exception as e:
-            self.translation_completed.emit("", False, f"Translation error: {str(e)}")
+            self.translation_completed.emit("", False, f"Translation error: {str(e)}", self.from_lang)
 
 
 class GoogleTranslateDock(BaseDock):
@@ -145,6 +150,7 @@ class GoogleTranslateDock(BaseDock):
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
         self._reversing = False  # Guard flag to prevent duplicate reverse calls
+        self._last_detected_lang = None  # Store detected language from last translation
         super().__init__(tr("menu.tools.google_translate"), parent)
 
     def _setup_ui(self):
@@ -475,7 +481,7 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setValue(progress)
         self.lbl_status.setText(status)
 
-    def _on_translation_completed(self, result: str, success: bool, error: str):
+    def _on_translation_completed(self, result: str, success: bool, error: str, detected_lang: str):
         """Handle translation completion."""
         # Reset UI
         self.btn_translate.setEnabled(True)
@@ -486,6 +492,7 @@ class GoogleTranslateDock(BaseDock):
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
             self.btn_reverse.setEnabled(True)
+            self._last_detected_lang = detected_lang  # Store detected language
             self.lbl_status.setText(tr("google_translate.status_completed"))
             self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         else:
@@ -549,26 +556,37 @@ class GoogleTranslateDock(BaseDock):
             from_code = self.combo_from_lang.currentData()
             to_code = self.combo_to_lang.currentData()
             print(f"BEFORE: from_code={from_code}, to_code={to_code}")
-            print(f"BEFORE: from_text={self.combo_from_lang.currentText()}")
-            print(f"BEFORE: to_text={self.combo_to_lang.currentText()}")
+            print(f"BEFORE: _last_detected_lang={self._last_detected_lang}")
             
-            # Swap languages (skip if source is auto-detect)
-            if from_code != "auto":
-                # Find indices by searching for the data value
+            # Swap languages
+            if from_code == "auto":
+                # Use detected language if available, otherwise keep auto-detect
+                if self._last_detected_lang:
+                    print(f"Using detected language: {self._last_detected_lang}")
+                    # Set From to target language, To to detected language
+                    from_index = self.combo_from_lang.findData(to_code)
+                    to_index = self.combo_to_lang.findData(self._last_detected_lang)
+                    
+                    if from_index >= 0:
+                        self.combo_from_lang.setCurrentIndex(from_index)
+                        print(f"Set combo_from_lang to index {from_index} (code={to_code})")
+                    if to_index >= 0:
+                        self.combo_to_lang.setCurrentIndex(to_index)
+                        print(f"Set combo_to_lang to index {to_index} (code={self._last_detected_lang})")
+                else:
+                    print("No detected language, keeping auto-detect")
+            else:
+                # Normal swap when From is not auto-detect
                 from_index = self.combo_from_lang.findData(to_code)
                 to_index = self.combo_to_lang.findData(from_code)
-                print(f"Indices: from_index={from_index}, to_index={to_index}")
+                print(f"Normal swap: from_index={from_index}, to_index={to_index}")
                 
                 if from_index >= 0:
                     self.combo_from_lang.setCurrentIndex(from_index)
-                    print(f"Set combo_from_lang to index {from_index}")
                 if to_index >= 0:
                     self.combo_to_lang.setCurrentIndex(to_index)
-                    print(f"Set combo_to_lang to index {to_index}")
             
             print(f"AFTER: from_code={self.combo_from_lang.currentData()}, to_code={self.combo_to_lang.currentData()}")
-            print(f"AFTER: from_text={self.combo_from_lang.currentText()}")
-            print(f"AFTER: to_text={self.combo_to_lang.currentText()}")
             
             # Swap input/output text
             input_text = self.text_input.toPlainText()
@@ -576,9 +594,10 @@ class GoogleTranslateDock(BaseDock):
             
             self.text_input.setPlainText(output_text)
             self.text_output.setPlainText(input_text)
+            print(f"Text swapped: input_len={len(output_text)}, output_len={len(input_text)}")
             
             # Update button states - keep reverse enabled, update copy based on new output
-            self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
+            self.btn_copy_result.setEnabled(bool(output_text))
             print("=== END DEBUG ===\n")
         finally:
             # Reset guard after short delay to allow legitimate subsequent clicks
