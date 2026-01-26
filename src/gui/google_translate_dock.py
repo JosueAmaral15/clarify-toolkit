@@ -150,8 +150,6 @@ class GoogleTranslateDock(BaseDock):
         self.api = GoogleTranslateAPI()
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
-        self._reversing = False  # Guard flag to prevent duplicate reverse calls
-        self._saving = False  # Guard flag to prevent duplicate save dialogs
         self._last_detected_lang = None  # Store detected language from last translation
         super().__init__(tr("menu.tools.google_translate"), parent)
 
@@ -159,7 +157,8 @@ class GoogleTranslateDock(BaseDock):
         """Setup the user interface."""
         self._create_widgets()
         self._create_layout()
-        self._connect_signals()
+        # Note: BaseDock.__init__ calls _connect_signals() automatically (line 56)
+        # Do NOT call it here or signals will be connected twice!
         self._apply_tooltips()
         self._load_preferences()
 
@@ -553,51 +552,41 @@ class GoogleTranslateDock(BaseDock):
 
     def _reverse_translation(self):
         """Reverse source and target languages, swap input/output text."""
-        # Guard: prevent duplicate calls from Qt event system
-        if self._reversing:
-            return
+        # Get current language codes (not display text)
+        from_code = self.combo_from_lang.currentData()
+        to_code = self.combo_to_lang.currentData()
         
-        self._reversing = True
-        
-        try:
-            # Get current language codes (not display text)
-            from_code = self.combo_from_lang.currentData()
-            to_code = self.combo_to_lang.currentData()
-            
-            # Swap languages
-            if from_code == "auto":
-                # Use detected language if available, otherwise keep auto-detect
-                if self._last_detected_lang:
-                    # Set From to target language, To to detected language
-                    from_index = self.combo_from_lang.findData(to_code)
-                    to_index = self.combo_to_lang.findData(self._last_detected_lang)
-                    
-                    if from_index >= 0:
-                        self.combo_from_lang.setCurrentIndex(from_index)
-                    if to_index >= 0:
-                        self.combo_to_lang.setCurrentIndex(to_index)
-            else:
-                # Normal swap when From is not auto-detect
+        # Swap languages
+        if from_code == "auto":
+            # Use detected language if available, otherwise keep auto-detect
+            if self._last_detected_lang:
+                # Set From to target language, To to detected language
                 from_index = self.combo_from_lang.findData(to_code)
-                to_index = self.combo_to_lang.findData(from_code)
+                to_index = self.combo_to_lang.findData(self._last_detected_lang)
                 
                 if from_index >= 0:
                     self.combo_from_lang.setCurrentIndex(from_index)
                 if to_index >= 0:
                     self.combo_to_lang.setCurrentIndex(to_index)
+        else:
+            # Normal swap when From is not auto-detect
+            from_index = self.combo_from_lang.findData(to_code)
+            to_index = self.combo_to_lang.findData(from_code)
             
-            # Swap input/output text
-            input_text = self.text_input.toPlainText()
-            output_text = self.text_output.toPlainText()
-            
-            self.text_input.setPlainText(output_text)
-            self.text_output.setPlainText(input_text)
-            
-            # Update button states - keep reverse enabled, update copy based on new output
-            self.btn_copy_result.setEnabled(bool(output_text))
-        finally:
-            # Reset guard after short delay to allow legitimate subsequent clicks
-            QTimer.singleShot(300, lambda: setattr(self, '_reversing', False))
+            if from_index >= 0:
+                self.combo_from_lang.setCurrentIndex(from_index)
+            if to_index >= 0:
+                self.combo_to_lang.setCurrentIndex(to_index)
+        
+        # Swap input/output text
+        input_text = self.text_input.toPlainText()
+        output_text = self.text_output.toPlainText()
+        
+        self.text_input.setPlainText(output_text)
+        self.text_output.setPlainText(input_text)
+        
+        # Update button states - keep reverse enabled, update copy based on new output
+        self.btn_copy_result.setEnabled(bool(output_text))
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
@@ -612,49 +601,39 @@ class GoogleTranslateDock(BaseDock):
 
     def _save_as(self):
         """Save translation result to file."""
-        # Guard: prevent duplicate calls from Qt event system
-        if self._saving:
+        result = self.text_output.toPlainText()
+        if not result:
             return
         
-        self._saving = True
+        # Generate default filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"translation_{timestamp}.txt"
         
-        try:
-            result = self.text_output.toPlainText()
-            if not result:
-                return
-            
-            # Generate default filename with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            default_filename = f"translation_{timestamp}.txt"
-            
-            # Open save file dialog
-            file_path, _ = QFileDialog.getSaveFileName(
-                self,
-                tr("google_translate.save_dialog_title"),
-                default_filename,
-                "Text Files (*.txt);;All Files (*)"
-            )
-            
-            if file_path:
-                try:
-                    # Save with UTF-8 encoding
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(result)
-                    
-                    # Visual feedback
-                    original_text = self.btn_save_as.text()
-                    self.btn_save_as.setText(tr("google_translate.btn_saved"))
-                    QTimer.singleShot(2000, lambda: self.btn_save_as.setText(original_text))
-                    
-                except Exception as e:
-                    QMessageBox.warning(
-                        self,
-                        tr("google_translate.save_error_title"),
-                        tr("google_translate.save_error_msg").format(str(e))
-                    )
-        finally:
-            # Reset guard after short delay
-            QTimer.singleShot(300, lambda: setattr(self, '_saving', False))
+        # Open save file dialog
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            tr("google_translate.save_dialog_title"),
+            default_filename,
+            "Text Files (*.txt);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                # Save with UTF-8 encoding
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(result)
+                
+                # Visual feedback
+                original_text = self.btn_save_as.text()
+                self.btn_save_as.setText(tr("google_translate.btn_saved"))
+                QTimer.singleShot(2000, lambda: self.btn_save_as.setText(original_text))
+                
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    tr("google_translate.save_error_title"),
+                    tr("google_translate.save_error_msg").format(str(e))
+                )
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
