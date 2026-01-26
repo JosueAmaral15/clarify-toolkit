@@ -41,6 +41,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QSplitter,
     QFrame,
+    QApplication,
 )
 from PySide6.QtGui import QFont
 
@@ -529,9 +530,8 @@ class GoogleTranslateDock(BaseDock):
         """Copy translation result to clipboard."""
         result = self.text_output.toPlainText()
         if result:
-            clipboard = self.parent().app.clipboard() if hasattr(self.parent(), "app") else None
-            if clipboard:
-                clipboard.setText(result)
+            clipboard = QApplication.clipboard()
+            clipboard.setText(result)
 
             # Visual feedback
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
