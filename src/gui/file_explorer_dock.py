@@ -1785,14 +1785,24 @@ class FileExplorerDock(BaseDock):
         
         Version: v2.9.122
         """
+        print(f"DEBUG 1782 _cleanup_worker_thread() | ENTER")
+        print(f"DEBUG 1783 _cleanup_worker_thread() | _worker_thread exists: {hasattr(self, '_worker_thread')}")
+        print(f"DEBUG 1784 _cleanup_worker_thread() | _worker_thread value: {getattr(self, '_worker_thread', 'NO_ATTR')}")
+        
         if hasattr(self, '_worker_thread') and self._worker_thread:
+            print(f"DEBUG 1788 _cleanup_worker_thread() | Cleaning up thread...")
             self._worker_thread.quit()
             self._worker_thread.wait()
             self._worker_thread.deleteLater()
             self._worker_thread = None
+            print(f"DEBUG 1793 _cleanup_worker_thread() | Thread cleaned up")
         
+        print(f"DEBUG 1795 _cleanup_worker_thread() | _worker exists: {hasattr(self, '_worker')}")
+        print(f"DEBUG 1796 _cleanup_worker_thread() | _worker value BEFORE: {getattr(self, '_worker', 'NO_ATTR')}")
         if hasattr(self, '_worker'):
             self._worker = None
+        print(f"DEBUG 1799 _cleanup_worker_thread() | _worker value AFTER: {getattr(self, '_worker', 'NO_ATTR')}")
+        print(f"DEBUG 1800 _cleanup_worker_thread() | EXIT")
 
     def _on_search_finished(self, result):
         """
@@ -1808,6 +1818,7 @@ class FileExplorerDock(BaseDock):
         """
         import time
         
+        print(f"DEBUG 1811 _on_search_finished() | ENTER")
         logger.debug("_on_search_finished() called!")
         
         # NOTE v2.9.123: Don't close progress dialog here!

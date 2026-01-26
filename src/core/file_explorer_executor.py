@@ -250,6 +250,7 @@ class UnifiedFileExplorerExecutor(QObject):
         browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
+        logger.debug(f"[SEARCH DEBUG] Browse found {len(files_to_search)} files (recursive={recursive}, show_hidden={show_hidden})")
 
         # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
         # (Sprint 1 - Task 1.1 - Fase 2 + BUGFIX)
@@ -317,9 +318,11 @@ class UnifiedFileExplorerExecutor(QObject):
 
         # Step 2: Apply filename pattern filter
         if filename_pattern:
+            before_filter = len(files_to_search)
             files_to_search = [
                 f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
             ]
+            logger.debug(f"[SEARCH DEBUG] Filename pattern '{filename_pattern}' filter: {before_filter} → {len(files_to_search)} files")
 
         # Step 3: Apply content search
         search_results = []
@@ -374,6 +377,8 @@ class UnifiedFileExplorerExecutor(QObject):
         stats = FileListExecutor.calculate_statistics(file_infos)
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
+        
+        logger.debug(f"[SEARCH DEBUG] Final results: {len(search_results)} files, {stats['total_matches']} matches")
 
         # Log memory optimization stats (v2.9.120)
         if stats["total_matches"] > 0:
