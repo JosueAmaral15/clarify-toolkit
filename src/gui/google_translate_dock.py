@@ -535,14 +535,20 @@ class GoogleTranslateDock(BaseDock):
 
     def _reverse_translation(self):
         """Reverse source and target languages, swap input/output text."""
-        # Swap languages (skip if either is "Auto-detect")
-        from_lang = self.combo_from_lang.currentText()
-        to_lang = self.combo_to_lang.currentText()
+        # Get current language codes (not display text)
+        from_code = self.combo_from_lang.currentData()
+        to_code = self.combo_to_lang.currentData()
         
-        if "Auto-detect" not in from_lang and "Auto-detect" not in to_lang:
-            # Swap the combo box selections
-            self.combo_from_lang.setCurrentText(to_lang)
-            self.combo_to_lang.setCurrentText(from_lang)
+        # Swap languages (skip if source is auto-detect)
+        if from_code != "auto":
+            # Find indices by searching for the data value
+            from_index = self.combo_from_lang.findData(to_code)
+            to_index = self.combo_to_lang.findData(from_code)
+            
+            if from_index >= 0:
+                self.combo_from_lang.setCurrentIndex(from_index)
+            if to_index >= 0:
+                self.combo_to_lang.setCurrentIndex(to_index)
         
         # Swap input/output text
         input_text = self.text_input.toPlainText()
