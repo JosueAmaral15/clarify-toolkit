@@ -700,6 +700,7 @@
   "google_translate.btn_clear": "🗑️ Clear",
   "google_translate.btn_copied": "✓ Copied!",
   "google_translate.btn_copy_result": "📋 Copy Result",
+  "google_translate.btn_reverse": "🔄 Reverse",
   "google_translate.btn_translate": "🌐 Translate",
   "google_translate.cache_na": "Cache: N/A",
   "google_translate.chk_file_mode": "Translate file instead of text",

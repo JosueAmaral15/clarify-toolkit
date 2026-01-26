@@ -203,6 +203,9 @@ class GoogleTranslateDock(BaseDock):
         self.btn_copy_result = QPushButton(tr("google_translate.btn_copy_result"))
         self.btn_copy_result.setEnabled(False)
 
+        self.btn_reverse = QPushButton(tr("google_translate.btn_reverse"))
+        self.btn_reverse.setEnabled(False)
+
         self.btn_clear = QPushButton(tr("google_translate.btn_clear"))
         self.btn_cancel = QPushButton(tr("google_translate.btn_cancel"))
         self.btn_cancel.setEnabled(False)
@@ -259,6 +262,7 @@ class GoogleTranslateDock(BaseDock):
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_translate)
         btn_layout.addWidget(self.btn_copy_result)
+        btn_layout.addWidget(self.btn_reverse)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_cancel)
         btn_layout.addStretch()
@@ -285,6 +289,7 @@ class GoogleTranslateDock(BaseDock):
         """Connect widget signals."""
         self.btn_translate.clicked.connect(self._translate)
         self.btn_copy_result.clicked.connect(self._copy_result)
+        self.btn_reverse.clicked.connect(self._reverse_translation)
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
         self.btn_browse_file.clicked.connect(self._browse_file)
@@ -479,6 +484,7 @@ class GoogleTranslateDock(BaseDock):
         if success:
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
+            self.btn_reverse.setEnabled(True)
             self.lbl_status.setText(tr("google_translate.status_completed"))
             self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         else:
@@ -523,8 +529,34 @@ class GoogleTranslateDock(BaseDock):
         self.text_output.clear()
         self.ed_file_path.clearEditText()
         self.btn_copy_result.setEnabled(False)
+        self.btn_reverse.setEnabled(False)
         self.lbl_status.setText(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
+
+    def _reverse_translation(self):
+        """Reverse source and target languages, swap input/output text."""
+        # Swap languages (skip if either is "Auto-detect")
+        from_lang = self.combo_from_lang.currentText()
+        to_lang = self.combo_to_lang.currentText()
+        
+        if "Auto-detect" in from_lang or "Auto-detect" in to_lang:
+            # Can't reverse with auto-detect, just swap text
+            pass
+        else:
+            # Swap the combo box selections
+            self.combo_from_lang.setCurrentText(to_lang)
+            self.combo_to_lang.setCurrentText(from_lang)
+        
+        # Swap input/output text
+        input_text = self.text_input.toPlainText()
+        output_text = self.text_output.toPlainText()
+        
+        self.text_input.setPlainText(output_text)
+        self.text_output.setPlainText(input_text)
+        
+        # Update button states
+        self.btn_reverse.setEnabled(False)
+        self.btn_copy_result.setEnabled(bool(input_text))  # Enable if there's now output
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
