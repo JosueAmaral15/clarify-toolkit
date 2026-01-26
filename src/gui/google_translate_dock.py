@@ -151,6 +151,7 @@ class GoogleTranslateDock(BaseDock):
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
         self._reversing = False  # Guard flag to prevent duplicate reverse calls
+        self._saving = False  # Guard flag to prevent duplicate save dialogs
         self._last_detected_lang = None  # Store detected language from last translation
         super().__init__(tr("menu.tools.google_translate"), parent)
 
@@ -611,39 +612,49 @@ class GoogleTranslateDock(BaseDock):
 
     def _save_as(self):
         """Save translation result to file."""
-        result = self.text_output.toPlainText()
-        if not result:
+        # Guard: prevent duplicate calls from Qt event system
+        if self._saving:
             return
         
-        # Generate default filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename = f"translation_{timestamp}.txt"
+        self._saving = True
         
-        # Open save file dialog
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            tr("google_translate.save_dialog_title"),
-            default_filename,
-            "Text Files (*.txt);;All Files (*)"
-        )
-        
-        if file_path:
-            try:
-                # Save with UTF-8 encoding
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(result)
-                
-                # Visual feedback
-                original_text = self.btn_save_as.text()
-                self.btn_save_as.setText(tr("google_translate.btn_saved"))
-                QTimer.singleShot(2000, lambda: self.btn_save_as.setText(original_text))
-                
-            except Exception as e:
-                QMessageBox.warning(
-                    self,
-                    tr("google_translate.save_error_title"),
-                    tr("google_translate.save_error_msg").format(str(e))
-                )
+        try:
+            result = self.text_output.toPlainText()
+            if not result:
+                return
+            
+            # Generate default filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            default_filename = f"translation_{timestamp}.txt"
+            
+            # Open save file dialog
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                tr("google_translate.save_dialog_title"),
+                default_filename,
+                "Text Files (*.txt);;All Files (*)"
+            )
+            
+            if file_path:
+                try:
+                    # Save with UTF-8 encoding
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(result)
+                    
+                    # Visual feedback
+                    original_text = self.btn_save_as.text()
+                    self.btn_save_as.setText(tr("google_translate.btn_saved"))
+                    QTimer.singleShot(2000, lambda: self.btn_save_as.setText(original_text))
+                    
+                except Exception as e:
+                    QMessageBox.warning(
+                        self,
+                        tr("google_translate.save_error_title"),
+                        tr("google_translate.save_error_msg").format(str(e))
+                    )
+        finally:
+            # Reset guard after short delay
+            QTimer.singleShot(300, lambda: setattr(self, '_saving', False))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
