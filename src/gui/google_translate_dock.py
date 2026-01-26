@@ -144,6 +144,7 @@ class GoogleTranslateDock(BaseDock):
         self.api = GoogleTranslateAPI()
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
+        self._reversing = False  # Guard flag to prevent duplicate reverse calls
         super().__init__(tr("menu.tools.google_translate"), parent)
 
     def _setup_ui(self):
@@ -535,43 +536,53 @@ class GoogleTranslateDock(BaseDock):
 
     def _reverse_translation(self):
         """Reverse source and target languages, swap input/output text."""
+        # Guard: prevent duplicate calls from Qt event system
+        if self._reversing:
+            print("⚠️  DUPLICATE REVERSE CALL BLOCKED")
+            return
+        
+        self._reversing = True
         print("\n=== REVERSE BUTTON DEBUG ===")
         
-        # Get current language codes (not display text)
-        from_code = self.combo_from_lang.currentData()
-        to_code = self.combo_to_lang.currentData()
-        print(f"BEFORE: from_code={from_code}, to_code={to_code}")
-        print(f"BEFORE: from_text={self.combo_from_lang.currentText()}")
-        print(f"BEFORE: to_text={self.combo_to_lang.currentText()}")
-        
-        # Swap languages (skip if source is auto-detect)
-        if from_code != "auto":
-            # Find indices by searching for the data value
-            from_index = self.combo_from_lang.findData(to_code)
-            to_index = self.combo_to_lang.findData(from_code)
-            print(f"Indices: from_index={from_index}, to_index={to_index}")
+        try:
+            # Get current language codes (not display text)
+            from_code = self.combo_from_lang.currentData()
+            to_code = self.combo_to_lang.currentData()
+            print(f"BEFORE: from_code={from_code}, to_code={to_code}")
+            print(f"BEFORE: from_text={self.combo_from_lang.currentText()}")
+            print(f"BEFORE: to_text={self.combo_to_lang.currentText()}")
             
-            if from_index >= 0:
-                self.combo_from_lang.setCurrentIndex(from_index)
-                print(f"Set combo_from_lang to index {from_index}")
-            if to_index >= 0:
-                self.combo_to_lang.setCurrentIndex(to_index)
-                print(f"Set combo_to_lang to index {to_index}")
-        
-        print(f"AFTER: from_code={self.combo_from_lang.currentData()}, to_code={self.combo_to_lang.currentData()}")
-        print(f"AFTER: from_text={self.combo_from_lang.currentText()}")
-        print(f"AFTER: to_text={self.combo_to_lang.currentText()}")
-        
-        # Swap input/output text
-        input_text = self.text_input.toPlainText()
-        output_text = self.text_output.toPlainText()
-        
-        self.text_input.setPlainText(output_text)
-        self.text_output.setPlainText(input_text)
-        
-        # Update button states - keep reverse enabled, update copy based on new output
-        self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
-        print("=== END DEBUG ===\n")
+            # Swap languages (skip if source is auto-detect)
+            if from_code != "auto":
+                # Find indices by searching for the data value
+                from_index = self.combo_from_lang.findData(to_code)
+                to_index = self.combo_to_lang.findData(from_code)
+                print(f"Indices: from_index={from_index}, to_index={to_index}")
+                
+                if from_index >= 0:
+                    self.combo_from_lang.setCurrentIndex(from_index)
+                    print(f"Set combo_from_lang to index {from_index}")
+                if to_index >= 0:
+                    self.combo_to_lang.setCurrentIndex(to_index)
+                    print(f"Set combo_to_lang to index {to_index}")
+            
+            print(f"AFTER: from_code={self.combo_from_lang.currentData()}, to_code={self.combo_to_lang.currentData()}")
+            print(f"AFTER: from_text={self.combo_from_lang.currentText()}")
+            print(f"AFTER: to_text={self.combo_to_lang.currentText()}")
+            
+            # Swap input/output text
+            input_text = self.text_input.toPlainText()
+            output_text = self.text_output.toPlainText()
+            
+            self.text_input.setPlainText(output_text)
+            self.text_output.setPlainText(input_text)
+            
+            # Update button states - keep reverse enabled, update copy based on new output
+            self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
+            print("=== END DEBUG ===\n")
+        finally:
+            # Reset guard after short delay to allow legitimate subsequent clicks
+            QTimer.singleShot(300, lambda: setattr(self, '_reversing', False))
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
