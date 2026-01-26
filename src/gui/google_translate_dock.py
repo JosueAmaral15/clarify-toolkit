@@ -22,6 +22,7 @@ Version: 2.9.78
 
 import os
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -210,6 +211,9 @@ class GoogleTranslateDock(BaseDock):
         self.btn_copy_result = QPushButton(tr("google_translate.btn_copy_result"))
         self.btn_copy_result.setEnabled(False)
 
+        self.btn_save_as = QPushButton(tr("google_translate.btn_save_as"))
+        self.btn_save_as.setEnabled(False)
+
         self.btn_reverse = QPushButton(tr("google_translate.btn_reverse"))
         self.btn_reverse.setEnabled(False)
 
@@ -269,6 +273,7 @@ class GoogleTranslateDock(BaseDock):
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_translate)
         btn_layout.addWidget(self.btn_copy_result)
+        btn_layout.addWidget(self.btn_save_as)
         btn_layout.addWidget(self.btn_reverse)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_cancel)
@@ -296,6 +301,7 @@ class GoogleTranslateDock(BaseDock):
         """Connect widget signals."""
         self.btn_translate.clicked.connect(self._translate)
         self.btn_copy_result.clicked.connect(self._copy_result)
+        self.btn_save_as.clicked.connect(self._save_as)
         self.btn_reverse.clicked.connect(self._reverse_translation)
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
@@ -491,6 +497,7 @@ class GoogleTranslateDock(BaseDock):
         if success:
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
+            self.btn_save_as.setEnabled(True)
             self.btn_reverse.setEnabled(True)
             self._last_detected_lang = detected_lang  # Store detected language
             self.lbl_status.setText(tr("google_translate.status_completed"))
@@ -498,6 +505,7 @@ class GoogleTranslateDock(BaseDock):
         else:
             self.text_output.setPlainText(f"Translation failed: {error}")
             self.btn_copy_result.setEnabled(False)
+            self.btn_save_as.setEnabled(False)
             self.lbl_status.setText(tr("google_translate.status_failed"))
             self.lbl_status.setStyleSheet("color: #EF4444; font-weight: bold;")
 
@@ -537,6 +545,7 @@ class GoogleTranslateDock(BaseDock):
         self.text_output.clear()
         self.ed_file_path.clearEditText()
         self.btn_copy_result.setEnabled(False)
+        self.btn_save_as.setEnabled(False)
         self.btn_reverse.setEnabled(False)
         self.lbl_status.setText(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
@@ -599,6 +608,42 @@ class GoogleTranslateDock(BaseDock):
             # Visual feedback
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
+
+    def _save_as(self):
+        """Save translation result to file."""
+        result = self.text_output.toPlainText()
+        if not result:
+            return
+        
+        # Generate default filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"translation_{timestamp}.txt"
+        
+        # Open save file dialog
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            tr("google_translate.save_dialog_title"),
+            default_filename,
+            "Text Files (*.txt);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                # Save with UTF-8 encoding
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(result)
+                
+                # Visual feedback
+                original_text = self.btn_save_as.text()
+                self.btn_save_as.setText(tr("google_translate.btn_saved"))
+                QTimer.singleShot(2000, lambda: self.btn_save_as.setText(original_text))
+                
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    tr("google_translate.save_error_title"),
+                    tr("google_translate.save_error_msg").format(str(e))
+                )
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
