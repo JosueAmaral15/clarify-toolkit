@@ -1846,6 +1846,18 @@ class FileExplorerDock(BaseDock):
         total_files = len(files_list)
         total_matches = sum(len(sr.matches) for sr in files_list)
         
+        # BUGFIX: When search returns 0 files, no batches are emitted, so tree/table
+        # never get cleared in _on_batch_ready(). Explicitly clear them here.
+        if total_files == 0:
+            logger.info("[BUGFIX] Search returned 0 files - clearing tree and table to remove stale results")
+            self.results_tree.clear()
+            if hasattr(self, 'table_manager') and self.table_manager:
+                self.table_manager.clear()
+            # Close progress dialog since no batches will trigger this
+            if self.progress_dialog:
+                self.progress_dialog.close()
+                self.progress_dialog = None
+        
         # Update status bar (lightweight)
         self.results_status.setText(
             f"Found {total_files} file(s) with {total_matches} match(es)"
