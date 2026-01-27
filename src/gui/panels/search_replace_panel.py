@@ -87,240 +87,243 @@ class SearchReplacePanel(QWidget):
         self._current_task_id = None
         self._processing_modal = None  # Modal de progresso
 
+
+    # Path row
+    column = QVBoxLayout()
+    row = QHBoxLayout()
+    row.addWidget(QLabel(tr("search_replace.lbl_root_path")))
+    self.ed_path = QLineEdit()
+    self.ed_path.setToolTip(tooltip_tr("search_replace.tooltip_path"))
+    self.btn_browse = QPushButton(tr("search_replace.btn_browse"))
+    self.btn_browse.setToolTip(tooltip_tr("search_replace.tooltip_browse"))
+    row.addWidget(self.ed_path, 1)
+    row.addWidget(self.btn_browse)
+    column.addLayout(row)
+    self.is_file = QCheckBox(tr("search_replace.chk_is_file"))
+    self.is_file.setToolTip(tooltip_tr("search_replace.tooltip_is_file"))
+    column.addWidget(self.is_file)
+    root.addLayout(column)
+
+    # File extension filter (v2.9.0, v2.9.1 - optional)
+    row = QHBoxLayout()
+    self.chk_use_ext_filter = QCheckBox(tr("search_replace.chk_use_ext_filter"))
+    self.chk_use_ext_filter.setChecked(True)  # Default: enabled
+    self.chk_use_ext_filter.setToolTip(tooltip_tr("search_replace.tooltip_use_ext_filter"))
+    row.addWidget(self.chk_use_ext_filter)
+    row.addWidget(QLabel(tr("search_replace.lbl_extensions")))
+    self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
+    self.ed_extensions.setPlaceholderText(tr("search_replace.placeholder_extensions"))
+    self.ed_extensions.setToolTip(tooltip_tr("search_replace.tooltip_extensions"))
+    row.addWidget(self.ed_extensions)
+    root.addLayout(row)
+
+    # Sort results option (v2.9.5)
+    self.chk_sort_results = QCheckBox(tr("search_replace.chk_sort_results"))
+    self.chk_sort_results.setChecked(False)
+    self.chk_sort_results.setToolTip(tooltip_tr("search_replace.tooltip_sort_results"))
+    root.addWidget(self.chk_sort_results)
+
+    # Include/Exclude globs (advanced)
+    row = QHBoxLayout()
+    row.addWidget(QLabel(tr("search_replace.lbl_include_globs")))
+    self.ed_inc = QLineEdit()
+    self.ed_inc.setPlaceholderText(tr("search_replace.placeholder_include"))
+    self.ed_inc.setToolTip(tooltip_tr("search_replace.tooltip_inc"))
+    root.addLayout(row)
+    root.addWidget(self.ed_inc)
+    row = QHBoxLayout()
+    row.addWidget(QLabel(tr("search_replace.lbl_exclude_globs")))
+    self.ed_exc = QLineEdit("node_modules;dist;build;.git")
+    self.ed_exc.setToolTip(tooltip_tr("search_replace.tooltip_exc"))
+    root.addLayout(row)
+    root.addWidget(self.ed_exc)
+
+    # Search field + toggles (v2.9.112 - split into file name and file content)
+    gb = QGroupBox(tr("search_replace.group_search"))
+    g = QGridLayout(gb)
+
+    # File name query field
+    g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
+    self.ed_filename_query = QLineEdit()
+    self.ed_filename_query.setPlaceholderText(tr("search_replace.placeholder_filename"))
+    self.ed_filename_query.setToolTip(tooltip_tr("search_replace.tooltip_filename_query"))
+    g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
+
+    # File content query field
+    g.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
+    self.ed_query = QPlainTextEdit()
+    self.ed_query.setMinimumHeight(30)
+    self.ed_query.setMaximumHeight(150)
+    self.ed_query.setPlaceholderText(tr("search_replace.placeholder_content"))
+    self.ed_query.setToolTip(tooltip_tr("search_replace.tooltip_query"))
+    g.addWidget(self.ed_query, 1, 1, 1, 3)
+
+    # Checkboxes
+    self.chk_case = QCheckBox(tr("search_replace.chk_case_sensitive"))
+    self.chk_case.setToolTip(tooltip_tr("search_replace.tooltip_case"))
+    self.chk_word = QCheckBox(tr("search_replace.chk_whole_word"))
+    self.chk_word.setToolTip(tooltip_tr("search_replace.tooltip_word"))
+    self.chk_regex = QCheckBox(tr("search_replace.chk_regex"))
+    self.chk_regex.setToolTip(tooltip_tr("search_replace.tooltip_regex"))
+    self.chk_multi_query = QCheckBox(tr("search_replace.chk_multi_line"))  # v2.8.0
+    self.chk_multi_query.setToolTip(tooltip_tr("search_replace.tooltip_multi_query"))
+    self.btn_search = QPushButton(tr("search_replace.btn_search_cancel"))
+    self.btn_search.setToolTip(tooltip_tr("search_replace.tooltip_search"))
+
+    g.addWidget(self.chk_case, 2, 0)
+    g.addWidget(self.chk_word, 2, 1)
+    g.addWidget(self.chk_regex, 2, 2)
+    g.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
+    g.addWidget(self.btn_search, 3, 3)  # Moved to row 3
+
+    root.addWidget(gb)
+
+    # Replace extras (optional)
+    gb2 = QGroupBox(tr("search_replace.group_replace"))
+    g2 = QGridLayout(gb2)
+    g2.addWidget(QLabel(tr("search_replace.lbl_replacement")), 0, 0)
+    self.ed_repl = QPlainTextEdit()
+    self.ed_repl.setMinimumHeight(30)
+    self.ed_repl.setMaximumHeight(150)
+    self.ed_repl.setToolTip(tooltip_tr("search_replace.tooltip_repl"))
+    self.chk_preserve = QCheckBox(tr("search_replace.chk_preserve_case"))
+    self.chk_preserve.setToolTip(tooltip_tr("search_replace.tooltip_preserve"))
+    self.btn_replace_one = QPushButton(tr("search_replace.btn_replace_first"))
+    self.btn_replace_one.setToolTip(tooltip_tr("search_replace.tooltip_replace_one"))
+    self.btn_replace_all = QPushButton(tr("search_replace.btn_replace_all"))
+    self.btn_replace_all.setToolTip(tooltip_tr("search_replace.tooltip_replace_all"))
+    g2.addWidget(self.ed_repl, 0, 1, 1, 3)
+    g2.addWidget(self.chk_preserve, 1, 0)
+    g2.addWidget(self.btn_replace_one, 1, 2)
+    g2.addWidget(self.btn_replace_all, 1, 3)
+    root.addWidget(gb2)
+
+    # Advanced conditions (collapsible style via group box)
+    gb3 = QGroupBox(tr("search_replace.group_advanced"))
+    g3 = QGridLayout(gb3)
+
+    # Add AND/OR selector at the top
+    lbl_logic = QLabel(tr("search_replace.lbl_logic_operator"))
+    self.combo_logic_op = QComboBox()
+    self.combo_logic_op.addItems(["AND", "OR"])
+    self.combo_logic_op.setToolTip(tooltip_tr("search_replace.tooltip_logic_op"))
+    logic_layout = QHBoxLayout()
+    logic_layout.addWidget(lbl_logic)
+    logic_layout.addWidget(self.combo_logic_op)
+    logic_layout.addStretch()
+    g3.addLayout(logic_layout, 0, 0, 1, 8)
+
+    # Add headers (now starting from row 1)
+    g3.addWidget(QLabel(tr("search_replace.lbl_field")), 1, 0)
+    g3.addWidget(QLabel(tr("search_replace.lbl_operator")), 1, 1)
+    g3.addWidget(QLabel(tr("search_replace.lbl_value")), 1, 2)
+    g3.addWidget(QLabel(tr("search_replace.lbl_scope")), 1, 3)
+    g3.addWidget(QLabel(tr("search_replace.lbl_scope_param")), 1, 4)
+    g3.addWidget(QLabel(tr("search_replace.lbl_case")), 1, 5)
+    g3.addWidget(QLabel(tr("search_replace.lbl_word")), 1, 6)
+    g3.addWidget(QLabel(tr("search_replace.lbl_regex")), 1, 7)
+
+    # Dynamic condition rows (Task #5 - v2.9.7)
+    self.cond_list: List[
+        Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]
+    ] = []
+    self.cond_grid = g3  # Store grid reference for dynamic row management
+    self.next_cond_row = 2  # Track next available row (0=logic, 1=headers, 2+=conditions)
+
+    # Buttons layout (v2.9.40.3: create BEFORE adding rows)
+    self.buttons_layout_ref = QHBoxLayout()
+
+    # Add initial 3 condition rows (minimum)
+    for _ in range(3):
+        self._add_condition_row()
+
+    # Add Condition button
+    btn_add_condition = QPushButton(tr("search_replace.btn_add_condition"))
+    btn_add_condition.setToolTip(tooltip_tr("search_replace.tooltip_add_condition"))
+    btn_add_condition.clicked.connect(self._add_condition_row)
+    self.buttons_layout_ref.addWidget(btn_add_condition)
+
+    # Clear All Conditions button (v2.9.5)
+    btn_clear_conditions = QPushButton(tr("search_replace.btn_clear_conditions"))
+    btn_clear_conditions.setToolTip(tooltip_tr("search_replace.tooltip_clear_conditions"))
+    btn_clear_conditions.clicked.connect(self._clear_all_conditions)
+    self.buttons_layout_ref.addWidget(btn_clear_conditions)
+
+    self.buttons_layout_ref.addStretch()
+
+    # Buttons already added to grid by _add_condition_row (v2.9.40.3)
+
+    root.addWidget(gb3)
+
+    # Results on the right
+    self.results = ResultsTree()
+
+    # Install event filter for hover expansion (v2.9.115)
+    self.results.installEventFilter(self)
+
+    # Results panel with save button
+    results_layout = QVBoxLayout()
+    results_header = QHBoxLayout()
+    results_label = QLabel(tr("search_replace.lbl_results"))
+    results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
+    self.btn_save_results = QPushButton(tr("search_replace.btn_save_results"))
+    self.btn_save_results.setToolTip(tooltip_tr("search_replace.tooltip_save_results"))
+    self.btn_save_results.clicked.connect(self._save_results)
+    results_header.addWidget(results_label)
+    results_header.addStretch()
+    results_header.addWidget(self.btn_save_results)
+    results_layout.addLayout(results_header)
+    results_layout.addWidget(self.results)
+
+    # Status bar at bottom showing position info (v2.5.1)
+    self.results_status = QLabel("")
+    self.results_status.setStyleSheet("padding: 4px; background-color: #f0f0f0; color: #333; font-size: 10pt;")
+    self.results_status.setMinimumHeight(25)
+    results_layout.addWidget(self.results_status)
+
+    # Connect status label to results tree
+    self.results.set_status_label(self.results_status)
+
+    results_widget = QWidget()
+    results_widget.setLayout(results_layout)
+
+    # Wrap left panel in scroll area (v2.9.5)
+    left_widget = QWidget()
+    left_widget.setLayout(root)
+    scroll_area = QScrollArea()
+    scroll_area.setWidget(left_widget)
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+    scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+    splitter = QSplitter()
+    splitter.addWidget(scroll_area)
+    splitter.addWidget(results_widget)
+    splitter.setSizes([500, 800])
+
+    # Store splitter and widget references for hover expansion (v2.9.115)
+    self._splitter = splitter
+    self._results_widget = results_widget
+    self._original_sizes = [500, 800]  # Default sizes
+    self._is_expanded = False
+
+    wroot = QVBoxLayout(self)
+    wroot.setContentsMargins(0, 0, 0, 0)
+    wroot.addWidget(splitter)
+
+    # Connect
+    self.is_file.stateChanged.connect(self.change_advanced_conditions)
+    self.btn_browse.clicked.connect(self._browse)
+    self.btn_search.clicked.connect(self._start_search_threaded)
+    self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
+    self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
+
+
     def set_editor_fonts(self, font):
         """Set monospaced font for query and replacement editors (v2.9.115)."""
-        self.ed_repl.setFont(font)
-        self.ed_query.setFont(font)
-
-        # Path row
-        column = QVBoxLayout()
-        row = QHBoxLayout()
-        row.addWidget(QLabel(tr("search_replace.lbl_root_path")))
-        self.ed_path = QLineEdit()
-        self.ed_path.setToolTip(tooltip_tr("search_replace.tooltip_path"))
-        self.btn_browse = QPushButton(tr("search_replace.btn_browse"))
-        self.btn_browse.setToolTip(tooltip_tr("search_replace.tooltip_browse"))
-        row.addWidget(self.ed_path, 1)
-        row.addWidget(self.btn_browse)
-        column.addLayout(row)
-        self.is_file = QCheckBox(tr("search_replace.chk_is_file"))
-        self.is_file.setToolTip(tooltip_tr("search_replace.tooltip_is_file"))
-        column.addWidget(self.is_file)
-        root.addLayout(column)
-
-        # File extension filter (v2.9.0, v2.9.1 - optional)
-        row = QHBoxLayout()
-        self.chk_use_ext_filter = QCheckBox(tr("search_replace.chk_use_ext_filter"))
-        self.chk_use_ext_filter.setChecked(True)  # Default: enabled
-        self.chk_use_ext_filter.setToolTip(tooltip_tr("search_replace.tooltip_use_ext_filter"))
-        row.addWidget(self.chk_use_ext_filter)
-        row.addWidget(QLabel(tr("search_replace.lbl_extensions")))
-        self.ed_extensions = QLineEdit(".ts,.tsx,.js,.jsx,.py,.md")
-        self.ed_extensions.setPlaceholderText(tr("search_replace.placeholder_extensions"))
-        self.ed_extensions.setToolTip(tooltip_tr("search_replace.tooltip_extensions"))
-        row.addWidget(self.ed_extensions)
-        root.addLayout(row)
-
-        # Sort results option (v2.9.5)
-        self.chk_sort_results = QCheckBox(tr("search_replace.chk_sort_results"))
-        self.chk_sort_results.setChecked(False)
-        self.chk_sort_results.setToolTip(tooltip_tr("search_replace.tooltip_sort_results"))
-        root.addWidget(self.chk_sort_results)
-
-        # Include/Exclude globs (advanced)
-        row = QHBoxLayout()
-        row.addWidget(QLabel(tr("search_replace.lbl_include_globs")))
-        self.ed_inc = QLineEdit()
-        self.ed_inc.setPlaceholderText(tr("search_replace.placeholder_include"))
-        self.ed_inc.setToolTip(tooltip_tr("search_replace.tooltip_inc"))
-        root.addLayout(row)
-        root.addWidget(self.ed_inc)
-        row = QHBoxLayout()
-        row.addWidget(QLabel(tr("search_replace.lbl_exclude_globs")))
-        self.ed_exc = QLineEdit("node_modules;dist;build;.git")
-        self.ed_exc.setToolTip(tooltip_tr("search_replace.tooltip_exc"))
-        root.addLayout(row)
-        root.addWidget(self.ed_exc)
-
-        # Search field + toggles (v2.9.112 - split into file name and file content)
-        gb = QGroupBox(tr("search_replace.group_search"))
-        g = QGridLayout(gb)
-
-        # File name query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
-        self.ed_filename_query = QLineEdit()
-        self.ed_filename_query.setPlaceholderText(tr("search_replace.placeholder_filename"))
-        self.ed_filename_query.setToolTip(tooltip_tr("search_replace.tooltip_filename_query"))
-        g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
-
-        # File content query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
-        self.ed_query = QPlainTextEdit()
-        self.ed_query.setMinimumHeight(30)
-        self.ed_query.setMaximumHeight(150)
-        self.ed_query.setPlaceholderText(tr("search_replace.placeholder_content"))
-        self.ed_query.setToolTip(tooltip_tr("search_replace.tooltip_query"))
-        g.addWidget(self.ed_query, 1, 1, 1, 3)
-
-        # Checkboxes
-        self.chk_case = QCheckBox(tr("search_replace.chk_case_sensitive"))
-        self.chk_case.setToolTip(tooltip_tr("search_replace.tooltip_case"))
-        self.chk_word = QCheckBox(tr("search_replace.chk_whole_word"))
-        self.chk_word.setToolTip(tooltip_tr("search_replace.tooltip_word"))
-        self.chk_regex = QCheckBox(tr("search_replace.chk_regex"))
-        self.chk_regex.setToolTip(tooltip_tr("search_replace.tooltip_regex"))
-        self.chk_multi_query = QCheckBox(tr("search_replace.chk_multi_line"))  # v2.8.0
-        self.chk_multi_query.setToolTip(tooltip_tr("search_replace.tooltip_multi_query"))
-        self.btn_search = QPushButton(tr("search_replace.btn_search_cancel"))
-        self.btn_search.setToolTip(tooltip_tr("search_replace.tooltip_search"))
-
-        g.addWidget(self.chk_case, 2, 0)
-        g.addWidget(self.chk_word, 2, 1)
-        g.addWidget(self.chk_regex, 2, 2)
-        g.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
-        g.addWidget(self.btn_search, 3, 3)  # Moved to row 3
-
-        root.addWidget(gb)
-
-        # Replace extras (optional)
-        gb2 = QGroupBox(tr("search_replace.group_replace"))
-        g2 = QGridLayout(gb2)
-        g2.addWidget(QLabel(tr("search_replace.lbl_replacement")), 0, 0)
-        self.ed_repl = QPlainTextEdit()
-        self.ed_repl.setMinimumHeight(30)
-        self.ed_repl.setMaximumHeight(150)
-        self.ed_repl.setToolTip(tooltip_tr("search_replace.tooltip_repl"))
-        self.chk_preserve = QCheckBox(tr("search_replace.chk_preserve_case"))
-        self.chk_preserve.setToolTip(tooltip_tr("search_replace.tooltip_preserve"))
-        self.btn_replace_one = QPushButton(tr("search_replace.btn_replace_first"))
-        self.btn_replace_one.setToolTip(tooltip_tr("search_replace.tooltip_replace_one"))
-        self.btn_replace_all = QPushButton(tr("search_replace.btn_replace_all"))
-        self.btn_replace_all.setToolTip(tooltip_tr("search_replace.tooltip_replace_all"))
-        g2.addWidget(self.ed_repl, 0, 1, 1, 3)
-        g2.addWidget(self.chk_preserve, 1, 0)
-        g2.addWidget(self.btn_replace_one, 1, 2)
-        g2.addWidget(self.btn_replace_all, 1, 3)
-        root.addWidget(gb2)
-
-        # Advanced conditions (collapsible style via group box)
-        gb3 = QGroupBox(tr("search_replace.group_advanced"))
-        g3 = QGridLayout(gb3)
-
-        # Add AND/OR selector at the top
-        lbl_logic = QLabel(tr("search_replace.lbl_logic_operator"))
-        self.combo_logic_op = QComboBox()
-        self.combo_logic_op.addItems(["AND", "OR"])
-        self.combo_logic_op.setToolTip(tooltip_tr("search_replace.tooltip_logic_op"))
-        logic_layout = QHBoxLayout()
-        logic_layout.addWidget(lbl_logic)
-        logic_layout.addWidget(self.combo_logic_op)
-        logic_layout.addStretch()
-        g3.addLayout(logic_layout, 0, 0, 1, 8)
-
-        # Add headers (now starting from row 1)
-        g3.addWidget(QLabel(tr("search_replace.lbl_field")), 1, 0)
-        g3.addWidget(QLabel(tr("search_replace.lbl_operator")), 1, 1)
-        g3.addWidget(QLabel(tr("search_replace.lbl_value")), 1, 2)
-        g3.addWidget(QLabel(tr("search_replace.lbl_scope")), 1, 3)
-        g3.addWidget(QLabel(tr("search_replace.lbl_scope_param")), 1, 4)
-        g3.addWidget(QLabel(tr("search_replace.lbl_case")), 1, 5)
-        g3.addWidget(QLabel(tr("search_replace.lbl_word")), 1, 6)
-        g3.addWidget(QLabel(tr("search_replace.lbl_regex")), 1, 7)
-
-        # Dynamic condition rows (Task #5 - v2.9.7)
-        self.cond_list: List[
-            Tuple[QComboBox, QComboBox, QLineEdit, QComboBox, QLineEdit, QCheckBox, QCheckBox, QCheckBox, QPushButton]
-        ] = []
-        self.cond_grid = g3  # Store grid reference for dynamic row management
-        self.next_cond_row = 2  # Track next available row (0=logic, 1=headers, 2+=conditions)
-
-        # Buttons layout (v2.9.40.3: create BEFORE adding rows)
-        self.buttons_layout_ref = QHBoxLayout()
-
-        # Add initial 3 condition rows (minimum)
-        for _ in range(3):
-            self._add_condition_row()
-
-        # Add Condition button
-        btn_add_condition = QPushButton(tr("search_replace.btn_add_condition"))
-        btn_add_condition.setToolTip(tooltip_tr("search_replace.tooltip_add_condition"))
-        btn_add_condition.clicked.connect(self._add_condition_row)
-        self.buttons_layout_ref.addWidget(btn_add_condition)
-
-        # Clear All Conditions button (v2.9.5)
-        btn_clear_conditions = QPushButton(tr("search_replace.btn_clear_conditions"))
-        btn_clear_conditions.setToolTip(tooltip_tr("search_replace.tooltip_clear_conditions"))
-        btn_clear_conditions.clicked.connect(self._clear_all_conditions)
-        self.buttons_layout_ref.addWidget(btn_clear_conditions)
-
-        self.buttons_layout_ref.addStretch()
-
-        # Buttons already added to grid by _add_condition_row (v2.9.40.3)
-
-        root.addWidget(gb3)
-
-        # Results on the right
-        self.results = ResultsTree()
-
-        # Install event filter for hover expansion (v2.9.115)
-        self.results.installEventFilter(self)
-
-        # Results panel with save button
-        results_layout = QVBoxLayout()
-        results_header = QHBoxLayout()
-        results_label = QLabel(tr("search_replace.lbl_results"))
-        results_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
-        self.btn_save_results = QPushButton(tr("search_replace.btn_save_results"))
-        self.btn_save_results.setToolTip(tooltip_tr("search_replace.tooltip_save_results"))
-        self.btn_save_results.clicked.connect(self._save_results)
-        results_header.addWidget(results_label)
-        results_header.addStretch()
-        results_header.addWidget(self.btn_save_results)
-        results_layout.addLayout(results_header)
-        results_layout.addWidget(self.results)
-
-        # Status bar at bottom showing position info (v2.5.1)
-        self.results_status = QLabel("")
-        self.results_status.setStyleSheet("padding: 4px; background-color: #f0f0f0; color: #333; font-size: 10pt;")
-        self.results_status.setMinimumHeight(25)
-        results_layout.addWidget(self.results_status)
-
-        # Connect status label to results tree
-        self.results.set_status_label(self.results_status)
-
-        results_widget = QWidget()
-        results_widget.setLayout(results_layout)
-
-        # Wrap left panel in scroll area (v2.9.5)
-        left_widget = QWidget()
-        left_widget.setLayout(root)
-        scroll_area = QScrollArea()
-        scroll_area.setWidget(left_widget)
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        splitter = QSplitter()
-        splitter.addWidget(scroll_area)
-        splitter.addWidget(results_widget)
-        splitter.setSizes([500, 800])
-
-        # Store splitter and widget references for hover expansion (v2.9.115)
-        self._splitter = splitter
-        self._results_widget = results_widget
-        self._original_sizes = [500, 800]  # Default sizes
-        self._is_expanded = False
-
-        wroot = QVBoxLayout(self)
-        wroot.setContentsMargins(0, 0, 0, 0)
-        wroot.addWidget(splitter)
-
-        # Connect
-        self.is_file.stateChanged.connect(self.change_advanced_conditions)
-        self.btn_browse.clicked.connect(self._browse)
-        self.btn_search.clicked.connect(self._start_search_threaded)
-        self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
-        self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
+        if hasattr(self, "ed_repl") and hasattr(self, "ed_query"):
+            self.ed_repl.setFont(font)
+            self.ed_query.setFont(font)
 
     def eventFilter(self, obj, event):
         """
