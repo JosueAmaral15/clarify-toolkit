@@ -248,6 +248,12 @@ class UnifiedFileExplorerExecutor(QObject):
             Dict with files and statistics
         """
         print(f"DEBUG EXECUTOR 218 execute_search() | ENTER - _cancel={self._cancel}")
+        
+        # BUGFIX: Reset cancel flag at start of each search
+        # The executor instance is reused, so _cancel persists between searches
+        self._cancel = False
+        print(f"DEBUG EXECUTOR 251 execute_search() | Reset _cancel to False")
+        
         search_options = search_options or {}
 
         # Step 1: List files
