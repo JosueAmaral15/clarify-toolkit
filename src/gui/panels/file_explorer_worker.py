@@ -15,6 +15,9 @@ Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 from PySide6.QtCore import QObject, Signal
 
 from ...core.file_explorer_executor import UnifiedFileExplorerExecutor
+from ...utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class FileExplorerWorker(QObject):
@@ -112,19 +115,19 @@ class FileExplorerWorker(QObject):
         total_items = len(all_items)
         
         if total_items == 0:
-            print("🔧 DEBUG: No items to emit")
+            logger.debug("No items to emit")
             return  # Nothing to emit
         
         # Calculate number of batches
         total_batches = (total_items + batch_size - 1) // batch_size  # Ceiling division
         
-        print(f"🔧 DEBUG: Emitting {total_items} items in {total_batches} batches of {batch_size}")
+        logger.debug("Emitting %d items in %d batches of %d", total_items, total_batches, batch_size)
         
         # Emit batches
         for batch_num in range(total_batches):
             # Check for cancellation
             if self._cancel_requested:
-                print(f"🔧 DEBUG: Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
+                logger.debug("Cancellation requested, stopping batch emission at %d/%d", batch_num+1, total_batches)
                 break
             
             start_idx = batch_num * batch_size
@@ -132,7 +135,7 @@ class FileExplorerWorker(QObject):
             
             batch = all_items[start_idx:end_idx]
             
-            print(f"🔧 DEBUG: Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
+            logger.debug("Emitting batch %d/%d (%d items)", batch_num+1, total_batches, len(batch))
             self.batch_ready.emit(batch, batch_num + 1, total_batches)
     
     def execute_search(
@@ -163,15 +166,15 @@ class FileExplorerWorker(QObject):
             conditions: Advanced conditions list
         """
         try:
-            print("🔧 DEBUG: Worker.execute_search() called - running in thread!")
+            logger.debug("Worker.execute_search() called - running in thread")
             # Forward executor signals to worker signals
             # This allows UI thread to receive progress updates
             self.executor.progress.connect(self.progress)
             self.executor.progress_detailed.connect(self.progress_detailed)
-            print("🔧 DEBUG: Executor signals connected to worker")
+            logger.debug("Executor signals connected to worker")
             
             # Execute search (blocking in worker thread)
-            print(f"🔧 DEBUG: Calling executor.execute_search(directory={directory})")
+            logger.debug("Calling executor.execute_search(directory=%s)", directory)
             result = self.executor.execute_search(
                 directory=directory,
                 filename_pattern=filename_pattern,
@@ -182,21 +185,21 @@ class FileExplorerWorker(QObject):
                 filters=filters,
                 conditions=conditions
             )
-            print(f"🔧 DEBUG: Search complete! Found {len(result.get('files', []))} files")
+            logger.debug("Search complete! Found %d files", len(result.get('files', [])))
             
             # NEW v2.9.123: Process results in worker thread
-            print("🔧 DEBUG: Building matches dict in worker thread...")
+            logger.debug("Building matches dict in worker thread")
             matches_dict = self._build_matches_dict(result)
-            print(f"🔧 DEBUG: Built matches dict with {len(matches_dict)} entries")
+            logger.debug("Built matches dict with %d entries", len(matches_dict))
             
             # NEW v2.9.123: Emit in batches for non-blocking UI
-            print("🔧 DEBUG: Emitting matches in batches...")
+            logger.debug("Emitting matches in batches")
             self._emit_in_batches(matches_dict, batch_size=100)
             
             # Emit finished with original result (for stats, history, etc.)
-            print("🔧 DEBUG: Emitting finished signal...")
+            logger.debug("Emitting finished signal")
             self.finished.emit(result)
-            print("🔧 DEBUG: Finished signal emitted")
+            logger.debug("Finished signal emitted")
             
         except Exception as e:
             # Emit error to UI thread

@@ -981,11 +981,11 @@ class FileExplorerDock(BaseDock):
             }
             
             # Create thread and worker
-            print("🔧 DEBUG: Creating worker thread...")
+            logger.debug("Creating worker thread")
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
             self._worker.moveToThread(self._worker_thread)
-            print(f"🔧 DEBUG: Worker moved to thread: {self._worker_thread}")
+            logger.debug("Worker moved to thread: %s", self._worker_thread)
 
             # Connect signals
             self._worker.progress.connect(self._on_progress)
@@ -993,7 +993,7 @@ class FileExplorerDock(BaseDock):
             self._worker.batch_ready.connect(self._on_batch_ready)  # NEW v2.9.123
             self._worker.finished.connect(self._on_search_finished)
             self._worker.error.connect(self._on_operation_error)
-            print("🔧 DEBUG: Signals connected")
+            logger.debug("Signals connected")
 
             # Start thread and execute search
             # Capture worker in local variable to avoid None issues after cleanup
@@ -1010,9 +1010,9 @@ class FileExplorerDock(BaseDock):
                     conditions=conditions
                 )
             )
-            print("🔧 DEBUG: Starting thread...")
+            logger.debug("Starting thread")
             self._worker_thread.start()
-            print("🔧 DEBUG: Thread started, returning early")
+            logger.debug("Thread started, returning early")
 
             # Return early - results will be handled by _on_search_finished()
             return
@@ -1624,10 +1624,10 @@ class FileExplorerDock(BaseDock):
 
     def _on_progress(self, message: str):
         """Handle progress updates from executor (v2.9.116)."""
-        print(f"🔧 DEBUG: _on_progress() called with message: {message[:50]}...")
+        logger.debug("_on_progress() called with message: %s...", message[:50])
         # Show progress dialog if not already visible
         if not self.progress_dialog:
-            print("🔧 DEBUG: Creating progress dialog")
+            logger.debug("Creating progress dialog")
             self.progress_dialog = QProgressDialog(
                 tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
             )
@@ -1637,7 +1637,7 @@ class FileExplorerDock(BaseDock):
             self.progress_dialog.canceled.connect(self.executor.cancel)
             self.progress_dialog.show()  # Explicitly show
             self.progress_dialog.raise_()  # Bring to front
-            print("🔧 DEBUG: Progress dialog created, shown, and raised")
+            logger.debug("Progress dialog created, shown, and raised")
 
         # Update message
         self.progress_dialog.setLabelText(message)
@@ -1664,16 +1664,16 @@ class FileExplorerDock(BaseDock):
         
         Version: v2.9.123
         """
-        print(f"🔧 DEBUG: _on_batch_ready() batch {batch_num}/{total_batches} ({len(batch)} items)")
+        logger.debug("_on_batch_ready() batch %d/%d (%d items)", batch_num, total_batches, len(batch))
         
         # Check for cancellation
         if self._cancel_requested:
-            print(f"🔧 DEBUG: Cancellation requested, skipping batch {batch_num}")
+            logger.debug("Cancellation requested, skipping batch %d", batch_num)
             return
         
         # Initialize batch processing on first batch
         if batch_num == 1:
-            print("🔧 DEBUG: Starting batch processing...")
+            logger.debug("Starting batch processing")
             self._batch_processing_active = True
             self._total_batches_expected = total_batches
             self._batches_received = 0
@@ -1707,7 +1707,7 @@ class FileExplorerDock(BaseDock):
         
         # Check if this was the last batch
         if batch_num == total_batches:
-            print(f"🔧 DEBUG: All {total_batches} batches received")
+            logger.debug("All %d batches received", total_batches)
             self._batch_processing_active = False
             
             # Store results for view sync (get from tree's internal storage)
@@ -1715,17 +1715,17 @@ class FileExplorerDock(BaseDock):
             
             # Apply sorting if enabled (only AFTER all batches)
             if self.chk_sort_results.isChecked():
-                print("🔧 DEBUG: Sorting results...")
+                logger.debug("Sorting results")
                 self.results_tree.sort_results()
             
             # Close progress dialog now that batching is complete
             if self.progress_dialog:
-                print("🔧 DEBUG: Closing progress dialog (batching complete)")
+                logger.debug("Closing progress dialog (batching complete)")
                 self.progress_dialog.close()
                 self.progress_dialog = None
         
         # Return immediately - event loop can process other events!
-        print(f"🔧 DEBUG: Batch {batch_num} processed, returning to event loop")
+        logger.debug("Batch %d processed, returning to event loop", batch_num)
 
     def _cleanup_worker_thread(self):
         """
@@ -1759,12 +1759,12 @@ class FileExplorerDock(BaseDock):
         """
         import time
         
-        print("🔧 DEBUG: _on_search_finished() called!")
+        logger.debug("_on_search_finished() called")
         
         # NOTE v2.9.123: Don't close progress dialog here!
         # It will be closed by _on_batch_ready() after last batch
         if self.progress_dialog and not self._batch_processing_active:
-            print("🔧 DEBUG: Closing progress dialog (no batching active)")
+            logger.debug("Closing progress dialog (no batching active)")
             self.progress_dialog.close()
             self.progress_dialog = None
         
@@ -1829,9 +1829,9 @@ class FileExplorerDock(BaseDock):
                     },
                 )
         except Exception as e:
-            print(f"Failed to save history: {e}")
+            logger.error("Failed to save history: %s", e)
         
-        print("🔧 DEBUG: _on_search_finished() completed (lightweight operations only)")
+        logger.debug("_on_search_finished() completed (lightweight operations only)")
         
         # Cleanup thread
         self._cleanup_worker_thread()
