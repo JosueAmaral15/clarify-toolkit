@@ -15,6 +15,9 @@ Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 from PySide6.QtCore import QObject, Signal
 
 from ...core.file_explorer_executor import UnifiedFileExplorerExecutor
+from ...utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class FileExplorerWorker(QObject):
@@ -112,19 +115,19 @@ class FileExplorerWorker(QObject):
         total_items = len(all_items)
         
         if total_items == 0:
-            print("🔧 DEBUG: No items to emit")
+            logger.debug("No items to emit")
             return  # Nothing to emit
         
         # Calculate number of batches
         total_batches = (total_items + batch_size - 1) // batch_size  # Ceiling division
         
-        print(f"🔧 DEBUG: Emitting {total_items} items in {total_batches} batches of {batch_size}")
+        logger.debug(f"Emitting {total_items} items in {total_batches} batches of {batch_size}")
         
         # Emit batches
         for batch_num in range(total_batches):
             # Check for cancellation
             if self._cancel_requested:
-                print(f"🔧 DEBUG: Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
+                logger.debug(f"Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
                 break
             
             start_idx = batch_num * batch_size
@@ -132,8 +135,10 @@ class FileExplorerWorker(QObject):
             
             batch = all_items[start_idx:end_idx]
             
-            print(f"🔧 DEBUG: Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
+            print(f"DEBUG WORKER 138 _emit_in_batches() | Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
+            logger.debug(f"Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
             self.batch_ready.emit(batch, batch_num + 1, total_batches)
+            print(f"DEBUG WORKER 140 _emit_in_batches() | Batch {batch_num+1} emitted!")
     
     def execute_search(
         self,
@@ -165,15 +170,16 @@ class FileExplorerWorker(QObject):
             logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
         """
         try:
-            print("🔧 DEBUG: Worker.execute_search() called - running in thread!")
+            print(f"DEBUG WORKER 171 execute_search() | ENTER - directory={directory}")
+            logger.debug("Worker.execute_search() called - running in thread!")
             # Forward executor signals to worker signals
             # This allows UI thread to receive progress updates
             self.executor.progress.connect(self.progress)
             self.executor.progress_detailed.connect(self.progress_detailed)
-            print("🔧 DEBUG: Executor signals connected to worker")
+            logger.debug("Executor signals connected to worker")
             
             # Execute search (blocking in worker thread)
-            print(f"🔧 DEBUG: Calling executor.execute_search(directory={directory})")
+            logger.debug(f"Calling executor.execute_search(directory={directory})")
             result = self.executor.execute_search(
                 directory=directory,
                 filename_pattern=filename_pattern,
@@ -185,21 +191,28 @@ class FileExplorerWorker(QObject):
                 conditions=conditions,
                 logic_operator=logic_operator
             )
-            print(f"🔧 DEBUG: Search complete! Found {len(result.get('files', []))} files")
+            print(f"DEBUG WORKER 191 execute_search() | Search complete! Found {len(result.get('files', []))} files")
+            logger.debug(f"Search complete! Found {len(result.get('files', []))} files")
             
             # NEW v2.9.123: Process results in worker thread
-            print("🔧 DEBUG: Building matches dict in worker thread...")
+            print(f"DEBUG WORKER 194 execute_search() | Building matches dict...")
+            logger.debug("Building matches dict in worker thread...")
             matches_dict = self._build_matches_dict(result)
-            print(f"🔧 DEBUG: Built matches dict with {len(matches_dict)} entries")
+            print(f"DEBUG WORKER 196 execute_search() | Built matches dict with {len(matches_dict)} entries")
+            logger.debug(f"Built matches dict with {len(matches_dict)} entries")
             
             # NEW v2.9.123: Emit in batches for non-blocking UI
-            print("🔧 DEBUG: Emitting matches in batches...")
+            print(f"DEBUG WORKER 199 execute_search() | Emitting {len(matches_dict)} items in batches...")
+            logger.debug("Emitting matches in batches...")
             self._emit_in_batches(matches_dict, batch_size=100)
+            print(f"DEBUG WORKER 201 execute_search() | Batches emitted!")
             
             # Emit finished with original result (for stats, history, etc.)
-            print("🔧 DEBUG: Emitting finished signal...")
+            print(f"DEBUG WORKER 203 execute_search() | Emitting finished signal...")
+            logger.debug("Emitting finished signal...")
             self.finished.emit(result)
-            print("🔧 DEBUG: Finished signal emitted")
+            print(f"DEBUG WORKER 205 execute_search() | Finished signal emitted")
+            logger.debug("Finished signal emitted")
             
         except Exception as e:
             # Emit error to UI thread

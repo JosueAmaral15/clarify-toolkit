@@ -41,6 +41,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QSplitter,
     QFrame,
+    QApplication,
 )
 from PySide6.QtGui import QFont
 
@@ -145,24 +146,6 @@ class GoogleTranslateDock(BaseDock):
         self._finished_workers = []  # Keep references to finished workers
         super().__init__(tr("menu.tools.google_translate"), parent)
 
-    def __del__(self):
-        """Destructor - ensure threads are stopped before deletion."""
-        import sys
-        print("=== GoogleTranslateDock.__del__() called ===", file=sys.stderr)
-        try:
-            if hasattr(self, 'translation_worker') and self.translation_worker:
-                if self.translation_worker.isRunning():
-                    print("CRITICAL: Worker still running in destructor! Stopping...", file=sys.stderr)
-                    self.translation_worker.cancel()
-                    self.translation_worker.wait(2000)
-                    if self.translation_worker.isRunning():
-                        print("CRITICAL: Terminating worker in destructor", file=sys.stderr)
-                        self.translation_worker.terminate()
-                        self.translation_worker.wait()
-            print("__del__() completed safely", file=sys.stderr)
-        except Exception as e:
-            print(f"ERROR in __del__(): {e}", file=sys.stderr)
-
     def _setup_ui(self):
         """Setup the user interface."""
         self._create_widgets()
@@ -220,6 +203,9 @@ class GoogleTranslateDock(BaseDock):
         self.btn_copy_result = QPushButton(tr("google_translate.btn_copy_result"))
         self.btn_copy_result.setEnabled(False)
 
+        self.btn_reverse = QPushButton(tr("google_translate.btn_reverse"))
+        self.btn_reverse.setEnabled(False)
+
         self.btn_clear = QPushButton(tr("google_translate.btn_clear"))
         self.btn_cancel = QPushButton(tr("google_translate.btn_cancel"))
         self.btn_cancel.setEnabled(False)
@@ -276,6 +262,7 @@ class GoogleTranslateDock(BaseDock):
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_translate)
         btn_layout.addWidget(self.btn_copy_result)
+        btn_layout.addWidget(self.btn_reverse)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_cancel)
         btn_layout.addStretch()
@@ -302,6 +289,7 @@ class GoogleTranslateDock(BaseDock):
         """Connect widget signals."""
         self.btn_translate.clicked.connect(self._translate)
         self.btn_copy_result.clicked.connect(self._copy_result)
+        self.btn_reverse.clicked.connect(self._reverse_translation)
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
         self.btn_browse_file.clicked.connect(self._browse_file)
@@ -446,6 +434,20 @@ class GoogleTranslateDock(BaseDock):
 
     def _start_translation(self, text: str, from_lang: str, to_lang: str):
         """Start background translation."""
+        # Prevent starting new worker while one is running (fixes crash on duplicate calls)
+        if self.translation_worker and self.translation_worker.isRunning():
+            return
+        
+        # Disconnect signals from previous worker if it exists
+        if self.translation_worker:
+            try:
+                self.translation_worker.progress_updated.disconnect()
+                self.translation_worker.translation_completed.disconnect()
+                self.translation_worker.finished.disconnect()
+            except (TypeError, RuntimeError):
+                # Signals already disconnected or worker deleted
+                pass
+        
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
@@ -482,6 +484,7 @@ class GoogleTranslateDock(BaseDock):
         if success:
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
+            self.btn_reverse.setEnabled(True)
             self.lbl_status.setText(tr("google_translate.status_completed"))
             self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         else:
@@ -526,48 +529,57 @@ class GoogleTranslateDock(BaseDock):
         self.text_output.clear()
         self.ed_file_path.clearEditText()
         self.btn_copy_result.setEnabled(False)
+        self.btn_reverse.setEnabled(False)
         self.lbl_status.setText(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
+
+    def _reverse_translation(self):
+        """Reverse source and target languages, swap input/output text."""
+        # Swap languages (skip if either is "Auto-detect")
+        from_lang = self.combo_from_lang.currentText()
+        to_lang = self.combo_to_lang.currentText()
+        
+        if "Auto-detect" not in from_lang and "Auto-detect" not in to_lang:
+            # Swap the combo box selections
+            self.combo_from_lang.setCurrentText(to_lang)
+            self.combo_to_lang.setCurrentText(from_lang)
+        
+        # Swap input/output text
+        input_text = self.text_input.toPlainText()
+        output_text = self.text_output.toPlainText()
+        
+        self.text_input.setPlainText(output_text)
+        self.text_output.setPlainText(input_text)
+        
+        # Update button states - keep reverse enabled, update copy based on new output
+        self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
         result = self.text_output.toPlainText()
         if result:
-            clipboard = self.parent().app.clipboard() if hasattr(self.parent(), "app") else None
-            if clipboard:
-                clipboard.setText(result)
+            clipboard = QApplication.clipboard()
+            clipboard.setText(result)
 
             # Visual feedback
-            original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
-            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
-        import sys
-        print("=== GoogleTranslateDock.closeEvent() called ===", file=sys.stderr)
-        print(f"translation_worker: {self.translation_worker}", file=sys.stderr)
-        
         if self.translation_worker and self.translation_worker.isRunning():
-            print(f"Worker is running, cancelling...", file=sys.stderr)
             # Cancel and wait for thread to finish
             self.translation_worker.cancel()
             if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
-                print("Worker did not finish in 3s, terminating...", file=sys.stderr)
                 self.translation_worker.terminate()
                 self.translation_worker.wait()
-            print("Worker stopped successfully", file=sys.stderr)
         
         # Wait for any finished workers
-        print(f"Finished workers count: {len(self._finished_workers)}", file=sys.stderr)
         for worker in self._finished_workers:
             if worker.isRunning():
-                print(f"Waiting for finished worker...", file=sys.stderr)
                 worker.wait(1000)
         
-        print("Calling super().closeEvent()", file=sys.stderr)
         super().closeEvent(event)
-        print("closeEvent() completed", file=sys.stderr)
 
     def _update_cache_info(self):
         """Update cache information display."""

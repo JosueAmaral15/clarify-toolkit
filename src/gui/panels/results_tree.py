@@ -24,6 +24,9 @@ from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect, QRectF
 from PySide6.QtGui import QColor, QPainter, QFontMetrics, QTextDocument, QAbstractTextDocumentLayout
 
 from ...i18n import tr
+from ...utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class WordWrapDelegate(QStyledItemDelegate):
@@ -727,24 +730,24 @@ class ResultsTree(QTreeWidget):
         """Get reference to main window."""
         # Try explicit reference first (v2.9.121 bugfix)
         if self._main_window_ref is not None:
-            print(f"[DEBUG] Using explicit main_window reference: {type(self._main_window_ref).__name__}")
+            logger.debug(f"Using explicit main_window reference: {type(self._main_window_ref).__name__}")
             return self._main_window_ref
         
         # Fallback to parent chain traversal
         widget = self
-        print(f"[DEBUG] Starting search for main_window from {type(self).__name__}")
+        logger.debug(f"Starting search for main_window from {type(self).__name__}")
         max_iterations = 20  # Safety limit
         iteration = 0
         
         while widget is not None and iteration < max_iterations:
-            print(f"[DEBUG] Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
+            logger.debug(f"Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
             if hasattr(widget, 'dock_editor'):
-                print(f"[DEBUG] Found main_window: {type(widget).__name__}")
+                logger.debug(f"Found main_window: {type(widget).__name__}")
                 return widget
             widget = widget.parent()
             iteration += 1
         
-        print(f"[DEBUG] Could NOT find main_window - reached None after {iteration} iterations")
+        logger.debug(f"Could NOT find main_window - reached None after {iteration} iterations")
         return None
 
     def _open_selected_files(self):
