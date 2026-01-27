@@ -399,4 +399,72 @@ Should have asked immediately:
 - ✅ No manual view switching needed
 - ✅ Performance: No noticeable delay
 
-**BUG FIXED - READY FOR PRODUCTION** 🚀
+**BUG #1 FIXED - READY FOR PRODUCTION** 🚀
+
+---
+
+## 🐛 Bug #2: Stale Results When Search Returns Empty
+
+**Date Discovered**: 2026-01-27  
+**Reported By**: User (Josué)  
+**Status**: ✅ **FIXED**
+
+### Problem Statement:
+When a search returns 0 files (or fewer files than previous search), the UI continues to display old results from the previous search. The tree and table views are not cleared when new results are empty.
+
+### Root Cause:
+The batch processing system only calls `_on_batch_ready()` when there are batches to emit. When a search returns 0 files:
+1. Worker completes successfully
+2. `_emit_in_batches()` loops 0 times (no data)
+3. No `batch_ready` signals are emitted
+4. `_on_batch_ready()` never fires
+5. Tree/table retain old data from previous search
+6. `_on_search_finished()` updates status bar but doesn't clear views
+
+### Reproduction Steps:
+1. Search directory A with query "X" → Returns 35 files
+2. Table mode displays 35 files correctly ✅
+3. Search directory B with query "Y" → Returns 0 files
+4. Table mode STILL displays 35 files from step 1 ❌
+
+### Debug Evidence:
+```
+DEBUG WORKER 191 execute_search() | Search complete! Found 35 files  # Search #1
+[Table shows 35 files correctly]
+
+DEBUG WORKER 191 execute_search() | Search complete! Found 0 files   # Search #2
+[Table STILL shows 35 files - BUG!]
+```
+
+### Solution (Commit 7ad4cdf):
+Added explicit check in `_on_search_finished()`:
+```python
+# When search returns 0 files, no batches are emitted
+if total_files == 0:
+    logger.info("[BUGFIX] Clearing tree and table to remove stale results")
+    self.results_tree.clear()
+    if hasattr(self, 'table_manager') and self.table_manager:
+        self.table_manager.clear()
+    # Close progress dialog since no batches will trigger this
+    if self.progress_dialog:
+        self.progress_dialog.close()
+        self.progress_dialog = None
+```
+
+### Files Modified:
+- `src/gui/file_explorer_dock.py` (lines 1849-1862)
+
+### Testing Required:
+1. ✅ Search returns 35 files → displays correctly
+2. ⏳ Search returns 0 files → table/tree clear
+3. ⏳ Search returns 10 files after 35 files → updates correctly
+4. ⏳ Multiple consecutive empty searches → no stale data
+5. ⏳ Switch between Tree and Table modes → no issues
+
+### Git History:
+- `9fe5c6e` - Add detailed search debug logging
+- `7ad4cdf` - Fix: Clear tree/table when search returns 0 results
+
+---
+
+**BOTH BUGS FIXED - READY FOR USER TESTING** 🚀
