@@ -116,10 +116,13 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
+        print(f"DEBUG EXECUTOR 101 execute_browse() | ENTER - dir={directory}, recursive={recursive}, show_hidden={show_hidden}")
         filters = filters or {}
 
         # Step 1: Get base file list
+        print(f"DEBUG EXECUTOR 122 execute_browse() | Calling FileListExecutor.list_files()")
         result = FileListExecutor.list_files(directory, show_hidden, recursive, filters)
+        print(f"DEBUG EXECUTOR 124 execute_browse() | FileListExecutor returned {len(result.files)} files")
 
         file_list = result.files
 
@@ -244,12 +247,16 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
+        print(f"DEBUG EXECUTOR 218 execute_search() | ENTER - _cancel={self._cancel}")
         search_options = search_options or {}
 
         # Step 1: List files
+        print(f"DEBUG EXECUTOR 249 execute_search() | Calling execute_browse(dir={directory}, show_hidden={show_hidden}, recursive={recursive})")
         browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
+        print(f"DEBUG EXECUTOR 251 execute_search() | Browse returned {len(browse_result.get('files', []))} files")
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
+        print(f"DEBUG EXECUTOR 253 execute_search() | files_to_search has {len(files_to_search)} items")
         logger.debug(f"[SEARCH DEBUG] Browse found {len(files_to_search)} files (recursive={recursive}, show_hidden={show_hidden})")
 
         # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
@@ -315,22 +322,30 @@ class UnifiedFileExplorerExecutor(QObject):
                     # Continue without early filtering on error
 
         logger.debug(f"Files to search after filters+conditions: {len(files_to_search)}")
+        print(f"DEBUG EXECUTOR 320 execute_search() | After conditions: {len(files_to_search)} files")
 
         # Step 2: Apply filename pattern filter
         if filename_pattern:
+            print(f"DEBUG EXECUTOR 323 execute_search() | Applying filename pattern: '{filename_pattern}'")
             before_filter = len(files_to_search)
             files_to_search = [
                 f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
             ]
+            print(f"DEBUG EXECUTOR 328 execute_search() | After filename filter: {before_filter} → {len(files_to_search)} files")
             logger.debug(f"[SEARCH DEBUG] Filename pattern '{filename_pattern}' filter: {before_filter} → {len(files_to_search)} files")
+        else:
+            print(f"DEBUG EXECUTOR 331 execute_search() | No filename pattern specified")
 
         # Step 3: Apply content search
+        print(f"DEBUG EXECUTOR 334 execute_search() | Starting content search on {len(files_to_search)} files")
+        print(f"DEBUG EXECUTOR 335 execute_search() | content_query='{content_query}'")
         search_results = []
         total_files = len(files_to_search)
         total_match_count = 0  # Track total matches across all files (v2.9.120)
 
         for idx, file_info in enumerate(files_to_search, 1):
             if self._cancel:
+                print(f"DEBUG EXECUTOR 344 execute_search() | CANCEL FLAG SET - Breaking loop")
                 break
 
             # Check global match limit (v2.9.120 - Memory optimization)
@@ -338,6 +353,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 warning_msg = f"Maximum total matches reached ({MAX_TOTAL_MATCHES:,}). Search stopped. Refine your search for better results."
                 logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
                 self.error.emit(warning_msg)
+                print(f"DEBUG EXECUTOR 351 execute_search() | MAX MATCHES REACHED - Breaking loop")
                 break
 
             self.progress.emit(file_info.path)
