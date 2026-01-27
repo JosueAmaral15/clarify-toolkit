@@ -377,7 +377,10 @@ class GoogleTranslateDock(BaseDock):
     def _browse_file(self):
         """Browse for text file to translate."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Text File to Translate", "", "Text Files (*.txt *.md *.rst);;All Files (*)"
+            self,
+            "Select File to Translate",
+            "",
+            "Text Files (*.txt);;Word Documents (*.docx);;OpenDocument (*.odt);;All Files (*)"
         )
 
         if file_path:
