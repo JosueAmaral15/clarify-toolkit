@@ -324,3 +324,69 @@ self.tabs.setCurrentIndex(0)
 **Status**: Bug #1 FIXED ✅  
 **Next Session**: Fix Bug #2 (Index Assumption)
 
+
+---
+
+## ✅ SESSION 2: Bug #2 Fixed (Index Assumption)
+
+**Date**: 2026-01-25 19:58 UTC  
+**Commit**: f3b7c70
+
+**Changes Made**:
+1. `src/app.py:_show_search_replace()` - Loop through all tabs by name instead of checking index 0
+2. `src/app.py:_show_insert()` - Loop through all tabs by name instead of checking index 1
+
+**Before (Bug #2)**:
+```python
+# Assumes tab is at specific index
+if self.tabs.count() > 0 and self.tabs.tabText(0) == tab_name:
+    self.tabs.setCurrentIndex(0)
+else:
+    # Create new tab...
+```
+
+**After (Fixed)**:
+```python
+# Search all tabs by name
+for i in range(self.tabs.count()):
+    if self.tabs.tabText(i) == tab_name:
+        self.tabs.setCurrentIndex(i)
+        return  # Early return if found
+
+# Tab not found, create it
+# ... creation logic
+```
+
+**Files Modified**: 1
+- `src/app.py` (+24 lines, -19 lines)
+
+**Result**: ✅ Tabs now detected correctly regardless of position/order
+
+**Benefits**:
+- Works with tab reordering (Qt drag-drop)
+- Handles dynamic tab insertion
+- Prevents duplicate tab creation
+- More robust and maintainable
+
+**Testing Needed**: 
+- Reorder tabs manually and use Tools → Search/Replace
+- Close tab, reopen, close again
+- Verify tab switches to existing instead of creating duplicate
+
+---
+
+## 🎉 BOTH BUGS FIXED
+
+**Session 1**: Translation mismatch → FIXED ✅  
+**Session 2**: Index assumption → FIXED ✅
+
+**Total Commits**: 2 (one per session as requested)
+
+**Status**: Search/Replace tool should now work correctly! ✅  
+**Ready for**: User testing and validation
+
+---
+
+**Investigation Complete**: 2026-01-25 20:00 UTC  
+**Investigator**: Programmer #3  
+**Protocol**: Simplicity 3 - Option C
