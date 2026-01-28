@@ -48,6 +48,7 @@ from PySide6.QtGui import QFont
 
 from ..gui.base_dock import BaseDock
 from ..translation.google_translate import GoogleTranslateAPI, TranslationResult
+from ..translation.document_parser import extract_text_from_document, DocumentParserError
 from ..i18n import tr, tooltip_tr
 
 
@@ -375,7 +376,7 @@ class GoogleTranslateDock(BaseDock):
             self.lbl_input.setText(tr("google_translate.lbl_input"))
 
     def _browse_file(self):
-        """Browse for text file to translate."""
+        """Browse for file to translate (supports .txt, .docx, .odt)."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select File to Translate",
@@ -385,9 +386,8 @@ class GoogleTranslateDock(BaseDock):
 
         if file_path:
             try:
-                # Read file content
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                # Use document parser to extract text
+                content = extract_text_from_document(file_path)
 
                 self.ed_file_path.setCurrentText(file_path)
                 self.text_input.setPlainText(content[:5000])  # Show preview
@@ -397,9 +397,13 @@ class GoogleTranslateDock(BaseDock):
                 else:
                     self.lbl_status.setText(f"File loaded successfully. {len(content)} characters.")
 
+            except DocumentParserError as e:
+                QMessageBox.warning(
+                    self, tr("google_translate.msg_file_error_title"), f"Could not parse file:\n{str(e)}"
+                )
             except Exception as e:
                 QMessageBox.warning(
-                    self, tr("translate.file_error_title"), tr("translate.file_error").format(error=str(e))
+                    self, tr("google_translate.msg_file_error_title"), tr("google_translate.msg_file_error_read").format(str(e))
                 )
 
     def _translate(self):
@@ -408,7 +412,7 @@ class GoogleTranslateDock(BaseDock):
         text_to_translate = ""
 
         if self.chk_file_mode.isChecked():
-            # File mode - read full file
+            # File mode - read full file using document parser
             file_path = self.ed_file_path.currentText().strip()
             if not file_path:
                 QMessageBox.warning(
@@ -417,13 +421,21 @@ class GoogleTranslateDock(BaseDock):
                 return
 
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    text_to_translate = f.read()
+                # Use document parser to handle all file types
+                text_to_translate = extract_text_from_document(file_path)
+            except DocumentParserError as e:
+                QMessageBox.warning(
+                    self,
+                    tr("google_translate.msg_file_error_title"),
+                    f"Could not parse file:\n{str(e)}"
+                )
+                return
             except Exception as e:
                 QMessageBox.warning(
                     self,
                     tr("google_translate.msg_file_error_title"),
                     tr("google_translate.msg_file_error_read").format(str(e)),
+                )
                 )
                 return
         else:
