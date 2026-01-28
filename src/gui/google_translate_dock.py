@@ -436,7 +436,6 @@ class GoogleTranslateDock(BaseDock):
                     tr("google_translate.msg_file_error_title"),
                     tr("google_translate.msg_file_error_read").format(str(e)),
                 )
-                )
                 return
         else:
             # Text mode
