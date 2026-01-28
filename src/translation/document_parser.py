@@ -113,8 +113,26 @@ class DocumentParser:
         Currently extracts only text content, ignoring formatting.
         Future: Will preserve formatting with tags.
         """
-        # TODO: Implement ODT parsing in next session
-        raise NotImplementedError("ODT parsing not yet implemented")
+        try:
+            from odf import text, teletype
+            from odf.opendocument import load
+            
+            # Load ODT document
+            doc = load(file_path)
+            
+            # Extract all text elements in document order
+            paragraphs = []
+            
+            # Get the main text body
+            for element in doc.getElementsByType(text.P) + doc.getElementsByType(text.H):
+                text_content = teletype.extractText(element).strip()
+                if text_content:  # Only add non-empty content
+                    paragraphs.append(text_content)
+            
+            return "\n\n".join(paragraphs) if paragraphs else ""
+            
+        except Exception as e:
+            raise DocumentParserError(f"Failed to parse .odt file: {str(e)}")
 
 
 # Convenience function
