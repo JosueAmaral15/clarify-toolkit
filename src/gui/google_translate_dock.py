@@ -180,6 +180,11 @@ class GoogleTranslateDock(BaseDock):
 
         # Input type selection
         self.chk_file_mode = QCheckBox(tr("google_translate.chk_file_mode"))
+        
+        # Format tag removal option
+        self.chk_remove_tags = QCheckBox(tr("google_translate.chk_remove_tags"))
+        self.chk_remove_tags.setToolTip(tr("google_translate.tooltip_remove_tags"))
+        self.chk_remove_tags.setChecked(True)  # Default: remove tags for clean output
 
         # File input (hidden by default)
         self.lbl_file = QLabel(tr("google_translate.lbl_file"))
@@ -271,6 +276,12 @@ class GoogleTranslateDock(BaseDock):
         splitter.addWidget(output_frame)
         splitter.setSizes([1, 1])  # Equal sizes
 
+        # Options layout
+        options_layout = QHBoxLayout()
+        options_layout.addWidget(self.chk_file_mode)
+        options_layout.addWidget(self.chk_remove_tags)
+        options_layout.addStretch()
+        
         # Button layout
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_translate)
@@ -283,7 +294,7 @@ class GoogleTranslateDock(BaseDock):
 
         # Main layout
         self.layout.addLayout(lang_layout)
-        self.layout.addWidget(self.chk_file_mode)
+        self.layout.addLayout(options_layout)
 
         # File input widgets (initially hidden)
         self.file_widgets = [self.lbl_file, self.ed_file_path, self.btn_browse_file]
@@ -519,6 +530,10 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setVisible(False)
 
         if success:
+            # Remove formatting tags if checkbox is checked
+            if self.chk_remove_tags.isChecked():
+                result = FormatMapper.remove_tags(result)
+            
             self.text_output.setPlainText(result)
             self.btn_copy_result.setEnabled(True)
             self.btn_save_as.setEnabled(True)
