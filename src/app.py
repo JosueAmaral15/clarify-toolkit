@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-name-in-module  # PySide6 uses dynamic module structure
 # pylint: disable=import-outside-toplevel  # Intentional lazy loading to avoid circular imports
+# pylint: disable=broad-exception-caught  # UI code needs broad exception handling
+# pylint: disable=too-few-public-methods  # Simple utility classes are acceptable
 
 """
 TextWorkbench — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
@@ -124,7 +126,7 @@ from .cli import build_parser
 _PYSIDE = True
 
 try:
-    from PySide6.QtCore import QByteArray
+    from PySide6.QtCore import QByteArray, Qt
     from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QDockWidget, QMessageBox
@@ -346,10 +348,21 @@ if _PYSIDE:
         def __init__(self, app: QApplication):
             super().__init__()
 
+            # Initialize attributes (prevent pylint warnings)
+            self.ICON_BASE_64 = None
+            self.tab_search = None
+            self.tab_insert = None
+            self.dock_text_to_json = None
+            self.dock_set_operations = None
+            self.dock_calculator = None
+            self.dock_formula_builder = None
+            self.dock_advanced_extractor = None
+            self.dock_editor = None
+            self.tool_tabs = {}
+
             # Fix: Configure window flags for Linux compatibility (v2.9.117)
             # Linux window managers (X11/Wayland) require explicit WindowMaximizeButtonHint
             # to show the maximize button [□] in the title bar alongside [_] and [×]
-            from PySide6.QtCore import Qt
 
             # Store desired window flags for restoration later (prevent QDockWidget interference)
             self._desired_window_flags = (
@@ -660,7 +673,6 @@ if _PYSIDE:
 
         def _show_advanced_extractor(self):
             """Show Advanced Extractor as tab (v2.9.115 - Sprint 2)."""
-            from .gui.dock_factory import DockFactory
             if not hasattr(self, 'dock_advanced_extractor') or self.dock_advanced_extractor is None:
                 self.dock_advanced_extractor = DockFactory.create_advanced_extractor_dock(self)
             self._add_tool_tab(self.dock_advanced_extractor, "Advanced Extractor", "advanced_extractor")
@@ -677,14 +689,13 @@ if _PYSIDE:
 
             # Get Gemini API key from settings
             settings = SettingsManager()
-            api_key = settings.get_value('ai_processor/gemini_api_key', '')
+            api_key = settings.get_value('ai_processor/gemini_api_key', '')  # pylint: disable=no-member
 
             dialog = TutorialAssistantDialog(self, api_key=api_key)
             dialog.show()
 
         def _about_dialog(self):
             """Show About Clarify dialog."""
-            from PySide6.QtWidgets import QMessageBox
             about_text = """<h2>Clarify</h2>
             <p><b>Text Processing Tool</b></p>
             <p>Version: 2.9.64 (Logging System Integration)</p>
@@ -702,7 +713,6 @@ if _PYSIDE:
             Falls back to showing path if opening fails.
             """
             from .utils.logger import get_log_file
-            from PySide6.QtWidgets import QMessageBox
             import subprocess
             import platform
 
@@ -725,7 +735,7 @@ if _PYSIDE:
                 elif system == "Darwin":  # macOS
                     subprocess.run(["open", str(log_file)], check=False)
                 elif system == "Windows":
-                    os.startfile(str(log_file))
+                    os.startfile(str(log_file))  # pylint: disable=no-member  # Windows only
                 else:
                     # Fallback: show path
                     QMessageBox.information(
@@ -799,7 +809,6 @@ if _PYSIDE:
             dialog.show_checking()
 
             # Process events to show dialog
-            from PySide6.QtWidgets import QApplication
             QApplication.processEvents()
 
             # Force fresh check
@@ -930,11 +939,10 @@ if _PYSIDE:
             # Check for unsaved changes (only for Editor)
             if hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes):
                 if widget.has_unsaved_changes():
-                    from PySide6.QtWidgets import QMessageBox
                     reply = QMessageBox.question(
                         self,
                         tr("dialog.unsaved_title"),
-                        tr("dialog.unsaved_message", tab_title=tab_title),
+                        tr("dialog.unsaved_message", tab_title=tab_title),  # pylint: disable=unexpected-keyword-arg
                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
                         QMessageBox.Save
                     )
@@ -1318,7 +1326,6 @@ if _PYSIDE:
                 self.logger.info(f"Layout saved: {layout_name}")
 
                 # Show confirmation
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.information(
                     self,
                     "Layout Saved",
@@ -1557,9 +1564,8 @@ if _PYSIDE:
                 self.settings.clear_recent_files()
                 QMessageBox.information(self, tr("app.msg_success_title"), tr("app.msg_clear_recent_success"))
 
-        def keyPressEvent(self, event):
+        def keyPressEvent(self, event):  # pylint: disable=too-many-return-statements
             """Handle global keyboard shortcuts (v2.9.33 + v2.9.35 accessibility)."""
-            from PySide6.QtCore import Qt
 
             key = event.key()
             modifiers = event.modifiers()
@@ -1615,7 +1621,7 @@ if _PYSIDE:
 
         def eventFilter(self, obj, event):
             """Global event filter for Shift+Scroll horizontal scrolling (v2.9.115)."""
-            from PySide6.QtCore import Qt, QEvent
+            from PySide6.QtCore import QEvent
 
             # Only handle wheel events
             if event.type() != QEvent.Wheel:
@@ -1653,7 +1659,6 @@ if _PYSIDE:
 
         def wheelEvent(self, event):
             """Handle mouse wheel for font scaling (v2.9.35)."""
-            from PySide6.QtCore import Qt
 
             # Ctrl+Scroll - Font scaling
             if event.modifiers() == Qt.ControlModifier:
@@ -1914,7 +1919,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     # Set Qt attributes before creating QApplication
-    from PySide6.QtCore import Qt
     QApplication.setAttribute(Qt.AA_UseDesktopOpenGL, True)
 
     app = QApplication(sys.argv)
