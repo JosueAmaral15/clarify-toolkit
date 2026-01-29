@@ -216,6 +216,42 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         
         container.addLayout(row2)
         
+        # Row 3: TypeScript export and exclude numeric keys
+        row3 = QHBoxLayout()
+        self.typescript_export_checkbox = QCheckBox(
+            tr("advanced_extractor.typescript_export", "TypeScript export")
+        )
+        self.typescript_export_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.typescript_export_tooltip",
+                      "Export as TypeScript interface instead of JSON")
+        )
+        row3.addWidget(self.typescript_export_checkbox)
+        
+        self.exclude_numeric_checkbox = QCheckBox(
+            tr("advanced_extractor.exclude_numeric", "Exclude numeric keys")
+        )
+        self.exclude_numeric_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.exclude_numeric_tooltip",
+                      "Filter out keys that are numeric strings")
+        )
+        row3.addWidget(self.exclude_numeric_checkbox)
+        
+        container.addLayout(row3)
+        
+        # Row 4: Skip empty values
+        row4 = QHBoxLayout()
+        self.skip_empty_checkbox = QCheckBox(
+            tr("advanced_extractor.skip_empty", "Skip empty values")
+        )
+        self.skip_empty_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.skip_empty_tooltip",
+                      "Skip entries with empty or null values")
+        )
+        row4.addWidget(self.skip_empty_checkbox)
+        row4.addStretch()  # Push checkbox to the left
+        
+        container.addLayout(row4)
+        
         return container
     
     def _create_case_section(self) -> QHBoxLayout:
@@ -443,6 +479,11 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
             avoid_keys = self.avoid_keys_edit.text().strip()
             avoid_keys_param = self.avoid_keys_parameter
             
+            # New features from Text Extractor
+            typescript_export = self.typescript_export_checkbox.isChecked()
+            exclude_numeric = self.exclude_numeric_checkbox.isChecked()
+            skip_empty = self.skip_empty_checkbox.isChecked()
+            
             # Extensions
             is_attribute_mode = self.is_attribute_checkbox.isChecked()
             exts_text = self.extensions_edit.text().strip()
@@ -469,7 +510,10 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
                 end_regex=end_regex,
                 file_extensions=file_extensions,
                 is_attribute_mode=is_attribute_mode,
-                match_all=match_all
+                match_all=match_all,
+                typescript_export=typescript_export,
+                exclude_numeric=exclude_numeric,
+                skip_empty=skip_empty
             )
             
             # Run extraction
