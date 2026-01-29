@@ -202,3 +202,62 @@ class FormatMapper:
                 segments.append(TextSegment(text=plain))
         
         return segments
+    
+    @staticmethod
+    def create_docx_from_segments(segments: List[TextSegment], output_path: str) -> None:
+        """
+        Create a DOCX file from text segments with formatting.
+        
+        Currently supports:
+        - Bold (bit 0)
+        - Italic (bit 1)
+        - Underline (bit 2)
+        
+        Args:
+            segments: List of TextSegment objects with formatting info
+            output_path: Path to save the output DOCX file
+        """
+        from docx import Document
+        
+        doc = Document()
+        current_paragraph = doc.add_paragraph()
+        
+        for segment in segments:
+            # Handle paragraph breaks
+            if '\n\n' in segment.text:
+                parts = segment.text.split('\n\n')
+                for i, part in enumerate(parts):
+                    if part:  # Skip empty parts
+                        run = current_paragraph.add_run(part)
+                        FormatMapper._apply_formatting(run, segment.format_bits)
+                    
+                    # Create new paragraph after each part except the last
+                    if i < len(parts) - 1:
+                        current_paragraph = doc.add_paragraph()
+            else:
+                # Normal text - add as run to current paragraph
+                run = current_paragraph.add_run(segment.text)
+                FormatMapper._apply_formatting(run, segment.format_bits)
+        
+        # Save document
+        doc.save(output_path)
+    
+    @staticmethod
+    def _apply_formatting(run, format_bits: int) -> None:
+        """
+        Apply formatting to a DOCX run based on format bits.
+        
+        Args:
+            run: python-docx Run object
+            format_bits: Integer with bit flags for formatting
+        """
+        if format_bits & FormatBit.BOLD:
+            run.bold = True
+        
+        if format_bits & FormatBit.ITALIC:
+            run.italic = True
+        
+        if format_bits & FormatBit.UNDERLINE:
+            run.underline = True
+        
+        # Note: Other formats (colors, fonts, etc.) will be added in Session 4
