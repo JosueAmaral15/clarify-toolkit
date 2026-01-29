@@ -639,28 +639,43 @@ class GoogleTranslateDock(BaseDock):
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def _save_as(self):
-        """Save translation result to file."""
+        """Save translation result to file (TXT or DOCX with formatting)."""
         result = self.text_output.toPlainText()
         if not result:
             return
         
-        # Generate default filename with timestamp
+        # Determine default format and filename based on tag presence
+        has_tags = '<' in result and '>' in result and not self.chk_remove_tags.isChecked()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename = f"translation_{timestamp}.txt"
+        
+        if has_tags:
+            # Has formatting tags - suggest DOCX
+            default_filename = f"translation_{timestamp}.docx"
+            file_filter = "Word Documents (*.docx);;Text Files (*.txt);;All Files (*)"
+        else:
+            # Plain text - suggest TXT
+            default_filename = f"translation_{timestamp}.txt"
+            file_filter = "Text Files (*.txt);;Word Documents (*.docx);;All Files (*)"
         
         # Open save file dialog
-        file_path, _ = QFileDialog.getSaveFileName(
+        file_path, selected_filter = QFileDialog.getSaveFileName(
             self,
             tr("google_translate.save_dialog_title"),
             default_filename,
-            "Text Files (*.txt);;All Files (*)"
+            file_filter
         )
         
         if file_path:
             try:
-                # Save with UTF-8 encoding
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(result)
+                # Determine output format from file extension
+                if file_path.lower().endswith('.docx'):
+                    # Save as DOCX with formatting restored
+                    self._save_as_docx(result, file_path)
+                else:
+                    # Save as plain text (remove tags if present)
+                    plain_text = FormatMapper.remove_tags(result) if has_tags else result
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(plain_text)
                 
                 # Visual feedback
                 original_text = self.btn_save_as.text()
@@ -673,6 +688,25 @@ class GoogleTranslateDock(BaseDock):
                     tr("google_translate.save_error_title"),
                     tr("google_translate.save_error_msg").format(str(e))
                 )
+    
+    def _save_as_docx(self, tagged_text: str, output_path: str):
+        """
+        Save translation as DOCX with formatting restored from tags.
+        
+        Args:
+            tagged_text: Translation result with format tags
+            output_path: Path to save DOCX file
+        """
+        # Parse tagged text into segments
+        segments = FormatMapper.parse_tagged_text(tagged_text)
+        
+        # Generate DOCX with formatting
+        FormatMapper.create_docx_from_segments(segments, output_path)
+        
+        # Update status
+        self.lbl_status.setText(tr("google_translate.status_docx_saved"))
+        self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
+        QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""

@@ -731,6 +731,7 @@
   "google_translate.save_error_title": "Save Error",
   "google_translate.status_cancelled": "Translation cancelled",
   "google_translate.status_completed": "✓ Translation completed successfully!",
+  "google_translate.status_docx_saved": "✓ DOCX saved with formatting restored!",
   "google_translate.status_failed": "✗ Translation failed",
   "google_translate.status_ready": "Ready to translate",
   "google_translate.status_starting": "Starting translation...",
