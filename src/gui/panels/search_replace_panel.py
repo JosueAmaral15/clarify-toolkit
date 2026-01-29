@@ -87,11 +87,6 @@ class SearchReplacePanel(QWidget):
         self._current_task_id = None
         self._processing_modal = None  # Modal de progresso
 
-    def set_editor_fonts(self, font):
-        """Set monospaced font for query and replacement editors (v2.9.115)."""
-        self.ed_repl.setFont(font)
-        self.ed_query.setFont(font)
-
         # Path row
         column = QVBoxLayout()
         row = QHBoxLayout()
@@ -321,6 +316,12 @@ class SearchReplacePanel(QWidget):
         self.btn_search.clicked.connect(self._start_search_threaded)
         self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
         self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
+
+
+    def set_editor_fonts(self, font):
+        """Set monospaced font for query and replacement editors (v2.9.115)."""
+        self.ed_repl.setFont(font)
+        self.ed_query.setFont(font)
 
     def eventFilter(self, obj, event):
         """
