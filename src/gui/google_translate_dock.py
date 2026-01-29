@@ -49,6 +49,7 @@ from PySide6.QtGui import QFont
 from ..gui.base_dock import BaseDock
 from ..translation.google_translate import GoogleTranslateAPI, TranslationResult
 from ..translation.document_parser import extract_text_from_document, DocumentParserError
+from ..translation.format_mapper import FormatMapper
 from ..i18n import tr, tooltip_tr
 
 
@@ -386,16 +387,21 @@ class GoogleTranslateDock(BaseDock):
 
         if file_path:
             try:
-                # Use document parser to extract text
-                content = extract_text_from_document(file_path)
+                # Use format mapper for DOCX files to extract with tags
+                if file_path.lower().endswith('.docx'):
+                    content = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    self.lbl_status.setText(f"DOCX loaded with formatting tags. {len(content)} characters.")
+                else:
+                    # Use plain text parser for other file types
+                    content = extract_text_from_document(file_path)
+                    self.lbl_status.setText(f"File loaded successfully. {len(content)} characters.")
 
                 self.ed_file_path.setCurrentText(file_path)
                 self.text_input.setPlainText(content[:5000])  # Show preview
 
                 if len(content) > 5000:
-                    self.lbl_status.setText(f"File loaded. Showing first 5000 chars of {len(content)} total.")
-                else:
-                    self.lbl_status.setText(f"File loaded successfully. {len(content)} characters.")
+                    current_status = self.lbl_status.text()
+                    self.lbl_status.setText(f"{current_status} Showing first 5000 chars.")
 
             except DocumentParserError as e:
                 QMessageBox.warning(
@@ -421,8 +427,12 @@ class GoogleTranslateDock(BaseDock):
                 return
 
             try:
-                # Use document parser to handle all file types
-                text_to_translate = extract_text_from_document(file_path)
+                # Use format mapper for DOCX files to extract with tags
+                if file_path.lower().endswith('.docx'):
+                    text_to_translate = FormatMapper.extract_formatted_text_from_docx(file_path)
+                else:
+                    # Use plain text parser for other file types
+                    text_to_translate = extract_text_from_document(file_path)
             except DocumentParserError as e:
                 QMessageBox.warning(
                     self,
