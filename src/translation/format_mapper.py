@@ -110,6 +110,7 @@ class FormatMapper:
                     continue
                 
                 segment = TextSegment(text=run.text)
+                metadata_parts = []
                 
                 # Detect bold
                 if run.bold:
@@ -123,7 +124,29 @@ class FormatMapper:
                 if run.underline:
                     segment.add_format(FormatBit.UNDERLINE)
                 
-                # TODO: Add more format detection (strikethrough, color, size, etc.)
+                # Detect font color
+                if run.font.color.rgb:
+                    segment.add_format(FormatBit.FONT_COLOR)
+                    rgb = run.font.color.rgb
+                    # Convert RGB to hex string (e.g., FF0000 for red)
+                    hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                    metadata_parts.append(hex_color)
+                
+                # Detect font size
+                if run.font.size:
+                    segment.add_format(FormatBit.FONT_SIZE)
+                    # Convert EMU (English Metric Units) to points
+                    points = run.font.size.pt
+                    metadata_parts.append(str(int(points)))
+                
+                # Detect font family
+                if run.font.name:
+                    segment.add_format(FormatBit.FONT_FAMILY)
+                    metadata_parts.append(run.font.name)
+                
+                # Store metadata if any
+                if metadata_parts:
+                    segment.metadata = ",".join(metadata_parts)
                 
                 segments.append(segment)
             
@@ -229,7 +252,7 @@ class FormatMapper:
                 for i, part in enumerate(parts):
                     if part:  # Skip empty parts
                         run = current_paragraph.add_run(part)
-                        FormatMapper._apply_formatting(run, segment.format_bits)
+                        FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
                     
                     # Create new paragraph after each part except the last
                     if i < len(parts) - 1:
@@ -237,20 +260,28 @@ class FormatMapper:
             else:
                 # Normal text - add as run to current paragraph
                 run = current_paragraph.add_run(segment.text)
-                FormatMapper._apply_formatting(run, segment.format_bits)
+                FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
         
         # Save document
         doc.save(output_path)
     
     @staticmethod
-    def _apply_formatting(run, format_bits: int) -> None:
+    def _apply_formatting(run, format_bits: int, metadata: Optional[str] = None) -> None:
         """
-        Apply formatting to a DOCX run based on format bits.
+        Apply formatting to a DOCX run based on format bits and metadata.
         
         Args:
             run: python-docx Run object
             format_bits: Integer with bit flags for formatting
+            metadata: Optional comma-separated metadata (colors, sizes, fonts)
         """
+        from docx.shared import RGBColor, Pt
+        
+        # Parse metadata if present
+        metadata_parts = metadata.split(",") if metadata else []
+        metadata_index = 0
+        
+        # Apply basic formatting
         if format_bits & FormatBit.BOLD:
             run.bold = True
         
@@ -260,4 +291,32 @@ class FormatMapper:
         if format_bits & FormatBit.UNDERLINE:
             run.underline = True
         
-        # Note: Other formats (colors, fonts, etc.) will be added in Session 4
+        # Apply font color (metadata: hex RGB)
+        if format_bits & FormatBit.FONT_COLOR and metadata_index < len(metadata_parts):
+            hex_color = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                # Convert hex string to RGB (e.g., "FF0000" -> (255, 0, 0))
+                r = int(hex_color[0:2], 16)
+                g = int(hex_color[2:4], 16)
+                b = int(hex_color[4:6], 16)
+                run.font.color.rgb = RGBColor(r, g, b)
+            except (ValueError, IndexError):
+                pass  # Skip invalid colors
+        
+        # Apply font size (metadata: points)
+        if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
+            size_str = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                points = float(size_str)
+                run.font.size = Pt(points)
+            except ValueError:
+                pass  # Skip invalid sizes
+        
+        # Apply font family (metadata: font name)
+        if format_bits & FormatBit.FONT_FAMILY and metadata_index < len(metadata_parts):
+            font_name = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            if font_name:
+                run.font.name = font_name
