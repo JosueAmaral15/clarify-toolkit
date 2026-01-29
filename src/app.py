@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# pylint: disable=no-name-in-module  # PySide6 uses dynamic module structure
 
 """
 TextWorkbench — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
