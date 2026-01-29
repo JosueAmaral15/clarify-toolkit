@@ -726,7 +726,7 @@
   "google_translate.placeholder_input": "Enter text to translate or select a file...",
   "google_translate.placeholder_text": "Enter text to translate...",
   "google_translate.save_dialog_title": "Save Translation Result",
-  "google_translate.tooltip_remove_tags": "When enabled, formatting tags like <1>, <2> are removed from output. Uncheck to keep tags for format restoration.",
+  "google_translate.tooltip_remove_tags": "✓ Checked: Save as plain text (.txt) - tags removed\n✗ Unchecked: Save as formatted document (.docx) - formatting restored from tags\n\nFor DOCX with formatting, uncheck this before saving.",
   "google_translate.save_error_msg": "Could not save file:\n{0}",
   "google_translate.save_error_title": "Save Error",
   "google_translate.status_cancelled": "Translation cancelled",
