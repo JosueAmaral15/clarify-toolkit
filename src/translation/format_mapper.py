@@ -53,6 +53,8 @@ class TextSegment:
     text: str
     format_bits: int = 0  # Bitwise combination of FormatBit values
     metadata: Optional[str] = None  # Additional format data (colors, sizes, etc.)
+    paragraph_format: int = 0  # Paragraph-level formatting bits
+    paragraph_metadata: Optional[str] = None  # Paragraph metadata (alignment, spacing)
     
     def has_format(self, bit: int) -> bool:
         """Check if segment has specific format."""
@@ -66,6 +68,15 @@ class TextSegment:
                 self.metadata += f",{metadata}"
             else:
                 self.metadata = metadata
+    
+    def add_paragraph_format(self, bit: int, metadata: Optional[str] = None):
+        """Add paragraph-level format."""
+        self.paragraph_format |= bit
+        if metadata:
+            if self.paragraph_metadata:
+                self.paragraph_metadata += f",{metadata}"
+            else:
+                self.paragraph_metadata = metadata
     
     def to_tagged_text(self) -> str:
         """Convert segment to tagged text."""
@@ -104,6 +115,31 @@ class FormatMapper:
         segments: List[TextSegment] = []
         
         for paragraph in doc.paragraphs:
+            # Detect paragraph-level formatting
+            para_metadata_parts = []
+            para_format_bits = 0
+            
+            # Detect alignment
+            if paragraph.alignment is not None:
+                from docx.enum.text import WD_ALIGN_PARAGRAPH
+                para_format_bits |= FormatBit.ALIGNMENT
+                # Map alignment to single letter
+                alignment_map = {
+                    WD_ALIGN_PARAGRAPH.LEFT: 'L',
+                    WD_ALIGN_PARAGRAPH.CENTER: 'C',
+                    WD_ALIGN_PARAGRAPH.RIGHT: 'R',
+                    WD_ALIGN_PARAGRAPH.JUSTIFY: 'J'
+                }
+                align_code = alignment_map.get(paragraph.alignment, 'L')
+                para_metadata_parts.append(align_code)
+            
+            # Detect line spacing
+            if paragraph.paragraph_format.line_spacing:
+                para_format_bits |= FormatBit.LINE_SPACING
+                spacing = paragraph.paragraph_format.line_spacing
+                # Store as multiplier (e.g., 1.5 for 1.5 line spacing)
+                para_metadata_parts.append(f"{spacing:.1f}")
+            
             # Process each run (a run is a continuous text with same formatting)
             for run in paragraph.runs:
                 if not run.text:
@@ -144,9 +180,14 @@ class FormatMapper:
                     segment.add_format(FormatBit.FONT_FAMILY)
                     metadata_parts.append(run.font.name)
                 
-                # Store metadata if any
+                # Store run-level metadata if any
                 if metadata_parts:
                     segment.metadata = ",".join(metadata_parts)
+                
+                # Store paragraph-level formatting
+                segment.paragraph_format = para_format_bits
+                if para_metadata_parts:
+                    segment.paragraph_metadata = ",".join(para_metadata_parts)
                 
                 segments.append(segment)
             
@@ -244,8 +285,20 @@ class FormatMapper:
         
         doc = Document()
         current_paragraph = doc.add_paragraph()
+        current_para_format = 0
+        current_para_metadata = None
         
         for segment in segments:
+            # Check if paragraph formatting changed
+            if segment.paragraph_format != current_para_format or segment.paragraph_metadata != current_para_metadata:
+                # New paragraph with different formatting
+                if current_paragraph.text:  # Don't create empty paragraphs
+                    current_paragraph = doc.add_paragraph()
+                current_para_format = segment.paragraph_format
+                current_para_metadata = segment.paragraph_metadata
+                # Apply paragraph formatting
+                FormatMapper._apply_paragraph_formatting(current_paragraph, current_para_format, current_para_metadata)
+            
             # Handle paragraph breaks
             if '\n\n' in segment.text:
                 parts = segment.text.split('\n\n')
@@ -257,6 +310,7 @@ class FormatMapper:
                     # Create new paragraph after each part except the last
                     if i < len(parts) - 1:
                         current_paragraph = doc.add_paragraph()
+                        FormatMapper._apply_paragraph_formatting(current_paragraph, current_para_format, current_para_metadata)
             else:
                 # Normal text - add as run to current paragraph
                 run = current_paragraph.add_run(segment.text)
@@ -320,3 +374,46 @@ class FormatMapper:
             metadata_index += 1
             if font_name:
                 run.font.name = font_name
+    
+    @staticmethod
+    def _apply_paragraph_formatting(paragraph, format_bits: int, metadata: Optional[str] = None) -> None:
+        """
+        Apply paragraph-level formatting.
+        
+        Args:
+            paragraph: python-docx Paragraph object
+            format_bits: Integer with bit flags for paragraph formatting
+            metadata: Optional comma-separated metadata (alignment, spacing)
+        """
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        
+        if not format_bits:
+            return
+        
+        # Parse metadata if present
+        metadata_parts = metadata.split(",") if metadata else []
+        metadata_index = 0
+        
+        # Apply alignment
+        if format_bits & FormatBit.ALIGNMENT and metadata_index < len(metadata_parts):
+            align_code = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            
+            alignment_map = {
+                'L': WD_ALIGN_PARAGRAPH.LEFT,
+                'C': WD_ALIGN_PARAGRAPH.CENTER,
+                'R': WD_ALIGN_PARAGRAPH.RIGHT,
+                'J': WD_ALIGN_PARAGRAPH.JUSTIFY
+            }
+            if align_code in alignment_map:
+                paragraph.alignment = alignment_map[align_code]
+        
+        # Apply line spacing
+        if format_bits & FormatBit.LINE_SPACING and metadata_index < len(metadata_parts):
+            spacing_str = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                spacing = float(spacing_str)
+                paragraph.paragraph_format.line_spacing = spacing
+            except ValueError:
+                pass  # Skip invalid spacing
