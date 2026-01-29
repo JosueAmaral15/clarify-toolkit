@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # pylint: disable=no-name-in-module  # PySide6 uses dynamic module structure
+# pylint: disable=import-outside-toplevel  # Intentional lazy loading to avoid circular imports
 
 """
 TextWorkbench — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
@@ -131,12 +132,24 @@ try:
 except Exception:
     _PYSIDE = False
     # Create stub classes for when PySide6 is not available
-    class QAbstractListModel: pass
-    class QAbstractTableModel: pass
-    class QWidget: pass
-    class QMainWindow: pass
-    class QObject: pass
-    class QThread: pass
+    class QAbstractListModel:
+        pass
+
+    class QAbstractTableModel:
+        pass
+
+    class QWidget:
+        pass
+
+    class QMainWindow:
+        pass
+
+    class QObject:
+        pass
+
+    class QThread:
+        pass
+
     QModelIndex = None
     Qt = None
     Signal = None
@@ -162,7 +175,7 @@ def load_prefs() -> configparser.ConfigParser:
 
 def save_prefs(cfg: configparser.ConfigParser):
     os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-    with open(CONFIG_PATH, "w") as f:
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         cfg.write(f)
 
 
@@ -1166,7 +1179,7 @@ if _PYSIDE:
             """Get current JSON data (placeholder for plugin integration)."""
             return None
 
-        def translate_json(self, data, lang):
+        def translate_json(self, data, _lang):
             """Translate JSON data (placeholder for API integration)."""
             return data
 
@@ -1220,7 +1233,7 @@ if _PYSIDE:
             dialog = ConfigEditorDialog(self)
             dialog.exec()
 
-        def _on_language_changed(self, lang: str):
+        def _on_language_changed(self, _lang: str):
             """Called when language changes - retranslate all UI (Task #24 - v2.9.10)."""
             self._retranslate_ui()
 
