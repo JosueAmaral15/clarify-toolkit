@@ -175,10 +175,7 @@ try:
     from PySide6.QtGui import QAction, QActionGroup, QFontDatabase, QPixmap, QIcon, QPalette, QColor, QShortcut, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-        QLabel, QLineEdit, QCheckBox, QPushButton, QSplitter, QListWidget, QListWidgetItem,
-        QFileDialog, QGroupBox, QComboBox, QSpinBox, QTreeWidget, QTreeWidgetItem,
-        QPlainTextEdit, QDockWidget, QMessageBox, QTabWidget, QFormLayout, QListView,
-        QProgressBar, QDialog, QTextEdit, QScrollArea, QRadioButton, QMenu
+        QLabel, QDockWidget, QMessageBox
     )
 except Exception:
     _PYSIDE = False
@@ -198,7 +195,7 @@ except Exception:
 #                    THREAD MANAGER & PROCESSING MODAL IMPORTS
 # =============================================================================
 
-from src.ui import thread_manager, FeatureType, ProcessingModal
+# Removed unused imports: thread_manager, FeatureType, ProcessingModal (COM4 - 2026-01-29)
 
 # =============================================================================
 #                    JSON TRANSLATE HELPERS (not yet in modules)
@@ -381,8 +378,7 @@ if _PYSIDE:
     from .gui.results_tree import ResultsTree
 
     # ============================ Code-aware JSON Translator ============================
-    # CodeAwareJSONTranslator now imported from src.processors.code_aware_translator (Phase 3.11 - Import Tree Analogy: FOLHA)
-    from .processors.code_aware_translator import CodeAwareJSONTranslator
+    # CodeAwareJSONTranslator removed - unused (COM4 - 2026-01-29)
     class MainWindow(QMainWindow):
         def __init__(self, app: QApplication):
             super().__init__()
