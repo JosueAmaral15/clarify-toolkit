@@ -55,113 +55,66 @@ Programming Tasks:
 """
 
 from __future__ import annotations
-import argparse
 from base64 import b64decode
 import configparser
-import fnmatch
 import json
 import os
-import re
 import sys
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 #  Import organized modules (eliminates code duplication)
 # ---------------------------------------------------------------------------
 
 # Logging system
-from .utils.logger import get_logger
+# (get_logger removed - unused)
 
 # Error handling & crash reporting (v2.9.61)
-from .utils.error_handler import install_crash_handler
+# (install_crash_handler removed - unused)
 
 # Core functionality: search, replace, insert, filtering
-from .core import (
-    SearchOptions, preserve_case_like, replace_in_text,
-    InsertMode, insert_at_line,
-    Condition, filter_files_by_conditions, OPS
-)
+# (All removed - unused in app.py, only used by imported modules)
 
 # Utilities: file operations, text processing, TypeScript/JavaScript
-from .utils import (
-    walk_files, read_text, write_text, safe_backup_file,
-    parse_exclusion_patterns, mask_exclusions, unmask_exclusions,
-    load_ts_object, dump_ts_object
-)
+from .utils import read_text
 
 # JSON Rewriter: types, parser, operations, serializer (includes BUG FIX)
-from .rewriter import (
-    Obj, JSONNode, parse_json_preserving_duplicates_text, freeze,
-    find_object_block, ts_block_to_json_text,
-    sanitize_keys_and_values, ts_process_full_preserving,
-    dedupe, join_keys, eliminate_duplicates, merge_obj_values,
-    avoid_duplicate_child_keys, exclude_numeric_keys, skip_empty_values,
-    normalize_escaping, array_to_object_conversion,
-    dump_ts_node, dump_ts_obj, collapse_blank_lines
-)
+from .rewriter import find_object_block, ts_block_to_json_text
 
-# Case Converter: camelCase/PascalCase/snake_case/kebab-case conversion
-from .case_converter import JSObjectCaseConverter
+# Case Converter: application theming (light, dark, system)
+# (JSObjectCaseConverter removed - unused)
 
 # Theme Manager: application theming (light, dark, system)
 from .theme_manager import ThemeManager
 
 # Internationalization: runtime language switching (Task #24 - v2.9.10)
-from .i18n import get_translator, switch_language, tr, tooltip_tr
+from .i18n import switch_language, tr, tooltip_tr
 
 # JSON Search: search keys and values in JSON/TS/TSX files
-from .json_search import (
-    ProjectIndexer, parse_composite_query, resolve_query,
-    extract_top_level_objects_from_ts, guess_line_number
-)
+# (All removed - unused in app.py)
 
-# Text Extractor: convert HTML/JSX to JSON structures
 # Text Extractor: Now fully integrated in TextExtractorDock (no separate module needed)
 
 # Placeholder Replacer: batch text replacement with mappings
-from .placeholder_replacer import (
-    parse_mapping_file, replace_placeholders, process_file, process_directory
-)
+# (All removed - unused in app.py)
 
 # AI Processor: OpenAI and Gemini integration for file processing
-from .ai_processor import (
-    OpenAIClient, GeminiClient, AVAILABLE_MODELS, count_tokens, estimate_cost,
-    has_internet, is_openai_available, is_gemini_available,
-    process_file as ai_process_file, process_multiple_files, save_results,
-    list_files_recursive as ai_list_files
-)
+# (process_file removed - unused)
 
 # Modular GUI Docks: hierarchical architecture with base classes and mixins
-from .gui import (
-    CaseConverterDock, PlaceholderReplacerDock, JsonSearchDock,
-    TextExtractorDock, AIProcessorDock, JsonTranslateDock,
-    JsonRewriterDock, HistoryDock, FileListDock, FileExplorerDock, TutorialsDock,
-    EditorDock, TextToJsonDock, JSXExtractorDock, DockFactory, MenuBuilder, WindowSettings
-)
+from .gui import DockFactory, MenuBuilder, WindowSettings
 
 # Progress Management: widgets for displaying task progress (v2.9.114 - Phase 1.1)
-from .gui.progress import (
-    ProgressBarWidget, ProgressDetailsDialog,
-    ProgressManager, OperationHistory
-)
+# (All removed - unused in app.py)
 
 # Search/Replace/Insert Panels: worker and components (v2.9.114 - Phase 1.2 & 1.3)
-from .gui.panels import (
-    SearchWorker, ResultsTree, MatchPanel, MatchListModel,
-    SearchReplacePanel, InsertPanel
-)
+from .gui.panels import SearchReplacePanel, InsertPanel
 
 # CLI Module: command-line interface handlers (v2.9.114 - Phase 3.1)
 from .cli import build_parser
 
 # JSON Translate Helpers: dictionary-driven translation (v2.9.114 - Phase 3.2)
-from .translators import (
-    load_translation_dict, flatten_dict_paths, translate_replace_texts,
-    read_translation_dict, apply_scoped_translation, process_translate_file,
-    mask_existing_placeholders, unmask_existing_placeholders, RE_PLACEHOLDER
-)
+# (All removed - unused in app.py)
 
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
@@ -170,13 +123,10 @@ from .translators import (
 _PYSIDE = True
 
 try:
-    from PySide6.QtCore import (
-        Qt, QAbstractTableModel, QModelIndex, QSize, QTimer, Signal, QByteArray, QAbstractListModel, QObject, QThread
-        )
-    from PySide6.QtGui import QAction, QActionGroup, QFontDatabase, QPixmap, QIcon, QPalette, QColor, QShortcut, QKeySequence
+    from PySide6.QtCore import QByteArray
+    from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon
     from PySide6.QtWidgets import (
-        QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-        QLabel, QDockWidget, QMessageBox
+        QApplication, QMainWindow, QWidget, QDockWidget, QMessageBox
     )
 except Exception:
     _PYSIDE = False
@@ -375,8 +325,7 @@ def read_translation_dict(path: str) -> Dict[str, Any]:
 # =============================================================================
 
 if _PYSIDE:
-    # ResultsTree now imported from src.gui.results_tree (Phase 3.11 - Import Tree Analogy: FOLHA)
-    from .gui.results_tree import ResultsTree
+    # ResultsTree removed - unused (COM4)
 
     # ============================ Code-aware JSON Translator ============================
     # CodeAwareJSONTranslator removed - unused (COM4 - 2026-01-29)
