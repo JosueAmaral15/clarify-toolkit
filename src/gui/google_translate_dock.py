@@ -523,10 +523,6 @@ class GoogleTranslateDock(BaseDock):
             self.progress_bar.setVisible(False)
             self.lbl_status.setText(tr("google_translate.text_cancelled"))
 
-<<<<<<< HEAD
-    def _clear(self):
-        """Clear all input and output fields."""
-=======
     def _copy_result(self):
         """Copy translation result to clipboard."""
         result = self.text_output.toPlainText()
@@ -542,7 +538,6 @@ class GoogleTranslateDock(BaseDock):
     
     def _clear(self):
         """Clear input and output fields."""
->>>>>>> COM3-documentation-study
         self.text_input.clear()
         self.text_output.clear()
         self.ed_file_path.clearEditText()
