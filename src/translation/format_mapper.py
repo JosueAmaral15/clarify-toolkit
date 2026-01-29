@@ -157,7 +157,12 @@ class FormatMapper:
     @staticmethod
     def parse_tagged_text(tagged_text: str) -> List[TextSegment]:
         """
-        Parse tagged text back into segments.
+        Parse tagged text back into segments with error recovery.
+        
+        Handles translation edge cases:
+        - Whitespace in tags: < 1>text</ 1>
+        - Missing closing tags: <1>text (treats as unformatted)
+        - Malformed tags: ignored and treated as plain text
         
         Args:
             tagged_text: Text with format tags
@@ -167,28 +172,32 @@ class FormatMapper:
         """
         segments: List[TextSegment] = []
         
+        # Normalize whitespace in tags: < 1> → <1>, </ 1> → </1>
+        normalized = re.sub(r'<\s*(\d+)(?:\s*:\s*([^>]+))?\s*>', r'<\1:\2>' if ':' in tagged_text else r'<\1>', tagged_text)
+        normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)
+        
         # Pattern: <tag_id:metadata>text</tag_id> or <tag_id>text</tag_id>
         pattern = r'<(\d+)(?::([^>]+))?>(.*?)</\1>'
         
         last_pos = 0
-        for match in re.finditer(pattern, tagged_text):
+        for match in re.finditer(pattern, normalized):
             # Add any plain text before this tag
             if match.start() > last_pos:
-                plain = tagged_text[last_pos:match.start()]
+                plain = normalized[last_pos:match.start()]
                 if plain:
                     segments.append(TextSegment(text=plain))
             
             # Add tagged segment
             tag_id = int(match.group(1))
-            metadata = match.group(2)
+            metadata = match.group(2) if match.group(2) and match.group(2) != '' else None
             text = match.group(3)
             segments.append(TextSegment(text=text, format_bits=tag_id, metadata=metadata))
             
             last_pos = match.end()
         
-        # Add any remaining plain text
-        if last_pos < len(tagged_text):
-            plain = tagged_text[last_pos:]
+        # Add any remaining plain text (includes unclosed tags)
+        if last_pos < len(normalized):
+            plain = normalized[last_pos:]
             if plain:
                 segments.append(TextSegment(text=plain))
         
