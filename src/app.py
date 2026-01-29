@@ -558,6 +558,7 @@ if _PYSIDE:
 
         def _show_search_replace(self):
             """Show Search/Replace tab (v2.9.40.2 - reopen if closed)."""
+<<<<<<< HEAD
             # Check if tab exists at index 0
             if self.tabs.count() > 0 and self.tabs.tabText(0) == "Search / Replace":
                 self.tabs.setCurrentIndex(0)
@@ -568,10 +569,35 @@ if _PYSIDE:
                 self.tabs.setCurrentIndex(0)
                 QApplication.processEvents()
 
+=======
+            tab_name = tr("ui_builder.tab_search")
+            
+            # Search for existing tab by name (don't assume index)
+            for i in range(self.tabs.count()):
+                if self.tabs.tabText(i) == tab_name:
+                    self.tabs.setCurrentIndex(i)
+                    return
+            
+            # Tab not found, create it at index 0
+            self.tab_search = SearchReplacePanel(parent=self, progress_manager=self.progress_manager)
+            self.tabs.insertTab(0, self.tab_search, tab_name)
+            self.tabs.setCurrentIndex(0)
+            QApplication.processEvents()
+        
+>>>>>>> COM3-documentation-study
         def _show_insert(self):
             """Show Insert tab (v2.9.40.2 - reopen if closed)."""
-            # Check if tab exists at index 1
+            tab_name = tr("ui_builder.tab_insert")
+            
+            # Search for existing tab by name (don't assume index)
+            for i in range(self.tabs.count()):
+                if self.tabs.tabText(i) == tab_name:
+                    self.tabs.setCurrentIndex(i)
+                    return
+            
+            # Tab not found, create it at index 1
             expected_index = 1
+<<<<<<< HEAD
             if self.tabs.count() > expected_index and self.tabs.tabText(expected_index) == "Insert":
                 self.tabs.setCurrentIndex(expected_index)
             else:
@@ -582,6 +608,13 @@ if _PYSIDE:
                 self.tabs.setCurrentIndex(expected_index)
                 QApplication.processEvents()
 
+=======
+            self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
+            self.tabs.insertTab(expected_index, self.tab_insert, tab_name)
+            self.tabs.setCurrentIndex(expected_index)
+            QApplication.processEvents()
+        
+>>>>>>> COM3-documentation-study
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
             from .gui.tab_manager import TabManager

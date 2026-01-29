@@ -523,8 +523,26 @@ class GoogleTranslateDock(BaseDock):
             self.progress_bar.setVisible(False)
             self.lbl_status.setText(tr("google_translate.text_cancelled"))
 
+<<<<<<< HEAD
     def _clear(self):
         """Clear all input and output fields."""
+=======
+    def _copy_result(self):
+        """Copy translation result to clipboard."""
+        result = self.text_output.toPlainText()
+        if result:
+            clipboard = self.parent().app.clipboard() if hasattr(self.parent(), "app") else None
+            if clipboard:
+                clipboard.setText(result)
+
+            # Visual feedback
+            original_text = self.btn_copy_result.text()
+            self.btn_copy_result.setText(tr("google_translate.btn_copied"))
+            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
+    
+    def _clear(self):
+        """Clear input and output fields."""
+>>>>>>> COM3-documentation-study
         self.text_input.clear()
         self.text_output.clear()
         self.ed_file_path.clearEditText()
