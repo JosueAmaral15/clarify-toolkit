@@ -241,6 +241,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Initialize state BEFORE calling super().__init__
         self.current_mode = "format_conversion"  # Default mode
         self.conversion_history: List[Dict[str, str]] = []
+        self.extraction_history: List[Dict[str, str]] = []  # JSX extraction history
         self.live_preview_timer = QTimer()
         self.live_preview_timer.setSingleShot(True)
         self.live_preview_timer.timeout.connect(self._do_live_preview)
@@ -1195,6 +1196,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_paths_output.setPlainText(text_output or "")
             self.jsx_json_output.setPlainText(json_output or "")
             
+            # Add to extraction history
+            self._jsx_add_to_history(path, json_output, mode, parameter)
+            
             # Show success message
             paths_count = len([line for line in text_output.split('\n') if line.strip()])
             self.show_info(
@@ -1406,10 +1410,68 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _jsx_show_history(self):
         """Show extraction history."""
-        self.show_info(
-            tr("text_to_json.history", "History"),
-            tr("text_to_json.history_coming_soon", "Extraction history feature coming soon in next phase!")
-        )
+        if not self.extraction_history:
+            self.show_info(
+                tr("text_to_json.info_history_empty_title", "History Empty"),
+                tr("text_to_json.info_history_empty_msg", "No extraction history yet. Run an extraction first.")
+            )
+            return
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("text_to_json.history_dialog_title", "Extraction History"))
+        dialog.resize(700, 450)
+        
+        layout = QVBoxLayout(dialog)
+        
+        list_widget = QListWidget()
+        for i, entry in enumerate(reversed(self.extraction_history)):
+            mode_str = entry.get('mode', 'unknown')
+            param_str = entry.get('parameter', 'N/A')
+            path_preview = entry['path'].split('/')[-1] if '/' in entry['path'] else entry['path']
+            item_text = f"{i+1}. [{mode_str}] {path_preview} (param: {param_str})"
+            list_widget.addItem(item_text)
+        
+        list_widget.itemDoubleClicked.connect(lambda item: self._jsx_load_history_item(item, dialog))
+        
+        layout.addWidget(QLabel(tr("text_to_json.history_lbl_double_click", "Double-click to load extraction")))
+        layout.addWidget(list_widget)
+        
+        close_btn = QPushButton(tr("text_to_json.btn_close", "Close"))
+        close_btn.clicked.connect(dialog.reject)
+        layout.addWidget(close_btn)
+        
+        dialog.exec()
+    
+    def _jsx_load_history_item(self, item: QListWidgetItem, dialog: QDialog) -> None:
+        """Load history item into JSX extraction fields."""
+        index = len(self.extraction_history) - 1 - item.listWidget().row(item)
+        if 0 <= index < len(self.extraction_history):
+            entry = self.extraction_history[index]
+            self.jsx_path_input.setText(entry['path'])
+            self.jsx_parameter_input.setText(entry.get('parameter', ''))
+            self.jsx_json_output.setPlainText(entry['output'])
+            
+            # Set mode if possible
+            mode_str = entry.get('mode', 'JSX')
+            mode_index = self.jsx_mode_combo.findText(mode_str)
+            if mode_index >= 0:
+                self.jsx_mode_combo.setCurrentIndex(mode_index)
+            
+            dialog.accept()
+    
+    def _jsx_add_to_history(self, path: str, output_json: str, mode: str, parameter: str) -> None:
+        """Add extraction to history."""
+        entry = {
+            'path': path,
+            'output': output_json,
+            'mode': mode,
+            'parameter': parameter
+        }
+        self.extraction_history.append(entry)
+        
+        # Keep history limited to 50 entries
+        if len(self.extraction_history) > 50:
+            self.extraction_history.pop(0)
     
     def _jsx_swap_outputs(self):
         """Swap JSON output back to JSX code (JSON → JSX conversion)."""
