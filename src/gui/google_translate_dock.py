@@ -185,11 +185,6 @@ class GoogleTranslateDock(BaseDock):
 
         # Input type selection
         self.chk_file_mode = QCheckBox(tr("google_translate.chk_file_mode"))
-        
-        # Format tag removal option
-        self.chk_remove_tags = QCheckBox(tr("google_translate.chk_remove_tags"))
-        self.chk_remove_tags.setToolTip(tr("google_translate.tooltip_remove_tags"))
-        self.chk_remove_tags.setChecked(True)  # Default: remove tags for clean output
 
         # File input (hidden by default)
         self.lbl_file = QLabel(tr("google_translate.lbl_file"))
@@ -284,7 +279,6 @@ class GoogleTranslateDock(BaseDock):
         # Options layout
         options_layout = QHBoxLayout()
         options_layout.addWidget(self.chk_file_mode)
-        options_layout.addWidget(self.chk_remove_tags)
         options_layout.addStretch()
         
         # Button layout
