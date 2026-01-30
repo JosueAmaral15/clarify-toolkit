@@ -670,11 +670,11 @@ class GoogleTranslateDock(BaseDock):
         if self._translated_segments:
             # Has formatting data - suggest DOCX
             default_filename = f"translation_{timestamp}.docx"
-            file_filter = "Word Documents (*.docx);;Text Files (*.txt);;All Files (*)"
+            file_filter = "Word Documents (*.docx);;OpenDocument (*.odt);;Text Files (*.txt);;All Files (*)"
         else:
             # Plain text - suggest TXT
             default_filename = f"translation_{timestamp}.txt"
-            file_filter = "Text Files (*.txt);;Word Documents (*.docx);;All Files (*)"
+            file_filter = "Text Files (*.txt);;Word Documents (*.docx);;OpenDocument (*.odt);;All Files (*)"
         
         # Open save file dialog
         file_path, selected_filter = QFileDialog.getSaveFileName(
@@ -690,11 +690,14 @@ class GoogleTranslateDock(BaseDock):
                 if file_path.lower().endswith('.docx'):
                     # Save as DOCX with formatting restored
                     self._save_as_docx(file_path)
+                elif file_path.lower().endswith('.odt'):
+                    # Save as ODT with formatting restored
+                    self._save_as_odt(file_path)
                 else:
                     # Save as plain text (use text from UI - already plain)
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(result)
-                
+                 
                 # Visual feedback
                 original_text = self.btn_save_as.text()
                 self.btn_save_as.setText(tr("google_translate.btn_saved"))
@@ -730,6 +733,32 @@ class GoogleTranslateDock(BaseDock):
         
         # Update status
         self.lbl_status.setText(tr("google_translate.status_docx_saved"))
+        self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
+        QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
+
+    def _save_as_odt(self, output_path: str):
+        """
+        Save translation as ODT with formatting restored from stored segments.
+        
+        Args:
+            output_path: Path to save ODT file
+        """
+        if not self._translated_segments:
+            # Fallback: no formatting, create plain text segment
+            plain_text = self.text_output.toPlainText()
+            
+            # CRITICAL: Remove any system tags that might have leaked into UI
+            # Only remove numeric tags (Clarify system), preserve user tags like <div>
+            plain_text = FormatMapper.remove_tags(plain_text)
+            
+            from ..translation.format_mapper import TextSegment
+            self._translated_segments = [TextSegment(text=plain_text)]
+        
+        # Generate ODT with formatting using stored segments
+        FormatMapper.create_odt_from_segments(self._translated_segments, output_path)
+        
+        # Update status
+        self.lbl_status.setText("✓ ODT saved with formatting restored!")
         self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 

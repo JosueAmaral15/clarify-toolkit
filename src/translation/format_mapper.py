@@ -448,3 +448,129 @@ class FormatMapper:
                 paragraph.paragraph_format.line_spacing = spacing
             except ValueError:
                 pass  # Skip invalid spacing
+
+    @staticmethod
+    def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
+        """
+        Create an ODT file from text segments with formatting.
+        
+        Currently supports:
+        - Bold (bit 0)
+        - Italic (bit 1)
+        - Underline (bit 2)
+        - Font colors (bit 4, metadata: hex RGB)
+        - Font sizes (bit 5, metadata: pt value)
+        - Font families (bit 6, metadata: font name)
+        
+        Args:
+            segments: List of TextSegment objects with formatting info
+            output_path: Path to save the output ODT file
+        """
+        from odf.opendocument import OpenDocumentText
+        from odf.style import Style, TextProperties
+        from odf.text import P, Span
+        
+        doc = OpenDocumentText()
+        
+        # Cache for created styles (avoid duplicates)
+        style_cache = {}
+        
+        def get_or_create_style(format_bits: int, metadata: Optional[str]) -> Optional[Style]:
+            """Get existing style or create new one for format combination."""
+            if format_bits == 0:
+                return None  # No formatting
+            
+            # Create cache key
+            cache_key = f"{format_bits}:{metadata or ''}"
+            if cache_key in style_cache:
+                return style_cache[cache_key]
+            
+            # Create new style
+            style_name = f"Format{format_bits}_{len(style_cache)}"
+            style = Style(name=style_name, family="text")
+            text_props = TextProperties()
+            
+            # Parse metadata
+            metadata_parts = metadata.split(",") if metadata else []
+            metadata_index = 0
+            
+            # Apply basic formatting
+            if format_bits & FormatBit.BOLD:
+                text_props.setAttribute("fontweight", "bold")
+            
+            if format_bits & FormatBit.ITALIC:
+                text_props.setAttribute("fontstyle", "italic")
+            
+            if format_bits & FormatBit.UNDERLINE:
+                text_props.setAttribute("textunderlinestyle", "solid")
+                text_props.setAttribute("textunderlinewidth", "auto")
+                text_props.setAttribute("textunderlinecolor", "font-color")
+            
+            # Apply font color
+            if format_bits & FormatBit.FONT_COLOR and metadata_index < len(metadata_parts):
+                hex_color = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("color", f"#{hex_color}")
+            
+            # Apply font size
+            if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
+                size_str = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("fontsize", f"{size_str}pt")
+            
+            # Apply font family
+            if format_bits & FormatBit.FONT_FAMILY and metadata_index < len(metadata_parts):
+                font_name = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("fontfamily", font_name)
+            
+            style.addElement(text_props)
+            doc.automaticstyles.addElement(style)
+            style_cache[cache_key] = style
+            return style
+        
+        # Create document content
+        current_paragraph = P()
+        
+        for segment in segments:
+            # Handle paragraph breaks
+            if '\n\n' in segment.text:
+                parts = segment.text.split('\n\n')
+                for i, part in enumerate(parts):
+                    if part:  # Skip empty parts
+                        # Safety: Remove any system tags that leaked
+                        clean_part = FormatMapper.remove_tags(part)
+                        
+                        # Get or create style for this format
+                        style = get_or_create_style(segment.format_bits, segment.metadata)
+                        
+                        if style:
+                            span = Span(stylename=style, text=clean_part)
+                            current_paragraph.addElement(span)
+                        else:
+                            current_paragraph.addText(clean_part)
+                    
+                    # Create new paragraph after each part except the last
+                    if i < len(parts) - 1:
+                        doc.text.addElement(current_paragraph)
+                        current_paragraph = P()
+            else:
+                # Normal text - add to current paragraph
+                # Safety: Remove any system tags that leaked
+                clean_text = FormatMapper.remove_tags(segment.text)
+                
+                # Get or create style for this format
+                style = get_or_create_style(segment.format_bits, segment.metadata)
+                
+                if style:
+                    span = Span(stylename=style, text=clean_text)
+                    current_paragraph.addElement(span)
+                else:
+                    current_paragraph.addText(clean_text)
+        
+        # Add final paragraph if not empty
+        if current_paragraph.hasChildNodes() or current_paragraph.data:
+            doc.text.addElement(current_paragraph)
+        
+        # Save document
+        doc.save(output_path)
