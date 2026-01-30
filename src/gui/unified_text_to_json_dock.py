@@ -741,7 +741,32 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         avoid_row2.addStretch(1)
         layout.addLayout(avoid_row2)
         
-        # Action buttons - Grid Layout
+        # Output tabs (MOVED BEFORE BUTTONS)
+        self.jsx_output_tabs = QTabWidget()
+        
+        self.jsx_paths_output = QPlainTextEdit()
+        self.jsx_paths_output.setReadOnly(True)
+        self.jsx_paths_output.setMinimumHeight(300)
+        self.jsx_paths_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.jsx_paths_output.customContextMenuRequested.connect(self._jsx_show_context_menu)
+        self.jsx_output_tabs.addTab(
+            self.jsx_paths_output,
+            tr("advanced_extractor.tab_paths", "Paths")
+        )
+        
+        self.jsx_json_output = QPlainTextEdit()
+        self.jsx_json_output.setReadOnly(True)
+        self.jsx_json_output.setMinimumHeight(300)
+        self.jsx_json_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.jsx_json_output.customContextMenuRequested.connect(self._jsx_show_context_menu)
+        self.jsx_output_tabs.addTab(
+            self.jsx_json_output,
+            tr("advanced_extractor.tab_json", "JSON")
+        )
+        
+        layout.addWidget(self.jsx_output_tabs, 1)
+        
+        # Action buttons - Grid Layout (MOVED TO BOTTOM)
         buttons_grid = QGridLayout()
         buttons_grid.setSpacing(8)
         
@@ -809,31 +834,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         buttons_grid.addWidget(self.jsx_copy_all_btn, 2, 3)
         
         layout.addLayout(buttons_grid)
-        
-        # Output tabs
-        self.jsx_output_tabs = QTabWidget()
-        
-        self.jsx_paths_output = QPlainTextEdit()
-        self.jsx_paths_output.setReadOnly(True)
-        self.jsx_paths_output.setMinimumHeight(300)
-        self.jsx_paths_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.jsx_paths_output.customContextMenuRequested.connect(self._jsx_show_context_menu)
-        self.jsx_output_tabs.addTab(
-            self.jsx_paths_output,
-            tr("advanced_extractor.tab_paths", "Paths")
-        )
-        
-        self.jsx_json_output = QPlainTextEdit()
-        self.jsx_json_output.setReadOnly(True)
-        self.jsx_json_output.setMinimumHeight(300)
-        self.jsx_json_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.jsx_json_output.customContextMenuRequested.connect(self._jsx_show_context_menu)
-        self.jsx_output_tabs.addTab(
-            self.jsx_json_output,
-            tr("advanced_extractor.tab_json", "JSON")
-        )
-        
-        layout.addWidget(self.jsx_output_tabs, 1)
     
     # ========================================================================
     # SIGNAL CONNECTIONS
