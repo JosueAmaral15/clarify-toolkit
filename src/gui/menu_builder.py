@@ -108,7 +108,8 @@ class MenuBuilder:
         main_window.act_open_insert = QAction(tr("menu.tools.insert"), main_window)
         main_window.act_open_translate = QAction(tr("menu.tools.json_translate"), main_window)
         main_window.act_open_rewriter = QAction(tr("menu.tools.json_rewriter"), main_window)
-        main_window.act_open_text_extractor = QAction(tr("menu.tools.text_extractor"), main_window)
+        # DEPRECATED: Text Extractor merged into Unified Text to JSON Converter
+        # main_window.act_open_text_extractor = QAction(tr("menu.tools.text_extractor"), main_window)
         main_window.act_open_placeholder_replacer = QAction(tr("menu.tools.placeholder_replacer"), main_window)
         main_window.act_open_ai_processor = QAction(tr("menu.tools.ai_processor"), main_window)
         main_window.act_open_json_search = QAction(tr("menu.tools.json_search"), main_window)
@@ -124,9 +125,10 @@ class MenuBuilder:
         main_window.act_open_file_explorer = QAction(tr("menu.tools.file_explorer"), main_window)
         main_window.act_open_file_explorer.setStatusTip(tr("menu.status.file_explorer"))
         main_window.act_open_file_explorer.setShortcut("Ctrl+Shift+F")
-        main_window.act_open_advanced_extractor = QAction(tr("menu.tools.advanced_extractor"), main_window)
-        main_window.act_open_advanced_extractor.setStatusTip(tr("menu.status.advanced_extractor"))
-        main_window.act_open_advanced_extractor.setShortcut("Ctrl+Shift+E")
+        # DEPRECATED: Advanced Extractor merged into Unified Text to JSON Converter
+        # main_window.act_open_advanced_extractor = QAction(tr("menu.tools.advanced_extractor"), main_window)
+        # main_window.act_open_advanced_extractor.setStatusTip(tr("menu.status.advanced_extractor"))
+        # main_window.act_open_advanced_extractor.setShortcut("Ctrl+Shift+E")
         
         # Add actions to menu
         m_tools.addAction(main_window.act_open_search_replace)
@@ -134,7 +136,7 @@ class MenuBuilder:
         m_tools.addSeparator()
         m_tools.addAction(main_window.act_open_translate)
         m_tools.addAction(main_window.act_open_rewriter)
-        m_tools.addAction(main_window.act_open_text_extractor)
+        # DEPRECATED: m_tools.addAction(main_window.act_open_text_extractor)
         m_tools.addAction(main_window.act_open_placeholder_replacer)
         m_tools.addAction(main_window.act_open_ai_processor)
         m_tools.addAction(main_window.act_open_json_search)
@@ -146,24 +148,24 @@ class MenuBuilder:
         m_tools.addAction(main_window.act_open_formula_builder)
         m_tools.addSeparator()
         m_tools.addAction(main_window.act_open_file_explorer)
-        m_tools.addAction(main_window.act_open_advanced_extractor)
+        # DEPRECATED: m_tools.addAction(main_window.act_open_advanced_extractor)
         
         # Connect actions
         main_window.act_open_search_replace.triggered.connect(main_window._show_search_replace)
         main_window.act_open_insert.triggered.connect(main_window._show_insert)
         main_window.act_open_translate.triggered.connect(main_window._show_translate)
         main_window.act_open_rewriter.triggered.connect(main_window._show_rewriter)
-        main_window.act_open_text_extractor.triggered.connect(main_window._show_text_extractor)
+        # DEPRECATED: main_window.act_open_text_extractor.triggered.connect(main_window._show_text_extractor)
         main_window.act_open_placeholder_replacer.triggered.connect(main_window._show_placeholder_replacer)
         main_window.act_open_ai_processor.triggered.connect(main_window._show_ai_processor)
         main_window.act_open_json_search.triggered.connect(main_window._show_json_search)
         main_window.act_open_case_converter.triggered.connect(main_window._show_case_converter)
-        main_window.act_open_text_to_json.triggered.connect(main_window._show_text_to_json)
+        main_window.act_open_text_to_json.triggered.connect(main_window._show_text_to_json)  # Now shows unified tool
         main_window.act_open_google_translate.triggered.connect(main_window._show_google_translate)
         main_window.act_open_set_operations.triggered.connect(main_window._show_set_operations)
         main_window.act_open_calculator.triggered.connect(main_window._show_calculator)
         main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_builder)
-        main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)
+        # DEPRECATED: main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
     
     @staticmethod

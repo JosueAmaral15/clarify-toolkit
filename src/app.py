@@ -605,14 +605,13 @@ if _PYSIDE:
             TabManager.show_google_translate(self)
 
         def _show_text_to_json(self):
-            """Show converter selection dialog and open chosen dock."""
-            from .gui.converter_selection_dialog import ConverterSelectionDialog
-
-            converter = ConverterSelectionDialog.get_converter_choice(self)
-            if converter == ConverterSelectionDialog.JSX_EXTRACTOR:
-                self._show_jsx_extractor()
-            elif converter == ConverterSelectionDialog.TEXT_CONVERTER:
-                self._show_text_format_converter()
+            """Show Unified Text to JSON Converter (Format Conversion + JSX Extraction)."""
+            if not hasattr(self, 'dock_unified_text_to_json'):
+                from .gui.unified_text_to_json_dock import UnifiedTextToJsonDock
+                self.dock_unified_text_to_json = UnifiedTextToJsonDock(self)
+                # Connect signals if needed
+                # self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+            self._add_tool_tab(self.dock_unified_text_to_json, "Text to JSON Converter", "unified_text_to_json")
 
         def _show_jsx_extractor(self):
             """Show JSX Parameter Extractor as tab (create on-demand)."""
@@ -1255,7 +1254,7 @@ if _PYSIDE:
             self.act_redo.setText(tr("menu.edit.redo"))
             self.act_open_translate.setText(tr("menu.tools.json_translate"))
             self.act_open_rewriter.setText(tr("menu.tools.json_rewriter"))
-            self.act_open_text_extractor.setText(tr("menu.tools.text_extractor"))
+            # DEPRECATED: self.act_open_text_extractor.setText(tr("menu.tools.text_extractor"))
             self.act_open_placeholder_replacer.setText(tr("menu.tools.placeholder_replacer"))
             self.act_open_ai_processor.setText(tr("menu.tools.ai_processor"))
             self.act_open_json_search.setText(tr("menu.tools.json_search"))
@@ -1468,8 +1467,8 @@ if _PYSIDE:
                 (self.act_open_set_operations, "open_set_operations", "Perform set operations on JSON"),
                 (self.act_open_ai_processor, "open_ai_processor", "Process JSON with AI"),
                 (self.act_open_case_converter, "open_case_converter", "Convert text case"),
-                (self.act_open_text_extractor, "open_text_extractor", "Extract text from files"),
-                (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON"),
+                # DEPRECATED: (self.act_open_text_extractor, "open_text_extractor", "Extract text from files"),
+                (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON / Extract from JSX"),
                 (self.act_open_placeholder_replacer, "open_placeholder_replacer", "Replace placeholders in text"),
                 (self.act_open_translate, "open_translate", "Translate JSON content"),
                 (self.act_open_file_explorer, "open_file_explorer", "Unified file explorer with advanced search"),
