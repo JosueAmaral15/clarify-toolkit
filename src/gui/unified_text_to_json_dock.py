@@ -629,6 +629,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_quotation_marks_checkbox = QCheckBox(
             tr("advanced_extractor.quotation_marks", "Include quotation marks")
         )
+        self.jsx_quotation_marks_checkbox.setChecked(True)  # Default: checked
         options_row2.addWidget(self.jsx_quotation_marks_checkbox)
         
         self.jsx_match_all_checkbox = QCheckBox(
