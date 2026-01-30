@@ -50,15 +50,14 @@ class UnifiedTextToJsonDock(BaseDock):
     """
     
     def __init__(self, parent: QWidgetType | None = None):
-        super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
-        self.setObjectName("UnifiedTextToJsonDock")
-        
-        # Current mode
+        # Initialize state BEFORE calling super().__init__
+        # because _setup_ui() is called by parent and needs these attributes
         self.current_mode = "format_conversion"  # Default mode
-        
-        # Tool widgets (created on demand)
         self.format_conversion_widget: TextToJsonDock | None = None
         self.jsx_extraction_widget: AdvancedExtractorDock | None = None
+        
+        super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
+        self.setObjectName("UnifiedTextToJsonDock")
     
     def _setup_ui(self) -> None:
         """Setup main UI with mode selector and embedded tool widgets."""
