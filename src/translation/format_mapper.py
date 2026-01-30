@@ -728,7 +728,8 @@ class FormatMapper:
                         style = get_or_create_style(segment.format_bits, segment.metadata)
                         
                         if style:
-                            span = Span(stylename=style, text=clean_part)
+                            span = Span(stylename=style)
+                            span.addText(clean_part)
                             current_paragraph.addElement(span)
                         else:
                             current_paragraph.addText(clean_part)
@@ -746,7 +747,8 @@ class FormatMapper:
                 style = get_or_create_style(segment.format_bits, segment.metadata)
                 
                 if style:
-                    span = Span(stylename=style, text=clean_text)
+                    span = Span(stylename=style)
+                    span.addText(clean_text)
                     current_paragraph.addElement(span)
                 else:
                     current_paragraph.addText(clean_text)
