@@ -15,18 +15,20 @@ Date: 2025-12-23
 Version: 2.9.109
 """
 
+# pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
+
 from typing import Any, Dict, Optional, Callable
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QDockWidget, QMenu
+from PySide6.QtWidgets import QDockWidget
 from PySide6.QtCore import QSettings
 
 
 class PluginBase:
     """
     Base class for Clarify plugins.
-    
+
     All plugins must inherit from this class and implement at least the `activate` method.
-    
+
     Plugin Structure:
         plugins/
           my_plugin/
@@ -34,7 +36,7 @@ class PluginBase:
             main.py         # Entry point (inherits PluginBase)
             requirements.txt # Optional dependencies
             README.md       # Documentation
-    
+
     plugin.json format:
         {
           "id": "my_plugin",
@@ -46,48 +48,48 @@ class PluginBase:
           "dependencies": ["requests", "psycopg2"],
           "enabled": true
         }
-    
+
     Example Plugin:
         class MyPlugin(PluginBase):
             name = "My Plugin"
             description = "Example plugin"
-            
+
             def activate(self, app):
                 # Register menu item
                 self.add_menu_item(
-                    app, 
+                    app,
                     menu_path="Tools/My Plugin",
                     text="Run Action",
                     callback=self.run_action
                 )
-                
+
             def run_action(self):
                 print("Action executed!")
-                
+
             def on_event(self, event_name, data):
                 if event_name == "file_opened":
                     print(f"File opened: {data['path']}")
     """
-    
+
     # Plugin metadata (override in subclass)
     name = "Base Plugin"
     description = "Base class for Clarify plugins"
     version = "0.0.0"
-    
+
     def __init__(self):
         """Initialize plugin."""
         self.app = None  # Will be set during activation
         self.settings = QSettings("Clarify", "Clarify")
         self._registered_docks = []
         self._registered_actions = []
-    
+
     def activate(self, app):
         """
         Activate the plugin (called when plugin is loaded).
-        
+
         Args:
             app: Main application instance (MainWindow)
-        
+
         This method MUST be implemented by subclasses.
         Use this to:
         - Register custom docks
@@ -95,16 +97,16 @@ class PluginBase:
         - Connect to signals
         - Initialize resources
         """
-        self.app = app
+        self.app = app  # pylint: disable=attribute-defined-outside-init  # Set during activation
         raise NotImplementedError(f"{self.__class__.__name__} must implement activate()")
-    
-    def deactivate(self, app):
+
+    def deactivate(self, app):  # pylint: disable=unused-argument  # API consistency
         """
         Deactivate the plugin (called when plugin is unloaded).
-        
+
         Args:
             app: Main application instance
-        
+
         Optional method for cleanup:
         - Remove menu items
         - Disconnect signals
@@ -114,26 +116,26 @@ class PluginBase:
         for action in self._registered_actions:
             try:
                 action.deleteLater()
-            except:
+            except Exception:  # pylint: disable=broad-except  # Cleanup must not fail
                 pass
-        
+
         for dock in self._registered_docks:
             try:
                 dock.deleteLater()
-            except:
+            except Exception:  # pylint: disable=broad-except  # Cleanup must not fail
                 pass
-        
+
         self._registered_actions.clear()
         self._registered_docks.clear()
-    
+
     def on_event(self, event_name: str, data: Dict[str, Any]):
         """
         Handle application events.
-        
+
         Args:
             event_name: Event identifier
             data: Event data dictionary
-        
+
         Common events:
         - file_opened: {"path": str}
         - file_saved: {"path": str}
@@ -142,55 +144,56 @@ class PluginBase:
         - ai_request_completed: {"prompt": str, "response": str}
         """
         pass
-    
+
     # Helper methods for UI integration
-    
+
     def register_dock(self, app, dock: QDockWidget, area: str = "right"):
         """
         Register a custom dock widget.
-        
+
         Args:
             app: Application instance
             dock: QDockWidget to register
             area: Dock area ("left", "right", "top", "bottom")
         """
-        from PySide6.QtCore import Qt
-        
+        from PySide6.QtCore import Qt  # pylint: disable=import-outside-toplevel  # Avoid circular imports
+
         area_map = {
             "left": Qt.LeftDockWidgetArea,
             "right": Qt.RightDockWidgetArea,
             "top": Qt.TopDockWidgetArea,
             "bottom": Qt.BottomDockWidgetArea
         }
-        
+
         qt_area = area_map.get(area, Qt.RightDockWidgetArea)
         app.addDockWidget(qt_area, dock)
         self._registered_docks.append(dock)
-    
+
+    # pylint: disable=too-many-positional-arguments  # Menu item requires all parameters
     def add_menu_item(
-        self, 
-        app, 
-        menu_path: str, 
-        text: str, 
+        self,
+        app,
+        menu_path: str,
+        text: str,
         callback: Callable,
         shortcut: Optional[str] = None
     ) -> QAction:
         """
         Add a menu item to the application.
-        
+
         Args:
             app: Application instance
             menu_path: Menu path (e.g., "Tools/My Plugin")
             text: Action text
             callback: Function to call when triggered
             shortcut: Optional keyboard shortcut
-            
+
         Returns:
             Created QAction
         """
         menu_bar = app.menuBar()
         parts = menu_path.split("/")
-        
+
         # Navigate/create menu hierarchy
         current_menu = None
         for part in parts:
@@ -219,62 +222,62 @@ class PluginBase:
                             break
                 if not found:
                     current_menu = current_menu.addMenu(part)
-        
+
         # Create action
         action = QAction(text, app)
         action.triggered.connect(callback)
         if shortcut:
             action.setShortcut(shortcut)
-        
+
         if current_menu:
             current_menu.addAction(action)
-        
+
         self._registered_actions.append(action)
         return action
-    
+
     def get_setting(self, key: str, default: Any = None) -> Any:
         """
         Get a plugin-specific setting.
-        
+
         Args:
             key: Setting key (will be prefixed with plugin name)
             default: Default value if not found
-            
+
         Returns:
             Setting value
         """
         plugin_key = f"plugins/{self.name}/{key}"
         return self.settings.value(plugin_key, default)
-    
+
     def set_setting(self, key: str, value: Any):
         """
         Save a plugin-specific setting.
-        
+
         Args:
             key: Setting key (will be prefixed with plugin name)
             value: Value to save
         """
         plugin_key = f"plugins/{self.name}/{key}"
         self.settings.setValue(plugin_key, value)
-    
+
     def show_message(self, title: str, message: str, icon: str = "information"):
         """
         Show a message box to the user.
-        
+
         Args:
             title: Dialog title
             message: Message text
             icon: Icon type ("information", "warning", "critical", "question")
         """
-        from PySide6.QtWidgets import QMessageBox
-        
+        from PySide6.QtWidgets import QMessageBox  # pylint: disable=import-outside-toplevel  # Avoid circular imports
+
         icon_map = {
             "information": QMessageBox.Information,
             "warning": QMessageBox.Warning,
             "critical": QMessageBox.Critical,
             "question": QMessageBox.Question
         }
-        
+
         msg_box = QMessageBox(self.app)
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
