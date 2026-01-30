@@ -306,62 +306,53 @@ class FormatMapper:
                     text_style = styles[style_name]
                     
                     for text_prop in text_style.getElementsByType(odf_style.TextProperties):
-                        try:
-                            # Bold - correct attribute name: 'font-weight'
-                            font_weight = text_prop.getAttribute('font-weight')
-                            if font_weight == 'bold':
-                                segment.add_format(FormatBit.BOLD)
-                        except (ValueError, KeyError):
-                            pass
+                        # Helper: Get attribute value ignoring namespace
+                        def get_attr(attr_name):
+                            """Get attribute value by name, ignoring namespace."""
+                            if hasattr(text_prop, 'attributes'):
+                                for (ns, name), value in text_prop.attributes.items():
+                                    if name == attr_name:
+                                        return value
+                            return None
                         
-                        try:
-                            # Italic - correct attribute name: 'font-style'
-                            font_style = text_prop.getAttribute('font-style')
-                            if font_style == 'italic':
-                                segment.add_format(FormatBit.ITALIC)
-                        except (ValueError, KeyError):
-                            pass
+                        # Bold
+                        font_weight = get_attr('font-weight')
+                        if font_weight == 'bold':
+                            segment.add_format(FormatBit.BOLD)
                         
-                        try:
-                            # Underline - correct attribute name: 'text-underline-style'
-                            text_underline_style = text_prop.getAttribute('text-underline-style')
-                            if text_underline_style and text_underline_style != 'none':
-                                segment.add_format(FormatBit.UNDERLINE)
-                        except (ValueError, KeyError):
-                            pass
+                        # Italic
+                        font_style = get_attr('font-style')
+                        if font_style == 'italic':
+                            segment.add_format(FormatBit.ITALIC)
                         
-                        try:
-                            # Font color - attribute name is correct: 'color'
-                            color = text_prop.getAttribute('color')
-                            if color:
-                                segment.add_format(FormatBit.FONT_COLOR)
-                                # ODT colors are like "#FF0000" or "#525252", strip the #
-                                hex_color = str(color).replace('#', '')
-                                metadata_parts.append(hex_color)
-                        except (ValueError, KeyError):
-                            pass
+                        # Underline
+                        text_underline_style = get_attr('text-underline-style')
+                        if text_underline_style and text_underline_style != 'none':
+                            segment.add_format(FormatBit.UNDERLINE)
                         
-                        try:
-                            # Font size - correct attribute name: 'font-size'
-                            font_size = text_prop.getAttribute('font-size')
-                            if font_size:
-                                segment.add_format(FormatBit.FONT_SIZE)
-                                # ODT sizes are like "12pt", strip "pt"
-                                size_value = str(font_size).replace('pt', '')
-                                metadata_parts.append(size_value)
-                        except (ValueError, KeyError):
-                            pass
+                        # Font color
+                        color = get_attr('color')
+                        if color:
+                            segment.add_format(FormatBit.FONT_COLOR)
+                            # ODT colors are like "#FF0000" or "#525252", strip the #
+                            hex_color = str(color).replace('#', '')
+                            metadata_parts.append(hex_color)
                         
-                        try:
-                            # Font family - correct attribute name: 'font-name'
-                            font_family = text_prop.getAttribute('font-name')
-                            if font_family:
-                                segment.add_format(FormatBit.FONT_FAMILY)
-                                # Remove quotes if present
-                                family_name = str(font_family).strip("'\"")
-                                metadata_parts.append(family_name)
-                        except (ValueError, KeyError):
-                            pass
+                        # Font size
+                        font_size = get_attr('font-size')
+                        if font_size:
+                            segment.add_format(FormatBit.FONT_SIZE)
+                            # ODT sizes are like "12pt", strip "pt"
+                            size_value = str(font_size).replace('pt', '')
+                            metadata_parts.append(size_value)
+                        
+                        # Font family
+                        font_family = get_attr('font-name')
+                        if font_family:
+                            segment.add_format(FormatBit.FONT_FAMILY)
+                            # Remove quotes if present
+                            family_name = str(font_family).strip("'\"")
+                            metadata_parts.append(family_name)
                 
                 # Store metadata
                 if metadata_parts:
