@@ -328,7 +328,9 @@ class FormatMapper:
                 parts = segment.text.split('\n\n')
                 for i, part in enumerate(parts):
                     if part:  # Skip empty parts
-                        run = current_paragraph.add_run(part)
+                        # Safety: Remove any system tags that leaked into segment text
+                        clean_part = FormatMapper.remove_tags(part)
+                        run = current_paragraph.add_run(clean_part)
                         FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
                     
                     # Create new paragraph after each part except the last
@@ -337,7 +339,9 @@ class FormatMapper:
                         FormatMapper._apply_paragraph_formatting(current_paragraph, current_para_format, current_para_metadata)
             else:
                 # Normal text - add as run to current paragraph
-                run = current_paragraph.add_run(segment.text)
+                # Safety: Remove any system tags that leaked into segment text
+                clean_text = FormatMapper.remove_tags(segment.text)
+                run = current_paragraph.add_run(clean_text)
                 FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
         
         # Save document

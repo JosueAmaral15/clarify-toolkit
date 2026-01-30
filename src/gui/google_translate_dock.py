@@ -717,6 +717,11 @@ class GoogleTranslateDock(BaseDock):
         if not self._translated_segments:
             # Fallback: no formatting, create plain text segment
             plain_text = self.text_output.toPlainText()
+            
+            # CRITICAL: Remove any system tags that might have leaked into UI
+            # Only remove numeric tags (Clarify system), preserve user tags like <div>
+            plain_text = FormatMapper.remove_tags(plain_text)
+            
             from ..translation.format_mapper import TextSegment
             self._translated_segments = [TextSegment(text=plain_text)]
         
