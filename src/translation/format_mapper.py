@@ -261,8 +261,10 @@ class FormatMapper:
         segments: List[TextSegment] = []
         
         # Normalize whitespace in tags: < 1> → <1>, </ 1> → </1>
-        normalized = re.sub(r'<\s*(\d+)(?:\s*:\s*([^>]+))?\s*>', r'<\1:\2>' if ':' in tagged_text else r'<\1>', tagged_text)
-        normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)
+        # Handle tags with metadata: < 1 : FF0000 > → <1:FF0000>
+        normalized = re.sub(r'<\s*(\d+)\s*:\s*([^>]+)\s*>', r'<\1:\2>', tagged_text)  # With metadata
+        normalized = re.sub(r'<\s*(\d+)\s*>', r'<\1>', normalized)  # Without metadata
+        normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)  # Closing tags
         
         # Pattern: <tag_id:metadata>text</tag_id> or <tag_id>text</tag_id>
         pattern = r'<(\d+)(?::([^>]+))?>(.*?)</\1>'
