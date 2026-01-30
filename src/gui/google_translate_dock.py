@@ -552,11 +552,15 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setVisible(False)
 
         if success:
-            # Remove formatting tags if checkbox is checked
-            if self.chk_remove_tags.isChecked():
-                result = FormatMapper.remove_tags(result)
+            # Parse tags from translation result (backend only)
+            # Result may contain tags like: "<1>Hola</1> <3:FF0000>mundo</3>"
+            self._translated_segments = FormatMapper.parse_tagged_text(result)
             
-            self.text_output.setPlainText(result)
+            # Extract ONLY plain text for UI display (hide tags from user)
+            plain_text = ''.join(seg.text for seg in self._translated_segments)
+            
+            # Display plain text in output box (NO TAGS VISIBLE)
+            self.text_output.setPlainText(plain_text)
             self.btn_copy_result.setEnabled(True)
             self.btn_save_as.setEnabled(True)
             self.btn_reverse.setEnabled(True)
