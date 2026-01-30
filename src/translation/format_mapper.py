@@ -224,13 +224,20 @@ class FormatMapper:
         styles = {}
         for style_element in doc.automaticstyles.childNodes + doc.styles.childNodes:
             if hasattr(style_element, 'getAttribute'):
-                style_name = style_element.getAttribute('name')
-                if style_name:
-                    styles[style_name] = style_element
+                try:
+                    style_name = style_element.getAttribute('name')
+                    if style_name:
+                        styles[style_name] = style_element
+                except (ValueError, KeyError):
+                    # Some elements don't have 'name' attribute - skip them
+                    continue
         
         # Process all paragraphs
         for para in doc.getElementsByType(odf_text.P):
-            para_style_name = para.getAttribute('stylename')
+            try:
+                para_style_name = para.getAttribute('stylename')
+            except (ValueError, KeyError):
+                para_style_name = None
             para_style = styles.get(para_style_name) if para_style_name else None
             
             # Extract paragraph-level formatting
@@ -240,21 +247,27 @@ class FormatMapper:
             if para_style:
                 # Check paragraph properties
                 for prop in para_style.getElementsByType(odf_style.ParagraphProperties):
-                    # Alignment
-                    text_align = prop.getAttribute('textalign')
-                    if text_align:
-                        para_format_bits |= FormatBit.ALIGNMENT
-                        align_map = {'start': 'L', 'center': 'C', 'end': 'R', 'justify': 'J'}
-                        para_metadata_parts.append(align_map.get(text_align, 'L'))
+                    try:
+                        # Alignment
+                        text_align = prop.getAttribute('textalign')
+                        if text_align:
+                            para_format_bits |= FormatBit.ALIGNMENT
+                            align_map = {'start': 'L', 'center': 'C', 'end': 'R', 'justify': 'J'}
+                            para_metadata_parts.append(align_map.get(text_align, 'L'))
+                    except (ValueError, KeyError):
+                        pass
                     
-                    # Line height
-                    line_height = prop.getAttribute('lineheight')
-                    if line_height:
-                        para_format_bits |= FormatBit.LINE_SPACING
-                        # Extract numeric value (e.g., "150%" -> "1.5")
-                        if '%' in str(line_height):
-                            spacing = float(str(line_height).replace('%', '')) / 100.0
-                            para_metadata_parts.append(f"{spacing:.1f}")
+                    try:
+                        # Line height
+                        line_height = prop.getAttribute('lineheight')
+                        if line_height:
+                            para_format_bits |= FormatBit.LINE_SPACING
+                            # Extract numeric value (e.g., "150%" -> "1.5")
+                            if '%' in str(line_height):
+                                spacing = float(str(line_height).replace('%', '')) / 100.0
+                                para_metadata_parts.append(f"{spacing:.1f}")
+                    except (ValueError, KeyError):
+                        pass
             
             # Process text content (spans and direct text)
             para_text_nodes = []
@@ -263,8 +276,11 @@ class FormatMapper:
                 """Recursively extract text with formatting from element tree."""
                 # Check if this is a Span with its own style
                 if isinstance(element, odf_text.Span):
-                    span_style_name = element.getAttribute('stylename')
-                    current_style_name = span_style_name if span_style_name else current_style_name
+                    try:
+                        span_style_name = element.getAttribute('stylename')
+                        current_style_name = span_style_name if span_style_name else current_style_name
+                    except (ValueError, KeyError):
+                        pass
                 
                 # Process child nodes
                 for child in element.childNodes:
@@ -289,44 +305,62 @@ class FormatMapper:
                     text_style = styles[style_name]
                     
                     for text_prop in text_style.getElementsByType(odf_style.TextProperties):
-                        # Bold
-                        font_weight = text_prop.getAttribute('fontweight')
-                        if font_weight == 'bold':
-                            segment.add_format(FormatBit.BOLD)
+                        try:
+                            # Bold
+                            font_weight = text_prop.getAttribute('fontweight')
+                            if font_weight == 'bold':
+                                segment.add_format(FormatBit.BOLD)
+                        except (ValueError, KeyError):
+                            pass
                         
-                        # Italic
-                        font_style = text_prop.getAttribute('fontstyle')
-                        if font_style == 'italic':
-                            segment.add_format(FormatBit.ITALIC)
+                        try:
+                            # Italic
+                            font_style = text_prop.getAttribute('fontstyle')
+                            if font_style == 'italic':
+                                segment.add_format(FormatBit.ITALIC)
+                        except (ValueError, KeyError):
+                            pass
                         
-                        # Underline
-                        text_underline_style = text_prop.getAttribute('textunderlinestyle')
-                        if text_underline_style and text_underline_style != 'none':
-                            segment.add_format(FormatBit.UNDERLINE)
+                        try:
+                            # Underline
+                            text_underline_style = text_prop.getAttribute('textunderlinestyle')
+                            if text_underline_style and text_underline_style != 'none':
+                                segment.add_format(FormatBit.UNDERLINE)
+                        except (ValueError, KeyError):
+                            pass
                         
-                        # Font color
-                        color = text_prop.getAttribute('color')
-                        if color:
-                            segment.add_format(FormatBit.FONT_COLOR)
-                            # ODT colors are like "#FF0000", strip the #
-                            hex_color = str(color).replace('#', '')
-                            metadata_parts.append(hex_color)
+                        try:
+                            # Font color
+                            color = text_prop.getAttribute('color')
+                            if color:
+                                segment.add_format(FormatBit.FONT_COLOR)
+                                # ODT colors are like "#FF0000", strip the #
+                                hex_color = str(color).replace('#', '')
+                                metadata_parts.append(hex_color)
+                        except (ValueError, KeyError):
+                            pass
                         
-                        # Font size
-                        font_size = text_prop.getAttribute('fontsize')
-                        if font_size:
-                            segment.add_format(FormatBit.FONT_SIZE)
-                            # ODT sizes are like "12pt", strip "pt"
-                            size_value = str(font_size).replace('pt', '')
-                            metadata_parts.append(size_value)
+                        try:
+                            # Font size
+                            font_size = text_prop.getAttribute('fontsize')
+                            if font_size:
+                                segment.add_format(FormatBit.FONT_SIZE)
+                                # ODT sizes are like "12pt", strip "pt"
+                                size_value = str(font_size).replace('pt', '')
+                                metadata_parts.append(size_value)
+                        except (ValueError, KeyError):
+                            pass
                         
-                        # Font family
-                        font_family = text_prop.getAttribute('fontfamily')
-                        if font_family:
-                            segment.add_format(FormatBit.FONT_FAMILY)
-                            # Remove quotes if present
-                            family_name = str(font_family).strip("'\"")
-                            metadata_parts.append(family_name)
+                        try:
+                            # Font family
+                            font_family = text_prop.getAttribute('fontfamily')
+                            if font_family:
+                                segment.add_format(FormatBit.FONT_FAMILY)
+                                # Remove quotes if present
+                                family_name = str(font_family).strip("'\"")
+                                metadata_parts.append(family_name)
+                        except (ValueError, KeyError):
+                            pass
                 
                 # Store metadata
                 if metadata_parts:
