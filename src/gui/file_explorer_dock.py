@@ -969,6 +969,34 @@ class FileExplorerDock(BaseDock):
         conditions = self.conditions_grid.get_conditions()
         logic_operator = self.conditions_grid.get_logic_operator()
 
+        # SECURITY: Validate regex patterns BEFORE starting search
+        # Prevents "Invalid regex pattern" errors during execution
+        if filename_pattern and search_options.get("regex", False):
+            try:
+                flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
+                re.compile(filename_pattern, flags)
+            except re.error as e:
+                logger.error(f"Invalid filename regex pattern: {filename_pattern[:50]}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    tr("file_explorer.error_title"),
+                    f"Invalid regex pattern in filename:\n\n{str(e)}\n\nPattern: {filename_pattern}"
+                )
+                return
+
+        if content_query and search_options.get("regex", False):
+            try:
+                flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
+                re.compile(content_query, flags)
+            except re.error as e:
+                logger.error(f"Invalid content regex pattern: {content_query[:50]}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    tr("file_explorer.error_title"),
+                    f"Invalid regex pattern in content search:\n\n{str(e)}\n\nPattern: {content_query}"
+                )
+                return
+
         # Determine if this is a search or browse operation
         is_search = bool(filename_pattern or content_query)
 
