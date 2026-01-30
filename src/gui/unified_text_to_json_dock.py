@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
     QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
     QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
-    QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu
+    QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication
 )
 from PySide6.QtGui import QFont, QAction
 
@@ -49,6 +49,7 @@ class TemplatesDialog(QDialog):
     """Dialog to show format templates and examples."""
     
     TEMPLATES = {
+        # Format Conversion Templates
         "Key-Value": """name: John Doe
 age: 30
 city: New York
@@ -109,11 +110,71 @@ age: 30
 tags[3]: python,coding,llm
 items[2]{id,name}:
   1,Apple
-  2,Banana"""
+  2,Banana""",
+        
+        # JSX/HTML Templates
+        "JSX Button": """<Button 
+  label="Click Me" 
+  variant="primary"
+  onClick={handleClick}
+  disabled={false}
+/>""",
+        
+        "JSX Form": """<Form 
+  action="/submit" 
+  method="POST"
+  onSubmit={handleSubmit}
+>
+  <Input name="username" placeholder="Enter username" />
+  <Input name="password" type="password" />
+  <Button type="submit">Submit</Button>
+</Form>""",
+        
+        "HTML Div": """<div 
+  className="container" 
+  id="main"
+  data-testid="main-container"
+  style="padding: 20px;"
+>
+  <h1>Welcome</h1>
+  <p>Content here</p>
+</div>""",
+        
+        "JSX Component": """<Card
+  title="User Profile"
+  subtitle="View details"
+  image="/avatar.jpg"
+  actions={[
+    {label: "Edit", onClick: handleEdit},
+    {label: "Delete", onClick: handleDelete}
+  ]}
+/>""",
+        
+        "HTML Table": """<table 
+  className="data-table"
+  border="1"
+  cellpadding="5"
+>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Age</th>
+      <th>City</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>John</td>
+      <td>30</td>
+      <td>New York</td>
+    </tr>
+  </tbody>
+</table>"""
     }
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, mode="format"):
         super().__init__(parent)
+        self.mode = mode  # "format" or "jsx"
         self.setWindowTitle(tr("text_to_json.templates_dialog_title"))
         self._setup_ui()
     
@@ -680,21 +741,74 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         avoid_row2.addStretch(1)
         layout.addLayout(avoid_row2)
         
-        # Action buttons
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addStretch(1)
+        # Action buttons - Grid Layout
+        buttons_grid = QGridLayout()
+        buttons_grid.setSpacing(8)
         
-        self.jsx_run_btn = QPushButton(tr("base.run", "Run"))
+        # Row 1: Primary actions
+        self.jsx_run_btn = QPushButton(tr("base.run", "Extract"))
         self.jsx_run_btn.setMinimumWidth(100)
         self.jsx_run_btn.clicked.connect(self._jsx_run_extraction)
-        buttons_layout.addWidget(self.jsx_run_btn)
+        buttons_grid.addWidget(self.jsx_run_btn, 0, 0)
+        
+        self.jsx_convert_btn = QPushButton(tr("text_to_json.btn_convert", "Convert"))
+        self.jsx_convert_btn.setMinimumWidth(100)
+        self.jsx_convert_btn.clicked.connect(self._jsx_run_extraction)  # Same as Extract
+        buttons_grid.addWidget(self.jsx_convert_btn, 0, 1)
+        
+        self.jsx_templates_btn = QPushButton(tr("text_to_json.btn_templates", "Templates"))
+        self.jsx_templates_btn.setMinimumWidth(100)
+        self.jsx_templates_btn.clicked.connect(self._jsx_show_templates)
+        buttons_grid.addWidget(self.jsx_templates_btn, 0, 2)
+        
+        self.jsx_clear_btn = QPushButton(tr("text_to_json.btn_clear", "Clear"))
+        self.jsx_clear_btn.setMinimumWidth(100)
+        self.jsx_clear_btn.clicked.connect(self._jsx_clear_all)
+        buttons_grid.addWidget(self.jsx_clear_btn, 0, 3)
+        
+        # Row 2: Output actions
+        self.jsx_validate_btn = QPushButton(tr("text_to_json.btn_validate", "Validate JSON"))
+        self.jsx_validate_btn.setMinimumWidth(100)
+        self.jsx_validate_btn.clicked.connect(self._jsx_validate_json)
+        buttons_grid.addWidget(self.jsx_validate_btn, 1, 0)
+        
+        self.jsx_copy_result_btn = QPushButton(tr("text_to_json.btn_copy", "Copy JSON"))
+        self.jsx_copy_result_btn.setMinimumWidth(100)
+        self.jsx_copy_result_btn.clicked.connect(self._jsx_copy_json)
+        buttons_grid.addWidget(self.jsx_copy_result_btn, 1, 1)
+        
+        self.jsx_open_editor_btn = QPushButton(tr("text_to_json.btn_open_editor", "Open in Editor"))
+        self.jsx_open_editor_btn.setMinimumWidth(100)
+        self.jsx_open_editor_btn.clicked.connect(self._jsx_open_in_editor)
+        buttons_grid.addWidget(self.jsx_open_editor_btn, 1, 2)
         
         self.jsx_save_btn = QPushButton(tr("base.save", "Save Outputs"))
-        self.jsx_save_btn.setMinimumWidth(120)
+        self.jsx_save_btn.setMinimumWidth(100)
         self.jsx_save_btn.clicked.connect(self._jsx_save_outputs)
-        buttons_layout.addWidget(self.jsx_save_btn)
+        buttons_grid.addWidget(self.jsx_save_btn, 1, 3)
         
-        layout.addLayout(buttons_layout)
+        # Row 3: Advanced actions
+        self.jsx_history_btn = QPushButton(tr("text_to_json.btn_history", "History"))
+        self.jsx_history_btn.setMinimumWidth(100)
+        self.jsx_history_btn.clicked.connect(self._jsx_show_history)
+        buttons_grid.addWidget(self.jsx_history_btn, 2, 0)
+        
+        self.jsx_swap_btn = QPushButton(tr("text_to_json.btn_swap", "Swap (JSON → JSX)"))
+        self.jsx_swap_btn.setMinimumWidth(100)
+        self.jsx_swap_btn.clicked.connect(self._jsx_swap_outputs)
+        buttons_grid.addWidget(self.jsx_swap_btn, 2, 1)
+        
+        self.jsx_copy_paths_btn = QPushButton(tr("base.copy_paths", "Copy Paths"))
+        self.jsx_copy_paths_btn.setMinimumWidth(100)
+        self.jsx_copy_paths_btn.clicked.connect(self._jsx_copy_paths)
+        buttons_grid.addWidget(self.jsx_copy_paths_btn, 2, 2)
+        
+        self.jsx_copy_all_btn = QPushButton(tr("base.copy_all", "Copy All"))
+        self.jsx_copy_all_btn.setMinimumWidth(100)
+        self.jsx_copy_all_btn.clicked.connect(self._jsx_copy_all)
+        buttons_grid.addWidget(self.jsx_copy_all_btn, 2, 3)
+        
+        layout.addLayout(buttons_grid)
         
         # Output tabs
         self.jsx_output_tabs = QTabWidget()
@@ -720,11 +834,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         )
         
         layout.addWidget(self.jsx_output_tabs, 1)
-        
-        # Copy button
-        self.jsx_copy_all_btn = QPushButton(tr("base.copy_all", "Copy All"))
-        self.jsx_copy_all_btn.clicked.connect(self._jsx_copy_all)
-        layout.addWidget(self.jsx_copy_all_btn)
     
     # ========================================================================
     # SIGNAL CONNECTIONS
@@ -1202,3 +1311,113 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         current_widget = self.jsx_output_tabs.currentWidget()
         menu.exec_(current_widget.mapToGlobal(position))
+    
+    # ========================================================================
+    # NEW JSX MODE METHODS - Additional Buttons
+    # ========================================================================
+    
+    def _jsx_show_templates(self):
+        """Show templates dialog with JSX/HTML examples."""
+        dialog = TemplatesDialog(self, mode="jsx")
+        if dialog.exec_() == QDialog.Accepted:
+            template = dialog.get_selected_template()
+            # For JSX mode, we could load it into path or show it
+            # For now, show info message
+            self.show_info(
+                tr("text_to_json.templates", "Template"),
+                tr("text_to_json.template_selected", f"Template selected:\n\n{template[:200]}...")
+            )
+    
+    def _jsx_clear_all(self):
+        """Clear all JSX mode fields."""
+        self.jsx_path_input.clear()
+        self.jsx_parameter_input.clear()
+        self.jsx_paths_output.clear()
+        self.jsx_json_output.clear()
+        self.show_info(
+            tr("text_to_json.cleared", "Cleared"),
+            tr("text_to_json.cleared_message", "All fields cleared.")
+        )
+    
+    def _jsx_validate_json(self):
+        """Validate extracted JSON output."""
+        json_text = self.jsx_json_output.toPlainText().strip()
+        
+        if not json_text:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", "No JSON output to validate. Run extraction first.")
+            )
+            return
+        
+        try:
+            json.loads(json_text)
+            self.show_info(
+                tr("text_to_json.valid_json", "Valid JSON"),
+                tr("text_to_json.valid_json_message", "The JSON output is valid! ✅")
+            )
+        except json.JSONDecodeError as e:
+            self.show_error(
+                tr("text_to_json.invalid_json", "Invalid JSON"),
+                tr("text_to_json.invalid_json_message", f"JSON validation error:\n\n{str(e)}")
+            )
+    
+    def _jsx_copy_json(self):
+        """Copy JSON output to clipboard."""
+        json_text = self.jsx_json_output.toPlainText()
+        if json_text:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(json_text)
+            self.show_info(
+                tr("text_to_json.copied", "Copied"),
+                tr("text_to_json.copied_message", "JSON output copied to clipboard.")
+            )
+        else:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", "No JSON output to copy.")
+            )
+    
+    def _jsx_copy_paths(self):
+        """Copy paths output to clipboard."""
+        paths_text = self.jsx_paths_output.toPlainText()
+        if paths_text:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(paths_text)
+            self.show_info(
+                tr("text_to_json.copied", "Copied"),
+                tr("text_to_json.copied_message", "Paths output copied to clipboard.")
+            )
+        else:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", "No paths output to copy.")
+            )
+    
+    def _jsx_open_in_editor(self):
+        """Open extracted JSON in editor."""
+        json_text = self.jsx_json_output.toPlainText().strip()
+        
+        if not json_text:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", "No JSON output to open. Run extraction first.")
+            )
+            return
+        
+        # Emit signal to open in editor
+        self.open_in_editor_requested.emit(json_text)
+    
+    def _jsx_show_history(self):
+        """Show extraction history."""
+        self.show_info(
+            tr("text_to_json.history", "History"),
+            tr("text_to_json.history_coming_soon", "Extraction history feature coming soon in next phase!")
+        )
+    
+    def _jsx_swap_outputs(self):
+        """Swap JSON output back to JSX code (JSON → JSX conversion)."""
+        self.show_info(
+            tr("text_to_json.swap", "Swap"),
+            tr("text_to_json.swap_coming_soon", "JSON → JSX conversion feature coming soon in next phase!")
+        )
