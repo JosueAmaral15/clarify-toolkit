@@ -406,7 +406,7 @@ class GoogleTranslateDock(BaseDock):
                     self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
                     
                     # Extract ONLY plain text for UI display (no tags visible to user)
-                    plain_text = ''.join(seg.text for seg in self._source_segments)
+                    plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
                     
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 else:
@@ -551,7 +551,7 @@ class GoogleTranslateDock(BaseDock):
             self._translated_segments = FormatMapper.parse_tagged_text(result)
             
             # Extract ONLY plain text for UI display (hide tags from user)
-            plain_text = ''.join(seg.text for seg in self._translated_segments)
+            plain_text = FormatMapper.extract_plain_text_from_segments(self._translated_segments)
             
             # Display plain text in output box (NO TAGS VISIBLE)
             self.text_output.setPlainText(plain_text)

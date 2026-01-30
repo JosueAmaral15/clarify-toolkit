@@ -219,6 +219,30 @@ class FormatMapper:
         return plain_text
     
     @staticmethod
+    def extract_plain_text_from_segments(segments: List[TextSegment]) -> str:
+        """
+        Extract plain text from segments (no tags, no formatting).
+        
+        This is a convenience method for getting clean text from segments
+        without having to manually join segment.text values.
+        
+        Args:
+            segments: List of TextSegment objects
+            
+        Returns:
+            Plain text string (no tags)
+            
+        Example:
+            segments = [
+                TextSegment(text="Hello", format_bits=1),
+                TextSegment(text=" world", format_bits=0)
+            ]
+            result = extract_plain_text_from_segments(segments)
+            # Returns: "Hello world" (no tags)
+        """
+        return ''.join(seg.text for seg in segments)
+    
+    @staticmethod
     def parse_tagged_text(tagged_text: str) -> List[TextSegment]:
         """
         Parse tagged text back into segments with error recovery.
