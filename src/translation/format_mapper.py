@@ -720,7 +720,8 @@ class FormatMapper:
             if '\n\n' in segment.text:
                 parts = segment.text.split('\n\n')
                 for i, part in enumerate(parts):
-                    if part:  # Skip empty parts
+                    # Add text to current paragraph (even if empty)
+                    if part:
                         # Safety: Remove any system tags that leaked
                         clean_part = FormatMapper.remove_tags(part)
                         
@@ -734,10 +735,10 @@ class FormatMapper:
                         else:
                             current_paragraph.addText(clean_part)
                     
-                    # Create new paragraph after each part except the last
+                    # Create new paragraph after each part (including empty ones for blank lines)
                     if i < len(parts) - 1:
                         doc.text.addElement(current_paragraph)
-                        current_paragraph = P()
+                        current_paragraph = P()  # New paragraph (can be empty for blank lines)
             else:
                 # Normal text - add to current paragraph
                 # Safety: Remove any system tags that leaked
@@ -753,9 +754,8 @@ class FormatMapper:
                 else:
                     current_paragraph.addText(clean_text)
         
-        # Add final paragraph if not empty
-        if current_paragraph.hasChildNodes() or current_paragraph.data:
-            doc.text.addElement(current_paragraph)
+        # Add final paragraph (even if empty)
+        doc.text.addElement(current_paragraph)
         
         # Save document
         doc.save(output_path)
