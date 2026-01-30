@@ -495,9 +495,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.fc_history_btn.clicked.connect(self._on_history_clicked)
         buttons_layout.addWidget(self.fc_history_btn, 2, 0)
         
-        self.fc_swap_btn = QPushButton(tr("text_to_json.btn_swap"))
-        self.fc_swap_btn.clicked.connect(self._on_swap_clicked)
-        buttons_layout.addWidget(self.fc_swap_btn, 2, 1)
+        self.fc_swap_checkbox = QCheckBox(tr("text_to_json.btn_swap", "Swap (JSON → Text)"))
+        self.fc_swap_checkbox.toggled.connect(self._on_swap_toggled)
+        buttons_layout.addWidget(self.fc_swap_checkbox, 2, 1)
         
         layout.addLayout(buttons_layout)
         
@@ -865,7 +865,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.fc_copy_btn.setToolTip(tooltip_tr("text_to_json.copy_btn"))
         self.fc_open_editor_btn.setToolTip(tooltip_tr("text_to_json.open_editor_btn"))
         self.fc_history_btn.setToolTip(tooltip_tr("text_to_json.history_btn"))
-        self.fc_swap_btn.setToolTip(tooltip_tr("text_to_json.swap_btn"))
+        self.fc_swap_checkbox.setToolTip(tooltip_tr("text_to_json.swap_checkbox", "Enable swap mode: Convert JSON back to text format"))
         self.fc_input_text.setToolTip(tooltip_tr("text_to_json.input_text"))
         self.fc_output_text.setToolTip(tooltip_tr("text_to_json.output_text"))
         self.fc_status_label.setToolTip(tooltip_tr("text_to_json.status_label"))
@@ -1045,9 +1045,38 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.fc_output_text.setPlainText(entry['output'])
             dialog.accept()
     
-    def _on_swap_clicked(self) -> None:
-        """Swap JSON to text (reverse conversion)."""
-        self.show_info(tr("text_to_json.info_swap_title"), tr("text_to_json.info_swap_msg"))
+    def _on_swap_toggled(self, checked: bool) -> None:
+        """Handle swap checkbox toggle - swap input/output fields and enable swap mode."""
+        if checked:
+            # Swap mode enabled: JSON → Text
+            # Swap the contents of input and output fields
+            input_content = self.fc_input_text.toPlainText()
+            output_content = self.fc_output_text.toPlainText()
+            
+            self.fc_input_text.setPlainText(output_content)
+            self.fc_output_text.setPlainText(input_content)
+            
+            # Update labels to reflect swap mode
+            self.fc_input_label.setText(tr("text_to_json.lbl_input_swap", "Input (JSON):"))
+            self.fc_output_label.setText(tr("text_to_json.lbl_output_swap", "Output (Text):"))
+            
+            self.fc_status_label.setText(tr("text_to_json.swap_mode_enabled", "Swap mode: JSON → Text"))
+            self.fc_status_label.setStyleSheet("color: blue;")
+        else:
+            # Normal mode: Text → JSON
+            # Swap back the contents
+            input_content = self.fc_input_text.toPlainText()
+            output_content = self.fc_output_text.toPlainText()
+            
+            self.fc_input_text.setPlainText(output_content)
+            self.fc_output_text.setPlainText(input_content)
+            
+            # Restore original labels
+            self.fc_input_label.setText(tr("text_to_json.lbl_input", "Input:"))
+            self.fc_output_label.setText(tr("text_to_json.lbl_output", "Output:"))
+            
+            self.fc_status_label.setText("")
+            self.fc_status_label.setStyleSheet("color: gray;")
     
     def _add_to_history(self, input_text: str, output_json: str, format_type: str) -> None:
         """Add conversion to history."""
