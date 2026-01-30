@@ -670,12 +670,11 @@ class GoogleTranslateDock(BaseDock):
         if not result:
             return
         
-        # Determine default format and filename based on tag presence
-        has_tags = '<' in result and '>' in result and not self.chk_remove_tags.isChecked()
+        # Determine default format based on whether we have stored formatting
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        if has_tags:
-            # Has formatting tags - suggest DOCX
+        if self._translated_segments:
+            # Has formatting data - suggest DOCX
             default_filename = f"translation_{timestamp}.docx"
             file_filter = "Word Documents (*.docx);;Text Files (*.txt);;All Files (*)"
         else:
@@ -696,12 +695,11 @@ class GoogleTranslateDock(BaseDock):
                 # Determine output format from file extension
                 if file_path.lower().endswith('.docx'):
                     # Save as DOCX with formatting restored
-                    self._save_as_docx(result, file_path)
+                    self._save_as_docx(file_path)
                 else:
-                    # Save as plain text (remove tags if present)
-                    plain_text = FormatMapper.remove_tags(result) if has_tags else result
+                    # Save as plain text (use text from UI - already plain)
                     with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(plain_text)
+                        f.write(result)
                 
                 # Visual feedback
                 original_text = self.btn_save_as.text()
@@ -715,19 +713,21 @@ class GoogleTranslateDock(BaseDock):
                     tr("google_translate.save_error_msg").format(str(e))
                 )
     
-    def _save_as_docx(self, tagged_text: str, output_path: str):
+    def _save_as_docx(self, output_path: str):
         """
-        Save translation as DOCX with formatting restored from tags.
+        Save translation as DOCX with formatting restored from stored segments.
         
         Args:
-            tagged_text: Translation result with format tags
             output_path: Path to save DOCX file
         """
-        # Parse tagged text into segments
-        segments = FormatMapper.parse_tagged_text(tagged_text)
+        if not self._translated_segments:
+            # Fallback: no formatting, create plain text segment
+            plain_text = self.text_output.toPlainText()
+            from ..translation.format_mapper import TextSegment
+            self._translated_segments = [TextSegment(text=plain_text)]
         
-        # Generate DOCX with formatting
-        FormatMapper.create_docx_from_segments(segments, output_path)
+        # Generate DOCX with formatting using stored segments
+        FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
         
         # Update status
         self.lbl_status.setText(tr("google_translate.status_docx_saved"))
