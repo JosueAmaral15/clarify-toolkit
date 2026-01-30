@@ -13,11 +13,10 @@ from __future__ import annotations
 import os
 import re
 import fnmatch
-from typing import Dict, List, Tuple, Any, Optional, Callable
+from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
-from datetime import datetime
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal  # pylint: disable=no-name-in-module  # Qt dynamic
 
 from .file_list_executor import FileInfo, FileListExecutor
 from ..utils import read_text
@@ -34,7 +33,7 @@ MAX_TOTAL_MATCHES = 50000  # Maximum total matches across all files
 @dataclass
 class SearchMatch:
     """Container for search match information.
-    
+
     Memory optimizations (v2.9.120):
     - snippet truncated to MAX_SNIPPET_LENGTH (was unlimited)
     - context_before/after removed (were rarely used, 3x memory overhead)
@@ -98,6 +97,7 @@ class UnifiedFileExplorerExecutor(QObject):
         """Resume processing."""
         self._paused = False
 
+    # pylint: disable=too-many-positional-arguments  # Complex browse parameters required
     def execute_browse(
         self, directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None,
         conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND"
@@ -120,7 +120,7 @@ class UnifiedFileExplorerExecutor(QObject):
         filters = filters or {}
 
         # Step 1: Get base file list
-        print(f"DEBUG EXECUTOR 122 execute_browse() | Calling FileListExecutor.list_files()")
+        print("DEBUG EXECUTOR 122 execute_browse() | Calling FileListExecutor.list_files()")
         result = FileListExecutor.list_files(directory, show_hidden, recursive, filters)
         print(f"DEBUG EXECUTOR 124 execute_browse() | FileListExecutor returned {len(result.files)} files")
 
@@ -137,6 +137,7 @@ class UnifiedFileExplorerExecutor(QObject):
         # Step 2.5: Apply advanced conditions if provided (v2.9.116 - Phase 4)
         if conditions:
             try:
+                # pylint: disable=import-outside-toplevel  # Circular import avoidance
                 from ..core.filters import filter_files_by_conditions, Condition
 
                 # Convert dict conditions to Condition objects
@@ -156,17 +157,17 @@ class UnifiedFileExplorerExecutor(QObject):
 
                 file_paths = [f.path for f in file_list]
                 original_count = len(file_paths)
-                
+
                 filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
-                
+
                 # Convert back to FileInfo objects
                 filtered_paths_set = set(filtered_paths)
                 file_list = [f for f in file_list if f.path in filtered_paths_set]
-                
+
                 filtered_count = original_count - len(file_list)
-                logger.info(f"Advanced conditions filtered {filtered_count} files in browse mode")
-            except Exception as e:
-                logger.error(f"Error applying conditions in browse mode: {e}", exc_info=True)
+                logger.info("Advanced conditions filtered %d files in browse mode", filtered_count)
+            except Exception as e:  # pylint: disable=broad-exception-caught  # Filter robustness
+                logger.error("Error applying conditions in browse mode: %s", e, exc_info=True)
 
         # Step 3: Apply include/exclude glob filters (from Search/Replace)
         include_globs = filters.get("include_globs", [])
@@ -218,6 +219,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         return {"files": search_results, "stats": stats}
 
+    # pylint: disable=too-many-positional-arguments  # Complex search parameters required
     def execute_search(
         self,
         directory: str,
@@ -248,12 +250,12 @@ class UnifiedFileExplorerExecutor(QObject):
             Dict with files and statistics
         """
         print(f"DEBUG EXECUTOR 218 execute_search() | ENTER - _cancel={self._cancel}")
-        
+
         # BUGFIX: Reset cancel flag at start of each search
         # The executor instance is reused, so _cancel persists between searches
         self._cancel = False
-        print(f"DEBUG EXECUTOR 251 execute_search() | Reset _cancel to False")
-        
+        print("DEBUG EXECUTOR 251 execute_search() | Reset _cancel to False")
+
         search_options = search_options or {}
 
         # Step 1: List files
@@ -263,7 +265,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
         print(f"DEBUG EXECUTOR 253 execute_search() | files_to_search has {len(files_to_search)} items")
-        logger.debug(f"[SEARCH DEBUG] Browse found {len(files_to_search)} files (recursive={recursive}, show_hidden={show_hidden})")
+        logger.debug("[SEARCH DEBUG] Browse found %d files (recursive=%s, show_hidden=%s)", len(files_to_search), recursive, show_hidden)
 
         # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
         # (Sprint 1 - Task 1.1 - Fase 2 + BUGFIX)
@@ -285,6 +287,7 @@ class UnifiedFileExplorerExecutor(QObject):
             # Apply non-content conditions EARLY
             if early_conditions:
                 try:
+                    # pylint: disable=import-outside-toplevel  # Circular import avoidance
                     from ..core.filters import filter_files_by_conditions, Condition
 
                     # Convert dict conditions to Condition objects
@@ -306,13 +309,14 @@ class UnifiedFileExplorerExecutor(QObject):
 
                     file_paths = [f.path for f in files_to_search]
                     original_count = len(file_paths)
-                    
+
                     filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
-                    
+
                     filtered_out = original_count - len(filtered_paths)
 
                     logger.info(
-                        f"Applied {len(early_conditions)} non-content conditions EARLY (before content search)",
+                        "Applied %d non-content conditions EARLY (before content search)",
+                        len(early_conditions),
                         extra={
                             "logic": logic_operator,
                             "filtered_out": filtered_out,
@@ -323,11 +327,11 @@ class UnifiedFileExplorerExecutor(QObject):
 
                     # Keep only files that passed conditions
                     files_to_search = [f for f in files_to_search if f.path in filtered_paths]
-                except Exception as e:
-                    logger.error(f"Failed to apply early conditions: {e}", exc_info=True)
+                except Exception as e:  # pylint: disable=broad-exception-caught  # Filter robustness
+                    logger.error("Failed to apply early conditions: %s", e, exc_info=True)
                     # Continue without early filtering on error
 
-        logger.debug(f"Files to search after filters+conditions: {len(files_to_search)}")
+        logger.debug("Files to search after filters+conditions: %d", len(files_to_search))
         print(f"DEBUG EXECUTOR 320 execute_search() | After conditions: {len(files_to_search)} files")
 
         # Step 2: Apply filename pattern filter
@@ -338,9 +342,9 @@ class UnifiedFileExplorerExecutor(QObject):
                 f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
             ]
             print(f"DEBUG EXECUTOR 328 execute_search() | After filename filter: {before_filter} → {len(files_to_search)} files")
-            logger.debug(f"[SEARCH DEBUG] Filename pattern '{filename_pattern}' filter: {before_filter} → {len(files_to_search)} files")
+            logger.debug("[SEARCH DEBUG] Filename pattern '%s' filter: %d → %d files", filename_pattern, before_filter, len(files_to_search))
         else:
-            print(f"DEBUG EXECUTOR 331 execute_search() | No filename pattern specified")
+            print("DEBUG EXECUTOR 331 execute_search() | No filename pattern specified")
 
         # Step 3: Apply content search
         print(f"DEBUG EXECUTOR 334 execute_search() | Starting content search on {len(files_to_search)} files")
@@ -351,7 +355,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         for idx, file_info in enumerate(files_to_search, 1):
             if self._cancel:
-                print(f"DEBUG EXECUTOR 344 execute_search() | CANCEL FLAG SET - Breaking loop")
+                print("DEBUG EXECUTOR 344 execute_search() | CANCEL FLAG SET - Breaking loop")
                 break
 
             # Check global match limit (v2.9.120 - Memory optimization)
@@ -359,7 +363,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 warning_msg = f"Maximum total matches reached ({MAX_TOTAL_MATCHES:,}). Search stopped. Refine your search for better results."
                 logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
                 self.error.emit(warning_msg)
-                print(f"DEBUG EXECUTOR 351 execute_search() | MAX MATCHES REACHED - Breaking loop")
+                print("DEBUG EXECUTOR 351 execute_search() | MAX MATCHES REACHED - Breaking loop")
                 break
 
             self.progress.emit(file_info.path)
@@ -383,7 +387,7 @@ class UnifiedFileExplorerExecutor(QObject):
                     search_results.append(SearchResult(file_info=file_info, matches=matches, match_count=len(matches)))
                     total_match_count += len(matches)  # Update total counter
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught  # File search robustness
                 self.error.emit(f"Error processing {file_info.path}: {e}")
 
         # Step 4: Apply content-based conditions if provided (LATE - after reading files)
@@ -391,7 +395,7 @@ class UnifiedFileExplorerExecutor(QObject):
         if conditions:
             late_conditions = [c for c in conditions if c.get("field") == "content"]
             if late_conditions:
-                logger.debug(f"Applying {len(late_conditions)} content-based conditions LATE")
+                logger.debug("Applying %d content-based conditions LATE", len(late_conditions))
                 search_results = self._apply_conditions(search_results, late_conditions, logic_operator)
 
         # Calculate statistics
@@ -399,13 +403,13 @@ class UnifiedFileExplorerExecutor(QObject):
         stats = FileListExecutor.calculate_statistics(file_infos)
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
-        
-        logger.debug(f"[SEARCH DEBUG] Final results: {len(search_results)} files, {stats['total_matches']} matches")
+
+        logger.debug("[SEARCH DEBUG] Final results: %d files, %d matches", len(search_results), stats["total_matches"])
 
         # Log memory optimization stats (v2.9.120)
         if stats["total_matches"] > 0:
             logger.info(
-                f"Search completed with memory optimizations",
+                "Search completed with memory optimizations",
                 extra={
                     "total_matches": stats["total_matches"],
                     "files_with_matches": stats["files_with_matches"],
@@ -417,6 +421,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         return {"files": search_results, "stats": stats}
 
+    # pylint: disable=too-many-positional-arguments  # Complex replace parameters required
     def execute_replace(
         self,
         files: List[SearchResult],
@@ -467,7 +472,7 @@ class UnifiedFileExplorerExecutor(QObject):
                     replaced_count += count
                     files_modified += 1
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught  # Replace robustness
                 errors.append(f"Error replacing in {file_path}: {e}")
                 self.error.emit(errors[-1])
 
@@ -497,8 +502,8 @@ class UnifiedFileExplorerExecutor(QObject):
             flags = 0 if case_sensitive else re.IGNORECASE
             try:
                 regex = re.compile(pattern, flags)
-            except re.error as e:
-                logger.error(f"Invalid regex pattern: {pattern[:50]}", exc_info=True)
+            except re.error as e:  # pylint: disable=broad-exception-caught  # Regex validation
+                logger.error("Invalid regex pattern: %s", pattern[:50], exc_info=True)
                 self.error.emit(f"Invalid regex pattern: {e}")
                 return []
 
@@ -517,17 +522,17 @@ class UnifiedFileExplorerExecutor(QObject):
                 try:
                     for match in regex.finditer(line_text):
                         if match_count >= MAX_MATCHES_PER_FILE:
-                            logger.warning(f"Max matches reached: {MAX_MATCHES_PER_FILE}")
+                            logger.warning("Max matches reached: %d", MAX_MATCHES_PER_FILE)
                             self.error.emit(f"Too many matches (>{MAX_MATCHES_PER_FILE}). Results truncated.")
                             return matches
 
                         col = match.start()
-                        
+
                         # Memory optimization (v2.9.120): Truncate snippet and remove context lines
                         # - Limits snippet to MAX_SNIPPET_LENGTH (200 chars)
                         # - Removes context_before/after (3x memory reduction)
                         truncated_snippet = line_text[:MAX_SNIPPET_LENGTH] if len(line_text) > MAX_SNIPPET_LENGTH else line_text
-                        
+
                         matches.append(
                             SearchMatch(
                                 line=line_num,
@@ -539,21 +544,22 @@ class UnifiedFileExplorerExecutor(QObject):
                         )
                         match_count += 1
 
-                except Exception as e:
+                except Exception:  # pylint: disable=broad-exception-caught  # Regex safety
                     # Catch potential regex matching errors (e.g., catastrophic backtracking)
-                    logger.error(f"Error matching regex on line {line_num}", exc_info=True)
+                    logger.error("Error matching regex on line %d", line_num, exc_info=True)
                     # Continue with next line instead of failing entire operation
                     continue
 
         except re.error as e:
-            logger.error(f"Regex compilation error: {e}", exc_info=True)
+            logger.error("Regex compilation error: %s", e, exc_info=True)
             self.error.emit(f"Invalid regex pattern: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error in search: {e}", exc_info=True)
+        except Exception as e:  # pylint: disable=broad-exception-caught  # Search robustness
+            logger.error("Unexpected error in search: %s", e, exc_info=True)
             self.error.emit(f"Search error: {e}")
 
         return matches
 
+    # pylint: disable=too-many-positional-arguments  # Complex replace parameters required
     def _replace_in_text(
         self, text: str, query: str, replacement: str, preserve_case: bool, replace_all: bool, options: Dict[str, bool]
     ) -> Tuple[str, int]:
@@ -581,8 +587,8 @@ class UnifiedFileExplorerExecutor(QObject):
             flags = 0 if case_sensitive else re.IGNORECASE
             try:
                 regex = re.compile(pattern, flags)
-            except re.error as e:
-                logger.error(f"Invalid regex in replace: {pattern[:50]}", exc_info=True)
+            except re.error:
+                logger.error("Invalid regex in replace: %s", pattern[:50], exc_info=True)
                 return (text, 0)  # Return original text unchanged
 
             # BUG FIX: Escape backslashes in replacement string when NOT using regex mode
@@ -638,7 +644,7 @@ class UnifiedFileExplorerExecutor(QObject):
             replaced += 1
 
             # Stop if we've replaced enough
-            if count > 0 and replaced >= count:
+            if 0 < count <= replaced:
                 result.append(text[last_end:])
                 break
         else:
@@ -700,6 +706,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         return filtered
 
+    # pylint: disable=too-many-return-statements  # Condition checking requires early returns
     def _check_condition(self, result: SearchResult, condition: Dict[str, Any]) -> bool:
         """Check if result matches a single condition."""
         field = condition.get("field")
