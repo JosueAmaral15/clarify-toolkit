@@ -23,7 +23,7 @@ class SearchOptions:
         try:
             return re.compile(pattern, flags)
         except re.error as e:
-            raise ValueError(f"Invalid regular expression: {e}")
+            raise ValueError(f"Invalid regular expression: {e}") from e
 
 
 def preserve_case_like(matched_text: str, replacement: str) -> str:
