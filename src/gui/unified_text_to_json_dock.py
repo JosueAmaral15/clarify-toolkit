@@ -771,29 +771,24 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         buttons_grid.setSpacing(8)
         
         # Row 1: Primary actions
-        self.jsx_run_btn = QPushButton(tr("base.run", "Extract"))
-        self.jsx_run_btn.setMinimumWidth(100)
+        self.jsx_run_btn = QPushButton(tr("base.run", "Extract/Convert"))
+        self.jsx_run_btn.setMinimumWidth(120)
         self.jsx_run_btn.clicked.connect(self._jsx_run_extraction)
         buttons_grid.addWidget(self.jsx_run_btn, 0, 0)
-        
-        self.jsx_convert_btn = QPushButton(tr("text_to_json.btn_convert", "Convert"))
-        self.jsx_convert_btn.setMinimumWidth(100)
-        self.jsx_convert_btn.clicked.connect(self._jsx_run_extraction)  # Same as Extract
-        buttons_grid.addWidget(self.jsx_convert_btn, 0, 1)
         
         self.jsx_templates_btn = QPushButton(tr("text_to_json.btn_templates", "Templates"))
         self.jsx_templates_btn.setMinimumWidth(100)
         self.jsx_templates_btn.clicked.connect(self._jsx_show_templates)
-        buttons_grid.addWidget(self.jsx_templates_btn, 0, 2)
+        buttons_grid.addWidget(self.jsx_templates_btn, 0, 1)
         
         self.jsx_clear_btn = QPushButton(tr("text_to_json.btn_clear", "Clear"))
         self.jsx_clear_btn.setMinimumWidth(100)
         self.jsx_clear_btn.clicked.connect(self._jsx_clear_all)
-        buttons_grid.addWidget(self.jsx_clear_btn, 0, 3)
+        buttons_grid.addWidget(self.jsx_clear_btn, 0, 2)
         
         # Row 2: Output actions
         self.jsx_validate_btn = QPushButton(tr("text_to_json.btn_validate", "Validate JSON"))
-        self.jsx_validate_btn.setMinimumWidth(100)
+        self.jsx_validate_btn.setMinimumWidth(120)
         self.jsx_validate_btn.clicked.connect(self._jsx_validate_json)
         buttons_grid.addWidget(self.jsx_validate_btn, 1, 0)
         
@@ -803,35 +798,36 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         buttons_grid.addWidget(self.jsx_copy_result_btn, 1, 1)
         
         self.jsx_open_editor_btn = QPushButton(tr("text_to_json.btn_open_editor", "Open in Editor"))
-        self.jsx_open_editor_btn.setMinimumWidth(100)
+        self.jsx_open_editor_btn.setMinimumWidth(120)
         self.jsx_open_editor_btn.clicked.connect(self._jsx_open_in_editor)
         buttons_grid.addWidget(self.jsx_open_editor_btn, 1, 2)
         
+        # Row 3: File and advanced actions
         self.jsx_save_btn = QPushButton(tr("base.save", "Save Outputs"))
-        self.jsx_save_btn.setMinimumWidth(100)
+        self.jsx_save_btn.setMinimumWidth(120)
         self.jsx_save_btn.clicked.connect(self._jsx_save_outputs)
-        buttons_grid.addWidget(self.jsx_save_btn, 1, 3)
+        buttons_grid.addWidget(self.jsx_save_btn, 2, 0)
         
-        # Row 3: Advanced actions
         self.jsx_history_btn = QPushButton(tr("text_to_json.btn_history", "History"))
         self.jsx_history_btn.setMinimumWidth(100)
         self.jsx_history_btn.clicked.connect(self._jsx_show_history)
-        buttons_grid.addWidget(self.jsx_history_btn, 2, 0)
+        buttons_grid.addWidget(self.jsx_history_btn, 2, 1)
         
         self.jsx_swap_btn = QPushButton(tr("text_to_json.btn_swap", "Swap (JSON → JSX)"))
-        self.jsx_swap_btn.setMinimumWidth(100)
+        self.jsx_swap_btn.setMinimumWidth(150)
         self.jsx_swap_btn.clicked.connect(self._jsx_swap_outputs)
-        buttons_grid.addWidget(self.jsx_swap_btn, 2, 1)
+        buttons_grid.addWidget(self.jsx_swap_btn, 2, 2)
         
+        # Row 4: Copy actions
         self.jsx_copy_paths_btn = QPushButton(tr("base.copy_paths", "Copy Paths"))
         self.jsx_copy_paths_btn.setMinimumWidth(100)
         self.jsx_copy_paths_btn.clicked.connect(self._jsx_copy_paths)
-        buttons_grid.addWidget(self.jsx_copy_paths_btn, 2, 2)
+        buttons_grid.addWidget(self.jsx_copy_paths_btn, 3, 0)
         
         self.jsx_copy_all_btn = QPushButton(tr("base.copy_all", "Copy All"))
         self.jsx_copy_all_btn.setMinimumWidth(100)
         self.jsx_copy_all_btn.clicked.connect(self._jsx_copy_all)
-        buttons_grid.addWidget(self.jsx_copy_all_btn, 2, 3)
+        buttons_grid.addWidget(self.jsx_copy_all_btn, 3, 1)
         
         layout.addLayout(buttons_grid)
     
