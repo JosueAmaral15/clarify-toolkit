@@ -1,10 +1,17 @@
+# pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
+# pylint: disable=import-error  # Example plugin - imports may not resolve in all contexts
+# pylint: disable=too-few-public-methods  # Example plugin - single activate method sufficient
+# pylint: disable=wrong-import-position  # Path manipulation required before local imports
 import sys
 import os
+import csv
+
+from PySide6.QtWidgets import QFileDialog, QMessageBox
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from plugins.plugin_base import PluginBase
-import csv
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+
 
 class ExportCSVPlugin(PluginBase):
     name = "Exportar JSON para CSV"
