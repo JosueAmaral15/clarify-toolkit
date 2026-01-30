@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QComboBox, QFrame
+    QLabel, QComboBox, QFrame, QScrollArea
 )
 
 from .base_dock import BaseDock
