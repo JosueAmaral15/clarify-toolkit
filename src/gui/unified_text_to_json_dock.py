@@ -1197,7 +1197,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_json_output.setPlainText(json_output or "")
             
             # Add to extraction history
-            self._jsx_add_to_history(path, json_output, mode, parameter)
+            self._jsx_add_to_history(path, json_output, mode, param)
             
             # Show success message
             paths_count = len([line for line in text_output.split('\n') if line.strip()])
@@ -1330,8 +1330,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _jsx_clear_all(self):
         """Clear all JSX mode fields."""
-        self.jsx_path_input.clear()
-        self.jsx_parameter_input.clear()
+        self.jsx_path_edit.clear()
+        self.jsx_param_edit.clear()
         self.jsx_paths_output.clear()
         self.jsx_json_output.clear()
         self.show_info(
@@ -1447,8 +1447,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         index = len(self.extraction_history) - 1 - item.listWidget().row(item)
         if 0 <= index < len(self.extraction_history):
             entry = self.extraction_history[index]
-            self.jsx_path_input.setText(entry['path'])
-            self.jsx_parameter_input.setText(entry.get('parameter', ''))
+            self.jsx_path_edit.setText(entry['path'])
+            self.jsx_param_edit.setText(entry.get('parameter', ''))
             self.jsx_json_output.setPlainText(entry['output'])
             
             # Set mode if possible
