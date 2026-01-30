@@ -10,19 +10,20 @@ This migration establishes the version tracking system.
 Future migrations can reference this as an example.
 """
 
-from src.migrations.base import Migration
 from typing import Dict, Any
+
+from src.migrations.base import Migration
 
 
 class MigrationV2_9_91(Migration):
     """
     First migration: Establish version tracking system.
-    
+
     v2.9.90 → v2.9.91
     """
-    
+
     version = "2.9.91"
-    
+
     def migrate_qsettings(self, settings) -> bool:
         """
         No QSettings changes in this version.
@@ -30,7 +31,7 @@ class MigrationV2_9_91(Migration):
         """
         # Save version (already handled by MigrationManager)
         return True
-    
+
     def migrate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
         Add app.version field to config.yaml if missing.
@@ -38,9 +39,9 @@ class MigrationV2_9_91(Migration):
         # Ensure app section exists
         if "app" not in config:
             config["app"] = {}
-        
+
         # Add version tracking
         if "version" not in config.get("app", {}):
             config["app"]["version"] = self.version
-        
+
         return config
