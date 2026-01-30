@@ -77,11 +77,23 @@ class UnifiedTextToJsonDock(BaseDock):
         separator.setFrameShadow(QFrame.Sunken)
         main_layout.addWidget(separator)
         
-        # Container for embedded tool widget
+        # Create scroll area for tool content
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
+        # Container for embedded tool widget (goes inside scroll area)
         self.tool_container = QWidget()
         self.tool_layout = QVBoxLayout(self.tool_container)
         self.tool_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(self.tool_container)
+        
+        # Put container in scroll area
+        scroll_area.setWidget(self.tool_container)
+        
+        # Add scroll area to main layout
+        main_layout.addWidget(scroll_area, 1)  # Stretch factor 1
         
         # Set main widget
         self.setWidget(main_widget)

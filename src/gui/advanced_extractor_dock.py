@@ -380,6 +380,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # Paths tab
         self.paths_output = QPlainTextEdit()
         self.paths_output.setReadOnly(True)
+        self.paths_output.setMinimumHeight(300)
         self.paths_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.paths_output.customContextMenuRequested.connect(self._show_context_menu)
         self.output_tabs.addTab(
@@ -390,6 +391,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # JSON tab
         self.json_output = QPlainTextEdit()
         self.json_output.setReadOnly(True)
+        self.json_output.setMinimumHeight(300)
         self.json_output.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.json_output.customContextMenuRequested.connect(self._show_context_menu)
         self.output_tabs.addTab(

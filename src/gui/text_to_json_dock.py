@@ -219,6 +219,7 @@ class TextToJsonDock(BaseDock):
         self.input_label = QLabel(tr("text_to_json.lbl_input"))
         self.input_text = QPlainTextEdit()
         self.input_text.setPlaceholderText(tr("text_to_json.input_placeholder"))
+        self.input_text.setMinimumHeight(200)
         self.input_text.textChanged.connect(self._on_input_changed)
         
         # Format selector
@@ -299,6 +300,7 @@ class TextToJsonDock(BaseDock):
         self.output_label = QLabel(tr("text_to_json.lbl_output"))
         self.output_text = QPlainTextEdit()
         self.output_text.setReadOnly(True)
+        self.output_text.setMinimumHeight(200)
         self.output_text.setPlaceholderText(tr("text_to_json.output_placeholder"))
         
         # Status label
