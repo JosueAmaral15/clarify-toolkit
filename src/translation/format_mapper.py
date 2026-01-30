@@ -204,6 +204,154 @@ class FormatMapper:
         return tagged_text.strip()
     
     @staticmethod
+    def extract_formatted_text_from_odt(file_path: str) -> str:
+        """
+        Extract text from ODT with formatting tags.
+        
+        Args:
+            file_path: Path to .odt file
+            
+        Returns:
+            Text with embedded format tags
+        """
+        from odf import opendocument, text as odf_text, style as odf_style
+        from odf.element import Text as ODFText
+        
+        doc = opendocument.load(file_path)
+        segments: List[TextSegment] = []
+        
+        # Build style dictionary for quick lookup
+        styles = {}
+        for style_element in doc.automaticstyles.childNodes + doc.styles.childNodes:
+            if hasattr(style_element, 'getAttribute'):
+                style_name = style_element.getAttribute('name')
+                if style_name:
+                    styles[style_name] = style_element
+        
+        # Process all paragraphs
+        for para in doc.getElementsByType(odf_text.P):
+            para_style_name = para.getAttribute('stylename')
+            para_style = styles.get(para_style_name) if para_style_name else None
+            
+            # Extract paragraph-level formatting
+            para_format_bits = 0
+            para_metadata_parts = []
+            
+            if para_style:
+                # Check paragraph properties
+                for prop in para_style.getElementsByType(odf_style.ParagraphProperties):
+                    # Alignment
+                    text_align = prop.getAttribute('textalign')
+                    if text_align:
+                        para_format_bits |= FormatBit.ALIGNMENT
+                        align_map = {'start': 'L', 'center': 'C', 'end': 'R', 'justify': 'J'}
+                        para_metadata_parts.append(align_map.get(text_align, 'L'))
+                    
+                    # Line height
+                    line_height = prop.getAttribute('lineheight')
+                    if line_height:
+                        para_format_bits |= FormatBit.LINE_SPACING
+                        # Extract numeric value (e.g., "150%" -> "1.5")
+                        if '%' in str(line_height):
+                            spacing = float(str(line_height).replace('%', '')) / 100.0
+                            para_metadata_parts.append(f"{spacing:.1f}")
+            
+            # Process text content (spans and direct text)
+            para_text_nodes = []
+            
+            def extract_text_recursive(element, current_style_name=None):
+                """Recursively extract text with formatting from element tree."""
+                # Check if this is a Span with its own style
+                if isinstance(element, odf_text.Span):
+                    span_style_name = element.getAttribute('stylename')
+                    current_style_name = span_style_name if span_style_name else current_style_name
+                
+                # Process child nodes
+                for child in element.childNodes:
+                    if isinstance(child, ODFText):
+                        # This is actual text content
+                        text_content = str(child)
+                        if text_content:
+                            para_text_nodes.append((text_content, current_style_name))
+                    elif hasattr(child, 'childNodes'):
+                        # Recursively process container elements
+                        extract_text_recursive(child, current_style_name)
+            
+            extract_text_recursive(para)
+            
+            # Convert extracted text nodes to segments
+            for text_content, style_name in para_text_nodes:
+                segment = TextSegment(text=text_content)
+                metadata_parts = []
+                
+                # Apply text formatting from style
+                if style_name and style_name in styles:
+                    text_style = styles[style_name]
+                    
+                    for text_prop in text_style.getElementsByType(odf_style.TextProperties):
+                        # Bold
+                        font_weight = text_prop.getAttribute('fontweight')
+                        if font_weight == 'bold':
+                            segment.add_format(FormatBit.BOLD)
+                        
+                        # Italic
+                        font_style = text_prop.getAttribute('fontstyle')
+                        if font_style == 'italic':
+                            segment.add_format(FormatBit.ITALIC)
+                        
+                        # Underline
+                        text_underline_style = text_prop.getAttribute('textunderlinestyle')
+                        if text_underline_style and text_underline_style != 'none':
+                            segment.add_format(FormatBit.UNDERLINE)
+                        
+                        # Font color
+                        color = text_prop.getAttribute('color')
+                        if color:
+                            segment.add_format(FormatBit.FONT_COLOR)
+                            # ODT colors are like "#FF0000", strip the #
+                            hex_color = str(color).replace('#', '')
+                            metadata_parts.append(hex_color)
+                        
+                        # Font size
+                        font_size = text_prop.getAttribute('fontsize')
+                        if font_size:
+                            segment.add_format(FormatBit.FONT_SIZE)
+                            # ODT sizes are like "12pt", strip "pt"
+                            size_value = str(font_size).replace('pt', '')
+                            metadata_parts.append(size_value)
+                        
+                        # Font family
+                        font_family = text_prop.getAttribute('fontfamily')
+                        if font_family:
+                            segment.add_format(FormatBit.FONT_FAMILY)
+                            # Remove quotes if present
+                            family_name = str(font_family).strip("'\"")
+                            metadata_parts.append(family_name)
+                
+                # Store metadata
+                if metadata_parts:
+                    segment.metadata = ",".join(metadata_parts)
+                
+                # Store paragraph-level formatting
+                segment.paragraph_format = para_format_bits
+                if para_metadata_parts:
+                    segment.paragraph_metadata = ",".join(para_metadata_parts)
+                
+                segments.append(segment)
+            
+            # Add paragraph break
+            if para_text_nodes:
+                segments.append(TextSegment(text="\n\n"))
+        
+        # Convert segments to tagged text
+        tagged_text = "".join(seg.to_tagged_text() for seg in segments)
+        
+        # Clean up excessive newlines
+        tagged_text = re.sub(r'\n{3,}', '\n\n', tagged_text)
+        
+        return tagged_text.strip()
+    
+    @staticmethod
     def remove_tags(tagged_text: str) -> str:
         """
         Remove all format tags from text.

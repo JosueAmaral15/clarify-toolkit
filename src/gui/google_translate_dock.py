@@ -397,7 +397,7 @@ class GoogleTranslateDock(BaseDock):
 
         if file_path:
             try:
-                # Use format mapper for DOCX files to extract formatting
+                # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
                     # Extract formatted text with tags (backend only)
                     formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
@@ -409,6 +409,17 @@ class GoogleTranslateDock(BaseDock):
                     plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
                     
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
+                elif file_path.lower().endswith('.odt'):
+                    # Extract formatted text with tags (backend only)
+                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_odt(file_path)
+                    
+                    # Parse tags to get segments (store formatting)
+                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    
+                    # Extract ONLY plain text for UI display (no tags visible to user)
+                    plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
+                    
+                    self.lbl_status.setText(f"ODT loaded with formatting. {len(plain_text)} characters.")
                 else:
                     # Use plain text parser for other file types
                     plain_text = extract_text_from_document(file_path)
@@ -446,10 +457,19 @@ class GoogleTranslateDock(BaseDock):
                 return
 
             try:
-                # Use format mapper for DOCX files to extract formatting
+                # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
                     # Extract formatted text with tags (backend only)
                     formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    
+                    # Parse tags to get segments (store formatting)
+                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    
+                    # Keep tagged text for translation (tags go to Google Translate)
+                    text_to_translate = formatted_text_with_tags
+                elif file_path.lower().endswith('.odt'):
+                    # Extract formatted text with tags (backend only)
+                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_odt(file_path)
                     
                     # Parse tags to get segments (store formatting)
                     self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
@@ -686,6 +706,16 @@ class GoogleTranslateDock(BaseDock):
         
         if file_path:
             try:
+                # Add correct extension if missing
+                if not file_path.lower().endswith(('.docx', '.odt', '.txt')):
+                    # Determine extension from selected filter
+                    if 'docx' in selected_filter.lower():
+                        file_path += '.docx'
+                    elif 'odt' in selected_filter.lower() or 'opendocument' in selected_filter.lower():
+                        file_path += '.odt'
+                    else:
+                        file_path += '.txt'
+                
                 # Determine output format from file extension
                 if file_path.lower().endswith('.docx'):
                     # Save as DOCX with formatting restored
