@@ -1,6 +1,31 @@
 """
 Advanced Parameter Extractor Dock (v2.9.115)
 
+⚠️ DEPRECATED - Scheduled for removal in v3.1.0
+===============================================
+
+This tool has been merged into the Unified Text to JSON Converter.
+
+Migration Path:
+- Use "Text to JSON Converter" from Tools menu
+- Select "JSX/HTML Extraction" mode from dropdown
+- All 26 features from this tool are available in the unified tool
+- New features added: TypeScript export, Exclude numeric keys, Skip empty values
+
+Deprecated: 2026-01-30 (v2.9.116)
+Removal: Planned for v3.1.0
+Replacement: src/gui/unified_text_to_json_dock.py (Mode: JSX/HTML Extraction)
+
+Note: The backend (src/extractors/advanced_extractor.py) remains unchanged and
+is still used by the unified tool. Only the GUI dock is deprecated.
+
+See: UNIFIED_TOOL_DESIGN_SPECIFICATION_3.md
+See: TOOL_CONSOLIDATION_INVESTIGATION_REPORT_3.md
+
+---
+
+Original Description:
+
 GUI for the advanced parameter extraction tool from add/main.py.
 Provides both JSX/TSX and generic mode extraction with hierarchical JSON generation.
 """
