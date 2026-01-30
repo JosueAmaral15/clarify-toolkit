@@ -679,22 +679,21 @@ class GoogleTranslateDock(BaseDock):
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def _save_as(self):
-        """Save translation result to file (TXT or DOCX with formatting)."""
+        """Save translation result to file (TXT, DOCX, or ODT based on dropdown selection)."""
         result = self.text_output.toPlainText()
         if not result:
             return
         
         # Determine default format based on whether we have stored formatting
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"translation_{timestamp}"  # NO extension - dropdown determines it
         
         if self._translated_segments:
-            # Has formatting data - suggest DOCX
-            default_filename = f"translation_{timestamp}.docx"
-            file_filter = "Word Documents (*.docx);;OpenDocument (*.odt);;Text Files (*.txt);;All Files (*)"
+            # Has formatting data - suggest DOCX first
+            file_filter = "Word Documents (*.docx);;OpenDocument (*.odt);;Text Files (*.txt)"
         else:
-            # Plain text - suggest TXT
-            default_filename = f"translation_{timestamp}.txt"
-            file_filter = "Text Files (*.txt);;Word Documents (*.docx);;OpenDocument (*.odt);;All Files (*)"
+            # Plain text - suggest TXT first
+            file_filter = "Text Files (*.txt);;Word Documents (*.docx);;OpenDocument (*.odt)"
         
         # Open save file dialog
         file_path, selected_filter = QFileDialog.getSaveFileName(
@@ -706,25 +705,23 @@ class GoogleTranslateDock(BaseDock):
         
         if file_path:
             try:
-                # Add correct extension if missing
-                if not file_path.lower().endswith(('.docx', '.odt', '.txt')):
-                    # Determine extension from selected filter
-                    if 'docx' in selected_filter.lower():
+                # Determine extension from selected filter (dropdown)
+                if 'docx' in selected_filter.lower() or 'word' in selected_filter.lower():
+                    # User selected Word Documents
+                    if not file_path.lower().endswith('.docx'):
                         file_path += '.docx'
-                    elif 'odt' in selected_filter.lower() or 'opendocument' in selected_filter.lower():
-                        file_path += '.odt'
-                    else:
-                        file_path += '.txt'
-                
-                # Determine output format from file extension
-                if file_path.lower().endswith('.docx'):
-                    # Save as DOCX with formatting restored
                     self._save_as_docx(file_path)
-                elif file_path.lower().endswith('.odt'):
-                    # Save as ODT with formatting restored
+                    
+                elif 'odt' in selected_filter.lower() or 'opendocument' in selected_filter.lower():
+                    # User selected OpenDocument
+                    if not file_path.lower().endswith('.odt'):
+                        file_path += '.odt'
                     self._save_as_odt(file_path)
+                    
                 else:
-                    # Save as plain text (use text from UI - already plain)
+                    # User selected Text Files (or unknown - default to TXT)
+                    if not file_path.lower().endswith('.txt'):
+                        file_path += '.txt'
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(result)
                  
