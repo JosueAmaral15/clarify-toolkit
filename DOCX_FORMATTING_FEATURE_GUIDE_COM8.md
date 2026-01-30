@@ -1,8 +1,8 @@
 # DOCX Formatting Feature - User Guide
 
-**Version**: 2.0 (Phase 2 Complete)  
+**Version**: 3.0 (Tags Backend-Only Update)  
 **Author**: COM8 (Programmer #8)  
-**Date**: January 29, 2026
+**Date**: January 30, 2026
 
 ---
 
@@ -10,22 +10,26 @@
 
 The Google Translate tool now supports translating DOCX files while preserving formatting. This means you can translate documents with **bold**, *italic*, colors, fonts, and sizes, and get a translated DOCX file with all formatting intact.
 
+**🎉 New in Version 3.0:** Formatting tags are now completely invisible to users! The translation happens seamlessly in the background.
+
 ---
 
 ## How It Works
 
-### The Magic: Format Tags
+### The Magic: Format Tags (Backend Only)
 
-Behind the scenes, the system converts formatting into invisible tags:
+Behind the scenes, the system converts formatting into invisible tags that you never see:
 
 ```
-Input:  "Hello world"  (world is bold)
-Step 1: "Hello <1>world</1>"  (extract with tags)
-Step 2: "Olá <1>mundo</1>"    (translate - tags preserved)
-Step 3: "Olá mundo"           (restore formatting in DOCX)
+What you see:          What happens internally:
+Input:  "Hello world"  →  "Hello <1>world</1>" (tags added)
+                       →  Sent to Google Translate
+                       →  "Olá <1>mundo</1>" (tags preserved)
+Output: "Olá mundo"    ←  Tags removed, formatting stored
+Save DOCX:             ←  Formatting applied from stored data
 ```
 
-The `<1>` tag means "bold". Google Translate doesn't understand the tag, so it leaves it alone!
+**Important**: You never see the `<1>` tags! They exist only internally during translation to preserve formatting. The UI always shows clean, plain text.
 
 ---
 
@@ -50,12 +54,13 @@ The `<1>` tag means "bold". Google Translate doesn't understand the tag, so it l
 1. Open the Google Translate tool (Tools → Google Translate)
 2. Check **"Translate file instead of text"**
 3. Click **"Browse..."** and select your `.docx` file
-4. The text preview will show your document with format tags
+4. The text preview will show your document as **plain text** (no tags visible)
 
 **Example preview:**
 ```
-Hello <1>world</1>! This is <2>italic</2> text.
+Hello world! This is italic text.
 ```
+*(Formatting is preserved internally - you just see clean text)*
 
 ### Step 2: Translate
 
@@ -63,46 +68,45 @@ Hello <1>world</1>! This is <2>italic</2> text.
 2. Select target language (e.g., Spanish)
 3. Click **"🌐 Translate"**
 4. Wait for translation to complete
+5. Result shows as **plain text** (formatting preserved internally)
 
 ### Step 3: Save with Formatting
 
-1. **IMPORTANT**: Uncheck **"Remove formatting tags"** checkbox
-   - If checked: saves as plain TXT (no formatting)
-   - If unchecked: saves as DOCX (with formatting)
+1. Click **"💾 Save As..."**
 
-2. Click **"💾 Save As..."**
+2. Choose file type:
+   - **"Word Documents (*.docx)"** → formatted output (formatting restored automatically!)
+   - **"Text Files (*.txt)"** → plain text only
 
-3. Choose file type:
-   - **"Word Documents (*.docx)"** → formatted output
-   - **"Text Files (*.txt)"** → plain text (tags removed)
-
-4. Enter filename and click Save
+3. Enter filename and click Save
 
 5. Open the saved DOCX in Word/LibreOffice → formatting restored! ✨
 
 ---
 
-## Tag System Explained
+## Tag System Explained (For Developers/Advanced Users)
 
-### Simple Tags (No Metadata)
+**Note**: These tags are completely invisible to end users! This section is for developers or curious users who want to understand how formatting is preserved during translation.
 
-| Tag | Meaning | Example |
-|-----|---------|---------|
-| `<1>` | Bold | `<1>bold</1>` |
-| `<2>` | Italic | `<2>italic</2>` |
-| `<3>` | Bold + Italic | `<3>both</3>` |
-| `<4>` | Underline | `<4>underline</4>` |
+### Simple Tags (Backend Only)
 
-### Tags with Metadata (Advanced)
+| Tag | Meaning | Binary Value |
+|-----|---------|--------------|
+| `<1>` | Bold | 2^0 = 1 |
+| `<2>` | Italic | 2^1 = 2 |
+| `<3>` | Bold + Italic | 1+2 = 3 |
+| `<4>` | Underline | 2^2 = 4 |
+
+### Tags with Metadata (Advanced - Backend Only)
 
 Format: `<tag_id:metadata>text</tag_id>`
 
 | Tag | Meaning | Example |
 |-----|---------|---------|
-| `<17:FF0000>` | Bold + Red | `<17:FF0000>red bold</17>` |
-| `<32:18>` | 18pt size | `<32:18>large</32>` |
-| `<64:Arial>` | Arial font | `<64:Arial>arial</64>` |
-| `<82:0000FF,Arial>` | Italic + Blue + Arial | Complex! |
+| `<17:FF0000>` | Bold + Red | Bold (1) + Color (16) = 17 |
+| `<32:18>` | 18pt size | Size bit + 18pt metadata |
+| `<64:Arial>` | Arial font | Font bit + Arial metadata |
+| `<82:0000FF,Arial>` | Italic + Blue + Arial | 2+16+64 = 82 |
 
 **Binary Encoding:**
 - Bold = 1 (2^0)
@@ -113,6 +117,8 @@ Format: `<tag_id:metadata>text</tag_id>`
 - Font = 64 (2^6)
 - Combined = sum (e.g., 17 = 1+16 = bold+color)
 
+**Why numeric tags?** Numbers can't be translated by Google Translate, ensuring formatting codes survive the translation process!
+
 ---
 
 ## Tips & Tricks
@@ -122,6 +128,7 @@ Format: `<tag_id:metadata>text</tag_id>`
 - Test with small documents first
 - Keep original DOCX as backup
 - Use for supported languages (see tested list below)
+- Trust the process - formatting is preserved even though you don't see tags!
 
 ### ⚠️ DON'T:
 - Don't expect perfect formatting for very complex documents
