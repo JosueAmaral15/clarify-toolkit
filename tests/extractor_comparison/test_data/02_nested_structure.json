@@ -1,0 +1,18 @@
+{
+  "user": {
+    "id": 123,
+    "profile": {
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "address": {
+        "street": "123 Main St",
+        "city": "New York",
+        "zipCode": "10001"
+      }
+    },
+    "settings": {
+      "theme": "dark",
+      "notifications": true
+    }
+  }
+}

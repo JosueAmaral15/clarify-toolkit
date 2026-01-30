@@ -1,0 +1,55 @@
+{
+  "company": {
+    "name": "Acme Corp",
+    "departments": {
+      "engineering": {
+        "employees": [
+          {
+            "id": 101,
+            "name": "Alice",
+            "skills": ["Python", "JavaScript", "React"]
+          },
+          {
+            "id": 102,
+            "name": "Bob",
+            "skills": ["Java", "Spring", "Docker"]
+          }
+        ],
+        "manager": {
+          "id": 100,
+          "name": "Charlie",
+          "contact": {
+            "email": "charlie@acme.com",
+            "phone": "+1-555-0100"
+          }
+        }
+      },
+      "sales": {
+        "employees": [
+          {
+            "id": 201,
+            "name": "Diana",
+            "region": "North"
+          },
+          {
+            "id": 202,
+            "name": "Eve",
+            "region": "South"
+          }
+        ],
+        "targets": {
+          "q1": 100000,
+          "q2": 120000,
+          "q3": 150000,
+          "q4": 180000
+        }
+      }
+    },
+    "metadata": {
+      "founded": 2010,
+      "headquarters": "San Francisco",
+      "revenue": 50000000,
+      "public": true
+    }
+  }
+}
