@@ -153,6 +153,11 @@ class GoogleTranslateDock(BaseDock):
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
         self._last_detected_lang = None  # Store detected language from last translation
+        
+        # Store formatting data (backend only - never shown to user)
+        self._source_segments = []  # Original document formatting (TextSegment list)
+        self._translated_segments = []  # Translated document formatting (TextSegment list)
+        
         super().__init__(tr("menu.tools.google_translate"), parent)
 
     def _setup_ui(self):
@@ -398,19 +403,28 @@ class GoogleTranslateDock(BaseDock):
 
         if file_path:
             try:
-                # Use format mapper for DOCX files to extract with tags
+                # Use format mapper for DOCX files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    content = FormatMapper.extract_formatted_text_from_docx(file_path)
-                    self.lbl_status.setText(f"DOCX loaded with formatting tags. {len(content)} characters.")
+                    # Extract formatted text with tags (backend only)
+                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    
+                    # Parse tags to get segments (store formatting)
+                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    
+                    # Extract ONLY plain text for UI display (no tags visible to user)
+                    plain_text = ''.join(seg.text for seg in self._source_segments)
+                    
+                    self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 else:
                     # Use plain text parser for other file types
-                    content = extract_text_from_document(file_path)
-                    self.lbl_status.setText(f"File loaded successfully. {len(content)} characters.")
+                    plain_text = extract_text_from_document(file_path)
+                    self._source_segments = []  # No formatting for plain text files
+                    self.lbl_status.setText(f"File loaded successfully. {len(plain_text)} characters.")
 
                 self.ed_file_path.setCurrentText(file_path)
-                self.text_input.setPlainText(content[:5000])  # Show preview
+                self.text_input.setPlainText(plain_text[:5000])  # Show preview (plain text only)
 
-                if len(content) > 5000:
+                if len(plain_text) > 5000:
                     current_status = self.lbl_status.text()
                     self.lbl_status.setText(f"{current_status} Showing first 5000 chars.")
 
@@ -438,12 +452,20 @@ class GoogleTranslateDock(BaseDock):
                 return
 
             try:
-                # Use format mapper for DOCX files to extract with tags
+                # Use format mapper for DOCX files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    text_to_translate = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    # Extract formatted text with tags (backend only)
+                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    
+                    # Parse tags to get segments (store formatting)
+                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    
+                    # Keep tagged text for translation (tags go to Google Translate)
+                    text_to_translate = formatted_text_with_tags
                 else:
                     # Use plain text parser for other file types
                     text_to_translate = extract_text_from_document(file_path)
+                    self._source_segments = []  # No formatting for plain text files
             except DocumentParserError as e:
                 QMessageBox.warning(
                     self,
@@ -459,7 +481,7 @@ class GoogleTranslateDock(BaseDock):
                 )
                 return
         else:
-            # Text mode
+            # Text mode - get plain text from UI
             text_to_translate = self.text_input.toPlainText().strip()
             if not text_to_translate:
                 QMessageBox.warning(
