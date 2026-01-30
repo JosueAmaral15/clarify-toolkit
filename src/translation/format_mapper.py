@@ -275,7 +275,8 @@ class FormatMapper:
             def extract_text_recursive(element, current_style_name=None):
                 """Recursively extract text with formatting from element tree."""
                 # Check if this is a Span with its own style
-                if isinstance(element, odf_text.Span):
+                # Note: odf_text.Span is a factory function, not a class, so we check qname
+                if hasattr(element, 'qname') and element.qname[1] == 'span':
                     try:
                         span_style_name = element.getAttribute('stylename')
                         current_style_name = span_style_name if span_style_name else current_style_name
