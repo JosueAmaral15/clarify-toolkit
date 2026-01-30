@@ -1,6 +1,3 @@
-import os
-import json
-
 class CloudSyncProvider:
     """
     Abstração para provedores de nuvem.
