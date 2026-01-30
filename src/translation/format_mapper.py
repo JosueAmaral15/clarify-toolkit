@@ -267,10 +267,11 @@ class FormatMapper:
         normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)  # Closing tags
         
         # Pattern: <tag_id:metadata>text</tag_id> or <tag_id>text</tag_id>
-        pattern = r'<(\d+)(?::([^>]+))?>(.*?)</\1>'
+        # Use [\s\S] instead of . to match newlines
+        pattern = r'<(\d+)(?::([^>]+))>([\s\S]*?)</\1>'
         
         last_pos = 0
-        for match in re.finditer(pattern, normalized):
+        for match in re.finditer(pattern, normalized, re.DOTALL):
             # Add any plain text before this tag
             if match.start() > last_pos:
                 plain = normalized[last_pos:match.start()]
