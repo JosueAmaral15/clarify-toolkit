@@ -1475,7 +1475,104 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _jsx_swap_outputs(self):
         """Swap JSON output back to JSX code (JSON → JSX conversion)."""
-        self.show_info(
-            tr("text_to_json.swap", "Swap"),
-            tr("text_to_json.swap_coming_soon", "JSON → JSX conversion feature coming soon in next phase!")
-        )
+        json_text = self.jsx_json_output.toPlainText().strip()
+        
+        if not json_text:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", "No JSON output to convert. Run extraction first.")
+            )
+            return
+        
+        try:
+            # Parse JSON
+            json_data = json.loads(json_text)
+            
+            # Convert JSON to JSX
+            jsx_output = self._json_to_jsx(json_data)
+            
+            # Put JSX output in paths tab (since it's text output)
+            self.jsx_paths_output.setPlainText(jsx_output)
+            
+            # Switch to Paths tab to show result
+            self.jsx_output_tabs.setCurrentIndex(0)
+            
+            self.show_info(
+                tr("text_to_json.swap", "Swap Complete"),
+                tr("text_to_json.swap_success", f"JSON converted to JSX code! ({len(jsx_output)} characters)")
+            )
+            
+        except json.JSONDecodeError as e:
+            self.show_error(
+                tr("text_to_json.invalid_json", "Invalid JSON"),
+                tr("text_to_json.invalid_json_message", f"Cannot convert invalid JSON:\n\n{str(e)}")
+            )
+        except Exception as e:
+            self.show_error(
+                tr("text_to_json.error", "Error"),
+                tr("text_to_json.swap_error", f"Swap failed: {str(e)}")
+            )
+    
+    def _json_to_jsx(self, data: Any, tag_name: str = "Component", indent_level: int = 0) -> str:
+        """
+        Convert JSON data to JSX code (basic implementation).
+        
+        Args:
+            data: JSON data (dict, list, or primitive)
+            tag_name: Tag name for the component
+            indent_level: Current indentation level
+        
+        Returns:
+            JSX code string
+        """
+        indent = "  " * indent_level
+        
+        if isinstance(data, dict):
+            # Dictionary → JSX element with attributes
+            if not data:
+                return f"{indent}<{tag_name} />"
+            
+            # Separate text content from attributes
+            text_content = data.pop('_text', None) if '_text' in data else None
+            children = data.pop('_children', None) if '_children' in data else None
+            
+            # Build attributes
+            attrs = []
+            for key, value in data.items():
+                if isinstance(value, (str, int, float, bool)):
+                    if isinstance(value, bool):
+                        attrs.append(f'{key}={{{str(value).lower()}}}')
+                    elif isinstance(value, str):
+                        attrs.append(f'{key}="{value}"')
+                    else:
+                        attrs.append(f'{key}={{{value}}}')
+            
+            attrs_str = " " + " ".join(attrs) if attrs else ""
+            
+            # Self-closing tag if no content
+            if not text_content and not children:
+                return f"{indent}<{tag_name}{attrs_str} />"
+            
+            # With content
+            jsx = f"{indent}<{tag_name}{attrs_str}>\n"
+            if text_content:
+                jsx += f"{indent}  {text_content}\n"
+            if children:
+                if isinstance(children, list):
+                    for i, child in enumerate(children):
+                        jsx += self._json_to_jsx(child, f"Item{i+1}", indent_level + 1) + "\n"
+                else:
+                    jsx += f"{indent}  {children}\n"
+            jsx += f"{indent}</{tag_name}>"
+            return jsx
+            
+        elif isinstance(data, list):
+            # List → Multiple JSX elements
+            jsx_lines = []
+            for i, item in enumerate(data):
+                jsx_lines.append(self._json_to_jsx(item, f"{tag_name}{i+1}", indent_level))
+            return "\n".join(jsx_lines)
+        
+        else:
+            # Primitive → Text content
+            return f"{indent}{data}"
