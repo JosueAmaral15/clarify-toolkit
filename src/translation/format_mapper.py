@@ -210,6 +210,10 @@ class FormatMapper:
                 if run.font.superscript:
                     segment.add_format(FormatBit.SUPERSCRIPT)
                 
+                # Detect subscript (Session 20)
+                if run.font.subscript:
+                    segment.add_format(FormatBit.SUBSCRIPT)
+                
                 # Detect font size
                 if run.font.size:
                     segment.add_format(FormatBit.FONT_SIZE)
@@ -381,6 +385,11 @@ class FormatMapper:
                         text_position = get_attr('text-position')
                         if text_position and 'super' in str(text_position).lower():
                             segment.add_format(FormatBit.SUPERSCRIPT)
+                        
+                        # Subscript (Session 20)
+                        # Note: Check same text-position attribute but for 'sub'
+                        if text_position and 'sub' in str(text_position).lower() and 'super' not in str(text_position).lower():
+                            segment.add_format(FormatBit.SUBSCRIPT)
                         
                         # Font color
                         color = get_attr('color')
@@ -653,6 +662,10 @@ class FormatMapper:
         if format_bits & FormatBit.SUPERSCRIPT:
             run.font.superscript = True
         
+        # Apply subscript (Session 20)
+        if format_bits & FormatBit.SUBSCRIPT:
+            run.font.subscript = True
+        
         # Apply font size (metadata: points)
         if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
             size_str = metadata_parts[metadata_index].strip()
@@ -803,6 +816,10 @@ class FormatMapper:
             # Apply superscript (Session 19)
             if format_bits & FormatBit.SUPERSCRIPT:
                 text_props.setAttribute("textposition", "super 58%")
+            
+            # Apply subscript (Session 20)
+            if format_bits & FormatBit.SUBSCRIPT:
+                text_props.setAttribute("textposition", "sub -58%")
             
             style.addElement(text_props)
             doc.automaticstyles.addElement(style)
