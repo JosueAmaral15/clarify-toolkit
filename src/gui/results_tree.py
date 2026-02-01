@@ -86,9 +86,9 @@ class ResultsTree(QTreeWidget):
 
                     # Update status label if available
                     if self._status_label:
-                    self._status_label.setText(
-                        f"📍 Position: Line {line}, Column {col} | File: {file_path}"
-                    )
+                        self._status_label.setText(
+                            f"📍 Position: Line {line}, Column {col} | File: {file_path}"
+                        )
             except Exception:
                 pass
         else:
