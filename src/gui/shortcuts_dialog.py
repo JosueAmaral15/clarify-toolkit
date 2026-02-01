@@ -37,7 +37,6 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
-    QWidget,
 )
 
 from src.i18n.translator import tr
