@@ -58,6 +58,7 @@ class FormatBit:
     # Extended paragraph formatting (bits 16+) - Session 26+
     SPACE_BEFORE_AFTER = 1 << 16  # 2^16 = 65536
     KEEP_LINES_TOGETHER = 1 << 17  # 2^17 = 131072
+    KEEP_WITH_NEXT = 1 << 18  # 2^18 = 262144
 
 
 @dataclass
@@ -199,6 +200,11 @@ class FormatMapper:
             # Detect keep lines together (Session 27)
             if pf.keep_together:
                 para_format_bits |= FormatBit.KEEP_LINES_TOGETHER
+                # Boolean flag, no metadata needed
+            
+            # Detect keep with next (Session 28)
+            if pf.keep_with_next:
+                para_format_bits |= FormatBit.KEEP_WITH_NEXT
                 # Boolean flag, no metadata needed
             
             # Process each run (a run is a continuous text with same formatting)
@@ -425,6 +431,15 @@ class FormatMapper:
                         keep_together = prop.getAttribute('keeptogether')
                         if keep_together and str(keep_together).lower() == 'always':
                             para_format_bits |= FormatBit.KEEP_LINES_TOGETHER
+                    except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Keep with next (Session 28)
+                        # ODT attribute: fo:keep-with-next = "always"
+                        keep_with_next = prop.getAttribute('keepwithnext')
+                        if keep_with_next and str(keep_with_next).lower() == 'always':
+                            para_format_bits |= FormatBit.KEEP_WITH_NEXT
                     except (ValueError, KeyError):
                         pass
             
@@ -935,6 +950,10 @@ class FormatMapper:
         # Apply keep lines together (Session 27)
         if format_bits & FormatBit.KEEP_LINES_TOGETHER:
             paragraph.paragraph_format.keep_together = True
+        
+        # Apply keep with next (Session 28)
+        if format_bits & FormatBit.KEEP_WITH_NEXT:
+            paragraph.paragraph_format.keep_with_next = True
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1129,6 +1148,10 @@ class FormatMapper:
             # Apply keep lines together (Session 27)
             if para_format_bits & FormatBit.KEEP_LINES_TOGETHER:
                 para_props.setAttribute("keeptogether", "always")
+            
+            # Apply keep with next (Session 28)
+            if para_format_bits & FormatBit.KEEP_WITH_NEXT:
+                para_props.setAttribute("keepwithnext", "always")
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
