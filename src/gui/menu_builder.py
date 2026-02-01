@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PySide6.QtGui import QAction, QKeySequence
+    from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module, QKeySequence
     from PySide6.QtWidgets import QActionGroup, QMenuBar
 
     from ..app import MainWindow
@@ -39,20 +39,20 @@ class MenuBuilder:
 
         MenuBuilder._build_file_menu(main_window, menu_bar)
         MenuBuilder._build_edit_menu(main_window, menu_bar)
-        MenuBuilder._build_tools_menu(main_window, bar)
-        MenuBuilder._build_view_menu(main_window, bar)
-        MenuBuilder._build_themes_menu(main_window, bar)
-        MenuBuilder._build_settings_menu(main_window, bar)
-        MenuBuilder._build_plugins_menu(main_window, bar)
-        MenuBuilder._build_help_menu(main_window, bar)
-        MenuBuilder._build_about_menu(main_window, bar)
+        MenuBuilder._build_tools_menu(main_window, menu_bar)
+        MenuBuilder._build_view_menu(main_window, menu_bar)
+        MenuBuilder._build_themes_menu(main_window, menu_bar)
+        MenuBuilder._build_settings_menu(main_window, menu_bar)
+        MenuBuilder._build_plugins_menu(main_window, menu_bar)
+        MenuBuilder._build_help_menu(main_window, menu_bar)
+        MenuBuilder._build_about_menu(main_window, menu_bar)
         MenuBuilder._setup_shortcuts(main_window)
 
     @staticmethod
-    def _build_file_menu(main_window, bar) -> None:
+    def _build_file_menu(main_window, menu_bar) -> None:
         """Build File menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_file = bar.addMenu(tr("menu.file"))
         m_file.setObjectName("m_file")  # For plugin access
@@ -77,10 +77,10 @@ class MenuBuilder:
         m_file.addAction(act_exit)
 
     @staticmethod
-    def _build_edit_menu(main_window, bar) -> None:
+    def _build_edit_menu(main_window, menu_bar) -> None:
         """Build Edit menu with Undo/Redo (Task #12 - v2.9.8)."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_edit = bar.addMenu(tr("menu.edit"))
 
@@ -102,10 +102,10 @@ class MenuBuilder:
         m_edit.addAction(act_clear_history)
 
     @staticmethod
-    def _build_tools_menu(main_window, bar) -> None:
+    def _build_tools_menu(main_window, menu_bar) -> None:
         """Build Tools menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_tools = bar.addMenu(tr("menu.tools"))
 
@@ -173,10 +173,10 @@ class MenuBuilder:
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
 
     @staticmethod
-    def _build_view_menu(main_window, bar) -> None:
+    def _build_view_menu(main_window, menu_bar) -> None:
         """Build View menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_view = bar.addMenu(tr("menu.view"))
 
@@ -207,10 +207,10 @@ class MenuBuilder:
         main_window.act_layout_manage.triggered.connect(main_window._manage_layouts)
 
     @staticmethod
-    def _build_themes_menu(main_window, bar) -> None:
+    def _build_themes_menu(main_window, menu_bar) -> None:
         """Build Themes menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_themes = bar.addMenu(tr("menu.themes"))
 
@@ -226,10 +226,10 @@ class MenuBuilder:
         main_window.act_theme_system.setChecked(True)
 
     @staticmethod
-    def _build_settings_menu(main_window, bar) -> None:
+    def _build_settings_menu(main_window, menu_bar) -> None:
         """Build Settings menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction, QActionGroup
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module, QActionGroup
 
         m_settings = bar.addMenu(tr("menu.settings"))
         act_preferences = QAction(tr("menu.settings.preferences"), main_window)
@@ -340,10 +340,10 @@ class MenuBuilder:
         act_clear_recent.triggered.connect(main_window._clear_recent_files)
 
     @staticmethod
-    def _build_plugins_menu(main_window, bar) -> None:
+    def _build_plugins_menu(main_window, menu_bar) -> None:
         """Build Plugins menu (v2.9.109 - Enhanced Plugin System)."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_plugins = bar.addMenu(tr("menu.plugins"))
 
@@ -375,10 +375,10 @@ class MenuBuilder:
                 m_plugins.addAction(act_no_plugins)
 
     @staticmethod
-    def _build_help_menu(main_window, bar) -> None:
+    def _build_help_menu(main_window, menu_bar) -> None:
         """Build Help menu (Task #45 - v2.9.15)."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_help = bar.addMenu(tr("menu.help"))
 
@@ -425,10 +425,10 @@ class MenuBuilder:
         main_window.act_check_updates.triggered.connect(main_window._check_for_updates_manual)
 
     @staticmethod
-    def _build_about_menu(main_window, bar) -> None:
+    def _build_about_menu(main_window, menu_bar) -> None:
         """Build About menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_about = bar.addMenu(tr("menu.about"))
         act_about = QAction(tr("menu.about.clarify"), main_window)
