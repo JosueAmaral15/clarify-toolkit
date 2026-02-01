@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 JSON Editor Tab - Advanced JSON Editing with Tree Navigation
 
@@ -23,13 +20,14 @@ Refactored in v2.9.114 (Phase 2.6):
 - Extracted JsonSearchDialog → src/gui/dialogs/json_search_dialog.py
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy SyntaxHighlighter import
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 from __future__ import annotations
-from typing import Optional, Dict, Any, List, Tuple
+
 import os
 import json
-import re
+from typing import Optional, Tuple
 
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtWidgets import (
@@ -38,12 +36,13 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont, QColor, QTextCursor, QTextCharFormat, QPalette
 
+from src.core.insert import insert_at_line
+from src.gui.panels import InsertPanel, RegexInsertPanel
+from src.i18n.translator import tr, tooltip_tr
+
+from .dialogs import JsonSearchDialog
 from .json_validator import JsonValidator, ValidationResult
 from .widgets import JsonTreeWidget
-from .dialogs import JsonSearchDialog
-from src.gui.panels import InsertPanel, RegexInsertPanel
-from src.core.insert import insert_at_line
-from src.i18n.translator import tr, tooltip_tr
 
 
 class JsonEditorTab(QWidget):
@@ -97,8 +96,10 @@ class JsonEditorTab(QWidget):
         self.btn_format.setToolTip(tooltip_tr("json_editor.tooltip_format"))
 
         self.combo_indent = QComboBox()
-        self.combo_indent.addItems([tr("json_editor.combo_2spaces"), tr("json_editor.combo_4spaces"), tr("json_editor.combo_minify")])
-        self.combo_indent.setToolTip(tooltip_tr("json_editor.tooltip_indent"))
+        self.combo_indent.addItems([
+            tr("json_editor.combo_2spaces"), tr("json_editor.combo_4spaces"),
+            tr("json_editor.combo_minify")
+        ])
 
         self.btn_validate = QPushButton(tr("json_editor.btn_validate"))
         self.btn_validate.setToolTip(tooltip_tr("json_editor.tooltip_validate"))
@@ -185,7 +186,7 @@ class JsonEditorTab(QWidget):
 
     def _connect_signals(self):
         self.btn_regex_insert.clicked.connect(self._toggle_regex_insert_panel)
-        """Connect signals."""
+        # """Connect signals."""  # Commented placeholder
         self.editor.textChanged.connect(self._on_text_changed)
         self.validation_timer.timeout.connect(self._validate)
         self.tree.node_clicked.connect(self._jump_to_line)
@@ -314,11 +315,11 @@ class JsonEditorTab(QWidget):
                 tr("json_editor.msg_insert_complete").format(line=line_no, mode=mode)
             )
 
-        except Exception as e:
+        except Exception as exc:
             QMessageBox.critical(
                 self,
                 tr("json_editor.msg_insert_error_title"),
-                tr("json_editor.msg_insert_error").format(error=str(e))
+                tr("json_editor.msg_insert_error").format(error=str(exc))
             )
 
     def _toggle_regex_insert_panel(self):
@@ -415,7 +416,7 @@ class JsonEditorTab(QWidget):
                 tr("json_editor.msg_json_error_title"),
                 tr("json_editor.msg_json_error").format(error=str(e))
             )
-        except Exception as e:
+        except Exception as _:
             QMessageBox.critical(
                 self,
                 tr("json_editor.msg_insert_error_title"),
@@ -564,7 +565,7 @@ class JsonEditorTab(QWidget):
         if value_str.startswith('{') or value_str.startswith('['):
             try:
                 return json.loads(value_str)
-            except:
+            except Exception:
                 pass
 
         # Try number
@@ -573,7 +574,7 @@ class JsonEditorTab(QWidget):
                 return float(value_str)
             else:
                 return int(value_str)
-        except:
+        except Exception:
             pass
 
         # Try boolean
@@ -606,7 +607,7 @@ class JsonEditorTab(QWidget):
             self._validate()
 
             return True
-        except Exception as e:
+        except Exception as _:
             return False
 
     def save_file(self, file_path: Optional[str] = None) -> Tuple[bool, str]:
@@ -644,8 +645,8 @@ class JsonEditorTab(QWidget):
             self.modified_changed.emit(False)
 
             return (True, "")
-        except Exception as e:
-            return (False, str(e))
+        except Exception as exc:
+            return (False, str(exc))
 
     def get_tab_title(self) -> str:
         """Get title for tab."""
