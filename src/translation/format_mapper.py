@@ -60,6 +60,7 @@ class FormatBit:
     KEEP_LINES_TOGETHER = 1 << 17  # 2^17 = 131072
     KEEP_WITH_NEXT = 1 << 18  # 2^18 = 262144
     PAGE_BREAK_BEFORE = 1 << 19  # 2^19 = 524288
+    WIDOW_ORPHAN_CONTROL = 1 << 20  # 2^20 = 1048576
 
 
 @dataclass
@@ -211,6 +212,11 @@ class FormatMapper:
             # Detect page break before (Session 29)
             if pf.page_break_before:
                 para_format_bits |= FormatBit.PAGE_BREAK_BEFORE
+                # Boolean flag, no metadata needed
+            
+            # Detect widow/orphan control (Session 30)
+            if pf.widow_control:
+                para_format_bits |= FormatBit.WIDOW_ORPHAN_CONTROL
                 # Boolean flag, no metadata needed
             
             # Process each run (a run is a continuous text with same formatting)
@@ -456,6 +462,17 @@ class FormatMapper:
                         if break_before and str(break_before).lower() == 'page':
                             para_format_bits |= FormatBit.PAGE_BREAK_BEFORE
                     except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Widow/orphan control (Session 30)
+                        # ODT attributes: fo:widows and fo:orphans (numeric values)
+                        # If either is set to 2 or more, enable control
+                        widows = prop.getAttribute('widows')
+                        orphans = prop.getAttribute('orphans')
+                        if (widows and int(str(widows)) >= 2) or (orphans and int(str(orphans)) >= 2):
+                            para_format_bits |= FormatBit.WIDOW_ORPHAN_CONTROL
+                    except (ValueError, KeyError, TypeError):
                         pass
             
             # Process text content (spans and direct text)
@@ -973,6 +990,10 @@ class FormatMapper:
         # Apply page break before (Session 29)
         if format_bits & FormatBit.PAGE_BREAK_BEFORE:
             paragraph.paragraph_format.page_break_before = True
+        
+        # Apply widow/orphan control (Session 30)
+        if format_bits & FormatBit.WIDOW_ORPHAN_CONTROL:
+            paragraph.paragraph_format.widow_control = True
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1175,6 +1196,12 @@ class FormatMapper:
             # Apply page break before (Session 29)
             if para_format_bits & FormatBit.PAGE_BREAK_BEFORE:
                 para_props.setAttribute("breakbefore", "page")
+            
+            # Apply widow/orphan control (Session 30)
+            if para_format_bits & FormatBit.WIDOW_ORPHAN_CONTROL:
+                # Set both widows and orphans to 2 (standard value)
+                para_props.setAttribute("widows", "2")
+                para_props.setAttribute("orphans", "2")
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
