@@ -32,16 +32,16 @@ from typing import Optional, Tuple
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
-    QLabel, QSplitter, QMessageBox, QToolBar, QComboBox
+    QLabel, QSplitter, QMessageBox, QComboBox
 )
-from PySide6.QtGui import QFont, QColor, QTextCursor, QTextCharFormat, QPalette
+from PySide6.QtGui import QFont, QTextCursor
 
 from src.core.insert import insert_at_line
 from src.gui.panels import InsertPanel, RegexInsertPanel
 from src.i18n.translator import tr, tooltip_tr
 
 from .dialogs import JsonSearchDialog
-from .json_validator import JsonValidator, ValidationResult
+from .json_validator import JsonValidator
 from .widgets import JsonTreeWidget
 
 

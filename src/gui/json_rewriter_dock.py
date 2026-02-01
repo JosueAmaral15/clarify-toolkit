@@ -65,7 +65,7 @@ class JsonRewriterDock(BaseDock):
     - Configurable indentation
     """
 
-    def __init__(self, parent: QWidgetType | None = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(tr("json_rewriter.title"), parent)
         self._load_preferences()
         self._apply_accessibility()
