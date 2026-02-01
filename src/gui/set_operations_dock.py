@@ -22,13 +22,10 @@ Version: 2.9.32
 import json
 import os
 
-from typing import Any, Dict, List
-
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QDialog, QFileDialog, QFrame, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QPushButton, QScrollArea,
+    QDialog, QFileDialog, QFrame, QHBoxLayout,
+    QLabel, QPushButton, QScrollArea,
     QTextEdit, QVBoxLayout, QWidget
 )
 
