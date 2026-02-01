@@ -222,13 +222,13 @@ class JsonTranslateDock(BaseDock):
         self.ed_dict.textChanged.connect(self._update_stats)
         # v2.9.51: Enter key executes translation
         self._setup_enter_key()
-    
+
     def _setup_enter_key(self) -> None:
         """Setup Enter key to execute translation (v2.9.51)."""
         from PySide6.QtCore import Qt
-        
+
         # Connect returnPressed for all text inputs
-        for widget in [self.ed_path, self.ed_dict, self.object_variable_name, 
+        for widget in [self.ed_path, self.ed_dict, self.object_variable_name,
                        self.ed_start, self.ed_end, self.ed_exclude]:
             widget.returnPressed.connect(self._run)
 

@@ -175,7 +175,7 @@ class JsonSearchDock(StandardToolDock):
         """Setup Esc key to interrupt search (v2.9.50)."""
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QShortcut, QKeySequence
-        
+
         shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
 
@@ -185,28 +185,28 @@ class JsonSearchDock(StandardToolDock):
         self.ed_search_key.setToolTip(tooltip_tr("json_search.ed_search_key"))
         self.ed_search_value.setToolTip(tooltip_tr("json_search.ed_search_value"))
         self.ed_filename.setToolTip(tooltip_tr("json_search.ed_filename"))
-        
+
         # Search mode (1)
         self.combo_mode.setToolTip(tooltip_tr("json_search.combo_mode"))
-        
+
         # Path inputs (3)
         self.ed_path.setToolTip(tooltip_tr("json_search.ed_path"))
         self.btn_browse.setToolTip(tooltip_tr("json_search.btn_browse"))
         self.chk_is_file.setToolTip(tooltip_tr("json_search.chk_is_file"))
-        
+
         # Options (2)
         self.chk_case.setToolTip(tooltip_tr("json_search.chk_case"))
         self.chk_regex.setToolTip(tooltip_tr("json_search.chk_regex"))
-        
+
         # Max results (1)
         self.spin_max.setToolTip(tooltip_tr("json_search.spin_max"))
-        
+
         # Action buttons (4)
         self.btn_search.setToolTip(tooltip_tr("json_search.btn_search"))
         self.btn_interrupt.setToolTip(tooltip_tr("json_search.btn_interrupt"))
         self.btn_save_results.setToolTip(tooltip_tr("json_search.btn_save_results"))
         self.btn_clear.setToolTip(tooltip_tr("json_search.btn_clear"))
-        
+
         # Results panel (1)
         self.text_results.setToolTip(tooltip_tr("json_search.text_results"))
 

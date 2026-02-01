@@ -18,7 +18,7 @@ from .match_panel import MatchPanel, MatchListModel
 from .file_explorer_worker import FileExplorerWorker
 
 __all__ = [
-    'SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel', 
+    'SearchReplacePanel', 'InsertPanel', 'RegexInsertPanel',
     'SearchWorker', 'ResultsTree', 'MatchPanel', 'MatchListModel',
     'FileExplorerWorker'
 ]

@@ -11,7 +11,7 @@ from src.ai_processor import process_multiple_files
 
 class AIProcessorWorker(ProcessorWorkerBase):
     """Background worker for AI file processing."""
-    
+
     def __init__(self, files, prompt, client, max_bytes, line_by_line,
                  scope_filter_enabled=False, scope_start="", scope_end="",
                  scope_start_regex=False, scope_start_case=False,
@@ -31,7 +31,7 @@ class AIProcessorWorker(ProcessorWorkerBase):
         self.scope_end_regex = scope_end_regex
         self.scope_end_case = scope_end_case
         self.template_enabled = template_enabled
-    
+
     def run(self):
         try:
             responses = process_multiple_files(

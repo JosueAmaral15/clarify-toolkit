@@ -140,7 +140,7 @@ class ResultsTree(QTreeWidget):
     def __init__(self, parent=None, main_window=None):
         """
         Initialize results tree.
-        
+
         Args:
             parent: Parent widget
             main_window: Optional explicit reference to main window (v2.9.121 bugfix)
@@ -361,7 +361,7 @@ class ResultsTree(QTreeWidget):
     def add_file_result(self, file_path: str, matches_list: List[Tuple[int, int, str]]):
         """
         Add a single file result to the tree incrementally (for batch processing).
-        
+
         Args:
             file_path: Path to the file
             matches_list: List of (line, col, snippet) tuples for this file
@@ -370,26 +370,26 @@ class ResultsTree(QTreeWidget):
         if file_path not in self._matches_data:
             self._matches_data[file_path] = []
         self._matches_data[file_path].extend(matches_list)
-        
+
         # Create file node
         top = QTreeWidgetItem([file_path])
         self.addTopLevelItem(top)
-        
+
         # Add match children
         for line, col, snippet in matches_list:
             # Truncate long snippets only if word wrap is disabled
             snippet_clean = snippet.strip()
             if not self._word_wrap_enabled and len(snippet_clean) > 120:
                 snippet_clean = snippet_clean[:120] + "..."
-            
+
             leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
-            
+
             # Store full snippet in tooltip if truncated and word wrap is off
             if not self._word_wrap_enabled and len(snippet.strip()) > 120:
                 leaf.setToolTip(0, f"Full content:\n{snippet.strip()}")
-            
+
             top.addChild(leaf)
-        
+
         # Auto-expand the file node
         top.setExpanded(True)
 
@@ -408,10 +408,10 @@ class ResultsTree(QTreeWidget):
                 # Skip summary header (starts with 📊)
                 if not text.startswith("📊"):
                     items.append((text, item))
-            
+
             # Sort by file path
             items.sort(key=lambda x: x[0])
-            
+
             # Re-add items in sorted order
             for idx, (_, item) in enumerate(items):
                 self.takeTopLevelItem(self.indexOfTopLevelItem(item))
@@ -503,12 +503,12 @@ class ResultsTree(QTreeWidget):
         open_editor_action = menu.addAction("📝 Open in Editor")
         open_editor_action.setEnabled(has_selection)
         open_editor_action.triggered.connect(self._open_in_editor)
-        
+
         # Open and switch to editor action (v2.9.121 - new feature)
         open_editor_switch_action = menu.addAction("🎯 " + tr("results_tree.action_open_and_switch"))
         open_editor_switch_action.setEnabled(has_selection)
         open_editor_switch_action.triggered.connect(self._open_in_editor_and_switch)
-        
+
         open_file_action = menu.addAction("📂 Open File")
         open_file_action.setEnabled(has_selection)
         open_file_action.triggered.connect(self._open_selected_files)
@@ -597,7 +597,7 @@ class ResultsTree(QTreeWidget):
         selected_items = self.selectedItems()
         if not selected_items:
             return
-        
+
         # Get main window reference
         main_window = self._get_main_window()
         if not main_window:
@@ -607,14 +607,14 @@ class ResultsTree(QTreeWidget):
                 tr("results_tree.error_no_main_window")
             )
             return
-        
+
         # Collect unique file paths from selection
         file_paths = set()
         for item in selected_items:
             # Skip summary header
             if item.text(0).startswith("📊 Results:"):
                 continue
-            
+
             # If it's a file item (no parent), use it directly
             if not item.parent():
                 file_paths.add(item.text(0))
@@ -623,12 +623,12 @@ class ResultsTree(QTreeWidget):
                 parent_text = item.parent().text(0)
                 if not parent_text.startswith("📊"):
                     file_paths.add(parent_text)
-        
+
         # Ensure dock_editor exists
         if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
             from src.gui.dock_factory import DockFactory
             DockFactory.create_editor_dock(main_window)
-        
+
         # Open each file in editor
         opened_count = 0
         for path in file_paths:
@@ -643,18 +643,18 @@ class ResultsTree(QTreeWidget):
                         tr("results_tree.error_open_editor").format(path, str(e))
                     )
                     break
-        
+
         # Show feedback
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor")
             QTimer.singleShot(3000, lambda: self._status_label.setText(""))
-    
+
     def _open_in_editor_and_switch(self):
         """Open selected files in Clarify editor and switch focus to editor (v2.9.121)."""
         selected_items = self.selectedItems()
         if not selected_items:
             return
-        
+
         # Get main window reference
         main_window = self._get_main_window()
         if not main_window:
@@ -664,14 +664,14 @@ class ResultsTree(QTreeWidget):
                 tr("results_tree.error_no_main_window")
             )
             return
-        
+
         # Collect unique file paths from selection
         file_paths = []  # Use list to preserve order
         for item in selected_items:
             # Skip summary header
             if item.text(0).startswith("📊 Results:"):
                 continue
-            
+
             # If it's a file item (no parent), use it directly
             if not item.parent():
                 path = item.text(0)
@@ -682,12 +682,12 @@ class ResultsTree(QTreeWidget):
                 parent_text = item.parent().text(0)
                 if not parent_text.startswith("📊") and parent_text not in file_paths:
                     file_paths.append(parent_text)
-        
+
         # Ensure dock_editor exists
         if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
             from src.gui.dock_factory import DockFactory
             DockFactory.create_editor_dock(main_window)
-        
+
         # Open each file in editor
         opened_count = 0
         last_opened_path = None
@@ -704,13 +704,13 @@ class ResultsTree(QTreeWidget):
                         tr("results_tree.error_open_editor").format(path, str(e))
                     )
                     break
-        
+
         # Switch to Editor tab in main window (create if doesn't exist)
         if last_opened_path:
             # Use _show_editor() which properly handles tab creation/switching
             if hasattr(main_window, '_show_editor'):
                 main_window._show_editor()
-            
+
             # Focus on the last opened file's tab in editor
             if hasattr(main_window.dock_editor, 'tab_widget'):
                 editor_tabs = main_window.dock_editor.tab_widget
@@ -720,25 +720,25 @@ class ResultsTree(QTreeWidget):
                     if hasattr(tab, 'file_path') and tab.file_path == last_opened_path:
                         editor_tabs.setCurrentIndex(i)
                         break
-        
+
         # Show feedback
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor and switched focus")
             QTimer.singleShot(3000, lambda: self._status_label.setText(""))
-    
+
     def _get_main_window(self):
         """Get reference to main window."""
         # Try explicit reference first (v2.9.121 bugfix)
         if self._main_window_ref is not None:
             logger.debug(f"Using explicit main_window reference: {type(self._main_window_ref).__name__}")
             return self._main_window_ref
-        
+
         # Fallback to parent chain traversal
         widget = self
         logger.debug(f"Starting search for main_window from {type(self).__name__}")
         max_iterations = 20  # Safety limit
         iteration = 0
-        
+
         while widget is not None and iteration < max_iterations:
             logger.debug(f"Checking widget: {type(widget).__name__}, has dock_editor: {hasattr(widget, 'dock_editor')}")
             if hasattr(widget, 'dock_editor'):
@@ -746,7 +746,7 @@ class ResultsTree(QTreeWidget):
                 return widget
             widget = widget.parent()
             iteration += 1
-        
+
         logger.debug(f"Could NOT find main_window - reached None after {iteration} iterations")
         return None
 

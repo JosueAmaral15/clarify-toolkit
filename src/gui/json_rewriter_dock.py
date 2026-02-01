@@ -525,8 +525,8 @@ class JsonRewriterDock(BaseDock):
         """Execute rewrite operation on selected file."""
         if not self.ed_in.text().strip():
             QMessageBox.warning(
-                self, 
-                tr("json_rewriter.msg_missing_input_title"), 
+                self,
+                tr("json_rewriter.msg_missing_input_title"),
                 tr("json_rewriter.msg_missing_input")
             )
             return
@@ -554,8 +554,8 @@ class JsonRewriterDock(BaseDock):
                 # User cancelled
                 if not accepted:
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_cancelled_title"), 
+                        self,
+                        tr("json_rewriter.msg_cancelled_title"),
                         tr("json_rewriter.msg_cancelled_case")
                     )
                     return
@@ -581,8 +581,8 @@ class JsonRewriterDock(BaseDock):
                     f.write(temp_text)
 
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_case").format(len(warnings))
                 )
 
@@ -592,8 +592,8 @@ class JsonRewriterDock(BaseDock):
 
             except Exception as e:
                 QMessageBox.critical(
-                    self, 
-                    tr("json_rewriter.msg_validation_error_title"), 
+                    self,
+                    tr("json_rewriter.msg_validation_error_title"),
                     tr("json_rewriter.msg_validation_error").format(e)
                 )
                 return
@@ -651,16 +651,16 @@ class JsonRewriterDock(BaseDock):
 
                 if not project_dir:
                     QMessageBox.warning(
-                        self, 
-                        tr("json_rewriter.msg_missing_project_title"), 
+                        self,
+                        tr("json_rewriter.msg_missing_project_title"),
                         tr("json_rewriter.msg_missing_project")
                     )
                     return
 
                 if not os.path.isdir(project_dir):
                     QMessageBox.warning(
-                        self, 
-                        tr("json_rewriter.msg_invalid_project_title"), 
+                        self,
+                        tr("json_rewriter.msg_invalid_project_title"),
                         tr("json_rewriter.msg_invalid_project").format(project_dir)
                     )
                     return
@@ -682,14 +682,14 @@ class JsonRewriterDock(BaseDock):
                     if file_count > 10:
                         files_list += f"  ... and {file_count - 10} more files\n"
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_refs_updated_title"), 
+                        self,
+                        tr("json_rewriter.msg_refs_updated_title"),
                         tr("json_rewriter.msg_refs_updated").format(total_subs, file_count, files_list)
                     )
                 else:
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_no_changes_title"), 
+                        self,
+                        tr("json_rewriter.msg_no_changes_title"),
                         tr("json_rewriter.msg_no_changes")
                     )
 
@@ -697,8 +697,8 @@ class JsonRewriterDock(BaseDock):
             stats_msg = format_removal_statistics(removal_stats)
             if stats_msg:
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_stats").format(stats_msg)
                 )
 
@@ -719,8 +719,8 @@ class JsonRewriterDock(BaseDock):
             else:
                 # Q5-C: Special message if nothing was removed
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_no_removal")
                 )
 
@@ -730,8 +730,8 @@ class JsonRewriterDock(BaseDock):
             import traceback
 
             QMessageBox.critical(
-                self, 
-                tr("json_rewriter.msg_error_title"), 
+                self,
+                tr("json_rewriter.msg_error_title"),
                 tr("json_rewriter.msg_error").format(str(e), traceback.format_exc())
             )
 

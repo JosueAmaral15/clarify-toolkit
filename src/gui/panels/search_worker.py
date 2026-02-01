@@ -29,12 +29,12 @@ class SearchWorker(QObject):
     done = Signal(dict)  # Final results
     error = Signal(str)  # Error messages
 
-    def __init__(self, pattern_text: str, iter_files_fn: Callable, search_options_factory, 
+    def __init__(self, pattern_text: str, iter_files_fn: Callable, search_options_factory,
                  is_multi_query: bool = False, multi_query_processor=None,
                  search_mode: str = "content_only", filename_pattern: Optional[str] = None):
         """
         Initialize search worker.
-        
+
         Args:
             pattern_text: Compiled regex pattern for content search
             iter_files_fn: Function that yields file paths to search
@@ -58,11 +58,11 @@ class SearchWorker(QObject):
     def cancel(self):
         """Cancel the search operation."""
         self._cancel = True
-    
+
     def pause(self):
         """Pause processing (v2.5.0+)."""
         self._paused = True
-    
+
     def resume(self):
         """Resume processing (v2.5.0+)."""
         self._paused = False
@@ -70,17 +70,17 @@ class SearchWorker(QObject):
     def run(self):
         """
         Execute file search with detailed progress tracking.
-        
+
         Features:
         - v2.5.0+: Pause/resume support
         - v2.8.0: Multi-query search
         - v2.9.112: Filename/content/both search modes
         """
         matches: Dict[str, List[Tuple[int, int, str]]] = {}
-        
+
         # Collect all files first to know total count
         files_to_process = list(self.iter_files_fn())
-        
+
         # v2.9.112: Filter by filename pattern if needed
         if self.search_mode in ("filename_only", "both") and self.filename_pattern:
             filtered_files = []
@@ -90,33 +90,33 @@ class SearchWorker(QObject):
                 if fnmatch.fnmatch(filename, self.filename_pattern):
                     filtered_files.append(p)
             files_to_process = filtered_files
-        
+
         total_files = len(files_to_process)
-        
+
         for idx, p in enumerate(files_to_process, 1):
             # Check for cancellation
             if self._cancel:
                 break
-            
+
             # Check for pause (NEW - v2.5.0+)
             while self._paused and not self._cancel:
                 time.sleep(0.1)  # Wait while paused
-            
+
             try:
                 # Emit detailed progress (current, total, message)
                 self.progress.emit(p)  # Legacy signal for backward compatibility
                 self.progress_detailed.emit(idx, total_files, p)
-                
+
                 # v2.9.112: Handle filename-only search mode
                 if self.search_mode == "filename_only":
                     # Just list the file with a placeholder match
                     matches[p] = [(0, 0, f"Matched file: {os.path.basename(p)}")]
                     continue
-                
+
                 # For content search or both modes, read and search file content
                 text = read_text(p)
                 lst: List[Tuple[int, int, str]] = []
-                
+
                 # v2.8.0: Multi-query search support
                 if self.is_multi_query and self.multi_query_processor:
                     # Use MultiQueryProcessor for multiple patterns
@@ -130,11 +130,11 @@ class SearchWorker(QObject):
                         col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
                         snippet = text.splitlines()[line - 1] if line - 1 < len(text.splitlines()) else ""
                         lst.append((line, col, snippet))
-                
+
                 if lst:
                     matches[p] = lst
             except Exception as e:
                 self.error.emit(f"[WARN] {p}: {e}")
                 # continue to next files
-        
+
         self.done.emit(matches)

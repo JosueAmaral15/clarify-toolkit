@@ -395,7 +395,7 @@ class ConditionsGrid(QWidget):
             chk_regex.setEnabled(is_text_field)
 
         combo_field.currentIndexChanged.connect(on_field_changed)
-        
+
         # Set initial state
         on_field_changed(combo_field.currentIndex())
 

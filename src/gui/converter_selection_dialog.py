@@ -19,33 +19,33 @@ from src.i18n.translator import tr
 class ConverterSelectionDialog(QDialog):
     """
     Dialog for selecting between JSX and Text converters.
-    
+
     Returns the selected converter type when accepted.
     """
-    
+
     JSX_EXTRACTOR = "jsx"
     TEXT_CONVERTER = "text"
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("converter_selection.title"))
         self.setModal(True)
         self.setMinimumWidth(400)
-        
+
         self.selected_converter = None
         self._build_ui()
-    
+
     def _build_ui(self):
         """Build the dialog UI."""
         layout = QVBoxLayout(self)
-        
+
         # Title
         title_label = QLabel(tr("converter_selection.header"))
         layout.addWidget(title_label)
-        
+
         # Radio buttons
         self.btn_group = QButtonGroup(self)
-        
+
         self.radio_jsx = QRadioButton(tr("converter_selection.radio_jsx"))
         self.radio_jsx.setToolTip(
             "Extract parameters and attributes from JSX/TSX files.\n"
@@ -54,7 +54,7 @@ class ConverterSelectionDialog(QDialog):
         self.radio_jsx.setChecked(True)  # Default
         self.btn_group.addButton(self.radio_jsx)
         layout.addWidget(self.radio_jsx)
-        
+
         self.radio_text = QRadioButton(tr("converter_selection.radio_text"))
         self.radio_text.setToolTip(
             "Convert text formats to JSON (CSV, YAML, INI, etc.).\n"
@@ -62,29 +62,29 @@ class ConverterSelectionDialog(QDialog):
         )
         self.btn_group.addButton(self.radio_text)
         layout.addWidget(self.radio_text)
-        
+
         # Description labels
         layout.addSpacing(10)
         desc_jsx = QLabel(tr("converter_selection.desc_jsx"))
         desc_jsx.setWordWrap(True)
         layout.addWidget(desc_jsx)
-        
+
         layout.addSpacing(5)
         desc_text = QLabel(tr("converter_selection.desc_text"))
         desc_text.setWordWrap(True)
         layout.addWidget(desc_text)
-        
+
         # Buttons
         layout.addSpacing(10)
         btn_ok = QPushButton(tr("converter_selection.btn_open"))
         btn_ok.setDefault(True)
         btn_ok.clicked.connect(self.accept)
         layout.addWidget(btn_ok)
-        
+
         btn_cancel = QPushButton(tr("converter_selection.btn_cancel"))
         btn_cancel.clicked.connect(self.reject)
         layout.addWidget(btn_cancel)
-    
+
     def accept(self):
         """Handle dialog acceptance and store selection."""
         if self.radio_jsx.isChecked():
@@ -92,24 +92,24 @@ class ConverterSelectionDialog(QDialog):
         else:
             self.selected_converter = self.TEXT_CONVERTER
         super().accept()
-    
+
     def get_selected_converter(self):
         """
         Get the selected converter type.
-        
+
         Returns:
             str: 'jsx' or 'text', or None if dialog was cancelled
         """
         return self.selected_converter
-    
+
     @staticmethod
     def get_converter_choice(parent=None):
         """
         Static method to show dialog and return selection.
-        
+
         Args:
             parent: Parent widget
-            
+
         Returns:
             str: 'jsx', 'text', or None if cancelled
         """

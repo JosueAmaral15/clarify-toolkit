@@ -327,49 +327,49 @@ class JSXExtractorDock(BaseDock):
         self.ed_path.setToolTip(tooltip_tr("jsx_extractor.ed_path"))
         self.btn_browse.setToolTip(tooltip_tr("jsx_extractor.btn_browse"))
         self.is_file.setToolTip(tooltip_tr("jsx_extractor.is_file"))
-        
+
         # Param and mode section
         self.ed_param.setToolTip(tooltip_tr("jsx_extractor.ed_param"))
         self.chk_is_attribute_mode.setToolTip(tooltip_tr("jsx_extractor.chk_is_attribute_mode"))
         self.cb_mode.setToolTip(tooltip_tr("jsx_extractor.cb_mode"))
-        
+
         # Generic delimiters
         self.ed_start.setToolTip(tooltip_tr("jsx_extractor.ed_start"))
         self.ed_end.setToolTip(tooltip_tr("jsx_extractor.ed_end"))
-        
+
         # Extensions
         self.ed_ext.setToolTip(tooltip_tr("jsx_extractor.ed_ext"))
-        
+
         # Extraction options
         self.chk_include_key.setToolTip(tooltip_tr("jsx_extractor.chk_include_key"))
         self.chk_include_value.setToolTip(tooltip_tr("jsx_extractor.chk_include_value"))
         self.chk_no_standard.setToolTip(tooltip_tr("jsx_extractor.chk_no_standard"))
         self.chk_only_strings.setToolTip(tooltip_tr("jsx_extractor.chk_only_strings"))
         self.chk_include_quotation_marks.setToolTip(tooltip_tr("jsx_extractor.chk_include_quotation_marks"))
-        
+
         # Normalization options
         self.cb_case.setToolTip(tooltip_tr("jsx_extractor.cb_case"))
         self.chk_upper.setToolTip(tooltip_tr("jsx_extractor.chk_upper"))
         self.ed_limit.setToolTip(tooltip_tr("jsx_extractor.ed_limit"))
         self.chk_avoid_cut.setToolTip(tooltip_tr("jsx_extractor.chk_avoid_cut"))
-        
+
         # JSON options
         self.spin_indent.setToolTip(tooltip_tr("jsx_extractor.spin_indent"))
-        
+
         # Avoid keys
         self.avoid_keys.setToolTip(tooltip_tr("jsx_extractor.avoid_keys"))
         self.cb_avoid_mode.setToolTip(tooltip_tr("jsx_extractor.cb_avoid_mode"))
-        
+
         # Action buttons
         self.btn_run.setToolTip(tooltip_tr("jsx_extractor.btn_run"))
         self.btn_save.setToolTip(tooltip_tr("jsx_extractor.btn_save"))
         self.btn_copy.setToolTip(tooltip_tr("jsx_extractor.btn_copy"))
         self.btn_clear.setToolTip(tooltip_tr("jsx_extractor.btn_clear"))
-        
+
         # Output tabs
         self.out_paths.setToolTip(tooltip_tr("jsx_extractor.out_paths"))
         self.out_json.setToolTip(tooltip_tr("jsx_extractor.out_json"))
-        
+
         # Status
         self.status_label.setToolTip(tooltip_tr("jsx_extractor.status_label"))
 

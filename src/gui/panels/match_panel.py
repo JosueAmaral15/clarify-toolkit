@@ -87,7 +87,7 @@ class MatchPanel(QWidget):
         if not path:
             QMessageBox.information(self, tr("match_panel.msg_open_title"), tr("match_panel.msg_open"))
             return
-        
+
         # Open in OS file manager
         if sys.platform.startswith("darwin"):
             os.system(f'open -R "{path}"')
