@@ -552,7 +552,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         path_layout.addWidget(self.jsx_path_edit, 1)
         
         self.jsx_browse_btn = QPushButton(tr("base.btn_browse", "Browse"))
-        self.jsx_browse_btn.setMaximumWidth(100)
+        self.jsx_browse_btn.setMaximumWidth(200)  # Increased for "Load from File..." text
         self.jsx_browse_btn.clicked.connect(self._jsx_browse_path)
         path_layout.addWidget(self.jsx_browse_btn)
         
