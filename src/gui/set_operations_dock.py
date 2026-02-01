@@ -15,6 +15,9 @@ Version: 2.9.32
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 # pylint: disable=import-outside-toplevel  # Lazy imports for dialogs
 # pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt data pattern
+# pylint: disable=line-too-long  # Long QFileDialog lines
+# pylint: disable=unexpected-keyword-arg  # BatchDialog signature varies
 
 import json
 import os
