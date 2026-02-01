@@ -33,6 +33,7 @@ import re
 # Format bit masks (powers of 2)
 class FormatBit:
     """Bit positions for different formatting types."""
+    # Character formatting (bits 0-7)
     BOLD = 1 << 0          # 2^0 = 1
     ITALIC = 1 << 1        # 2^1 = 2
     UNDERLINE = 1 << 2     # 2^2 = 4
@@ -41,10 +42,18 @@ class FormatBit:
     FONT_SIZE = 1 << 5     # 2^5 = 32
     FONT_FAMILY = 1 << 6   # 2^6 = 64
     HIGHLIGHT = 1 << 7     # 2^7 = 128
+    
+    # Paragraph formatting (bits 8-11)
     ALIGNMENT = 1 << 8     # 2^8 = 256
     LINE_SPACING = 1 << 9  # 2^9 = 512
     INDENTATION = 1 << 10  # 2^10 = 1024
     HEADING = 1 << 11      # 2^11 = 2048
+    
+    # Extended character formatting (bits 12-15) - Session 19+
+    SUPERSCRIPT = 1 << 12  # 2^12 = 4096
+    SUBSCRIPT = 1 << 13    # 2^13 = 8192
+    DOUBLE_UNDERLINE = 1 << 14  # 2^14 = 16384
+    SMALL_CAPS = 1 << 15   # 2^15 = 32768
 
 
 @dataclass
@@ -196,6 +205,10 @@ class FormatMapper:
                     }
                     highlight_hex = highlight_map.get(run.font.highlight_color, 'FFFF00')
                     metadata_parts.append(highlight_hex)
+                
+                # Detect superscript (Session 19)
+                if run.font.superscript:
+                    segment.add_format(FormatBit.SUPERSCRIPT)
                 
                 # Detect font size
                 if run.font.size:
@@ -363,6 +376,11 @@ class FormatMapper:
                         text_line_through = get_attr('text-line-through-style')
                         if text_line_through and text_line_through != 'none':
                             segment.add_format(FormatBit.STRIKETHROUGH)
+                        
+                        # Superscript (Session 19)
+                        text_position = get_attr('text-position')
+                        if text_position and 'super' in str(text_position).lower():
+                            segment.add_format(FormatBit.SUPERSCRIPT)
                         
                         # Font color
                         color = get_attr('color')
@@ -631,6 +649,10 @@ class FormatMapper:
             except:
                 pass  # Skip if mapping fails
         
+        # Apply superscript (Session 19)
+        if format_bits & FormatBit.SUPERSCRIPT:
+            run.font.superscript = True
+        
         # Apply font size (metadata: points)
         if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
             size_str = metadata_parts[metadata_index].strip()
@@ -777,6 +799,10 @@ class FormatMapper:
                 font_name = metadata_parts[metadata_index].strip()
                 metadata_index += 1
                 text_props.setAttribute("fontfamily", font_name)
+            
+            # Apply superscript (Session 19)
+            if format_bits & FormatBit.SUPERSCRIPT:
+                text_props.setAttribute("textposition", "super 58%")
             
             style.addElement(text_props)
             doc.automaticstyles.addElement(style)
