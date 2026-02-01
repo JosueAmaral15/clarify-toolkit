@@ -323,8 +323,13 @@ class JsonTranslateDock(BaseDock):
                     f"{file_count} {file_str} {tr('json_translate.stats_to_process')}"
                 )
             if translation_count > 0:
-                trans_str = tr("json_translate.stats_translations" if translation_count == 1 else "json_translate.stats_translations_plural")
-                parts.append(f"{translation_count} {trans_str} {tr('json_translate.stats_available')}")
+                trans_str = tr(
+                    "json_translate.stats_translations"
+                    if translation_count == 1 else "json_translate.stats_translations_plural"
+                )
+                parts.append(
+                    f"{translation_count} {trans_str} {tr('json_translate.stats_available')}"
+                )
             self.lbl_stats.setText(" | ".join(parts))
         else:
             self.lbl_stats.setText(tr("json_translate.lbl_stats_ready"))
@@ -390,7 +395,7 @@ class JsonTranslateDock(BaseDock):
             if ok:
                 changed += 1
             if err:
-                errors.append(f"{p}: {err}")
+                errors.append(f"{file_path}: {err}")
 
         # Display results
         msg = f"{tr('json_translate.result_modified')} {changed}"
@@ -408,9 +413,15 @@ class JsonTranslateDock(BaseDock):
         Note: This doesn't physically swap files, just toggles the inverse checkbox.
         """
         # Toggle inverse checkbox to reverse translation direction
-        self.chk_inverse_json_translate.setChecked(not self.chk_inverse_json_translate.isChecked())
+        self.chk_inverse_json_translate.setChecked(
+            not self.chk_inverse_json_translate.isChecked()
+        )
 
-        status = tr("json_translate.swap_enabled") if self.chk_inverse_json_translate.isChecked() else tr("json_translate.swap_disabled")
+        status = (
+            tr("json_translate.swap_enabled")
+            if self.chk_inverse_json_translate.isChecked()
+            else tr("json_translate.swap_disabled")
+        )
         msg = tr("json_translate.swap_msg").replace("{status}", status)
         QMessageBox.information(
             self,
