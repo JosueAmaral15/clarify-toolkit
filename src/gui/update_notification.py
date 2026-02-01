@@ -21,12 +21,12 @@ Version: 2.9.45
 
 import webbrowser
 
-from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import QSettings
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QHBoxLayout,
     QLabel, QPushButton, QSizePolicy,
-    QTextEdit, QVBoxLayout, QWidget
+    QTextEdit, QVBoxLayout
 )
 
 from src.i18n.translator import tr
