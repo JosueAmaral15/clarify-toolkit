@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Merge Preview Dialog - Preview merge operation before applying
 
@@ -12,17 +9,21 @@ Author: Josué Amaral
 Date: 2025-12-23
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=invalid-name  # Qt method name convention
 
 import json
-from typing import Dict, Any, Optional
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QGroupBox,
-    QTextEdit, QPushButton, QLabel, QMessageBox,
-    QSplitter, QFileDialog
-)
+
+from typing import Any, Dict
+
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
+from PySide6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PySide6.QtWidgets import (
+    QDialog, QFileDialog, QGroupBox, QHBoxLayout,
+    QLabel, QMessageBox, QPushButton, QSplitter,
+    QTextEdit, QVBoxLayout
+)
+
 from src.i18n.translator import tr
 
 
@@ -226,7 +227,7 @@ class MergePreviewDialog(QDialog):
         diff_lines = self._calculate_diff(original_json, merged_json)
 
         # Apply diff highlighting to merged panel
-        highlighter = DiffHighlighter(self.text_merged.document(), diff_lines)
+        _ = DiffHighlighter(self.text_merged.document(), diff_lines)  # Attached to document
 
         # Calculate summary statistics
         self._update_summary(original_json, merged_json)
@@ -248,11 +249,9 @@ class MergePreviewDialog(QDialog):
         diff_lines = {}
 
         # Simple line-by-line comparison
-        max_len = max(len(original_lines), len(merged_lines))
-
-        for i in range(len(merged_lines)):
+        for i, merged_line in enumerate(merged_lines):
             if i < len(original_lines):
-                if merged_lines[i] == original_lines[i]:
+                if merged_line == original_lines[i]:
                     diff_lines[i] = 'unchanged'
                 else:
                     diff_lines[i] = 'modified'
@@ -336,8 +335,13 @@ class MergePreviewDialog(QDialog):
         .info {{ background: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 20px; }}
         .container {{ display: flex; gap: 20px; }}
         .panel {{ flex: 1; }}
-        .panel h2 {{ color: #666; border-bottom: 2px solid #ddd; padding-bottom: 5px; }}
-        pre {{ background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: Courier, monospace; font-size: 12px; }}
+        .panel h2 {{
+            color: #666; border-bottom: 2px solid #ddd; padding-bottom: 5px;
+        }}
+        pre {{
+            background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;
+            font-family: Courier, monospace; font-size: 12px;
+        }}
         .added {{ background-color: #c8f7c5; }}
         .removed {{ background-color: #ffcccb; }}
         .modified {{ background-color: #ffffcc; }}
