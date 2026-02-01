@@ -464,6 +464,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.fc_live_preview_check.setChecked(False)
         layout.addWidget(self.fc_live_preview_check)
         
+        # Swap checkbox (below live preview)
+        self.fc_swap_checkbox = QCheckBox(tr("text_to_json.btn_swap", "Swap (JSON → Text)"))
+        self.fc_swap_checkbox.toggled.connect(self._on_swap_toggled)
+        layout.addWidget(self.fc_swap_checkbox)
+        
         # Action buttons (3x3 grid)
         buttons_layout = QGridLayout()
         
@@ -494,10 +499,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.fc_history_btn = QPushButton(tr("text_to_json.btn_history"))
         self.fc_history_btn.clicked.connect(self._on_history_clicked)
         buttons_layout.addWidget(self.fc_history_btn, 2, 0)
-        
-        self.fc_swap_checkbox = QCheckBox(tr("text_to_json.btn_swap", "Swap (JSON → Text)"))
-        self.fc_swap_checkbox.toggled.connect(self._on_swap_toggled)
-        buttons_layout.addWidget(self.fc_swap_checkbox, 2, 1)
         
         layout.addLayout(buttons_layout)
         
@@ -675,6 +676,16 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Skip entries with empty or null values")
         )
         options_row4.addWidget(self.jsx_skip_empty_checkbox)
+        
+        # Add Swap checkbox next to Skip empty values
+        self.jsx_swap_checkbox = QCheckBox(tr("text_to_json.btn_swap", "Swap (JSON → JSX)"))
+        self.jsx_swap_checkbox.toggled.connect(self._jsx_swap_toggled)
+        self.jsx_swap_checkbox.setToolTip(
+            tooltip_tr("text_to_json.swap_checkbox_jsx", 
+                      "Enable swap mode: Convert JSON output back to JSX code")
+        )
+        options_row4.addWidget(self.jsx_swap_checkbox)
+        
         options_row4.addStretch()
         
         layout.addLayout(options_row4)
@@ -1542,6 +1553,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 tr("text_to_json.error", "Error"),
                 tr("text_to_json.swap_error", f"Swap failed: {str(e)}")
             )
+    
+    def _jsx_swap_toggled(self, checked: bool) -> None:
+        """Handle JSX swap checkbox toggle - automatically trigger swap when checked."""
+        if checked:
+            # Call the swap method to convert JSON → JSX
+            self._jsx_swap_outputs()
+        # Note: When unchecked, we don't do anything (user can manually clear if needed)
     
     def _json_to_jsx(self, data: Any, tag_name: str = "Component", indent_level: int = 0) -> str:
         """
