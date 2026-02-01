@@ -57,7 +57,7 @@ from .base_dock import BaseDock
 
 # Type checking imports
 if TYPE_CHECKING:
-    from PySide6.QtWidgets import QWidget as QWidgetType
+    pass  # QWidget already imported above
 
 
 class TemplatesDialog(QDialog):
