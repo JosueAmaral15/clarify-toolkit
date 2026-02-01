@@ -949,6 +949,17 @@ class FormatMapper:
                 if align_code in align_map:
                     para_props.setAttribute("textalign", align_map[align_code])
             
+            # Apply line spacing (Session 24)
+            if para_format_bits & FormatBit.LINE_SPACING and metadata_index < len(metadata_parts):
+                spacing_str = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                try:
+                    spacing = float(spacing_str)
+                    # ODT uses percentage (1.5 → "150%")
+                    para_props.setAttribute("lineheight", f"{int(spacing * 100)}%")
+                except ValueError:
+                    pass  # Skip invalid spacing
+            
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
             style_cache[cache_key] = style
