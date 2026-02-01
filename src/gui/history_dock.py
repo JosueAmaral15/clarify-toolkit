@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 History Dock - Operation History Viewer
 
@@ -15,18 +12,24 @@ Features:
 - Export history to text file
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Lazy os import
 
 from __future__ import annotations
+
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTreeWidget,
     QTreeWidgetItem, QLabel, QFileDialog, QMessageBox
 )
-from .base_dock import BaseDock
+
 from src.i18n.translator import tooltip_tr, tr
+
+from .base_dock import BaseDock
 
 
 class HistoryDock(BaseDock):
@@ -65,7 +68,10 @@ class HistoryDock(BaseDock):
 
         # Tree widget for history display
         self.tree_history = QTreeWidget()
-        self.tree_history.setHeaderLabels([tr("history_dock.header_time"), tr("history_dock.header_operation"), tr("history_dock.header_details"), tr("history_dock.header_files")])
+        self.tree_history.setHeaderLabels([
+            tr("history_dock.header_time"), tr("history_dock.header_operation"),
+            tr("history_dock.header_details"), tr("history_dock.header_files")
+        ])
         self.tree_history.setColumnWidth(0, 150)  # Timestamp
         self.tree_history.setColumnWidth(1, 100)  # Operation type
         self.tree_history.setColumnWidth(2, 300)  # Details
@@ -224,9 +230,15 @@ class HistoryDock(BaseDock):
 
                     f.write("-" * 80 + "\n\n")
 
-            QMessageBox.information(self, tr("history.msg_exported_title"), tr("history.msg_exported_msg").format(file_path))
+            QMessageBox.information(
+                self, tr("history.msg_exported_title"),
+                tr("history.msg_exported_msg").format(file_path)
+            )
         except Exception as e:
-            QMessageBox.critical(self, tr("history.msg_export_error_title"), tr("history.msg_export_error_msg").format(str(e)))
+            QMessageBox.critical(
+                self, tr("history.msg_export_error_title"),
+                tr("history.msg_export_error_msg").format(str(e))
+            )
 
     def _refresh_display(self) -> None:
         """Refresh the tree widget display."""
