@@ -4,6 +4,8 @@ Shows detailed removal statistics with interactive table, search, filter, and ex
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 # pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Optional openpyxl import
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 
 import csv
 import json
@@ -82,7 +84,7 @@ class StatisticsDialog(QDialog):
 
     def _create_removal_tab(self):
         """Create the removal operations tab."""
-        widget = QTableWidget()
+        _ = QTableWidget()  # Placeholder widget
 
         # Search and filter section
         container = QTableWidget()
