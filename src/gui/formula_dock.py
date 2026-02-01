@@ -7,19 +7,32 @@ Date: 2025/12/23
 Version: 2.9.108
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=attribute-defined-outside-init  # Qt dialog pattern
 
 import json
 
 from PySide6.QtWidgets import (
+    QDockWidget,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QMessageBox,
+    QInputDialog,
+    QLineEdit,
+    QComboBox,
+    QTextEdit,
+    QSplitter,
+    QGroupBox,
+    QFileDialog,
+)
 from PySide6.QtCore import Qt, Signal
 
 from src.formula_manager import Formula, FormulaStep, FormulaManager, FormulaExecutor
 from src.i18n.translator import get_translator
-from PySide6.QtCore import Qt, Signal
-from src.formula_manager import Formula, FormulaStep, FormulaManager, FormulaExecutor
-from src.i18n.translator import get_translator
-import json
 
 tr = get_translator().get
 
