@@ -26,7 +26,7 @@ from typing import Any, Dict, List
 
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
 )
 
 from src.i18n.translator import tooltip_tr, tr
@@ -292,7 +292,7 @@ class TextExtractorDock(StandardToolDock):
             # Calculate statistics
             total_keys = self._count_keys(result)
 
-            self.append_result(self.text_results, f"✅ Extraction complete!\n")
+            self.append_result(self.text_results, "✅ Extraction complete!\n")
             self.append_result(self.text_results, f"Files processed: {files_processed}")
             self.append_result(self.text_results, f"Keys extracted: {total_keys}")
             self.append_result(self.text_results, f"Output: {output_path}\n")
