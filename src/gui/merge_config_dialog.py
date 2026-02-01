@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-Merge Configuration Dialog - Select merge mode and target file
+"""Merge Configuration Dialog - Select merge mode and target file.
 
 Allows user to configure how Set Operations results will be merged
 back to original files with mode selection and file picker.
@@ -13,19 +12,20 @@ Date: 2025-12-23
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
-
 import os
-from typing import Optional, Tuple
+from typing import Tuple
+
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGroupBox,
     QRadioButton, QLabel, QPushButton, QFileDialog,
     QLineEdit, QCheckBox, QSpinBox, QMessageBox
 )
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+
 from src.i18n.translator import tr
 
 
+# pylint: disable=too-few-public-methods  # Simple configuration dialog
 class MergeConfigDialog(QDialog):
     """Dialog for configuring merge operation parameters."""
 

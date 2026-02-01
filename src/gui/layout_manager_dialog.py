@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""
-Layout Manager Dialog for Clarify
-----------------------------------
+"""Layout Manager Dialog for Clarify.
+
 Dialog for managing saved layouts: load, delete, reset to defaults.
 
 Phase 3.10 - Dialog Extraction
@@ -12,7 +11,6 @@ Date: 2025-12-24
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
-
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
     QPushButton, QMessageBox, QLabel
@@ -20,6 +18,7 @@ from PySide6.QtWidgets import (
 from src.i18n.translator import tr
 
 
+# pylint: disable=too-few-public-methods  # Simple dialog class
 class LayoutManagerDialog(QDialog):
     """Dialog for managing saved layouts (v2.9.84)."""
 
