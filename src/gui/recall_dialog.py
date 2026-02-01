@@ -7,16 +7,21 @@ Date: 2025/12/23
 Version: 2.9.101
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy QApplication import
+# pylint: disable=broad-exception-caught  # GUI robustness
 
-
-from typing import Any, Dict, Optional
-from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                                QTextEdit, QPushButton, QFileDialog, QMessageBox,
-                                QGroupBox)
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont
-from src.i18n.translator import tr, tooltip_tr
 import json
+
+from typing import Any, Dict
+
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QDialog, QFileDialog, QGroupBox, QHBoxLayout,
+    QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+)
+
+from src.i18n.translator import tr, tooltip_tr
 
 
 class RecallDialog(QDialog):
