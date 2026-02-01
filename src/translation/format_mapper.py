@@ -160,6 +160,20 @@ class FormatMapper:
             para_metadata_parts = []
             para_format_bits = 0
             
+            # Detect heading level (Session 33)
+            # DOCX uses style names like "Heading 1", "Heading 2", etc.
+            if paragraph.style.name.startswith('Heading'):
+                para_format_bits |= FormatBit.HEADING
+                # Extract level number from style name (e.g., "Heading 1" → "1")
+                try:
+                    level = paragraph.style.name.split()[-1]
+                    if level.isdigit() and 1 <= int(level) <= 6:
+                        para_metadata_parts.append(f"H{level}")
+                    else:
+                        para_metadata_parts.append("H1")  # Default
+                except:
+                    para_metadata_parts.append("H1")  # Default if parsing fails
+            
             # Detect alignment
             if paragraph.alignment is not None:
                 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -372,6 +386,26 @@ class FormatMapper:
             except (ValueError, KeyError):
                 para_style_name = None
             para_style = styles.get(para_style_name) if para_style_name else None
+            
+            # Detect heading level (Session 33)
+            # ODT uses outline-level attribute or style names like "Heading_20_1"
+            if para_style_name:
+                if 'heading' in para_style_name.lower() or 'head' in para_style_name.lower():
+                    para_format_bits |= FormatBit.HEADING
+                    # Try to extract level from style name (e.g., "Heading_20_1" → "1")
+                    try:
+                        import re
+                        match = re.search(r'[_\s](\d)(?:[_\s]|$)', para_style_name)
+                        if match:
+                            level = match.group(1)
+                            if 1 <= int(level) <= 6:
+                                para_metadata_parts.append(f"H{level}")
+                            else:
+                                para_metadata_parts.append("H1")  # Default
+                        else:
+                            para_metadata_parts.append("H1")  # Default
+                    except:
+                        para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Extract paragraph-level formatting
             para_format_bits = 0
@@ -939,6 +973,16 @@ class FormatMapper:
         metadata_parts = metadata.split(",") if metadata else []
         metadata_index = 0
         
+        # Apply heading style (Session 33) - Must be first to set style
+        if format_bits & FormatBit.HEADING and metadata_index < len(metadata_parts):
+            heading_code = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            # Parse heading level (e.g., "H1" → "Heading 1")
+            if heading_code.startswith('H') and len(heading_code) == 2:
+                level = heading_code[1]
+                if level.isdigit() and 1 <= int(level) <= 6:
+                    paragraph.style = f'Heading {level}'
+        
         # Apply alignment
         if format_bits & FormatBit.ALIGNMENT and metadata_index < len(metadata_parts):
             align_code = metadata_parts[metadata_index].strip()
@@ -1156,6 +1200,17 @@ class FormatMapper:
             # Parse metadata
             metadata_parts = para_metadata.split(",") if para_metadata else []
             metadata_index = 0
+            
+            # Apply heading level (Session 33)
+            # Note: ODT headings use outline-level attribute
+            if para_format_bits & FormatBit.HEADING and metadata_index < len(metadata_parts):
+                heading_code = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                # Parse heading level (e.g., "H1" → outline-level="1")
+                if heading_code.startswith('H') and len(heading_code) == 2:
+                    level = heading_code[1]
+                    if level.isdigit() and 1 <= int(level) <= 6:
+                        para_props.setAttribute("outlinelevel", level)
             
             # Apply alignment (Session 23)
             if para_format_bits & FormatBit.ALIGNMENT and metadata_index < len(metadata_parts):
