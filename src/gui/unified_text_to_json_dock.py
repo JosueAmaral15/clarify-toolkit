@@ -625,13 +625,16 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         layout.addLayout(options_row1)
         
-        # Row 2
-        options_row2 = QHBoxLayout()
+        # Options grid (2 rows x 4 columns)
+        options_grid = QGridLayout()
+        options_grid.setSpacing(10)
+        
+        # Row 0
         self.jsx_quotation_marks_checkbox = QCheckBox(
             tr("advanced_extractor.quotation_marks", "Include quotation marks")
         )
         self.jsx_quotation_marks_checkbox.setChecked(True)  # Default: checked
-        options_row2.addWidget(self.jsx_quotation_marks_checkbox)
+        options_grid.addWidget(self.jsx_quotation_marks_checkbox, 0, 0)
         
         self.jsx_match_all_checkbox = QCheckBox(
             tr("advanced_extractor.match_all", "Match all")
@@ -640,12 +643,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tooltip_tr("advanced_extractor.match_all_tooltip",
                       "Match all occurrences instead of specific parameter")
         )
-        options_row2.addWidget(self.jsx_match_all_checkbox)
+        options_grid.addWidget(self.jsx_match_all_checkbox, 0, 1)
         
-        layout.addLayout(options_row2)
-        
-        # Row 3
-        options_row3 = QHBoxLayout()
         self.jsx_typescript_export_checkbox = QCheckBox(
             tr("advanced_extractor.typescript_export", "TypeScript export")
         )
@@ -653,7 +652,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tooltip_tr("advanced_extractor.typescript_export_tooltip",
                       "Export as TypeScript interface instead of JSON")
         )
-        options_row3.addWidget(self.jsx_typescript_export_checkbox)
+        options_grid.addWidget(self.jsx_typescript_export_checkbox, 0, 2)
         
         self.jsx_exclude_numeric_checkbox = QCheckBox(
             tr("advanced_extractor.exclude_numeric", "Exclude numeric keys")
@@ -662,12 +661,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tooltip_tr("advanced_extractor.exclude_numeric_tooltip",
                       "Filter out keys that are numeric strings")
         )
-        options_row3.addWidget(self.jsx_exclude_numeric_checkbox)
+        options_grid.addWidget(self.jsx_exclude_numeric_checkbox, 0, 3)
         
-        layout.addLayout(options_row3)
-        
-        # Row 4
-        options_row4 = QHBoxLayout()
+        # Row 1
         self.jsx_skip_empty_checkbox = QCheckBox(
             tr("advanced_extractor.skip_empty", "Skip empty values")
         )
@@ -675,20 +671,19 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tooltip_tr("advanced_extractor.skip_empty_tooltip",
                       "Skip entries with empty or null values")
         )
-        options_row4.addWidget(self.jsx_skip_empty_checkbox)
+        options_grid.addWidget(self.jsx_skip_empty_checkbox, 1, 0)
         
-        # Add Swap checkbox next to Skip empty values
         self.jsx_swap_checkbox = QCheckBox(tr("text_to_json.btn_swap", "Swap (JSON → JSX)"))
         self.jsx_swap_checkbox.toggled.connect(self._jsx_swap_toggled)
         self.jsx_swap_checkbox.setToolTip(
             tooltip_tr("text_to_json.swap_checkbox_jsx", 
                       "Enable swap mode: Convert JSON output back to JSX code")
         )
-        options_row4.addWidget(self.jsx_swap_checkbox)
+        options_grid.addWidget(self.jsx_swap_checkbox, 1, 1)
         
-        options_row4.addStretch()
+        # Columns 2 and 3 in row 1 are empty for future expansion
         
-        layout.addLayout(options_row4)
+        layout.addLayout(options_grid)
         
         # Case style and limits section
         case_layout = QHBoxLayout()
