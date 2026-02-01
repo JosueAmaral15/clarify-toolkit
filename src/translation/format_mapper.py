@@ -161,6 +161,29 @@ class FormatMapper:
             para_metadata_parts = []
             para_format_bits = 0
             
+            # Detect list items (Session 39)
+            # DOCX stores list info in paragraph._element
+            try:
+                # Check if paragraph is part of a list
+                pPr = paragraph._element.pPr
+                if pPr is not None:
+                    numPr = pPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}numPr')
+                    if numPr is not None:
+                        para_format_bits |= FormatBit.LIST_ITEM
+                        # Get list level (ilvl element)
+                        ilvl = numPr.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}ilvl')
+                        level = int(ilvl.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', '0')) + 1 if ilvl is not None else 1
+                        
+                        # Determine list type from style name or default to bullet
+                        # DOCX uses style names like "List Bullet", "List Number"
+                        list_type = 'B'  # Default to bullet
+                        if 'number' in paragraph.style.name.lower():
+                            list_type = 'N'
+                        
+                        para_metadata_parts.append(f"{list_type},{level}")
+            except:
+                pass  # Not a list item
+            
             # Detect heading level (Session 33)
             # DOCX uses style names like "Heading 1", "Heading 2", etc.
             if paragraph.style.name.startswith('Heading'):
@@ -388,6 +411,21 @@ class FormatMapper:
                 para_style_name = None
             para_style = styles.get(para_style_name) if para_style_name else None
             
+            # Initialize paragraph formatting
+            para_format_bits = 0
+            para_metadata_parts = []
+            
+            # Detect list items (Session 39)
+            # ODT wraps list items in text:list elements
+            # Check if this paragraph's parent is a list
+            if hasattr(para, 'parentNode') and para.parentNode is not None:
+                parent = para.parentNode
+                if hasattr(parent, 'qname') and parent.qname[1] == 'list-item':
+                    para_format_bits |= FormatBit.LIST_ITEM
+                    # Default to bullet list, level 1
+                    # TODO: Detect list type and level from list style
+                    para_metadata_parts.append("B,1")
+            
             # Detect heading level (Session 33)
             # ODT uses outline-level attribute or style names like "Heading_20_1"
             if para_style_name:
@@ -409,9 +447,6 @@ class FormatMapper:
                         para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Extract paragraph-level formatting
-            para_format_bits = 0
-            para_metadata_parts = []
-            
             if para_style:
                 # Check paragraph properties
                 for prop in para_style.getElementsByType(odf_style.ParagraphProperties):
@@ -974,6 +1009,24 @@ class FormatMapper:
         metadata_parts = metadata.split(",") if metadata else []
         metadata_index = 0
         
+        # Apply list item style (Session 39) - Must be before heading
+        if format_bits & FormatBit.LIST_ITEM and metadata_index < len(metadata_parts):
+            list_info = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            # Parse: "TYPE,LEVEL" (e.g., "B,1" or "N,2")
+            try:
+                parts = list_info.split(',')
+                if len(parts) == 2:
+                    list_type = parts[0]
+                    level = int(parts[1])
+                    # Apply list style based on type
+                    if list_type == 'B':
+                        paragraph.style = 'List Bullet'
+                    elif list_type == 'N':
+                        paragraph.style = 'List Number'
+            except (ValueError, IndexError):
+                pass  # Skip if parsing fails
+        
         # Apply heading style (Session 33) - Must be first to set style
         if format_bits & FormatBit.HEADING and metadata_index < len(metadata_parts):
             heading_code = metadata_parts[metadata_index].strip()
@@ -1201,6 +1254,23 @@ class FormatMapper:
             # Parse metadata
             metadata_parts = para_metadata.split(",") if para_metadata else []
             metadata_index = 0
+            
+            # Apply list item (Session 39)
+            # Note: Full ODT list support requires wrapping in text:list elements
+            # For now, just apply list-style indentation
+            if para_format_bits & FormatBit.LIST_ITEM and metadata_index < len(metadata_parts):
+                list_info = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                # Parse: "TYPE,LEVEL" and apply indentation
+                try:
+                    parts = list_info.split(',')
+                    if len(parts) == 2:
+                        level = int(parts[1])
+                        # Apply indentation based on level (0.5cm per level)
+                        indent_cm = level * 0.5
+                        para_props.setAttribute("marginleft", f"{indent_cm:.1f}cm")
+                except (ValueError, IndexError):
+                    pass  # Skip if parsing fails
             
             # Apply heading level (Session 33)
             # Note: ODT headings use outline-level attribute
