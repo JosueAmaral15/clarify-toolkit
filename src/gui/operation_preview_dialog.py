@@ -185,7 +185,8 @@ class OperationPreviewDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "No Slots Available",
-                "All memory slots are occupied.\n\n" "Please clear a slot before storing new results.",
+                "All memory slots are occupied.\n\n"
+                "Please clear a slot before storing new results.",
             )
             return
 
