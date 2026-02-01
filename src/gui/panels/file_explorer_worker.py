@@ -11,6 +11,10 @@ Created: 2026-01-12 (v2.9.122)
 Pattern: Based on SearchWorker (search_worker.py)
 Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=line-too-long  # Long log messages
+# pylint: disable=logging-fstring-interpolation  # Performance not critical
 
 from PySide6.QtCore import QObject, Signal
 
@@ -114,7 +118,7 @@ class FileExplorerWorker(QObject):
         all_items = list(matches_dict.items())
         total_items = len(all_items)
 
-        if total_items == 0:
+        if not total_items:
             logger.debug("No items to emit")
             return  # Nothing to emit
 
