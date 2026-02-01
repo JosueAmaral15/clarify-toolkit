@@ -46,7 +46,8 @@ from PySide6.QtWidgets import (
     QButtonGroup, QCheckBox, QComboBox,
     QDialog, QFrame, QGridLayout, QGroupBox,
     QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-    QPlainTextEdit, QPushButton, QRadioButton, QScrollArea, QVBoxLayout
+    QPlainTextEdit, QPushButton, QRadioButton, QScrollArea,
+    QVBoxLayout, QWidget
 )
 from PySide6.QtGui import QFont
 
