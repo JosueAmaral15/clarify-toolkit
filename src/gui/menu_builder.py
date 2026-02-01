@@ -8,13 +8,19 @@ Author: Refactoring Phase 3.4
 Date: 2024-12-24
 Version: v2.9.114
 """
+# pylint: disable=import-outside-toplevel  # Lazy imports in menu builders
+# pylint: disable=protected-access  # Accessing MainWindow internal methods
+# pylint: disable=unnecessary-lambda  # Lambda wrappers for consistency
+# pylint: disable=line-too-long  # Menu builder has long QAction lines
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PySide6.QtWidgets import QMenuBar, QActionGroup
     from PySide6.QtGui import QAction, QKeySequence
+    from PySide6.QtWidgets import QActionGroup, QMenuBar
+
     from ..app import MainWindow
 
 
@@ -29,10 +35,10 @@ class MenuBuilder:
         Args:
             main_window: MainWindow instance
         """
-        bar = main_window.menuBar()
+        menu_bar = main_window.menuBar()
 
-        MenuBuilder._build_file_menu(main_window, bar)
-        MenuBuilder._build_edit_menu(main_window, bar)
+        MenuBuilder._build_file_menu(main_window, menu_bar)
+        MenuBuilder._build_edit_menu(main_window, menu_bar)
         MenuBuilder._build_tools_menu(main_window, bar)
         MenuBuilder._build_view_menu(main_window, bar)
         MenuBuilder._build_themes_menu(main_window, bar)
