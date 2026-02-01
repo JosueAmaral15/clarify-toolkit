@@ -529,10 +529,24 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
         
-        # Path input section
+        # Path/Text input section
         path_layout = QHBoxLayout()
+        
+        # Input type dropdown (replaces "Is File?" checkbox)
+        path_layout.addWidget(QLabel(tr("advanced_extractor.input_type", "Input:")))
+        self.jsx_input_type_combo = QComboBox()
+        self.jsx_input_type_combo.addItems([
+            tr("advanced_extractor.input_directory", "Directory"),
+            tr("advanced_extractor.input_file", "File"),
+            tr("advanced_extractor.input_text", "Text")
+        ])
+        self.jsx_input_type_combo.setMaximumWidth(120)
+        self.jsx_input_type_combo.currentIndexChanged.connect(self._jsx_on_input_type_changed)
+        path_layout.addWidget(self.jsx_input_type_combo)
+        
         path_layout.addWidget(QLabel(tr("advanced_extractor.path", "Path:")))
         
+        # Path input field (visible for Directory/File mode)
         self.jsx_path_edit = QLineEdit()
         self.jsx_path_edit.setPlaceholderText(tr("advanced_extractor.path_placeholder", "File or directory path"))
         path_layout.addWidget(self.jsx_path_edit, 1)
@@ -542,10 +556,14 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_browse_btn.clicked.connect(self._jsx_browse_path)
         path_layout.addWidget(self.jsx_browse_btn)
         
-        self.jsx_is_file_checkbox = QCheckBox(tr("advanced_extractor.is_file", "Is file?"))
-        path_layout.addWidget(self.jsx_is_file_checkbox)
-        
         layout.addLayout(path_layout)
+        
+        # Text input area (visible only in Text mode)
+        self.jsx_text_input = QPlainTextEdit()
+        self.jsx_text_input.setPlaceholderText(tr("advanced_extractor.text_placeholder", "Paste HTML/JSX text here..."))
+        self.jsx_text_input.setFixedHeight(150)
+        self.jsx_text_input.setVisible(False)  # Hidden by default
+        layout.addWidget(self.jsx_text_input)
         
         # Mode and parameter section
         mode_layout = QHBoxLayout()
@@ -1116,6 +1134,24 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_start_edit.setEnabled(is_generic)
         self.jsx_end_edit.setEnabled(is_generic)
     
+    def _jsx_on_input_type_changed(self, index: int):
+        """Handle input type dropdown change (Directory/File/Text)."""
+        input_types = ["directory", "file", "text"]
+        selected_type = input_types[index]
+        
+        if selected_type == "text":
+            # Text mode: Hide path field, show text area
+            self.jsx_path_edit.setVisible(False)
+            self.jsx_browse_btn.setText(tr("advanced_extractor.load_file", "Load from File..."))
+            self.jsx_text_input.setVisible(True)
+            self.jsx_extensions_edit.setEnabled(False)
+        else:
+            # Directory/File mode: Show path field, hide text area
+            self.jsx_path_edit.setVisible(True)
+            self.jsx_browse_btn.setText(tr("base.btn_browse", "Browse"))
+            self.jsx_text_input.setVisible(False)
+            self.jsx_extensions_edit.setEnabled(True)
+    
     def _jsx_update_avoid_mode(self):
         """Update avoid keys matching mode."""
         if self.jsx_avoid_equals_radio.isChecked():
@@ -1124,59 +1160,74 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.avoid_keys_parameter = self.CONTAINS
     
     def _jsx_browse_path(self):
-        """Browse for file or directory."""
-        path = self.jsx_path_edit.text().strip()
+        """Browse for file or directory, or load file content in Text mode."""
+        input_type_index = self.jsx_input_type_combo.currentIndex()
         
-        if not path or not os.path.exists(path):
-            if self.jsx_is_file_checkbox.isChecked():
-                file_path, _ = QFileDialog.getOpenFileName(
-                    self,
-                    tr("advanced_extractor.select_file", "Select file")
-                )
-                if file_path:
-                    self.jsx_path_edit.setText(file_path)
-            else:
-                dir_path = QFileDialog.getExistingDirectory(
-                    self,
-                    tr("advanced_extractor.select_dir", "Select directory")
-                )
-                if dir_path:
-                    self.jsx_path_edit.setText(dir_path)
-        else:
-            if os.path.isfile(path):
-                file_path, _ = QFileDialog.getOpenFileName(
-                    self,
-                    tr("advanced_extractor.select_file", "Select file"),
-                    os.path.dirname(path)
-                )
-                if file_path:
-                    self.jsx_path_edit.setText(file_path)
-            else:
-                dir_path = QFileDialog.getExistingDirectory(
-                    self,
-                    tr("advanced_extractor.select_dir", "Select directory"),
-                    path
-                )
-                if dir_path:
-                    self.jsx_path_edit.setText(dir_path)
+        if input_type_index == 2:  # Text mode
+            # Load from File... - opens file and pastes content into text area
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                tr("advanced_extractor.load_file_dialog", "Load File Content"),
+                "",
+                "All Files (*);;HTML Files (*.html *.htm);;JSX/TSX Files (*.jsx *.tsx);;JavaScript Files (*.js *.ts)"
+            )
+            if file_path:
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        self.jsx_text_input.setPlainText(content)
+                except Exception as e:
+                    self.show_error(
+                        tr("advanced_extractor.error", "Error"),
+                        tr("advanced_extractor.load_error", f"Failed to load file: {str(e)}")
+                    )
+        elif input_type_index == 1:  # File mode
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                tr("advanced_extractor.select_file", "Select file")
+            )
+            if file_path:
+                self.jsx_path_edit.setText(file_path)
+        else:  # Directory mode (index 0)
+            dir_path = QFileDialog.getExistingDirectory(
+                self,
+                tr("advanced_extractor.select_dir", "Select directory")
+            )
+            if dir_path:
+                self.jsx_path_edit.setText(dir_path)
     
     def _jsx_run_extraction(self):
         """Execute the extraction with current settings."""
         try:
-            path = self.jsx_path_edit.text().strip()
-            if not path:
-                self.show_warning(
-                    tr("advanced_extractor.error", "Error"),
-                    tr("advanced_extractor.no_path", "Please provide a path.")
-                )
-                return
+            input_type_index = self.jsx_input_type_combo.currentIndex()
             
-            if not os.path.exists(path):
-                self.show_warning(
-                    tr("advanced_extractor.error", "Error"),
-                    tr("advanced_extractor.invalid_path", "Path does not exist.")
-                )
-                return
+            # Determine input source
+            if input_type_index == 2:  # Text mode
+                text_content = self.jsx_text_input.toPlainText().strip()
+                if not text_content:
+                    self.show_warning(
+                        tr("advanced_extractor.error", "Error"),
+                        tr("advanced_extractor.no_text", "Please provide HTML/JSX text.")
+                    )
+                    return
+                # Use temporary in-memory processing
+                path = None
+            else:  # Directory or File mode
+                path = self.jsx_path_edit.text().strip()
+                if not path:
+                    self.show_warning(
+                        tr("advanced_extractor.error", "Error"),
+                        tr("advanced_extractor.no_path", "Please provide a path.")
+                    )
+                    return
+                
+                if not os.path.exists(path):
+                    self.show_warning(
+                        tr("advanced_extractor.error", "Error"),
+                        tr("advanced_extractor.invalid_path", "Path does not exist.")
+                    )
+                    return
+                text_content = None
             
             # Collect settings
             param = self.jsx_param_edit.text().strip() or ""
@@ -1238,14 +1289,19 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             )
             
             # Run extraction
-            text_output, json_output = extractor.run(path)
+            if input_type_index == 2:  # Text mode
+                # Process text directly without file system
+                text_output, json_output = extractor.process_text("TextInput", text_content)
+            else:  # Directory/File mode
+                text_output, json_output = extractor.run(path)
             
             # Display results
             self.jsx_paths_output.setPlainText(text_output or "")
             self.jsx_json_output.setPlainText(json_output or "")
             
             # Add to extraction history
-            self._jsx_add_to_history(path, json_output, mode, param)
+            input_source = path if path else "TextInput"
+            self._jsx_add_to_history(input_source, json_output, mode, param)
             
             # Show success message
             paths_count = len([line for line in text_output.split('\n') if line.strip()])
