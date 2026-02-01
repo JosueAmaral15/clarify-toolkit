@@ -843,7 +843,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Run extraction
             if input_type_index == 2:  # Text mode
                 # Process text directly without file system
-                text_output, json_output = extractor.process_text("TextInput", text_content)
+                path_lines, merged_json = extractor.process_text("TextInput", text_content)
+                
+                # Convert results to strings (process_text returns list and dict)
+                text_output = "\n".join(path_lines)
+                json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False) if merged_json else None
             else:  # Directory/File mode
                 text_output, json_output = extractor.run(path)
             
