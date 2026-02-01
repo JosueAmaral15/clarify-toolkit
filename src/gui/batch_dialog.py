@@ -8,8 +8,9 @@ Version: 2.9.102
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
-
+import os
 from typing import Optional
+
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -25,15 +26,13 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QHeaderView,
-    QTextEdit,
     QAbstractItemView,
 )
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont, QIcon
-from ..batch_manager import BatchJob, BatchStep, BatchExecutor, BatchHistory
-from ..accessibility_manager import AccessibilityManager
+
 from src.i18n.translator import tr, tooltip_tr
-import os
+
+from ..batch_manager import BatchJob, BatchStep, BatchExecutor, BatchHistory
 
 
 class BatchStepEditorDialog(QDialog):
@@ -484,7 +483,7 @@ class BatchDialog(QDialog):
                 "pending": "⏸️ Pending",
                 "running": "⏳ Running",
                 "completed": f"✅ Done ({step.result_count})",
-                "failed": f"❌ Failed",
+                "failed": "❌ Failed",
             }
             status_text = status_icons.get(step.status, step.status)
             status_item = QTableWidgetItem(status_text)
@@ -492,7 +491,7 @@ class BatchDialog(QDialog):
 
     def _add_step(self):
         """Add new step."""
-        is_first = len(self.batch_job.steps) == 0
+        is_first = not self.batch_job.steps
         dialog = BatchStepEditorDialog(is_first_step=is_first, parent=self)
 
         if dialog.exec() == QDialog.Accepted:
@@ -511,7 +510,7 @@ class BatchDialog(QDialog):
             return
 
         step = self.batch_job.steps[row]
-        is_first = row == 0
+        is_first = not row
 
         dialog = BatchStepEditorDialog(step=step, is_first_step=is_first, parent=self)
 
@@ -552,7 +551,7 @@ class BatchDialog(QDialog):
 
     def _save_batch(self):
         """Save batch to JSON file."""
-        if len(self.batch_job.steps) == 0:
+        if not self.batch_job.steps:
             QMessageBox.warning(
                 self, tr("batch_dialog.msg_empty_batch_save_title"), tr("batch_dialog.msg_empty_batch_save")
             )
@@ -596,7 +595,7 @@ class BatchDialog(QDialog):
 
     def _execute_batch(self):
         """Execute batch job."""
-        if len(self.batch_job.steps) == 0:
+        if not self.batch_job.steps:
             QMessageBox.warning(
                 self, tr("batch_dialog.msg_empty_batch_exec_title"), tr("batch_dialog.msg_empty_batch_exec")
             )
@@ -637,7 +636,7 @@ class BatchDialog(QDialog):
             self.executor.cancel()
             self.btn_cancel_exec.setEnabled(False)
 
-    def _on_step_started(self, step_index: int, total_steps: int):
+    def _on_step_started(self, step_index: int, total_steps: int):  # pylint: disable=unused-argument
         """Handle step started."""
         self.batch_job.steps[step_index].status = "running"
         self._refresh_table()
