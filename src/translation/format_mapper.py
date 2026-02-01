@@ -62,6 +62,7 @@ class FormatBit:
     PAGE_BREAK_BEFORE = 1 << 19  # 2^19 = 524288
     WIDOW_ORPHAN_CONTROL = 1 << 20  # 2^20 = 1048576
     BIDI_TEXT = 1 << 21  # 2^21 = 2097152
+    LIST_ITEM = 1 << 22  # 2^22 = 4194304
 
 
 @dataclass
