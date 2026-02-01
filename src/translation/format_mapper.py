@@ -169,6 +169,11 @@ class FormatMapper:
                 if run.underline:
                     segment.add_format(FormatBit.UNDERLINE)
                 
+                # Detect double underline (Session 21)
+                # DOCX underline enum: 3 = DOUBLE
+                if run.underline == 3:
+                    segment.add_format(FormatBit.DOUBLE_UNDERLINE)
+                
                 # Detect strikethrough (Session 17)
                 if run.font.strike:
                     segment.add_format(FormatBit.STRIKETHROUGH)
@@ -375,6 +380,12 @@ class FormatMapper:
                         text_underline_style = get_attr('text-underline-style')
                         if text_underline_style and text_underline_style != 'none':
                             segment.add_format(FormatBit.UNDERLINE)
+                        
+                        # Double underline (Session 21)
+                        # ODT uses text-underline-type attribute
+                        text_underline_type = get_attr('text-underline-type')
+                        if text_underline_type == 'double':
+                            segment.add_format(FormatBit.DOUBLE_UNDERLINE)
                         
                         # Strikethrough (Session 17)
                         text_line_through = get_attr('text-line-through-style')
@@ -621,6 +632,11 @@ class FormatMapper:
         if format_bits & FormatBit.UNDERLINE:
             run.underline = True
         
+        # Apply double underline (Session 21)
+        if format_bits & FormatBit.DOUBLE_UNDERLINE:
+            # WD_UNDERLINE.DOUBLE = 3
+            run.underline = 3
+        
         # Apply strikethrough (Session 17)
         if format_bits & FormatBit.STRIKETHROUGH:
             run.font.strike = True
@@ -780,6 +796,13 @@ class FormatMapper:
             
             if format_bits & FormatBit.UNDERLINE:
                 text_props.setAttribute("textunderlinestyle", "solid")
+                text_props.setAttribute("textunderlinewidth", "auto")
+                text_props.setAttribute("textunderlinecolor", "font-color")
+            
+            # Apply double underline (Session 21)
+            if format_bits & FormatBit.DOUBLE_UNDERLINE:
+                text_props.setAttribute("textunderlinestyle", "solid")
+                text_props.setAttribute("textunderlinetype", "double")
                 text_props.setAttribute("textunderlinewidth", "auto")
                 text_props.setAttribute("textunderlinecolor", "font-color")
             
