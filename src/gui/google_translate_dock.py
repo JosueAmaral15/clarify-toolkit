@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Google Translate Dock - Translation Interface
 
@@ -20,18 +17,17 @@ Date: December 21, 2025
 Version: 2.9.78
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=invalid-name  # closeEvent is Qt convention
 
 
-import os
 import time
-from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QGroupBox,
     QLabel,
     QComboBox,
@@ -43,13 +39,12 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QSplitter,
     QFrame,
-    QApplication,
 )
 from PySide6.QtGui import QFont
 
 from ..gui.base_dock import BaseDock
-from ..translation.google_translate import GoogleTranslateAPI, TranslationResult
 from ..i18n import tr, tooltip_tr
+from ..translation.google_translate import GoogleTranslateAPI
 
 
 class TranslationWorker(QThread):
@@ -348,7 +343,7 @@ class GoogleTranslateDock(BaseDock):
 
     def _save_preferences(self):
         """Save user preferences (placeholder for QSettings)."""
-        pass  # Could implement QSettings here
+        # Could implement QSettings here in the future
 
     def _toggle_file_mode(self, enabled: bool):
         """Toggle between text and file input modes."""
@@ -568,17 +563,6 @@ class GoogleTranslateDock(BaseDock):
 
         # Update button states - keep reverse enabled, update copy based on new output
         self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
-
-    def _copy_result(self):
-        """Copy translation result to clipboard."""
-        result = self.text_output.toPlainText()
-        if result:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(result)
-
-            # Visual feedback
-            self.btn_copy_result.setText(tr("google_translate.btn_copied"))
-            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
