@@ -4,16 +4,16 @@ Provides reusable components and patterns for creating tool docks.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
-from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtWidgets import (
-    QDockWidget, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QTextEdit, QCheckBox, QMessageBox,
-    QFileDialog, QSpinBox, QComboBox, QMenu
-)
-from PySide6.QtGui import QIcon
-from typing import Optional, List
 import os
 import re
+from typing import Optional, List
+
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import (
+    QDockWidget, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QTextEdit, QCheckBox, QMessageBox,
+    QFileDialog, QSpinBox, QMenu
+)
 
 from src.i18n.translator import tr, tooltip_tr
 
@@ -193,6 +193,7 @@ class ResultsOutputMixin:
         text_edit.setReadOnly(True)
 
         # Add search shortcut (Ctrl+F)
+        # pylint: disable=import-outside-toplevel  # Lazy Qt import for shortcut
         from PySide6.QtGui import QShortcut, QKeySequence
         search_shortcut = QShortcut(QKeySequence("Ctrl+F"), text_edit)
         search_shortcut.activated.connect(lambda: self._show_search_dialog(text_edit))
@@ -207,6 +208,7 @@ class ResultsOutputMixin:
 
     def _show_search_dialog(self, text_edit: QTextEdit) -> None:
         """Show search dialog for results panel."""
+        # pylint: disable=import-outside-toplevel,reimported,redefined-outer-name  # Lazy dialog imports
         from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton
 
         dialog = QDialog(text_edit)
@@ -245,6 +247,7 @@ class ResultsOutputMixin:
         def find_prev():
             term = search_input.text()
             if term:
+                # pylint: disable=import-outside-toplevel  # Lazy Qt import for find
                 from PySide6.QtGui import QTextDocument
                 text_edit.find(term, QTextDocument.FindBackward)
 
@@ -309,7 +312,7 @@ class ResultsOutputMixin:
         extension = self._detect_content_extension(content)
 
         # Create temporary file
-        import tempfile
+        import tempfile  # pylint: disable=import-outside-toplevel  # Lazy import for temp files
         try:
             with tempfile.NamedTemporaryFile(
                 mode='w',
@@ -338,7 +341,7 @@ class ResultsOutputMixin:
                 # Clean up temp file if editor not found
                 os.unlink(temp_path)
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # Editor launch robustness
             QMessageBox.critical(
                 self,
                 tr("base.error_title"),
@@ -360,7 +363,7 @@ class ResultsOutputMixin:
         # Check for JSON content
         if content_stripped.startswith(('{', '[')):
             try:
-                import json
+                import json  # pylint: disable=import-outside-toplevel  # Lazy import for content detection
                 json.loads(content_stripped)
                 return '.json'
             except (json.JSONDecodeError, ValueError):
@@ -397,6 +400,7 @@ class ResultsOutputMixin:
 
         if parent:
             # Search for EditorDock
+            # pylint: disable=import-outside-toplevel  # Avoid circular import
             from .editor_dock import EditorDock
             editor_dock = parent.findChild(EditorDock)
             return editor_dock
@@ -430,6 +434,7 @@ class ResultsOutputMixin:
         return btn_open
 
 
+# pylint: disable=too-few-public-methods  # Mixin class provides single utility method
 class ActionButtonsMixin:
     """Mixin for common action buttons."""
 
@@ -488,6 +493,7 @@ class OptionsGroupMixin:
 
         return checkboxes
 
+    # pylint: disable=too-many-positional-arguments  # Spinbox configuration requires multiple parameters
     def create_spinbox_input(
         self,
         label_text: str,
@@ -550,7 +556,7 @@ class ValidationMixin:
         if dir_path and not os.path.exists(dir_path):
             try:
                 os.makedirs(dir_path, exist_ok=True)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught  # Directory creation robustness
                 return False, f"Cannot create directory: {str(e)}"
 
         if os.path.exists(path) and not os.access(path, os.W_OK):
