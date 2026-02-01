@@ -17,17 +17,23 @@ Features:
 
 Pattern: Command (GoF) - encapsulates search operation as object
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=line-too-long  # Long regex patterns
 
 from __future__ import annotations
-from typing import List, Tuple
 import re
 
+from typing import List, Tuple
+
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QCheckBox, QPushButton, QMessageBox, QTextEdit
-)
 from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat
+from PySide6.QtWidgets import (
+    QCheckBox, QDialog, QHBoxLayout,
+    QLabel, QLineEdit, QMessageBox,
+    QPushButton, QTextEdit, QVBoxLayout
+)
+
 from src.i18n.translator import tr
 
 
