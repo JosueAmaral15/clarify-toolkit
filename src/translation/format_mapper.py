@@ -61,6 +61,7 @@ class FormatBit:
     KEEP_WITH_NEXT = 1 << 18  # 2^18 = 262144
     PAGE_BREAK_BEFORE = 1 << 19  # 2^19 = 524288
     WIDOW_ORPHAN_CONTROL = 1 << 20  # 2^20 = 1048576
+    BIDI_TEXT = 1 << 21  # 2^21 = 2097152
 
 
 @dataclass
@@ -218,6 +219,13 @@ class FormatMapper:
             if pf.widow_control:
                 para_format_bits |= FormatBit.WIDOW_ORPHAN_CONTROL
                 # Boolean flag, no metadata needed
+            
+            # Detect bidirectional text (Session 31)
+            if paragraph.paragraph_format.bidi:
+                para_format_bits |= FormatBit.BIDI_TEXT
+                # Store direction as metadata: R=RTL, L=LTR
+                # DOCX bidi=True means RTL context
+                para_metadata_parts.append('R')
             
             # Process each run (a run is a continuous text with same formatting)
             for run in paragraph.runs:
@@ -473,6 +481,23 @@ class FormatMapper:
                         if (widows and int(str(widows)) >= 2) or (orphans and int(str(orphans)) >= 2):
                             para_format_bits |= FormatBit.WIDOW_ORPHAN_CONTROL
                     except (ValueError, KeyError, TypeError):
+                        pass
+                    
+                    try:
+                        # Bidirectional text (Session 31)
+                        # ODT attribute: style:writing-mode
+                        # Values: "lr-tb" (LTR), "rl-tb" (RTL), etc.
+                        writing_mode = prop.getAttribute('writingmode')
+                        if writing_mode:
+                            mode_str = str(writing_mode).lower()
+                            if 'rl' in mode_str:
+                                para_format_bits |= FormatBit.BIDI_TEXT
+                                para_metadata_parts.append('R')  # RTL
+                            elif 'lr' in mode_str and para_format_bits & FormatBit.BIDI_TEXT == 0:
+                                # Explicitly LTR (only if not already RTL)
+                                para_format_bits |= FormatBit.BIDI_TEXT
+                                para_metadata_parts.append('L')  # LTR
+                    except (ValueError, KeyError):
                         pass
             
             # Process text content (spans and direct text)
@@ -994,6 +1019,14 @@ class FormatMapper:
         # Apply widow/orphan control (Session 30)
         if format_bits & FormatBit.WIDOW_ORPHAN_CONTROL:
             paragraph.paragraph_format.widow_control = True
+        
+        # Apply bidirectional text (Session 31)
+        if format_bits & FormatBit.BIDI_TEXT and metadata_index < len(metadata_parts):
+            direction = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            if direction == 'R':
+                paragraph.paragraph_format.bidi = True  # RTL
+            # Note: LTR is default, no need to explicitly set
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1202,6 +1235,15 @@ class FormatMapper:
                 # Set both widows and orphans to 2 (standard value)
                 para_props.setAttribute("widows", "2")
                 para_props.setAttribute("orphans", "2")
+            
+            # Apply bidirectional text (Session 31)
+            if para_format_bits & FormatBit.BIDI_TEXT and metadata_index < len(metadata_parts):
+                direction = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                if direction == 'R':
+                    para_props.setAttribute("writingmode", "rl-tb")  # RTL
+                elif direction == 'L':
+                    para_props.setAttribute("writingmode", "lr-tb")  # LTR
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
