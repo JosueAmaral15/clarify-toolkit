@@ -855,10 +855,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_history_btn.clicked.connect(self._jsx_show_history)
         buttons_grid.addWidget(self.jsx_history_btn, 2, 1)
         
-        self.jsx_swap_btn = QPushButton(tr("text_to_json.btn_swap", "Swap (JSON → JSX)"))
-        self.jsx_swap_btn.setMinimumWidth(150)
-        self.jsx_swap_btn.clicked.connect(self._jsx_swap_outputs)
-        buttons_grid.addWidget(self.jsx_swap_btn, 2, 2)
+        # Note: Swap button removed - using checkbox instead (in options grid)
         
         # Row 4: Copy actions
         self.jsx_copy_paths_btn = QPushButton(tr("base.copy_paths", "Copy Paths"))
