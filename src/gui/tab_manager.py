@@ -10,9 +10,11 @@ Author: Refactoring Phase 3.6
 Date: 2024-12-24
 Version: v2.9.114
 """
+# pylint: disable=import-outside-toplevel  # Lazy loading pattern
+# pylint: disable=protected-access  # TabManager works with MainWindow internals
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Tuple, Type
+from typing import TYPE_CHECKING, Dict, Tuple
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QDockWidget
@@ -29,13 +31,21 @@ class TabManager:
 
     # Registry of simple tool docks: (dock_attr, DockClass, tab_title, tab_id)
     SIMPLE_TOOLS: Dict[str, Tuple[str, str, str, str]] = {
-        'translate': ('dock_translate', 'JsonTranslateDock', 'JSON Translate', 'translate'),
-        'rewriter': ('dock_rewriter', 'JsonRewriterDock', 'JSON Rewriter', 'rewriter'),
-        'text_extractor': ('dock_text_extractor', 'TextExtractorDock', 'Text Extractor', 'text_extractor'),
-        'placeholder_replacer': ('dock_placeholder_replacer', 'PlaceholderReplacerDock', 'Placeholder Replacer', 'placeholder_replacer'),
-        'ai_processor': ('dock_ai_processor', 'AIProcessorDock', 'AI Processor', 'ai_processor'),
-        'json_search': ('dock_json_search', 'JsonSearchDock', 'JSON Search', 'json_search'),
-        'case_converter': ('dock_case_converter', 'CaseConverterDock', 'Case Converter', 'case_converter'),
+        'translate': ('dock_translate', 'JsonTranslateDock',
+                      'JSON Translate', 'translate'),
+        'rewriter': ('dock_rewriter', 'JsonRewriterDock',
+                     'JSON Rewriter', 'rewriter'),
+        'text_extractor': ('dock_text_extractor', 'TextExtractorDock',
+                          'Text Extractor', 'text_extractor'),
+        'placeholder_replacer': ('dock_placeholder_replacer',
+                                'PlaceholderReplacerDock',
+                                'Placeholder Replacer', 'placeholder_replacer'),
+        'ai_processor': ('dock_ai_processor', 'AIProcessorDock',
+                        'AI Processor', 'ai_processor'),
+        'json_search': ('dock_json_search', 'JsonSearchDock',
+                       'JSON Search', 'json_search'),
+        'case_converter': ('dock_case_converter', 'CaseConverterDock',
+                          'Case Converter', 'case_converter'),
         'google_translate': ('dock_google_translate', 'GoogleTranslateDock', 'Google Translate', 'google_translate'),
         'jsx_extractor': ('dock_jsx_extractor', 'JSXExtractorDock', 'JSX Extractor', 'jsx_extractor'),
         'file_explorer': ('dock_file_explorer', 'FileExplorerDock', 'File Explorer', 'file_explorer'),
