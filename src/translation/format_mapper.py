@@ -160,6 +160,10 @@ class FormatMapper:
                 if run.underline:
                     segment.add_format(FormatBit.UNDERLINE)
                 
+                # Detect strikethrough (Session 17)
+                if run.font.strike:
+                    segment.add_format(FormatBit.STRIKETHROUGH)
+                
                 # Detect font color
                 if run.font.color.rgb:
                     segment.add_format(FormatBit.FONT_COLOR)
@@ -329,6 +333,11 @@ class FormatMapper:
                         text_underline_style = get_attr('text-underline-style')
                         if text_underline_style and text_underline_style != 'none':
                             segment.add_format(FormatBit.UNDERLINE)
+                        
+                        # Strikethrough (Session 17)
+                        text_line_through = get_attr('text-line-through-style')
+                        if text_line_through and text_line_through != 'none':
+                            segment.add_format(FormatBit.STRIKETHROUGH)
                         
                         # Font color
                         color = get_attr('color')
@@ -550,6 +559,10 @@ class FormatMapper:
         if format_bits & FormatBit.UNDERLINE:
             run.underline = True
         
+        # Apply strikethrough (Session 17)
+        if format_bits & FormatBit.STRIKETHROUGH:
+            run.font.strike = True
+        
         # Apply font color (metadata: hex RGB)
         if format_bits & FormatBit.FONT_COLOR and metadata_index < len(metadata_parts):
             hex_color = metadata_parts[metadata_index].strip()
@@ -679,6 +692,12 @@ class FormatMapper:
                 text_props.setAttribute("textunderlinestyle", "solid")
                 text_props.setAttribute("textunderlinewidth", "auto")
                 text_props.setAttribute("textunderlinecolor", "font-color")
+            
+            # Apply strikethrough (Session 17)
+            if format_bits & FormatBit.STRIKETHROUGH:
+                text_props.setAttribute("textlinethroughstyle", "solid")
+                text_props.setAttribute("textlinethroughwidth", "auto")
+                text_props.setAttribute("textlinethroughcolor", "font-color")
             
             # Apply font color
             if format_bits & FormatBit.FONT_COLOR and metadata_index < len(metadata_parts):
