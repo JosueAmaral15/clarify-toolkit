@@ -8,23 +8,17 @@ Version: 2.9.101
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
-
-from typing import Any, Dict, Optional
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QTextEdit,
-    QPushButton,
-    QComboBox,
-    QGroupBox,
-    QMessageBox,
-)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
-from src.i18n.translator import tr, tooltip_tr
 import json
+
+from typing import Any, Dict
+
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QComboBox, QDialog, QGroupBox, QHBoxLayout,
+    QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+)
+
+from src.i18n.translator import tr, tooltip_tr
 
 
 class OperationPreviewDialog(QDialog):
@@ -111,7 +105,7 @@ class OperationPreviewDialog(QDialog):
         self.data_preview.setFont(QFont("Courier New", 10))
 
         # Format JSON with color highlighting for empty results
-        if not self.result_data or (isinstance(self.result_data, dict) and len(self.result_data) == 0):
+        if not self.result_data or (isinstance(self.result_data, dict) and not self.result_data):
             self.data_preview.setPlainText("{}\n\n(Empty result - no matching keys)")
             self.data_preview.setStyleSheet("background-color: #3a3a3a; color: #CE9178;")
         else:
@@ -199,11 +193,12 @@ class OperationPreviewDialog(QDialog):
         self.target_slot = self.slot_combo.currentText()
 
         # Confirm if result is empty
-        if not self.result_data or (isinstance(self.result_data, dict) and len(self.result_data) == 0):
+        if not self.result_data or (isinstance(self.result_data, dict) and not self.result_data):
             reply = QMessageBox.question(
                 self,
                 "Empty Result",
-                f"The result is empty (no matching keys).\n\n" f"Store empty result in Slot {self.target_slot}?",
+                f"The result is empty (no matching keys).\n\n"
+                f"Store empty result in Slot {self.target_slot}?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
