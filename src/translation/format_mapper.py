@@ -59,6 +59,7 @@ class FormatBit:
     SPACE_BEFORE_AFTER = 1 << 16  # 2^16 = 65536
     KEEP_LINES_TOGETHER = 1 << 17  # 2^17 = 131072
     KEEP_WITH_NEXT = 1 << 18  # 2^18 = 262144
+    PAGE_BREAK_BEFORE = 1 << 19  # 2^19 = 524288
 
 
 @dataclass
@@ -205,6 +206,11 @@ class FormatMapper:
             # Detect keep with next (Session 28)
             if pf.keep_with_next:
                 para_format_bits |= FormatBit.KEEP_WITH_NEXT
+                # Boolean flag, no metadata needed
+            
+            # Detect page break before (Session 29)
+            if pf.page_break_before:
+                para_format_bits |= FormatBit.PAGE_BREAK_BEFORE
                 # Boolean flag, no metadata needed
             
             # Process each run (a run is a continuous text with same formatting)
@@ -440,6 +446,15 @@ class FormatMapper:
                         keep_with_next = prop.getAttribute('keepwithnext')
                         if keep_with_next and str(keep_with_next).lower() == 'always':
                             para_format_bits |= FormatBit.KEEP_WITH_NEXT
+                    except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Page break before (Session 29)
+                        # ODT attribute: fo:break-before = "page"
+                        break_before = prop.getAttribute('breakbefore')
+                        if break_before and str(break_before).lower() == 'page':
+                            para_format_bits |= FormatBit.PAGE_BREAK_BEFORE
                     except (ValueError, KeyError):
                         pass
             
@@ -954,6 +969,10 @@ class FormatMapper:
         # Apply keep with next (Session 28)
         if format_bits & FormatBit.KEEP_WITH_NEXT:
             paragraph.paragraph_format.keep_with_next = True
+        
+        # Apply page break before (Session 29)
+        if format_bits & FormatBit.PAGE_BREAK_BEFORE:
+            paragraph.paragraph_format.page_break_before = True
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1152,6 +1171,10 @@ class FormatMapper:
             # Apply keep with next (Session 28)
             if para_format_bits & FormatBit.KEEP_WITH_NEXT:
                 para_props.setAttribute("keepwithnext", "always")
+            
+            # Apply page break before (Session 29)
+            if para_format_bits & FormatBit.PAGE_BREAK_BEFORE:
+                para_props.setAttribute("breakbefore", "page")
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
