@@ -1,4 +1,5 @@
 """JSON deduplication operations: dedupe, join_keys, eliminate_duplicates."""
+# pylint: disable=multiple-statements  # Intentional compact style for tuple processing
 
 from typing import List, Dict, Optional, Set, Any, Tuple
 from .types import Obj, JSONNode, freeze
@@ -7,17 +8,17 @@ from .detailed_stats import get_global_collector
 
 def dedupe(node: JSONNode, path: str = "root") -> Tuple[JSONNode, int]:
     """Remove duplicate (key, value) pairs in Obj nodes, recursively.
-    
+
     Args:
         node: JSON node to process
         path: Current path in JSON tree (for detailed stats)
-    
+
     Returns:
         Tuple of (processed_node, removed_count)
     """
     removed_count = 0
     collector = get_global_collector()
-    
+
     if isinstance(node, Obj):
         seen: Set = set()
         seen_keys: Dict = {}  # sig -> (key, path) for detailed stats
@@ -56,7 +57,7 @@ def dedupe(node: JSONNode, path: str = "root") -> Tuple[JSONNode, int]:
 
 def merge_obj_values(values: List[Obj]) -> Tuple[Obj, int]:
     """Merge multiple Obj values by concatenating their pairs and joining keys.
-    
+
     Returns:
         Tuple of (merged_result, removed_count)
     """
@@ -72,19 +73,19 @@ def join_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     - If all values are identical → keep one
     - If all values are Obj → merge them recursively
     - Otherwise → deduplicate and keep first unique value(s)
-    
+
     Returns:
         Tuple of (processed_node, merged_count) - always 0 for removed_count
     """
     removed_count = 0
-    
+
     if isinstance(node, Obj):
         processed = []
         for k, v in node:
             processed_v, child_removed = join_keys(v)
             removed_count += child_removed
             processed.append((k, processed_v))
-        
+
         order: List[str] = []
         groups: Dict[str, List[JSONNode]] = {}
         for k, v in processed:
@@ -126,13 +127,13 @@ def eliminate_duplicates(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove globally duplicate values across the entire tree.
     Only the first occurrence of each unique value is kept.
-    
+
     Returns:
         Tuple of (processed_node, removed_duplicate_values_count)
     """
     seen: Set = set()
     removed_count = 0
-    
+
     def _visit(n: JSONNode) -> Optional[JSONNode]:
         nonlocal removed_count
         if isinstance(n, Obj):
@@ -160,7 +161,7 @@ def eliminate_duplicates(node: JSONNode) -> Tuple[JSONNode, int]:
                 out.append(v2)
             return out if out else None
         return n
-    
+
     res = _visit(node)
     return (res if res is not None else Obj()), removed_count
 
@@ -169,12 +170,12 @@ def exclude_numeric_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove keys that are purely numeric (e.g., '0', '123', '456').
     Recursively processes Obj and list nodes.
-    
+
     Returns:
         Tuple of (processed_node, removed_numeric_keys_count)
     """
     removed_count = 0
-    
+
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
@@ -200,21 +201,21 @@ def exclude_numeric_keys(node: JSONNode) -> Tuple[JSONNode, int]:
 def skip_empty_values(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove empty values from JSON structure.
-    
+
     Empty values include:
     - Empty strings: ""
     - None/null
     - Empty lists: []
     - Empty dicts/Obj: {}
     - Whitespace-only strings: "   "
-    
+
     Recursively processes Obj and list nodes.
-    
+
     Returns:
         Tuple of (processed_node, removed_empty_pairs_count)
     """
     removed_count = 0
-    
+
     def is_empty(value: Any) -> bool:
         """Check if value is considered empty."""
         if value is None:
@@ -226,7 +227,7 @@ def skip_empty_values(node: JSONNode) -> Tuple[JSONNode, int]:
         if isinstance(value, dict):
             return len(value) == 0
         return False
-    
+
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
@@ -253,29 +254,29 @@ def skip_empty_values(node: JSONNode) -> Tuple[JSONNode, int]:
 def avoid_duplicate_child_keys(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Avoid child keys with the same name as parent keys.
-    
+
     Example:
         { pages: { home: { home: { home: 'Welcome' } } } }
     Becomes:
         { pages: { home: 'Welcome' } }
-    
+
     If both parent and child are objects, they are merged.
     If values conflict, parent value is kept (child ignored).
-    
+
     Recursively processes Obj and list nodes.
-    
+
     Returns:
         Tuple of (processed_node, collapsed_hierarchies_count)
     """
     removed_count = 0
-    
+
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
             # First, recursively process the value
             processed_v, child_removed = avoid_duplicate_child_keys(v)
             removed_count += child_removed
-            
+
             # Check if the value is an Obj with a single key that matches current key
             if isinstance(processed_v, Obj) and len(processed_v) == 1:
                 child_key, child_val = processed_v[0]
@@ -292,7 +293,7 @@ def avoid_duplicate_child_keys(node: JSONNode) -> Tuple[JSONNode, int]:
                         # Child is not an object, just use it directly
                         out.append((k, child_val))
                     continue
-            
+
             # No duplicate found, keep as is
             out.append((k, processed_v))
         return out, removed_count
@@ -309,24 +310,24 @@ def avoid_duplicate_child_keys(node: JSONNode) -> Tuple[JSONNode, int]:
 def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False) -> Tuple[JSONNode, int]:
     """
     Remove duplicate values from arrays in JSON structure.
-    
+
     Args:
         node: JSON node to process
         consecutive_only: If True, only removes consecutive duplicates (e.g., ['a','a','b'] → ['a','b'])
                          If False, removes all duplicates (e.g., ['a','b','a'] → ['a','b'])
-    
+
     Examples:
         consecutive_only=True:  ['a', 'a', 'b', 'c', 'c'] → ['a', 'b', 'c']
         consecutive_only=False: ['a', 'b', 'a', 'c', 'b'] → ['a', 'b', 'c']
-    
+
     Recursively processes Obj and list nodes.
     Uses set-like behavior to preserve first occurrence.
-    
+
     Returns:
         Tuple of (processed_node, removed_array_elements_count)
     """
     removed_count = 0
-    
+
     if isinstance(node, Obj):
         out = Obj()
         for k, v in node:
@@ -335,7 +336,7 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
             removed_count += child_removed
             out.append((k, processed_v))
         return out, removed_count
-    
+
     if isinstance(node, list):
         if consecutive_only:
             # Remove only consecutive duplicates
@@ -345,7 +346,7 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
             prev_item, prev_removed = remove_duplicate_array_values(node[0], consecutive_only)
             removed_count += prev_removed
             result.append(prev_item)
-            
+
             for i in range(1, len(node)):
                 curr_item, curr_removed = remove_duplicate_array_values(node[i], consecutive_only)
                 removed_count += curr_removed
@@ -372,31 +373,32 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
                     # Duplicate found
                     removed_count += 1
             return result, removed_count
-    
+
     return node, 0
 
 
 def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inconsistencies: bool = True) -> tuple[JSONNode, List[str]]:
     """
     Enforce consistent case style on all JSON keys.
-    
+
     Args:
         node: JSON node to process
         target_case: Target case style - 'camel', 'pascal', 'snake', or 'kebab' (default: 'camel')
         warn_inconsistencies: If True, collect warnings for keys that deviate from target case
-    
+
     Returns:
         Tuple of (processed_node, warnings_list)
-        
+
     Examples:
         Input:  { "homeTitle": "A", "AboutPage": "B", "user_name": "C" }
         Output: { "homeTitle": "A", "aboutPage": "B", "userName": "C" }
         Warnings: ["Key 'AboutPage' converted to 'aboutPage'", "Key 'user_name' converted to 'userName'"]
     """
+    # pylint: disable=import-outside-toplevel  # Optional regex dependency
     import re
-    
+
     warnings = []
-    
+
     def split_words(s: str) -> List[str]:
         """Split identifier into words."""
         # Handle kebab-case and snake_case
@@ -405,62 +407,62 @@ def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inc
         s = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
         s = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', s)
         return [w for w in s.split() if w]
-    
+
     def to_camel(s: str) -> str:
         words = split_words(s)
         if not words:
             return s
         return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
-    
+
     def to_pascal(s: str) -> str:
         words = split_words(s)
         if not words:
             return s
         return ''.join(w.capitalize() for w in words)
-    
+
     def to_snake(s: str) -> str:
         words = split_words(s)
         return '_'.join(w.lower() for w in words)
-    
+
     def to_kebab(s: str) -> str:
         words = split_words(s)
         return '-'.join(w.lower() for w in words)
-    
+
     converters = {
         'camel': to_camel,
         'pascal': to_pascal,
         'snake': to_snake,
         'kebab': to_kebab
     }
-    
+
     converter = converters.get(target_case)
     if not converter:
         warnings.append(f"Unknown case style '{target_case}', defaulting to camelCase")
         converter = to_camel
-    
+
     def process_node(n: JSONNode, path: str = "") -> JSONNode:
         if isinstance(n, Obj):
             out = Obj()
             for k, v in n:
                 # Convert key
                 new_key = converter(k)
-                
+
                 # Warn if changed
                 if warn_inconsistencies and new_key != k:
                     key_path = f"{path}.{k}" if path else k
                     warnings.append(f"Key '{key_path}' converted from '{k}' to '{new_key}'")
-                
+
                 # Recursively process value
                 new_path = f"{path}.{new_key}" if path else new_key
                 processed_v = process_node(v, new_path)
                 out.append((new_key, processed_v))
             return out
-        
+
         if isinstance(n, list):
             return [process_node(item, f"{path}[]") for item in n]
-        
+
         return n
-    
+
     processed = process_node(node)
     return processed, warnings
 
@@ -468,47 +470,47 @@ def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inc
 def normalize_escaping(node: JSONNode) -> JSONNode:
     """
     Normalize excessive escaping in string values (Task #22 - v2.9.10).
-    
+
     Detects patterns like:
     - \\\\\\' (3+ backslashes before quote) → \\'
     - \\\\\\\\" (3+ backslashes before double quote) → \\\\"
-    
+
     Examples:
         "value": "don\\\\\\'t" → "value": "don\\'t"
         "value": "say \\\\\\"hi\\\\\\"" → "value": "say \\"hi\\""
-    
+
     Note: \\' (single backslash + quote) is kept unchanged as it's valid.
-    
+
     Args:
         node: JSONNode tree to process
-    
+
     Returns:
         Processed JSONNode with normalized escaping
     """
-    import re
-    
+    import re  # pylint: disable=import-outside-toplevel  # Optional regex dependency
+
     def normalize_string(s: str) -> str:
         """Normalize excessive backslash escaping in a single string."""
         if not isinstance(s, str):
             return s
-        
+
         # Pattern 1: Detect 2+ backslashes before single quote → normalize to \'
         # Match: \\\\' or \\\\\' or \\\\\\' etc. → replace with \'
         pattern1 = r"\\{2,}'"
         normalized = re.sub(pattern1, r"\'", s)
-        
+
         # Pattern 2: Detect 2+ backslashes before double quote → normalize to \"
         # Match: \\\\" or \\\\\\" or \\\\\\\\" etc. → replace with \"
         pattern2 = r'\\{2,}"'
         normalized = re.sub(pattern2, r'\"', normalized)
-        
+
         return normalized
-    
+
     def process_node(n: JSONNode) -> JSONNode:
         """Recursively process node and normalize string escaping."""
         if isinstance(n, str):
             return normalize_string(n)
-        
+
         if isinstance(n, Obj):
             out = Obj()
             for k, v in n:
@@ -517,13 +519,13 @@ def normalize_escaping(node: JSONNode) -> JSONNode:
                 new_v = process_node(v)
                 out.append((new_k, new_v))
             return out
-        
+
         if isinstance(n, list):
             return [process_node(item) for item in n]
-        
+
         # For other types (int, float, bool, None), return as-is
         return n
-    
+
     return process_node(node)
 
 
@@ -535,34 +537,35 @@ def array_to_object_conversion(
 ) -> JSONNode:
     """
     Convert arrays to objects with intelligently generated keys (Task #21 - v2.9.10).
-    
+
     Strategy:
     1. Take first N characters of string value (default 30)
     2. Remove accents, special characters, keep only alphanumeric
     3. Convert to target case style (camelCase by default)
     4. Handle conflicts by adding more words until unique
-    
+
     Args:
         node: JSONNode tree to process
         max_key_length: Maximum initial key length (default 30 chars)
         case_style: Target case style ('camel', 'pascal', 'snake', 'kebab')
         scope_path: Current path for conflict resolution (internal)
-    
+
     Returns:
         Processed JSONNode with arrays converted to objects
-    
+
     Example:
         ["O usuario pode seguir..."] →
         {oUsuarioPodeSeguir: "O usuario pode seguir..."}
     """
+    # pylint: disable=import-outside-toplevel  # Optional dependencies
     import re
     import unicodedata
-    
+
     def remove_accents(text: str) -> str:
         """Remove accents from text."""
         nfd = unicodedata.normalize('NFD', text)
         return ''.join(char for char in nfd if unicodedata.category(char) != 'Mn')
-    
+
     def clean_text(text: str) -> str:
         """Remove special characters, keep alphanumeric and spaces."""
         # Remove accents
@@ -570,13 +573,13 @@ def array_to_object_conversion(
         # Keep only alphanumeric and spaces
         text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
         return text.strip()
-    
+
     def to_case(text: str, style: str) -> str:
         """Convert text to target case style."""
         words = text.split()
         if not words:
             return text
-        
+
         if style == 'camel':
             # camelCase: first word lowercase, rest capitalized
             return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
@@ -592,11 +595,11 @@ def array_to_object_conversion(
         else:
             # Default to camelCase
             return words[0].lower() + ''.join(w.capitalize() for w in words[1:])
-    
+
     def generate_key(value: str, max_len: int, used_keys: set) -> str:
         """
         Generate unique key from value string.
-        
+
         Strategy:
         1. Take first max_len chars
         2. Clean and convert to case
@@ -609,7 +612,7 @@ def array_to_object_conversion(
             while f"{base}{counter}" in used_keys:
                 counter += 1
             return f"{base}{counter}"
-        
+
         # Clean value
         cleaned = clean_text(value)
         if not cleaned:
@@ -619,133 +622,133 @@ def array_to_object_conversion(
             while f"{base}{counter}" in used_keys:
                 counter += 1
             return f"{base}{counter}"
-        
+
         # Try with initial length
         words = cleaned.split()
         key = to_case(' '.join(words)[:max_len], case_style)
-        
+
         if key not in used_keys:
             return key
-        
+
         # Conflict: try adding more words
         for i in range(1, len(words) + 1):
             key = to_case(' '.join(words[:i]), case_style)
             if key not in used_keys:
                 return key
-        
+
         # Still conflict: add entire string
         key = to_case(cleaned, case_style)
         if key not in used_keys:
             return key
-        
+
         # Ultimate fallback: add counter
         counter = 1
         base_key = key
         while f"{base_key}{counter}" in used_keys:
             counter += 1
         return f"{base_key}{counter}"
-    
+
     def process_array(arr: list, path: str) -> JSONNode:
         """Convert array to object if it contains strings."""
         # Check if array contains only strings
         if not arr:
             return arr
-        
+
         # Check if all items are strings
         all_strings = all(isinstance(item, str) for item in arr)
-        
+
         if all_strings:
             # Convert to object
             obj = Obj()
             used_keys = set()
-            
+
             for value in arr:
                 key = generate_key(value, max_key_length, used_keys)
                 used_keys.add(key)
                 obj.append((key, value))
-            
+
             return obj
         else:
             # Recursively process array items
             return [process_node(item, f"{path}[]") for item in arr]
-    
+
     def process_node(n: JSONNode, path: str = "") -> JSONNode:
         """Recursively process node."""
         if isinstance(n, str):
             return n
-        
+
         if isinstance(n, Obj):
             out = Obj()
             for k, v in n:
                 new_path = f"{path}.{k}" if path else k
-                
+
                 # Apply conversion only within scope (if specified)
                 if not scope_path or new_path.startswith(scope_path):
                     processed_v = process_node(v, new_path)
                 else:
                     processed_v = v
-                
+
                 out.append((k, processed_v))
             return out
-        
+
         if isinstance(n, list):
             # Check if we should convert this array
             if not scope_path or path.startswith(scope_path):
                 return process_array(n, path)
             else:
                 return [process_node(item, f"{path}[]") for item in n]
-        
+
         # Other types (int, float, bool, None)
         return n
-    
+
     return process_node(node)
 
 
 def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
     """
     Remove keys that don't have siblings (Task #35 - v2.9.11).
-    
+
     A serial chain is a hierarchy where each level has only one child,
     continuing until reaching a leaf value (not an object with multiple children).
-    
+
     Example:
         Input:  {a: {b: {c: "value"}}}  // Serial chain: a->b->c->leaf
         Output: {}  // All removed (no siblings at any level)
-        
+
         Input:  {a: {b: "val1", c: "val2"}}  // a->{b,c} (siblings exist)
         Output: {a: {b: "val1", c: "val2"}}  // Kept (b and c are siblings)
-    
+
     Args:
         node: JSON node to process
-    
+
     Returns:
         Tuple of (processed_node, removed_orphan_chains_count)
     """
     removed_count = 0
-    
+
     def has_siblings_in_subtree(obj: Obj) -> bool:
         """Check if obj or any descendant has multiple children."""
         if len(obj) > 1:
             return True  # This level has siblings
-        
+
         if len(obj) == 0:
             return False  # Empty object
-        
+
         # Single child - check if it's an object with descendants
-        k, v = obj[0]
+        _k, v = obj[0]
         if isinstance(v, Obj):
             return has_siblings_in_subtree(v)
         else:
             # Leaf value (not an object)
             return False
-    
+
     def process_obj(obj: Obj) -> Optional[Obj]:
         """Process Obj node, returning None if should be removed."""
         nonlocal removed_count
-        
+
         if not obj:
             return obj
-        
+
         # Process all children first (recursively)
         processed_children = []
         for k, v in obj:
@@ -759,7 +762,7 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
             else:
                 # Leaf value - always keep at this stage
                 processed_children.append((k, v))
-        
+
         # Now check if this object should be kept
         # Keep if: has multiple children OR has siblings in subtree
         if len(processed_children) > 1:
@@ -778,7 +781,7 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
         else:
             # Empty after processing
             return None
-    
+
     def process_list(arr: list) -> list:
         """Process list items."""
         result = []
@@ -792,7 +795,7 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
             else:
                 result.append(item)
         return result
-    
+
     # Start processing
     if isinstance(node, Obj):
         result = process_obj(node)
@@ -811,22 +814,22 @@ def remove_duplicate_objects(
 ) -> Tuple[JSONNode, int, dict]:
     """
     Remove duplicate objects based on value equality.
-    
+
     Finds objects with identical or similar values and removes duplicates,
     keeping the first occurrence (smallest line number in source).
-    
+
     Args:
         node: JSONNode to process
         threshold: Similarity threshold (0.0-1.0). 1.0 = exact match only
         include_arrays: If True, also compare arrays for duplicates
         mode: 'remove' (delete duplicates) or 'reference' (replace with $ref:path)
-    
+
     Returns:
         Tuple of (processed_node, removed_count, stats_dict) where:
             - processed_node: JSONNode with duplicates removed
             - removed_count: Number of duplicate objects removed
             - stats_dict: Details like {'duplicates_found': [...], 'references_created': [...]}
-    
+
     Examples:
         >>> obj = Obj([('user', {'name': 'John'}), ('author', {'name': 'John'})])
         >>> result, count, stats = remove_duplicate_objects(obj, threshold=1.0)
@@ -839,14 +842,14 @@ def remove_duplicate_objects(
         'references_created': [],
         'kept_objects': []
     }
-    
+
     # Track seen objects: {frozen_value: (path, first_key, obj_value)}
     seen_objects: Dict[Any, Tuple[str, str, JSONNode]] = {}
-    
+
     def calculate_similarity(obj1: JSONNode, obj2: JSONNode) -> float:
         """
         Calculate similarity score between two objects (0.0 to 1.0).
-        
+
         For Obj: percentage of matching fields.
         For others: 1.0 if identical, 0.0 otherwise.
         """
@@ -854,60 +857,60 @@ def remove_duplicate_objects(
             # Convert to dicts for comparison
             dict1 = {k: freeze(v) for k, v in obj1}
             dict2 = {k: freeze(v) for k, v in obj2}
-            
+
             all_keys = set(dict1.keys()) | set(dict2.keys())
             if not all_keys:
                 return 1.0  # Both empty
-            
+
             matching_keys = sum(
                 1 for k in all_keys
                 if k in dict1 and k in dict2 and dict1[k] == dict2[k]
             )
             return matching_keys / len(all_keys)
-        
+
         elif isinstance(obj1, list) and isinstance(obj2, list):
             # For arrays: must be exactly equal
             return 1.0 if freeze(obj1) == freeze(obj2) else 0.0
-        
+
         else:
             # Primitives: exact match
             return 1.0 if freeze(obj1) == freeze(obj2) else 0.0
-    
+
+    # pylint: disable=too-many-return-statements  # Complex similarity logic with multiple conditions
     def process_node(n: JSONNode, path: str = '') -> Optional[JSONNode]:
         """
         Recursively process node, tracking and removing duplicates.
-        
+
         Args:
             n: Current node to process
             path: Current path in tree (e.g., 'root.users.0')
-        
+
         Returns:
             Processed node or None if removed as duplicate
         """
         nonlocal removed_count
-        
+
         if isinstance(n, Obj):
             # Check if this object is a duplicate
-            should_check = True
             frozen_val = freeze(n)
-            
+
             # Look for similar objects in seen_objects
             duplicate_of = None
             best_similarity = 0.0
-            
+
             for seen_frozen, (seen_path, seen_key, seen_obj) in seen_objects.items():
                 similarity = calculate_similarity(n, seen_obj)
-                
+
                 if similarity >= threshold and similarity > best_similarity:
                     best_similarity = similarity
                     duplicate_of = (seen_path, seen_key, seen_obj, seen_frozen)
-            
+
             if duplicate_of:
                 # Found duplicate!
                 seen_path, seen_key, seen_obj, seen_frozen = duplicate_of
-                
+
                 removed_count += 1  # Increment regardless of mode
-                
+
                 if mode == 'reference':
                     # Create reference instead of removing
                     ref_path = seen_path if seen_path else seen_key
@@ -927,14 +930,14 @@ def remove_duplicate_objects(
                         'similarity': best_similarity
                     })
                     return None  # Remove this object
-            
+
             # Not a duplicate - process recursively and track it
             seen_objects[frozen_val] = (path, '', n)
             stats_dict['kept_objects'].append({
                 'path': path,
                 'frozen_signature': str(frozen_val)[:100]  # First 100 chars
             })
-            
+
             # Process children
             out = Obj()
             for idx, (k, v) in enumerate(n):
@@ -942,9 +945,9 @@ def remove_duplicate_objects(
                 processed_v = process_node(v, child_path)
                 if processed_v is not None:
                     out.append((k, processed_v))
-            
+
             return out  # Return even if empty (empty objects are valid)
-        
+
         elif isinstance(n, list):
             if not include_arrays:
                 # Don't check arrays for duplicates, but process children
@@ -958,7 +961,7 @@ def remove_duplicate_objects(
             else:
                 # Check arrays for duplicates too
                 frozen_val = freeze(n)
-                
+
                 # Look for duplicate array
                 duplicate_of = None
                 for seen_frozen, (seen_path, seen_key, seen_obj) in seen_objects.items():
@@ -967,10 +970,10 @@ def remove_duplicate_objects(
                         if similarity >= threshold:
                             duplicate_of = (seen_path, seen_key, seen_obj, seen_frozen)
                             break
-                
+
                 if duplicate_of:
                     seen_path, seen_key, seen_obj, seen_frozen = duplicate_of
-                    
+
                     if mode == 'reference':
                         ref_path = seen_path if seen_path else seen_key
                         stats_dict['references_created'].append({
@@ -988,10 +991,10 @@ def remove_duplicate_objects(
                         })
                         removed_count += 1
                         return None
-                
+
                 # Not duplicate - track and process
                 seen_objects[frozen_val] = (path, '', n)
-                
+
                 result = []
                 for idx, item in enumerate(n):
                     child_path = f"{path}[{idx}]" if path else f"[{idx}]"
@@ -999,11 +1002,11 @@ def remove_duplicate_objects(
                     if processed_item is not None:
                         result.append(processed_item)
                 return result
-        
+
         else:
             # Primitive value - no duplication check
             return n
-    
+
     # Process the tree
     result = process_node(node, 'root')
     return (result if result is not None else Obj()), removed_count, stats_dict

@@ -1,4 +1,5 @@
 """TypeScript/JavaScript parser: find and extract object blocks from TS/JS files."""
+# pylint: disable=multiple-statements  # Intentional compact parser state machine
 
 import re
 from typing import Optional, Tuple, List
@@ -130,7 +131,7 @@ def strip_comments_code(s: str) -> str:
 
 def lift_strings_to_placeholders(s: str) -> tuple[str, List[str]]:
     """Replace string literals with placeholders to protect them during transformation."""
-    import json
+    import json  # pylint: disable=import-outside-toplevel  # Optional JSON dependency
     out, tokens = [], []
     i = 0; n = len(s); start = 0
     while i < n:

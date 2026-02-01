@@ -6,9 +6,9 @@ This module contains sanitize_keys_and_values with the fix that handles Obj type
 import re
 import json
 from typing import Optional, Dict, Any
-from .types import Obj, JSONNode
+from .types import Obj
 from .ts_parser import find_object_block, ts_block_to_json_text
-from .operations import dedupe, join_keys, eliminate_duplicates
+from .operations import dedupe, join_keys, eliminate_duplicates, normalize_escaping, array_to_object_conversion
 from .serializer import dump_ts_node
 from ..utils.file_utils import read_text
 
@@ -19,7 +19,7 @@ def sanitize_keys_and_values(obj: dict,
                              drop_empty_values: bool = True) -> dict:
     """
     CRITICAL BUG FIX APPLIED: This function now handles both dict and Obj types correctly.
-    
+
     - If drop_empty_values: remove entries whose value is '' (or whitespace-only).
     - If not allow_numeric_keys:
         • For keys like '1.abcd' → keep only 'abcd' (strip leading digits + dots).
@@ -71,10 +71,11 @@ def sanitize_keys_and_values(obj: dict,
     return walk(obj)
 
 
+    # pylint: disable=too-many-positional-arguments  # Pipeline requires multiple operation flags
 def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool, elim: bool, normalize_esc: bool = False, convert_arrays: bool = False) -> str:
     """
     Complete pipeline: find TS/JS object block → parse → dedupe → join → eliminate → normalize escaping → array to object → serialize.
-    
+
     Args:
         raw_full: Full TS/JS file content
         indent: Indentation level (None or <=0 for compact)
@@ -82,16 +83,16 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
         elim: Apply eliminate_duplicates operation
         normalize_esc: Apply normalize_escaping operation (Task #22 - v2.9.10)
         convert_arrays: Apply array_to_object_conversion operation (Task #21 - v2.9.10)
-    
+
     Returns:
         Processed file content (statistics are discarded here - use cli_dedupe for full stats)
     """
     start, end, block = find_object_block(raw_full)
     block_json = ts_block_to_json_text(block)
-    
-    from .types import parse_json_preserving_duplicates_text
+
+    from .types import parse_json_preserving_duplicates_text  # pylint: disable=import-outside-toplevel  # Avoid circular import
     node = parse_json_preserving_duplicates_text(block_json)
-    
+
     # Apply operations (discard counters in this simplified function)
     node, _ = dedupe(node)
     if join:
@@ -104,7 +105,7 @@ def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool,
         node = array_to_object_conversion(node)
 
     new_block = dump_ts_node(node, indent, 0)
-    
+
     # Reconstruct full file
     before = raw_full[:start]
     after = raw_full[end:]
@@ -121,6 +122,6 @@ def load_translation_dict(path: str) -> Dict[str, Any]:
         return json.loads(text)
 
     # Fallback: naive TS/JS extraction
-    start, end, block = find_object_block(text)
+    _start, _end, block = find_object_block(text)
     block_json = ts_block_to_json_text(block)
     return json.loads(block_json)

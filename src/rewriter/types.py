@@ -1,4 +1,5 @@
 """Core data types for JSON Rewriter with duplicate key preservation."""
+# pylint: disable=duplicate-code  # Type definitions shared with other modules
 
 import json
 from typing import Union, Any, List, Tuple
