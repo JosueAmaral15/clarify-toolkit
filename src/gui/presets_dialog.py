@@ -3,8 +3,9 @@ Operation Presets Dialog
 Dialog para gerenciar presets de operações.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
