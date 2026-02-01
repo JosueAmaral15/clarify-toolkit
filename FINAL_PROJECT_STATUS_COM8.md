@@ -57,24 +57,24 @@
 - ❌ Character styles (deferred - requires style mapping)
 
 ### Phase 4: Lists - 50% ⚠️ (3/6)
-24. **Bullet Lists** - Unordered lists with bullets
-25. **Numbered Lists** - Ordered lists with numbers
-26. **Multi-level Lists** - Nested list support
+26. **Bullet Lists** - Unordered lists with bullets
+27. **Numbered Lists** - Ordered lists with numbers
+28. **Multi-level Lists** - Nested list support
 - ❌ Custom bullets (deferred - edge case)
 - ❌ List start numbers (deferred - edge case)
 - ❌ Custom list indentation (deferred - edge case)
 
 ### Phase 7: Hyperlinks - 100% ✅ (3/3)
-27. **HTTP/HTTPS Links** - Web URLs
-28. **Email Links** - mailto: scheme
-29. **File Links** - file:// scheme
-30. **Other Schemes** - tel:, ftp:, custom:// (implicit support)
+29. **HTTP/HTTPS Links** - Web URLs
+30. **Email Links** - mailto: scheme
+31. **File Links** - file:// scheme
+32. **Other Schemes** - tel:, ftp:, custom:// (implicit support)
 
 ### Phase 9: Special Characters - 100% ✅ (4/4)
-31. **Non-breaking Spaces** - U+00A0 (NBSP)
-32. **Non-breaking Hyphens** - U+2011 (NBHY)
-33. **Soft Hyphens** - U+00AD (SHY)
-34. **Tab Characters** - U+0009 (TAB)
+33. **Non-breaking Spaces** - U+00A0 (NBSP)
+34. **Non-breaking Hyphens** - U+2011 (NBHY)
+35. **Soft Hyphens** - U+00AD (SHY)
+36. **Tab Characters** - U+0009 (TAB)
 
 ---
 
