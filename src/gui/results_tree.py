@@ -89,8 +89,8 @@ class ResultsTree(QTreeWidget):
                         self._status_label.setText(
                             f"📍 Position: Line {line}, Column {col} | File: {file_path}"
                         )
-            except Exception:
-                pass
+                except Exception:
+                    pass
         else:
             # Clear status for non-match items
             if self._status_label:
