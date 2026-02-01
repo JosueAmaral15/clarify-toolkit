@@ -219,6 +219,10 @@ class FormatMapper:
                 if run.font.subscript:
                     segment.add_format(FormatBit.SUBSCRIPT)
                 
+                # Detect small caps (Session 22)
+                if run.font.small_caps:
+                    segment.add_format(FormatBit.SMALL_CAPS)
+                
                 # Detect font size
                 if run.font.size:
                     segment.add_format(FormatBit.FONT_SIZE)
@@ -401,6 +405,11 @@ class FormatMapper:
                         # Note: Check same text-position attribute but for 'sub'
                         if text_position and 'sub' in str(text_position).lower() and 'super' not in str(text_position).lower():
                             segment.add_format(FormatBit.SUBSCRIPT)
+                        
+                        # Small caps (Session 22)
+                        font_variant = get_attr('font-variant')
+                        if font_variant == 'small-caps':
+                            segment.add_format(FormatBit.SMALL_CAPS)
                         
                         # Font color
                         color = get_attr('color')
@@ -682,6 +691,10 @@ class FormatMapper:
         if format_bits & FormatBit.SUBSCRIPT:
             run.font.subscript = True
         
+        # Apply small caps (Session 22)
+        if format_bits & FormatBit.SMALL_CAPS:
+            run.font.small_caps = True
+        
         # Apply font size (metadata: points)
         if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
             size_str = metadata_parts[metadata_index].strip()
@@ -843,6 +856,10 @@ class FormatMapper:
             # Apply subscript (Session 20)
             if format_bits & FormatBit.SUBSCRIPT:
                 text_props.setAttribute("textposition", "sub -58%")
+            
+            # Apply small caps (Session 22)
+            if format_bits & FormatBit.SMALL_CAPS:
+                text_props.setAttribute("fontvariant", "small-caps")
             
             style.addElement(text_props)
             doc.automaticstyles.addElement(style)
