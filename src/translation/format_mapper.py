@@ -54,6 +54,9 @@ class FormatBit:
     SUBSCRIPT = 1 << 13    # 2^13 = 8192
     DOUBLE_UNDERLINE = 1 << 14  # 2^14 = 16384
     SMALL_CAPS = 1 << 15   # 2^15 = 32768
+    
+    # Extended paragraph formatting (bits 16+) - Session 26+
+    SPACE_BEFORE_AFTER = 1 << 16  # 2^16 = 65536
 
 
 @dataclass
@@ -183,6 +186,14 @@ class FormatMapper:
                 left = int(pf.left_indent.pt) if pf.left_indent else 0
                 right = int(pf.right_indent.pt) if pf.right_indent else 0
                 para_metadata_parts.append(f"{first_line},{left},{right}")
+            
+            # Detect space before/after paragraphs (Session 26)
+            if pf.space_before or pf.space_after:
+                para_format_bits |= FormatBit.SPACE_BEFORE_AFTER
+                # Convert to points and store as "before,after"
+                before = int(pf.space_before.pt) if pf.space_before else 0
+                after = int(pf.space_after.pt) if pf.space_after else 0
+                para_metadata_parts.append(f"{before},{after}")
             
             # Process each run (a run is a continuous text with same formatting)
             for run in paragraph.runs:
@@ -386,6 +397,19 @@ class FormatMapper:
                             left = dim_to_points(margin_left) if margin_left else 0
                             right = dim_to_points(margin_right) if margin_right else 0
                             para_metadata_parts.append(f"{first_line},{left},{right}")
+                    except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Space before/after (Session 26)
+                        margin_top = prop.getAttribute('margintop')
+                        margin_bottom = prop.getAttribute('marginbottom')
+                        
+                        if margin_top or margin_bottom:
+                            para_format_bits |= FormatBit.SPACE_BEFORE_AFTER
+                            before = dim_to_points(margin_top) if margin_top else 0
+                            after = dim_to_points(margin_bottom) if margin_bottom else 0
+                            para_metadata_parts.append(f"{before},{after}")
                     except (ValueError, KeyError):
                         pass
             
@@ -873,6 +897,25 @@ class FormatMapper:
                         paragraph.paragraph_format.right_indent = Pt(right)
             except (ValueError, IndexError):
                 pass  # Skip invalid indentation
+        
+        # Apply space before/after (Session 26)
+        if format_bits & FormatBit.SPACE_BEFORE_AFTER and metadata_index < len(metadata_parts):
+            space_str = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                from docx.shared import Pt
+                # Parse: "before,after"
+                parts = space_str.split(',')
+                if len(parts) == 2:
+                    before = int(parts[0])
+                    after = int(parts[1])
+                    
+                    if before != 0:
+                        paragraph.paragraph_format.space_before = Pt(before)
+                    if after != 0:
+                        paragraph.paragraph_format.space_after = Pt(after)
+            except (ValueError, IndexError):
+                pass  # Skip invalid spacing
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1044,6 +1087,25 @@ class FormatMapper:
                             para_props.setAttribute("marginright", f"{right * 0.0353:.2f}cm")
                 except (ValueError, IndexError):
                     pass  # Skip invalid indentation
+            
+            # Apply space before/after (Session 26)
+            if para_format_bits & FormatBit.SPACE_BEFORE_AFTER and metadata_index < len(metadata_parts):
+                space_str = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                try:
+                    # Parse: "before,after" in points
+                    parts = space_str.split(',')
+                    if len(parts) == 2:
+                        before = int(parts[0])
+                        after = int(parts[1])
+                        
+                        # Convert points to cm (1pt = 0.0353cm)
+                        if before != 0:
+                            para_props.setAttribute("margintop", f"{before * 0.0353:.2f}cm")
+                        if after != 0:
+                            para_props.setAttribute("marginbottom", f"{after * 0.0353:.2f}cm")
+                except (ValueError, IndexError):
+                    pass  # Skip invalid spacing
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
