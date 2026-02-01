@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QMessageBox, QComboBox, QDialog, QTextEdit,
     QGroupBox, QHeaderView, QAbstractItemView
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
 from ..calculator_memory import CalculatorMemory
 from ..statistics_manager import StatisticsManager
@@ -61,8 +61,7 @@ class CompareDialog(QDialog):
         diffs = self.comparison_data['differences']
 
         comparison_text = StatisticsManager.format_comparative_statistics(
-            stats1, stats2, {},
-            f"Slot {slot1}", f"Slot {slot2}", "Difference"
+            stats1, stats2, {}, 0.0
         )
 
         # Add difference summary
@@ -404,7 +403,11 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
 
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot").format(slot_name))
+            QMessageBox.information(
+                self,
+                tr("calculator.msg_empty_slot_title"),
+                tr("calculator.msg_empty_slot").format(slot_name)
+            )
             return
 
         slot_info = self.memory.get_slot_info(slot_name)
@@ -432,7 +435,10 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
 
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot").format(slot_name))
+            QMessageBox.information(
+                self, tr("calculator.msg_empty_slot_title"),
+                tr("calculator.msg_empty_slot").format(slot_name)
+            )
             return
 
         slot_info = self.memory.get_slot_info(slot_name)
@@ -457,7 +463,10 @@ class CalculatorDock(QWidget):
         slot_name = self.combo_slot.currentText()
 
         if self.memory.is_slot_empty(slot_name):
-            QMessageBox.information(self, tr("calculator.msg_empty_slot_title"), tr("calculator.msg_empty_slot_already").format(slot_name))
+            QMessageBox.information(
+                self, tr("calculator.msg_empty_slot_title"),
+                tr("calculator.msg_empty_slot_already").format(slot_name)
+            )
             return
 
         reply = QMessageBox.question(
@@ -470,7 +479,10 @@ class CalculatorDock(QWidget):
         if reply == QMessageBox.Yes:
             self.memory.clear_slot(slot_name)
             self._refresh_table()
-            QMessageBox.information(self, tr("calculator.msg_cleared_title"), tr("calculator.msg_cleared_slot").format(slot_name))
+            QMessageBox.information(
+                self, tr("calculator.msg_cleared_title"),
+                tr("calculator.msg_cleared_slot").format(slot_name)
+            )
 
     def _clear_all_slots(self):
         """Clear all memory slots."""
@@ -498,7 +510,11 @@ class CalculatorDock(QWidget):
         slot2 = self.combo_compare2.currentText()
 
         if slot1 == slot2:
-            QMessageBox.warning(self, tr("calculator.msg_invalid_selection_title"), tr("calculator.msg_invalid_selection"))
+            QMessageBox.warning(
+                self,
+                tr("calculator.msg_invalid_selection_title"),
+                tr("calculator.msg_invalid_selection")
+            )
             return
 
         if self.memory.is_slot_empty(slot1) or self.memory.is_slot_empty(slot2):
@@ -524,7 +540,10 @@ class CalculatorDock(QWidget):
 
         # Validate selection
         if slot1 == slot2:
-            QMessageBox.warning(self, tr("calculator.msg_invalid_selection_title"), tr("calculator.msg_invalid_selection"))
+            QMessageBox.warning(
+                self, tr("calculator.msg_invalid_selection_title"),
+                tr("calculator.msg_invalid_selection")
+            )
             return
 
         # Get slot data
@@ -547,7 +566,10 @@ class CalculatorDock(QWidget):
         elif operation == 'difference':
             success, result, message = self.operations.difference(data1, data2, comparison_mode='key_value')
         else:
-            QMessageBox.critical(self, tr("calculator.unknown_operation_title"), tr("calculator.unknown_operation").format(operation=operation))
+            QMessageBox.critical(
+                self, tr("calculator.unknown_operation_title"),
+                tr("calculator.unknown_operation").format(operation=operation)
+            )
             return
 
         if not success:
