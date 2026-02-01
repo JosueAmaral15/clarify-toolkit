@@ -148,7 +148,10 @@ class PlaceholderReplacerDock(StandardToolDock):
                 f"{os.path.basename(mapping_file)}\n"
             )
         except Exception as e:
-            self.show_error(tr("common.error"), tr("placeholder_replacer.error_load_mapping").replace("{error}", str(e)))
+            self.show_error(
+                tr("common.error"),
+                tr("placeholder_replacer.error_load_mapping").replace("{error}", str(e))
+            )
             self._mapping = {}
 
     def _process(self, dry_run: bool = False) -> None:
@@ -200,9 +203,14 @@ class PlaceholderReplacerDock(StandardToolDock):
                         if len(modified) > 2000:
                             self.append_result(self.text_results, "\n\n... (truncated)")
                 else:
-                    self.append_result(self.text_results, f"✓ Replaced {count} placeholders in {os.path.basename(target)}")
+                    self.append_result(
+                        self.text_results,
+                        f"✓ Replaced {count} placeholders in {os.path.basename(target)}"
+                    )
                     if create_backup:
-                        self.append_result(self.text_results, f"  Backup: {target}.bak")
+                        self.append_result(
+                            self.text_results, f"  Backup: {target}.bak"
+                        )
 
             else:
                 # Directory
