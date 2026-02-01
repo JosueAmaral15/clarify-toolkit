@@ -14,18 +14,23 @@ Features:
 - Generic scope parser with custom delimiters
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=line-too-long  # Long regex patterns
 
-
+import json
 import os
 import re
-import json
-from typing import Dict, Any, List, Optional
+
+from typing import Any, Dict, List
+
 from PySide6.QtWidgets import (
-    QGridLayout, QLabel, QLineEdit, QCheckBox, QComboBox,
-    QPushButton, QSpinBox, QGroupBox, QVBoxLayout, QHBoxLayout
+    QCheckBox, QComboBox, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox
 )
-from .base_dock import StandardToolDock
+
 from src.i18n.translator import tooltip_tr, tr
+from .base_dock import StandardToolDock
 
 
 class TextExtractorDock(StandardToolDock):
@@ -575,5 +580,5 @@ class TextExtractorDock(StandardToolDock):
         if isinstance(value, str):
             return not value.strip()
         if isinstance(value, (list, dict)):
-            return len(value) == 0
+            return not value
         return False
