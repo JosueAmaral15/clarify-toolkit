@@ -26,7 +26,6 @@ import re
 
 from typing import List, Tuple
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QTextCursor, QTextCharFormat
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QHBoxLayout,
