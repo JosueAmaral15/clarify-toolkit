@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 JSON Validator - Real-time JSON Validation
 
@@ -11,11 +8,12 @@ Pattern: Strategy (GoF)
 - Encapsulates validation algorithm
 - Easy to add new validators (XMLValidator, YAMLValidator)
 """
+# pylint: disable=broad-exception-caught  # Validation robustness
 
 from __future__ import annotations
-from typing import Tuple, Optional
+
 import json
-import re
+from typing import Tuple, Optional
 
 
 class ValidationResult:
