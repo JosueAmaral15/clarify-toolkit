@@ -11,21 +11,23 @@ v2.9.114 Refactoring (Phase 2.4):
 - Extracted FileListExecutor (core file listing logic)
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
 
 import os
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Dict, Any
+
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QCheckBox, QFileDialog, QMessageBox, QMenu, QMainWindow
 )
-from PySide6.QtCore import Qt, QSettings, QDate
+from PySide6.QtCore import QSettings
 from PySide6.QtGui import QAction
+
+from src.core import FileListExecutor
+from src.i18n.translator import tooltip_tr, tr
+
 from .base_dock import BaseDock
 from .widgets import FileFilterPanel, PresetManager, FileListTableManager
-from src.core import FileListExecutor, FileInfo, ListResult
-from src.i18n.translator import tooltip_tr, tr
 
 
 class FileListDock(BaseDock):
@@ -175,7 +177,10 @@ class FileListDock(BaseDock):
             return
 
         if not os.path.isdir(directory):
-            QMessageBox.warning(self, tr("file_list.msg_invalid_title"), tr("file_list.msg_invalid_directory").format(directory))
+            QMessageBox.warning(
+                self, tr("file_list.msg_invalid_title"),
+                tr("file_list.msg_invalid_directory").format(directory)
+            )
             return
 
         # Save to recent directories
