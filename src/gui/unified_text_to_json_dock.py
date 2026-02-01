@@ -802,6 +802,12 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         layout.addWidget(self.jsx_output_tabs, 1)
         
+        # Status label (below output tabs, before button grid)
+        self.jsx_status_label = QLabel("")
+        self.jsx_status_label.setStyleSheet("color: gray;")
+        self.jsx_status_label.setWordWrap(True)
+        layout.addWidget(self.jsx_status_label)
+        
         # Action buttons - Grid Layout (MOVED TO BOTTOM)
         buttons_grid = QGridLayout()
         buttons_grid.setSpacing(8)
@@ -1159,6 +1165,19 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         elif self.jsx_avoid_contains_radio.isChecked():
             self.avoid_keys_parameter = self.CONTAINS
     
+    def _jsx_update_status(self, message: str) -> None:
+        """
+        Update JSX status label with message.
+        Auto-clears after 3 seconds if message is not empty.
+        Uses gray color matching Format Conversion style.
+        """
+        self.jsx_status_label.setText(message)
+        self.jsx_status_label.setStyleSheet("color: gray;")
+        
+        # Auto-clear after 3 seconds if message is not empty
+        if message:
+            QTimer.singleShot(3000, lambda: self.jsx_status_label.setText(""))
+    
     def _jsx_browse_path(self):
         """Browse for file or directory, or load file content in Text mode."""
         input_type_index = self.jsx_input_type_combo.currentIndex()
@@ -1288,6 +1307,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 use_class_names=use_class_names
             )
             
+            # Show status: Extracting...
+            self._jsx_update_status("Extracting...")
+            
             # Run extraction
             if input_type_index == 2:  # Text mode
                 # Process text directly without file system
@@ -1303,18 +1325,21 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             input_source = path if path else "TextInput"
             self._jsx_add_to_history(input_source, json_output, mode, param)
             
-            # Show success message
+            # Show success message (dialog + status)
             paths_count = len([line for line in text_output.split('\n') if line.strip()])
+            success_msg = f"Extracted {paths_count} paths successfully."
+            self._jsx_update_status(f"✓ {success_msg}")
             self.show_info(
                 tr("advanced_extractor.success", "Success"),
-                tr("advanced_extractor.extracted",
-                   f"Extracted {paths_count} paths successfully.")
+                tr("advanced_extractor.extracted", success_msg)
             )
             
         except Exception as e:
+            error_msg = f"Extraction failed: {str(e)}"
+            self._jsx_update_status(f"❌ {error_msg}")
             self.show_error(
                 tr("advanced_extractor.error", "Error"),
-                tr("advanced_extractor.run_error", f"Extraction failed: {str(e)}")
+                tr("advanced_extractor.run_error", error_msg)
             )
     
     def _jsx_save_outputs(self):
@@ -1352,12 +1377,14 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(json_text)
             
+            self._jsx_update_status("✓ Outputs saved successfully")
             self.show_info(
                 tr("advanced_extractor.saved", "Saved"),
                 tr("advanced_extractor.outputs_saved", "Outputs saved successfully.")
             )
             
         except Exception as e:
+            self._jsx_update_status(f"❌ Failed to save: {str(e)}")
             self.show_error(
                 tr("advanced_extractor.error", "Error"),
                 tr("advanced_extractor.save_error", f"Failed to save: {str(e)}")
@@ -1438,6 +1465,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_param_edit.clear()
         self.jsx_paths_output.clear()
         self.jsx_json_output.clear()
+        self._jsx_update_status("Cleared")
         self.show_info(
             tr("text_to_json.cleared", "Cleared"),
             tr("text_to_json.cleared_message", "All fields cleared.")
@@ -1456,11 +1484,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         try:
             json.loads(json_text)
+            self._jsx_update_status("✓ JSON is valid")
             self.show_info(
                 tr("text_to_json.valid_json", "Valid JSON"),
                 tr("text_to_json.valid_json_message", "The JSON output is valid! ✅")
             )
         except json.JSONDecodeError as e:
+            self._jsx_update_status("❌ Invalid JSON")
             self.show_error(
                 tr("text_to_json.invalid_json", "Invalid JSON"),
                 tr("text_to_json.invalid_json_message", f"JSON validation error:\n\n{str(e)}")
@@ -1472,6 +1502,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         if json_text:
             clipboard = QApplication.clipboard()
             clipboard.setText(json_text)
+            self._jsx_update_status("✓ JSON copied to clipboard")
             self.show_info(
                 tr("text_to_json.copied", "Copied"),
                 tr("text_to_json.copied_message", "JSON output copied to clipboard.")
@@ -1488,6 +1519,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         if paths_text:
             clipboard = QApplication.clipboard()
             clipboard.setText(paths_text)
+            self._jsx_update_status("✓ Paths copied to clipboard")
             self.show_info(
                 tr("text_to_json.copied", "Copied"),
                 tr("text_to_json.copied_message", "Paths output copied to clipboard.")
@@ -1511,6 +1543,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         # Emit signal to open in editor
         self.open_in_editor_requested.emit(json_text)
+        self._jsx_update_status("✓ Opened in editor")
     
     def _jsx_show_history(self):
         """Show extraction history."""
