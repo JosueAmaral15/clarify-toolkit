@@ -149,7 +149,8 @@ class TutorialAssistantDialog(QDialog):
         """Check if assistant is available."""
         if not self.assistant.is_available():
             self._add_system_message(
-                "⚠️ Tutorial assistant is not available. " "Please configure a Google Gemini API key in Settings."
+                "⚠️ Tutorial assistant is not available. "
+                "Please configure a Google Gemini API key in Settings."
             )
             self.input_field.setEnabled(False)
             self.send_button.setEnabled(False)
