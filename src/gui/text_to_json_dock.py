@@ -31,23 +31,28 @@ Author: Josué Amaral
 Date: 2025-12-01
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=line-too-long  # Long regex patterns
+# pylint: disable=fixme  # TODO is intentional
 
 from __future__ import annotations
 import json
-from typing import TYPE_CHECKING, Any, Dict, List
-from PySide6.QtCore import Qt, QTimer, Signal
+from typing import TYPE_CHECKING, Dict, List
+
+from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
-    QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
-    QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
-    QScrollArea, QFrame
+    QButtonGroup, QCheckBox, QComboBox,
+    QDialog, QFrame, QGridLayout, QGroupBox,
+    QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
+    QPlainTextEdit, QPushButton, QRadioButton, QScrollArea, QVBoxLayout
 )
 from PySide6.QtGui import QFont
 
-from .base_dock import BaseDock
-from src.text_to_json import convert_text_to_json, detect_format
 from src.i18n.translator import tooltip_tr, tr
+from src.text_to_json import convert_text_to_json, detect_format
+from .base_dock import BaseDock
 
 # Type checking imports
 if TYPE_CHECKING:
