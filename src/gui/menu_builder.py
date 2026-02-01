@@ -219,9 +219,9 @@ class MenuBuilder:
         main_window.act_theme_dark = QAction(tr("menu.themes.dark"), main_window, checkable=True)
 
         grp = [main_window.act_theme_system, main_window.act_theme_light, main_window.act_theme_dark]
-        for a in grp:
-            m_themes.addAction(a)
-            a.triggered.connect(lambda _, x=a: main_window._apply_theme_action(x))
+        for action in grp:
+            m_themes.addAction(action)
+            action.triggered.connect(lambda _, x=action: main_window._apply_theme_action(x))
 
         main_window.act_theme_system.setChecked(True)
 
