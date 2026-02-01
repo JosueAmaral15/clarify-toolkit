@@ -199,23 +199,23 @@ class FileExplorerWorker(QObject):
             logger.debug(f"Search complete! Found {len(result.get('files', []))} files")
 
             # NEW v2.9.123: Process results in worker thread
-            print(f"DEBUG WORKER 194 execute_search() | Building matches dict...")
+            print("DEBUG WORKER 194 execute_search() | Building matches dict...")
             logger.debug("Building matches dict in worker thread...")
             matches_dict = self._build_matches_dict(result)
-            print(f"DEBUG WORKER 196 execute_search() | Built matches dict with {len(matches_dict)} entries")
+            print(f"DEBUG WORKER 196 execute_search() | Built {len(matches_dict)}")
             logger.debug(f"Built matches dict with {len(matches_dict)} entries")
 
             # NEW v2.9.123: Emit in batches for non-blocking UI
-            print(f"DEBUG WORKER 199 execute_search() | Emitting {len(matches_dict)} items in batches...")
+            print(f"DEBUG WORKER 199 | Emitting {len(matches_dict)} in batches...")
             logger.debug("Emitting matches in batches...")
             self._emit_in_batches(matches_dict, batch_size=100)
-            print(f"DEBUG WORKER 201 execute_search() | Batches emitted!")
+            print("DEBUG WORKER 201 execute_search() | Batches emitted!")
 
             # Emit finished with original result (for stats, history, etc.)
-            print(f"DEBUG WORKER 203 execute_search() | Emitting finished signal...")
+            print("DEBUG WORKER 203 execute_search() | Emitting finished signal...")
             logger.debug("Emitting finished signal...")
             self.finished.emit(result)
-            print(f"DEBUG WORKER 205 execute_search() | Finished signal emitted")
+            print("DEBUG WORKER 205 execute_search() | Finished signal emitted")
             logger.debug("Finished signal emitted")
 
         except Exception as e:
@@ -227,7 +227,7 @@ class FileExplorerWorker(QObject):
             try:
                 self.executor.progress.disconnect(self.progress)
                 self.executor.progress_detailed.disconnect(self.progress_detailed)
-            except:
+            except Exception:
                 pass  # Already disconnected or never connected
 
     def execute_browse(
@@ -275,7 +275,7 @@ class FileExplorerWorker(QObject):
             try:
                 self.executor.progress.disconnect(self.progress)
                 self.executor.progress_detailed.disconnect(self.progress_detailed)
-            except:
+            except Exception:
                 pass
 
     def execute_replace(
@@ -315,5 +315,5 @@ class FileExplorerWorker(QObject):
         finally:
             try:
                 self.executor.progress.disconnect(self.progress)
-            except:
+            except Exception:
                 pass
