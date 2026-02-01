@@ -17,30 +17,23 @@ Date: 2025-12-23
 Version: v2.9.107
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=invalid-name  # Qt method name convention
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 
 import json
-from typing import Dict, Any, Optional
-from pathlib import Path
+
+from typing import Any, Dict
+
+from PySide6.QtCore import Qt, QRectF, QPointF as QPointFType
+from PySide6.QtGui import QPen, QBrush, QColor, QPainter, QFont
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QGraphicsView,
-    QGraphicsScene,
-    QGraphicsEllipseItem,
-    QGraphicsTextItem,
-    QListWidget,
-    QTextEdit,
-    QSplitter,
-    QGroupBox,
-    QFileDialog,
-    QMessageBox,
+    QDialog, QFileDialog, QGraphicsEllipseItem, QGraphicsScene,
+    QGraphicsTextItem, QGraphicsView, QGroupBox, QHBoxLayout,
+    QLabel, QListWidget, QMessageBox, QPushButton, QSplitter,
+    QTextEdit, QVBoxLayout
 )
-from PySide6.QtCore import Qt, QRectF, QPointF
-from PySide6.QtGui import QBrush, QColor, QPen, QFont, QPainter
+
 from src.i18n.translator import tr, tooltip_tr
 from ..venn_diagram_generator import VennDiagramGenerator
 from ..diff_analyzer import DiffAnalyzer
