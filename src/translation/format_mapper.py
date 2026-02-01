@@ -172,6 +172,31 @@ class FormatMapper:
                     hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
                     metadata_parts.append(hex_color)
                 
+                # Detect highlight/background color (Session 18)
+                if run.font.highlight_color:
+                    segment.add_format(FormatBit.HIGHLIGHT)
+                    # DOCX highlight is WD_COLOR_INDEX enum, convert to RGB hex
+                    # Map common colors to hex (approximations)
+                    highlight_map = {
+                        1: 'FFFF00',  # YELLOW
+                        2: '00FF00',  # BRIGHT_GREEN
+                        3: '00FFFF',  # TURQUOISE
+                        4: 'FF00FF',  # PINK
+                        5: '0000FF',  # BLUE
+                        6: 'FF0000',  # RED
+                        7: '800080',  # DARK_BLUE
+                        8: '008080',  # TEAL
+                        9: '00FF00',  # GREEN
+                        10: 'FF00FF', # VIOLET
+                        11: '800000', # DARK_RED
+                        12: 'FFFF00', # DARK_YELLOW
+                        13: '808080', # GRAY_50
+                        14: '696969', # GRAY_25
+                        15: '000000', # BLACK
+                    }
+                    highlight_hex = highlight_map.get(run.font.highlight_color, 'FFFF00')
+                    metadata_parts.append(highlight_hex)
+                
                 # Detect font size
                 if run.font.size:
                     segment.add_format(FormatBit.FONT_SIZE)
@@ -346,6 +371,16 @@ class FormatMapper:
                             # ODT colors are like "#FF0000" or "#525252", strip the #
                             hex_color = str(color).replace('#', '')
                             metadata_parts.append(hex_color)
+                        
+                        # Highlight/Background color (Session 18)
+                        bg_color = get_attr('background-color')
+                        if not bg_color:
+                            bg_color = get_attr('text-background-color')
+                        if bg_color and bg_color != 'transparent':
+                            segment.add_format(FormatBit.HIGHLIGHT)
+                            # ODT background colors like "#FFFF00", strip the #
+                            hex_bg = str(bg_color).replace('#', '')
+                            metadata_parts.append(hex_bg)
                         
                         # Font size
                         font_size = get_attr('font-size')
@@ -576,6 +611,26 @@ class FormatMapper:
             except (ValueError, IndexError):
                 pass  # Skip invalid colors
         
+        # Apply highlight/background color (Session 18)
+        if format_bits & FormatBit.HIGHLIGHT and metadata_index < len(metadata_parts):
+            hex_bg = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                # Map RGB hex to closest WD_COLOR_INDEX
+                from docx.enum.text import WD_COLOR_INDEX
+                # Simple mapping based on hex value
+                rgb_to_highlight = {
+                    'FFFF00': WD_COLOR_INDEX.YELLOW,
+                    '00FF00': WD_COLOR_INDEX.BRIGHT_GREEN,
+                    '00FFFF': WD_COLOR_INDEX.TURQUOISE,
+                    'FF00FF': WD_COLOR_INDEX.PINK,
+                    '0000FF': WD_COLOR_INDEX.BLUE,
+                    'FF0000': WD_COLOR_INDEX.RED,
+                }
+                run.font.highlight_color = rgb_to_highlight.get(hex_bg.upper(), WD_COLOR_INDEX.YELLOW)
+            except:
+                pass  # Skip if mapping fails
+        
         # Apply font size (metadata: points)
         if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
             size_str = metadata_parts[metadata_index].strip()
@@ -704,6 +759,12 @@ class FormatMapper:
                 hex_color = metadata_parts[metadata_index].strip()
                 metadata_index += 1
                 text_props.setAttribute("color", f"#{hex_color}")
+            
+            # Apply highlight/background color (Session 18)
+            if format_bits & FormatBit.HIGHLIGHT and metadata_index < len(metadata_parts):
+                hex_bg = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("backgroundcolor", f"#{hex_bg}")
             
             # Apply font size
             if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
