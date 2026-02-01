@@ -173,6 +173,17 @@ class FormatMapper:
                 # Store as multiplier (e.g., 1.5 for 1.5 line spacing)
                 para_metadata_parts.append(f"{spacing:.1f}")
             
+            # Detect indentation (Session 25)
+            # Store as: first_line,left,right in points (e.g., "36,0,0")
+            pf = paragraph.paragraph_format
+            if pf.first_line_indent or pf.left_indent or pf.right_indent:
+                para_format_bits |= FormatBit.INDENTATION
+                # Convert EMU to points (914400 EMU = 1 inch = 72 points)
+                first_line = int(pf.first_line_indent.pt) if pf.first_line_indent else 0
+                left = int(pf.left_indent.pt) if pf.left_indent else 0
+                right = int(pf.right_indent.pt) if pf.right_indent else 0
+                para_metadata_parts.append(f"{first_line},{left},{right}")
+            
             # Process each run (a run is a continuous text with same formatting)
             for run in paragraph.runs:
                 if not run.text:
@@ -345,6 +356,36 @@ class FormatMapper:
                             if '%' in str(line_height):
                                 spacing = float(str(line_height).replace('%', '')) / 100.0
                                 para_metadata_parts.append(f"{spacing:.1f}")
+                    except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Indentation (Session 25)
+                        # ODT uses margin-left, margin-right, text-indent
+                        # Helper to convert dimension to points
+                        def dim_to_points(dim_str):
+                            """Convert ODT dimension (cm, in, pt) to points."""
+                            if not dim_str:
+                                return 0
+                            dim_str = str(dim_str).lower()
+                            if 'cm' in dim_str:
+                                return int(float(dim_str.replace('cm', '')) * 28.35)  # 1cm = 28.35pt
+                            elif 'in' in dim_str:
+                                return int(float(dim_str.replace('in', '')) * 72)  # 1in = 72pt
+                            elif 'pt' in dim_str:
+                                return int(float(dim_str.replace('pt', '')))
+                            return 0
+                        
+                        text_indent = prop.getAttribute('textindent')
+                        margin_left = prop.getAttribute('marginleft')
+                        margin_right = prop.getAttribute('marginright')
+                        
+                        if text_indent or margin_left or margin_right:
+                            para_format_bits |= FormatBit.INDENTATION
+                            first_line = dim_to_points(text_indent) if text_indent else 0
+                            left = dim_to_points(margin_left) if margin_left else 0
+                            right = dim_to_points(margin_right) if margin_right else 0
+                            para_metadata_parts.append(f"{first_line},{left},{right}")
                     except (ValueError, KeyError):
                         pass
             
@@ -810,6 +851,28 @@ class FormatMapper:
                 paragraph.paragraph_format.line_spacing = spacing
             except ValueError:
                 pass  # Skip invalid spacing
+        
+        # Apply indentation (Session 25)
+        if format_bits & FormatBit.INDENTATION and metadata_index < len(metadata_parts):
+            indent_str = metadata_parts[metadata_index].strip()
+            metadata_index += 1
+            try:
+                from docx.shared import Pt
+                # Parse: "first_line,left,right"
+                parts = indent_str.split(',')
+                if len(parts) == 3:
+                    first_line = int(parts[0])
+                    left = int(parts[1])
+                    right = int(parts[2])
+                    
+                    if first_line != 0:
+                        paragraph.paragraph_format.first_line_indent = Pt(first_line)
+                    if left != 0:
+                        paragraph.paragraph_format.left_indent = Pt(left)
+                    if right != 0:
+                        paragraph.paragraph_format.right_indent = Pt(right)
+            except (ValueError, IndexError):
+                pass  # Skip invalid indentation
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -959,6 +1022,28 @@ class FormatMapper:
                     para_props.setAttribute("lineheight", f"{int(spacing * 100)}%")
                 except ValueError:
                     pass  # Skip invalid spacing
+            
+            # Apply indentation (Session 25)
+            if para_format_bits & FormatBit.INDENTATION and metadata_index < len(metadata_parts):
+                indent_str = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                try:
+                    # Parse: "first_line,left,right" in points
+                    parts = indent_str.split(',')
+                    if len(parts) == 3:
+                        first_line = int(parts[0])
+                        left = int(parts[1])
+                        right = int(parts[2])
+                        
+                        # Convert points to cm (1pt = 0.0353cm)
+                        if first_line != 0:
+                            para_props.setAttribute("textindent", f"{first_line * 0.0353:.2f}cm")
+                        if left != 0:
+                            para_props.setAttribute("marginleft", f"{left * 0.0353:.2f}cm")
+                        if right != 0:
+                            para_props.setAttribute("marginright", f"{right * 0.0353:.2f}cm")
+                except (ValueError, IndexError):
+                    pass  # Skip invalid indentation
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
