@@ -88,15 +88,39 @@ class TextSegment:
                 self.paragraph_metadata = metadata
     
     def to_tagged_text(self) -> str:
-        """Convert segment to tagged text."""
-        if self.format_bits == 0:
-            # No formatting, return plain text
-            return self.text
+        """Convert segment to tagged text with both character and paragraph formatting."""
+        # Build tag with both character and paragraph formats
+        has_char_format = self.format_bits != 0
+        has_para_format = self.paragraph_format != 0
         
+        if not has_char_format and not has_para_format:
+            return self.text  # No formatting
+        
+        # Build format string: "char_bits|para_bits:char_meta|para_meta"
+        parts = []
+        
+        # Character format bits
+        parts.append(str(self.format_bits))
+        
+        # Paragraph format bits (if any)
+        if has_para_format:
+            parts.append(f"|{self.paragraph_format}")
+        
+        format_str = "".join(parts)
+        
+        # Build metadata string
+        meta_parts = []
         if self.metadata:
-            return f"<{self.format_bits}:{self.metadata}>{self.text}</{self.format_bits}>"
+            meta_parts.append(self.metadata)
+        if self.paragraph_metadata:
+            meta_parts.append(f"|{self.paragraph_metadata}")
+        
+        if meta_parts:
+            metadata_str = "".join(meta_parts)
+            return f"<{format_str}:{metadata_str}>{self.text}</{format_str}>"
         else:
-            return f"<{self.format_bits}>{self.text}</{self.format_bits}>"
+            return f"<{format_str}>{self.text}</{format_str}>"
+
 
 
 class FormatMapper:
@@ -531,9 +555,16 @@ class FormatMapper:
         normalized = re.sub(r'<\s*(\d+)\s*>', r'<\1>', normalized)  # Without metadata
         normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)  # Closing tags
         
-        # Pattern: <tag_id:metadata>text</tag_id> or <tag_id>text</tag_id>
-        # Use [\s\S] instead of . to match newlines
-        pattern = r'<(\d+)(?::([^>]+))>([\s\S]*?)</\1>'
+        # Pattern: <char|para:meta>text</char|para> or variations
+        # Format: "char_bits|para_bits:char_meta|para_meta" or simpler combinations
+        # Examples:
+        #   <1>text</1> - only character format
+        #   <1|256>text</1|256> - character + paragraph format
+        #   <1:FF0000>text</1> - character format with metadata
+        #   <1|256:FF0000|L>text</1|256> - both formats with metadata
+        
+        # Match patterns like: <1>, <1|256>, <1:meta>, <1|256:meta1|meta2>
+        pattern = r'<([\d|]+)(?::([^>]+))>([\s\S]*?)</\1>'
         
         last_pos = 0
         for match in re.finditer(pattern, normalized, re.DOTALL):
@@ -543,11 +574,36 @@ class FormatMapper:
                 if plain:
                     segments.append(TextSegment(text=plain))
             
-            # Add tagged segment
-            tag_id = int(match.group(1))
-            metadata = match.group(2) if match.group(2) and match.group(2) != '' else None
+            # Parse format bits (char|para or just char)
+            format_str = match.group(1)
+            char_bits = 0
+            para_bits = 0
+            if '|' in format_str:
+                parts = format_str.split('|')
+                char_bits = int(parts[0]) if parts[0] else 0
+                para_bits = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+            else:
+                char_bits = int(format_str)
+            
+            # Parse metadata (char_meta|para_meta or just char_meta)
+            metadata_str = match.group(2) if match.group(2) and match.group(2) != '' else None
+            char_meta = None
+            para_meta = None
+            if metadata_str and '|' in metadata_str:
+                meta_parts = metadata_str.split('|', 1)  # Split only on first |
+                char_meta = meta_parts[0] if meta_parts[0] else None
+                para_meta = meta_parts[1] if len(meta_parts) > 1 and meta_parts[1] else None
+            elif metadata_str:
+                char_meta = metadata_str
+            
             text = match.group(3)
-            segments.append(TextSegment(text=text, format_bits=tag_id, metadata=metadata))
+            segments.append(TextSegment(
+                text=text,
+                format_bits=char_bits,
+                metadata=char_meta,
+                paragraph_format=para_bits,
+                paragraph_metadata=para_meta
+            ))
             
             last_pos = match.end()
         
@@ -866,10 +922,59 @@ class FormatMapper:
             style_cache[cache_key] = style
             return style
         
+        def get_or_create_para_style(para_format_bits: int, para_metadata: Optional[str]) -> Optional[Style]:
+            """Get or create paragraph style for formatting."""
+            if para_format_bits == 0:
+                return None
+            
+            cache_key = f"para_{para_format_bits}:{para_metadata or ''}"
+            if cache_key in style_cache:
+                return style_cache[cache_key]
+            
+            # Create paragraph style
+            style_name = f"ParaFormat{para_format_bits}_{len(style_cache)}"
+            style = Style(name=style_name, family="paragraph")
+            para_props = ParagraphProperties()
+            
+            # Parse metadata
+            metadata_parts = para_metadata.split(",") if para_metadata else []
+            metadata_index = 0
+            
+            # Apply alignment (Session 23)
+            if para_format_bits & FormatBit.ALIGNMENT and metadata_index < len(metadata_parts):
+                align_code = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                
+                align_map = {'L': 'left', 'C': 'center', 'R': 'right', 'J': 'justify'}
+                if align_code in align_map:
+                    para_props.setAttribute("textalign", align_map[align_code])
+            
+            style.addElement(para_props)
+            doc.automaticstyles.addElement(style)
+            style_cache[cache_key] = style
+            return style
+        
         # Create document content
         current_paragraph = P()
+        current_para_format = 0
+        current_para_metadata = None
         
         for segment in segments:
+            # Check if paragraph formatting changed
+            if segment.paragraph_format != current_para_format or segment.paragraph_metadata != current_para_metadata:
+                # Need to finalize current paragraph and start new one
+                if current_paragraph.childNodes or current_paragraph.data:
+                    doc.text.addElement(current_paragraph)
+                    current_paragraph = P()
+                
+                current_para_format = segment.paragraph_format
+                current_para_metadata = segment.paragraph_metadata
+                
+                # Apply paragraph style
+                para_style = get_or_create_para_style(segment.paragraph_format, segment.paragraph_metadata)
+                if para_style:
+                    current_paragraph.setAttribute("stylename", para_style)
+            
             # Handle paragraph breaks
             if '\n\n' in segment.text:
                 parts = segment.text.split('\n\n')
@@ -892,7 +997,11 @@ class FormatMapper:
                     # Create new paragraph after each part (including empty ones for blank lines)
                     if i < len(parts) - 1:
                         doc.text.addElement(current_paragraph)
-                        current_paragraph = P()  # New paragraph (can be empty for blank lines)
+                        current_paragraph = P()
+                        # Reapply paragraph style to new paragraph
+                        para_style = get_or_create_para_style(current_para_format, current_para_metadata)
+                        if para_style:
+                            current_paragraph.setAttribute("stylename", para_style)
             else:
                 # Normal text - add to current paragraph
                 # Safety: Remove any system tags that leaked
