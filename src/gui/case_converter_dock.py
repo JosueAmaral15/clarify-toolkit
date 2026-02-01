@@ -5,15 +5,17 @@ Provides UI for converting text case styles between camelCase, PascalCase,
 snake_case, and kebab-case.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy Qt imports
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import os
+
 from PySide6.QtWidgets import QGridLayout, QLabel, QComboBox, QLineEdit, QHBoxLayout
-from PySide6.QtCore import Qt
-from .base_dock import StandardToolDock, ProcessorWorkerBase
-from src.case_converter import convert_file, convert_string
-from src.i18n import tooltip_tr
+
+from src.case_converter import convert_file
 from src.i18n.translator import tr, tooltip_tr
+
+from .base_dock import StandardToolDock, ProcessorWorkerBase
 
 
 class CaseConverterWorker(ProcessorWorkerBase):
@@ -26,6 +28,7 @@ class CaseConverterWorker(ProcessorWorkerBase):
         self.source_style = source_style
 
     def run(self):
+        """Execute case conversion on all files."""
         try:
             total = len(self.files)
             results = {}
@@ -150,10 +153,11 @@ class CaseConverterDock(StandardToolDock):
 
     def _setup_escape_key_interrupt(self):
         """Setup Esc key to interrupt case conversion (v2.9.50.1)."""
+        # pylint: disable=reimported,redefined-outer-name  # Lazy import for Qt
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QShortcut, QKeySequence
 
-        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
 
     def _browse(self):
