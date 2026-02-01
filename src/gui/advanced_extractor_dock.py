@@ -5,20 +5,20 @@ GUI for the advanced parameter extraction tool from add/main.py.
 Provides both JSX/TSX and generic mode extraction with hierarchical JSON generation.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
+# pylint: disable=broad-exception-caught  # GUI robustness
 
+import os
+import re
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QTextEdit, QCheckBox, QMessageBox,
+    QVBoxLayout, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QCheckBox,
     QFileDialog, QSpinBox, QComboBox, QTabWidget, QPlainTextEdit,
     QRadioButton, QButtonGroup, QApplication, QMenu
 )
-from PySide6.QtGui import QIcon, QAction
-from typing import Optional, List, Tuple, Dict, Any
-import os
-import re
-import json
+from PySide6.QtGui import QAction
 
 from src.gui.base_dock import BaseDock, FileInputMixin
 from src.extractors.advanced_extractor import AdvancedExtractor
@@ -44,8 +44,8 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
 
         # Avoid keys parameter for radio buttons
         self.avoid_keys_parameter = "equals"
-        self.EQUALS = "equals"
-        self.CONTAINS = "contains"
+        self.EQUALS = "equals"  # pylint: disable=invalid-name  # Constants
+        self.CONTAINS = "contains"  # pylint: disable=invalid-name  # Constants
 
     def _setup_ui(self):
         """Setup the complete UI with all controls."""
@@ -227,7 +227,10 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         # Case style
         layout.addWidget(QLabel(tr("advanced_extractor.case", "Case:")))
         self.case_combo = QComboBox()
-        self.case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
+        self.case_combo.addItems([
+            tr("combo.case_snake"), tr("combo.case_camel"),
+            tr("combo.case_pascal"), tr("combo.case_kebab")
+        ])
         layout.addWidget(self.case_combo)
 
         # Uppercase toggle
@@ -351,7 +354,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
 
     def _toggle_generic_fields(self, mode: str):
         """Enable/disable generic mode fields based on mode selection."""
-        is_generic = (mode == "generic")
+        is_generic = mode == "generic"
         self.start_edit.setEnabled(is_generic)
         self.end_edit.setEnabled(is_generic)
 
@@ -451,6 +454,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
             file_extensions = [e.strip() for e in exts_text.split() if e.strip()]
 
             # Create extractor
+            # pylint: disable=unexpected-keyword-arg  # AdvancedExtractor accepts these args
             extractor = AdvancedExtractor(
                 param=param,
                 mode=mode,
@@ -570,7 +574,7 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
         compact = []
         prev_blank = False
         for ln in filtered:
-            blank = (ln.strip() == "")
+            blank = not ln.strip()
             if blank and prev_blank:
                 continue
             compact.append(ln)
