@@ -681,7 +681,17 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         )
         options_grid.addWidget(self.jsx_swap_checkbox, 1, 1)
         
-        # Columns 2 and 3 in row 1 are empty for future expansion
+        self.jsx_use_class_names_checkbox = QCheckBox(
+            tr("advanced_extractor.use_class_names", "HTML tags → class name")
+        )
+        self.jsx_use_class_names_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.use_class_names_tooltip",
+                      "Use class names as keys instead of HTML tags. "
+                      "Multiple classes joined with dash. Falls back to tag if no class.")
+        )
+        options_grid.addWidget(self.jsx_use_class_names_checkbox, 1, 2)
+        
+        # Column 3 in row 1 is empty for future expansion
         
         layout.addLayout(options_grid)
         
@@ -1193,6 +1203,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             typescript_export = self.jsx_typescript_export_checkbox.isChecked()
             exclude_numeric = self.jsx_exclude_numeric_checkbox.isChecked()
             skip_empty = self.jsx_skip_empty_checkbox.isChecked()
+            use_class_names = self.jsx_use_class_names_checkbox.isChecked()
             
             is_attribute_mode = self.jsx_is_attribute_checkbox.isChecked()
             exts_text = self.jsx_extensions_edit.text().strip()
@@ -1222,7 +1233,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 match_all=match_all,
                 typescript_export=typescript_export,
                 exclude_numeric=exclude_numeric,
-                skip_empty=skip_empty
+                skip_empty=skip_empty,
+                use_class_names=use_class_names
             )
             
             # Run extraction
