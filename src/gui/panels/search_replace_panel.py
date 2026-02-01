@@ -26,13 +26,17 @@ Date: 2025
 # pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 # pylint: disable=too-many-instance-attributes  # Complex UI panel
 # pylint: disable=too-many-public-methods  # UI event handlers
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=invalid-name  # Qt method names, single-letter layout vars
+# pylint: disable=missing-function-docstring  # Internal UI methods
+# pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
+# pylint: disable=unnecessary-pass  # Placeholder for future code
 
 from __future__ import annotations
-import os
 import re
 import sys
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 from PySide6.QtCore import Qt, Signal, QThread, QEvent
 from PySide6.QtWidgets import (
@@ -45,10 +49,10 @@ from PySide6.QtWidgets import (
 from src.i18n.translator import tr, tooltip_tr
 
 # Core functionality
-from ...core import SearchOptions, preserve_case_like, replace_in_text, Condition, filter_files_by_conditions
+from ...core import SearchOptions, replace_in_text, Condition, filter_files_by_conditions
 
 # Utilities
-from ...utils import walk_files, read_text, write_text, parse_exclusion_patterns
+from ...utils import walk_files, read_text, write_text
 
 # Components from this package
 from .results_tree import ResultsTree
@@ -133,7 +137,7 @@ class SearchReplacePanel(QWidget):
 
         # Search field + toggles (v2.9.112 - split into file name and file content)
         gb = QGroupBox(tr("search_replace.group_search"))
-        g = QGridLayout(gb)
+        grid = QGridLayout(gb)
 
         # File name query field
         g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
@@ -509,24 +513,25 @@ class SearchReplacePanel(QWidget):
             for (
                 cb_field,
                 cb_op,
-                ed,
+                _cb_field,
                 cb_scope,
                 ed_scope_val,
                 chk_case,
                 chk_word,
                 chk_regex,
-                btn_remove,
+                _btn_remove,
             ) in self.cond_list:
-                f = cb_field.currentText().strip()
-                o = cb_op.currentText().strip()
-                v = ed.text().strip()
+                field = cb_field.currentText().strip()
+                operator = cb_op.currentText().strip()
+                value = ed.text().strip()
                 scope_type = cb_scope.currentText().strip()
                 scope_val = ed_scope_val.text().strip()
                 case_sensitive = chk_case.isChecked()
                 whole_word = chk_word.isChecked()
                 use_regex = chk_regex.isChecked()
-                if f and o and v:
-                    out.append(Condition(f, o, v, scope_type, scope_val, case_sensitive, whole_word, use_regex))
+                if field and operator and value:
+                    out.append(Condition(field, operator, value, scope_type,
+                                       scope_val, case_sensitive, whole_word, use_regex))
         logic_op = self.combo_logic_op.currentText()
         return out, logic_op
 
@@ -549,7 +554,8 @@ class SearchReplacePanel(QWidget):
 
             # Combine with user-provided include globs if any
             if ed_inc_text:
-                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+                inc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", ed_inc_text)
+                       if glob_pat.strip()]
                 inc.extend(ext_globs)
             else:
                 inc = ext_globs
@@ -676,8 +682,9 @@ class SearchReplacePanel(QWidget):
                         return
 
                     # Check if there are any queries
-                    if multi_query_processor.get_query_count() == 0:
-                        self.error.emit("No valid queries found. Add at least one search pattern.")
+                    if not multi_query_processor.get_query_count():
+                        msg = "No valid queries found. Add at least one search pattern."
+                        self.error.emit(msg)
                         self.done.emit({})
                         return
                 except Exception as e:
