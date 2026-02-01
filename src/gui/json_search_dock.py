@@ -7,6 +7,7 @@ Provides UI for searching keys and values in JSON and TypeScript files.
 # pylint: disable=import-outside-toplevel  # Lazy imports for optional modules
 # pylint: disable=broad-exception-caught  # GUI robustness
 # pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=no-member  # ProjectIndexer dynamic attributes
 
 import os
 
