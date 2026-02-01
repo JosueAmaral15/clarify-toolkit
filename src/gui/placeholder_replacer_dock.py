@@ -5,15 +5,22 @@ Provides UI for batch replacement of placeholders (e.g., {t.key}) with values
 from mapping files (JSON or CSV).
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy QFileDialog import
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import os
-from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout
-from .base_dock import StandardToolDock
-from src.placeholder_replacer import (
-    parse_mapping_file, process_file, process_directory
+
+from PySide6.QtWidgets import (
+    QCheckBox, QGridLayout, QHBoxLayout, QLabel,
+    QLineEdit, QPushButton
 )
+
 from src.i18n.translator import tr, tooltip_tr
+from src.placeholder_replacer import (
+    parse_mapping_file, process_directory, process_file
+)
+
+from .base_dock import StandardToolDock
 
 
 class PlaceholderReplacerDock(StandardToolDock):
@@ -137,7 +144,8 @@ class PlaceholderReplacerDock(StandardToolDock):
             self._mapping = parse_mapping_file(mapping_file)
             self.append_result(
                 self.text_results,
-                f"✓ Loaded {len(self._mapping)} mappings from {os.path.basename(mapping_file)}\n"
+                f"✓ Loaded {len(self._mapping)} mappings from "
+                f"{os.path.basename(mapping_file)}\n"
             )
         except Exception as e:
             self.show_error(tr("common.error"), tr("placeholder_replacer.error_load_mapping").replace("{error}", str(e)))
@@ -179,8 +187,13 @@ class PlaceholderReplacerDock(StandardToolDock):
                 )
 
                 if dry_run:
-                    self.append_result(self.text_results, f"=== Preview: {os.path.basename(target)} ===\n")
-                    self.append_result(self.text_results, f"Would replace {count} placeholders\n")
+                    self.append_result(
+                        self.text_results,
+                        f"=== Preview: {os.path.basename(target)} ===\n"
+                    )
+                    self.append_result(
+                        self.text_results, f"Would replace {count} placeholders\n"
+                    )
                     if count > 0:
                         self.append_result(self.text_results, "\nModified content preview:\n")
                         self.append_result(self.text_results, modified[:2000])
@@ -236,10 +249,11 @@ class PlaceholderReplacerDock(StandardToolDock):
         self._replace()
 
     def _setup_tooltips(self) -> None:
-        """Setup internationalized tooltips for all widgets (v2.9.65)."""
-        # Note: This is called from __init__ but actual tooltip application
-        # happens in _apply_tooltips() after widgets are created in _setup_ui()
-        pass
+        """Setup internationalized tooltips for all widgets (v2.9.65).
+        
+        Note: Actual tooltip application happens in _apply_tooltips()
+        after widgets are created in _setup_ui().
+        """
 
     def _apply_tooltips(self) -> None:
         """Apply internationalized tooltips to all widgets (v2.9.65)."""
