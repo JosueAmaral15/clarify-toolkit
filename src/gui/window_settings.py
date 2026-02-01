@@ -15,9 +15,12 @@ Author: Refactoring Phase 3.5
 Date: 2024-12-24
 Version: v2.9.114
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy imports for circular dependency avoidance
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Dict
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QCloseEvent
@@ -78,7 +81,6 @@ class WindowSettings:
         Args:
             main_window: MainWindow instance
         """
-        from ..translators import load_translation_dict  # Import from helpers
         from ..theme_manager import ThemeManager
         from PySide6.QtWidgets import QApplication
 
@@ -87,7 +89,6 @@ class WindowSettings:
         try:
             from configparser import ConfigParser
             from pathlib import Path
-            import os
 
             cfg = ConfigParser()
             config_path = Path.home() / ".clarify" / "preferences.ini"
@@ -146,7 +147,8 @@ class WindowSettings:
             main_window: MainWindow instance
             event: QCloseEvent
         """
-        from PySide6.QtWidgets import QMessageBox
+        from PySide6.QtWidgets import QMessageBox, QCheckBox
+        from ..i18n.translator import tr
         from ..ui import thread_manager
 
         # Check if there are any active threads
@@ -190,9 +192,6 @@ class WindowSettings:
 
         # Normal exit confirmation
         if main_window.settings.get("confirm_on_exit", True):
-            # Import translation function
-            from ..i18n.translator import tr
-
             # Create custom message box with checkbox
             msg_box = QMessageBox(main_window)
             msg_box.setWindowTitle(tr("dialog.exit.title"))
@@ -202,7 +201,6 @@ class WindowSettings:
             msg_box.setIcon(QMessageBox.Question)
 
             # Add checkbox "Don't show this message again"
-            from PySide6.QtWidgets import QCheckBox
             checkbox = QCheckBox(tr("dialog.exit.dont_show_again"))
             msg_box.setCheckBox(checkbox)
 
