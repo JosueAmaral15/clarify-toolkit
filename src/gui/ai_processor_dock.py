@@ -10,6 +10,8 @@ New features:
 - Statistics tracking across sessions
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Lazy Qt imports
 
 
 import os
@@ -17,30 +19,33 @@ import re
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
+
 from PySide6.QtWidgets import (
-    QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox,
+    QGridLayout, QLabel, QLineEdit, QCheckBox,
     QComboBox, QTextEdit, QPushButton, QGroupBox, QHBoxLayout,
     QSplitter, QWidget, QVBoxLayout, QScrollArea, QFrame, QFileDialog,
     QMessageBox
 )
 from PySide6.QtCore import Qt, QSettings
-from .base_dock import StandardToolDock, ProcessorWorkerBase
-from src.gui.workers import AIProcessorWorker
+
 from src.ai_processor import (
     OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS,
     count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available,
-    is_claude_available, process_multiple_files, save_results,
-    list_files_recursive as ai_list_files, extract_between_markers,
+    is_claude_available, save_results,
+    list_files_recursive as ai_list_files,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models,
     preview_template, has_templates
 )
-from src.core.filters import Condition, filter_files_by_conditions
-from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
-from src.i18n.translator import tr, tooltip_tr
+from src.core.filters import Condition
+from src.core.insert import insert_at_line
+from src.core.search_replace import replace_in_text
 from src.gui.panels import SearchReplacePanel, InsertPanel
 from src.gui.widgets import PathEntry
-from src.core.search_replace import replace_in_text, SearchOptions
-from src.core.insert import insert_at_line
+from src.gui.workers import AIProcessorWorker
+from src.i18n.translator import tr, tooltip_tr
+from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+
+from .base_dock import StandardToolDock
 
 
 class AIProcessorDock(StandardToolDock):
@@ -511,18 +516,11 @@ class AIProcessorDock(StandardToolDock):
 
     def _setup_escape_key_interrupt(self):
         """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
+        # pylint: disable=reimported,redefined-outer-name  # Lazy import for Qt components
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QShortcut, QKeySequence
 
-        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
-        shortcut.activated.connect(self._interrupt)
-
-    def _setup_escape_key_interrupt(self):
-        """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
-        from PySide6.QtCore import Qt
-        from PySide6.QtGui import QShortcut, QKeySequence
-
-        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+        shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
 
     def _load_models_cache(self):
@@ -531,7 +529,7 @@ class AIProcessorDock(StandardToolDock):
             return {}
 
         try:
-            with open(self.models_cache_file, 'r') as f:
+            with open(self.models_cache_file, 'r', encoding='utf-8') as f:
                 cache = json.load(f)
                 # Validate cache age (24h expiry)
                 if 'timestamp' in cache:
@@ -549,7 +547,7 @@ class AIProcessorDock(StandardToolDock):
                 'timestamp': datetime.now().isoformat(),
                 'models': models_dict
             }
-            with open(self.models_cache_file, 'w') as f:
+            with open(self.models_cache_file, 'w', encoding='utf-8') as f:
                 json.dump(cache, f, indent=2)
         except Exception:
             pass
@@ -614,7 +612,10 @@ class AIProcessorDock(StandardToolDock):
         elif "Perplexity" in provider:
             provider_key = 'perplexity'
             if not is_openai_available():
-                self.show_warning("SDK Missing", "OpenAI SDK not installed (required for Perplexity).\nRun: pip install openai")
+                self.show_warning(
+                    "SDK Missing",
+                    "OpenAI SDK not installed (required for Perplexity).\nRun: pip install openai"
+                )
         else:
             return
 
@@ -794,7 +795,8 @@ class AIProcessorDock(StandardToolDock):
             self.append_result(self.text_results, display_msg)
 
             # Update token stats for actual responses (not status messages)
-            if not msg.startswith('[') and not msg.startswith('✓') and not msg.startswith('Reading') and not msg.startswith('⚠'):
+            if not msg.startswith('[') and not msg.startswith('✓') \
+                    and not msg.startswith('Reading') and not msg.startswith('⚠'):
                 model = self.combo_model.currentData() or 'gpt-4o'
                 input_tok = count_tokens(self.ed_prompt.toPlainText(), model)
                 output_tok = count_tokens(msg, model)
@@ -809,7 +811,6 @@ class AIProcessorDock(StandardToolDock):
                 self.lifetime_stats['total_requests'] = self.lifetime_stats.get('total_requests', 0) + 1
 
                 # Calculate costs
-                session_cost = estimate_cost(self.session_input_tokens, self.session_output_tokens, model)
                 lifetime_cost_increment = estimate_cost(input_tok, output_tok, model)
                 self.lifetime_stats['total_cost'] = self.lifetime_stats.get('total_cost', 0.0) + lifetime_cost_increment
 
@@ -838,6 +839,7 @@ class AIProcessorDock(StandardToolDock):
             self.show_warning("No Results", "No results to save")
             return
 
+        # pylint: disable=reimported,redefined-outer-name  # Lazy import
         from PySide6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getSaveFileName(
             self, "Save results", "",
@@ -1068,7 +1070,7 @@ class AIProcessorDock(StandardToolDock):
         stats_file = Path.home() / '.clarify_ai_stats.json'
         try:
             if stats_file.exists():
-                with open(stats_file, 'r') as f:
+                with open(stats_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -1083,7 +1085,7 @@ class AIProcessorDock(StandardToolDock):
         """Load lifetime statistics from file."""
         try:
             if self.stats_file.exists():
-                with open(self.stats_file, 'r') as f:
+                with open(self.stats_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -1097,7 +1099,7 @@ class AIProcessorDock(StandardToolDock):
     def _save_lifetime_stats(self):
         """Save lifetime statistics to file."""
         try:
-            with open(self.stats_file, 'w') as f:
+            with open(self.stats_file, 'w', encoding='utf-8') as f:
                 json.dump(self.lifetime_stats, f, indent=2)
         except Exception as e:
             print(f"Failed to save stats: {e}")
@@ -1176,7 +1178,7 @@ class AIProcessorDock(StandardToolDock):
         try:
             files = self._get_files()
             total_files = len(files)
-        except:
+        except Exception:
             total_files = 5  # Default for preview
 
         # Generate preview
