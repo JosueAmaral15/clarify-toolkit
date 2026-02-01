@@ -21,31 +21,25 @@ This module contains the SearchReplacePanel class which implements:
 Author: Josué Amaral
 Date: 2025
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=too-many-instance-attributes  # Complex UI panel
+# pylint: disable=too-many-public-methods  # UI event handlers
 
 from __future__ import annotations
 import os
 import re
 import sys
-from typing import List, Tuple, Dict, Optional
 
-# PySide6 imports
+from typing import Dict, List, Optional, Tuple
+
 from PySide6.QtCore import Qt, Signal, QThread, QEvent
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QCheckBox,
-    QComboBox,
-    QPlainTextEdit,
-    QGroupBox,
-    QSplitter,
-    QScrollArea,
-    QFileDialog,
-    QMessageBox,
+    QCheckBox, QComboBox, QFileDialog, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QPlainTextEdit, QPushButton, QScrollArea,
+    QSplitter, QVBoxLayout, QWidget
 )
 
 from src.i18n.translator import tr, tooltip_tr
