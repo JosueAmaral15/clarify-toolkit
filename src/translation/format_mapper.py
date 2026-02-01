@@ -63,6 +63,7 @@ class FormatBit:
     WIDOW_ORPHAN_CONTROL = 1 << 20  # 2^20 = 1048576
     BIDI_TEXT = 1 << 21  # 2^21 = 2097152
     LIST_ITEM = 1 << 22  # 2^22 = 4194304
+    HYPERLINK = 1 << 23  # 2^23 = 8388608  # Session 44
 
 
 @dataclass
@@ -73,6 +74,7 @@ class TextSegment:
     metadata: Optional[str] = None  # Additional format data (colors, sizes, etc.)
     paragraph_format: int = 0  # Paragraph-level formatting bits
     paragraph_metadata: Optional[str] = None  # Paragraph metadata (alignment, spacing)
+    hyperlink_url: Optional[str] = None  # URL for hyperlinks (Session 44)
     
     def has_format(self, bit: int) -> bool:
         """Check if segment has specific format."""
@@ -98,6 +100,13 @@ class TextSegment:
     
     def to_tagged_text(self) -> str:
         """Convert segment to tagged text with both character and paragraph formatting."""
+        # Special handling for hyperlinks (Session 44)
+        if self.hyperlink_url:
+            # Use clean LINK tag format: <LINK:url>display_text</LINK>
+            # URL encoding to handle special characters
+            url_encoded = self.hyperlink_url.replace('<', '&lt;').replace('>', '&gt;')
+            return f"<LINK:{url_encoded}>{self.text}</LINK>"
+        
         # Build tag with both character and paragraph formats
         has_char_format = self.format_bits != 0
         has_para_format = self.paragraph_format != 0
@@ -259,14 +268,50 @@ class FormatMapper:
                 # Boolean flag, no metadata needed
             
             # Detect bidirectional text (Session 31)
-            if paragraph.paragraph_format.bidi:
-                para_format_bits |= FormatBit.BIDI_TEXT
-                # Store direction as metadata: R=RTL, L=LTR
-                # DOCX bidi=True means RTL context
-                para_metadata_parts.append('R')
+            try:
+                if paragraph.paragraph_format.bidi:
+                    para_format_bits |= FormatBit.BIDI_TEXT
+                    # Store direction as metadata: R=RTL, L=LTR
+                    # DOCX bidi=True means RTL context
+                    para_metadata_parts.append('R')
+            except AttributeError:
+                pass  # bidi attribute not available in this python-docx version
             
-            # Process each run (a run is a continuous text with same formatting)
-            for run in paragraph.runs:
+            # Detect hyperlinks (Session 44)
+            # Process all elements in paragraph, including hyperlinks
+            # paragraph.runs doesn't include runs inside hyperlinks, so we need to process _element directly
+            from docx.oxml.ns import qn
+            from docx.text.run import Run
+            
+            # Collect all runs (including those inside hyperlinks)
+            all_runs = []  # List of (run_object, hyperlink_url or None)
+            
+            for element in paragraph._element:
+                if 'hyperlink' in element.tag:
+                    # Extract URL
+                    rel_id = element.get(qn('r:id'))
+                    url = None
+                    if rel_id and rel_id in doc.part.rels:
+                        url = doc.part.rels[rel_id].target_ref
+                    
+                    # Get runs inside hyperlink
+                    for run_elem in element:
+                        if 'r' in run_elem.tag:
+                            try:
+                                run_obj = Run(run_elem, paragraph)
+                                all_runs.append((run_obj, url))
+                            except:
+                                pass  # Skip invalid runs
+                elif 'r' in element.tag:
+                    # Regular run (not in hyperlink)
+                    try:
+                        run_obj = Run(element, paragraph)
+                        all_runs.append((run_obj, None))
+                    except:
+                        pass  # Skip invalid runs
+            
+            # Process each run (both regular and hyperlink runs)
+            for run, hyperlink_url in all_runs:
                 if not run.text:
                     continue
                 
@@ -355,6 +400,10 @@ class FormatMapper:
                 if metadata_parts:
                     segment.metadata = ",".join(metadata_parts)
                 
+                # Store hyperlink URL if this run is part of a hyperlink (Session 44)
+                if hyperlink_url:
+                    segment.hyperlink_url = hyperlink_url
+                
                 # Store paragraph-level formatting
                 segment.paragraph_format = para_format_bits
                 if para_metadata_parts:
@@ -433,7 +482,6 @@ class FormatMapper:
                     para_format_bits |= FormatBit.HEADING
                     # Try to extract level from style name (e.g., "Heading_20_1" → "1")
                     try:
-                        import re
                         match = re.search(r'[_\s](\d)(?:[_\s]|$)', para_style_name)
                         if match:
                             level = match.group(1)
@@ -573,8 +621,17 @@ class FormatMapper:
             # Process text content (spans and direct text)
             para_text_nodes = []
             
-            def extract_text_recursive(element, current_style_name=None):
+            def extract_text_recursive(element, current_style_name=None, hyperlink_url=None):
                 """Recursively extract text with formatting from element tree."""
+                # Check if this is a hyperlink (Session 44)
+                # ODT hyperlinks use text:a element with xlink:href attribute
+                if hasattr(element, 'qname') and element.qname == ('urn:oasis:names:tc:opendocument:xmlns:text:1.0', 'a'):
+                    try:
+                        href = element.getAttribute('href')
+                        hyperlink_url = href if href else hyperlink_url
+                    except (ValueError, KeyError):
+                        pass
+                
                 # Check if this is a Span with its own style
                 # Note: odf_text.Span is a factory function, not a class, so we check qname
                 if hasattr(element, 'qname') and element.qname[1] == 'span':
@@ -590,17 +647,21 @@ class FormatMapper:
                         # This is actual text content
                         text_content = str(child)
                         if text_content:
-                            para_text_nodes.append((text_content, current_style_name))
+                            para_text_nodes.append((text_content, current_style_name, hyperlink_url))
                     elif hasattr(child, 'childNodes'):
                         # Recursively process container elements
-                        extract_text_recursive(child, current_style_name)
+                        extract_text_recursive(child, current_style_name, hyperlink_url)
             
             extract_text_recursive(para)
             
             # Convert extracted text nodes to segments
-            for text_content, style_name in para_text_nodes:
+            for text_content, style_name, hyperlink_url in para_text_nodes:
                 segment = TextSegment(text=text_content)
                 metadata_parts = []
+                
+                # Store hyperlink URL if present (Session 44)
+                if hyperlink_url:
+                    segment.hyperlink_url = hyperlink_url
                 
                 # Apply text formatting from style
                 if style_name and style_name in styles:
@@ -762,6 +823,7 @@ class FormatMapper:
         - Whitespace in tags: < 1>text</ 1>
         - Missing closing tags: <1>text (treats as unformatted)
         - Malformed tags: ignored and treated as plain text
+        - Hyperlinks: <LINK:url>text</LINK> (Session 44)
         
         Args:
             tagged_text: Text with format tags
@@ -776,6 +838,19 @@ class FormatMapper:
         normalized = re.sub(r'<\s*(\d+)\s*:\s*([^>]+)\s*>', r'<\1:\2>', tagged_text)  # With metadata
         normalized = re.sub(r'<\s*(\d+)\s*>', r'<\1>', normalized)  # Without metadata
         normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)  # Closing tags
+        
+        # First, extract hyperlinks (Session 44)
+        # Pattern: <LINK:url>display_text</LINK>
+        # Replace with placeholder to process after regular tags
+        hyperlink_pattern = r'<LINK:([^>]+)>([\s\S]*?)</LINK>'
+        hyperlink_placeholders = []
+        def replace_hyperlink(match):
+            url = match.group(1).replace('&lt;', '<').replace('&gt;', '>')  # Decode URL
+            text = match.group(2)
+            index = len(hyperlink_placeholders)
+            hyperlink_placeholders.append({'url': url, 'text': text})
+            return f'{{{{HYPERLINK_{index}}}}}'
+        normalized = re.sub(hyperlink_pattern, replace_hyperlink, normalized, flags=re.DOTALL)
         
         # Pattern: <char|para:meta>text</char|para> or variations
         # Format: "char_bits|para_bits:char_meta|para_meta" or simpler combinations
@@ -835,7 +910,63 @@ class FormatMapper:
             if plain:
                 segments.append(TextSegment(text=plain))
         
-        return segments
+        # Restore hyperlink placeholders (Session 44)
+        final_segments = []
+        for segment in segments:
+            # Check if segment text contains hyperlink placeholders
+            hyperlink_placeholder_pattern = r'\{\{HYPERLINK_(\d+)\}\}'
+            matches = list(re.finditer(hyperlink_placeholder_pattern, segment.text))
+            
+            if not matches:
+                final_segments.append(segment)
+                continue
+            
+            # Split segment by hyperlink placeholders
+            last_pos = 0
+            for match in matches:
+                # Add text before placeholder
+                if match.start() > last_pos:
+                    before_text = segment.text[last_pos:match.start()]
+                    if before_text:
+                        before_seg = TextSegment(
+                            text=before_text,
+                            format_bits=segment.format_bits,
+                            metadata=segment.metadata,
+                            paragraph_format=segment.paragraph_format,
+                            paragraph_metadata=segment.paragraph_metadata
+                        )
+                        final_segments.append(before_seg)
+                
+                # Add hyperlink segment
+                index = int(match.group(1))
+                if index < len(hyperlink_placeholders):
+                    hyperlink_info = hyperlink_placeholders[index]
+                    hyperlink_seg = TextSegment(
+                        text=hyperlink_info['text'],
+                        hyperlink_url=hyperlink_info['url'],
+                        format_bits=segment.format_bits,
+                        metadata=segment.metadata,
+                        paragraph_format=segment.paragraph_format,
+                        paragraph_metadata=segment.paragraph_metadata
+                    )
+                    final_segments.append(hyperlink_seg)
+                
+                last_pos = match.end()
+            
+            # Add text after last placeholder
+            if last_pos < len(segment.text):
+                after_text = segment.text[last_pos:]
+                if after_text:
+                    after_seg = TextSegment(
+                        text=after_text,
+                        format_bits=segment.format_bits,
+                        metadata=segment.metadata,
+                        paragraph_format=segment.paragraph_format,
+                        paragraph_metadata=segment.paragraph_metadata
+                    )
+                    final_segments.append(after_seg)
+        
+        return final_segments
     
     @staticmethod
     def create_docx_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -876,8 +1007,16 @@ class FormatMapper:
                     if part:  # Skip empty parts
                         # Safety: Remove any system tags that leaked into segment text
                         clean_part = FormatMapper.remove_tags(part)
-                        run = current_paragraph.add_run(clean_part)
-                        FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
+                        
+                        # Handle hyperlinks (Session 44)
+                        if segment.hyperlink_url:
+                            FormatMapper._add_hyperlink_to_paragraph(
+                                current_paragraph, clean_part, segment.hyperlink_url,
+                                segment.format_bits, segment.metadata, doc
+                            )
+                        else:
+                            run = current_paragraph.add_run(clean_part)
+                            FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
                     
                     # Create new paragraph after each part except the last
                     if i < len(parts) - 1:
@@ -887,8 +1026,16 @@ class FormatMapper:
                 # Normal text - add as run to current paragraph
                 # Safety: Remove any system tags that leaked into segment text
                 clean_text = FormatMapper.remove_tags(segment.text)
-                run = current_paragraph.add_run(clean_text)
-                FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
+                
+                # Handle hyperlinks (Session 44)
+                if segment.hyperlink_url:
+                    FormatMapper._add_hyperlink_to_paragraph(
+                        current_paragraph, clean_text, segment.hyperlink_url,
+                        segment.format_bits, segment.metadata, doc
+                    )
+                else:
+                    run = current_paragraph.add_run(clean_text)
+                    FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
         
         # Save document
         doc.save(output_path)
@@ -1125,6 +1272,50 @@ class FormatMapper:
             if direction == 'R':
                 paragraph.paragraph_format.bidi = True  # RTL
             # Note: LTR is default, no need to explicitly set
+
+    @staticmethod
+    def _add_hyperlink_to_paragraph(paragraph, text, url, format_bits=0, metadata=None, doc=None):
+        """
+        Add a hyperlink to a paragraph (Session 44).
+        
+        Args:
+            paragraph: python-docx Paragraph object
+            text: Display text for hyperlink
+            url: Target URL
+            format_bits: Character formatting bits
+            metadata: Character formatting metadata
+            doc: Document object (needed for relationship creation)
+        """
+        from docx.oxml import parse_xml
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+        
+        # Create hyperlink relationship
+        r_id = doc.part.relate_to(url, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink', is_external=True)
+        
+        # Create hyperlink XML element
+        hyperlink = OxmlElement('w:hyperlink')
+        hyperlink.set(qn('r:id'), r_id)
+        
+        # Create a run inside the hyperlink
+        run_elem = OxmlElement('w:r')
+        
+        # Create text element
+        t_elem = OxmlElement('w:t')
+        t_elem.text = text
+        run_elem.append(t_elem)
+        
+        # Add run to hyperlink
+        hyperlink.append(run_elem)
+        
+        # Add hyperlink to paragraph
+        paragraph._element.append(hyperlink)
+        
+        # Now apply formatting to the run we created
+        # We need to wrap it in a Run object to use _apply_formatting
+        from docx.text.run import Run
+        run_obj = Run(run_elem, paragraph)
+        FormatMapper._apply_formatting(run_obj, format_bits, metadata)
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1406,15 +1597,31 @@ class FormatMapper:
                         # Safety: Remove any system tags that leaked
                         clean_part = FormatMapper.remove_tags(part)
                         
-                        # Get or create style for this format
-                        style = get_or_create_style(segment.format_bits, segment.metadata)
-                        
-                        if style:
-                            span = Span(stylename=style)
-                            span.addText(clean_part)
-                            current_paragraph.addElement(span)
+                        # Handle hyperlinks (Session 44)
+                        if segment.hyperlink_url:
+                            from odf.text import A
+                            link = A(href=segment.hyperlink_url)
+                            
+                            # Apply formatting to link content if needed
+                            style = get_or_create_style(segment.format_bits, segment.metadata)
+                            if style:
+                                span = Span(stylename=style)
+                                span.addText(clean_part)
+                                link.addElement(span)
+                            else:
+                                link.addText(clean_part)
+                            
+                            current_paragraph.addElement(link)
                         else:
-                            current_paragraph.addText(clean_part)
+                            # Get or create style for this format
+                            style = get_or_create_style(segment.format_bits, segment.metadata)
+                            
+                            if style:
+                                span = Span(stylename=style)
+                                span.addText(clean_part)
+                                current_paragraph.addElement(span)
+                            else:
+                                current_paragraph.addText(clean_part)
                     
                     # Create new paragraph after each part (including empty ones for blank lines)
                     if i < len(parts) - 1:
@@ -1429,15 +1636,31 @@ class FormatMapper:
                 # Safety: Remove any system tags that leaked
                 clean_text = FormatMapper.remove_tags(segment.text)
                 
-                # Get or create style for this format
-                style = get_or_create_style(segment.format_bits, segment.metadata)
-                
-                if style:
-                    span = Span(stylename=style)
-                    span.addText(clean_text)
-                    current_paragraph.addElement(span)
+                # Handle hyperlinks (Session 44)
+                if segment.hyperlink_url:
+                    from odf.text import A
+                    link = A(href=segment.hyperlink_url)
+                    
+                    # Apply formatting to link content if needed
+                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                    if style:
+                        span = Span(stylename=style)
+                        span.addText(clean_text)
+                        link.addElement(span)
+                    else:
+                        link.addText(clean_text)
+                    
+                    current_paragraph.addElement(link)
                 else:
-                    current_paragraph.addText(clean_text)
+                    # Get or create style for this format
+                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                    
+                    if style:
+                        span = Span(stylename=style)
+                        span.addText(clean_text)
+                        current_paragraph.addElement(span)
+                    else:
+                        current_paragraph.addText(clean_text)
         
         # Add final paragraph (even if empty)
         doc.text.addElement(current_paragraph)
