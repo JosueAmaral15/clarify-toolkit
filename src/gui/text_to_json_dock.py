@@ -183,7 +183,7 @@ class TextToJsonDock(BaseDock):
     # Signal emitted when user wants to open result in editor
     open_in_editor_requested = Signal(str)  # JSON string
 
-    def __init__(self, parent: QWidgetType | None = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__("Text to JSON Converter", parent)
         self.conversion_history: List[Dict[str, str]] = []
         self.live_preview_timer = QTimer()
