@@ -656,28 +656,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self._jsx_toggle_generic_fields(self.jsx_mode_combo.currentText())
     
     def _apply_tooltips(self) -> None:
-        """Apply internationalized tooltips."""
-        # Format Conversion tooltips
-        self.fc_format_combo.setToolTip(tooltip_tr("text_to_json.format_combo"))
-        self.fc_type_auto_radio.setToolTip(tooltip_tr("text_to_json.type_auto_radio"))
-        self.fc_type_string_radio.setToolTip(tooltip_tr("text_to_json.type_string_radio"))
-        self.fc_csv_header_check.setToolTip(tooltip_tr("text_to_json.csv_header_check"))
-        self.fc_csv_separator_combo.setToolTip(tooltip_tr("text_to_json.csv_separator_combo"))
-        self.fc_csv_array_objects_radio.setToolTip(tooltip_tr("text_to_json.csv_array_objects_radio"))
-        self.fc_csv_array_arrays_radio.setToolTip(tooltip_tr("text_to_json.csv_array_arrays_radio"))
-        self.fc_pretty_print_check.setToolTip(tooltip_tr("text_to_json.pretty_print_check"))
-        self.fc_live_preview_check.setToolTip(tooltip_tr("text_to_json.live_preview_check"))
-        self.fc_convert_btn.setToolTip(tooltip_tr("text_to_json.convert_btn"))
-        self.fc_templates_btn.setToolTip(tooltip_tr("text_to_json.templates_btn"))
-        self.fc_clear_btn.setToolTip(tooltip_tr("text_to_json.clear_btn"))
-        self.fc_validate_btn.setToolTip(tooltip_tr("text_to_json.validate_btn"))
-        self.fc_copy_btn.setToolTip(tooltip_tr("text_to_json.copy_btn"))
-        self.fc_open_editor_btn.setToolTip(tooltip_tr("text_to_json.open_editor_btn"))
-        self.fc_history_btn.setToolTip(tooltip_tr("text_to_json.history_btn"))
-        self.fc_swap_checkbox.setToolTip(tooltip_tr("text_to_json.swap_checkbox", "Enable swap mode: Convert JSON back to text format"))
-        self.fc_input_text.setToolTip(tooltip_tr("text_to_json.input_text"))
-        self.fc_output_text.setToolTip(tooltip_tr("text_to_json.output_text"))
-        self.fc_status_label.setToolTip(tooltip_tr("text_to_json.status_label"))
+        """Apply internationalized tooltips for JSX mode."""
+        # Note: JSX tooltips are already set inline during widget creation
+        pass
     
     # ========================================================================
     # JSX EXTRACTION METHODS (from advanced_extractor_dock.py)
