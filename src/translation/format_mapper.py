@@ -57,6 +57,7 @@ class FormatBit:
     
     # Extended paragraph formatting (bits 16+) - Session 26+
     SPACE_BEFORE_AFTER = 1 << 16  # 2^16 = 65536
+    KEEP_LINES_TOGETHER = 1 << 17  # 2^17 = 131072
 
 
 @dataclass
@@ -194,6 +195,11 @@ class FormatMapper:
                 before = int(pf.space_before.pt) if pf.space_before else 0
                 after = int(pf.space_after.pt) if pf.space_after else 0
                 para_metadata_parts.append(f"{before},{after}")
+            
+            # Detect keep lines together (Session 27)
+            if pf.keep_together:
+                para_format_bits |= FormatBit.KEEP_LINES_TOGETHER
+                # Boolean flag, no metadata needed
             
             # Process each run (a run is a continuous text with same formatting)
             for run in paragraph.runs:
@@ -410,6 +416,15 @@ class FormatMapper:
                             before = dim_to_points(margin_top) if margin_top else 0
                             after = dim_to_points(margin_bottom) if margin_bottom else 0
                             para_metadata_parts.append(f"{before},{after}")
+                    except (ValueError, KeyError):
+                        pass
+                    
+                    try:
+                        # Keep lines together (Session 27)
+                        # ODT attribute: fo:keep-together = "always"
+                        keep_together = prop.getAttribute('keeptogether')
+                        if keep_together and str(keep_together).lower() == 'always':
+                            para_format_bits |= FormatBit.KEEP_LINES_TOGETHER
                     except (ValueError, KeyError):
                         pass
             
@@ -916,6 +931,10 @@ class FormatMapper:
                         paragraph.paragraph_format.space_after = Pt(after)
             except (ValueError, IndexError):
                 pass  # Skip invalid spacing
+        
+        # Apply keep lines together (Session 27)
+        if format_bits & FormatBit.KEEP_LINES_TOGETHER:
+            paragraph.paragraph_format.keep_together = True
 
     @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
@@ -1106,6 +1125,10 @@ class FormatMapper:
                             para_props.setAttribute("marginbottom", f"{after * 0.0353:.2f}cm")
                 except (ValueError, IndexError):
                     pass  # Skip invalid spacing
+            
+            # Apply keep lines together (Session 27)
+            if para_format_bits & FormatBit.KEEP_LINES_TOGETHER:
+                para_props.setAttribute("keeptogether", "always")
             
             style.addElement(para_props)
             doc.automaticstyles.addElement(style)
