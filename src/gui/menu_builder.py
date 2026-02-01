@@ -54,7 +54,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_file = bar.addMenu(tr("menu.file"))
+        m_file = menu_bar.addMenu(tr("menu.file"))
         m_file.setObjectName("m_file")  # For plugin access
 
         # New Project from Template (v2.9.63)
@@ -82,7 +82,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_edit = bar.addMenu(tr("menu.edit"))
+        m_edit = menu_bar.addMenu(tr("menu.edit"))
 
         main_window.act_undo = QAction(tr("menu.edit.undo"), main_window)
         main_window.act_undo.setShortcut("Ctrl+Z")
@@ -107,7 +107,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_tools = bar.addMenu(tr("menu.tools"))
+        m_tools = menu_bar.addMenu(tr("menu.tools"))
 
         # Fixed tabs accessibility (v2.9.40.2 - Task: menu for closed tabs)
         main_window.act_open_search_replace = QAction(tr("menu.tools.search_replace"), main_window)
@@ -178,7 +178,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_view = bar.addMenu(tr("menu.view"))
+        m_view = menu_bar.addMenu(tr("menu.view"))
 
         main_window.act_toggle_history = QAction(tr("menu.view.history"), main_window, checkable=True)
         main_window.act_toggle_history.setToolTip(tr("menu.tooltip_toggle_history"))
@@ -212,7 +212,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_themes = bar.addMenu(tr("menu.themes"))
+        m_themes = menu_bar.addMenu(tr("menu.themes"))
 
         main_window.act_theme_system = QAction(tr("menu.themes.system"), main_window, checkable=True)
         main_window.act_theme_light = QAction(tr("menu.themes.light"), main_window, checkable=True)
@@ -231,7 +231,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module, QActionGroup
 
-        m_settings = bar.addMenu(tr("menu.settings"))
+        m_settings = menu_bar.addMenu(tr("menu.settings"))
         act_preferences = QAction(tr("menu.settings.preferences"), main_window)
         act_shortcuts = QAction(tr("menu.settings.shortcuts"), main_window)
         act_transparency = QAction(tr("menu.settings.transparency"), main_window)
@@ -345,7 +345,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_plugins = bar.addMenu(tr("menu.plugins"))
+        m_plugins = menu_bar.addMenu(tr("menu.plugins"))
 
         # Plugin Manager submenu
         main_window.act_plugin_manager = QAction("🔌 Plugin Manager...", main_window)
@@ -380,7 +380,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_help = bar.addMenu(tr("menu.help"))
+        m_help = menu_bar.addMenu(tr("menu.help"))
 
         main_window.act_open_tutorials = QAction(tr("menu.help.tutorials"), main_window)
         main_window.act_open_tutorials.setToolTip(tr("menu.tooltip_open_tutorials"))
@@ -430,7 +430,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_about = bar.addMenu(tr("menu.about"))
+        m_about = menu_bar.addMenu(tr("menu.about"))
         act_about = QAction(tr("menu.about.clarify"), main_window)
         m_about.addAction(act_about)
         act_about.triggered.connect(main_window._about_dialog)
