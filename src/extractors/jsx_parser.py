@@ -60,9 +60,11 @@ class JSXParser:
         self.is_attribute_mode = is_attribute_mode
         self.no_standard = no_standard
         self.items = list()
+        self.class_map = {}  # Store class attributes: {(tuple(stack), tag): "class-value"}
 
     def clear_items_and_reset(self):
         self.items = list()
+        self.class_map = {}
 
     def _custom_find_matching_close_span(self, text, tag, from_index):
         """
@@ -469,6 +471,14 @@ class JSXParser:
                 is_self = mopen["self_closing"]
                 have_close_tag = bool(re.findall(rf"</\s*({tag})\s*>", text))
                 stack.append(tag)
+                
+                # Extract class attribute if present (store after stack.append)
+                class_match = re.search(r'\bclass\s*=\s*["\']([^"\']+)["\']', attrs_src, re.IGNORECASE)
+                if class_match:
+                    class_value = class_match.group(1).strip()
+                    # Store with current stack position (including current tag)
+                    stack_key = (tuple(stack), tag)
+                    self.class_map[stack_key] = class_value
 
                 # =========================
                 # TAG-CONTENT MODE (UNCHECKED)

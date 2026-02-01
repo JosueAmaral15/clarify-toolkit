@@ -261,21 +261,23 @@ class AdvancedExtractor:
         self.skip_empty = skip_empty
         self.use_class_names = use_class_names
 
-    def _extract_class_name_from_tag(self, text: str, tag: str) -> Optional[str]:
+    def _extract_class_name_from_parser(self, parser, stack: List[str], tag: str) -> Optional[str]:
         """
-        Extract class attribute from HTML tag in text.
+        Extract class attribute from parser's class_map.
         Returns joined class names with dash if multiple, or None if no class found.
         """
         if not self.use_class_names:
             return None
         
-        # Find the tag in text (look for <tag ... class="..." >)
-        # This is a simplified approach - matches the tag opening
-        tag_pattern = rf'<{re.escape(tag)}\b[^>]*class\s*=\s*["\']([^"\']+)["\']'
-        match = re.search(tag_pattern, text, re.IGNORECASE)
+        # Check if parser has class_map (only JSXParser)
+        if not hasattr(parser, 'class_map'):
+            return None
         
-        if match:
-            class_value = match.group(1).strip()
+        # Look up class using stack + tag as key
+        stack_key = (tuple(stack), tag)
+        class_value = parser.class_map.get(stack_key)
+        
+        if class_value:
             # Multiple classes: join with dash (e.g., "btn primary" -> "btn-primary")
             class_names = class_value.split()
             return "-".join(class_names) if class_names else None
@@ -661,15 +663,18 @@ class AdvancedExtractor:
                 # Try to extract class name if use_class_names is enabled
                 effective_key = tag_name
                 if self.use_class_names:
-                    class_name = self._extract_class_name_from_tag(text, tag_name)
+                    class_name = self._extract_class_name_from_parser(parser, stack, tag_name)
                     if class_name:
                         effective_key = class_name
                     # else: fall back to tag_name
                 
+                # Build modified stack with effective_key replacing the current tag
+                modified_stack = stack[:-1] + [effective_key] if stack else [effective_key]
+                
                 if self.no_standard and (tag_name.lower() in STANDARD_HTML_TAGS):
-                    tokens = self._nearest_kept_ancestor_tokens(file_alias, stack)
+                    tokens = self._nearest_kept_ancestor_tokens(file_alias, modified_stack)
                 else:
-                    tokens = self._build_path_tokens_with_key(file_alias, stack, effective_key)
+                    tokens = self._build_path_tokens_with_key(file_alias, modified_stack, effective_key)
 
                 # Additional token filtering
                 if self.avoid_keys and keys_to_avoid:
