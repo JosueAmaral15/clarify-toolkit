@@ -9,18 +9,19 @@ Date: 2024-12-24
 Version: v2.9.114
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=protected-access  # UIBuilder works with MainWindow internals
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from ..app import MainWindow
-
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
+
 from ..gui.progress import ProgressManager
 from ..gui.panels import SearchReplacePanel, InsertPanel
 from ..i18n.translator import tr
+
+if TYPE_CHECKING:
+    from ..app import MainWindow
 
 
 class UIBuilder:
