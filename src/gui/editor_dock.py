@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Editor Dock - Integrated File Editor
 
@@ -21,28 +18,26 @@ Refactored in v2.9.114 (Phase 2.5):
 - Extracted EditorTab → src/gui/widgets/editor_tab.py
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy QSettings import
 
 from __future__ import annotations
-from typing import Optional, Dict, List
-import os
-import re
 
-from PySide6.QtCore import Qt, Signal, QRegularExpression, QTimer
+import os
+from typing import List
+
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
-    QLabel, QFileDialog, QMessageBox, QTabWidget, QLineEdit,
-    QCheckBox, QPlainTextEdit, QMenu, QToolBar, QApplication
+    QHBoxLayout, QPushButton,
+    QLabel, QFileDialog, QMessageBox, QTabWidget,
+    QCheckBox, QMenu, QApplication
 )
-from PySide6.QtGui import (
-    QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
-    QTextCursor, QPalette, QAction, QKeySequence
-)
+from PySide6.QtGui import QAction
+
+from src.i18n.translator import tooltip_tr, tr
 
 from .base_dock import BaseDock
 from .json_editor_tab import JsonEditorTab
-from .widgets import SyntaxHighlighter, EditorTab
-from src.i18n.translator import tooltip_tr, tr
+from .widgets import EditorTab
 
 
 class EditorDock(BaseDock):
@@ -265,7 +260,10 @@ class EditorDock(BaseDock):
         tab = self._create_tab_for_file(file_path, edit_only)
 
         if not tab.load_file(file_path):
-            QMessageBox.critical(self, tr("editor.file_open_error_title"), tr("editor.file_open_error").format(file=file_path))
+            QMessageBox.critical(
+                self, tr("editor.file_open_error_title"),
+                tr("editor.file_open_error").format(file=file_path)
+            )
             return
 
         # If edit-only, disconnect from file
@@ -349,7 +347,10 @@ class EditorDock(BaseDock):
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
             else:
-                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed_path").format(tab.file_path))
+                QMessageBox.critical(
+                    self, tr("editor.msg_error_title"),
+                    tr("editor.msg_save_failed_path").format(tab.file_path)
+                )
 
     def _save_file_as(self):
         """Save current file with new name."""
@@ -361,7 +362,8 @@ class EditorDock(BaseDock):
             self,
             "Save File As",
             "",
-            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;HTML (*.html)"
+            "All Files (*);;JSON Files (*.json);;Text Files (*.txt);;"
+            "Python (*.py);;JavaScript (*.js);;TypeScript (*.ts);;HTML (*.html)"
         )
 
         if not file_path:
@@ -381,7 +383,10 @@ class EditorDock(BaseDock):
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
             else:
-                QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed_path").format(file_path))
+                QMessageBox.critical(
+                    self, tr("editor.msg_error_title"),
+                    tr("editor.msg_save_failed_path").format(file_path)
+                )
 
     def _close_current_tab(self):
         """Close currently active tab."""
@@ -405,7 +410,7 @@ class EditorDock(BaseDock):
 
                 btn_save = msg.addButton(tr("editor.btn_save_to_file"), QMessageBox.ActionRole)
                 btn_clipboard = msg.addButton(tr("editor.btn_copy_to_clipboard"), QMessageBox.ActionRole)
-                btn_discard = msg.addButton(tr("editor.btn_discard"), QMessageBox.DestructiveRole)
+                msg.addButton(tr("editor.btn_discard"), QMessageBox.DestructiveRole)
                 btn_cancel = msg.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
 
                 msg.exec_()
@@ -491,7 +496,7 @@ class EditorDock(BaseDock):
 
     def _on_auto_save_toggled(self, state):
         """Handle auto-save checkbox toggle."""
-        enabled = (state == Qt.Checked)
+        enabled = state == Qt.Checked
         self.auto_save_enabled = enabled
 
         # Save preference to QSettings
@@ -533,7 +538,10 @@ class EditorDock(BaseDock):
         Public API method for integration with other tools.
         """
         if not os.path.exists(file_path):
-            QMessageBox.warning(self, tr("editor.msg_file_not_found_title"), tr("editor.msg_file_not_found_msg").format(file_path))
+            QMessageBox.warning(
+                self, tr("editor.msg_file_not_found_title"),
+                tr("editor.msg_file_not_found_msg").format(file_path)
+            )
             return
 
         # Check if already open
