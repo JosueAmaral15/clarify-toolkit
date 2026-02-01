@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Keyboard Shortcuts Customization Dialog
 ----------------------------------------
@@ -11,11 +8,14 @@ Author: Josué Amaral
 Date: 2025-12-10
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=invalid-name  # Qt method name convention
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import json
+
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, List
+
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -128,7 +128,8 @@ class ShortcutCustomizerDialog(QDialog):
 
         # Header with description
         header = QLabel(
-            "<b>Customize Keyboard Shortcuts</b><br>" "Double-click a shortcut to edit. Press <i>Escape</i> to clear."
+            "<b>Customize Keyboard Shortcuts</b><br>"
+            "Double-click a shortcut to edit. Press <i>Escape</i> to clear."
         )
         layout.addWidget(header)
 
@@ -344,7 +345,9 @@ class ShortcutCustomizerDialog(QDialog):
                     )
                     conflict_label.setStyleSheet("color: red;")
                 elif ShortcutManager.is_os_shortcut(new_seq):
-                    conflict_label.setText(f"⚠️ <b>OS Conflict:</b> This shortcut may conflict with system shortcuts")
+                    conflict_label.setText(
+                        "⚠️ <b>OS Conflict:</b> This shortcut may conflict with system shortcuts"
+                    )
                     conflict_label.setStyleSheet("color: orange;")
                 else:
                     conflict_label.setText("✓ No conflicts")
