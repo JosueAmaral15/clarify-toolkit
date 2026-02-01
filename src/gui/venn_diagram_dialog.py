@@ -25,7 +25,7 @@ import json
 
 from typing import Any, Dict
 
-from PySide6.QtCore import Qt, QRectF, QPointF as QPointFType
+from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QPen, QBrush, QColor, QPainter, QFont
 from PySide6.QtWidgets import (
     QDialog, QFileDialog, QGraphicsEllipseItem, QGraphicsScene,
