@@ -202,6 +202,7 @@ class AdvancedExtractor:
         exclude_numeric: bool = False,
         skip_empty: bool = False,
         use_class_names: bool = False,
+        avoid_cut_direction: str = "before",
     ):
         """
         Initialize AdvancedExtractor.
@@ -232,6 +233,7 @@ class AdvancedExtractor:
             exclude_numeric: Filter out numeric keys
             skip_empty: Skip entries with empty/null values
             use_class_names: Use class names as keys instead of HTML tags
+            avoid_cut_direction: Direction to search for word boundary ('before' or 'after')
         """
         self.param = param
         self.match_all = match_all or (param is None) or (param.strip() == "") or (param.strip() == "*")
@@ -248,6 +250,7 @@ class AdvancedExtractor:
         self.case_style = case_style
         self.limit = limit
         self.avoid_cut = avoid_cut
+        self.avoid_cut_direction = avoid_cut_direction
         self.to_upper = to_upper
         self.start_regex = start_regex
         self.end_regex = end_regex
@@ -376,15 +379,25 @@ class AdvancedExtractor:
                 if limit_num > 0 and len(key) > limit_num:
                     if self.avoid_cut:
                         # Cut at word boundary (underscore or dash)
-                        # Find last separator before or at limit position
-                        truncated = key[:limit_num]
-                        # Find last underscore or dash
-                        last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
-                        if last_sep > 0:
-                            key = truncated[:last_sep]
+                        if self.avoid_cut_direction == "after":
+                            # Search AFTER limit for next separator
+                            next_sep_pos = -1
+                            for i in range(limit_num, len(key)):
+                                if key[i] in ('_', '-'):
+                                    next_sep_pos = i
+                                    break
+                            if next_sep_pos > 0:
+                                key = key[:next_sep_pos]
+                            # else: no separator found after, keep full key
                         else:
-                            # No separator found, just truncate
-                            key = truncated
+                            # Default: search BEFORE limit for last separator
+                            truncated = key[:limit_num]
+                            last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
+                            if last_sep > 0:
+                                key = truncated[:last_sep]
+                            else:
+                                # No separator found, just truncate
+                                key = truncated
                     else:
                         # Hard cut at limit
                         key = key[:limit_num]

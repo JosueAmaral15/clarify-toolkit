@@ -512,6 +512,21 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         )
         case_layout.addWidget(self.jsx_avoid_cut_checkbox)
         
+        # Avoid cut direction dropdown
+        self.jsx_avoid_cut_direction_combo = QComboBox()
+        self.jsx_avoid_cut_direction_combo.addItems(["Before", "After"])
+        self.jsx_avoid_cut_direction_combo.setCurrentIndex(0)  # Default: Before
+        self.jsx_avoid_cut_direction_combo.setMaximumWidth(80)
+        self.jsx_avoid_cut_direction_combo.setToolTip(
+            tooltip_tr("advanced_extractor.avoid_cut_direction",
+                      "Before: cut at last word boundary before limit\nAfter: cut at next word boundary after limit")
+        )
+        self.jsx_avoid_cut_direction_combo.setEnabled(False)  # Disabled by default
+        case_layout.addWidget(self.jsx_avoid_cut_direction_combo)
+        
+        # Connect avoid_cut checkbox to enable/disable direction combo
+        self.jsx_avoid_cut_checkbox.toggled.connect(self._jsx_on_avoid_cut_toggled)
+        
         case_layout.addWidget(QLabel(tr("advanced_extractor.indent", "Indent:")))
         self.jsx_indent_spin = QSpinBox()
         self.jsx_indent_spin.setRange(0, 16)
@@ -695,6 +710,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         elif self.jsx_avoid_contains_radio.isChecked():
             self.avoid_keys_parameter = self.CONTAINS
     
+    def _jsx_on_avoid_cut_toggled(self, checked: bool) -> None:
+        """Enable/disable the avoid cut direction dropdown based on checkbox state."""
+        self.jsx_avoid_cut_direction_combo.setEnabled(checked)
+    
     def _jsx_update_status(self, message: str) -> None:
         """
         Update JSX status label with message.
@@ -795,6 +814,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             to_upper = self.jsx_uppercase_checkbox.isChecked()
             limit = self.jsx_limit_edit.text().strip() or "all"
             avoid_cut = self.jsx_avoid_cut_checkbox.isChecked()
+            avoid_cut_direction = self.jsx_avoid_cut_direction_combo.currentText().lower()  # "before" or "after"
             indent = self.jsx_indent_spin.value()
             
             avoid_keys = self.jsx_avoid_keys_edit.text().strip()
@@ -825,6 +845,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 avoid_keys=avoid_keys,
                 avoid_keys_parameter=avoid_keys_param,
                 avoid_cut=avoid_cut,
+                avoid_cut_direction=avoid_cut_direction,
                 to_upper=to_upper,
                 start_regex=start_regex,
                 end_regex=end_regex,
