@@ -10,6 +10,8 @@ Sprint: v2.9.62 - Keyboard Shortcuts Customization
 Author: Josué Amaral
 Date: 2025-12-10
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import json
 from pathlib import Path

@@ -2,19 +2,15 @@
 Operation Presets Dialog
 Dialog para gerenciar presets de operações.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
+
+from typing import Optional, Dict, Any
 
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QListWidget,
-    QMessageBox,
-    QLabel,
-    QInputDialog,
-    QTextEdit,
-    QGroupBox,
-)
+from PySide6.QtCore import Qt, Signal
+
+from src.i18n.translator import tr
 from PySide6.QtCore import Qt, Signal
 from typing import Optional, Dict, Any
 from src.i18n.translator import tr

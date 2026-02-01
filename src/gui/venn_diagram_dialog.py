@@ -16,6 +16,8 @@ Author: Josué Amaral
 Date: 2025-12-23
 Version: v2.9.107
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import json
 from typing import Dict, Any, Optional

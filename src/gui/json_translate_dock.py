@@ -6,6 +6,8 @@ JSON Translate Dock - Modular implementation
 Translates text in files using a JSON/TS dictionary, replacing text with variable references.
 Supports scope filtering, backup creation, and reverse translation.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 

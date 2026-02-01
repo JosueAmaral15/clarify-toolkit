@@ -6,6 +6,8 @@ Author: Josué Amaral
 Date: 2025/12/23
 Version: 2.9.99
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import json
 from pathlib import Path

@@ -4,6 +4,8 @@ Advanced Parameter Extractor Dock (v2.9.115)
 GUI for the advanced parameter extraction tool from add/main.py.
 Provides both JSX/TSX and generic mode extraction with hierarchical JSON generation.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (

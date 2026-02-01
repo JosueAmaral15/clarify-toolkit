@@ -10,6 +10,8 @@ Phase 3.10 - Dialog Extraction
 Author: Josué Amaral
 Date: 2025-12-24
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QGroupBox, QDialogButtonBox
 from PySide6.QtCore import Qt

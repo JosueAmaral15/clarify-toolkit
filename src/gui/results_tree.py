@@ -17,9 +17,17 @@ Esta é uma FOLHA na árvore de importações:
 Author: Josué Amaral
 Date: 2025-12-24
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 import sys
+from typing import Dict, List, Tuple
+
+import subprocess
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QApplication, QMenu, QMessageBox
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor
 import subprocess
 from typing import Dict, List, Tuple
 

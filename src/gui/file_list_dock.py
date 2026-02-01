@@ -10,6 +10,8 @@ v2.9.114 Refactoring (Phase 2.4):
 - Extracted FileListTableManager (table display and context menu)
 - Extracted FileListExecutor (core file listing logic)
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 from datetime import datetime

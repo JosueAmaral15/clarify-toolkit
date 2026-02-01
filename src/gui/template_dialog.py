@@ -2,12 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """Project Templates Dialog - Sprint v2.9.63"""
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from pathlib import Path
+
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem,
-    QPushButton, QLabel, QLineEdit, QFileDialog, QMessageBox, QTextEdit
-)
+from PySide6.QtCore import Qt
+
+from src.i18n.translator import tr
+from ..template_manager import get_template_manager, ProjectTemplate
 from PySide6.QtCore import Qt
 from src.i18n.translator import tr
 

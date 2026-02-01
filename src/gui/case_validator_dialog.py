@@ -1,15 +1,15 @@
 """Dialog for previewing case conversion changes before applying them."""
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QTextEdit, QComboBox
-)
-from PySide6.QtCore import Qt
+import json
 from typing import List, Tuple
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel
+
 from src.rewriter.types import JSONNode
 from src.rewriter.operations import enforce_consistent_case
 from src.i18n.translator import tr
-import json
 
 
 class CaseValidatorDialog(QDialog):

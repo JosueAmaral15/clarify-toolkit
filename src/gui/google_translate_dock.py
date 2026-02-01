@@ -19,6 +19,8 @@ Author: Josué Amaral
 Date: December 21, 2025
 Version: 2.9.78
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 import time

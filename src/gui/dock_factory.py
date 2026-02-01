@@ -1,5 +1,5 @@
-"""
-Dock Factory
+"""Dock Factory.
+
 Factory pattern for creating and configuring GUI dock widgets.
 
 Refactored from src/app.py MainWindow class (Phase 3.3 - v2.9.114)
@@ -8,6 +8,7 @@ Original lines: 1266-1360 (~95 lines of dock creation methods)
 This factory centralizes dock creation logic, reducing duplication and
 making it easier to manage dock configurations.
 """
+# pylint: disable=no-name-in-module,import-outside-toplevel  # Qt dynamic, factory lazy imports
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -33,6 +34,7 @@ class DockFactory:
     4. Optionally connecting signals
     """
 
+    # pylint: disable=too-many-positional-arguments  # Factory requires multiple configuration parameters
     @staticmethod
     def create_dock(main_window: 'QMainWindow',
                    dock_class,

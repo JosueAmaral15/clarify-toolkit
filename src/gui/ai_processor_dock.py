@@ -9,6 +9,8 @@ New features:
 - Enhanced result display with cleaned output
 - Statistics tracking across sessions
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 import re

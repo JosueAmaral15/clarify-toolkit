@@ -3,6 +3,8 @@ JSON Search Dock Widget
 
 Provides UI for searching keys and values in JSON and TypeScript files.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 

@@ -5,6 +5,8 @@
 JSON Rewriter Dock - Modular implementation
 Rewrites JSON/TS files with options to join keys, eliminate duplicates, and format output.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 

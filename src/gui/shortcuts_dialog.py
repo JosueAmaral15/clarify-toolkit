@@ -19,6 +19,8 @@ Design Patterns:
 - Command Pattern: Each shortcut change is a reversible command
 - Observer Pattern: Cell changed signals trigger validation
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from typing import Dict, List, Optional
 

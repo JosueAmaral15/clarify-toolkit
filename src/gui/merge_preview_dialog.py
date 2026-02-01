@@ -11,6 +11,8 @@ v2.9.100 - Merge Results to File
 Author: Josué Amaral
 Date: 2025-12-23
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import json
 from typing import Dict, Any, Optional

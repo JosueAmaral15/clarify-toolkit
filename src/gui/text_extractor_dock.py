@@ -13,6 +13,8 @@ Features:
 - Nested JSON output generation
 - Generic scope parser with custom delimiters
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 import re

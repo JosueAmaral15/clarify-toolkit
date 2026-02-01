@@ -7,129 +7,17 @@ Author: Josué Amaral
 Date: 2025-12-23
 Version: 2.9.109
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
+
+                from datetime import datetime
 
 import webbrowser
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QTextEdit,
-    QCheckBox,
-    QGroupBox,
-    QMessageBox,
-)
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
 from src.i18n.translator import tr
-
-
-class UpdateNotificationDialog(QDialog):
-    """Dialog to notify users of available updates."""
-
-    # Signals
-    check_now_requested = Signal()
-    skip_version_requested = Signal(str)
-
-    def __init__(self, parent=None):
-        """Initialize update notification dialog."""
-        super().__init__(parent)
-
-        self.current_result = None
-
-        self._init_ui()
-        self._connect_signals()
-
-    def _init_ui(self):
-        """Initialize UI components."""
-        self.setWindowTitle(tr("update_notification.window_title_available"))
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(400)
-
-        # Main layout
-        layout = QVBoxLayout(self)
-
-        # Header with emoji
-        header = QLabel(tr("update_notification.header_new_version"))
-        header_font = QFont()
-        header_font.setPointSize(14)
-        header_font.setBold(True)
-        header.setFont(header_font)
-        layout.addWidget(header)
-
-        # Version info group
-        version_group = QGroupBox(tr("update_notification.group_version"))
-        version_layout = QVBoxLayout(version_group)
-
-        self.lbl_current = QLabel(tr("update_notification.lbl_current"))
-        self.lbl_latest = QLabel(tr("update_notification.lbl_latest"))
-        self.lbl_published = QLabel(tr("update_notification.lbl_published"))
-
-        version_layout.addWidget(self.lbl_current)
-        version_layout.addWidget(self.lbl_latest)
-        version_layout.addWidget(self.lbl_published)
-
-        layout.addWidget(version_group)
-
-        # Release notes
-        notes_label = QLabel(tr("update_notification.lbl_whats_new"))
-        notes_label_font = QFont()
-        notes_label_font.setBold(True)
-        notes_label.setFont(notes_label_font)
-        layout.addWidget(notes_label)
-
-        self.text_notes = QTextEdit()
-        self.text_notes.setReadOnly(True)
-        self.text_notes.setMaximumHeight(150)
-        layout.addWidget(self.text_notes)
-
-        # Checkbox to skip this version
-        self.chk_skip_version = QCheckBox(tr("update_notification.chk_skip_version"))
-        layout.addWidget(self.chk_skip_version)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-
-        self.btn_download = QPushButton(f"📥 {tr('update_notification.btn_download')}")
-        self.btn_download.setStyleSheet(
-            "QPushButton { background-color: #0078D4; color: white; font-weight: bold; padding: 8px; }"
-            "QPushButton:hover { background-color: #005A9E; }"
-        )
-
-        self.btn_remind_later = QPushButton(tr("update_notification.btn_remind_later"))
-        self.btn_close = QPushButton(tr("update_notification.btn_close"))
-
-        btn_layout.addWidget(self.btn_download)
-        btn_layout.addWidget(self.btn_remind_later)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_close)
-
-        layout.addLayout(btn_layout)
-
-    def _connect_signals(self):
-        """Connect signals to slots."""
-        self.btn_download.clicked.connect(self._on_download_clicked)
-        self.btn_remind_later.clicked.connect(self.accept)
-        self.btn_close.clicked.connect(self.reject)
-
-    def show_update(self, result: dict):
-        """
-        Show update notification with result data.
-
-        Args:
-            result: Dict from UpdateChecker.check_for_updates()
-        """
-        self.current_result = result
-
-        # Populate labels
-        current = result.get("current_version", "Unknown")
-        latest = result.get("latest_version", "Unknown")
-        published = result.get("published_at", "")
-
-        self.lbl_current.setText(f"Current version: v{current}")
-        self.lbl_latest.setText(f"Latest version: v{latest}")
 
         # Format published date
         if published:

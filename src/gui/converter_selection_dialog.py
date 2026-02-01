@@ -8,6 +8,8 @@ Author: Refactoring Phase 3.8
 Date: 2024-12-24
 Version: v2.9.114
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton,

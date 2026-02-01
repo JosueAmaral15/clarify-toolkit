@@ -6,6 +6,8 @@ Author: Josué Amaral
 Date: 2025/12/22
 Version: 2.9.98
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,

@@ -11,6 +11,8 @@ v2.9.115 Integration:
 - Adds selection mode (return list of selected files)
 - Maintains all existing features from both tools
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 import re

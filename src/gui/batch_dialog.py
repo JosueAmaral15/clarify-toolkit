@@ -6,6 +6,8 @@ Author: Josué Amaral
 Date: 2025/12/23
 Version: 2.9.102
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from typing import Optional
 from PySide6.QtWidgets import (

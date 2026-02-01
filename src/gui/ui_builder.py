@@ -8,6 +8,8 @@ Author: Refactoring Phase 3.9
 Date: 2024-12-24
 Version: v2.9.114
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 from typing import TYPE_CHECKING

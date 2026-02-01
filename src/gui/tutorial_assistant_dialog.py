@@ -3,6 +3,8 @@ Tutorial Assistant Dialog
 
 Non-modal chat dialog for AI-powered tutorial assistance.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from PySide6.QtWidgets import (
     QDialog,

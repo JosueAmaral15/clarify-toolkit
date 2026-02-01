@@ -4,6 +4,8 @@ Case Converter Dock Widget
 Provides UI for converting text case styles between camelCase, PascalCase,
 snake_case, and kebab-case.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 from PySide6.QtWidgets import QGridLayout, QLabel, QComboBox, QLineEdit, QHBoxLayout

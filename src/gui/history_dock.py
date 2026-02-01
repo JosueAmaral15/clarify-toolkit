@@ -14,6 +14,8 @@ Features:
 - Clear history button
 - Export history to text file
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 from datetime import datetime

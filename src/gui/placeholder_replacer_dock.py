@@ -4,6 +4,8 @@ Placeholder Replacer Dock Widget
 Provides UI for batch replacement of placeholders (e.g., {t.key}) with values
 from mapping files (JSON or CSV).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 import os
 from PySide6.QtWidgets import QGridLayout, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout

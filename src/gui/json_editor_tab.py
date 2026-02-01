@@ -22,6 +22,8 @@ Refactored in v2.9.114 (Phase 2.6):
 - Extracted JsonTreeWidget → src/gui/widgets/json_tree_widget.py
 - Extracted JsonSearchDialog → src/gui/dialogs/json_search_dialog.py
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 from typing import Optional, Dict, Any, List, Tuple

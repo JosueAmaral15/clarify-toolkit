@@ -2,151 +2,17 @@
 Operation History Dialog
 Dialog para visualizar e gerenciar histórico de operações.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QListWidget,
-    QMessageBox,
-    QFileDialog,
-    QTextEdit,
-    QLabel,
-)
-from PySide6.QtCore import Qt, Signal
+
 from pathlib import Path
 from typing import Optional, Dict, Any
+        from datetime import datetime
+
+from PySide6.QtWidgets import (
+from PySide6.QtCore import Qt, Signal
+
 from src.i18n.translator import tr, tooltip_tr
-
-
-class HistoryDialog(QDialog):
-    """Dialog para exibir histórico de operações."""
-
-    # Signal emitido quando usuário quer re-executar uma operação
-    re_execute_requested = Signal(dict)
-
-    def __init__(self, history_manager, parent=None):
-        """
-        Inicializa o dialog.
-
-        Args:
-            history_manager: Instância do HistoryManager
-            parent: Widget pai
-        """
-        super().__init__(parent)
-        self.history_manager = history_manager
-        self.setWindowTitle(tr("history_dialog.title"))
-        self.resize(800, 500)
-
-        self._setup_ui()
-        self._load_history()
-
-    def _setup_ui(self):
-        """Configura a interface."""
-        layout = QVBoxLayout(self)
-
-        # Label informativo
-        info_label = QLabel(
-            "📜 Last 50 operations (most recent first)\n" "Select an operation to view details or re-execute it"
-        )
-        info_label.setWordWrap(True)
-        layout.addWidget(info_label)
-
-        # Lista de operações
-        self.list_widget = QListWidget()
-        self.list_widget.currentRowChanged.connect(self._on_selection_changed)
-        self.list_widget.itemDoubleClicked.connect(self._on_re_execute_clicked)
-        layout.addWidget(self.list_widget)
-
-        # Área de detalhes
-        details_label = QLabel(tr("history_dialog.lbl_details"))
-        layout.addWidget(details_label)
-
-        self.details_text = QTextEdit()
-        self.details_text.setReadOnly(True)
-        self.details_text.setMaximumHeight(120)
-        layout.addWidget(self.details_text)
-
-        # Botões de ação
-        buttons_layout = QHBoxLayout()
-
-        self.btn_re_execute = QPushButton(tr("history_dialog.btn_re_execute"))
-        self.btn_re_execute.setToolTip(tooltip_tr("history.tooltip_re_execute"))
-        self.btn_re_execute.clicked.connect(self._on_re_execute_clicked)
-        self.btn_re_execute.setEnabled(False)
-        buttons_layout.addWidget(self.btn_re_execute)
-
-        self.btn_export = QPushButton(tr("history_dialog.btn_export"))
-        self.btn_export.setToolTip(tooltip_tr("history.tooltip_export"))
-        self.btn_export.clicked.connect(self._on_export_clicked)
-        buttons_layout.addWidget(self.btn_export)
-
-        self.btn_clear = QPushButton(tr("history_dialog.btn_clear"))
-        self.btn_clear.setToolTip(tooltip_tr("history.tooltip_clear"))
-        self.btn_clear.clicked.connect(self._on_clear_clicked)
-        buttons_layout.addWidget(self.btn_clear)
-
-        buttons_layout.addStretch()
-
-        self.btn_close = QPushButton(tr("history_dialog.btn_close"))
-        self.btn_close.clicked.connect(self.accept)
-        buttons_layout.addWidget(self.btn_close)
-
-        layout.addLayout(buttons_layout)
-
-    def _load_history(self):
-        """Carrega histórico na lista."""
-        self.list_widget.clear()
-        self.details_text.clear()
-
-        history = self.history_manager.get_history()
-
-        if not history:
-            self.list_widget.addItem(tr("history_dialog.no_operations"))
-            self.btn_export.setEnabled(False)
-            self.btn_clear.setEnabled(False)
-            return
-
-        # Adiciona cada operação
-        for entry in history:
-            display_text = self.history_manager.format_entry_display(entry)
-            self.list_widget.addItem(display_text)
-
-        self.btn_export.setEnabled(True)
-        self.btn_clear.setEnabled(True)
-
-    def _on_selection_changed(self, current_row: int):
-        """
-        Callback quando seleção muda.
-
-        Args:
-            current_row: Índice da linha selecionada
-        """
-        if current_row < 0:
-            self.details_text.clear()
-            self.btn_re_execute.setEnabled(False)
-            return
-
-        entry = self.history_manager.get_entry(current_row)
-
-        if not entry:
-            self.details_text.clear()
-            self.btn_re_execute.setEnabled(False)
-            return
-
-        # Exibe detalhes
-        details = self._format_details(entry)
-        self.details_text.setPlainText(details)
-
-        self.btn_re_execute.setEnabled(True)
-
-    def _format_details(self, entry: Dict[str, Any]) -> str:
-        """
-        Formata detalhes da operação.
-
-        Args:
-            entry: Dicionário com dados da operação
 
         Returns:
             String formatada com detalhes

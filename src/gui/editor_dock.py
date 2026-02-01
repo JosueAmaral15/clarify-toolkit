@@ -20,6 +20,8 @@ Refactored in v2.9.114 (Phase 2.5):
 - Extracted SyntaxHighlighter → src/gui/widgets/syntax_highlighter.py
 - Extracted EditorTab → src/gui/widgets/editor_tab.py
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 from typing import Optional, Dict, List

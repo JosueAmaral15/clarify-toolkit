@@ -17,6 +17,8 @@ Features:
 Author: Josué Amaral
 Date: 2025-12-02
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 
