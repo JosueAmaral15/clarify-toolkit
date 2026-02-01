@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Set Operations Dock - GUI Interface (v2.9.32)
 
@@ -16,38 +13,30 @@ Date: December 2, 2025
 Version: 2.9.32
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-
+# pylint: disable=import-outside-toplevel  # Lazy imports for dialogs
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import json
 import os
+
 from typing import Any, Dict, List
 
-from PySide6.QtWidgets import (
-    QDialog,
-    QFileDialog,
-    QFrame,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QPushButton,
-    QScrollArea,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (
+    QDialog, QFileDialog, QFrame, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QListWidget, QPushButton, QScrollArea,
+    QTextEdit, QVBoxLayout, QWidget
+)
 
-from src.core.set_operation_executor import SetOperationExecutor
-from src.core.result_exporter import ResultExporter
-from src.i18n import tooltip_tr
-from src.i18n.translator import tr, tooltip_tr
 from src.accessibility_manager import AccessibilityManager
+from src.core.result_exporter import ResultExporter
+from src.core.set_operation_executor import SetOperationExecutor
+from src.i18n.translator import tr, tooltip_tr
+
+from ..history_manager import HistoryManager
 from .base_dock import BaseDock
 from .widgets import FileSelectionWidget, OperationOptionsWidget
-from ..history_manager import HistoryManager
 from .history_dialog import HistoryDialog
 from ..presets_manager import PresetsManager
 from .presets_dialog import PresetsDialog
@@ -323,7 +312,9 @@ class SetOperationsDock(BaseDock):
         if not data:
             return
 
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Results", "", "JSON Files (*.json)")
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Results", "", "JSON Files (*.json)"
+        )
 
         if file_path:
             success, message = ResultExporter.save_json(data, file_path)
@@ -504,7 +495,7 @@ class SetOperationsDock(BaseDock):
             return
 
         # Step 3: Apply merge
-        success, message, output_path = merge_manager.merge_to_file(
+        success, message, _ = merge_manager.merge_to_file(
             file_path, self.result_data, mode, backup=auto_backup
         )
 
@@ -563,7 +554,10 @@ class SetOperationsDock(BaseDock):
             self._execute()
 
         except Exception as e:
-            self.show_error("Re-execute Error", f"Failed to re-execute operation:\n{e}")
+            self.show_error(
+                "Re-execute Error",
+                f"Failed to re-execute operation:\n{e}"
+            )
 
     def _show_presets(self):
         """Show operation presets dialog (v2.9.95)."""
