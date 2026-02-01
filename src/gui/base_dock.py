@@ -1,8 +1,8 @@
-"""
-Base classes for Clarify dock widgets.
+"""Base classes for Clarify dock widgets.
 
 Provides reusable components and patterns for creating tool docks.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QSpinBox, QComboBox, QMenu
 )
 from PySide6.QtGui import QIcon
-from typing import Optional, Callable, List
+from typing import Optional, List
 import os
 import re
 
