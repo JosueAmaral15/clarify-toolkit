@@ -473,7 +473,8 @@ class JSXParser:
                 stack.append(tag)
                 
                 # Extract class attribute if present (store after stack.append)
-                class_match = re.search(r'\bclass\s*=\s*["\']([^"\']+)["\']', attrs_src, re.IGNORECASE)
+                # Match both 'class' (HTML) and 'className' (JSX/React)
+                class_match = re.search(r'\b(?:class|className)\s*=\s*["\']([^"\']+)["\']', attrs_src, re.IGNORECASE)
                 if class_match:
                     class_value = class_match.group(1).strip()
                     # Store with current stack position (including current tag)

@@ -261,6 +261,32 @@ class AdvancedExtractor:
         self.skip_empty = skip_empty
         self.use_class_names = use_class_names
 
+    def _replace_stack_with_class_names(self, parser, stack: List[str]) -> List[str]:
+        """
+        Replace tag names in stack with class names where available.
+        Used when use_class_names is enabled to convert entire path.
+        """
+        if not self.use_class_names or not hasattr(parser, 'class_map'):
+            return stack
+        
+        modified_stack = []
+        for i, tag in enumerate(stack):
+            # Build the key for this position in the stack
+            stack_up_to_here = tuple(stack[:i+1])
+            stack_key = (stack_up_to_here, tag)
+            
+            # Look up class name for this tag at this position
+            class_value = parser.class_map.get(stack_key)
+            if class_value:
+                # Join multiple classes with dash
+                class_names = class_value.split()
+                modified_stack.append("-".join(class_names) if class_names else tag)
+            else:
+                # No class found, use tag name
+                modified_stack.append(tag)
+        
+        return modified_stack
+
     def _extract_class_name_from_parser(self, parser, stack: List[str], tag: str) -> Optional[str]:
         """
         Extract class attribute from parser's class_map.
@@ -660,21 +686,16 @@ class AdvancedExtractor:
                 # TAG-CONTENT MODE
                 tag_name = tag
                 
-                # Try to extract class name if use_class_names is enabled
-                effective_key = tag_name
+                # Replace entire stack with class names if enabled
                 if self.use_class_names:
-                    class_name = self._extract_class_name_from_parser(parser, stack, tag_name)
-                    if class_name:
-                        effective_key = class_name
-                    # else: fall back to tag_name
-                
-                # Build modified stack with effective_key replacing the current tag
-                modified_stack = stack[:-1] + [effective_key] if stack else [effective_key]
+                    modified_stack = self._replace_stack_with_class_names(parser, stack)
+                else:
+                    modified_stack = stack
                 
                 if self.no_standard and (tag_name.lower() in STANDARD_HTML_TAGS):
                     tokens = self._nearest_kept_ancestor_tokens(file_alias, modified_stack)
                 else:
-                    tokens = self._build_path_tokens_with_key(file_alias, modified_stack, effective_key)
+                    tokens = self._build_path_tokens_with_key(file_alias, modified_stack, None)
 
                 # Additional token filtering
                 if self.avoid_keys and keys_to_avoid:
