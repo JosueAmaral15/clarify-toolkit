@@ -42,7 +42,7 @@ class JsonSearchWorker(ProcessorWorkerBase):
         try:
             # Create indexer and index files
             self.emit_progress(f"Indexing {len(self.files)} file(s)...")
-            indexer = ProjectIndexer()
+            indexer = ProjectIndexer()  # pylint: disable=no-value-for-parameter  # Optional args
 
             for i, file_path in enumerate(self.files):
                 if self.check_interrupt():
