@@ -1,5 +1,5 @@
-"""
-JSX Parser Module
+"""JSX Parser Module.
+# pylint: disable=too-many-nested-blocks,no-else-continue,consider-using-in,duplicate-code  # Complex JSX parsing
 
 Minimal JSX/TSX parser for extracting parameters and attributes from React components.
 Extracted from add/main.py for use in the Clarify project.
@@ -59,10 +59,10 @@ class JSXParser:
         self.match_all = match_all
         self.is_attribute_mode = is_attribute_mode
         self.no_standard = no_standard
-        self.items = list()
+        self.items = []
 
     def clear_items_and_reset(self):
-        self.items = list()
+        self.items = []
 
     def _custom_find_matching_close_span(self, text, tag, from_index):
         """
@@ -223,7 +223,7 @@ class JSXParser:
                 if ch == in_quote:
                     in_quote = None
             else:
-                if ch == "'" or ch == '"':
+                if ch in ("'", '"'):
                     in_quote = ch
                 elif ch == "{":
                     brace_depth += 1
@@ -485,8 +485,8 @@ class JSXParser:
                             items = self._extract_non_tag_items(inner)
 
                         if inner and not self.no_standard:
-                            for stack, tag, tag, item in self.parse(inner, stack):
-                                yield (stack, tag, tag, item)
+                            for s, t1, t2, item in self.parse(inner, stack):
+                                yield (s, t1, t2, item)
 
                         for it in items:
                             new_item = it.strip()

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-extractor.py
+"""extractor.py - Orchestrator class for JSX/Generic parameter extraction.
+# pylint: disable=consider-using-in  # Explicit comparisons for clarity
 
-Orchestrator class for JSX/Generic parameter extraction.
 Processes files/directories, parses with JSXParser or GenericScopeParser,
 builds hierarchical JSON structures, and applies normalization options.
 """
@@ -15,7 +14,6 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from ..utils.normalization import (
     STANDARD_HTML_TAGS,
-    is_standard_tag,
     kept_prefix,
     normalize_token,
     path_join,
@@ -60,6 +58,7 @@ class Extractor:
     CONTAINS = "contains"
     EQUALS = "equals"
 
+    # pylint: disable=too-many-positional-arguments  # Complex extractor configuration
     def __init__(
         self,
         param: str,
@@ -346,7 +345,7 @@ class Extractor:
             if self.avoid_keys:
                 keys_to_avoid = [i.strip() for i in self.avoid_keys.split(",")]
                 if self.avoid_keys_parameter == self.CONTAINS:
-                    if any(x in (key_matched or "") or x in tag or x in (value or "") for x in keys_to_avoid):
+                    if (key_matched or "") in keys_to_avoid or tag in keys_to_avoid or (value or "") in keys_to_avoid:
                         continue
                 elif self.avoid_keys_parameter == self.EQUALS:
                     if any(x == (key_matched or "") or x == tag or x == (value or "") for x in keys_to_avoid):
@@ -445,7 +444,7 @@ class Extractor:
         for fp in list_files(path, file_patterns):
             try:
                 text = read_text(fp)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught  # File read robustness
                 all_lines.append(f"<<ERROR reading {fp}: {e}>>")
                 continue
 
