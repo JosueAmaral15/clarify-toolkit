@@ -2,10 +2,13 @@
 Search worker thread for file scanning.
 Extracted from app.py (v2.9.114 - Phase 1.2).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import time
 import fnmatch
 import os
+
 from typing import Dict, List, Tuple, Callable, Optional
 
 from PySide6.QtCore import QObject, Signal
@@ -84,16 +87,16 @@ class SearchWorker(QObject):
         # v2.9.112: Filter by filename pattern if needed
         if self.search_mode in ("filename_only", "both") and self.filename_pattern:
             filtered_files = []
-            for p in files_to_process:
-                filename = os.path.basename(p)
+            for file_path in files_to_process:
+                filename = os.path.basename(file_path)
                 # Support simple wildcards like *.py, test_*, etc.
                 if fnmatch.fnmatch(filename, self.filename_pattern):
-                    filtered_files.append(p)
+                    filtered_files.append(file_path)
             files_to_process = filtered_files
 
         total_files = len(files_to_process)
 
-        for idx, p in enumerate(files_to_process, 1):
+        for idx, file_path in enumerate(files_to_process, 1):
             # Check for cancellation
             if self._cancel:
                 break
@@ -104,37 +107,41 @@ class SearchWorker(QObject):
 
             try:
                 # Emit detailed progress (current, total, message)
-                self.progress.emit(p)  # Legacy signal for backward compatibility
-                self.progress_detailed.emit(idx, total_files, p)
+                self.progress.emit(file_path)  # Legacy signal
+                self.progress_detailed.emit(idx, total_files, file_path)
 
                 # v2.9.112: Handle filename-only search mode
                 if self.search_mode == "filename_only":
                     # Just list the file with a placeholder match
-                    matches[p] = [(0, 0, f"Matched file: {os.path.basename(p)}")]
+                    matches[file_path] = [
+                        (0, 0, f"Matched file: {os.path.basename(file_path)}")
+                    ]
                     continue
 
                 # For content search or both modes, read and search file content
-                text = read_text(p)
+                text = read_text(file_path)
                 lst: List[Tuple[int, int, str]] = []
 
                 # v2.8.0: Multi-query search support
                 if self.is_multi_query and self.multi_query_processor:
                     # Use MultiQueryProcessor for multiple patterns
                     query_matches = self.multi_query_processor.search_in_text(text)
-                    # Convert from (line, col, snippet, query_line_num) to (line, col, snippet)
-                    lst = [(line, col, snippet) for line, col, snippet, _ in query_matches]
+                    # Convert from (line, col, snippet, query_line_num)
+                    lst = [(line, col, snippet)
+                           for line, col, snippet, _ in query_matches]
                 else:
                     # Single pattern search (original behavior)
                     for m in self.pattern_text.finditer(text):
                         line = text.count("\n", 0, m.start()) + 1
                         col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
-                        snippet = text.splitlines()[line - 1] if line - 1 < len(text.splitlines()) else ""
+                        lines = text.splitlines()
+                        snippet = lines[line - 1] if line - 1 < len(lines) else ""
                         lst.append((line, col, snippet))
 
                 if lst:
-                    matches[p] = lst
-            except Exception as e:
-                self.error.emit(f"[WARN] {p}: {e}")
+                    matches[file_path] = lst
+            except Exception as exc:
+                self.error.emit(f"[WARN] {file_path}: {exc}")
                 # continue to next files
 
         self.done.emit(matches)
