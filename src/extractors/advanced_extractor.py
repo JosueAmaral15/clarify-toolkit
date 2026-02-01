@@ -366,9 +366,30 @@ class AdvancedExtractor:
         derived from raw_value. The key is normalized using current case settings;
         the value is the original raw_value.
         """
-        # Normalize key from the raw value
-        trimmed = smart_truncate(raw_value, self.limit, self.avoid_cut)
-        key = normalize_token(trimmed, self.case_style, self.to_upper) or "text"
+        # First normalize the entire raw value to get the key
+        key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
+        
+        # Then apply limit to the normalized key (not raw text)
+        if self.limit not in (None, 'all', 'ALL', 'All'):
+            try:
+                limit_num = int(self.limit)
+                if limit_num > 0 and len(key) > limit_num:
+                    if self.avoid_cut:
+                        # Cut at word boundary (underscore or dash)
+                        # Find last separator before or at limit position
+                        truncated = key[:limit_num]
+                        # Find last underscore or dash
+                        last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
+                        if last_sep > 0:
+                            key = truncated[:last_sep]
+                        else:
+                            # No separator found, just truncate
+                            key = truncated
+                    else:
+                        # Hard cut at limit
+                        key = key[:limit_num]
+            except ValueError:
+                pass  # Invalid limit, keep full key
         
         # Skip empty values if enabled
         if self.skip_empty and (not raw_value or not raw_value.strip()):
