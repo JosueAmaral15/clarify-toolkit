@@ -752,6 +752,8 @@ class ResultsTree(QTreeWidget):
 
     def _open_selected_files(self):
         """Open selected files in system default application (v2.9.2)."""
+        import subprocess as sp
+
         selected_items = self.selectedItems()
         if not selected_items:
             return
@@ -794,6 +796,8 @@ class ResultsTree(QTreeWidget):
 
     def _open_all_files(self):
         """Open all files from results in system default application (v2.9.2)."""
+        import subprocess as sp
+
         if not self._matches_data:
             return
 
