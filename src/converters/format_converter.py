@@ -14,13 +14,15 @@ Author: Clarify Project
 Version: 2.9.80
 Date: 2025-12-21
 """
+# pylint: disable=broad-exception-caught  # Conversion robustness
+# pylint: disable=logging-fstring-interpolation  # Readability over micro-optimization
 
 import json
 from pathlib import Path
-from typing import Union, Dict, Any, List, Optional
+from typing import Union, Dict, List, Optional, Any
 import logging
 
-from . import Format, ConversionError, FormatDetectionError
+from . import Format, FormatDetectionError
 from .factory import ConverterFactory
 from .toon import ToonAdapter
 from .bson import BsonAdapter
