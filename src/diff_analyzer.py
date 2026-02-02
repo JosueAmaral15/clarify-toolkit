@@ -143,8 +143,14 @@ class DiffAnalyzer:
         lines.append(f"Common:     {len(diff_result['common'])} items")
         lines.append(f"Modified:   {len(diff_result['modified'])} items")
         lines.append("")
-        lines.append(f"Total keys in A: {len(diff_result['only_in_a']) + len(diff_result['common']) + len(diff_result['modified'])}")
-        lines.append(f"Total keys in B: {len(diff_result['only_in_b']) + len(diff_result['common']) + len(diff_result['modified'])}")
+        total_a = (len(diff_result['only_in_a']) +
+                   len(diff_result['common']) +
+                   len(diff_result['modified']))
+        total_b = (len(diff_result['only_in_b']) +
+                   len(diff_result['common']) +
+                   len(diff_result['modified']))
+        lines.append(f"Total keys in A: {total_a}")
+        lines.append(f"Total keys in B: {total_b}")
 
         return "\n".join(lines)
 
@@ -199,11 +205,17 @@ class DiffAnalyzer:
 
         # Only in A (green)
         for key, value in sorted(diff_result['only_in_a'].items()):
-            html_lines.append(f"<span class='only-a'><span class='key'>{key}:</span> {json.dumps(value)}</span>")
+            val_json = json.dumps(value)
+            html_lines.append(
+                f"<span class='only-a'><span class='key'>{key}:</span> {val_json}</span>"
+            )
 
         # Common (yellow)
         for key, values in sorted(diff_result['common'].items()):
-            html_lines.append(f"<span class='common'><span class='key'>{key}:</span> {json.dumps(values['a'])}</span>")
+            val_json = json.dumps(values['a'])
+            html_lines.append(
+                f"<span class='common'><span class='key'>{key}:</span> {val_json}</span>"
+            )
 
         # Modified (orange) - show value from A
         for key, values in sorted(diff_result['modified'].items()):
