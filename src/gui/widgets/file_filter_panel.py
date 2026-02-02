@@ -16,6 +16,9 @@ Features:
 - Exclude directories (common + custom)
 - Collapsible panel
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=line-too-long  # Long filter descriptions
+# pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
 
 from __future__ import annotations
 
@@ -28,8 +31,6 @@ from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QSpinBox, QDateEdit, QVBoxLayout, QHBoxLayout
 )
 from PySide6.QtCore import Signal, QDate
-
-from src.i18n.translator import tr
 
 from src.i18n.translator import tr
 
