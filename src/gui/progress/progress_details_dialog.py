@@ -2,6 +2,7 @@
 Progress details dialog showing expanded information.
 Extracted from app.py (v2.9.114).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from datetime import datetime
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QTextEdit, QPushButton
