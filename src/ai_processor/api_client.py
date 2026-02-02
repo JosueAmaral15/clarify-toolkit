@@ -3,6 +3,7 @@ AI API Client Module
 
 Provides unified interface for OpenAI and Google Gemini APIs.
 """
+# pylint: disable=broad-exception-caught  # API robustness
 
 from typing import Optional, Tuple
 import socket
