@@ -38,7 +38,7 @@ import os
 import re
 import sys
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 from PySide6.QtCore import Qt, Signal, QThread, QTimer
 from PySide6.QtWidgets import (
@@ -63,7 +63,6 @@ from .search_worker import SearchWorker
 from ..progress import OperationHistory
 
 # Thread management
-from ...ui import thread_manager, FeatureType, ProcessingModal
 
 
 class InsertPanel(QWidget):
