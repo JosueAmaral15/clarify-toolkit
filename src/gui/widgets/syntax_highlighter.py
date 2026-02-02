@@ -15,11 +15,13 @@ Supported Languages:
 
 Pattern: Strategy (GoF) - Different highlighting strategies per file type
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=invalid-name  # Qt convention (highlightBlock)
+# pylint: disable=redefined-builtin  # format is standard name in highlighter
 
 from __future__ import annotations
 
 from PySide6.QtCore import QRegularExpression
-from PySide6.QtWidgets import QTextEdit
 from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont
 
 
