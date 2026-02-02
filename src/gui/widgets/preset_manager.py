@@ -13,12 +13,15 @@ Features:
 - Preset combo box management
 - Auto-load on selection
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=line-too-long  # Long preset descriptions
+# pylint: disable=broad-exception-caught  # File I/O robustness
 
 from __future__ import annotations
 
 import json
 from typing import Dict, Any, List, Callable, Optional
-from PySide6.QtCore import Qt, Signal, QSettings
+from PySide6.QtCore import Signal, QSettings
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QMessageBox, QInputDialog, QFileDialog
