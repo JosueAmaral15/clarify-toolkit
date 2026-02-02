@@ -31,6 +31,11 @@ Features:
 - QSettings persistence
 """
 
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=line-too-long  # Qt string literals & descriptions
+# pylint: disable=import-outside-toplevel  # Conditional imports
+# pylint: disable=too-many-instance-attributes  # Complex UI panel
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 from __future__ import annotations
 from typing import Optional
 
