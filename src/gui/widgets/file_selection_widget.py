@@ -13,6 +13,7 @@ Features:
 - Browse/Add/Remove/Clear operations
 - Signals for file changes
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from __future__ import annotations
 
