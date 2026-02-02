@@ -1,3 +1,13 @@
+"""
+Clarify REST API Module
+
+FastAPI-based REST API for Clarify application.
+Provides endpoints for status, JSON operations, and GUI control.
+"""
+# pylint: disable=import-error  # fastapi/uvicorn optional dependencies
+# pylint: disable=missing-class-docstring  # API class is self-explanatory
+# pylint: disable=missing-function-docstring  # FastAPI route decorators are self-documenting
+
 from threading import Thread
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
