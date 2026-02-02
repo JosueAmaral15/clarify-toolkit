@@ -11,15 +11,15 @@ Author: Josué Amaral
 Date: December 21, 2025
 Version: 2.9.78
 """
+# pylint: disable=broad-exception-caught  # Translation robustness
 
 import json
-import re
 import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Dict, Optional, Tuple
-from dataclasses import dataclass, asdict
+from typing import Dict, Optional
+from dataclasses import dataclass
 
 
 @dataclass
