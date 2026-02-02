@@ -15,7 +15,7 @@ from typing import Dict, Any
 from src.migrations.base import Migration
 
 
-class MigrationV2_9_91(Migration):
+class MigrationV2_9_91(Migration):  # pylint: disable=invalid-name  # Version naming
     """
     First migration: Establish version tracking system.
 
