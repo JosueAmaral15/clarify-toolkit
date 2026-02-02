@@ -461,6 +461,56 @@ class FormatMapper:
                                     }
                         if borders:
                             cell_data.borders = borders
+                    
+                    # Get cell merging - Session 63
+                    # Horizontal merge (colspan)
+                    hMerge = tcPr.find(qn('w:hMerge'))
+                    if hMerge is not None:
+                        val = hMerge.get(qn('w:val'))
+                        if val == 'restart':
+                            # This is the start of a horizontal merge
+                            # Count continuation cells to determine colspan
+                            colspan = 1
+                            for next_col_idx in range(col_idx + 1, num_cols):
+                                next_cell = docx_table.rows[row_idx].cells[next_col_idx]
+                                next_tcPr = next_cell._element.tcPr
+                                if next_tcPr is not None:
+                                    next_hMerge = next_tcPr.find(qn('w:hMerge'))
+                                    if next_hMerge is not None and next_hMerge.get(qn('w:val')) == 'continue':
+                                        colspan += 1
+                                    else:
+                                        break
+                                else:
+                                    break
+                            cell_data.col_span = colspan
+                    
+                    # Vertical merge (rowspan)
+                    vMerge = tcPr.find(qn('w:vMerge'))
+                    if vMerge is not None:
+                        val = vMerge.get(qn('w:val'))
+                        # 'restart' or no val attribute could mean start
+                        # Check if this is truly a restart by seeing if it has val='restart'
+                        if val == 'restart' or val is None:
+                            # Could be start of merge - need to verify by checking for continuations
+                            # Count continuation cells to determine rowspan
+                            rowspan = 1
+                            for next_row_idx in range(row_idx + 1, num_rows):
+                                next_cell = docx_table.rows[next_row_idx].cells[col_idx]
+                                next_tcPr = next_cell._element.tcPr
+                                if next_tcPr is not None:
+                                    next_vMerge = next_tcPr.find(qn('w:vMerge'))
+                                    if next_vMerge is not None:
+                                        # Any vMerge in next row means continuation
+                                        rowspan += 1
+                                    else:
+                                        break
+                                else:
+                                    break
+                            
+                            # Only set if we actually found continuations
+                            if rowspan > 1:
+                                cell_data.row_span = rowspan
+                
                 
                 # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
@@ -599,6 +649,23 @@ class FormatMapper:
                                     cell_data.borders = borders
                 except (ValueError, KeyError):
                     pass  # No cell style
+                
+                # Extract cell merging - Session 63
+                # Horizontal merge (colspan)
+                colspan = cell.getAttribute('numbercolumnsspanned')
+                if colspan:
+                    try:
+                        cell_data.col_span = int(colspan)
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Vertical merge (rowspan)
+                rowspan = cell.getAttribute('numberrowsspanned')
+                if rowspan:
+                    try:
+                        cell_data.row_span = int(rowspan)
+                    except (ValueError, TypeError):
+                        pass
                 
                 # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
@@ -1463,9 +1530,28 @@ class FormatMapper:
             except:
                 pass  # Style might not exist in document
         
+        # Track which cells are covered by merges (to avoid duplicate processing)
+        covered = set()
+        
+        # First pass: Mark covered cells
+        for row_idx in range(table.num_rows):
+            for col_idx in range(table.num_cols):
+                cell_data = table.get_cell(row_idx, col_idx)
+                if cell_data.col_span > 1 or cell_data.row_span > 1:
+                    # Mark covered cells
+                    for r_offset in range(cell_data.row_span):
+                        for c_offset in range(cell_data.col_span):
+                            if r_offset == 0 and c_offset == 0:
+                                continue  # Skip the main cell
+                            covered.add((row_idx + r_offset, col_idx + c_offset))
+        
         # Populate each cell
         for row_idx in range(table.num_rows):
             for col_idx in range(table.num_cols):
+                # Skip covered cells (will be handled by their parent merge cell)
+                if (row_idx, col_idx) in covered:
+                    continue
+                
                 cell_data = table.get_cell(row_idx, col_idx)
                 docx_cell = docx_table.rows[row_idx].cells[col_idx]
                 
@@ -1522,6 +1608,38 @@ class FormatMapper:
                             border_elem.set(qn('w:color'), border_info['color'])
                             tcBorders.append(border_elem)
                     tcPr.append(tcBorders)
+                
+                # Cell merging - Session 63
+                if cell_data.col_span > 1 or cell_data.row_span > 1:
+                    # Horizontal merge (colspan)
+                    if cell_data.col_span > 1:
+                        hMerge = OxmlElement('w:hMerge')
+                        hMerge.set(qn('w:val'), 'restart')
+                        tcPr.append(hMerge)
+                        
+                        # Mark continuation cells
+                        for offset in range(1, cell_data.col_span):
+                            if col_idx + offset < table.num_cols:
+                                cont_cell = docx_table.rows[row_idx].cells[col_idx + offset]
+                                cont_tcPr = cont_cell._element.get_or_add_tcPr()
+                                cont_hMerge = OxmlElement('w:hMerge')
+                                cont_hMerge.set(qn('w:val'), 'continue')
+                                cont_tcPr.append(cont_hMerge)
+                    
+                    # Vertical merge (rowspan)
+                    if cell_data.row_span > 1:
+                        vMerge = OxmlElement('w:vMerge')
+                        vMerge.set(qn('w:val'), 'restart')
+                        tcPr.append(vMerge)
+                        
+                        # Mark continuation cells
+                        for offset in range(1, cell_data.row_span):
+                            if row_idx + offset < table.num_rows:
+                                cont_cell = docx_table.rows[row_idx + offset].cells[col_idx]
+                                cont_tcPr = cont_cell._element.get_or_add_tcPr()
+                                cont_vMerge = OxmlElement('w:vMerge')
+                                # Don't set val attribute - vMerge without val means continue
+                                cont_tcPr.append(cont_vMerge)
         
         return docx_table
     
@@ -1965,11 +2083,41 @@ class FormatMapper:
         # Create table
         odt_table = Table()
         
+        # Track covered cells for proper placeholder insertion
+        # covered_cells[row][col] = True if cell is covered by a merge
+        covered_cells = {}
+        for r in range(table.num_rows):
+            covered_cells[r] = {}
+            for c in range(table.num_cols):
+                covered_cells[r][c] = False
+        
+        # Mark cells covered by merges
+        for row_idx in range(table.num_rows):
+            for col_idx in range(table.num_cols):
+                cell_data = table.get_cell(row_idx, col_idx)
+                if cell_data.col_span > 1 or cell_data.row_span > 1:
+                    # Mark covered cells
+                    for r_offset in range(cell_data.row_span):
+                        for c_offset in range(cell_data.col_span):
+                            if r_offset == 0 and c_offset == 0:
+                                continue  # Skip the main cell
+                            r = row_idx + r_offset
+                            c = col_idx + c_offset
+                            if r < table.num_rows and c < table.num_cols:
+                                covered_cells[r][c] = True
+        
         # Create rows and cells
         for row_idx in range(table.num_rows):
             odt_row = TableRow()
             
             for col_idx in range(table.num_cols):
+                # Check if this cell is covered by a merge
+                if covered_cells[row_idx][col_idx]:
+                    # Add covered cell placeholder
+                    from odf.table import CoveredTableCell
+                    odt_row.addElement(CoveredTableCell())
+                    continue
+                
                 cell_data = table.get_cell(row_idx, col_idx)
                 odt_cell = TableCell()
                 
@@ -2043,6 +2191,13 @@ class FormatMapper:
                     cell_style.addElement(cell_props)
                     doc.automaticstyles.addElement(cell_style)
                     odt_cell.setAttribute("stylename", cell_style)
+                
+                # Cell merging - Session 63
+                if cell_data.col_span > 1:
+                    odt_cell.setAttribute("numbercolumnsspanned", str(cell_data.col_span))
+                
+                if cell_data.row_span > 1:
+                    odt_cell.setAttribute("numberrowsspanned", str(cell_data.row_span))
                 
                 odt_row.addElement(odt_cell)
             
