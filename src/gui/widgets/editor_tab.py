@@ -18,12 +18,14 @@ Features:
 
 Pattern: State (GoF) - edit_only_mode changes behavior
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # File I/O robustness
 
 from __future__ import annotations
 from typing import Optional
 import os
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Signal, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QTextEdit, QPushButton, QFileDialog,
     QMessageBox, QToolBar, QApplication
@@ -31,7 +33,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from .syntax_highlighter import SyntaxHighlighter
-from src.i18n.translator import tooltip_tr, tr
+from src.i18n.translator import tr, tooltip_tr
 
 
 class EditorTab(QWidget):
