@@ -24,26 +24,26 @@ FlatIndex = Dict[str, List[Dict[str, Any]]]  # path -> [{"file": str, "value": A
 def parse_composite_query(raw: str) -> Tuple[str, Optional[str]]:
     """
     Parse a composite query of the form "base.path,sub.path".
-    
+
     The left side is the base path; optional right side is appended subpath.
     Leading 't.' or 't' is stripped from the base side for convenience.
-    
+
     Args:
         raw: Query string (e.g., "t.pages.testFormatDetail,hero.title")
-        
+
     Returns:
         Tuple of (base_path, sub_path)
-        
+
     Examples:
         >>> parse_composite_query("t.pages.home,title")
         ("pages.home", "title")
-        
+
         >>> parse_composite_query("auth.login")
         ("auth.login", None)
     """
     q = raw.strip()
     idx = q.find(",")
-    
+
     if idx >= 0:
         left = q[:idx].strip()
         right = q[idx + 1:].strip()
@@ -58,7 +58,7 @@ def parse_composite_query(raw: str) -> Tuple[str, Optional[str]]:
 
     base_path = left
     sub_path = right if (right and len(right) > 0) else None
-    
+
     return base_path, sub_path
 
 
@@ -66,14 +66,14 @@ def match_with_options(candidate: str, needle: str,
                        case_sensitive: bool, whole_word: bool, regex: bool) -> bool:
     """
     Apply case/whole-word/regex rules to match a candidate path.
-    
+
     Args:
         candidate: The path to test (e.g., "pages.home.title")
         needle: The search pattern
         case_sensitive: Whether to match case exactly
         whole_word: Whether to match whole segments only (dot-separated)
         regex: Whether needle is a regular expression
-        
+
     Returns:
         True if candidate matches needle with given options
     """
@@ -99,16 +99,16 @@ def resolve_query(flat: FlatIndex, raw_query: str,
                   case_sensitive: bool, whole_word: bool, regex: bool):
     """
     Resolve a query against the flattened index.
-    
+
     Returns exact matches and suggestions based on search options.
-    
+
     Args:
         flat: Flattened index mapping paths to metadata
         raw_query: User query string
         case_sensitive: Match case exactly
         whole_word: Match whole path segments only
         regex: Treat query as regular expression
-        
+
     Returns:
         Tuple of (exact_matches, suggestions)
         - exact_matches: List of dicts with "path", "file", "value", "line"
@@ -123,7 +123,7 @@ def resolve_query(flat: FlatIndex, raw_query: str,
     # Scan entire index
     for key, metas in flat.items():
         matched = match_with_options(key, needle, case_sensitive, whole_word, regex) if needle else False
-        
+
         if matched:
             # Exact match - include all occurrences
             for meta in metas:
@@ -164,33 +164,33 @@ def resolve_query_by_value(flat: FlatIndex, search_value: str,
                             case_sensitive: bool, regex: bool) -> List[Dict[str, Any]]:
     """
     Search for entries whose values match the search pattern.
-    
+
     Args:
         flat: Flattened index mapping paths to metadata
         search_value: Value pattern to search for
         case_sensitive: Match case exactly
         regex: Treat search_value as regular expression
-        
+
     Returns:
         List of dicts with "key", "file", "value", "line", "match_type"
-        
+
     Examples:
         >>> flat = {"pages.home.title": [{"file": "en.json", "value": "Welcome", "line": 5}]}
         >>> resolve_query_by_value(flat, "Welcome", True, False)
         [{"key": "pages.home.title", "value": "Welcome", "file": "en.json", "line": 5, "match_type": "value"}]
     """
     results: List[Dict[str, Any]] = []
-    
+
     for key_path, metadata_list in flat.items():
         for metadata in metadata_list:
             value = metadata.get("value")
-            
+
             # Convert value to string for matching (handle None specially)
             if value is None:
                 value_str = "None"
             else:
                 value_str = str(value)
-            
+
             # Apply matching rules
             matched = False
             if regex:
@@ -205,7 +205,7 @@ def resolve_query_by_value(flat: FlatIndex, search_value: str,
                     matched = search_value in value_str
                 else:
                     matched = search_value.lower() in value_str.lower()
-            
+
             if matched:
                 results.append({
                     "key": key_path,
@@ -214,7 +214,7 @@ def resolve_query_by_value(flat: FlatIndex, search_value: str,
                     "line": metadata.get("line"),
                     "match_type": "value"
                 })
-    
+
     # Limit results to 200
     return results[:200]
 
@@ -223,7 +223,7 @@ def resolve_query_with_mode(flat: FlatIndex, search_key: str, search_value: str,
                              search_mode: str, case_sensitive: bool, regex: bool) -> List[Dict[str, Any]]:
     """
     Resolve query based on search mode (key, value, or both).
-    
+
     Args:
         flat: Flattened index
         search_key: Key pattern to search for
@@ -231,22 +231,22 @@ def resolve_query_with_mode(flat: FlatIndex, search_key: str, search_value: str,
         search_mode: "key", "value", or "both"
         case_sensitive: Match case exactly
         regex: Treat patterns as regular expressions
-        
+
     Returns:
         Unified list of results with match_type indicator
-        
+
     Examples:
         >>> resolve_query_with_mode(flat, "title", "", "key", False, False)
         # Returns all keys containing "title"
-        
+
         >>> resolve_query_with_mode(flat, "", "Welcome", "value", True, False)
         # Returns all entries with value = "Welcome"
-        
+
         >>> resolve_query_with_mode(flat, "title", "Home", "both", False, False)
         # Returns keys with "title" OR values with "Home"
     """
     results: List[Dict[str, Any]] = []
-    
+
     # Mode 1: Key only
     if search_mode == "key":
         if search_key:
@@ -261,13 +261,13 @@ def resolve_query_with_mode(flat: FlatIndex, search_key: str, search_value: str,
                     "match_type": "key"
                 }
                 results.append(result)
-    
+
     # Mode 2: Value only
     elif search_mode == "value":
         if search_value:
             value_results = resolve_query_by_value(flat, search_value, case_sensitive, regex)
             results.extend(value_results)
-    
+
     # Mode 3: Both (key OR value)
     else:  # "both"
         # Search keys
@@ -282,12 +282,12 @@ def resolve_query_with_mode(flat: FlatIndex, search_key: str, search_value: str,
                     "match_type": "key"
                 }
                 results.append(result)
-        
+
         # Search values
         if search_value:
             value_results = resolve_query_by_value(flat, search_value, case_sensitive, regex)
             results.extend(value_results)
-    
+
     # Deduplicate results (same key + file + line)
     seen = set()
     deduped = []
@@ -296,5 +296,5 @@ def resolve_query_with_mode(flat: FlatIndex, search_key: str, search_value: str,
         if signature not in seen:
             seen.add(signature)
             deduped.append(result)
-    
+
     return deduped[:200]  # Limit to 200 results
