@@ -42,19 +42,16 @@ class ConverterStrategy(ABC):
         Raises:
             ConversionError: If conversion fails
         """
-        pass
 
     @property
     @abstractmethod
     def source_format(self) -> Format:
         """Source format for this converter."""
-        pass
 
     @property
     @abstractmethod
     def target_format(self) -> Format:
         """Target format for this converter."""
-        pass
 
 
 # ============================================================================
