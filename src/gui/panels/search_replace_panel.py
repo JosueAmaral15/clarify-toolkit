@@ -140,20 +140,20 @@ class SearchReplacePanel(QWidget):
         grid = QGridLayout(gb)
 
         # File name query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
+        grid.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
         self.ed_filename_query = QLineEdit()
         self.ed_filename_query.setPlaceholderText(tr("search_replace.placeholder_filename"))
         self.ed_filename_query.setToolTip(tooltip_tr("search_replace.tooltip_filename_query"))
-        g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
+        grid.addWidget(self.ed_filename_query, 0, 1, 1, 3)
 
         # File content query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
+        grid.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
         self.ed_query = QPlainTextEdit()
         self.ed_query.setMinimumHeight(30)
         self.ed_query.setMaximumHeight(150)
         self.ed_query.setPlaceholderText(tr("search_replace.placeholder_content"))
         self.ed_query.setToolTip(tooltip_tr("search_replace.tooltip_query"))
-        g.addWidget(self.ed_query, 1, 1, 1, 3)
+        grid.addWidget(self.ed_query, 1, 1, 1, 3)
 
         # Checkboxes
         self.chk_case = QCheckBox(tr("search_replace.chk_case_sensitive"))
@@ -167,11 +167,11 @@ class SearchReplacePanel(QWidget):
         self.btn_search = QPushButton(tr("search_replace.btn_search_cancel"))
         self.btn_search.setToolTip(tooltip_tr("search_replace.tooltip_search"))
 
-        g.addWidget(self.chk_case, 2, 0)
-        g.addWidget(self.chk_word, 2, 1)
-        g.addWidget(self.chk_regex, 2, 2)
-        g.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
-        g.addWidget(self.btn_search, 3, 3)  # Moved to row 3
+        grid.addWidget(self.chk_case, 2, 0)
+        grid.addWidget(self.chk_word, 2, 1)
+        grid.addWidget(self.chk_regex, 2, 2)
+        grid.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
+        grid.addWidget(self.btn_search, 3, 3)  # Moved to row 3
 
         root.addWidget(gb)
 
@@ -513,7 +513,7 @@ class SearchReplacePanel(QWidget):
             for (
                 cb_field,
                 cb_op,
-                _cb_field,
+                ed,
                 cb_scope,
                 ed_scope_val,
                 chk_case,
@@ -613,7 +613,7 @@ class SearchReplacePanel(QWidget):
                 chk_case,
                 chk_word,
                 chk_regex,
-                btn_remove,
+                _btn_remove,
             ) in self.cond_list:
                 cb_field.setEnabled(state)
                 cb_op.setEnabled(state)
