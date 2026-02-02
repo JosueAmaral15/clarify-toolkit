@@ -1371,6 +1371,68 @@ class FormatMapper:
         return final_segments
     
     @staticmethod
+    def _reconstruct_table_to_docx(table: TableSegment, doc) -> None:
+        """
+        Reconstruct a table in DOCX format from TableSegment (Session 59).
+        
+        Args:
+            table: TableSegment with cells and formatting
+            doc: python-docx Document object to add table to
+            
+        Returns:
+            The created python-docx Table object
+        """
+        from docx import Document
+        
+        # Create table with dimensions
+        docx_table = doc.add_table(rows=table.num_rows, cols=table.num_cols)
+        
+        # Apply table style if specified
+        if table.table_style:
+            try:
+                docx_table.style = table.table_style
+            except:
+                pass  # Style might not exist in document
+        
+        # Populate each cell
+        for row_idx in range(table.num_rows):
+            for col_idx in range(table.num_cols):
+                cell_data = table.get_cell(row_idx, col_idx)
+                docx_cell = docx_table.rows[row_idx].cells[col_idx]
+                
+                # Clear default paragraph (python-docx creates one empty paragraph by default)
+                # We'll reuse it for the first content
+                if len(docx_cell.paragraphs) > 0:
+                    # Clear the default paragraph's runs
+                    p = docx_cell.paragraphs[0]
+                    p.clear()
+                
+                # Add formatted content
+                current_paragraph = None
+                for segment in cell_data.text_segments:
+                    # Handle paragraph breaks
+                    if segment.text == "\n":
+                        # Start new paragraph
+                        current_paragraph = None
+                        continue
+                    
+                    # Create paragraph if needed
+                    if current_paragraph is None:
+                        if len(docx_cell.paragraphs) > 0 and not docx_cell.paragraphs[0].text:
+                            # Reuse first empty paragraph
+                            current_paragraph = docx_cell.paragraphs[0]
+                        else:
+                            current_paragraph = docx_cell.add_paragraph()
+                    
+                    # Add run with formatting
+                    clean_text = FormatMapper.remove_tags(segment.text)
+                    if clean_text:
+                        run = current_paragraph.add_run(clean_text)
+                        FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
+        
+        return docx_table
+    
+    @staticmethod
     def create_docx_from_segments(segments: List[TextSegment], output_path: str) -> None:
         """
         Create a DOCX file from text segments with formatting.
