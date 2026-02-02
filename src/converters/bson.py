@@ -133,7 +133,7 @@ class BsonAdapter:
                 f"Input must be bytes, got {type(bson_data).__name__}"
             )
 
-        if len(bson_data) == 0:
+        if not bson_data:
             raise ValidationError("Empty BSON data")
 
         try:
@@ -176,7 +176,7 @@ class BsonAdapter:
         if not isinstance(bson_data, bytes):
             return False
 
-        if len(bson_data) == 0:
+        if not bson_data:
             return False
 
         try:
