@@ -13,7 +13,7 @@ Date: 2025-12-21
 """
 
 from abc import ABC, abstractmethod
-from typing import Union, Dict, Any, List
+from typing import Union, Dict, List
 import json
 
 from .toon import ToonAdapter
