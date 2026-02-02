@@ -201,6 +201,95 @@ class FormatMapper:
     """
     
     @staticmethod
+    def _extract_run_formatting(run) -> Tuple[int, List[str]]:
+        """
+        Extract formatting from a single DOCX run (Session 57).
+        
+        Args:
+            run: A python-docx Run object
+            
+        Returns:
+            Tuple of (format_bits, metadata_list)
+        """
+        format_bits = 0
+        metadata_parts = []
+        
+        # Detect bold
+        if run.bold:
+            format_bits |= FormatBit.BOLD
+        
+        # Detect italic
+        if run.italic:
+            format_bits |= FormatBit.ITALIC
+        
+        # Detect underline
+        if run.underline:
+            format_bits |= FormatBit.UNDERLINE
+        
+        # Detect double underline
+        if run.underline == 3:  # DOUBLE
+            format_bits |= FormatBit.DOUBLE_UNDERLINE
+        
+        # Detect strikethrough
+        if run.font.strike:
+            format_bits |= FormatBit.STRIKETHROUGH
+        
+        # Detect font color
+        if run.font.color.rgb:
+            format_bits |= FormatBit.FONT_COLOR
+            rgb = run.font.color.rgb
+            hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+            metadata_parts.append(hex_color)
+        
+        # Detect highlight/background color
+        if run.font.highlight_color:
+            format_bits |= FormatBit.HIGHLIGHT
+            highlight_map = {
+                1: 'FFFF00',  # YELLOW
+                2: '00FF00',  # BRIGHT_GREEN
+                3: '00FFFF',  # TURQUOISE
+                4: 'FF00FF',  # PINK
+                5: '0000FF',  # BLUE
+                6: 'FF0000',  # RED
+                7: '800080',  # DARK_BLUE
+                8: '008080',  # TEAL
+                9: '00FF00',  # GREEN
+                10: 'FF00FF', # VIOLET
+                11: '800000', # DARK_RED
+                12: 'FFFF00', # DARK_YELLOW
+                13: '808080', # GRAY_50
+                14: '696969', # GRAY_25
+                15: '000000', # BLACK
+            }
+            highlight_hex = highlight_map.get(run.font.highlight_color, 'FFFF00')
+            metadata_parts.append(highlight_hex)
+        
+        # Detect superscript
+        if run.font.superscript:
+            format_bits |= FormatBit.SUPERSCRIPT
+        
+        # Detect subscript
+        if run.font.subscript:
+            format_bits |= FormatBit.SUBSCRIPT
+        
+        # Detect small caps
+        if run.font.small_caps:
+            format_bits |= FormatBit.SMALL_CAPS
+        
+        # Detect font size
+        if run.font.size:
+            format_bits |= FormatBit.FONT_SIZE
+            points = run.font.size.pt
+            metadata_parts.append(str(int(points)))
+        
+        # Detect font family
+        if run.font.name:
+            format_bits |= FormatBit.FONT_FAMILY
+            metadata_parts.append(run.font.name)
+        
+        return format_bits, metadata_parts
+    
+    @staticmethod
     def _extract_table_from_docx(docx_table) -> TableSegment:
         """
         Extract a single table from DOCX format (Session 56).
@@ -222,15 +311,29 @@ class FormatMapper:
             for col_idx, cell in enumerate(row.cells):
                 cell_data = CellData()
                 
-                # Extract text from cell paragraphs (cells can have multiple paragraphs)
+                # Extract text from cell paragraphs with formatting (Session 57)
                 for para in cell.paragraphs:
-                    # Reuse paragraph extraction logic from main function
-                    # For now, simple text extraction - will add formatting in Session 57
-                    if para.text.strip():
-                        segment = TextSegment(text=para.text + "\n")
+                    # Process each run in the paragraph
+                    for run in para.runs:
+                        if not run.text:
+                            continue
+                        
+                        # Extract run formatting using helper method
+                        format_bits, metadata_parts = FormatMapper._extract_run_formatting(run)
+                        
+                        # Create text segment with formatting
+                        segment = TextSegment(
+                            text=run.text,
+                            format_bits=format_bits,
+                            metadata=",".join(metadata_parts) if metadata_parts else None
+                        )
                         cell_data.text_segments.append(segment)
+                    
+                    # Add paragraph break after each paragraph (except last)
+                    if para.text.strip():
+                        cell_data.text_segments.append(TextSegment(text="\n"))
                 
-                # Store cell (merging handled in Session 62)
+                # Store cell (merging and cell-level formatting handled in later sessions)
                 table.set_cell(row_idx, col_idx, cell_data)
         
         return table
