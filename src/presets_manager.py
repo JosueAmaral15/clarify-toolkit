@@ -112,8 +112,8 @@ class PresetsManager:
 
         # Verifica se já existe preset com mesmo nome
         existing_index = -1
-        for i, p in enumerate(presets):
-            if p.get("name") == preset["name"]:
+        for i, existing_preset in enumerate(presets):
+            if existing_preset.get("name") == preset["name"]:
                 existing_index = i
                 break
 
@@ -141,7 +141,7 @@ class PresetsManager:
 
         # Filtra removendo preset com nome especificado
         original_count = len(presets)
-        presets = [p for p in presets if p.get("name") != name]
+        presets = [preset for preset in presets if preset.get("name") != name]
 
         if len(presets) < original_count:
             self._save_presets(presets)
@@ -163,7 +163,7 @@ class PresetsManager:
         presets = self.get_presets()
 
         # Verifica se novo nome já existe
-        if any(p.get("name") == new_name for p in presets):
+        if any(preset.get("name") == new_name for preset in presets):
             return False
 
         # Renomeia preset
