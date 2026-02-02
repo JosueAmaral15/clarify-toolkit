@@ -133,7 +133,7 @@ class SettingsManager:
 
 
 # Global settings instance
-_settings_instance: Optional[SettingsManager] = None
+_settings_instance: Optional[SettingsManager] = None  # pylint: disable=invalid-name
 
 
 def get_settings() -> SettingsManager:

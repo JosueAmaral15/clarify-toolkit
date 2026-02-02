@@ -257,7 +257,7 @@ class UpdateChecker:
 
 
 # Singleton instance
-_update_checker_instance: Optional[UpdateChecker] = None
+_update_checker_instance: Optional[UpdateChecker] = None  # pylint: disable=invalid-name
 
 
 def get_update_checker(

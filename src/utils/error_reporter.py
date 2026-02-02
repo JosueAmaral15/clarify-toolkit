@@ -233,7 +233,7 @@ class ErrorReporter:
 
 
 # Global instance
-_error_reporter: Optional[ErrorReporter] = None
+_error_reporter: Optional[ErrorReporter] = None  # pylint: disable=invalid-name
 
 
 def get_error_reporter() -> ErrorReporter:
