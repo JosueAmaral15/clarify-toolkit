@@ -14,18 +14,19 @@ Features:
 Integrates with ConfigManager (src/config_manager.py).
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-error  # jsonschema optional dependency
+# pylint: disable=no-member  # Dynamic ConfigManager.data attribute
 
 import sys
 import yaml
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
-    QLabel, QMessageBox, QGroupBox
+    QMessageBox, QGroupBox
 )
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
-from src.i18n.translator import tr, tooltip_tr
+from src.i18n.translator import tr
 
 try:
     from src.config_manager import get_config
