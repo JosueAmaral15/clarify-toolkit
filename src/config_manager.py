@@ -500,7 +500,7 @@ class ConfigManager:
 
 
 # Global instance
-_config_instance: Optional[ConfigManager] = None
+_config_instance: Optional[ConfigManager] = None  # pylint: disable=invalid-name  # Module-level singleton
 
 
 def get_config() -> ConfigManager:
