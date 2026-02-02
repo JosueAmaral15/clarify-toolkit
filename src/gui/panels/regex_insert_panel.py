@@ -38,12 +38,11 @@ Features:
 # pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 # pylint: disable=broad-exception-caught  # UI error handling robustness
 from __future__ import annotations
-from typing import Optional
 
-from PySide6.QtCore import Qt, Signal, QSettings
+from PySide6.QtCore import Signal, QSettings
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QTextEdit, QGroupBox,
+    QLabel, QLineEdit, QPushButton, QGroupBox,
     QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView,
     QComboBox, QCheckBox
 )
