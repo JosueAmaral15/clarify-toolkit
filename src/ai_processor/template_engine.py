@@ -45,9 +45,6 @@ class TemplateEngine:
     # Whitelist of safe operators
     SAFE_OPERATORS = ['+', '-', '*', '/']
 
-    def __init__(self):
-        """Initialize template engine."""
-        pass
 
     def render(self, template: str, context: Dict[str, Any]) -> str:
         """
@@ -175,7 +172,7 @@ class TemplateEngine:
             elif operator == '*':
                 result = left_value * right_value
             elif operator == '/':
-                if right_value == 0:
+                if not right_value:
                     return "{{DIVISION_BY_ZERO}}"
                 result = left_value // right_value  # Integer division
             else:

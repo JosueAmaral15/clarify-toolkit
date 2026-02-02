@@ -7,7 +7,6 @@ Core file processing logic for AI-powered batch operations.
 import os
 import re
 from typing import List, Optional, Callable
-from pathlib import Path
 from .template_engine import render_prompt, has_templates
 
 
@@ -219,7 +218,11 @@ def process_file(
     if progress_callback:
         progress_callback(f"Sending {os.path.basename(file_path)} to AI...")
 
-    system_prompt = "You are a helpful assistant. Analyze the provided file and respond according to the user's instructions."
+        system_prompt = (
+            "You are a helpful assistant. Analyze the provided file and respond "
+            "according to the user's instructions."
+        )
+            "according to the user's instructions."
     response = client.chat(system_prompt, user_prompt)
 
     return strip_code_fences(response.strip())
