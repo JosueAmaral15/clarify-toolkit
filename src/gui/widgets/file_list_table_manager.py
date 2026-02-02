@@ -29,9 +29,9 @@ import os
 import csv
 import platform
 import subprocess
-from typing import List, Callable, Optional
+from typing import List
 from datetime import datetime
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
     QTableWidgetItem, QPushButton, QLineEdit, QHeaderView,
@@ -448,7 +448,7 @@ class FileListTableManager(QWidget):
 
     def export_csv(self):
         """Export table to CSV file."""
-        if self.table.rowCount() == 0:
+        if not self.table.rowCount():
             QMessageBox.information(
                 self,
                 tr("table_manager.no_data_title"),
