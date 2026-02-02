@@ -425,7 +425,6 @@ class FileListTableManager(QWidget):
 
     def _copy_path(self):
         """Copy selected path(s) to clipboard."""
-        from PySide6.QtGui import QClipboard
         from PySide6.QtWidgets import QApplication
 
         selected_rows = sorted(set(item.row() for item in self.table.selectedItems()))
