@@ -868,7 +868,17 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 
                 # Convert results to strings (process_text returns list and dict)
                 text_output = "\n".join(path_lines)
-                json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False) if merged_json else None
+                
+                # Format JSON based on settings (same as run() method)
+                if merged_json:
+                    if typescript_export:
+                        json_output = extractor.json_to_typescript(merged_json, "ExtractedData", indent)
+                    elif with_quotation_marks:
+                        json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False)
+                    else:
+                        json_output = extractor.json_to_js_literal(merged_json, indent=indent)
+                else:
+                    json_output = None
             else:  # Directory/File mode
                 text_output, json_output = extractor.run(path)
             
