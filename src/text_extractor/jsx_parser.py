@@ -14,6 +14,7 @@ Supports:
 Author: Josué Amaral
 Date: 2025-11-24
 """
+# pylint: disable=broad-exception-caught  # File parsing robustness
 
 import re
 from typing import List, Tuple, Optional, Dict

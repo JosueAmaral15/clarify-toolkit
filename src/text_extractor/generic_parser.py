@@ -20,7 +20,7 @@ from typing import List, Tuple, Optional, Dict, Iterator
 
 
 class GenericScopeParser:
-    """
+    r"""
     Generic scope parser driven by user-defined regex patterns.
 
     Features:
