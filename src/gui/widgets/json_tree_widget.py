@@ -15,6 +15,8 @@ Features:
 
 Pattern: Composite (GoF) - recursive tree structure
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=line-too-long  # Long tr() strings
 
 from __future__ import annotations
 from typing import Optional, Dict, Any
@@ -23,6 +25,8 @@ import json
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtGui import QColor
+
+from src.i18n.translator import tr
 
 
 class JsonTreeWidget(QTreeWidget):
@@ -63,7 +67,7 @@ class JsonTreeWidget(QTreeWidget):
         # Store line numbers for each node
         self.line_map: Dict[QTreeWidgetItem, int] = {}
 
-    def _on_item_clicked(self, item: QTreeWidgetItem, column: int):
+    def _on_item_clicked(self, item: QTreeWidgetItem, _column: int):
         """
         Handle tree item click - emit line number.
 
