@@ -3,7 +3,11 @@ Operation History Dialog
 Dialog para visualizar e gerenciar histórico de operações.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy datetime import
+# pylint: disable=broad-exception-caught  # History display robustness
 
+from pathlib import Path
+from typing import Dict, Any
 
 from PySide6.QtWidgets import (
     QDialog,
@@ -16,9 +20,8 @@ from PySide6.QtWidgets import (
     QTextEdit,
     QLabel,
 )
-from PySide6.QtCore import Qt, Signal
-from pathlib import Path
-from typing import Optional, Dict, Any
+from PySide6.QtCore import Signal
+
 from src.i18n.translator import tr, tooltip_tr
 
 
@@ -50,7 +53,8 @@ class HistoryDialog(QDialog):
 
         # Label informativo
         info_label = QLabel(
-            "📜 Last 50 operations (most recent first)\n" "Select an operation to view details or re-execute it"
+            "📜 Last 50 operations (most recent first)\n"
+            "Select an operation to view details or re-execute it"
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
