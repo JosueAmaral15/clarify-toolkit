@@ -4,6 +4,9 @@
 # pylint: disable=import-outside-toplevel  # Intentional lazy loading to avoid circular imports
 # pylint: disable=broad-exception-caught  # UI code needs broad exception handling
 # pylint: disable=too-few-public-methods  # Simple utility classes are acceptable
+# pylint: disable=missing-class-docstring  # Qt stub classes don't need docstrings
+# pylint: disable=missing-function-docstring  # Internal Qt wrappers
+# pylint: disable=invalid-name  # Qt naming conventions (_PYSIDE, Qt, Signal)
 
 """
 TextWorkbench — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
@@ -299,7 +302,7 @@ def read_translation_dict(path: str) -> Dict[str, Any]:
 #             if isinstance(n, Obj):
 #                 if not n: return "{}"
 #                 if ind is None or ind <= 0:
-#                     parts = ["{"] + [("," if i else "") + json.dumps(k, ensure_ascii=False) + ":" + dump_json(v, ind, lvl)
+#                     parts = ["{"] + [("," if i else "") + json.dumps(k, ensure_ascii=False) + ":" + dump_json(v, ind, lvl)  # pylint: disable=line-too-long  # Commented legacy code
 #                                      for i,(k,v) in enumerate(n)] + ["}"]
 #                     return "".join(parts)
 #                 sp = " " * ind
@@ -1154,7 +1157,12 @@ if _PYSIDE:
         def _apply_theme_action(self, action: QAction):
             for a in (self.act_theme_system, self.act_theme_light, self.act_theme_dark):
                 a.setChecked(a is action)
-            mode = "system" if action is self.act_theme_system else ("light" if action is self.act_theme_light else "dark")
+            if action is self.act_theme_system:
+                mode = "system"
+            elif action is self.act_theme_light:
+                mode = "light"
+            else:
+                mode = "dark"
             apply_theme(QApplication.instance(), mode)
             # persist
             cfg = load_prefs()
@@ -1504,7 +1512,8 @@ if _PYSIDE:
                 QMessageBox.information(
                     self,
                     tr("app.msg_undo_title"),
-                    f"{tr('app.msg_undo_title')}: {self.command_manager.get_redo_description() or tr('app.msg_success_title')}"
+                    f"{tr('app.msg_undo_title')}: "
+                    f"{self.command_manager.get_redo_description() or tr('app.msg_success_title')}"
                 )
             else:
                 QMessageBox.warning(self, tr("app.msg_undo_title"), tr("app.msg_undo_nothing"))
@@ -1516,7 +1525,8 @@ if _PYSIDE:
                 QMessageBox.information(
                     self,
                     tr("app.msg_redo_title"),
-                    f"{tr('app.msg_redo_title')}: {self.command_manager.get_undo_description() or tr('app.msg_success_title')}"
+                    f"{tr('app.msg_redo_title')}: "
+                    f"{self.command_manager.get_undo_description() or tr('app.msg_success_title')}"
                 )
             else:
                 QMessageBox.warning(self, tr("app.msg_redo_title"), tr("app.msg_redo_nothing"))
