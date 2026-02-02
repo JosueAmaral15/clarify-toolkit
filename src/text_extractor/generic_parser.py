@@ -71,14 +71,14 @@ class GenericScopeParser:
             self.start_re = re.compile(start_regex, re.DOTALL)
             self.end_re = re.compile(end_regex, re.DOTALL)
         except re.error as e:
-            raise ValueError(f"Invalid regex pattern: {e}")
+            raise ValueError(f"Invalid regex pattern: {e}") from e
 
     def parse(
         self,
         text: str,
         stack: Optional[List[str]] = None
     ) -> Iterator[Tuple[List[str], str, str, Optional[str]]]:
-        """
+        r"""
         Parse text and yield (stack, node_name, key, value) tuples.
 
         Args:
@@ -225,7 +225,7 @@ class GenericScopeParser:
                 depth += 1
             elif ch == '}':
                 depth -= 1
-                if depth == 0:
+                if not depth:
                     return text[start + 1:i], i + 1
 
             i += 1
