@@ -1883,44 +1883,38 @@ class FormatMapper:
             except ValueError:
                 pass  # Skip invalid spacing
         
-        # Apply indentation (Session 25)
-        if format_bits & FormatBit.INDENTATION and metadata_index < len(metadata_parts):
-            indent_str = metadata_parts[metadata_index].strip()
-            metadata_index += 1
+        # Apply indentation (Session 64 fix)
+        if format_bits & FormatBit.INDENTATION and metadata_index + 2 < len(metadata_parts):
             try:
                 from docx.shared import Pt
-                # Parse: "first_line,left,right"
-                parts = indent_str.split(',')
-                if len(parts) == 3:
-                    first_line = int(parts[0])
-                    left = int(parts[1])
-                    right = int(parts[2])
-                    
-                    if first_line != 0:
-                        paragraph.paragraph_format.first_line_indent = Pt(first_line)
-                    if left != 0:
-                        paragraph.paragraph_format.left_indent = Pt(left)
-                    if right != 0:
-                        paragraph.paragraph_format.right_indent = Pt(right)
+                # Consume 3 metadata parts: first_line, left, right
+                first_line = int(metadata_parts[metadata_index].strip())
+                left = int(metadata_parts[metadata_index + 1].strip())
+                right = int(metadata_parts[metadata_index + 2].strip())
+                metadata_index += 3
+                
+                if first_line != 0:
+                    paragraph.paragraph_format.first_line_indent = Pt(first_line)
+                if left != 0:
+                    paragraph.paragraph_format.left_indent = Pt(left)
+                if right != 0:
+                    paragraph.paragraph_format.right_indent = Pt(right)
             except (ValueError, IndexError):
                 pass  # Skip invalid indentation
         
-        # Apply space before/after (Session 26)
-        if format_bits & FormatBit.SPACE_BEFORE_AFTER and metadata_index < len(metadata_parts):
-            space_str = metadata_parts[metadata_index].strip()
-            metadata_index += 1
+        # Apply space before/after (Session 64 fix)
+        if format_bits & FormatBit.SPACE_BEFORE_AFTER and metadata_index + 1 < len(metadata_parts):
             try:
                 from docx.shared import Pt
-                # Parse: "before,after"
-                parts = space_str.split(',')
-                if len(parts) == 2:
-                    before = int(parts[0])
-                    after = int(parts[1])
-                    
-                    if before != 0:
-                        paragraph.paragraph_format.space_before = Pt(before)
-                    if after != 0:
-                        paragraph.paragraph_format.space_after = Pt(after)
+                # Consume 2 metadata parts: before, after
+                before = int(metadata_parts[metadata_index].strip())
+                after = int(metadata_parts[metadata_index + 1].strip())
+                metadata_index += 2
+                
+                if before != 0:
+                    paragraph.paragraph_format.space_before = Pt(before)
+                if after != 0:
+                    paragraph.paragraph_format.space_after = Pt(after)
             except (ValueError, IndexError):
                 pass  # Skip invalid spacing
         
