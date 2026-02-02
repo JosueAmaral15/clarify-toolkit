@@ -3,10 +3,12 @@ Collapsible Section Widget with Smooth Animations (v2.9.117 - B.6)
 
 A widget that provides expandable/collapsible sections with smooth height animations.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=invalid-name  # Qt convention (setContent, setTitle, etc)
+# pylint: disable=bare-except  # Animation exception handling
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Property, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QFrame
+from PySide6.QtCore import QPropertyAnimation, QEasingCurve
 
 
 class CollapsibleSection(QWidget):
