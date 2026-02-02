@@ -5,22 +5,22 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 # pylint: disable=broad-exception-caught  # GUI robustness
 # pylint: disable=invalid-name  # Qt method names
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=protected-access  # Access to MainWindow internals
+# pylint: disable=logging-fstring-interpolation  # Performance not critical
+# pylint: disable=subprocess-run-check  # Open commands don't need check
 
 import os
 import sys
-import subprocess
 
 from typing import Dict, List, Tuple
 
-from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect, QRectF
-from PySide6.QtGui import (
-    QAbstractTextDocumentLayout, QColor, QFontMetrics,
-    QPainter, QTextDocument
-)
+from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect
+from PySide6.QtGui import QColor, QPainter, QTextDocument
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QHeaderView,
-    QMenu, QMessageBox, QStyledItemDelegate,
-    QStyle, QStyleOptionViewItem, QTreeWidget, QTreeWidgetItem
+    QApplication, QHeaderView, QMenu,
+    QMessageBox, QStyledItemDelegate, QStyle,
+    QStyleOptionViewItem, QTreeWidget, QTreeWidgetItem
 )
 
 from ...i18n import tr
@@ -275,7 +275,7 @@ class ResultsTree(QTreeWidget):
             # Force viewport update
             self.viewport().update()
 
-    def _on_item_hover(self, item: QTreeWidgetItem, column: int):
+    def _on_item_hover(self, item: QTreeWidgetItem, _column: int):
         """Show position info when hovering over match items (v2.5.1)."""
         if item and item.parent():  # This is a match item (has parent = file item)
             text = item.text(0)
@@ -295,7 +295,7 @@ class ResultsTree(QTreeWidget):
                     # Update status label if available
                     if self._status_label:
                         self._status_label.setText(f"📍 Position: Line {line}, Column {col} | File: {file_path}")
-                except:
+                except Exception:
                     pass
         else:
             # Clear status for non-match items
@@ -778,11 +778,11 @@ class ResultsTree(QTreeWidget):
             if os.path.isfile(path):
                 try:
                     if sys.platform.startswith("darwin"):
-                        subprocess.run(["open", path], check=False)
+                        sp.run(["open", path], check=False)
                     elif os.name == "nt":
-                        subprocess.run(["cmd", "/c", "start", "", path], check=False)
+                        sp.run(["cmd", "/c", "start", "", path], check=False)
                     else:
-                        subprocess.run(["xdg-open", path], check=False)
+                        sp.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
                     print(f"Error opening {path}: {e}")
@@ -816,11 +816,11 @@ class ResultsTree(QTreeWidget):
             if os.path.isfile(path):
                 try:
                     if sys.platform.startswith("darwin"):
-                        subprocess.run(["open", path], check=False)
+                        sp.run(["open", path], check=False)
                     elif os.name == "nt":
-                        subprocess.run(["cmd", "/c", "start", "", path], check=False)
+                        sp.run(["cmd", "/c", "start", "", path], check=False)
                     else:
-                        subprocess.run(["xdg-open", path], check=False)
+                        sp.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
                     print(f"Error opening {path}: {e}")
@@ -832,7 +832,7 @@ class ResultsTree(QTreeWidget):
 
     def _open_file_location(self):
         """Open file location in file manager (v2.9.117 - C.2)."""
-        import subprocess
+        import subprocess as sp
         import platform
 
         selected_items = self.selectedItems()
@@ -864,11 +864,11 @@ class ResultsTree(QTreeWidget):
                 try:
                     system = platform.system()
                     if system == "Windows":
-                        subprocess.run(["explorer", "/select,", path])
+                        sp.run(["explorer", "/select,", path], check=False)
                     elif system == "Darwin":  # macOS
-                        subprocess.run(["open", "-R", path])
+                        sp.run(["open", "-R", path], check=False)
                     else:  # Linux
-                        subprocess.run(["xdg-open", directory])
+                        sp.run(["xdg-open", directory], check=False)
                     opened_count += 1
                 except Exception as e:
                     print(f"Error opening location for {path}: {e}")
