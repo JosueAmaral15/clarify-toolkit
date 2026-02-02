@@ -27,6 +27,11 @@ Date: 2025
 # pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 # pylint: disable=too-many-instance-attributes  # Complex UI panel
 # pylint: disable=too-many-public-methods  # UI event handlers
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=missing-class-docstring  # Internal classes
+# pylint: disable=missing-function-docstring  # Internal UI methods
+# pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
+# pylint: disable=unnecessary-pass  # Placeholder for future code
 
 from __future__ import annotations
 import os
@@ -448,16 +453,17 @@ class InsertPanel(QWidget):
         if not self.is_file.isChecked():
             for widgets in self.cond_list:
                 cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
-                f = cb_field.currentText().strip()
-                o = cb_op.currentText().strip()
-                v = ed.text().strip()
+                field = cb_field.currentText().strip()
+                operator = cb_op.currentText().strip()
+                value = ed.text().strip()
                 scope_type = cb_scope.currentText().strip()
                 scope_val = ed_scope_val.text().strip()
                 case_sensitive = chk_case.isChecked()
                 whole_word = chk_word.isChecked()
                 use_regex = chk_regex.isChecked()
-                if f and o and v:
-                    out.append(Condition(f, o, v, scope_type, scope_val, case_sensitive, whole_word, use_regex))
+                if field and operator and value:
+                    out.append(Condition(field, operator, value, scope_type,
+                                       scope_val, case_sensitive, whole_word, use_regex))
         logic_op = self.combo_logic_op.currentText()
         return out, logic_op
 
@@ -522,8 +528,8 @@ class InsertPanel(QWidget):
         if not self._conds():  # only trigger if there's at least 1 valid rule
             return
         # Only do live preview when path is a directory:
-        p = self.ed_path.text().strip()
-        if not p or os.path.isfile(p):
+        path_text = self.ed_path.text().strip()
+        if not path_text or os.path.isfile(path_text):
             return
         self._debounce_timer.start()
 
@@ -716,9 +722,9 @@ class InsertPanel(QWidget):
         count = 0
         skipped = 0
 
-        for p in self._files():
+        for file_path in self._files():
             try:
-                old = read_text(p)
+                old = read_text(file_path)
 
                 # Determine line number(s) to use
                 if query:
@@ -748,10 +754,10 @@ class InsertPanel(QWidget):
                     new = insert_at_line(new, line, insert_text, mode)
 
                 if new != old:
-                    write_text(p, new)
+                    write_text(file_path, new)
                     count += 1
-            except Exception as e:
-                print(f"[WARN] {p}: {e}", file=sys.stderr)
+            except Exception as exc:
+                print(f"[WARN] {file_path}: {exc}", file=sys.stderr)
                 skipped += 1
 
         msg = f"Modified files: {count}"
