@@ -41,14 +41,14 @@ def parse_composite_query(raw: str) -> Tuple[str, Optional[str]]:
         >>> parse_composite_query("auth.login")
         ("auth.login", None)
     """
-    q = raw.strip()
-    idx = q.find(",")
+    query = raw.strip()
+    idx = query.find(",")
 
     if idx >= 0:
-        left = q[:idx].strip()
-        right = q[idx + 1:].strip()
+        left = query[:idx].strip()
+        right = query[idx + 1:].strip()
     else:
-        left, right = q, None
+        left, right = query, None
 
     # Remove optional 't' or 't.' prefix (common convention)
     if left.startswith("t."):
