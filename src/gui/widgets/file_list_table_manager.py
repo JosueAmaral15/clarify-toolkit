@@ -409,11 +409,12 @@ class FileListTableManager(QWidget):
                 system = platform.system()
                 try:
                     if system == "Windows":
+                        # pylint: disable=no-member  # os.startfile is Windows-only
                         os.startfile(directory)
                     elif system == "Darwin":  # macOS
-                        subprocess.run(["open", directory])
+                        subprocess.run(["open", directory], check=False)
                     else:  # Linux
-                        subprocess.run(["xdg-open", directory])
+                        subprocess.run(["xdg-open", directory], check=False)
                 except Exception as e:
                     QMessageBox.warning(
                         self,
