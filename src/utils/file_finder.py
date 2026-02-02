@@ -179,7 +179,11 @@ class AdvancedFileSearchDialog(QDialog):
             return
 
         if not os.path.isdir(directory):
-            QMessageBox.warning(self, tr("file_finder.msg_invalid_title"), tr("file_finder.msg_invalid_directory").format(directory=directory))
+            QMessageBox.warning(
+                self,
+                tr("file_finder.msg_invalid_title"),
+                tr("file_finder.msg_invalid_directory").format(directory=directory)
+            )
             return
 
         # Build search criteria
@@ -189,7 +193,11 @@ class AdvancedFileSearchDialog(QDialog):
                 flags = 0 if self.chk_case_sensitive.isChecked() else re.IGNORECASE
                 regex = re.compile(pattern, flags)
             except re.error as e:
-                QMessageBox.warning(self, tr("file_finder.msg_invalid_regex_title"), tr("file_finder.msg_invalid_regex").format(error=e))
+                QMessageBox.warning(
+                    self,
+                    tr("file_finder.msg_invalid_regex_title"),
+                    tr("file_finder.msg_invalid_regex").format(error=e)
+                )
                 return
         else:
             regex = None
@@ -314,13 +322,18 @@ class AdvancedFileSearchDialog(QDialog):
         total_size = sum(stat.st_size for _, stat in self.results)
         total_size_mb = total_size / (1024 * 1024)
         self.lbl_stats.setText(
-            f"Found {len(self.results)} items | Total size: {total_size_mb:.2f} MB"
+            f"Found {len(self.results)} items | "
+            f"Total size: {total_size_mb:.2f} MB"
         )
 
     def _export_results(self):
         """Export results to CSV file."""
         if not self.results:
-            QMessageBox.information(self, tr("file_finder.msg_no_results_title"), tr("file_finder.msg_no_results_export"))
+            QMessageBox.information(
+                self,
+                tr("file_finder.msg_no_results_title"),
+                tr("file_finder.msg_no_results_export")
+            )
             return
 
         filepath, _ = QFileDialog.getSaveFileName(
@@ -349,7 +362,10 @@ class AdvancedFileSearchDialog(QDialog):
                     name = name.replace('"', '""')
                     path = path.replace('"', '""')
 
-                    f.write(f'"{name}","{path}",{stat.st_size},{size_mb:.2f},{mtime_str}\n')
+                    f.write(
+                        f'"{name}","{path}",{stat.st_size},'
+                        f'{size_mb:.2f},{mtime_str}\n'
+                    )
 
             QMessageBox.information(
                 self,
@@ -357,7 +373,11 @@ class AdvancedFileSearchDialog(QDialog):
                 tr("file_finder.msg_export_complete").format(filepath=filepath)
             )
         except Exception as e:  # pylint: disable=broad-exception-caught  # Export robustness
-            QMessageBox.critical(self, tr("file_finder.msg_export_failed_title"), tr("file_finder.msg_export_failed").format(error=e))
+            QMessageBox.critical(
+                self,
+                tr("file_finder.msg_export_failed_title"),
+                tr("file_finder.msg_export_failed").format(error=e)
+            )
 
     def _show_file_preview(self, item: QTableWidgetItem):
         """Show file preview tooltip on hover (Task #41 - v2.9.13)."""
