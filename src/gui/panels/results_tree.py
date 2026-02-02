@@ -2,26 +2,26 @@
 Results tree widget for displaying search matches.
 Extracted from app.py (v2.9.114 - Phase 1.2).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=invalid-name  # Qt method names
 
 import os
 import sys
 import subprocess
+
 from typing import Dict, List, Tuple
 
-from PySide6.QtWidgets import (
-    QTreeWidget,
-    QTreeWidgetItem,
-    QMenu,
-    QMessageBox,
-    QApplication,
-    QHeaderView,
-    QCheckBox,
-    QStyledItemDelegate,
-    QStyleOptionViewItem,
-    QStyle,
-)
 from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect, QRectF
-from PySide6.QtGui import QColor, QPainter, QFontMetrics, QTextDocument, QAbstractTextDocumentLayout
+from PySide6.QtGui import (
+    QAbstractTextDocumentLayout, QColor, QFontMetrics,
+    QPainter, QTextDocument
+)
+from PySide6.QtWidgets import (
+    QApplication, QCheckBox, QHeaderView,
+    QMenu, QMessageBox, QStyledItemDelegate,
+    QStyle, QStyleOptionViewItem, QTreeWidget, QTreeWidgetItem
+)
 
 from ...i18n import tr
 from ...utils.logger import get_logger
