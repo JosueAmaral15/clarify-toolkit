@@ -8,6 +8,8 @@ Author: Clarify Project
 Version: 2.9.80
 Date: 2025-12-21
 """
+# pylint: disable=wrong-import-position  # Define exceptions before importing converters
+# pylint: disable=raise-missing-from  # Generic format error
 
 from enum import Enum
 from typing import Union, Dict, Any, List
@@ -62,17 +64,14 @@ class Format(Enum):
 
 class ConversionError(Exception):
     """Base exception for conversion errors."""
-    pass
 
 
 class ValidationError(ConversionError):
     """Raised when data validation fails."""
-    pass
 
 
 class FormatDetectionError(ConversionError):
     """Raised when format cannot be automatically detected."""
-    pass
 
 
 # Import main converter classes
