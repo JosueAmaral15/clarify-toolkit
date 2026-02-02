@@ -57,7 +57,6 @@ class Migration(ABC):
             settings.remove("old/path")
             return True
         """
-        pass
 
     @abstractmethod
     def migrate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -76,7 +75,6 @@ class Migration(ABC):
                 config["new_section"] = config.pop("old_section")
             return config
         """
-        pass
 
     def __str__(self):
         return f"Migration {self.version}"
