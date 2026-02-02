@@ -4,6 +4,11 @@ AI Processor Worker - v2.9.114
 Background worker for AI file processing tasks.
 Extracted from ai_processor_dock.py for better modularity.
 """
+# pylint: disable=missing-function-docstring  # run() is standard QThread method
+# pylint: disable=broad-exception-caught  # Worker robustness
+# pylint: disable=unnecessary-lambda  # Signal/slot pattern
+# pylint: disable=too-many-instance-attributes  # Worker configuration
+# pylint: disable=too-many-arguments  # Worker initialization
 
 from src.gui.base_dock import ProcessorWorkerBase
 from src.ai_processor import process_multiple_files

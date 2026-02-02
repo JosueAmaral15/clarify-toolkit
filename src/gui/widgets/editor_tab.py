@@ -330,7 +330,7 @@ class EditorTab(QWidget):
                 self._setup_highlighter()
 
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def get_tab_title(self) -> str:
