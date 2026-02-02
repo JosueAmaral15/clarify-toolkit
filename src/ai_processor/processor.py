@@ -3,6 +3,7 @@ AI Processor Module
 
 Core file processing logic for AI-powered batch operations.
 """
+# pylint: disable=broad-exception-caught  # File processing robustness
 
 import os
 import re
