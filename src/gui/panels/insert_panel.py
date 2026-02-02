@@ -37,20 +37,10 @@ from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtCore import Qt, Signal, QThread, QTimer
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QGridLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPlainTextEdit, QPushButton,
-    QSpinBox, QVBoxLayout, QWidget
-)
-    QPushButton,
-    QCheckBox,
-    QComboBox,
-    QSpinBox,
-    QPlainTextEdit,
-    QGroupBox,
-    QSplitter,
-    QScrollArea,
-    QFileDialog,
-    QMessageBox,
+    QCheckBox, QComboBox, QFileDialog, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QPlainTextEdit, QPushButton, QScrollArea,
+    QSpinBox, QSplitter, QVBoxLayout, QWidget
 )
 
 # Core functionality
