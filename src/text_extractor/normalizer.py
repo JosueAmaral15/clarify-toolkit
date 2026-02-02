@@ -21,15 +21,15 @@ from typing import Optional
 def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool = True) -> str:
     """
     Truncate text to a character limit, optionally preserving word boundaries.
-    
+
     Args:
         text: Text to truncate
         limit: Character limit ('all', None, or numeric string)
         avoid_cut: If True, cut at last whitespace boundary <= limit
-        
+
     Returns:
         Truncated text
-        
+
     Example:
         >>> smart_truncate("Hello world", "5", avoid_cut=True)
         "Hello"
@@ -38,7 +38,7 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool = True) -> s
     """
     if not text or limit in (None, 'all', 'ALL', 'All'):
         return text
-    
+
     try:
         n = int(limit)
     except (ValueError, TypeError):
@@ -48,13 +48,13 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool = True) -> s
         return text
 
     sub = text[:n]
-    
+
     if avoid_cut:
         # Find last whitespace
         last_space = sub.rfind(' ')
         if last_space > 0:
             return sub[:last_space]
-    
+
     return sub
 
 
@@ -90,24 +90,24 @@ def to_kebab_case(text: str) -> str:
     return '-'.join(w.lower() for w in words if w)
 
 
-def normalize_text(text: str, 
+def normalize_text(text: str,
                    case_style: str = 'snake',
                    uppercase: bool = False,
                    limit: Optional[str] = None,
                    avoid_cut: bool = True) -> str:
     """
     Normalize text with case style, truncation, and uppercase options.
-    
+
     Args:
         text: Text to normalize
         case_style: 'snake', 'camel', 'pascal', or 'kebab'
         uppercase: Convert to uppercase after case transformation
         limit: Character limit for truncation
         avoid_cut: Preserve word boundaries when truncating
-        
+
     Returns:
         Normalized text
-        
+
     Example:
         >>> normalize_text("Hello World", case_style="snake")
         "hello_world"
@@ -116,7 +116,7 @@ def normalize_text(text: str,
     """
     if not text:
         return text
-    
+
     # Apply case style
     if case_style == 'snake':
         result = to_snake_case(text)
@@ -128,13 +128,13 @@ def normalize_text(text: str,
         result = to_kebab_case(text)
     else:
         result = text
-    
+
     # Apply uppercase if requested
     if uppercase:
         result = result.upper()
-    
+
     # Apply truncation
     if limit:
         result = smart_truncate(result, limit, avoid_cut)
-    
+
     return result
