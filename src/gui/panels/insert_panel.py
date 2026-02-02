@@ -22,22 +22,25 @@ This module contains the InsertPanel class which implements:
 Author: Josué Amaral
 Date: 2025
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=too-many-instance-attributes  # Complex UI panel
+# pylint: disable=too-many-public-methods  # UI event handlers
 
 from __future__ import annotations
 import os
 import re
 import sys
-from typing import List, Tuple, Dict, Optional
 
-# PySide6 imports
+from typing import Dict, List, Optional, Tuple
+
 from PySide6.QtCore import Qt, Signal, QThread, QTimer
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QLabel,
-    QLineEdit,
+    QCheckBox, QComboBox, QGridLayout, QHBoxLayout,
+    QLabel, QLineEdit, QPlainTextEdit, QPushButton,
+    QSpinBox, QVBoxLayout, QWidget
+)
     QPushButton,
     QCheckBox,
     QComboBox,
