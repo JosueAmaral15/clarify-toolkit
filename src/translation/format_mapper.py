@@ -430,7 +430,19 @@ class FormatMapper:
                     if para.text.strip():
                         cell_data.text_segments.append(TextSegment(text="\n"))
                 
-                # Store cell (merging and cell-level formatting handled in later sessions)
+                # Extract cell-level formatting (Session 61)
+                # Get cell shading (background color)
+                from docx.oxml.ns import qn
+                tc = cell._element
+                tcPr = tc.tcPr
+                if tcPr is not None:
+                    shd = tcPr.find(qn('w:shd'))
+                    if shd is not None:
+                        fill = shd.get(qn('w:fill'))
+                        if fill and fill != 'auto':
+                            cell_data.background_color = fill
+                
+                # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
         
         return table
@@ -530,6 +542,26 @@ class FormatMapper:
                     # Add paragraph break after each paragraph
                     if span_data:
                         cell_data.text_segments.append(TextSegment(text="\n"))
+                
+                # Extract cell-level formatting (Session 61)
+                # Get cell background color from cell style
+                try:
+                    cell_style_name = cell.getAttribute('stylename')
+                    if cell_style_name and cell_style_name in styles:
+                        cell_style = styles[cell_style_name]
+                        cell_props = cell_style.getElementsByType(odf_style.TableCellProperties)
+                        
+                        if cell_props:
+                            props = cell_props[0]
+                            # Get background-color attribute
+                            if hasattr(props, 'attributes'):
+                                for (ns, name), value in props.attributes.items():
+                                    if name == 'background-color':
+                                        # ODT uses #RRGGBB format, strip the #
+                                        if value and value != 'transparent':
+                                            cell_data.background_color = value.replace('#', '')
+                except (ValueError, KeyError):
+                    pass  # No cell style
                 
                 # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
@@ -1429,6 +1461,17 @@ class FormatMapper:
                     if clean_text:
                         run = current_paragraph.add_run(clean_text)
                         FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
+                
+                # Apply cell-level formatting (Session 61)
+                if cell_data.background_color:
+                    from docx.oxml import OxmlElement
+                    from docx.oxml.ns import qn
+                    
+                    # Create shading element
+                    tcPr = docx_cell._element.get_or_add_tcPr()
+                    shd = OxmlElement('w:shd')
+                    shd.set(qn('w:fill'), cell_data.background_color)
+                    tcPr.append(shd)
         
         return docx_table
     
@@ -1795,7 +1838,8 @@ class FormatMapper:
         """
         from odf.table import Table, TableRow, TableCell
         from odf.text import P, Span
-        from odf.style import Style, TextProperties
+        from odf.style import Style, TextProperties, TableCellProperties
+        from odf import style as odf_style
         
         # Create style cache for this table
         style_cache = {}
@@ -1908,6 +1952,16 @@ class FormatMapper:
                 # Ensure cell has at least one paragraph
                 if len(odt_cell.childNodes) == 0:
                     odt_cell.addElement(P())
+                
+                # Apply cell-level formatting (Session 61)
+                if cell_data.background_color:
+                    # Create cell style with background color
+                    cell_style = odf_style.Style(name=f"cell_{row_idx}_{col_idx}", family="table-cell")
+                    cell_props = odf_style.TableCellProperties()
+                    cell_props.setAttribute("backgroundcolor", f"#{cell_data.background_color}")
+                    cell_style.addElement(cell_props)
+                    doc.automaticstyles.addElement(cell_style)
+                    odt_cell.setAttribute("stylename", cell_style)
                 
                 odt_row.addElement(odt_cell)
             
