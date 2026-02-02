@@ -219,7 +219,10 @@ class DiffAnalyzer:
 
         # Modified (orange) - show value from A
         for key, values in sorted(diff_result['modified'].items()):
-            html_lines.append(f"<span class='modified'><span class='key'>{key}:</span> {json.dumps(values['a'])}</span>")
+            val_json = json.dumps(values['a'])
+            html_lines.append(
+                f"<span class='modified'><span class='key'>{key}:</span> {val_json}</span>"
+            )
 
         html_lines.append("</pre>")
         html_lines.append("</div>")
@@ -239,7 +242,10 @@ class DiffAnalyzer:
 
         # Modified (orange) - show value from B
         for key, values in sorted(diff_result['modified'].items()):
-            html_lines.append(f"<span class='modified'><span class='key'>{key}:</span> {json.dumps(values['b'])}</span>")
+            val_json = json.dumps(values['b'])
+            html_lines.append(
+                f"<span class='modified'><span class='key'>{key}:</span> {val_json}</span>"
+            )
 
         html_lines.append("</pre>")
         html_lines.append("</div>")
