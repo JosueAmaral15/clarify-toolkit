@@ -13,6 +13,7 @@ Supports:
 Author: Josué Amaral
 Date: 2025-11-24
 """
+# pylint: disable=broad-exception-caught  # File indexing robustness
 
 import os
 import json
