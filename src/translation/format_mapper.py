@@ -290,6 +290,103 @@ class FormatMapper:
         return format_bits, metadata_parts
     
     @staticmethod
+    def _extract_span_formatting_odt(text_prop, styles) -> Tuple[int, List[str]]:
+        """
+        Extract formatting from ODT TextProperties element (Session 58).
+        
+        Args:
+            text_prop: ODF TextProperties element
+            styles: Style dictionary for lookups
+            
+        Returns:
+            Tuple of (format_bits, metadata_list)
+        """
+        from odf import style as odf_style
+        
+        format_bits = 0
+        metadata_parts = []
+        
+        # Helper: Get attribute value ignoring namespace
+        def get_attr(attr_name):
+            """Get attribute value by name, ignoring namespace."""
+            if hasattr(text_prop, 'attributes'):
+                for (ns, name), value in text_prop.attributes.items():
+                    if name == attr_name:
+                        return value
+            return None
+        
+        # Bold
+        font_weight = get_attr('font-weight')
+        if font_weight == 'bold':
+            format_bits |= FormatBit.BOLD
+        
+        # Italic
+        font_style = get_attr('font-style')
+        if font_style == 'italic':
+            format_bits |= FormatBit.ITALIC
+        
+        # Underline
+        text_underline_style = get_attr('text-underline-style')
+        if text_underline_style and text_underline_style != 'none':
+            format_bits |= FormatBit.UNDERLINE
+        
+        # Double underline
+        text_underline_type = get_attr('text-underline-type')
+        if text_underline_type == 'double':
+            format_bits |= FormatBit.DOUBLE_UNDERLINE
+        
+        # Strikethrough
+        text_line_through = get_attr('text-line-through-style')
+        if text_line_through and text_line_through != 'none':
+            format_bits |= FormatBit.STRIKETHROUGH
+        
+        # Superscript
+        text_position = get_attr('text-position')
+        if text_position and 'super' in str(text_position).lower():
+            format_bits |= FormatBit.SUPERSCRIPT
+        
+        # Subscript
+        if text_position and 'sub' in str(text_position).lower() and 'super' not in str(text_position).lower():
+            format_bits |= FormatBit.SUBSCRIPT
+        
+        # Small caps
+        font_variant = get_attr('font-variant')
+        if font_variant == 'small-caps':
+            format_bits |= FormatBit.SMALL_CAPS
+        
+        # Font color
+        color = get_attr('color')
+        if color:
+            format_bits |= FormatBit.FONT_COLOR
+            hex_color = str(color).replace('#', '')
+            metadata_parts.append(hex_color)
+        
+        # Highlight/Background color
+        bg_color = get_attr('background-color')
+        if not bg_color:
+            bg_color = get_attr('text-background-color')
+        if bg_color and bg_color != 'transparent':
+            format_bits |= FormatBit.HIGHLIGHT
+            hex_bg = str(bg_color).replace('#', '')
+            metadata_parts.append(hex_bg)
+        
+        # Font size
+        font_size = get_attr('font-size')
+        if font_size:
+            format_bits |= FormatBit.FONT_SIZE
+            size_value = str(font_size).replace('pt', '')
+            metadata_parts.append(size_value)
+        
+        # Font family
+        font_family = get_attr('font-name')
+        if font_family:
+            format_bits |= FormatBit.FONT_FAMILY
+            family_name = str(font_family).strip("'\"")
+            metadata_parts.append(family_name)
+        
+        return format_bits, metadata_parts
+    
+    @staticmethod
     def _extract_table_from_docx(docx_table) -> TableSegment:
         """
         Extract a single table from DOCX format (Session 56).
@@ -334,6 +431,107 @@ class FormatMapper:
                         cell_data.text_segments.append(TextSegment(text="\n"))
                 
                 # Store cell (merging and cell-level formatting handled in later sessions)
+                table.set_cell(row_idx, col_idx, cell_data)
+        
+        return table
+    
+    @staticmethod
+    def _extract_table_from_odt(odt_table, styles) -> TableSegment:
+        """
+        Extract a single table from ODT format (Session 58).
+        
+        Args:
+            odt_table: An ODF Table element
+            styles: Style dictionary for lookups
+            
+        Returns:
+            TableSegment with all cells and formatting
+        """
+        from odf import text as odf_text, table as odf_table, style as odf_style
+        from odf.element import Text as ODFText
+        
+        # Get table dimensions
+        rows = odt_table.getElementsByType(odf_table.TableRow)
+        num_rows = len(rows)
+        num_cols = 0
+        
+        # Determine max columns by checking first row
+        if num_rows > 0:
+            cells = rows[0].getElementsByType(odf_table.TableCell)
+            num_cols = len(cells)
+        
+        table = TableSegment(num_rows, num_cols)
+        
+        # Extract each cell
+        for row_idx, row in enumerate(rows):
+            cells = row.getElementsByType(odf_table.TableCell)
+            
+            for col_idx, cell in enumerate(cells):
+                if col_idx >= num_cols:
+                    break  # Skip extra cells if row has more than expected
+                
+                cell_data = CellData()
+                
+                # Extract text from cell paragraphs with formatting (Session 58)
+                paras = cell.getElementsByType(odf_text.P)
+                
+                for para in paras:
+                    # Recursively extract text with span formatting
+                    def extract_spans(element, current_style_name=None):
+                        """Recursively extract text from spans."""
+                        results = []  # List of (text, style_name) tuples
+                        
+                        # Check if this is a Span with a style
+                        if hasattr(element, 'qname') and element.qname[1] == 'span':
+                            try:
+                                span_style_name = element.getAttribute('stylename')
+                                current_style_name = span_style_name if span_style_name else current_style_name
+                            except (ValueError, KeyError):
+                                pass
+                        
+                        # Process child nodes
+                        for child in element.childNodes:
+                            if isinstance(child, ODFText):
+                                # Actual text content
+                                text_content = str(child)
+                                if text_content:
+                                    results.append((text_content, current_style_name))
+                            elif hasattr(child, 'childNodes'):
+                                # Recursively process containers
+                                results.extend(extract_spans(child, current_style_name))
+                        
+                        return results
+                    
+                    # Extract all text spans with their styles
+                    span_data = extract_spans(para)
+                    
+                    # Convert spans to TextSegments
+                    for text_content, style_name in span_data:
+                        format_bits = 0
+                        metadata_parts = []
+                        
+                        # Apply formatting from style
+                        if style_name and style_name in styles:
+                            text_style = styles[style_name]
+                            
+                            for text_prop in text_style.getElementsByType(odf_style.TextProperties):
+                                format_bits, metadata_parts = FormatMapper._extract_span_formatting_odt(
+                                    text_prop, styles
+                                )
+                        
+                        # Create segment
+                        segment = TextSegment(
+                            text=text_content,
+                            format_bits=format_bits,
+                            metadata=",".join(metadata_parts) if metadata_parts else None
+                        )
+                        cell_data.text_segments.append(segment)
+                    
+                    # Add paragraph break after each paragraph
+                    if span_data:
+                        cell_data.text_segments.append(TextSegment(text="\n"))
+                
+                # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
         
         return table
@@ -632,11 +830,12 @@ class FormatMapper:
         Returns:
             Text with embedded format tags
         """
-        from odf import opendocument, text as odf_text, style as odf_style
+        from odf import opendocument, text as odf_text, style as odf_style, table as odf_table
         from odf.element import Text as ODFText
         
         doc = opendocument.load(file_path)
         segments: List[TextSegment] = []
+        tables: List[TableSegment] = []  # Session 58: Store extracted tables
         
         # Build style dictionary for quick lookup
         styles = {}
@@ -649,6 +848,11 @@ class FormatMapper:
                 except (ValueError, KeyError):
                     # Some elements don't have 'name' attribute - skip them
                     continue
+        
+        # Session 58: Extract all tables first
+        for table_idx, odt_table in enumerate(doc.getElementsByType(odf_table.Table)):
+            table_segment = FormatMapper._extract_table_from_odt(odt_table, styles)
+            tables.append(table_segment)
         
         # Process all paragraphs
         for para in doc.getElementsByType(odf_text.P):
