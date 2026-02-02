@@ -4,6 +4,7 @@ Path Entry Widget - v2.9.114
 Reusable widget for file/directory path input with browse functionality.
 Extracted from ai_processor_dock.py for better modularity.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QLabel, QLineEdit,
