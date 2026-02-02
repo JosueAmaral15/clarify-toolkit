@@ -2,6 +2,7 @@
 Operation history management.
 Extracted from app.py (v2.9.114).
 """
+# pylint: disable=broad-exception-caught  # Robustness for file I/O
 
 from pathlib import Path
 import json
