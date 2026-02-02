@@ -4,7 +4,6 @@ AI Token Counter Module
 Provides token counting functionality for OpenAI (GPT) and Google Gemini models.
 """
 # pylint: disable=broad-exception-caught  # Counting robustness
-from typing import Optional
 
 
 try:
