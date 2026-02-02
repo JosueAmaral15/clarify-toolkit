@@ -23,12 +23,14 @@ Integration:
 - Emits replace_requested signal with parameters
 - Parent handles actual replacement logic
 """
+# pylint: disable=invalid-name  # Module name from legacy code
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=redefined-builtin  # compile from search_replace
+# pylint: disable=broad-exception-caught  # UI error handling
 
 from __future__ import annotations
-from typing import Optional
-import re
 
-from PySide6.QtCore import Qt, Signal, QSettings
+from PySide6.QtCore import Signal, QSettings
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QCheckBox, QSpinBox,
