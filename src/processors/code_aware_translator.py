@@ -249,7 +249,7 @@ class CodeAwareJSONTranslator:
                 i += 1
                 continue
 
-            if depth == 0:
+            if not depth:
                 # Try to match any known variant at this position
                 replaced = False
                 for idx, val in enumerate(self._variant_values):
