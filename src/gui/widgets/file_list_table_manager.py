@@ -16,6 +16,12 @@ Features:
 - Export to CSV
 - Statistics display
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=line-too-long  # Long UI strings
+# pylint: disable=import-outside-toplevel  # Circular import avoidance
+# pylint: disable=broad-exception-caught  # UI error handling
+# pylint: disable=protected-access  # MainWindow internal access
+# pylint: disable=logging-fstring-interpolation  # Not performance-critical
 
 from __future__ import annotations
 
@@ -25,7 +31,7 @@ import platform
 import subprocess
 from typing import List, Callable, Optional
 from datetime import datetime
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
     QTableWidgetItem, QPushButton, QLineEdit, QHeaderView,
