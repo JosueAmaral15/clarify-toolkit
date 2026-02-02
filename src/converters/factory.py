@@ -99,7 +99,7 @@ class ConverterFactory:
         """
         return [
             (source.value, target.value)
-            for source, target in cls._CONVERTERS.keys()
+            for source, target in cls._CONVERTERS
         ]
 
     @classmethod
