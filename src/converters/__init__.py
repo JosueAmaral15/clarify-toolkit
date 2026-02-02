@@ -18,18 +18,18 @@ class Format(Enum):
     JSON = "json"
     TOON = "toon"
     BSON = "bson"
-    
+
     @classmethod
     def from_string(cls, format_str: str) -> 'Format':
         """
         Convert string to Format enum.
-        
+
         Args:
             format_str: Format name ('json', 'toon', 'bson')
-        
+
         Returns:
             Format enum value
-        
+
         Raises:
             ValueError: If format is not supported
         """
@@ -41,18 +41,18 @@ class Format(Enum):
                 f"Unsupported format: '{format_str}'. "
                 f"Supported formats: {', '.join([f.value for f in cls])}"
             )
-    
+
     @classmethod
     def from_extension(cls, extension: str) -> 'Format':
         """
         Detect format from file extension.
-        
+
         Args:
             extension: File extension (e.g., '.json', '.toon', '.bson')
-        
+
         Returns:
             Format enum value
-        
+
         Raises:
             ValueError: If extension is not recognized
         """
