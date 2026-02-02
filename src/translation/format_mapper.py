@@ -140,6 +140,57 @@ class TextSegment:
             return f"<{format_str}>{self.text}</{format_str}>"
 
 
+@dataclass
+class CellData:
+    """Data for a single table cell (Session 56)."""
+    text_segments: List[TextSegment]  # Text content with formatting
+    row_span: int = 1  # Number of rows this cell spans
+    col_span: int = 1  # Number of columns this cell spans
+    vertical_alignment: Optional[str] = None  # top, center, bottom
+    background_color: Optional[str] = None  # RGB hex color
+    borders: Optional[Dict[str, str]] = None  # Border styles (top, bottom, left, right)
+    
+    def __init__(self):
+        """Initialize empty cell."""
+        self.text_segments = []
+        self.row_span = 1
+        self.col_span = 1
+        self.vertical_alignment = None
+        self.background_color = None
+        self.borders = None
+
+
+@dataclass
+class TableSegment:
+    """A table structure with rows and cells (Session 56)."""
+    rows: List[List[CellData]]  # 2D array of cells [row][col]
+    num_rows: int
+    num_cols: int
+    table_style: Optional[str] = None  # Table style name
+    table_width: Optional[str] = None  # Table width (pt or %)
+    column_widths: Optional[List[str]] = None  # Width of each column
+    
+    def __init__(self, num_rows: int, num_cols: int):
+        """Initialize table with given dimensions."""
+        self.num_rows = num_rows
+        self.num_cols = num_cols
+        self.rows = [[CellData() for _ in range(num_cols)] for _ in range(num_rows)]
+        self.table_style = None
+        self.table_width = None
+        self.column_widths = None
+    
+    def get_cell(self, row: int, col: int) -> CellData:
+        """Get cell at specific position."""
+        return self.rows[row][col]
+    
+    def set_cell(self, row: int, col: int, cell: CellData):
+        """Set cell at specific position."""
+        self.rows[row][col] = cell
+    
+    def to_placeholder(self, table_index: int) -> str:
+        """Convert table to placeholder for main text."""
+        return f"{{TABLE_{table_index}}}"
+
 
 class FormatMapper:
     """
@@ -148,6 +199,41 @@ class FormatMapper:
     Currently supports DOCX format detection.
     ODT support to be added later.
     """
+    
+    @staticmethod
+    def _extract_table_from_docx(docx_table) -> TableSegment:
+        """
+        Extract a single table from DOCX format (Session 56).
+        
+        Args:
+            docx_table: A python-docx Table object
+            
+        Returns:
+            TableSegment with all cells and formatting
+        """
+        # Get table dimensions
+        num_rows = len(docx_table.rows)
+        num_cols = len(docx_table.columns) if docx_table.rows else 0
+        
+        table = TableSegment(num_rows, num_cols)
+        
+        # Extract each cell
+        for row_idx, row in enumerate(docx_table.rows):
+            for col_idx, cell in enumerate(row.cells):
+                cell_data = CellData()
+                
+                # Extract text from cell paragraphs (cells can have multiple paragraphs)
+                for para in cell.paragraphs:
+                    # Reuse paragraph extraction logic from main function
+                    # For now, simple text extraction - will add formatting in Session 57
+                    if para.text.strip():
+                        segment = TextSegment(text=para.text + "\n")
+                        cell_data.text_segments.append(segment)
+                
+                # Store cell (merging handled in Session 62)
+                table.set_cell(row_idx, col_idx, cell_data)
+        
+        return table
     
     @staticmethod
     def extract_formatted_text_from_docx(file_path: str) -> str:
@@ -164,6 +250,15 @@ class FormatMapper:
         
         doc = docx.Document(file_path)
         segments: List[TextSegment] = []
+        tables: List[TableSegment] = []  # Session 56: Store extracted tables
+        
+        # Session 56: Extract all tables first
+        for table_idx, docx_table in enumerate(doc.tables):
+            table_segment = FormatMapper._extract_table_from_docx(docx_table)
+            tables.append(table_segment)
+        
+        # Track table index as we encounter them in document order
+        table_counter = 0
         
         for paragraph in doc.paragraphs:
             # Detect paragraph-level formatting
