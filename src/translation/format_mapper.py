@@ -1782,6 +1782,142 @@ class FormatMapper:
         FormatMapper._apply_formatting(run_obj, format_bits, metadata)
 
     @staticmethod
+    def _reconstruct_table_to_odt(table: TableSegment, doc) -> None:
+        """
+        Reconstruct a table in ODT format from TableSegment (Session 60).
+        
+        Args:
+            table: TableSegment with cells and formatting
+            doc: ODF OpenDocumentText object to add table to
+            
+        Returns:
+            The created ODF Table object
+        """
+        from odf.table import Table, TableRow, TableCell
+        from odf.text import P, Span
+        from odf.style import Style, TextProperties
+        
+        # Create style cache for this table
+        style_cache = {}
+        
+        def get_or_create_style(format_bits: int, metadata: Optional[str]) -> Optional[Style]:
+            """Get existing style or create new one for format combination."""
+            if format_bits == 0:
+                return None
+            
+            cache_key = f"{format_bits}:{metadata or ''}"
+            if cache_key in style_cache:
+                return style_cache[cache_key]
+            
+            # Create new style
+            style_name = f"TableCell{format_bits}_{len(style_cache)}"
+            style = Style(name=style_name, family="text")
+            text_props = TextProperties()
+            
+            # Parse metadata
+            metadata_parts = metadata.split(",") if metadata else []
+            metadata_index = 0
+            
+            # Apply formatting (same as create_odt_from_segments)
+            if format_bits & FormatBit.BOLD:
+                text_props.setAttribute("fontweight", "bold")
+            
+            if format_bits & FormatBit.ITALIC:
+                text_props.setAttribute("fontstyle", "italic")
+            
+            if format_bits & FormatBit.UNDERLINE:
+                text_props.setAttribute("textunderlinestyle", "solid")
+            
+            if format_bits & FormatBit.DOUBLE_UNDERLINE:
+                text_props.setAttribute("textunderlinetype", "double")
+            
+            if format_bits & FormatBit.STRIKETHROUGH:
+                text_props.setAttribute("textlinethroughstyle", "solid")
+            
+            if format_bits & FormatBit.SUPERSCRIPT:
+                text_props.setAttribute("textposition", "super 58%")
+            
+            if format_bits & FormatBit.SUBSCRIPT:
+                text_props.setAttribute("textposition", "sub 58%")
+            
+            if format_bits & FormatBit.SMALL_CAPS:
+                text_props.setAttribute("fontvariant", "small-caps")
+            
+            if format_bits & FormatBit.FONT_COLOR and metadata_index < len(metadata_parts):
+                hex_color = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("color", f"#{hex_color}")
+            
+            if format_bits & FormatBit.HIGHLIGHT and metadata_index < len(metadata_parts):
+                hex_bg = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("backgroundcolor", f"#{hex_bg}")
+            
+            if format_bits & FormatBit.FONT_SIZE and metadata_index < len(metadata_parts):
+                size_str = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("fontsize", f"{size_str}pt")
+            
+            if format_bits & FormatBit.FONT_FAMILY and metadata_index < len(metadata_parts):
+                font_name = metadata_parts[metadata_index].strip()
+                metadata_index += 1
+                text_props.setAttribute("fontname", font_name)
+            
+            style.addElement(text_props)
+            doc.automaticstyles.addElement(style)
+            style_cache[cache_key] = style
+            return style
+        
+        # Create table
+        odt_table = Table()
+        
+        # Create rows and cells
+        for row_idx in range(table.num_rows):
+            odt_row = TableRow()
+            
+            for col_idx in range(table.num_cols):
+                cell_data = table.get_cell(row_idx, col_idx)
+                odt_cell = TableCell()
+                
+                # Add cell content
+                current_paragraph = None
+                for segment in cell_data.text_segments:
+                    # Handle paragraph breaks
+                    if segment.text == "\n":
+                        current_paragraph = None
+                        continue
+                    
+                    # Create paragraph if needed
+                    if current_paragraph is None:
+                        current_paragraph = P()
+                        odt_cell.addElement(current_paragraph)
+                    
+                    # Add formatted text
+                    clean_text = FormatMapper.remove_tags(segment.text)
+                    if clean_text:
+                        if segment.format_bits == 0:
+                            # Plain text
+                            current_paragraph.addText(clean_text)
+                        else:
+                            # Formatted text - use span
+                            style = get_or_create_style(segment.format_bits, segment.metadata)
+                            span = Span(stylename=style)
+                            span.addText(clean_text)
+                            current_paragraph.addElement(span)
+                
+                # Ensure cell has at least one paragraph
+                if len(odt_cell.childNodes) == 0:
+                    odt_cell.addElement(P())
+                
+                odt_row.addElement(odt_cell)
+            
+            odt_table.addElement(odt_row)
+        
+        # Add table to document
+        doc.text.addElement(odt_table)
+        return odt_table
+
+    @staticmethod
     def create_odt_from_segments(segments: List[TextSegment], output_path: str) -> None:
         """
         Create an ODT file from text segments with formatting.
