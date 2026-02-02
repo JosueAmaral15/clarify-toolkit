@@ -2,6 +2,9 @@
 Match list model and panel for displaying search results.
 Extracted from app.py (v2.9.114 - Phase 1.2).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=missing-function-docstring  # Qt method overrides
+# pylint: disable=invalid-name  # Qt convention (rowCount)
 
 import os
 import sys
@@ -29,7 +32,7 @@ class MatchListModel(QAbstractListModel):
             return self.items[index.row()]
         return None
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, _parent=QModelIndex()):
         return len(self.items)
 
     def set_items(self, items: List[str]):
