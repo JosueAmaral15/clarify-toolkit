@@ -2,6 +2,7 @@
 Progress manager widget for displaying multiple progress bars.
 Extracted from app.py (v2.9.114).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea
 from PySide6.QtCore import Qt
