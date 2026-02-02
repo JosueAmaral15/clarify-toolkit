@@ -13,6 +13,7 @@ Features:
 - Advanced options (case sensitivity, empty values, arrays)
 - Output format selection
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from __future__ import annotations
 
