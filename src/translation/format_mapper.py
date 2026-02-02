@@ -147,8 +147,9 @@ class CellData:
     row_span: int = 1  # Number of rows this cell spans
     col_span: int = 1  # Number of columns this cell spans
     vertical_alignment: Optional[str] = None  # top, center, bottom
-    background_color: Optional[str] = None  # RGB hex color
-    borders: Optional[Dict[str, str]] = None  # Border styles (top, bottom, left, right)
+    background_color: Optional[str] = None  # RGB hex color (Session 61)
+    borders: Optional[Dict[str, Dict[str, str]]] = None  # Border styles per side (Session 62)
+    # borders format: {'top': {'style': 'single', 'width': '8', 'color': 'FF0000'}, ...}
     
     def __init__(self):
         """Initialize empty cell."""
@@ -430,17 +431,36 @@ class FormatMapper:
                     if para.text.strip():
                         cell_data.text_segments.append(TextSegment(text="\n"))
                 
-                # Extract cell-level formatting (Session 61)
-                # Get cell shading (background color)
+                # Extract cell-level formatting (Sessions 61-62)
                 from docx.oxml.ns import qn
                 tc = cell._element
                 tcPr = tc.tcPr
                 if tcPr is not None:
+                    # Get cell shading (background color) - Session 61
                     shd = tcPr.find(qn('w:shd'))
                     if shd is not None:
                         fill = shd.get(qn('w:fill'))
                         if fill and fill != 'auto':
                             cell_data.background_color = fill
+                    
+                    # Get cell borders - Session 62
+                    tcBorders = tcPr.find(qn('w:tcBorders'))
+                    if tcBorders is not None:
+                        borders = {}
+                        for side in ['top', 'bottom', 'left', 'right']:
+                            border_elem = tcBorders.find(qn(f'w:{side}'))
+                            if border_elem is not None:
+                                style = border_elem.get(qn('w:val'))
+                                width = border_elem.get(qn('w:sz'))
+                                color = border_elem.get(qn('w:color'))
+                                if style:  # Only store if border exists
+                                    borders[side] = {
+                                        'style': style,
+                                        'width': width or '8',  # Default 1pt
+                                        'color': color or '000000'  # Default black
+                                    }
+                        if borders:
+                            cell_data.borders = borders
                 
                 # Store cell
                 table.set_cell(row_idx, col_idx, cell_data)
@@ -543,8 +563,7 @@ class FormatMapper:
                     if span_data:
                         cell_data.text_segments.append(TextSegment(text="\n"))
                 
-                # Extract cell-level formatting (Session 61)
-                # Get cell background color from cell style
+                # Extract cell-level formatting (Sessions 61-62)
                 try:
                     cell_style_name = cell.getAttribute('stylename')
                     if cell_style_name and cell_style_name in styles:
@@ -553,13 +572,31 @@ class FormatMapper:
                         
                         if cell_props:
                             props = cell_props[0]
-                            # Get background-color attribute
                             if hasattr(props, 'attributes'):
+                                borders = {}
                                 for (ns, name), value in props.attributes.items():
+                                    # Background color - Session 61
                                     if name == 'background-color':
-                                        # ODT uses #RRGGBB format, strip the #
                                         if value and value != 'transparent':
                                             cell_data.background_color = value.replace('#', '')
+                                    
+                                    # Borders - Session 62
+                                    # ODT format: "0.05cm solid #FF0000"
+                                    elif name.startswith('border-'):
+                                        side = name.replace('border-', '')  # top, bottom, left, right
+                                        if value and value != 'none':
+                                            # Parse: "width style color"
+                                            parts = value.split()
+                                            if len(parts) >= 3:
+                                                width, style, color = parts[0], parts[1], parts[2]
+                                                # Convert ODT to internal format
+                                                borders[side] = {
+                                                    'style': style,
+                                                    'width': width,
+                                                    'color': color.replace('#', '')
+                                                }
+                                if borders:
+                                    cell_data.borders = borders
                 except (ValueError, KeyError):
                     pass  # No cell style
                 
@@ -1462,16 +1499,29 @@ class FormatMapper:
                         run = current_paragraph.add_run(clean_text)
                         FormatMapper._apply_formatting(run, segment.format_bits, segment.metadata)
                 
-                # Apply cell-level formatting (Session 61)
+                # Apply cell-level formatting (Sessions 61-62)
+                from docx.oxml import OxmlElement
+                from docx.oxml.ns import qn
+                tcPr = docx_cell._element.get_or_add_tcPr()
+                
+                # Shading - Session 61
                 if cell_data.background_color:
-                    from docx.oxml import OxmlElement
-                    from docx.oxml.ns import qn
-                    
-                    # Create shading element
-                    tcPr = docx_cell._element.get_or_add_tcPr()
                     shd = OxmlElement('w:shd')
                     shd.set(qn('w:fill'), cell_data.background_color)
                     tcPr.append(shd)
+                
+                # Borders - Session 62
+                if cell_data.borders:
+                    tcBorders = OxmlElement('w:tcBorders')
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        if side in cell_data.borders:
+                            border_info = cell_data.borders[side]
+                            border_elem = OxmlElement(f'w:{side}')
+                            border_elem.set(qn('w:val'), border_info['style'])
+                            border_elem.set(qn('w:sz'), border_info['width'])
+                            border_elem.set(qn('w:color'), border_info['color'])
+                            tcBorders.append(border_elem)
+                    tcPr.append(tcBorders)
         
         return docx_table
     
@@ -1953,12 +2003,43 @@ class FormatMapper:
                 if len(odt_cell.childNodes) == 0:
                     odt_cell.addElement(P())
                 
-                # Apply cell-level formatting (Session 61)
-                if cell_data.background_color:
-                    # Create cell style with background color
+                # Apply cell-level formatting (Sessions 61-62)
+                if cell_data.background_color or cell_data.borders:
+                    # Create cell style with background color and/or borders
                     cell_style = odf_style.Style(name=f"cell_{row_idx}_{col_idx}", family="table-cell")
                     cell_props = odf_style.TableCellProperties()
-                    cell_props.setAttribute("backgroundcolor", f"#{cell_data.background_color}")
+                    
+                    # Background color - Session 61
+                    if cell_data.background_color:
+                        cell_props.setAttribute("backgroundcolor", f"#{cell_data.background_color}")
+                    
+                    # Borders - Session 62
+                    if cell_data.borders:
+                        for side in ['top', 'bottom', 'left', 'right']:
+                            if side in cell_data.borders:
+                                border_info = cell_data.borders[side]
+                                # Convert DOCX format to ODT format
+                                # DOCX: width in 1/8 pt, style name, color hex
+                                # ODT: "width style #color" (e.g., "0.05cm solid #FF0000")
+                                
+                                # Convert width from 1/8 pt to cm (rough approximation)
+                                width_eighths = int(border_info['width'])
+                                width_pt = width_eighths / 8.0
+                                width_cm = width_pt * 0.0353  # 1 pt ≈ 0.0353 cm
+                                
+                                # Map DOCX styles to ODT styles
+                                style_map = {
+                                    'single': 'solid',
+                                    'thick': 'solid',
+                                    'double': 'double',
+                                    'dashed': 'dashed',
+                                    'dotted': 'dotted'
+                                }
+                                odt_style = style_map.get(border_info['style'], 'solid')
+                                
+                                border_value = f"{width_cm:.3f}cm {odt_style} #{border_info['color']}"
+                                cell_props.setAttribute(f"border{side}", border_value)
+                    
                     cell_style.addElement(cell_props)
                     doc.automaticstyles.addElement(cell_style)
                     odt_cell.setAttribute("stylename", cell_style)
