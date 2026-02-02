@@ -562,11 +562,13 @@ class SearchReplacePanel(QWidget):
         else:
             # No extension filter, use include globs or default
             if ed_inc_text:
-                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+                inc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", ed_inc_text)
+                       if glob_pat.strip()]
             else:
                 inc = ["*.*"]  # Default: all files
 
-        exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
+        exc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", self.ed_exc.text())
+               if glob_pat.strip()]
         files = list(walk_files(path, inc, exc))
         conds, logic_op = self._conds()
         return filter_files_by_conditions(files, conds, logic_op)
