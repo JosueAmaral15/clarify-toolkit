@@ -26,16 +26,18 @@ import json
 import os
 import re
 from typing import TYPE_CHECKING, Any, Dict, List
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal, QThread
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox,
     QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
     QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
-    QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication
+    QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication,
+    QProgressDialog
 )
 from PySide6.QtGui import QFont, QAction
 
 from .base_dock import BaseDock, FileInputMixin
+from .extraction_worker import ExtractionWorker
 from src.text_to_json import convert_text_to_json, detect_format
 from src.extractors.advanced_extractor import AdvancedExtractor
 from src.i18n.translator import tooltip_tr, tr
@@ -770,7 +772,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 self.jsx_path_edit.setText(dir_path)
     
     def _jsx_run_extraction(self):
-        """Execute the extraction with current settings."""
+        """Execute the extraction with current settings using worker thread."""
         try:
             input_type_index = self.jsx_input_type_combo.currentIndex()
             
@@ -783,7 +785,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                         tr("advanced_extractor.no_text", "Please provide HTML/JSX text.")
                     )
                     return
-                # Use temporary in-memory processing
                 path = None
             else:  # Directory or File mode
                 path = self.jsx_path_edit.text().strip()
@@ -819,7 +820,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             to_upper = self.jsx_uppercase_checkbox.isChecked()
             limit = self.jsx_limit_edit.text().strip() or "all"
             avoid_cut = self.jsx_avoid_cut_checkbox.isChecked()
-            avoid_cut_direction = self.jsx_avoid_cut_direction_combo.currentText().lower()  # "before" or "after"
+            avoid_cut_direction = self.jsx_avoid_cut_direction_combo.currentText().lower()
             indent = self.jsx_indent_spin.value()
             
             avoid_keys = self.jsx_avoid_keys_edit.text().strip()
@@ -833,6 +834,36 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             is_attribute_mode = self.jsx_is_attribute_checkbox.isChecked()
             exts_text = self.jsx_extensions_edit.text().strip()
             file_extensions = [e.strip() for e in exts_text.split() if e.strip()]
+            
+            # Store settings for history (captured before threading)
+            self._extraction_settings = {
+                'param': param,
+                'mode': mode,
+                'input_type': ['Directory', 'File', 'Text'][input_type_index],
+                'case_style': case_style,
+                'limit': limit,
+                'avoid_cut': avoid_cut,
+                'avoid_cut_direction': avoid_cut_direction,
+                'to_upper': to_upper,
+                'indent': indent,
+                'include_key': include_key,
+                'include_value': include_value,
+                'no_standard': no_standard,
+                'only_strings': only_strings,
+                'with_quotation_marks': with_quotation_marks,
+                'match_all': match_all,
+                'typescript_export': typescript_export,
+                'exclude_numeric': exclude_numeric,
+                'skip_empty': skip_empty,
+                'use_class_names': use_class_names,
+                'is_attribute_mode': is_attribute_mode,
+                'avoid_keys': avoid_keys,
+                'avoid_keys_param': avoid_keys_param,
+                'file_extensions': file_extensions,
+                'start_regex': start_regex,
+                'end_regex': end_regex
+            }
+            self._extraction_input_source = path if path else "TextInput"
             
             # Create extractor
             extractor = AdvancedExtractor(
@@ -863,75 +894,43 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 use_class_names=use_class_names
             )
             
-            # Show status: Extracting...
-            self._jsx_update_status("Extracting...")
-            
-            # Run extraction
-            if input_type_index == 2:  # Text mode
-                # Process text directly without file system
-                path_lines, merged_json = extractor.process_text("TextInput", text_content)
-                
-                # Convert results to strings (process_text returns list and dict)
-                text_output = "\n".join(path_lines)
-                
-                # Format JSON based on settings (same as run() method)
-                if merged_json:
-                    if typescript_export:
-                        json_output = extractor.json_to_typescript(merged_json, "ExtractedData", indent)
-                    elif with_quotation_marks:
-                        json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False)
-                    else:
-                        json_output = extractor.json_to_js_literal(merged_json, indent=indent)
-                else:
-                    json_output = None
-            else:  # Directory/File mode
-                text_output, json_output = extractor.run(path)
-            
-            # Display results
-            self.jsx_paths_output.setPlainText(text_output or "")
-            self.jsx_json_output.setPlainText(json_output or "")
-            
-            # Determine input source for history
-            input_source = path if path else "TextInput"
-            
-            # Add to extraction history with settings
-            settings = {
-                'param': param,
-                'mode': mode,
-                'input_type': ['Directory', 'File', 'Text'][input_type_index],
-                'case_style': case_style,
-                'limit': limit,
-                'avoid_cut': avoid_cut,
-                'avoid_cut_direction': avoid_cut_direction,
-                'to_upper': to_upper,
-                'indent': indent,
-                'include_key': include_key,
-                'include_value': include_value,
-                'no_standard': no_standard,
-                'only_strings': only_strings,
-                'with_quotation_marks': with_quotation_marks,
-                'match_all': match_all,
-                'typescript_export': typescript_export,
-                'exclude_numeric': exclude_numeric,
-                'skip_empty': skip_empty,
-                'use_class_names': use_class_names,
-                'is_attribute_mode': is_attribute_mode,
-                'avoid_keys': avoid_keys,
-                'avoid_keys_param': avoid_keys_param,
-                'file_extensions': file_extensions,
-                'start_regex': start_regex,
-                'end_regex': end_regex
-            }
-            self._jsx_add_to_history(input_source, json_output, settings)
-            
-            # Show success message (dialog + status)
-            paths_count = len([line for line in text_output.split('\n') if line.strip()])
-            success_msg = f"Extracted {paths_count} paths successfully."
-            self._jsx_update_status(f"✓ {success_msg}")
-            self.show_info(
-                tr("advanced_extractor.success", "Success"),
-                tr("advanced_extractor.extracted", success_msg)
+            # Create progress dialog
+            self._extraction_progress = QProgressDialog(
+                "Initializing extraction...",
+                "Cancel",
+                0, 100,
+                self
             )
+            self._extraction_progress.setWindowTitle("Extracting...")
+            self._extraction_progress.setWindowModality(Qt.WindowModal)
+            self._extraction_progress.setMinimumDuration(0)
+            self._extraction_progress.show()
+            
+            # Create worker thread
+            self._extraction_thread = QThread(self)
+            self._extraction_worker = ExtractionWorker(extractor)
+            self._extraction_worker.moveToThread(self._extraction_thread)
+            
+            # Connect signals
+            self._extraction_worker.progress.connect(self._on_extraction_progress)
+            self._extraction_worker.progress_detailed.connect(self._on_extraction_progress_detailed)
+            self._extraction_worker.finished.connect(self._on_extraction_finished)
+            self._extraction_worker.error.connect(self._on_extraction_error)
+            
+            # Connect progress dialog cancel to worker cleanup
+            self._extraction_progress.canceled.connect(self._on_extraction_canceled)
+            
+            # Start thread and trigger extraction
+            self._extraction_thread.started.connect(
+                lambda: self._extraction_worker.execute_extraction(
+                    path, text_content, input_type_index,
+                    typescript_export, with_quotation_marks, indent
+                )
+            )
+            self._extraction_thread.start()
+            
+            # Update status
+            self._jsx_update_status("Extracting...")
             
         except Exception as e:
             error_msg = f"Extraction failed: {str(e)}"
@@ -940,6 +939,77 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 tr("advanced_extractor.error", "Error"),
                 tr("advanced_extractor.run_error", error_msg)
             )
+    
+    def _on_extraction_progress(self, message: str):
+        """Handle progress updates from extraction worker."""
+        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+            self._extraction_progress.setLabelText(message)
+    
+    def _on_extraction_progress_detailed(self, current: int, total: int, message: str):
+        """Handle detailed progress updates from extraction worker."""
+        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+            self._extraction_progress.setMaximum(total)
+            self._extraction_progress.setValue(current)
+            self._extraction_progress.setLabelText(f"[{current}/{total}] {message}")
+    
+    def _on_extraction_finished(self, text_output: str, json_output: str):
+        """Handle extraction completion."""
+        try:
+            # Display results
+            self.jsx_paths_output.setPlainText(text_output or "")
+            self.jsx_json_output.setPlainText(json_output or "")
+            
+            # Add to history
+            if hasattr(self, '_extraction_settings'):
+                self._jsx_add_to_history(
+                    self._extraction_input_source,
+                    json_output,
+                    self._extraction_settings
+                )
+            
+            # Show success message
+            paths_count = len([line for line in text_output.split('\n') if line.strip()])
+            success_msg = f"Extracted {paths_count} paths successfully."
+            self._jsx_update_status(f"✓ {success_msg}")
+            self.show_info(
+                tr("advanced_extractor.success", "Success"),
+                tr("advanced_extractor.extracted", success_msg)
+            )
+            
+        finally:
+            self._cleanup_extraction_thread()
+    
+    def _on_extraction_error(self, error_msg: str):
+        """Handle extraction error."""
+        self._jsx_update_status(f"❌ Extraction failed: {error_msg}")
+        self.show_error(
+            tr("advanced_extractor.error", "Error"),
+            tr("advanced_extractor.run_error", f"Extraction failed: {error_msg}")
+        )
+        self._cleanup_extraction_thread()
+    
+    def _on_extraction_canceled(self):
+        """Handle extraction cancellation."""
+        if hasattr(self, '_extraction_worker'):
+            self._extraction_worker._cancel_requested = True
+        self._jsx_update_status("Extraction canceled")
+        self._cleanup_extraction_thread()
+    
+    def _cleanup_extraction_thread(self):
+        """Clean up worker thread and progress dialog."""
+        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+            self._extraction_progress.close()
+            self._extraction_progress = None
+        
+        if hasattr(self, '_extraction_thread') and self._extraction_thread:
+            self._extraction_thread.quit()
+            self._extraction_thread.wait(5000)  # Wait up to 5 seconds
+            if self._extraction_thread.isRunning():
+                self._extraction_thread.terminate()
+            self._extraction_thread = None
+        
+        if hasattr(self, '_extraction_worker'):
+            self._extraction_worker = None
     
     def _jsx_save_outputs(self):
         """Save outputs to files."""
