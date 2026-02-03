@@ -342,7 +342,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         mode_layout.addWidget(QLabel(tr("advanced_extractor.param", "Param/Attribute:")))
         self.jsx_param_edit = QLineEdit()
-        self.jsx_param_edit.setPlaceholderText(tr("advanced_extractor.param_placeholder", "e.g., label, title"))
+        self.jsx_param_edit.setPlaceholderText(tr("advanced_extractor.param_placeholder", "e.g., label, title (or leave empty/* for all)"))
+        self.jsx_param_edit.setToolTip(
+            "Specify which attribute/parameter to extract.\n"
+            "Leave empty or use '*' to extract all (same as 'Match all' checkbox)."
+        )
         mode_layout.addWidget(self.jsx_param_edit)
         
         self.jsx_is_attribute_checkbox = QCheckBox(
@@ -431,7 +435,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         )
         self.jsx_match_all_checkbox.setToolTip(
             tooltip_tr("advanced_extractor.match_all_tooltip",
-                      "Match all occurrences instead of specific parameter")
+                      "Override Parameter field and extract ALL attributes/content.\n"
+                      "Note: Parameter field empty or '*' automatically enables this.")
         )
         options_grid.addWidget(self.jsx_match_all_checkbox, 0, 1)
         
