@@ -72,9 +72,13 @@ def sanitize_keys_and_values(obj: dict,
 
 
     # pylint: disable=too-many-positional-arguments  # Pipeline requires multiple operation flags
-def ts_process_full_preserving(raw_full: str, indent: Optional[int], join: bool, elim: bool, normalize_esc: bool = False, convert_arrays: bool = False) -> str:
+def ts_process_full_preserving(
+    raw_full: str, indent: Optional[int], join: bool, elim: bool,
+    normalize_esc: bool = False, convert_arrays: bool = False
+) -> str:
     """
-    Complete pipeline: find TS/JS object block → parse → dedupe → join → eliminate → normalize escaping → array to object → serialize.
+    Complete pipeline: find TS/JS object block → parse → dedupe → join →
+    eliminate → normalize escaping → array to object → serialize.
 
     Args:
         raw_full: Full TS/JS file content
