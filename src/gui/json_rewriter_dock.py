@@ -554,7 +554,7 @@ class JsonRewriterDock(BaseDock):
 
                 # Parse based on format
                 if self.chk_from_ts.isChecked():
-                    obj = rw.ts_process_full_preserving(text)
+                    obj = rw.ts_process_full_preserving(text)  # pylint: disable=no-value-for-parameter  # Has defaults
                 else:
                     obj = rw.parse_json_preserving_duplicates_text(text)
 
@@ -581,11 +581,12 @@ class JsonRewriterDock(BaseDock):
                 # and let cli_dedupe handle the rest
                 # Actually, we need to serialize it back to text first
                 if self.chk_ts_out.isChecked():
+                    # pylint: disable=no-value-for-parameter  # Has defaults
                     temp_text = rw.dump_ts_node(obj_converted, indent=self.spin_indent.value())
                     if not self.chk_nlb.isChecked():
                         temp_text = rw.collapse_blank_lines(temp_text)
                 else:
-                    temp_text = rw.dump_ts_obj(obj_converted, indent=self.spin_indent.value())
+                    temp_text = rw.dump_ts_obj(obj_converted, indent=self.spin_indent.value(), level=0)
 
                 # Write to output
                 out_path = self.ed_out.text().strip() or self.ed_in.text().strip()
@@ -651,7 +652,7 @@ class JsonRewriterDock(BaseDock):
 
         # Execute rewrite (Sprint B Feature #1: pass advanced conditions, Sprint B Feature #3: get detailed stats)
         try:
-            output_text, substitution_map, removal_stats, detailed_stats = cli_dedupe(
+            _output_text, substitution_map, removal_stats, detailed_stats = cli_dedupe(
                 ns,
                 advanced_conditions=self.advanced_conditions if self.advanced_filters_enabled else None,
                 apply_all_types=self.chk_apply_all_types.isChecked(),
