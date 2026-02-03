@@ -18,7 +18,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module, QKeySequence
+    # pylint: disable=no-name-in-module  # Qt dynamic modules
+    from PySide6.QtGui import QAction, QKeySequence
     from PySide6.QtWidgets import QActionGroup, QMenuBar
 
     from ..app import MainWindow
@@ -229,7 +230,9 @@ class MenuBuilder:
     def _build_settings_menu(main_window, menu_bar) -> None:
         """Build Settings menu."""
         from ..i18n import tr
-        from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module, QActionGroup
+        # pylint: disable=no-name-in-module  # Qt dynamic modules
+        from PySide6.QtGui import QAction
+        from PySide6.QtWidgets import QActionGroup
 
         m_settings = menu_bar.addMenu(tr("menu.settings"))
         act_preferences = QAction(tr("menu.settings.preferences"), main_window)
@@ -439,7 +442,9 @@ class MenuBuilder:
     def _setup_shortcuts(main_window) -> None:
         """Setup keyboard shortcuts."""
         from ..shortcut_manager import ShortcutManager
-        from PySide6.QtGui import QShortcut, QKeySequence
+        # pylint: disable=no-name-in-module  # Qt dynamic modules
+        from PySide6.QtGui import QKeySequence
+        from PySide6.QtWidgets import QShortcut
 
         # Exit shortcut
         shortcut_exit = QShortcut(ShortcutManager.get_key_sequence("exit"), main_window)
