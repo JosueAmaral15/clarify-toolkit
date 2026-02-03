@@ -891,6 +891,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_paths_output.setPlainText(text_output or "")
             self.jsx_json_output.setPlainText(json_output or "")
             
+            # Determine input source for history
+            input_source = path if path else "TextInput"
+            
             # Add to extraction history with settings
             settings = {
                 'param': param,
