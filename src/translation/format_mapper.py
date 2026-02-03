@@ -191,6 +191,16 @@ class TableSegment:
     def to_placeholder(self, table_index: int) -> str:
         """Convert table to placeholder for main text."""
         return f"{{TABLE_{table_index}}}"
+    
+    def to_tagged_text(self) -> str:
+        """
+        Convert table to tagged text representation (Session 66 fix).
+        
+        For translation purposes, we represent the table as a placeholder
+        to avoid breaking table structure during translation.
+        """
+        # Use a generic placeholder that won't be translated
+        return "[TABLE]"
 
 
 class FormatMapper:

@@ -687,7 +687,7 @@ class GoogleTranslateDock(BaseDock):
             # Prepare text for translation (with formatting tags if available)
             if has_formatting and self._source_segments:
                 # Use tagged text for translation to preserve formatting
-                text_to_translate = FormatMapper.segments_to_tagged_text(self._source_segments)
+                text_to_translate = "".join(seg.to_tagged_text() for seg in self._source_segments)
             else:
                 # Plain text mode
                 text_to_translate = output_text
