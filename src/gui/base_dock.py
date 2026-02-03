@@ -57,11 +57,9 @@ class BaseDock(QDockWidget):
 
     def _setup_ui(self):
         """Override to setup UI components."""
-        pass
 
     def _connect_signals(self):
         """Override to connect signals."""
-        pass
 
     def show_error(self, title: str, message: str) -> None:
         """Show error message dialog."""
@@ -599,4 +597,3 @@ class StandardToolDock(
         Override this method to define the action triggered by Enter key.
         This should typically call your main processing method (e.g., _process).
         """
-        pass

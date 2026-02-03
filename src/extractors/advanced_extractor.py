@@ -225,7 +225,7 @@ class AdvancedExtractor:
             file_extensions: File patterns to process
         """
         self.param = param
-        self.match_all = (param is None) or (param.strip() == "") or (param.strip() == "*")
+        self.match_all = (param is None) or (not param.strip()) or (param.strip() == "*")
         self.mode = mode
         self.avoid_keys = avoid_keys
         self.avoid_keys_parameter = avoid_keys_parameter
@@ -339,7 +339,10 @@ class AdvancedExtractor:
                 a[k] = v
         return a
 
-    def find_paths_to_key(self, structure: JSONLike, word_key: str, current_path: Optional[List[str]] = None) -> List[List[str]]:
+    def find_paths_to_key(
+        self, structure: JSONLike, word_key: str,
+        current_path: Optional[List[str]] = None
+    ) -> List[List[str]]:
         """Return a list of key paths leading to every occurrence of word_key."""
         if current_path is None:
             current_path = []
@@ -405,7 +408,7 @@ class AdvancedExtractor:
             if depth_offset < 0:
                 new_path = path[:depth_offset] if abs(depth_offset) < len(path) else []
                 leaf = path[depth_offset] if new_path else word_key
-            elif depth_offset == 0:
+            elif not depth_offset:
                 new_path = path
                 leaf = word_key
             else:

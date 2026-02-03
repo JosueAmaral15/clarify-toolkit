@@ -134,7 +134,7 @@ class FileListExecutor:
             if recursive and os.path.isdir(filepath):
                 # Check depth limit
                 max_depth = filters.get("depth", 0)
-                if max_depth == 0 or depth < max_depth:
+                if not max_depth or depth < max_depth:
                     files.extend(FileListExecutor._collect_files(filepath, show_hidden, recursive, filters, depth + 1))
 
         return files
@@ -180,7 +180,7 @@ class FileListExecutor:
                     return False
             except re.error as e:
                 logger.debug("Invalid regex pattern: %s - %s", regex_config["pattern"], e)
-                pass  # Invalid regex, ignore
+                # Invalid regex, ignore
 
         # Size filter
         try:

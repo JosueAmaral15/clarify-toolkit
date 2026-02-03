@@ -2086,7 +2086,7 @@ class FileExplorerDock(BaseDock):
         # Cleanup thread
         self._cleanup_worker_thread()
 
-    def _on_execution_done(self, results: dict):
+    def _on_execution_done(self, _results: dict):
         """Handle execution completion (v2.9.116)."""
         # Close progress dialog
         if self.progress_dialog:

@@ -286,7 +286,7 @@ class MemoryRegister:
 
 
 # Global singleton instance (optional)
-_global_register: Optional[MemoryRegister] = None
+_global_register: Optional[MemoryRegister] = None  # pylint: disable=invalid-name
 
 
 def get_global_register() -> MemoryRegister:

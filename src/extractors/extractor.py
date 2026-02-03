@@ -83,7 +83,7 @@ class Extractor:
         file_extensions: Optional[List[str]] = None,
     ):
         self.param = param
-        self.match_all = (param is None) or (param.strip() == "") or (param.strip() == "*")
+        self.match_all = (param is None) or (not param.strip()) or (param.strip() == "*")
         self.mode = mode
         self.avoid_keys = avoid_keys
         self.avoid_keys_parameter = avoid_keys_parameter
