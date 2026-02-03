@@ -123,8 +123,9 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
 
     Args:
         text: The full text to extract from
-        scope_type: Type of scope ("brackets", "braces", "custom", "tag", "specific-tag", "hierarchical", "" for no scope)
-        scope_value: Additional value for custom delimiters, specific tag name, or hierarchical ranges
+        scope_type: Type of scope ("brackets", "braces", "custom", "tag",
+            "specific-tag", "hierarchical", "" for no scope)
+        scope_value: Additional value for custom delimiters, tag name, ranges
         use_regex: Whether to treat patterns as regex (for hierarchical ranges)
 
     Returns:
@@ -158,12 +159,12 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
         start = -1
         for i, char in enumerate(text):
             if char == '{':
-                if depth == 0:
+                if not depth:
                     start = i + 1
                 depth += 1
             elif char == '}':
                 depth -= 1
-                if depth == 0 and start != -1:
+                if not depth and start != -1:
                     results.append(text[start:i])
                     start = -1
 
@@ -173,12 +174,12 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
         start = -1
         for i, char in enumerate(text):
             if char == '(':
-                if depth == 0:
+                if not depth:
                     start = i + 1
                 depth += 1
             elif char == ')':
                 depth -= 1
-                if depth == 0 and start != -1:
+                if not depth and start != -1:
                     results.append(text[start:i])
                     start = -1
 
@@ -206,6 +207,7 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
 
 @dataclass
 class Condition:
+    """Represents a filter condition for file attributes."""
     field: str              # "filename" | "path" | "ext" | "size" | "mtime" | "content"
     operator: str           # see OPS keys
     value: str
@@ -280,40 +282,44 @@ class Condition:
 
     # pylint: disable=too-many-return-statements  # Field validation requires early returns
     def matches(self, path: str) -> bool:
+        """Check if path matches this condition."""
         try:
             if self.field == "filename":
-                a = os.path.basename(path)
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = os.path.basename(path)
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field == "path":
-                a = path
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = path
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field == "ext":
-                a = os.path.splitext(path)[1].lstrip(".")
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = os.path.splitext(path)[1].lstrip(".")
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field in ("size", "mtime"):
                 st = os.stat(path)
-                a = st.st_size if self.field == "size" else st.st_mtime
-                b = float(self.value)
-                return OPS[self.operator](a, b)
+                actual_value = st.st_size if self.field == "size" else st.st_mtime
+                expected_value = float(self.value)
+                return OPS[self.operator](actual_value, expected_value)
             if self.field == "content":
                 txt = read_text(path)
                 # Apply scope filtering if specified
                 if self.scope_type and self.scope_type != "none":
                     txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex)
-                a = txt
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = txt
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
         except Exception:  # pylint: disable=broad-exception-caught  # Catch all file/parsing errors
             return False
         return False
 
 
-def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition], logic_operator: str = "AND") -> List[str]:
+def filter_files_by_conditions(
+    files: Iterable[str], conds: Sequence[Condition], logic_operator: str = "AND"
+) -> List[str]:
     """
-    Evaluate conditions against metadata and, when needed, file content (for 'content' field).
+    Evaluate conditions against metadata and file content.
+    
     We read content at most once per file if any content-condition is present.
 
     Args:
@@ -328,17 +334,17 @@ def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition],
     out: List[str] = []
     logic_operator = logic_operator.upper()
 
-    for p in files:
+    for file_path in files:
         try:
             if logic_operator == "OR":
                 # At least one condition must match (disjunction)
-                ok = any(c.matches(p) for c in conds)
+                ok = any(c.matches(file_path) for c in conds)
             else:
                 # All conditions must match (conjunction) - default behavior
-                ok = all(c.matches(p) for c in conds)
+                ok = all(c.matches(file_path) for c in conds)
 
             if ok:
-                out.append(p)
+                out.append(file_path)
         except Exception:  # pylint: disable=broad-exception-caught  # Filter robustness
             pass
 
