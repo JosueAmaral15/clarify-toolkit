@@ -244,7 +244,9 @@ class BatchExecutor(QThread):
 
                 # Emit step completed
                 self.step_completed.emit(step_index, step.result_count, execution_time)
-                self.progress_message.emit(f"Step {step_index + 1}/{total_steps} completed: {step.result_count} results")
+                self.progress_message.emit(
+                    f"Step {step_index + 1}/{total_steps} completed: {step.result_count} results"
+                )
 
             except Exception as e:
                 # Handle error

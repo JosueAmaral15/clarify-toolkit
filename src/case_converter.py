@@ -147,7 +147,7 @@ class JSObjectCaseConverter:
                     depth += 1
                 elif ch == '}':
                     depth -= 1
-                    if depth == 0:
+                    if not depth:
                         return source[start:i+1]
             i += 1
 
