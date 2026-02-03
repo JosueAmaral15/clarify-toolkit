@@ -209,7 +209,7 @@ class Translator(QObject):
 
 
 # Global singleton instance
-_translator: Optional[Translator] = None
+_translator: Optional[Translator] = None  # pylint: disable=invalid-name  # Module-level singleton
 
 
 def get_translator() -> Translator:
