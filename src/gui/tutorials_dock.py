@@ -10,7 +10,6 @@ Version: v2.9.15
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 
 
-import os
 import json
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -21,9 +20,8 @@ from PySide6.QtWidgets import (
     QTreeWidgetItem, QTextBrowser, QSplitter, QLineEdit, QPushButton,
     QLabel, QMessageBox
 )
-from PySide6.QtGui import QFont, QIcon
 
-from src.i18n.translator import tooltip_tr
+from src.i18n.translator import tooltip_tr, tr
 
 
 class TutorialsDock(QDockWidget):
@@ -163,9 +161,12 @@ class TutorialsDock(QDockWidget):
             with open(self.index_path, 'r', encoding='utf-8') as f:
                 self.tutorials_index = json.load(f)
             self.status_label.setText(f"✓ Loaded {len(self.tutorials_index.get('tutorials', []))} tutorials")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
             self.status_label.setText(f"✗ Error loading index: {str(e)}")
-            QMessageBox.warning(self, tr("tutorials.load_error_title"), tr("tutorials.load_error").format(error=str(e)))
+            QMessageBox.warning(
+                self, tr("tutorials.load_error_title"),
+                tr("tutorials.load_error").format(error=str(e))
+            )
 
     def _populate_tree(self):
         """Populate tree widget with tutorial structure."""
@@ -211,7 +212,7 @@ class TutorialsDock(QDockWidget):
         # Expand all by default
         self.tree.expandAll()
 
-    def _on_tree_item_clicked(self, item: QTreeWidgetItem, column: int):
+    def _on_tree_item_clicked(self, item: QTreeWidgetItem, column: int):  # pylint: disable=unused-argument  # Qt signal
         """Handle tree item click."""
         file_path = item.data(0, Qt.UserRole)
 
@@ -228,7 +229,10 @@ class TutorialsDock(QDockWidget):
 
         if not full_path.exists():
             self.status_label.setText(f"✗ File not found: {relative_path}")
-            QMessageBox.warning(self, tr("tutorials.file_not_found_title"), tr("tutorials.file_not_found").format(file=full_path))
+            QMessageBox.warning(
+                self, tr("tutorials.file_not_found_title"),
+                tr("tutorials.file_not_found").format(file=full_path)
+            )
             return
 
         try:
@@ -252,9 +256,12 @@ class TutorialsDock(QDockWidget):
             # Emit signal
             self.tutorial_opened.emit(str(full_path))
 
-        except Exception as e:
-            self.status_label.setText(f"✗ Error opening tutorial")
-            QMessageBox.critical(self, tr("tutorials.open_error_title"), tr("tutorials.open_error").format(error=str(e)))
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
+            self.status_label.setText("✗ Error opening tutorial")
+            QMessageBox.critical(
+                self, tr("tutorials.open_error_title"),
+                tr("tutorials.open_error").format(error=str(e))
+            )
 
     def _markdown_to_html(self, markdown: str) -> str:
         """
@@ -263,7 +270,7 @@ class TutorialsDock(QDockWidget):
         For production, consider using a library like `markdown` or `mistune`.
         This is a minimal implementation for MVP.
         """
-        import re
+        import re  # pylint: disable=import-outside-toplevel  # Lazy import
 
         html = markdown
 
@@ -311,12 +318,32 @@ class TutorialsDock(QDockWidget):
         <html>
         <head>
             <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; padding: 20px; }}
-                h1 {{ color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                        Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    line-height: 1.6;
+                    padding: 20px;
+                }}
+                h1 {{
+                    color: #2c3e50;
+                    border-bottom: 2px solid #3498db;
+                    padding-bottom: 10px;
+                }}
                 h2 {{ color: #34495e; margin-top: 30px; }}
                 h3 {{ color: #7f8c8d; }}
-                code {{ background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }}
-                pre {{ background-color: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+                code {{
+                    background-color: #f4f4f4;
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    font-family: 'Courier New', monospace;
+                }}
+                pre {{
+                    background-color: #2c3e50;
+                    color: #ecf0f1;
+                    padding: 15px;
+                    border-radius: 5px;
+                    overflow-x: auto;
+                }}
                 pre code {{ background-color: transparent; color: #ecf0f1; }}
                 a {{ color: #3498db; text-decoration: none; }}
                 a:hover {{ text-decoration: underline; }}
@@ -386,12 +413,13 @@ class TutorialsDock(QDockWidget):
 
     def _open_ai_assistant(self):
         """Open AI Tutorial Assistant dialog (v2.9.92)."""
+        # pylint: disable=import-outside-toplevel  # Lazy imports
         from .tutorial_assistant_dialog import TutorialAssistantDialog
         from ..settings_manager import SettingsManager
 
         # Get Gemini API key from settings
         settings = SettingsManager()
-        api_key = settings.get_value('ai_processor/gemini_api_key', '')
+        api_key = settings.get_value('ai_processor/gemini_api_key', '')  # pylint: disable=no-member  # Dynamic
 
         dialog = TutorialAssistantDialog(self, api_key=api_key)
         dialog.show()
@@ -424,7 +452,10 @@ class TutorialsDock(QDockWidget):
             self.status_label.setText(f"✓ Found {len(matches)} results for '{query}'")
         else:
             self.status_label.setText(f"✗ No results for '{query}'")
-            self.browser.setHtml(f"<html><body><h2>No results found for '{query}'</h2><p>Try different keywords.</p></body></html>")
+            self.browser.setHtml(
+                f"<html><body><h2>No results found for '{query}'</h2>"
+                "<p>Try different keywords.</p></body></html>"
+            )
 
     def _generate_search_results_html(self, query: str, matches: List[Dict]) -> str:
         """Generate HTML for search results."""
@@ -448,10 +479,23 @@ class TutorialsDock(QDockWidget):
         <html>
         <head>
             <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; padding: 20px; }}
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                        Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                    padding: 20px;
+                }}
                 h2 {{ color: #2c3e50; }}
-                .result-card {{ background-color: #f8f9fa; border-left: 4px solid #3498db; padding: 15px; margin: 15px 0; }}
-                .result-card a {{ color: #3498db; text-decoration: none; font-weight: bold; }}
+                .result-card {{
+                    background-color: #f8f9fa;
+                    border-left: 4px solid #3498db;
+                    padding: 15px;
+                    margin: 15px 0;
+                }}
+                .result-card a {{
+                    color: #3498db;
+                    text-decoration: none;
+                    font-weight: bold;
+                }}
                 .result-card a:hover {{ text-decoration: underline; }}
             </style>
         </head>
