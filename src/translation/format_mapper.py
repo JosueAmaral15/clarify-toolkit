@@ -1665,6 +1665,19 @@ class FormatMapper:
         current_para_metadata = None
         
         for segment in segments:
+            # Handle TableSegment separately (Session 64 fix)
+            if isinstance(segment, TableSegment):
+                # Ensure current paragraph is added before table
+                if current_paragraph.text or not current_paragraph.runs:
+                    current_paragraph = doc.add_paragraph()
+                
+                # Reconstruct table using existing method
+                FormatMapper._reconstruct_table_to_docx(segment, doc)
+                
+                # Start fresh paragraph after table
+                current_paragraph = doc.add_paragraph()
+                continue
+            
             # Check if paragraph formatting changed
             if segment.paragraph_format != current_para_format or segment.paragraph_metadata != current_para_metadata:
                 # New paragraph with different formatting
@@ -2457,10 +2470,24 @@ class FormatMapper:
         current_para_metadata = None
         
         for segment in segments:
+            # Handle TableSegment separately (Session 64 fix)
+            if isinstance(segment, TableSegment):
+                # Finalize current paragraph before table
+                if current_paragraph.childNodes or hasattr(current_paragraph, 'data'):
+                    doc.text.addElement(current_paragraph)
+                    current_paragraph = P()
+                
+                # Reconstruct table using existing method
+                FormatMapper._reconstruct_table_to_odt(segment, doc)
+                
+                # Start fresh paragraph after table
+                current_paragraph = P()
+                continue
+            
             # Check if paragraph formatting changed
             if segment.paragraph_format != current_para_format or segment.paragraph_metadata != current_para_metadata:
                 # Need to finalize current paragraph and start new one
-                if current_paragraph.childNodes or current_paragraph.data:
+                if current_paragraph.childNodes or hasattr(current_paragraph, 'data'):
                     doc.text.addElement(current_paragraph)
                     current_paragraph = P()
                 
