@@ -630,10 +630,20 @@ class GoogleTranslateDock(BaseDock):
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
 
     def _reverse_translation(self):
-        """Reverse source and target languages, swap input/output text."""
+        """Reverse source and target languages, swap input/output text, and auto-translate."""
+        # Check if translation is currently running - if so, ignore the click
+        if self.translation_worker and self.translation_worker.isRunning():
+            return
+        
         # Get current language codes (not display text)
         from_code = self.combo_from_lang.currentData()
         to_code = self.combo_to_lang.currentData()
+        
+        # Store the output text before swapping (this will become the new input)
+        output_text = self.text_output.toPlainText()
+        
+        # Also store translated segments with formatting for document mode
+        has_formatting = bool(self._translated_segments)
         
         # Swap languages
         if from_code == "auto":
@@ -659,13 +669,31 @@ class GoogleTranslateDock(BaseDock):
         
         # Swap input/output text
         input_text = self.text_input.toPlainText()
-        output_text = self.text_output.toPlainText()
         
         self.text_input.setPlainText(output_text)
-        self.text_output.setPlainText(input_text)
+        self.text_output.clear()  # Clear output before auto-translation
         
-        # Update button states - keep reverse enabled, update copy based on new output
-        self.btn_copy_result.setEnabled(bool(output_text))
+        # Swap formatting segments if we have them (for document mode)
+        if has_formatting:
+            # Swap source and translated segments
+            self._source_segments, self._translated_segments = self._translated_segments, self._source_segments
+        
+        # Auto-trigger translation with the swapped text
+        if output_text.strip():
+            # Get new language selections after swap
+            new_from_lang = self.combo_from_lang.currentData()
+            new_to_lang = self.combo_to_lang.currentData()
+            
+            # Prepare text for translation (with formatting tags if available)
+            if has_formatting and self._source_segments:
+                # Use tagged text for translation to preserve formatting
+                text_to_translate = FormatMapper.segments_to_tagged_text(self._source_segments)
+            else:
+                # Plain text mode
+                text_to_translate = output_text
+            
+            # Start automatic translation
+            self._start_translation(text_to_translate, new_from_lang, new_to_lang)
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
