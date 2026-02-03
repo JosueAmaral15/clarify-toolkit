@@ -891,9 +891,35 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_paths_output.setPlainText(text_output or "")
             self.jsx_json_output.setPlainText(json_output or "")
             
-            # Add to extraction history
-            input_source = path if path else "TextInput"
-            self._jsx_add_to_history(input_source, json_output, mode, param)
+            # Add to extraction history with settings
+            settings = {
+                'param': param,
+                'mode': mode,
+                'input_type': ['Directory', 'File', 'Text'][input_type_index],
+                'case_style': case_style,
+                'limit': limit,
+                'avoid_cut': avoid_cut,
+                'avoid_cut_direction': avoid_cut_direction,
+                'to_upper': to_upper,
+                'indent': indent,
+                'include_key': include_key,
+                'include_value': include_value,
+                'no_standard': no_standard,
+                'only_strings': only_strings,
+                'with_quotation_marks': with_quotation_marks,
+                'match_all': match_all,
+                'typescript_export': typescript_export,
+                'exclude_numeric': exclude_numeric,
+                'skip_empty': skip_empty,
+                'use_class_names': use_class_names,
+                'is_attribute_mode': is_attribute_mode,
+                'avoid_keys': avoid_keys,
+                'avoid_keys_param': avoid_keys_param,
+                'file_extensions': file_extensions,
+                'start_regex': start_regex,
+                'end_regex': end_regex
+            }
+            self._jsx_add_to_history(input_source, json_output, settings)
             
             # Show success message (dialog + status)
             paths_count = len([line for line in text_output.split('\n') if line.strip()])
@@ -1116,7 +1142,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self._jsx_update_status("✓ Opened in editor")
     
     def _jsx_show_history(self):
-        """Show extraction history."""
+        """Show extraction history with detailed settings and changes."""
         if not self.extraction_history:
             self.show_info(
                 tr("text_to_json.info_history_empty_title", "History Empty"),
@@ -1126,21 +1152,81 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         dialog = QDialog(self)
         dialog.setWindowTitle(tr("text_to_json.history_dialog_title", "Extraction History"))
-        dialog.resize(700, 450)
+        dialog.resize(800, 500)
         
         layout = QVBoxLayout(dialog)
         
         list_widget = QListWidget()
+        
         for i, entry in enumerate(reversed(self.extraction_history)):
-            mode_str = entry.get('mode', 'unknown')
-            param_str = entry.get('parameter', 'N/A')
+            settings = entry.get('settings', {})
+            mode_str = settings.get('mode', 'unknown')
+            param_str = settings.get('param', 'N/A')
+            input_type = settings.get('input_type', 'Unknown')
             path_preview = entry['path'].split('/')[-1] if '/' in entry['path'] else entry['path']
+            
+            # Brief display
             item_text = f"{i+1}. [{mode_str}] {path_preview} (param: {param_str})"
-            list_widget.addItem(item_text)
+            
+            # Build detailed tooltip with all settings
+            tooltip_lines = [
+                f"=== Entry #{i+1} ===",
+                f"Path: {entry['path']}",
+                f"Input Type: {input_type}",
+                f"",
+                "Settings:",
+                f"  Mode: {mode_str}",
+                f"  Parameter: {param_str}",
+                f"  Attribute Mode: {'Yes' if settings.get('is_attribute_mode') else 'No'}",
+                f"  Match All: {'Yes' if settings.get('match_all') else 'No'}",
+                f"  Case Style: {settings.get('case_style', 'N/A')}",
+                f"  Uppercase: {'Yes' if settings.get('to_upper') else 'No'}",
+                f"  Limit: {settings.get('limit', 'all')}",
+                f"  Avoid Cut: {'Yes' if settings.get('avoid_cut') else 'No'}",
+                f"  Avoid Cut Direction: {settings.get('avoid_cut_direction', 'N/A')}",
+                f"  Indent: {settings.get('indent', 2)}",
+                f"  Include Key: {'Yes' if settings.get('include_key') else 'No'}",
+                f"  Include Value: {'Yes' if settings.get('include_value') else 'No'}",
+                f"  Drop Standard Tags: {'Yes' if settings.get('no_standard') else 'No'}",
+                f"  Only Strings: {'Yes' if settings.get('only_strings') else 'No'}",
+                f"  With Quotes: {'Yes' if settings.get('with_quotation_marks') else 'No'}",
+                f"  TypeScript Export: {'Yes' if settings.get('typescript_export') else 'No'}",
+                f"  Exclude Numeric: {'Yes' if settings.get('exclude_numeric') else 'No'}",
+                f"  Skip Empty: {'Yes' if settings.get('skip_empty') else 'No'}",
+                f"  Use Class Names: {'Yes' if settings.get('use_class_names') else 'No'}",
+                f"  Avoid Keys: {settings.get('avoid_keys', 'None')}",
+                f"  File Extensions: {', '.join(settings.get('file_extensions', [])) or 'All'}"
+            ]
+            
+            # Show what changed from previous entry
+            if i < len(self.extraction_history) - 1:
+                prev_entry = self.extraction_history[len(self.extraction_history) - 1 - (i + 1)]
+                prev_settings = prev_entry.get('settings', {})
+                changes = []
+                
+                # Compare all settings
+                for key in settings:
+                    if key not in ['start_regex', 'end_regex']:  # Skip regex for brevity
+                        curr_val = settings.get(key)
+                        prev_val = prev_settings.get(key)
+                        if curr_val != prev_val:
+                            changes.append(f"    {key}: {prev_val} → {curr_val}")
+                
+                if changes:
+                    tooltip_lines.append("")
+                    tooltip_lines.append(f"Changes from previous entry:")
+                    tooltip_lines.extend(changes)
+                else:
+                    tooltip_lines.append("")
+                    tooltip_lines.append("(No settings changed from previous)")
+            
+            item = QListWidgetItem(item_text)
+            item.setToolTip("\n".join(tooltip_lines))
+            list_widget.addItem(item)
         
         list_widget.itemDoubleClicked.connect(lambda item: self._jsx_load_history_item(item, dialog))
         
-        layout.addWidget(QLabel(tr("text_to_json.history_lbl_double_click", "Double-click to load extraction")))
+        layout.addWidget(QLabel(tr("text_to_json.history_lbl_double_click", "Double-click to load extraction. Hover for full details.")))
         layout.addWidget(list_widget)
         
         close_btn = QPushButton(tr("text_to_json.btn_close", "Close"))
@@ -1150,29 +1236,76 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         dialog.exec()
     
     def _jsx_load_history_item(self, item: QListWidgetItem, dialog: QDialog) -> None:
-        """Load history item into JSX extraction fields."""
+        """Load history item into JSX extraction fields with all settings."""
         index = len(self.extraction_history) - 1 - item.listWidget().row(item)
         if 0 <= index < len(self.extraction_history):
             entry = self.extraction_history[index]
+            settings = entry.get('settings', {})
+            
+            # Restore path/input
             self.jsx_path_edit.setText(entry['path'])
-            self.jsx_param_edit.setText(entry.get('parameter', ''))
+            
+            # Restore output
             self.jsx_json_output.setPlainText(entry['output'])
             
-            # Set mode if possible
-            mode_str = entry.get('mode', 'JSX')
+            # Restore all settings that affect output
+            self.jsx_param_edit.setText(settings.get('param', ''))
+            
+            # Mode
+            mode_str = settings.get('mode', 'JSX')
             mode_index = self.jsx_mode_combo.findText(mode_str)
             if mode_index >= 0:
                 self.jsx_mode_combo.setCurrentIndex(mode_index)
             
+            # Case settings
+            case_style = settings.get('case_style', 'snake')
+            case_index = self.jsx_case_combo.findText(case_style)
+            if case_index >= 0:
+                self.jsx_case_combo.setCurrentIndex(case_index)
+            
+            self.jsx_uppercase_checkbox.setChecked(settings.get('to_upper', False))
+            self.jsx_limit_edit.setText(str(settings.get('limit', 'all')))
+            self.jsx_avoid_cut_checkbox.setChecked(settings.get('avoid_cut', False))
+            
+            direction = settings.get('avoid_cut_direction', 'before')
+            direction_index = 0 if direction == 'before' else 1
+            self.jsx_avoid_cut_direction_combo.setCurrentIndex(direction_index)
+            
+            self.jsx_indent_spin.setValue(settings.get('indent', 2))
+            
+            # Checkboxes
+            self.jsx_include_key_checkbox.setChecked(settings.get('include_key', True))
+            self.jsx_include_value_checkbox.setChecked(settings.get('include_value', True))
+            self.jsx_no_standard_checkbox.setChecked(settings.get('no_standard', False))
+            self.jsx_only_strings_checkbox.setChecked(settings.get('only_strings', False))
+            self.jsx_quotation_marks_checkbox.setChecked(settings.get('with_quotation_marks', True))
+            self.jsx_match_all_checkbox.setChecked(settings.get('match_all', False))
+            self.jsx_typescript_export_checkbox.setChecked(settings.get('typescript_export', False))
+            self.jsx_exclude_numeric_checkbox.setChecked(settings.get('exclude_numeric', False))
+            self.jsx_skip_empty_checkbox.setChecked(settings.get('skip_empty', False))
+            self.jsx_use_class_names_checkbox.setChecked(settings.get('use_class_names', False))
+            self.jsx_is_attribute_checkbox.setChecked(settings.get('is_attribute_mode', False))
+            
+            # Avoid keys
+            self.jsx_avoid_keys_edit.setText(settings.get('avoid_keys', ''))
+            avoid_keys_param = settings.get('avoid_keys_param', 'contains')
+            if avoid_keys_param == 'equals':
+                self.jsx_avoid_equals_radio.setChecked(True)
+            else:
+                self.jsx_avoid_contains_radio.setChecked(True)
+            
+            # File extensions
+            file_exts = settings.get('file_extensions', [])
+            self.jsx_extensions_edit.setText(' '.join(file_exts))
+            
             dialog.accept()
     
-    def _jsx_add_to_history(self, path: str, output_json: str, mode: str, parameter: str) -> None:
-        """Add extraction to history."""
+    def _jsx_add_to_history(self, path: str, output_json: str, settings: dict) -> None:
+        """Add extraction to history with full settings metadata."""
         entry = {
             'path': path,
             'output': output_json,
-            'mode': mode,
-            'parameter': parameter
+            'settings': settings
         }
         self.extraction_history.append(entry)
         
