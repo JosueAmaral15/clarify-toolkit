@@ -7,6 +7,7 @@ from typing import Tuple
 
 @dataclass
 class SearchOptions:
+    """Options for search operations."""
     case_sensitive: bool = False
     whole_word: bool = False
     regex: bool = False

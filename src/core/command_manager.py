@@ -21,12 +21,10 @@ class Command(ABC):
     @abstractmethod
     def execute(self) -> None:
         """Execute the command (perform the action)."""
-        pass
 
     @abstractmethod
     def undo(self) -> None:
         """Undo the command (revert the action)."""
-        pass
 
     def redo(self) -> None:
         """Redo the command (re-execute after undo). Default: calls execute()."""
