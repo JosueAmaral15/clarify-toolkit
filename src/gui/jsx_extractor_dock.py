@@ -22,12 +22,9 @@ Date: 2025-12-02
 
 from __future__ import annotations
 
-import json
 import os
-import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -43,26 +40,11 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QTabWidget,
-    QVBoxLayout,
     QWidget,
 )
 
-from src.extractors import GenericScopeParser, JSXParser
 from src.i18n.translator import tooltip_tr, tr
-from src.utils.normalization import (
-    STANDARD_HTML_TAGS,
-    is_standard_tag,
-    kept_prefix,
-    normalize_token,
-    path_join,
-    smart_truncate,
-)
-from src.i18n.translator import tooltip_tr
 from .base_dock import BaseDock
-
-# Type checking imports
-if TYPE_CHECKING:
-    from PySide6.QtWidgets import QWidget as QWidgetType
 
 
 class JSXExtractorDock(BaseDock):
@@ -73,7 +55,7 @@ class JSXExtractorDock(BaseDock):
     building hierarchical JSON structures based on component tree.
     """
 
-    def __init__(self, parent: QWidgetType | None = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__("JSX Parameter Extractor", parent)
 
     def _setup_ui(self) -> None:
@@ -83,7 +65,7 @@ class JSXExtractorDock(BaseDock):
         self._apply_tooltips()  # v2.9.70
         self._connect_signals()
 
-    def _validate_path_security(self, path: str, operation: str = "access") -> Optional[str]:
+    def _validate_path_security(self, path: str, operation: str = "access") -> Optional[str]:  # pylint: disable=unused-argument  # For future use
         """
         Validate path for security (path traversal prevention).
 
@@ -113,6 +95,7 @@ class JSXExtractorDock(BaseDock):
             QMessageBox.warning(self, tr("jsx.msg_error_title"), tr("jsx.msg_invalid_path").format(e))
             return None
 
+    # pylint: disable=attribute-defined-outside-init  # Pattern: widgets created in helper method
     def _create_widgets(self) -> None:
         """Create all widgets."""
         # Path section
@@ -172,7 +155,10 @@ class JSXExtractorDock(BaseDock):
 
         self.case_label = QLabel(tr("jsx.lbl_case_style"))
         self.cb_case = QComboBox()
-        self.cb_case.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
+        self.cb_case.addItems([
+            tr("combo.case_snake"), tr("combo.case_camel"),
+            tr("combo.case_pascal"), tr("combo.case_kebab")
+        ])
 
         self.chk_upper = QCheckBox(tr("jsx.chk_uppercase"))
         self.chk_upper.setChecked(False)
@@ -460,7 +446,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setStyleSheet("color: blue; font-style: italic;")
 
             # Import Extractor here to avoid circular imports
-            from src.extractors import Extractor
+            from src.extractors import Extractor  # pylint: disable=import-outside-toplevel  # Lazy import
 
             # Create Extractor instance with all options
             extractor = Extractor(
@@ -496,7 +482,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setText(tr("jsx.status_completed"))
             self.status_label.setStyleSheet("color: green; font-style: italic;")
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
             QMessageBox.critical(self, tr("jsx.msg_extraction_error_title"), str(e))
             self.status_label.setText(f"Error: {str(e)}")
             self.status_label.setStyleSheet("color: red; font-style: italic;")
@@ -546,12 +532,12 @@ class JSXExtractorDock(BaseDock):
                         f.write(js)
 
             QMessageBox.information(self, tr("jsx.msg_saved_title"), tr("jsx.msg_saved_success"))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
             QMessageBox.critical(self, tr("jsx.msg_save_error_title"), str(e))
 
     def _on_copy(self) -> None:
         """Copy current tab content to clipboard."""
-        from PySide6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication  # pylint: disable=import-outside-toplevel  # Lazy import
 
         current = self.tabs.currentWidget()
         text = current.toPlainText()
