@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# pylint: skip-file  # BACKUP file - legacy code kept for reference
 
 """
 Insert Panel - Reusable Component
