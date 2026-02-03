@@ -37,7 +37,10 @@ class ResultExporter:
     }
 
     # Format filters for file dialog
-    FORMAT_FILTER = "CSV Files (*.csv);;Excel Files (*.xlsx);;YAML Files (*.yaml);;TOML Files (*.toml);;JSON Files (*.json)"
+    FORMAT_FILTER = (
+        "CSV Files (*.csv);;Excel Files (*.xlsx);;"
+        "YAML Files (*.yaml);;TOML Files (*.toml);;JSON Files (*.json)"
+    )
 
     @staticmethod
     def save_json(data: str, file_path: str) -> Tuple[bool, str]:
