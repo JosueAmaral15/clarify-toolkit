@@ -2242,7 +2242,7 @@ class FormatMapper:
             output_path: Path to save the output ODT file
         """
         from odf.opendocument import OpenDocumentText
-        from odf.style import Style, TextProperties
+        from odf.style import Style, TextProperties, ParagraphProperties
         from odf.text import P, Span
         
         doc = OpenDocumentText()
