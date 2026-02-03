@@ -116,7 +116,10 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
-        print(f"DEBUG EXECUTOR 101 execute_browse() | ENTER - dir={directory}, recursive={recursive}, show_hidden={show_hidden}")
+        print(
+            f"DEBUG EXECUTOR 101 execute_browse() | ENTER - "
+            f"dir={directory}, recursive={recursive}, show_hidden={show_hidden}"
+        )
         filters = filters or {}
 
         # Step 1: Get base file list
@@ -259,13 +262,19 @@ class UnifiedFileExplorerExecutor(QObject):
         search_options = search_options or {}
 
         # Step 1: List files
-        print(f"DEBUG EXECUTOR 249 execute_search() | Calling execute_browse(dir={directory}, show_hidden={show_hidden}, recursive={recursive})")
+        print(
+            f"DEBUG EXECUTOR 249 execute_search() | Calling execute_browse("
+            f"dir={directory}, show_hidden={show_hidden}, recursive={recursive})"
+        )
         browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
         print(f"DEBUG EXECUTOR 251 execute_search() | Browse returned {len(browse_result.get('files', []))} files")
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
         print(f"DEBUG EXECUTOR 253 execute_search() | files_to_search has {len(files_to_search)} items")
-        logger.debug("[SEARCH DEBUG] Browse found %d files (recursive=%s, show_hidden=%s)", len(files_to_search), recursive, show_hidden)
+        logger.debug(
+            "[SEARCH DEBUG] Browse found %d files (recursive=%s, show_hidden=%s)",
+            len(files_to_search), recursive, show_hidden
+        )
 
         # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
         # (Sprint 1 - Task 1.1 - Fase 2 + BUGFIX)
@@ -341,8 +350,14 @@ class UnifiedFileExplorerExecutor(QObject):
             files_to_search = [
                 f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
             ]
-            print(f"DEBUG EXECUTOR 328 execute_search() | After filename filter: {before_filter} → {len(files_to_search)} files")
-            logger.debug("[SEARCH DEBUG] Filename pattern '%s' filter: %d → %d files", filename_pattern, before_filter, len(files_to_search))
+            print(
+                f"DEBUG EXECUTOR 328 execute_search() | After filename filter: "
+                f"{before_filter} → {len(files_to_search)} files"
+            )
+            logger.debug(
+                "[SEARCH DEBUG] Filename pattern '%s' filter: %d → %d files",
+                filename_pattern, before_filter, len(files_to_search)
+            )
         else:
             print("DEBUG EXECUTOR 331 execute_search() | No filename pattern specified")
 
@@ -360,7 +375,10 @@ class UnifiedFileExplorerExecutor(QObject):
 
             # Check global match limit (v2.9.120 - Memory optimization)
             if total_match_count >= MAX_TOTAL_MATCHES:
-                warning_msg = f"Maximum total matches reached ({MAX_TOTAL_MATCHES:,}). Search stopped. Refine your search for better results."
+                warning_msg = (
+                    f"Maximum total matches reached ({MAX_TOTAL_MATCHES:,}). "
+                    "Search stopped. Refine your search for better results."
+                )
                 logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
                 self.error.emit(warning_msg)
                 print("DEBUG EXECUTOR 351 execute_search() | MAX MATCHES REACHED - Breaking loop")
@@ -513,7 +531,7 @@ class UnifiedFileExplorerExecutor(QObject):
             # For production, consider using regex module with timeout parameter
             lines = text.splitlines()
             match_count = 0
-            MAX_MATCHES_PER_FILE = 10000  # Prevent memory exhaustion
+            MAX_MATCHES_PER_FILE = 10000  # pylint: disable=invalid-name  # Constant
 
             for line_num, line_text in enumerate(lines, 1):
                 if self._cancel:  # Allow cancellation
@@ -531,7 +549,11 @@ class UnifiedFileExplorerExecutor(QObject):
                         # Memory optimization (v2.9.120): Truncate snippet and remove context lines
                         # - Limits snippet to MAX_SNIPPET_LENGTH (200 chars)
                         # - Removes context_before/after (3x memory reduction)
-                        truncated_snippet = line_text[:MAX_SNIPPET_LENGTH] if len(line_text) > MAX_SNIPPET_LENGTH else line_text
+                        truncated_snippet = (
+                            line_text[:MAX_SNIPPET_LENGTH]
+                            if len(line_text) > MAX_SNIPPET_LENGTH
+                            else line_text
+                        )
 
                         matches.append(
                             SearchMatch(
