@@ -4,8 +4,9 @@
 import json
 from typing import List, Tuple
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel
+from PySide6.QtWidgets import (
+    QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QComboBox
+)
 
 from src.rewriter.types import JSONNode
 from src.rewriter.operations import enforce_consistent_case
@@ -49,7 +50,10 @@ class CaseValidatorDialog(QDialog):
         selector_layout.addWidget(QLabel(tr("case_validator.target_case")))
 
         self.combo_case = QComboBox()
-        self.combo_case.addItems([tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_snake"), tr("combo.case_kebab")])
+        self.combo_case.addItems([
+            tr("combo.case_camel"), tr("combo.case_pascal"),
+            tr("combo.case_snake"), tr("combo.case_kebab")
+        ])
         self.combo_case.currentTextChanged.connect(self._update_preview)
         selector_layout.addWidget(self.combo_case)
         selector_layout.addStretch()
@@ -145,22 +149,34 @@ class CaseValidatorDialog(QDialog):
         try:
             before_json = json.dumps(self.original_node, indent=2, ensure_ascii=False)
             self.text_before.setPlainText(before_json)
-        except Exception as e:
-            self.text_before.setPlainText(tr("case_validator.error_display_original").replace("{error}", str(e)))
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
+            self.text_before.setPlainText(
+                tr("case_validator.error_display_original").replace("{error}", str(e))
+            )
 
         # Display after
         try:
             after_json = json.dumps(self.converted_node, indent=2, ensure_ascii=False)
             self.text_after.setPlainText(after_json)
-        except Exception as e:
-            self.text_after.setPlainText(tr("case_validator.error_display_converted").replace("{error}", str(e)))
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
+            self.text_after.setPlainText(
+                tr("case_validator.error_display_converted").replace("{error}", str(e))
+            )
 
         # Display warnings
         if self.warnings:
-            warnings_text = tr("case_validator.total_changes").replace("{count}", str(len(self.warnings))) + "\n\n"
-            warnings_text += "\n".join(f"• {w}" for w in self.warnings[:50])  # Limit to 50 for performance
+            warnings_text = (
+                tr("case_validator.total_changes").replace("{count}", str(len(self.warnings)))
+                + "\n\n"
+            )
+            warnings_text += "\n".join(f"• {w}" for w in self.warnings[:50])
             if len(self.warnings) > 50:
-                warnings_text += "\n\n" + tr("case_validator.more_changes").replace("{count}", str(len(self.warnings) - 50))
+                warnings_text += (
+                    "\n\n"
+                    + tr("case_validator.more_changes").replace(
+                        "{count}", str(len(self.warnings) - 50)
+                    )
+                )
             self.text_warnings.setPlainText(warnings_text)
         else:
             self.text_warnings.setPlainText(tr("case_validator.no_changes"))
