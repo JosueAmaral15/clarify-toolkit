@@ -7,21 +7,19 @@ Author: Josué Amaral
 Date: 2025-12-23
 Version: 2.9.109
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Lazy imports
 
 import webbrowser
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QTextEdit,
-    QCheckBox,
-    QGroupBox,
-    QMessageBox,
-)
-from PySide6.QtCore import Qt, Signal
+
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QCheckBox, QDialog, QGroupBox,
+    QHBoxLayout, QLabel, QMessageBox,
+    QPushButton, QTextEdit, QVBoxLayout
+)
 
 from src.i18n.translator import tr
 
@@ -52,7 +50,7 @@ class UpdateNotificationDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Header with emoji
-        header = QLabel(tr("update_notification.header_new_version"))
+        header = QLabel("🚀 New Version Available!")
         header_font = QFont()
         header_font.setPointSize(14)
         header_font.setBold(True)
@@ -98,7 +96,7 @@ class UpdateNotificationDialog(QDialog):
             "QPushButton:hover { background-color: #005A9E; }"
         )
 
-        self.btn_remind_later = QPushButton(tr("update_notification.btn_remind_later"))
+        self.btn_remind_later = QPushButton("🕐 Remind Me Later")
         self.btn_close = QPushButton(tr("update_notification.btn_close"))
 
         btn_layout.addWidget(self.btn_download)
@@ -135,14 +133,13 @@ class UpdateNotificationDialog(QDialog):
         if published:
             try:
                 from datetime import datetime
-
                 dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
                 formatted = dt.strftime("%B %d, %Y")
                 self.lbl_published.setText(f"Published: {formatted}")
-            except:
+            except Exception:
                 self.lbl_published.setText(f"Published: {published}")
         else:
-            self.lbl_published.setText(tr("update_notification.text_published_unknown"))
+            self.lbl_published.setText("Published: Unknown")
 
         # Release notes
         notes = result.get("release_notes", "No release notes available.")
@@ -172,10 +169,14 @@ class UpdateNotificationDialog(QDialog):
                     QMessageBox.warning(
                         self,
                         tr("update.browser_error_title"),
-                        tr("update.browser_error").format(error=str(e), url=download_url),
+                        tr("update.browser_error").format(error=str(e), url=download_url)
                     )
             else:
-                QMessageBox.warning(self, tr("update.browser_error_title"), tr("update.url_unavailable"))
+                QMessageBox.warning(
+                    self,
+                    tr("update.browser_error_title"),
+                    tr("update.url_unavailable")
+                )
 
 
 class ManualCheckDialog(QDialog):
@@ -236,7 +237,9 @@ class ManualCheckDialog(QDialog):
             # Up to date
             current = result.get("current_version", "Unknown")
             self.lbl_status.setText(
-                f"✅ You're up to date!\n\n" f"Current version: v{current}\n\n" f"No updates available at this time."
+                f"✅ You're up to date!\n\n"
+                f"Current version: v{current}\n\n"
+                f"No updates available at this time."
             )
 
         self.btn_close.setEnabled(True)

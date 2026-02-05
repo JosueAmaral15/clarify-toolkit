@@ -11,6 +11,10 @@ Created: 2026-01-12 (v2.9.122)
 Pattern: Based on SearchWorker (search_worker.py)
 Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=line-too-long  # Long log messages
+# pylint: disable=logging-fstring-interpolation  # Performance not critical
 
 from PySide6.QtCore import QObject, Signal
 
@@ -44,13 +48,13 @@ class FileExplorerWorker(QObject):
     """
 
     # Signals
-    progress = Signal(str)  # Current file/message
-    progress_detailed = Signal(int, int, str)  # (current, total, message)
-    finished = Signal(object)  # Result object
-    error = Signal(str)  # Error message
+    progress = Signal(str)                      # Current file/message
+    progress_detailed = Signal(int, int, str)   # (current, total, message)
+    finished = Signal(object)                   # Result object
+    error = Signal(str)                         # Error message
 
     # Batch processing signal (v2.9.123)
-    batch_ready = Signal(list, int, int)  # (batch_items, batch_num, total_batches)
+    batch_ready = Signal(list, int, int)        # (batch_items, batch_num, total_batches)
 
     def __init__(self, executor: UnifiedFileExplorerExecutor):
         """
@@ -114,20 +118,20 @@ class FileExplorerWorker(QObject):
         all_items = list(matches_dict.items())
         total_items = len(all_items)
 
-        if total_items == 0:
+        if not total_items:
             logger.debug("No items to emit")
             return  # Nothing to emit
 
         # Calculate number of batches
         total_batches = (total_items + batch_size - 1) // batch_size  # Ceiling division
 
-        logger.debug("Emitting %d items in %d batches of %d", total_items, total_batches, batch_size)
+        logger.debug(f"Emitting {total_items} items in {total_batches} batches of {batch_size}")
 
         # Emit batches
         for batch_num in range(total_batches):
             # Check for cancellation
             if self._cancel_requested:
-                logger.debug("Cancellation requested, stopping batch emission at %d/%d", batch_num + 1, total_batches)
+                logger.debug(f"Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
                 break
 
             start_idx = batch_num * batch_size
@@ -135,8 +139,10 @@ class FileExplorerWorker(QObject):
 
             batch = all_items[start_idx:end_idx]
 
-            logger.debug("Emitting batch %d/%d (%d items)", batch_num + 1, total_batches, len(batch))
+            print(f"DEBUG WORKER 138 _emit_in_batches() | Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
+            logger.debug(f"Emitting batch {batch_num+1}/{total_batches} ({len(batch)} items)")
             self.batch_ready.emit(batch, batch_num + 1, total_batches)
+            print(f"DEBUG WORKER 140 _emit_in_batches() | Batch {batch_num+1} emitted!")
 
     def execute_search(
         self,
@@ -148,6 +154,7 @@ class FileExplorerWorker(QObject):
         recursive: bool,
         filters: dict,
         conditions: list,
+        logic_operator: str = "AND"
     ):
         """
         Execute search operation in worker thread.
@@ -164,9 +171,11 @@ class FileExplorerWorker(QObject):
             recursive: Search recursively
             filters: Filters dict
             conditions: Advanced conditions list
+            logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
         """
         try:
-            logger.debug("Worker.execute_search() called - running in thread")
+            print(f"DEBUG WORKER 171 execute_search() | ENTER - directory={directory}")
+            logger.debug("Worker.execute_search() called - running in thread!")
             # Forward executor signals to worker signals
             # This allows UI thread to receive progress updates
             self.executor.progress.connect(self.progress)
@@ -174,7 +183,7 @@ class FileExplorerWorker(QObject):
             logger.debug("Executor signals connected to worker")
 
             # Execute search (blocking in worker thread)
-            logger.debug("Calling executor.execute_search(directory=%s)", directory)
+            logger.debug(f"Calling executor.execute_search(directory={directory})")
             result = self.executor.execute_search(
                 directory=directory,
                 filename_pattern=filename_pattern,
@@ -184,21 +193,29 @@ class FileExplorerWorker(QObject):
                 recursive=recursive,
                 filters=filters,
                 conditions=conditions,
+                logic_operator=logic_operator
             )
-            logger.debug("Search complete! Found %d files", len(result.get("files", [])))
+            print(f"DEBUG WORKER 191 execute_search() | Search complete! Found {len(result.get('files', []))} files")
+            logger.debug(f"Search complete! Found {len(result.get('files', []))} files")
 
             # NEW v2.9.123: Process results in worker thread
-            logger.debug("Building matches dict in worker thread")
+            print("DEBUG WORKER 194 execute_search() | Building matches dict...")
+            logger.debug("Building matches dict in worker thread...")
             matches_dict = self._build_matches_dict(result)
-            logger.debug("Built matches dict with %d entries", len(matches_dict))
+            print(f"DEBUG WORKER 196 execute_search() | Built {len(matches_dict)}")
+            logger.debug(f"Built matches dict with {len(matches_dict)} entries")
 
             # NEW v2.9.123: Emit in batches for non-blocking UI
-            logger.debug("Emitting matches in batches")
+            print(f"DEBUG WORKER 199 | Emitting {len(matches_dict)} in batches...")
+            logger.debug("Emitting matches in batches...")
             self._emit_in_batches(matches_dict, batch_size=100)
+            print("DEBUG WORKER 201 execute_search() | Batches emitted!")
 
             # Emit finished with original result (for stats, history, etc.)
-            logger.debug("Emitting finished signal")
+            print("DEBUG WORKER 203 execute_search() | Emitting finished signal...")
+            logger.debug("Emitting finished signal...")
             self.finished.emit(result)
+            print("DEBUG WORKER 205 execute_search() | Finished signal emitted")
             logger.debug("Finished signal emitted")
 
         except Exception as e:
@@ -210,10 +227,18 @@ class FileExplorerWorker(QObject):
             try:
                 self.executor.progress.disconnect(self.progress)
                 self.executor.progress_detailed.disconnect(self.progress_detailed)
-            except:
+            except Exception:
                 pass  # Already disconnected or never connected
 
-    def execute_browse(self, directory: str, show_hidden: bool, recursive: bool, filters: dict):
+    def execute_browse(
+        self,
+        directory: str,
+        show_hidden: bool,
+        recursive: bool,
+        filters: dict,
+        conditions: list = None,
+        logic_operator: str = "AND"
+    ):
         """
         Execute browse operation in worker thread.
 
@@ -222,6 +247,8 @@ class FileExplorerWorker(QObject):
             show_hidden: Show hidden files
             recursive: Browse recursively
             filters: Filters dict
+            conditions: Advanced conditions list (v2.9.116 - Phase 4)
+            logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
         """
         try:
             # Forward signals
@@ -230,7 +257,12 @@ class FileExplorerWorker(QObject):
 
             # Execute browse (blocking in worker thread)
             result = self.executor.execute_browse(
-                directory=directory, show_hidden=show_hidden, recursive=recursive, filters=filters
+                directory=directory,
+                show_hidden=show_hidden,
+                recursive=recursive,
+                filters=filters,
+                conditions=conditions,
+                logic_operator=logic_operator
             )
 
             # Emit result to UI thread
@@ -243,10 +275,16 @@ class FileExplorerWorker(QObject):
             try:
                 self.executor.progress.disconnect(self.progress)
                 self.executor.progress_detailed.disconnect(self.progress_detailed)
-            except:
+            except Exception:
                 pass
 
-    def execute_replace(self, files: list, search_text: str, replace_text: str, search_options: dict):
+    def execute_replace(
+        self,
+        files: list,
+        search_text: str,
+        replace_text: str,
+        search_options: dict
+    ):
         """
         Execute replace operation in worker thread.
 
@@ -262,7 +300,10 @@ class FileExplorerWorker(QObject):
 
             # Execute replace (blocking in worker thread)
             result = self.executor.execute_replace(
-                files=files, search_text=search_text, replace_text=replace_text, search_options=search_options
+                files=files,
+                search_text=search_text,
+                replace_text=replace_text,
+                search_options=search_options
             )
 
             # Emit result to UI thread
@@ -274,5 +315,5 @@ class FileExplorerWorker(QObject):
         finally:
             try:
                 self.executor.progress.disconnect(self.progress)
-            except:
+            except Exception:
                 pass

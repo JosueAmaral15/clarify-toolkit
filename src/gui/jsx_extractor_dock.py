@@ -17,15 +17,14 @@ Features:
 Author: Josué Amaral
 Date: 2025-12-02
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+
 
 from __future__ import annotations
 
-import json
 import os
-import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -41,26 +40,11 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QTabWidget,
-    QVBoxLayout,
     QWidget,
 )
 
-from src.extractors import GenericScopeParser, JSXParser
 from src.i18n.translator import tooltip_tr, tr
-from src.utils.normalization import (
-    STANDARD_HTML_TAGS,
-    is_standard_tag,
-    kept_prefix,
-    normalize_token,
-    path_join,
-    smart_truncate,
-)
-from src.i18n.translator import tooltip_tr
 from .base_dock import BaseDock
-
-# Type checking imports
-if TYPE_CHECKING:
-    from PySide6.QtWidgets import QWidget as QWidgetType
 
 
 class JSXExtractorDock(BaseDock):
@@ -71,7 +55,7 @@ class JSXExtractorDock(BaseDock):
     building hierarchical JSON structures based on component tree.
     """
 
-    def __init__(self, parent: QWidgetType | None = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__("JSX Parameter Extractor", parent)
 
     def _setup_ui(self) -> None:
@@ -81,7 +65,7 @@ class JSXExtractorDock(BaseDock):
         self._apply_tooltips()  # v2.9.70
         self._connect_signals()
 
-    def _validate_path_security(self, path: str, operation: str = "access") -> Optional[str]:
+    def _validate_path_security(self, path: str, operation: str = "access") -> Optional[str]:  # pylint: disable=unused-argument  # For future use
         """
         Validate path for security (path traversal prevention).
 
@@ -111,6 +95,7 @@ class JSXExtractorDock(BaseDock):
             QMessageBox.warning(self, tr("jsx.msg_error_title"), tr("jsx.msg_invalid_path").format(e))
             return None
 
+    # pylint: disable=attribute-defined-outside-init  # Pattern: widgets created in helper method
     def _create_widgets(self) -> None:
         """Create all widgets."""
         # Path section
@@ -170,7 +155,10 @@ class JSXExtractorDock(BaseDock):
 
         self.case_label = QLabel(tr("jsx.lbl_case_style"))
         self.cb_case = QComboBox()
-        self.cb_case.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
+        self.cb_case.addItems([
+            tr("combo.case_snake"), tr("combo.case_camel"),
+            tr("combo.case_pascal"), tr("combo.case_kebab")
+        ])
 
         self.chk_upper = QCheckBox(tr("jsx.chk_uppercase"))
         self.chk_upper.setChecked(False)
@@ -327,49 +315,49 @@ class JSXExtractorDock(BaseDock):
         self.ed_path.setToolTip(tooltip_tr("jsx_extractor.ed_path"))
         self.btn_browse.setToolTip(tooltip_tr("jsx_extractor.btn_browse"))
         self.is_file.setToolTip(tooltip_tr("jsx_extractor.is_file"))
-        
+
         # Param and mode section
         self.ed_param.setToolTip(tooltip_tr("jsx_extractor.ed_param"))
         self.chk_is_attribute_mode.setToolTip(tooltip_tr("jsx_extractor.chk_is_attribute_mode"))
         self.cb_mode.setToolTip(tooltip_tr("jsx_extractor.cb_mode"))
-        
+
         # Generic delimiters
         self.ed_start.setToolTip(tooltip_tr("jsx_extractor.ed_start"))
         self.ed_end.setToolTip(tooltip_tr("jsx_extractor.ed_end"))
-        
+
         # Extensions
         self.ed_ext.setToolTip(tooltip_tr("jsx_extractor.ed_ext"))
-        
+
         # Extraction options
         self.chk_include_key.setToolTip(tooltip_tr("jsx_extractor.chk_include_key"))
         self.chk_include_value.setToolTip(tooltip_tr("jsx_extractor.chk_include_value"))
         self.chk_no_standard.setToolTip(tooltip_tr("jsx_extractor.chk_no_standard"))
         self.chk_only_strings.setToolTip(tooltip_tr("jsx_extractor.chk_only_strings"))
         self.chk_include_quotation_marks.setToolTip(tooltip_tr("jsx_extractor.chk_include_quotation_marks"))
-        
+
         # Normalization options
         self.cb_case.setToolTip(tooltip_tr("jsx_extractor.cb_case"))
         self.chk_upper.setToolTip(tooltip_tr("jsx_extractor.chk_upper"))
         self.ed_limit.setToolTip(tooltip_tr("jsx_extractor.ed_limit"))
         self.chk_avoid_cut.setToolTip(tooltip_tr("jsx_extractor.chk_avoid_cut"))
-        
+
         # JSON options
         self.spin_indent.setToolTip(tooltip_tr("jsx_extractor.spin_indent"))
-        
+
         # Avoid keys
         self.avoid_keys.setToolTip(tooltip_tr("jsx_extractor.avoid_keys"))
         self.cb_avoid_mode.setToolTip(tooltip_tr("jsx_extractor.cb_avoid_mode"))
-        
+
         # Action buttons
         self.btn_run.setToolTip(tooltip_tr("jsx_extractor.btn_run"))
         self.btn_save.setToolTip(tooltip_tr("jsx_extractor.btn_save"))
         self.btn_copy.setToolTip(tooltip_tr("jsx_extractor.btn_copy"))
         self.btn_clear.setToolTip(tooltip_tr("jsx_extractor.btn_clear"))
-        
+
         # Output tabs
         self.out_paths.setToolTip(tooltip_tr("jsx_extractor.out_paths"))
         self.out_json.setToolTip(tooltip_tr("jsx_extractor.out_json"))
-        
+
         # Status
         self.status_label.setToolTip(tooltip_tr("jsx_extractor.status_label"))
 
@@ -458,7 +446,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setStyleSheet("color: blue; font-style: italic;")
 
             # Import Extractor here to avoid circular imports
-            from src.extractors import Extractor
+            from src.extractors import Extractor  # pylint: disable=import-outside-toplevel  # Lazy import
 
             # Create Extractor instance with all options
             extractor = Extractor(
@@ -494,7 +482,7 @@ class JSXExtractorDock(BaseDock):
             self.status_label.setText(tr("jsx.status_completed"))
             self.status_label.setStyleSheet("color: green; font-style: italic;")
 
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
             QMessageBox.critical(self, tr("jsx.msg_extraction_error_title"), str(e))
             self.status_label.setText(f"Error: {str(e)}")
             self.status_label.setStyleSheet("color: red; font-style: italic;")
@@ -544,12 +532,12 @@ class JSXExtractorDock(BaseDock):
                         f.write(js)
 
             QMessageBox.information(self, tr("jsx.msg_saved_title"), tr("jsx.msg_saved_success"))
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness
             QMessageBox.critical(self, tr("jsx.msg_save_error_title"), str(e))
 
     def _on_copy(self) -> None:
         """Copy current tab content to clipboard."""
-        from PySide6.QtWidgets import QApplication
+        from PySide6.QtWidgets import QApplication  # pylint: disable=import-outside-toplevel  # Lazy import
 
         current = self.tabs.currentWidget()
         text = current.toPlainText()

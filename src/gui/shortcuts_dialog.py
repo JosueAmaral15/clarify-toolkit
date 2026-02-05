@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Keyboard Shortcuts Customization Dialog
 
@@ -19,8 +16,11 @@ Design Patterns:
 - Command Pattern: Each shortcut change is a reversible command
 - Observer Pattern: Cell changed signals trigger validation
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=unnecessary-lambda  # Lambda for signal connections
+# pylint: disable=line-too-long  # Long tooltips
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QKeySequence
@@ -37,7 +37,6 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
-    QWidget,
 )
 
 from src.i18n.translator import tr
@@ -150,7 +149,7 @@ class ShortcutsDialog(QDialog):
 
         # Group by category
         categories = {}
-        for action_name in all_shortcuts.keys():
+        for action_name in all_shortcuts:
             category = ShortcutManager.get_category(action_name)
             if category not in categories:
                 categories[category] = []

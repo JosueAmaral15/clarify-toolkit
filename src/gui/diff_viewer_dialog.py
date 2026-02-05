@@ -6,9 +6,12 @@ Author: Josué Amaral
 Date: 2025/12/23
 Version: 2.9.99
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # Diff loading robustness
+# pylint: disable=invalid-name  # Qt method naming (highlightBlock)
+
 
 import json
-from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -22,7 +25,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter, QTextCursor
+from PySide6.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter
 from src.i18n.translator import tr, tooltip_tr
 from ..diff_analyzer import DiffAnalyzer
 

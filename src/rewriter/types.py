@@ -1,4 +1,5 @@
 """Core data types for JSON Rewriter with duplicate key preservation."""
+# pylint: disable=duplicate-code  # Type definitions shared with other modules
 
 import json
 from typing import Union, Any, List, Tuple
@@ -6,7 +7,6 @@ from typing import Union, Any, List, Tuple
 
 class Obj(list):
     """Object represented as list [(key, value), ...], preserving order and duplicate keys."""
-    pass
 
 
 JSONNode = Union[Obj, list, dict, str, int, float, bool, None]

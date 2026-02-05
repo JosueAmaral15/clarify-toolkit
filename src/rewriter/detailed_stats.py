@@ -1,13 +1,13 @@
 """Detailed statistics tracking for JSON operations (Sprint B Feature #3 v2.9.31)."""
 
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
+from typing import List, Dict, Any
+from dataclasses import dataclass
 
 
 @dataclass
 class DetailedStatEntry:
     """Single entry in detailed statistics.
-    
+
     Attributes:
         operation: Type of operation (dedupe, eliminate, numeric_keys, etc.)
         original_key: Key that was removed/replaced
@@ -24,7 +24,7 @@ class DetailedStatEntry:
     line_numbers: str = ""
     count: int = 1
     details: str = ""
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for export."""
         return {
@@ -40,25 +40,26 @@ class DetailedStatEntry:
 
 class DetailedStatsCollector:
     """Collects detailed statistics during JSON operations.
-    
+
     Usage:
         collector = DetailedStatsCollector()
         collector.add_entry('dedupe', 'root.user.name', 'root.admin.name', 100.0, '10, 25')
         entries = collector.get_entries()
     """
-    
+
     def __init__(self):
         self.entries: List[DetailedStatEntry] = []
         self.enabled = False
-    
+
     def enable(self):
         """Enable detailed statistics collection."""
         self.enabled = True
-    
+
     def disable(self):
         """Disable detailed statistics collection."""
         self.enabled = False
-    
+
+    # pylint: disable=too-many-positional-arguments  # Stats entry requires multiple fields
     def add_entry(
         self,
         operation: str,
@@ -72,7 +73,7 @@ class DetailedStatsCollector:
         """Add a new entry to detailed statistics."""
         if not self.enabled:
             return
-        
+
         entry = DetailedStatEntry(
             operation=operation,
             original_key=original_key,
@@ -83,15 +84,15 @@ class DetailedStatsCollector:
             details=details
         )
         self.entries.append(entry)
-    
+
     def get_entries(self) -> List[DetailedStatEntry]:
         """Get all collected entries."""
         return self.entries
-    
+
     def clear(self):
         """Clear all entries."""
         self.entries.clear()
-    
+
     def get_summary(self) -> Dict[str, int]:
         """Get summary counts by operation type."""
         summary = {}

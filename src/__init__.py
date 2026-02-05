@@ -41,7 +41,7 @@ __email__ = "josue.amaral@example.com"
 # Lazy import of main function to avoid loading GUI dependencies
 def main():
     """Main entry point - lazy import to avoid GUI dependencies at module level."""
-    from .app import main as app_main
+    from .app import main as app_main  # pylint: disable=import-outside-toplevel  # Intentional lazy import
     return app_main()
 
 __all__ = ["main", "__version__", "__author__"]

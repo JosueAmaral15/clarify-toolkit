@@ -15,8 +15,8 @@ Date: 2025-12-02
 
 from typing import Optional
 
+# pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QWidget
 
 
@@ -282,6 +282,7 @@ class AccessibilityManager:
         app.setAttribute(Qt.AA_UseDesktopOpenGL, True)  # Better screen reader compat
 
     @staticmethod
+    # pylint: disable=too-many-positional-arguments  # RGB color pairs require 6 args
     def get_contrast_ratio(r1: int, g1: int, b1: int, r2: int, g2: int, b2: int) -> float:
         """
         Calculate WCAG contrast ratio between two RGB colors.

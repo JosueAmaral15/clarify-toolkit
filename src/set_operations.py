@@ -115,11 +115,11 @@ def unflatten_json(flat_dict: Dict[str, Any], sep: str = ".") -> Any:
         >>> unflatten_json({'items.0': 1, 'items.1': 2})
         {'items': [1, 2]}
     """
-    result = {}
+    nested = {}
 
     for key, value in flat_dict.items():
         parts = key.split(sep)
-        current = result
+        current = nested
 
         for i, part in enumerate(parts[:-1]):
             # Determine if next level should be list or dict
@@ -154,7 +154,7 @@ def unflatten_json(flat_dict: Dict[str, Any], sep: str = ".") -> Any:
         else:
             current[final_key] = value
 
-    return result
+    return nested
 
 
 def normalize_for_comparison(value: Any, arrays_ignore_order: bool = False) -> Any:
@@ -192,8 +192,9 @@ def normalize_for_comparison(value: Any, arrays_ignore_order: bool = False) -> A
         return value  # Primitives: int, str, float, bool (strict types)
 
 
+# pylint: disable=too-many-positional-arguments  # API design - all params meaningful
 def compare_files(
-    file_dicts: List[Dict[str, Any]],
+    files_data: List[Dict[str, Any]],
     comparison_mode: str = "key_value",
     ignore_case_keys: bool = False,
     ignore_case_values: bool = False,
@@ -204,7 +205,7 @@ def compare_files(
     Prepare files for comparison by flattening and normalizing.
 
     Args:
-        file_dicts: List of JSON objects to compare
+        files_data: List of JSON objects to compare
         comparison_mode: 'key_value', 'full_path_value', or 'key_only'
         ignore_case_keys: Normalize key case for comparison
         ignore_case_values: Normalize value case for comparison
@@ -217,7 +218,7 @@ def compare_files(
     prepared = []
     stats = {"total_keys": 0, "skipped_empty": 0}
 
-    for obj in file_dicts:
+    for obj in files_data:
         flat = flatten_json(obj)
         items = set()
 
@@ -253,26 +254,26 @@ def compare_files(
     return prepared, stats
 
 
-def intersection(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
+def intersection(files_data: List[Dict[str, Any]], **opts) -> Dict[str, Any]:
     """
     Compute intersection of multiple JSON files (A ∩ B ∩ C ...).
 
     Pipeline: left-to-right sequential intersection.
 
     Args:
-        file_dicts: List of JSON objects
-        **options: Comparison options (passed to compare_files)
+        files_data: List of JSON objects
+        **opts: Comparison options (passed to compare_files)
 
     Returns:
         JSON object containing only common elements
     """
-    if not file_dicts:
+    if not files_data:
         return {}
 
-    if len(file_dicts) == 1:
-        return file_dicts[0]
+    if len(files_data) == 1:
+        return files_data[0]
 
-    prepared, _ = compare_files(file_dicts, **options)
+    prepared, _ = compare_files(files_data, **opts)
 
     # Compute intersection: result = A ∩ B ∩ C ...
     result_set = prepared[0]
@@ -284,21 +285,21 @@ def intersection(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
     return {"intersection": list(result_set)}
 
 
-def union(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
+def union(files_data: List[Dict[str, Any]], **opts) -> Dict[str, Any]:
     """
     Compute union of multiple JSON files (A ∪ B ∪ C ...).
 
     Args:
-        file_dicts: List of JSON objects
-        **options: Comparison options
+        files_data: List of JSON objects
+        **opts: Comparison options
 
     Returns:
         JSON object containing all elements from all files
     """
-    if not file_dicts:
+    if not files_data:
         return {}
 
-    prepared, _ = compare_files(file_dicts, **options)
+    prepared, _ = compare_files(files_data, **opts)
 
     # Compute union
     result_set = set()
@@ -308,26 +309,26 @@ def union(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
     return {"union": list(result_set)}
 
 
-def difference(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
+def difference(files_data: List[Dict[str, Any]], **opts) -> Dict[str, Any]:
     """
     Compute difference (A - B - C ...).
 
     Pipeline: left-to-right sequential subtraction.
 
     Args:
-        file_dicts: List of JSON objects
-        **options: Comparison options
+        files_data: List of JSON objects
+        **opts: Comparison options
 
     Returns:
         JSON object containing elements only in first file
     """
-    if not file_dicts:
+    if not files_data:
         return {}
 
-    if len(file_dicts) == 1:
-        return file_dicts[0]
+    if len(files_data) == 1:
+        return files_data[0]
 
-    prepared, _ = compare_files(file_dicts, **options)
+    prepared, _ = compare_files(files_data, **opts)
 
     # Compute difference: result = A - B - C ...
     result_set = prepared[0]
@@ -337,7 +338,7 @@ def difference(file_dicts: List[Dict[str, Any]], **options) -> Dict[str, Any]:
     return {"difference": list(result_set)}
 
 
-def symmetric_difference(file_a: Dict[str, Any], file_b: Dict[str, Any], **options) -> Dict[str, Any]:
+def symmetric_difference(file_a: Dict[str, Any], file_b: Dict[str, Any], **opts) -> Dict[str, Any]:
     """
     Compute symmetric difference (A ⊕ B) - elements in A or B but not both.
 
@@ -346,12 +347,12 @@ def symmetric_difference(file_a: Dict[str, Any], file_b: Dict[str, Any], **optio
     Args:
         file_a: First JSON object
         file_b: Second JSON object
-        **options: Comparison options
+        **opts: Comparison options
 
     Returns:
         JSON object containing elements exclusive to each file
     """
-    prepared, _ = compare_files([file_a, file_b], **options)
+    prepared, _ = compare_files([file_a, file_b], **opts)
 
     result_set = prepared[0].symmetric_difference(prepared[1])
 
@@ -420,7 +421,7 @@ if __name__ == "__main__":
             result = difference(file_dicts, **options)
         elif args.operation == "symmetric":
             result = symmetric_difference(file_dicts[0], file_dicts[1], **options)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-exception-caught  # CLI error handling
         print(f"Error executing operation: {exc}", file=sys.stderr)
         sys.exit(1)
 

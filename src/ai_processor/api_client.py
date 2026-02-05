@@ -3,6 +3,7 @@ AI API Client Module
 
 Provides unified interface for OpenAI and Google Gemini APIs.
 """
+# pylint: disable=broad-exception-caught  # API robustness
 
 from typing import Optional, Tuple
 import socket
@@ -77,11 +78,11 @@ def list_openai_models(api_key: str) -> list:
     """List available OpenAI models."""
     if not _OPENAI_AVAILABLE or not api_key:
         return []
-    
+
     try:
         client = OpenAI(api_key=api_key)
         models = client.models.list()
-        
+
         # Filter for chat models only (gpt-*)
         chat_models = []
         for model in models.data:
@@ -91,7 +92,7 @@ def list_openai_models(api_key: str) -> list:
                     'name': model_id,
                     'label': model_id.upper()
                 })
-        
+
         return sorted(chat_models, key=lambda x: x['name'])
     except Exception:
         return []
@@ -101,11 +102,11 @@ def list_gemini_models(api_key: str) -> list:
     """List available Gemini models."""
     if not _GEMINI_AVAILABLE or not api_key:
         return []
-    
+
     try:
         genai.configure(api_key=api_key)
         models = genai.list_models()
-        
+
         # Filter for generative models
         gen_models = []
         for model in models:
@@ -117,7 +118,7 @@ def list_gemini_models(api_key: str) -> list:
                         'name': name,
                         'label': name.replace('-', ' ').title()
                     })
-        
+
         return sorted(gen_models, key=lambda x: x['name'])
     except Exception:
         return []
@@ -127,7 +128,7 @@ def list_claude_models(api_key: str) -> list:
     """List available Claude models (static list as API doesn't provide model listing)."""
     if not _CLAUDE_AVAILABLE or not api_key:
         return []
-    
+
     # Claude API doesn't have a models list endpoint, return static list
     return AVAILABLE_MODELS['claude']
 
@@ -136,20 +137,20 @@ def list_perplexity_models(api_key: str) -> list:
     """List available Perplexity models (static list)."""
     if not _OPENAI_AVAILABLE or not api_key:
         return []
-    
+
     # Perplexity doesn't expose model listing, return static list
     return AVAILABLE_MODELS['perplexity']
 
 
 class OpenAIClient:
     """OpenAI API client wrapper."""
-    
+
     def __init__(self, api_key: Optional[str], model: str = 'gpt-4o-mini'):
         self.api_key = api_key
         self.model = model
         self.available = bool(api_key) and _OPENAI_AVAILABLE
         self.client = OpenAI(api_key=api_key) if self.available else None
-    
+
     def verify_key(self) -> Tuple[bool, str]:
         """Verify API key is valid."""
         if not _OPENAI_AVAILABLE:
@@ -158,7 +159,7 @@ class OpenAIClient:
             return False, "No API key provided"
         if not has_internet():
             return False, "No internet connection"
-        
+
         try:
             models = self.client.models.list()
             if not models or not getattr(models, "data", None):
@@ -166,12 +167,12 @@ class OpenAIClient:
             return True, "✅ Valid key, internet OK, OpenAI access confirmed"
         except Exception as e:
             return False, f"❌ Key validation error: {str(e)}"
-    
+
     def chat(self, system_prompt: str, user_prompt: str) -> str:
         """Send chat request to OpenAI."""
         if not self.available:
             return ">> SIMULATED RESPONSE << (no valid API key or SDK missing)"
-        
+
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -188,12 +189,12 @@ class OpenAIClient:
 
 class GeminiClient:
     """Google Gemini API client wrapper."""
-    
+
     def __init__(self, api_key: Optional[str], model: str = 'gemini-2.5-flash'):
         self.api_key = api_key
         self.model = model
         self.available = bool(api_key) and _GEMINI_AVAILABLE
-        
+
         if self.available:
             try:
                 genai.configure(api_key=api_key)
@@ -203,7 +204,7 @@ class GeminiClient:
                 self._model = None
         else:
             self._model = None
-    
+
     def verify_key(self) -> Tuple[bool, str]:
         """Verify API key is valid."""
         if not _GEMINI_AVAILABLE:
@@ -212,7 +213,7 @@ class GeminiClient:
             return False, "No API key provided"
         if not has_internet():
             return False, "No internet connection"
-        
+
         try:
             models = list(genai.list_models())
             ok = any(
@@ -225,12 +226,12 @@ class GeminiClient:
             return False, "Could not list/verify Gemini models"
         except Exception as e:
             return False, f"❌ Key validation error: {str(e)}"
-    
+
     def chat(self, system_prompt: str, user_prompt: str) -> str:
         """Send chat request to Gemini."""
         if not self.available or not self._model:
             return ">> SIMULATED RESPONSE << (no valid API key or SDK missing)"
-        
+
         try:
             # Gemini doesn't have roles the same way; fold system+user into single prompt
             prompt = f"[SYSTEM]\n{system_prompt}\n\n[USER]\n{user_prompt}"
@@ -242,13 +243,13 @@ class GeminiClient:
 
 class ClaudeClient:
     """Anthropic Claude API client wrapper."""
-    
+
     def __init__(self, api_key: Optional[str], model: str = 'claude-sonnet-4-20250514'):
         self.api_key = api_key
         self.model = model
         self.available = bool(api_key) and _CLAUDE_AVAILABLE
         self.client = anthropic.Anthropic(api_key=api_key) if self.available else None
-    
+
     def verify_key(self) -> Tuple[bool, str]:
         """Verify API key is valid."""
         if not _CLAUDE_AVAILABLE:
@@ -257,7 +258,7 @@ class ClaudeClient:
             return False, "No API key provided"
         if not has_internet():
             return False, "No internet connection"
-        
+
         try:
             # Test with minimal request
             response = self.client.messages.create(
@@ -270,12 +271,12 @@ class ClaudeClient:
             return False, "Could not verify Claude API"
         except Exception as e:
             return False, f"❌ Key validation error: {str(e)}"
-    
+
     def chat(self, system_prompt: str, user_prompt: str) -> str:
         """Send chat request to Claude."""
         if not self.available:
             return ">> SIMULATED RESPONSE << (no valid API key or SDK missing)"
-        
+
         try:
             response = self.client.messages.create(
                 model=self.model,
@@ -291,16 +292,16 @@ class ClaudeClient:
 
 class PerplexityClient:
     """Perplexity API client wrapper (OpenAI-compatible)."""
-    
+
     def __init__(self, api_key: Optional[str], model: str = 'llama-3.1-sonar-small-128k-online'):
         self.api_key = api_key
         self.model = model
         self.available = bool(api_key) and _OPENAI_AVAILABLE
         self.client = OpenAI(
-            api_key=api_key, 
+            api_key=api_key,
             base_url="https://api.perplexity.ai"
         ) if self.available else None
-    
+
     def verify_key(self) -> Tuple[bool, str]:
         """Verify API key is valid."""
         if not _OPENAI_AVAILABLE:
@@ -309,7 +310,7 @@ class PerplexityClient:
             return False, "No API key provided"
         if not has_internet():
             return False, "No internet connection"
-        
+
         try:
             # Test with minimal request
             response = self.client.chat.completions.create(
@@ -322,12 +323,12 @@ class PerplexityClient:
             return False, "Could not verify Perplexity API"
         except Exception as e:
             return False, f"❌ Key validation error: {str(e)}"
-    
+
     def chat(self, system_prompt: str, user_prompt: str) -> str:
         """Send chat request to Perplexity."""
         if not self.available:
             return ">> SIMULATED RESPONSE << (no valid API key or SDK missing)"
-        
+
         try:
             response = self.client.chat.completions.create(
                 model=self.model,

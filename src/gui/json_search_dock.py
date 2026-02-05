@@ -3,22 +3,25 @@ JSON Search Dock Widget
 
 Provides UI for searching keys and values in JSON and TypeScript files.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy imports for optional modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=no-member  # ProjectIndexer dynamic attributes
 
 import os
 
-from PySide6.QtWidgets import QCheckBox, QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QSpinBox
+from PySide6.QtWidgets import (
+    QCheckBox, QComboBox, QGridLayout, QHBoxLayout,
+    QLabel, QLineEdit, QSpinBox
+)
 
 from src.accessibility_manager import AccessibilityManager
 from src.ai_processor.processor import list_files_recursive
 from src.i18n.translator import tooltip_tr, tr
+from src.json_search import ProjectIndexer, resolve_query_with_mode
+
 from .base_dock import ProcessorWorkerBase, StandardToolDock
-from src.json_search import (
-    ProjectIndexer,
-    match_with_options,
-    parse_composite_query,
-    resolve_query,
-    resolve_query_with_mode,
-)
 
 
 class JsonSearchWorker(ProcessorWorkerBase):
@@ -35,10 +38,11 @@ class JsonSearchWorker(ProcessorWorkerBase):
         self.max_results = max_results
 
     def run(self):
+        """Execute search in background thread."""
         try:
             # Create indexer and index files
             self.emit_progress(f"Indexing {len(self.files)} file(s)...")
-            indexer = ProjectIndexer()
+            indexer = ProjectIndexer()  # pylint: disable=no-value-for-parameter  # Optional args
 
             for i, file_path in enumerate(self.files):
                 if self.check_interrupt():
@@ -112,7 +116,10 @@ class JsonSearchDock(StandardToolDock):
         # Search mode
         grid.addWidget(QLabel(tr("json_search.lbl_mode")), 3, 0)
         self.combo_mode = QComboBox()
-        self.combo_mode.addItems([tr("json_search.mode_key_value"), tr("json_search.mode_key"), tr("json_search.mode_value")])
+        self.combo_mode.addItems([
+            tr("json_search.mode_key_value"), tr("json_search.mode_key"),
+            tr("json_search.mode_value")
+        ])
         grid.addWidget(self.combo_mode, 3, 1, 1, 3)
 
         # File/directory input
@@ -175,7 +182,7 @@ class JsonSearchDock(StandardToolDock):
         """Setup Esc key to interrupt search (v2.9.50)."""
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QShortcut, QKeySequence
-        
+
         shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
 
@@ -185,28 +192,28 @@ class JsonSearchDock(StandardToolDock):
         self.ed_search_key.setToolTip(tooltip_tr("json_search.ed_search_key"))
         self.ed_search_value.setToolTip(tooltip_tr("json_search.ed_search_value"))
         self.ed_filename.setToolTip(tooltip_tr("json_search.ed_filename"))
-        
+
         # Search mode (1)
         self.combo_mode.setToolTip(tooltip_tr("json_search.combo_mode"))
-        
+
         # Path inputs (3)
         self.ed_path.setToolTip(tooltip_tr("json_search.ed_path"))
         self.btn_browse.setToolTip(tooltip_tr("json_search.btn_browse"))
         self.chk_is_file.setToolTip(tooltip_tr("json_search.chk_is_file"))
-        
+
         # Options (2)
         self.chk_case.setToolTip(tooltip_tr("json_search.chk_case"))
         self.chk_regex.setToolTip(tooltip_tr("json_search.chk_regex"))
-        
+
         # Max results (1)
         self.spin_max.setToolTip(tooltip_tr("json_search.spin_max"))
-        
+
         # Action buttons (4)
         self.btn_search.setToolTip(tooltip_tr("json_search.btn_search"))
         self.btn_interrupt.setToolTip(tooltip_tr("json_search.btn_interrupt"))
         self.btn_save_results.setToolTip(tooltip_tr("json_search.btn_save_results"))
         self.btn_clear.setToolTip(tooltip_tr("json_search.btn_clear"))
-        
+
         # Results panel (1)
         self.text_results.setToolTip(tooltip_tr("json_search.text_results"))
 
@@ -255,7 +262,7 @@ class JsonSearchDock(StandardToolDock):
                     pattern = re.compile(filename_filter)
                     files = [f for f in files if pattern.search(os.path.basename(f))]
                 except re.error as e:
-                    raise ValueError(f"Invalid regex pattern: {e}")
+                    raise ValueError(f"Invalid regex pattern: {e}") from e
 
             # Method 3: wildcards (default)
             else:
@@ -384,7 +391,11 @@ class JsonSearchDock(StandardToolDock):
 
     def _save_results(self):
         """Save search results to file(s) with format options."""
-        from PySide6.QtWidgets import QButtonGroup, QDialog, QDialogButtonBox, QLabel, QRadioButton, QVBoxLayout
+        # pylint: disable=redefined-outer-name,reimported  # Lazy dialog imports
+        from PySide6.QtWidgets import (
+            QButtonGroup, QDialog, QDialogButtonBox,
+            QLabel, QRadioButton, QVBoxLayout
+        )
 
         if not self.last_results:
             self.show_warning(tr("json_search.warning_no_results_title"), tr("json_search.warning_no_results_message"))
@@ -429,7 +440,7 @@ class JsonSearchDock(StandardToolDock):
         selected_option = self.radio_group.checkedId()
 
         # Execute save based on selection
-        if selected_option == 0:
+        if not selected_option:
             self._save_single_file()
         elif selected_option == 1:
             self._save_per_original_file()
@@ -465,9 +476,15 @@ class JsonSearchDock(StandardToolDock):
                     f.write(f"  Value: {value}\n")
                     f.write("\n")
 
-            self.show_info(tr("json_search.success_title"), tr("json_search.success_saved").replace("{path}", file_path))
+            self.show_info(
+                tr("json_search.success_title"),
+                tr("json_search.success_saved").replace("{path}", file_path)
+            )
         except Exception as e:
-            self.show_error(tr("json_search.error_save_title"), tr("json_search.error_save_message").replace("{error}", str(e)))
+            self.show_error(
+                tr("json_search.error_save_title"),
+                tr("json_search.error_save_message").replace("{error}", str(e))
+            )
 
     def _save_per_original_file(self):
         """Save results grouped by original source file."""
@@ -506,9 +523,17 @@ class JsonSearchDock(StandardToolDock):
                         f.write(f"  Value: {value}\n")
                         f.write("\n")
 
-            self.show_info(tr("json_search.success_title"), tr("json_search.success_saved_multiple").replace("{count}", str(len(grouped))).replace("{path}", output_dir))
+            self.show_info(
+                tr("json_search.success_title"),
+                tr("json_search.success_saved_multiple")
+                .replace("{count}", str(len(grouped)))
+                .replace("{path}", output_dir)
+            )
         except Exception as e:
-            self.show_error(tr("json_search.error_save_title"), tr("json_search.error_save_message").replace("{error}", str(e)))
+            self.show_error(
+                tr("json_search.error_save_title"),
+                tr("json_search.error_save_message").replace("{error}", str(e))
+            )
 
     def _save_per_query(self):
         """Save results grouped by search query (key or value)."""

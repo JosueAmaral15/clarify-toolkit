@@ -23,13 +23,13 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         ArgumentParser with all subcommands configured.
     """
-    p = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Search/Replace/Insert + JSON Translate/Dedupe — GUI or CLI"
     )
-    sub = p.add_subparsers(dest="cmd")
+    sub = parser.add_subparsers(dest="cmd")
 
     # GUI
-    p.add_argument("--gui", action="store_true", help="Launch GUI (default if no cmd).")
+    parser.add_argument("--gui", action="store_true", help="Launch GUI (default if no cmd).")
 
     # search
     ps = sub.add_parser("search", help="Search in a file/folder")
@@ -40,8 +40,10 @@ def build_parser() -> argparse.ArgumentParser:
     ps.add_argument("--regex", action="store_true", help="Interpret query as regex")
     ps.add_argument("--include", nargs="*", default=None, help="Include globs (*.ts *.tsx …)")
     ps.add_argument("--exclude", nargs="*", default=None, help="Exclude globs (node_modules …)")
-    ps.add_argument("--cond", nargs="*", help="Advanced conditions like field:op:value "
-                                                  "(field=filename|path|ext|size|mtime) (op like contains, equals, >, …)")
+    ps.add_argument(
+        "--cond", nargs="*",
+        help="Advanced conditions like field:op:value (field=filename|path|ext|size|mtime)"
+    )
     ps.set_defaults(func=cli_search)
 
     # replace
@@ -107,4 +109,4 @@ def build_parser() -> argparse.ArgumentParser:
     pd.add_argument("-b", "--no-line-break", action="store_true", help="Remove blank blanklines in output")
     pd.set_defaults(func=cli_dedupe)
 
-    return p
+    return parser

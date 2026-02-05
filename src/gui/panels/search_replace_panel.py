@@ -21,40 +21,38 @@ This module contains the SearchReplacePanel class which implements:
 Author: Josué Amaral
 Date: 2025
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
+# pylint: disable=too-many-instance-attributes  # Complex UI panel
+# pylint: disable=too-many-public-methods  # UI event handlers
+# pylint: disable=import-outside-toplevel  # Lazy imports
+# pylint: disable=invalid-name  # Qt method names, single-letter layout vars
+# pylint: disable=missing-function-docstring  # Internal UI methods
+# pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
+# pylint: disable=unnecessary-pass  # Placeholder for future code
 
 from __future__ import annotations
-import os
 import re
 import sys
-from typing import List, Tuple, Dict, Optional
 
-# PySide6 imports
+from typing import List, Tuple
+
 from PySide6.QtCore import Qt, Signal, QThread, QEvent
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QCheckBox,
-    QComboBox,
-    QPlainTextEdit,
-    QGroupBox,
-    QSplitter,
-    QScrollArea,
-    QFileDialog,
-    QMessageBox,
+    QCheckBox, QComboBox, QFileDialog, QGridLayout,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QPlainTextEdit, QPushButton, QScrollArea,
+    QSplitter, QVBoxLayout, QWidget
 )
 
 from src.i18n.translator import tr, tooltip_tr
 
 # Core functionality
-from ...core import SearchOptions, preserve_case_like, replace_in_text, Condition, filter_files_by_conditions
+from ...core import SearchOptions, replace_in_text, Condition, filter_files_by_conditions
 
 # Utilities
-from ...utils import walk_files, read_text, write_text, parse_exclusion_patterns
+from ...utils import walk_files, read_text, write_text
 
 # Components from this package
 from .results_tree import ResultsTree
@@ -86,11 +84,6 @@ class SearchReplacePanel(QWidget):
         self.progress_manager = progress_manager
         self._current_task_id = None
         self._processing_modal = None  # Modal de progresso
-
-    def set_editor_fonts(self, font):
-        """Set monospaced font for query and replacement editors (v2.9.115)."""
-        self.ed_repl.setFont(font)
-        self.ed_query.setFont(font)
 
         # Path row
         column = QVBoxLayout()
@@ -144,23 +137,23 @@ class SearchReplacePanel(QWidget):
 
         # Search field + toggles (v2.9.112 - split into file name and file content)
         gb = QGroupBox(tr("search_replace.group_search"))
-        g = QGridLayout(gb)
+        grid = QGridLayout(gb)
 
         # File name query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
+        grid.addWidget(QLabel(tr("search_replace.lbl_file_name_query")), 0, 0)
         self.ed_filename_query = QLineEdit()
         self.ed_filename_query.setPlaceholderText(tr("search_replace.placeholder_filename"))
         self.ed_filename_query.setToolTip(tooltip_tr("search_replace.tooltip_filename_query"))
-        g.addWidget(self.ed_filename_query, 0, 1, 1, 3)
+        grid.addWidget(self.ed_filename_query, 0, 1, 1, 3)
 
         # File content query field
-        g.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
+        grid.addWidget(QLabel(tr("search_replace.lbl_file_content_query")), 1, 0)
         self.ed_query = QPlainTextEdit()
         self.ed_query.setMinimumHeight(30)
         self.ed_query.setMaximumHeight(150)
         self.ed_query.setPlaceholderText(tr("search_replace.placeholder_content"))
         self.ed_query.setToolTip(tooltip_tr("search_replace.tooltip_query"))
-        g.addWidget(self.ed_query, 1, 1, 1, 3)
+        grid.addWidget(self.ed_query, 1, 1, 1, 3)
 
         # Checkboxes
         self.chk_case = QCheckBox(tr("search_replace.chk_case_sensitive"))
@@ -174,11 +167,11 @@ class SearchReplacePanel(QWidget):
         self.btn_search = QPushButton(tr("search_replace.btn_search_cancel"))
         self.btn_search.setToolTip(tooltip_tr("search_replace.tooltip_search"))
 
-        g.addWidget(self.chk_case, 2, 0)
-        g.addWidget(self.chk_word, 2, 1)
-        g.addWidget(self.chk_regex, 2, 2)
-        g.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
-        g.addWidget(self.btn_search, 3, 3)  # Moved to row 3
+        grid.addWidget(self.chk_case, 2, 0)
+        grid.addWidget(self.chk_word, 2, 1)
+        grid.addWidget(self.chk_regex, 2, 2)
+        grid.addWidget(self.chk_multi_query, 2, 3)  # v2.8.0
+        grid.addWidget(self.btn_search, 3, 3)  # Moved to row 3
 
         root.addWidget(gb)
 
@@ -321,6 +314,12 @@ class SearchReplacePanel(QWidget):
         self.btn_search.clicked.connect(self._start_search_threaded)
         self.btn_replace_one.clicked.connect(lambda: self._do_replace(all_=False))
         self.btn_replace_all.clicked.connect(lambda: self._do_replace(all_=True))
+
+
+    def set_editor_fonts(self, font):
+        """Set monospaced font for query and replacement editors (v2.9.115)."""
+        self.ed_repl.setFont(font)
+        self.ed_query.setFont(font)
 
     def eventFilter(self, obj, event):
         """
@@ -520,18 +519,19 @@ class SearchReplacePanel(QWidget):
                 chk_case,
                 chk_word,
                 chk_regex,
-                btn_remove,
+                _btn_remove,
             ) in self.cond_list:
-                f = cb_field.currentText().strip()
-                o = cb_op.currentText().strip()
-                v = ed.text().strip()
+                field = cb_field.currentText().strip()
+                operator = cb_op.currentText().strip()
+                value = ed.text().strip()
                 scope_type = cb_scope.currentText().strip()
                 scope_val = ed_scope_val.text().strip()
                 case_sensitive = chk_case.isChecked()
                 whole_word = chk_word.isChecked()
                 use_regex = chk_regex.isChecked()
-                if f and o and v:
-                    out.append(Condition(f, o, v, scope_type, scope_val, case_sensitive, whole_word, use_regex))
+                if field and operator and value:
+                    out.append(Condition(field, operator, value, scope_type,
+                                       scope_val, case_sensitive, whole_word, use_regex))
         logic_op = self.combo_logic_op.currentText()
         return out, logic_op
 
@@ -554,18 +554,21 @@ class SearchReplacePanel(QWidget):
 
             # Combine with user-provided include globs if any
             if ed_inc_text:
-                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+                inc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", ed_inc_text)
+                       if glob_pat.strip()]
                 inc.extend(ext_globs)
             else:
                 inc = ext_globs
         else:
             # No extension filter, use include globs or default
             if ed_inc_text:
-                inc = [g.strip() for g in re.split(r"[;,]", ed_inc_text) if g.strip()]
+                inc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", ed_inc_text)
+                       if glob_pat.strip()]
             else:
                 inc = ["*.*"]  # Default: all files
 
-        exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
+        exc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", self.ed_exc.text())
+               if glob_pat.strip()]
         files = list(walk_files(path, inc, exc))
         conds, logic_op = self._conds()
         return filter_files_by_conditions(files, conds, logic_op)
@@ -610,7 +613,7 @@ class SearchReplacePanel(QWidget):
                 chk_case,
                 chk_word,
                 chk_regex,
-                btn_remove,
+                _btn_remove,
             ) in self.cond_list:
                 cb_field.setEnabled(state)
                 cb_op.setEnabled(state)
@@ -681,8 +684,9 @@ class SearchReplacePanel(QWidget):
                         return
 
                     # Check if there are any queries
-                    if multi_query_processor.get_query_count() == 0:
-                        self.error.emit("No valid queries found. Add at least one search pattern.")
+                    if not multi_query_processor.get_query_count():
+                        msg = "No valid queries found. Add at least one search pattern."
+                        self.error.emit(msg)
                         self.done.emit({})
                         return
                 except Exception as e:

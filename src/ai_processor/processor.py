@@ -3,11 +3,11 @@ AI Processor Module
 
 Core file processing logic for AI-powered batch operations.
 """
+# pylint: disable=broad-exception-caught  # File processing robustness
 
 import os
 import re
 from typing import List, Optional, Callable
-from pathlib import Path
 from .template_engine import render_prompt, has_templates
 
 
@@ -24,7 +24,7 @@ def extract_between_markers(
 ) -> str:
     """
     Extract content between start and end markers.
-    
+
     Args:
         text: Input text
         start_marker: Start marker (plain text or regex)
@@ -35,35 +35,35 @@ def extract_between_markers(
         end_case_sensitive: Case sensitive end matching
         include_markers: Include markers in extracted text
         match_all: Extract all matches (True) or only first (False)
-    
+
     Returns:
         Extracted text
     """
     if not (start_marker and end_marker):
         return text
-    
+
     # Build start pattern
     if start_regex:
         start_pat = start_marker
     else:
         start_pat = re.escape(start_marker)
-    
+
     # Build end pattern
     if end_regex:
         end_pat = end_marker
     else:
         end_pat = re.escape(end_marker)
-    
+
     # Compile with independent case flags
     flags_start = 0 if start_case_sensitive else re.IGNORECASE
     flags_end = 0 if end_case_sensitive else re.IGNORECASE
-    
+
     start_re = re.compile(start_pat, flags_start)
     end_re = re.compile(end_pat, flags_end)
-    
+
     out = []
     i = 0
-    
+
     # Non-overlapping segment finder
     while i <= len(text):
         m_start = start_re.search(text, i)
@@ -72,35 +72,35 @@ def extract_between_markers(
         m_end = end_re.search(text, m_start.end())
         if not m_end:
             break
-        
+
         if include_markers:
             seg = text[m_start.start(): m_end.end()]
         else:
             seg = text[m_start.end(): m_end.start()]
-        
+
         out.append(seg)
         i = m_end.end()
         if not match_all:
             break
-    
+
     return "".join(out) if out else text
 
 
 def read_file_safe(file_path: str, max_bytes: Optional[int] = None) -> str:
     """
     Safely read file content with optional byte limit.
-    
+
     Args:
         file_path: Path to file
         max_bytes: Maximum bytes to read (None = no limit)
-    
+
     Returns:
         File content as string
     """
     try:
         with open(file_path, 'rb') as f:
             data = f.read() if max_bytes is None else f.read(max_bytes)
-        
+
         # Try UTF-8 first, fallback to latin-1
         try:
             return data.decode('utf-8')
@@ -113,12 +113,12 @@ def read_file_safe(file_path: str, max_bytes: Optional[int] = None) -> str:
 def list_files_recursive(directory: str, extensions: List[str]) -> List[str]:
     """
     List all files in directory recursively, optionally filtered by extensions.
-    
+
     Args:
         directory: Root directory path
         extensions: List of extensions to filter (e.g., ['.txt', '.py'])
                    Empty list = all files
-    
+
     Returns:
         List of absolute file paths
     """
@@ -133,14 +133,14 @@ def list_files_recursive(directory: str, extensions: List[str]) -> List[str]:
 def strip_code_fences(text: str) -> str:
     """
     Remove markdown code fences from AI responses.
-    
+
     Examples:
         ```python\ncode\n``` -> code
         ```json\n{...}\n``` -> {...}
-    
+
     Args:
         text: Input text with potential code fences
-    
+
     Returns:
         Text with code fences removed
     """
@@ -170,7 +170,7 @@ def process_file(
 ) -> str:
     """
     Process a single file with AI.
-    
+
     Args:
         file_path: Path to file
         prompt: User prompt/instruction
@@ -187,19 +187,19 @@ def process_file(
         template_enabled: Enable template variable substitution ({{count}}, {{filename}}, etc.)
         file_index: Current file index (0-based) for templates
         total_files: Total number of files for templates
-    
+
     Returns:
         AI response
     """
     # Apply template rendering if enabled
     if template_enabled and has_templates(prompt):
         prompt = render_prompt(prompt, file_index, total_files, file_path)
-    
+
     if progress_callback:
         progress_callback(f"Reading {os.path.basename(file_path)}...")
-    
+
     content = read_file_safe(file_path, max_bytes)
-    
+
     # Apply scope filter if enabled
     if scope_filter_enabled and scope_start and scope_end:
         content = extract_between_markers(
@@ -213,15 +213,18 @@ def process_file(
             include_markers=False,
             match_all=True
         )
-    
+
     user_prompt = f"{prompt}\n\n# File: {file_path}\n```\n{content}\n```"
-    
+
     if progress_callback:
         progress_callback(f"Sending {os.path.basename(file_path)} to AI...")
-    
-    system_prompt = "You are a helpful assistant. Analyze the provided file and respond according to the user's instructions."
+
+    system_prompt = (
+        "You are a helpful assistant. Analyze the provided file and respond "
+        "according to the user's instructions."
+    )
     response = client.chat(system_prompt, user_prompt)
-    
+
     return strip_code_fences(response.strip())
 
 
@@ -244,7 +247,7 @@ def process_multiple_files(
 ) -> List[str]:
     """
     Process multiple files with AI.
-    
+
     Args:
         file_paths: List of file paths to process
         prompt: User prompt/instruction (or list of prompts for line-by-line)
@@ -261,31 +264,31 @@ def process_multiple_files(
         scope_end_regex: Treat end as regex
         scope_end_case: Case sensitive end
         template_enabled: Enable template variable substitution ({{count}}, {{filename}}, etc.)
-    
+
     Returns:
         List of AI responses (one per file)
     """
     responses = []
     prompt_lines = prompt.splitlines() if line_by_line else []
     total_files = len(file_paths)
-    
+
     for i, file_path in enumerate(file_paths):
         # Check for interrupt
         if interrupt_check and interrupt_check():
             if progress_callback:
                 progress_callback("⚠️ Processing interrupted by user")
             break
-        
+
         # Select prompt
         if line_by_line and prompt_lines:
             current_prompt = prompt_lines[i % len(prompt_lines)]
         else:
             current_prompt = prompt
-        
+
         # Process file
         if progress_callback:
             progress_callback(f"[{i+1}/{len(file_paths)}] Processing {os.path.basename(file_path)}...")
-        
+
         response = process_file(
             file_path, current_prompt, client, max_bytes, progress_callback,
             scope_filter_enabled, scope_start, scope_end,
@@ -294,10 +297,10 @@ def process_multiple_files(
             template_enabled, i, total_files
         )
         responses.append(response)
-        
+
         if progress_callback:
             progress_callback(f"✓ Completed {os.path.basename(file_path)}")
-    
+
     return responses
 
 
@@ -308,14 +311,14 @@ def save_results(
 ) -> None:
     """
     Save processing results to file.
-    
+
     Args:
         results: List of AI responses
         output_path: Output file path
         mode: 'write' (overwrite) or 'append'
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
+
     mode_flag = 'a' if mode == 'append' else 'w'
     with open(output_path, mode_flag, encoding='utf-8') as f:
         for i, result in enumerate(results, 1):
