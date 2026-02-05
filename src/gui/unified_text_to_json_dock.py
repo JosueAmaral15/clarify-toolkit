@@ -1073,12 +1073,25 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         from PySide6.QtWidgets import QApplication
         
         current_widget = self.jsx_output_tabs.currentWidget()
+        current_tab_index = self.jsx_output_tabs.currentIndex()
+        
+        print(f"DEBUG _jsx_copy_all() | Current tab index: {current_tab_index}")
+        print(f"DEBUG _jsx_copy_all() | Tab 0 (Paths) widget: {self.jsx_paths_output}")
+        print(f"DEBUG _jsx_copy_all() | Tab 1 (JSON) widget: {self.jsx_json_output}")
+        print(f"DEBUG _jsx_copy_all() | Current widget: {current_widget}")
+        print(f"DEBUG _jsx_copy_all() | Is Paths tab? {current_widget is self.jsx_paths_output}")
+        print(f"DEBUG _jsx_copy_all() | Is JSON tab? {current_widget is self.jsx_json_output}")
+        
         text = current_widget.toPlainText()
         
-        print(f"DEBUG _jsx_copy_all() | Current tab index: {self.jsx_output_tabs.currentIndex()}")
-        print(f"DEBUG _jsx_copy_all() | Current widget: {current_widget}")
         print(f"DEBUG _jsx_copy_all() | Text length: {len(text)}")
         print(f"DEBUG _jsx_copy_all() | Text preview: {text[:100] if text else '(empty)'}")
+        
+        # Also show what's in each tab
+        paths_text = self.jsx_paths_output.toPlainText()
+        json_text = self.jsx_json_output.toPlainText()
+        print(f"DEBUG _jsx_copy_all() | Paths tab has {len(paths_text)} chars")
+        print(f"DEBUG _jsx_copy_all() | JSON tab has {len(json_text)} chars")
         
         if not text:
             self.show_warning(
@@ -1108,6 +1121,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         QApplication.clipboard().setText(result)
         
         print(f"DEBUG _jsx_copy_all() | Copied {len(result)} characters to clipboard")
+        print(f"DEBUG _jsx_copy_all() | Clipboard preview: {QApplication.clipboard().text()[:100]}")
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
