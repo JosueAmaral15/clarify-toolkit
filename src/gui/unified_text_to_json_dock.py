@@ -1012,12 +1012,12 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_progress(self, message: str):
         """Handle progress updates from extraction worker."""
-        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
             self._extraction_progress.setLabelText(message)
     
     def _on_extraction_progress_detailed(self, current: int, total: int, message: str):
         """Handle detailed progress updates from extraction worker."""
-        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
             self._extraction_progress.setMaximum(total)
             self._extraction_progress.setValue(current)
             self._extraction_progress.setLabelText(f"[{current}/{total}] {message}")
@@ -1060,18 +1060,32 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_canceled(self):
         """Handle extraction cancellation."""
-        if hasattr(self, '_extraction_worker'):
+        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
             self._extraction_worker._cancel_requested = True
         self._jsx_update_status("Extraction canceled")
         self._cleanup_extraction_thread()
     
     def _cleanup_extraction_thread(self):
         """Clean up worker thread and progress dialog."""
-        if hasattr(self, '_extraction_progress') and self._extraction_progress:
+        # Disconnect signals first to prevent race conditions
+        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
+            try:
+                self._extraction_worker.progress.disconnect()
+                self._extraction_worker.progress_detailed.disconnect()
+                self._extraction_worker.finished.disconnect()
+                self._extraction_worker.error.disconnect()
+            except:
+                pass  # Already disconnected
+        
+        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
+            try:
+                self._extraction_progress.canceled.disconnect()
+            except:
+                pass  # Already disconnected
             self._extraction_progress.close()
             self._extraction_progress = None
         
-        if hasattr(self, '_extraction_thread') and self._extraction_thread:
+        if hasattr(self, '_extraction_thread') and self._extraction_thread is not None:
             self._extraction_thread.quit()
             self._extraction_thread.wait(5000)  # Wait up to 5 seconds
             if self._extraction_thread.isRunning():
