@@ -18,8 +18,7 @@ Date: 2025-12-01
 
 import re
 import ast
-import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 
 def detect_format(text: str) -> str:
@@ -115,7 +114,7 @@ def parse_value(value_str: str, infer_types: bool = True) -> Any:
         return value_str
 
     # Empty string
-    if value_str == '':
+    if not value_str:
         return None
 
     # Boolean values
@@ -278,7 +277,7 @@ def convert_python_dict_to_json(text: str) -> Any:
     try:
         return ast.literal_eval(text)
     except (ValueError, SyntaxError) as e:
-        raise ValueError(f"Invalid Python literal: {e}")
+        raise ValueError(f"Invalid Python literal: {e}") from e
 
 
 def convert_yaml_to_json(text: str, infer_types: bool = True) -> Any:
@@ -440,15 +439,15 @@ def convert_toml_to_json(text: str) -> Any:
     """
     try:
         # Try tomli (Python 3.11+)
-        import tomli
+        import tomli  # pylint: disable=import-outside-toplevel
         return tomli.loads(text)
     except ImportError:
         try:
             # Try toml library
-            import toml
+            import toml  # pylint: disable=import-outside-toplevel
             return toml.loads(text)
-        except ImportError:
-            raise ValueError("TOML library not available. Install with: pip install tomli")
+        except ImportError as exc:
+            raise ValueError("TOML library not available. Install with: pip install tomli") from exc
 
 
 def convert_java_properties_to_json(text: str, infer_types: bool = True) -> Dict[str, Any]:
@@ -523,7 +522,7 @@ def convert_toon_to_json(text: str) -> Any:
             array_match = re.match(r'^(\w+)\[(\d+)\]:\s*(.*)$', line)
             if array_match:
                 key = array_match.group(1)
-                length = int(array_match.group(2))
+                # array_length = int(array_match.group(2))  # Not currently used
                 values_str = array_match.group(3)
 
                 if values_str:
@@ -543,7 +542,7 @@ def convert_toon_to_json(text: str) -> Any:
     # Root array: [N]: values
     root_array_match = re.match(r'^\[(\d+)\]:\s*(.*)$', text)
     if root_array_match:
-        length = int(root_array_match.group(1))
+        # array_length = int(root_array_match.group(1))  # Not currently used
         values_str = root_array_match.group(2)
 
         if values_str:
