@@ -1069,7 +1069,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         return False
     
     def _jsx_copy_all(self):
-        """Copy BOTH tabs content to clipboard (Paths + JSON together)."""
+        """Copy BOTH tabs content to clipboard (Paths + blank line + JSON)."""
         from PySide6.QtWidgets import QApplication
         
         # Get content from BOTH tabs
@@ -1086,7 +1086,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             )
             return
         
-        # Combine both outputs: Paths, then separator, then JSON
+        # Combine both outputs: Paths, blank line, then JSON
         combined_parts = []
         
         # Add Paths content (filtered)
@@ -1106,10 +1106,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             
             combined_parts.append("\n".join(paths_compact))
         
-        # Add separator if both exist
-        if paths_text and json_text:
-            combined_parts.append(", in the next line:")
-        
         # Add JSON content (filtered)
         if json_text:
             json_lines = json_text.splitlines()
@@ -1127,12 +1123,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             
             combined_parts.append("\n".join(json_compact))
         
-        # Combine all parts
-        result = " ".join(combined_parts)
+        # Join with blank line separator (two newlines = blank line between)
+        result = "\n\n".join(combined_parts)
         
         QApplication.clipboard().setText(result)
-        
-        total_lines = len(paths_text.splitlines()) + len(json_text.splitlines()) if paths_text and json_text else (len(paths_text.splitlines()) if paths_text else len(json_text.splitlines()))
         
         print(f"DEBUG _jsx_copy_all() | Combined {len(result)} characters (Paths + JSON)")
         
