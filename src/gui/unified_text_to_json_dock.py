@@ -1069,81 +1069,76 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         return False
     
     def _jsx_copy_all(self):
-        """Copy current tab content to clipboard (filtered)."""
+        """Copy BOTH tabs content to clipboard (Paths + JSON together)."""
         from PySide6.QtWidgets import QApplication
         
-        # CRITICAL FIX: Save tab index in a lambda when button is pressed
-        # to avoid focus-change issues when button is clicked
-        # 
-        # Problem: currentIndex() returns 0 after button click due to focus change
-        # Solution: Use tabBar().currentIndex() which is more reliable,
-        #           or check which tab widget has content that matches cursor position
-        
-        # Alternative approach: Check which output has focus or non-empty selection
-        paths_has_focus = self.jsx_paths_output.hasFocus()
-        json_has_focus = self.jsx_json_output.hasFocus()
-        
-        # Get tab bar's current index (before button steals focus)
-        tab_bar_index = self.jsx_output_tabs.tabBar().currentIndex()
-        
-        print(f"DEBUG _jsx_copy_all() | tabBar().currentIndex(): {tab_bar_index}")
-        print(f"DEBUG _jsx_copy_all() | currentIndex(): {self.jsx_output_tabs.currentIndex()}")
-        print(f"DEBUG _jsx_copy_all() | Paths has focus: {paths_has_focus}")
-        print(f"DEBUG _jsx_copy_all() | JSON has focus: {json_has_focus}")
-        
-        # Use tab bar index (more reliable)
-        current_tab_index = tab_bar_index
-        
-        # Get widget based on index
-        if current_tab_index == 0:
-            current_widget = self.jsx_paths_output
-            tab_name = "Paths"
-        elif current_tab_index == 1:
-            current_widget = self.jsx_json_output
-            tab_name = "JSON"
-        else:
-            print(f"ERROR: Unexpected tab index {current_tab_index}")
-            return
-        
-        text = current_widget.toPlainText()
-        
-        print(f"DEBUG _jsx_copy_all() | Using tab index: {current_tab_index}")
-        print(f"DEBUG _jsx_copy_all() | Tab name: {tab_name}")
-        print(f"DEBUG _jsx_copy_all() | Text length: {len(text)}")
-        
-        # Also show what's in each tab
+        # Get content from BOTH tabs
         paths_text = self.jsx_paths_output.toPlainText()
         json_text = self.jsx_json_output.toPlainText()
+        
         print(f"DEBUG _jsx_copy_all() | Paths tab has {len(paths_text)} chars")
         print(f"DEBUG _jsx_copy_all() | JSON tab has {len(json_text)} chars")
         
-        if not text:
+        if not paths_text and not json_text:
             self.show_warning(
                 tr("advanced_extractor.error", "Error"),
                 "No content to copy. Please run extraction first."
             )
             return
         
-        lines = text.splitlines()
-        filtered = [ln for ln in lines if not self._jsx_should_filter_line(ln)]
+        # Combine both outputs: Paths, then separator, then JSON
+        combined_parts = []
         
-        compact = []
-        prev_blank = False
-        for ln in filtered:
-            blank = (ln.strip() == "")
-            if blank and prev_blank:
-                continue
-            compact.append(ln)
-            prev_blank = blank
+        # Add Paths content (filtered)
+        if paths_text:
+            paths_lines = paths_text.splitlines()
+            paths_filtered = [ln for ln in paths_lines if not self._jsx_should_filter_line(ln)]
+            
+            # Compact consecutive blank lines
+            paths_compact = []
+            prev_blank = False
+            for ln in paths_filtered:
+                blank = (ln.strip() == "")
+                if blank and prev_blank:
+                    continue
+                paths_compact.append(ln)
+                prev_blank = blank
+            
+            combined_parts.append("\n".join(paths_compact))
         
-        result = "\n".join(compact)
+        # Add separator if both exist
+        if paths_text and json_text:
+            combined_parts.append(", in the next line:")
+        
+        # Add JSON content (filtered)
+        if json_text:
+            json_lines = json_text.splitlines()
+            json_filtered = [ln for ln in json_lines if not self._jsx_should_filter_line(ln)]
+            
+            # Compact consecutive blank lines
+            json_compact = []
+            prev_blank = False
+            for ln in json_filtered:
+                blank = (ln.strip() == "")
+                if blank and prev_blank:
+                    continue
+                json_compact.append(ln)
+                prev_blank = blank
+            
+            combined_parts.append("\n".join(json_compact))
+        
+        # Combine all parts
+        result = " ".join(combined_parts)
+        
         QApplication.clipboard().setText(result)
         
-        print(f"DEBUG _jsx_copy_all() | Copied {len(result)} characters from {tab_name} tab")
+        total_lines = len(paths_text.splitlines()) + len(json_text.splitlines()) if paths_text and json_text else (len(paths_text.splitlines()) if paths_text else len(json_text.splitlines()))
+        
+        print(f"DEBUG _jsx_copy_all() | Combined {len(result)} characters (Paths + JSON)")
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
-            tr("advanced_extractor.copied_message", f"Copied {len(compact)} lines from {tab_name} tab to clipboard.")
+            tr("advanced_extractor.copied_message", f"Copied both Paths and JSON output to clipboard ({len(result)} chars).")
         )
     
     def _jsx_show_context_menu(self, position):
