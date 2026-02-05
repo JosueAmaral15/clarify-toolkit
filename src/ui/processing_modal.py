@@ -323,7 +323,7 @@ class ProcessingModal(QDialog):
             self.btn_cancel.clicked.disconnect()
             self.btn_cancel.clicked.connect(self.accept)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # pylint: disable=invalid-name  # Qt naming convention
         """Sobrescreve close event para emitir sinal de cancelamento"""
         if self._show_cancel and hasattr(self, 'btn_cancel'):
             if self.btn_cancel.text() != "Close":

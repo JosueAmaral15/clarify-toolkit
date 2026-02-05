@@ -143,7 +143,6 @@ class PluginBase:
         - rewrite_completed: {"input_path": str, "output_path": str}
         - ai_request_completed: {"prompt": str, "response": str}
         """
-        pass
 
     # Helper methods for UI integration
 
