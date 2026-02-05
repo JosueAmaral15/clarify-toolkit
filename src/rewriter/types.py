@@ -7,7 +7,6 @@ from typing import Union, Any, List, Tuple
 
 class Obj(list):
     """Object represented as list [(key, value), ...], preserving order and duplicate keys."""
-    pass
 
 
 JSONNode = Union[Obj, list, dict, str, int, float, bool, None]
