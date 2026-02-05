@@ -21,7 +21,7 @@ from datetime import datetime
 @dataclass
 class ProjectTemplate:
     """Represents a project template."""
-    
+
     id: str
     name: str
     description: str
@@ -32,11 +32,11 @@ class ProjectTemplate:
     created_at: str
     author: str = "Clarify"
     builtin: bool = False
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ProjectTemplate':
         """Create from dictionary."""
@@ -45,27 +45,27 @@ class ProjectTemplate:
 
 class TemplateManager:
     """Manages project templates."""
-    
+
     def __init__(self, templates_dir: Optional[Path] = None):
         """
         Initialize template manager.
-        
+
         Args:
             templates_dir: Directory for custom templates (default: ~/.config/clarify/templates)
         """
         if templates_dir is None:
             templates_dir = Path.home() / ".config" / "clarify" / "templates"
-        
+
         self.templates_dir = templates_dir
         self.templates_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self._templates: Dict[str, ProjectTemplate] = {}
         self._load_builtin_templates()
         self._load_custom_templates()
-    
+
     def _load_builtin_templates(self):
         """Load built-in templates."""
-        
+
         # Template 1: JSON Translation Project
         self._templates["json_translation"] = ProjectTemplate(
             id="json_translation",
@@ -96,7 +96,7 @@ class TemplateManager:
             author="Clarify",
             builtin=True
         )
-        
+
         # Template 2: Text Processing Pipeline
         self._templates["text_processing"] = ProjectTemplate(
             id="text_processing",
@@ -127,7 +127,7 @@ class TemplateManager:
             author="Clarify",
             builtin=True
         )
-        
+
         # Template 3: JSON Rewriter Project
         self._templates["json_rewriter"] = ProjectTemplate(
             id="json_rewriter",
@@ -154,7 +154,7 @@ class TemplateManager:
             author="Clarify",
             builtin=True
         )
-        
+
         # Template 4: AI Processing Project
         self._templates["ai_processing"] = ProjectTemplate(
             id="ai_processing",
@@ -185,7 +185,7 @@ class TemplateManager:
             author="Clarify",
             builtin=True
         )
-        
+
         # Template 5: Blank Project
         self._templates["blank"] = ProjectTemplate(
             id="blank",
@@ -212,7 +212,7 @@ class TemplateManager:
             author="Clarify",
             builtin=True
         )
-    
+
     def _load_custom_templates(self):
         """Load custom templates from disk."""
         for template_file in self.templates_dir.glob("*.json"):
@@ -221,35 +221,35 @@ class TemplateManager:
                     data = json.load(f)
                     template = ProjectTemplate.from_dict(data)
                     self._templates[template.id] = template
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"Failed to load template {template_file}: {e}")
-    
+
     def get_template(self, template_id: str) -> Optional[ProjectTemplate]:
         """Get template by ID."""
         return self._templates.get(template_id)
-    
+
     def list_templates(self, category: Optional[str] = None) -> List[ProjectTemplate]:
         """
         List available templates.
-        
+
         Args:
             category: Filter by category (None = all)
-        
+
         Returns:
             List of templates
         """
         templates = list(self._templates.values())
-        
+
         if category:
             templates = [t for t in templates if t.category == category]
-        
+
         return sorted(templates, key=lambda t: (not t.builtin, t.name))
-    
+
     def get_categories(self) -> List[str]:
         """Get all template categories."""
         categories = set(t.category for t in self._templates.values())
         return sorted(categories)
-    
+
     def create_from_template(
         self,
         template_id: str,
@@ -258,81 +258,81 @@ class TemplateManager:
     ) -> bool:
         """
         Create project from template.
-        
+
         Args:
             template_id: Template ID
             target_dir: Target directory
             overwrite: Overwrite existing files
-        
+
         Returns:
             True if successful
         """
         template = self.get_template(template_id)
         if not template:
             raise ValueError(f"Template not found: {template_id}")
-        
+
         target_dir = Path(target_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create files
         for file_info in template.files:
             file_path = target_dir / file_info["path"]
-            
+
             if file_path.exists() and not overwrite:
                 continue
-            
+
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(file_info["content"])
-        
+
         return True
-    
+
     def save_template(self, template: ProjectTemplate) -> bool:
         """
         Save custom template.
-        
+
         Args:
             template: Template to save
-        
+
         Returns:
             True if successful
         """
         if template.builtin:
             raise ValueError("Cannot modify built-in templates")
-        
+
         template_file = self.templates_dir / f"{template.id}.json"
-        
+
         with open(template_file, 'w', encoding='utf-8') as f:
             json.dump(template.to_dict(), f, indent=2)
-        
+
         self._templates[template.id] = template
         return True
-    
+
     def delete_template(self, template_id: str) -> bool:
         """
         Delete custom template.
-        
+
         Args:
             template_id: Template ID
-        
+
         Returns:
             True if successful
         """
         template = self.get_template(template_id)
         if not template:
             return False
-        
+
         if template.builtin:
             raise ValueError("Cannot delete built-in templates")
-        
+
         template_file = self.templates_dir / f"{template_id}.json"
         if template_file.exists():
             template_file.unlink()
-        
+
         del self._templates[template_id]
         return True
-    
+
     def create_template_from_directory(
         self,
         source_dir: Path,
@@ -344,7 +344,7 @@ class TemplateManager:
     ) -> ProjectTemplate:
         """
         Create template from existing directory.
-        
+
         Args:
             source_dir: Source directory
             template_id: Template ID
@@ -352,33 +352,33 @@ class TemplateManager:
             description: Template description
             category: Template category
             icon: Template icon
-        
+
         Returns:
             Created template
         """
         source_dir = Path(source_dir)
-        
+
         if not source_dir.exists():
             raise ValueError(f"Directory not found: {source_dir}")
-        
+
         # Collect files
         files = []
         for file_path in source_dir.rglob("*"):
             if file_path.is_file():
                 rel_path = file_path.relative_to(source_dir)
-                
+
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     files.append({
                         "path": str(rel_path),
                         "content": content
                     })
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     # Skip binary files
                     continue
-        
+
         template = ProjectTemplate(
             id=template_id,
             name=name,
@@ -391,17 +391,17 @@ class TemplateManager:
             author="Custom",
             builtin=False
         )
-        
+
         return template
 
 
-# Singleton instance
-_template_manager: Optional[TemplateManager] = None
+# Singleton instance (private, use get_template_manager())
+_template_manager: Optional[TemplateManager] = None  # pylint: disable=invalid-name
 
 
 def get_template_manager() -> TemplateManager:
     """Get singleton TemplateManager instance."""
-    global _template_manager
+    global _template_manager  # pylint: disable=global-statement
     if _template_manager is None:
         _template_manager = TemplateManager()
     return _template_manager
@@ -409,7 +409,7 @@ def get_template_manager() -> TemplateManager:
 
 def reset_template_manager():
     """Reset singleton (for testing)."""
-    global _template_manager
+    global _template_manager  # pylint: disable=global-statement
     _template_manager = None
 
 
@@ -418,18 +418,18 @@ if __name__ == "__main__":
     print("=" * 80)
     print("Template Manager Demo")
     print("=" * 80)
-    
+
     manager = get_template_manager()
-    
+
     print(f"\nAvailable templates: {len(manager.list_templates())}")
     print("\nBuilt-in templates:")
-    for template in manager.list_templates():
-        if template.builtin:
-            print(f"  {template.icon} {template.name} - {template.description}")
-    
+    for tmpl in manager.list_templates():  # Renamed to avoid shadowing class method params
+        if tmpl.builtin:
+            print(f"  {tmpl.icon} {tmpl.name} - {tmpl.description}")
+
     print("\nCategories:")
-    for category in manager.get_categories():
-        count = len([t for t in manager.list_templates() if t.category == category])
-        print(f"  {category}: {count} templates")
-    
+    for cat in manager.get_categories():  # Renamed to avoid shadowing class method params
+        count = len([t for t in manager.list_templates() if t.category == cat])
+        print(f"  {cat}: {count} templates")
+
     print("\n✅ Template Manager demo complete")
