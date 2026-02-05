@@ -253,6 +253,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         if not isinstance(self.jsx_recent_paths, list):
             self.jsx_recent_paths = []
         
+        # Flag to prevent signal processing during cleanup
+        self._extraction_cleaning_up = False
+        
         super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
         self.setObjectName("UnifiedTextToJsonDock")
     
@@ -963,6 +966,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             )
             
             # Create progress dialog
+            self._extraction_cleaning_up = False  # Reset cleanup flag
             self._extraction_progress = QProgressDialog(
                 "Initializing extraction...",
                 "Cancel",
@@ -1012,11 +1016,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_progress(self, message: str):
         """Handle progress updates from extraction worker."""
+        if self._extraction_cleaning_up:
+            return  # Ignore signals during cleanup
         if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
             self._extraction_progress.setLabelText(message)
     
     def _on_extraction_progress_detailed(self, current: int, total: int, message: str):
         """Handle detailed progress updates from extraction worker."""
+        if self._extraction_cleaning_up:
+            return  # Ignore signals during cleanup
         if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
             self._extraction_progress.setMaximum(total)
             self._extraction_progress.setValue(current)
@@ -1060,28 +1068,55 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_canceled(self):
         """Handle extraction cancellation."""
+        # Set cleanup flag immediately
+        self._extraction_cleaning_up = True
+        
+        # Stop worker FIRST before cleanup
         if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
             self._extraction_worker._cancel_requested = True
+        
+        # Disconnect signals immediately to stop further updates
+        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
+            try:
+                self._extraction_worker.progress.disconnect(self._on_extraction_progress)
+                self._extraction_worker.progress_detailed.disconnect(self._on_extraction_progress_detailed)
+                self._extraction_worker.finished.disconnect(self._on_extraction_finished)
+                self._extraction_worker.error.disconnect(self._on_extraction_error)
+            except:
+                pass  # Already disconnected
+        
         self._jsx_update_status("Extraction canceled")
         self._cleanup_extraction_thread()
     
     def _cleanup_extraction_thread(self):
         """Clean up worker thread and progress dialog."""
-        # Disconnect signals first to prevent race conditions
+        # Set cleanup flag
+        self._extraction_cleaning_up = True
+        
+        # Disconnect signals first to prevent race conditions (if not already done)
         if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
             try:
-                self._extraction_worker.progress.disconnect()
-                self._extraction_worker.progress_detailed.disconnect()
-                self._extraction_worker.finished.disconnect()
-                self._extraction_worker.error.disconnect()
+                self._extraction_worker.progress.disconnect(self._on_extraction_progress)
             except:
-                pass  # Already disconnected
+                pass
+            try:
+                self._extraction_worker.progress_detailed.disconnect(self._on_extraction_progress_detailed)
+            except:
+                pass
+            try:
+                self._extraction_worker.finished.disconnect(self._on_extraction_finished)
+            except:
+                pass
+            try:
+                self._extraction_worker.error.disconnect(self._on_extraction_error)
+            except:
+                pass
         
         if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
             try:
-                self._extraction_progress.canceled.disconnect()
+                self._extraction_progress.canceled.disconnect(self._on_extraction_canceled)
             except:
-                pass  # Already disconnected
+                pass
             self._extraction_progress.close()
             self._extraction_progress = None
         
@@ -1094,6 +1129,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         if hasattr(self, '_extraction_worker'):
             self._extraction_worker = None
+        
+        # Reset cleanup flag
+        self._extraction_cleaning_up = False
     
     def _jsx_save_outputs(self):
         """Save outputs to files."""
