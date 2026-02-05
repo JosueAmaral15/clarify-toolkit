@@ -62,8 +62,8 @@ def merge_obj_values(values: List[Obj]) -> Tuple[Obj, int]:
         Tuple of (merged_result, removed_count)
     """
     merged_pairs: Obj = Obj()
-    for o in values:
-        merged_pairs.extend(o)
+    for obj_item in values:
+        merged_pairs.extend(obj_item)
     return join_keys(merged_pairs)
 
 
@@ -223,9 +223,9 @@ def skip_empty_values(node: JSONNode) -> Tuple[JSONNode, int]:
         if isinstance(value, str):
             return not value.strip()
         if isinstance(value, (list, Obj)):
-            return len(value) == 0
+            return not value
         if isinstance(value, dict):
-            return len(value) == 0
+            return not value
         return False
 
     if isinstance(node, Obj):
@@ -377,7 +377,9 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
     return node, 0
 
 
-def enforce_consistent_case(node: JSONNode, target_case: str = 'camel', warn_inconsistencies: bool = True) -> tuple[JSONNode, List[str]]:
+def enforce_consistent_case(
+    node: JSONNode, target_case: str = 'camel', warn_inconsistencies: bool = True
+) -> tuple[JSONNode, List[str]]:
     """
     Enforce consistent case style on all JSON keys.
 
@@ -731,7 +733,7 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
         if len(obj) > 1:
             return True  # This level has siblings
 
-        if len(obj) == 0:
+        if not obj:
             return False  # Empty object
 
         # Single child - check if it's an object with descendants
