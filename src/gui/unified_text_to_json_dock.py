@@ -1072,18 +1072,24 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         """Copy current tab content to clipboard (filtered)."""
         from PySide6.QtWidgets import QApplication
         
-        current_widget = self.jsx_output_tabs.currentWidget()
+        # Explicitly get current tab index first
         current_tab_index = self.jsx_output_tabs.currentIndex()
         
-        print(f"DEBUG _jsx_copy_all() | Current tab index: {current_tab_index}")
-        print(f"DEBUG _jsx_copy_all() | Tab 0 (Paths) widget: {self.jsx_paths_output}")
-        print(f"DEBUG _jsx_copy_all() | Tab 1 (JSON) widget: {self.jsx_json_output}")
-        print(f"DEBUG _jsx_copy_all() | Current widget: {current_widget}")
-        print(f"DEBUG _jsx_copy_all() | Is Paths tab? {current_widget is self.jsx_paths_output}")
-        print(f"DEBUG _jsx_copy_all() | Is JSON tab? {current_widget is self.jsx_json_output}")
+        # Get widget based on index (more reliable than currentWidget)
+        if current_tab_index == 0:
+            current_widget = self.jsx_paths_output
+            tab_name = "Paths"
+        elif current_tab_index == 1:
+            current_widget = self.jsx_json_output
+            tab_name = "JSON"
+        else:
+            print(f"ERROR: Unexpected tab index {current_tab_index}")
+            return
         
         text = current_widget.toPlainText()
         
+        print(f"DEBUG _jsx_copy_all() | Current tab index: {current_tab_index}")
+        print(f"DEBUG _jsx_copy_all() | Tab name: {tab_name}")
         print(f"DEBUG _jsx_copy_all() | Text length: {len(text)}")
         print(f"DEBUG _jsx_copy_all() | Text preview: {text[:100] if text else '(empty)'}")
         
@@ -1125,7 +1131,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
-            tr("advanced_extractor.copied_message", f"Copied {len(compact)} lines to clipboard.")
+            tr("advanced_extractor.copied_message", f"Copied {len(compact)} lines from {tab_name} tab to clipboard.")
         )
     
     def _jsx_show_context_menu(self, position):
