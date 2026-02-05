@@ -246,6 +246,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.EQUALS = "equals"
         self.CONTAINS = "contains"
         
+        # Initialize recent paths list (for Recent button feature)
+        from PySide6.QtCore import QSettings
+        self.settings = QSettings("Clarify", "TextToJsonConverter")
+        self.jsx_recent_paths = self.settings.value("jsx_recent_paths", [], type=list)
+        if not isinstance(self.jsx_recent_paths, list):
+            self.jsx_recent_paths = []
+        
         super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
         self.setObjectName("UnifiedTextToJsonDock")
     
@@ -324,6 +331,12 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_path_edit = QLineEdit()
         self.jsx_path_edit.setPlaceholderText(tr("advanced_extractor.path_placeholder", "File or directory path"))
         path_layout.addWidget(self.jsx_path_edit, 1)
+        
+        # Recent button (same as File Explorer)
+        self.jsx_recent_btn = QPushButton(tr("file_list.btn_recent", "Recent"))
+        self.jsx_recent_btn.setMaximumWidth(100)
+        self.jsx_recent_btn.clicked.connect(self._jsx_show_recent_menu)
+        path_layout.addWidget(self.jsx_recent_btn)
         
         self.jsx_browse_btn = QPushButton(tr("base.btn_browse", "Browse"))
         self.jsx_browse_btn.setMaximumWidth(200)  # Increased for "Load from File..." text
@@ -771,6 +784,57 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             if dir_path:
                 self.jsx_path_edit.setText(dir_path)
     
+    def _jsx_show_recent_menu(self):
+        """Show recent paths menu (same pattern as File Explorer)."""
+        if not self.jsx_recent_paths:
+            QMessageBox.information(
+                self,
+                tr("file_list.recent_none_title", "No Recent Paths"),
+                tr("file_list.recent_none_message", "No recent paths yet. Browse for files or directories to build your recent list.")
+            )
+            return
+        
+        menu = QMenu(self)
+        for path in self.jsx_recent_paths:
+            action = QAction(path, self)
+            action.triggered.connect(lambda checked, p=path: self.jsx_path_edit.setText(p))
+            menu.addAction(action)
+        
+        menu.addSeparator()
+        clear_action = QAction(tr("file_list.recent_clear", "Clear Recent"), self)
+        clear_action.triggered.connect(self._jsx_clear_recent)
+        menu.addAction(clear_action)
+        
+        menu.exec(self.jsx_recent_btn.mapToGlobal(self.jsx_recent_btn.rect().bottomLeft()))
+    
+    def _jsx_clear_recent(self):
+        """Clear recent paths list."""
+        self.jsx_recent_paths = []
+        self.settings.setValue("jsx_recent_paths", self.jsx_recent_paths)
+        QMessageBox.information(
+            self,
+            tr("file_list.cleared_title", "Cleared"),
+            tr("file_list.cleared_message", "Recent paths cleared.")
+        )
+    
+    def _jsx_add_to_recent(self, path: str):
+        """Add path to recent list."""
+        if not path or not os.path.exists(path):
+            return
+        
+        # Remove if already exists
+        if path in self.jsx_recent_paths:
+            self.jsx_recent_paths.remove(path)
+        
+        # Add to beginning
+        self.jsx_recent_paths.insert(0, path)
+        
+        # Keep last 10
+        self.jsx_recent_paths = self.jsx_recent_paths[:10]
+        
+        # Save to settings
+        self.settings.setValue("jsx_recent_paths", self.jsx_recent_paths)
+    
     def _jsx_run_extraction(self):
         """Execute the extraction with current settings using worker thread."""
         try:
@@ -801,6 +865,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                         tr("advanced_extractor.invalid_path", "Path does not exist.")
                     )
                     return
+                
+                # Add to recent paths
+                self._jsx_add_to_recent(path)
+                
                 text_content = None
             
             # Collect settings
