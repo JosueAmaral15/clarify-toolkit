@@ -101,46 +101,79 @@ class ExtractionWorker(QObject):
                 import os
                 logger.debug(f"Processing path: {path}")
                 
-                # Count total files to process
+                # Pre-scan to count total files
+                from src.extractors.advanced_extractor import list_files
+                file_extensions = self.extractor.file_extensions
+                
                 if os.path.isdir(path):
-                    file_extensions = self.extractor.file_extensions
-                    total_files = 0
-                    for root, dirs, files in os.walk(path):
-                        for file in files:
-                            if any(file.endswith(ext) for ext in file_extensions):
-                                total_files += 1
+                    all_files = list(list_files(path, file_extensions))
+                    total_files = len(all_files)
                     logger.debug(f"Found {total_files} files to process")
                 else:
+                    all_files = [path] if os.path.isfile(path) else []
                     total_files = 1
                 
-                # Track progress during extraction
-                processed = 0
+                # Emit initial progress
+                self.progress.emit(f"Starting extraction...")
+                self.progress_detailed.emit(0, total_files, "Initializing...")
                 
-                # Hook into extractor's file processing
-                original_process_file = self.extractor._process_single_file if hasattr(self.extractor, '_process_single_file') else None
+                # Process files manually to emit progress
+                from src.extractors.advanced_extractor import read_text
+                import re
+                import json
                 
-                def progress_wrapper(file_path):
-                    nonlocal processed
-                    processed += 1
-                    filename = os.path.basename(file_path)
+                all_lines = []
+                merged_json = {}
+                
+                for idx, fp in enumerate(all_files, 1):
+                    # Emit progress for each file
+                    filename = os.path.basename(fp)
                     self.progress.emit(f"Processing: {filename}")
-                    self.progress_detailed.emit(processed, total_files, filename)
-                    if original_process_file:
-                        return original_process_file(file_path)
-                    return None
+                    self.progress_detailed.emit(idx, total_files, filename)
+                    
+                    try:
+                        text = read_text(fp)
+                    except Exception as e:
+                        all_lines.append(f"<<ERROR reading {fp}: {e}>>")
+                        continue
+                    
+                    # Derive file-root token from filename
+                    base = os.path.splitext(os.path.basename(fp))[0]
+                    
+                    # Try to find exported component/function name
+                    export_m = re.search(r'\bexport\s+default\s+function\s+([A-Za-z_]\w*)', text)
+                    if not export_m:
+                        export_m = re.search(r'\bexport\s+default\s+([A-Za-z_]\w*)\b', text)
+                    
+                    if export_m:
+                        file_root = export_m.group(1)
+                    else:
+                        # Fallback: Pascalize filename
+                        file_root = base[0:1].upper() + base[1:]
+                    
+                    lines, j = self.extractor.process_text(file_root, text)
+                    
+                    if lines:
+                        all_lines.append(f"# File: {fp}")
+                        all_lines.extend(lines)
+                    
+                    if self.extractor.convert_to_json and j:
+                        merged_json = self.extractor.deep_merge(merged_json, j)
                 
-                # Apply wrapper if method exists
-                if original_process_file:
-                    self.extractor._process_single_file = progress_wrapper
+                # Format results
+                result_text = "\n".join(all_lines) if all_lines else "(no matches)"
                 
-                # Run extraction
-                text_output, json_output = self.extractor.run(path)
+                if self.extractor.convert_to_json:
+                    if typescript_export:
+                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData", indent)
+                    elif with_quotation_marks:
+                        json_output = json.dumps(merged_json, ensure_ascii=False, indent=indent)
+                    else:
+                        json_output = self.extractor.json_to_js_literal(merged_json, indent=indent)
+                else:
+                    json_output = None
                 
-                # Restore original method
-                if original_process_file:
-                    self.extractor._process_single_file = original_process_file
-                
-                self.finished.emit(text_output or "", json_output or "")
+                self.finished.emit(result_text, json_output or "")
             
             else:
                 self.error.emit("No input provided")
