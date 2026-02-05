@@ -101,7 +101,9 @@ class StatisticsManager:
             stats["value_types"]["null"] += 1
 
     @staticmethod
-    def calculate_overlap_percentage(file1_stats: Dict[str, Any], file2_stats: Dict[str, Any], result_count: int) -> float:
+    def calculate_overlap_percentage(
+        file1_stats: Dict[str, Any], file2_stats: Dict[str, Any], result_count: int
+    ) -> float:
         """
         Calcula percentual de overlap entre dois arquivos.
 
@@ -115,7 +117,7 @@ class StatisticsManager:
         """
         total_keys = file1_stats["total_keys"] + file2_stats["total_keys"]
 
-        if total_keys == 0:
+        if not total_keys:
             return 0.0
 
         # Overlap é baseado no resultado da interseção
@@ -193,6 +195,7 @@ Value Types:
         Returns:
             String formatada com comparação lado-a-lado
         """
+        # pylint: disable=line-too-long  # Formatted report with aligned columns
         text = f"""📊 COMPARATIVE STATISTICS
 
 Overlap: {overlap_pct:.1f}%
