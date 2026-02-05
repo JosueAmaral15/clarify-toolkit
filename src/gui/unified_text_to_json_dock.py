@@ -972,6 +972,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self._extraction_progress.setWindowTitle("Extracting...")
             self._extraction_progress.setWindowModality(Qt.WindowModal)
             self._extraction_progress.setMinimumDuration(0)
+            self._extraction_progress.setMinimumWidth(400)
+            self._extraction_progress.setMaximumWidth(600)
             self._extraction_progress.show()
             
             # Create worker thread
