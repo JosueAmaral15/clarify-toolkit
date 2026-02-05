@@ -13,7 +13,7 @@ def strip_bom(s: str) -> str:
 def scan_find_next_lbrace(s: str, pos: int) -> int:
     """Find next '{' in string, skipping over comments and strings."""
     i, n = pos, len(s)
-    in_str = False; q = ""; esc = False; in_line = False; in_block = False
+    in_str = False; quote_char = ""; esc = False; in_line = False; in_block = False
     while i < n:
         ch = s[i]; nxt = s[i+1] if i+1 < n else ""
         if in_line:
@@ -25,11 +25,11 @@ def scan_find_next_lbrace(s: str, pos: int) -> int:
         if in_str:
             if esc: esc = False
             elif ch == "\\": esc = True
-            elif ch == q: in_str = False
+            elif ch == quote_char: in_str = False
             i += 1; continue
         if ch == "/" and nxt == "/": in_line = True; i += 2; continue
         if ch == "/" and nxt == "*": in_block = True; i += 2; continue
-        if ch in ("'", '"', "`"): in_str = True; q = ch; i += 1; continue
+        if ch in ("'", '"', "`"): in_str = True; quote_char = ch; i += 1; continue
         if ch == "{": return i
         i += 1
     return -1
@@ -38,7 +38,7 @@ def scan_find_next_lbrace(s: str, pos: int) -> int:
 def extract_balanced_from(s: str, lbrace_idx: int) -> Optional[Tuple[int, int, str]]:
     """Extract balanced {...} block starting at lbrace_idx."""
     i, n = lbrace_idx, len(s)
-    in_str = False; q = ""; esc = False; in_line = False; in_block = False
+    in_str = False; quote_char = ""; esc = False; in_line = False; in_block = False
     depth = 0; start = None
     while i < n:
         ch = s[i]; nxt = s[i+1] if i+1 < n else ""
@@ -51,18 +51,18 @@ def extract_balanced_from(s: str, lbrace_idx: int) -> Optional[Tuple[int, int, s
         if in_str:
             if esc: esc = False
             elif ch == "\\": esc = True
-            elif ch == q: in_str = False
+            elif ch == quote_char: in_str = False
             i += 1; continue
         if ch == "/" and nxt == "/": in_line = True; i += 2; continue
         if ch == "/" and nxt == "*": in_block = True; i += 2; continue
-        if ch in ("'", '"', "`"): in_str = True; q = ch; i += 1; continue
+        if ch in ("'", '"', "`"): in_str = True; quote_char = ch; i += 1; continue
 
         if ch == "{":
-            if depth == 0: start = i
+            if not depth: start = i
             depth += 1
         elif ch == "}":
             depth -= 1
-            if depth == 0 and start is not None:
+            if not depth and start is not None:
                 end = i + 1
                 return start, end, s[start:end]
         i += 1
@@ -106,7 +106,7 @@ def strip_comments_code(s: str) -> str:
     """Remove comments (// and /* */) from code while preserving strings."""
     out = []
     i = 0; n = len(s)
-    in_str = False; q = ""; esc = False; in_line = False; in_block = False
+    in_str = False; quote_char = ""; esc = False; in_line = False; in_block = False
     while i < n:
         ch = s[i]; nxt = s[i+1] if i+1 < n else ""
         if in_line:
@@ -119,12 +119,12 @@ def strip_comments_code(s: str) -> str:
             out.append(ch)
             if esc: esc = False
             elif ch == "\\": esc = True
-            elif ch == q: in_str = False
+            elif ch == quote_char: in_str = False
             i += 1; continue
         if ch == "/" and nxt == "/": in_line = True; i += 2; continue
         if ch == "/" and nxt == "*": in_block = True; i += 2; continue
         if ch in ("'", '"', "`"):
-            in_str = True; q = ch; out.append(ch); i += 1; continue
+            in_str = True; quote_char = ch; out.append(ch); i += 1; continue
         out.append(ch); i += 1
     return "".join(out)
 
@@ -138,13 +138,13 @@ def lift_strings_to_placeholders(s: str) -> tuple[str, List[str]]:
         ch = s[i]
         if ch in ("'", '"', "`"):
             out.append(s[start:i])
-            q = ch; i += 1; buf = []; esc = False
+            quote_char = ch; i += 1; buf = []; esc = False
             while i < n:
-                c = s[i]
-                if esc: buf.append(c); esc = False; i += 1; continue
-                if c == "\\": buf.append(c); esc = True; i += 1; continue
-                if c == q: i += 1; break
-                buf.append(c); i += 1
+                char = s[i]
+                if esc: buf.append(char); esc = False; i += 1; continue
+                if char == "\\": buf.append(char); esc = True; i += 1; continue
+                if char == quote_char: i += 1; break
+                buf.append(char); i += 1
             content = "".join(buf)
             tokens.append(json.dumps(content, ensure_ascii=False))
             out.append(f"@@S{len(tokens)-1}@@")
@@ -180,8 +180,8 @@ def ts_block_to_json_text(block: str) -> str:
     Convert a TS/JS object literal block into valid JSON text.
     Pipeline: strip comments → lift strings → quote keys → remove trailing commas → restore strings.
     """
-    b = strip_comments_code(block)
-    no_str, tokens = lift_strings_to_placeholders(b)
+    block_content = strip_comments_code(block)
+    no_str, tokens = lift_strings_to_placeholders(block_content)
     with_keys = quote_bare_and_numeric_keys(no_str)
     no_trailing = remove_trailing_commas(with_keys)
     return restore_placeholders(no_trailing, tokens)
