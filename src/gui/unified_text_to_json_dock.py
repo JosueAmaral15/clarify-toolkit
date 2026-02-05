@@ -1072,10 +1072,29 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         """Copy current tab content to clipboard (filtered)."""
         from PySide6.QtWidgets import QApplication
         
-        # Explicitly get current tab index first
-        current_tab_index = self.jsx_output_tabs.currentIndex()
+        # CRITICAL FIX: Save tab index in a lambda when button is pressed
+        # to avoid focus-change issues when button is clicked
+        # 
+        # Problem: currentIndex() returns 0 after button click due to focus change
+        # Solution: Use tabBar().currentIndex() which is more reliable,
+        #           or check which tab widget has content that matches cursor position
         
-        # Get widget based on index (more reliable than currentWidget)
+        # Alternative approach: Check which output has focus or non-empty selection
+        paths_has_focus = self.jsx_paths_output.hasFocus()
+        json_has_focus = self.jsx_json_output.hasFocus()
+        
+        # Get tab bar's current index (before button steals focus)
+        tab_bar_index = self.jsx_output_tabs.tabBar().currentIndex()
+        
+        print(f"DEBUG _jsx_copy_all() | tabBar().currentIndex(): {tab_bar_index}")
+        print(f"DEBUG _jsx_copy_all() | currentIndex(): {self.jsx_output_tabs.currentIndex()}")
+        print(f"DEBUG _jsx_copy_all() | Paths has focus: {paths_has_focus}")
+        print(f"DEBUG _jsx_copy_all() | JSON has focus: {json_has_focus}")
+        
+        # Use tab bar index (more reliable)
+        current_tab_index = tab_bar_index
+        
+        # Get widget based on index
         if current_tab_index == 0:
             current_widget = self.jsx_paths_output
             tab_name = "Paths"
@@ -1088,10 +1107,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         text = current_widget.toPlainText()
         
-        print(f"DEBUG _jsx_copy_all() | Current tab index: {current_tab_index}")
+        print(f"DEBUG _jsx_copy_all() | Using tab index: {current_tab_index}")
         print(f"DEBUG _jsx_copy_all() | Tab name: {tab_name}")
         print(f"DEBUG _jsx_copy_all() | Text length: {len(text)}")
-        print(f"DEBUG _jsx_copy_all() | Text preview: {text[:100] if text else '(empty)'}")
         
         # Also show what's in each tab
         paths_text = self.jsx_paths_output.toPlainText()
@@ -1109,9 +1127,6 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         lines = text.splitlines()
         filtered = [ln for ln in lines if not self._jsx_should_filter_line(ln)]
         
-        print(f"DEBUG _jsx_copy_all() | Original lines: {len(lines)}")
-        print(f"DEBUG _jsx_copy_all() | After filtering: {len(filtered)}")
-        
         compact = []
         prev_blank = False
         for ln in filtered:
@@ -1121,13 +1136,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             compact.append(ln)
             prev_blank = blank
         
-        print(f"DEBUG _jsx_copy_all() | After compacting: {len(compact)}")
-        
         result = "\n".join(compact)
         QApplication.clipboard().setText(result)
         
-        print(f"DEBUG _jsx_copy_all() | Copied {len(result)} characters to clipboard")
-        print(f"DEBUG _jsx_copy_all() | Clipboard preview: {QApplication.clipboard().text()[:100]}")
+        print(f"DEBUG _jsx_copy_all() | Copied {len(result)} characters from {tab_name} tab")
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
