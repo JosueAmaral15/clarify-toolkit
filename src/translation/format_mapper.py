@@ -1382,10 +1382,29 @@ class FormatMapper:
         segments: List[TextSegment] = []
         
         # Normalize whitespace in tags: < 1> → <1>, </ 1> → </1>
-        # Handle tags with metadata: < 1 : FF0000 > → <1:FF0000>
-        normalized = re.sub(r'<\s*(\d+)\s*:\s*([^>]+)\s*>', r'<\1:\2>', tagged_text)  # With metadata
-        normalized = re.sub(r'<\s*(\d+)\s*>', r'<\1>', normalized)  # Without metadata
-        normalized = re.sub(r'</\s*(\d+)\s*>', r'</\1>', normalized)  # Closing tags
+        # Handle tags with pipes and metadata: < 113 | 65536 : L > → <113|65536:L>
+        # Session 70: Fixed to handle pipe characters in paragraph formatting tags
+        def normalize_opening(match):
+            bits = match.group(1).replace(' ', '')  # Remove all spaces from bits
+            metadata = match.group(2)
+            if metadata:
+                metadata = metadata.replace(' ', '')  # Remove spaces from metadata
+                return f"<{bits}:{metadata}>"
+            else:
+                return f"<{bits}>"
+        
+        normalized = re.sub(
+            r'<\s*(\d+(?:\s*\|\s*\d+)*)\s*(?::\s*([^>]+))?\s*>',
+            normalize_opening,
+            tagged_text
+        )
+        # Closing tags: < / 113 | 65536 > → </113|65536>
+        # Handle space after < as well: '< /' or '</'
+        normalized = re.sub(
+            r'<\s*/\s*(\d+(?:\s*\|\s*\d+)*)\s*>',
+            lambda m: f"</{m.group(1).replace(' ', '')}>",
+            normalized
+        )
         
         # First, extract hyperlinks (Session 44)
         # Pattern: <LINK:url>display_text</LINK>
