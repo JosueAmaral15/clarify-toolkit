@@ -1075,11 +1075,23 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         current_widget = self.jsx_output_tabs.currentWidget()
         text = current_widget.toPlainText()
         
+        print(f"DEBUG _jsx_copy_all() | Current tab index: {self.jsx_output_tabs.currentIndex()}")
+        print(f"DEBUG _jsx_copy_all() | Current widget: {current_widget}")
+        print(f"DEBUG _jsx_copy_all() | Text length: {len(text)}")
+        print(f"DEBUG _jsx_copy_all() | Text preview: {text[:100] if text else '(empty)'}")
+        
         if not text:
+            self.show_warning(
+                tr("advanced_extractor.error", "Error"),
+                "No content to copy. Please run extraction first."
+            )
             return
         
         lines = text.splitlines()
         filtered = [ln for ln in lines if not self._jsx_should_filter_line(ln)]
+        
+        print(f"DEBUG _jsx_copy_all() | Original lines: {len(lines)}")
+        print(f"DEBUG _jsx_copy_all() | After filtering: {len(filtered)}")
         
         compact = []
         prev_blank = False
@@ -1090,11 +1102,16 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             compact.append(ln)
             prev_blank = blank
         
-        QApplication.clipboard().setText("\n".join(compact))
+        print(f"DEBUG _jsx_copy_all() | After compacting: {len(compact)}")
+        
+        result = "\n".join(compact)
+        QApplication.clipboard().setText(result)
+        
+        print(f"DEBUG _jsx_copy_all() | Copied {len(result)} characters to clipboard")
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
-            tr("advanced_extractor.copied_message", "Filtered output copied to clipboard.")
+            tr("advanced_extractor.copied_message", f"Copied {len(compact)} lines to clipboard.")
         )
     
     def _jsx_show_context_menu(self, position):
