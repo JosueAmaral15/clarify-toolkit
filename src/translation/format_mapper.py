@@ -1419,6 +1419,33 @@ class FormatMapper:
             return f'{{{{HYPERLINK_{index}}}}}'
         normalized = re.sub(hyperlink_pattern, replace_hyperlink, normalized, flags=re.DOTALL)
         
+        # Session 72 Fix: Helper to clean broken tag artifacts from Google Translate
+        def clean_tag_artifacts(text: str) -> str:
+            """
+            Remove broken tag artifacts that Google Translate sometimes creates.
+            
+            Google Translate can corrupt tags by:
+            - Adding spaces: <113|meta> → <113 | meta>
+            - Removing closing tags entirely: <113|meta>text → <113 | text (no closing tag)
+            - Splitting/merging text differently
+            
+            This function removes:
+            1. Incomplete opening tags: <113 |, < 113|, <113:meta (no closing >)
+            2. Complete but orphaned opening tags: <113|meta>, <113:meta>
+            3. Broken closing tags: </113|65536>, </ 113>
+            """
+            # Remove incomplete opening tags (no closing >): <113 |anything
+            cleaned = re.sub(r'<\s*\d+\s*\|[^>]*$', '', text)  # At end of text
+            cleaned = re.sub(r'<\s*\d+\s*\|[^>]*(?=\s)', ' ', cleaned)  # In middle (before space)
+            
+            # Remove complete orphaned opening tags: <113|meta>, <113:meta>
+            cleaned = re.sub(r'<\s*\d+\s*(?:\|[^>]*)?\s*(?::[^>]*)?\s*>', '', cleaned)
+            
+            # Remove broken closing tags: </113|65536>, </ 113>
+            cleaned = re.sub(r'<\s*/\s*\d+(?:\s*\|\s*\d+)?\s*>', '', cleaned)
+            
+            return cleaned
+        
         # Pattern: <char|para:meta>text</char|para> or variations
         # Format: "char_bits|para_bits:char_meta|para_meta" or simpler combinations
         # Examples:
@@ -1437,7 +1464,10 @@ class FormatMapper:
             if match.start() > last_pos:
                 plain = normalized[last_pos:match.start()]
                 if plain:
-                    segments.append(TextSegment(text=plain))
+                    # Session 72 Fix: Clean broken tags from plain text
+                    cleaned_plain = clean_tag_artifacts(plain)
+                    if cleaned_plain.strip():  # Only add if content remains
+                        segments.append(TextSegment(text=cleaned_plain))
             
             # Parse format bits (char|para or just char)
             format_str = match.group(1)
@@ -1476,7 +1506,10 @@ class FormatMapper:
         if last_pos < len(normalized):
             plain = normalized[last_pos:]
             if plain:
-                segments.append(TextSegment(text=plain))
+                # Session 72 Fix: Clean broken tags from remaining plain text
+                cleaned = clean_tag_artifacts(plain)
+                if cleaned.strip():  # Only add if there's actual content left
+                    segments.append(TextSegment(text=cleaned))
         
         # Restore hyperlink placeholders (Session 44)
         final_segments = []

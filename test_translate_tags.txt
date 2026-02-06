@@ -1,0 +1,46 @@
+# Test File for Google Translate - Format Preservation with Number Tags
+
+This file contains text with number tags to test the Google Translate tool's format preservation feature.
+
+## Test Case 1: Simple Number Tags
+
+This is a sentence with <113|1:L> a simple tag in the middle.
+
+## Test Case 2: Multiple Tags
+
+The quick <113|2:L> brown fox jumps <113|3:L> over the lazy dog.
+
+## Test Case 3: Tags with Metadata (Pipes)
+
+Advanced formatting <113|65536:L> requires special handling of pipe characters.
+
+## Test Case 4: Complex Tag Pattern (Session 70 Fix)
+
+This tests the normalization: <113|4:B:L> with bold and link together.
+
+## Test Case 5: Tags at Different Positions
+
+<113|5:L> Starting tag
+Middle tag <113|6:L> continues
+Ending tag <113|7:L>
+
+## Test Case 6: Multiple Tags Close Together
+
+Word<113|8:L><113|9:L> with tags and<113|10:L> spacing issues.
+
+## Test Case 7: Tags with Special Characters
+
+Email example: user<113|11:L>@<113|12:L>example.com
+
+## Test Case 8: Long Text with Many Tags
+
+This is a longer paragraph that contains <113|13:L> multiple tags throughout the <113|14:L> entire text to ensure that the <113|15:L> translation system properly preserves <113|16:L> all formatting markers even when <113|17:L> the content is substantial.
+
+## Expected Behavior:
+
+When translated through Google Translate tool:
+- All <113|N:X> tags should be preserved in exact positions
+- Numbers should remain unchanged
+- Metadata (letters after colon) should remain unchanged
+- Spacing around tags should be maintained
+- Translation should only affect regular text, not tags
