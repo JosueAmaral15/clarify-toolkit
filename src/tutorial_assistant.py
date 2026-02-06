@@ -10,6 +10,11 @@ import os
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 try:
     import google.generativeai as genai
     _GEMINI_AVAILABLE = True
@@ -75,7 +80,7 @@ class TutorialAssistant:
                         self.tutorials_content[tutorial['id']] = f.read()
 
         except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"Warning: Could not load tutorial knowledge base: {e}")
+            logger.error(f"Warning: Could not load tutorial knowledge base: {e}")
 
     def _build_context(self, user_query: str) -> str:
         """

@@ -10,6 +10,11 @@ import threading
 from typing import Dict, Optional, Callable
 from enum import Enum
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 try:
     from PySide6.QtCore import QThread, QObject
     _PYSIDE = True
@@ -154,7 +159,7 @@ class ThreadManager:
             try:
                 info.cancel_callback()
             except Exception as e:  # pylint: disable=broad-exception-caught  # Cleanup robustness
-                print(f"[ThreadManager] Error canceling thread {thread_id}: {e}")
+                logger.error(f"[ThreadManager] Error canceling thread {thread_id}: {e}")
 
         # Mark as not running
         info.is_running = False
@@ -227,7 +232,7 @@ class ThreadManager:
                 # Wait for finish
                 if not info.thread.wait(timeout_ms):
                     all_finished = False
-                    print(f"[ThreadManager] Warning: Thread {thread_id} did not finish in time")
+                    logger.error(f"[ThreadManager] Warning: Thread {thread_id} did not finish in time")
 
         return all_finished
 
@@ -242,7 +247,7 @@ class ThreadManager:
                     info.thread.terminate()
                     info.thread.wait(1000)
             except Exception as e:  # pylint: disable=broad-exception-caught  # Cleanup robustness
-                print(f"[ThreadManager] Error forcing cleanup of {thread_id}: {e}")
+                logger.error(f"[ThreadManager] Error forcing cleanup of {thread_id}: {e}")
 
         self._threads.clear()
 

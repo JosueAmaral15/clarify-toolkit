@@ -13,6 +13,11 @@ from typing import Optional
 from PySide6.QtCore import QSettings  # pylint: disable=no-name-in-module  # Qt dynamic
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class ErrorReporter:
     """Global error reporter for Clarify application."""
 

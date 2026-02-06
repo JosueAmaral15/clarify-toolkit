@@ -23,6 +23,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 def validate_file_path(file_path: str) -> bool:
     """
     Validate file path for security (CWE-22: Path Traversal).
@@ -432,7 +437,7 @@ if __name__ == "__main__":
         try:
             with open(args.output, "w", encoding="utf-8") as f:
                 f.write(output_json)
-            print(f"✓ Result saved to: {args.output}")
+            logger.error(f"✓ Result saved to: {args.output}")
         except OSError as exc:
             print(f"Error saving output: {exc}", file=sys.stderr)
             sys.exit(1)

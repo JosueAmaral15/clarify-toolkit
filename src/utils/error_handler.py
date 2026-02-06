@@ -445,27 +445,27 @@ if __name__ == "__main__":
     )
 
     print("=" * 80)
-    print("Error Handler Demo")
+    logger.error("Error Handler Demo")
     print("=" * 80)
 
     # Install crash handler (no dialog in CLI mode)
     handler = install_crash_handler(show_dialog=False)
-    print(f"✅ Crash handler installed (dialog={handler.show_dialog})")
+    logger.error(f"✅ Crash handler installed (dialog={handler.show_dialog})")
 
     # Test 1: Context manager
-    print("\nTest 1: Context manager with handled error")
+    logger.error("\nTest 1: Context manager with handled error")
     try:
         with CrashHandler.handle_errors():
             result = 10 / 0  # ZeroDivisionError
     except ZeroDivisionError:
-        print("✅ Error caught and handled")
+        logger.error("✅ Error caught and handled")
 
     # Test 2: Unhandled exception (will be caught by crash handler)
-    print("\nTest 2: Unhandled exception (triggers crash handler)")
-    print("This will cause the program to crash with a crash report...")
+    logger.error("\nTest 2: Unhandled exception (triggers crash handler)")
+    logger.error("This will cause the program to crash with a crash report...")
 
     # Uncomment to test crash handler:
     # raise ValueError("Test crash for demonstration purposes")
 
-    print("\n✅ Error handler demo complete")
-    print(f"Crash reports directory: {Path.home() / '.config' / 'clarify' / 'crashes'}")
+    logger.error("\n✅ Error handler demo complete")
+    logger.error(f"Crash reports directory: {Path.home() / '.config' / 'clarify' / 'crashes'}")

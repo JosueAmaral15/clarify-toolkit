@@ -23,6 +23,11 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class UpdateChecker:
     """
     Check for Clarify updates from GitHub Releases API.
@@ -73,7 +78,7 @@ class UpdateChecker:
             >>> checker = UpdateChecker("2.9.44")
             >>> has_update, info = checker.check_for_updates()
             >>> if has_update:
-            ...     print(f"New version: {info['version']}")
+            ...     logger.error(f"New version: {info['version']}")
         """
         # Check cache first (unless forced)
         if not force:
@@ -98,7 +103,7 @@ class UpdateChecker:
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Offline or network error - fail gracefully
-            print(f"Update check failed (offline?): {e}")
+            logger.error(f"Update check failed (offline?): {e}")
             return False, None
 
     def _fetch_latest_release(self) -> Optional[Dict]:
@@ -142,10 +147,10 @@ class UpdateChecker:
         except HTTPError as e:
             # 404 means no releases published yet - don't spam console
             if e.code != 404:
-                print(f"Failed to fetch release info: HTTP {e.code}")
+                logger.error(f"Failed to fetch release info: HTTP {e.code}")
             return None
         except (URLError, json.JSONDecodeError, TimeoutError) as e:
-            print(f"Failed to fetch release info: {e}")
+            logger.error(f"Failed to fetch release info: {e}")
             return None
 
     def _is_newer_version(self, latest: str) -> bool:
@@ -263,7 +268,7 @@ def check_for_updates(current_version: str, force: bool = False) -> Tuple[bool, 
         >>> from src import __version__
         >>> has_update, info = check_for_updates(__version__)
         >>> if has_update:
-        ...     print(f"Update available: {info['version']}")
+        ...     logger.error(f"Update available: {info['version']}")
     """
     checker = UpdateChecker(current_version)
     return checker.check_for_updates(force=force)

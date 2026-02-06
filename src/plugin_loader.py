@@ -28,6 +28,11 @@ from typing import List, Dict, Optional, Any
 from PySide6.QtCore import QObject, Signal, QSettings
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class PluginMetadata:
     """Metadata from plugin.json file."""
 
@@ -126,7 +131,7 @@ class PluginLoader(QObject):
                 discovered.append(metadata)
 
             except Exception as e:
-                print(f"[PluginLoader] Failed to load metadata from {item}: {e}")
+                logger.error(f"[PluginLoader] Failed to load metadata from {item}: {e}")
 
         return discovered
 
@@ -188,7 +193,7 @@ class PluginLoader(QObject):
 
         except Exception as e:
             error_msg = f"Failed to load plugin {plugin_id}: {e}"
-            print(f"[PluginLoader] {error_msg}")
+            logger.error(f"[PluginLoader] {error_msg}")
             self.plugin_error.emit(plugin_id, error_msg)
             return None
 
@@ -219,7 +224,7 @@ class PluginLoader(QObject):
 
         except Exception as e:
             error_msg = f"Failed to activate plugin {plugin_id}: {e}"
-            print(f"[PluginLoader] {error_msg}")
+            logger.error(f"[PluginLoader] {error_msg}")
             self.plugin_error.emit(plugin_id, error_msg)
             return False
 
@@ -256,7 +261,7 @@ class PluginLoader(QObject):
                 plugin.deactivate(self.app)
             return True
         except Exception as e:
-            print(f"[PluginLoader] Failed to deactivate {plugin_id}: {e}")
+            logger.error(f"[PluginLoader] Failed to deactivate {plugin_id}: {e}")
             return False
 
     def enable_plugin(self, plugin_id: str, enabled: bool = True):
@@ -287,7 +292,7 @@ class PluginLoader(QObject):
                     if hasattr(plugin, 'on_event'):
                         plugin.on_event(event_name, data)
                 except Exception as e:
-                    print(f"[PluginLoader] Plugin {plugin_id} event handler error: {e}")
+                    logger.error(f"[PluginLoader] Plugin {plugin_id} event handler error: {e}")
 
     def get_plugin(self, plugin_id: str) -> Optional[Any]:
         """Get a loaded plugin instance by ID."""
@@ -319,5 +324,5 @@ class PluginLoader(QObject):
             return True
 
         except Exception as e:
-            print(f"[PluginLoader] Failed to unload {plugin_id}: {e}")
+            logger.error(f"[PluginLoader] Failed to unload {plugin_id}: {e}")
             return False

@@ -126,7 +126,7 @@ def extract_from_directory(directory: str,
                 )
                 all_results.extend(results)
             except Exception as e:
-                print(f"Error processing {file_path}: {e}")
+                logger.error(f"Error processing {file_path}: {e}")
 
     return all_results
 

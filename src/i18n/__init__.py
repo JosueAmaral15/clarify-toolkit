@@ -16,6 +16,9 @@ Usage:
     switch_language("pt_BR")  # Runtime switch
 """
 
+from ..utils.logger import get_logger
 from .translator import Translator, get_translator, switch_language, tr, tooltip_tr
+
+logger = get_logger(__name__)
 
 __all__ = ['Translator', 'get_translator', 'switch_language', 'tr', 'tooltip_tr']

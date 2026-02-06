@@ -12,6 +12,11 @@ from typing import Tuple, Dict, Any, Optional
 from .types import Obj, JSONNode, freeze
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 def format_reference(
     path: str,
     line: Optional[int] = None,
@@ -252,7 +257,7 @@ def resolve_references(node: JSONNode) -> Tuple[JSONNode, Dict[str, int]]:
 
             if not match:
                 # Invalid format
-                print(f"⚠️  Warning: Invalid reference format '{n}' at {path}")
+                logger.error(f"⚠️  Warning: Invalid reference format '{n}' at {path}")
                 stats['invalid'] += 1
                 return n  # Keep as-is
 
@@ -275,7 +280,7 @@ def resolve_references(node: JSONNode) -> Tuple[JSONNode, Dict[str, int]]:
                 return resolved_value
             else:
                 # Path not found
-                print(f"⚠️  Warning: Reference target not found: '{ref_path}' (line {ref_line}) at {path}")
+                logger.error(f"⚠️  Warning: Reference target not found: '{ref_path}' (line {ref_line}) at {path}")
                 stats['invalid'] += 1
                 return n  # Keep as-is
 

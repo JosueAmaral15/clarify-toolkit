@@ -24,6 +24,11 @@ import shutil
 from typing import Dict, Any, List, Tuple, Optional
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 def flatten_dict(nested: Dict[str, Any], prefix: str = "", sep: str = ".") -> Dict[str, str]:
     """
     Flatten nested dictionary to dot-notation keys.
@@ -300,6 +305,6 @@ def process_directory(directory: str,
                     if count > 0:
                         results[file_path] = count
                 except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - continue processing other files
-                    print(f"Error processing {file_path}: {e}")
+                    logger.error(f"Error processing {file_path}: {e}")
 
     return results
