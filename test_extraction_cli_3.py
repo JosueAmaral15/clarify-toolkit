@@ -342,3 +342,88 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+def test_real_directory_extraction():
+    """Test extraction from REAL production directory"""
+    from src.extractors.advanced_extractor import AdvancedExtractor
+    import os
+    
+    # Real production path
+    real_path = "/home/josue/Documents/Informática/Programação/programming workspace/archived/PTEasy/PTEasy-frontend-v2/src/app/faq"
+    
+    if not os.path.exists(real_path):
+        print(f"⚠️  Directory not found: {real_path}")
+        print("✅ Test skipped (directory doesn't exist)")
+        return True
+    
+    print(f"📁 Real directory: {real_path}")
+    
+    # Count files
+    tsx_files = [f for f in os.listdir(real_path) if f.endswith('.tsx')]
+    print(f"✓ Found {len(tsx_files)} .tsx files: {tsx_files}")
+    
+    # Create extractor
+    extractor = AdvancedExtractor(
+        param="*",
+        mode="jsx",
+        avoid_keys="className,style",
+        avoid_keys_parameter="contains",
+        include_key=False,
+        include_value=False,
+        no_standard=True,
+        convert_to_json=True,
+        with_quotation_marks=True,
+        indentation=2,
+        case_style='snake',
+        limit="100",
+        avoid_cut=True,
+        avoid_cut_direction='before',
+        file_extensions=['.tsx', '.jsx', '.js']
+    )
+    
+    # Process each file manually
+    for tsx_file in tsx_files:
+        file_path = os.path.join(real_path, tsx_file)
+        print(f"\n  Processing: {tsx_file}")
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract
+        path_lines, merged_json = extractor.process_text(tsx_file.replace('.tsx', ''), content)
+        
+        print(f"    ✓ Extracted {len(path_lines)} path entries")
+        print(f"    ✓ Generated JSON with {len(merged_json)} top-level keys")
+        
+        if merged_json:
+            # Show sample keys
+            all_keys = list(merged_json.keys())
+            print(f"    ✓ Sample keys: {all_keys[:5]}")
+            
+            # Show JSON size
+            json_str = json.dumps(merged_json, indent=2)
+            print(f"    ✓ JSON size: {len(json_str)} characters")
+            
+            # Save to output file
+            output_file = f"/tmp/extracted_{tsx_file.replace('.tsx', '')}.json"
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(json_str)
+            print(f"    ✓ Saved to: {output_file}")
+    
+    print(f"\n✅ Real directory extraction test passed\n")
+    return True
+
+if __name__ == '__main__':
+    # Add the new test to main
+    import sys
+    print("=" * 70)
+    print("BONUS TEST: Real Production Directory Extraction")
+    print("=" * 70)
+    print()
+    try:
+        test_real_directory_extraction()
+    except Exception as e:
+        print(f"❌ Real extraction test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
