@@ -10,6 +10,10 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from PySide6.QtCore import QSettings
 
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class HistoryManager:
     """Gerenciador de histórico de operações."""
@@ -110,9 +114,6 @@ class HistoryManager:
         """
         import json
         from pathlib import Path
-from .utils.logger import get_logger
-
-logger = get_logger(__name__)
 
         try:
             history = self.get_history()

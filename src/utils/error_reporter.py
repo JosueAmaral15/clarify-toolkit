@@ -14,7 +14,7 @@ from PySide6.QtCore import QSettings  # pylint: disable=no-name-in-module  # Qt 
 
 
 
-from .utils.logger import get_logger
+from .logger import get_logger
 
 logger = get_logger(__name__)
 

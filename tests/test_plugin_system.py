@@ -22,8 +22,8 @@ from PySide6.QtCore import QSettings
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from plugin_loader import PluginLoader, PluginMetadata
-from plugins.plugin_base import PluginBase
+from src.plugin_loader import PluginLoader, PluginMetadata
+from src.plugins.plugin_base import PluginBase
 
 
 class TestPluginMetadata:
