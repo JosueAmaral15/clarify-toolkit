@@ -943,32 +943,30 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self._extraction_input_source = path if path else "TextInput"
             
             # Create extractor
+            # Note: match_all is auto-derived from param in AdvancedExtractor
+            # Note: typescript_export, exclude_numeric, skip_empty, use_class_names 
+            #       are handled by ExtractionWorker, not AdvancedExtractor
             extractor = AdvancedExtractor(
                 param=param,
                 mode=mode,
+                avoid_keys=avoid_keys,
+                avoid_keys_parameter=avoid_keys_param,
                 include_key=include_key,
                 include_value=include_value,
                 no_standard=no_standard,
                 convert_to_json=True,
                 with_quotation_marks=with_quotation_marks,
-                only_strings=only_strings,
                 indentation=indent,
                 case_style=case_style,
                 limit=limit,
-                avoid_keys=avoid_keys,
-                avoid_keys_parameter=avoid_keys_param,
                 avoid_cut=avoid_cut,
                 avoid_cut_direction=avoid_cut_direction,
                 to_upper=to_upper,
+                only_strings=only_strings,
+                is_attribute_mode=is_attribute_mode,
                 start_regex=start_regex,
                 end_regex=end_regex,
-                file_extensions=file_extensions,
-                is_attribute_mode=is_attribute_mode,
-                match_all=match_all,
-                typescript_export=typescript_export,
-                exclude_numeric=exclude_numeric,
-                skip_empty=skip_empty,
-                use_class_names=use_class_names
+                file_extensions=file_extensions
             )
             
             # Create progress dialog
