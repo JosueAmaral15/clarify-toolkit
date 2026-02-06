@@ -63,15 +63,6 @@ def test_exclude_pattern_matching():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-<<<<<<< HEAD
-# ============================================================================
-# TEST FIX #3: Case/Regex Checkboxes Logic
-# ============================================================================
-print("TEST FIX #3: Case/Regex Checkboxes Logic")
-print("-" * 80)
-
-=======
->>>>>>> COM3-documentation-study
 def test_checkbox_logic():
     """Test the fixed checkbox initial state logic."""
     
@@ -106,52 +97,6 @@ def test_checkbox_logic():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-<<<<<<< HEAD
-# ============================================================================
-# TEST FIX #4: Operators Display
-# ============================================================================
-def test_operators_display():
-    """Test operators display logic."""
-    operators = [
-        "equals",
-        "not equals",
-        "contains",
-        "not contains",
-        "greater than",
-        "less than",  # was "<"
-        "greater than or equal",  # was ">="
-        "less than or equal",  # was "<="
-        "regex"
-    ]
-
-    print("TEST FIX #4: Operators Display")
-    print("-" * 80)
-    print("  Operators list (should show full text, not symbols):")
-    for i, op in enumerate(operators, 1):
-        symbol_check = " ← Was symbol!" if op in ["<", ">=", "<="] else ""
-        print(f"    {i}. {op}{symbol_check}")
-
-    # Check if any symbols remain
-    has_symbols = any(op in ["<", ">=", "<="] for op in operators)
-    fix4_passed = not has_symbols
-
-    print()
-    if fix4_passed:
-        print("  ✅ PASS: All operators use full text")
-    else:
-        print("  ❌ FAIL: Some operators still use symbols")
-    print()
-    
-    return fix4_passed
-
-# ============================================================================
-# TEST FIX #5: Type Filter i18n
-# ============================================================================
-print("TEST FIX #5: Type Filter i18n-safe Comparison")
-print("-" * 80)
-
-=======
->>>>>>> COM3-documentation-study
 def test_type_filter_logic():
     """Test the Type Filter i18n display fix."""
     
@@ -189,10 +134,6 @@ def test_type_filter_logic():
     print(f"  Results: {passed} passed, {failed} failed")
     return failed == 0
 
-<<<<<<< HEAD
-if __name__ == "__main__":
-    print("=" * 80)
-=======
 # ============================================================================
 # MAIN EXECUTION (only when run directly, not when imported)
 # ============================================================================
@@ -281,4 +222,3 @@ if __name__ == "__main__":
         print("SOME FIXES FAILED ❌")
         print("=" * 80)
         sys.exit(1)
->>>>>>> COM3-documentation-study
