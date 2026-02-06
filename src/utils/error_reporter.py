@@ -78,11 +78,11 @@ class ErrorReporter:
                     self.dialog.show_error(error_info)
             except Exception as e:  # pylint: disable=broad-exception-caught  # Dialog robustness
                 # Fallback if dialog fails
-                print(f"Error showing dialog: {e}", file=sys.stderr)
-                print(error_info["full_traceback"], file=sys.stderr)
+                logger.error(f"Error showing dialog: {e}")
+                logger.error(error_info["full_traceback"])
         else:
             # Print to stderr if reporting disabled
-            print(error_info["full_traceback"], file=sys.stderr)
+            logger.error(error_info["full_traceback"])
 
     def format_error(self, exc_type, exc_value, exc_traceback) -> dict:
         """

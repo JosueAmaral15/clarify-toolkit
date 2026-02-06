@@ -269,7 +269,7 @@ class SetOperationsDock(BaseDock):
                 result_data=exec_result.results
             )
         except Exception as e:
-            print(f"Warning: Failed to save operation to history: {e}")
+            logger.warning(f"Failed to save operation to history: {e}")
 
         # Calculate comparative statistics (v2.9.96)
         try:
@@ -296,7 +296,7 @@ class SetOperationsDock(BaseDock):
             self.txt_statistics.setVisible(True)
 
         except Exception as e:
-            print(f"Warning: Failed to calculate statistics: {e}")
+            logger.warning(f"Failed to calculate statistics: {e}")
             self.txt_statistics.setVisible(False)
 
         # Enable save, export, diff viewer, venn diagram, merge, and calculator buttons
