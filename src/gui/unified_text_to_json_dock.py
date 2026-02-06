@@ -238,6 +238,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     # Signal emitted when user wants to open result in editor
     open_in_editor_requested = Signal(str)  # JSON string
+    open_in_editor_and_switch_requested = Signal(str, bool)  # (content, switch_to_file)
     
     def __init__(self, parent: QWidgetType | None = None):
         # Initialize JSX extraction state BEFORE calling super().__init__
@@ -664,6 +665,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_history_btn.setMinimumWidth(100)
         self.jsx_history_btn.clicked.connect(self._jsx_show_history)
         buttons_grid.addWidget(self.jsx_history_btn, 2, 1)
+        
+        self.jsx_open_switch_btn = QPushButton(tr("text_to_json.btn_open_switch", "Open in Editor and Switch"))
+        self.jsx_open_switch_btn.setMinimumWidth(120)
+        self.jsx_open_switch_btn.clicked.connect(self._jsx_open_in_editor_and_switch)
+        buttons_grid.addWidget(self.jsx_open_switch_btn, 2, 2)
         
         # Note: Swap button removed - using checkbox instead (in options grid)
         
@@ -1387,6 +1393,33 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Emit signal to open in editor
         self.open_in_editor_requested.emit(json_text)
         self._jsx_update_status("✓ Opened in editor")
+    
+    def _jsx_open_in_editor_and_switch(self):
+        """Open current tab content in editor and switch to the file."""
+        # Detect which tab is currently active
+        current_index = self.jsx_output_tabs.currentIndex()
+        
+        # Get content based on active tab (0 = Paths, 1 = JSON)
+        if current_index == 0:
+            # Paths tab is active
+            content = self.jsx_paths_output.toPlainText().strip()
+            tab_name = "Paths"
+        else:
+            # JSON tab is active
+            content = self.jsx_json_output.toPlainText().strip()
+            tab_name = "JSON"
+        
+        if not content:
+            self.show_warning(
+                tr("text_to_json.no_output", "No Output"),
+                tr("text_to_json.no_output_message", f"No {tab_name} output to open. Run extraction first.")
+            )
+            return
+        
+        # Emit signal to open in editor AND switch to file
+        self.open_in_editor_and_switch_requested.emit(content, True)
+        self._jsx_update_status(f"✓ Opened {tab_name} in editor and switched")
+    
     
     def _jsx_show_history(self):
         """Show extraction history with detailed settings and changes."""

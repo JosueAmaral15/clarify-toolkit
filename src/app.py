@@ -491,7 +491,8 @@ if _PYSIDE:
         def _open_text_to_json(self):
             """Open Text to JSON Converter dock (Task #49 - v2.9.24)."""
             signal_connections = {
-                'open_in_editor_requested': self._load_json_from_converter
+                'open_in_editor_requested': self._load_json_from_converter,
+                'open_in_editor_and_switch_requested': self._load_json_from_converter_and_switch
             }
             DockFactory.create_text_to_json_dock(self, signal_connections=signal_connections)
 
@@ -501,6 +502,20 @@ if _PYSIDE:
                 self._open_editor()
             self.dock_editor.load_json_string(json_str)
             self.dock_editor.show()
+        
+        def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
+            """Load content from text converter into main editor and switch to File Explorer."""
+            # Load content in editor
+            if not hasattr(self, 'dock_editor'):
+                self._open_editor()
+            self.dock_editor.load_json_string(content)
+            self.dock_editor.show()
+            
+            # Switch to File Explorer dock if requested
+            if switch_to_file and hasattr(self, 'dock_file_explorer'):
+                self.dock_file_explorer.show()
+                self.dock_file_explorer.raise_()
+                self.dock_file_explorer.activateWindow()
 
         def _open_file_explorer(self):
             """Open File Explorer dock (unified File List + Advanced Search - v2.9.115)."""
