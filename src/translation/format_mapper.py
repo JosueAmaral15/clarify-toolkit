@@ -1428,7 +1428,8 @@ class FormatMapper:
         #   <1|256:FF0000|L>text</1|256> - both formats with metadata
         
         # Match patterns like: <1>, <1|256>, <1:meta>, <1|256:meta1|meta2>
-        pattern = r'<([\d|]+)(?::([^>]+))>([\s\S]*?)</\1>'
+        # Fixed in Session 72: Added ? to make metadata optional
+        pattern = r'<([\d|]+)(?::([^>]+))?>([\s\S]*?)</\1>'
         
         last_pos = 0
         for match in re.finditer(pattern, normalized, re.DOTALL):
