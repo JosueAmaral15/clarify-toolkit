@@ -31,6 +31,7 @@ Date: 2025
 # pylint: disable=missing-function-docstring  # Internal UI methods
 # pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
 # pylint: disable=unnecessary-pass  # Placeholder for future code
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 from __future__ import annotations
 import re
@@ -53,6 +54,7 @@ from ...core import SearchOptions, replace_in_text, Condition, filter_files_by_c
 
 # Utilities
 from ...utils import walk_files, read_text, write_text
+from ...utils.logger import get_logger
 
 # Components from this package
 from .results_tree import ResultsTree
@@ -63,6 +65,8 @@ from ..progress import OperationHistory
 
 # Thread management
 from ...ui import thread_manager, FeatureType, ProcessingModal
+
+logger = get_logger(__name__)
 
 
 class SearchReplacePanel(QWidget):
@@ -392,7 +396,7 @@ class SearchReplacePanel(QWidget):
             return True
 
         except Exception as e:
-            print(f"[ERROR] Failed to emit replace_requested: {e}")
+            logger.error(f"Failed to emit replace_requested: {e}")
             return False
 
     def _add_condition_row(self):
@@ -826,7 +830,7 @@ class SearchReplacePanel(QWidget):
         # Update progress widget (v2.5.0) - mantido para compatibilidade
         if self._current_progress_widget:
             self._current_progress_widget.add_log(f"ERROR: {msg}")
-        print(msg)
+        logger.error(msg)
 
     def _on_search_done(self, matches: dict):
         """Handle search completion with history tracking (v2.5.0+)."""
@@ -872,7 +876,7 @@ class SearchReplacePanel(QWidget):
                     "Search", {"query": query_text, "files_processed": len(matches), "matches_found": total_matches}
                 )
         except Exception as e:
-            print(f"Failed to save history: {e}")
+            logger.error(f"Failed to save history: {e}")
 
         # Don't auto-remove progress bar - let user close it manually
 
@@ -941,7 +945,7 @@ class SearchReplacePanel(QWidget):
                     write_text(p, new)
                     count_files += 1
             except Exception as e:
-                print(f"[WARN] {p}: {e}", file=sys.stderr)
+                logger.warning(f"{p}: {e}")
 
         # Add to History Dock (v2.9.6)
         try:
@@ -951,7 +955,7 @@ class SearchReplacePanel(QWidget):
                     {"query": self.ed_query.toPlainText().strip(), "replacement": repl, "files_processed": count_files},
                 )
         except Exception as e:
-            print(f"Failed to save to history dock: {e}")
+            logger.error(f"Failed to save to history dock: {e}")
 
         QMessageBox.information(
             self,

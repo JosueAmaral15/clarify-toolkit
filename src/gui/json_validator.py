@@ -15,6 +15,10 @@ from __future__ import annotations
 import json
 from typing import Tuple, Optional
 
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class ValidationResult:
     """
@@ -48,7 +52,7 @@ class JsonValidator:
         validator = JsonValidator()
         result = validator.validate(text)
         if not result.is_valid:
-            print(f"Error at line {result.line}, col {result.col}: {result.error_msg}")
+            logger.error(f"Error at line {result.line}, col {result.col}: {result.error_msg}")
     """
 
     def validate(self, text: str) -> ValidationResult:

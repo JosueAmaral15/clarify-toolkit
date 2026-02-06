@@ -1043,18 +1043,10 @@ class FileExplorerDock(BaseDock):
             }
 
             # Create thread and worker
-            print("DEBUG 999 _list_files() | SEARCH MODE: Creating worker thread")
-            print(f"DEBUG 1000 _list_files() | Checking if _worker exists: {hasattr(self, '_worker')}")
-            if hasattr(self, '_worker'):
-                print(f"DEBUG 1002 _list_files() | _worker value: {self._worker}")
-                print(f"DEBUG 1003 _list_files() | _worker type: {type(self._worker)}")
-
             logger.debug("Creating worker thread...")
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
             self._worker.moveToThread(self._worker_thread)
-            print(f"DEBUG 1010 _list_files() | Worker created: {self._worker}")
-            print(f"DEBUG 1011 _list_files() | Worker thread: {self._worker_thread}")
             logger.debug(f"Worker moved to thread: {self._worker_thread}")
 
             # Connect signals
@@ -1817,7 +1809,6 @@ class FileExplorerDock(BaseDock):
 
         Version: v2.9.122
         """
-        print("DEBUG 1782 _cleanup_worker_thread() | ENTER")
         print(
             f"DEBUG 1783 _cleanup_worker_thread() | _worker_thread exists: "
             f"{hasattr(self, '_worker_thread')}"
@@ -1828,19 +1819,13 @@ class FileExplorerDock(BaseDock):
         )
 
         if hasattr(self, '_worker_thread') and self._worker_thread:
-            print("DEBUG 1788 _cleanup_worker_thread() | Cleaning up thread...")
             self._worker_thread.quit()
             self._worker_thread.wait()
             self._worker_thread.deleteLater()
             self._worker_thread = None
-            print("DEBUG 1793 _cleanup_worker_thread() | Thread cleaned up")
 
-        print("DEBUG 1795 _cleanup_worker_thread() | _worker exists: {hasattr(self, '_worker')}")
-        print(f"DEBUG 1796 _cleanup_worker_thread() | _worker value BEFORE: {getattr(self, '_worker', 'NO_ATTR')}")
         if hasattr(self, '_worker'):
             self._worker = None
-        print(f"DEBUG 1799 _cleanup_worker_thread() | _worker value AFTER: {getattr(self, '_worker', 'NO_ATTR')}")
-        print("DEBUG 1800 _cleanup_worker_thread() | EXIT")
 
     def _on_search_finished(self, result):
         """
@@ -1856,7 +1841,6 @@ class FileExplorerDock(BaseDock):
         """
         import time
 
-        print("DEBUG 1811 _on_search_finished() | ENTER")
         logger.debug("_on_search_finished() called!")
 
         # NOTE v2.9.123: Don't close progress dialog here!
