@@ -91,8 +91,8 @@ class TestPluginLoader:
         assert isinstance(plugin_loader.metadata, dict)
         assert isinstance(plugin_loader.settings, QSettings)
     
-    @patch('plugin_loader.Path.exists')
-    @patch('plugin_loader.Path.iterdir')
+    @patch('src.plugin_loader.Path.exists')
+    @patch('src.plugin_loader.Path.iterdir')
     def test_discover_plugins_no_directory(self, mock_iterdir, mock_exists, plugin_loader):
         """Test discovery when plugin directory doesn't exist."""
         mock_exists.return_value = False
@@ -101,8 +101,8 @@ class TestPluginLoader:
         
         assert len(discovered) == 0
     
-    @patch('plugin_loader.Path.exists')
-    @patch('plugin_loader.Path.iterdir')
+    @patch('src.plugin_loader.Path.exists')
+    @patch('src.plugin_loader.Path.iterdir')
     @patch('builtins.open', create=True)
     def test_discover_plugins_with_valid_plugin(
         self, mock_open, mock_iterdir, mock_exists, plugin_loader
@@ -264,7 +264,7 @@ class TestPluginBase:
         # Just verify methods don't raise exceptions
         assert True
     
-    @patch('plugins.plugin_base.QMessageBox')
+    @patch('PySide6.QtWidgets.QMessageBox')
     def test_show_message(self, mock_msgbox, test_plugin, mock_app):
         """Test show_message method."""
         test_plugin.app = mock_app
