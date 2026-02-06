@@ -1978,3 +1978,23 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         else:
             # Primitive → Text content
             return f"{indent}{data}"
+    
+    # ========================================================================
+    # TEXT SEARCH FEATURE (CTRL+F)
+    # ========================================================================
+    
+    def _on_search_shortcut(self):
+        """Handle CTRL+F / Cmd+F shortcut."""
+        # Only open search if Text mode is active
+        selected_type = self.jsx_input_type_combo.currentData()
+        if selected_type == "text":
+            self._open_text_search()
+    
+    def _open_text_search(self):
+        """Open search dialog for text mode."""
+        if not hasattr(self, '_text_search_dialog') or self._text_search_dialog is None:
+            self._text_search_dialog = TextSearchDialog(self, self.jsx_text_input)
+        
+        self._text_search_dialog.show()
+        self._text_search_dialog.raise_()
+        self._text_search_dialog.activateWindow()
