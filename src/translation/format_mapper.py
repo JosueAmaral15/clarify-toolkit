@@ -1434,9 +1434,9 @@ class FormatMapper:
             2. Complete but orphaned opening tags: <113|meta>, <113:meta>
             3. Broken closing tags: </113|65536>, </ 113>
             """
-            # Remove incomplete opening tags (no closing >): <113 |anything
-            cleaned = re.sub(r'<\s*\d+\s*\|[^>]*$', '', text)  # At end of text
-            cleaned = re.sub(r'<\s*\d+\s*\|[^>]*(?=\s)', ' ', cleaned)  # In middle (before space)
+            # Remove incomplete opening tags (no closing >): <113 | (stops at space/newline)
+            # Only match the tag token itself, NOT content after it
+            cleaned = re.sub(r'<\s*\d+\s*\|[^\s>]*', '', text)
             
             # Remove complete orphaned opening tags: <113|meta>, <113:meta>
             cleaned = re.sub(r'<\s*\d+\s*(?:\|[^>]*)?\s*(?::[^>]*)?\s*>', '', cleaned)
