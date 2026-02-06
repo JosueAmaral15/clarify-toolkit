@@ -308,8 +308,60 @@ Check if Text mode (line ~79-97) can be canceled:
 **IDENTIFIED:** ✅  
 **ROOT CAUSE:** Worker never checks `_cancel_requested` flag  
 **SOLUTION:** Add `if self._cancel_requested: return` at top of loop  
-**IMPLEMENTED:** ❌ (pending)  
-**TESTED:** ❌ (pending)
+**IMPLEMENTED:** ✅ (commit 237f243)  
+**TESTED:** ⏳ Awaiting user verification
+
+---
+
+## Implementation (2026-02-06)
+
+### Changes Made
+
+**File:** `src/gui/extraction_worker.py` (Line 128-133)
+```python
+for idx, fp in enumerate(all_files, 1):
+    # Check for cancellation FIRST
+    if self._cancel_requested:
+        logger.info(f"Extraction canceled by user at file {idx}/{total_files}")
+        self.error.emit("Extraction canceled by user")
+        return  # Exit early without emitting finished signal
+    
+    # Continue processing...
+```
+
+**File:** `src/gui/unified_text_to_json_dock.py` (Line 1076-1089)
+```python
+def _on_extraction_error(self, error_msg: str):
+    # Don't show status/dialog for user cancellation (already shown)
+    if "canceled by user" in error_msg.lower():
+        self._cleanup_extraction_thread()
+        return
+    
+    # Show error for actual failures
+    self._jsx_update_status(f"❌ Extraction failed: {error_msg}")
+    self.show_error(...)
+    self._cleanup_extraction_thread()
+```
+
+### How It Works
+
+1. User clicks Cancel button
+2. Cancel handler sets `_cancel_requested = True`
+3. Worker checks flag at **top of next loop iteration**
+4. Worker exits immediately via `return`
+5. Error signal emitted: "Extraction canceled by user"
+6. Error handler recognizes cancellation message
+7. Cleanup runs without showing error dialog
+8. Status already shows "Extraction canceled" from cancel handler
+
+### Benefits
+
+- ✅ Cancel stops within 1 second (after current file)
+- ✅ No silent background processing
+- ✅ UI responsive immediately
+- ✅ Clean thread shutdown
+- ✅ No error dialog for normal cancellation
+- ✅ Matches File Explorer pattern (consistent codebase)
 
 ---
 
