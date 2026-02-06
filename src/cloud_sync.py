@@ -4,6 +4,7 @@ Cloud Sync Module
 Abstraction for cloud storage providers (Google Drive, Dropbox, etc.).
 Includes dummy provider for testing.
 """
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 from .utils.logger import get_logger
 
