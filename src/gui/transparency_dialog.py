@@ -10,9 +10,14 @@ Phase 3.10 - Dialog Extraction
 Author: Josué Amaral
 Date: 2025-12-24
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QSlider, QGroupBox, QDialogButtonBox
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QDialog, QDialogButtonBox, QGroupBox,
+    QHBoxLayout, QLabel, QSlider, QVBoxLayout
+)
+
 from src.i18n.translator import tr
 
 
@@ -43,7 +48,8 @@ class TransparencyDialog(QDialog):
 
         # Info label
         info_label = QLabel(
-            "Adjust the transparency level for all windows and docks.\n" "0% = Fully transparent, 100% = Fully opaque"
+            "Adjust the transparency level for all windows and docks.\n"
+            "0% = Fully transparent, 100% = Fully opaque"
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)

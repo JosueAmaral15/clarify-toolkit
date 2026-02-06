@@ -1,7 +1,6 @@
 """Text processing utilities for masking, exclusions, and regex compilation."""
 
 import re
-from typing import List, Tuple
 
 
 def parse_exclusion_patterns(csv_regex: str) -> list[str]:
@@ -54,14 +53,14 @@ def _escape_variants_for_quotes(s: str) -> list[str]:
     """
     base = re.escape(s)
     variants = { base }
-    
+
     if '"' in s:
         variants.add(re.escape(s.replace('"', '\\"')))
     if "'" in s:
         variants.add(re.escape(s.replace("'", "\\'")))
     if "\\\"" in s or "\\\'" in s:
         variants.add(re.escape(s.replace("\\\"", "\"").replace("\\\'", "'")))
-    
+
     return list(variants)
 
 

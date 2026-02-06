@@ -52,6 +52,7 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
     return [file_root]
 
 
+# pylint: disable=too-many-return-statements  # Text truncation requires multiple early returns
 def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
     """
     Truncate text by char limit. If limit is 'all' or None -> return original.
@@ -61,7 +62,7 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
         return text
     try:
         n = int(limit)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught  # Invalid limit handling
         return text
 
     if n <= 0 or len(text) <= n:
@@ -118,7 +119,7 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
         else:
             # default snake
             token = "_".join(w.lower() for w in words)
-    
+
     if to_upper:
         token = token.upper()
     return token

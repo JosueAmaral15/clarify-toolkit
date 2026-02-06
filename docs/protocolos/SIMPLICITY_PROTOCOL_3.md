@@ -1,5 +1,11 @@
 # Simplicity 3 Protocol - Solo Developer in Production
 
+---
+
+> 📖 **MANDATORY FOR ALL ARTIFICIAL INTELLIGENCES**: If you are reading this protocol, you MUST study and comprehend 100% of its content before proceeding. This is not optional documentation—it is the foundational methodology that defines how you must assist users and their customers. Read every section thoroughly, understand every principle, checklist, and guideline. Your effectiveness depends entirely on mastering this protocol. Partial understanding leads to incomplete work and user frustration.
+
+---
+
 **Author**: Josué Amaral  
 **Creation Date**: December 02, 2025  
 **Version**: 4.5  
@@ -101,15 +107,15 @@
 - ✅ Integration with existing Associative Memory Factor section
 
 **Changelog v3.9** (01/06/2026):
-- ✅ **[BLOCKING SOLO REFACTORING]** Mandatory Rule: Study Code BEFORE Refactoring (Solo Pragmatic)
-- ✅ AI MUST have studied relevant code and documentation before refactoring (pragmatic for solo dev)
-- ✅ Pragmatic checklist of 6 essential items (don't need to study 100% of code)
+- ✅ **[BLOCKING SOLO REFACTORING]** Mandatory Rule: Study Code BEFORE Refactoring (Solo Disciplined)
+- ✅ AI MUST have studied ALL code and documentation before refactoring (rigorous for quality)
+- ✅ Complete and comprehensive checklist of 8 mandatory items (MUST study 100% of relevant code)
 - ✅ PROHIBITED situations: 4 solo examples of what to NEVER do (refactor without understanding = debugging at 3AM)
-- ✅ Correct process in 5 pragmatic steps: Study Essential → Plan Quick → Refactor → Test → Sleep Peacefully
+- ✅ Correct process in 5 disciplined steps: Study Everything → Plan Complete → Refactor → Test → Implement Safely
 - ✅ Complete example: WRONG vs CORRECT refactoring (input validation)
-- ✅ Solo mantra: "Refactoring without study = Waking up at 3AM debugging. Protect your sleep!"
-- ✅ Solo rationale: 2h studying → safe refactoring | 0h studying → 8h debugging alone
-- ✅ Pragmatic study time: 30min - 2h (maximum, you have a life)
+- ✅ Solo mantra: "Refactoring without study = Waking up at 3AM debugging. Study 100% to protect your sleep!"
+- ✅ Solo rationale: 3-6h studying → safe refactoring | 0h studying → 12h debugging alone
+- ✅ Mandatory study time: 1-4h (necessary for complete comprehension)
 
 **Changelog v3.8** (01/06/2026):
 - ✅ **[FUNDAMENTAL SOLO PARADIGM]** Total Clarity Before Implementation (MANDATORY)
@@ -125,20 +131,20 @@
 
 **Changelog v3.7** (01/06/2026):
 - ✅ **[CRITICAL SOLO]** Added Step 1.2: Deep Comprehension of Existing Codebase (MANDATORY)
-- ✅ AI MUST know existing code before implementing
-- ✅ Pragmatic 6-item checklist (don't need to study 100% of code)
-- ✅ Focus on: code you'll touch + related code + project patterns
-- ✅ Maximum time: 2h initial study + incremental as needed
-- ✅ Identify critical "don't touch" code and reuse opportunities
+- ✅ AI MUST know ALL existing code before implementing
+- ✅ Complete and comprehensive 8-item mandatory checklist (MUST study 100% of code)
+- ✅ Focus on: ALL source code + ALL documentation + ALL Git history + ALL tests
+- ✅ Necessary time: 1-4 days of complete study depending on project size
+- ✅ Identify critical "don't touch" code, understand complete architecture and reuse opportunities
 - ✅ Create simple docs/NOTES.md with findings
 - ✅ Solo rationale: Only firefighter, limited memory, scarce time, active production
 
 **Changelog v3.6** (01/06/2026):
 - ✅ **[MANDATORY PRAGMATIC]** Added Mandatory Rule: Unit Tests for Complex Tools (Solo Pragmatic)
 - ✅ MANDATORY: Test critical code that causes 3AM debugging sessions
-- ✅ Pragmatic coverage: 60-70% for critical paths only
+- ✅ Rigorous coverage: 80-90% for ALL code with logic (if/else, loops, validations)
 - ✅ When to test: Complex logic, data handling, would-wake-you-up bugs
-- ✅ When to SKIP: Trivial getters/setters, temporary code, CRUD boilerplate
+- ✅ Priority order: Critical first, then complex, then simple (but test ALL)
 - ✅ Discount calculation example showing test priorities
 - ✅ Solo-specific rationale: Limited memory, you're the only firefighter
 - ✅ Simplified CI/CD without blocking coverage requirements
@@ -192,6 +198,183 @@
 **Changelog v3.1** (09/12/2025):
 
 ---
+---
+
+## 🤝 Human-AI Interaction Guide: Main Steps for Software Development
+
+**CRITICAL NOTICE**: The artificial intelligence MUST be notified about the main steps to correctly perform the software development process. The interaction between human beings and artificial intelligence MUST follow this flow:
+
+### 📋 Complete Development Process (8 Steps)
+
+#### **Step 1: Choose and Read 100% of the Protocol**
+- Choose one of the simplicity protocols (example: Simplicity Protocol 3)
+- The AI MUST read **100% of the chosen protocol**
+- This is the **first mandatory step** before any action
+- Without complete reading, the AI will not have the necessary methodological context
+
+#### **Step 2: Study 100% of Documentation and Code**
+After the protocol has been 100% read:
+1. **Documentation**: The AI MUST study **100% of the project documentation**
+2. **Source Code**: If there is code, the AI MUST study **100% of the code** (if not already read)
+3. **Git History**: The AI MUST read the entire project history with:
+   ```bash
+   git log --all --stat --graph --decorate
+   ```
+4. **Tests**: The AI MUST study and investigate algorithm behavior by running test codes from the `tests/` folder
+
+**Recommended order**: Protocol → Documentation → Git Log → Code → Tests
+
+#### **Step 3: Document Tasks in docs/TASKS.md**
+**Scenario A - If `docs/TASKS.md` does NOT exist:**
+1. Ask the AI to document your tasks in `docs/ORIGINAL-TASKS.md`
+2. The AI will use the protocol to organize tasks from `docs/ORIGINAL-TASKS.md` → `docs/TASKS.md`
+3. If you already have the requirements, place them in `docs/ORIGINAL-TASKS.md`
+4. If you do NOT have the requirements, discuss with the AI what needs to be implemented
+5. These requirements should be listed directly in `docs/TASKS.md`
+
+**Scenario B - If `docs/TASKS.md` exists:**
+1. The AI already has the structured task list
+2. Proceed to Step 4
+
+**🔑 Importance**: Documenting features is essential to:
+- Make the protocol more effective
+- Ensure requirements are documented and remembered later
+- Allow clear organization of all demands
+
+#### **Step 4: Complete Tasks According to the Protocol**
+1. With documentation read and tasks defined, ask the AI to complete the tasks
+2. Execute **one task at a time**, following the simplicity protocol
+3. **You do NOT need to choose which task**: The protocol's central rule is to solve:
+   - Simplest tasks first
+   - Tasks that other tasks depend on to be executed
+   - Task/sprint/feature/requirement selection is **automatic**
+
+#### **Step 5: Refine Requirements with Questions and Answers**
+1. **Answer the questions** that the AI asks in each session
+2. This allows refining the requirements
+3. The AI will better understand what it should do
+4. **Observe the protocol in action** at this stage
+5. See your software being developed incrementally
+
+**🎯 Bilateral relationship**: Client and AI learn from each other (student-teacher relationship)
+
+#### **Step 6: Test User Experience (UX)**
+1. The AI can perform **automated technical tests**
+2. **You** need to conduct **user experience (UX) tests**
+3. Until the user experience is satisfactory:
+   - Provide details of your experience
+   - Explain what you want to do
+   - Continue refining until the AI gets it right, according to the simplicity protocol
+
+**🔁 Iterative cycle**: Test → Feedback → Refinement → Test again
+
+#### **Step 7: Final Verification - Mandatory Questions**
+When the AI signals that it has finished and that the program/application has been completed, **ALWAYS** ask to challenge the AI's assumptions:
+
+**Question 1 (Mandatory):**
+```
+❓ "What does this program do?"
+```
+- The AI will give a description of how the program/application turned out
+
+**Question 2 (Mandatory):**
+```
+❓ "And do you GUARANTEE that the program does ALL of this?"
+```
+- This question will reveal if the AI actually managed to perform the requested activities
+- It will reveal if the AI is being sincere and honest in what it says
+
+**🚨 STRONGLY RECOMMENDED**: Ask these two questions after the AI signals completion
+
+**After the two questions, ask the AI to:**
+1. Install dependencies
+2. Run all tests
+3. Finalize pending sprints
+4. Check for orphaned code (unused code)
+5. Analyze if refactoring was successful
+6. Get organized and follow the simplicity protocol
+7. Create a **detailed action plan** with specific stages
+8. Record **step by step** in the action plan what needs to be done to get organized
+9. Divide into clear phases/stages
+
+#### **Step 8: Software Completion**
+✅ **Success criteria**:
+1. All requirements are implemented
+2. There are no known bugs
+3. User experience (UX) tests are a success
+4. All automated tests pass
+5. Code is organized and documented
+
+🎉 **Congratulations, your software is finished!**
+
+---
+
+### 📊 Human-AI Interaction Checklist
+
+**Before starting to program:**
+- [ ] ✅ I chose a simplicity protocol (1, 2, or 3)
+- [ ] ✅ AI read 100% of the chosen protocol
+- [ ] ✅ AI studied 100% of existing documentation
+- [ ] ✅ AI read entire Git history (`git log --all --stat`)
+- [ ] ✅ AI studied 100% of source code (if it exists)
+- [ ] ✅ AI executed tests from `tests/` folder to understand behavior
+- [ ] ✅ Tasks documented in `docs/TASKS.md` or `docs/ORIGINAL-TASKS.md`
+
+**During development:**
+- [ ] ✅ AI is completing tasks one at a time
+- [ ] ✅ AI automatically chooses simple tasks or tasks with dependencies
+- [ ] ✅ I am answering AI questions to refine requirements
+- [ ] ✅ I am observing the protocol in action
+- [ ] ✅ I am testing user experience (UX)
+- [ ] ✅ I am providing detailed UX feedback
+
+**Final verification:**
+- [ ] ✅ Asked: "What does this program do?"
+- [ ] ✅ Asked: "And do you GUARANTEE that the program does ALL of this?"
+- [ ] ✅ AI installed all dependencies
+- [ ] ✅ AI executed all tests successfully
+- [ ] ✅ AI finalized all pending sprints
+- [ ] ✅ AI checked for orphaned code
+- [ ] ✅ AI analyzed refactoring success
+- [ ] ✅ AI created detailed action plan
+- [ ] ✅ All requirements implemented
+- [ ] ✅ No known bugs
+- [ ] ✅ UX tests successful
+
+---
+
+### 🎯 Golden Rules of Human-AI Interaction
+
+1. **📖 Complete Reading**: AI MUST read 100% of the protocol before any action
+2. **🔍 Deep Study**: AI MUST study docs, git log, code, and tests before implementing
+3. **📝 Clear Documentation**: All tasks MUST be in `docs/TASKS.md`
+4. **🎯 Incremental Focus**: One task at a time, from simplest to most complex
+5. **💬 Active Communication**: Questions and answers continuously refine requirements
+6. **🧪 Continuous Testing**: AI tests technically, user tests experience (UX)
+7. **✅ Final Verification**: Always ask the 2 mandatory questions at the end
+8. **🎉 Clear Criteria**: Finished software = requirements + no bugs + perfect UX
+
+---
+
+### ⚠️ Important Warnings
+
+**For the AI:**
+- 🚫 **NEVER** skip complete protocol reading
+- 🚫 **NEVER** start coding without studying documentation, git log, and code
+- 🚫 **NEVER** assume you understood everything without asking questions
+- 🚫 **NEVER** say you finished without guaranteeing EVERYTHING works
+- ✅ **ALWAYS** be sincere and honest, even if it temporarily displeases
+- ✅ **ALWAYS** answer the 2 mandatory questions with complete honesty
+
+**For the User:**
+- 📋 **ALWAYS** document requirements in `docs/TASKS.md` or `docs/ORIGINAL-TASKS.md`
+- 💬 **ALWAYS** answer AI questions to refine requirements
+- 🧪 **ALWAYS** test user experience (UX) personally
+- ❓ **ALWAYS** ask the 2 mandatory questions at the end
+- 🔍 **ALWAYS** verify if the AI really delivered what it promised
+
+---
+
 
 ## 🎯 Why Does Simplicity 3 Exist?
 
@@ -2262,7 +2445,1423 @@ If yes, what title and description would you like for the PR?
 **Git Golden Rule**:
 > **"Main is sacred. Always work on COM-UUID branches, except if user explicitly asks to use main."**
 
+### 🌳 Branch Patterns for Solo Devs (Pragmatic)
+
+As a solo dev, you have flexibility but need organization:
+
+#### **Pattern 1: COM-UUID** (For AIs)
+```bash
+COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+```
+- ✅ **When**: AI works on automated tasks
+- ✅ **Advantage**: Perfect traceability
+
+#### **Pattern 2: COM1-feature** (For You - Recommended)
+```bash
+COM1-add-authentication
+COM1-fix-login-bug
+COM1-refactor-api
+```
+- ✅ **When**: You work on features/bugfixes
+- ✅ **Advantage**: Simple, descriptive, easy to remember
+- ✅ **Format**: `COM1-<short-description>`
+
+#### **Pattern 3: COM1** (Single Workspace - Optional)
+```bash
+COM1  # Personal work branch
+```
+- ⚠️ **When**: Prefer single persistent work branch
+- ⚠️ **Disadvantage**: Mixes different features
+- ✅ **OK for solo dev**, but Pattern 2 is better
+
+**Pragmatic Choice:**
+- **AI**: Always COM-UUID (automatic)
+- **You**: COM1-feature (organized but simple)
+
+### 🔄 Solo Dev Workflow (Straight to the Point)
+
+#### **Step 1: Create Branch**
+```bash
+# Update main
+git checkout main
+git pull origin main
+
+# Create branch for feature
+git checkout -b COM1-add-user-profiles
+```
+
+#### **Step 2: Work and Commit**
+```bash
+# Make changes
+vim src/profiles.py
+
+# Commit (simple but clear message)
+git add src/profiles.py
+git commit -m "feat: add user profile page with avatar upload"
+
+# Push (automatic backup!)
+git push -u origin COM1-add-user-profiles
+```
+
+**Commit frequency:**
+- ✅ Commit at end of day (backup)
+- ✅ Commit before risky change (savepoint)
+- ✅ Commit when feature works (milestone)
+
+#### **Step 3: Test Before Merging**
+```bash
+# Run basic tests
+npm test
+# or
+pytest tests/
+
+# If all OK, merge to main
+git checkout main
+git merge COM1-add-user-profiles
+git push origin main
+
+# Delete branch (optional, but keeps things organized)
+git branch -d COM1-add-user-profiles
+git push origin --delete COM1-add-user-profiles
+```
+
+**Disciplined Solo Development:**
+- ✅ PR is mandatory even solo (documents self-review and decisions)
+- ✅ CI/CD is strongly recommended (automates quality and prevents bugs)
+- ✅ Code review is you methodically reviewing with checklist
+- ✅ Priority: **works WELL > works poorly** (quality is non-negotiable)
+
+#### **Step 4: Handle Experiments**
+```bash
+# For risky tests/experiments:
+git checkout -b COM1-experiment-new-db
+# [do experiment]
+
+# If it worked:
+git checkout main
+git merge COM1-experiment-new-db
+
+# If it failed:
+git checkout main
+git branch -D COM1-experiment-new-db  # Delete without merge
+```
+
+### ⚠️ Conflict Handling (Solo Dev)
+
+**Scenario**: You work on laptop + desktop (or with AI helping)
+
+```bash
+# On laptop: committed changes
+git commit -m "feat: add profile feature"
+git push origin COM1-profiles
+
+# On desktop (or AI committed): edited same file
+git pull origin COM1-profiles
+# Auto-merging src/profiles.py
+# CONFLICT (content): Merge conflict in src/profiles.py
+
+# Resolve conflict:
+vim src/profiles.py
+
+# Conflict example:
+# <<<<<<< HEAD  # Local change (desktop)
+#     def get_profile(user_id):
+#         return database.query(user_id)
+# =======       # Remote change (laptop)
+#     def get_profile(user_id):
+#         return cache.get(user_id) or database.query(user_id)
+# >>>>>>> origin/COM1-profiles
+
+# Choose best version (or combine):
+def get_profile(user_id):
+    return cache.get(user_id) or database.query(user_id)
+
+# Finalize:
+git add src/profiles.py
+git commit -m "merge: resolve conflict - keep cache version"
+git push origin COM1-profiles
+```
+
+**Solo Dev Tip**: If conflicts are rare, don't overcomplicate. Manual resolution is OK.
+
+### 🚫 Common Mistakes (Solo Dev)
+
+#### ❌ **Mistake 1: Never Committing**
+```bash
+# Working for weeks without commit = no backup = risk losing everything
+```
+
+**✅ Solution**: Commit at end of each session
+```bash
+# Every end of day:
+git add -A
+git commit -m "wip: progress on user profiles"
+git push origin COM1-profiles
+```
+
+#### ❌ **Mistake 2: Working Directly on Main for Risky Changes**
+```bash
+git checkout main
+vim src/critical_payment.py  # Big, risky change
+git commit -m "refactor payments"  # If it breaks, main is broken!
+```
+
+**✅ Solution**: Branch for risky changes
+```bash
+git checkout -b COM1-refactor-payments
+vim src/critical_payment.py
+git commit -m "refactor: simplify payment logic"
+# Test A LOT before merging
+npm test
+# If OK:
+git checkout main
+git merge COM1-refactor-payments
+```
+
+#### ❌ **Mistake 3: Forgetting to Push (No Backup)**
+```bash
+# Committing only locally = if HD fails, everything lost
+git commit -m "feat: important feature"
+# [forgets to push]
+# [HD crashes] 💀
+```
+
+**✅ Solution**: Always push after commit
+```bash
+git commit -m "feat: important feature"
+git push origin COM1-feature  # IMMEDIATE BACKUP
+```
+
+### 💡 Useful Commands for Solo Dev
+
+```bash
+# See simple history
+git log --oneline -10
+
+# See what changed recently
+git diff HEAD~1
+
+# Undo last commit (if haven't pushed yet)
+git reset --soft HEAD~1  # Keeps changes
+# or
+git reset --hard HEAD~1  # Discards changes (careful!)
+
+# See modified files
+git status -s
+
+# Quick backup before risky change
+git commit -am "wip: backup before risky change"
+git push
+
+# Undo changes in file (before commit)
+git checkout -- src/file.py
+
+# See who (you or AI) modified each line
+git blame src/file.py
+
+# Find recently introduced bug (simplified bisect)
+git log --oneline
+# Test commits manually until finding culprit
+```
+
+### 🤖 Working with AI (Solo Dev + AI Assistant)
+
+**Scenario**: You + AI working together on project
+
+```bash
+# AI works on COM-UUID branch
+# [AI creates]: git checkout -b COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+
+# You work on COM1-feature branch
+git checkout -b COM1-refactor-ui
+
+# Both can work simultaneously without conflicts!
+
+# When AI finishes, you can:
+# 1. Review AI's code:
+git diff main..COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+
+# 2. Test AI's branch:
+git checkout COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+npm test
+
+# 3. If OK, merge:
+git checkout main
+git merge COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+git push origin main
+
+# 4. Delete AI's branch:
+git branch -d COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+```
+
+### 🎯 Pragmatic Workflow Summary
+
+**For Simple Features:**
+```bash
+# 1. Branch
+git checkout -b COM1-feature
+
+# 2. Work
+vim src/code.py
+
+# 3. Commit + Push (backup)
+git commit -am "feat: add feature"
+git push -u origin COM1-feature
+
+# 4. Test
+npm test
+
+# 5. Merge
+git checkout main
+git merge COM1-feature
+git push origin main
+
+# 6. Cleanup (optional)
+git branch -d COM1-feature
+```
+
+**For Risky Experiments:**
+```bash
+# Separate branch
+git checkout -b COM1-experiment
+
+# Experiment
+# [experimental code]
+
+# If it works → merge
+# If it doesn't → git branch -D COM1-experiment
+```
+
+**For Quick Backup:**
+```bash
+# End of day:
+git add -A
+git commit -m "wip: end of day backup"
+git push
+```
+
+### 📋 Solo Dev Best Practices (Pragmatic)
+
+**DO ✅:**
+- Commit at end of each work session (backup)
+- Use branch for risky changes
+- Push frequently (protection against HD failure)
+- Descriptive commit messages (you'll forget in 1 month)
+- Delete branches after merge (organization)
+
+**DON'T ❌:**
+- Work weeks without commit (risk of loss)
+- Big changes directly on main (no rollback)
+- Forget to push (no remote backup)
+- Vague messages "update" (will regret later)
+
+**Solo Dev Golden Rule:**
+> **"Branches protect experiments. Commits protect progress. Push protects everything. Do all three regularly."**
+
+### 🔧 Useful Scripts for Solo Dev
+
+**Script 1: Auto Backup (End of Day)**
+```bash
+#!/bin/bash
+# daily_backup.sh
+current_branch=$(git branch --show-current)
+
+git add -A
+git diff --cached --quiet || git commit -m "wip: daily backup $(date +%Y-%m-%d)"
+git push origin $current_branch
+echo "✅ Backup sent to remote"
+```
+
+```bash
+chmod +x daily_backup.sh
+# Run at end of day:
+./daily_backup.sh
+# Or automate (cron): 0 18 * * * cd /path && ./daily_backup.sh
+```
+
+**Script 2: Cleanup Old Branches**
+```bash
+#!/bin/bash
+# cleanup_branches.sh
+git checkout main && git pull origin main
+merged=$(git branch --merged main | grep -v "main\|*")
+[[ -z "$merged" ]] && { echo "✅ No branches to clean"; exit 0; }
+echo "$merged"
+read -p "Delete? (y/n): " confirm
+[[ "$confirm" == "y" ]] && echo "$merged" | xargs git branch -d
+```
+
+**Script 3: Quick Commit + Push**
+```bash
+#!/bin/bash
+# qcp.sh (Quick Commit Push)
+# Usage: ./qcp.sh "commit message"
+[[ -z "$1" ]] && { echo "Usage: ./qcp.sh 'message'"; exit 1; }
+git add -A
+git commit -m "$1"
+git push origin $(git branch --show-current)
+echo "✅ Committed and pushed: $1"
+```
+
+```bash
+chmod +x qcp.sh
+./qcp.sh "feat: add user authentication"
+# ✅ Committed and pushed: feat: add user authentication
+```
+
+### 🎓 Advanced Techniques (Optional for Solo Dev)
+
+**Git Stash (Save Temporary Work)**
+```bash
+# You're in the middle of something, need to switch context urgently:
+git stash save "work in progress on profile"
+
+# Switch context:
+git checkout main
+# [do urgent hotfix]
+
+# Return to previous work:
+git checkout COM1-profiles
+git stash pop  # Restore changes
+```
+
+**Git Bisect (Find When Bug Was Introduced)**
+```bash
+# Test was passing last week, now fails. Which commit broke it?
+git bisect start
+git bisect bad                    # Current commit is broken
+git bisect good HEAD~20           # 20 commits ago was OK
+
+# Git checks out middle commit
+# Test:
+npm test
+
+# If fails:
+git bisect bad
+# If passes:
+git bisect good
+
+# Repeat until Git finds culprit commit
+git bisect reset  # Return to normal
+```
+
+**Git Reflog (Recover "Lost" Work)**
+```bash
+# Did git reset --hard by accident and "lost" commits:
+git reflog
+# abc1234 HEAD@{0}: reset: moving to HEAD~5
+# def5678 HEAD@{1}: commit: important feature
+
+# Recover "lost" commit:
+git checkout def5678
+git checkout -b COM1-recovery
+# Commits recovered! 🎉
+```
+
+### 🎯 Solo Dev Summary
+
+**Minimum Viable Workflow:**
+1. Branch for each feature/experiment
+2. Commit at end of day (backup)
+3. Push every time (protection)
+4. Merge when it works
+5. Delete branch when merged
+
+**Essential Rules:**
+- 🌿 **Branch** = Safe experiment
+- 💾 **Commit** = Savepoint
+- ☁️ **Push** = Cloud backup
+- 🧪 **Test** before merge
+- 🧹 **Cleanup** old branches
+
+**When to Simplify:**
+- Trivial features: OK to commit directly to main (you decide)
+- Solo on project: PR is optional
+- Quick prototype: Less rigor OK
+
+**When to Be Strict:**
+- Active production: ALWAYS use branches
+- Risky changes: ALWAYS test in branch
+- Critical code: ALWAYS commit + push
+
+**Solo Dev Philosophy:**
+> **"Git isn't bureaucracy, it's your safety net. Use it."**
+
 ---
+
+### 🤖 Multi-AI Concurrent Work with Git Worktree
+
+> **CRITICAL SCENARIO**: When multiple AIs work simultaneously on the same project (multiple terminal tabs/windows), it is **MANDATORY** to use `git worktree` to avoid conflicts.
+
+#### 📋 When to Use Git Worktree (MANDATORY)
+
+**Scenario:**
+```
+Terminal Tab 1: AI #1 working on feature A
+Terminal Tab 2: AI #2 working on feature B
+Terminal Tab 3: AI #3 working on bugfix C
+
+All in same project: ~/project/
+```
+
+**Problem without worktree:**
+- `.git/index.lock` conflicts
+- Branch changes affect all AIs
+- Context loss when AI changes branch
+- Accidental commits to wrong branch
+
+**Solution with worktree:**
+- Each AI works in separate directory
+- Each AI has its own active branch
+- No lock file conflicts
+- Isolated and safe context
+
+#### 🔍 Concurrent Work Detection (AI MUST DO)
+
+**Step 1: Ask User (ALWAYS)**
+```markdown
+🤖 **Concurrent Work Detection**
+
+Before starting, I need to know:
+
+❓ Are there other AIs working on this project NOW?
+   - In other terminal tabs/windows?
+   - In other simultaneous processes?
+
+**Answer:**
+- [1] YES - Other AIs are working (I'll use worktree)
+- [2] NO - I'm the only AI working (normal workflow)
+- [3] DON'T KNOW - Check automatically
+
+Default answer: option 3 (check)
+```
+
+**Step 2: Automatic Verification (if user chooses option 3)**
+```bash
+# Check lock files (indicate another AI working)
+if [ -f .git/index.lock ]; then
+    echo "⚠️ DETECTED: .git/index.lock exists"
+    echo "Another AI may be working now"
+    echo "RECOMMENDATION: Use worktree"
+fi
+
+# Check active branches in worktrees
+git worktree list
+# If returns multiple worktrees → other AIs working
+
+# Check active git processes (optional)
+ps aux | grep -i "git\|code\|cursor" | grep -v grep
+```
+
+**Step 3: Decision**
+- If DETECTED other AIs → **MANDATORY** use worktree
+- If NOT DETECTED but user said "YES" → **MANDATORY** use worktree
+- If NOT DETECTED and user said "NO" → Normal workflow
+
+#### 📁 Workflow with Worktree (Step by Step)
+
+**Scenario: User confirmed multiple AIs working**
+
+**Step 1: Check Existing Worktrees**
+```bash
+# List all active worktrees
+git worktree list
+
+# Example output:
+# /home/user/project              abc1234 [main]
+# /home/user/project-worktree-1  def5678 [COM-uuid1]
+# /home/user/project-worktree-2  ghi9012 [COM-uuid2]
+```
+
+**Step 2: Determine Next Worktree Number**
+```bash
+# Count existing worktrees (excluding main)
+existing_worktrees=$(git worktree list | grep -c "worktree-")
+
+# Next number
+next_number=$((existing_worktrees + 1))
+
+# New worktree name
+worktree_name="../project-worktree-${next_number}"
+```
+
+**Step 3: Create COM-UUID Branch**
+```bash
+# Generate UUID v4 for this AI
+uuid=$(uuidgen | tr '[:upper:]' '[:lower:]')
+branch_name="COM-${uuid}"
+
+echo "📌 Branch created: ${branch_name}"
+```
+
+**Step 4: Create Worktree**
+```bash
+# Create worktree in separate directory
+git worktree add ${worktree_name} -b ${branch_name}
+
+# Expected output:
+# Preparing worktree (new branch 'COM-a5e531b2-...')
+# HEAD is now at abc1234 commit message
+```
+
+**Step 5: Change to Worktree Directory**
+```bash
+cd ${worktree_name}
+
+# Confirm location
+pwd
+# /home/user/project-worktree-3
+
+# Confirm active branch
+git branch --show-current
+# COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+```
+
+**Step 6: Inform User**
+```markdown
+✅ **Worktree Successfully Configured!**
+
+📂 **Working directory:** ${worktree_name}
+🌿 **Active branch:** ${branch_name}
+🔒 **Isolation:** This AI is isolated from other AIs
+
+**Current structure:**
+- Main directory: ~/project/ (don't use!)
+- Worktree 1: ~/project-worktree-1/ (AI #1)
+- Worktree 2: ~/project-worktree-2/ (AI #2)
+- Worktree 3: ~/project-worktree-3/ (YOU ARE HERE)
+
+**IMPORTANT:**
+- Work ONLY in ${worktree_name}
+- DO NOT return to ~/project/
+- Commits will be made on branch ${branch_name}
+```
+
+**Step 7: Work Normally**
+```bash
+# Now work as if it were a normal directory
+vim src/feature.py
+git add src/feature.py
+git commit -m "feat: implement feature A"
+git push origin ${branch_name}
+```
+
+#### 🧹 Cleanup After Completion (ASK USER)
+
+**When AI finishes task:**
+
+```markdown
+✅ **Task Completed!**
+
+📊 **Worktree Status:**
+- Directory: ${worktree_name}
+- Branch: ${branch_name}
+- Commits: X commits made
+- Status: Pushed to remote
+
+🧹 **Worktree Cleanup:**
+
+Do you want me to remove the worktree now?
+
+**Options:**
+1. ✅ YES - Remove worktree (will keep branch on remote)
+2. 📋 NO - Keep for review (you can review later)
+3. 🔀 MERGE - Merge to main and then remove
+
+Recommendation: Option 2 (keep for review)
+```
+
+**If user chooses "YES - Remove":**
+```bash
+# Return to main directory
+cd ~/project/
+
+# Remove worktree
+git worktree remove ${worktree_name}
+
+# Confirm removal
+git worktree list
+# Worktree no longer appears in list
+
+echo "✅ Worktree ${worktree_name} successfully removed!"
+echo "⚠️ Branch ${branch_name} still exists on remote"
+```
+
+**If user chooses "MERGE and Remove":**
+```bash
+# Return to main
+cd ~/project/
+git checkout main
+git pull origin main
+
+# Merge branch
+git merge ${branch_name}
+git push origin main
+
+# Remove worktree
+git worktree remove ${worktree_name}
+
+# Delete local and remote branch
+git branch -d ${branch_name}
+git push origin --delete ${branch_name}
+
+echo "✅ Merge complete and worktree removed!"
+```
+
+#### ⚠️ Common Error Handling
+
+**Error 1: Worktree already exists**
+```bash
+# Error:
+# fatal: '${worktree_name}' already exists
+
+# Solution:
+git worktree list
+# Check if worktree is actually in use
+# If not in use:
+git worktree remove ${worktree_name} --force
+# Recreate
+git worktree add ${worktree_name} -b ${branch_name}
+```
+
+**Error 2: Branch already exists**
+```bash
+# Error:
+# fatal: A branch named 'COM-uuid' already exists
+
+# Solution:
+# Generate new UUID
+uuid=$(uuidgen | tr '[:upper:]' '[:lower:]')
+branch_name="COM-${uuid}"
+# Try again
+```
+
+**Error 3: Directory not empty**
+```bash
+# Error:
+# fatal: '${worktree_name}' already exists and is not empty
+
+# Solution:
+# Use different directory
+next_number=$((next_number + 1))
+worktree_name="../project-worktree-${next_number}"
+```
+
+#### 📊 Active Worktree Monitoring
+
+**View status of all worktrees:**
+```bash
+# List worktrees
+git worktree list
+
+# Detailed output:
+# /home/user/project              abc1234 [main]
+# /home/user/project-worktree-1  def5678 [COM-uuid1]  ← AI #1
+# /home/user/project-worktree-2  ghi9012 [COM-uuid2]  ← AI #2
+# /home/user/project-worktree-3  jkl3456 [COM-uuid3]  ← AI #3 (you)
+
+# View status of each worktree
+for worktree in $(git worktree list --porcelain | grep "worktree " | cut -d' ' -f2); do
+    echo "📂 Worktree: $worktree"
+    cd "$worktree"
+    git status -s
+    echo "---"
+done
+```
+
+#### 🎯 Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ User opens multiple terminal tabs/windows                  │
+│ Each tab = 1 AI working                                    │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│ AI asks: "Other AIs working now?"                          │
+│ User answers: YES / NO / DON'T KNOW                        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+              ┌───────────┴───────────┐
+              │   YES or DETECTED     │   NO
+              ↓                       ↓
+┌──────────────────────────┐  ┌─────────────────┐
+│ Workflow with WORKTREE   │  │ NORMAL Workflow │
+│ (MANDATORY)              │  │ (no worktree)   │
+└──────────────────────────┘  └─────────────────┘
+              ↓
+┌──────────────────────────────────────────────────────────────┐
+│ 1. Check existing worktrees (git worktree list)            │
+│ 2. Determine next number (worktree-N)                      │
+│ 3. Generate UUID for branch (COM-uuid)                     │
+│ 4. Create worktree: git worktree add ../project-worktree-N │
+│ 5. Change to worktree: cd ../project-worktree-N            │
+│ 6. Work in isolation                                       │
+│ 7. Commits and push normally                               │
+└──────────────────────────────────────────────────────────────┘
+              ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Task completed                                              │
+│ Ask: Remove worktree? YES / NO / MERGE                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### 💡 Alternative Worktree Format (Less Common)
+
+**Option: Use COM-UUID as directory name**
+
+```bash
+# Instead of: ../project-worktree-1
+# Use: ../project-COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
+
+worktree_name="../project-${branch_name}"
+git worktree add ${worktree_name} -b ${branch_name}
+```
+
+**Advantages:**
+- Directory name = branch name (consistency)
+- Perfect traceability
+
+**Disadvantages:**
+- Very long and difficult to type name
+- Less readable in listings
+
+**Recommendation:** Use `worktree-N` by default, but offer UUID as option.
+
+#### 🎓 Multi-AI Golden Rule
+
+> **"When multiple AIs work together, worktrees keep each AI in its own universe. One directory per AI, one branch per AI, zero conflicts."**
+
+**Mandatory checklist:**
+- [ ] Did I ask user about other AIs working?
+- [ ] Did I check `.git/index.lock` and `git worktree list`?
+- [ ] If multiple AIs detected → did I use worktree?
+- [ ] Did I create worktree with sequential name (worktree-N)?
+- [ ] Did I change to worktree directory before working?
+- [ ] Did I inform user about location and branch?
+- [ ] Did I ask about removal when completing task?
+
+---
+
+### 🌐 Multi-AI Communication & Coordination
+
+> **CRITICAL UNDERSTANDING**: GitHub Copilot CLI (and Copilot in general) is **stateless per invocation**. Each terminal session is completely isolated—AIs do NOT communicate directly. To enable coordination between multiple AIs working on the same project, you must architect an external communication system.
+
+#### 🔍 Technical Reality: How Copilot CLI Actually Works
+
+**Core Architecture:**
+- **Stateless per invocation**: Each Copilot call is independent—no memory persists between invocations
+- **Process isolation**: Each terminal tab is a separate shell process with:
+  - Independent environment variables
+  - Own STDIN/STDOUT/STDERR streams
+  - No shared Inter-Process Communication (IPC) channels
+- **No agent identity**: Copilot does not have:
+  - Agent IDs or persistent identities
+  - Message buses or event systems
+  - Long-running background processes
+  - Awareness of other terminal sessions
+- **Security model**: GitHub intentionally prevents:
+  - Background autonomous coordination
+  - Cross-terminal inference without user consent
+  - Implicit data sharing between sessions
+  - Autonomous behavior that could leak sensitive data
+
+**What This Means in Practice:**
+```
+Terminal A: Copilot receives prompt → generates response → exits
+Terminal B: Copilot receives prompt → generates response → exits
+
+Result: No shared context, no communication, no coordination
+```
+
+Think of two Copilot sessions like two people answering emails independently—**zero awareness of each other**.
+
+#### 🎯 Communication Options: How to Enable Multi-AI Coordination
+
+Since direct AI-to-AI communication is impossible, you must **build coordination infrastructure**. Three options exist, ranked by sophistication:
+
+---
+
+#### 📁 Option A: Shared State via Filesystem (Simplest, Last Resort)
+
+**Concept**: All AIs read/write from a shared JSON file to exchange state and messages.
+
+**How It Works:**
+1. All terminals agree on a shared file location: `/tmp/ai_coordination.json`
+2. Each AI reads the file before acting
+3. Each AI writes its status/conclusions back
+4. Coordination emerges from sequential read-modify-write cycles
+
+**Setup Instructions:**
+
+```bash
+# 1. Create shared state file
+cat > /tmp/ai_coordination.json << 'EOF'
+{
+  "project_name": "my-project",
+  "global_goal": "Refactor authentication module",
+  "agents": {},
+  "messages": [],
+  "file_locks": {},
+  "last_updated": ""
+}
+EOF
+
+# 2. In each terminal, AI includes in prompt:
+# "Read /tmp/ai_coordination.json and respond as Agent A"
+# "Write your status and decisions back to the file"
+
+# 3. Example AI interaction:
+jq '.agents.A = {"role": "Refactor", "status": "working", "files": ["auth.py"]}' \
+  /tmp/ai_coordination.json > /tmp/ai_coordination.json.tmp && \
+  mv /tmp/ai_coordination.json.tmp /tmp/ai_coordination.json
+```
+
+**Advantages:**
+- ✅ Extremely simple—just a JSON file
+- ✅ No external dependencies
+- ✅ Works on any system with filesystem access
+- ✅ Human-readable for debugging
+
+**Disadvantages:**
+- ❌ Race conditions (two AIs writing simultaneously)
+- ❌ No real-time updates (polling required)
+- ❌ Fragile—file corruption breaks everything
+- ❌ Manual coordination logic (no enforcement)
+- ❌ Not scalable beyond 2-3 AIs
+
+**When to Use:**
+- Only when Option C and Option B both fail
+- Simple 2-AI scenarios with low conflict risk
+- Temporary/experimental multi-AI work
+- No tmux available, no ability to run external process
+
+---
+
+#### 🎛️ Option B: External Orchestrator (Recommended for Production)
+
+**Concept**: A central controller process maintains shared memory, assigns roles, tracks state, and coordinates all AIs through a clean API.
+
+**Architecture:**
+```
+┌─────────────────┐
+│ Terminal A      │─┐
+│ (AI #1)         │ │
+└─────────────────┘ │
+                    ▼
+              ┌──────────────────┐
+              │  Orchestrator    │
+              │  (Python/Go)     │
+              │                  │
+              │  • Shared memory │
+              │  • Task graph    │
+              │  • Role manager  │
+              │  • Conflict ctrl │
+              └──────────────────┘
+                    ▲
+┌─────────────────┐ │
+│ Terminal B      │─┘
+│ (AI #2)         │
+└─────────────────┘
+```
+
+**How It Works:**
+1. **Orchestrator maintains shared state** (in-memory or Redis/SQLite)
+2. **Each AI registers** with the orchestrator (gets Agent ID and role)
+3. **AIs send messages** to orchestrator (not to each other)
+4. **Orchestrator updates context** for each AI based on global state
+5. **Coordination rules enforced** by orchestrator (file locks, task dependencies)
+
+**Setup Instructions:**
+
+**Step 1: Create Orchestrator (Python example)**
+
+```python
+#!/usr/bin/env python3
+# orchestrator.py
+import json
+import time
+from flask import Flask, request, jsonify
+from threading import Lock
+
+app = Flask(__name__)
+state_lock = Lock()
+
+# Shared state
+state = {
+    "global_goal": "",
+    "agents": {},
+    "messages": [],
+    "file_locks": {},
+    "task_queue": []
+}
+
+@app.route('/register', methods=['POST'])
+def register_agent():
+    """Register new agent with role"""
+    data = request.json
+    agent_id = data.get('agent_id')
+    role = data.get('role')
+    
+    with state_lock:
+        state['agents'][agent_id] = {
+            "role": role,
+            "status": "idle",
+            "files": [],
+            "last_seen": time.time()
+        }
+    return jsonify({"status": "registered", "agent_id": agent_id})
+
+@app.route('/get_context', methods=['GET'])
+def get_context():
+    """AI requests current context"""
+    agent_id = request.args.get('agent_id')
+    with state_lock:
+        return jsonify({
+            "global_state": state,
+            "your_role": state['agents'].get(agent_id, {}).get('role'),
+            "messages": state['messages'][-10:]  # Last 10 messages
+        })
+
+@app.route('/update_status', methods=['POST'])
+def update_status():
+    """AI reports status/decisions"""
+    data = request.json
+    agent_id = data.get('agent_id')
+    
+    with state_lock:
+        if agent_id in state['agents']:
+            state['agents'][agent_id].update({
+                "status": data.get('status'),
+                "files": data.get('files', []),
+                "last_seen": time.time()
+            })
+        
+        # Add to message log
+        state['messages'].append({
+            "from": agent_id,
+            "message": data.get('message'),
+            "timestamp": time.time()
+        })
+    
+    return jsonify({"status": "updated"})
+
+@app.route('/lock_file', methods=['POST'])
+def lock_file():
+    """Request exclusive file access"""
+    data = request.json
+    agent_id = data.get('agent_id')
+    file_path = data.get('file')
+    
+    with state_lock:
+        if file_path in state['file_locks']:
+            return jsonify({"locked": False, "owner": state['file_locks'][file_path]})
+        else:
+            state['file_locks'][file_path] = agent_id
+            return jsonify({"locked": True})
+
+@app.route('/unlock_file', methods=['POST'])
+def unlock_file():
+    """Release file lock"""
+    data = request.json
+    file_path = data.get('file')
+    
+    with state_lock:
+        if file_path in state['file_locks']:
+            del state['file_locks'][file_path]
+    
+    return jsonify({"unlocked": True})
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5555)
+```
+
+**Step 2: Start Orchestrator**
+
+```bash
+# In a dedicated terminal:
+python3 orchestrator.py
+
+# Orchestrator runs on http://127.0.0.1:5555
+```
+
+**Step 3: AI Terminal Integration**
+
+```bash
+# Each AI terminal registers and communicates via HTTP
+
+# Register Agent A
+curl -X POST http://127.0.0.1:5555/register \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "A", "role": "Refactor"}'
+
+# Get context (AI includes this in prompt)
+CONTEXT=$(curl -s http://127.0.0.1:5555/get_context?agent_id=A)
+echo "Context for Agent A: $CONTEXT"
+
+# Update status after action
+curl -X POST http://127.0.0.1:5555/update_status \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "A", "status": "working", "files": ["auth.py"], "message": "Refactoring authentication logic"}'
+
+# Lock file before editing
+curl -X POST http://127.0.0.1:5555/lock_file \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "A", "file": "auth.py"}'
+
+# Unlock when done
+curl -X POST http://127.0.0.1:5555/unlock_file \
+  -H "Content-Type: application/json" \
+  -d '{"file": "auth.py"}'
+```
+
+**Step 4: AI Prompt Integration**
+
+When prompting Copilot, include:
+
+```
+You are Agent A working on project "my-project".
+Your assigned role: Refactor
+
+Current global state:
+<insert JSON from /get_context>
+
+Your task:
+- Refactor auth.py
+- Do not touch files locked by other agents
+- Report status via orchestrator
+
+Before proceeding, check file locks and coordinate with other agents.
+```
+
+**Advantages:**
+- ✅ Scalable to many AIs (tested with 10+)
+- ✅ Real-time coordination (event-driven possible)
+- ✅ Enforced rules (file locks, task dependencies)
+- ✅ Auditable (all messages logged)
+- ✅ Production-ready architecture
+- ✅ Works across machines (network-accessible)
+
+**Disadvantages:**
+- ❌ Requires running external process
+- ❌ More complex setup
+- ❌ Network dependency (HTTP calls)
+- ❌ Debugging overhead
+
+**When to Use:**
+- 3+ AIs working concurrently
+- Complex projects with many files
+- Need strong conflict prevention
+- Production/enterprise environments
+- Multi-machine coordination
+- When Option C (tmux) is not available or insufficient
+
+---
+
+#### 🖥️ Option C: tmux + Daemon Controller (Default, Best for Local Development)
+
+**Concept**: Each tmux pane represents one AI role. A daemon monitors pane output, extracts intent, updates shared state, and injects context into prompts. This creates a **visual coordination surface** where you can see all AIs working in parallel.
+
+**Architecture:**
+```
+┌──────────────┬──────────────┐
+│ Pane A       │ Pane B       │
+│ AI: Refactor │ AI: Tests    │
+├──────────────┼──────────────┤
+│ Pane C       │ Pane D       │
+│ AI: Lint     │ AI: Docs     │
+└──────────────┴──────────────┘
+        ▲              ▲
+        │              │
+        └──────┬───────┘
+               │
+       ┌───────▼────────┐
+       │ tmux Daemon    │
+       │ (monitors all) │
+       │ • Logs output  │
+       │ • Shares state │
+       │ • Injects ctx  │
+       └────────────────┘
+```
+
+**How It Works:**
+1. **tmux session** with multiple panes (one per AI)
+2. **Daemon monitors** each pane's output using `tmux capture-pane`
+3. **State extraction**: Daemon parses logs to understand what each AI is doing
+4. **Context injection**: Daemon sends updated context to each pane via `tmux send-keys`
+5. **Visual feedback**: You see all AIs working in real-time
+
+**Setup Instructions:**
+
+**Step 1: Create tmux Session with Panes**
+
+```bash
+# Create session with 4 panes
+tmux new-session -s ai-coord -d
+tmux split-window -h -t ai-coord
+tmux split-window -v -t ai-coord:0.0
+tmux split-window -v -t ai-coord:0.2
+
+# Name each pane (for clarity)
+tmux select-pane -t ai-coord:0.0 -T "AI-Refactor"
+tmux select-pane -t ai-coord:0.1 -T "AI-Tests"
+tmux select-pane -t ai-coord:0.2 -T "AI-Lint"
+tmux select-pane -t ai-coord:0.3 -T "AI-Docs"
+
+# Attach to session
+tmux attach -t ai-coord
+```
+
+**Step 2: Create Monitoring Daemon**
+
+```python
+#!/usr/bin/env python3
+# tmux_ai_daemon.py
+import subprocess
+import json
+import time
+import re
+from pathlib import Path
+
+STATE_FILE = "/tmp/tmux_ai_state.json"
+SESSION = "ai-coord"
+
+def get_pane_list():
+    """Get all panes in session"""
+    result = subprocess.run(
+        ["tmux", "list-panes", "-t", SESSION, "-F", "#{pane_index}"],
+        capture_output=True, text=True
+    )
+    return result.stdout.strip().split('\n')
+
+def capture_pane_output(pane_id):
+    """Capture last 50 lines from pane"""
+    result = subprocess.run(
+        ["tmux", "capture-pane", "-t", f"{SESSION}:{pane_id}", "-p", "-S", "-50"],
+        capture_output=True, text=True
+    )
+    return result.stdout
+
+def extract_intent(output):
+    """Parse output to understand AI intent"""
+    # Look for common patterns
+    if "editing" in output.lower() or "modifying" in output.lower():
+        files = re.findall(r'[a-zA-Z0-9_/-]+\.(py|js|ts|java|go)', output)
+        return {"action": "editing", "files": files}
+    elif "testing" in output.lower():
+        return {"action": "testing", "status": "running"}
+    elif "waiting" in output.lower():
+        return {"action": "waiting", "reason": "dependency"}
+    else:
+        return {"action": "unknown"}
+
+def send_context_to_pane(pane_id, context):
+    """Inject context into pane"""
+    prompt = f"\n# UPDATED CONTEXT:\n{json.dumps(context, indent=2)}\n"
+    subprocess.run(
+        ["tmux", "send-keys", "-t", f"{SESSION}:{pane_id}", prompt]
+    )
+
+def load_state():
+    """Load shared state"""
+    if Path(STATE_FILE).exists():
+        with open(STATE_FILE) as f:
+            return json.load(f)
+    return {"agents": {}, "file_locks": {}, "messages": []}
+
+def save_state(state):
+    """Save shared state"""
+    with open(STATE_FILE, 'w') as f:
+        json.dump(state, f, indent=2)
+
+def main():
+    """Main coordination loop"""
+    print(f"[tmux AI Daemon] Monitoring session: {SESSION}")
+    
+    while True:
+        state = load_state()
+        panes = get_pane_list()
+        
+        for pane_id in panes:
+            # Capture output
+            output = capture_pane_output(pane_id)
+            
+            # Extract intent
+            intent = extract_intent(output)
+            
+            # Update state
+            state['agents'][pane_id] = {
+                "last_action": intent,
+                "last_seen": time.time()
+            }
+            
+            # Check for conflicts (e.g., two AIs editing same file)
+            if intent['action'] == 'editing':
+                for file in intent.get('files', []):
+                    if file in state['file_locks']:
+                        # Send warning to pane
+                        warning = f"\n⚠️  WARNING: {file} locked by pane {state['file_locks'][file]}\n"
+                        subprocess.run(["tmux", "send-keys", "-t", f"{SESSION}:{pane_id}", warning])
+                    else:
+                        state['file_locks'][file] = pane_id
+        
+        # Save updated state
+        save_state(state)
+        
+        # Update context for all panes
+        for pane_id in panes:
+            context = {
+                "all_agents": state['agents'],
+                "file_locks": state['file_locks'],
+                "your_pane": pane_id
+            }
+            # Only send if significant change (avoid spam)
+            # Implementation: compare with previous state
+        
+        time.sleep(5)  # Poll every 5 seconds
+
+if __name__ == '__main__':
+    main()
+```
+
+**Step 3: Start Daemon**
+
+```bash
+# In a separate terminal (outside tmux):
+python3 tmux_ai_daemon.py
+
+# Daemon monitors all panes and maintains /tmp/tmux_ai_state.json
+```
+
+**Step 4: AI Usage in Each Pane**
+
+In each tmux pane, when prompting Copilot:
+
+```bash
+# Before asking Copilot, check state:
+cat /tmp/tmux_ai_state.json
+
+# Include in prompt:
+# "You are Agent in Pane 0 (Refactor role)"
+# "Current state: <paste JSON>"
+# "Your task: Refactor auth.py"
+# "Before editing, check file_locks to avoid conflicts"
+```
+
+**Advantages:**
+- ✅ **Visual coordination**: See all AIs working in real-time
+- ✅ **Natural parallelism**: Each pane = independent AI
+- ✅ **Human-in-the-loop**: Easy to intervene/supervise
+- ✅ **No cloud dependency**: Fully local
+- ✅ **Perfect for development**: Tactile, immediate feedback
+- ✅ **Aligns with parallel workflow intuition**
+
+**Disadvantages:**
+- ❌ Requires tmux (Linux/macOS only, not Windows)
+- ❌ Local machine only (doesn't scale across network)
+- ❌ Manual pane management
+- ❌ Daemon adds complexity
+
+**When to Use (Default):**
+- Local development on Linux/macOS
+- 2-4 AIs working concurrently
+- Need visual feedback and supervision
+- Want tactile control over coordination
+- Working in terminal-heavy environment (your preferred style)
+
+---
+
+#### 🔍 Option Detection & Selection Protocol
+
+**MANDATORY**: Before choosing a coordination option, AI MUST detect if another AI already established coordination.
+
+**Detection Steps:**
+
+```bash
+# 1. Check for Option A (shared JSON file)
+if [ -f /tmp/ai_coordination.json ]; then
+    echo "Option A detected - using shared filesystem"
+    # Use Option A
+fi
+
+# 2. Check for Option B (orchestrator)
+if curl -s http://127.0.0.1:5555/get_context?agent_id=probe >/dev/null 2>&1; then
+    echo "Option B detected - orchestrator running on port 5555"
+    # Use Option B
+fi
+
+# 3. Check for Option C (tmux + daemon)
+if [ -f /tmp/tmux_ai_state.json ] && tmux has-session -t ai-coord 2>/dev/null; then
+    echo "Option C detected - tmux session 'ai-coord' active"
+    # Use Option C
+fi
+
+# 4. If none detected - ask user
+if [ no coordination detected ]; then
+    echo "No coordination system detected."
+    echo "Multiple AIs working on this project?"
+    read -p "Choose: (C) tmux [default], (B) orchestrator, (A) filesystem: " choice
+    # Setup chosen option
+fi
+```
+
+**Fallback Hierarchy (if setup fails):**
+
+```
+Attempt C (tmux) → if fails → Attempt B (orchestrator) → if fails → Use A (filesystem)
+```
+
+**Example Failure Scenarios:**
+- **C fails**: tmux not installed → fall back to B
+- **B fails**: Cannot bind port 5555, no Python → fall back to A
+- **A always works**: Filesystem always available (last resort)
+
+---
+
+#### ✅ Multi-AI Coordination Checklist
+
+**Before Starting Multi-AI Work:**
+- [ ] Did I detect if coordination already exists?
+- [ ] If detected → am I using the SAME option as other AIs?
+- [ ] If NOT detected → did I ask user which option to use?
+- [ ] Is coordination infrastructure running (daemon/orchestrator)?
+- [ ] Did I register my agent with ID and role?
+- [ ] Do I understand fallback hierarchy (C → B → A)?
+
+**During Work:**
+- [ ] Am I checking shared state before major actions?
+- [ ] Am I updating my status after decisions?
+- [ ] Am I respecting file locks from other AIs?
+- [ ] Am I avoiding files currently being edited?
+- [ ] Am I sending messages to coordinate (not working blind)?
+
+**Conflict Prevention:**
+- [ ] Before editing file → check if locked by another AI
+- [ ] Before git operations → check if another AI is mid-commit
+- [ ] Before running tests → check if another AI modified test files
+- [ ] If conflict detected → ask user for guidance
+
+**After Completing Task:**
+- [ ] Did I update status to "completed"?
+- [ ] Did I release all file locks?
+- [ ] Did I notify other AIs of completion?
+- [ ] Did I document my changes in shared state?
+
+---
+
+#### 🎓 Multi-AI Golden Rules
+
+1. **Never assume isolation**: Always check if other AIs are working
+2. **Coordination is mandatory**: If multiple AIs detected → MUST use one of the 3 options
+3. **Same option for all**: All AIs must use the same coordination method
+4. **Fallback is acceptable**: If preferred option fails, use next in hierarchy
+5. **User decides conflicts**: If AIs disagree on file ownership → ask user
+6. **Visual feedback**: Option C (tmux) is default because visibility prevents mistakes
+7. **Production uses B**: For enterprise/critical work, Option B (orchestrator) is most robust
+8. **Option A is last resort**: Only use filesystem coordination if B and C both fail
+
+---
+
 
 ## 🎓 Fundamental Paradigm: Total Clarity Before Implementation (Solo Pragmatic)
 
@@ -2694,8 +4293,8 @@ Obvious choice, right? So why don't you ask?
   💡 Suggestion: ALWAYS mock external APIs. Always.
   
 - "How much coverage is enough?"
-  ⚠️ RISK: 100% = waste time. 0% = guaranteed bugs
-  💡 Solo suggestion: 70% is good. Focus on critical logic and edge cases.
+  ⚠️ RISK: <80% = production bugs. 0% = guaranteed disaster
+  💡 Solo suggestion: 80-90% for ALL code with logic. Prioritize critical FIRST, but test ALL.
   
 - "How to test without breaking production?"
   ⚠️ RISK: Testing in production = users are involuntary beta testers
@@ -3303,13 +4902,13 @@ Before starting any new task:
 
 ---
 
-## 🧪 Mandatory Rule: Unit Tests for Complex Tools (Solo Pragmatic)
+## 🧪 Mandatory Rule: Unit Tests for Code with Logic (Disciplined Development)
 
-> **CRITICAL FOR SOLO DEVS**: When tools (functions, classes, modules) are **complex enough to cause 3AM debugging sessions**, it is **MANDATORY** to create pragmatic unit tests in a `tests/` folder. **Test what would wake you up at night, skip the rest.**
+> **CRITICAL FOR ALL DEVELOPERS**: ALL code containing logic (if/else, loops, calculations, validations) **MUST** have comprehensive unit tests in a `tests/` folder. **Test ALL code with logic using intelligent priority order: critical first, then complex, then simple.**
 
-### 🎯 Objective (Solo Developer Focus)
+### 🎯 Objective (Professional Development)
 
-Ensure that **critical and complex** code is **selectively tested** to:
+Ensure that ALL code with logic is **comprehensively tested in priority order** to:
 - ✅ Prevent production bugs that require urgent fixes
 - ✅ Act as "external memory" for your future self
 - ✅ Enable safe refactoring without breaking things
@@ -3333,43 +4932,62 @@ Create unit tests when the tool meets **ANY** of these "would-wake-you-up" crite
 9. **🔄 Stateful Logic**: Code that maintains state or has side effects
 10. **🐞 Bug History**: This code has broken before (fool me once...)
 
-### 🚫 When to SKIP Unit Tests (Solo Developer Pragmatism)
+### ✅ Priority Order for Unit Tests (Disciplined Development)
 
-**Don't waste time testing** if the code:
+**Test ALL critical and complex code, but with intelligent priority order**:
 
-1. ✅ **Simple CRUD**: Basic database queries (SELECT, INSERT, UPDATE, DELETE)
-2. ✅ **Getters/Setters**: Trivial property access with no logic
-3. ✅ **Pass-through**: Functions that just call another function
-4. ✅ **UI Components**: Basic display components (test manually)
-5. ✅ **Configuration**: Static config files or constants
-6. ✅ **Temporary Code**: Proof-of-concept or throwaway experiments
-7. ✅ **One-liner Utils**: Simple string formatting, date utilities
-8. ✅ **Framework Boilerplate**: Code generated by Rails/Django/Next.js
+**🔴 MAXIMUM PRIORITY (Test first - non-negotiable):**
+1. ✅ **Critical business logic**: Financial calculations, payment processing
+2. ✅ **Complex algorithms**: Validations, parsers, data transformations
+3. ✅ **Data manipulation**: CRUD with validations and business rules
+4. ✅ **Security**: Authentication, authorization, input sanitization
+5. ✅ **External integrations**: APIs, webhooks, file processing
+6. ✅ **Known edge cases**: Code that has broken before (bug history)
 
-**Rule of Thumb**: If you can understand it in 10 seconds and it's not critical, skip testing.
+**🟡 MEDIUM PRIORITY (Test after critical code):**
+7. ✅ **Utilities with logic**: Formatters with rules, complex validators
+8. ✅ **Validation rules**: CPF, email, phone validation, etc.
+9. ✅ **Data transformations**: Mappings, conversions, serialization
+10. ✅ **Business components**: Services with multiple responsibilities
 
-### 📁 Test Organization (Simplified for Solo)
+**🟢 LOW PRIORITY (Test if time available, but still relevant):**
+11. ✅ **Getters/Setters with validation**: Properties with internal logic
+12. ✅ **Simple CRUD with rules**: Queries with basic validations
+13. ✅ **Formatting utils**: Simple string and date formatters
+14. ✅ **UI components with logic**: Components with state or side effects
+
+**⚪ CAN BE TESTED MANUALLY (Only if code is too trivial):**
+15. ⚠️ **Constants and configurations**: Static files without logic
+16. ⚠️ **Pure pass-through**: Functions that only delegate without transformation
+17. ⚠️ **Generated boilerplate**: Auto-generated framework code (if not modified)
+
+**Golden Rule**: **If code has ANY logic (if/else, loops, calculations, validations), it MUST be tested.** Only purely trivial code can be verified manually.
+
+### 📁 Test Organization (Disciplined for Solo Developer)
 
 ```
 project/
 ├── src/
 │   ├── lib/
-│   │   ├── pricing.ts          # Complex pricing logic → TEST THIS
-│   │   └── formatters.ts       # Simple formatting → SKIP
+│   │   ├── pricing.ts          # Complex pricing logic → TEST THIS (Priority 1)
+│   │   └── formatters.ts       # Simple formatting → TEST THIS (Priority 3)
 │   ├── services/
-│   │   └── payment.ts          # Payment processing → TEST THIS
+│   │   └── payment.ts          # Payment processing → TEST THIS (Priority 1)
 │   └── utils/
-│       └── string-helpers.ts   # Trivial helpers → SKIP
+│       └── string-helpers.ts   # Helpers with logic → TEST THIS (Priority 2)
 └── tests/
-    ├── pricing.test.ts         # Only test critical code
-    └── payment.test.ts
+    ├── pricing.test.ts         # Test ALL business logic
+    ├── payment.test.ts         # Test ALL critical flows
+    ├── formatters.test.ts      # Test edge cases and validations
+    └── string-helpers.test.ts  # Test functions with logic
 ```
 
-**Solo Rules**:
-- ✅ Flat structure: Just `tests/` folder (no nested folders needed)
+**Rules for Disciplined Solo Developer**:
+- ✅ Clear structure: `tests/` folder mirroring `src/`
 - ✅ Test files: `<filename>.test.ts` or `test_<filename>.py`
-- ✅ Coverage goal: **60-70% of critical code** (not 100%!)
-- ✅ Fast tests: Total test suite runs in <10 seconds
+- ✅ Coverage goal: **80-90% of code with logic** (focus on quality, not quantity)
+- ✅ Fast tests: Total suite runs in <30 seconds
+- ✅ **Test ALL business logic and complex algorithms (non-negotiable)**
 
 ### 🔍 Example: Discount Calculator (Solo TypeScript)
 
@@ -3428,8 +5046,8 @@ export function calculatePrice(
 /**
  * Simple helper: formats price with currency
  * 
- * NOT CRITICAL: Just display formatting
- * → SKIP TESTING (test manually)
+ * LOW PRIORITY: Display formatting (but still has locale logic)
+ * → MUST BE TESTED (Priority 3: test after critical code)
  */
 export function formatPrice(amount: number, currency: string = 'USD'): string {
   return new Intl.NumberFormat('en-US', {
@@ -3441,7 +5059,7 @@ export function formatPrice(amount: number, currency: string = 'USD'): string {
 
 #### Unit Tests (`tests/pricing.test.ts`)
 
-**Only test the critical `calculatePrice` function, skip `formatPrice`**:
+**Test ALL functions with logic - `calculatePrice` (Priority 1) and `formatPrice` (Priority 3)**:
 
 ```typescript
 import { calculatePrice, DiscountRule } from '../src/lib/pricing';
@@ -3554,11 +5172,11 @@ describe('calculatePrice (Critical Revenue Logic)', () => {
   });
 });
 
-// ⚠️ NOTE: We are NOT testing formatPrice() because:
-// - It's just display formatting (not business critical)
-// - Uses built-in Intl.NumberFormat (already tested by JS engine)
-// - Easy to verify manually in UI
-// - A bug here won't wake me up at 3AM
+// ⚠️ NOTE: formatPrice() should also be tested (Priority 3):
+// - Formatting still has logic (locale, currency)
+// - Can have bugs (invalid currency, edge case values)
+// - Easy to test (3-5 minutes for basic tests)
+// - Test AFTER critical code, but still test!
 ```
 
 ### ✅ Solo Developer Test Checklist
@@ -3603,9 +5221,9 @@ describe('calculatePrice (Critical Revenue Logic)', () => {
    - Tests catch bugs before deploy
 
 3. **⏰ Time is Your Scarcest Resource**
-   - Don't test everything (60-70% coverage is fine)
-   - Focus on code that causes 3AM emergencies
-   - Skip trivial code you can verify in seconds
+   - Test ALL code with logic (80-90% coverage target)
+   - Use priority order: critical first, complex next, simple last
+   - Only purely trivial code (constants, pure pass-through) verified manually
 
 4. **💰 Bugs Cost You Money**
    - Production bugs = lost customers
@@ -3632,10 +5250,12 @@ This rule **complements** Step 9 (Test Before Deploy):
 
 **Solo Developer Testing Strategy**:
 
-1. **Unit Tests** (This Rule): Critical business logic only
-   - Payment calculations, discounts, data validation
+1. **Unit Tests** (This Rule): ALL code with logic (if/else, loops, validations)
+   - MAXIMUM PRIORITY: Payment calculations, discounts, critical data validation
+   - MEDIUM PRIORITY: Utilities with logic, data transformations
+   - LOW PRIORITY: Simple code with basic logic
    - Run before every git commit (fast feedback)
-   - Goal: 60-70% coverage of critical code
+   - Goal: 80-90% coverage of code with logic
 
 2. **Smoke Tests** (Step 9): Main user flows work
    - Can users sign up?
@@ -3703,22 +5323,23 @@ jobs:
       # ✅ Just run tests and report
 ```
 
-### 📝 Summary (Solo Pragmatic)
+### 📝 Summary (Solo Comprehensive & Efficient)
 
 **When**:
-- Complex logic that would cause 3AM debugging
-- Code that directly affects revenue or data integrity
-- Skip trivial code (formatters, getters, CRUD)
+- ALL code with logic (if/else, loops, calculations, validations)
+- PRIORITY: Complex logic that would cause 3AM debugging (test FIRST)
+- ALSO TEST: Simpler code with logic (test AFTER critical code)
 
 **Coverage**:
-- **60-70% of critical code** (not 100%!)
-- Test smart, not everything
-- No CI/CD coverage enforcement
+- **80-90% of ALL code with logic**
+- Test ALL code with logic using priority order: critical first, then complex, then simple
+- No CI/CD coverage enforcement (but still test comprehensively)
 
 **What**:
-- Happy path, edge cases, financial calculations
-- Skip simple formatters and boilerplate
-- Focus on "would-wake-you-up" bugs
+- Happy path, edge cases, financial calculations (MAXIMUM PRIORITY)
+- Utilities with logic, data transformations (MEDIUM PRIORITY)  
+- Simple code with basic logic (LOW PRIORITY)
+- Only purely trivial code can be verified manually (constants, pure pass-through)
 
 **Why**:
 - Limited memory (tests as external brain)
@@ -5957,15 +7578,15 @@ AI must have **practical knowledge** of the codebase:
 - ✅ **No team**: Nobody to review or catch errors
 - ✅ **Active production**: Breakages affect your users immediately
 
-#### 📋 Pragmatic Checklist (Solo Developer)
+#### 📋 Complete and Comprehensive Checklist (Solo Developer - Efficient Method)
 
-**BEFORE implementing**, do the essential minimum:
+**BEFORE implementing**, study EVERYTHING efficiently:
 
 ```markdown
-[ ] **1. Quick Inventory**
-    - List main files (don't need ALL of them)
-    - Focus on: code you'll touch + related code
-    - Basic folder structure (src/, tests/, config/)
+[ ] **1. Complete Inventory**
+    - List ALL project files (mandatory)
+    - Study: ALL user-created files (source code, docs, configs)
+    - Map complete folder structure (src/, tests/, config/, docs/, scripts/)
 
 [ ] **2. Read Complete Git History**
     - **MANDATORY**: Read entire commit history from main/master branch
@@ -6009,27 +7630,31 @@ AI must have **practical knowledge** of the codebase:
     - Use test results to validate code comprehension
 ```
 
-**Don't stress about 100% - focus on essentials for current task!**
+**MANDATORY to study 100% of code and documentation - use efficient methodology below to avoid wasting time!**
 
-#### 🔍 Practical Methodology (Solo)
+#### 🔍 Efficient Methodology for 100% Study (Solo)
 
-**Step 1: Quick Overview (15-30 minutes)**
+**Step 1: Complete Codebase Inventory (30-60 minutes)**
 
 ```bash
-# List folder structure
-tree -L 2 -I 'node_modules|venv|__pycache__'
+# List COMPLETE folder structure (include all relevant depths)
+tree -L 5 -I 'node_modules|venv|__pycache__|.git'
 
-# Count files by type
+# Count ALL files by type
 find . -name "*.py" | wc -l
 find . -name "*.js" | wc -l
+find . -name "*.md" | wc -l
+find . -name "*.json" | wc -l
+find . -name "*.yml" | wc -l
+find . -name "*.yaml" | wc -l
 
-# Identify large/important files (probably critical code)
-find src/ -name "*.py" -exec wc -l {} + | sort -rn | head -10
+# List ALL files ordered by size (to prioritize reading)
+find src/ -type f -exec wc -l {} + | sort -rn
 ```
 
-**Step 2: Mental Dependency Map (15 minutes)**
+**Step 2: Complete Dependency Map (30-60 minutes)**
 
-Focus only on main ones:
+Map ALL files and their dependencies:
 ```
 src/
 ├── main.py            # Entry point → imports routes
@@ -6039,28 +7664,33 @@ src/
 │   └── payment.py     # CRITICAL → imports models
 ├── models/
 │   └── user.py        # Data → imports nothing
-└── utils/
-    └── helpers.py     # Utilities → used by all
+├── config/
+│   └── settings.py    # Configuration → study to understand setup
+├── utils/
+│   └── helpers.py     # Utilities → used by all
+└── scripts/
+    └── deploy.sh      # Scripts → study to understand deployment
 ```
 
-**DON'T need to map everything! Just main flow.**
+**MUST map everything! Start with main flow, then complete mapping of ALL modules, configs, and scripts.**
 
-**Step 3: Read Critical Code (30-60 minutes)**
+**Step 3: Read ALL Code (1-4 hours depending on size)**
 
-Focus on:
-1. **Entry point** (`main.py`, `app.js`, `index.ts`)
-2. **Code you'll modify** (mandatory!)
-3. **Related code** (imported or imports what you'll modify)
-4. **Existing tests** (if any - shows how to use code)
+Read ALL project files in the following priority order:
+1. **Complete documentation** (README.md, CONTRIBUTING.md, docs/)
+2. **Entry point** (`main.py`, `app.js`, `index.ts`) - understand initialization
+3. **Business code** (services/, models/, controllers/) - main logic
+4. **Infrastructure code** (config.py, database.py) - understand setup and connections
+5. **Helper scripts** (deploy.sh, migrations, build scripts) - understand processes
+6. **Existing tests** (tests/) - understand expected behavior and use cases
+7. **Configuration files** (package.json, requirements.txt, .env.example) - understand dependencies
+8. **Third-party libraries used** (read official documentation of main ones)
 
-**Skip**:
-- Configuration code (config.py, settings.js)
-- Helper scripts (deploy, build, migrations)
-- Third-party code (external libs)
+**NEVER skip any user-created file! Everything is relevant and necessary for complete understanding.**
 
-**Step 4: Note Findings (10 minutes)**
+**Step 4: Note Complete Discoveries (30 minutes)**
 
-Create simple `docs/NOTES.md`:
+Create detailed `docs/CODEBASE-STUDY.md`:
 ```markdown
 # Codebase Notes
 
@@ -6087,29 +7717,32 @@ Create simple `docs/NOTES.md`:
 - `obscure_util.py` - didn't understand, ask user
 ```
 
-#### ⏱️ Time Dedicated (Pragmatic)
+#### ⏱️ Time Dedicated (Complete and Mandatory Study)
 
-**Solo rule**: **Maximum 2 hours** on initial study, then incremental as needed.
+**Rule for all sizes**: **Study 100% of code BEFORE implementing**. Time varies by complexity:
 
-| Size | Files | Time | When to do more |
-|------|-------|------|-----------------|
-| Small | <30 | 15-30min | As needed |
-| Medium | 30-100 | 1-2h | Before large features |
-| Large | >100 | 2h initial + incremental | Continuous study |
+| Size | Files | Minimum Time | Rationale |
+|------|-------|--------------|-----------|
+| Small | <30 | 1-2h | Read everything + docs + git log + tests |
+| Medium | 30-100 | 3-6h | Deep comprehension + complete mapping |
+| Large | 100-500 | 1-2 days | Systematic study of all modules |
+| Very Large | >500 | 2-4 days | Complex architecture requires adequate time |
 
-**Incremental strategy**:
-- Day 1: Study only what's needed for current task
-- Later: Study more as you touch new modules
-- Don't need to know 100% at the start!
+**Correct strategy (100% mandatory)**:
+- Day 1: Study ALL documentation + complete git log + structure
+- Day 2: Read ALL source code + configs + scripts
+- Day 3+: Execute tests, validate comprehension, document discoveries
+- **NEVER start implementing without having studied 100% of the project**
 
 #### 🚨 When to Re-study
 
-**Quick re-study** (15-30min):
-- ✅ Before touching file you don't remember well
-- ✅ After long pause (>2 weeks without seeing code)
-- ✅ When finding bug in unknown area
+**Mandatory re-study**:
+- ✅ Before modifying ANY file (review complete context)
+- ✅ After break (>1 week without seeing code) - re-read everything related
+- ✅ When finding bug - study affected area + dependencies + git history
+- ✅ Before refactoring - re-study ALL code that will be impacted
 
-**Don't need to re-study everything always - just what you'll touch!**
+**ALWAYS re-study before touching code! Memory fails, code doesn't.**
 
 #### 💬 Ask User (When in Doubt)
 
@@ -6171,20 +7804,25 @@ Correct?
 
 #### ✅ Minimum Expected Result
 
-After study, AI must answer:
+After complete study, AI MUST answer with 100% certainty:
 
 ```markdown
+✅ Did I understand the ENTIRE project architecture and how modules relate?
+✅ Did I read ALL source code and understand the purpose of each file?
+✅ Did I study the ENTIRE Git history and understand project evolution?
+✅ Did I execute ALL existing tests and understand expected behavior?
+✅ Did I read ALL documentation and understand requirements and decisions?
 ✅ Where's critical code I should NOT break?
-✅ Where to implement new feature X?
-✅ Is there reusable code for task?
-✅ Which files will I need to modify?
-✅ Where to add tests?
-✅ Which pattern/convention to follow?
+✅ Where to implement new feature X without duplicating code?
+✅ Is there reusable code for the task?
+✅ Which files will I need to modify + their impacts?
+✅ Where to add tests for new functionality?
+✅ Which pattern/convention to follow (naming, structure, style)?
 ```
 
-**If can't answer, study 15-30 more minutes focused on relevant area!**
+**If can't answer ANY item above, GO BACK and study more until 100% comprehension!**
 
-**Remember**: You don't need to be expert in entire codebase, but **MUST know what you'll touch + impact of changes**.
+**Golden rule**: You MUST be able to explain the ENTIRE codebase to the user, not just what you'll modify. **Complete comprehension = safe implementation without bugs.**
 
 ---
 
@@ -6474,6 +8112,8 @@ DONE. Don't overcomplicate.
 
 **Message for AIs (Solo Dev)**:
 > "Solo developer doesn't have time for planning meetings. But NEEDS organization. Create short sprints (1-3 days), small tasks (1-4h), minimum documentation. 30 minutes of planning saves 3 hours of rework. Organize yourself, but don't get lost in unnecessary ceremonies."
+
+**⚠️ IMPORTANT - CLARIFICATION**: "Minimum documentation" refers EXCLUSIVELY to **daily sprint updates** (just updating `docs/TASKS.md` with progress). The **INITIAL task planning**, the **COMPLETE study of documentation**, and the **COMPLETE study of code** (as per Step 1.0 and 1.2) remain **MANDATORY** and **100% COMPLETE**. "Minimum" = simple format, NOT = incomplete content.
 
 ---
 
@@ -8075,6 +9715,9 @@ echo -e "${GREEN}🚀 Starting Java application...${NC}"
 # Compile if necessary
 if [ ! -d "target" ]; then
     echo -e "${GREEN}🏗️ Compiling project...${NC}"
+    # ⚠️ NOTE: -DskipTests used ONLY for quick local development builds
+    # Tests MUST be executed separately with: mvn test
+    # In CI/CD, NEVER use -DskipTests - always run complete tests
     mvn clean package -DskipTests
 fi
 
@@ -8093,6 +9736,9 @@ echo 🚀 Starting Java application...
 REM Compile if necessary
 if not exist "target\" (
     echo 🏗️ Compiling project...
+    REM ⚠️ NOTE: -DskipTests used ONLY for quick local development builds
+    REM Tests MUST be executed separately with: mvn test
+    REM In CI/CD, NEVER use -DskipTests - always run complete tests
     call mvn clean package -DskipTests
 )
 

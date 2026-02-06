@@ -13,6 +13,7 @@ Features:
 - Browse/Add/Remove/Clear operations
 - Signals for file changes
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from __future__ import annotations
 
@@ -39,17 +40,17 @@ from src.accessibility_manager import AccessibilityManager
 
 class FileSelectionWidget(QWidget):
     """Widget for selecting one or multiple files with pipeline support."""
-    
+
     # Signal emitted when file list changes
     files_changed = Signal(list)  # List[str]
-    
-    def __init__(self, 
+
+    def __init__(self,
                  title: str = "File Selection",
                  file_filter: str = "JSON Files (*.json);;All Files (*)",
                  parent: QWidget | None = None):
         """
         Initialize file selection widget.
-        
+
         Args:
             title: Group box title
             file_filter: File dialog filter
@@ -60,13 +61,13 @@ class FileSelectionWidget(QWidget):
         self._setup_ui(title)
         self._connect_signals()
         self._apply_accessibility()
-    
+
     def _setup_ui(self, title: str) -> None:
         """Setup UI components."""
         # Create group box
         file_group = QGroupBox(title)
         file_layout = QGridLayout()
-        
+
         # File A
         file_layout.addWidget(QLabel(tr("file_selection.lbl_file_a")), 0, 0)
         self.ed_file_a = QLineEdit()
@@ -77,7 +78,7 @@ class FileSelectionWidget(QWidget):
         self.btn_browse_a.setMaximumWidth(100)
         self.btn_browse_a.setToolTip(tooltip_tr("set_ops.btn_browse_a"))
         file_layout.addWidget(self.btn_browse_a, 0, 2)
-        
+
         # File B
         file_layout.addWidget(QLabel(tr("file_selection.lbl_file_b")), 1, 0)
         self.ed_file_b = QLineEdit()
@@ -88,18 +89,18 @@ class FileSelectionWidget(QWidget):
         self.btn_browse_b.setMaximumWidth(100)
         self.btn_browse_b.setToolTip(tooltip_tr("set_ops.btn_browse_b"))
         file_layout.addWidget(self.btn_browse_b, 1, 2)
-        
+
         # Multiple files checkbox
         self.chk_multiple = QCheckBox(tr("file_selection.chk_multiple"))
         self.chk_multiple.setToolTip(tooltip_tr("set_ops.chk_multiple"))
         file_layout.addWidget(self.chk_multiple, 2, 0, 1, 3)
-        
+
         # File list (hidden by default)
         self.list_files = QListWidget()
         self.list_files.setMaximumHeight(100)
         self.list_files.setVisible(False)
         file_layout.addWidget(self.list_files, 3, 0, 1, 3)
-        
+
         # Buttons for file list
         file_btn_layout = QHBoxLayout()
         self.btn_add_file = QPushButton(tr("file_selection.btn_add_file"))
@@ -116,14 +117,14 @@ class FileSelectionWidget(QWidget):
         file_btn_layout.addWidget(self.btn_clear_files)
         file_btn_layout.addStretch()
         file_layout.addLayout(file_btn_layout, 4, 0, 1, 3)
-        
+
         file_group.setLayout(file_layout)
-        
+
         # Main layout
         main_layout = QGridLayout(self)
         main_layout.addWidget(file_group, 0, 0)
         main_layout.setContentsMargins(0, 0, 0, 0)
-    
+
     def _connect_signals(self) -> None:
         """Connect internal signals."""
         self.btn_browse_a.clicked.connect(lambda: self._browse_file("a"))
@@ -132,13 +133,13 @@ class FileSelectionWidget(QWidget):
         self.btn_add_file.clicked.connect(self._add_file)
         self.btn_remove_file.clicked.connect(self._remove_file)
         self.btn_clear_files.clicked.connect(self._clear_files)
-        
+
         # Emit signal when files change
         self.ed_file_a.textChanged.connect(self._on_files_changed)
         self.ed_file_b.textChanged.connect(self._on_files_changed)
         self.list_files.model().rowsInserted.connect(self._on_files_changed)
         self.list_files.model().rowsRemoved.connect(self._on_files_changed)
-    
+
     def _apply_accessibility(self) -> None:
         """Apply accessibility labels."""
         AccessibilityManager.set_accessible_widget(
@@ -161,31 +162,31 @@ class FileSelectionWidget(QWidget):
             self.chk_multiple, "File Selection - Checkbox - Multiple Files",
             "Enable pipeline processing with multiple files (left-to-right)"
         )
-    
+
     def _browse_file(self, target: str) -> None:
         """
         Browse for file.
-        
+
         Args:
             target: Target field ('a' or 'b')
         """
         file_path, _ = QFileDialog.getOpenFileName(
             self, f"Select File {target.upper()}", "", self.file_filter
         )
-        
+
         if file_path:
             if target == "a":
                 self.ed_file_a.setText(file_path)
             else:
                 self.ed_file_b.setText(file_path)
-    
+
     def _toggle_multiple_files(self, checked: bool) -> None:
         """Toggle multiple files mode."""
         self.list_files.setVisible(checked)
         self.btn_add_file.setVisible(checked)
         self.btn_remove_file.setVisible(checked)
         self.btn_clear_files.setVisible(checked)
-        
+
         if checked:
             # Populate list with File A and B if they exist
             self.list_files.clear()
@@ -194,37 +195,37 @@ class FileSelectionWidget(QWidget):
             if self.ed_file_b.text():
                 self.list_files.addItem(self.ed_file_b.text())
             self._on_files_changed()
-    
+
     def _add_file(self) -> None:
         """Add file to multi-file list via file dialog."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Add File", "", self.file_filter
         )
-        
+
         if file_path:
             self.list_files.addItem(file_path)
-    
+
     def _remove_file(self) -> None:
         """Remove selected file from multi-file list."""
         current_row = self.list_files.currentRow()
         if current_row >= 0:
             self.list_files.takeItem(current_row)
-    
+
     def _clear_files(self) -> None:
         """Clear file list."""
         self.list_files.clear()
-    
+
     def _on_files_changed(self) -> None:
         """Emit files_changed signal when file list changes."""
         files = self.get_files()
         self.files_changed.emit(files)
-    
+
     # Public API
-    
+
     def get_files(self) -> List[str]:
         """
         Get list of files to process.
-        
+
         Returns:
             List of file paths from either 2-file mode (File A/B) or multi-file list.
         """
@@ -240,11 +241,11 @@ class FileSelectionWidget(QWidget):
             if self.ed_file_b.text():
                 files.append(self.ed_file_b.text())
             return files
-    
+
     def set_files(self, files: List[str]) -> None:
         """
         Set file list programmatically.
-        
+
         Args:
             files: List of file paths
         """
@@ -264,14 +265,14 @@ class FileSelectionWidget(QWidget):
             self.chk_multiple.setChecked(False)
             self.ed_file_a.setText(files[0])
             self.ed_file_b.clear()
-    
+
     def clear(self) -> None:
         """Clear all file selections."""
         self.ed_file_a.clear()
         self.ed_file_b.clear()
         self.list_files.clear()
         self.chk_multiple.setChecked(False)
-    
+
     def is_multiple_mode(self) -> bool:
         """Check if multiple files mode is enabled."""
         return self.chk_multiple.isChecked()

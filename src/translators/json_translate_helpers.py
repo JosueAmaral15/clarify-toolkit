@@ -18,10 +18,12 @@ Functions:
 - translate_replace_texts: Forward/inverse text translation
 - read_translation_dict: Read and parse dictionary file
 """
+# pylint: disable=broad-exception-caught  # Translation robustness
+# pylint: disable=import-outside-toplevel  # Circular import avoidance
+# pylint: disable=unused-argument  # API compatibility
 
 from __future__ import annotations
 import json
-import os
 import re
 from typing import Any, Dict, Optional
 
@@ -148,7 +150,7 @@ def _apply_scoped_translation_tag_balanced(content: str, fn_transform) -> str:
             if m_next.re is _TAG_CLOSE_RE and m_next.group(1) == tag_name:
                 depth -= 1
                 j = m_next.end()
-                if depth == 0:
+                if not depth:
                     # We have a full <tag> ... </tag> region
                     open_tag  = content[m_open.start():tag_open_end]
                     inner     = content[tag_open_end:m_next.start()]
@@ -178,7 +180,8 @@ def mask_existing_placeholders(text: str) -> tuple[str, list[str]]:
     """Protect existing {root.path} so we don't touch/duplicate them."""
     guards: list[str] = []
     def _mask(m: re.Match) -> str:
-        idx = len(guards); guards.append(m.group(0))
+        idx = len(guards)
+        guards.append(m.group(0))
         return f"@@TREF{idx}@@"
     return RE_PLACEHOLDER.sub(_mask, text), guards
 
@@ -352,7 +355,7 @@ def load_translation_dict(path: str) -> Dict[str, Any]:
         return json.loads(text)
 
     # Fallback: naive TS/JS extraction (re-usable from dedupe machinery below)
-    start, end, block = find_object_block(text)
+    _, _, block = find_object_block(text)
     block_json = ts_block_to_json_text(block)
     return json.loads(block_json)
 

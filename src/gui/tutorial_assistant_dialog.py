@@ -3,24 +3,20 @@ Tutorial Assistant Dialog
 
 Non-modal chat dialog for AI-powered tutorial assistance.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=no-member  # SettingsManager dynamic attributes
+# pylint: disable=invalid-name  # Qt method name convention
 
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTextEdit,
-    QLineEdit,
-    QPushButton,
-    QLabel,
-    QWidget,
-    QScrollArea,
-)
 from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtWidgets import (
+    QDialog, QHBoxLayout, QLabel,
+    QLineEdit, QPushButton, QTextEdit, QVBoxLayout
+)
 
-from ..tutorial_assistant import get_assistant
-from ..settings_manager import SettingsManager
 from src.i18n.translator import tr, tooltip_tr
+from ..settings_manager import SettingsManager
+from ..tutorial_assistant import get_assistant
 
 
 class AssistantWorker(QThread):
@@ -153,7 +149,8 @@ class TutorialAssistantDialog(QDialog):
         """Check if assistant is available."""
         if not self.assistant.is_available():
             self._add_system_message(
-                "⚠️ Tutorial assistant is not available. " "Please configure a Google Gemini API key in Settings."
+                "⚠️ Tutorial assistant is not available. "
+                "Please configure a Google Gemini API key in Settings."
             )
             self.input_field.setEnabled(False)
             self.send_button.setEnabled(False)

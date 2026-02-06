@@ -9,106 +9,117 @@ New features:
 - Enhanced result display with cleaned output
 - Statistics tracking across sessions
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Lazy Qt imports
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
+
 
 import os
 import re
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
+
 from PySide6.QtWidgets import (
-    QGridLayout, QLabel, QLineEdit, QCheckBox, QSpinBox, 
+    QGridLayout, QLabel, QLineEdit, QCheckBox,
     QComboBox, QTextEdit, QPushButton, QGroupBox, QHBoxLayout,
     QSplitter, QWidget, QVBoxLayout, QScrollArea, QFrame, QFileDialog,
     QMessageBox
 )
 from PySide6.QtCore import Qt, QSettings
-from .base_dock import StandardToolDock, ProcessorWorkerBase
-from src.gui.workers import AIProcessorWorker
+
 from src.ai_processor import (
-    OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS, 
-    count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available, 
-    is_claude_available, process_multiple_files, save_results, 
-    list_files_recursive as ai_list_files, extract_between_markers,
+    OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS,
+    count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available,
+    is_claude_available, save_results,
+    list_files_recursive as ai_list_files,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models,
     preview_template, has_templates
 )
-from src.core.filters import Condition, filter_files_by_conditions
-from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
-from src.i18n.translator import tr, tooltip_tr
+from src.core.filters import Condition
+from src.core.insert import insert_at_line
+from src.core.search_replace import replace_in_text
 from src.gui.panels import SearchReplacePanel, InsertPanel
 from src.gui.widgets import PathEntry
-from src.core.search_replace import replace_in_text, SearchOptions
-from src.core.insert import insert_at_line
+from src.gui.workers import AIProcessorWorker
+from src.i18n.translator import tr, tooltip_tr
+from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+from src.utils.logger import get_logger
+
+from .base_dock import StandardToolDock
+
+logger = get_logger(__name__)
 
 
 class AIProcessorDock(StandardToolDock):
     """Dock widget for AI file processor with enhanced features."""
-    
+
     def __init__(self, parent=None):
         # Initialize attributes BEFORE calling super().__init__()
         # This prevents AttributeError when _setup_ui() calls _update_stats_display()
         self.worker = None
         self.last_responses = []
-        
+
         # Session stats
         self.session_input_tokens = 0
         self.session_output_tokens = 0
-        
+
         # Lifetime stats (persistent)
         self.stats_file = Path.home() / '.clarify_ai_stats.json'
         self.lifetime_stats = self._load_lifetime_stats_early()
-        
+
         # Models cache (persistent for 24h)
         self.models_cache_file = Path.home() / '.clarify_models_cache.json'
         self.models_cache = self._load_models_cache()
-        
+
         # Code fence removal option
         self.remove_fences = True
-        
+
         # NOW call parent __init__ which triggers _setup_ui()
         super().__init__("AI File Processor", parent)
-    
+
     def _setup_ui(self):
         """Setup UI components."""
         # Create splitter for resizable layout
         splitter = QSplitter(Qt.Vertical)
-        
+
         # Top widget for controls with scroll
         scroll_controls = QScrollArea()
         scroll_controls.setWidgetResizable(True)
         scroll_controls.setFrameShape(QFrame.NoFrame)
-        
+
         controls_widget = QWidget()
         controls_layout = QVBoxLayout(controls_widget)
-        
+
         grid = QGridLayout()
-        
+
         # Provider selection
         grid.addWidget(QLabel(tr("ai_processor.lbl_provider")), 0, 0)
         self.combo_provider = QComboBox()
         self.combo_provider.addItems([
-            "OpenAI (ChatGPT)", 
-            "Google Gemini", 
+            "OpenAI (ChatGPT)",
+            "Google Gemini",
             "Anthropic Claude",
             "Perplexity"
         ])
         self.combo_provider.currentIndexChanged.connect(self._on_provider_changed)
         self.combo_provider.setToolTip(tooltip_tr("ai_processor.tooltip_provider"))
         grid.addWidget(self.combo_provider, 0, 1, 1, 2)
-        
+
         # Model selection
         grid.addWidget(QLabel(tr("ai_processor.lbl_model")), 1, 0)
         self.combo_model = QComboBox()
         self.combo_model.setToolTip(tooltip_tr("ai_processor.tooltip_model"))
         grid.addWidget(self.combo_model, 1, 1, 1, 2)
-        
+
         # Refresh models button
         self.btn_refresh_models = QPushButton(tr("ai_processor.btn_refresh"))
         self.btn_refresh_models.setMaximumWidth(40)
         self.btn_refresh_models.setToolTip(tooltip_tr("ai_processor.tooltip_refresh_models"))
         self.btn_refresh_models.clicked.connect(self._refresh_models)
         grid.addWidget(self.btn_refresh_models, 1, 3)
-        
+
         # API Key
         grid.addWidget(QLabel(tr("ai_processor.lbl_api_key")), 2, 0)
         self.ed_api_key = QLineEdit()
@@ -120,7 +131,7 @@ class AIProcessorDock(StandardToolDock):
         self.btn_verify.setToolTip(tooltip_tr("ai_processor.tooltip_verify"))
         grid.addWidget(self.ed_api_key, 2, 1, 1, 3)
         grid.addWidget(self.btn_verify, 2, 4)
-        
+
         # Prompt
         grid.addWidget(QLabel(tr("ai_processor.lbl_prompt")), 3, 0)
         self.ed_prompt = QTextEdit()
@@ -128,112 +139,112 @@ class AIProcessorDock(StandardToolDock):
         self.ed_prompt.setToolTip(tooltip_tr("ai_processor.tooltip_prompt"))
         self.ed_prompt.setMaximumHeight(100)
         grid.addWidget(self.ed_prompt, 3, 1, 1, 4)
-        
+
         controls_layout.addLayout(grid)
-        
+
         # Multiple paths section (in group box with scroll area)
         paths_group = QGroupBox(tr("ai_processor.group_paths"))
         paths_group_layout = QVBoxLayout()
-        
+
         # Scroll area for path entries
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setMaximumHeight(200)
         scroll.setFrameShape(QFrame.StyledPanel)
-        
+
         paths_container = QWidget()
         self.paths_layout = QVBoxLayout(paths_container)
         self.paths_layout.setContentsMargins(5, 5, 5, 5)
-        
+
         scroll.setWidget(paths_container)
         paths_group_layout.addWidget(scroll)
-        
+
         # Add path button
         btn_add_path = QPushButton(tr("ai_processor.btn_add_path"))
         btn_add_path.clicked.connect(self._add_path_entry)
         btn_add_path.setMaximumWidth(120)
         paths_group_layout.addWidget(btn_add_path)
-        
+
         paths_group.setLayout(paths_group_layout)
         controls_layout.addWidget(paths_group)
-        
+
         # Initialize with first path entry
         self.path_entries = []
         self._add_path_entry()
-        
+
         # Options grid
         options_grid = QGridLayout()
-        
+
         self.chk_line_by_line = QCheckBox(tr("ai_processor.chk_line_by_line"))
         self.chk_line_by_line.setToolTip(tooltip_tr("ai_processor.tooltip_line_by_line"))
         options_grid.addWidget(self.chk_line_by_line, 0, 0, 1, 2)
-        
+
         lbl_max, self.spin_max_bytes = self.create_spinbox_input(
             "Max bytes:", 1000, 10000000, 1000000, 100000
         )
         self.spin_max_bytes.setToolTip(tooltip_tr("ai_processor.tooltip_max_bytes"))
         options_grid.addWidget(lbl_max, 1, 0)
         options_grid.addWidget(self.spin_max_bytes, 1, 1)
-        
+
         options_grid.addWidget(QLabel(tr("ai_processor.lbl_extensions")), 1, 2)
         self.ed_extensions = QLineEdit()
         self.ed_extensions.setText(".txt,.py,.js,.ts,.jsx,.tsx")
         self.ed_extensions.setPlaceholderText(tr("ai_processor.placeholder_extensions"))
         self.ed_extensions.setToolTip(tooltip_tr("ai_processor.tooltip_extensions"))
         options_grid.addWidget(self.ed_extensions, 1, 3, 1, 2)
-        
+
         controls_layout.addLayout(options_grid)
-        
+
         # Scope filter section
         scope_group = QGroupBox(tr("ai_processor.group_scope"))
         scope_layout = QGridLayout()
-        
+
         self.chk_scope_enable = QCheckBox(tr("ai_processor.chk_enable"))
         self.chk_scope_enable.setToolTip(tooltip_tr("ai_processor.tooltip_scope_enable"))
         scope_layout.addWidget(self.chk_scope_enable, 0, 0, 1, 2)
-        
+
         scope_layout.addWidget(QLabel(tr("ai_processor.lbl_start")), 1, 0)
         self.ed_scope_start = QLineEdit()
         self.ed_scope_start.setPlaceholderText(tr("ai_processor.placeholder_start"))
         self.ed_scope_start.setToolTip(tooltip_tr("ai_processor.tooltip_scope_start"))
         scope_layout.addWidget(self.ed_scope_start, 1, 1, 1, 2)
-        
+
         self.chk_start_regex = QCheckBox(tr("ai_processor.chk_regex"))
         self.chk_start_regex.setToolTip(tooltip_tr("ai_processor.tooltip_start_regex"))
         self.chk_start_case = QCheckBox(tr("ai_processor.chk_case_sensitive"))
         self.chk_start_case.setToolTip(tooltip_tr("ai_processor.tooltip_start_case"))
         scope_layout.addWidget(self.chk_start_regex, 1, 3)
         scope_layout.addWidget(self.chk_start_case, 1, 4)
-        
+
         scope_layout.addWidget(QLabel(tr("ai_processor.lbl_end")), 2, 0)
         self.ed_scope_end = QLineEdit()
         self.ed_scope_end.setPlaceholderText(tr("ai_processor.placeholder_end"))
         self.ed_scope_end.setToolTip(tooltip_tr("ai_processor.tooltip_scope_end"))
         scope_layout.addWidget(self.ed_scope_end, 2, 1, 1, 2)
-        
+
         self.chk_end_regex = QCheckBox(tr("ai_processor.chk_regex"))
         self.chk_end_regex.setToolTip(tooltip_tr("ai_processor.tooltip_end_regex"))
         self.chk_end_case = QCheckBox(tr("ai_processor.chk_case_sensitive"))
         self.chk_end_case.setToolTip(tooltip_tr("ai_processor.tooltip_end_case"))
         scope_layout.addWidget(self.chk_end_regex, 2, 3)
         scope_layout.addWidget(self.chk_end_case, 2, 4)
-        
+
         scope_group.setLayout(scope_layout)
         controls_layout.addWidget(scope_group)
-        
+
         # Advanced Conditions section (Task #51 - v2.9.26)
         adv_cond_group = QGroupBox(tr("ai_processor.group_advanced"))
         adv_cond_group.setCheckable(True)
         adv_cond_group.setChecked(False)
         adv_cond_layout = QGridLayout()
-        
+
         # Logic operator
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_logic")), 0, 0)
         self.combo_cond_logic = QComboBox()
         self.combo_cond_logic.addItems(["AND", "OR"])
         self.combo_cond_logic.setToolTip(tooltip_tr("ai_processor.tooltip_cond_logic"))
         adv_cond_layout.addWidget(self.combo_cond_logic, 0, 1, 1, 2)
-        
+
         # Headers
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_field")), 1, 0)
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_operator")), 1, 1)
@@ -241,7 +252,7 @@ class AIProcessorDock(StandardToolDock):
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_scope")), 1, 3)
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_case")), 1, 4)
         adv_cond_layout.addWidget(QLabel(tr("ai_processor.lbl_regex")), 1, 5)
-        
+
         # 3 condition rows (minimum)
         self.cond_rows = []
         for row in range(3):
@@ -250,19 +261,19 @@ class AIProcessorDock(StandardToolDock):
             combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
             # Operator combo
             combo_op = QComboBox()
-            combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
+            combo_op.addItems(["", "contains", "not contains", "equals", "not equals",
                               "starts with", "ends with", ">", "<", ">=", "<="])
             # Value input
             ed_value = QLineEdit()
             ed_value.setPlaceholderText(tr("ai_processor.placeholder_filter_value"))
             ed_value.setToolTip(tooltip_tr("ai_processor.tooltip_cond_value"))
-            
+
             # Scope combo
             combo_scope = QComboBox()
-            combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
+            combo_scope.addItems(["none", "brackets", "braces", "parentheses",
                                  "custom", "tag", "specific-tag", "hierarchical"])
             combo_scope.setToolTip(tooltip_tr("ai_processor.tooltip_cond_scope"))
-            
+
             # Case sensitive checkbox
             chk_case = QCheckBox()
             chk_case.setChecked(True)
@@ -276,31 +287,31 @@ class AIProcessorDock(StandardToolDock):
             adv_cond_layout.addWidget(combo_scope, grid_row, 3)
             adv_cond_layout.addWidget(chk_case, grid_row, 4)
             adv_cond_layout.addWidget(chk_regex, grid_row, 5)
-            
+
             self.cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
-        
+
         # Add buttons: Add Condition and Clear All (v2.9.40.3: store reference)
         self.buttons_layout_ref = QHBoxLayout()
         btn_add_cond = QPushButton(tr("ai_processor.btn_add_condition"))
         btn_add_cond.setToolTip(tooltip_tr("ai_processor.tooltip_add_cond"))
         btn_add_cond.clicked.connect(self._add_condition_row)
         self.buttons_layout_ref.addWidget(btn_add_cond)
-        
+
         btn_clear_cond = QPushButton(tr("ai_processor.btn_clear_conditions"))
         btn_clear_cond.clicked.connect(self._clear_all_conditions)
         self.buttons_layout_ref.addWidget(btn_clear_cond)
         self.buttons_layout_ref.addStretch()
-        
+
         adv_cond_layout.addLayout(self.buttons_layout_ref, 5, 0, 1, 6)  # Will be moved by _add_condition_row
-        
+
         adv_cond_group.setLayout(adv_cond_layout)
         controls_layout.addWidget(adv_cond_group)
-        
+
         # Store reference to group for enable/disable
         self.adv_cond_group = adv_cond_group
         self.adv_cond_grid = adv_cond_layout
         self.next_cond_row = 5  # Next available row after initial 3
-        
+
         # Action buttons
         buttons = [
             ("Process", self._process),
@@ -310,35 +321,35 @@ class AIProcessorDock(StandardToolDock):
         ]
         btn_layout = self.create_action_buttons(buttons)
         self.btn_interrupt.setEnabled(False)
-        
+
         # Add tooltips to action buttons (v2.9.48)
         self.btn_process.setToolTip(tooltip_tr("ai_processor.tooltip_process"))
         self.btn_interrupt.setToolTip(tooltip_tr("ai_processor.tooltip_interrupt"))
         self.btn_save_results.setToolTip(tooltip_tr("ai_processor.tooltip_save_results"))
         self.btn_clear.setToolTip(tooltip_tr("ai_processor.tooltip_clear"))
-        
+
         controls_layout.addLayout(btn_layout)
-        
+
         # Statistics panel
         stats_group = QGroupBox(tr("ai_processor.group_stats"))
         stats_layout = QGridLayout()
-        
+
         self.lbl_session_stats = QLabel(tr("ai_processor.lbl_session_stats"))
         self.lbl_session_stats.setToolTip(tooltip_tr("ai_processor.tooltip_session_stats"))
         self.lbl_lifetime_stats = QLabel(tr("ai_processor.lbl_lifetime_stats"))
         self.lbl_lifetime_stats.setToolTip(tooltip_tr("ai_processor.tooltip_lifetime_stats"))
-        
+
         stats_layout.addWidget(QLabel("💬"), 0, 0)
         stats_layout.addWidget(self.lbl_session_stats, 0, 1)
         stats_layout.addWidget(QLabel("🌍"), 1, 0)
         stats_layout.addWidget(self.lbl_lifetime_stats, 1, 1)
-        
+
         # Code fence removal option
         self.chk_remove_fences = QCheckBox(tr("ai_processor.chk_remove_fences"))
         self.chk_remove_fences.setChecked(True)
         self.chk_remove_fences.setToolTip(tooltip_tr("ai_processor.tooltip_remove_fences"))
         stats_layout.addWidget(self.chk_remove_fences, 2, 0, 1, 2)
-        
+
         # Template variables option (v2.9.79 - Dynamic Templates)
         self.chk_enable_templates = QCheckBox(tr("ai_processor.chk_templates"))
         self.chk_enable_templates.setChecked(False)
@@ -353,86 +364,86 @@ class AIProcessorDock(StandardToolDock):
             "→ 'Process chapter 1 of 10: chapter1.txt' (for first file)"
         )
         stats_layout.addWidget(self.chk_enable_templates, 3, 0, 1, 2)
-        
+
         # Template preview button
         self.btn_preview_template = QPushButton(tr("ai_processor.btn_preview"))
         self.btn_preview_template.setToolTip(tooltip_tr("ai_processor.tooltip_preview_template"))
         self.btn_preview_template.clicked.connect(self._preview_template)
         self.btn_preview_template.setMaximumWidth(100)
         stats_layout.addWidget(self.btn_preview_template, 4, 0, 1, 2)
-        
+
         stats_group.setLayout(stats_layout)
         controls_layout.addWidget(stats_group)
-        
+
         # Search/Replace Panel (v2.9.110 - Re-enabled with emit methods)
         search_replace_group = QGroupBox(tr("ai_processor.group_search_replace"))
         search_replace_layout = QVBoxLayout()
         self.search_replace_panel = SearchReplacePanel(self, "ai_processor_search_replace")
         self.search_replace_panel.replace_requested.connect(self._handle_replace_in_results)
         search_replace_layout.addWidget(self.search_replace_panel)
-        
+
         # Add button to trigger replace signal
         btn_replace_results = QPushButton(tr("ai_processor.btn_apply_replace"))
         btn_replace_results.setToolTip(tooltip_tr("ai_processor.tooltip_replace_results"))
         btn_replace_results.clicked.connect(self.search_replace_panel.emit_replace_request)
         search_replace_layout.addWidget(btn_replace_results)
-        
+
         search_replace_group.setLayout(search_replace_layout)
         controls_layout.addWidget(search_replace_group)
-        
+
         # Insert Panel (v2.9.110 - Re-enabled with emit methods)
         insert_group = QGroupBox(tr("ai_processor.group_insert"))
         insert_layout = QVBoxLayout()
         self.insert_panel = InsertPanel(self, "ai_processor_insert")
         self.insert_panel.insert_requested.connect(self._handle_insert_in_prompt)
         insert_layout.addWidget(self.insert_panel)
-        
+
         # Add button to trigger insert signal
         btn_insert_prompt = QPushButton(tr("ai_processor.btn_apply_insert"))
         btn_insert_prompt.setToolTip(tooltip_tr("ai_processor.tooltip_insert_prompt"))
         btn_insert_prompt.clicked.connect(self.insert_panel.emit_insert_request)
         insert_layout.addWidget(btn_insert_prompt)
-        
+
         insert_group.setLayout(insert_layout)
         controls_layout.addWidget(insert_group)
-        
+
         # Set scroll widget and add to splitter
         scroll_controls.setWidget(controls_widget)
         splitter.addWidget(scroll_controls)
-        
+
         # Results panel in bottom part of splitter
         results_widget = QWidget()
         results_layout = QVBoxLayout(results_widget)
         lbl_results, self.text_results = self.create_results_panel()
         results_layout.addWidget(lbl_results)
         results_layout.addWidget(self.text_results)
-        
+
         # Open in Editor button (Task #6 - v2.9.19)
         editor_btn_layout = QHBoxLayout()
         self.add_open_in_editor_button(self.text_results, editor_btn_layout)
         results_layout.addLayout(editor_btn_layout)
-        
+
         splitter.addWidget(results_widget)
-        
+
         # Set initial splitter sizes (40% controls, 60% results)
         splitter.setStretchFactor(0, 2)
         splitter.setStretchFactor(1, 3)
-        
+
         # Add splitter to main layout
         self.layout.addWidget(splitter)
-        
+
         # Apply tooltips (v2.9.71)
         self._apply_tooltips()
-        
+
         # Update stats display
         self._update_stats_display()
-        
+
         # Initialize provider
         self._on_provider_changed()
-        
+
         # Load advanced conditions preferences (Task #51 - v2.9.26)
         self._load_advanced_conditions_preferences()
-    
+
     def _apply_tooltips(self) -> None:
         """Apply internationalized tooltips (v2.9.71)."""
         # Path entries (will be applied to each PathEntry dynamically)
@@ -440,7 +451,7 @@ class AIProcessorDock(StandardToolDock):
             path_entry.ed_path.setToolTip(tooltip_tr("ai_processor.ed_path"))
             path_entry.btn_browse.setToolTip(tooltip_tr("ai_processor.btn_browse"))
             path_entry.chk_is_file.setToolTip(tooltip_tr("ai_processor.chk_is_file"))
-        
+
         # AI Configuration
         self.combo_provider.setToolTip(tooltip_tr("ai_processor.combo_provider"))
         self.combo_model.setToolTip(tooltip_tr("ai_processor.combo_model"))
@@ -448,12 +459,12 @@ class AIProcessorDock(StandardToolDock):
         self.ed_api_key.setToolTip(tooltip_tr("ai_processor.ed_api_key"))
         self.btn_verify.setToolTip(tooltip_tr("ai_processor.btn_verify"))
         self.ed_prompt.setToolTip(tooltip_tr("ai_processor.ed_prompt"))
-        
+
         # Processing Options
         self.chk_line_by_line.setToolTip(tooltip_tr("ai_processor.chk_line_by_line"))
         self.spin_max_bytes.setToolTip(tooltip_tr("ai_processor.spin_max_bytes"))
         self.ed_extensions.setToolTip(tooltip_tr("ai_processor.ed_extensions"))
-        
+
         # Scope Extraction
         self.chk_scope_enable.setToolTip(tooltip_tr("ai_processor.chk_scope_enable"))
         self.ed_scope_start.setToolTip(tooltip_tr("ai_processor.ed_scope_start"))
@@ -462,74 +473,67 @@ class AIProcessorDock(StandardToolDock):
         self.ed_scope_end.setToolTip(tooltip_tr("ai_processor.ed_scope_end"))
         self.chk_end_regex.setToolTip(tooltip_tr("ai_processor.chk_end_regex"))
         self.chk_end_case.setToolTip(tooltip_tr("ai_processor.chk_end_case"))
-        
+
         # Advanced Conditions
         self.combo_cond_logic.setToolTip(tooltip_tr("ai_processor.combo_cond_logic"))
-        
+
         # Action Buttons
         self.btn_process.setToolTip(tooltip_tr("ai_processor.btn_process"))
         self.btn_interrupt.setToolTip(tooltip_tr("ai_processor.btn_interrupt"))
         self.btn_save_results.setToolTip(tooltip_tr("ai_processor.btn_save_results"))
         self.btn_clear.setToolTip(tooltip_tr("ai_processor.btn_clear"))
-        
+
         # Statistics
         self.lbl_session_stats.setToolTip(tooltip_tr("ai_processor.lbl_session_stats"))
         self.lbl_lifetime_stats.setToolTip(tooltip_tr("ai_processor.lbl_lifetime_stats"))
-        
+
         # Output Options
         self.chk_remove_fences.setToolTip(tooltip_tr("ai_processor.chk_remove_fences"))
-    
+
     def _add_path_entry(self):
         """Add a new path entry."""
         path_number = len(self.path_entries) + 1
         entry = PathEntry(path_number, self._remove_path_entry, self)
         self.path_entries.append(entry)
         self.paths_layout.addWidget(entry)
-    
+
     def _remove_path_entry(self, entry):
         """Remove a path entry."""
         if len(self.path_entries) <= 1:
             self.show_warning("Cannot Remove", "At least one path is required")
             return
-        
+
         self.path_entries.remove(entry)
         entry.deleteLater()
-        
+
         # Renumber remaining entries
         for i, e in enumerate(self.path_entries, 1):
             e.path_number = i
             e.lbl_path.setText(f"Path {i}:")
             e.btn_remove.setEnabled(i > 1)
-    
+
     def _connect_signals(self):
         """Connect signals."""
         self._setup_enter_key_execution(self.ed_api_key, self.ed_extensions)
         self._setup_escape_key_interrupt()
         self._setup_escape_key_interrupt()
-    
-    def _setup_escape_key_interrupt(self):
-        """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
-        from PySide6.QtCore import Qt
-        from PySide6.QtGui import QShortcut, QKeySequence
-        
-        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
-        shortcut.activated.connect(self._interrupt)
 
     def _setup_escape_key_interrupt(self):
         """Setup Esc key to interrupt AI processing (v2.9.50.1)."""
+        # pylint: disable=reimported,redefined-outer-name  # Lazy import for Qt components
         from PySide6.QtCore import Qt
         from PySide6.QtGui import QShortcut, QKeySequence
-        
-        shortcut = QShortcut(QKeySequence(Qt.Key_Escape), self)
+
+        shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         shortcut.activated.connect(self._interrupt)
 
     def _load_models_cache(self):
         """Load models cache from file."""
         if not self.models_cache_file.exists():
             return {}
-        
+
         try:
-            with open(self.models_cache_file, 'r') as f:
+            with open(self.models_cache_file, 'r', encoding='utf-8') as f:
                 cache = json.load(f)
                 # Validate cache age (24h expiry)
                 if 'timestamp' in cache:
@@ -539,7 +543,7 @@ class AIProcessorDock(StandardToolDock):
                 return {}
         except Exception:
             return {}
-    
+
     def _save_models_cache(self, models_dict):
         """Save models cache to file."""
         try:
@@ -547,21 +551,21 @@ class AIProcessorDock(StandardToolDock):
                 'timestamp': datetime.now().isoformat(),
                 'models': models_dict
             }
-            with open(self.models_cache_file, 'w') as f:
+            with open(self.models_cache_file, 'w', encoding='utf-8') as f:
                 json.dump(cache, f, indent=2)
         except Exception:
             pass
-    
+
     def _refresh_models(self):
         """Refresh models list from API."""
         api_key = self.ed_api_key.text().strip()
         if not api_key:
             self.show_warning("No API Key", "Please enter an API key first")
             return
-        
+
         provider = self.combo_provider.currentText()
         self.show_info("Refreshing...", f"Fetching models from {provider}")
-        
+
         try:
             if "OpenAI" in provider:
                 models = list_openai_models(api_key)
@@ -577,12 +581,12 @@ class AIProcessorDock(StandardToolDock):
                 provider_key = 'perplexity'
             else:
                 return
-            
+
             if models:
                 # Update cache
                 self.models_cache[provider_key] = models
                 self._save_models_cache(self.models_cache)
-                
+
                 # Refresh UI
                 self._on_provider_changed()
                 self.show_info("Success", f"Found {len(models)} models")
@@ -590,12 +594,12 @@ class AIProcessorDock(StandardToolDock):
                 self.show_warning("No Models", "No models found. Check API key.")
         except Exception as e:
             self.show_error("Error", f"Failed to refresh models: {str(e)}")
-    
+
     def _on_provider_changed(self):
         """Handle provider change."""
         provider = self.combo_provider.currentText()
         self.combo_model.clear()
-        
+
         # Determine provider key
         if "OpenAI" in provider:
             provider_key = 'openai'
@@ -612,30 +616,33 @@ class AIProcessorDock(StandardToolDock):
         elif "Perplexity" in provider:
             provider_key = 'perplexity'
             if not is_openai_available():
-                self.show_warning("SDK Missing", "OpenAI SDK not installed (required for Perplexity).\nRun: pip install openai")
+                self.show_warning(
+                    "SDK Missing",
+                    "OpenAI SDK not installed (required for Perplexity).\nRun: pip install openai"
+                )
         else:
             return
-        
+
         # Load models from cache first, fallback to static list
         models = self.models_cache.get(provider_key, AVAILABLE_MODELS.get(provider_key, []))
-        
+
         for model in models:
             self.combo_model.addItem(model['label'], model['name'])
-    
+
     def _verify_key(self):
         """Verify API key."""
         api_key = self.ed_api_key.text().strip()
         if not api_key:
             self.show_warning("No Key", "Please enter an API key")
             return
-        
+
         if not has_internet():
             self.show_warning("No Internet", "No internet connection detected")
             return
-        
+
         provider = self.combo_provider.currentText()
         model_name = self.combo_model.currentData()
-        
+
         try:
             if "OpenAI" in provider:
                 client = OpenAIClient(api_key, model_name)
@@ -647,7 +654,7 @@ class AIProcessorDock(StandardToolDock):
                 client = PerplexityClient(api_key, model_name)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
-            
+
             ok, msg = client.verify_key()
             if ok:
                 self.show_info("Success", msg)
@@ -655,16 +662,16 @@ class AIProcessorDock(StandardToolDock):
                 self.show_warning("Verification Failed", msg)
         except Exception as e:
             self.show_error("Error", f"Verification error: {str(e)}")
-    
+
     def _get_client(self):
         """Get AI client."""
         api_key = self.ed_api_key.text().strip()
         if not api_key:
             raise ValueError("No API key provided")
-        
+
         provider = self.combo_provider.currentText()
         model_name = self.combo_model.currentData()
-        
+
         if "OpenAI" in provider:
             return OpenAIClient(api_key, model_name)
         elif "Gemini" in provider:
@@ -675,18 +682,18 @@ class AIProcessorDock(StandardToolDock):
             return PerplexityClient(api_key, model_name)
         else:
             raise ValueError(f"Unknown provider: {provider}")
-    
+
     def _get_files(self):
         """Get list of files to process from all path entries."""
         all_files = []
         ext_text = self.ed_extensions.text().strip()
         extensions = [e.strip() for e in ext_text.split(',') if e.strip()] if ext_text else []
-        
+
         for entry in self.path_entries:
             path = entry.get_path()
             if not path:
                 continue
-            
+
             if entry.is_file():
                 if not os.path.isfile(path):
                     raise ValueError(f"Not a file: {path}")
@@ -694,16 +701,16 @@ class AIProcessorDock(StandardToolDock):
             else:
                 if not os.path.isdir(path):
                     raise ValueError(f"Not a directory: {path}")
-                
+
                 dir_files = ai_list_files(path, extensions)
                 if dir_files:
                     all_files.extend(dir_files)
-        
+
         if not all_files:
             raise ValueError("No files found in any path")
-        
+
         return all_files
-    
+
     def _process(self):
         """Start processing."""
         try:
@@ -711,14 +718,14 @@ class AIProcessorDock(StandardToolDock):
             if not prompt:
                 self.show_warning("No Prompt", "Please enter a prompt")
                 return
-            
+
             client = self._get_client()
             files = self._get_files()
-            
+
             # Apply advanced conditions BEFORE processing (Task #51 - v2.9.26)
             original_count = len(files)
             filtered_files, filtered_out = self._apply_advanced_conditions(files)
-            
+
             # Check if any files remain after filtering
             if not filtered_files:
                 self.show_warning(
@@ -727,7 +734,7 @@ class AIProcessorDock(StandardToolDock):
                     "Please adjust your filters and try again."
                 )
                 return
-            
+
             # Show feedback about filtering
             if filtered_out > 0:
                 filter_msg = (
@@ -736,10 +743,10 @@ class AIProcessorDock(StandardToolDock):
                 )
             else:
                 filter_msg = f"📊 Processing {len(filtered_files)} file(s) (no filters applied)\n"
-            
+
             # Don't reset session stats - accumulate
             self.last_responses = []
-            
+
             # Start worker with filtered files
             self.worker = AIProcessorWorker(
                 filtered_files,  # Use filtered list instead of original
@@ -759,26 +766,26 @@ class AIProcessorDock(StandardToolDock):
             self.worker.progress.connect(self._on_progress)
             self.worker.finished_ok.connect(self._on_finished)
             self.worker.failed.connect(self._on_failed)
-            
+
             self.btn_process.setEnabled(False)
             self.btn_interrupt.setEnabled(True)
             self.clear_results(self.text_results)
             self.append_result(self.text_results, filter_msg)
-            
+
             # Save preferences for next session
             self._save_advanced_conditions_preferences()
-            
+
             self.worker.start()
-            
+
         except Exception as e:
             self.show_error("Error", str(e))
-    
+
     def _interrupt(self):
         """Interrupt processing."""
         if self.worker and self.worker.isRunning():
             self.worker.request_interrupt()
             self.append_result(self.text_results, "\n⚠️ Interrupt requested...")
-    
+
     def _on_progress(self, msg):
         """Handle progress update with enhanced features."""
         if msg:
@@ -788,54 +795,55 @@ class AIProcessorDock(StandardToolDock):
                 display_msg = cleaned_msg if cleaned_msg != msg else msg
             else:
                 display_msg = msg
-            
+
             self.append_result(self.text_results, display_msg)
-            
+
             # Update token stats for actual responses (not status messages)
-            if not msg.startswith('[') and not msg.startswith('✓') and not msg.startswith('Reading') and not msg.startswith('⚠'):
+            if not msg.startswith('[') and not msg.startswith('✓') \
+                    and not msg.startswith('Reading') and not msg.startswith('⚠'):
                 model = self.combo_model.currentData() or 'gpt-4o'
                 input_tok = count_tokens(self.ed_prompt.toPlainText(), model)
                 output_tok = count_tokens(msg, model)
-                
+
                 # Update session stats
                 self.session_input_tokens += input_tok
                 self.session_output_tokens += output_tok
-                
+
                 # Update lifetime stats
                 self.lifetime_stats['total_input_tokens'] += input_tok
                 self.lifetime_stats['total_output_tokens'] += output_tok
                 self.lifetime_stats['total_requests'] = self.lifetime_stats.get('total_requests', 0) + 1
-                
+
                 # Calculate costs
-                session_cost = estimate_cost(self.session_input_tokens, self.session_output_tokens, model)
                 lifetime_cost_increment = estimate_cost(input_tok, output_tok, model)
                 self.lifetime_stats['total_cost'] = self.lifetime_stats.get('total_cost', 0.0) + lifetime_cost_increment
-                
+
                 # Update display
                 self._update_stats_display()
-                
+
                 # Save lifetime stats periodically
                 self._save_lifetime_stats()
-    
+
     def _on_finished(self, responses):
         """Handle completion."""
         self.last_responses = responses
         self.append_result(self.text_results, f"\n✅ Processing complete! {len(responses)} response(s) received.")
         self.btn_process.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
-    
+
     def _on_failed(self, error):
         """Handle failure."""
         self.append_result(self.text_results, f"\n❌ Error: {error}")
         self.btn_process.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
-    
+
     def _save_results(self):
         """Save results to file."""
         if not self.last_responses:
             self.show_warning("No Results", "No results to save")
             return
-        
+
+        # pylint: disable=reimported,redefined-outer-name  # Lazy import
         from PySide6.QtWidgets import QFileDialog
         path, _ = QFileDialog.getSaveFileName(
             self, "Save results", "",
@@ -847,7 +855,7 @@ class AIProcessorDock(StandardToolDock):
                 self.show_info("Saved", f"Results saved to {path}")
             except Exception as e:
                 self.show_error("Save Error", str(e))
-    
+
     def _clear(self):
         """Clear results."""
         self.clear_results(self.text_results)
@@ -855,12 +863,12 @@ class AIProcessorDock(StandardToolDock):
         self.session_input_tokens = 0
         self.session_output_tokens = 0
         self._update_stats_display()
-    
-    def _handle_replace_in_results(self, file_name_query, file_content_query, replacement, 
+
+    def _handle_replace_in_results(self, file_name_query, file_content_query, replacement,
                                    options, preserve_case, count):
         """
         Handle search/replace in results text (v2.9.110).
-        
+
         Pattern: Command (GoF)
         Args:
             file_name_query: File name search pattern (not used in text results)
@@ -876,32 +884,32 @@ class AIProcessorDock(StandardToolDock):
         if not content:
             self.show_warning("No Results", "No results to process. Run AI processor first.")
             return
-        
+
         try:
             # Compile pattern
             pattern = compile(needle, options)
-            
+
             # Execute replacement
             new_content, num_replaced = replace_in_text(
                 content, pattern, replacement, preserve_case, count or 0
             )
-            
+
             # Update results
             self.text_results.setPlainText(new_content)
-            
+
             # Show feedback
             self.show_message(
                 "Replace Complete",
                 f"Replaced {num_replaced} occurrence(s) of '{needle}' with '{replacement}'"
             )
-            
+
         except Exception as e:
             self.show_error("Replace Error", f"Error during replacement:\n\n{str(e)}")
-    
+
     def _handle_insert_in_prompt(self, line_no, text, mode):
         """
         Handle insert in prompt text (v2.9.110).
-        
+
         Pattern: Command (GoF)
         Args:
             line_no: Target line number (1-based)
@@ -909,44 +917,44 @@ class AIProcessorDock(StandardToolDock):
             mode: Insertion mode (LEFT, RIGHT, REPLACE, INSERT_ABOVE, INSERT_BELOW)
         """
         content = self.ed_prompt.toPlainText()
-        
+
         try:
             # Execute insertion
             new_content = insert_at_line(content, line_no, text, mode)
-            
+
             # Update prompt
             self.ed_prompt.setPlainText(new_content)
-            
+
             # Show feedback
             self.show_message(
                 "Insert Complete",
                 f"Inserted text at line {line_no} using {mode} mode"
             )
-            
+
         except Exception as e:
             self.show_error("Insert Error", f"Error during insertion:\n\n{str(e)}")
-    
+
     def _execute_action(self):
         """Execute the main action when ENTER is pressed."""
         self._process()
-    
+
     # ==================== Advanced Conditions (Task #51 - v2.9.26) ====================
-    
+
     def _add_condition_row(self):
         """Add a new condition row dynamically."""
         row_num = self.next_cond_row
-        
+
         # Create widgets
         combo_field = QComboBox()
         combo_field.addItems(["", "filename", "path", "ext", "size", "mtime", "content"])
         combo_op = QComboBox()
-        combo_op.addItems(["", "contains", "not contains", "equals", "not equals", 
+        combo_op.addItems(["", "contains", "not contains", "equals", "not equals",
                           "starts with", "ends with", ">", "<", ">=", "<="])
         ed_value = QLineEdit()
         ed_value.setPlaceholderText(tr("ai_processor.placeholder_filter_value"))
-        
+
         combo_scope = QComboBox()
-        combo_scope.addItems(["none", "brackets", "braces", "parentheses", 
+        combo_scope.addItems(["none", "brackets", "braces", "parentheses",
                              "custom", "tag", "specific-tag", "hierarchical"])
         chk_case = QCheckBox()
         chk_case.setChecked(True)
@@ -958,17 +966,17 @@ class AIProcessorDock(StandardToolDock):
         self.adv_cond_grid.addWidget(combo_scope, row_num, 3)
         self.adv_cond_grid.addWidget(chk_case, row_num, 4)
         self.adv_cond_grid.addWidget(chk_regex, row_num, 5)
-        
+
         # Store reference
         self.cond_rows.append((combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex))
-        
+
         # Increment next row
         self.next_cond_row += 1
-        
+
         # Move buttons layout to new bottom position (v2.9.40.3)
         self.adv_cond_grid.removeItem(self.buttons_layout_ref)
         self.adv_cond_grid.addLayout(self.buttons_layout_ref, self.next_cond_row, 0, 1, 6)
-    
+
     def _clear_all_conditions(self):
         """Clear all condition fields."""
         for combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex in self.cond_rows:
@@ -978,14 +986,14 @@ class AIProcessorDock(StandardToolDock):
             combo_scope.setCurrentIndex(0)
             chk_case.setChecked(True)
             chk_regex.setChecked(False)
-    
+
     def _get_conditions(self) -> list[Condition]:
         """
         Build list of Condition objects from UI.
         (Delegated to shared module for reusability)
         """
         return get_conditions_from_ui(self.cond_rows)
-    
+
     def _apply_advanced_conditions(self, files: list[str]) -> tuple[list[str], int]:
         """
         Apply advanced conditions to file list.
@@ -995,15 +1003,15 @@ class AIProcessorDock(StandardToolDock):
         conditions = self._get_conditions()
         logic_op = self.combo_cond_logic.currentText()
         enabled = self.adv_cond_group.isChecked()
-        
+
         return apply_conditions_to_files(files, conditions, logic_op, enabled)
-    
+
     def _save_advanced_conditions_preferences(self):
         """Save advanced conditions state to QSettings."""
         settings = QSettings("Clarify", "AIProcessor")
         settings.setValue("adv_cond/enabled", self.adv_cond_group.isChecked())
         settings.setValue("adv_cond/logic", self.combo_cond_logic.currentText())
-        
+
         # Save each condition row
         for i, (combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex) in enumerate(self.cond_rows):
             settings.setValue(f"adv_cond/row{i}/field", combo_field.currentText())
@@ -1012,61 +1020,61 @@ class AIProcessorDock(StandardToolDock):
             settings.setValue(f"adv_cond/row{i}/scope", combo_scope.currentText())
             settings.setValue(f"adv_cond/row{i}/case", chk_case.isChecked())
             settings.setValue(f"adv_cond/row{i}/regex", chk_regex.isChecked())
-        
+
         settings.setValue("adv_cond/row_count", len(self.cond_rows))
-    
+
     def _load_advanced_conditions_preferences(self):
         """Load advanced conditions state from QSettings."""
         settings = QSettings("Clarify", "AIProcessor")
-        
+
         # Load enabled state
         enabled = settings.value("adv_cond/enabled", False, type=bool)
         self.adv_cond_group.setChecked(enabled)
-        
+
         # Load logic operator
         logic = settings.value("adv_cond/logic", "AND", type=str)
         index = self.combo_cond_logic.findText(logic)
         if index >= 0:
             self.combo_cond_logic.setCurrentIndex(index)
-        
+
         # Load condition rows
         row_count = settings.value("adv_cond/row_count", 0, type=int)
         for i in range(min(row_count, len(self.cond_rows))):
             combo_field, combo_op, ed_value, combo_scope, chk_case, chk_regex = self.cond_rows[i]
-            
+
             field = settings.value(f"adv_cond/row{i}/field", "", type=str)
             operator = settings.value(f"adv_cond/row{i}/operator", "", type=str)
             value = settings.value(f"adv_cond/row{i}/value", "", type=str)
             scope = settings.value(f"adv_cond/row{i}/scope", "none", type=str)
             case = settings.value(f"adv_cond/row{i}/case", True, type=bool)
             regex = settings.value(f"adv_cond/row{i}/regex", False, type=bool)
-            
+
             # Set values
             idx = combo_field.findText(field)
             if idx >= 0:
                 combo_field.setCurrentIndex(idx)
-            
+
             idx = combo_op.findText(operator)
             if idx >= 0:
                 combo_op.setCurrentIndex(idx)
-            
+
             ed_value.setText(value)
-            
+
             idx = combo_scope.findText(scope)
             if idx >= 0:
                 combo_scope.setCurrentIndex(idx)
-            
+
             chk_case.setChecked(case)
             chk_regex.setChecked(regex)
-    
+
     # ==================== Enhanced Features ====================
-    
+
     def _load_lifetime_stats_early(self) -> dict:
         """Load lifetime statistics from file (early initialization)."""
         stats_file = Path.home() / '.clarify_ai_stats.json'
         try:
             if stats_file.exists():
-                with open(stats_file, 'r') as f:
+                with open(stats_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -1076,12 +1084,12 @@ class AIProcessorDock(StandardToolDock):
             'total_requests': 0,
             'total_cost': 0.0
         }
-    
+
     def _load_lifetime_stats(self) -> dict:
         """Load lifetime statistics from file."""
         try:
             if self.stats_file.exists():
-                with open(self.stats_file, 'r') as f:
+                with open(self.stats_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
         except Exception:
             pass
@@ -1091,15 +1099,15 @@ class AIProcessorDock(StandardToolDock):
             'total_requests': 0,
             'total_cost': 0.0
         }
-    
+
     def _save_lifetime_stats(self):
         """Save lifetime statistics to file."""
         try:
-            with open(self.stats_file, 'w') as f:
+            with open(self.stats_file, 'w', encoding='utf-8') as f:
                 json.dump(self.lifetime_stats, f, indent=2)
         except Exception as e:
-            print(f"Failed to save stats: {e}")
-    
+            logger.error(f"Failed to save stats: {e}")
+
     def _update_stats_display(self):
         """Update statistics labels."""
         # Session stats
@@ -1111,14 +1119,14 @@ class AIProcessorDock(StandardToolDock):
         self.lbl_session_stats.setText(
             f"Session: {self.session_input_tokens:,} in / {self.session_output_tokens:,} out | ${session_cost:.6f}"
         )
-        
+
         # Lifetime stats
         lifetime_cost = self.lifetime_stats.get('total_cost', 0.0)
         self.lbl_lifetime_stats.setText(
             f"Lifetime: {self.lifetime_stats['total_input_tokens']:,} in / "
             f"{self.lifetime_stats['total_output_tokens']:,} out | ${lifetime_cost:.6f}"
         )
-    
+
     def _strip_code_fences(self, text: str) -> str:
         """
         Remove code fences from text (improved with non-greedy matching).
@@ -1130,30 +1138,30 @@ class AIProcessorDock(StandardToolDock):
         """
         if not text:
             return text
-        
+
         stripped = text.strip()
-        
+
         # Remove surrounding fences with optional language identifier (non-greedy)
         # Pattern: ```[language]\n content \n```
         pattern = r'^```[\w]*?\n(.+?)\n```$'
         match = re.match(pattern, stripped, re.DOTALL)
         if match:
             return match.group(1).strip()
-        
+
         # Remove inline fence blocks (non-greedy to handle nested cases)
         # This will match from the first ``` to the nearest closing ```
         text = re.sub(r'```[\w]*?\n(.+?)\n```', r'\1', stripped, flags=re.DOTALL)
-        
+
         return text
-    
+
     def _preview_template(self):
         """Preview template rendering for first file (v2.9.79)."""
         prompt = self.ed_prompt.toPlainText().strip()
-        
+
         if not prompt:
             self.show_warning("No Prompt", "Please enter a prompt to preview")
             return
-        
+
         if not self.chk_enable_templates.isChecked():
             QMessageBox.information(
                 self,
@@ -1161,7 +1169,7 @@ class AIProcessorDock(StandardToolDock):
                 tr("ai_processor.msg_templates_disabled")
             )
             return
-        
+
         if not has_templates(prompt):
             QMessageBox.information(
                 self,
@@ -1169,17 +1177,17 @@ class AIProcessorDock(StandardToolDock):
                 tr("ai_processor.msg_no_templates")
             )
             return
-        
+
         # Get files to determine total count
         try:
             files = self._get_files()
             total_files = len(files)
-        except:
+        except Exception:
             total_files = 5  # Default for preview
-        
+
         # Generate preview
         preview_text = preview_template(prompt, total_files)
-        
+
         # Show in message box
         QMessageBox.information(
             self,

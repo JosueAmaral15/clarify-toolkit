@@ -1,5 +1,4 @@
-"""
-Generic Scope Parser Module
+"""Generic Scope Parser Module.
 
 Parser driven by user regex for scope start and end delimiters.
 Extracted from add/main.py for use in the Clarify project.
@@ -11,7 +10,7 @@ Date: 2025-12-02
 import re
 from typing import Iterable, List, Optional, Tuple
 
-
+# pylint: disable=too-few-public-methods  # Single-purpose parser class
 class GenericScopeParser:
     """
     Generic parser driven by user regex for scope start and end (delimiters).

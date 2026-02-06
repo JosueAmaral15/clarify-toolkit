@@ -7,6 +7,7 @@ Part of v2.9.116 integration: Search/Replace → File Explorer.
 Author: Josué Amaral
 Date: 2025/12/25
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -17,7 +18,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QPushButton,
     QLabel,
-    QGroupBox,
     QComboBox,
 )
 from PySide6.QtCore import Signal
@@ -395,7 +395,7 @@ class ConditionsGrid(QWidget):
             chk_regex.setEnabled(is_text_field)
 
         combo_field.currentIndexChanged.connect(on_field_changed)
-        
+
         # Set initial state
         on_field_changed(combo_field.currentIndex())
 

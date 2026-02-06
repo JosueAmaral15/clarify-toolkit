@@ -11,6 +11,14 @@ v2.9.115 Integration:
 - Adds selection mode (return list of selected files)
 - Maintains all existing features from both tools
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=too-many-lines  # Large unified file (consolidation of 2 tools)
+# pylint: disable=import-outside-toplevel  # Lazy translator import
+# pylint: disable=logging-fstring-interpolation  # Debug logging readability
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=reimported,redefined-outer-name  # Lazy imports in methods
+
 
 import os
 import re
@@ -18,6 +26,7 @@ import time
 import csv
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -32,7 +41,6 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
-    QAbstractItemView,
     QProgressDialog,
     QSplitter,
     QScrollArea,
@@ -40,9 +48,15 @@ from PySide6.QtWidgets import (
     QFrame,
     QMainWindow,
 )
-from PySide6.QtCore import Qt, QSettings, QDate, QTimer, QObject, QThread
+from PySide6.QtCore import Qt, QSettings, QThread
 from PySide6.QtGui import QAction, QShortcut, QKeySequence
+
+from src.core.file_explorer_executor import UnifiedFileExplorerExecutor
+from src.i18n.translator import tooltip_tr, tr
+from src.utils.logger import get_logger
+
 from .base_dock import BaseDock
+from .panels import ResultsTree, FileExplorerWorker
 from .widgets import (
     FileFilterPanel,
     PresetManager,
@@ -54,10 +68,6 @@ from .widgets import (
     ConditionsGrid,
     CollapsibleSection,
 )
-from .panels import ResultsTree, FileExplorerWorker
-from src.core.file_explorer_executor import UnifiedFileExplorerExecutor
-from src.i18n.translator import tooltip_tr, tr
-from src.utils.logger import get_logger
 
 # Initialize logger for structured logging (Protocolo Simplicidade 3 - Etapa 6)
 logger = get_logger(__name__)
@@ -96,7 +106,7 @@ class FileExplorerDock(BaseDock):
         self.dialog_mode = dialog_mode
         self.selected_files: List[str] = []
         self.settings = QSettings("Clarify", "FileExplorer")
-        
+
         # Store reference to main window for child components (v2.9.121 bugfix)
         self._main_window_ref = None
         if parent is not None:
@@ -131,7 +141,7 @@ class FileExplorerDock(BaseDock):
 
         # Progress dialog for long operations
         self.progress_dialog = None
-        
+
         # Batch processing state (v2.9.123)
         self._batch_processing_active = False
         self._total_batches_expected = 0
@@ -302,7 +312,7 @@ class FileExplorerDock(BaseDock):
         # Action button tooltip (v2.9.117 - B.7: Unified)
         self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
 
-    def retranslateUi(self):
+    def retranslateUi(self):  # pylint: disable=invalid-name  # Qt naming convention
         """Retranslate all UI elements when language changes (v2.9.117 - B.7)."""
         # Update window title
         self.setWindowTitle(tr("file_list.title"))
@@ -654,13 +664,13 @@ class FileExplorerDock(BaseDock):
         """
         # Mark that user manually changed the view
         self._user_manually_changed_view = True
-        
+
         view_index = self.combo_view_mode.itemData(index)
         self.results_stack.setCurrentIndex(view_index)
 
         # Enable/disable word wrap checkbox based on view
         # Word wrap only applies to Tree view
-        is_tree_view = view_index == 0
+        is_tree_view = not view_index
         self.chk_word_wrap.setEnabled(is_tree_view)
 
         # ENHANCEMENT: Synchronize data when switching views
@@ -668,7 +678,7 @@ class FileExplorerDock(BaseDock):
         if view_index == 1 and self.last_was_search and self.last_search_results:
             # Convert search results (tree matches) to table format (file list)
             self._sync_search_to_table()
-        elif view_index == 0 and not self.last_was_search and self.last_browse_results:
+        elif not view_index and not self.last_was_search and self.last_browse_results:
             # Convert browse results (table files) to tree format (simple file list)
             self._sync_browse_to_tree()
 
@@ -676,11 +686,11 @@ class FileExplorerDock(BaseDock):
         """
         Check if a file matches the advanced filters.
         Replicates logic from file_list_executor.py for consistency.
-        
+
         Args:
             file_path: Path to file to check
             filters: Filter configuration dict
-            
+
         Returns:
             True if file passes all filters, False otherwise
         """
@@ -688,29 +698,33 @@ class FileExplorerDock(BaseDock):
             # Size filter
             file_size = os.path.getsize(file_path)
             size_config = filters.get("size", {})
-            
+
             min_size = size_config.get("min")
             if min_size is not None and file_size < min_size:
                 return False
-            
+
             max_size = size_config.get("max")
             if max_size is not None and file_size > max_size:
                 return False
-            
+
             # MTime filter
             mtime = datetime.fromtimestamp(os.path.getmtime(file_path)).date()
             mtime_config = filters.get("mtime", {})
-            
+
             after = mtime_config.get("after")
             if after and mtime < after:
-                logger.debug(f"File {file_path} filtered: mtime={mtime} < after={after}")
+                logger.debug(
+                    "File %s filtered: mtime=%s < after=%s", file_path, mtime, after
+                )
                 return False
-            
+
             before = mtime_config.get("before")
             if before and mtime > before:
-                logger.debug(f"File {file_path} filtered: mtime={mtime} > before={before}")
+                logger.debug(
+                    "File %s filtered: mtime=%s > before=%s", file_path, mtime, before
+                )
                 return False
-            
+
             # Extensions filter
             extensions = filters.get("extensions", [])
             if extensions:
@@ -718,7 +732,7 @@ class FileExplorerDock(BaseDock):
                 ext = ext.lower().lstrip(".")
                 if ext not in extensions:
                     return False
-            
+
             # Regex filter (on filename)
             regex_config = filters.get("regex", {})
             if regex_config.get("enabled", False):
@@ -729,7 +743,7 @@ class FileExplorerDock(BaseDock):
                             return False
                     except re.error:
                         pass  # Invalid regex, ignore
-            
+
             return True
         except (OSError, ValueError):
             return False
@@ -738,6 +752,14 @@ class FileExplorerDock(BaseDock):
         """Populate table view with files from search results (tree matches)."""
         if not self.last_search_results:
             return
+
+        # DEBUG: Log total files in search results
+        total_files_in_results = len(self.last_search_results)
+        logger.info(
+            "[DEBUG] _sync_search_to_table() called with %d files in last_search_results",
+            total_files_in_results
+        )
+        logger.info("[DEBUG] File paths: %s", list(self.last_search_results.keys()))
 
         # Get Advanced Filters if enabled
         advanced_filters = None
@@ -750,13 +772,17 @@ class FileExplorerDock(BaseDock):
         # Extract file paths from matches dictionary
         files_data = []
         filtered_count = 0
+        loop_iterations = 0
         for file_path in self.last_search_results.keys():
+            loop_iterations += 1
+            logger.debug(f"[DEBUG] Loop iteration {loop_iterations}: Processing {file_path}")
             try:
                 # Apply Advanced Filters if enabled
                 if advanced_filters and not self._matches_advanced_filters(file_path, advanced_filters):
                     filtered_count += 1
+                    logger.debug(f"[DEBUG] File {file_path} REJECTED by advanced filters")
                     continue
-                
+
                 # Get file stats
                 stat_info = os.stat(file_path)
                 is_dir = os.path.isdir(file_path)
@@ -772,9 +798,16 @@ class FileExplorerDock(BaseDock):
                         "is_dir": is_dir,
                     }
                 )
+                logger.debug(f"[DEBUG] File {file_path} ADDED to files_data (total now: {len(files_data)})")
             except (OSError, FileNotFoundError) as e:
                 logger.warning(f"Failed to stat file {file_path}: {e}")
                 continue
+
+        # DEBUG: Log final counts
+        logger.info(
+            "[DEBUG] Loop completed: %d iterations, %d files added, %d filtered",
+            loop_iterations, len(files_data), filtered_count
+        )
 
         # Sort if checkbox is enabled
         if self.chk_sort_results.isChecked():
@@ -782,6 +815,7 @@ class FileExplorerDock(BaseDock):
 
         # Populate table
         human_readable = self.chk_human.isChecked()
+        logger.info(f"[DEBUG] Calling table_manager.populate() with {len(files_data)} files")
         self.table_manager.populate(files_data, human_readable=human_readable)
 
         if filtered_count > 0:
@@ -883,7 +917,6 @@ class FileExplorerDock(BaseDock):
     def _list_files(self):
         """List or search files with unified executor (v2.9.116)."""
         # Start timer (v2.9.117 - B.4)
-        start_time = time.time()
 
         directory = self.ed_directory.text().strip()
 
@@ -955,12 +988,40 @@ class FileExplorerDock(BaseDock):
         conditions = self.conditions_grid.get_conditions()
         logic_operator = self.conditions_grid.get_logic_operator()
 
+        # SECURITY: Validate regex patterns BEFORE starting search
+        # Prevents "Invalid regex pattern" errors during execution
+        if filename_pattern and search_options.get("regex", False):
+            try:
+                flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
+                re.compile(filename_pattern, flags)
+            except re.error as e:
+                logger.error(f"Invalid filename regex pattern: {filename_pattern[:50]}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    tr("file_explorer.error_title"),
+                    f"Invalid regex pattern in filename:\n\n{str(e)}\n\nPattern: {filename_pattern}"
+                )
+                return
+
+        if content_query and search_options.get("regex", False):
+            try:
+                flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
+                re.compile(content_query, flags)
+            except re.error as e:
+                logger.error(f"Invalid content regex pattern: {content_query[:50]}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    tr("file_explorer.error_title"),
+                    f"Invalid regex pattern in content search:\n\n{str(e)}\n\nPattern: {content_query}"
+                )
+                return
+
         # Determine if this is a search or browse operation
         is_search = bool(filename_pattern or content_query)
 
         if is_search:
             logger.info(
-                f"Executing search operation",
+                "Executing search operation",
                 extra={
                     "filename_pattern": filename_pattern,
                     "content_query": content_query[:50] if content_query else None,
@@ -968,7 +1029,7 @@ class FileExplorerDock(BaseDock):
                     "case_sensitive": search_options.get("case_sensitive", False),
                 },
             )
-            
+
             # ============================================================================
             # v2.9.122: Use threading for progress bar support
             # ============================================================================
@@ -980,13 +1041,13 @@ class FileExplorerDock(BaseDock):
                 "search_options": search_options,
                 "start_time": time.time()
             }
-            
+
             # Create thread and worker
-            print("🔧 DEBUG: Creating worker thread...")
+            logger.debug("Creating worker thread...")
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
             self._worker.moveToThread(self._worker_thread)
-            print(f"🔧 DEBUG: Worker moved to thread: {self._worker_thread}")
+            logger.debug(f"Worker moved to thread: {self._worker_thread}")
 
             # Connect signals
             self._worker.progress.connect(self._on_progress)
@@ -994,7 +1055,7 @@ class FileExplorerDock(BaseDock):
             self._worker.batch_ready.connect(self._on_batch_ready)  # NEW v2.9.123
             self._worker.finished.connect(self._on_search_finished)
             self._worker.error.connect(self._on_operation_error)
-            print("🔧 DEBUG: Signals connected")
+            logger.debug("Signals connected")
 
             # Start thread and execute search
             # Capture worker in local variable to avoid None issues after cleanup
@@ -1012,9 +1073,9 @@ class FileExplorerDock(BaseDock):
                     logic_operator=logic_operator
                 )
             )
-            print("🔧 DEBUG: Starting thread...")
+            logger.debug("Starting thread...")
             self._worker_thread.start()
-            print("🔧 DEBUG: Thread started, returning early")
+            logger.debug("Thread started, returning early")
 
             # Return early - results will be handled by _on_search_finished()
             return
@@ -1023,8 +1084,8 @@ class FileExplorerDock(BaseDock):
             # ============================================================================
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
-            logger.info(f"Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
-            
+            logger.info("Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
+
             # ============================================================================
             # v2.9.122: Use threading for progress bar support
             # ============================================================================
@@ -1038,7 +1099,7 @@ class FileExplorerDock(BaseDock):
                 "human_readable": human_readable,
                 "start_time": time.time()
             }
-            
+
             # Create thread and worker
             self._worker_thread = QThread(self)
             self._worker = FileExplorerWorker(self.executor)
@@ -1051,8 +1112,10 @@ class FileExplorerDock(BaseDock):
             self._worker.error.connect(self._on_operation_error)
 
             # Start thread and execute browse
+            # Capture worker in local variable to avoid None issues after cleanup
+            worker = self._worker
             self._worker_thread.started.connect(
-                lambda: self._worker.execute_browse(
+                lambda: worker.execute_browse(
                     directory=directory,
                     show_hidden=show_hidden,
                     recursive=recursive,
@@ -1065,20 +1128,6 @@ class FileExplorerDock(BaseDock):
 
             # Return early - results will be handled by _on_browse_finished()
             return
-
-
-        # Show errors if any
-        if result.get("errors"):
-            logger.warning(f"Operation completed with errors", extra={"error_count": len(result["errors"])})
-            error_msg = "\n".join(result["errors"][:5])  # Show first 5 errors
-            if len(result["errors"]) > 5:
-                error_msg += f"\n... and {len(result['errors']) - 5} more errors"
-            QMessageBox.warning(self, tr("file_list.errors_title"), error_msg)
-        else:
-            logger.info(f"Operation completed successfully", extra={"duration": time.time() - start_time})
-
-        # Save preferences after listing
-        self._save_preferences()
 
     def _build_filters(self) -> Dict[str, Any]:
         """Build filter dictionary from filter panel AND extension/glob fields."""
@@ -1334,44 +1383,44 @@ class FileExplorerDock(BaseDock):
         QMessageBox.information(self, tr("file_list.cleared_title"), tr("file_list.cleared_message"))
 
     def _show_preview_tooltip(self, item):
-         """
-         Show preview tooltip on hover - displays the SPECIFIC cell value.
-         
-         Args:
-             item: QTableWidgetItem being hovered
-         """
-         if item is None:
-             return
+        """
+        Show preview tooltip on hover - displays the SPECIFIC cell value.
 
-         row = item.row()
-         col = item.column()
+        Args:
+            item: QTableWidgetItem being hovered
+        """
+        if item is None:
+            return
 
-         # Get the value from the CURRENT cell (not always Path!)
-         cell_value = item.text()
+        _ = item.row()  # Row not used
+        col = item.column()
 
-         # Column 0: Name - show full name if truncated
-         if col == 0:
-             item.setToolTip(cell_value)
+        # Get the value from the CURRENT cell (not always Path!)
+        cell_value = item.text()
 
-         # Column 1: Size - show full formatted size
-         elif col == 1:
-             item.setToolTip(cell_value)
+        # Column 0: Name - show full name if truncated
+        if not col:
+            item.setToolTip(cell_value)
 
-         # Column 2: Modified - show full datetime
-         elif col == 2:
-             item.setToolTip(cell_value)
+        # Column 1: Size - show full formatted size
+        elif col == 1:
+            item.setToolTip(cell_value)
 
-         # Column 3: Permissions - show full permissions
-         elif col == 3:
-             item.setToolTip(cell_value)
+        # Column 2: Modified - show full datetime
+        elif col == 2:
+            item.setToolTip(cell_value)
 
-         # Column 4: Path - show full path
-         elif col == 4:
-             item.setToolTip(cell_value)
+        # Column 3: Permissions - show full permissions
+        elif col == 3:
+            item.setToolTip(cell_value)
 
-         # Default: show cell value
-         else:
-             item.setToolTip(cell_value)
+        # Column 4: Path - show full path
+        elif col == 4:
+            item.setToolTip(cell_value)
+
+        # Default: show cell value
+        else:
+            item.setToolTip(cell_value)
 
     def _accept_dialog(self):
         """Accept dialog and collect selected files (NEW - dialog mode)."""
@@ -1624,14 +1673,13 @@ class FileExplorerDock(BaseDock):
     def _on_conditions_changed(self, conditions: list):
         """Handle advanced conditions changes."""
         # Could auto-filter results when conditions change
-        pass
 
     def _on_progress(self, message: str):
         """Handle progress updates from executor (v2.9.116)."""
-        print(f"🔧 DEBUG: _on_progress() called with message: {message[:50]}...")
+        logger.debug(f"_on_progress() called with message: {message[:50]}...")
         # Show progress dialog if not already visible
         if not self.progress_dialog:
-            print("🔧 DEBUG: Creating progress dialog")
+            logger.debug("Creating progress dialog")
             self.progress_dialog = QProgressDialog(
                 tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
             )
@@ -1641,7 +1689,7 @@ class FileExplorerDock(BaseDock):
             self.progress_dialog.canceled.connect(self.executor.cancel)
             self.progress_dialog.show()  # Explicitly show
             self.progress_dialog.raise_()  # Bring to front
-            print("🔧 DEBUG: Progress dialog created, shown, and raised")
+            logger.debug("Progress dialog created, shown, and raised")
 
         # Update message
         self.progress_dialog.setLabelText(message)
@@ -1657,42 +1705,48 @@ class FileExplorerDock(BaseDock):
     def _on_batch_ready(self, batch: list, batch_num: int, total_batches: int):
         """
         Handle batch of results (runs in UI thread, but doesn't block!).
-        
+
         This method processes one batch (100 items) then returns, allowing
         the event loop to process other events (paint, input, etc.).
-        
+
         Args:
             batch: List of (file_path, matches_list) tuples
             batch_num: Current batch number (1-indexed)
             total_batches: Total number of batches
-        
+
         Version: v2.9.123
         """
-        print(f"🔧 DEBUG: _on_batch_ready() batch {batch_num}/{total_batches} ({len(batch)} items)")
-        
+        logger.debug(f"_on_batch_ready() batch {batch_num}/{total_batches} ({len(batch)} items)")
+
         # Check for cancellation
         if self._cancel_requested:
-            print(f"🔧 DEBUG: Cancellation requested, skipping batch {batch_num}")
+            logger.debug(f"Cancellation requested, skipping batch {batch_num}")
             return
-        
+
         # Initialize batch processing on first batch
         if batch_num == 1:
-            print("🔧 DEBUG: Starting batch processing...")
+            logger.debug("Starting batch processing...")
             self._batch_processing_active = True
             self._total_batches_expected = total_batches
             self._batches_received = 0
             self._cancel_requested = False
-            
+
+            # Store user's current view mode for restoration later
+            self._user_view_before_search = self.results_stack.currentIndex()
+            logger.debug(f"User's view mode before search: {self._user_view_before_search} (0=Tree, 1=Table)")
+
             # Clear tree before adding items
             self.results_tree.clear()
-            
-            # Switch to tree view (respect manual override)
-            if not self._user_manually_changed_view:
-                self.results_stack.setCurrentIndex(0)
-                self.combo_view_mode.blockSignals(True)
-                self.combo_view_mode.setCurrentIndex(0)
-                self.combo_view_mode.blockSignals(False)
-        
+
+            # CRITICAL: Temporarily switch to Tree view for batch processing
+            # Qt's QTreeWidget requires visibility to properly add items
+            # We'll restore user's view mode after all batches complete
+            self.results_stack.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(True)
+            self.combo_view_mode.setCurrentIndex(0)
+            self.combo_view_mode.blockSignals(False)
+            logger.debug("Temporarily switched to Tree view for batch processing")
+
         # Update progress dialog to show batch progress
         if self.progress_dialog:
             progress = int((batch_num / total_batches) * 100)
@@ -1701,77 +1755,101 @@ class FileExplorerDock(BaseDock):
                 f"Processing results: batch {batch_num}/{total_batches}\n"
                 f"({len(batch)} items in this batch)"
             )
-        
+
         # Add batch items to tree (this is the UI operation, but only 100 items)
         for file_path, matches_list in batch:
             self.results_tree.add_file_result(file_path, matches_list)
-        
+
         # Update batch counter
         self._batches_received += 1
-        
+
         # Check if this was the last batch
         if batch_num == total_batches:
-            print(f"🔧 DEBUG: All {total_batches} batches received")
+            logger.debug(f"All {total_batches} batches received")
             self._batch_processing_active = False
-            
+
             # Store results for view sync (get from tree's internal storage)
             self.last_search_results = self.results_tree.get_matches_data()
-            
+
             # Apply sorting if enabled (only AFTER all batches)
             if self.chk_sort_results.isChecked():
-                print("🔧 DEBUG: Sorting results...")
+                logger.debug("Sorting results...")
                 self.results_tree.sort_results()
-            
+
+            # BUGFIX: Restore user's view mode and sync table if needed
+            # Tree was populated during batch processing (requires visibility)
+            # Now restore user's original view and sync table if they were in Table mode
+            if self._user_view_before_search == 1:  # User was in Table mode
+                logger.info("[BUGFIX] User was in Table mode, syncing results and restoring view")
+                self._sync_search_to_table()
+                # Restore Table view
+                self.results_stack.setCurrentIndex(1)
+                self.combo_view_mode.blockSignals(True)
+                self.combo_view_mode.setCurrentIndex(1)
+                self.combo_view_mode.blockSignals(False)
+                logger.debug("Restored Table view mode")
+            else:
+                logger.debug("User was in Tree mode, results already visible")
+
             # Close progress dialog now that batching is complete
             if self.progress_dialog:
-                print("🔧 DEBUG: Closing progress dialog (batching complete)")
+                logger.debug("Closing progress dialog (batching complete)")
                 self.progress_dialog.close()
                 self.progress_dialog = None
-        
+
         # Return immediately - event loop can process other events!
-        print(f"🔧 DEBUG: Batch {batch_num} processed, returning to event loop")
+        logger.debug(f"Batch {batch_num} processed, returning to event loop")
 
     def _cleanup_worker_thread(self):
         """
         Clean up worker thread after operation completes.
-        
+
         This ensures proper thread lifecycle management and prevents resource leaks.
         Called from _on_*_finished() and _on_operation_error() handlers.
-        
+
         Version: v2.9.122
         """
+        print(
+            f"DEBUG 1783 _cleanup_worker_thread() | _worker_thread exists: "
+            f"{hasattr(self, '_worker_thread')}"
+        )
+        print(
+            f"DEBUG 1784 _cleanup_worker_thread() | _worker_thread value: "
+            f"{getattr(self, '_worker_thread', 'NO_ATTR')}"
+        )
+
         if hasattr(self, '_worker_thread') and self._worker_thread:
             self._worker_thread.quit()
             self._worker_thread.wait()
             self._worker_thread.deleteLater()
             self._worker_thread = None
-        
+
         if hasattr(self, '_worker'):
             self._worker = None
 
     def _on_search_finished(self, result):
         """
         Handle search operation completion (runs in UI thread).
-        
+
         NOTE v2.9.123: Heavy processing (building matches_dict, populate) is now
         done via batch_ready signals. This handler only does lightweight finalization.
-        
+
         Args:
             result: SearchResult dict from FileExplorerExecutor
-        
+
         Version: v2.9.123
         """
         import time
-        
-        print("🔧 DEBUG: _on_search_finished() called!")
-        
+
+        logger.debug("_on_search_finished() called!")
+
         # NOTE v2.9.123: Don't close progress dialog here!
         # It will be closed by _on_batch_ready() after last batch
         if self.progress_dialog and not self._batch_processing_active:
-            print("🔧 DEBUG: Closing progress dialog (no batching active)")
+            logger.debug("Closing progress dialog (no batching active)")
             self.progress_dialog.close()
             self.progress_dialog = None
-        
+
         # Retrieve stored parameters
         params = self._current_search_params
         directory = params["directory"]
@@ -1779,25 +1857,37 @@ class FileExplorerDock(BaseDock):
         content_query = params["content_query"]
         search_options = params["search_options"]
         start_time = params["start_time"]
-        
+
         # ═══════════════════════════════════════════════════════════════════════
         # NOTE: matches_dict building and populate() are now done in batch_ready!
         # This handler only does LIGHTWEIGHT operations
         # ═══════════════════════════════════════════════════════════════════════
-        
+
         # Get count from result (lightweight)
         files_list = result.get("files", [])
         total_files = len(files_list)
         total_matches = sum(len(sr.matches) for sr in files_list)
-        
+
+        # BUGFIX: When search returns 0 files, no batches are emitted, so tree/table
+        # never get cleared in _on_batch_ready(). Explicitly clear them here.
+        if not total_files:
+            logger.info("[BUGFIX] Search returned 0 files - clearing tree and table to remove stale results")
+            self.results_tree.clear()
+            if hasattr(self, 'table_manager') and self.table_manager:
+                self.table_manager.clear()
+            # Close progress dialog since no batches will trigger this
+            if self.progress_dialog:
+                self.progress_dialog.close()
+                self.progress_dialog = None
+
         # Update status bar (lightweight)
         self.results_status.setText(
             f"Found {total_files} file(s) with {total_matches} match(es)"
         )
-        
+
         # Store for view sync (lightweight)
         self.last_was_search = True
-        
+
         # Update statistics (lightweight - just counters)
         self._update_statistics(files_list, time.time() - start_time)
 
@@ -1833,40 +1923,40 @@ class FileExplorerDock(BaseDock):
                     },
                 )
         except Exception as e:
-            print(f"Failed to save history: {e}")
-        
-        print("🔧 DEBUG: _on_search_finished() completed (lightweight operations only)")
-        
+            logger.error(f"Failed to save history: {e}")
+
+        logger.debug("_on_search_finished() completed (lightweight operations only)")
+
         # Cleanup thread
         self._cleanup_worker_thread()
 
     def _on_browse_finished(self, result):
         """
         Handle browse operation completion (runs in UI thread).
-        
+
         Args:
             result: BrowseResult dict from FileExplorerExecutor
-        
+
         Version: v2.9.122
         """
         import time
         from PySide6.QtWidgets import QAbstractItemView
-        
+
         # Close progress dialog
         if self.progress_dialog:
             self.progress_dialog.close()
             self.progress_dialog = None
-        
+
         # Retrieve stored parameters
         params = self._current_browse_params
         directory = params["directory"]
         show_hidden = params["show_hidden"]
         recursive = params["recursive"]
-        filters = params["filters"]
+        filters = params["filters"]  # pylint: disable=unused-variable  # Legacy param
         long_format = params["long_format"]
         human_readable = params["human_readable"]
         start_time = params["start_time"]
-        
+
         # ============================================================================
         # BROWSE MODE: Populate FileListTable (v2.9.117 - B.1)
         # ============================================================================
@@ -1876,7 +1966,7 @@ class FileExplorerDock(BaseDock):
             self.combo_view_mode.blockSignals(True)
             self.combo_view_mode.setCurrentIndex(1)
             self.combo_view_mode.blockSignals(False)
-        
+
         # Process SearchResult objects (browse returns SearchResult with empty matches)
         files_data = []
         for search_result in result.get("files", []):
@@ -1914,9 +2004,9 @@ class FileExplorerDock(BaseDock):
         # ENHANCEMENT: Store browse results for view synchronization
         self.last_browse_results = files_data
         self.last_was_search = False
-        
+
         # BUGFIX v2.9.119: If user is in tree view, also populate tree with browse results
-        if self._user_manually_changed_view and self.results_stack.currentIndex() == 0:
+        if self._user_manually_changed_view and self.results_stack.currentIndex():
             self._sync_browse_to_tree()
         logger.debug(f"Stored {len(files_data)} browse results for view sync")
 
@@ -1947,40 +2037,40 @@ class FileExplorerDock(BaseDock):
                 )
         except Exception as e:
             print(f"Failed to save history: {e}")
-        
+
         # Update status label
         self.results_status.setText(f"Found {len(files_list)} file(s)")
-        
+
         # Cleanup thread
         self._cleanup_worker_thread()
 
     def _on_operation_error(self, error_message: str):
         """
         Handle operation error (runs in UI thread).
-        
+
         Args:
             error_message: Error description
-        
+
         Version: v2.9.122
         """
         from PySide6.QtWidgets import QMessageBox
-        
+
         # Close progress dialog
         if self.progress_dialog:
             self.progress_dialog.close()
             self.progress_dialog = None
-        
+
         # Show error dialog
         QMessageBox.critical(
             self,
             tr("file_list.error_title"),
             f"{tr('file_list.error_operation')}\n\n{error_message}"
         )
-        
+
         # Cleanup thread
         self._cleanup_worker_thread()
 
-    def _on_execution_done(self, results: dict):
+    def _on_execution_done(self, _results: dict):
         """Handle execution completion (v2.9.116)."""
         # Close progress dialog
         if self.progress_dialog:
@@ -1989,9 +2079,9 @@ class FileExplorerDock(BaseDock):
 
         # Results are already processed by _list_files() method
         # This is just for cleanup and optional status updates
-        files_count = len(results.get("files", []))
-        stats = results.get("stats", {})
-        total_size = stats.get("total_size", 0)
+        # files_count = len(results.get("files", []))
+        #stats = results.get("stats", {})
+        # total_size = stats.get("total_size", 0)
 
         # Update status bar or show completion message (optional)
         # For now, just close the progress dialog

@@ -5,6 +5,10 @@
 JSON Rewriter Dock - Modular implementation
 Rewrites JSON/TS files with options to join keys, eliminate duplicates, and format output.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Lazy imports for heavy modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ import argparse
 import os
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -33,16 +37,17 @@ from PySide6.QtWidgets import (
 )
 
 from src.accessibility_manager import AccessibilityManager
-from src.core.filters import Condition
 from src.core import cli_dedupe
+from src.core.filters import Condition
 from src.i18n.translator import tooltip_tr, tr
-from src.utils.advanced_conditions import apply_conditions_to_files, get_conditions_from_ui
 from src.utils import format_removal_statistics
+from src.utils.advanced_conditions import get_conditions_from_ui
+
 from .base_dock import BaseDock
 
 # Type checking imports
 if TYPE_CHECKING:
-    from PySide6.QtWidgets import QWidget as QWidgetType
+    pass  # Type hints removed
 
 
 class JsonRewriterDock(BaseDock):
@@ -60,7 +65,7 @@ class JsonRewriterDock(BaseDock):
     - Configurable indentation
     """
 
-    def __init__(self, parent: QWidgetType | None = None):
+    def __init__(self, parent: QWidget | None = None):
         super().__init__(tr("json_rewriter.title"), parent)
         self._load_preferences()
         self._apply_accessibility()
@@ -119,8 +124,10 @@ class JsonRewriterDock(BaseDock):
         self.chk_enforce_case = QCheckBox(tr("json_rewriter.chk_enforce_case"))
         self.chk_enforce_case.setChecked(True)  # Applied automatically
         self.combo_case_style = QComboBox()
-        self.combo_case_style.addItems([tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_snake"), tr("combo.case_kebab")])
-        self.combo_case_style.setCurrentIndex(0)  # Default: camelCase
+        self.combo_case_style.addItems([
+            tr("combo.case_camel"), tr("combo.case_pascal"),
+            tr("combo.case_snake"), tr("combo.case_kebab")
+        ])
         self.chk_validate_case = QCheckBox(tr("json_rewriter.chk_validate_case"))
         self.chk_validate_case.setChecked(False)  # Optional validation
         self.chk_is_file = QCheckBox(tr("json_rewriter.chk_is_file"))
@@ -156,80 +163,80 @@ class JsonRewriterDock(BaseDock):
     def _create_layout(self) -> None:
         """Arrange widgets in the dock."""
         # Clear the existing VBoxLayout and replace with QGridLayout
-        g = QGridLayout()
+        grid_layout = QGridLayout()
 
         # Remove the old layout and set the new one
         old_layout = self.main_widget.layout()
         if old_layout:
             QWidget().setLayout(old_layout)  # Take ownership to delete
-        self.main_widget.setLayout(g)
+        self.main_widget.setLayout(grid_layout)
 
         # Row 0: Input file
-        g.addWidget(self.lbl_in, 0, 0)
-        g.addWidget(self.ed_in, 0, 1, 1, 3)
-        g.addWidget(self.btn_in, 0, 4)
+        grid_layout.addWidget(self.lbl_in, 0, 0)
+        grid_layout.addWidget(self.ed_in, 0, 1, 1, 3)
+        grid_layout.addWidget(self.btn_in, 0, 4)
 
         # Row 1: Output file
-        g.addWidget(self.lbl_out, 1, 0)
-        g.addWidget(self.ed_out, 1, 1, 1, 3)
-        g.addWidget(self.btn_out, 1, 4)
+        grid_layout.addWidget(self.lbl_out, 1, 0)
+        grid_layout.addWidget(self.ed_out, 1, 1, 1, 3)
+        grid_layout.addWidget(self.btn_out, 1, 4)
 
         # Row 2: Options checkboxes (line 1)
-        g.addWidget(self.chk_from_ts, 2, 0)
-        g.addWidget(self.chk_ts_out, 2, 1)
-        g.addWidget(self.chk_join, 2, 2)
-        g.addWidget(self.chk_elim, 2, 3)
-        g.addWidget(self.chk_nlb, 2, 4)
+        grid_layout.addWidget(self.chk_from_ts, 2, 0)
+        grid_layout.addWidget(self.chk_ts_out, 2, 1)
+        grid_layout.addWidget(self.chk_join, 2, 2)
+        grid_layout.addWidget(self.chk_elim, 2, 3)
+        grid_layout.addWidget(self.chk_nlb, 2, 4)
 
         # Row 3: Options checkboxes (line 2)
-        g.addWidget(self.chk_exclude_numeric, 3, 0)
-        g.addWidget(self.chk_skip_empty, 3, 1)
-        g.addWidget(self.chk_avoid_dup_child, 3, 2)
-        g.addWidget(self.chk_normalize_escaping, 3, 3)
-        g.addWidget(self.chk_is_file, 3, 4)
+        grid_layout.addWidget(self.chk_exclude_numeric, 3, 0)
+        grid_layout.addWidget(self.chk_skip_empty, 3, 1)
+        grid_layout.addWidget(self.chk_avoid_dup_child, 3, 2)
+        grid_layout.addWidget(self.chk_normalize_escaping, 3, 3)
+        grid_layout.addWidget(self.chk_is_file, 3, 4)
 
         # Row 4: Options checkboxes (line 3) - Array operations
-        g.addWidget(self.chk_convert_arrays, 4, 0, 1, 2)
-        g.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 1)
-        g.addWidget(self.chk_remove_dup_all, 4, 3, 1, 1)
-        g.addWidget(self.chk_skip_no_siblings, 4, 4, 1, 1)
+        grid_layout.addWidget(self.chk_convert_arrays, 4, 0, 1, 2)
+        grid_layout.addWidget(self.chk_remove_dup_consecutive, 4, 2, 1, 1)
+        grid_layout.addWidget(self.chk_remove_dup_all, 4, 3, 1, 1)
+        grid_layout.addWidget(self.chk_skip_no_siblings, 4, 4, 1, 1)
 
         # Row 5: Update references (Task #23)
-        g.addWidget(self.chk_update_refs, 5, 0, 1, 1)
-        g.addWidget(self.ed_project_dir, 5, 1, 1, 2)
-        g.addWidget(self.btn_project_browse, 5, 3)
-        g.addWidget(self.chk_ref_backup, 5, 4)
+        grid_layout.addWidget(self.chk_update_refs, 5, 0, 1, 1)
+        grid_layout.addWidget(self.ed_project_dir, 5, 1, 1, 2)
+        grid_layout.addWidget(self.btn_project_browse, 5, 3)
+        grid_layout.addWidget(self.chk_ref_backup, 5, 4)
 
         # Row 6: Enforce consistent case
-        g.addWidget(self.chk_enforce_case, 6, 0, 1, 2)
-        g.addWidget(QLabel(tr("json_rewriter.lbl_case_style")), 6, 2)
-        g.addWidget(self.combo_case_style, 6, 3)
-        g.addWidget(self.chk_validate_case, 6, 4)
+        grid_layout.addWidget(self.chk_enforce_case, 6, 0, 1, 2)
+        grid_layout.addWidget(QLabel(tr("json_rewriter.lbl_case_style")), 6, 2)
+        grid_layout.addWidget(self.combo_case_style, 6, 3)
+        grid_layout.addWidget(self.chk_validate_case, 6, 4)
 
         # Row 7: Remove duplicate objects (Task #52)
-        g.addWidget(self.chk_remove_dup_objects, 7, 0, 1, 1)
-        g.addWidget(self.chk_include_dup_arrays, 7, 1)
-        g.addWidget(self.lbl_dup_threshold, 7, 2)
-        g.addWidget(self.spin_dup_threshold, 7, 3)
-        g.addWidget(self.combo_dup_mode, 7, 4)
+        grid_layout.addWidget(self.chk_remove_dup_objects, 7, 0, 1, 1)
+        grid_layout.addWidget(self.chk_include_dup_arrays, 7, 1)
+        grid_layout.addWidget(self.lbl_dup_threshold, 7, 2)
+        grid_layout.addWidget(self.spin_dup_threshold, 7, 3)
+        grid_layout.addWidget(self.combo_dup_mode, 7, 4)
 
         # Row 8: Advanced Filters (Sprint B Feature #1)
-        g.addWidget(self.btn_advanced_filters, 8, 0, 1, 2)
-        g.addWidget(self.chk_apply_all_types, 8, 2, 1, 2)
+        grid_layout.addWidget(self.btn_advanced_filters, 8, 0, 1, 2)
+        grid_layout.addWidget(self.chk_apply_all_types, 8, 2, 1, 2)
 
         # Row 9: Reference Resolver (Sprint A v2.9.29)
-        g.addWidget(self.lbl_ref_mode, 9, 0)
-        g.addWidget(self.radio_delete_dups, 9, 1, 1, 2)
-        g.addWidget(self.radio_use_refs, 9, 3, 1, 2)
+        grid_layout.addWidget(self.lbl_ref_mode, 9, 0)
+        grid_layout.addWidget(self.radio_delete_dups, 9, 1, 1, 2)
+        grid_layout.addWidget(self.radio_use_refs, 9, 3, 1, 2)
 
         # Row 10: Resolve references checkbox + Configure Format button (Sprint B Feature #4)
-        g.addWidget(self.chk_resolve_refs, 10, 0, 1, 2)
-        g.addWidget(self.btn_configure_format, 10, 2, 1, 2)
+        grid_layout.addWidget(self.chk_resolve_refs, 10, 0, 1, 2)
+        grid_layout.addWidget(self.btn_configure_format, 10, 2, 1, 2)
 
         # Row 11: Indent and run button
-        g.addWidget(self.lbl_indent, 11, 0)
-        g.addWidget(self.spin_indent, 11, 1)
-        g.addWidget(self.btn_run, 11, 4)
+        grid_layout.addWidget(self.lbl_indent, 11, 0)
+        grid_layout.addWidget(self.spin_indent, 11, 1)
+        grid_layout.addWidget(self.btn_run, 11, 4)
 
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
@@ -303,9 +310,11 @@ class JsonRewriterDock(BaseDock):
 
     def _browse_project_dir(self) -> None:
         """Browse for project directory (Task #23)."""
-        d = QFileDialog.getExistingDirectory(self, "Select project directory", "", QFileDialog.Option.ShowDirsOnly)
-        if d:
-            self.ed_project_dir.setText(d)
+        folder = QFileDialog.getExistingDirectory(
+            self, "Select project directory", "", QFileDialog.Option.ShowDirsOnly
+        )
+        if folder:
+            self.ed_project_dir.setText(folder)
 
     def _open_format_config_dialog(self) -> None:
         """Open dialog to configure reference format (Sprint B Feature #4 - v2.9.30)."""
@@ -408,7 +417,10 @@ class JsonRewriterDock(BaseDock):
 
     def _open_advanced_filters_dialog(self) -> None:
         """Open dialog to configure advanced file filters (Sprint B Feature #1)."""
-        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QGroupBox, QHBoxLayout, QVBoxLayout
+        # pylint: disable=redefined-outer-name,reimported  # Lazy imports in function
+        from PySide6.QtWidgets import (
+            QDialog, QDialogButtonBox, QGroupBox, QVBoxLayout
+        )
 
         dialog = QDialog(self)
         dialog.setWindowTitle(tr("json_rewriter.window_title_filters"))
@@ -525,8 +537,8 @@ class JsonRewriterDock(BaseDock):
         """Execute rewrite operation on selected file."""
         if not self.ed_in.text().strip():
             QMessageBox.warning(
-                self, 
-                tr("json_rewriter.msg_missing_input_title"), 
+                self,
+                tr("json_rewriter.msg_missing_input_title"),
                 tr("json_rewriter.msg_missing_input")
             )
             return
@@ -542,7 +554,7 @@ class JsonRewriterDock(BaseDock):
 
                 # Parse based on format
                 if self.chk_from_ts.isChecked():
-                    obj = rw.ts_process_full_preserving(text)
+                    obj = rw.ts_process_full_preserving(text)  # pylint: disable=no-value-for-parameter  # Has defaults
                 else:
                     obj = rw.parse_json_preserving_duplicates_text(text)
 
@@ -554,8 +566,8 @@ class JsonRewriterDock(BaseDock):
                 # User cancelled
                 if not accepted:
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_cancelled_title"), 
+                        self,
+                        tr("json_rewriter.msg_cancelled_title"),
                         tr("json_rewriter.msg_cancelled_case")
                     )
                     return
@@ -569,11 +581,12 @@ class JsonRewriterDock(BaseDock):
                 # and let cli_dedupe handle the rest
                 # Actually, we need to serialize it back to text first
                 if self.chk_ts_out.isChecked():
+                    # pylint: disable=no-value-for-parameter  # Has defaults
                     temp_text = rw.dump_ts_node(obj_converted, indent=self.spin_indent.value())
                     if not self.chk_nlb.isChecked():
                         temp_text = rw.collapse_blank_lines(temp_text)
                 else:
-                    temp_text = rw.dump_ts_obj(obj_converted, indent=self.spin_indent.value())
+                    temp_text = rw.dump_ts_obj(obj_converted, indent=self.spin_indent.value(), level=0)
 
                 # Write to output
                 out_path = self.ed_out.text().strip() or self.ed_in.text().strip()
@@ -581,8 +594,8 @@ class JsonRewriterDock(BaseDock):
                     f.write(temp_text)
 
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_case").format(len(warnings))
                 )
 
@@ -592,8 +605,8 @@ class JsonRewriterDock(BaseDock):
 
             except Exception as e:
                 QMessageBox.critical(
-                    self, 
-                    tr("json_rewriter.msg_validation_error_title"), 
+                    self,
+                    tr("json_rewriter.msg_validation_error_title"),
                     tr("json_rewriter.msg_validation_error").format(e)
                 )
                 return
@@ -639,7 +652,7 @@ class JsonRewriterDock(BaseDock):
 
         # Execute rewrite (Sprint B Feature #1: pass advanced conditions, Sprint B Feature #3: get detailed stats)
         try:
-            output_text, substitution_map, removal_stats, detailed_stats = cli_dedupe(
+            _output_text, substitution_map, removal_stats, detailed_stats = cli_dedupe(
                 ns,
                 advanced_conditions=self.advanced_conditions if self.advanced_filters_enabled else None,
                 apply_all_types=self.chk_apply_all_types.isChecked(),
@@ -651,16 +664,16 @@ class JsonRewriterDock(BaseDock):
 
                 if not project_dir:
                     QMessageBox.warning(
-                        self, 
-                        tr("json_rewriter.msg_missing_project_title"), 
+                        self,
+                        tr("json_rewriter.msg_missing_project_title"),
                         tr("json_rewriter.msg_missing_project")
                     )
                     return
 
                 if not os.path.isdir(project_dir):
                     QMessageBox.warning(
-                        self, 
-                        tr("json_rewriter.msg_invalid_project_title"), 
+                        self,
+                        tr("json_rewriter.msg_invalid_project_title"),
                         tr("json_rewriter.msg_invalid_project").format(project_dir)
                     )
                     return
@@ -682,14 +695,14 @@ class JsonRewriterDock(BaseDock):
                     if file_count > 10:
                         files_list += f"  ... and {file_count - 10} more files\n"
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_refs_updated_title"), 
+                        self,
+                        tr("json_rewriter.msg_refs_updated_title"),
                         tr("json_rewriter.msg_refs_updated").format(total_subs, file_count, files_list)
                     )
                 else:
                     QMessageBox.information(
-                        self, 
-                        tr("json_rewriter.msg_no_changes_title"), 
+                        self,
+                        tr("json_rewriter.msg_no_changes_title"),
                         tr("json_rewriter.msg_no_changes")
                     )
 
@@ -697,8 +710,8 @@ class JsonRewriterDock(BaseDock):
             stats_msg = format_removal_statistics(removal_stats)
             if stats_msg:
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_stats").format(stats_msg)
                 )
 
@@ -719,8 +732,8 @@ class JsonRewriterDock(BaseDock):
             else:
                 # Q5-C: Special message if nothing was removed
                 QMessageBox.information(
-                    self, 
-                    tr("json_rewriter.msg_done_title"), 
+                    self,
+                    tr("json_rewriter.msg_done_title"),
                     tr("json_rewriter.msg_done_no_removal")
                 )
 
@@ -730,8 +743,8 @@ class JsonRewriterDock(BaseDock):
             import traceback
 
             QMessageBox.critical(
-                self, 
-                tr("json_rewriter.msg_error_title"), 
+                self,
+                tr("json_rewriter.msg_error_title"),
                 tr("json_rewriter.msg_error").format(str(e), traceback.format_exc())
             )
 
@@ -869,7 +882,7 @@ class JsonRewriterDock(BaseDock):
         AccessibilityManager.set_accessible_widget(
             self.chk_join,
             "JSON Rewriter - Checkbox - Join Keys",
-            "Merge nested object keys into flat structure (e.g., user.name)",
+            "Merge nested object keys into flat structure (e.grid_layout., user.name)",
         )
         AccessibilityManager.set_accessible_widget(
             self.chk_elim,
@@ -886,7 +899,7 @@ class JsonRewriterDock(BaseDock):
         AccessibilityManager.set_accessible_widget(
             self.chk_exclude_numeric,
             "JSON Rewriter - Checkbox - Exclude Numeric Keys",
-            "Skip keys with numeric names (e.g., '0', '123')",
+            "Skip keys with numeric names (e.grid_layout., '0', '123')",
         )
         AccessibilityManager.set_accessible_widget(
             self.chk_skip_empty,
@@ -901,7 +914,7 @@ class JsonRewriterDock(BaseDock):
         AccessibilityManager.set_accessible_widget(
             self.chk_normalize_escaping,
             "JSON Rewriter - Checkbox - Normalize Escaping",
-            "Standardize escape sequences (e.g., \\n, \\t) across file",
+            "Standardize escape sequences (e.grid_layout., \\n, \\t) across file",
         )
         AccessibilityManager.set_accessible_widget(
             self.chk_convert_arrays,

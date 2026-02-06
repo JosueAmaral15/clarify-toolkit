@@ -63,49 +63,6 @@
   - Files: `tests/test_tag_normalization_session70.py`
 
 ### Added (2026-01-02) - i18n Implementation
-- **i18n**: Comprehensive Portuguese (Brazil) translations for 257 GUI elements
-  - 26 tooltips translated across 7 files (Task 1)
-  - 10 QLabels translated across 6 files (Task 3)
-  - 21 table headers translated across 6 files (Task 5)
-  - 4 ComboBox items translated across 4 files (Task 8)
-  - 88 placeholders validated (already translated)
-  - 8 missed translations fixed (config_editor, plugin_manager)
-- **Testing**: Comprehensive manual test checklist with 100 test items
-- **Testing**: Automated pre-test validation suite for i18n coverage
-- **Documentation**: I18N_FINAL_REPORT.md with complete implementation details
-- **Documentation**: I18N_MANUAL_TEST_CHECKLIST.md for user testing
-
-### Fixed (2026-01-02) - i18n Bugs
-- **i18n**: Missing `tooltip_tr` imports in operation_preview_dialog.py and tutorial_assistant_dialog.py
-- **i18n**: 3 hardcoded tooltips in config_editor_dialog.py
-- **i18n**: 5 hardcoded headers in plugin_manager_dialog.py
-
-### Changed (2026-01-02) - i18n Updates
-- **i18n**: All active source files now use tr() and tooltip_tr() for user-facing text
-- **i18n**: JSON translation files updated with 138 new keys (69 EN + 69 PT-BR)
-- **Quality**: All modified files formatted with Black (line-length 120)
-
-### Technical Details (2026-01-02)
-- Commits: 2d6abf7, 58bb8d3, bbb5179, 1913a2d, 822c5dc, 3b8cc05, 13775d3
-- Files modified: 20 source files + 2 translation files + 4 documentation files
-- Test coverage: 100% automated tests passing
-- Protocol: Followed Protocolo Simplicidade 3 (10 etapas)
-- Time spent: 4h52min (including documentation)
-
-### Fixed
-- **Advanced Filters**: Fixed advanced filters in File Explorer not being applied correctly (Sprint 1 - Task 1.1)
-  - Added comprehensive debug logging in `_build_filters()` to trace filter configuration
-  - Optimized conditions application - now applied BEFORE content search for better performance  
-  - Fixed advanced conditions being applied twice (removed duplicate application)
-  - Improved exception handling with proper logging instead of silent failures
-  - Files: `src/gui/file_explorer_dock.py`, `src/core/file_explorer_executor.py`, `src/core/file_list_executor.py`
-
-## [2.9.117] - 2024-12-26
-
-### 🔧 File Explorer Critical Corrections (8h)
-
-Correções estruturais para 6 problemas identificados na v2.9.116, incluindo fix crítico do botão maximizar e refatorações de UX/UI.
-
 ---
 
 #### **Correções Implementadas** (Fases A-D)

@@ -7,6 +7,7 @@ from typing import Tuple
 
 @dataclass
 class SearchOptions:
+    """Options for search operations."""
     case_sensitive: bool = False
     whole_word: bool = False
     regex: bool = False
@@ -23,7 +24,7 @@ class SearchOptions:
         try:
             return re.compile(pattern, flags)
         except re.error as e:
-            raise ValueError(f"Invalid regular expression: {e}")
+            raise ValueError(f"Invalid regular expression: {e}") from e
 
 
 def preserve_case_like(matched_text: str, replacement: str) -> str:

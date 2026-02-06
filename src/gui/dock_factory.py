@@ -1,5 +1,5 @@
-"""
-Dock Factory
+"""Dock Factory.
+
 Factory pattern for creating and configuring GUI dock widgets.
 
 Refactored from src/app.py MainWindow class (Phase 3.3 - v2.9.114)
@@ -8,6 +8,7 @@ Original lines: 1266-1360 (~95 lines of dock creation methods)
 This factory centralizes dock creation logic, reducing duplication and
 making it easier to manage dock configurations.
 """
+# pylint: disable=no-name-in-module,import-outside-toplevel  # Qt dynamic, factory lazy imports
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
@@ -25,14 +26,15 @@ except ImportError:
 class DockFactory:
     """
     Factory for creating and configuring dock widgets.
-    
+
     Handles the common pattern of:
     1. Creating a dock instance
     2. Adding it to the main window
     3. Setting initial visibility (hidden by default)
     4. Optionally connecting signals
     """
-    
+
+    # pylint: disable=too-many-positional-arguments  # Factory requires multiple configuration parameters
     @staticmethod
     def create_dock(main_window: 'QMainWindow',
                    dock_class,
@@ -43,7 +45,7 @@ class DockFactory:
                    **dock_kwargs) -> 'QDockWidget':
         """
         Create and configure a dock widget.
-        
+
         Args:
             main_window: The main window to add the dock to
             dock_class: The dock widget class to instantiate
@@ -52,10 +54,10 @@ class DockFactory:
             hide: Whether to hide dock initially (default: True)
             signal_connections: Dict of {signal_name: slot} to connect
             **dock_kwargs: Additional kwargs for dock constructor
-            
+
         Returns:
             The created dock widget
-            
+
         Example:
             >>> dock = DockFactory.create_dock(
             ...     self, JsonTranslateDock, 'dock_translate',
@@ -64,30 +66,30 @@ class DockFactory:
         """
         if area is None and Qt is not None:
             area = Qt.RightDockWidgetArea
-        
+
         # Create dock instance (pass parent as keyword argument for consistency)
         dock = dock_class(parent=main_window, **dock_kwargs)
-        
+
         # Store in main window
         setattr(main_window, dock_attr_name, dock)
-        
+
         # Add to main window
         if area is not None:
             main_window.addDockWidget(area, dock)
-        
+
         # Connect signals if provided
         if signal_connections:
             for signal_name, slot in signal_connections.items():
                 signal = getattr(dock, signal_name, None)
                 if signal is not None:
                     signal.connect(slot)
-        
+
         # Set initial visibility
         if hide:
             dock.hide()
-        
+
         return dock
-    
+
     @staticmethod
     def create_dock_lazy(main_window: 'QMainWindow',
                         dock_class,
@@ -96,14 +98,14 @@ class DockFactory:
                         **dock_kwargs) -> 'QDockWidget':
         """
         Create dock only if it doesn't exist yet (lazy initialization).
-        
+
         Args:
             main_window: The main window
             dock_class: The dock widget class
             dock_attr_name: Attribute name for the dock
             area: Dock area (default: RightDockWidgetArea)
             **dock_kwargs: Additional kwargs for dock constructor
-            
+
         Returns:
             The dock widget (existing or newly created)
         """
@@ -113,9 +115,9 @@ class DockFactory:
                 area=area, **dock_kwargs
             )
         return getattr(main_window, dock_attr_name)
-    
+
     # Convenience methods for common dock types
-    
+
     @staticmethod
     def create_json_translate_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create JSON Translate dock."""
@@ -123,7 +125,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, JsonTranslateDock, 'dock_translate'
         )
-    
+
     @staticmethod
     def create_json_rewriter_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create JSON Rewriter dock."""
@@ -131,7 +133,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, JsonRewriterDock, 'dock_rewriter'
         )
-    
+
     @staticmethod
     def create_text_extractor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Text Extractor dock."""
@@ -139,7 +141,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, TextExtractorDock, 'dock_text_extractor'
         )
-    
+
     @staticmethod
     def create_placeholder_replacer_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Placeholder Replacer dock."""
@@ -147,7 +149,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, PlaceholderReplacerDock, 'dock_placeholder_replacer'
         )
-    
+
     @staticmethod
     def create_ai_processor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create AI Processor dock."""
@@ -155,7 +157,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, AIProcessorDock, 'dock_ai_processor'
         )
-    
+
     @staticmethod
     def create_json_search_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create JSON Search dock."""
@@ -163,7 +165,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, JsonSearchDock, 'dock_json_search'
         )
-    
+
     @staticmethod
     def create_case_converter_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Case Converter dock."""
@@ -171,7 +173,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, CaseConverterDock, 'dock_case_converter'
         )
-    
+
     @staticmethod
     def create_jsx_extractor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create JSX Parameter Extractor dock."""
@@ -179,7 +181,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, JSXExtractorDock, 'dock_jsx_extractor'
         )
-    
+
     @staticmethod
     def create_text_to_json_dock(main_window: 'QMainWindow',
                                  signal_connections: Optional[dict] = None) -> 'QDockWidget':
@@ -189,7 +191,7 @@ class DockFactory:
             main_window, TextToJsonDock, 'dock_text_to_json',
             signal_connections=signal_connections
         )
-    
+
     @staticmethod
     def create_file_list_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create File List dock."""
@@ -197,7 +199,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, FileListDock, 'dock_file_list'
         )
-    
+
     @staticmethod
     def create_file_explorer_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create File Explorer dock (unified File List + Advanced Search)."""
@@ -205,7 +207,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, FileExplorerDock, 'dock_file_explorer'
         )
-    
+
     @staticmethod
     def create_history_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create History dock (lazy initialization with special handling)."""
@@ -218,7 +220,7 @@ class DockFactory:
             main_window, HistoryDock, 'dock_history',
             area=area, max_entries=10
         )
-    
+
     @staticmethod
     def create_tutorials_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Tutorials dock (lazy initialization)."""
@@ -226,7 +228,7 @@ class DockFactory:
         return DockFactory.create_dock_lazy(
             main_window, TutorialsDock, 'dock_tutorials'
         )
-    
+
     @staticmethod
     def create_editor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Editor dock (lazy initialization)."""
@@ -234,7 +236,7 @@ class DockFactory:
         return DockFactory.create_dock_lazy(
             main_window, EditorDock, 'dock_editor'
         )
-    
+
     @staticmethod
     def create_google_translate_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Google Translate dock."""
@@ -242,7 +244,7 @@ class DockFactory:
         return DockFactory.create_dock(
             main_window, GoogleTranslateDock, 'dock_google_translate'
         )
-    
+
     @staticmethod
     def create_advanced_extractor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Advanced Extractor dock (v2.9.115)."""

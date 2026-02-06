@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Advanced Extractor - Core Business Logic for Parameter Extraction
+"""Advanced Extractor - Core Business Logic for Parameter Extraction.
+# pylint: disable=consider-using-in  # Explicit comparisons for clarity
 
 Extracted from add/main.py (Sprint 2, Task 1.1)
 Handles advanced extraction features:
@@ -23,7 +23,6 @@ import os
 import re
 import json
 from typing import List, Dict, Any, Optional, Tuple, Union
-from pathlib import Path
 
 # Type aliases
 JSONLike = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -69,11 +68,12 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
     Truncate text by char limit. If limit is 'all' or None -> return original.
     If avoid_cut=True, cut at the last whitespace boundary <= limit (when possible).
     """
+    # pylint: disable=too-many-return-statements  # Multiple early exit conditions
     if not text or limit in (None, 'all', 'ALL', 'All'):
         return text
     try:
         n = int(limit)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught  # Parse robustness
         return text
 
     if n <= 0 or len(text) <= n:
@@ -159,7 +159,7 @@ def list_files(root: str, patterns: Optional[List[str]] = None) -> List[str]:
 class AdvancedExtractor:
     """
     Advanced parameter/content extractor with hierarchical JSON generation.
-    
+
     Features:
     - Attribute mode vs Tag-content mode
     - Normalize tokens (snake/camel/pascal/kebab)
@@ -170,11 +170,12 @@ class AdvancedExtractor:
     - Remove numeric hierarchy with collapse algorithm
     - Deep merge nested JSON structures
     """
-    
+
     # Constants for avoid_keys_parameter
     CONTAINS = "contains"
     EQUALS = "equals"
-    
+
+    # pylint: disable=too-many-positional-arguments  # Complex extractor configuration
     def __init__(
         self,
         param: str,
@@ -200,7 +201,7 @@ class AdvancedExtractor:
     ):
         """
         Initialize AdvancedExtractor.
-        
+
         Args:
             param: Parameter/attribute name to extract (or * for match_all)
             mode: 'jsx' or 'generic'
@@ -224,7 +225,7 @@ class AdvancedExtractor:
             file_extensions: File patterns to process
         """
         self.param = param
-        self.match_all = (param is None) or (param.strip() == "") or (param.strip() == "*")
+        self.match_all = (param is None) or (not param.strip()) or (param.strip() == "*")
         self.mode = mode
         self.avoid_keys = avoid_keys
         self.avoid_keys_parameter = avoid_keys_parameter
@@ -252,7 +253,7 @@ class AdvancedExtractor:
         return [p for p in path if not is_standard_tag(p)]
 
     def _build_path_tokens(
-        self, file_root_token: str, stack: List[str], tag: str, value_text: Optional[str]
+        self, file_root_token: str, stack: List[str], tag: str, value_text: Optional[str]  # pylint: disable=unused-argument  # Signature consistency
     ) -> List[str]:
         """
         Build path tokens from file-root + stack + tag,
@@ -338,7 +339,10 @@ class AdvancedExtractor:
                 a[k] = v
         return a
 
-    def find_paths_to_key(self, structure: JSONLike, word_key: str, current_path: Optional[List[str]] = None) -> List[List[str]]:
+    def find_paths_to_key(
+        self, structure: JSONLike, word_key: str,
+        current_path: Optional[List[str]] = None
+    ) -> List[List[str]]:
         """Return a list of key paths leading to every occurrence of word_key."""
         if current_path is None:
             current_path = []
@@ -404,7 +408,7 @@ class AdvancedExtractor:
             if depth_offset < 0:
                 new_path = path[:depth_offset] if abs(depth_offset) < len(path) else []
                 leaf = path[depth_offset] if new_path else word_key
-            elif depth_offset == 0:
+            elif not depth_offset:
                 new_path = path
                 leaf = word_key
             else:
@@ -429,11 +433,11 @@ class AdvancedExtractor:
     def remove_key(self, structure: JSONLike, key_to_remove: str) -> JSONLike:
         """
         Recursively remove all occurrences of key_to_remove from nested structure.
-        
+
         Args:
             structure: nested structure (dict/list/scalars)
             key_to_remove: key name to delete
-            
+
         Returns:
             New structure with all occurrences of the key removed.
         """
@@ -456,10 +460,10 @@ class AdvancedExtractor:
         Remove key_to_remove throughout structure.
         If, after removal, a child dict becomes empty, collapse the value
         of that child to the key name itself.
-        
+
         Example:
             { 'StatsCard': {} } -> { 'StatsCard': 'StatsCard' }
-        
+
         This is the CRITICAL algorithm for removing numeric hierarchy.
         """
         if isinstance(structure, dict):
@@ -490,17 +494,18 @@ class AdvancedExtractor:
         # Scalars remain unchanged
         return structure
 
+    # pylint: disable=too-many-return-statements  # Multiple validation conditions
     def check_value_if_it_is_just_string(self, value: str) -> bool:
         """
         Returns True if value represents only a pure literal string,
         and False if it contains expressions, variables, operations, objects,
         arrays, conditionals, numbers, or anything outside quotes.
-        
+
         Valid examples:
             "Hello world"
             'Hi there'
             "Today's Practice"
-        
+
         Invalid examples:
             {dynamicGreeting}
             user.name
@@ -538,11 +543,12 @@ class AdvancedExtractor:
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
         """
         Process text content and extract parameters/content.
-        
+
         Returns:
             Tuple of (path_lines, merged_json_dict)
         """
         # Import parsers here to avoid circular dependency
+        # pylint: disable=import-outside-toplevel  # Avoid circular import
         from .jsx_parser import JSXParser
         from .generic_parser import GenericScopeParser
 
@@ -578,10 +584,10 @@ class AdvancedExtractor:
                 # Check if should skip based on avoid_keys
                 should_skip = False
                 if self.avoid_keys_parameter == self.CONTAINS:
-                    should_skip = any(x in key_matched or x in tag or x in value for x in keys_to_avoid)
+                    should_skip = key_matched in keys_to_avoid or tag in keys_to_avoid or value in keys_to_avoid
                 elif self.avoid_keys_parameter == self.EQUALS:
                     should_skip = any(x == key_matched or x == tag or x == value for x in keys_to_avoid)
-                
+
                 if should_skip:
                     continue
 
@@ -600,7 +606,7 @@ class AdvancedExtractor:
                         should_skip_tokens = any(any(x in token for token in tokens) for x in keys_to_avoid)
                     elif self.avoid_keys_parameter == self.EQUALS:
                         should_skip_tokens = any(any(x == token for token in tokens) for x in keys_to_avoid)
-                    
+
                     if should_skip_tokens:
                         continue
 
@@ -625,7 +631,7 @@ class AdvancedExtractor:
                         should_skip_tokens = any(any(x in token for token in tokens) for x in keys_to_avoid)
                     elif self.avoid_keys_parameter == self.EQUALS:
                         should_skip_tokens = any(token == x for token in tokens for x in keys_to_avoid)
-                    
+
                     if should_skip_tokens:
                         continue
 
@@ -655,10 +661,10 @@ class AdvancedExtractor:
     def run(self, path: str) -> Tuple[str, Optional[str]]:
         """
         Process a file or directory.
-        
+
         Args:
             path: File or directory path
-            
+
         Returns:
             Tuple of (text_result, json_result_or_None)
         """
@@ -669,13 +675,13 @@ class AdvancedExtractor:
         for fp in list_files(path, file_patterns):
             try:
                 text = read_text(fp)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught  # File read robustness
                 all_lines.append(f"<<ERROR reading {fp}: {e}>>")
                 continue
 
             # Derive file-root token from filename
             base = os.path.splitext(os.path.basename(fp))[0]
-            
+
             # Try to find exported component/function name
             export_m = re.search(r'\bexport\s+default\s+function\s+([A-Za-z_]\w*)', text)
             if not export_m:
@@ -688,11 +694,11 @@ class AdvancedExtractor:
                 file_root = base[0:1].upper() + base[1:]
 
             lines, j = self.process_text(file_root, text)
-            
+
             if lines:
                 all_lines.append(f"# File: {fp}")
                 all_lines.extend(lines)
-            
+
             if self.convert_to_json and j:
                 merged_json = self.deep_merge(merged_json, j)
 

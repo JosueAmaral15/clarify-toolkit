@@ -1,32 +1,26 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Statistics Dialog - Detailed statistics viewer (Sprint B Feature #3 v2.9.31)
 Shows detailed removal statistics with interactive table, search, filter, and export.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=import-outside-toplevel  # Optional openpyxl import
+# pylint: disable=attribute-defined-outside-init  # Qt widget pattern
 
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTabWidget,
-    QTableWidget,
-    QTableWidgetItem,
-    QLineEdit,
-    QPushButton,
-    QComboBox,
-    QLabel,
-    QHeaderView,
-    QMenu,
-    QFileDialog,
-    QMessageBox,
-)
-from PySide6.QtCore import Qt
-from src.i18n.translator import tr
-from typing import List, Dict, Any
 import csv
 import json
+
+from typing import Any, Dict, List
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QComboBox, QDialog, QFileDialog, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QMenu,
+    QMessageBox, QPushButton, QTableWidget,
+    QTableWidgetItem, QTabWidget, QVBoxLayout
+)
+
+from src.i18n.translator import tr
 
 
 class StatisticsDialog(QDialog):
@@ -90,7 +84,7 @@ class StatisticsDialog(QDialog):
 
     def _create_removal_tab(self):
         """Create the removal operations tab."""
-        widget = QTableWidget()
+        _ = QTableWidget()  # Placeholder widget
 
         # Search and filter section
         container = QTableWidget()
@@ -109,7 +103,7 @@ class StatisticsDialog(QDialog):
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel(tr("statistics_dialog.lbl_filter")))
         self.operation_filter = QComboBox()
-        self.operation_filter.addItem(tr("statistics_dialog.filter_all_operations"))
+        self.operation_filter.addItem("All Operations")
         self.operation_filter.currentTextChanged.connect(self._filter_removal_table)
         filter_layout.addWidget(self.operation_filter)
         filter_layout.addStretch()
@@ -118,16 +112,10 @@ class StatisticsDialog(QDialog):
         # Table
         self.removal_table = QTableWidget()
         self.removal_table.setColumnCount(6)
-        self.removal_table.setHorizontalHeaderLabels(
-            [
-                tr("statistics_dialog.header_operation_type"),
-                tr("statistics_dialog.header_original_key"),
-                tr("statistics_dialog.header_kept_key"),
-                tr("statistics_dialog.header_similarity"),
-                tr("statistics_dialog.header_line_numbers"),
-                tr("statistics_dialog.header_count"),
-            ]
-        )
+        self.removal_table.setHorizontalHeaderLabels([
+            "Operation Type", "Original Key", "Kept Key",
+            "Similarity %", "Line Numbers", "Count"
+        ])
         self.removal_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.removal_table.horizontalHeader().setStretchLastSection(False)
         self.removal_table.setSortingEnabled(True)
@@ -139,7 +127,7 @@ class StatisticsDialog(QDialog):
         self.removal_table.setColumnWidth(2, 250)  # Kept Key
         self.removal_table.setColumnWidth(3, 100)  # Similarity
         self.removal_table.setColumnWidth(4, 100)  # Line Numbers
-        self.removal_table.setColumnWidth(5, 80)  # Count
+        self.removal_table.setColumnWidth(5, 80)   # Count
 
         container_layout.addWidget(self.removal_table)
 
@@ -153,9 +141,7 @@ class StatisticsDialog(QDialog):
         # Table for reference stats
         self.reference_table = QTableWidget()
         self.reference_table.setColumnCount(2)
-        self.reference_table.setHorizontalHeaderLabels(
-            [tr("statistics_dialog.header_metric"), tr("statistics_dialog.header_value")]
-        )
+        self.reference_table.setHorizontalHeaderLabels(["Metric", "Value"])
         self.reference_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.reference_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.reference_table.setAlternatingRowColors(True)
@@ -171,18 +157,18 @@ class StatisticsDialog(QDialog):
 
         operations_set = set()
         for i, entry in enumerate(self.removal_stats):
-            self.removal_table.setItem(i, 0, QTableWidgetItem(entry.get("operation", "N/A")))
-            self.removal_table.setItem(i, 1, QTableWidgetItem(entry.get("original_key", "N/A")))
-            self.removal_table.setItem(i, 2, QTableWidgetItem(entry.get("kept_key", "N/A")))
-            self.removal_table.setItem(i, 3, QTableWidgetItem(entry.get("similarity", "N/A")))
-            self.removal_table.setItem(i, 4, QTableWidgetItem(entry.get("line_numbers", "N/A")))
+            self.removal_table.setItem(i, 0, QTableWidgetItem(entry.get('operation', 'N/A')))
+            self.removal_table.setItem(i, 1, QTableWidgetItem(entry.get('original_key', 'N/A')))
+            self.removal_table.setItem(i, 2, QTableWidgetItem(entry.get('kept_key', 'N/A')))
+            self.removal_table.setItem(i, 3, QTableWidgetItem(entry.get('similarity', 'N/A')))
+            self.removal_table.setItem(i, 4, QTableWidgetItem(entry.get('line_numbers', 'N/A')))
 
             # Count column as number for sorting
             count_item = QTableWidgetItem()
-            count_item.setData(Qt.ItemDataRole.DisplayRole, entry.get("count", 0))
+            count_item.setData(Qt.ItemDataRole.DisplayRole, entry.get('count', 0))
             self.removal_table.setItem(i, 5, count_item)
 
-            operations_set.add(entry.get("operation", "N/A"))
+            operations_set.add(entry.get('operation', 'N/A'))
 
         # Populate operation filter dropdown
         for op in sorted(operations_set):
@@ -190,11 +176,11 @@ class StatisticsDialog(QDialog):
 
         # Populate reference stats table
         ref_rows = [
-            ("References Created", self.reference_stats.get("created", 0)),
-            ("References Resolved", self.reference_stats.get("resolved", 0)),
-            ("Invalid References", self.reference_stats.get("invalid", 0)),
-            ("Duplicates Deleted", self.reference_stats.get("deleted", 0)),
-            ("Objects Kept", self.reference_stats.get("kept", 0)),
+            ("References Created", self.reference_stats.get('created', 0)),
+            ("References Resolved", self.reference_stats.get('resolved', 0)),
+            ("Invalid References", self.reference_stats.get('invalid', 0)),
+            ("Duplicates Deleted", self.reference_stats.get('deleted', 0)),
+            ("Objects Kept", self.reference_stats.get('kept', 0)),
         ]
 
         self.reference_table.setRowCount(len(ref_rows))
@@ -233,12 +219,14 @@ class StatisticsDialog(QDialog):
 
     def _export_csv(self):
         """Export removal stats to CSV."""
-        filename, _ = QFileDialog.getSaveFileName(self, "Export CSV", "", "CSV Files (*.csv)")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export CSV", "", "CSV Files (*.csv)"
+        )
         if not filename:
             return
 
         try:
-            with open(filename, "w", newline="", encoding="utf-8") as f:
+            with open(filename, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
 
                 # Write header
@@ -256,17 +244,17 @@ class StatisticsDialog(QDialog):
                             row_data.append(item.text() if item else "")
                         writer.writerow(row_data)
 
-            QMessageBox.information(
-                self, tr("statistics.msg_success_title"), tr("statistics.msg_exported_csv").format(filename=filename)
-            )
+            QMessageBox.information(self, tr("statistics.msg_success_title"),
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(
-                self, tr("statistics.msg_error_title"), tr("statistics.msg_export_csv_failed").format(error=e)
-            )
+            QMessageBox.critical(self, tr("statistics.msg_error_title"),
+                tr("statistics.msg_export_csv_failed").format(error=e))
 
     def _export_json(self):
         """Export removal stats to JSON."""
-        filename, _ = QFileDialog.getSaveFileName(self, "Export JSON", "", "JSON Files (*.json)")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export JSON", "", "JSON Files (*.json)"
+        )
         if not filename:
             return
 
@@ -277,16 +265,14 @@ class StatisticsDialog(QDialog):
                 if not self.removal_table.isRowHidden(row):
                     data.append(self.removal_stats[row])
 
-            with open(filename, "w", encoding="utf-8") as f:
+            with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
 
-            QMessageBox.information(
-                self, tr("statistics.msg_success_title"), tr("statistics.msg_exported_csv").format(filename=filename)
-            )
+            QMessageBox.information(self, tr("statistics.msg_success_title"),
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(
-                self, tr("statistics.msg_error_title"), tr("statistics.msg_export_json_failed").format(error=e)
-            )
+            QMessageBox.critical(self, tr("statistics.msg_error_title"),
+                tr("statistics.msg_export_json_failed").format(error=e))
 
     def _export_excel(self):
         """Export removal stats to Excel (requires openpyxl)."""
@@ -294,11 +280,14 @@ class StatisticsDialog(QDialog):
             import openpyxl  # type: ignore[import-not-found]  # Optional dependency
         except ImportError:
             QMessageBox.warning(
-                self, tr("statistics.msg_missing_dependency_title"), tr("statistics.msg_missing_openpyxl")
+                self, tr("statistics.msg_missing_dependency_title"),
+                tr("statistics.msg_missing_openpyxl")
             )
             return
 
-        filename, _ = QFileDialog.getSaveFileName(self, "Export Excel", "", "Excel Files (*.xlsx)")
+        filename, _ = QFileDialog.getSaveFileName(
+            self, "Export Excel", "", "Excel Files (*.xlsx)"
+        )
         if not filename:
             return
 
@@ -323,10 +312,8 @@ class StatisticsDialog(QDialog):
                     sheet.append(row_data)
 
             workbook.save(filename)
-            QMessageBox.information(
-                self, tr("statistics.msg_success_title"), tr("statistics.msg_exported_csv").format(filename=filename)
-            )
+            QMessageBox.information(self, tr("statistics.msg_success_title"),
+                tr("statistics.msg_exported_csv").format(filename=filename))
         except Exception as e:
-            QMessageBox.critical(
-                self, tr("statistics.msg_error_title"), tr("statistics.msg_export_excel_failed").format(error=e)
-            )
+            QMessageBox.critical(self, tr("statistics.msg_error_title"),
+                tr("statistics.msg_export_excel_failed").format(error=e))
