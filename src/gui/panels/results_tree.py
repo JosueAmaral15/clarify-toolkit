@@ -787,7 +787,7 @@ class ResultsTree(QTreeWidget):
                         sp.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
-                    print(f"Error opening {path}: {e}")
+                    logger.error(f"Error opening {path}: {e}")
 
         # Show feedback
         if self._status_label and opened_count > 0:
@@ -827,7 +827,7 @@ class ResultsTree(QTreeWidget):
                         sp.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
-                    print(f"Error opening {path}: {e}")
+                    logger.error(f"Error opening {path}: {e}")
 
         # Show feedback
         if self._status_label and opened_count > 0:
@@ -875,7 +875,7 @@ class ResultsTree(QTreeWidget):
                         sp.run(["xdg-open", directory], check=False)
                     opened_count += 1
                 except Exception as e:
-                    print(f"Error opening location for {path}: {e}")
+                    logger.error(f"Error opening location for {path}: {e}")
 
         # Show feedback
         if self._status_label and opened_count > 0:

@@ -1559,7 +1559,7 @@ class FileExplorerDock(BaseDock):
                         {"files_modified": files_modified, "replacements": replacements_made},
                     )
             except Exception as e:
-                print(f"Failed to save history: {e}")
+                logger.error(f"Failed to save history: {e}")
 
             # Refresh file list to show updated sizes/times
             self._list_files()
@@ -1662,7 +1662,7 @@ class FileExplorerDock(BaseDock):
                         {"files_modified": files_modified, "replacements": replacements_made},
                     )
             except Exception as e:
-                print(f"Failed to save history: {e}")
+                logger.error(f"Failed to save history: {e}")
 
             # Refresh file list to show updated sizes/times
             self._list_files()
@@ -1809,15 +1809,6 @@ class FileExplorerDock(BaseDock):
 
         Version: v2.9.122
         """
-        print(
-            f"DEBUG 1783 _cleanup_worker_thread() | _worker_thread exists: "
-            f"{hasattr(self, '_worker_thread')}"
-        )
-        print(
-            f"DEBUG 1784 _cleanup_worker_thread() | _worker_thread value: "
-            f"{getattr(self, '_worker_thread', 'NO_ATTR')}"
-        )
-
         if hasattr(self, '_worker_thread') and self._worker_thread:
             self._worker_thread.quit()
             self._worker_thread.wait()
