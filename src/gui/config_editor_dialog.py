@@ -27,6 +27,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from src.i18n.translator import tr
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 try:
     from src.config_manager import get_config
@@ -41,7 +44,7 @@ class ConfigEditorDialog(QDialog):
     Usage:
         dialog = ConfigEditorDialog(parent)
         if dialog.exec() == QDialog.Accepted:
-            print("Config saved!")
+            logger.info("Config saved!")
     """
 
     # Settings that require app restart to take effect

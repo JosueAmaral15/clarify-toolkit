@@ -12,6 +12,7 @@ New features:
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 # pylint: disable=broad-exception-caught  # GUI robustness
 # pylint: disable=import-outside-toplevel  # Lazy Qt imports
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 
 import os
@@ -44,8 +45,11 @@ from src.gui.widgets import PathEntry
 from src.gui.workers import AIProcessorWorker
 from src.i18n.translator import tr, tooltip_tr
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
+from src.utils.logger import get_logger
 
 from .base_dock import StandardToolDock
+
+logger = get_logger(__name__)
 
 
 class AIProcessorDock(StandardToolDock):
@@ -1102,7 +1106,7 @@ class AIProcessorDock(StandardToolDock):
             with open(self.stats_file, 'w', encoding='utf-8') as f:
                 json.dump(self.lifetime_stats, f, indent=2)
         except Exception as e:
-            print(f"Failed to save stats: {e}")
+            logger.error(f"Failed to save stats: {e}")
 
     def _update_stats_display(self):
         """Update statistics labels."""
