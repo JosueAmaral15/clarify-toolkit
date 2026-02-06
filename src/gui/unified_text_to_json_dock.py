@@ -1071,19 +1071,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Set cleanup flag immediately
         self._extraction_cleaning_up = True
         
-        # Stop worker FIRST before cleanup
+        # Block signals at Qt level FIRST to stop queued signals
+        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
+            self._extraction_worker.blockSignals(True)
+        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
+            self._extraction_progress.blockSignals(True)
+        
+        # Stop worker
         if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
             self._extraction_worker._cancel_requested = True
-        
-        # Disconnect signals immediately to stop further updates
-        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
-            try:
-                self._extraction_worker.progress.disconnect(self._on_extraction_progress)
-                self._extraction_worker.progress_detailed.disconnect(self._on_extraction_progress_detailed)
-                self._extraction_worker.finished.disconnect(self._on_extraction_finished)
-                self._extraction_worker.error.disconnect(self._on_extraction_error)
-            except:
-                pass  # Already disconnected
         
         self._jsx_update_status("Extraction canceled")
         self._cleanup_extraction_thread()
@@ -1093,30 +1089,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Set cleanup flag
         self._extraction_cleaning_up = True
         
-        # Disconnect signals first to prevent race conditions (if not already done)
+        # Block signals at Qt level to prevent queued signals from being delivered
         if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
-            try:
-                self._extraction_worker.progress.disconnect(self._on_extraction_progress)
-            except:
-                pass
-            try:
-                self._extraction_worker.progress_detailed.disconnect(self._on_extraction_progress_detailed)
-            except:
-                pass
-            try:
-                self._extraction_worker.finished.disconnect(self._on_extraction_finished)
-            except:
-                pass
-            try:
-                self._extraction_worker.error.disconnect(self._on_extraction_error)
-            except:
-                pass
+            self._extraction_worker.blockSignals(True)
         
+        # Close progress dialog first (before setting to None)
         if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
-            try:
-                self._extraction_progress.canceled.disconnect(self._on_extraction_canceled)
-            except:
-                pass
+            self._extraction_progress.blockSignals(True)  # Block canceled signal
             self._extraction_progress.close()
             self._extraction_progress = None
         
