@@ -304,7 +304,7 @@ class TestIntegration:
             ]
             
             # Execute cli_dedupe with filters (file should be filtered out)
-            output, sub_map, stats = cli_dedupe(args, advanced_conditions=conditions, apply_all_types=True)
+            output, sub_map, stats, detailed_stats = cli_dedupe(args, advanced_conditions=conditions, apply_all_types=True)
             
             # Verify - file was filtered out (empty output)
             assert output == ""
@@ -315,7 +315,7 @@ class TestIntegration:
                 Condition(field="filename", operator="contains", value="test")
             ]
             
-            output2, sub_map2, stats2 = cli_dedupe(args, advanced_conditions=conditions2, apply_all_types=True)
+            output2, sub_map2, stats2, detailed_stats2 = cli_dedupe(args, advanced_conditions=conditions2, apply_all_types=True)
             
             # Verify - file was processed (output not empty)
             assert output2 != ""

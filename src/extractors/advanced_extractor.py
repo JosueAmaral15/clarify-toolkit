@@ -584,7 +584,10 @@ class AdvancedExtractor:
                 # Check if should skip based on avoid_keys
                 should_skip = False
                 if self.avoid_keys_parameter == self.CONTAINS:
-                    should_skip = key_matched in keys_to_avoid or tag in keys_to_avoid or value in keys_to_avoid
+                    should_skip = any(
+                        avoid_key in key_matched or avoid_key in tag or avoid_key in str(value)
+                        for avoid_key in keys_to_avoid
+                    )
                 elif self.avoid_keys_parameter == self.EQUALS:
                     should_skip = any(x == key_matched or x == tag or x == value for x in keys_to_avoid)
 
