@@ -110,9 +110,9 @@ class HistoryManager:
         """
         import json
         from pathlib import Path
-from .utils.logger import get_logger
+        from .utils.logger import get_logger
 
-logger = get_logger(__name__)
+        logger = get_logger(__name__)
 
         try:
             history = self.get_history()
