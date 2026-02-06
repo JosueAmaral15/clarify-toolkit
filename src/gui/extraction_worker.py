@@ -126,6 +126,12 @@ class ExtractionWorker(QObject):
                 merged_json = {}
                 
                 for idx, fp in enumerate(all_files, 1):
+                    # Check for cancellation FIRST
+                    if self._cancel_requested:
+                        logger.info(f"Extraction canceled by user at file {idx}/{total_files}")
+                        self.error.emit("Extraction canceled by user")
+                        return  # Exit early without emitting finished signal
+                    
                     # Emit progress for each file
                     filename = os.path.basename(fp)
                     self.progress.emit(f"Processing: {filename}")

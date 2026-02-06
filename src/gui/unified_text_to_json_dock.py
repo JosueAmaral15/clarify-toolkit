@@ -1075,6 +1075,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_error(self, error_msg: str):
         """Handle extraction error."""
+        # Don't show status/dialog for user cancellation (already shown)
+        if "canceled by user" in error_msg.lower():
+            # Cancellation already handled in _on_extraction_canceled
+            self._cleanup_extraction_thread()
+            return
+        
+        # Show error for actual failures
         self._jsx_update_status(f"❌ Extraction failed: {error_msg}")
         self.show_error(
             tr("advanced_extractor.error", "Error"),
