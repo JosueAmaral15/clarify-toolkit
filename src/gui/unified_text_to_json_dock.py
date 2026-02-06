@@ -1017,18 +1017,34 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     def _on_extraction_progress(self, message: str):
         """Handle progress updates from extraction worker."""
         if self._extraction_cleaning_up:
-            return  # Ignore signals during cleanup
-        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
-            self._extraction_progress.setLabelText(message)
+            return
+        
+        # Cache reference locally (atomic) to prevent TOCTOU race
+        progress = self._extraction_progress
+        if progress is None:
+            return
+        
+        try:
+            progress.setLabelText(message)
+        except RuntimeError:
+            pass  # Qt object was deleted
     
     def _on_extraction_progress_detailed(self, current: int, total: int, message: str):
         """Handle detailed progress updates from extraction worker."""
         if self._extraction_cleaning_up:
-            return  # Ignore signals during cleanup
-        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
-            self._extraction_progress.setMaximum(total)
-            self._extraction_progress.setValue(current)
-            self._extraction_progress.setLabelText(f"[{current}/{total}] {message}")
+            return
+        
+        # Cache reference locally (atomic) to prevent TOCTOU race
+        progress = self._extraction_progress
+        if progress is None:
+            return
+        
+        try:
+            progress.setMaximum(total)
+            progress.setValue(current)
+            progress.setLabelText(f"[{current}/{total}] {message}")
+        except RuntimeError:
+            pass  # Qt object was deleted
     
     def _on_extraction_finished(self, text_output: str, json_output: str):
         """Handle extraction completion."""
