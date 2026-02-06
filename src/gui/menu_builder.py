@@ -442,8 +442,7 @@ class MenuBuilder:
         """Setup keyboard shortcuts."""
         from ..shortcut_manager import ShortcutManager
         # pylint: disable=no-name-in-module  # Qt dynamic modules
-        from PySide6.QtGui import QKeySequence
-        from PySide6.QtWidgets import QShortcut
+        from PySide6.QtGui import QKeySequence, QShortcut
 
         # Exit shortcut
         shortcut_exit = QShortcut(ShortcutManager.get_key_sequence("exit"), main_window)
