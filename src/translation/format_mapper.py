@@ -1196,6 +1196,33 @@ class FormatMapper:
                         text_content = str(child)
                         if text_content:
                             para_text_nodes.append((text_content, current_style_name, hyperlink_url))
+                    # Session 75 Fix: Handle special formatting elements
+                    elif hasattr(child, 'qname'):
+                        qname = child.qname[1] if isinstance(child.qname, tuple) else str(child.qname)
+                        
+                        # Tab character
+                        if qname == 'tab':
+                            para_text_nodes.append(('\t', current_style_name, hyperlink_url))
+                        
+                        # Line break (soft return within paragraph)
+                        elif qname == 'line-break':
+                            para_text_nodes.append(('\n', current_style_name, hyperlink_url))
+                        
+                        # Multiple spaces (text:s with count attribute)
+                        elif qname == 's':
+                            try:
+                                # Get space count from text:c attribute
+                                space_count = child.getAttribute('c')
+                                count = int(space_count) if space_count else 1
+                                para_text_nodes.append((' ' * count, current_style_name, hyperlink_url))
+                            except (ValueError, KeyError):
+                                # Default to single space if attribute missing
+                                para_text_nodes.append((' ', current_style_name, hyperlink_url))
+                        
+                        # Recursively process other container elements
+                        elif hasattr(child, 'childNodes'):
+                            extract_text_recursive(child, current_style_name, hyperlink_url)
+                    
                     elif hasattr(child, 'childNodes'):
                         # Recursively process container elements
                         extract_text_recursive(child, current_style_name, hyperlink_url)
