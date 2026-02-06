@@ -4,6 +4,31 @@
 """
 Text to JSON Converter Dock
 
+⚠️ NOTE: This file is still used by the Unified Text to JSON Converter
+=========================================================================
+
+This dock is embedded in the unified tool as "Format Conversion" mode.
+It is NOT deprecated - it's actively used via composition pattern.
+
+Usage:
+- Direct: Previously accessible via Tools > Text to JSON Converter menu
+- Current: Embedded in unified_text_to_json_dock.py (Mode: Format Conversion)
+
+The unified tool uses this class via composition:
+- UnifiedTextToJsonDock creates a TextToJsonDock instance
+- Embeds it as a widget in "Format Conversion" mode
+- No code duplication - original class is reused
+
+Last Update: 2026-01-30 (v2.9.116)
+Status: ACTIVE (used by unified tool)
+
+See: src/gui/unified_text_to_json_dock.py
+See: UNIFIED_TOOL_DESIGN_SPECIFICATION_3.md
+
+---
+
+Original Description:
+
 Converts various text formats to JSON with advanced options:
 - Key-Value pairs
 - Lists (bullet points)
@@ -202,6 +227,7 @@ class TextToJsonDock(BaseDock):
         self.input_label = QLabel(tr("text_to_json.lbl_input"))
         self.input_text = QPlainTextEdit()
         self.input_text.setPlaceholderText(tr("text_to_json.input_placeholder"))
+        self.input_text.setMinimumHeight(200)
         self.input_text.textChanged.connect(self._on_input_changed)
 
         # Format selector
@@ -282,6 +308,7 @@ class TextToJsonDock(BaseDock):
         self.output_label = QLabel(tr("text_to_json.lbl_output"))
         self.output_text = QPlainTextEdit()
         self.output_text.setReadOnly(True)
+        self.output_text.setMinimumHeight(200)
         self.output_text.setPlaceholderText(tr("text_to_json.output_placeholder"))
 
         # Status label

@@ -1,0 +1,11 @@
+{
+  "name": "Test",
+  "emptyString": "",
+  "nullValue": null,
+  "validValue": "data",
+  "anotherEmpty": "",
+  "nested": {
+    "empty": "",
+    "valid": "content"
+  }
+}

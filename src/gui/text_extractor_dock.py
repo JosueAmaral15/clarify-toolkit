@@ -1,6 +1,27 @@
 """
 Text Extractor Dock Widget - Advanced Version
 
+⚠️ DEPRECATED - Scheduled for removal in v3.1.0
+===============================================
+
+This tool has been superseded by the Unified Text to JSON Converter.
+
+Migration Path:
+- Use "Text to JSON Converter" from Tools menu
+- Select "JSX/HTML Extraction" mode from dropdown
+- All features from this tool are available in the unified tool
+
+Deprecated: 2026-01-30 (v2.9.116)
+Removal: Planned for v3.1.0
+Replacement: src/gui/unified_text_to_json_dock.py
+
+See: UNIFIED_TOOL_DESIGN_SPECIFICATION_3.md
+See: TOOL_CONSOLIDATION_INVESTIGATION_REPORT_3.md
+
+---
+
+Original Description:
+
 Provides UI for extracting text/attributes from HTML/JSX to structured JSON.
 
 Features:
