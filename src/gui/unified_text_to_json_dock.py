@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication,
     QProgressDialog
 )
-from PySide6.QtGui import QFont, QAction
+from PySide6.QtGui import QFont, QAction, QShortcut, QKeySequence, QTextCursor, QTextCharFormat, QColor
 
 from .base_dock import BaseDock, FileInputMixin
 from .extraction_worker import ExtractionWorker
@@ -45,6 +45,264 @@ from src.i18n.translator import tooltip_tr, tr
 # Type checking imports
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget as QWidgetType
+
+
+class TextSearchDialog(QDialog):
+    """Search dialog for text input with regex, case-sensitive, and whole-word options."""
+    
+    def __init__(self, parent=None, text_widget=None):
+        super().__init__(parent)
+        self.text_widget = text_widget
+        self.matches = []  # List of (start, end) tuples
+        self.current_match_index = -1
+        
+        self.setWindowTitle("Search in Text")
+        self.setModal(False)  # Non-modal so user can edit text while searching
+        self.resize(450, 200)
+        
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        """Setup search dialog UI."""
+        layout = QVBoxLayout(self)
+        
+        # Search input
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Find:"))
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Enter search text...")
+        self.search_input.textChanged.connect(self._on_search_text_changed)
+        self.search_input.returnPressed.connect(self._find_next)
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+        
+        # Options checkboxes
+        options_layout = QHBoxLayout()
+        self.regex_checkbox = QCheckBox("Regex")
+        self.regex_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.regex_checkbox)
+        
+        self.case_checkbox = QCheckBox("Case sensitive")
+        self.case_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.case_checkbox)
+        
+        self.whole_word_checkbox = QCheckBox("Whole word")
+        self.whole_word_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.whole_word_checkbox)
+        
+        options_layout.addStretch()
+        layout.addLayout(options_layout)
+        
+        # Match counter
+        self.counter_label = QLabel("No matches")
+        self.counter_label.setStyleSheet("color: gray; font-style: italic;")
+        layout.addWidget(self.counter_label)
+        
+        # Navigation buttons
+        buttons_layout = QHBoxLayout()
+        
+        self.prev_button = QPushButton("◀ Previous")
+        self.prev_button.clicked.connect(self._find_previous)
+        self.prev_button.setEnabled(False)
+        buttons_layout.addWidget(self.prev_button)
+        
+        self.next_button = QPushButton("Next ▶")
+        self.next_button.clicked.connect(self._find_next)
+        self.next_button.setEnabled(False)
+        buttons_layout.addWidget(self.next_button)
+        
+        buttons_layout.addStretch()
+        
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.close)
+        buttons_layout.addWidget(close_button)
+        
+        layout.addLayout(buttons_layout)
+    
+    def showEvent(self, event):
+        """When dialog shows, focus search input and select current word if any."""
+        super().showEvent(event)
+        self.search_input.setFocus()
+        
+        # Pre-fill with selected text if any
+        if self.text_widget and self.text_widget.textCursor().hasSelection():
+            selected_text = self.text_widget.textCursor().selectedText()
+            if selected_text:
+                self.search_input.setText(selected_text)
+                self.search_input.selectAll()
+    
+    def _on_search_text_changed(self):
+        """Handle search text change."""
+        self._find_all_matches()
+    
+    def _on_options_changed(self):
+        """Handle search option change."""
+        self._find_all_matches()
+    
+    def _find_all_matches(self):
+        """Find all matches based on current search text and options."""
+        if not self.text_widget:
+            return
+        
+        search_text = self.search_input.text()
+        if not search_text:
+            self._clear_highlights()
+            self.matches = []
+            self.current_match_index = -1
+            self._update_ui()
+            return
+        
+        text = self.text_widget.toPlainText()
+        self.matches = []
+        
+        use_regex = self.regex_checkbox.isChecked()
+        case_sensitive = self.case_checkbox.isChecked()
+        whole_word = self.whole_word_checkbox.isChecked()
+        
+        if use_regex:
+            # Regex search
+            try:
+                flags = 0 if case_sensitive else re.IGNORECASE
+                pattern = re.compile(search_text, flags)
+                for match in pattern.finditer(text):
+                    # Check whole word if needed
+                    if whole_word:
+                        if not self._is_whole_word_match(text, match.start(), match.end()):
+                            continue
+                    self.matches.append((match.start(), match.end()))
+            except re.error:
+                # Invalid regex
+                self.counter_label.setText("Invalid regex pattern")
+                self.counter_label.setStyleSheet("color: red;")
+                self._clear_highlights()
+                return
+        else:
+            # Plain text search
+            if not case_sensitive:
+                text_lower = text.lower()
+                search_lower = search_text.lower()
+            else:
+                text_lower = text
+                search_lower = search_text
+            
+            start = 0
+            while True:
+                pos = text_lower.find(search_lower, start)
+                if pos == -1:
+                    break
+                
+                end = pos + len(search_text)
+                
+                # Check whole word if needed
+                if whole_word:
+                    if not self._is_whole_word_match(text, pos, end):
+                        start = pos + 1
+                        continue
+                
+                self.matches.append((pos, end))
+                start = pos + 1
+        
+        # Reset to first match
+        if self.matches:
+            self.current_match_index = 0
+        else:
+            self.current_match_index = -1
+        
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _is_whole_word_match(self, text, start, end):
+        """Check if match is a whole word."""
+        before_ok = start == 0 or not text[start - 1].isalnum()
+        after_ok = end >= len(text) or not text[end].isalnum()
+        return before_ok and after_ok
+    
+    def _highlight_all_matches(self):
+        """Highlight all matches in text widget."""
+        if not self.text_widget or not self.matches:
+            self._clear_highlights()
+            return
+        
+        extra_selections = []
+        
+        for i, (start, end) in enumerate(self.matches):
+            selection = QPlainTextEdit.ExtraSelection()
+            
+            cursor = self.text_widget.textCursor()
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            
+            # Different color for current match
+            if i == self.current_match_index:
+                # Orange for current match
+                format = QTextCharFormat()
+                format.setBackground(QColor(255, 165, 0, 150))
+            else:
+                # Yellow for other matches
+                format = QTextCharFormat()
+                format.setBackground(QColor(255, 255, 0, 100))
+            
+            selection.cursor = cursor
+            selection.format = format
+            extra_selections.append(selection)
+        
+        self.text_widget.setExtraSelections(extra_selections)
+        
+        # Scroll to current match
+        if self.current_match_index >= 0:
+            start, end = self.matches[self.current_match_index]
+            cursor = self.text_widget.textCursor()
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            self.text_widget.setTextCursor(cursor)
+            self.text_widget.ensureCursorVisible()
+    
+    def _clear_highlights(self):
+        """Clear all highlights from text widget."""
+        if self.text_widget:
+            self.text_widget.setExtraSelections([])
+    
+    def _find_next(self):
+        """Navigate to next match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index + 1) % len(self.matches)
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _find_previous(self):
+        """Navigate to previous match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index - 1) % len(self.matches)
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _update_ui(self):
+        """Update UI based on current state."""
+        has_matches = len(self.matches) > 0
+        
+        self.prev_button.setEnabled(has_matches)
+        self.next_button.setEnabled(has_matches)
+        
+        if has_matches:
+            self.counter_label.setText(f"Match {self.current_match_index + 1} of {len(self.matches)}")
+            self.counter_label.setStyleSheet("color: green; font-weight: bold;")
+        else:
+            search_text = self.search_input.text()
+            if search_text:
+                self.counter_label.setText("No matches found")
+                self.counter_label.setStyleSheet("color: red;")
+            else:
+                self.counter_label.setText("Enter text to search")
+                self.counter_label.setStyleSheet("color: gray; font-style: italic;")
+    
+    def closeEvent(self, event):
+        """Clear highlights when dialog closes."""
+        self._clear_highlights()
+        super().closeEvent(event)
 
 
 class TemplatesDialog(QDialog):
@@ -296,6 +554,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Set main widget
         self.setWidget(main_widget)
         
+        # Setup CTRL+F shortcut for text search
+        self.search_shortcut = QShortcut(QKeySequence.StandardKey.Find, self)
+        self.search_shortcut.activated.connect(self._on_search_shortcut)
+        
         # Connect signals
         self._connect_signals()
         
@@ -355,6 +617,17 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_text_input.setFixedHeight(150)
         self.jsx_text_input.setVisible(False)  # Hidden by default
         layout.addWidget(self.jsx_text_input)
+        
+        # Search button (visible only in Text mode)
+        search_button_layout = QHBoxLayout()
+        search_button_layout.addStretch()
+        self.jsx_search_button = QPushButton("🔍 Search")
+        self.jsx_search_button.clicked.connect(self._open_text_search)
+        self.jsx_search_button.setEnabled(False)  # Disabled until Text mode selected
+        self.jsx_search_button.setVisible(False)  # Hidden by default
+        self.jsx_search_button.setToolTip("Search text (CTRL+F)")
+        search_button_layout.addWidget(self.jsx_search_button)
+        layout.addLayout(search_button_layout)
         
         # Mode and parameter section
         mode_layout = QHBoxLayout()
@@ -724,12 +997,16 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_path_edit.setVisible(False)
             self.jsx_browse_btn.setText(tr("advanced_extractor.load_file", "Load from File..."))
             self.jsx_text_input.setVisible(True)
+            self.jsx_search_button.setVisible(True)
+            self.jsx_search_button.setEnabled(True)
             self.jsx_extensions_edit.setEnabled(False)
         else:
             # Directory/File mode: Show path field, hide text area
             self.jsx_path_edit.setVisible(True)
             self.jsx_browse_btn.setText(tr("base.btn_browse", "Browse"))
             self.jsx_text_input.setVisible(False)
+            self.jsx_search_button.setVisible(False)
+            self.jsx_search_button.setEnabled(False)
             self.jsx_extensions_edit.setEnabled(True)
     
     def _jsx_update_avoid_mode(self):
