@@ -2,6 +2,66 @@
 
 ## [Unreleased]
 
+### Added (2026-02-06) - COM8 Sessions 64-72
+
+#### Format Preservation Enhancements
+- **Session 64**: DOCX paragraph formatting bug fixes
+  - Fixed indentation metadata parsing (double-split bug in lines 1886-1903)
+  - Fixed space_before/after metadata parsing (lines 1905-1918)
+  - **Impact**: DOCX format support increased from 50% to 100% (24/24 formats)
+  - Files: `src/translation/format_mapper.py`
+
+- **Session 65**: Auto-translate on Reverse button
+  - Implemented automatic translation when reversing languages in Google Translate tool
+  - **Impact**: Workflow improvement - reduced from 3 clicks to 2 clicks (33% reduction)
+  - Works for simple text, DOCX, and ODT translations
+  - Includes progress indicators and click-blocking during translation
+  - Files: `src/gui/google_translate_dock.py` (lines 632-696)
+
+#### Bug Fixes - Google Translate Tool
+- **Session 66**: Fixed ODT table save functionality
+  - Fixed `AttributeError: 'Element' object has no attribute 'data'`
+  - Added TableSegment handling in `create_docx_from_segments()` and `create_odt_from_segments()`
+  - Files: `src/translation/format_mapper.py` (lines 1667, 2472)
+
+- **Session 67**: Fixed Reverse button crash
+  - Fixed `AttributeError: 'FormatMapper' has no attribute 'segments_to_tagged_text'`
+  - Added `to_tagged_text()` method to TableSegment class
+  - Files: `src/translation/format_mapper.py` (lines 191-201), `src/gui/google_translate_dock.py`
+
+- **Session 68**: Fixed ODT save import error
+  - Added missing `ParagraphProperties` import in `create_odt_from_segments()`
+  - One-line fix resolved `name 'ParagraphProperties' is not defined` error
+  - Files: `src/translation/format_mapper.py` (line 2245)
+
+- **Session 70**: Fixed tag normalization for paragraph formatting
+  - Updated regex to handle pipe characters in tags: `< 113 | 65536 : L >` → `<113|65536:L>`
+  - Fixed opening tags normalization (lines 1387-1400)
+  - Fixed closing tags normalization with space after `<` (lines 1402-1407)
+  - **Impact**: Paragraph formatting (alignment, indentation, spacing) now preserved correctly
+  - Files: `src/translation/format_mapper.py`
+
+- **Session 72**: Fixed parse pattern bug + comprehensive testing
+  - Fixed pre-existing bug: metadata group not optional in parse pattern
+  - Changed `(?::([^>]+))>` to `(?::([^>]+))?>`  (added `?` to make optional)
+  - **Impact**: Simple character formatting tags like `<1>text</1>` now work correctly
+  - Created 12 comprehensive automated tests (all passing in 0.21s)
+  - Files: `src/translation/format_mapper.py` (line 1431), `tests/test_tag_normalization_session70.py`
+
+#### Project Organization
+- **Session 71**: Organized project root per SIMPLICITY_PROTOCOL_3
+  - Moved 169 documentation files from root to `docs/` subdirectories
+  - Created organized structure: `docs/com8/`, `docs/investigations/`, `docs/plans/`, `docs/reports/`
+  - Root directory now contains only 11 essential files (README, CHANGELOG, CONTRIBUTING, etc.)
+  - **Impact**: Professional appearance, easier navigation, protocol compliant
+
+#### Testing & Validation
+- **Session 72**: Comprehensive test suite for tag normalization
+  - 12 automated tests covering all tag formats and edge cases
+  - Tests validate Session 70 fix and complete translation workflow
+  - Test execution: 0.21 seconds (suitable for CI/CD)
+  - Files: `tests/test_tag_normalization_session70.py`
+
 ### Added (2026-01-02) - i18n Implementation
 - **i18n**: Comprehensive Portuguese (Brazil) translations for 257 GUI elements
   - 26 tooltips translated across 7 files (Task 1)
