@@ -1,0 +1,1510 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Index &mdash; Clarify 2.9.88 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://josueamaral15.github.io/clarify/genindex.html"/>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=1eff7c7c"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Clarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#what-is-clarify">What is Clarify?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#key-capabilities">Key Capabilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#core-operations">Core Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#advanced-features">Advanced Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#architecture-principles">Architecture Principles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#modularity">Modularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#performance">Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#use-cases">Use Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#development-workflows">Development Workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#data-engineering">Data Engineering</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#api-design-philosophy">API Design Philosophy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#public-vs-private">Public vs Private</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#type-hints">Type Hints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#basic-examples">Basic Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#search-files">Search Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#replace-text">Replace Text</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#deduplicate-json">Deduplicate JSON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#set-operations">Set Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#case-conversion">Case Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#ai-processing">AI Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#batch-processing-with-threading">Batch Processing with Threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#custom-filters">Custom Filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#jsx-text-extraction">JSX Text Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.html">Core API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.SearchOptions"><code class="docutils literal notranslate"><span class="pre">SearchOptions</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SearchOptions.case_sensitive"><code class="docutils literal notranslate"><span class="pre">SearchOptions.case_sensitive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SearchOptions.whole_word"><code class="docutils literal notranslate"><span class="pre">SearchOptions.whole_word</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SearchOptions.regex"><code class="docutils literal notranslate"><span class="pre">SearchOptions.regex</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SearchOptions.compile"><code class="docutils literal notranslate"><span class="pre">SearchOptions.compile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SearchOptions.__init__"><code class="docutils literal notranslate"><span class="pre">SearchOptions.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.preserve_case_like"><code class="docutils literal notranslate"><span class="pre">preserve_case_like()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.replace_in_text"><code class="docutils literal notranslate"><span class="pre">replace_in_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.InsertMode"><code class="docutils literal notranslate"><span class="pre">InsertMode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.InsertMode.LEFT"><code class="docutils literal notranslate"><span class="pre">InsertMode.LEFT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.InsertMode.RIGHT"><code class="docutils literal notranslate"><span class="pre">InsertMode.RIGHT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.InsertMode.REPLACE"><code class="docutils literal notranslate"><span class="pre">InsertMode.REPLACE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.InsertMode.INSERT_ABOVE"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_ABOVE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.InsertMode.INSERT_BELOW"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_BELOW</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.insert_at_line"><code class="docutils literal notranslate"><span class="pre">insert_at_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.Condition"><code class="docutils literal notranslate"><span class="pre">Condition</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.field"><code class="docutils literal notranslate"><span class="pre">Condition.field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.operator"><code class="docutils literal notranslate"><span class="pre">Condition.operator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.value"><code class="docutils literal notranslate"><span class="pre">Condition.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.scope_type"><code class="docutils literal notranslate"><span class="pre">Condition.scope_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.scope_value"><code class="docutils literal notranslate"><span class="pre">Condition.scope_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.case_sensitive"><code class="docutils literal notranslate"><span class="pre">Condition.case_sensitive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.whole_word"><code class="docutils literal notranslate"><span class="pre">Condition.whole_word</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.use_regex"><code class="docutils literal notranslate"><span class="pre">Condition.use_regex</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.matches"><code class="docutils literal notranslate"><span class="pre">Condition.matches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.Condition.__init__"><code class="docutils literal notranslate"><span class="pre">Condition.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.filter_files_by_conditions"><code class="docutils literal notranslate"><span class="pre">filter_files_by_conditions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.extract_scope_content"><code class="docutils literal notranslate"><span class="pre">extract_scope_content()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.cli_dedupe"><code class="docutils literal notranslate"><span class="pre">cli_dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.FileListExecutor"><code class="docutils literal notranslate"><span class="pre">FileListExecutor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileListExecutor.list_files"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.list_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileListExecutor.format_size_human"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.format_size_human()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileListExecutor.calculate_statistics"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.calculate_statistics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.FileInfo"><code class="docutils literal notranslate"><span class="pre">FileInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.name"><code class="docutils literal notranslate"><span class="pre">FileInfo.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.path"><code class="docutils literal notranslate"><span class="pre">FileInfo.path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.size"><code class="docutils literal notranslate"><span class="pre">FileInfo.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.mtime"><code class="docutils literal notranslate"><span class="pre">FileInfo.mtime</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.permissions"><code class="docutils literal notranslate"><span class="pre">FileInfo.permissions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.owner"><code class="docutils literal notranslate"><span class="pre">FileInfo.owner</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.group"><code class="docutils literal notranslate"><span class="pre">FileInfo.group</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.is_dir"><code class="docutils literal notranslate"><span class="pre">FileInfo.is_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.FileInfo.__init__"><code class="docutils literal notranslate"><span class="pre">FileInfo.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.ListResult"><code class="docutils literal notranslate"><span class="pre">ListResult</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ListResult.__init__"><code class="docutils literal notranslate"><span class="pre">ListResult.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.SetOperationExecutor"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SetOperationExecutor.validate_and_load_files"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.validate_and_load_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SetOperationExecutor.execute_operations"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.execute_operations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SetOperationExecutor.format_results_json"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.format_results_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.SetOperationExecutor.calculate_result_count"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.calculate_result_count()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#src.core.ResultExporter"><code class="docutils literal notranslate"><span class="pre">ResultExporter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.FORMAT_MAP"><code class="docutils literal notranslate"><span class="pre">ResultExporter.FORMAT_MAP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.FORMAT_FILTER"><code class="docutils literal notranslate"><span class="pre">ResultExporter.FORMAT_FILTER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.save_json"><code class="docutils literal notranslate"><span class="pre">ResultExporter.save_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.export_multi_format"><code class="docutils literal notranslate"><span class="pre">ResultExporter.export_multi_format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.validate_export_data"><code class="docutils literal notranslate"><span class="pre">ResultExporter.validate_export_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.get_format_from_filter"><code class="docutils literal notranslate"><span class="pre">ResultExporter.get_format_from_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.ensure_extension"><code class="docutils literal notranslate"><span class="pre">ResultExporter.ensure_extension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.save_json_dict"><code class="docutils literal notranslate"><span class="pre">ResultExporter.save_json_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.ResultExporter.format_json_for_display"><code class="docutils literal notranslate"><span class="pre">ResultExporter.format_json_for_display()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-src.core.search_replace">Search &amp; Replace</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions"><code class="docutils literal notranslate"><span class="pre">SearchOptions</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions.case_sensitive"><code class="docutils literal notranslate"><span class="pre">SearchOptions.case_sensitive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions.whole_word"><code class="docutils literal notranslate"><span class="pre">SearchOptions.whole_word</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions.regex"><code class="docutils literal notranslate"><span class="pre">SearchOptions.regex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions.compile"><code class="docutils literal notranslate"><span class="pre">SearchOptions.compile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.search_replace.SearchOptions.__init__"><code class="docutils literal notranslate"><span class="pre">SearchOptions.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.search_replace.preserve_case_like"><code class="docutils literal notranslate"><span class="pre">preserve_case_like()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.search_replace.replace_in_text"><code class="docutils literal notranslate"><span class="pre">replace_in_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-src.core.insert">Insert Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.insert.InsertMode"><code class="docutils literal notranslate"><span class="pre">InsertMode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.insert.InsertMode.LEFT"><code class="docutils literal notranslate"><span class="pre">InsertMode.LEFT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.insert.InsertMode.RIGHT"><code class="docutils literal notranslate"><span class="pre">InsertMode.RIGHT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.insert.InsertMode.REPLACE"><code class="docutils literal notranslate"><span class="pre">InsertMode.REPLACE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.insert.InsertMode.INSERT_ABOVE"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_ABOVE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.insert.InsertMode.INSERT_BELOW"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_BELOW</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.insert.insert_at_line"><code class="docutils literal notranslate"><span class="pre">insert_at_line()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-src.core.filters">Filters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.filters.parse_hierarchical_ranges"><code class="docutils literal notranslate"><span class="pre">parse_hierarchical_ranges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.filters.apply_hierarchical_filter"><code class="docutils literal notranslate"><span class="pre">apply_hierarchical_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.filters.extract_scope_content"><code class="docutils literal notranslate"><span class="pre">extract_scope_content()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.filters.Condition"><code class="docutils literal notranslate"><span class="pre">Condition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.field"><code class="docutils literal notranslate"><span class="pre">Condition.field</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.operator"><code class="docutils literal notranslate"><span class="pre">Condition.operator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.value"><code class="docutils literal notranslate"><span class="pre">Condition.value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.scope_type"><code class="docutils literal notranslate"><span class="pre">Condition.scope_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.scope_value"><code class="docutils literal notranslate"><span class="pre">Condition.scope_value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.case_sensitive"><code class="docutils literal notranslate"><span class="pre">Condition.case_sensitive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.whole_word"><code class="docutils literal notranslate"><span class="pre">Condition.whole_word</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.use_regex"><code class="docutils literal notranslate"><span class="pre">Condition.use_regex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.matches"><code class="docutils literal notranslate"><span class="pre">Condition.matches()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#src.core.filters.Condition.__init__"><code class="docutils literal notranslate"><span class="pre">Condition.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#src.core.filters.filter_files_by_conditions"><code class="docutils literal notranslate"><span class="pre">filter_files_by_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.html#classes">Classes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rewriter.html">JSON Rewriter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.Obj"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.parse_json_preserving_duplicates_text"><code class="docutils literal notranslate"><span class="pre">parse_json_preserving_duplicates_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.freeze"><code class="docutils literal notranslate"><span class="pre">freeze()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.find_object_block"><code class="docutils literal notranslate"><span class="pre">find_object_block()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.ts_block_to_json_text"><code class="docutils literal notranslate"><span class="pre">ts_block_to_json_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.dedupe"><code class="docutils literal notranslate"><span class="pre">dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.join_keys"><code class="docutils literal notranslate"><span class="pre">join_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.eliminate_duplicates"><code class="docutils literal notranslate"><span class="pre">eliminate_duplicates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.merge_obj_values"><code class="docutils literal notranslate"><span class="pre">merge_obj_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.exclude_numeric_keys"><code class="docutils literal notranslate"><span class="pre">exclude_numeric_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.skip_empty_values"><code class="docutils literal notranslate"><span class="pre">skip_empty_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.avoid_duplicate_child_keys"><code class="docutils literal notranslate"><span class="pre">avoid_duplicate_child_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.remove_duplicate_array_values"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_array_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.enforce_consistent_case"><code class="docutils literal notranslate"><span class="pre">enforce_consistent_case()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.normalize_escaping"><code class="docutils literal notranslate"><span class="pre">normalize_escaping()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.array_to_object_conversion"><code class="docutils literal notranslate"><span class="pre">array_to_object_conversion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.skip_keys_without_siblings"><code class="docutils literal notranslate"><span class="pre">skip_keys_without_siblings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.remove_duplicate_objects"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.dump_ts_node"><code class="docutils literal notranslate"><span class="pre">dump_ts_node()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.dump_ts_obj"><code class="docutils literal notranslate"><span class="pre">dump_ts_obj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.dump_ts_array"><code class="docutils literal notranslate"><span class="pre">dump_ts_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.dump_ts_scalar"><code class="docutils literal notranslate"><span class="pre">dump_ts_scalar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.collapse_blank_lines"><code class="docutils literal notranslate"><span class="pre">collapse_blank_lines()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.sanitize_keys_and_values"><code class="docutils literal notranslate"><span class="pre">sanitize_keys_and_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.ts_process_full_preserving"><code class="docutils literal notranslate"><span class="pre">ts_process_full_preserving()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.scan_project_references"><code class="docutils literal notranslate"><span class="pre">scan_project_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.build_substitution_map_by_value"><code class="docutils literal notranslate"><span class="pre">build_substitution_map_by_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.update_references_in_project"><code class="docutils literal notranslate"><span class="pre">update_references_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.extract_all_keys_from_obj"><code class="docutils literal notranslate"><span class="pre">extract_all_keys_from_obj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.create_references"><code class="docutils literal notranslate"><span class="pre">create_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.resolve_references"><code class="docutils literal notranslate"><span class="pre">resolve_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#src.rewriter.format_reference"><code class="docutils literal notranslate"><span class="pre">format_reference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#module-src.rewriter.rewriter">Rewriter Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.rewriter.sanitize_keys_and_values"><code class="docutils literal notranslate"><span class="pre">sanitize_keys_and_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.rewriter.ts_process_full_preserving"><code class="docutils literal notranslate"><span class="pre">ts_process_full_preserving()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.rewriter.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#module-src.rewriter.types">Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.types.Obj"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.types.parse_json_preserving_duplicates_text"><code class="docutils literal notranslate"><span class="pre">parse_json_preserving_duplicates_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.types.freeze"><code class="docutils literal notranslate"><span class="pre">freeze()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#id1">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rewriter.html#src.rewriter.types.JSONNode"><code class="docutils literal notranslate"><span class="pre">JSONNode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rewriter.html#id0"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#module-src.rewriter.operations">Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.dedupe"><code class="docutils literal notranslate"><span class="pre">dedupe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.merge_obj_values"><code class="docutils literal notranslate"><span class="pre">merge_obj_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.join_keys"><code class="docutils literal notranslate"><span class="pre">join_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.eliminate_duplicates"><code class="docutils literal notranslate"><span class="pre">eliminate_duplicates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.exclude_numeric_keys"><code class="docutils literal notranslate"><span class="pre">exclude_numeric_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.skip_empty_values"><code class="docutils literal notranslate"><span class="pre">skip_empty_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.avoid_duplicate_child_keys"><code class="docutils literal notranslate"><span class="pre">avoid_duplicate_child_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.remove_duplicate_array_values"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_array_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.enforce_consistent_case"><code class="docutils literal notranslate"><span class="pre">enforce_consistent_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.normalize_escaping"><code class="docutils literal notranslate"><span class="pre">normalize_escaping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.array_to_object_conversion"><code class="docutils literal notranslate"><span class="pre">array_to_object_conversion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.skip_keys_without_siblings"><code class="docutils literal notranslate"><span class="pre">skip_keys_without_siblings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.operations.remove_duplicate_objects"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_objects()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#module-src.rewriter.ts_parser">TypeScript Parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.strip_bom"><code class="docutils literal notranslate"><span class="pre">strip_bom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.scan_find_next_lbrace"><code class="docutils literal notranslate"><span class="pre">scan_find_next_lbrace()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.extract_balanced_from"><code class="docutils literal notranslate"><span class="pre">extract_balanced_from()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.find_object_block"><code class="docutils literal notranslate"><span class="pre">find_object_block()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.strip_comments_code"><code class="docutils literal notranslate"><span class="pre">strip_comments_code()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.lift_strings_to_placeholders"><code class="docutils literal notranslate"><span class="pre">lift_strings_to_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.restore_placeholders"><code class="docutils literal notranslate"><span class="pre">restore_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.quote_bare_and_numeric_keys"><code class="docutils literal notranslate"><span class="pre">quote_bare_and_numeric_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.remove_trailing_commas"><code class="docutils literal notranslate"><span class="pre">remove_trailing_commas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.ts_parser.ts_block_to_json_text"><code class="docutils literal notranslate"><span class="pre">ts_block_to_json_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rewriter.html#module-src.rewriter.serializer">Serializer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.esc_single"><code class="docutils literal notranslate"><span class="pre">esc_single()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.dump_ts_scalar"><code class="docutils literal notranslate"><span class="pre">dump_ts_scalar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.dump_ts_key"><code class="docutils literal notranslate"><span class="pre">dump_ts_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.dump_ts_obj"><code class="docutils literal notranslate"><span class="pre">dump_ts_obj()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.dump_ts_array"><code class="docutils literal notranslate"><span class="pre">dump_ts_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.dump_ts_node"><code class="docutils literal notranslate"><span class="pre">dump_ts_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rewriter.html#src.rewriter.serializer.collapse_blank_lines"><code class="docutils literal notranslate"><span class="pre">collapse_blank_lines()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="translators.html">Translators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.flatten_dict_paths"><code class="docutils literal notranslate"><span class="pre">flatten_dict_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.translate_replace_texts"><code class="docutils literal notranslate"><span class="pre">translate_replace_texts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.apply_scoped_translation"><code class="docutils literal notranslate"><span class="pre">apply_scoped_translation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.mask_existing_placeholders"><code class="docutils literal notranslate"><span class="pre">mask_existing_placeholders()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.unmask_existing_placeholders"><code class="docutils literal notranslate"><span class="pre">unmask_existing_placeholders()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.process_translate_file"><code class="docutils literal notranslate"><span class="pre">process_translate_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#src.translators.read_translation_dict"><code class="docutils literal notranslate"><span class="pre">read_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#json-translator">JSON Translator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="translators.html#module-src.placeholder_replacer">Placeholder Replacer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#id1">Placeholder Replacer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.flatten_dict"><code class="docutils literal notranslate"><span class="pre">flatten_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.parse_mapping_file"><code class="docutils literal notranslate"><span class="pre">parse_mapping_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.replace_placeholders"><code class="docutils literal notranslate"><span class="pre">replace_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.backup_file"><code class="docutils literal notranslate"><span class="pre">backup_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.process_file"><code class="docutils literal notranslate"><span class="pre">process_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="translators.html#src.placeholder_replacer.process_directory"><code class="docutils literal notranslate"><span class="pre">process_directory()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">Extractors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extractors.html#src.extractors.JSXParser"><code class="docutils literal notranslate"><span class="pre">JSXParser</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.TAG_START_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.TAG_START_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.TAG_CLOSE_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.TAG_CLOSE_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.SELF_CLOSE_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.SELF_CLOSE_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.ATTR_DQ_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_DQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.ATTR_SQ_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_SQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_STRING_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_STRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_DQSTRING_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_DQSTRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_EXPR_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_EXPR_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.__init__"><code class="docutils literal notranslate"><span class="pre">JSXParser.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.clear_items_and_reset"><code class="docutils literal notranslate"><span class="pre">JSXParser.clear_items_and_reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.match_opening_tag"><code class="docutils literal notranslate"><span class="pre">JSXParser.match_opening_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.JSXParser.parse"><code class="docutils literal notranslate"><span class="pre">JSXParser.parse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.ATTR_DQ_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_DQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.ATTR_SQ_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_SQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_STRING_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_STRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_DQSTRING_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_DQSTRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_EXPR_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_EXPR_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.__init__"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.GenericScopeParser.parse"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.parse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="extractors.html#src.extractors.Extractor"><code class="docutils literal notranslate"><span class="pre">Extractor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.CONTAINS"><code class="docutils literal notranslate"><span class="pre">Extractor.CONTAINS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.EQUALS"><code class="docutils literal notranslate"><span class="pre">Extractor.EQUALS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.__init__"><code class="docutils literal notranslate"><span class="pre">Extractor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.find_paths_to_key"><code class="docutils literal notranslate"><span class="pre">Extractor.find_paths_to_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.get_subtree_at_path"><code class="docutils literal notranslate"><span class="pre">Extractor.get_subtree_at_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.build_tree_from_path"><code class="docutils literal notranslate"><span class="pre">Extractor.build_tree_from_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.merge_dicts"><code class="docutils literal notranslate"><span class="pre">Extractor.merge_dicts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.prune_to_key"><code class="docutils literal notranslate"><span class="pre">Extractor.prune_to_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.remove_key"><code class="docutils literal notranslate"><span class="pre">Extractor.remove_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.remove_key_with_collapse"><code class="docutils literal notranslate"><span class="pre">Extractor.remove_key_with_collapse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.deep_merge"><code class="docutils literal notranslate"><span class="pre">Extractor.deep_merge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.check_value_if_it_is_just_string"><code class="docutils literal notranslate"><span class="pre">Extractor.check_value_if_it_is_just_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.process_text"><code class="docutils literal notranslate"><span class="pre">Extractor.process_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.json_to_js_literal"><code class="docutils literal notranslate"><span class="pre">Extractor.json_to_js_literal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#src.extractors.Extractor.run"><code class="docutils literal notranslate"><span class="pre">Extractor.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="extractors.html#jsx-extractor">JSX Extractor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="extractors.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="extractors.html#text-extractor">Text Extractor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">GUI Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#main-application">Main Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#docks">Docks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#editor-dock">Editor Dock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#search-dock">Search Dock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#insert-panel">Insert Panel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#json-rewriter-dock">JSON Rewriter Dock</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#layout-manager">Layout Manager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#id1">Classes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.walk_files"><code class="docutils literal notranslate"><span class="pre">walk_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.read_text"><code class="docutils literal notranslate"><span class="pre">read_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.write_text"><code class="docutils literal notranslate"><span class="pre">write_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.safe_backup_file"><code class="docutils literal notranslate"><span class="pre">safe_backup_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.parse_exclusion_patterns"><code class="docutils literal notranslate"><span class="pre">parse_exclusion_patterns()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.mask_exclusions"><code class="docutils literal notranslate"><span class="pre">mask_exclusions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.unmask_exclusions"><code class="docutils literal notranslate"><span class="pre">unmask_exclusions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.compile_value_union_regex"><code class="docutils literal notranslate"><span class="pre">compile_value_union_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.load_ts_object"><code class="docutils literal notranslate"><span class="pre">load_ts_object()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.dump_ts_object"><code class="docutils literal notranslate"><span class="pre">dump_ts_object()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.strip_export_default"><code class="docutils literal notranslate"><span class="pre">strip_export_default()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.to_json_ish"><code class="docutils literal notranslate"><span class="pre">to_json_ish()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#src.utils.format_removal_statistics"><code class="docutils literal notranslate"><span class="pre">format_removal_statistics()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#module-src.utils.file_utils">File Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.file_utils.walk_files"><code class="docutils literal notranslate"><span class="pre">walk_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.file_utils.read_text"><code class="docutils literal notranslate"><span class="pre">read_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.file_utils.write_text"><code class="docutils literal notranslate"><span class="pre">write_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.file_utils.safe_backup_file"><code class="docutils literal notranslate"><span class="pre">safe_backup_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#module-src.utils.text_utils">Text Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.text_utils.parse_exclusion_patterns"><code class="docutils literal notranslate"><span class="pre">parse_exclusion_patterns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.text_utils.mask_exclusions"><code class="docutils literal notranslate"><span class="pre">mask_exclusions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.text_utils.unmask_exclusions"><code class="docutils literal notranslate"><span class="pre">unmask_exclusions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.text_utils.compile_value_union_regex"><code class="docutils literal notranslate"><span class="pre">compile_value_union_regex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html#module-src.utils.ts_utils">TypeScript Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.ts_utils.strip_export_default"><code class="docutils literal notranslate"><span class="pre">strip_export_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.ts_utils.to_json_ish"><code class="docutils literal notranslate"><span class="pre">to_json_ish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.ts_utils.load_ts_object"><code class="docutils literal notranslate"><span class="pre">load_ts_object()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils.html#src.utils.ts_utils.dump_ts_object"><code class="docutils literal notranslate"><span class="pre">dump_ts_object()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_search"><code class="docutils literal notranslate"><span class="pre">cli_search()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_replace"><code class="docutils literal notranslate"><span class="pre">cli_replace()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_insert"><code class="docutils literal notranslate"><span class="pre">cli_insert()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_translate"><code class="docutils literal notranslate"><span class="pre">cli_translate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_gtranslate"><code class="docutils literal notranslate"><span class="pre">cli_gtranslate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.cli_dedupe"><code class="docutils literal notranslate"><span class="pre">cli_dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.split_globs"><code class="docutils literal notranslate"><span class="pre">split_globs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.parse_conditions"><code class="docutils literal notranslate"><span class="pre">parse_conditions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#src.cli.build_file_list"><code class="docutils literal notranslate"><span class="pre">build_file_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#main-cli">Main CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#search-cli">Search CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#rewriter-cli">Rewriter CLI</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Clarify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.Condition.__init__">__init__() (src.core.Condition method)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.FileInfo.__init__">(src.core.FileInfo method)</a>
+</li>
+        <li><a href="core.html#src.core.filters.Condition.__init__">(src.core.filters.Condition method)</a>
+</li>
+        <li><a href="core.html#src.core.ListResult.__init__">(src.core.ListResult method)</a>
+</li>
+        <li><a href="core.html#src.core.search_replace.SearchOptions.__init__">(src.core.search_replace.SearchOptions method)</a>
+</li>
+        <li><a href="core.html#src.core.SearchOptions.__init__">(src.core.SearchOptions method)</a>
+</li>
+        <li><a href="extractors.html#src.extractors.Extractor.__init__">(src.extractors.Extractor method)</a>
+</li>
+        <li><a href="extractors.html#src.extractors.GenericScopeParser.__init__">(src.extractors.GenericScopeParser method)</a>
+</li>
+        <li><a href="extractors.html#src.extractors.JSXParser.__init__">(src.extractors.JSXParser method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.filters.apply_hierarchical_filter">apply_hierarchical_filter() (in module src.core.filters)</a>
+</li>
+      <li><a href="translators.html#src.translators.apply_scoped_translation">apply_scoped_translation() (in module src.translators)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.array_to_object_conversion">array_to_object_conversion() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.array_to_object_conversion">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_DQSTRING_RE">ATTR_BRACE_DQSTRING_RE (src.extractors.GenericScopeParser attribute)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_DQSTRING_RE">(src.extractors.JSXParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_EXPR_RE">ATTR_BRACE_EXPR_RE (src.extractors.GenericScopeParser attribute)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_EXPR_RE">(src.extractors.JSXParser attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_STRING_RE">ATTR_BRACE_STRING_RE (src.extractors.GenericScopeParser attribute)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.ATTR_BRACE_STRING_RE">(src.extractors.JSXParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.ATTR_DQ_RE">ATTR_DQ_RE (src.extractors.GenericScopeParser attribute)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.ATTR_DQ_RE">(src.extractors.JSXParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.ATTR_SQ_RE">ATTR_SQ_RE (src.extractors.GenericScopeParser attribute)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.ATTR_SQ_RE">(src.extractors.JSXParser attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.avoid_duplicate_child_keys">avoid_duplicate_child_keys() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.avoid_duplicate_child_keys">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="translators.html#src.placeholder_replacer.backup_file">backup_file() (in module src.placeholder_replacer)</a>
+</li>
+      <li><a href="cli.html#src.cli.build_file_list">build_file_list() (in module src.cli)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli.html#src.cli.build_parser">build_parser() (in module src.cli)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.build_substitution_map_by_value">build_substitution_map_by_value() (in module src.rewriter)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.Extractor.build_tree_from_path">build_tree_from_path() (src.extractors.Extractor method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.SetOperationExecutor.calculate_result_count">calculate_result_count() (src.core.SetOperationExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.FileListExecutor.calculate_statistics">calculate_statistics() (src.core.FileListExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.Condition.case_sensitive">case_sensitive (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.case_sensitive">(src.core.filters.Condition attribute)</a>
+</li>
+        <li><a href="core.html#src.core.search_replace.SearchOptions.case_sensitive">(src.core.search_replace.SearchOptions attribute)</a>
+</li>
+        <li><a href="core.html#src.core.SearchOptions.case_sensitive">(src.core.SearchOptions attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.check_value_if_it_is_just_string">check_value_if_it_is_just_string() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.JSXParser.clear_items_and_reset">clear_items_and_reset() (src.extractors.JSXParser method)</a>
+</li>
+      <li><a href="cli.html#src.cli.cli_dedupe">cli_dedupe() (in module src.cli)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.cli_dedupe">(in module src.core)</a>
+</li>
+      </ul></li>
+      <li><a href="cli.html#src.cli.cli_gtranslate">cli_gtranslate() (in module src.cli)</a>
+</li>
+      <li><a href="cli.html#src.cli.cli_insert">cli_insert() (in module src.cli)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cli.html#src.cli.cli_replace">cli_replace() (in module src.cli)</a>
+</li>
+      <li><a href="cli.html#src.cli.cli_search">cli_search() (in module src.cli)</a>
+</li>
+      <li><a href="cli.html#src.cli.cli_translate">cli_translate() (in module src.cli)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.collapse_blank_lines">collapse_blank_lines() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.serializer.collapse_blank_lines">(in module src.rewriter.serializer)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.search_replace.SearchOptions.compile">compile() (src.core.search_replace.SearchOptions method)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.SearchOptions.compile">(src.core.SearchOptions method)</a>
+</li>
+      </ul></li>
+      <li><a href="utils.html#src.utils.compile_value_union_regex">compile_value_union_regex() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.text_utils.compile_value_union_regex">(in module src.utils.text_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.Condition">Condition (class in src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition">(class in src.core.filters)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.CONTAINS">CONTAINS (src.extractors.Extractor attribute)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.create_references">create_references() (in module src.rewriter)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.dedupe">dedupe() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.dedupe">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.deep_merge">deep_merge() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.dump_ts_array">dump_ts_array() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.serializer.dump_ts_array">(in module src.rewriter.serializer)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.serializer.dump_ts_key">dump_ts_key() (in module src.rewriter.serializer)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.dump_ts_node">dump_ts_node() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.serializer.dump_ts_node">(in module src.rewriter.serializer)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.dump_ts_obj">dump_ts_obj() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.serializer.dump_ts_obj">(in module src.rewriter.serializer)</a>
+</li>
+      </ul></li>
+      <li><a href="utils.html#src.utils.dump_ts_object">dump_ts_object() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.ts_utils.dump_ts_object">(in module src.utils.ts_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.dump_ts_scalar">dump_ts_scalar() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.serializer.dump_ts_scalar">(in module src.rewriter.serializer)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.eliminate_duplicates">eliminate_duplicates() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.eliminate_duplicates">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.enforce_consistent_case">enforce_consistent_case() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.enforce_consistent_case">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.ResultExporter.ensure_extension">ensure_extension() (src.core.ResultExporter static method)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.Extractor.EQUALS">EQUALS (src.extractors.Extractor attribute)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.serializer.esc_single">esc_single() (in module src.rewriter.serializer)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.exclude_numeric_keys">exclude_numeric_keys() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.exclude_numeric_keys">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.SetOperationExecutor.execute_operations">execute_operations() (src.core.SetOperationExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.export_multi_format">export_multi_format() (src.core.ResultExporter static method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.extract_all_keys_from_obj">extract_all_keys_from_obj() (in module src.rewriter)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.extract_balanced_from">extract_balanced_from() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="core.html#src.core.extract_scope_content">extract_scope_content() (in module src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.extract_scope_content">(in module src.core.filters)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor">Extractor (class in src.extractors)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.Condition.field">field (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.field">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.FileInfo">FileInfo (class in src.core)</a>
+</li>
+      <li><a href="core.html#src.core.FileListExecutor">FileListExecutor (class in src.core)</a>
+</li>
+      <li><a href="core.html#src.core.filter_files_by_conditions">filter_files_by_conditions() (in module src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.filter_files_by_conditions">(in module src.core.filters)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.find_object_block">find_object_block() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.ts_parser.find_object_block">(in module src.rewriter.ts_parser)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.find_paths_to_key">find_paths_to_key() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="translators.html#src.placeholder_replacer.flatten_dict">flatten_dict() (in module src.placeholder_replacer)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="translators.html#src.translators.flatten_dict_paths">flatten_dict_paths() (in module src.translators)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.FORMAT_FILTER">FORMAT_FILTER (src.core.ResultExporter attribute)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.format_json_for_display">format_json_for_display() (src.core.ResultExporter static method)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.FORMAT_MAP">FORMAT_MAP (src.core.ResultExporter attribute)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.format_reference">format_reference() (in module src.rewriter)</a>
+</li>
+      <li><a href="utils.html#src.utils.format_removal_statistics">format_removal_statistics() (in module src.utils)</a>
+</li>
+      <li><a href="core.html#src.core.SetOperationExecutor.format_results_json">format_results_json() (src.core.SetOperationExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.FileListExecutor.format_size_human">format_size_human() (src.core.FileListExecutor static method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.freeze">freeze() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.types.freeze">(in module src.rewriter.types)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser">GenericScopeParser (class in src.extractors)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.get_format_from_filter">get_format_from_filter() (src.core.ResultExporter static method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.Extractor.get_subtree_at_path">get_subtree_at_path() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="core.html#src.core.FileInfo.group">group (src.core.FileInfo attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.insert.InsertMode.INSERT_ABOVE">INSERT_ABOVE (src.core.insert.InsertMode attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.InsertMode.INSERT_ABOVE">(src.core.InsertMode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.insert_at_line">insert_at_line() (in module src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.insert.insert_at_line">(in module src.core.insert)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.insert.InsertMode.INSERT_BELOW">INSERT_BELOW (src.core.insert.InsertMode attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.InsertMode.INSERT_BELOW">(src.core.InsertMode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.InsertMode">InsertMode (class in src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.insert.InsertMode">(class in src.core.insert)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.FileInfo.is_dir">is_dir (src.core.FileInfo attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.join_keys">join_keys() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.join_keys">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.Extractor.json_to_js_literal">json_to_js_literal() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.types.JSONNode">JSONNode (in module src.rewriter.types)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.JSXParser">JSXParser (class in src.extractors)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.insert.InsertMode.LEFT">LEFT (src.core.insert.InsertMode attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.InsertMode.LEFT">(src.core.InsertMode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.lift_strings_to_placeholders">lift_strings_to_placeholders() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="core.html#src.core.FileListExecutor.list_files">list_files() (src.core.FileListExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.ListResult">ListResult (class in src.core)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.load_translation_dict">load_translation_dict() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.rewriter.load_translation_dict">(in module src.rewriter.rewriter)</a>
+</li>
+        <li><a href="translators.html#src.translators.load_translation_dict">(in module src.translators)</a>
+</li>
+      </ul></li>
+      <li><a href="utils.html#src.utils.load_ts_object">load_ts_object() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.ts_utils.load_ts_object">(in module src.utils.ts_utils)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.mask_exclusions">mask_exclusions() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.text_utils.mask_exclusions">(in module src.utils.text_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.translators.mask_existing_placeholders">mask_existing_placeholders() (in module src.translators)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.JSXParser.match_opening_tag">match_opening_tag() (src.extractors.JSXParser class method)</a>
+</li>
+      <li><a href="core.html#src.core.Condition.matches">matches() (src.core.Condition method)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.matches">(src.core.filters.Condition method)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.merge_dicts">merge_dicts() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.merge_obj_values">merge_obj_values() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.merge_obj_values">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="cli.html#module-src.cli">src.cli</a>
+</li>
+        <li><a href="core.html#module-src.core">src.core</a>
+</li>
+        <li><a href="core.html#module-src.core.filters">src.core.filters</a>
+</li>
+        <li><a href="core.html#module-src.core.insert">src.core.insert</a>
+</li>
+        <li><a href="core.html#module-src.core.search_replace">src.core.search_replace</a>
+</li>
+        <li><a href="extractors.html#module-src.extractors">src.extractors</a>
+</li>
+        <li><a href="translators.html#module-src.placeholder_replacer">src.placeholder_replacer</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter">src.rewriter</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter.operations">src.rewriter.operations</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter.rewriter">src.rewriter.rewriter</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter.serializer">src.rewriter.serializer</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter.ts_parser">src.rewriter.ts_parser</a>
+</li>
+        <li><a href="rewriter.html#module-src.rewriter.types">src.rewriter.types</a>
+</li>
+        <li><a href="translators.html#module-src.translators">src.translators</a>
+</li>
+        <li><a href="utils.html#module-src.utils">src.utils</a>
+</li>
+        <li><a href="utils.html#module-src.utils.file_utils">src.utils.file_utils</a>
+</li>
+        <li><a href="utils.html#module-src.utils.text_utils">src.utils.text_utils</a>
+</li>
+        <li><a href="utils.html#module-src.utils.ts_utils">src.utils.ts_utils</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.FileInfo.mtime">mtime (src.core.FileInfo attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.FileInfo.name">name (src.core.FileInfo attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.normalize_escaping">normalize_escaping() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.normalize_escaping">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.Obj">Obj (class in src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#id0">(class in src.rewriter.types)</a>, <a href="rewriter.html#src.rewriter.types.Obj">[1]</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.Condition.operator">operator (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.operator">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.FileInfo.owner">owner (src.core.FileInfo attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.GenericScopeParser.parse">parse() (src.extractors.GenericScopeParser method)</a>
+
+      <ul>
+        <li><a href="extractors.html#src.extractors.JSXParser.parse">(src.extractors.JSXParser method)</a>
+</li>
+      </ul></li>
+      <li><a href="cli.html#src.cli.parse_conditions">parse_conditions() (in module src.cli)</a>
+</li>
+      <li><a href="utils.html#src.utils.parse_exclusion_patterns">parse_exclusion_patterns() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.text_utils.parse_exclusion_patterns">(in module src.utils.text_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.filters.parse_hierarchical_ranges">parse_hierarchical_ranges() (in module src.core.filters)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.parse_json_preserving_duplicates_text">parse_json_preserving_duplicates_text() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.types.parse_json_preserving_duplicates_text">(in module src.rewriter.types)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.placeholder_replacer.parse_mapping_file">parse_mapping_file() (in module src.placeholder_replacer)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.FileInfo.path">path (src.core.FileInfo attribute)</a>
+</li>
+      <li><a href="core.html#src.core.FileInfo.permissions">permissions (src.core.FileInfo attribute)</a>
+</li>
+      <li><a href="core.html#src.core.preserve_case_like">preserve_case_like() (in module src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.search_replace.preserve_case_like">(in module src.core.search_replace)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.placeholder_replacer.process_directory">process_directory() (in module src.placeholder_replacer)</a>
+</li>
+      <li><a href="translators.html#src.placeholder_replacer.process_file">process_file() (in module src.placeholder_replacer)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.Extractor.process_text">process_text() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="translators.html#src.translators.process_translate_file">process_translate_file() (in module src.translators)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.Extractor.prune_to_key">prune_to_key() (src.extractors.Extractor method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.quote_bare_and_numeric_keys">quote_bare_and_numeric_keys() (in module src.rewriter.ts_parser)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.read_text">read_text() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.file_utils.read_text">(in module src.utils.file_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.translators.read_translation_dict">read_translation_dict() (in module src.translators)</a>
+</li>
+      <li><a href="core.html#src.core.search_replace.SearchOptions.regex">regex (src.core.search_replace.SearchOptions attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.SearchOptions.regex">(src.core.SearchOptions attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.remove_duplicate_array_values">remove_duplicate_array_values() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.remove_duplicate_array_values">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.remove_duplicate_objects">remove_duplicate_objects() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.remove_duplicate_objects">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.remove_key">remove_key() (src.extractors.Extractor method)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.Extractor.remove_key_with_collapse">remove_key_with_collapse() (src.extractors.Extractor method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.remove_trailing_commas">remove_trailing_commas() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="core.html#src.core.insert.InsertMode.REPLACE">REPLACE (src.core.insert.InsertMode attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.InsertMode.REPLACE">(src.core.InsertMode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.replace_in_text">replace_in_text() (in module src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.search_replace.replace_in_text">(in module src.core.search_replace)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.placeholder_replacer.replace_placeholders">replace_placeholders() (in module src.placeholder_replacer)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.resolve_references">resolve_references() (in module src.rewriter)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.restore_placeholders">restore_placeholders() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter">ResultExporter (class in src.core)</a>
+</li>
+      <li><a href="core.html#src.core.insert.InsertMode.RIGHT">RIGHT (src.core.insert.InsertMode attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.InsertMode.RIGHT">(src.core.InsertMode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.Extractor.run">run() (src.extractors.Extractor method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.safe_backup_file">safe_backup_file() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.file_utils.safe_backup_file">(in module src.utils.file_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.sanitize_keys_and_values">sanitize_keys_and_values() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.rewriter.sanitize_keys_and_values">(in module src.rewriter.rewriter)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.ResultExporter.save_json">save_json() (src.core.ResultExporter static method)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.save_json_dict">save_json_dict() (src.core.ResultExporter static method)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.scan_find_next_lbrace">scan_find_next_lbrace() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.scan_project_references">scan_project_references() (in module src.rewriter)</a>
+</li>
+      <li><a href="core.html#src.core.Condition.scope_type">scope_type (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.scope_type">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.Condition.scope_value">scope_value (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.scope_value">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.SearchOptions">SearchOptions (class in src.core)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.search_replace.SearchOptions">(class in src.core.search_replace)</a>
+</li>
+      </ul></li>
+      <li><a href="extractors.html#src.extractors.JSXParser.SELF_CLOSE_RE">SELF_CLOSE_RE (src.extractors.JSXParser attribute)</a>
+</li>
+      <li><a href="core.html#src.core.SetOperationExecutor">SetOperationExecutor (class in src.core)</a>
+</li>
+      <li><a href="core.html#src.core.FileInfo.size">size (src.core.FileInfo attribute)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.skip_empty_values">skip_empty_values() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.skip_empty_values">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.skip_keys_without_siblings">skip_keys_without_siblings() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.operations.skip_keys_without_siblings">(in module src.rewriter.operations)</a>
+</li>
+      </ul></li>
+      <li><a href="cli.html#src.cli.split_globs">split_globs() (in module src.cli)</a>
+</li>
+      <li>
+    src.cli
+
+      <ul>
+        <li><a href="cli.html#module-src.cli">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.core
+
+      <ul>
+        <li><a href="core.html#module-src.core">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.core.filters
+
+      <ul>
+        <li><a href="core.html#module-src.core.filters">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.core.insert
+
+      <ul>
+        <li><a href="core.html#module-src.core.insert">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.core.search_replace
+
+      <ul>
+        <li><a href="core.html#module-src.core.search_replace">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    src.extractors
+
+      <ul>
+        <li><a href="extractors.html#module-src.extractors">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.placeholder_replacer
+
+      <ul>
+        <li><a href="translators.html#module-src.placeholder_replacer">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter.operations
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter.operations">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter.rewriter
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter.rewriter">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter.serializer
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter.serializer">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter.ts_parser
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter.ts_parser">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.rewriter.types
+
+      <ul>
+        <li><a href="rewriter.html#module-src.rewriter.types">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.translators
+
+      <ul>
+        <li><a href="translators.html#module-src.translators">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.utils
+
+      <ul>
+        <li><a href="utils.html#module-src.utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.utils.file_utils
+
+      <ul>
+        <li><a href="utils.html#module-src.utils.file_utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.utils.text_utils
+
+      <ul>
+        <li><a href="utils.html#module-src.utils.text_utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    src.utils.ts_utils
+
+      <ul>
+        <li><a href="utils.html#module-src.utils.ts_utils">module</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.strip_bom">strip_bom() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.ts_parser.strip_comments_code">strip_comments_code() (in module src.rewriter.ts_parser)</a>
+</li>
+      <li><a href="utils.html#src.utils.strip_export_default">strip_export_default() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.ts_utils.strip_export_default">(in module src.utils.ts_utils)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="extractors.html#src.extractors.JSXParser.TAG_CLOSE_RE">TAG_CLOSE_RE (src.extractors.JSXParser attribute)</a>
+</li>
+      <li><a href="extractors.html#src.extractors.JSXParser.TAG_START_RE">TAG_START_RE (src.extractors.JSXParser attribute)</a>
+</li>
+      <li><a href="utils.html#src.utils.to_json_ish">to_json_ish() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.ts_utils.to_json_ish">(in module src.utils.ts_utils)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="translators.html#src.translators.translate_replace_texts">translate_replace_texts() (in module src.translators)</a>
+</li>
+      <li><a href="rewriter.html#src.rewriter.ts_block_to_json_text">ts_block_to_json_text() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.ts_parser.ts_block_to_json_text">(in module src.rewriter.ts_parser)</a>
+</li>
+      </ul></li>
+      <li><a href="rewriter.html#src.rewriter.ts_process_full_preserving">ts_process_full_preserving() (in module src.rewriter)</a>
+
+      <ul>
+        <li><a href="rewriter.html#src.rewriter.rewriter.ts_process_full_preserving">(in module src.rewriter.rewriter)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.unmask_exclusions">unmask_exclusions() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.text_utils.unmask_exclusions">(in module src.utils.text_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="translators.html#src.translators.unmask_existing_placeholders">unmask_existing_placeholders() (in module src.translators)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rewriter.html#src.rewriter.update_references_in_project">update_references_in_project() (in module src.rewriter)</a>
+</li>
+      <li><a href="core.html#src.core.Condition.use_regex">use_regex (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.use_regex">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.SetOperationExecutor.validate_and_load_files">validate_and_load_files() (src.core.SetOperationExecutor static method)</a>
+</li>
+      <li><a href="core.html#src.core.ResultExporter.validate_export_data">validate_export_data() (src.core.ResultExporter static method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="core.html#src.core.Condition.value">value (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.value">(src.core.filters.Condition attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.walk_files">walk_files() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.file_utils.walk_files">(in module src.utils.file_utils)</a>
+</li>
+      </ul></li>
+      <li><a href="core.html#src.core.Condition.whole_word">whole_word (src.core.Condition attribute)</a>
+
+      <ul>
+        <li><a href="core.html#src.core.filters.Condition.whole_word">(src.core.filters.Condition attribute)</a>
+</li>
+        <li><a href="core.html#src.core.search_replace.SearchOptions.whole_word">(src.core.search_replace.SearchOptions attribute)</a>
+</li>
+        <li><a href="core.html#src.core.SearchOptions.whole_word">(src.core.SearchOptions attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#src.utils.write_text">write_text() (in module src.utils)</a>
+
+      <ul>
+        <li><a href="utils.html#src.utils.file_utils.write_text">(in module src.utils.file_utils)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Josue Amaral.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

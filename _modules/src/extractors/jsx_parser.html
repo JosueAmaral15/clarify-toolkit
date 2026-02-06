@@ -1,0 +1,1090 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.extractors.jsx_parser &mdash; Clarify 2.9.88 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://josueamaral15.github.io/clarify/_modules/src/extractors/jsx_parser.html"/>
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1eff7c7c"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Clarify
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#what-is-clarify">What is Clarify?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#key-capabilities">Key Capabilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#core-operations">Core Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#advanced-features">Advanced Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#architecture-principles">Architecture Principles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#modularity">Modularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#performance">Performance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#use-cases">Use Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#development-workflows">Development Workflows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#data-engineering">Data Engineering</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#api-design-philosophy">API Design Philosophy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#public-vs-private">Public vs Private</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#type-hints">Type Hints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../overview.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../overview.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#basic-examples">Basic Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#search-files">Search Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#replace-text">Replace Text</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#deduplicate-json">Deduplicate JSON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#set-operations">Set Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#case-conversion">Case Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#ai-processing">AI Processing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#batch-processing-with-threading">Batch Processing with Threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#custom-filters">Custom Filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#jsx-text-extraction">JSX Text Extraction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../quickstart.html#error-handling">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core.html">Core API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.SearchOptions"><code class="docutils literal notranslate"><span class="pre">SearchOptions</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SearchOptions.case_sensitive"><code class="docutils literal notranslate"><span class="pre">SearchOptions.case_sensitive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SearchOptions.whole_word"><code class="docutils literal notranslate"><span class="pre">SearchOptions.whole_word</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SearchOptions.regex"><code class="docutils literal notranslate"><span class="pre">SearchOptions.regex</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SearchOptions.compile"><code class="docutils literal notranslate"><span class="pre">SearchOptions.compile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SearchOptions.__init__"><code class="docutils literal notranslate"><span class="pre">SearchOptions.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.preserve_case_like"><code class="docutils literal notranslate"><span class="pre">preserve_case_like()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.replace_in_text"><code class="docutils literal notranslate"><span class="pre">replace_in_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.InsertMode"><code class="docutils literal notranslate"><span class="pre">InsertMode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.InsertMode.LEFT"><code class="docutils literal notranslate"><span class="pre">InsertMode.LEFT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.InsertMode.RIGHT"><code class="docutils literal notranslate"><span class="pre">InsertMode.RIGHT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.InsertMode.REPLACE"><code class="docutils literal notranslate"><span class="pre">InsertMode.REPLACE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.InsertMode.INSERT_ABOVE"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_ABOVE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.InsertMode.INSERT_BELOW"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_BELOW</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.insert_at_line"><code class="docutils literal notranslate"><span class="pre">insert_at_line()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.Condition"><code class="docutils literal notranslate"><span class="pre">Condition</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.field"><code class="docutils literal notranslate"><span class="pre">Condition.field</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.operator"><code class="docutils literal notranslate"><span class="pre">Condition.operator</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.value"><code class="docutils literal notranslate"><span class="pre">Condition.value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.scope_type"><code class="docutils literal notranslate"><span class="pre">Condition.scope_type</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.scope_value"><code class="docutils literal notranslate"><span class="pre">Condition.scope_value</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.case_sensitive"><code class="docutils literal notranslate"><span class="pre">Condition.case_sensitive</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.whole_word"><code class="docutils literal notranslate"><span class="pre">Condition.whole_word</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.use_regex"><code class="docutils literal notranslate"><span class="pre">Condition.use_regex</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.matches"><code class="docutils literal notranslate"><span class="pre">Condition.matches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.Condition.__init__"><code class="docutils literal notranslate"><span class="pre">Condition.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.filter_files_by_conditions"><code class="docutils literal notranslate"><span class="pre">filter_files_by_conditions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.extract_scope_content"><code class="docutils literal notranslate"><span class="pre">extract_scope_content()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.cli_dedupe"><code class="docutils literal notranslate"><span class="pre">cli_dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.FileListExecutor"><code class="docutils literal notranslate"><span class="pre">FileListExecutor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileListExecutor.list_files"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.list_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileListExecutor.format_size_human"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.format_size_human()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileListExecutor.calculate_statistics"><code class="docutils literal notranslate"><span class="pre">FileListExecutor.calculate_statistics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.FileInfo"><code class="docutils literal notranslate"><span class="pre">FileInfo</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.name"><code class="docutils literal notranslate"><span class="pre">FileInfo.name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.path"><code class="docutils literal notranslate"><span class="pre">FileInfo.path</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.size"><code class="docutils literal notranslate"><span class="pre">FileInfo.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.mtime"><code class="docutils literal notranslate"><span class="pre">FileInfo.mtime</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.permissions"><code class="docutils literal notranslate"><span class="pre">FileInfo.permissions</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.owner"><code class="docutils literal notranslate"><span class="pre">FileInfo.owner</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.group"><code class="docutils literal notranslate"><span class="pre">FileInfo.group</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.is_dir"><code class="docutils literal notranslate"><span class="pre">FileInfo.is_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.FileInfo.__init__"><code class="docutils literal notranslate"><span class="pre">FileInfo.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.ListResult"><code class="docutils literal notranslate"><span class="pre">ListResult</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ListResult.__init__"><code class="docutils literal notranslate"><span class="pre">ListResult.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.SetOperationExecutor"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SetOperationExecutor.validate_and_load_files"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.validate_and_load_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SetOperationExecutor.execute_operations"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.execute_operations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SetOperationExecutor.format_results_json"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.format_results_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.SetOperationExecutor.calculate_result_count"><code class="docutils literal notranslate"><span class="pre">SetOperationExecutor.calculate_result_count()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#src.core.ResultExporter"><code class="docutils literal notranslate"><span class="pre">ResultExporter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.FORMAT_MAP"><code class="docutils literal notranslate"><span class="pre">ResultExporter.FORMAT_MAP</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.FORMAT_FILTER"><code class="docutils literal notranslate"><span class="pre">ResultExporter.FORMAT_FILTER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.save_json"><code class="docutils literal notranslate"><span class="pre">ResultExporter.save_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.export_multi_format"><code class="docutils literal notranslate"><span class="pre">ResultExporter.export_multi_format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.validate_export_data"><code class="docutils literal notranslate"><span class="pre">ResultExporter.validate_export_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.get_format_from_filter"><code class="docutils literal notranslate"><span class="pre">ResultExporter.get_format_from_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.ensure_extension"><code class="docutils literal notranslate"><span class="pre">ResultExporter.ensure_extension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.save_json_dict"><code class="docutils literal notranslate"><span class="pre">ResultExporter.save_json_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.ResultExporter.format_json_for_display"><code class="docutils literal notranslate"><span class="pre">ResultExporter.format_json_for_display()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#module-src.core.search_replace">Search &amp; Replace</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions"><code class="docutils literal notranslate"><span class="pre">SearchOptions</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions.case_sensitive"><code class="docutils literal notranslate"><span class="pre">SearchOptions.case_sensitive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions.whole_word"><code class="docutils literal notranslate"><span class="pre">SearchOptions.whole_word</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions.regex"><code class="docutils literal notranslate"><span class="pre">SearchOptions.regex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions.compile"><code class="docutils literal notranslate"><span class="pre">SearchOptions.compile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.search_replace.SearchOptions.__init__"><code class="docutils literal notranslate"><span class="pre">SearchOptions.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.search_replace.preserve_case_like"><code class="docutils literal notranslate"><span class="pre">preserve_case_like()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.search_replace.replace_in_text"><code class="docutils literal notranslate"><span class="pre">replace_in_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#module-src.core.insert">Insert Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode"><code class="docutils literal notranslate"><span class="pre">InsertMode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode.LEFT"><code class="docutils literal notranslate"><span class="pre">InsertMode.LEFT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode.RIGHT"><code class="docutils literal notranslate"><span class="pre">InsertMode.RIGHT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode.REPLACE"><code class="docutils literal notranslate"><span class="pre">InsertMode.REPLACE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode.INSERT_ABOVE"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_ABOVE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.insert.InsertMode.INSERT_BELOW"><code class="docutils literal notranslate"><span class="pre">InsertMode.INSERT_BELOW</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.insert.insert_at_line"><code class="docutils literal notranslate"><span class="pre">insert_at_line()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core.html#module-src.core.filters">Filters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.filters.parse_hierarchical_ranges"><code class="docutils literal notranslate"><span class="pre">parse_hierarchical_ranges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.filters.apply_hierarchical_filter"><code class="docutils literal notranslate"><span class="pre">apply_hierarchical_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.filters.extract_scope_content"><code class="docutils literal notranslate"><span class="pre">extract_scope_content()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.filters.Condition"><code class="docutils literal notranslate"><span class="pre">Condition</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.field"><code class="docutils literal notranslate"><span class="pre">Condition.field</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.operator"><code class="docutils literal notranslate"><span class="pre">Condition.operator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.value"><code class="docutils literal notranslate"><span class="pre">Condition.value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.scope_type"><code class="docutils literal notranslate"><span class="pre">Condition.scope_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.scope_value"><code class="docutils literal notranslate"><span class="pre">Condition.scope_value</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.case_sensitive"><code class="docutils literal notranslate"><span class="pre">Condition.case_sensitive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.whole_word"><code class="docutils literal notranslate"><span class="pre">Condition.whole_word</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.use_regex"><code class="docutils literal notranslate"><span class="pre">Condition.use_regex</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.matches"><code class="docutils literal notranslate"><span class="pre">Condition.matches()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../core.html#src.core.filters.Condition.__init__"><code class="docutils literal notranslate"><span class="pre">Condition.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#src.core.filters.filter_files_by_conditions"><code class="docutils literal notranslate"><span class="pre">filter_files_by_conditions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core.html#classes">Classes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rewriter.html">JSON Rewriter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.Obj"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.parse_json_preserving_duplicates_text"><code class="docutils literal notranslate"><span class="pre">parse_json_preserving_duplicates_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.freeze"><code class="docutils literal notranslate"><span class="pre">freeze()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.find_object_block"><code class="docutils literal notranslate"><span class="pre">find_object_block()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_block_to_json_text"><code class="docutils literal notranslate"><span class="pre">ts_block_to_json_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.dedupe"><code class="docutils literal notranslate"><span class="pre">dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.join_keys"><code class="docutils literal notranslate"><span class="pre">join_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.eliminate_duplicates"><code class="docutils literal notranslate"><span class="pre">eliminate_duplicates()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.merge_obj_values"><code class="docutils literal notranslate"><span class="pre">merge_obj_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.exclude_numeric_keys"><code class="docutils literal notranslate"><span class="pre">exclude_numeric_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.skip_empty_values"><code class="docutils literal notranslate"><span class="pre">skip_empty_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.avoid_duplicate_child_keys"><code class="docutils literal notranslate"><span class="pre">avoid_duplicate_child_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.remove_duplicate_array_values"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_array_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.enforce_consistent_case"><code class="docutils literal notranslate"><span class="pre">enforce_consistent_case()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.normalize_escaping"><code class="docutils literal notranslate"><span class="pre">normalize_escaping()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.array_to_object_conversion"><code class="docutils literal notranslate"><span class="pre">array_to_object_conversion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.skip_keys_without_siblings"><code class="docutils literal notranslate"><span class="pre">skip_keys_without_siblings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.remove_duplicate_objects"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_objects()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.dump_ts_node"><code class="docutils literal notranslate"><span class="pre">dump_ts_node()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.dump_ts_obj"><code class="docutils literal notranslate"><span class="pre">dump_ts_obj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.dump_ts_array"><code class="docutils literal notranslate"><span class="pre">dump_ts_array()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.dump_ts_scalar"><code class="docutils literal notranslate"><span class="pre">dump_ts_scalar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.collapse_blank_lines"><code class="docutils literal notranslate"><span class="pre">collapse_blank_lines()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.sanitize_keys_and_values"><code class="docutils literal notranslate"><span class="pre">sanitize_keys_and_values()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_process_full_preserving"><code class="docutils literal notranslate"><span class="pre">ts_process_full_preserving()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.scan_project_references"><code class="docutils literal notranslate"><span class="pre">scan_project_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.build_substitution_map_by_value"><code class="docutils literal notranslate"><span class="pre">build_substitution_map_by_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.update_references_in_project"><code class="docutils literal notranslate"><span class="pre">update_references_in_project()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.extract_all_keys_from_obj"><code class="docutils literal notranslate"><span class="pre">extract_all_keys_from_obj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.create_references"><code class="docutils literal notranslate"><span class="pre">create_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.resolve_references"><code class="docutils literal notranslate"><span class="pre">resolve_references()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#src.rewriter.format_reference"><code class="docutils literal notranslate"><span class="pre">format_reference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#module-src.rewriter.rewriter">Rewriter Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.rewriter.sanitize_keys_and_values"><code class="docutils literal notranslate"><span class="pre">sanitize_keys_and_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.rewriter.ts_process_full_preserving"><code class="docutils literal notranslate"><span class="pre">ts_process_full_preserving()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.rewriter.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#module-src.rewriter.types">Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.types.Obj"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.types.parse_json_preserving_duplicates_text"><code class="docutils literal notranslate"><span class="pre">parse_json_preserving_duplicates_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.types.freeze"><code class="docutils literal notranslate"><span class="pre">freeze()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#id1">Classes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../rewriter.html#src.rewriter.types.JSONNode"><code class="docutils literal notranslate"><span class="pre">JSONNode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../rewriter.html#id0"><code class="docutils literal notranslate"><span class="pre">Obj</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#module-src.rewriter.operations">Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.dedupe"><code class="docutils literal notranslate"><span class="pre">dedupe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.merge_obj_values"><code class="docutils literal notranslate"><span class="pre">merge_obj_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.join_keys"><code class="docutils literal notranslate"><span class="pre">join_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.eliminate_duplicates"><code class="docutils literal notranslate"><span class="pre">eliminate_duplicates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.exclude_numeric_keys"><code class="docutils literal notranslate"><span class="pre">exclude_numeric_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.skip_empty_values"><code class="docutils literal notranslate"><span class="pre">skip_empty_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.avoid_duplicate_child_keys"><code class="docutils literal notranslate"><span class="pre">avoid_duplicate_child_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.remove_duplicate_array_values"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_array_values()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.enforce_consistent_case"><code class="docutils literal notranslate"><span class="pre">enforce_consistent_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.normalize_escaping"><code class="docutils literal notranslate"><span class="pre">normalize_escaping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.array_to_object_conversion"><code class="docutils literal notranslate"><span class="pre">array_to_object_conversion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.skip_keys_without_siblings"><code class="docutils literal notranslate"><span class="pre">skip_keys_without_siblings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.operations.remove_duplicate_objects"><code class="docutils literal notranslate"><span class="pre">remove_duplicate_objects()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#module-src.rewriter.ts_parser">TypeScript Parser</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.strip_bom"><code class="docutils literal notranslate"><span class="pre">strip_bom()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.scan_find_next_lbrace"><code class="docutils literal notranslate"><span class="pre">scan_find_next_lbrace()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.extract_balanced_from"><code class="docutils literal notranslate"><span class="pre">extract_balanced_from()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.find_object_block"><code class="docutils literal notranslate"><span class="pre">find_object_block()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.strip_comments_code"><code class="docutils literal notranslate"><span class="pre">strip_comments_code()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.lift_strings_to_placeholders"><code class="docutils literal notranslate"><span class="pre">lift_strings_to_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.restore_placeholders"><code class="docutils literal notranslate"><span class="pre">restore_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.quote_bare_and_numeric_keys"><code class="docutils literal notranslate"><span class="pre">quote_bare_and_numeric_keys()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.remove_trailing_commas"><code class="docutils literal notranslate"><span class="pre">remove_trailing_commas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.ts_parser.ts_block_to_json_text"><code class="docutils literal notranslate"><span class="pre">ts_block_to_json_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../rewriter.html#module-src.rewriter.serializer">Serializer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.esc_single"><code class="docutils literal notranslate"><span class="pre">esc_single()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.dump_ts_scalar"><code class="docutils literal notranslate"><span class="pre">dump_ts_scalar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.dump_ts_key"><code class="docutils literal notranslate"><span class="pre">dump_ts_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.dump_ts_obj"><code class="docutils literal notranslate"><span class="pre">dump_ts_obj()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.dump_ts_array"><code class="docutils literal notranslate"><span class="pre">dump_ts_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.dump_ts_node"><code class="docutils literal notranslate"><span class="pre">dump_ts_node()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../rewriter.html#src.rewriter.serializer.collapse_blank_lines"><code class="docutils literal notranslate"><span class="pre">collapse_blank_lines()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../translators.html">Translators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.load_translation_dict"><code class="docutils literal notranslate"><span class="pre">load_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.flatten_dict_paths"><code class="docutils literal notranslate"><span class="pre">flatten_dict_paths()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.translate_replace_texts"><code class="docutils literal notranslate"><span class="pre">translate_replace_texts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.apply_scoped_translation"><code class="docutils literal notranslate"><span class="pre">apply_scoped_translation()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.mask_existing_placeholders"><code class="docutils literal notranslate"><span class="pre">mask_existing_placeholders()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.unmask_existing_placeholders"><code class="docutils literal notranslate"><span class="pre">unmask_existing_placeholders()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.process_translate_file"><code class="docutils literal notranslate"><span class="pre">process_translate_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#src.translators.read_translation_dict"><code class="docutils literal notranslate"><span class="pre">read_translation_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#json-translator">JSON Translator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../translators.html#module-src.placeholder_replacer">Placeholder Replacer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#id1">Placeholder Replacer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.flatten_dict"><code class="docutils literal notranslate"><span class="pre">flatten_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.parse_mapping_file"><code class="docutils literal notranslate"><span class="pre">parse_mapping_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.replace_placeholders"><code class="docutils literal notranslate"><span class="pre">replace_placeholders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.backup_file"><code class="docutils literal notranslate"><span class="pre">backup_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.process_file"><code class="docutils literal notranslate"><span class="pre">process_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../translators.html#src.placeholder_replacer.process_directory"><code class="docutils literal notranslate"><span class="pre">process_directory()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extractors.html">Extractors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser"><code class="docutils literal notranslate"><span class="pre">JSXParser</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.TAG_START_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.TAG_START_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.TAG_CLOSE_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.TAG_CLOSE_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.SELF_CLOSE_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.SELF_CLOSE_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.ATTR_DQ_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_DQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.ATTR_SQ_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_SQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.ATTR_BRACE_STRING_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_STRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.ATTR_BRACE_DQSTRING_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_DQSTRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.ATTR_BRACE_EXPR_RE"><code class="docutils literal notranslate"><span class="pre">JSXParser.ATTR_BRACE_EXPR_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.__init__"><code class="docutils literal notranslate"><span class="pre">JSXParser.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.clear_items_and_reset"><code class="docutils literal notranslate"><span class="pre">JSXParser.clear_items_and_reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.match_opening_tag"><code class="docutils literal notranslate"><span class="pre">JSXParser.match_opening_tag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.JSXParser.parse"><code class="docutils literal notranslate"><span class="pre">JSXParser.parse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.ATTR_DQ_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_DQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.ATTR_SQ_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_SQ_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_STRING_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_STRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_DQSTRING_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_DQSTRING_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.ATTR_BRACE_EXPR_RE"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.ATTR_BRACE_EXPR_RE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.__init__"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.GenericScopeParser.parse"><code class="docutils literal notranslate"><span class="pre">GenericScopeParser.parse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor"><code class="docutils literal notranslate"><span class="pre">Extractor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.CONTAINS"><code class="docutils literal notranslate"><span class="pre">Extractor.CONTAINS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.EQUALS"><code class="docutils literal notranslate"><span class="pre">Extractor.EQUALS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.__init__"><code class="docutils literal notranslate"><span class="pre">Extractor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.find_paths_to_key"><code class="docutils literal notranslate"><span class="pre">Extractor.find_paths_to_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.get_subtree_at_path"><code class="docutils literal notranslate"><span class="pre">Extractor.get_subtree_at_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.build_tree_from_path"><code class="docutils literal notranslate"><span class="pre">Extractor.build_tree_from_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.merge_dicts"><code class="docutils literal notranslate"><span class="pre">Extractor.merge_dicts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.prune_to_key"><code class="docutils literal notranslate"><span class="pre">Extractor.prune_to_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.remove_key"><code class="docutils literal notranslate"><span class="pre">Extractor.remove_key()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.remove_key_with_collapse"><code class="docutils literal notranslate"><span class="pre">Extractor.remove_key_with_collapse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.deep_merge"><code class="docutils literal notranslate"><span class="pre">Extractor.deep_merge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.check_value_if_it_is_just_string"><code class="docutils literal notranslate"><span class="pre">Extractor.check_value_if_it_is_just_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.process_text"><code class="docutils literal notranslate"><span class="pre">Extractor.process_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.json_to_js_literal"><code class="docutils literal notranslate"><span class="pre">Extractor.json_to_js_literal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#src.extractors.Extractor.run"><code class="docutils literal notranslate"><span class="pre">Extractor.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../extractors.html#jsx-extractor">JSX Extractor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../extractors.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../extractors.html#text-extractor">Text Extractor</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gui.html">GUI Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui.html#main-application">Main Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#classes">Classes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui.html#docks">Docks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#editor-dock">Editor Dock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#search-dock">Search Dock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#insert-panel">Insert Panel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#json-rewriter-dock">JSON Rewriter Dock</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui.html#layout-manager">Layout Manager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../gui.html#id1">Classes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../utils.html">Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.walk_files"><code class="docutils literal notranslate"><span class="pre">walk_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.read_text"><code class="docutils literal notranslate"><span class="pre">read_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.write_text"><code class="docutils literal notranslate"><span class="pre">write_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.safe_backup_file"><code class="docutils literal notranslate"><span class="pre">safe_backup_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.parse_exclusion_patterns"><code class="docutils literal notranslate"><span class="pre">parse_exclusion_patterns()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.mask_exclusions"><code class="docutils literal notranslate"><span class="pre">mask_exclusions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.unmask_exclusions"><code class="docutils literal notranslate"><span class="pre">unmask_exclusions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.compile_value_union_regex"><code class="docutils literal notranslate"><span class="pre">compile_value_union_regex()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.load_ts_object"><code class="docutils literal notranslate"><span class="pre">load_ts_object()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.dump_ts_object"><code class="docutils literal notranslate"><span class="pre">dump_ts_object()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.strip_export_default"><code class="docutils literal notranslate"><span class="pre">strip_export_default()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.to_json_ish"><code class="docutils literal notranslate"><span class="pre">to_json_ish()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#src.utils.format_removal_statistics"><code class="docutils literal notranslate"><span class="pre">format_removal_statistics()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#module-src.utils.file_utils">File Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.file_utils.walk_files"><code class="docutils literal notranslate"><span class="pre">walk_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.file_utils.read_text"><code class="docutils literal notranslate"><span class="pre">read_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.file_utils.write_text"><code class="docutils literal notranslate"><span class="pre">write_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.file_utils.safe_backup_file"><code class="docutils literal notranslate"><span class="pre">safe_backup_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#module-src.utils.text_utils">Text Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.text_utils.parse_exclusion_patterns"><code class="docutils literal notranslate"><span class="pre">parse_exclusion_patterns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.text_utils.mask_exclusions"><code class="docutils literal notranslate"><span class="pre">mask_exclusions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.text_utils.unmask_exclusions"><code class="docutils literal notranslate"><span class="pre">unmask_exclusions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.text_utils.compile_value_union_regex"><code class="docutils literal notranslate"><span class="pre">compile_value_union_regex()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../utils.html#module-src.utils.ts_utils">TypeScript Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.ts_utils.strip_export_default"><code class="docutils literal notranslate"><span class="pre">strip_export_default()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.ts_utils.to_json_ish"><code class="docutils literal notranslate"><span class="pre">to_json_ish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.ts_utils.load_ts_object"><code class="docutils literal notranslate"><span class="pre">load_ts_object()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../utils.html#src.utils.ts_utils.dump_ts_object"><code class="docutils literal notranslate"><span class="pre">dump_ts_object()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_search"><code class="docutils literal notranslate"><span class="pre">cli_search()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_replace"><code class="docutils literal notranslate"><span class="pre">cli_replace()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_insert"><code class="docutils literal notranslate"><span class="pre">cli_insert()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_translate"><code class="docutils literal notranslate"><span class="pre">cli_translate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_gtranslate"><code class="docutils literal notranslate"><span class="pre">cli_gtranslate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.cli_dedupe"><code class="docutils literal notranslate"><span class="pre">cli_dedupe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.build_parser"><code class="docutils literal notranslate"><span class="pre">build_parser()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.split_globs"><code class="docutils literal notranslate"><span class="pre">split_globs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.parse_conditions"><code class="docutils literal notranslate"><span class="pre">parse_conditions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#src.cli.build_file_list"><code class="docutils literal notranslate"><span class="pre">build_file_list()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#main-cli">Main CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#search-cli">Search CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../cli.html#rewriter-cli">Rewriter CLI</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Clarify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">src.extractors.jsx_parser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.extractors.jsx_parser</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;JSX Parser Module.</span>
+<span class="sd"># pylint: disable=too-many-nested-blocks,no-else-continue,consider-using-in,duplicate-code  # Complex JSX parsing</span>
+
+<span class="sd">Minimal JSX/TSX parser for extracting parameters and attributes from React components.</span>
+<span class="sd">Extracted from add/main.py for use in the Clarify project.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">- Detect opening tags &lt;Tag ...&gt; and self-closing &lt;Tag .../&gt;</span>
+<span class="sd">- Detect closing tags &lt;/Tag&gt;</span>
+<span class="sd">- Extract attributes (key=&quot;...&quot; | key={&#39;...&#39;} | key={...expr...})</span>
+<span class="sd">- Handle nested tags with proper depth tracking</span>
+<span class="sd">- Extract tag content (text and expressions)</span>
+<span class="sd">- Support for both attribute mode and tag-content mode</span>
+
+<span class="sd">Author: Josué Amaral</span>
+<span class="sd">Date: 2025-12-02</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+
+<div class="viewcode-block" id="JSXParser">
+<a class="viewcode-back" href="../../../extractors.html#src.extractors.JSXParser">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">JSXParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Minimal JSX-ish parser to:</span>
+<span class="sd">      - detect opening tags &lt;Tag ...&gt; and self-closing &lt;Tag .../&gt;</span>
+<span class="sd">      - detect closing tags &lt;/Tag&gt;</span>
+<span class="sd">      - detect attributes on opening/self-closing token (key=&quot;...&quot; | key={&#39;...&#39;} | key={...expr...})</span>
+
+<span class="sd">    It builds a stack of open tag names. For each opening/self-closing tag, if the attribute</span>
+<span class="sd">    target matches (--param), we emit a record with the current path + tag, and attr value.</span>
+
+<span class="sd">    This is robust enough for common .tsx/.jsx files (not a full parser).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># open/self close tag</span>
+    <span class="n">TAG_START_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&lt;([A-Za-z_][\w.\-]*)\b&quot;</span><span class="p">)</span>
+
+    <span class="c1"># closing tag</span>
+    <span class="n">TAG_CLOSE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&lt;/\s*([A-Za-z_][\w\.\-]*)\s*&gt;&quot;</span><span class="p">)</span>
+    <span class="c1"># self-closing detection (based on &quot; ... /&gt;&quot;)</span>
+    <span class="n">SELF_CLOSE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/\s*&gt;$&quot;</span><span class="p">)</span>
+
+    <span class="c1"># attribute patterns</span>
+    <span class="c1"># key=&quot;string&quot;</span>
+    <span class="n">ATTR_DQ_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([A-Za-z_][\w\-]*)\s*=\s*&quot;([^&quot;]*)&quot;&#39;</span><span class="p">)</span>
+    <span class="c1"># key=&#39;string&#39;</span>
+    <span class="n">ATTR_SQ_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z_][\w\-]*)\s*=\s*&#39;([^&#39;]*)&#39;&quot;</span><span class="p">)</span>
+    <span class="c1"># key={&#39;string&#39;} (capture literal string inside braces)</span>
+    <span class="n">ATTR_BRACE_STRING_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z_][\w\-]*)\s*=\s*\{\s*&#39;([^&#39;]*)&#39;\s*\}&quot;</span><span class="p">)</span>
+    <span class="n">ATTR_BRACE_DQSTRING_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([A-Za-z_][\w\-]*)\s*=\s*\{\s*&quot;([^&quot;]*)&quot;\s*\}&#39;</span><span class="p">)</span>
+    <span class="c1"># key={ expression } fallback</span>
+    <span class="n">ATTR_BRACE_EXPR_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([A-Za-z_][\w\-]*)\s*=\s*\{([^}]*)\}&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JSXParser.__init__">
+<a class="viewcode-back" href="../../../extractors.html#src.extractors.JSXParser.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">match_all</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">is_attribute_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">no_standard</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_name</span> <span class="o">=</span> <span class="n">param_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match_all</span> <span class="o">=</span> <span class="n">match_all</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_attribute_mode</span> <span class="o">=</span> <span class="n">is_attribute_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_standard</span> <span class="o">=</span> <span class="n">no_standard</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="JSXParser.clear_items_and_reset">
+<a class="viewcode-back" href="../../../extractors.html#src.extractors.JSXParser.clear_items_and_reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_items_and_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset items list.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_custom_find_matching_close_span</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">from_index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an opening &lt;tag ...&gt; that ends at from_index (i.e., index right after &#39;&gt;&#39;),</span>
+<span class="sd">        return (start, end) of the matching closing token &lt;/tag&gt;, considering nested same-name tags.</span>
+<span class="sd">        If not found, return None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">from_index</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">open_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;&lt;\s*</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2">\b&quot;</span><span class="p">)</span>
+        <span class="n">close_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;&lt;/\s*</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2">\s*&gt;&quot;</span><span class="p">)</span>
+        <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">apostrophe</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># pylint: disable=invalid-name  # JSX delimiter constants</span>
+        <span class="n">GREATER_THAN</span> <span class="o">=</span> <span class="s2">&quot;&gt;&quot;</span>
+        <span class="n">LOWER_THAN</span> <span class="o">=</span> <span class="s2">&quot;&lt;&quot;</span>
+        <span class="n">greater_than_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">lower_than_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">difference_appearance_signs</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">brace_depth</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+
+            <span class="n">mclose</span> <span class="o">=</span> <span class="n">close_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mclose</span> <span class="ow">and</span> <span class="n">in_quote</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">apostrophe</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">depth</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="n">mclose</span><span class="o">.</span><span class="n">start</span><span class="p">(),</span> <span class="n">mclose</span><span class="o">.</span><span class="n">end</span><span class="p">())</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">mclose</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+                <span class="k">continue</span>
+            <span class="c1"># quick check for an opening same-name tag at i (increases depth)</span>
+            <span class="n">mopen</span> <span class="o">=</span> <span class="n">open_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mopen</span> <span class="ow">and</span> <span class="n">in_quote</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">apostrophe</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                <span class="c1"># skip forward to the end &#39;&gt;&#39; of this opening to avoid false matches inside attributes</span>
+                <span class="n">m2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_opening_tag</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">m2</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">m2</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+                <span class="k">continue</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">from_index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ch</span> <span class="o">==</span> <span class="n">GREATER_THAN</span> <span class="ow">and</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[//\w\&lt;\}\d]&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">ch</span> <span class="o">==</span> <span class="n">LOWER_THAN</span> <span class="ow">and</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[//\w\&gt;]&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="p">):</span>
+
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">GREATER_THAN</span><span class="p">:</span>
+                        <span class="n">greater_than_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">LOWER_THAN</span><span class="p">:</span>
+                        <span class="n">lower_than_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="n">difference_appearance_signs</span> <span class="o">=</span> <span class="n">lower_than_count</span> <span class="o">-</span> <span class="n">greater_than_count</span>
+
+            <span class="k">if</span> <span class="n">difference_appearance_signs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">in_quote</span> <span class="ow">or</span> <span class="n">apostrophe</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                        <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">apostrophe</span><span class="p">:</span>
+                        <span class="n">apostrophe</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">apostrophe</span><span class="p">:</span>
+                        <span class="n">in_quote</span> <span class="o">=</span> <span class="n">ch</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                        <span class="n">brace_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">brace_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">brace_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">in_quote</span><span class="p">:</span>
+                        <span class="n">apostrophe</span> <span class="o">=</span> <span class="n">ch</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_matching_close_span</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">from_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an opening &lt;tag ...&gt; that ends at from_index (i.e., index right after &#39;&gt;&#39;),</span>
+<span class="sd">        return (start, end) of the matching closing token &lt;/tag&gt;, considering nested same-name tags.</span>
+<span class="sd">        If not found, return None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">from_index</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">open_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;&lt;\s*</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2">\b&quot;</span><span class="p">)</span>
+        <span class="n">close_pat</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;&lt;/\s*</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s2">\s*&gt;&quot;</span><span class="p">)</span>
+        <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">brace_depth</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="c1"># quick check for a closing tag at i</span>
+            <span class="n">mclose</span> <span class="o">=</span> <span class="n">close_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mclose</span> <span class="ow">and</span> <span class="n">in_quote</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">depth</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="n">mclose</span><span class="o">.</span><span class="n">start</span><span class="p">(),</span> <span class="n">mclose</span><span class="o">.</span><span class="n">end</span><span class="p">())</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">mclose</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># quick check for an opening same-name tag at i (increases depth)</span>
+            <span class="n">mopen</span> <span class="o">=</span> <span class="n">open_pat</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mopen</span> <span class="ow">and</span> <span class="n">in_quote</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                <span class="c1"># skip forward to the end &#39;&gt;&#39; of this opening to avoid false matches inside attributes</span>
+                <span class="n">m2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_opening_tag</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">m2</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">m2</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+                <span class="k">continue</span>
+
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">in_quote</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="n">ch</span>
+                <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                    <span class="n">brace_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">brace_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">brace_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="JSXParser.match_opening_tag">
+<a class="viewcode-back" href="../../../extractors.html#src.extractors.JSXParser.match_opening_tag">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">match_opening_tag</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a dict with:</span>
+<span class="sd">        - tag: tag name (str)</span>
+<span class="sd">        - attrs: full raw attributes string (str)</span>
+<span class="sd">        - self_closing: bool</span>
+<span class="sd">        - start: start index of &#39;&lt;&#39;</span>
+<span class="sd">        - end: index just after the closing &#39;&gt;&#39; of this opening tag</span>
+<span class="sd">        Returns None if no opening tag is found from `start` onward.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">TAG_START_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+        <span class="n">attrs_start</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">brace_depth</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">in_quote</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="n">ch</span>
+                <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                    <span class="n">brace_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">brace_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">brace_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                    <span class="n">raw_attrs</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">attrs_start</span><span class="p">:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+                    <span class="n">self_closing</span> <span class="o">=</span> <span class="n">raw_attrs</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">self_closing</span><span class="p">:</span>
+                        <span class="n">raw_attrs</span> <span class="o">=</span> <span class="n">raw_attrs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+                    <span class="k">return</span> <span class="p">{</span>
+                        <span class="s2">&quot;tag&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span>
+                        <span class="s2">&quot;attrs&quot;</span><span class="p">:</span> <span class="n">raw_attrs</span><span class="p">,</span>
+                        <span class="s2">&quot;self_closing&quot;</span><span class="p">:</span> <span class="n">self_closing</span><span class="p">,</span>
+                        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">(),</span>
+                        <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="p">}</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_strip_tag_tokens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove every &#39;&lt;...&gt;&#39; token from s, preserving the text outside tags.</span>
+<span class="sd">        Handles quoted strings and brace depth inside a tag to avoid premature &#39;&gt;&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span>
+                <span class="c1"># skip a full tag token &lt;...&gt;</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">brace_depth</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                    <span class="n">char</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">in_quote</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                            <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                            <span class="n">in_quote</span> <span class="o">=</span> <span class="n">char</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                            <span class="n">brace_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">brace_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">brace_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">break</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># drop the whole &lt;...&gt; token</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">j</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_non_tag_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        From a tag&#39;s inner source (original, unmodified), produce a list of:</span>
+<span class="sd">        - visible text lines (non-empty, normalized), and</span>
+<span class="sd">        - non-JSX brace expressions (e.g., {dynamicGreeting}), preserving braces.</span>
+
+<span class="sd">        For brace bodies that contain JSX (&#39;&lt;&#39;), we DO NOT emit the expression itself;</span>
+<span class="sd">        instead we recursively extract non-tag items from inside the brace body so we still</span>
+<span class="sd">        pick up human-visible text nested in JSX.</span>
+
+<span class="sd">        Items are returned in source order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">emit_text_segment</span><span class="p">(</span><span class="n">seg</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># Collapse whitespace per line and emit non-empty lines that contain letters/digits</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()]</span>
+            <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ln</span> <span class="ow">and</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[A-Za-z0-9]&quot;</span><span class="p">,</span> <span class="n">ln</span><span class="p">):</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ln</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># 1) JSX tag token: skip the entire &lt;...&gt; (opening/closing/self-closing)</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">brace_depth</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="c1"># skip until matching &#39;&gt;&#39; that is not inside quotes or inner braces</span>
+                <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                    <span class="n">char</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">in_quote</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                            <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                            <span class="n">in_quote</span> <span class="o">=</span> <span class="n">char</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                            <span class="n">brace_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">brace_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">brace_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">continue</span>
+                        <span class="k">if</span> <span class="n">char</span> <span class="o">==</span> <span class="s2">&quot;&gt;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">brace_depth</span><span class="p">:</span>
+                            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">break</span>
+                        <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># drop the whole tag token</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">j</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># 2) Brace expression: read balanced body, then decide</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">body</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_balanced_brace_expr</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># Unbalanced: treat &#39;{&#39; literally as text up to next control char</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">i</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;{&lt;&quot;</span><span class="p">:</span>
+                        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">emit_text_segment</span><span class="p">(</span><span class="n">inner</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">i</span><span class="p">])</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="s2">&quot;&lt;&quot;</span> <span class="ow">in</span> <span class="n">body</span><span class="p">:</span>
+                    <span class="c1"># JSX inside; recurse to collect nested texts/expressions (but NOT this expr token)</span>
+                    <span class="n">nested</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_non_tag_items</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nested</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Non-JSX expression → keep as literal with braces</span>
+                    <span class="n">expr</span> <span class="o">=</span> <span class="s2">&quot;{&quot;</span> <span class="o">+</span> <span class="n">body</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">j2</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># 3) Plain text region until next control char</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;{&lt;&quot;</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">emit_text_segment</span><span class="p">(</span><span class="n">inner</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">items</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_balanced_brace_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read a balanced expression that starts at s[start] == &#39;{&#39; and return</span>
+<span class="sd">        (content_without_braces, position_after_expression).</span>
+
+<span class="sd">        Maintains brace balance and respects quoted strings with escapes.</span>
+<span class="sd">        Raises ValueError if the expression is not closed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">s</span><span class="p">[</span><span class="n">start</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">in_quote</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">in_quote</span><span class="p">:</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                    <span class="n">in_quote</span> <span class="o">=</span> <span class="n">ch</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;{&quot;</span><span class="p">:</span>
+                    <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+                    <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">depth</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">start</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i</span><span class="p">],</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unbalanced brace expression&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JSXParser.parse">
+<a class="viewcode-back" href="../../../extractors.html#src.extractors.JSXParser.parse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stack</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse JSX/TSX text and yield tuples of (stack, tag, key_matched, value).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text: JSX/TSX source code</span>
+<span class="sd">            stack: Current tag stack (for recursive calls)</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Tuples of (stack_path, tag_name, attribute_key, attribute_value)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">stack</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">mclose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG_CLOSE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mclose</span><span class="p">:</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">mclose</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">stack</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
+                        <span class="n">stack</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[:</span><span class="n">j</span><span class="p">]</span>
+                        <span class="k">break</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">mclose</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+                <span class="k">continue</span>
+
+            <span class="n">mopen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_opening_tag</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mopen</span><span class="p">:</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;tag&quot;</span><span class="p">]</span>
+                <span class="n">attrs_src</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;attrs&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">is_self</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;self_closing&quot;</span><span class="p">]</span>
+                <span class="n">have_close_tag</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">rf</span><span class="s2">&quot;&lt;/\s*(</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">)\s*&gt;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+                <span class="c1"># =========================</span>
+                <span class="c1"># TAG-CONTENT MODE (UNCHECKED)</span>
+                <span class="c1"># =========================</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_attribute_mode</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_all</span> <span class="ow">or</span> <span class="p">(</span><span class="n">tag</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_name</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">is_self</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">have_close_tag</span><span class="p">:</span>
+                            <span class="n">inner</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                            <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="n">span</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">span</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_custom_find_matching_close_span</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">])</span>
+                            <span class="n">inner</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span> <span class="p">:</span> <span class="n">span</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">if</span> <span class="n">span</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                            <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_non_tag_items</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">inner</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_standard</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">stack</span><span class="p">):</span>
+                                <span class="k">yield</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+                        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                            <span class="n">new_item</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                            <span class="k">if</span> <span class="n">new_item</span> <span class="ow">and</span> <span class="n">new_item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_item</span><span class="p">)</span>
+                                <span class="k">yield</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stack</span><span class="p">),</span> <span class="n">tag</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">new_item</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">is_self</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">span</span><span class="p">:</span>
+                            <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                            <span class="n">i</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">i</span> <span class="o">=</span> <span class="n">span</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="n">stack</span> <span class="ow">and</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
+                                <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                        <span class="k">continue</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">is_self</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">have_close_tag</span><span class="p">:</span>
+                            <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                        <span class="n">i</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+                        <span class="k">continue</span>
+
+                <span class="c1"># =========================</span>
+                <span class="c1"># ATTRIBUTE MODE (CHECKED)</span>
+                <span class="c1"># =========================</span>
+                <span class="n">key_matched</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">value_text</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="k">if</span> <span class="n">attrs_src</span><span class="p">:</span>
+                    <span class="c1"># string-like values first</span>
+                    <span class="k">for</span> <span class="n">rx</span> <span class="ow">in</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ATTR_DQ_RE</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ATTR_SQ_RE</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ATTR_BRACE_STRING_RE</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ATTR_BRACE_DQSTRING_RE</span><span class="p">,</span>
+                    <span class="p">):</span>
+                        <span class="k">for</span> <span class="n">am</span> <span class="ow">in</span> <span class="n">rx</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">attrs_src</span><span class="p">):</span>
+                            <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">am</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">am</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_all</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_name</span><span class="p">):</span>
+                                <span class="n">key_matched</span><span class="p">,</span> <span class="n">value_text</span> <span class="o">=</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span>
+                                <span class="k">break</span>
+                        <span class="k">if</span> <span class="n">key_matched</span><span class="p">:</span>
+                            <span class="k">break</span>
+
+                    <span class="c1"># balanced { ... } expressions (scanner)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">key_matched</span><span class="p">:</span>
+                        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">attrs_src</span><span class="p">):</span>
+                            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\s*([A-Za-z_][\w\-]*)\s*=\s*\{&quot;</span><span class="p">,</span> <span class="n">attrs_src</span><span class="p">[</span><span class="n">j</span><span class="p">:])</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+                                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="k">continue</span>
+                            <span class="n">k</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                            <span class="n">brace_start</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="n">expr</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_balanced_brace_expr</span><span class="p">(</span><span class="n">attrs_src</span><span class="p">,</span> <span class="n">brace_start</span><span class="p">)</span>
+                            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="k">continue</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_all</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_name</span><span class="p">):</span>
+                                <span class="n">key_matched</span><span class="p">,</span> <span class="n">value_text</span> <span class="o">=</span> <span class="n">k</span><span class="p">,</span> <span class="n">expr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                                <span class="k">break</span>
+                            <span class="n">j</span> <span class="o">=</span> <span class="n">j2</span>
+
+                <span class="k">yield</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stack</span><span class="p">),</span> <span class="n">tag</span><span class="p">,</span> <span class="n">key_matched</span><span class="p">,</span> <span class="n">value_text</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">is_self</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">have_close_tag</span><span class="p">:</span>
+                    <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">mopen</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span>
+                <span class="k">continue</span>
+
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Josue Amaral.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
