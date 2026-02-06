@@ -25,6 +25,11 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 
+
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 @dataclass
 class ReferenceMatch:
     """Represents a found reference in a file."""
@@ -122,7 +127,7 @@ def scan_project_references(
                         references[ref].append(ref_match)
 
             except Exception as e:  # pylint: disable=broad-exception-caught  # File reading robustness
-                print(f"Warning: Could not read {filepath}: {e}")
+                logger.error(f"Warning: Could not read {filepath}: {e}")
                 continue
 
     return references
@@ -274,7 +279,7 @@ def apply_substitutions_to_file(
         return substitutions_made
 
     except Exception as e:  # pylint: disable=broad-exception-caught  # File update robustness
-        print(f"Error updating {filepath}: {e}")
+        logger.error(f"Error updating {filepath}: {e}")
         return 0
 
 

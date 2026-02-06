@@ -18,6 +18,9 @@ import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List
 from pathlib import Path
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class MergeManager:
@@ -238,7 +241,7 @@ class MergeManager:
             return backup_path
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Catch-all for backup robustness
-            print(f"Warning: Failed to create backup: {e}")
+            logger.warning(f"Failed to create backup: {e}")
             return None
 
     def _rotate_backups(self, file_path: str) -> None:
@@ -269,7 +272,7 @@ class MergeManager:
                 os.remove(oldest)
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Catch-all for rotation robustness
-            print(f"Warning: Failed to rotate backups: {e}")
+            logger.warning(f"Failed to rotate backups: {e}")
 
     def _validate_permissions(self, file_path: str) -> Tuple[bool, str]:
         """
@@ -369,5 +372,5 @@ class MergeManager:
             return backup_files
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Catch-all for listing robustness
-            print(f"Warning: Failed to list backups: {e}")
+            logger.warning(f"Failed to list backups: {e}")
             return []

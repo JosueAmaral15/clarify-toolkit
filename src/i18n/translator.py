@@ -25,6 +25,11 @@ from typing import Dict, Optional
 from PySide6.QtCore import QObject, Signal
 
 
+
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class Translator(QObject):
     """Singleton translator with runtime language switching."""
 
@@ -108,7 +113,7 @@ class Translator(QObject):
             return "en"
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Fallback to English on any error
-            print(f"Error detecting system locale: {e}")
+            logger.error(f"Error detecting system locale: {e}")
             return "en"
 
     def _load_language(self, lang: str) -> None:
@@ -121,7 +126,7 @@ class Translator(QObject):
         translation_file = i18n_dir / f"{lang}.json"
 
         if not translation_file.exists():
-            print(f"Warning: Translation file not found: {translation_file}")
+            logger.error(f"Warning: Translation file not found: {translation_file}")
             self._translations[lang] = {}
             return
 
@@ -129,7 +134,7 @@ class Translator(QObject):
             with open(translation_file, 'r', encoding='utf-8') as f:
                 self._translations[lang] = json.load(f)
         except Exception as e:  # pylint: disable=broad-exception-caught  # Translation loading errors vary
-            print(f"Error loading translation {lang}: {e}")
+            logger.error(f"Error loading translation {lang}: {e}")
             self._translations[lang] = {}
 
     def get(self, key: str, default: Optional[str] = None) -> str:
@@ -169,7 +174,7 @@ class Translator(QObject):
             lang: Language code ('en', 'pt_BR')
         """
         if lang not in self._available_languages:
-            print(f"Warning: Language '{lang}' not available")
+            logger.error(f"Warning: Language '{lang}' not available")
             return
 
         if lang == self._current_language:

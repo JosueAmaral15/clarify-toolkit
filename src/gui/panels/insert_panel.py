@@ -32,6 +32,7 @@ Date: 2025
 # pylint: disable=missing-function-docstring  # Internal UI methods
 # pylint: disable=unnecessary-lambda  # Qt signal/slot pattern
 # pylint: disable=unnecessary-pass  # Placeholder for future code
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 from __future__ import annotations
 import os
@@ -53,6 +54,7 @@ from ...core import SearchOptions, Condition, filter_files_by_conditions, Insert
 
 # Utilities
 from ...utils import walk_files, read_text, write_text
+from ...utils.logger import get_logger
 from ...i18n.translator import tr, tooltip_tr
 
 # Components from this package
@@ -63,6 +65,8 @@ from .search_worker import SearchWorker
 from ..progress import OperationHistory
 
 # Thread management
+
+logger = get_logger(__name__)
 
 
 class InsertPanel(QWidget):
@@ -317,7 +321,7 @@ class InsertPanel(QWidget):
             return True
 
         except Exception as e:
-            print(f"[ERROR] Failed to emit insert_requested: {e}")
+            logger.error(f"Failed to emit insert_requested: {e}")
             return False
 
     def _add_condition_row(self):
@@ -604,7 +608,7 @@ class InsertPanel(QWidget):
         """Handle search errors."""
         if self._current_progress_widget:
             self._current_progress_widget.add_log(f"ERROR: {msg}")
-        print(msg)
+        logger.error(msg)
 
     def _on_search_done(self, matches: dict):
         """Handle search completion with history tracking (v2.5.0+)."""
@@ -630,7 +634,7 @@ class InsertPanel(QWidget):
                 },
             )
         except Exception as e:
-            print(f"Failed to save history: {e}")
+            logger.error(f"Failed to save history: {e}")
 
     # def _do_search(self):
     #     try:
@@ -756,7 +760,7 @@ class InsertPanel(QWidget):
                     write_text(file_path, new)
                     count += 1
             except Exception as exc:
-                print(f"[WARN] {file_path}: {exc}", file=sys.stderr)
+                logger.warning(f"{file_path}: {exc}")
                 skipped += 1
 
         msg = f"Modified files: {count}"

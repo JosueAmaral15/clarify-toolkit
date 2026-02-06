@@ -38,7 +38,7 @@ class OperationHistory:
             with open(self.history_file, 'w', encoding='utf-8') as f:
                 json.dump(self.history[-1000:], f, indent=2)  # Keep last 1000
         except Exception as e:
-            print(f"Failed to save history: {e}")
+            logger.error(f"Failed to save history: {e}")
 
     def add_operation(self, operation_type: str, details: dict):
         """Add operation to history."""

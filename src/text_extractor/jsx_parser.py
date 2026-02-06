@@ -17,6 +17,9 @@ Date: 2025-11-24
 # pylint: disable=broad-exception-caught  # File parsing robustness
 
 import re
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 from typing import List, Tuple, Optional, Dict
 
 
@@ -42,7 +45,7 @@ class JSXParser:
     Usage:
         parser = JSXParser(content)
         for tag_name, attrs, tag_stack in parser.parse():
-            print(f"{tag_stack} -> {tag_name}: {attrs}")
+            logger.error(f"{tag_stack} -> {tag_name}: {attrs}")
     """
 
     # Regex patterns

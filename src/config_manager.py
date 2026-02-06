@@ -13,6 +13,7 @@ Features:
 - Priority: CLI args > config.yaml > defaults
 - Thread-safe operations
 """
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 import json
 import shutil
@@ -22,6 +23,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 try:
     from PySide6.QtCore import QSettings
@@ -192,13 +197,13 @@ class ConfigManager:
             self._validate()
 
         except yaml.YAMLError as e:
-            print(f"Warning: Invalid YAML in {self.config_file}: {e}")
-            print("Using defaults and backing up invalid file")
+            logger.warning(f"Invalid YAML in {self.config_file}: {e}")
+            logger.warning("Using defaults and backing up invalid file")
             self._backup_file(suffix="_invalid")
             self.config = self._deep_copy(self.DEFAULTS)
             self.save()
         except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - fallback to defaults
-            print(f"Error loading config: {e}")
+            logger.error(f"Error loading config: {e}")
             self.config = self._deep_copy(self.DEFAULTS)
 
     def _validate(self) -> None:
@@ -210,8 +215,8 @@ class ConfigManager:
             # jsonschema not installed, skip validation
             pass
         except Exception as e:  # pylint: disable=broad-exception-caught  # Validation errors vary
-            print(f"Warning: Config validation failed: {e}")
-            print("Some settings may be invalid")
+            logger.warning(f"Config validation failed: {e}")
+            logger.warning("Some settings may be invalid")
 
     def save(self) -> None:
         """Save configuration to YAML file."""
@@ -231,7 +236,7 @@ class ConfigManager:
                 yaml.dump(self.config, f, default_flow_style=False, sort_keys=False)
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # File write errors vary
-            print(f"Error saving config: {e}")
+            logger.error(f"Error saving config: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -371,7 +376,7 @@ class ConfigManager:
                 for old_backup in backups[:-5]:
                     old_backup.unlink()
         except Exception as e:  # pylint: disable=broad-exception-caught  # Backup is non-critical
-            print(f"Warning: Failed to create backup: {e}")
+            logger.warning(f"Failed to create backup: {e}")
 
     def _migrate_from_legacy(self) -> bool:
         """
@@ -431,12 +436,12 @@ class ConfigManager:
                     migrated_any = True
 
             if migrated_any:
-                print("✅ Migrated settings from QSettings")
+                logger.info("Migrated settings from QSettings")
 
             return migrated_any
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Migration is non-critical
-            print(f"Warning: QSettings migration failed: {e}")
+            logger.warning(f"QSettings migration failed: {e}")
             return False
 
     def _migrate_from_json(self, json_file: Path) -> bool:
@@ -467,12 +472,12 @@ class ConfigManager:
             backup = json_file.with_suffix(".json.migrated")
             shutil.move(json_file, backup)
 
-            print(f"✅ Migrated settings from {json_file}")
-            print(f"   Backup saved to {backup}")
+            logger.info(f"Migrated settings from {json_file}")
+            logger.info(f"Backup saved to {backup}")
             return True
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Migration is non-critical
-            print(f"Warning: JSON migration failed: {e}")
+            logger.warning(f"JSON migration failed: {e}")
             return False
 
     def _migrate_from_configparser(self, conf_file: Path) -> bool:
@@ -490,12 +495,12 @@ class ConfigManager:
             backup = conf_file.with_suffix(".conf.migrated")
             shutil.move(conf_file, backup)
 
-            print(f"✅ Migrated settings from {conf_file}")
-            print(f"   Backup saved to {backup}")
+            logger.info(f"Migrated settings from {conf_file}")
+            logger.info(f"Backup saved to {backup}")
             return True
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # Migration is non-critical
-            print(f"Warning: ConfigParser migration failed: {e}")
+            logger.warning(f"ConfigParser migration failed: {e}")
             return False
 
 

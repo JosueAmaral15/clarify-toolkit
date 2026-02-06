@@ -10,6 +10,10 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from PySide6.QtCore import QSettings
 
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class HistoryManager:
     """Gerenciador de histórico de operações."""
@@ -129,7 +133,7 @@ class HistoryManager:
             return True
 
         except Exception as e:
-            print(f"Erro ao exportar histórico: {e}")
+            logger.error(f"Erro ao exportar histórico: {e}")
             return False
 
     def format_entry_display(self, entry: Dict[str, Any]) -> str:

@@ -23,6 +23,11 @@ from PySide6.QtWidgets import QDockWidget
 from PySide6.QtCore import QSettings
 
 
+
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 class PluginBase:
     """
     Base class for Clarify plugins.
@@ -64,11 +69,11 @@ class PluginBase:
                 )
 
             def run_action(self):
-                print("Action executed!")
+                logger.error("Action executed!")
 
             def on_event(self, event_name, data):
                 if event_name == "file_opened":
-                    print(f"File opened: {data['path']}")
+                    logger.error(f"File opened: {data['path']}")
     """
 
     # Plugin metadata (override in subclass)

@@ -53,7 +53,7 @@ class SettingsManager:
                     # Merge with defaults (in case new settings were added)
                     self.settings.update(loaded)
             except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - keep defaults on error
-                print(f"Warning: Failed to load settings: {e}")
+                logger.warning(f"Failed to load settings: {e}")
                 # Keep defaults on error
 
     def save(self) -> None:
@@ -65,7 +65,7 @@ class SettingsManager:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=2)
         except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - fail gracefully
-            print(f"Error: Failed to save settings: {e}")
+            logger.error(f"Failed to save settings: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a setting value."""
