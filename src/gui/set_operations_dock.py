@@ -33,6 +33,7 @@ from src.accessibility_manager import AccessibilityManager
 from src.core.result_exporter import ResultExporter
 from src.core.set_operation_executor import SetOperationExecutor
 from src.i18n.translator import tr, tooltip_tr
+from src.utils.logger import get_logger
 
 from ..history_manager import HistoryManager
 from .base_dock import BaseDock
@@ -40,6 +41,8 @@ from .widgets import FileSelectionWidget, OperationOptionsWidget
 from .history_dialog import HistoryDialog
 from ..presets_manager import PresetsManager
 from .presets_dialog import PresetsDialog
+
+logger = get_logger(__name__)
 
 
 class SetOperationsDock(BaseDock):

@@ -31,6 +31,9 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n.translator import tr
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ResultsTree(QTreeWidget):
