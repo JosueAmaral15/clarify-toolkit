@@ -63,10 +63,12 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
     return [file_root]
 
 
-def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
+def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_direction: str = "before") -> str:
     """
     Truncate text by char limit. If limit is 'all' or None -> return original.
-    If avoid_cut=True, cut at the last whitespace boundary <= limit (when possible).
+    If avoid_cut=True, cut at whitespace boundary:
+      - 'before': cut at last whitespace <= limit (existing behavior)
+      - 'after': cut at next whitespace >= limit (new behavior)
     """
     # pylint: disable=too-many-return-statements  # Multiple early exit conditions
     if not text or limit in (None, 'all', 'ALL', 'All'):
@@ -84,19 +86,29 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
     if not avoid_cut:
         return sub
 
-    # If we ended already on whitespace, just strip trailing whitespace.
-    if sub[-1].isspace():
-        return sub.rstrip()
+    # Direction-aware cutting
+    if avoid_cut_direction == "after":
+        # Search AFTER limit for next whitespace
+        for i in range(n, len(text)):
+            if text[i].isspace():
+                return text[:i].rstrip()
+        # No whitespace found after limit, return full text
+        return text
+    else:
+        # Original "before" behavior: cut at last whitespace before limit
+        # If we ended already on whitespace, just strip trailing whitespace.
+        if sub[-1].isspace():
+            return sub.rstrip()
 
-    # Find the last whitespace run before the cut and cut right before it.
-    m = re.search(r'\s+\S*$', sub, flags=re.UNICODE)
-    if m:
-        cut = m.start()
-        if cut > 0:
-            return sub[:cut].rstrip()
+        # Find the last whitespace run before the cut and cut right before it.
+        m = re.search(r'\s+\S*$', sub, flags=re.UNICODE)
+        if m:
+            cut = m.start()
+            if cut > 0:
+                return sub[:cut].rstrip()
 
-    # Fallback: no whitespace found in the window (a very long first word).
-    return sub
+        # Fallback: no whitespace found in the window (a very long first word).
+        return sub
 
 
 def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
@@ -191,7 +203,8 @@ class AdvancedExtractor:
         case_style: str,
         limit: Optional[str],
         avoid_cut: bool,
-        to_upper: bool,
+        avoid_cut_direction: str = "before",
+        to_upper: bool = False,
         only_strings: bool = False,
         is_attribute_mode: bool = False,
         start_regex: Optional[str] = None,
@@ -216,6 +229,7 @@ class AdvancedExtractor:
             case_style: 'snake'|'camel'|'pascal'|'kebab'
             limit: Character limit for normalization
             avoid_cut: Cut at word boundary
+            avoid_cut_direction: Direction to search for word boundary ('before' or 'after')
             to_upper: Uppercase normalized tokens
             only_strings: Accept only literal strings (no expressions)
             is_attribute_mode: Extract attributes vs tag content
@@ -239,6 +253,7 @@ class AdvancedExtractor:
         self.case_style = case_style
         self.limit = limit
         self.avoid_cut = avoid_cut
+        self.avoid_cut_direction = avoid_cut_direction
         self.to_upper = to_upper
         self.start_regex = start_regex
         self.end_regex = end_regex
@@ -303,7 +318,7 @@ class AdvancedExtractor:
         the value is the original raw_value.
         """
         # Normalize key from the raw value
-        trimmed = smart_truncate(raw_value, self.limit, self.avoid_cut)
+        trimmed = smart_truncate(raw_value, self.limit, self.avoid_cut, self.avoid_cut_direction)
         key = normalize_token(trimmed, self.case_style, self.to_upper) or "text"
 
         # Build small tree: (... path_tokens ...) -> { key: raw_value }
