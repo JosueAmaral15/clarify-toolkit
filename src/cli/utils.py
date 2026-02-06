@@ -18,18 +18,18 @@ from ..core import Condition
 def split_globs(s: Optional[str]) -> List[str]:
     """
     Split glob patterns separated by semicolon or comma.
-    
+
     Args:
         s: String with glob patterns (e.g., "*.ts;*.tsx")
-        
+
     Returns:
         List of individual glob patterns
-        
+
     Example:
         >>> split_globs("*.ts;*.tsx,*.js")
         ['*.ts', '*.tsx', '*.js']
     """
-    if not s: 
+    if not s:
         return []
     return [p.strip() for p in re.split(r"[;,]", s) if p.strip()]
 
@@ -37,14 +37,14 @@ def split_globs(s: Optional[str]) -> List[str]:
 def parse_conditions(items: Optional[List[str]]) -> List[Condition]:
     """
     Parse condition strings into Condition objects.
-    
+
     Args:
         items: List of condition strings in format "FIELD:OP:VALUE"
                e.g., ["content:contains:React", "ext:equals:ts"]
-        
+
     Returns:
         List of Condition objects
-        
+
     Example:
         >>> parse_conditions(["content:contains:React"])
         [Condition(field='content', op='contains', value='React')]
@@ -61,15 +61,15 @@ def parse_conditions(items: Optional[List[str]]) -> List[Condition]:
 def build_file_list(root: str, include_globs: List[str], exclude_globs: List[str]) -> List[str]:
     """
     Build a list of files matching include/exclude patterns.
-    
+
     Args:
         root: Root directory to search
         include_globs: List of patterns to include (empty = all files)
         exclude_globs: List of patterns to exclude
-        
+
     Returns:
         List of file paths matching the criteria
-        
+
     Example:
         >>> build_file_list("./src", ["*.py"], ["*test*.py"])
         ['./src/app.py', './src/utils.py']

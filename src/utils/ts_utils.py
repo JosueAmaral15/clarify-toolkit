@@ -24,13 +24,13 @@ def to_json_ish(src: str) -> str:
     s = strip_export_default(src)
     s = re.sub(r';\s*$', '', s)
     s = re.sub(r'(?m)(^|[{,\s])([A-Za-z_][A-Za-z0-9_]*)\s*:', r'\1"\2":', s)
-    
+
     def _s2d(m):
         inner = m.group(1).replace(r'\"', '"')
         inner = inner.replace(r"\\'", r"\u0027")
         inner = inner.replace("'", r"\u0027")
         return '"' + inner + '"'
-    
+
     s = re.sub(r"'([^'\\]*(?:\\.[^'\\]*)*)'", _s2d, s, flags=re.DOTALL)
     s = re.sub(r',(\s*[}\]])', r'\1', s)
     return s
@@ -49,6 +49,7 @@ def _esc_ts(s: str) -> str:
 
 def dump_ts_object(obj: dict, emit_export_default: bool = True, indent: int = 2) -> str:
     """Deterministic pretty TS object: single-quoted strings, sorted keys, optional export default."""
+    # pylint: disable=too-many-return-statements  # TS value serialization requires type checking
     def _dump(v, lvl=0):
         sp = ' ' * (indent * lvl)
         if v is None:

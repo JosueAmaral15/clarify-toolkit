@@ -46,7 +46,7 @@ def format_removal_statistics(stats: dict) -> str:
             total += count
 
     # If nothing was removed, return empty (Q5-C handled in caller)
-    if total == 0:
+    if not total:
         return ""
 
     # Format final message

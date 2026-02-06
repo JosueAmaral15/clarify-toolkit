@@ -14,6 +14,7 @@ Version: 2.9.4
 
 from typing import Literal
 
+# pylint: disable=no-name-in-module  # Qt dynamic imports
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QApplication
 

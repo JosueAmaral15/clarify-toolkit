@@ -2,22 +2,17 @@
 Operation Presets Dialog
 Dialog para gerenciar presets de operações.
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
 
-from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QListWidget,
-    QMessageBox,
-    QLabel,
-    QInputDialog,
-    QTextEdit,
-    QGroupBox,
-)
+from typing import Any, Dict
+
 from PySide6.QtCore import Qt, Signal
-from typing import Optional, Dict, Any
-from src.i18n.translator import tr
+from PySide6.QtWidgets import (
+    QDialog, QGroupBox, QHBoxLayout, QInputDialog,
+    QLabel, QListWidget, QMessageBox, QPushButton,
+    QTextEdit, QVBoxLayout
+)
 
 
 class PresetsDialog(QDialog):
@@ -36,7 +31,7 @@ class PresetsDialog(QDialog):
         """
         super().__init__(parent)
         self.presets_manager = presets_manager
-        self.setWindowTitle(tr("presets_dialog.title"))
+        self.setWindowTitle("Operation Presets")
         self.resize(700, 500)
 
         self._setup_ui()
@@ -47,7 +42,10 @@ class PresetsDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Label informativo
-        info_label = QLabel("📋 Saved presets for Set Operations\n" "Select a preset to view details or load it")
+        info_label = QLabel(
+            "📋 Saved presets for Set Operations\n"
+            "Select a preset to view details or load it"
+        )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
 
@@ -58,7 +56,7 @@ class PresetsDialog(QDialog):
         layout.addWidget(self.list_widget)
 
         # Área de detalhes
-        details_group = QGroupBox(tr("presets_dialog.group_details"))
+        details_group = QGroupBox("Preset Details")
         details_layout = QVBoxLayout(details_group)
 
         self.details_text = QTextEdit()
@@ -71,27 +69,27 @@ class PresetsDialog(QDialog):
         # Botões de ação
         buttons_layout = QHBoxLayout()
 
-        self.btn_load = QPushButton(tr("presets_dialog.btn_load"))
-        self.btn_load.setToolTip(tr("presets.tooltip_load"))
+        self.btn_load = QPushButton("✅ Load Preset")
+        self.btn_load.setToolTip("Load selected preset into Set Operations")
         self.btn_load.clicked.connect(self._on_load_clicked)
         self.btn_load.setEnabled(False)
         buttons_layout.addWidget(self.btn_load)
 
-        self.btn_rename = QPushButton(tr("presets_dialog.btn_rename"))
-        self.btn_rename.setToolTip(tr("presets.tooltip_rename"))
+        self.btn_rename = QPushButton("✏️ Rename")
+        self.btn_rename.setToolTip("Rename selected preset")
         self.btn_rename.clicked.connect(self._on_rename_clicked)
         self.btn_rename.setEnabled(False)
         buttons_layout.addWidget(self.btn_rename)
 
-        self.btn_delete = QPushButton(tr("presets_dialog.btn_delete"))
-        self.btn_delete.setToolTip(tr("presets.tooltip_delete"))
+        self.btn_delete = QPushButton("🗑️ Delete")
+        self.btn_delete.setToolTip("Delete selected preset")
         self.btn_delete.clicked.connect(self._on_delete_clicked)
         self.btn_delete.setEnabled(False)
         buttons_layout.addWidget(self.btn_delete)
 
         buttons_layout.addStretch()
 
-        self.btn_close = QPushButton(tr("presets_dialog.btn_close"))
+        self.btn_close = QPushButton("Close")
         self.btn_close.clicked.connect(self.accept)
         buttons_layout.addWidget(self.btn_close)
 
@@ -105,7 +103,7 @@ class PresetsDialog(QDialog):
         presets = self.presets_manager.get_presets()
 
         if not presets:
-            self.list_widget.addItem(tr("presets_dialog.no_presets"))
+            self.list_widget.addItem("(No presets saved)")
             return
 
         # Adiciona cada preset
@@ -158,9 +156,18 @@ class PresetsDialog(QDialog):
         """
         try:
             # Mapeamento de símbolos para nomes
-            op_names = {"∩": "Intersection", "∪": "Union", "−": "Difference", "⊕": "Symmetric Difference"}
+            op_names = {
+                "∩": "Intersection",
+                "∪": "Union",
+                "−": "Difference",
+                "⊕": "Symmetric Difference"
+            }
 
-            mode_names = {"key_value": "Key + Value", "full_path_value": "Full Path + Value", "key_only": "Key Only"}
+            mode_names = {
+                "key_value": "Key + Value",
+                "full_path_value": "Full Path + Value",
+                "key_only": "Key Only"
+            }
 
             details = f"""Operation: {op_names.get(preset['operation_type'], preset['operation_type'])}
 Comparison Mode: {mode_names.get(preset['comparison_mode'], preset['comparison_mode'])}
@@ -172,7 +179,7 @@ Options:
   • Ignore Array Order: {'Yes' if preset.get('arrays_ignore_order', False) else 'No'}"""
 
             # Adiciona arquivos favoritos se houver
-            favorite_files = preset.get("favorite_files", [])
+            favorite_files = preset.get('favorite_files', [])
             if favorite_files:
                 details += f"\n\nFavorite Files: {len(favorite_files)} file(s)"
 
@@ -192,7 +199,11 @@ Options:
         preset = self.presets_manager.get_preset(preset_name)
 
         if not preset:
-            QMessageBox.warning(self, "Load Error", "Could not retrieve preset data.")
+            QMessageBox.warning(
+                self,
+                "Load Error",
+                "Could not retrieve preset data."
+            )
             return
 
         # Emite signal para carregar preset
@@ -211,7 +222,12 @@ Options:
         old_name = self.list_widget.item(current_row).text()
 
         # Solicita novo nome
-        new_name, ok = QInputDialog.getText(self, "Rename Preset", "Enter new name:", text=old_name)
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Rename Preset",
+            "Enter new name:",
+            text=old_name
+        )
 
         if not ok or not new_name.strip():
             return
@@ -220,7 +236,11 @@ Options:
 
         # Verifica se nome já existe
         if new_name != old_name and self.presets_manager.get_preset(new_name):
-            QMessageBox.warning(self, "Rename Error", f"A preset named '{new_name}' already exists.")
+            QMessageBox.warning(
+                self,
+                "Rename Error",
+                f"A preset named '{new_name}' already exists."
+            )
             return
 
         # Renomeia
@@ -234,7 +254,11 @@ Options:
             if items:
                 self.list_widget.setCurrentItem(items[0])
         else:
-            QMessageBox.critical(self, "Rename Error", "Failed to rename preset.")
+            QMessageBox.critical(
+                self,
+                "Rename Error",
+                "Failed to rename preset."
+            )
 
     def _on_delete_clicked(self):
         """Callback para deletar preset."""
@@ -249,9 +273,10 @@ Options:
         reply = QMessageBox.question(
             self,
             "Delete Preset",
-            f"Are you sure you want to delete preset '{preset_name}'?\n" "This action cannot be undone.",
+            f"Are you sure you want to delete preset '{preset_name}'?\n"
+            "This action cannot be undone.",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.No
         )
 
         if reply == QMessageBox.Yes:
@@ -259,6 +284,14 @@ Options:
 
             if success:
                 self._load_presets()
-                QMessageBox.information(self, "Preset Deleted", f"Preset '{preset_name}' has been deleted.")
+                QMessageBox.information(
+                    self,
+                    "Preset Deleted",
+                    f"Preset '{preset_name}' has been deleted."
+                )
             else:
-                QMessageBox.critical(self, "Delete Error", "Failed to delete preset.")
+                QMessageBox.critical(
+                    self,
+                    "Delete Error",
+                    "Failed to delete preset."
+                )

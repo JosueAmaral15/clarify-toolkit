@@ -14,6 +14,7 @@ Uses json5 for tolerant parsing when available, with fallback normalization.
 Author: Josué Amaral
 Date: 2025-11-24
 """
+# pylint: disable=broad-exception-caught  # Parsing robustness
 
 import re
 import json
@@ -44,13 +45,13 @@ UNQUOTED_KEY_RE = re.compile(r"(?P<prefix>[\{\s,])(?P<key>[A-Za-z_]\w*)\s*:", re
 def _find_matching_closing_brace(s: str, open_index: int) -> int:
     """
     Find the index of the matching '}' for '{' at open_index.
-    
+
     Respects string literals and escape sequences.
-    
+
     Args:
         s: Source text
         open_index: Index of opening '{'
-        
+
     Returns:
         Index of matching '}', or -1 if not found
     """
@@ -84,7 +85,7 @@ def _find_matching_closing_brace(s: str, open_index: int) -> int:
             depth += 1
         elif ch == "}":
             depth -= 1
-            if depth == 0:
+            if not depth:
                 return i
 
         i += 1
@@ -95,13 +96,13 @@ def _find_matching_closing_brace(s: str, open_index: int) -> int:
 def _parse_js_like_object(obj_literal: str) -> Optional[Dict[str, Any]]:
     """
     Parse a JavaScript-like object literal.
-    
+
     Tries json5 first (handles single quotes, trailing commas, comments).
     Falls back to naive normalization for standard JSON parsing.
-    
+
     Args:
         obj_literal: JavaScript object literal string
-        
+
     Returns:
         Parsed dict, or None if parsing fails
     """
@@ -142,15 +143,15 @@ def _parse_js_like_object(obj_literal: str) -> Optional[Dict[str, Any]]:
 def extract_top_level_objects_from_ts(text: str) -> List[Dict[str, Any]]:
     """
     Extract and parse top-level object literals from TypeScript/JavaScript.
-    
+
     Matches:
         - export const name = { ... }
         - export const name: Type = { ... }
         - export default { ... }
-    
+
     Args:
         text: TypeScript/JavaScript source code
-        
+
     Returns:
         List of parsed object dicts
     """
@@ -162,14 +163,14 @@ def extract_top_level_objects_from_ts(text: str) -> List[Dict[str, Any]]:
             start_brace = s.find("{", m.start())
             if start_brace < 0:
                 continue
-                
+
             end_brace = _find_matching_closing_brace(s, start_brace)
             if end_brace < 0:
                 continue
 
             literal = s[start_brace:end_brace + 1]
             parsed = _parse_js_like_object(literal)
-            
+
             if isinstance(parsed, dict):
                 out.append(parsed)
 
@@ -179,45 +180,45 @@ def extract_top_level_objects_from_ts(text: str) -> List[Dict[str, Any]]:
 def guess_line_number(text: str, dot_path: str) -> Optional[int]:
     """
     Guess the line number where a dot-path key appears in source text.
-    
+
     Strategy:
     1. Look for exact "key:" pattern at line start
     2. Fallback to any word-bounded occurrence of the key
-    
+
     Args:
         text: Source file content
         dot_path: Dot-path like "a.b.c" (uses last segment)
-        
+
     Returns:
         1-based line number, or None if not found
     """
     last_segment = dot_path.split(".")[-1].replace("[", "").replace("]", "")
-    
+
     # Try exact pattern: "key": or key: at line start
     pattern1 = re.compile(
-        r'(?m)^\s*(?:"|\')?%s(?:"|\')?\s*:' % re.escape(last_segment)
+        rf'(?m)^\s*(?:"|\')?{re.escape(last_segment)}(?:"|\')?\s*:'
     )
     match = pattern1.search(text)
     if match:
         return text.count("\n", 0, match.start()) + 1
-    
+
     # Fallback: any word-bounded occurrence
-    pattern2 = re.compile(r'(?<!\w)%s(?!\w)' % re.escape(last_segment))
+    pattern2 = re.compile(rf'(?<!\w){re.escape(last_segment)}(?!\w)')
     match2 = pattern2.search(text)
     if match2:
         return text.count("\n", 0, match2.start()) + 1
-    
+
     return None
 
 
 def js_like_dump(obj: Any, indent: int = 2) -> str:
     """
     Pretty-print object in JavaScript style (unquoted keys).
-    
+
     Args:
         obj: Object to format
         indent: Indentation spaces per level
-        
+
     Returns:
         Formatted string with JS-style syntax
     """
@@ -237,5 +238,5 @@ def js_like_dump(obj: Any, indent: int = 2) -> str:
         if isinstance(v, str):
             return '"' + v.replace('"', '\\"') + '"'
         return str(v)
-    
+
     return _fmt(obj, 0)

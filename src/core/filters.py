@@ -3,7 +3,7 @@
 import os
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence, Optional
+from typing import Iterable, List, Sequence
 
 from ..utils.file_utils import read_text
 
@@ -25,10 +25,10 @@ OPS = {
 def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
     """
     Parse hierarchical include/exclude ranges from scope_value.
-    
+
     Syntax: "include div#test1, exclude #test2, include #test3"
     Returns: [("include", "div#test1"), ("exclude", "#test2"), ("include", "#test3")]
-    
+
     Supports:
     - include/exclude directives
     - ID selectors: #myId
@@ -37,14 +37,14 @@ def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
     """
     if not scope_value:
         return []
-    
+
     ranges = []
     parts = [p.strip() for p in scope_value.split(",")]
-    
+
     for part in parts:
         if not part:
             continue
-        
+
         # Parse "include/exclude selector"
         tokens = part.split(None, 1)  # Split on first whitespace
         if len(tokens) == 2:
@@ -55,34 +55,34 @@ def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
         elif len(tokens) == 1:
             # No explicit action, default to include
             ranges.append(("include", tokens[0].strip()))
-    
+
     return ranges
 
 
 def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_regex: bool = False) -> str:
     """
     Apply hierarchical include/exclude filtering to HTML/XML content.
-    
+
     Args:
         text: The HTML/XML text to filter
         ranges: List of (action, selector) tuples from parse_hierarchical_ranges
         use_regex: Whether to treat selectors as regex patterns
-    
+
     Returns:
         Filtered text containing only included sections minus excluded sections
     """
     if not ranges:
         return text
-    
+
     results = []
-    
+
     for action, selector in ranges:
         if use_regex:
             # Treat selector as regex pattern
             try:
                 pattern = re.compile(selector, re.DOTALL | re.IGNORECASE)
                 matches = pattern.findall(text)
-                
+
                 if action == "include":
                     results.extend(matches)
                 elif action == "exclude":
@@ -104,32 +104,33 @@ def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_rege
             else:
                 # Plain tag selector
                 pattern = rf'<{re.escape(selector)}[^>]*>(.*?)</{re.escape(selector)}>'
-            
+
             matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
-            
+
             if action == "include":
                 results.extend(matches)
             elif action == "exclude":
                 # Remove excluded content from results
                 for match in matches:
                     results = [r for r in results if r != match]
-    
+
     return '\n'.join(results) if results else ""
 
 
 def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use_regex: bool = False) -> str:
     """
     Extract content within specified scope delimiters.
-    
+
     Args:
         text: The full text to extract from
-        scope_type: Type of scope ("brackets", "braces", "custom", "tag", "specific-tag", "hierarchical", "" for no scope)
-        scope_value: Additional value for custom delimiters, specific tag name, or hierarchical ranges
+        scope_type: Type of scope ("brackets", "braces", "custom", "tag",
+            "specific-tag", "hierarchical", "" for no scope)
+        scope_value: Additional value for custom delimiters, tag name, ranges
         use_regex: Whether to treat patterns as regex (for hierarchical ranges)
-    
+
     Returns:
         Concatenated content within all matching scopes
-    
+
     Hierarchical Ranges Syntax (scope_type="hierarchical"):
         "include div#test1, exclude #test2, include #test3"
         - include: Add matching content
@@ -138,19 +139,19 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
     """
     if not scope_type or scope_type == "none":
         return text
-    
+
     # Hierarchical include/exclude ranges
     if scope_type == "hierarchical":
         ranges = parse_hierarchical_ranges(scope_value)
         return apply_hierarchical_filter(text, ranges, use_regex)
-    
+
     results = []
-    
+
     if scope_type == "brackets":
         # Extract everything between [ and ]
         pattern = r'\[([^\[\]]*)\]'
         results = re.findall(pattern, text)
-    
+
     elif scope_type == "braces":
         # Extract everything between { and }
         # Handle nested braces with a more sophisticated approach
@@ -158,30 +159,30 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
         start = -1
         for i, char in enumerate(text):
             if char == '{':
-                if depth == 0:
+                if not depth:
                     start = i + 1
                 depth += 1
             elif char == '}':
                 depth -= 1
-                if depth == 0 and start != -1:
+                if not depth and start != -1:
                     results.append(text[start:i])
                     start = -1
-    
+
     elif scope_type == "parentheses":
         # Extract everything between ( and )
         depth = 0
         start = -1
         for i, char in enumerate(text):
             if char == '(':
-                if depth == 0:
+                if not depth:
                     start = i + 1
                 depth += 1
             elif char == ')':
                 depth -= 1
-                if depth == 0 and start != -1:
+                if not depth and start != -1:
                     results.append(text[start:i])
                     start = -1
-    
+
     elif scope_type == "custom" and scope_value:
         # Extract between custom delimiters (format: "begin,end")
         parts = scope_value.split(",", 1)
@@ -189,23 +190,24 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
             begin, end = parts[0].strip(), parts[1].strip()
             pattern = re.escape(begin) + r'(.*?)' + re.escape(end)
             results = re.findall(pattern, text, re.DOTALL)
-    
+
     elif scope_type == "tag":
         # Extract content from any HTML/XML tags
         pattern = r'<[^/>]+>(.*?)</[^>]+>'
         results = re.findall(pattern, text, re.DOTALL)
-    
+
     elif scope_type == "specific-tag" and scope_value:
         # Extract content from specific HTML/XML tag
         tag = scope_value.strip()
         pattern = rf'<{tag}[^>]*>(.*?)</{tag}>'
         results = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
-    
+
     return '\n'.join(results) if results else ""
 
 
 @dataclass
 class Condition:
+    """Represents a filter condition for file attributes."""
     field: str              # "filename" | "path" | "ext" | "size" | "mtime" | "content"
     operator: str           # see OPS keys
     value: str
@@ -215,6 +217,7 @@ class Condition:
     whole_word: bool = False         # Match whole words only (for contains/not contains)
     use_regex: bool = False          # Use value as regex pattern
 
+    # pylint: disable=too-many-return-statements  # String matching requires checking all operators
     def _apply_string_matching(self, text: str, pattern: str, operator: str) -> bool:
         """
         Apply string matching with case sensitivity, whole word, and regex options.
@@ -224,14 +227,14 @@ class Condition:
             try:
                 flags = 0 if self.case_sensitive else re.IGNORECASE
                 regex_pattern = pattern
-                
+
                 # Add word boundary if whole_word is enabled
                 if self.whole_word and operator in ("contains", "not contains"):
                     regex_pattern = r'\b' + regex_pattern + r'\b'
-                
+
                 compiled = re.compile(regex_pattern, flags)
                 found = bool(compiled.search(text))
-                
+
                 if operator == "contains":
                     return found
                 elif operator == "not contains":
@@ -248,11 +251,11 @@ class Condition:
                     return False
             except re.error:
                 return False
-        
+
         # Non-regex mode
         search_text = text if self.case_sensitive else text.lower()
         search_pattern = pattern if self.case_sensitive else pattern.lower()
-        
+
         # Handle whole word matching for contains/not contains
         if self.whole_word and operator in ("contains", "not contains"):
             # Use word boundaries
@@ -260,7 +263,7 @@ class Condition:
             flags = 0 if self.case_sensitive else re.IGNORECASE
             found = bool(re.search(regex_pattern, text, flags))
             return found if operator == "contains" else not found
-        
+
         # Standard string operations
         if operator == "contains":
             return search_pattern in search_text
@@ -274,46 +277,51 @@ class Condition:
             return search_text.startswith(search_pattern)
         elif operator == "ends with":
             return search_text.endswith(search_pattern)
-        
+
         return False
 
+    # pylint: disable=too-many-return-statements  # Field validation requires early returns
     def matches(self, path: str) -> bool:
+        """Check if path matches this condition."""
         try:
             if self.field == "filename":
-                a = os.path.basename(path)
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = os.path.basename(path)
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field == "path":
-                a = path
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = path
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field == "ext":
-                a = os.path.splitext(path)[1].lstrip(".")
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
+                actual_value = os.path.splitext(path)[1].lstrip(".")
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field in ("size", "mtime"):
                 st = os.stat(path)
-                a = st.st_size if self.field == "size" else st.st_mtime
-                b = float(self.value)
-                return OPS[self.operator](a, b)
+                actual_value = st.st_size if self.field == "size" else st.st_mtime
+                expected_value = float(self.value)
+                return OPS[self.operator](actual_value, expected_value)
             if self.field == "content":
                 txt = read_text(path)
                 # Apply scope filtering if specified
                 if self.scope_type and self.scope_type != "none":
                     txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex)
-                a = txt
-                b = self.value
-                return self._apply_string_matching(a, b, self.operator)
-        except Exception:
+                actual_value = txt
+                expected_value = self.value
+                return self._apply_string_matching(actual_value, expected_value, self.operator)
+        except Exception:  # pylint: disable=broad-exception-caught  # Catch all file/parsing errors
             return False
         return False
 
 
-def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition], logic_operator: str = "AND") -> List[str]:
+def filter_files_by_conditions(
+    files: Iterable[str], conds: Sequence[Condition], logic_operator: str = "AND"
+) -> List[str]:
     """
-    Evaluate conditions against metadata and, when needed, file content (for 'content' field).
-    We read content at most once per file if any content-condition is present.
+    Evaluate conditions against metadata and file content.
     
+    We read content at most once per file if any content-condition is present.
+
     Args:
         files: Files to filter
         conds: List of conditions to apply
@@ -326,18 +334,18 @@ def filter_files_by_conditions(files: Iterable[str], conds: Sequence[Condition],
     out: List[str] = []
     logic_operator = logic_operator.upper()
 
-    for p in files:
+    for file_path in files:
         try:
             if logic_operator == "OR":
                 # At least one condition must match (disjunction)
-                ok = any(c.matches(p) for c in conds)
+                ok = any(c.matches(file_path) for c in conds)
             else:
                 # All conditions must match (conjunction) - default behavior
-                ok = all(c.matches(p) for c in conds)
-            
+                ok = all(c.matches(file_path) for c in conds)
+
             if ok:
-                out.append(p)
-        except Exception:
+                out.append(file_path)
+        except Exception:  # pylint: disable=broad-exception-caught  # Filter robustness
             pass
 
     return out

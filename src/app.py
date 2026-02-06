@@ -4,6 +4,11 @@
 # pylint: disable=import-outside-toplevel  # Intentional lazy loading to avoid circular imports
 # pylint: disable=broad-exception-caught  # UI code needs broad exception handling
 # pylint: disable=too-few-public-methods  # Simple utility classes are acceptable
+# pylint: disable=missing-class-docstring  # Qt stub classes don't need docstrings
+# pylint: disable=missing-function-docstring  # Internal Qt wrappers
+# pylint: disable=invalid-name  # Qt naming conventions (_PYSIDE, Qt, Signal)
+# pylint: disable=logging-fstring-interpolation  # F-strings clearer than lazy %
+# pylint: disable=redefined-outer-name  # Local loggers in methods acceptable
 
 """
 TextWorkbench — GUI + CLI for project-wide search/replace/insert + JSON translate/dedupe
@@ -70,7 +75,7 @@ from typing import Any, Dict, List, Optional
 # ---------------------------------------------------------------------------
 
 # Logging system
-# (get_logger removed - unused)
+from .utils.logger import get_logger
 
 # Error handling & crash reporting (v2.9.61)
 # (install_crash_handler removed - unused)
@@ -118,6 +123,9 @@ from .cli import build_parser
 
 # JSON Translate Helpers: dictionary-driven translation (v2.9.114 - Phase 3.2)
 # (All removed - unused in app.py)
+
+# Initialize logger after all imports
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 #  Optional import of PySide6 (the CLI subcommands work even if PySide6 is missing)
@@ -299,7 +307,7 @@ def read_translation_dict(path: str) -> Dict[str, Any]:
 #             if isinstance(n, Obj):
 #                 if not n: return "{}"
 #                 if ind is None or ind <= 0:
-#                     parts = ["{"] + [("," if i else "") + json.dumps(k, ensure_ascii=False) + ":" + dump_json(v, ind, lvl)
+#                     parts = ["{"] + [("," if i else "") + json.dumps(k, ensure_ascii=False) + ":" + dump_json(v, ind, lvl)  # pylint: disable=line-too-long  # Commented legacy code
 #                                      for i,(k,v) in enumerate(n)] + ["}"]
 #                     return "".join(parts)
 #                 sp = " " * ind
@@ -433,7 +441,7 @@ if _PYSIDE:
                 self._build_icon_fallback()
 
             except Exception as exc:
-                print(f"Error loading icon from assets: {exc}")
+                logger.warning(f"Error loading icon from assets: {exc}")
                 self._build_icon_fallback()
 
         def _build_icon_fallback(self):
@@ -446,7 +454,7 @@ if _PYSIDE:
                 # 3. Load the image bytes into a QPixmap
                 pixmap = QPixmap()
                 if not pixmap.loadFromData(QByteArray(icon_data)):
-                    print("Error loading QPixmap icon data.")
+                    logger.error("Error loading QPixmap icon data.")
                     # Handle the error, perhaps use a default icon or stop
                     icon = QIcon() # empty icon
                 else:
@@ -457,7 +465,7 @@ if _PYSIDE:
                     icon = QIcon(pixmap)
 
             except Exception as exc:
-                print(f"Error processing base64 string or creating icon: {exc}")
+                logger.error(f"Error processing base64 string or creating icon: {exc}")
                 icon = QIcon() # Empty icon on error
 
             # 5. Set the icon for the main window
@@ -871,7 +879,7 @@ if _PYSIDE:
 
             except Exception as e:
                 # Silent failure - don't bother user during startup
-                print(f"[Update Check] Failed silently: {e}")
+                logger.debug(f"Update check failed silently: {e}")
 
         def _show_update_dialog(self, release_info: dict):
             """
@@ -1168,7 +1176,12 @@ if _PYSIDE:
         def _apply_theme_action(self, action: QAction):
             for a in (self.act_theme_system, self.act_theme_light, self.act_theme_dark):
                 a.setChecked(a is action)
-            mode = "system" if action is self.act_theme_system else ("light" if action is self.act_theme_light else "dark")
+            if action is self.act_theme_system:
+                mode = "system"
+            elif action is self.act_theme_light:
+                mode = "light"
+            else:
+                mode = "dark"
             apply_theme(QApplication.instance(), mode)
             # persist
             cfg = load_prefs()
@@ -1220,13 +1233,13 @@ if _PYSIDE:
             # QActionGroup handles radio button behavior automatically - no need to setChecked
             # Just switch language and save preference
 
-            print(f"[Language] Switching to: {lang}")
-            print(f"[Language] Current language before switch: {self.translator.current_language}")
+            logger.debug(f"Switching language to: {lang}")
+            logger.debug(f"Current language before switch: {self.translator.current_language}")
 
             # Switch language
             switch_language(lang)
 
-            print(f"[Language] Current language after switch: {self.translator.current_language}")
+            logger.debug(f"Current language after switch: {self.translator.current_language}")
 
             # Save preference
             self.settings.set("language", lang)
@@ -1518,7 +1531,8 @@ if _PYSIDE:
                 QMessageBox.information(
                     self,
                     tr("app.msg_undo_title"),
-                    f"{tr('app.msg_undo_title')}: {self.command_manager.get_redo_description() or tr('app.msg_success_title')}"
+                    f"{tr('app.msg_undo_title')}: "
+                    f"{self.command_manager.get_redo_description() or tr('app.msg_success_title')}"
                 )
             else:
                 QMessageBox.warning(self, tr("app.msg_undo_title"), tr("app.msg_undo_nothing"))
@@ -1530,7 +1544,8 @@ if _PYSIDE:
                 QMessageBox.information(
                     self,
                     tr("app.msg_redo_title"),
-                    f"{tr('app.msg_redo_title')}: {self.command_manager.get_undo_description() or tr('app.msg_success_title')}"
+                    f"{tr('app.msg_redo_title')}: "
+                    f"{self.command_manager.get_undo_description() or tr('app.msg_success_title')}"
                 )
             else:
                 QMessageBox.warning(self, tr("app.msg_redo_title"), tr("app.msg_redo_nothing"))
@@ -1929,7 +1944,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Otherwise, run the GUI (PySide6 must be available)
     if not _PYSIDE:
         parser.print_help(sys.stderr)
-        print("\nPySide6 is not installed; install it or use the CLI subcommands.", file=sys.stderr)
+        logger.error("PySide6 is not installed; install it or use the CLI subcommands.")
         return 2
 
     # Set Qt attributes before creating QApplication

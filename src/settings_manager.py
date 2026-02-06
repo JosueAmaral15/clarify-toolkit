@@ -52,8 +52,8 @@ class SettingsManager:
                     loaded = json.load(f)
                     # Merge with defaults (in case new settings were added)
                     self.settings.update(loaded)
-            except Exception as e:
-                print(f"Warning: Failed to load settings: {e}")
+            except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - keep defaults on error
+                logger.warning(f"Failed to load settings: {e}")
                 # Keep defaults on error
 
     def save(self) -> None:
@@ -64,8 +64,8 @@ class SettingsManager:
 
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=2)
-        except Exception as e:
-            print(f"Error: Failed to save settings: {e}")
+        except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - fail gracefully
+            logger.error(f"Failed to save settings: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a setting value."""
@@ -133,12 +133,12 @@ class SettingsManager:
 
 
 # Global settings instance
-_settings_instance: Optional[SettingsManager] = None
+_settings_instance: Optional[SettingsManager] = None  # pylint: disable=invalid-name
 
 
 def get_settings() -> SettingsManager:
     """Get global settings instance."""
-    global _settings_instance
+    global _settings_instance  # pylint: disable=global-statement  # Singleton pattern
     if _settings_instance is None:
         _settings_instance = SettingsManager()
     return _settings_instance
@@ -146,5 +146,5 @@ def get_settings() -> SettingsManager:
 
 def reset_settings_instance():
     """Reset global instance (useful for testing)."""
-    global _settings_instance
+    global _settings_instance  # pylint: disable=global-statement  # Singleton pattern
     _settings_instance = None

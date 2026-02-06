@@ -26,11 +26,11 @@ from .strategies import (
 class ConverterFactory:
     """
     Factory for creating converter instances.
-    
+
     Maps (source_format, target_format) to appropriate converter class.
     Implements full conversion graph (6 directions).
     """
-    
+
     # Conversion mapping: (source, target) → Converter class
     _CONVERTERS: Dict[Tuple[Format, Format], type[ConverterStrategy]] = {
         # Direct JSON conversions
@@ -38,27 +38,27 @@ class ConverterFactory:
         (Format.TOON, Format.JSON): ToonToJsonConverter,
         (Format.JSON, Format.BSON): JsonToBsonConverter,
         (Format.BSON, Format.JSON): BsonToJsonConverter,
-        
+
         # Indirect conversions (via JSON)
         (Format.TOON, Format.BSON): ToonToBsonConverter,
         (Format.BSON, Format.TOON): BsonToToonConverter,
     }
-    
+
     @classmethod
     def create(cls, source: Format, target: Format) -> ConverterStrategy:
         """
         Create converter instance for source→target conversion.
-        
+
         Args:
             source: Source format enum
             target: Target format enum
-        
+
         Returns:
             Converter strategy instance
-        
+
         Raises:
             ConversionError: If conversion is not supported
-        
+
         Example:
             >>> converter = ConverterFactory.create(Format.JSON, Format.TOON)
             >>> toon_str = converter.convert('{"name": "Alice"}')
@@ -71,27 +71,27 @@ class ConverterFactory:
                 f"Source and target formats are the same: {source.value}. "
                 "No conversion needed."
             )
-        
+
         # Lookup converter class
         converter_class = cls._CONVERTERS.get((source, target))
-        
+
         if converter_class is None:
             raise ConversionError(
                 f"Conversion from {source.value} to {target.value} is not supported. "
                 f"Supported conversions: {cls.get_supported_conversions()}"
             )
-        
+
         # Instantiate and return
         return converter_class()
-    
+
     @classmethod
     def get_supported_conversions(cls) -> list[tuple[str, str]]:
         """
         Get list of all supported (source, target) conversions.
-        
+
         Returns:
             List of (source_format, target_format) string tuples
-        
+
         Example:
             >>> conversions = ConverterFactory.get_supported_conversions()
             >>> print(conversions)
@@ -99,21 +99,21 @@ class ConverterFactory:
         """
         return [
             (source.value, target.value)
-            for source, target in cls._CONVERTERS.keys()
+            for source, target in cls._CONVERTERS
         ]
-    
+
     @classmethod
     def is_conversion_supported(cls, source: Format, target: Format) -> bool:
         """
         Check if conversion from source to target is supported.
-        
+
         Args:
             source: Source format
             target: Target format
-        
+
         Returns:
             True if conversion is supported, False otherwise
-        
+
         Example:
             >>> ConverterFactory.is_conversion_supported(Format.JSON, Format.TOON)
             True

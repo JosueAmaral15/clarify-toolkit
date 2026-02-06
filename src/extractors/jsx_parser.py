@@ -1,5 +1,5 @@
-"""
-JSX Parser Module
+"""JSX Parser Module.
+# pylint: disable=too-many-nested-blocks,no-else-continue,consider-using-in,duplicate-code  # Complex JSX parsing
 
 Minimal JSX/TSX parser for extracting parameters and attributes from React components.
 Extracted from add/main.py for use in the Clarify project.
@@ -59,12 +59,11 @@ class JSXParser:
         self.match_all = match_all
         self.is_attribute_mode = is_attribute_mode
         self.no_standard = no_standard
-        self.items = list()
-        self.class_map = {}  # Store class attributes: {(tuple(stack), tag): "class-value"}
+        self.items = []
 
     def clear_items_and_reset(self):
-        self.items = list()
-        self.class_map = {}
+        """Reset items list."""
+        self.items = []
 
     def _custom_find_matching_close_span(self, text, tag, from_index):
         """
@@ -79,6 +78,7 @@ class JSXParser:
         close_pat = re.compile(rf"</\s*{re.escape(tag)}\s*>")
         in_quote = None
         apostrophe = None
+        # pylint: disable=invalid-name  # JSX delimiter constants
         GREATER_THAN = ">"
         LOWER_THAN = "<"
         greater_than_count = 0
@@ -89,15 +89,15 @@ class JSXParser:
         while i < n:
 
             mclose = close_pat.match(text, i)
-            if mclose and in_quote is None and apostrophe is None and brace_depth == 0:
+            if mclose and in_quote is None and apostrophe is None and not brace_depth:
                 depth -= 1
-                if depth == 0:
+                if not depth:
                     return (mclose.start(), mclose.end())
                 i = mclose.end()
                 continue
             # quick check for an opening same-name tag at i (increases depth)
             mopen = open_pat.match(text, i)
-            if mopen and in_quote is None and apostrophe is None and brace_depth == 0:
+            if mopen and in_quote is None and apostrophe is None and not brace_depth:
                 # skip forward to the end '>' of this opening to avoid false matches inside attributes
                 m2 = self.match_opening_tag(text, i)
                 if not m2:
@@ -119,7 +119,7 @@ class JSXParser:
 
                     difference_appearance_signs = lower_than_count - greater_than_count
 
-            if difference_appearance_signs != 0:
+            if difference_appearance_signs:
                 if in_quote or apostrophe:
                     if ch == "\\":
                         i += 2
@@ -158,16 +158,16 @@ class JSXParser:
         while i < n:
             # quick check for a closing tag at i
             mclose = close_pat.match(text, i)
-            if mclose and in_quote is None and brace_depth == 0:
+            if mclose and in_quote is None and not brace_depth:
                 depth -= 1
-                if depth == 0:
+                if not depth:
                     return (mclose.start(), mclose.end())
                 i = mclose.end()
                 continue
 
             # quick check for an opening same-name tag at i (increases depth)
             mopen = open_pat.match(text, i)
-            if mopen and in_quote is None and brace_depth == 0:
+            if mopen and in_quote is None and not brace_depth:
                 # skip forward to the end '>' of this opening to avoid false matches inside attributes
                 m2 = self.match_opening_tag(text, i)
                 if not m2:
@@ -225,14 +225,14 @@ class JSXParser:
                 if ch == in_quote:
                     in_quote = None
             else:
-                if ch == "'" or ch == '"':
+                if ch in ("'", '"'):
                     in_quote = ch
                 elif ch == "{":
                     brace_depth += 1
                 elif ch == "}":
                     if brace_depth > 0:
                         brace_depth -= 1
-                elif ch == ">" and brace_depth == 0:
+                elif ch == ">" and not brace_depth:
                     raw_attrs = text[attrs_start:i].rstrip()
                     self_closing = raw_attrs.endswith("/")
                     if self_closing:
@@ -263,30 +263,30 @@ class JSXParser:
                 in_quote = None
                 brace_depth = 0
                 while j < n:
-                    c = s[j]
+                    char = s[j]
                     if in_quote:
-                        if c == "\\":
+                        if char == "\\":
                             j += 2
                             continue
-                        if c == in_quote:
+                        if char == in_quote:
                             in_quote = None
                         j += 1
                         continue
                     else:
-                        if c in ("'", '"'):
-                            in_quote = c
+                        if char in ("'", '"'):
+                            in_quote = char
                             j += 1
                             continue
-                        if c == "{":
+                        if char == "{":
                             brace_depth += 1
                             j += 1
                             continue
-                        if c == "}":
+                        if char == "}":
                             if brace_depth > 0:
                                 brace_depth -= 1
                             j += 1
                             continue
-                        if c == ">" and brace_depth == 0:
+                        if char == ">" and not brace_depth:
                             j += 1
                             break
                         j += 1
@@ -331,30 +331,30 @@ class JSXParser:
                 brace_depth = 0
                 # skip until matching '>' that is not inside quotes or inner braces
                 while j < n:
-                    c = inner[j]
+                    char = inner[j]
                     if in_quote:
-                        if c == "\\":
+                        if char == "\\":
                             j += 2
                             continue
-                        if c == in_quote:
+                        if char == in_quote:
                             in_quote = None
                         j += 1
                         continue
                     else:
-                        if c in ("'", '"'):
-                            in_quote = c
+                        if char in ("'", '"'):
+                            in_quote = char
                             j += 1
                             continue
-                        if c == "{":
+                        if char == "{":
                             brace_depth += 1
                             j += 1
                             continue
-                        if c == "}":
+                        if char == "}":
                             if brace_depth > 0:
                                 brace_depth -= 1
                             j += 1
                             continue
-                        if c == ">" and brace_depth == 0:
+                        if char == ">" and not brace_depth:
                             j += 1
                             break
                         j += 1
@@ -428,7 +428,7 @@ class JSXParser:
                     continue
                 if ch == "}":
                     depth -= 1
-                    if depth == 0:
+                    if not depth:
                         return (s[start + 1 : i], i + 1)
                     i += 1
                     continue
@@ -471,15 +471,6 @@ class JSXParser:
                 is_self = mopen["self_closing"]
                 have_close_tag = bool(re.findall(rf"</\s*({tag})\s*>", text))
                 stack.append(tag)
-                
-                # Extract class attribute if present (store after stack.append)
-                # Match both 'class' (HTML) and 'className' (JSX/React)
-                class_match = re.search(r'\b(?:class|className)\s*=\s*["\']([^"\']+)["\']', attrs_src, re.IGNORECASE)
-                if class_match:
-                    class_value = class_match.group(1).strip()
-                    # Store with current stack position (including current tag)
-                    stack_key = (tuple(stack), tag)
-                    self.class_map[stack_key] = class_value
 
                 # =========================
                 # TAG-CONTENT MODE (UNCHECKED)
@@ -496,8 +487,8 @@ class JSXParser:
                             items = self._extract_non_tag_items(inner)
 
                         if inner and not self.no_standard:
-                            for stack, tag, tag, item in self.parse(inner, stack):
-                                yield (stack, tag, tag, item)
+                            for s, t1, t2, item in self.parse(inner, stack):
+                                yield (s, t1, t2, item)
 
                         for it in items:
                             new_item = it.strip()

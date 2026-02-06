@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Google Translate Dock - Translation Interface
 
@@ -19,17 +16,18 @@ Author: Josué Amaral
 Date: December 21, 2025
 Version: 2.9.78
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=attribute-defined-outside-init  # Qt widget creation pattern
+# pylint: disable=broad-exception-caught  # GUI robustness
+# pylint: disable=invalid-name  # closeEvent is Qt convention
 
-import os
+
 import time
-from pathlib import Path
-from typing import Optional
 
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QGroupBox,
     QLabel,
     QComboBox,
@@ -41,13 +39,12 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QSplitter,
     QFrame,
-    QApplication,
 )
 from PySide6.QtGui import QFont
 
 from ..gui.base_dock import BaseDock
-from ..translation.google_translate import GoogleTranslateAPI, TranslationResult
 from ..i18n import tr, tooltip_tr
+from ..translation.google_translate import GoogleTranslateAPI
 
 
 class TranslationWorker(QThread):
@@ -346,7 +343,7 @@ class GoogleTranslateDock(BaseDock):
 
     def _save_preferences(self):
         """Save user preferences (placeholder for QSettings)."""
-        pass  # Could implement QSettings here
+        # Could implement QSettings here in the future
 
     def _toggle_file_mode(self, enabled: bool):
         """Toggle between text and file input modes."""
@@ -437,7 +434,7 @@ class GoogleTranslateDock(BaseDock):
         # Prevent starting new worker while one is running (fixes crash on duplicate calls)
         if self.translation_worker and self.translation_worker.isRunning():
             return
-        
+
         # Disconnect signals from previous worker if it exists
         if self.translation_worker:
             try:
@@ -447,7 +444,7 @@ class GoogleTranslateDock(BaseDock):
             except (TypeError, RuntimeError):
                 # Signals already disconnected or worker deleted
                 pass
-        
+
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
@@ -458,15 +455,15 @@ class GoogleTranslateDock(BaseDock):
 
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
-        
+
         # Connect signals BEFORE starting thread
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
-        
+
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
         self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
-        
+
         self.translation_worker.start()
 
     def _on_progress_updated(self, progress: int, status: str):
@@ -535,7 +532,7 @@ class GoogleTranslateDock(BaseDock):
             original_text = self.btn_copy_result.text()
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(original_text))
-    
+
     def _clear(self):
         """Clear input and output fields."""
         self.text_input.clear()
@@ -551,32 +548,21 @@ class GoogleTranslateDock(BaseDock):
         # Swap languages (skip if either is "Auto-detect")
         from_lang = self.combo_from_lang.currentText()
         to_lang = self.combo_to_lang.currentText()
-        
+
         if "Auto-detect" not in from_lang and "Auto-detect" not in to_lang:
             # Swap the combo box selections
             self.combo_from_lang.setCurrentText(to_lang)
             self.combo_to_lang.setCurrentText(from_lang)
-        
+
         # Swap input/output text
         input_text = self.text_input.toPlainText()
         output_text = self.text_output.toPlainText()
-        
+
         self.text_input.setPlainText(output_text)
         self.text_output.setPlainText(input_text)
-        
+
         # Update button states - keep reverse enabled, update copy based on new output
         self.btn_copy_result.setEnabled(bool(output_text))  # Enable if there's text in new output position
-
-    def _copy_result(self):
-        """Copy translation result to clipboard."""
-        result = self.text_output.toPlainText()
-        if result:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(result)
-
-            # Visual feedback
-            self.btn_copy_result.setText(tr("google_translate.btn_copied"))
-            QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
@@ -586,12 +572,12 @@ class GoogleTranslateDock(BaseDock):
             if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
                 self.translation_worker.terminate()
                 self.translation_worker.wait()
-        
+
         # Wait for any finished workers
         for worker in self._finished_workers:
             if worker.isRunning():
                 worker.wait(1000)
-        
+
         super().closeEvent(event)
 
     def _update_cache_info(self):

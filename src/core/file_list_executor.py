@@ -23,7 +23,7 @@ import pwd
 import grp
 import re
 from datetime import datetime
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any
 from dataclasses import dataclass
 
 
@@ -41,6 +41,7 @@ class FileInfo:
     is_dir: bool
 
 
+# pylint: disable=too-few-public-methods  # Simple data container
 class ListResult:
     """Container for file listing results."""
 
@@ -133,7 +134,7 @@ class FileListExecutor:
             if recursive and os.path.isdir(filepath):
                 # Check depth limit
                 max_depth = filters.get("depth", 0)
-                if max_depth == 0 or depth < max_depth:
+                if not max_depth or depth < max_depth:
                     files.extend(FileListExecutor._collect_files(filepath, show_hidden, recursive, filters, depth + 1))
 
         return files
@@ -160,9 +161,10 @@ class FileListExecutor:
         )
 
     @staticmethod
+    # pylint: disable=too-many-return-statements  # Filter chain logic requires early returns
     def _matches_filters(filepath: str, filename: str, depth: int, filters: Dict[str, Any]) -> bool:
         """Check if file matches all filter criteria."""
-        from ..utils.logger import get_logger
+        from ..utils.logger import get_logger  # pylint: disable=import-outside-toplevel  # Lazy import
 
         logger = get_logger(__name__)
 
@@ -174,11 +176,11 @@ class FileListExecutor:
         if regex_config.get("enabled") and regex_config.get("pattern"):
             try:
                 if not re.search(regex_config["pattern"], filename):
-                    logger.debug(f"Regex filter rejected: {filename} (pattern: {regex_config['pattern']})")
+                    logger.debug("Regex filter rejected: %s (pattern: %s)", filename, regex_config["pattern"])
                     return False
             except re.error as e:
-                logger.debug(f"Invalid regex pattern: {regex_config['pattern']} - {e}")
-                pass  # Invalid regex, ignore
+                logger.debug("Invalid regex pattern: %s - %s", regex_config["pattern"], e)
+                # Invalid regex, ignore
 
         # Size filter
         try:
@@ -221,7 +223,7 @@ class FileListExecutor:
 
         # Depth filter
         max_depth = filters.get("depth", 0)
-        if max_depth > 0 and depth > max_depth:
+        if 0 < max_depth < depth:
             return False
 
         return True

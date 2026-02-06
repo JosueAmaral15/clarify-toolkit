@@ -1,7 +1,9 @@
 """Text insertion at specific lines with multiple modes."""
 
 
+# pylint: disable=too-few-public-methods  # Constants container class
 class InsertMode:
+    """Text insertion modes for line operations."""
     LEFT = "Insert left of line"
     RIGHT = "Insert right of line"
     REPLACE = "Replace line content"

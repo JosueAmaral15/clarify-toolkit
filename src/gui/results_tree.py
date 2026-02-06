@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
 Results Tree Widget for Clarify
 --------------------------------
@@ -17,15 +14,26 @@ Esta é uma FOLHA na árvore de importações:
 Author: Josué Amaral
 Date: 2025-12-24
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=broad-exception-caught  # GUI robustness
 
 import os
-import sys
 import subprocess
+import sys
+
 from typing import Dict, List, Tuple
 
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QApplication, QMenu, QMessageBox
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (
+    QApplication, QMenu, QMessageBox,
+    QTreeWidget, QTreeWidgetItem
+)
+
+from src.i18n.translator import tr
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ResultsTree(QTreeWidget):
@@ -62,7 +70,7 @@ class ResultsTree(QTreeWidget):
         """Set the status label widget for showing position info (v2.5.1)."""
         self._status_label = label
 
-    def _on_item_hover(self, item: QTreeWidgetItem, column: int):
+    def _on_item_hover(self, item: QTreeWidgetItem, _column: int):
         """Show position info when hovering over match items (v2.5.1)."""
         if item and item.parent():  # This is a match item (has parent = file item)
             text = item.text(0)
@@ -81,8 +89,10 @@ class ResultsTree(QTreeWidget):
 
                     # Update status label if available
                     if self._status_label:
-                        self._status_label.setText(f"📍 Position: Line {line}, Column {col} | File: {file_path}")
-                except:
+                        self._status_label.setText(
+                            f"📍 Position: Line {line}, Column {col} | File: {file_path}"
+                        )
+                except Exception:
                     pass
         else:
             # Clear status for non-match items

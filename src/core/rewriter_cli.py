@@ -34,6 +34,7 @@ def cli_dedupe(
             - removal_stats: dict with removal counters (Task v2.9.22)
             - detailed_stats: list of DetailedStatEntry objects (Sprint B Feature #3 v2.9.31)
     """
+    # pylint: disable=import-outside-toplevel  # Lazy import for CLI function
     from src import rewriter as rw
     from src.rewriter.detailed_stats import get_global_collector
 
@@ -82,8 +83,9 @@ def cli_dedupe(
 
     # Parse based on format
     if args.from_ts:
-        # TypeScript/JavaScript object literal
-        obj = rw.ts_process_full_preserving(text)
+        # TypeScript/JavaScript object literal - parse only, transformations applied later
+        # pylint: disable=no-value-for-parameter  # Passing minimal args for parsing only
+        obj = rw.ts_process_full_preserving(text, None, False, False)
     else:
         # Pure JSON
         obj = rw.parse_json_preserving_duplicates_text(text)
@@ -157,7 +159,7 @@ def cli_dedupe(
             threshold = getattr(args, "duplicate_threshold", 100) / 100.0  # Convert percentage to 0.0-1.0
             include_arrays = getattr(args, "include_duplicate_arrays", False)
             mode = getattr(args, "duplicate_mode", "remove")
-            obj, stats["duplicate_objects"], dup_stats = rw.remove_duplicate_objects(
+            obj, stats["duplicate_objects"], _dup_stats = rw.remove_duplicate_objects(
                 obj, threshold=threshold, include_arrays=include_arrays, mode=mode
             )
 
@@ -174,7 +176,7 @@ def cli_dedupe(
 
     # Serialize output
     if args.ts_out:
-        output_text = rw.dump_ts_node(obj, indent=args.indent)
+        output_text = rw.dump_ts_node(obj, indent=args.indent, level=0)
         if not args.no_line_break:
             output_text = rw.collapse_blank_lines(output_text)
     else:

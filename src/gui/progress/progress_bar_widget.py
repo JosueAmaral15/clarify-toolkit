@@ -2,12 +2,16 @@
 Individual progress bar widget with controls.
 Extracted from app.py (v2.9.114).
 """
+# pylint: disable=no-name-in-module  # Qt dynamic modules
+# pylint: disable=import-outside-toplevel  # Conditional imports
+# pylint: disable=broad-exception-caught  # Robustness
 
 from datetime import datetime
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
-from src.i18n.translator import tooltip_tr
+
 from PySide6.QtCore import Signal
-from src.i18n.translator import tr
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
+
+from src.i18n.translator import tr, tooltip_tr
 
 from .progress_details_dialog import ProgressDetailsDialog
 
