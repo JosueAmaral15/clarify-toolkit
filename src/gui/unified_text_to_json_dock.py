@@ -1062,8 +1062,20 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 )
             
             # Show success message
-            paths_count = len([line for line in text_output.split('\n') if line.strip()])
-            success_msg = f"Extracted {paths_count} paths successfully."
+            # Count actual paths (exclude comment lines starting with #)
+            paths_count = len([
+                line for line in text_output.split('\n') 
+                if line.strip() and not line.strip().startswith('#')
+            ])
+            
+            # Check for "(no matches)" message
+            if text_output.strip() == "(no matches)" or paths_count == 0:
+                success_msg = "Extraction completed with no matches found."
+            elif paths_count == 1:
+                success_msg = "Extracted 1 path successfully."
+            else:
+                success_msg = f"Extracted {paths_count} paths successfully."
+            
             self._jsx_update_status(f"✓ {success_msg}")
             self.show_info(
                 tr("advanced_extractor.success", "Success"),
