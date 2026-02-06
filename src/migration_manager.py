@@ -21,6 +21,9 @@ Usage:
 import json
 import logging
 import sys
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -270,5 +273,5 @@ def run_migrations() -> bool:
         manager = MigrationManager()
         return manager.run_pending_migrations()
     except Exception as e:
-        print(f"CRITICAL: Migration system failed: {e}", file=sys.stderr)
+        logger.critical(f"Migration system failed: {e}")
         return False

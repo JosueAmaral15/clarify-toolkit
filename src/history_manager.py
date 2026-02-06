@@ -110,6 +110,9 @@ class HistoryManager:
         """
         import json
         from pathlib import Path
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
 
         try:
             history = self.get_history()
@@ -129,7 +132,7 @@ class HistoryManager:
             return True
 
         except Exception as e:
-            print(f"Erro ao exportar histórico: {e}")
+            logger.error(f"Erro ao exportar histórico: {e}")
             return False
 
     def format_entry_display(self, entry: Dict[str, Any]) -> str:

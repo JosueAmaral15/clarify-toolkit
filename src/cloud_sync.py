@@ -5,6 +5,11 @@ Abstraction for cloud storage providers (Google Drive, Dropbox, etc.).
 Includes dummy provider for testing.
 """
 
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
 class CloudSyncProvider:
     """
     Abstração para provedores de nuvem.
@@ -24,8 +29,8 @@ class DummyProvider(CloudSyncProvider):
     """Provedor fictício para testes."""
     def login(self):
         """Dummy login."""
-        print("Dummy login performed.")
+        logger.info("Dummy login performed.")
     def upload_settings(self, settings_path):
-        print(f"Dummy upload of {settings_path}")
+        logger.info(f"Dummy upload of {settings_path}")
     def download_settings(self, dest_path):
-        print(f"Dummy download to {dest_path}")
+        logger.info(f"Dummy download to {dest_path}")
