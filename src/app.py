@@ -758,9 +758,9 @@ if _PYSIDE:
             try:
                 system = platform.system()
                 if system == "Linux":
-                    subprocess.run(["xdg-open", str(log_file)], check=False)
+                    subprocess.run(["xdg-open", str(log_file)], check=False, timeout=5)
                 elif system == "Darwin":  # macOS
-                    subprocess.run(["open", str(log_file)], check=False)
+                    subprocess.run(["open", str(log_file)], check=False, timeout=5)
                 elif system == "Windows":
                     os.startfile(str(log_file))  # pylint: disable=no-member  # Windows only
                 else:
