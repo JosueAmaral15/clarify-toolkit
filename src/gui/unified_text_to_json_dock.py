@@ -41,6 +41,7 @@ from .extraction_worker import ExtractionWorker
 from src.text_to_json import convert_text_to_json, detect_format
 from src.extractors.advanced_extractor import AdvancedExtractor
 from src.i18n.translator import tooltip_tr, tr
+from src.converters.json_output_converter import convert_json_to_format
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -486,6 +487,12 @@ items[2]{id,name}:
         if self.parent() and hasattr(self.parent(), 'jsx_output_tabs'):
             # Tab index 1 is the JSON/format output tab (index 0 is Paths)
             self.parent().jsx_output_tabs.setTabText(1, format_name)
+            
+            # Store selected format in parent dock and persist to settings
+            if hasattr(self.parent(), 'selected_output_format'):
+                self.parent().selected_output_format = format_name
+                if hasattr(self.parent(), 'settings'):
+                    self.parent().settings.setValue("selected_output_format", format_name)
     
     def get_selected_template(self) -> str:
         """Get the currently selected template text."""
@@ -525,6 +532,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_recent_paths = self.settings.value("jsx_recent_paths", [], type=list)
         if not isinstance(self.jsx_recent_paths, list):
             self.jsx_recent_paths = []
+        
+        # Initialize output format selection (for format conversion)
+        self.selected_output_format = self.settings.value("selected_output_format", "JSON", type=str)
         
         # Flag to prevent signal processing during cleanup
         self._extraction_cleaning_up = False
@@ -1396,17 +1406,40 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             pass  # Qt object was deleted
     
     def _on_extraction_finished(self, text_output: str, json_output: str):
-        """Handle extraction completion."""
+        """Handle extraction completion with format conversion."""
         try:
+            # Get selected output format
+            output_format = getattr(self, 'selected_output_format', 'JSON')
+            
+            # Convert JSON output to selected format
+            converted_output = json_output
+            if json_output and output_format != "JSON":
+                try:
+                    # Parse JSON string to dict/list
+                    json_data = json.loads(json_output)
+                    
+                    # Convert to target format
+                    converted_output = convert_json_to_format(json_data, output_format)
+                    
+                except Exception as conv_err:
+                    # Conversion failed, fallback to JSON and show error
+                    converted_output = json_output
+                    error_msg = f"Failed to convert to {output_format} format: {str(conv_err)}\n\nFalling back to JSON output."
+                    self._jsx_update_status(f"⚠ Conversion error: {output_format}")
+                    self.show_warning(
+                        tr("text_to_json.conversion_error", "Conversion Error"),
+                        error_msg
+                    )
+            
             # Display results
             self.jsx_paths_output.setPlainText(text_output or "")
-            self.jsx_json_output.setPlainText(json_output or "")
+            self.jsx_json_output.setPlainText(converted_output or "")
             
-            # Add to history
+            # Add to history (store original JSON for compatibility)
             if hasattr(self, '_extraction_settings'):
                 self._jsx_add_to_history(
                     self._extraction_input_source,
-                    json_output,
+                    json_output,  # Store original JSON, not converted
                     self._extraction_settings
                 )
             
