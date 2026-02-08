@@ -30,6 +30,108 @@ from typing import Dict, List, Optional, Tuple
 import re
 
 
+# ============================================================================
+# Session 75 - Placeholder Protection System for 100% Tag Preservation
+# ============================================================================
+
+def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dict[str, str]]]:
+    """
+    Replace format tags with Unicode placeholders before translation.
+    
+    This prevents Google Translate from corrupting or deleting format tags.
+    
+    Example:
+        Input:  "<113|65536:Arial|0,0>RISKS</113|65536>"
+        Output: ("【FMT001】RISKS【/FMT001】", {mapping})
+    
+    Args:
+        tagged_text: Text with format tags like <113|65536:Arial|0,0>text</113|65536>
+        
+    Returns:
+        (text_with_placeholders, mapping)
+        - text_with_placeholders: Text with 【FMTXXX】text【/FMTXXX】
+        - mapping: Dict mapping IDs to original tag info
+        
+    Author: COM8 (Session 75)
+    """
+    mapping = {}
+    counter = 1
+    result = tagged_text
+    
+    # Pattern to match complete tag pairs: <opening>text</closing>
+    # Captures: (opening_tag_content, text_inside, closing_tag_content)
+    pattern = r'<(\d+(?:\|\d+)?:[^>]+)>([^<]*?)</(\d+(?:\|\d+)?)>'
+    
+    def replace_match(match):
+        nonlocal counter
+        opening_tag = match.group(1)
+        text_inside = match.group(2)
+        closing_tag = match.group(3)
+        
+        # Generate unique ID
+        fmt_id = f"FMT{counter:03d}"
+        counter += 1
+        
+        # Store original tag info
+        mapping[fmt_id] = {
+            'opening': f'<{opening_tag}>',
+            'closing': f'</{closing_tag}>',
+            'original_text': text_inside
+        }
+        
+        # Return placeholder with Unicode brackets 【】 (won't be recognized as HTML)
+        return f'【{fmt_id}】{text_inside}【/{fmt_id}】'
+    
+    # Replace all tag pairs with placeholders
+    result = re.sub(pattern, replace_match, result)
+    
+    return result, mapping
+
+
+def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict[str, str]]) -> str:
+    """
+    Restore original format tags from placeholders after translation.
+    
+    Example:
+        Input:  "【FMT001】RISKS【/FMT001】"
+        Output: "<113|65536:Arial|0,0>RISKS</113|65536>"
+    
+    Args:
+        translated_text: Text with 【FMTXXX】translated text【/FMTXXX】
+        mapping: Dict mapping IDs to original tag info
+        
+    Returns:
+        Text with restored tags: <113|65536:Arial|0,0>translated text</113|65536>
+        
+    Author: COM8 (Session 75)
+    """
+    result = translated_text
+    
+    # Pattern to match placeholder pairs: 【FMT001】text【/FMT001】
+    pattern = r'【(FMT\d+)】(.*?)【/\1】'
+    
+    def restore_match(match):
+        fmt_id = match.group(1)
+        translated_text_inside = match.group(2)
+        
+        if fmt_id not in mapping:
+            # Placeholder not in mapping - keep as is (shouldn't happen)
+            return match.group(0)
+        
+        tag_info = mapping[fmt_id]
+        opening = tag_info['opening']
+        closing = tag_info['closing']
+        
+        # Restore with original tags and translated text
+        return f'{opening}{translated_text_inside}{closing}'
+    
+    # Replace all placeholders with original tags
+    result = re.sub(pattern, restore_match, result, flags=re.DOTALL)
+    
+    return result
+
+
+# ============================================================================
 # Format bit masks (powers of 2)
 class FormatBit:
     """Bit positions for different formatting types."""

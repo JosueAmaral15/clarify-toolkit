@@ -83,13 +83,25 @@ class TranslationWorker(QThread):
             if self.is_cancelled:
                 return
 
+            # Session 75: Check if text contains format tags
+            # If yes, use placeholder protection for 100% tag preservation
+            from translation.format_mapper import replace_tags_with_placeholders, restore_tags_from_placeholders
+            
+            has_format_tags = '<' in self.text and '>' in self.text and '|' in self.text
+            placeholder_mapping = None
+            text_to_translate = self.text
+            
+            if has_format_tags:
+                self.progress_updated.emit(30, "Protecting format tags...")
+                text_to_translate, placeholder_mapping = replace_tags_with_placeholders(self.text)
+
             # For large texts, split into chunks
             max_chunk_size = 5000  # Google Translate limit
             text_chunks = []
 
-            if len(self.text) > max_chunk_size:
+            if len(text_to_translate) > max_chunk_size:
                 # Split by sentences/paragraphs to maintain context
-                paragraphs = self.text.split("\n\n")
+                paragraphs = text_to_translate.split("\n\n")
                 current_chunk = ""
 
                 for paragraph in paragraphs:
@@ -103,7 +115,7 @@ class TranslationWorker(QThread):
                 if current_chunk:
                     text_chunks.append(current_chunk.strip())
             else:
-                text_chunks = [self.text]
+                text_chunks = [text_to_translate]
 
             self.progress_updated.emit(50, f"Translating {len(text_chunks)} chunk(s)...")
 
@@ -115,7 +127,7 @@ class TranslationWorker(QThread):
                 if self.is_cancelled:
                     return
 
-                progress = 50 + int((i / total_chunks) * 40)
+                progress = 50 + int((i / total_chunks) * 35)
                 self.progress_updated.emit(progress, f"Translating chunk {i+1}/{total_chunks}...")
 
                 result = self.api.translate_text(chunk, self.from_lang, self.to_lang)
@@ -132,6 +144,11 @@ class TranslationWorker(QThread):
 
             # Combine translated chunks
             final_result = "\n\n".join(translated_chunks)
+            
+            # Session 75: Restore format tags if placeholders were used
+            if placeholder_mapping:
+                self.progress_updated.emit(95, "Restoring format tags...")
+                final_result = restore_tags_from_placeholders(final_result, placeholder_mapping)
 
             self.progress_updated.emit(100, "Translation completed!")
             self.translation_completed.emit(final_result, True, "", detected_language)
