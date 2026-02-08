@@ -470,8 +470,13 @@ items[2]{id,name}:
         self._on_format_changed(self.format_combo.currentText())
     
     def _on_format_changed(self, format_name: str):
-        """Update example text when format changes."""
+        """Update example text and output tab name when format changes."""
         self.example_text.setPlainText(self.TEMPLATES.get(format_name, ""))
+        
+        # Update parent dock's output tab name to match selected format
+        if self.parent() and hasattr(self.parent(), 'jsx_output_tabs'):
+            # Tab index 1 is the JSON/format output tab (index 0 is Paths)
+            self.parent().jsx_output_tabs.setTabText(1, format_name)
     
     def get_selected_template(self) -> str:
         """Get the currently selected template text."""
