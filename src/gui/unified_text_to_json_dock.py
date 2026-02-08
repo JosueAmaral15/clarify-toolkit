@@ -1060,15 +1060,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 "All Files (*);;HTML Files (*.html *.htm);;JSX/TSX Files (*.jsx *.tsx);;JavaScript Files (*.js *.ts)"
             )
             if file_path:
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        self.jsx_text_input.setPlainText(content)
-                except Exception as e:
-                    self.show_error(
-                        tr("advanced_extractor.error", "Error"),
-                        tr("advanced_extractor.load_error", f"Failed to load file: {str(e)}")
-                    )
+                self._jsx_load_file_to_text(file_path)
         elif input_type_index == 1:  # File mode
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
@@ -1085,7 +1077,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 self.jsx_path_edit.setText(dir_path)
     
     def _jsx_show_recent_menu(self):
-        """Show recent paths menu (same pattern as File Explorer)."""
+        """Show recent paths menu - mode-aware behavior."""
         if not self.jsx_recent_paths:
             QMessageBox.information(
                 self,
@@ -1094,10 +1086,35 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             )
             return
         
+        # Get current input mode
+        input_mode_index = self.jsx_input_type_combo.currentIndex()
+        is_text_mode = (input_mode_index == 2)
+        
+        # Filter recent paths based on mode
+        if is_text_mode:
+            # Text mode: Show only files (not directories)
+            filtered_paths = [p for p in self.jsx_recent_paths if os.path.isfile(p)]
+            if not filtered_paths:
+                QMessageBox.information(
+                    self,
+                    tr("file_list.recent_no_files_title", "No Recent Files"),
+                    tr("file_list.recent_no_files_message", "No recent files found. Only files can be loaded in Text mode.")
+                )
+                return
+            paths_to_show = filtered_paths
+        else:
+            # Directory/File mode: Show all
+            paths_to_show = self.jsx_recent_paths
+        
         menu = QMenu(self)
-        for path in self.jsx_recent_paths:
+        for path in paths_to_show:
             action = QAction(path, self)
-            action.triggered.connect(lambda checked, p=path: self.jsx_path_edit.setText(p))
+            if is_text_mode:
+                # Text mode: Load file content
+                action.triggered.connect(lambda checked, p=path: self._jsx_load_file_to_text(p))
+            else:
+                # Directory/File mode: Set path
+                action.triggered.connect(lambda checked, p=path: self.jsx_path_edit.setText(p))
             menu.addAction(action)
         
         menu.addSeparator()
@@ -1106,6 +1123,43 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         menu.addAction(clear_action)
         
         menu.exec(self.jsx_recent_btn.mapToGlobal(self.jsx_recent_btn.rect().bottomLeft()))
+    
+    def _jsx_load_file_to_text(self, file_path: str):
+        """Load file content into text input (Text mode only)."""
+        if not os.path.isfile(file_path):
+            QMessageBox.warning(
+                self,
+                tr("text_to_json.not_file_title", "Not a File"),
+                tr("text_to_json.not_file_message", f"Path is not a file:\n{file_path}")
+            )
+            return
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                self.jsx_text_input.setPlainText(content)
+                
+                # Update hidden path field (for tracking)
+                self.jsx_path_edit.setText(file_path)
+                
+                # Add to recent list
+                self._jsx_add_to_recent(file_path)
+                
+                self._jsx_update_status(tr("text_to_json.file_loaded", f"File loaded: {os.path.basename(file_path)}"))
+                
+        except UnicodeDecodeError:
+            # Binary file error
+            QMessageBox.warning(
+                self,
+                tr("text_to_json.binary_file_title", "Cannot Load Binary File"),
+                tr("text_to_json.binary_file_message", f"Cannot load binary file as text:\n{file_path}\n\nPlease select a text file.")
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                tr("text_to_json.load_error_title", "Load Error"),
+                tr("text_to_json.load_error_message", f"Failed to load file:\n{file_path}\n\nError: {str(e)}")
+            )
     
     def _jsx_clear_recent(self):
         """Clear recent paths list."""
