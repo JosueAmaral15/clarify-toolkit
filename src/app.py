@@ -508,7 +508,9 @@ if _PYSIDE:
             """Load JSON from text converter into main editor (stays in Text to JSON dock)."""
             # Open Editor as a dedicated tab (not as dock)
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
-                self._show_editor()
+                from .gui import EditorDock
+                self.dock_editor = EditorDock(self)
+                self._add_tool_tab(self.dock_editor, "Editor", "editor")
             self.dock_editor.load_json_string(json_str)
             # Don't switch - stay in Text to JSON tab
         
@@ -516,7 +518,9 @@ if _PYSIDE:
             """Load content from text converter into main editor and switch to Editor tab."""
             # Open Editor as a dedicated tab (not as dock)
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
-                self._show_editor()
+                from .gui import EditorDock
+                self.dock_editor = EditorDock(self)
+                self._add_tool_tab(self.dock_editor, "Editor", "editor")
             self.dock_editor.load_json_string(content)
             
             # SWITCH to Editor tab
