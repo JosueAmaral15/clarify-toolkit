@@ -162,15 +162,15 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
     result = translated_text
     
     # PASS 1: Restore PAIRED tags (【FMT001】...【/FMT001】)
-    # Normal/slightly corrupted pairs
-    pattern1 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s*】'
+    # ULTRA-PERMISSIVE: Allows spaces ANYWHERE, handles ASCII brackets too
+    # Matches: 【FMT001】, 【F MT007】, [FMT013], [ F M T 0 1 3 ]
+    pattern1_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】(.*?)【\s*/\s*F\s*M\s*T\s*\1\s*】'
+    pattern1_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\](.*?)\[\s*/\s*F\s*M\s*T\s*\1\s*\]'
     
     def restore_paired(match):
-        fmt_id_with_spaces = match.group(1)
+        num = match.group(1).replace(' ', '')
         translated_text_inside = match.group(2)
-        
-        # Remove all spaces from ID: "F MT001" → "FMT001"
-        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        fmt_id = f"FMT{num}"
         
         if fmt_id not in mapping:
             return match.group(0)
@@ -181,16 +181,18 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
         else:
             return match.group(0)
     
-    result = re.sub(pattern1, restore_paired, result, flags=re.DOTALL)
+    result = re.sub(pattern1_unicode, restore_paired, result, flags=re.DOTALL)
+    result = re.sub(pattern1_ascii, restore_paired, result, flags=re.DOTALL)
     
     # PASS 2: Severely corrupted pairs (closing bracket deleted by Google)
-    pattern2 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s+'
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern2_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】(.*?)【\s*/\s*F\s*M\s*T\s*\1\s+'
+    pattern2_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\](.*?)\[\s*/\s*F\s*M\s*T\s*\1\s+'
     
     def restore_paired_broken(match):
-        fmt_id_with_spaces = match.group(1)
+        num = match.group(1).replace(' ', '')
         translated_text_inside = match.group(2)
-        
-        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        fmt_id = f"FMT{num}"
         
         if fmt_id not in mapping:
             return match.group(0)
@@ -201,11 +203,13 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
         else:
             return match.group(0)
     
-    result = re.sub(pattern2, restore_paired_broken, result, flags=re.DOTALL)
+    result = re.sub(pattern2_unicode, restore_paired_broken, result, flags=re.DOTALL)
+    result = re.sub(pattern2_ascii, restore_paired_broken, result, flags=re.DOTALL)
     
     # PASS 3: Restore CLOSING tags (【FMTC001】)
-    # Ultra-permissive to handle corruption
-    pattern_closing = r'【\s*F\s*M\s*T\s*C\s*(\d+)\s*[】\s]*'
+    # ULTRA-PERMISSIVE: Handles spaces anywhere + ASCII brackets
+    pattern_closing_unicode = r'【\s*F\s*M\s*T\s*C\s*(\d+)\s*[】\s]*'
+    pattern_closing_ascii = r'\[\s*F\s*M\s*T\s*C\s*(\d+)\s*[\]\s]*'
     
     def restore_closing(match):
         num = match.group(1).replace(' ', '')
@@ -216,11 +220,13 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
         else:
             return ''
     
-    result = re.sub(pattern_closing, restore_closing, result)
+    result = re.sub(pattern_closing_unicode, restore_closing, result)
+    result = re.sub(pattern_closing_ascii, restore_closing, result)
     
     # PASS 4: Restore OPENING tags (【FMTO001】)
-    # Ultra-permissive to handle corruption
-    pattern_opening = r'【\s*F\s*M\s*T\s*O\s*(\d+)\s*[】\s]*'
+    # ULTRA-PERMISSIVE: Handles spaces anywhere + ASCII brackets
+    pattern_opening_unicode = r'【\s*F\s*M\s*T\s*O\s*(\d+)\s*[】\s]*'
+    pattern_opening_ascii = r'\[\s*F\s*M\s*T\s*O\s*(\d+)\s*[\]\s]*'
     
     def restore_opening(match):
         num = match.group(1).replace(' ', '')
@@ -231,14 +237,17 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
         else:
             return ''
     
-    result = re.sub(pattern_opening, restore_opening, result)
+    result = re.sub(pattern_opening_unicode, restore_opening, result)
+    result = re.sub(pattern_opening_ascii, restore_opening, result)
     
     # PASS 5: Cleanup orphaned paired opening tags (【FMT001】 with no closing)
-    pattern3 = r'【\s*(FMT\s*\d+)\s*】'
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern3_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】'
+    pattern3_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\]'
     
     def restore_orphan_opening(match):
-        fmt_id_with_spaces = match.group(1)
-        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMT{num}"
         
         if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
             # Return just the opening tag (closing was lost)
@@ -247,21 +256,25 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
             # Unknown ID or already processed - remove placeholder
             return ''
     
-    result = re.sub(pattern3, restore_orphan_opening, result)
+    result = re.sub(pattern3_unicode, restore_orphan_opening, result)
+    result = re.sub(pattern3_ascii, restore_orphan_opening, result)
     
     # PASS 6: Cleanup orphaned paired closing tags (【/FMT001】)
-    pattern4 = r'【\s*/\s*(FMT\s*\d+)\s*[】\s]*'
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern4_unicode = r'【\s*/\s*F\s*M\s*T\s*(\d+)\s*[】\s]*'
+    pattern4_ascii = r'\[\s*/\s*F\s*M\s*T\s*(\d+)\s*[\]\s]*'
     
     def restore_orphan_closing(match):
-        fmt_id_with_spaces = match.group(1)
-        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMT{num}"
         
         if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
             return mapping[fmt_id]['closing']
         else:
             return ''
     
-    result = re.sub(pattern4, restore_orphan_closing, result)
+    result = re.sub(pattern4_unicode, restore_orphan_closing, result)
+    result = re.sub(pattern4_ascii, restore_orphan_closing, result)
     
     return result
 
