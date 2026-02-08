@@ -515,7 +515,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Flag to prevent signal processing during cleanup
         self._extraction_cleaning_up = False
         
-        super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
+        super().__init__(tr("text_to_json.title", "Format Converter"), parent)
         self.setObjectName("UnifiedTextToJsonDock")
     
     def _setup_ui(self) -> None:

@@ -640,7 +640,7 @@ if _PYSIDE:
                 # Connect signals for editor integration
                 self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
                 self.dock_unified_text_to_json.open_in_editor_and_switch_requested.connect(self._load_json_from_converter_and_switch)
-            self._add_tool_tab(self.dock_unified_text_to_json, "Text to JSON Converter", "unified_text_to_json")
+            self._add_tool_tab(self.dock_unified_text_to_json, "Format Converter", "unified_text_to_json")
 
         def _show_jsx_extractor(self):
             """Show JSX Parameter Extractor as tab (create on-demand)."""

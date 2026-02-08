@@ -620,4 +620,4 @@ class EditorDock(BaseDock):
         index = self.tab_widget.addTab(tab, "Untitled.txt")
         self.tab_widget.setCurrentIndex(index)
         
-        self.lbl_status.setText("Content loaded from Text to JSON Converter")
+        self.lbl_status.setText("Content loaded from Format Converter")
