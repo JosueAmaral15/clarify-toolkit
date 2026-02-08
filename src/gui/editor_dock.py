@@ -594,13 +594,14 @@ class EditorDock(BaseDock):
     
     def load_json_string(self, json_str: str):
         """
-        Load JSON string content into a new edit-only tab.
+        Load JSON string content into a new normal-mode tab named 'Untitled.txt'.
+        User can edit and save the content.
         
         Args:
             json_str: JSON string content to load
         """
-        # Create new edit-only tab
-        tab = EditorTab(None, self, edit_only_mode=True)
+        # Create new NORMAL-mode tab (not edit-only)
+        tab = EditorTab(None, self, edit_only_mode=False)
         tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
         tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
         
@@ -612,8 +613,11 @@ class EditorDock(BaseDock):
         # Set content using the underlying QTextEdit
         tab.editor.setPlainText(json_str)
         
-        # Add tab with descriptive name
-        index = self.tab_widget.addTab(tab, "JSON from Converter")
+        # Mark as modified so user knows to save
+        tab.is_modified = True
+        
+        # Add tab with name "Untitled.txt"
+        index = self.tab_widget.addTab(tab, "Untitled.txt")
         self.tab_widget.setCurrentIndex(index)
         
-        self.lbl_status.setText("JSON loaded from converter")
+        self.lbl_status.setText("Content loaded from Text to JSON Converter")

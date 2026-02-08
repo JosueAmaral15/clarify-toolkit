@@ -232,6 +232,7 @@ class EditorTab(QWidget):
                 QTextEdit {
                     border: 3px solid #FFD700;
                     background-color: #FFF8DC;
+                    color: #000000;
                 }
             """)
         else:
