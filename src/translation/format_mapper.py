@@ -65,6 +65,7 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
     
     # PASS 1: Match complete tag pairs with content: <opening>text</closing>
     # This handles the majority of normal formatted text
+    # BUT: Skip pairs with ONLY whitespace (those are span transitions)
     paired_pattern = r'<(\d+(?:\|\d+)?:[^>]+)>([^<]+?)</(\d+(?:\|\d+)?)>'
     
     def replace_paired_match(match):
@@ -72,6 +73,12 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
         opening_tag = match.group(1)
         text_inside = match.group(2)
         closing_tag = match.group(3)
+        
+        # Session 76.3 FIX: If content is ONLY whitespace, don't treat as paired
+        # These are span transitions and should be handled as individual tags
+        if text_inside.strip() == '':
+            # Return unchanged - will be caught by Pass 2/3 as individual tags
+            return match.group(0)
         
         # Generate unique ID
         fmt_id = f"FMT{counter:03d}"
