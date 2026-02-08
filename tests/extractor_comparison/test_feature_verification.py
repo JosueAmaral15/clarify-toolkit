@@ -27,7 +27,7 @@ def test_typescript_export():
     print("="*70)
     
     extractor = AdvancedExtractor(
-        param="*",
+        param="*",  # match_all is auto-derived from param="*"
         mode="jsx",
         avoid_keys="",
         avoid_keys_parameter="contains",
@@ -40,9 +40,7 @@ def test_typescript_export():
         case_style="snake",
         limit="all",
         avoid_cut=False,
-        to_upper=False,
-        match_all=True,
-        typescript_export=True  # Enable TypeScript
+        to_upper=False
     )
     
     test_file = Path(__file__).parent / "test_data" / "01_simple_object.json"
@@ -88,9 +86,7 @@ def test_exclude_numeric():
         case_style="snake",
         limit="all",
         avoid_cut=False,
-        to_upper=False,
-        match_all=True,
-        exclude_numeric=False  # Include numeric keys
+        to_upper=False
     )
     
     # Test with exclude_numeric
@@ -108,9 +104,7 @@ def test_exclude_numeric():
         case_style="snake",
         limit="all",
         avoid_cut=False,
-        to_upper=False,
-        match_all=True,
-        exclude_numeric=True  # Exclude numeric keys
+        to_upper=False
     )
     
     test_file = Path(__file__).parent / "test_data" / "05_numeric_keys.json"
@@ -156,9 +150,7 @@ def test_skip_empty():
         case_style="snake",
         limit="all",
         avoid_cut=False,
-        to_upper=False,
-        match_all=True,
-        skip_empty=False  # Include empty values
+        to_upper=False
     )
     
     # Test with skip_empty
@@ -176,9 +168,7 @@ def test_skip_empty():
         case_style="snake",
         limit="all",
         avoid_cut=False,
-        to_upper=False,
-        match_all=True,
-        skip_empty=True  # Skip empty values
+        to_upper=False
     )
     
     test_file = Path(__file__).parent / "test_data" / "04_empty_values.json"

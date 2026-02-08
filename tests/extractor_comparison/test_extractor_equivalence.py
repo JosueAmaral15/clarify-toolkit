@@ -28,7 +28,7 @@ sys.path.insert(0, str(project_root))
 from src.extractors.advanced_extractor import AdvancedExtractor
 
 
-class TestResult:
+class ExtractorTestResult:
     """Container for test results."""
     def __init__(self, name: str, passed: bool, message: str = "", details: str = ""):
         self.name = name
@@ -42,7 +42,7 @@ class ExtractorTester:
     
     def __init__(self, test_data_dir: str):
         self.test_data_dir = Path(test_data_dir)
-        self.results: List[TestResult] = []
+        self.results: List[ExtractorTestResult] = []
     
     def run_advanced_extractor(
         self, 
@@ -54,7 +54,7 @@ class ExtractorTester:
         """Run Advanced Extractor on a file and return paths + JSON output."""
         try:
             extractor = AdvancedExtractor(
-                param="*",  # Match all
+                param="*",  # Match all (match_all auto-derived from param="*")
                 mode="jsx",
                 avoid_keys="",
                 avoid_keys_parameter="contains",
@@ -69,11 +69,7 @@ class ExtractorTester:
                 avoid_cut=False,
                 to_upper=False,
                 only_strings=False,
-                is_attribute_mode=True,
-                match_all=True,
-                typescript_export=typescript_export,
-                exclude_numeric=exclude_numeric,
-                skip_empty=skip_empty
+                is_attribute_mode=True
             )
             
             paths_output, json_output = extractor.run(str(file_path))
@@ -88,7 +84,7 @@ class ExtractorTester:
         output1: Tuple[str, str],
         output2: Tuple[str, str],
         feature_description: str
-    ) -> TestResult:
+    ) -> ExtractorTestResult:
         """Compare two outputs and return test result."""
         paths1, json1 = output1
         paths2, json2 = output2
@@ -96,7 +92,7 @@ class ExtractorTester:
         # For now, just verify Advanced Extractor doesn't crash
         # Full Text Extractor comparison would require implementing its extraction logic here
         if "ERROR" in paths1 or "ERROR" in json1:
-            return TestResult(
+            return ExtractorTestResult(
                 name=f"{file_name} - {feature_description}",
                 passed=False,
                 message="Advanced Extractor crashed",
@@ -104,7 +100,7 @@ class ExtractorTester:
             )
         
         # Success: Advanced Extractor processed without errors
-        return TestResult(
+        return ExtractorTestResult(
             name=f"{file_name} - {feature_description}",
             passed=True,
             message="Advanced Extractor processed successfully",
