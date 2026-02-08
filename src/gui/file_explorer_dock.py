@@ -2136,7 +2136,7 @@ def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[Li
         List of selected file paths, or None if canceled
 
     Example:
-        >>> files = show_file_explorer_dialog(self, "/home/user/projects")
+        >>> files = show_file_explorer_dialog(self, "~/projects")
         >>> if files:
         ...     print(f"Selected {len(files)} files")
     """
