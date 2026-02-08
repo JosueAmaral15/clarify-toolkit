@@ -58,6 +58,8 @@ coverage.json
 *.backup
 *.backup_*
 *_OLD.py
+*_OLD.md
+*_OLD.*.pyc
 *.py~
 *.swp
 
