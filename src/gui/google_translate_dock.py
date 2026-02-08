@@ -85,7 +85,12 @@ class TranslationWorker(QThread):
 
             # Session 75: Check if text contains format tags
             # If yes, use placeholder protection for 100% tag preservation
-            from translation.format_mapper import replace_tags_with_placeholders, restore_tags_from_placeholders
+            from translation.format_mapper import (
+                replace_tags_with_placeholders, 
+                restore_tags_from_placeholders,
+                protect_special_whitespace,
+                restore_special_whitespace
+            )
             
             has_format_tags = '<' in self.text and '>' in self.text and '|' in self.text
             placeholder_mapping = None
@@ -94,6 +99,10 @@ class TranslationWorker(QThread):
             if has_format_tags:
                 self.progress_updated.emit(30, "Protecting format tags...")
                 text_to_translate, placeholder_mapping = replace_tags_with_placeholders(self.text)
+            
+            # Session 75: Always protect special whitespace (tabs, line breaks, multiple spaces)
+            self.progress_updated.emit(32, "Protecting whitespace...")
+            text_to_translate = protect_special_whitespace(text_to_translate)
 
             # For large texts, split into chunks
             max_chunk_size = 5000  # Google Translate limit
@@ -101,7 +110,8 @@ class TranslationWorker(QThread):
 
             if len(text_to_translate) > max_chunk_size:
                 # Split by sentences/paragraphs to maintain context
-                paragraphs = text_to_translate.split("\n\n")
+                # Note: We can still split on 【BR】【BR】 (which was \n\n)
+                paragraphs = text_to_translate.split("【BR】【BR】")
                 current_chunk = ""
 
                 for paragraph in paragraphs:
@@ -143,11 +153,16 @@ class TranslationWorker(QThread):
                     detected_language = result.source_language
 
             # Combine translated chunks
-            final_result = "\n\n".join(translated_chunks)
+            # Note: Can't use \n\n anymore since we protected it, use 【BR】【BR】
+            final_result = "【BR】【BR】".join(translated_chunks)
+            
+            # Session 75: Restore whitespace FIRST (before format tags)
+            self.progress_updated.emit(93, "Restoring whitespace...")
+            final_result = restore_special_whitespace(final_result)
             
             # Session 75: Restore format tags if placeholders were used
             if placeholder_mapping:
-                self.progress_updated.emit(95, "Restoring format tags...")
+                self.progress_updated.emit(96, "Restoring format tags...")
                 final_result = restore_tags_from_placeholders(final_result, placeholder_mapping)
 
             self.progress_updated.emit(100, "Translation completed!")

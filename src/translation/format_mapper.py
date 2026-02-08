@@ -131,6 +131,88 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
     return result
 
 
+def protect_special_whitespace(text: str) -> str:
+    """
+    Protect special whitespace characters from Google Translate conversion.
+    
+    Google Translate often normalizes whitespace:
+    - Tabs (\t) → regular spaces
+    - Multiple spaces → single space
+    - Line breaks may be removed
+    - Non-breaking spaces may be converted
+    
+    This function replaces them with Unicode placeholders that Google preserves.
+    
+    Args:
+        text: Text with special whitespace characters
+        
+    Returns:
+        Text with whitespace protected by placeholders
+        
+    Example:
+        Input:  "text\t\ttab  spaces\nline"
+        Output: "text【TAB】【TAB】tab【SP2】spaces【BR】line"
+        
+    Author: COM8 (Session 75)
+    """
+    # Order matters! Process specific patterns before generic ones
+    
+    # Non-breaking space (U+00A0)
+    text = text.replace('\xa0', '【NBSP】')
+    
+    # Tabs
+    text = text.replace('\t', '【TAB】')
+    
+    # Line breaks (single \n)
+    # Note: \n\n will become 【BR】【BR】 which is fine for paragraph breaks
+    text = text.replace('\n', '【BR】')
+    
+    # Multiple consecutive spaces (2 or more)
+    # Pattern: "  " → 【SP2】, "   " → 【SP3】, etc.
+    def replace_spaces(match):
+        count = len(match.group(0))
+        return f'【SP{count}】'
+    
+    text = re.sub(r' {2,}', replace_spaces, text)
+    
+    return text
+
+
+def restore_special_whitespace(text: str) -> str:
+    """
+    Restore special whitespace from placeholders after translation.
+    
+    Reverses the protection applied by protect_special_whitespace().
+    
+    Args:
+        text: Text with whitespace placeholders
+        
+    Returns:
+        Text with restored whitespace characters
+        
+    Example:
+        Input:  "text【TAB】【TAB】tab【SP2】spaces【BR】line"
+        Output: "text\t\ttab  spaces\nline"
+        
+    Author: COM8 (Session 75)
+    """
+    # Restore in reverse order of protection
+    
+    # Multiple spaces: 【SP2】 → "  ", 【SP3】 → "   ", etc.
+    def restore_spaces(match):
+        count = int(match.group(1))
+        return ' ' * count
+    
+    text = re.sub(r'【SP(\d+)】', restore_spaces, text)
+    
+    # Simple character replacements
+    text = text.replace('【BR】', '\n')
+    text = text.replace('【TAB】', '\t')
+    text = text.replace('【NBSP】', '\xa0')
+    
+    return text
+
+
 # ============================================================================
 # Format bit masks (powers of 2)
 class FormatBit:
