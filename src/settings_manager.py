@@ -13,6 +13,10 @@ import os
 from pathlib import Path
 from typing import Any, Optional, Dict
 
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class SettingsManager:
     """Manages application settings with persistence."""

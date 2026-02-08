@@ -18,6 +18,9 @@ from typing import List, Dict, Any, Optional, Tuple
 from .jsx_parser import parse_jsx_file
 from .normalizer import normalize_text
 from .path_builder import PathBuilder, build_nested_json
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def extract_from_file(file_path: str,
