@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
     QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
     QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication,
-    QProgressDialog
+    QProgressDialog, QTextEdit
 )
 from PySide6.QtGui import QFont, QAction, QShortcut, QKeySequence, QTextCursor, QTextCharFormat, QColor
 
@@ -226,7 +226,7 @@ class TextSearchDialog(QDialog):
         extra_selections = []
         
         for i, (start, end) in enumerate(self.matches):
-            selection = QPlainTextEdit.ExtraSelection()
+            selection = QTextEdit.ExtraSelection()
             
             cursor = self.text_widget.textCursor()
             cursor.setPosition(start)
