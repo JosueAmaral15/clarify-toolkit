@@ -40,29 +40,34 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
     
     This prevents Google Translate from corrupting or deleting format tags.
     
+    Session 76 FIX: Now handles BOTH paired tags AND adjacent unpaired tags
+    
     Example:
         Input:  "<113|65536:Arial|0,0>RISKS</113|65536>"
         Output: ("【FMT001】RISKS【/FMT001】", {mapping})
+        
+        Input:  "Header</113|65536><112|65536:Arial|0,0>Body"
+        Output: ("Header【FMTC001】【FMTO002】Body", {mapping})
     
     Args:
         tagged_text: Text with format tags like <113|65536:Arial|0,0>text</113|65536>
         
     Returns:
         (text_with_placeholders, mapping)
-        - text_with_placeholders: Text with 【FMTXXX】text【/FMTXXX】
+        - text_with_placeholders: Text with 【FMTXXX】 placeholders
         - mapping: Dict mapping IDs to original tag info
         
-    Author: COM8 (Session 75)
+    Author: COM8 (Sessions 75, 76)
     """
     mapping = {}
     counter = 1
     result = tagged_text
     
-    # Pattern to match complete tag pairs: <opening>text</closing>
-    # Captures: (opening_tag_content, text_inside, closing_tag_content)
-    pattern = r'<(\d+(?:\|\d+)?:[^>]+)>([^<]*?)</(\d+(?:\|\d+)?)>'
+    # PASS 1: Match complete tag pairs with content: <opening>text</closing>
+    # This handles the majority of normal formatted text
+    paired_pattern = r'<(\d+(?:\|\d+)?:[^>]+)>([^<]+?)</(\d+(?:\|\d+)?)>'
     
-    def replace_match(match):
+    def replace_paired_match(match):
         nonlocal counter
         opening_tag = match.group(1)
         text_inside = match.group(2)
@@ -74,16 +79,56 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
         
         # Store original tag info
         mapping[fmt_id] = {
+            'type': 'paired',
             'opening': f'<{opening_tag}>',
             'closing': f'</{closing_tag}>',
             'original_text': text_inside
         }
         
-        # Return placeholder with Unicode brackets 【】 (won't be recognized as HTML)
+        # Return placeholder with Unicode brackets 【】
         return f'【{fmt_id}】{text_inside}【/{fmt_id}】'
     
-    # Replace all tag pairs with placeholders
-    result = re.sub(pattern, replace_match, result)
+    # Replace all paired tags first
+    result = re.sub(paired_pattern, replace_paired_match, result)
+    
+    # PASS 2: Match remaining CLOSING tags (individual, unpaired)
+    # These appear at span transitions like: "text</TAG1><TAG2>text"
+    closing_pattern = r'</(\d+(?:\|\d+)?)>'
+    
+    def replace_closing_match(match):
+        nonlocal counter
+        closing_tag = match.group(1)
+        
+        fmt_id = f"FMTC{counter:03d}"  # C = Close
+        counter += 1
+        
+        mapping[fmt_id] = {
+            'type': 'closing',
+            'tag': f'</{closing_tag}>'
+        }
+        
+        return f'【{fmt_id}】'
+    
+    result = re.sub(closing_pattern, replace_closing_match, result)
+    
+    # PASS 3: Match remaining OPENING tags (individual, unpaired)
+    opening_pattern = r'<(\d+(?:\|\d+)?:[^>]+)>'
+    
+    def replace_opening_match(match):
+        nonlocal counter
+        opening_tag = match.group(1)
+        
+        fmt_id = f"FMTO{counter:03d}"  # O = Open
+        counter += 1
+        
+        mapping[fmt_id] = {
+            'type': 'opening',
+            'tag': f'<{opening_tag}>'
+        }
+        
+        return f'【{fmt_id}】'
+    
+    result = re.sub(opening_pattern, replace_opening_match, result)
     
     return result, mapping
 
@@ -91,30 +136,36 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
 def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict[str, str]]) -> str:
     """
     Restore original format tags from placeholders after translation.
+    
+    Session 76 UPDATE: Now handles 3 placeholder types:
+    - Paired: 【FMT001】text【/FMT001】 (normal formatted text)
+    - Closing: 【FMTC001】 (unpaired closing tag)
+    - Opening: 【FMTO001】 (unpaired opening tag)
+    
     Handles severely corrupted placeholders where Google Translate:
     - Added spaces: 【FMT001】 → 【F MT001】
     - Deleted brackets: 【/FMT001】 → 【/FMT001 (missing closing 】)
     
     Example:
-        Input:  "【FMT001】RISKS【/FMT001】" or "【FMT001】RISKS【/FMT001 "
-        Output: "<113|65536:Arial|0,0>RISKS</113|65536>"
+        Input:  "【FMT001】RISKS【/FMT001】" or "Header【FMTC001】【FMTO002】Body"
+        Output: "<113|65536:Arial|0,0>RISKS</113|65536>" or "Header</113|65536><112|65536>Body"
     
     Args:
-        translated_text: Text with 【FMTXXX】translated text【/FMTXXX】
+        translated_text: Text with 【FMTXXX】 placeholders
         mapping: Dict mapping IDs to original tag info
         
     Returns:
-        Text with restored tags: <113|65536:Arial|0,0>translated text</113|65536>
+        Text with restored tags
         
-    Author: COM8 (Session 75, fixed after user caught incomplete testing)
+    Author: COM8 (Sessions 75, 76)
     """
     result = translated_text
     
-    # Pattern 1: Normal/slightly corrupted pairs (closing bracket present)
-    # Matches: 【FMT001】...【/FMT001】, 【F MT001】...【/ FMT001】
+    # PASS 1: Restore PAIRED tags (【FMT001】...【/FMT001】)
+    # Normal/slightly corrupted pairs
     pattern1 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s*】'
     
-    def restore_match(match):
+    def restore_paired(match):
         fmt_id_with_spaces = match.group(1)
         translated_text_inside = match.group(2)
         
@@ -125,16 +176,17 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
             return match.group(0)
         
         tag_info = mapping[fmt_id]
-        return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        if tag_info.get('type') == 'paired':
+            return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        else:
+            return match.group(0)
     
-    result = re.sub(pattern1, restore_match, result, flags=re.DOTALL)
+    result = re.sub(pattern1, restore_paired, result, flags=re.DOTALL)
     
-    # Pattern 2: Severely corrupted (closing bracket deleted by Google)
-    # Matches: 【FMT001】...【/FMT001 (no closing 】)
-    # Must use lookahead to avoid consuming too much
+    # PASS 2: Severely corrupted pairs (closing bracket deleted by Google)
     pattern2 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s+'
     
-    def restore_match_broken(match):
+    def restore_paired_broken(match):
         fmt_id_with_spaces = match.group(1)
         translated_text_inside = match.group(2)
         
@@ -144,36 +196,67 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
             return match.group(0)
         
         tag_info = mapping[fmt_id]
-        return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        if tag_info.get('type') == 'paired':
+            return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        else:
+            return match.group(0)
     
-    result = re.sub(pattern2, restore_match_broken, result, flags=re.DOTALL)
+    result = re.sub(pattern2, restore_paired_broken, result, flags=re.DOTALL)
     
-    # Pattern 3: Cleanup orphaned opening tags (no matching closing tag found)
-    # These are usually near the end or where Google heavily modified text
-    # Just restore the opening tag and remove the placeholder
+    # PASS 3: Restore CLOSING tags (【FMTC001】)
+    # Ultra-permissive to handle corruption
+    pattern_closing = r'【\s*F\s*M\s*T\s*C\s*(\d+)\s*[】\s]*'
+    
+    def restore_closing(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMTC{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'closing':
+            return mapping[fmt_id]['tag']
+        else:
+            return ''
+    
+    result = re.sub(pattern_closing, restore_closing, result)
+    
+    # PASS 4: Restore OPENING tags (【FMTO001】)
+    # Ultra-permissive to handle corruption
+    pattern_opening = r'【\s*F\s*M\s*T\s*O\s*(\d+)\s*[】\s]*'
+    
+    def restore_opening(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMTO{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'opening':
+            return mapping[fmt_id]['tag']
+        else:
+            return ''
+    
+    result = re.sub(pattern_opening, restore_opening, result)
+    
+    # PASS 5: Cleanup orphaned paired opening tags (【FMT001】 with no closing)
     pattern3 = r'【\s*(FMT\s*\d+)\s*】'
     
     def restore_orphan_opening(match):
         fmt_id_with_spaces = match.group(1)
         fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
         
-        if fmt_id in mapping:
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
             # Return just the opening tag (closing was lost)
             return mapping[fmt_id]['opening']
         else:
-            # Unknown ID - just remove the placeholder
+            # Unknown ID or already processed - remove placeholder
             return ''
     
     result = re.sub(pattern3, restore_orphan_opening, result)
     
-    # Pattern 4: Cleanup orphaned closing tags
+    # PASS 6: Cleanup orphaned paired closing tags (【/FMT001】)
     pattern4 = r'【\s*/\s*(FMT\s*\d+)\s*[】\s]*'
     
     def restore_orphan_closing(match):
         fmt_id_with_spaces = match.group(1)
         fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
         
-        if fmt_id in mapping:
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
             return mapping[fmt_id]['closing']
         else:
             return ''
