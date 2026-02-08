@@ -1493,8 +1493,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         paths_text = self.jsx_paths_output.toPlainText()
         json_text = self.jsx_json_output.toPlainText()
         
-        print(f"DEBUG _jsx_copy_all() | Paths tab has {len(paths_text)} chars")
-        print(f"DEBUG _jsx_copy_all() | JSON tab has {len(json_text)} chars")
+        # Debug logging removed - was using print() which violates SIMPLICITY_PROTOCOL_3
+        # These were: print(f"DEBUG _jsx_copy_all() | Paths tab has {len(paths_text)} chars")
+        #             print(f"DEBUG _jsx_copy_all() | JSON tab has {len(json_text)} chars")
         
         if not paths_text and not json_text:
             self.show_warning(
@@ -1545,7 +1546,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         QApplication.clipboard().setText(result)
         
-        print(f"DEBUG _jsx_copy_all() | Combined {len(result)} characters (Paths + JSON)")
+        # Debug logging removed - was using print() which violates SIMPLICITY_PROTOCOL_3
+        # Was: print(f"DEBUG _jsx_copy_all() | Combined {len(result)} characters (Paths + JSON)")
         
         self.show_info(
             tr("advanced_extractor.copied", "Copied"),
