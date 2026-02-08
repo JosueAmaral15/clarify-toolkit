@@ -305,6 +305,15 @@ class TextSearchDialog(QDialog):
         super().closeEvent(event)
 
 
+class JSXTextSearchDialog(TextSearchDialog):
+    """Modal search dialog specifically for JSX text input field."""
+    
+    def __init__(self, parent=None, text_widget=None):
+        super().__init__(parent, text_widget)
+        self.setModal(True)  # Make it modal
+        self.setWindowTitle(tr("text_search.title_jsx", "Search in JSX Text Input"))
+
+
 class TemplatesDialog(QDialog):
     """Dialog to show format templates and examples."""
     
@@ -609,6 +618,14 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_recent_btn.clicked.connect(self._jsx_show_recent_menu)
         path_layout.addWidget(self.jsx_recent_btn)
         
+        # Search button (only visible in Text mode)
+        self.jsx_search_btn = QPushButton(tr("text_search.btn_search", "Search"))
+        self.jsx_search_btn.setMaximumWidth(100)
+        self.jsx_search_btn.clicked.connect(self._jsx_open_search_dialog)
+        self.jsx_search_btn.setVisible(False)  # Hidden by default
+        self.jsx_search_btn.setToolTip(tr("text_search.tooltip_search", "Search in text input (Ctrl+F)"))
+        path_layout.addWidget(self.jsx_search_btn)
+        
         self.jsx_browse_btn = QPushButton(tr("base.btn_browse", "Browse"))
         self.jsx_browse_btn.setMaximumWidth(200)  # Increased for "Load from File..." text
         self.jsx_browse_btn.clicked.connect(self._jsx_browse_path)
@@ -623,16 +640,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_text_input.setVisible(False)  # Hidden by default
         layout.addWidget(self.jsx_text_input)
         
-        # Search button (visible only in Text mode)
-        search_button_layout = QHBoxLayout()
-        search_button_layout.addStretch()
-        self.jsx_search_button = QPushButton("🔍 Search")
-        self.jsx_search_button.clicked.connect(self._open_text_search)
-        self.jsx_search_button.setEnabled(False)  # Disabled until Text mode selected
-        self.jsx_search_button.setVisible(False)  # Hidden by default
-        self.jsx_search_button.setToolTip("Search text (CTRL+F)")
-        search_button_layout.addWidget(self.jsx_search_button)
-        layout.addLayout(search_button_layout)
+        # Setup Ctrl+F shortcut for text input (only works when text input has focus)
+        search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self.jsx_text_input)
+        search_shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+        search_shortcut.activated.connect(self._jsx_open_search_dialog)
         
         # Mode and parameter section
         mode_layout = QHBoxLayout()
@@ -998,20 +1009,18 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         selected_type = input_types[index]
         
         if selected_type == "text":
-            # Text mode: Hide path field, show text area
+            # Text mode: Hide path field, show text area and search button
             self.jsx_path_edit.setVisible(False)
             self.jsx_browse_btn.setText(tr("advanced_extractor.load_file", "Load from File..."))
             self.jsx_text_input.setVisible(True)
-            self.jsx_search_button.setVisible(True)
-            self.jsx_search_button.setEnabled(True)
+            self.jsx_search_btn.setVisible(True)
             self.jsx_extensions_edit.setEnabled(False)
         else:
-            # Directory/File mode: Show path field, hide text area
+            # Directory/File mode: Show path field, hide text area and search button
             self.jsx_path_edit.setVisible(True)
             self.jsx_browse_btn.setText(tr("base.btn_browse", "Browse"))
             self.jsx_text_input.setVisible(False)
-            self.jsx_search_button.setVisible(False)
-            self.jsx_search_button.setEnabled(False)
+            self.jsx_search_btn.setVisible(False)
             self.jsx_extensions_edit.setEnabled(True)
     
     def _jsx_update_avoid_mode(self):
@@ -1589,6 +1598,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 tr("text_to_json.templates", "Template"),
                 tr("text_to_json.template_selected", f"Template selected:\n\n{template[:200]}...")
             )
+    
+    def _jsx_open_search_dialog(self):
+        """Open modal search dialog for JSX text input (Ctrl+F)."""
+        dialog = JSXTextSearchDialog(self, self.jsx_text_input)
+        dialog.exec()
     
     def _jsx_clear_all(self):
         """Clear all JSX mode fields."""
