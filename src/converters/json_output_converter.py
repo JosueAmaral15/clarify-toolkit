@@ -199,14 +199,15 @@ def convert_json_to_toml(data: Union[Dict, List, str], **options) -> str:
     
     Note:
         TOML has structural limitations (no root-level arrays, limited nesting).
-        Requires 'toml' library (tomllib is read-only in Python 3.11+).
+        Requires 'toml' library (installed via: poetry add toml).
     """
     try:
         import toml as toml_lib
     except ImportError:
         raise ImportError(
-            "toml library is required for TOML writing. "
-            "Install it with: pip install toml"
+            "toml library is required for TOML writing.\n"
+            "Install it with: poetry add toml\n"
+            "Or with pip: pip install toml"
         )
     
     if isinstance(data, str):
