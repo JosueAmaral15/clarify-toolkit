@@ -591,3 +591,29 @@ class EditorDock(BaseDock):
     def save_file(self):
         """Public API for saving current file (v2.9.40)."""
         self._save_file()
+    
+    def load_json_string(self, json_str: str):
+        """
+        Load JSON string content into a new edit-only tab.
+        
+        Args:
+            json_str: JSON string content to load
+        """
+        # Create new edit-only tab
+        tab = EditorTab(None, self, edit_only_mode=True)
+        tab.modified_changed.connect(lambda modified: self._update_tab_title(tab))
+        tab.edit_only_changed.connect(lambda: self._update_tab_title(tab))
+        
+        # Apply auto-save setting
+        tab.set_auto_save(self.auto_save_enabled)
+        if self.auto_save_enabled:
+            tab.auto_saved.connect(lambda: self._on_auto_saved(tab))
+        
+        # Set content using the underlying QTextEdit
+        tab.editor.setPlainText(json_str)
+        
+        # Add tab with descriptive name
+        index = self.tab_widget.addTab(tab, "JSON from Converter")
+        self.tab_widget.setCurrentIndex(index)
+        
+        self.lbl_status.setText("JSON loaded from converter")
