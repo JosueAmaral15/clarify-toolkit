@@ -18,6 +18,11 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 
 
+
+from .utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 @dataclass
 class ProjectTemplate:
     """Represents a project template."""
@@ -222,7 +227,7 @@ class TemplateManager:
                     template = ProjectTemplate.from_dict(data)
                     self._templates[template.id] = template
             except Exception as e:  # pylint: disable=broad-exception-caught
-                print(f"Failed to load template {template_file}: {e}")
+                logger.error(f"Failed to load template {template_file}: {e}")
 
     def get_template(self, template_id: str) -> Optional[ProjectTemplate]:
         """Get template by ID."""
@@ -416,20 +421,20 @@ def reset_template_manager():
 if __name__ == "__main__":
     # Demo
     print("=" * 80)
-    print("Template Manager Demo")
+    logger.error("Template Manager Demo")
     print("=" * 80)
 
     manager = get_template_manager()
 
-    print(f"\nAvailable templates: {len(manager.list_templates())}")
-    print("\nBuilt-in templates:")
+    logger.error(f"\nAvailable templates: {len(manager.list_templates())}")
+    logger.error("\nBuilt-in templates:")
     for tmpl in manager.list_templates():  # Renamed to avoid shadowing class method params
         if tmpl.builtin:
-            print(f"  {tmpl.icon} {tmpl.name} - {tmpl.description}")
+            logger.error(f"  {tmpl.icon} {tmpl.name} - {tmpl.description}")
 
-    print("\nCategories:")
+    logger.error("\nCategories:")
     for cat in manager.get_categories():  # Renamed to avoid shadowing class method params
         count = len([t for t in manager.list_templates() if t.category == cat])
-        print(f"  {cat}: {count} templates")
+        logger.error(f"  {cat}: {count} templates")
 
-    print("\n✅ Template Manager demo complete")
+    logger.error("\n✅ Template Manager demo complete")

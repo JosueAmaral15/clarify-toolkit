@@ -2027,7 +2027,7 @@ class FileExplorerDock(BaseDock):
                     "File Explorer Browse", {"directory": directory, "files_found": len(files_data)}
                 )
         except Exception as e:
-            print(f"Failed to save history: {e}")
+            logger.error(f"Failed to save history: {e}")
 
         # Update status label
         self.results_status.setText(f"Found {len(files_list)} file(s)")

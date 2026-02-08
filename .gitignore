@@ -55,7 +55,10 @@ coverage.json
 # Temporary files (Protocolo Simplicidade 3 - Etapa 11)
 *.tmp
 *.bak
+*.backup
 *.backup_*
+*_OLD.py
+*.py~
 *.swp
 
 # OS

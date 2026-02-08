@@ -17,6 +17,9 @@ Date: 2025-11-25
 # pylint: disable=broad-exception-caught  # File parsing robustness
 
 import re
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
 from typing import List, Tuple, Optional, Dict, Iterator
 
 
@@ -40,7 +43,7 @@ class GenericScopeParser:
         )
 
         for stack, node_name, key, value in parser.parse(content):
-            print(f"{stack} -> {node_name}: {key}={value}")
+            logger.error(f"{stack} -> {node_name}: {key}={value}")
     """
 
     # Attribute patterns (reusable)
@@ -92,7 +95,7 @@ class GenericScopeParser:
         Example:
             >>> parser = GenericScopeParser("label", r"<(\w+)", r"</(\w+)>")
             >>> for stack, name, key, val in parser.parse(content):
-            ...     print(f"{'.'.join(stack + [name])}: {key}={val}")
+            ...     logger.error(f"{'.'.join(stack + [name])}: {key}={val}")
         """
         if stack is None:
             stack = []

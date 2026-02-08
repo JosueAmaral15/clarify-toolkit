@@ -305,7 +305,7 @@ class ResultsTree(QTreeWidget):
                         subprocess.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
-                    print(f"Error opening {path}: {e}")
+                    logger.error(f"Error opening {path}: {e}")
 
         # Show feedback
         if self._status_label and opened_count > 0:
@@ -343,7 +343,7 @@ class ResultsTree(QTreeWidget):
                         subprocess.run(["xdg-open", path], check=False)
                     opened_count += 1
                 except Exception as e:
-                    print(f"Error opening {path}: {e}")
+                    logger.error(f"Error opening {path}: {e}")
 
         # Show feedback
         if self._status_label and opened_count > 0:

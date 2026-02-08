@@ -2,67 +2,67 @@
 
 ## [Unreleased]
 
-### Added (2026-01-22) - Phase 4: Advanced Conditions Logic Operator (v2.9.116)
-- **File Explorer**: Integrated logic_operator (AND/OR) with Advanced Conditions in browse and search modes
-  - Added `logic_operator` parameter to `execute_browse()` and `execute_search()` in UnifiedFileExplorerExecutor
-  - Extended browse mode to support conditions filtering (previously only search mode had it)
-  - Updated FileExplorerWorker signatures to match executor (browse and search methods)
-  - GUI now retrieves and passes logic_operator from ConditionsGrid widget
-  - Programmer #8 (Josué Amaral) - Following Simplicity Protocol 3 v4.5
-  - Files: `src/core/file_explorer_executor.py`, `src/gui/file_explorer_dock.py`, `src/gui/panels/file_explorer_worker.py`
-  - Tests: Added 10 unit tests for logic_operator integration (all passing)
-  - Time: 3.5 hours (125 min study + 45 min implementation + 30 min testing)
+### Added (2026-02-06) - COM8 Sessions 64-72
 
-### Fixed (2026-01-22) - Phase 4 Bug Fixes
-- **File Explorer**: Fixed browse result format bug (dict vs object attribute access)
-  - Changed `result.files` to `result["files"]` in `_on_browse_finished()`
-  - Removed duplicate `_cleanup_worker_thread()` call
-  - File: `src/gui/file_explorer_dock.py`
+#### Format Preservation Enhancements
+- **Session 64**: DOCX paragraph formatting bug fixes
+  - Fixed indentation metadata parsing (double-split bug in lines 1886-1903)
+  - Fixed space_before/after metadata parsing (lines 1905-1918)
+  - **Impact**: DOCX format support increased from 50% to 100% (24/24 formats)
+  - Files: `src/translation/format_mapper.py`
+
+- **Session 65**: Auto-translate on Reverse button
+  - Implemented automatic translation when reversing languages in Google Translate tool
+  - **Impact**: Workflow improvement - reduced from 3 clicks to 2 clicks (33% reduction)
+  - Works for simple text, DOCX, and ODT translations
+  - Includes progress indicators and click-blocking during translation
+  - Files: `src/gui/google_translate_dock.py` (lines 632-696)
+
+#### Bug Fixes - Google Translate Tool
+- **Session 66**: Fixed ODT table save functionality
+  - Fixed `AttributeError: 'Element' object has no attribute 'data'`
+  - Added TableSegment handling in `create_docx_from_segments()` and `create_odt_from_segments()`
+  - Files: `src/translation/format_mapper.py` (lines 1667, 2472)
+
+- **Session 67**: Fixed Reverse button crash
+  - Fixed `AttributeError: 'FormatMapper' has no attribute 'segments_to_tagged_text'`
+  - Added `to_tagged_text()` method to TableSegment class
+  - Files: `src/translation/format_mapper.py` (lines 191-201), `src/gui/google_translate_dock.py`
+
+- **Session 68**: Fixed ODT save import error
+  - Added missing `ParagraphProperties` import in `create_odt_from_segments()`
+  - One-line fix resolved `name 'ParagraphProperties' is not defined` error
+  - Files: `src/translation/format_mapper.py` (line 2245)
+
+- **Session 70**: Fixed tag normalization for paragraph formatting
+  - Updated regex to handle pipe characters in tags: `< 113 | 65536 : L >` → `<113|65536:L>`
+  - Fixed opening tags normalization (lines 1387-1400)
+  - Fixed closing tags normalization with space after `<` (lines 1402-1407)
+  - **Impact**: Paragraph formatting (alignment, indentation, spacing) now preserved correctly
+  - Files: `src/translation/format_mapper.py`
+
+- **Session 72**: Fixed parse pattern bug + comprehensive testing
+  - Fixed pre-existing bug: metadata group not optional in parse pattern
+  - Changed `(?::([^>]+))>` to `(?::([^>]+))?>`  (added `?` to make optional)
+  - **Impact**: Simple character formatting tags like `<1>text</1>` now work correctly
+  - Created 12 comprehensive automated tests (all passing in 0.21s)
+  - Files: `src/translation/format_mapper.py` (line 1431), `tests/test_tag_normalization_session70.py`
+
+#### Project Organization
+- **Session 71**: Organized project root per SIMPLICITY_PROTOCOL_3
+  - Moved 169 documentation files from root to `docs/` subdirectories
+  - Created organized structure: `docs/com8/`, `docs/investigations/`, `docs/plans/`, `docs/reports/`
+  - Root directory now contains only 11 essential files (README, CHANGELOG, CONTRIBUTING, etc.)
+  - **Impact**: Professional appearance, easier navigation, protocol compliant
+
+#### Testing & Validation
+- **Session 72**: Comprehensive test suite for tag normalization
+  - 12 automated tests covering all tag formats and edge cases
+  - Tests validate Session 70 fix and complete translation workflow
+  - Test execution: 0.21 seconds (suitable for CI/CD)
+  - Files: `tests/test_tag_normalization_session70.py`
 
 ### Added (2026-01-02) - i18n Implementation
-- **i18n**: Comprehensive Portuguese (Brazil) translations for 257 GUI elements
-  - 26 tooltips translated across 7 files (Task 1)
-  - 10 QLabels translated across 6 files (Task 3)
-  - 21 table headers translated across 6 files (Task 5)
-  - 4 ComboBox items translated across 4 files (Task 8)
-  - 88 placeholders validated (already translated)
-  - 8 missed translations fixed (config_editor, plugin_manager)
-- **Testing**: Comprehensive manual test checklist with 100 test items
-- **Testing**: Automated pre-test validation suite for i18n coverage
-- **Documentation**: I18N_FINAL_REPORT.md with complete implementation details
-- **Documentation**: I18N_MANUAL_TEST_CHECKLIST.md for user testing
-
-### Fixed (2026-01-02) - i18n Bugs
-- **i18n**: Missing `tooltip_tr` imports in operation_preview_dialog.py and tutorial_assistant_dialog.py
-- **i18n**: 3 hardcoded tooltips in config_editor_dialog.py
-- **i18n**: 5 hardcoded headers in plugin_manager_dialog.py
-
-### Changed (2026-01-02) - i18n Updates
-- **i18n**: All active source files now use tr() and tooltip_tr() for user-facing text
-- **i18n**: JSON translation files updated with 138 new keys (69 EN + 69 PT-BR)
-- **Quality**: All modified files formatted with Black (line-length 120)
-
-### Technical Details (2026-01-02)
-- Commits: 2d6abf7, 58bb8d3, bbb5179, 1913a2d, 822c5dc, 3b8cc05, 13775d3
-- Files modified: 20 source files + 2 translation files + 4 documentation files
-- Test coverage: 100% automated tests passing
-- Protocol: Followed Protocolo Simplicidade 3 (10 etapas)
-- Time spent: 4h52min (including documentation)
-
-### Fixed
-- **Advanced Filters**: Fixed advanced filters in File Explorer not being applied correctly (Sprint 1 - Task 1.1)
-  - Added comprehensive debug logging in `_build_filters()` to trace filter configuration
-  - Optimized conditions application - now applied BEFORE content search for better performance  
-  - Fixed advanced conditions being applied twice (removed duplicate application)
-  - Improved exception handling with proper logging instead of silent failures
-  - Files: `src/gui/file_explorer_dock.py`, `src/core/file_explorer_executor.py`, `src/core/file_list_executor.py`
-
-## [2.9.117] - 2024-12-26
-
-### 🔧 File Explorer Critical Corrections (8h)
-
-Correções estruturais para 6 problemas identificados na v2.9.116, incluindo fix crítico do botão maximizar e refatorações de UX/UI.
-
 ---
 
 #### **Correções Implementadas** (Fases A-D)

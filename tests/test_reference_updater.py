@@ -17,19 +17,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import directly from file
-import importlib.util
-spec = importlib.util.spec_from_file_location(
-    "reference_updater",
-    project_root / "src" / "rewriter" / "reference_updater.py"
+# Import normally from src
+from src.rewriter.reference_updater import (
+    extract_all_keys_from_obj,
+    build_substitution_map_by_value,
+    apply_substitutions_to_file,
+    update_references_in_project
 )
-reference_updater = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(reference_updater)
-
-extract_all_keys_from_obj = reference_updater.extract_all_keys_from_obj
-build_substitution_map_by_value = reference_updater.build_substitution_map_by_value
-apply_substitutions_to_file = reference_updater.apply_substitutions_to_file
-update_references_in_project = reference_updater.update_references_in_project
 
 
 class TestExtractKeysFromObj(unittest.TestCase):
