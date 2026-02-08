@@ -15,6 +15,9 @@ from typing import Optional
 
 from src.core.filters import Condition
 from src.utils.advanced_conditions import apply_conditions_to_files
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def cli_dedupe(
@@ -168,11 +171,11 @@ def cli_dedupe(
         case_style = getattr(args, "case_style", "camel")
         obj, warnings = rw.enforce_consistent_case(obj, target_case=case_style, warn_inconsistencies=True)
         if warnings:
-            print(f"\n⚠️ Case inconsistencies detected and corrected ({len(warnings)} warnings):")
-            for warning in warnings[:10]:  # Show first 10 warnings
-                print(f"  - {warning}")
+            logger.warning(f"Case inconsistencies detected and corrected ({len(warnings)} warnings)")
+            for warning in warnings[:10]:  # Log first 10 warnings
+                logger.warning(f"  - {warning}")
             if len(warnings) > 10:
-                print(f"  ... and {len(warnings) - 10} more warnings")
+                logger.warning(f"  ... and {len(warnings) - 10} more warnings")
 
     # Serialize output
     if args.ts_out:

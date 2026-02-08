@@ -116,8 +116,8 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
-        print(
-            f"DEBUG EXECUTOR 101 execute_browse() | ENTER - "
+        logger.debug(
+            f"EXECUTOR execute_browse() | ENTER - "
             f"dir={directory}, recursive={recursive}, show_hidden={show_hidden}"
         )
         filters = filters or {}
@@ -258,8 +258,8 @@ class UnifiedFileExplorerExecutor(QObject):
         search_options = search_options or {}
 
         # Step 1: List files
-        print(
-            f"DEBUG EXECUTOR 249 execute_search() | Calling execute_browse("
+        logger.debug(
+            f"EXECUTOR execute_search() | Calling execute_browse("
             f"dir={directory}, show_hidden={show_hidden}, recursive={recursive})"
         )
         browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
@@ -342,8 +342,8 @@ class UnifiedFileExplorerExecutor(QObject):
             files_to_search = [
                 f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
             ]
-            print(
-                f"DEBUG EXECUTOR 328 execute_search() | After filename filter: "
+            logger.debug(
+                f"EXECUTOR execute_search() | After filename filter: "
                 f"{before_filter} → {len(files_to_search)} files"
             )
             logger.debug(

@@ -746,7 +746,7 @@ class FormatMapper:
                         para_metadata_parts.append(f"H{level}")
                     else:
                         para_metadata_parts.append("H1")  # Default
-                except:
+                except (AttributeError, IndexError, ValueError):
                     para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Detect alignment
@@ -1039,7 +1039,7 @@ class FormatMapper:
                                 para_metadata_parts.append("H1")  # Default
                         else:
                             para_metadata_parts.append("H1")  # Default
-                    except:
+                    except (AttributeError, IndexError, ValueError):
                         para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Extract paragraph-level formatting
