@@ -402,7 +402,8 @@ class JSXParser:
         Maintains brace balance and respects quoted strings with escapes.
         Raises ValueError if the expression is not closed.
         """
-        assert s[start] == "{"
+        if not s or start >= len(s) or s[start] != "{":
+            raise ValueError(f"Expected '{{' at position {start}")
         i = start + 1
         depth = 1
         n = len(s)
