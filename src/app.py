@@ -632,8 +632,9 @@ if _PYSIDE:
             if not hasattr(self, 'dock_unified_text_to_json'):
                 from .gui.unified_text_to_json_dock import UnifiedTextToJsonDock
                 self.dock_unified_text_to_json = UnifiedTextToJsonDock(self)
-                # Connect signals if needed
-                # self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+                # Connect signals for editor integration
+                self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+                self.dock_unified_text_to_json.open_in_editor_and_switch_requested.connect(self._load_json_from_converter_and_switch)
             self._add_tool_tab(self.dock_unified_text_to_json, "Text to JSON Converter", "unified_text_to_json")
 
         def _show_jsx_extractor(self):
