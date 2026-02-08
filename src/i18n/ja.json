@@ -1129,7 +1129,7 @@
   "menu.tools.search_replace": "検索 / 置換",
   "menu.tools.set_operations": "JSON集合操作...",
   "menu.tools.text_extractor": "テキスト抽出を開く",
-  "menu.tools.text_to_json": "テキストからJSONへの変換",
+  "menu.tools.text_to_json": "フォーマットコンバーター",
   "menu.tooltip_ai_assistant": "Clarifyチュートリアルについて AIに質問",
   "menu.tooltip_check_updates": "GitHubで新しいClarifyバージョンを確認",
   "menu.tooltip_config_editor": "ビジュアルエディタでconfig.yamlを編集",

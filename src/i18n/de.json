@@ -1129,7 +1129,7 @@
   "menu.tools.search_replace": "Suchen / Ersetzen",
   "menu.tools.set_operations": "JSON-Mengenoperationen...",
   "menu.tools.text_extractor": "Textextraktor öffnen",
-  "menu.tools.text_to_json": "Text-zu-JSON-Konverter",
+  "menu.tools.text_to_json": "Format-Konverter",
   "menu.tooltip_ai_assistant": "KI über Clarify-Tutorials fragen",
   "menu.tooltip_check_updates": "Nach neuen Clarify-Versionen auf GitHub suchen",
   "menu.tooltip_config_editor": "config.yaml mit visuellem Editor bearbeiten",

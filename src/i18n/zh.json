@@ -1129,7 +1129,7 @@
   "menu.tools.search_replace": "搜索 / 替换",
   "menu.tools.set_operations": "JSON集合操作...",
   "menu.tools.text_extractor": "打开文本提取器",
-  "menu.tools.text_to_json": "文本转JSON转换器",
+  "menu.tools.text_to_json": "格式转换器",
   "menu.tooltip_ai_assistant": "向AI询问Clarify教程",
   "menu.tooltip_check_updates": "从GitHub检查新的Clarify版本",
   "menu.tooltip_config_editor": "使用可视化编辑器编辑config.yaml",
