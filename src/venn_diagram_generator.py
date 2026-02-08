@@ -276,5 +276,8 @@ class VennDiagramGenerator:
         svg_lines.append('</svg>')
 
         # Write to file
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(svg_lines))
+        try:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(svg_lines))
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Failed to save Venn diagram to {output_path}: {e}") from e

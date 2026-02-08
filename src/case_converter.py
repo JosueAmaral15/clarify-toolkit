@@ -311,8 +311,11 @@ def convert_file(input_path: str, output_path: str, target_case: str,
     else:
         output = converter.format_as_js(converted)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(output)
+    try:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(output)
+    except (IOError, OSError, PermissionError) as e:
+        raise RuntimeError(f"Failed to write converted output to {output_path}: {e}") from e
 
 
 def convert_string(source: str, target_case: str, output_format: str = 'js') -> str:

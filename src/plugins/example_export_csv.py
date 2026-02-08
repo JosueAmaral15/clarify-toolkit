@@ -28,15 +28,21 @@ class ExportCSVPlugin(PluginBase):
         path, _ = QFileDialog.getSaveFileName(app, "Salvar CSV", "", "CSV Files (*.csv)")
         if not path:
             return
-        with open(path, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            if isinstance(data, dict):
-                writer.writerow(data.keys())
-                writer.writerow(data.values())
-            elif isinstance(data, list) and data and isinstance(data[0], dict):
-                writer.writerow(data[0].keys())
-                for row in data:
-                    writer.writerow(row.values())
-            else:
+        try:
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                if isinstance(data, dict):
+                    writer.writerow(data.keys())
+                    writer.writerow(data.values())
+                elif isinstance(data, list) and data and isinstance(data[0], dict):
+                    writer.writerow(data[0].keys())
+                    for row in data:
+                        writer.writerow(row.values())
+                else:
+                    QMessageBox.warning(app, "Exportar CSV", "Formato de dados não suportado.")
+                    return
+        except (IOError, OSError, PermissionError) as e:
+            QMessageBox.critical(app, "Erro", f"Falha ao salvar CSV: {e}")
+            return
                 writer.writerow([str(data)])
         QMessageBox.information(app, "Exportar CSV", f"Arquivo salvo em: {path}")

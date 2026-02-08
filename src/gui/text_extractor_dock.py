@@ -303,12 +303,17 @@ class TextExtractorDock(StandardToolDock):
                 result = self._flatten_to_nested(result, options['exclude_numeric'], options['skip_empty'])
 
             # Save result
-            with open(output_path, 'w', encoding='utf-8') as f:
-                if self.chk_ts_export.isChecked():
-                    f.write("export default ")
-                json.dump(result, f, indent=2, ensure_ascii=False)
-                if self.chk_ts_export.isChecked():
-                    f.write(";")
+            try:
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    if self.chk_ts_export.isChecked():
+                        f.write("export default ")
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                    if self.chk_ts_export.isChecked():
+                        f.write(";")
+            except (IOError, OSError, PermissionError) as e:
+                logger.error(f"Failed to save text extractor output to {output_path}: {e}")
+                self.worker.signals.error.emit(f"Failed to save output: {e}")
+                return
 
             # Calculate statistics
             total_keys = self._count_keys(result)

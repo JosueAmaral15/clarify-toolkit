@@ -184,8 +184,11 @@ def cli_dedupe(
 
     # Write output
     out_path = args.output or args.input
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(output_text)
+    try:
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(output_text)
+    except (IOError, OSError, PermissionError) as e:
+        raise RuntimeError(f"Failed to write output to {out_path}: {e}") from e
 
     # Collect detailed stats and disable collector (Sprint B Feature #3)
     detailed_stats = [entry.to_dict() for entry in collector.get_entries()]

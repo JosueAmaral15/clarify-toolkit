@@ -1172,8 +1172,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     "Text files (*.txt);;All files (*)"
                 )
                 if file_path:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(paths_text)
+                    try:
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(paths_text)
+                    except (IOError, OSError, PermissionError) as e:
+                        self.show_error(
+                            tr("error.title", "Error"),
+                            tr("error.save_failed", f"Failed to save paths: {e}")
+                        )
+                        return
             
             if json_text:
                 file_path, _ = QFileDialog.getSaveFileName(
@@ -1183,8 +1190,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     "JSON files (*.json);;All files (*)"
                 )
                 if file_path:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(json_text)
+                    try:
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(json_text)
+                    except (IOError, OSError, PermissionError) as e:
+                        self.show_error(
+                            tr("error.title", "Error"),
+                            tr("error.save_failed", f"Failed to save JSON: {e}")
+                        )
+                        return
             
             self._jsx_update_status("✓ Outputs saved successfully")
             self.show_info(

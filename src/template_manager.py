@@ -288,8 +288,12 @@ class TemplateManager:
 
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(file_info["content"])
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(file_info["content"])
+            except (IOError, OSError, PermissionError) as e:
+                logger.error(f"Failed to write template file {file_path}: {e}")
+                raise RuntimeError(f"Cannot create template file {file_path}: {e}") from e
 
         return True
 
@@ -308,8 +312,12 @@ class TemplateManager:
 
         template_file = self.templates_dir / f"{template.id}.json"
 
-        with open(template_file, 'w', encoding='utf-8') as f:
-            json.dump(template.to_dict(), f, indent=2)
+        try:
+            with open(template_file, 'w', encoding='utf-8') as f:
+                json.dump(template.to_dict(), f, indent=2)
+        except (IOError, OSError, PermissionError) as e:
+            logger.error(f"Failed to save template to {template_file}: {e}")
+            raise RuntimeError(f"Cannot save template: {e}") from e
 
         self._templates[template.id] = template
         return True

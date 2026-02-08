@@ -254,25 +254,29 @@ class CrashHandler:
         }
 
         # Write crash report
-        with open(crash_file, 'w', encoding='utf-8') as f:
-            f.write("=" * 80 + "\n")
-            f.write("CLARIFY CRASH REPORT\n")
-            f.write("=" * 80 + "\n\n")
+        try:
+            with open(crash_file, 'w', encoding='utf-8') as f:
+                f.write("=" * 80 + "\n")
+                f.write("CLARIFY CRASH REPORT\n")
+                f.write("=" * 80 + "\n\n")
 
-            f.write("System Information:\n")
-            f.write("-" * 80 + "\n")
-            for key, value in system_info.items():
-                f.write(f"{key}: {value}\n")
-            f.write("\n")
+                f.write("System Information:\n")
+                f.write("-" * 80 + "\n")
+                for key, value in system_info.items():
+                    f.write(f"{key}: {value}\n")
+                f.write("\n")
 
-            f.write("Traceback:\n")
-            f.write("-" * 80 + "\n")
-            f.write(tb_text)
-            f.write("\n")
+                f.write("Traceback:\n")
+                f.write("-" * 80 + "\n")
+                f.write(tb_text)
+                f.write("\n")
 
-            f.write("=" * 80 + "\n")
-            f.write("End of crash report\n")
-            f.write("=" * 80 + "\n")
+                f.write("=" * 80 + "\n")
+                f.write("End of crash report\n")
+                f.write("=" * 80 + "\n")
+        except (IOError, OSError, PermissionError) as e:
+            logger.error(f"Failed to write crash report to {crash_file}: {e}")
+            # Don't raise - crash reporting failure shouldn't crash the crash handler
 
         return crash_file
 

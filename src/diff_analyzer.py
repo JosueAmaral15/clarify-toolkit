@@ -255,5 +255,8 @@ class DiffAnalyzer:
         html_lines.append("</html>")
 
         # Write to file
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write("\n".join(html_lines))
+        try:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write("\n".join(html_lines))
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Failed to save HTML diff to {output_path}: {e}") from e

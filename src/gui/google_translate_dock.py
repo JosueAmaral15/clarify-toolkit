@@ -750,8 +750,16 @@ class GoogleTranslateDock(BaseDock):
                     # User selected Text Files (or unknown - default to TXT)
                     if not file_path.lower().endswith('.txt'):
                         file_path += '.txt'
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(result)
+                    try:
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(result)
+                    except (IOError, OSError, PermissionError) as e:
+                        QMessageBox.critical(
+                            self,
+                            tr("google_translate.error_title", "Error"),
+                            f"Failed to save file: {e}"
+                        )
+                        return
                  
                 # Visual feedback
                 original_text = self.btn_save_as.text()

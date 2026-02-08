@@ -511,8 +511,12 @@ class JSXExtractorDock(BaseDock):
                     if not validated_fp:
                         return
 
-                    with open(validated_fp, "w", encoding="utf-8") as f:
-                        f.write(text)
+                    try:
+                        with open(validated_fp, "w", encoding="utf-8") as f:
+                            f.write(text)
+                    except (IOError, OSError, PermissionError) as e:
+                        QMessageBox.critical(self, tr("jsx.msg_save_error_title"), f"Failed to save paths: {e}")
+                        return
 
             # Save JSON
             if js:
@@ -528,8 +532,12 @@ class JSXExtractorDock(BaseDock):
                     if not validated_fj:
                         return
 
-                    with open(validated_fj, "w", encoding="utf-8") as f:
-                        f.write(js)
+                    try:
+                        with open(validated_fj, "w", encoding="utf-8") as f:
+                            f.write(js)
+                    except (IOError, OSError, PermissionError) as e:
+                        QMessageBox.critical(self, tr("jsx.msg_save_error_title"), f"Failed to save JSON: {e}")
+                        return
 
             QMessageBox.information(self, tr("jsx.msg_saved_title"), tr("jsx.msg_saved_success"))
         except Exception as e:  # pylint: disable=broad-exception-caught  # UI robustness

@@ -590,8 +590,16 @@ class JsonRewriterDock(BaseDock):
 
                 # Write to output
                 out_path = self.ed_out.text().strip() or self.ed_in.text().strip()
-                with open(out_path, "w", encoding="utf-8") as f:
-                    f.write(temp_text)
+                try:
+                    with open(out_path, "w", encoding="utf-8") as f:
+                        f.write(temp_text)
+                except (IOError, OSError, PermissionError) as e:
+                    QMessageBox.critical(
+                        self,
+                        tr("json_rewriter.error_title", "Error"),
+                        f"Failed to write output: {e}"
+                    )
+                    return
 
                 QMessageBox.information(
                     self,

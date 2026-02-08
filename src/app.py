@@ -184,9 +184,14 @@ def load_prefs() -> configparser.ConfigParser:
     return cfg
 
 def save_prefs(cfg: configparser.ConfigParser):
-    os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        cfg.write(f)
+    try:
+        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            cfg.write(f)
+        logger.debug(f"Preferences saved to {CONFIG_PATH}")
+    except (IOError, OSError, PermissionError) as e:
+        logger.error(f"Failed to save preferences to {CONFIG_PATH}: {e}")
+        raise RuntimeError(f"Cannot save preferences: {e}") from e
 
 
 # =============================== Utility: theming ===============================
