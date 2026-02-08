@@ -525,8 +525,8 @@ if _PYSIDE:
             
             # SWITCH to Editor tab
             if hasattr(self, 'tool_tabs') and "editor" in self.tool_tabs:
-                editor_tab_index = self.tool_tabs["editor"]
-                self.tab_widget.setCurrentIndex(editor_tab_index)
+                _widget, editor_tab_index = self.tool_tabs["editor"]
+                self.tabs.setCurrentIndex(editor_tab_index)
             
             # Note: Not switching to File Explorer - user confirmed "go to Editor"
 
