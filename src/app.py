@@ -506,23 +506,23 @@ if _PYSIDE:
 
         def _load_json_from_converter(self, json_str: str):
             """Load JSON from text converter into main editor (stays in Text to JSON dock)."""
-            if self.dock_editor is None:
-                self._open_editor()
+            # Open Editor as a dedicated tab (not as dock)
+            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
+                self._show_editor()
             self.dock_editor.load_json_string(json_str)
-            self.dock_editor.show()
-            # Don't switch - stay in Text to JSON dock
+            # Don't switch - stay in Text to JSON tab
         
         def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
-            """Load content from text converter into main editor and switch to Editor dock."""
-            # Load content in editor
-            if self.dock_editor is None:
-                self._open_editor()
+            """Load content from text converter into main editor and switch to Editor tab."""
+            # Open Editor as a dedicated tab (not as dock)
+            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
+                self._show_editor()
             self.dock_editor.load_json_string(content)
-            self.dock_editor.show()
             
-            # SWITCH to Editor dock (raise and activate)
-            self.dock_editor.raise_()
-            self.dock_editor.activateWindow()
+            # SWITCH to Editor tab
+            if hasattr(self, 'tool_tabs') and "editor" in self.tool_tabs:
+                editor_tab_index = self.tool_tabs["editor"]
+                self.tab_widget.setCurrentIndex(editor_tab_index)
             
             # Note: Not switching to File Explorer - user confirmed "go to Editor"
 
