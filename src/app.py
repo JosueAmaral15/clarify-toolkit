@@ -506,7 +506,7 @@ if _PYSIDE:
 
         def _load_json_from_converter(self, json_str: str):
             """Load JSON from text converter into main editor."""
-            if not hasattr(self, 'dock_editor'):
+            if self.dock_editor is None:
                 self._open_editor()
             self.dock_editor.load_json_string(json_str)
             self.dock_editor.show()
@@ -514,13 +514,13 @@ if _PYSIDE:
         def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
             """Load content from text converter into main editor and switch to File Explorer."""
             # Load content in editor
-            if not hasattr(self, 'dock_editor'):
+            if self.dock_editor is None:
                 self._open_editor()
             self.dock_editor.load_json_string(content)
             self.dock_editor.show()
             
             # Switch to File Explorer dock if requested
-            if switch_to_file and hasattr(self, 'dock_file_explorer'):
+            if switch_to_file and hasattr(self, 'dock_file_explorer') and self.dock_file_explorer is not None:
                 self.dock_file_explorer.show()
                 self.dock_file_explorer.raise_()
                 self.dock_file_explorer.activateWindow()
