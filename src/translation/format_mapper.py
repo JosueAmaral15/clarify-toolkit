@@ -1595,7 +1595,8 @@ class FormatMapper:
                 if plain:
                     # Session 72 Fix: Clean broken tags from plain text
                     cleaned_plain = clean_tag_artifacts(plain)
-                    if cleaned_plain.strip():  # Only add if content remains
+                    # Session 75 Fix: Don't strip! Preserve \n\n for paragraph breaks
+                    if cleaned_plain:  # Keep whitespace/newlines
                         segments.append(TextSegment(text=cleaned_plain))
             
             # Parse format bits (char|para or just char)
@@ -1637,7 +1638,8 @@ class FormatMapper:
             if plain:
                 # Session 72 Fix: Clean broken tags from remaining plain text
                 cleaned = clean_tag_artifacts(plain)
-                if cleaned.strip():  # Only add if there's actual content left
+                # Session 75 Fix: Don't strip! Preserve whitespace and newlines
+                if cleaned:  # Keep all whitespace
                     segments.append(TextSegment(text=cleaned))
         
         # Restore hyperlink placeholders (Session 44)
@@ -2739,31 +2741,84 @@ class FormatMapper:
                 # Safety: Remove any system tags that leaked
                 clean_text = FormatMapper.remove_tags(segment.text)
                 
-                # Handle hyperlinks (Session 44)
-                if segment.hyperlink_url:
-                    from odf.text import A
-                    link = A(href=segment.hyperlink_url)
+                # Session 75: Handle line breaks (\n) and tabs (\t) in text
+                # Split by \n to insert line breaks
+                if '\n' in clean_text or '\t' in clean_text:
+                    from odf.text import LineBreak, Tab
                     
-                    # Apply formatting to link content if needed
-                    style = get_or_create_style(segment.format_bits, segment.metadata)
-                    if style:
-                        span = Span(stylename=style)
-                        span.addText(clean_text)
-                        link.addElement(span)
-                    else:
-                        link.addText(clean_text)
-                    
-                    current_paragraph.addElement(link)
+                    # Process character by character to handle \n and \t
+                    i = 0
+                    while i < len(clean_text):
+                        if clean_text[i] == '\n':
+                            # Insert line break
+                            current_paragraph.addElement(LineBreak())
+                            i += 1
+                        elif clean_text[i] == '\t':
+                            # Insert tab
+                            current_paragraph.addElement(Tab())
+                            i += 1
+                        else:
+                            # Collect regular text until next special char
+                            j = i
+                            while j < len(clean_text) and clean_text[j] not in '\n\t':
+                                j += 1
+                            
+                            text_part = clean_text[i:j]
+                            if text_part:
+                                # Handle hyperlinks (Session 44)
+                                if segment.hyperlink_url:
+                                    from odf.text import A
+                                    link = A(href=segment.hyperlink_url)
+                                    
+                                    # Apply formatting to link content if needed
+                                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                                    if style:
+                                        span = Span(stylename=style)
+                                        span.addText(text_part)
+                                        link.addElement(span)
+                                    else:
+                                        link.addText(text_part)
+                                    
+                                    current_paragraph.addElement(link)
+                                else:
+                                    # Get or create style for this format
+                                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                                    
+                                    if style:
+                                        span = Span(stylename=style)
+                                        span.addText(text_part)
+                                        current_paragraph.addElement(span)
+                                    else:
+                                        current_paragraph.addText(text_part)
+                            
+                            i = j
                 else:
-                    # Get or create style for this format
-                    style = get_or_create_style(segment.format_bits, segment.metadata)
-                    
-                    if style:
-                        span = Span(stylename=style)
-                        span.addText(clean_text)
-                        current_paragraph.addElement(span)
+                    # No special characters - add text directly
+                    # Handle hyperlinks (Session 44)
+                    if segment.hyperlink_url:
+                        from odf.text import A
+                        link = A(href=segment.hyperlink_url)
+                        
+                        # Apply formatting to link content if needed
+                        style = get_or_create_style(segment.format_bits, segment.metadata)
+                        if style:
+                            span = Span(stylename=style)
+                            span.addText(clean_text)
+                            link.addElement(span)
+                        else:
+                            link.addText(clean_text)
+                        
+                        current_paragraph.addElement(link)
                     else:
-                        current_paragraph.addText(clean_text)
+                        # Get or create style for this format
+                        style = get_or_create_style(segment.format_bits, segment.metadata)
+                        
+                        if style:
+                            span = Span(stylename=style)
+                            span.addText(clean_text)
+                            current_paragraph.addElement(span)
+                        else:
+                            current_paragraph.addText(clean_text)
         
         # Add final paragraph (even if empty)
         doc.text.addElement(current_paragraph)
