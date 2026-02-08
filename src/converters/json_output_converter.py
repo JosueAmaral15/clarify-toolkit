@@ -357,7 +357,7 @@ def convert_json_to_java_properties(data: Union[Dict, List, str], **options) -> 
 
 def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
     """
-    Convert JSON to TOON format using existing ToonAdapter.
+    Convert JSON to TOON format (simple implementation without toon-llm).
     
     Args:
         data: JSON data to convert
@@ -366,24 +366,62 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
     Returns:
         TOON formatted string
     
-    Raises:
-        ImportError: If ToonAdapter is not available
-    
     Note:
         TOON format: key: value, key[N]: val1,val2,val3
+        This is a simple implementation. For complex TOON features,
+        use the ToonAdapter (requires toon-llm library).
     """
-    if not TOON_AVAILABLE:
-        raise ImportError("ToonAdapter is not available")
-    
     if isinstance(data, str):
         data = json.loads(data)
     
-    # Use existing ToonAdapter
-    from . import Format
-    from .factory import ConverterFactory
+    lines = []
     
-    converter = ConverterFactory.create(Format.JSON, Format.TOON)
-    return converter.convert(data)
+    def convert_value(val):
+        """Convert value to TOON format."""
+        if isinstance(val, bool):
+            return str(val).lower()
+        elif isinstance(val, (int, float)):
+            return str(val)
+        elif isinstance(val, str):
+            return val
+        elif val is None:
+            return "null"
+        else:
+            return str(val)
+    
+    def process_dict(d, prefix=""):
+        """Process dictionary recursively."""
+        for key, value in d.items():
+            full_key = f"{prefix}.{key}" if prefix else key
+            
+            if isinstance(value, dict):
+                # Nested dict: recurse
+                process_dict(value, full_key)
+            elif isinstance(value, list):
+                # Array: key[N]: val1,val2,val3
+                if value:
+                    array_values = [convert_value(v) for v in value]
+                    lines.append(f"{full_key}[{len(value)}]: {','.join(array_values)}")
+                else:
+                    lines.append(f"{full_key}[0]: ")
+            else:
+                # Simple value
+                lines.append(f"{full_key}: {convert_value(value)}")
+    
+    if isinstance(data, dict):
+        process_dict(data)
+    elif isinstance(data, list):
+        # Root array
+        if data:
+            array_values = [convert_value(v) for v in data]
+            lines.append(f"[{len(data)}]: {','.join(array_values)}")
+        else:
+            lines.append("[0]: ")
+    else:
+        # Primitive at root
+        lines.append(f"value: {convert_value(data)}")
+    
+    return '\n'.join(lines)
 
 
 def convert_json_to_format(
@@ -407,7 +445,7 @@ def convert_json_to_format(
         ImportError: If required library is not available
     
     Supported formats:
-        - JSON
+        - JSON (and all JSX/HTML templates default to JSON)
         - CSV
         - YAML
         - TOML
@@ -416,6 +454,8 @@ def convert_json_to_format(
         - Python Dict
         - Java Properties
         - TOON
+        - Key-Value
+        - List
     
     Example:
         >>> data = {"name": "Alice", "age": 30}
@@ -438,13 +478,18 @@ def convert_json_to_format(
         "PYTHON DICT": convert_json_to_python_dict,
         "JAVA PROPERTIES": convert_json_to_java_properties,
         "TOON": convert_json_to_toon,
+        "KEY-VALUE": convert_json_to_java_properties,  # Alias for Java Properties
+        "LIST": convert_json_to_json,  # Lists are already JSON arrays
+        # JSX/HTML templates are input examples, output as JSON
+        "JSX BUTTON": convert_json_to_json,
+        "JSX FORM": convert_json_to_json,
+        "HTML DIV": convert_json_to_json,
+        "JSX COMPONENT": convert_json_to_json,
     }
     
     converter = converters.get(format_normalized)
     if not converter:
-        raise ValueError(
-            f"Unsupported format: '{format_name}'. "
-            f"Supported formats: {', '.join(converters.keys())}"
-        )
+        # Default to JSON for any unrecognized format
+        return convert_json_to_json(data, **options)
     
     return converter(data, **options)
