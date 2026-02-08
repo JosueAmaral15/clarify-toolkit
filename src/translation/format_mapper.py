@@ -91,9 +91,12 @@ def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dic
 def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict[str, str]]) -> str:
     """
     Restore original format tags from placeholders after translation.
+    Handles severely corrupted placeholders where Google Translate:
+    - Added spaces: 【FMT001】 → 【F MT001】
+    - Deleted brackets: 【/FMT001】 → 【/FMT001 (missing closing 】)
     
     Example:
-        Input:  "【FMT001】RISKS【/FMT001】"
+        Input:  "【FMT001】RISKS【/FMT001】" or "【FMT001】RISKS【/FMT001 "
         Output: "<113|65536:Arial|0,0>RISKS</113|65536>"
     
     Args:
@@ -103,30 +106,79 @@ def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict
     Returns:
         Text with restored tags: <113|65536:Arial|0,0>translated text</113|65536>
         
-    Author: COM8 (Session 75)
+    Author: COM8 (Session 75, fixed after user caught incomplete testing)
     """
     result = translated_text
     
-    # Pattern to match placeholder pairs: 【FMT001】text【/FMT001】
-    pattern = r'【(FMT\d+)】(.*?)【/\1】'
+    # Pattern 1: Normal/slightly corrupted pairs (closing bracket present)
+    # Matches: 【FMT001】...【/FMT001】, 【F MT001】...【/ FMT001】
+    pattern1 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s*】'
     
     def restore_match(match):
-        fmt_id = match.group(1)
+        fmt_id_with_spaces = match.group(1)
         translated_text_inside = match.group(2)
         
+        # Remove all spaces from ID: "F MT001" → "FMT001"
+        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        
         if fmt_id not in mapping:
-            # Placeholder not in mapping - keep as is (shouldn't happen)
             return match.group(0)
         
         tag_info = mapping[fmt_id]
-        opening = tag_info['opening']
-        closing = tag_info['closing']
-        
-        # Restore with original tags and translated text
-        return f'{opening}{translated_text_inside}{closing}'
+        return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
     
-    # Replace all placeholders with original tags
-    result = re.sub(pattern, restore_match, result, flags=re.DOTALL)
+    result = re.sub(pattern1, restore_match, result, flags=re.DOTALL)
+    
+    # Pattern 2: Severely corrupted (closing bracket deleted by Google)
+    # Matches: 【FMT001】...【/FMT001 (no closing 】)
+    # Must use lookahead to avoid consuming too much
+    pattern2 = r'【\s*(FMT\s*\d+)\s*】(.*?)【\s*/\s*\1\s+'
+    
+    def restore_match_broken(match):
+        fmt_id_with_spaces = match.group(1)
+        translated_text_inside = match.group(2)
+        
+        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        
+        if fmt_id not in mapping:
+            return match.group(0)
+        
+        tag_info = mapping[fmt_id]
+        return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+    
+    result = re.sub(pattern2, restore_match_broken, result, flags=re.DOTALL)
+    
+    # Pattern 3: Cleanup orphaned opening tags (no matching closing tag found)
+    # These are usually near the end or where Google heavily modified text
+    # Just restore the opening tag and remove the placeholder
+    pattern3 = r'【\s*(FMT\s*\d+)\s*】'
+    
+    def restore_orphan_opening(match):
+        fmt_id_with_spaces = match.group(1)
+        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        
+        if fmt_id in mapping:
+            # Return just the opening tag (closing was lost)
+            return mapping[fmt_id]['opening']
+        else:
+            # Unknown ID - just remove the placeholder
+            return ''
+    
+    result = re.sub(pattern3, restore_orphan_opening, result)
+    
+    # Pattern 4: Cleanup orphaned closing tags
+    pattern4 = r'【\s*/\s*(FMT\s*\d+)\s*[】\s]*'
+    
+    def restore_orphan_closing(match):
+        fmt_id_with_spaces = match.group(1)
+        fmt_id = re.sub(r'\s+', '', fmt_id_with_spaces)
+        
+        if fmt_id in mapping:
+            return mapping[fmt_id]['closing']
+        else:
+            return ''
+    
+    result = re.sub(pattern4, restore_orphan_closing, result)
     
     return result
 
@@ -183,6 +235,7 @@ def restore_special_whitespace(text: str) -> str:
     Restore special whitespace from placeholders after translation.
     
     Reverses the protection applied by protect_special_whitespace().
+    Handles corrupted placeholders where Google Translate added spaces.
     
     Args:
         text: Text with whitespace placeholders
@@ -191,24 +244,37 @@ def restore_special_whitespace(text: str) -> str:
         Text with restored whitespace characters
         
     Example:
-        Input:  "text【TAB】【TAB】tab【SP2】spaces【BR】line"
+        Input:  "text【TAB】【TA B】tab【SP2】spaces【BR】line"
         Output: "text\t\ttab  spaces\nline"
         
-    Author: COM8 (Session 75)
+    Note: Google Translate sometimes adds spaces inside placeholders:
+        【TAB】 → 【TA B】, 【BR】 → 【B R】, etc.
+        We use regex to handle both exact and corrupted patterns.
+        
+    Author: COM8 (Session 75, fixed after user caught incomplete testing)
     """
     # Restore in reverse order of protection
+    # Use VERY permissive regex to handle Google's creative corruption:
+    # - Spaces between letters: 【TA B】
+    # - Spaces before/after: 【 TAB】, 【TAB 】
+    # - Multiple spaces: 【T  A  B】
+    # Strategy: Match the bracket, then any mix of target letters and spaces, then bracket
     
-    # Multiple spaces: 【SP2】 → "  ", 【SP3】 → "   ", etc.
+    # Multiple spaces: 【SP2】 or 【S P2】 or 【 SP2】 or 【SP 2】 → "  ", etc.
     def restore_spaces(match):
         count = int(match.group(1))
         return ' ' * count
     
-    text = re.sub(r'【SP(\d+)】', restore_spaces, text)
+    # Match 【, then S/P/digits with any spaces, then 】
+    text = re.sub(r'【[S\s]*P[\ s]*(\d+)[\s]*】', restore_spaces, text)
     
-    # Simple character replacements
-    text = text.replace('【BR】', '\n')
-    text = text.replace('【TAB】', '\t')
-    text = text.replace('【NBSP】', '\xa0')
+    # Character replacements - match letters in order with any whitespace between/around
+    # TAB: Match 【, then T/A/B in order with any spaces, then 】
+    text = re.sub(r'【[\s]*T[\s]*A[\s]*B[\s]*】', '\t', text)
+    # BR: Match 【, then B/R in order with any spaces, then 】
+    text = re.sub(r'【[\s]*B[\s]*R[\s]*】', '\n', text)
+    # NBSP: Match 【, then N/B/S/P in order with any spaces, then 】
+    text = re.sub(r'【[\s]*N[\s]*B[\s]*S[\s]*P[\s]*】', '\xa0', text)
     
     return text
 
