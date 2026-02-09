@@ -91,14 +91,26 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
 
 def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
     """
-    Normalize a string to snake/camel/pascal/kebab; drop non-alnum (after spaces);
+    Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
     optionally uppercase whole token.
     Steps:
     - Lowercase for snake/kebab; for camel/pascal, lowercase then apply.
     - Replace non-letter/digit with space; split words; rebuild.
+    - For 'preserve' mode, keeps original case intact (only removes special chars).
     """
     # remove quotes around e.g. "Today's Practice" if present (we get raw value text usually)
     s = s.strip()
+    
+    # Special handling for 'preserve' mode - keep original case
+    if case_style == "preserve" or case_style == "none":
+        # Only remove non-alphanumeric characters, keep original case
+        cleaned = re.sub(r"[^0-9A-Za-z]+", "_", s)
+        # Remove leading/trailing underscores
+        token = cleaned.strip("_")
+        if to_upper:
+            token = token.upper()
+        return token
+    
     # Convert any non-alphanumeric into space (keep letters/digits only)
     # But keep apostrophes to allow "today's" joining; we'll drop them before final build.
     cleaned = re.sub(r"[^0-9A-Za-z]+", " ", s)

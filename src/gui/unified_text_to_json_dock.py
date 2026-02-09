@@ -813,7 +813,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         case_layout.addWidget(QLabel(tr("advanced_extractor.case", "Case:")))
         self.jsx_case_combo = QComboBox()
-        self.jsx_case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
+        self.jsx_case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab"), tr("combo.case_preserve", "preserve")])
         case_layout.addWidget(self.jsx_case_combo)
         
         self.jsx_uppercase_checkbox = QCheckBox(
