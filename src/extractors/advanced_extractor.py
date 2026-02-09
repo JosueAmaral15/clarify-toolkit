@@ -115,6 +115,7 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
     """
     Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
     optionally uppercase whole token.
+    Splits camelCase/PascalCase into words before applying conversion.
     """
     s = s.strip()
     
@@ -128,9 +129,17 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
             token = token.upper()
         return token
     
-    # Convert any non-alphanumeric into space
-    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", s)
+    # Step 1: Split camelCase/PascalCase into separate words
+    # Insert space before uppercase letters that follow lowercase or are followed by lowercase
+    with_spaces = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)  # lowerUpper → lower Upper
+    with_spaces = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', with_spaces)  # XMLParser → XML Parser
+    
+    # Step 2: Convert any remaining non-alphanumeric into space
+    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", with_spaces)
+    
+    # Step 3: Split into words
     words = [w for w in cleaned.strip().split() if w]
+    
     if not words:
         token = ""
     else:
