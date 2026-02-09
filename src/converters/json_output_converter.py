@@ -308,6 +308,101 @@ def convert_json_to_html_table(data: Union[Dict, List, str], **options) -> str:
     return html
 
 
+def convert_json_to_html_div(data: Union[Dict, List, str], **options) -> str:
+    """
+    Convert JSON to nested HTML div structure.
+    
+    Args:
+        data: JSON data to convert
+        **options: indent_size (int), add_classes (bool)
+    
+    Returns:
+        Nested HTML div string representing the JSON structure
+    
+    Example:
+        {"user": {"name": "John", "age": 30}} becomes:
+        <div class="json-root">
+          <div class="json-object" data-key="user">
+            <div class="json-property" data-key="name">John</div>
+            <div class="json-property" data-key="age">30</div>
+          </div>
+        </div>
+    """
+    if isinstance(data, str):
+        data = json.loads(data)
+    
+    indent_size = options.get('indent_size', 2)
+    add_classes = options.get('add_classes', True)
+    
+    def indent(level):
+        """Generate indentation string."""
+        return ' ' * (indent_size * level)
+    
+    def escape_html(text):
+        """Escape HTML special characters."""
+        return str(text).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+    
+    def convert_value(val, key, level):
+        """Convert a single value to HTML div."""
+        lines = []
+        
+        if isinstance(val, dict):
+            # Nested object
+            if add_classes:
+                lines.append(f'{indent(level)}<div class="json-object" data-key="{escape_html(key)}">')
+            else:
+                lines.append(f'{indent(level)}<div data-key="{escape_html(key)}">')
+            
+            for k, v in val.items():
+                lines.extend(convert_value(v, k, level + 1))
+            
+            lines.append(f'{indent(level)}</div>')
+            
+        elif isinstance(val, list):
+            # Array
+            if add_classes:
+                lines.append(f'{indent(level)}<div class="json-array" data-key="{escape_html(key)}">')
+            else:
+                lines.append(f'{indent(level)}<div data-key="{escape_html(key)}">')
+            
+            for idx, item in enumerate(val):
+                lines.extend(convert_value(item, f"{key}[{idx}]", level + 1))
+            
+            lines.append(f'{indent(level)}</div>')
+            
+        else:
+            # Primitive value
+            if add_classes:
+                value_class = f"json-{type(val).__name__}" if val is not None else "json-null"
+                lines.append(f'{indent(level)}<div class="json-property {value_class}" data-key="{escape_html(key)}">{escape_html(val)}</div>')
+            else:
+                lines.append(f'{indent(level)}<div data-key="{escape_html(key)}">{escape_html(val)}</div>')
+        
+        return lines
+    
+    # Build the HTML structure
+    html_lines = []
+    
+    if add_classes:
+        html_lines.append('<div class="json-root">')
+    else:
+        html_lines.append('<div>')
+    
+    if isinstance(data, dict):
+        for key, value in data.items():
+            html_lines.extend(convert_value(value, key, 1))
+    elif isinstance(data, list):
+        for idx, item in enumerate(data):
+            html_lines.extend(convert_value(item, f"item[{idx}]", 1))
+    else:
+        # Root primitive
+        html_lines.append(f'{indent(1)}<div class="json-value">{escape_html(data)}</div>')
+    
+    html_lines.append('</div>')
+    
+    return '\n'.join(html_lines)
+
+
 def convert_json_to_python_dict(data: Union[Dict, List, str], **options) -> str:
     """
     Convert JSON to Python dict literal representation.
@@ -476,15 +571,15 @@ def convert_json_to_format(
         "TOML": convert_json_to_toml,
         "INI": convert_json_to_ini,
         "HTML TABLE": convert_json_to_html_table,
+        "HTML DIV": convert_json_to_html_div,
         "PYTHON DICT": convert_json_to_python_dict,
         "JAVA PROPERTIES": convert_json_to_java_properties,
         "TOON": convert_json_to_toon,
         "KEY-VALUE": convert_json_to_java_properties,  # Alias for Java Properties
         "LIST": convert_json_to_json,  # Lists are already JSON arrays
-        # JSX/HTML templates are input examples, output as JSON
+        # JSX templates are input examples, output as JSON
         "JSX BUTTON": convert_json_to_json,
         "JSX FORM": convert_json_to_json,
-        "HTML DIV": convert_json_to_json,
         "JSX COMPONENT": convert_json_to_json,
     }
     
