@@ -453,7 +453,13 @@ def convert_json_to_java_properties(data: Union[Dict, List, str], **options) -> 
 
 def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
     """
-    Convert JSON to TOON format (simple implementation without toon-llm).
+    Convert JSON to TOON (Token-Oriented Object Notation) format.
+    
+    TOON is an LLM-optimized data serialization format that is more compact
+    and readable than JSON. It supports:
+    - Simple key:value pairs
+    - Inline arrays: key[N]: val1,val2,val3
+    - Tabular arrays: key[N]{col1,col2}: with indented rows
     
     Args:
         data: JSON data to convert
@@ -463,9 +469,16 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
         TOON formatted string
     
     Note:
-        TOON format: key: value, key[N]: val1,val2,val3
-        This is a simple implementation. For complex TOON features,
-        use the ToonAdapter (requires toon-llm library).
+        This implements core TOON features. For full specification, see:
+        https://github.com/davidpirogov/toon-llm
+    
+    Examples:
+        Simple values: name: John Doe
+        Inline array: tags[3]: python,coding,llm
+        Tabular array:
+            items[2]{id,name}:
+              1,Apple
+              2,Banana
     """
     if isinstance(data, str):
         data = json.loads(data)
@@ -485,6 +498,40 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
         else:
             return str(val)
     
+    def is_array_of_objects(arr):
+        """Check if array contains objects (dicts)."""
+        return len(arr) > 0 and all(isinstance(item, dict) for item in arr)
+    
+    def get_common_keys(arr):
+        """Get common keys from array of objects."""
+        if not arr:
+            return []
+        # Get all keys that appear in all objects
+        all_keys = set(arr[0].keys())
+        for item in arr[1:]:
+            all_keys &= set(item.keys())
+        # Return in order of first object
+        return [k for k in arr[0].keys() if k in all_keys]
+    
+    def format_tabular_array(key, arr):
+        """Format array of objects in tabular TOON format."""
+        common_keys = get_common_keys(arr)
+        if not common_keys:
+            # Fallback to inline if no common keys
+            return [f"{key}[{len(arr)}]: " + str(arr)]
+        
+        result = []
+        # Header: key[N]{col1,col2,...}:
+        columns = ','.join(common_keys)
+        result.append(f"{key}[{len(arr)}]{{{columns}}}:")
+        
+        # Rows: indented with two spaces
+        for item in arr:
+            values = [convert_value(item.get(k, '')) for k in common_keys]
+            result.append(f"  {','.join(values)}")
+        
+        return result
+    
     def process_dict(d, prefix=""):
         """Process dictionary recursively."""
         for key, value in d.items():
@@ -494,12 +541,16 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
                 # Nested dict: recurse
                 process_dict(value, full_key)
             elif isinstance(value, list):
-                # Array: key[N]: val1,val2,val3
-                if value:
+                if not value:
+                    # Empty array
+                    lines.append(f"{full_key}[0]: ")
+                elif is_array_of_objects(value):
+                    # Array of objects -> tabular format
+                    lines.extend(format_tabular_array(full_key, value))
+                else:
+                    # Array of primitives -> inline format
                     array_values = [convert_value(v) for v in value]
                     lines.append(f"{full_key}[{len(value)}]: {','.join(array_values)}")
-                else:
-                    lines.append(f"{full_key}[0]: ")
             else:
                 # Simple value
                 lines.append(f"{full_key}: {convert_value(value)}")
@@ -508,11 +559,13 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
         process_dict(data)
     elif isinstance(data, list):
         # Root array
-        if data:
+        if not data:
+            lines.append("[0]: ")
+        elif is_array_of_objects(data):
+            lines.extend(format_tabular_array("root", data))
+        else:
             array_values = [convert_value(v) for v in data]
             lines.append(f"[{len(data)}]: {','.join(array_values)}")
-        else:
-            lines.append("[0]: ")
     else:
         # Primitive at root
         lines.append(f"value: {convert_value(data)}")
