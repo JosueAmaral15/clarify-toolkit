@@ -927,17 +927,27 @@ class GoogleTranslateDock(BaseDock):
         Args:
             output_path: Path to save ODT file
         """
+        # DEBUG: Log what we have
+        print(f"\n[DEBUG] _save_as_odt called:")
+        print(f"  _translated_html: {self._translated_html is not None} (length: {len(self._translated_html) if self._translated_html else 0})")
+        print(f"  _css_manager: {self._css_manager is not None} (type: {type(self._css_manager).__name__ if self._css_manager else 'None'})")
+        print(f"  _translated_segments: {len(self._translated_segments)} segments")
+        
         if self._translated_html and self._css_manager:
             # Session 77: NEW HTML system - use HTML to ODT conversion
+            print(f"  → Using HTML system")
             from translation.html_format_mapper import create_odt_from_html
             create_odt_from_html(self._translated_html, self._css_manager, output_path)
+            print(f"  → ODT created successfully")
             
         elif self._translated_segments:
             # OLD system - use segment-based approach (backward compatibility)
+            print(f"  → Using OLD segment system")
             FormatMapper.create_odt_from_segments(self._translated_segments, output_path)
             
         else:
             # Fallback: no formatting, create plain text segment
+            print(f"  → Using FALLBACK plain text")
             plain_text = self.text_output.toPlainText()
             
             # CRITICAL: Remove any system tags that might have leaked into UI
