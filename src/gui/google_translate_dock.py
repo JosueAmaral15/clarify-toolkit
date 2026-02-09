@@ -495,14 +495,41 @@ class GoogleTranslateDock(BaseDock):
                             super().__init__()
                             self.text_parts = []
                             self.current_tag = None
+                            self.current_class = None
+                            self.prev_class = None
+                            # Header classes (bold/large text that should have newlines around them)
+                            self.header_classes = ['fmt1', 'fmt3', 'fmt4', 'fmt5', 'fmt7']
                         
                         def handle_starttag(self, tag, attrs):
-                            self.current_tag = tag
                             if tag == 'br':
                                 # Line break
                                 self.text_parts.append('\n')
+                                self.current_tag = tag
+                                return
+                            
+                            if tag == 'span':
+                                new_class = None
+                                for attr, value in attrs:
+                                    if attr == 'class':
+                                        new_class = value
+                                        break
+                                
+                                # Add newline on format class transition (header ↔ body)
+                                if self.prev_class and new_class and self.prev_class != new_class:
+                                    prev_is_header = self.prev_class in self.header_classes
+                                    new_is_header = new_class in self.header_classes
+                                    
+                                    # Newline if entering or leaving header format
+                                    if prev_is_header != new_is_header:
+                                        self.text_parts.append('\n')
+                                
+                                self.current_class = new_class
+                            
+                            self.current_tag = tag
                         
                         def handle_endtag(self, tag):
+                            if tag == 'span' and self.current_class:
+                                self.prev_class = self.current_class
                             if tag == self.current_tag:
                                 self.current_tag = None
                         
@@ -697,14 +724,41 @@ class GoogleTranslateDock(BaseDock):
                         super().__init__()
                         self.text_parts = []
                         self.current_tag = None
+                        self.current_class = None
+                        self.prev_class = None
+                        # Header classes (bold/large text that should have newlines around them)
+                        self.header_classes = ['fmt1', 'fmt3', 'fmt4', 'fmt5', 'fmt7']
                     
                     def handle_starttag(self, tag, attrs):
-                        self.current_tag = tag
                         if tag == 'br':
                             # Line break
                             self.text_parts.append('\n')
+                            self.current_tag = tag
+                            return
+                        
+                        if tag == 'span':
+                            new_class = None
+                            for attr, value in attrs:
+                                if attr == 'class':
+                                    new_class = value
+                                    break
+                            
+                            # Add newline on format class transition (header ↔ body)
+                            if self.prev_class and new_class and self.prev_class != new_class:
+                                prev_is_header = self.prev_class in self.header_classes
+                                new_is_header = new_class in self.header_classes
+                                
+                                # Newline if entering or leaving header format
+                                if prev_is_header != new_is_header:
+                                    self.text_parts.append('\n')
+                            
+                            self.current_class = new_class
+                        
+                        self.current_tag = tag
                     
                     def handle_endtag(self, tag):
+                        if tag == 'span' and self.current_class:
+                            self.prev_class = self.current_class
                         if tag == self.current_tag:
                             self.current_tag = None
                     
