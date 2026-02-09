@@ -66,6 +66,7 @@ class TranslationWorker(QThread):
         self.from_lang = from_lang
         self.to_lang = to_lang
         self.is_cancelled = False
+        self._placeholder_mapping = None  # For old format system backward compatibility
 
     def cancel(self):
         """Cancel translation operation."""
@@ -83,35 +84,50 @@ class TranslationWorker(QThread):
             if self.is_cancelled:
                 return
 
-            # Session 75: Check if text contains format tags
-            # If yes, use placeholder protection for 100% tag preservation
-            from translation.format_mapper import (
-                replace_tags_with_placeholders, 
-                restore_tags_from_placeholders,
-                protect_special_whitespace,
-                restore_special_whitespace
-            )
+            # Session 77: NEW HTML-based approach for format preservation
+            # Check if text is HTML (from ODT/DOCX extraction)
+            is_html_format = '<!DOCTYPE html>' in self.text or '<html>' in self.text
             
-            has_format_tags = '<' in self.text and '>' in self.text and '|' in self.text
-            placeholder_mapping = None
-            text_to_translate = self.text
-            
-            if has_format_tags:
-                self.progress_updated.emit(30, "Protecting format tags...")
-                text_to_translate, placeholder_mapping = replace_tags_with_placeholders(self.text)
-            
-            # Session 75: Always protect special whitespace (tabs, line breaks, multiple spaces)
-            self.progress_updated.emit(32, "Protecting whitespace...")
-            text_to_translate = protect_special_whitespace(text_to_translate)
+            if is_html_format:
+                # HTML format - just protect whitespace and send to Google
+                # Google already knows how to preserve HTML structure
+                self.progress_updated.emit(30, "Protecting whitespace...")
+                from translation.html_format_mapper import protect_special_whitespace
+                text_to_translate = protect_special_whitespace(self.text)
+            else:
+                # Plain text - check if it has old format tags (backward compatibility)
+                has_format_tags = '<' in self.text and '>' in self.text and '|' in self.text
+                
+                if has_format_tags:
+                    # Old format - use placeholder protection (Session 75)
+                    from translation.format_mapper import (
+                        replace_tags_with_placeholders, 
+                        protect_special_whitespace
+                    )
+                    self.progress_updated.emit(30, "Protecting format tags...")
+                    text_to_translate, self._placeholder_mapping = replace_tags_with_placeholders(self.text)
+                    
+                    self.progress_updated.emit(32, "Protecting whitespace...")
+                    text_to_translate = protect_special_whitespace(text_to_translate)
+                else:
+                    # Pure plain text - no special handling
+                    text_to_translate = self.text
+                    self._placeholder_mapping = None
 
             # For large texts, split into chunks
             max_chunk_size = 5000  # Google Translate limit
             text_chunks = []
 
             if len(text_to_translate) > max_chunk_size:
-                # Split by sentences/paragraphs to maintain context
-                # Note: We can still split on 【BR】【BR】 (which was \n\n)
-                paragraphs = text_to_translate.split("【BR】【BR】")
+                # Split by paragraphs/double newlines to maintain context
+                if is_html_format:
+                    # For HTML, split on </p> or <br><br>
+                    paragraphs = text_to_translate.split("</p>")
+                else:
+                    # For plain text, split on double newlines
+                    separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
+                    paragraphs = text_to_translate.split(separator)
+                
                 current_chunk = ""
 
                 for paragraph in paragraphs:
@@ -120,7 +136,8 @@ class TranslationWorker(QThread):
                             text_chunks.append(current_chunk.strip())
                         current_chunk = paragraph
                     else:
-                        current_chunk += "\n\n" + paragraph if current_chunk else paragraph
+                        separator_str = "</p>" if is_html_format else "\n\n"
+                        current_chunk += separator_str + paragraph if current_chunk else paragraph
 
                 if current_chunk:
                     text_chunks.append(current_chunk.strip())
@@ -153,17 +170,29 @@ class TranslationWorker(QThread):
                     detected_language = result.source_language
 
             # Combine translated chunks
-            # Note: Can't use \n\n anymore since we protected it, use 【BR】【BR】
-            final_result = "【BR】【BR】".join(translated_chunks)
+            if is_html_format:
+                final_result = "</p>".join(translated_chunks)
+            else:
+                separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
+                final_result = separator.join(translated_chunks)
             
-            # Session 75: Restore whitespace FIRST (before format tags)
-            self.progress_updated.emit(93, "Restoring whitespace...")
-            final_result = restore_special_whitespace(final_result)
-            
-            # Session 75: Restore format tags if placeholders were used
-            if placeholder_mapping:
-                self.progress_updated.emit(96, "Restoring format tags...")
-                final_result = restore_tags_from_placeholders(final_result, placeholder_mapping)
+            # Restore whitespace and format tags based on format type
+            if is_html_format:
+                self.progress_updated.emit(93, "Restoring whitespace...")
+                from translation.html_format_mapper import restore_special_whitespace
+                final_result = restore_special_whitespace(final_result)
+            else:
+                if self._placeholder_mapping:
+                    # Old format system - restore whitespace then tags
+                    from translation.format_mapper import (
+                        restore_special_whitespace,
+                        restore_tags_from_placeholders
+                    )
+                    self.progress_updated.emit(93, "Restoring whitespace...")
+                    final_result = restore_special_whitespace(final_result)
+                    
+                    self.progress_updated.emit(96, "Restoring format tags...")
+                    final_result = restore_tags_from_placeholders(final_result, self._placeholder_mapping)
 
             self.progress_updated.emit(100, "Translation completed!")
             self.translation_completed.emit(final_result, True, "", detected_language)
@@ -187,8 +216,13 @@ class GoogleTranslateDock(BaseDock):
         self._last_detected_lang = None  # Store detected language from last translation
         
         # Store formatting data (backend only - never shown to user)
-        self._source_segments = []  # Original document formatting (TextSegment list)
-        self._translated_segments = []  # Translated document formatting (TextSegment list)
+        self._source_segments = []  # Original document formatting (TextSegment list) - OLD SYSTEM
+        self._translated_segments = []  # Translated document formatting (TextSegment list) - OLD SYSTEM
+        
+        # Session 77: NEW HTML format system
+        self._css_manager = None  # CSS class manager for HTML-based translation
+        self._source_file_path = None  # Source file path for format reference
+        self._translated_html = None  # Translated HTML content
         
         super().__init__(tr("menu.tools.google_translate"), parent)
 
@@ -442,16 +476,39 @@ class GoogleTranslateDock(BaseDock):
                     
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 elif file_path.lower().endswith('.odt'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_odt(file_path)
+                    # Session 77: NEW HTML-based format system
+                    from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting)
+                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Extract ONLY plain text for UI display (no tags visible to user)
-                    plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
+                    # Store CSS manager for later ODT creation
+                    self._css_manager = css_manager_or_path
+                    self._source_file_path = file_path
                     
-                    self.lbl_status.setText(f"ODT loaded with formatting. {len(plain_text)} characters.")
+                    # Parse HTML to extract plain text for UI preview
+                    from html.parser import HTMLParser
+                    
+                    class TextExtractor(HTMLParser):
+                        def __init__(self):
+                            super().__init__()
+                            self.text_parts = []
+                        
+                        def handle_data(self, data):
+                            if data.strip():
+                                self.text_parts.append(data.strip())
+                        
+                        def get_text(self):
+                            return ' '.join(self.text_parts)
+                    
+                    extractor = TextExtractor()
+                    extractor.feed(html_content)
+                    plain_text = extractor.get_text()
+                    
+                    self.lbl_status.setText(f"ODT loaded with HTML formatting. {len(plain_text)} characters.")
+                    
+                    # Store empty segments (HTML system doesn't use segments)
+                    self._source_segments = []
                 else:
                     # Use plain text parser for other file types
                     plain_text = extract_text_from_document(file_path)
@@ -500,14 +557,21 @@ class GoogleTranslateDock(BaseDock):
                     # Keep tagged text for translation (tags go to Google Translate)
                     text_to_translate = formatted_text_with_tags
                 elif file_path.lower().endswith('.odt'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_odt(file_path)
+                    # Session 77: NEW HTML-based format system
+                    from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting)
+                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Keep tagged text for translation (tags go to Google Translate)
-                    text_to_translate = formatted_text_with_tags
+                    # Store CSS manager for later ODT creation
+                    self._css_manager = css_manager_or_path
+                    self._source_file_path = file_path
+                    
+                    # Store empty segments (HTML system doesn't use segments)
+                    self._source_segments = []
+                    
+                    # Keep HTML for translation (Google Translate will preserve HTML structure)
+                    text_to_translate = html_content
                 else:
                     # Use plain text parser for other file types
                     text_to_translate = extract_text_from_document(file_path)
@@ -598,12 +662,42 @@ class GoogleTranslateDock(BaseDock):
         self.progress_bar.setVisible(False)
 
         if success:
-            # Parse tags from translation result (backend only)
-            # Result may contain tags like: "<1>Hola</1> <3:FF0000>mundo</3>"
-            self._translated_segments = FormatMapper.parse_tagged_text(result)
+            # Session 77: Check if result is HTML (from new format system)
+            is_html_format = '<!DOCTYPE html>' in result or '<html>' in result
             
-            # Extract ONLY plain text for UI display (hide tags from user)
-            plain_text = FormatMapper.extract_plain_text_from_segments(self._translated_segments)
+            if is_html_format:
+                # HTML format - extract plain text for UI display
+                from html.parser import HTMLParser
+                
+                class TextExtractor(HTMLParser):
+                    def __init__(self):
+                        super().__init__()
+                        self.text_parts = []
+                    
+                    def handle_data(self, data):
+                        if self.get_starttag_text() and 'style' not in self.get_starttag_text():
+                            if data.strip():
+                                self.text_parts.append(data.strip())
+                    
+                    def get_text(self):
+                        return '\n'.join(self.text_parts)
+                
+                extractor = TextExtractor()
+                extractor.feed(result)
+                plain_text = extractor.get_text()
+                
+                # Store translated HTML for ODT creation
+                self._translated_html = result
+                self._translated_segments = []  # Not used in HTML system
+            else:
+                # Old format system or plain text
+                # Parse tags from translation result (backend only)
+                self._translated_segments = FormatMapper.parse_tagged_text(result)
+                
+                # Extract ONLY plain text for UI display (hide tags from user)
+                plain_text = FormatMapper.extract_plain_text_from_segments(self._translated_segments)
+                
+                self._translated_html = None
             
             # Display plain text in output box (NO TAGS VISIBLE)
             self.text_output.setPlainText(plain_text)
@@ -824,6 +918,39 @@ class GoogleTranslateDock(BaseDock):
         QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
     def _save_as_odt(self, output_path: str):
+        """
+        Save translation as ODT with formatting restored.
+        
+        Session 77: Uses NEW HTML-based format system if available.
+        Falls back to old segment system for backward compatibility.
+        
+        Args:
+            output_path: Path to save ODT file
+        """
+        if self._translated_html and self._css_manager:
+            # Session 77: NEW HTML system - use HTML to ODT conversion
+            from translation.html_format_mapper import create_odt_from_html
+            create_odt_from_html(self._translated_html, self._css_manager, output_path)
+            
+        elif self._translated_segments:
+            # OLD system - use segment-based approach (backward compatibility)
+            FormatMapper.create_odt_from_segments(self._translated_segments, output_path)
+            
+        else:
+            # Fallback: no formatting, create plain text segment
+            plain_text = self.text_output.toPlainText()
+            
+            # CRITICAL: Remove any system tags that might have leaked into UI
+            plain_text = FormatMapper.remove_tags(plain_text)
+            
+            from ..translation.format_mapper import TextSegment
+            self._translated_segments = [TextSegment(text=plain_text)]
+            FormatMapper.create_odt_from_segments(self._translated_segments, output_path)
+        
+        # Update status
+        self.lbl_status.setText(tr("google_translate.status_odt_saved"))
+        self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
+        QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
         """
         Save translation as ODT with formatting restored from stored segments.
         

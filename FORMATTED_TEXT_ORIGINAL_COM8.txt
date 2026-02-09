@@ -1,0 +1,111 @@
+1. HTML Tag Selection
+
+   Which HTML tags should we use?
+
+     - Option A: Block-level content → <div class="fmt113">...</div>
+     - Option B: Inline content → <span class="fmt113">...</span>
+     - Option C: Mix based on context
+
+   Answer: C
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   2. Class Naming Convention
+
+   How to name CSS classes?
+
+     - Option A: Simple incremental: fmt1, fmt2, fmt3...
+     - Option B: Type-based prefix: tag113, tag96, tag97...
+     - Option C: Hash-based: fmt_a1b2c3...
+
+   Answer: A
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   3. Multiple Instances of Same Format
+
+   If same format appears multiple times, should we:
+
+     - Option A: Reuse same class name (deduplicate)
+       - Pro: Cleaner HTML, smaller dictionary
+       - Con: Loses position-specific info
+     - Option B: Create unique class per instance
+       - Pro: Perfect 1:1 mapping
+       - Con: More classes, larger dictionary
+
+   Answer: A, you can create classes whose texts have common patterns, reducing the number of configurations or styles, something reminiscent of the venn diagram and the truth table. but it's just an idea that can be implemented: first (and recursively) identify which style(s) are the most used and create a class for them for all html tags, and also identify the styles with the same amount of use so that a class name can be dedicated just for these styles. Can you understand what I mean?
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   4. Dictionary Storage
+
+   Where to store class→tag mapping?
+
+     - Option A: In-memory only (during translation session)
+     - Option B: Temporary JSON file
+     - Option C: Embedded in output file metadata
+
+   Answer: A if have more memory available, otherwise, B. You need to make a conditional structure to the code decide by itself.
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   5. Whitespace Handling
+
+   Tabs and newlines inside tags:
+
+     - Option A: Keep current placeholder approach (【TAB】, 【BR】)
+     - Option B: Use HTML entities (&Tab;, &#10;)
+     - Option C: Trust HTML to preserve whitespace as-is
+
+   Answer: B
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   6. Nested Tags
+
+   What if tags are nested?
+
+     <113|65536>outer<96|66048>inner</96|66048>text</113|65536>
+
+   Convert to:
+
+     <span class="fmt113">outer<span class="fmt96">inner</span>text</span>
+
+   Is this correct approach?
+
+   Answer: yes.
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   7. Adjacent Tags (The Original Bug Source)
+
+   Adjacent tags with no content:
+
+     </113|65536><112|65536>
+
+   Convert to:
+
+     </span><span class="fmt112">
+
+   Should we:
+
+     - Option A: Keep as-is (empty tags removed by Google?)
+     - Option B: Add invisible marker: </span><!-- boundary --><span class="fmt112">
+     - Option C: Merge into single tag transition
+
+   Answer:A, but is only to use html tags, forget the number tags as </113|65536><112|65536>. Don't use more number tags, forget it!
+
+   -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+   8. Tag Types That Might Need Different HTML Elements
+
+   Should certain custom tags map to semantic HTML?
+
+     - Option A: Bold-like formats → <strong class="fmt113">
+     - Option B: Italic-like → <em class="fmt96">
+     - Option C: Headings → <h1 class="fmt97">
+     - Option D: Keep everything as <span>/<div>
+
+   Answer: D
+   
+   any more questions?
