@@ -49,6 +49,18 @@ coverage.json
 .tox/
 .hypothesis/
 
+# Test outputs (COM8 - added 2026-02-09)
+.test_outputs/
+*_COM8.odt
+*_COM8.html
+*_COM8.txt
+test_*.odt
+test_*.html
+*_DEBUG_*.txt
+*_COMPARISON_*.txt
+*_TRANSLATED_*.txt
+*_FORMATTED_*.txt
+
 # Logs
 *.log
 
