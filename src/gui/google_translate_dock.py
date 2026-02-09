@@ -493,8 +493,19 @@ class GoogleTranslateDock(BaseDock):
                         def __init__(self):
                             super().__init__()
                             self.text_parts = []
+                            self.current_tag = None
+                        
+                        def handle_starttag(self, tag, attrs):
+                            self.current_tag = tag
+                        
+                        def handle_endtag(self, tag):
+                            if tag == self.current_tag:
+                                self.current_tag = None
                         
                         def handle_data(self, data):
+                            # Skip data inside style/script/head tags
+                            if self.current_tag in ['style', 'script', 'head', 'title']:
+                                return
                             if data.strip():
                                 self.text_parts.append(data.strip())
                         
@@ -673,11 +684,21 @@ class GoogleTranslateDock(BaseDock):
                     def __init__(self):
                         super().__init__()
                         self.text_parts = []
+                        self.current_tag = None
+                    
+                    def handle_starttag(self, tag, attrs):
+                        self.current_tag = tag
+                    
+                    def handle_endtag(self, tag):
+                        if tag == self.current_tag:
+                            self.current_tag = None
                     
                     def handle_data(self, data):
-                        if self.get_starttag_text() and 'style' not in self.get_starttag_text():
-                            if data.strip():
-                                self.text_parts.append(data.strip())
+                        # Skip data inside style/script/head tags
+                        if self.current_tag in ['style', 'script', 'head', 'title']:
+                            return
+                        if data.strip():
+                            self.text_parts.append(data.strip())
                     
                     def get_text(self):
                         return '\n'.join(self.text_parts)
