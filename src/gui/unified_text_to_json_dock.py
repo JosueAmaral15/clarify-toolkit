@@ -320,6 +320,20 @@ class TemplatesDialog(QDialog):
     
     TEMPLATES = {
         # Format Conversion Templates
+        "JSON": """{
+  "user": {
+    "name": "John Doe",
+    "age": 30,
+    "city": "New York",
+    "active": true
+  },
+  "items": [
+    "Apple",
+    "Banana",
+    "Orange"
+  ]
+}""",
+        
         "Key-Value": """name: John Doe
 age: 30
 city: New York
