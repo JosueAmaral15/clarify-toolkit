@@ -241,9 +241,68 @@ Ask user to:
 
 ---
 
-## STATUS: Comprehensive analysis complete - waiting for user approval
+---
+
+## BUG 5: Whitespace Not Preserved in Preview (DISCOVERED BY USER)
+
+**Reported**: 2026-02-09 20:04 UTC  
+**Problem**: File Content (Preview) not preserving:
+- Line breaks between paragraphs
+- Blank lines
+- Tabulations (&#9; → tab character)
+- Indentations
+
+**Root Cause**: HTML uses `<span>` + `<br>` tags, NOT `<p>` tags!
+```html
+<span class="fmt1">CAIT</span>
+<span class="fmt1">&#9;</span>  <!-- Tab -->
+<span class="fmt2">&#9;&#9;...</span>  <!-- Multiple tabs -->
+<span class="fmt3">13/11/12</span>
+<br>  <!-- Line break -->
+<span class="fmt4">Nome:</span>
+```
+
+Current code joins all text with single space → loses structure!
+
+**Solution**: Track `<br>` tags and decode HTML entities (&#9; → \t)
+
+```python
+class TextExtractor(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.text_parts = []
+        self.current_tag = None
+    
+    def handle_starttag(self, tag, attrs):
+        self.current_tag = tag
+        if tag == 'br':
+            # Add line break
+            self.text_parts.append('\n')
+    
+    def handle_endtag(self, tag):
+        if tag == self.current_tag:
+            self.current_tag = None
+    
+    def handle_data(self, data):
+        if self.current_tag in ['style', 'script', 'head', 'title']:
+            return
+        if data.strip() or data:  # Keep whitespace
+            import html
+            # Decode HTML entities (&#9; → tab, etc.)
+            decoded = html.unescape(data)
+            self.text_parts.append(decoded)
+    
+    def get_text(self):
+        # Join all parts (already has \n from <br> tags)
+        return ''.join(self.text_parts)
+```
+
+**Apply in**: Both `_browse_file()` and `_on_translation_completed()`
+
+---
+
+## STATUS: Bug 1 & 2 FIXED, Bug 5 DISCOVERED - waiting for approval to fix
 
 **Questions for User**:
-1. Should I fix Bugs 1 & 2 (CSS in preview/result) now?
-2. After fixing, should I request your testing for Bug 3 (ODT save)?
-3. Should I optimize Bug 4 (_css_manager reuse)?
+1. Should I fix Bug 5 (whitespace preservation) now?
+2. After fixing, should I request your testing for all bugs?

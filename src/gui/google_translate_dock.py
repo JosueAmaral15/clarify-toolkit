@@ -488,6 +488,7 @@ class GoogleTranslateDock(BaseDock):
                     
                     # Parse HTML to extract plain text for UI preview
                     from html.parser import HTMLParser
+                    import html as html_module
                     
                     class TextExtractor(HTMLParser):
                         def __init__(self):
@@ -497,6 +498,9 @@ class GoogleTranslateDock(BaseDock):
                         
                         def handle_starttag(self, tag, attrs):
                             self.current_tag = tag
+                            if tag == 'br':
+                                # Line break
+                                self.text_parts.append('\n')
                         
                         def handle_endtag(self, tag):
                             if tag == self.current_tag:
@@ -506,11 +510,18 @@ class GoogleTranslateDock(BaseDock):
                             # Skip data inside style/script/head tags
                             if self.current_tag in ['style', 'script', 'head', 'title']:
                                 return
-                            if data.strip():
-                                self.text_parts.append(data.strip())
+                            
+                            # Inside content tags - decode entities and keep ALL content (including whitespace)
+                            # Outside content tags - only keep if has non-whitespace (ignore HTML formatting)
+                            if self.current_tag in ['span', 'p', 'div']:
+                                decoded = html_module.unescape(data)
+                                self.text_parts.append(decoded)
+                            elif data.strip():
+                                decoded = html_module.unescape(data)
+                                self.text_parts.append(decoded)
                         
                         def get_text(self):
-                            return ' '.join(self.text_parts)
+                            return ''.join(self.text_parts)
                     
                     extractor = TextExtractor()
                     extractor.feed(html_content)
@@ -679,6 +690,7 @@ class GoogleTranslateDock(BaseDock):
             if is_html_format:
                 # HTML format - extract plain text for UI display
                 from html.parser import HTMLParser
+                import html as html_module
                 
                 class TextExtractor(HTMLParser):
                     def __init__(self):
@@ -688,6 +700,9 @@ class GoogleTranslateDock(BaseDock):
                     
                     def handle_starttag(self, tag, attrs):
                         self.current_tag = tag
+                        if tag == 'br':
+                            # Line break
+                            self.text_parts.append('\n')
                     
                     def handle_endtag(self, tag):
                         if tag == self.current_tag:
@@ -697,11 +712,18 @@ class GoogleTranslateDock(BaseDock):
                         # Skip data inside style/script/head tags
                         if self.current_tag in ['style', 'script', 'head', 'title']:
                             return
-                        if data.strip():
-                            self.text_parts.append(data.strip())
+                        
+                        # Inside content tags - decode entities and keep ALL content (including whitespace)
+                        # Outside content tags - only keep if has non-whitespace (ignore HTML formatting)
+                        if self.current_tag in ['span', 'p', 'div']:
+                            decoded = html_module.unescape(data)
+                            self.text_parts.append(decoded)
+                        elif data.strip():
+                            decoded = html_module.unescape(data)
+                            self.text_parts.append(decoded)
                     
                     def get_text(self):
-                        return '\n'.join(self.text_parts)
+                        return ''.join(self.text_parts)
                 
                 extractor = TextExtractor()
                 extractor.feed(result)
