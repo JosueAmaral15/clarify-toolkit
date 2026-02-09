@@ -1263,6 +1263,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             match_all = self.jsx_match_all_checkbox.isChecked()
             
             case_style = self.jsx_case_combo.currentText()
+            # Map display text to internal value
+            case_style_map = {
+                "snake_case": "snake",
+                "camelCase": "camel",
+                "PascalCase": "pascal",
+                "kebab-case": "kebab",
+                "preserve": "preserve"
+            }
+            case_style = case_style_map.get(case_style, "snake")  # Default to snake if not found
             to_upper = self.jsx_uppercase_checkbox.isChecked()
             limit = self.jsx_limit_edit.text().strip() or "all"
             avoid_cut = self.jsx_avoid_cut_checkbox.isChecked()
