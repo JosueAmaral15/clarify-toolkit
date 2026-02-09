@@ -951,30 +951,6 @@ class GoogleTranslateDock(BaseDock):
         self.lbl_status.setText(tr("google_translate.status_odt_saved"))
         self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
-        """
-        Save translation as ODT with formatting restored from stored segments.
-        
-        Args:
-            output_path: Path to save ODT file
-        """
-        if not self._translated_segments:
-            # Fallback: no formatting, create plain text segment
-            plain_text = self.text_output.toPlainText()
-            
-            # CRITICAL: Remove any system tags that might have leaked into UI
-            # Only remove numeric tags (Clarify system), preserve user tags like <div>
-            plain_text = FormatMapper.remove_tags(plain_text)
-            
-            from ..translation.format_mapper import TextSegment
-            self._translated_segments = [TextSegment(text=plain_text)]
-        
-        # Generate ODT with formatting using stored segments
-        FormatMapper.create_odt_from_segments(self._translated_segments, output_path)
-        
-        # Update status
-        self.lbl_status.setText("✓ ODT saved with formatting restored!")
-        self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
-        QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
     def closeEvent(self, event):
         """Handle dock close event - wait for running threads."""
