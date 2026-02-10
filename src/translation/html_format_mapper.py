@@ -775,8 +775,8 @@ class HTMLToODTParser(HTMLParser):
         if self.current_tag in ['style', 'head', 'title']:
             return
         
-        # Skip empty data
-        if not data.strip() and not data:
+        # Skip whitespace-only data (HTML formatting between tags)
+        if not data.strip():
             return
         
         # Decode HTML entities back to characters
