@@ -354,22 +354,54 @@ class HTMLFormatMapper:
                 # Plain text node
                 para_text += str(node)
             elif hasattr(node, 'qname') and node.qname[1] == 'span':
-                # Formatted span
-                span_text, span_fmt = HTMLFormatMapper._extract_span(node, styles, para_fmt)
+                # Get span format
+                span_fmt = HTMLFormatMapper._extract_span_format(node, styles, para_fmt)
                 
-                # If format changed, create new segment
-                if span_text:
-                    if para_text:
-                        # Save accumulated text with previous format
-                        css_class = css_manager.get_or_create_class(current_fmt)
-                        tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
-                        segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
-                        para_text = ""
-                    
-                    # Add span segment
-                    css_class = css_manager.get_or_create_class(span_fmt)
-                    segments.append(HTMLSegment(span_text, css_class, 'span', span_fmt))
-                    current_fmt = para_fmt  # Reset to paragraph format
+                # Process span content, handling line-breaks
+                for child in node.childNodes:
+                    if isinstance(child, ODFText):
+                        # Text content
+                        if para_text:
+                            # Check if format changed
+                            if current_fmt != span_fmt:
+                                # Save accumulated text with previous format
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                        current_fmt = span_fmt
+                        para_text += str(child)
+                    elif hasattr(child, 'qname'):
+                        elem_type = child.qname[1]
+                        if elem_type == 'line-break':
+                            # Save current text before line break
+                            if para_text:
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                            # Add BR segment
+                            segments.append(HTMLSegment('\n', '', 'br', FormatAttributes()))
+                            current_fmt = span_fmt  # Keep format after BR
+                        elif elem_type == 'tab':
+                            para_text += '&#9;'
+                        elif elem_type == 's':
+                            # Multiple spaces
+                            try:
+                                count = int(child.getAttribute('c'))
+                            except:
+                                count = 1
+                            para_text += '&nbsp;' * count
+            elif hasattr(node, 'qname') and node.qname[1] == 'line-break':
+                # Line break within paragraph (soft break)
+                if para_text:
+                    # Save accumulated text
+                    css_class = css_manager.get_or_create_class(current_fmt)
+                    tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                    segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                    para_text = ""
+                # Add BR segment
+                segments.append(HTMLSegment('', '', 'br', FormatAttributes()))
             elif hasattr(node, 'qname') and node.qname[1] in ['tab', 's']:
                 # Tab or space
                 if node.qname[1] == 'tab':
@@ -438,8 +470,8 @@ class HTMLFormatMapper:
         return fmt
     
     @staticmethod
-    def _extract_span(span, styles: Dict, para_fmt: FormatAttributes) -> Tuple[str, FormatAttributes]:
-        """Extract span text and formatting."""
+    def _extract_span_format(span, styles: Dict, para_fmt: FormatAttributes) -> FormatAttributes:
+        """Extract span formatting only (not text content)."""
         # Start with paragraph format as base
         fmt = FormatAttributes(
             alignment=para_fmt.alignment,
@@ -511,7 +543,14 @@ class HTMLFormatMapper:
                 except (ValueError, KeyError):
                     pass
         
-        # Extract text content
+        return fmt
+    
+    @staticmethod
+    def _extract_span(span, styles: Dict, para_fmt: FormatAttributes) -> Tuple[str, FormatAttributes]:
+        """Extract span text and formatting."""
+        fmt = HTMLFormatMapper._extract_span_format(span, styles, para_fmt)
+        
+        # Extract text content (note: does NOT handle line-breaks inside spans!)
         text = ""
         for node in span.childNodes:
             if isinstance(node, ODFText):
