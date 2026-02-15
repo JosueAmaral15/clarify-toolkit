@@ -2090,7 +2090,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 return (path_parts, value)  # No limiting needed
             
             parents = path_parts  # All keys are parents (value is separate)
-            parents_to_keep = limit - 1  # Subtract 1 for leaf
+            parents_to_keep = limit
             
             if parents_to_keep <= 0:
                 return ([], value)  # Keep only leaf
