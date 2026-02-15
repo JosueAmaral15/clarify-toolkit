@@ -725,10 +725,14 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
     
     for segment in parser.segments:
         if segment['type'] == 'br':
-            # End current paragraph
+            # End current paragraph (even if empty)
             if current_paragraph is not None:
                 doc.text.addElement(current_paragraph)
-            current_paragraph = None
+                current_paragraph = None
+            else:
+                # Consecutive BR = empty paragraph
+                empty_para = P()
+                doc.text.addElement(empty_para)
         
         elif segment['type'] == 'text':
             # Add text to current or new paragraph
