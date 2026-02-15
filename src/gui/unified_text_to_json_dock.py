@@ -751,6 +751,53 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         layout.addLayout(options_row1)
         
+        # Limit parent keys row
+        limit_parent_keys_row = QHBoxLayout()
+        
+        self.jsx_limit_parent_keys_checkbox = QCheckBox(
+            tr("advanced_extractor.limit_parent_keys", "Limit parent keys")
+        )
+        self.jsx_limit_parent_keys_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.limit_parent_keys_tooltip",
+                      "Reduce JSON nesting depth by limiting number of parent keys in paths")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_checkbox)
+        
+        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.max_keys", "Max keys:")))
+        self.jsx_limit_parent_keys_spin = QSpinBox()
+        self.jsx_limit_parent_keys_spin.setRange(0, 999)
+        self.jsx_limit_parent_keys_spin.setValue(0)
+        self.jsx_limit_parent_keys_spin.setMaximumWidth(80)
+        self.jsx_limit_parent_keys_spin.setEnabled(False)  # Disabled by default
+        self.jsx_limit_parent_keys_spin.setToolTip(
+            tooltip_tr("advanced_extractor.max_keys_tooltip",
+                      "Maximum number of keys to keep (including leaf). 0 = keep only leaf")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_spin)
+        
+        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.keep_mode", "Mode:")))
+        self.jsx_limit_parent_keys_mode_combo = QComboBox()
+        self.jsx_limit_parent_keys_mode_combo.addItems([
+            tr("advanced_extractor.keep_from_start", "Keep from start"),
+            tr("advanced_extractor.keep_from_end", "Keep from end"),
+            tr("advanced_extractor.keep_both_ends", "Keep both ends")
+        ])
+        self.jsx_limit_parent_keys_mode_combo.setCurrentIndex(2)  # Default: Keep both ends
+        self.jsx_limit_parent_keys_mode_combo.setEnabled(False)  # Disabled by default
+        self.jsx_limit_parent_keys_mode_combo.setToolTip(
+            tooltip_tr("advanced_extractor.keep_mode_tooltip",
+                      "Start: keep first N parents\n"
+                      "End: keep last N parents\n"
+                      "Both: keep from both ends (CEIL(N/2) from start, FLOOR(N/2) from end)")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_mode_combo)
+        
+        # Connect checkbox to enable/disable controls
+        self.jsx_limit_parent_keys_checkbox.toggled.connect(self._jsx_on_limit_parent_keys_toggled)
+        
+        limit_parent_keys_row.addStretch()
+        layout.addLayout(limit_parent_keys_row)
+        
         # Options grid (2 rows x 4 columns)
         options_grid = QGridLayout()
         options_grid.setSpacing(10)
@@ -1057,6 +1104,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     def _jsx_on_avoid_cut_toggled(self, checked: bool) -> None:
         """Enable/disable the avoid cut direction dropdown based on checkbox state."""
         self.jsx_avoid_cut_direction_combo.setEnabled(checked)
+    
+    def _jsx_on_limit_parent_keys_toggled(self, checked: bool) -> None:
+        """Enable/disable limit parent keys controls based on checkbox state."""
+        self.jsx_limit_parent_keys_spin.setEnabled(checked)
+        self.jsx_limit_parent_keys_mode_combo.setEnabled(checked)
     
     def _jsx_update_status(self, message: str) -> None:
         """
@@ -1433,6 +1485,28 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         try:
             # Get selected output format
             output_format = getattr(self, 'selected_output_format', 'JSON')
+            
+            # Apply parent key limiting if enabled
+            if json_output and self.jsx_limit_parent_keys_checkbox.isChecked():
+                try:
+                    json_data = json.loads(json_output)
+                    limit = self.jsx_limit_parent_keys_spin.value()
+                    mode_text = self.jsx_limit_parent_keys_mode_combo.currentText()
+                    
+                    # Map display text to internal mode
+                    mode_map = {
+                        "Keep from start": "start",
+                        "Keep from end": "end",
+                        "Keep both ends": "both"
+                    }
+                    mode = mode_map.get(mode_text, "both")
+                    
+                    # Apply limiting
+                    json_data = self._apply_parent_key_limiting(json_data, limit, mode)
+                    json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    
+                except Exception as limit_err:
+                    self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
             
             # Convert JSON output to selected format
             converted_output = json_output
@@ -1985,6 +2059,115 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_extensions_edit.setText(' '.join(file_exts))
             
             dialog.accept()
+    
+    def _apply_parent_key_limiting(self, data: Any, limit: int, mode: str) -> Any:
+        """
+        Recursively apply parent key limiting to JSON data.
+        
+        Args:
+            data: JSON data (dict, list, or primitive)
+            limit: Maximum number of keys to keep (including leaf)
+            mode: "start", "end", or "both"
+        
+        Returns:
+            Modified JSON data with limited parent keys
+        """
+        if not isinstance(data, dict) or limit <= 0:
+            return data
+        
+        def limit_path_keys(path_parts: List[str], value: Any) -> tuple:
+            """
+            Limit path keys and return (limited_path, value).
+            
+            Args:
+                path_parts: List of keys representing the path
+                value: The leaf value
+            
+            Returns:
+                Tuple of (limited_path_parts, value)
+            """
+            if len(path_parts) <= limit:
+                return (path_parts, value)  # No limiting needed
+            
+            parents = path_parts  # All keys are parents (value is separate)
+            parents_to_keep = limit - 1  # Subtract 1 for leaf
+            
+            if parents_to_keep <= 0:
+                return ([], value)  # Keep only leaf
+            
+            if mode == "start":
+                return (parents[:parents_to_keep], value)
+            elif mode == "end":
+                return (parents[-parents_to_keep:], value)
+            elif mode == "both":
+                from_start = (parents_to_keep + 1) // 2  # CEIL
+                from_end = parents_to_keep // 2          # FLOOR
+                
+                if from_end == 0:
+                    return (parents[:from_start], value)
+                else:
+                    return (parents[:from_start] + parents[-from_end:], value)
+            
+            return (path_parts, value)  # Default: no change
+        
+        def collect_paths(obj: Any, current_path: List[str] = None) -> List[tuple]:
+            """
+            Collect all leaf paths and values from nested dict.
+            
+            Returns:
+                List of (path_list, value) tuples
+            """
+            if current_path is None:
+                current_path = []
+            
+            paths = []
+            
+            if isinstance(obj, dict):
+                for key, val in obj.items():
+                    new_path = current_path + [key]
+                    if isinstance(val, dict):
+                        paths.extend(collect_paths(val, new_path))
+                    else:
+                        # Leaf value found
+                        paths.append((new_path, val))
+            else:
+                # Non-dict value at this level
+                paths.append((current_path, obj))
+            
+            return paths
+        
+        def rebuild_dict(paths: List[tuple]) -> Dict[str, Any]:
+            """
+            Rebuild nested dict from list of (path, value) tuples.
+            """
+            result = {}
+            
+            for path_parts, value in paths:
+                if not path_parts:
+                    # Edge case: no parents, only value
+                    # This shouldn't happen in normal extraction
+                    continue
+                
+                # Navigate/create nested structure
+                current = result
+                for i, key in enumerate(path_parts[:-1]):
+                    if key not in current:
+                        current[key] = {}
+                    current = current[key]
+                
+                # Set leaf value
+                current[path_parts[-1]] = value
+            
+            return result
+        
+        # Collect all paths
+        all_paths = collect_paths(data)
+        
+        # Apply limiting to each path
+        limited_paths = [limit_path_keys(path, val) for path, val in all_paths]
+        
+        # Rebuild dictionary
+        return rebuild_dict(limited_paths)
     
     def _jsx_add_to_history(self, path: str, output_json: str, settings: dict) -> None:
         """Add extraction to history with full settings metadata."""
