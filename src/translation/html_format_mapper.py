@@ -269,16 +269,27 @@ class HTMLFormatMapper:
         # Build style dictionary
         styles = HTMLFormatMapper._build_style_dict(doc)
         
-        # Process all paragraphs
-        paragraphs = doc.getElementsByType(odf_text.P)
-        for i, para in enumerate(paragraphs):
-            para_segments = HTMLFormatMapper._extract_paragraph(para, styles, css_manager)
-            segments.extend(para_segments)
+        # Process all text elements (paragraphs AND headings) in document order
+        # Get all P and H elements from body
+        text_elements = []
+        for elem in doc.text.childNodes:
+            if hasattr(elem, 'qname'):
+                if elem.qname == (odf_text.TEXTNS, 'p'):
+                    text_elements.append(('p', elem))
+                elif elem.qname == (odf_text.TEXTNS, 'h'):
+                    text_elements.append(('h', elem))
+        
+        for i, (elem_type, elem) in enumerate(text_elements):
+            # Extract element (works for both P and H)
+            elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager)
             
-            # Add line break after each paragraph (except the last one)
-            # This preserves document structure: each ODT paragraph becomes a line in HTML
-            if i < len(paragraphs) - 1:
-                # Create BR segment with empty FormatAttributes
+            # Skip adding BR if this element is empty (reduces excess blank lines)
+            has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
+            
+            segments.extend(elem_segments)
+            
+            # Add line break after each element (except the last one, and only if has content)
+            if i < len(text_elements) - 1 and has_content:
                 segments.append(HTMLSegment(
                     tag_type='br',
                     css_class=None,
