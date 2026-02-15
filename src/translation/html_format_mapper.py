@@ -270,9 +270,21 @@ class HTMLFormatMapper:
         styles = HTMLFormatMapper._build_style_dict(doc)
         
         # Process all paragraphs
-        for para in doc.getElementsByType(odf_text.P):
+        paragraphs = doc.getElementsByType(odf_text.P)
+        for i, para in enumerate(paragraphs):
             para_segments = HTMLFormatMapper._extract_paragraph(para, styles, css_manager)
             segments.extend(para_segments)
+            
+            # Add line break after each paragraph (except the last one)
+            # This preserves document structure: each ODT paragraph becomes a line in HTML
+            if i < len(paragraphs) - 1:
+                # Create BR segment with empty FormatAttributes
+                segments.append(HTMLSegment(
+                    tag_type='br',
+                    css_class=None,
+                    text='',
+                    attributes=FormatAttributes()
+                ))
         
         # Generate HTML structure
         html = HTMLFormatMapper._generate_html(segments, css_manager)
@@ -756,6 +768,11 @@ class HTMLToODTParser(HTMLParser):
         """Handle opening tags."""
         self.current_tag = tag
         
+        # Handle self-closing BR tag immediately
+        if tag == 'br':
+            self.segments.append({'type': 'br'})
+            return
+        
         # Extract class attribute
         for attr, value in attrs:
             if attr == 'class':
@@ -764,8 +781,6 @@ class HTMLToODTParser(HTMLParser):
     
     def handle_endtag(self, tag):
         """Handle closing tags."""
-        if tag == 'br':
-            self.segments.append({'type': 'br'})
         self.current_tag = None
         self.current_class = None
     
