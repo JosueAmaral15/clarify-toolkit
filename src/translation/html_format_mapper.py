@@ -145,7 +145,7 @@ class HTMLSegment:
     """Represents a text segment with HTML formatting."""
     text: str
     css_class: str
-    tag_type: str  # 'div' or 'span'
+    tag_type: str  # 'div', 'span', 'br' (paragraph break), or 'line-break' (soft break within paragraph)
     attributes: FormatAttributes
 
 
@@ -287,15 +287,6 @@ class HTMLFormatMapper:
             has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
             
             segments.extend(elem_segments)
-            
-            # Add line break after each element (except the last one, and only if has content)
-            if i < len(text_elements) - 1 and has_content:
-                segments.append(HTMLSegment(
-                    tag_type='br',
-                    css_class=None,
-                    text='',
-                    attributes=FormatAttributes()
-                ))
         
         # Generate HTML structure
         html = HTMLFormatMapper._generate_html(segments, css_manager)
@@ -380,8 +371,8 @@ class HTMLFormatMapper:
                                 tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
                                 segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
                                 para_text = ""
-                            # Add BR segment
-                            segments.append(HTMLSegment('\n', '', 'br', FormatAttributes()))
+                            # Add line-break segment (soft break within paragraph)
+                            segments.append(HTMLSegment('\n', '', 'line-break', FormatAttributes()))
                             current_fmt = span_fmt  # Keep format after BR
                         elif elem_type == 'tab':
                             para_text += '&#9;'
@@ -400,8 +391,8 @@ class HTMLFormatMapper:
                     tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
                     segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
                     para_text = ""
-                # Add BR segment
-                segments.append(HTMLSegment('', '', 'br', FormatAttributes()))
+                # Add line-break segment (soft break within paragraph)
+                segments.append(HTMLSegment('', '', 'line-break', FormatAttributes()))
             elif hasattr(node, 'qname') and node.qname[1] in ['tab', 's']:
                 # Tab or space
                 if node.qname[1] == 'tab':
@@ -602,7 +593,11 @@ class HTMLFormatMapper:
         
         for i, segment in enumerate(segments):
             if segment.tag_type == 'br':
-                body_parts.append('<br>')
+                # Hard break (paragraph separator)
+                body_parts.append('<br class="brk1">')
+            elif segment.tag_type == 'line-break':
+                # Soft break (line break within paragraph)
+                body_parts.append('<br class="brk2">')
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
@@ -620,7 +615,7 @@ class HTMLFormatMapper:
                 body_parts.append(span_html)
                 
                 # Add space after span if next segment is also a span (prevent word merging in Google Translate)
-                if i + 1 < len(segments) and segments[i + 1].tag_type != 'br' and segments[i + 1].css_class:
+                if i + 1 < len(segments) and segments[i + 1].tag_type not in ('br', 'line-break') and segments[i + 1].css_class:
                     body_parts.append(' ')
             else:
                 # No formatting
@@ -780,7 +775,7 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
     
     for segment in parser.segments:
         if segment['type'] == 'br':
-            # End current paragraph (even if empty)
+            # Hard break - end current paragraph and start new one
             if current_paragraph is not None:
                 doc.text.addElement(current_paragraph)
                 current_paragraph = None
@@ -788,6 +783,15 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
                 # Consecutive BR = empty paragraph
                 empty_para = P()
                 doc.text.addElement(empty_para)
+        
+        elif segment['type'] == 'line-break':
+            # Soft break - add line-break element within current paragraph
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Add line-break element
+            from odf.text import LineBreak
+            current_paragraph.addElement(LineBreak())
         
         elif segment['type'] == 'text':
             # Add text to current or new paragraph
@@ -829,7 +833,13 @@ class HTMLToODTParser(HTMLParser):
         
         # Handle self-closing BR tag immediately
         if tag == 'br':
-            self.segments.append({'type': 'br'})
+            # Check class attribute to distinguish paragraph vs line break
+            break_type = 'br'  # Default to paragraph break (brk1)
+            for attr, value in attrs:
+                if attr == 'class' and value == 'brk2':
+                    break_type = 'line-break'
+                    break
+            self.segments.append({'type': break_type})
             return
         
         # Extract class attribute
