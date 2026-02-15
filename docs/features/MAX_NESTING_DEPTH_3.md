@@ -1,4 +1,4 @@
-# Limit Parent Keys Feature
+# Max Nesting Depth Feature
 
 **Programmer #3**  
 **Date:** 2026-02-15  
@@ -9,7 +9,9 @@
 
 ## Overview
 
-The **"Limit parent keys"** feature allows users to reduce JSON nesting depth by limiting the number of parent keys in extraction output paths. This is useful for simplifying deeply nested structures from complex JSX/HTML documents.
+The **"Max nesting depth"** feature allows users to reduce JSON nesting depth by limiting the number of parent keys in extraction output paths. This is useful for simplifying deeply nested structures from complex JSX/HTML documents.
+
+**Note:** This is different from the "Limit" field which truncates **key names** (character limit). This feature controls **nesting depth** (number of levels).
 
 ---
 
@@ -22,7 +24,7 @@ The **"Limit parent keys"** feature allows users to reduce JSON nesting depth by
 
 ## UI Components
 
-### 1. Checkbox: "Limit parent keys"
+### 1. Checkbox: "Max nesting depth"
 - **Default:** Unchecked (disabled)
 - **Behavior:** Enables/disables the entire feature
 - **Tooltip:** "Reduce JSON nesting depth by limiting number of parent keys in paths"

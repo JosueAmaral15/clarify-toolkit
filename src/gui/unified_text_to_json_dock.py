@@ -751,19 +751,19 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         layout.addLayout(options_row1)
         
-        # Limit parent keys row
-        limit_parent_keys_row = QHBoxLayout()
+        # Max nesting depth row
+        max_nesting_depth_row = QHBoxLayout()
         
         self.jsx_limit_parent_keys_checkbox = QCheckBox(
-            tr("advanced_extractor.limit_parent_keys", "Limit parent keys")
+            tr("advanced_extractor.max_nesting_depth", "Max nesting depth")
         )
         self.jsx_limit_parent_keys_checkbox.setToolTip(
-            tooltip_tr("advanced_extractor.limit_parent_keys_tooltip",
+            tooltip_tr("advanced_extractor.max_nesting_depth_tooltip",
                       "Reduce JSON nesting depth by limiting number of parent keys in paths")
         )
-        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_checkbox)
+        max_nesting_depth_row.addWidget(self.jsx_limit_parent_keys_checkbox)
         
-        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.max_keys", "Max keys:")))
+        max_nesting_depth_row.addWidget(QLabel(tr("advanced_extractor.max_keys", "Max keys:")))
         self.jsx_limit_parent_keys_spin = QSpinBox()
         self.jsx_limit_parent_keys_spin.setRange(0, 999)
         self.jsx_limit_parent_keys_spin.setValue(0)
@@ -773,9 +773,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tooltip_tr("advanced_extractor.max_keys_tooltip",
                       "Maximum number of keys to keep (including leaf). 0 = keep only leaf")
         )
-        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_spin)
+        max_nesting_depth_row.addWidget(self.jsx_limit_parent_keys_spin)
         
-        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.keep_mode", "Mode:")))
+        max_nesting_depth_row.addWidget(QLabel(tr("advanced_extractor.keep_mode", "Mode:")))
         self.jsx_limit_parent_keys_mode_combo = QComboBox()
         self.jsx_limit_parent_keys_mode_combo.addItems([
             tr("advanced_extractor.keep_from_start", "Keep from start"),
@@ -790,13 +790,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "End: keep last N parents\n"
                       "Both: keep from both ends (CEIL(N/2) from start, FLOOR(N/2) from end)")
         )
-        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_mode_combo)
+        max_nesting_depth_row.addWidget(self.jsx_limit_parent_keys_mode_combo)
         
         # Connect checkbox to enable/disable controls
         self.jsx_limit_parent_keys_checkbox.toggled.connect(self._jsx_on_limit_parent_keys_toggled)
         
-        limit_parent_keys_row.addStretch()
-        layout.addLayout(limit_parent_keys_row)
+        max_nesting_depth_row.addStretch()
+        layout.addLayout(max_nesting_depth_row)
         
         # Options grid (2 rows x 4 columns)
         options_grid = QGridLayout()
