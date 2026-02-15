@@ -1396,7 +1396,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 is_attribute_mode=is_attribute_mode,
                 start_regex=start_regex,
                 end_regex=end_regex,
-                file_extensions=file_extensions
+                file_extensions=file_extensions,
+                use_class_names=use_class_names
             )
             
             # Create progress dialog
