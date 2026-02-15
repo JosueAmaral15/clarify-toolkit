@@ -510,25 +510,30 @@ if _PYSIDE:
             DockFactory.create_text_to_json_dock(self, signal_connections=signal_connections)
 
         def _load_json_from_converter(self, json_str: str):
-            """Load JSON from text converter into main editor."""
-            if not hasattr(self, 'dock_editor'):
-                self._open_editor()
+            """Load JSON from text converter into main editor (stays in Text to JSON dock)."""
+            # Open Editor as a dedicated tab (not as dock)
+            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
+                from .gui import EditorDock
+                self.dock_editor = EditorDock(self)
+                self._add_tool_tab(self.dock_editor, "Editor", "editor")
             self.dock_editor.load_json_string(json_str)
-            self.dock_editor.show()
+            # Don't switch - stay in Text to JSON tab
         
         def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
-            """Load content from text converter into main editor and switch to File Explorer."""
-            # Load content in editor
-            if not hasattr(self, 'dock_editor'):
-                self._open_editor()
+            """Load content from text converter into main editor and switch to Editor tab."""
+            # Open Editor as a dedicated tab (not as dock)
+            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
+                from .gui import EditorDock
+                self.dock_editor = EditorDock(self)
+                self._add_tool_tab(self.dock_editor, "Editor", "editor")
             self.dock_editor.load_json_string(content)
-            self.dock_editor.show()
             
-            # Switch to File Explorer dock if requested
-            if switch_to_file and hasattr(self, 'dock_file_explorer'):
-                self.dock_file_explorer.show()
-                self.dock_file_explorer.raise_()
-                self.dock_file_explorer.activateWindow()
+            # SWITCH to Editor tab
+            if hasattr(self, 'tool_tabs') and "editor" in self.tool_tabs:
+                _widget, editor_tab_index = self.tool_tabs["editor"]
+                self.tabs.setCurrentIndex(editor_tab_index)
+            
+            # Note: Not switching to File Explorer - user confirmed "go to Editor"
 
         def _open_file_explorer(self):
             """Open File Explorer dock (unified File List + Advanced Search - v2.9.115)."""
@@ -637,9 +642,10 @@ if _PYSIDE:
             if not hasattr(self, 'dock_unified_text_to_json'):
                 from .gui.unified_text_to_json_dock import UnifiedTextToJsonDock
                 self.dock_unified_text_to_json = UnifiedTextToJsonDock(self)
-                # Connect signals if needed
-                # self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
-            self._add_tool_tab(self.dock_unified_text_to_json, "Text to JSON Converter", "unified_text_to_json")
+                # Connect signals for editor integration
+                self.dock_unified_text_to_json.open_in_editor_requested.connect(self._load_json_from_converter)
+                self.dock_unified_text_to_json.open_in_editor_and_switch_requested.connect(self._load_json_from_converter_and_switch)
+            self._add_tool_tab(self.dock_unified_text_to_json, "Format Converter", "unified_text_to_json")
 
         def _show_jsx_extractor(self):
             """Show JSX Parameter Extractor as tab (create on-demand)."""

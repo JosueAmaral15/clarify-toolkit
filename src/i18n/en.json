@@ -1162,7 +1162,7 @@
   "menu.tools.search_replace": "Search / Replace",
   "menu.tools.set_operations": "JSON Set Operations...",
   "menu.tools.text_extractor": "Open Text Extractor",
-  "menu.tools.text_to_json": "Text to JSON Converter",
+  "menu.tools.text_to_json": "Format Converter",
   "menu.tooltip_ai_assistant": "Ask AI about Clarify tutorials",
   "menu.tooltip_check_updates": "Check for new Clarify versions from GitHub",
   "menu.tooltip_config_editor": "Edit config.yaml with visual editor",

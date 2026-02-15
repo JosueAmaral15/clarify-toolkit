@@ -113,13 +113,33 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
 
 def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
     """
-    Normalize a string to snake/camel/pascal/kebab; drop non-alnum (after spaces);
+    Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
     optionally uppercase whole token.
+    Splits camelCase/PascalCase into words before applying conversion.
     """
     s = s.strip()
-    # Convert any non-alphanumeric into space
-    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", s)
+    
+    # Special handling for 'preserve' mode - keep original case
+    if case_style == "preserve" or case_style == "none":
+        # Only remove non-alphanumeric characters, keep original case
+        cleaned = re.sub(r"[^0-9A-Za-z]+", "_", s)
+        # Remove leading/trailing underscores
+        token = cleaned.strip("_")
+        if to_upper:
+            token = token.upper()
+        return token
+    
+    # Step 1: Split camelCase/PascalCase into separate words
+    # Insert space before uppercase letters that follow lowercase or are followed by lowercase
+    with_spaces = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)  # lowerUpper → lower Upper
+    with_spaces = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', with_spaces)  # XMLParser → XML Parser
+    
+    # Step 2: Convert any remaining non-alphanumeric into space
+    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", with_spaces)
+    
+    # Step 3: Split into words
     words = [w for w in cleaned.strip().split() if w]
+    
     if not words:
         token = ""
     else:

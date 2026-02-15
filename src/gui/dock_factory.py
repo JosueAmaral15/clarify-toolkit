@@ -109,12 +109,14 @@ class DockFactory:
         Returns:
             The dock widget (existing or newly created)
         """
-        if not hasattr(main_window, dock_attr_name):
+        # Check if attribute exists AND is not None (handle initialization to None)
+        existing_dock = getattr(main_window, dock_attr_name, None)
+        if existing_dock is None:
             return DockFactory.create_dock(
                 main_window, dock_class, dock_attr_name,
                 area=area, **dock_kwargs
             )
-        return getattr(main_window, dock_attr_name)
+        return existing_dock
 
     # Convenience methods for common dock types
 

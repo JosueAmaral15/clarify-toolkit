@@ -32,19 +32,287 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QRadioButton, QButtonGroup, QCheckBox,
     QPushButton, QPlainTextEdit, QMessageBox, QDialog, QListWidget, QListWidgetItem,
     QScrollArea, QFrame, QLineEdit, QSpinBox, QTabWidget, QFileDialog, QMenu, QApplication,
-    QProgressDialog
+    QProgressDialog, QTextEdit
 )
-from PySide6.QtGui import QFont, QAction
+from PySide6.QtGui import QFont, QAction, QShortcut, QKeySequence, QTextCursor, QTextCharFormat, QColor
 
 from .base_dock import BaseDock, FileInputMixin
 from .extraction_worker import ExtractionWorker
 from src.text_to_json import convert_text_to_json, detect_format
 from src.extractors.advanced_extractor import AdvancedExtractor
 from src.i18n.translator import tooltip_tr, tr
+from src.converters.json_output_converter import convert_json_to_format
 
 # Type checking imports
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget as QWidgetType
+
+
+class TextSearchDialog(QDialog):
+    """Search dialog for text input with regex, case-sensitive, and whole-word options."""
+    
+    def __init__(self, parent=None, text_widget=None):
+        super().__init__(parent)
+        self.text_widget = text_widget
+        self.matches = []  # List of (start, end) tuples
+        self.current_match_index = -1
+        
+        self.setWindowTitle("Search in Text")
+        self.setModal(False)  # Non-modal so user can edit text while searching
+        self.resize(450, 200)
+        
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        """Setup search dialog UI."""
+        layout = QVBoxLayout(self)
+        
+        # Search input
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Find:"))
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Enter search text...")
+        self.search_input.textChanged.connect(self._on_search_text_changed)
+        self.search_input.returnPressed.connect(self._find_next)
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+        
+        # Options checkboxes
+        options_layout = QHBoxLayout()
+        self.regex_checkbox = QCheckBox("Regex")
+        self.regex_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.regex_checkbox)
+        
+        self.case_checkbox = QCheckBox("Case sensitive")
+        self.case_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.case_checkbox)
+        
+        self.whole_word_checkbox = QCheckBox("Whole word")
+        self.whole_word_checkbox.toggled.connect(self._on_options_changed)
+        options_layout.addWidget(self.whole_word_checkbox)
+        
+        options_layout.addStretch()
+        layout.addLayout(options_layout)
+        
+        # Match counter
+        self.counter_label = QLabel("No matches")
+        self.counter_label.setStyleSheet("color: gray; font-style: italic;")
+        layout.addWidget(self.counter_label)
+        
+        # Navigation buttons
+        buttons_layout = QHBoxLayout()
+        
+        self.prev_button = QPushButton("◀ Previous")
+        self.prev_button.clicked.connect(self._find_previous)
+        self.prev_button.setEnabled(False)
+        buttons_layout.addWidget(self.prev_button)
+        
+        self.next_button = QPushButton("Next ▶")
+        self.next_button.clicked.connect(self._find_next)
+        self.next_button.setEnabled(False)
+        buttons_layout.addWidget(self.next_button)
+        
+        buttons_layout.addStretch()
+        
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.close)
+        buttons_layout.addWidget(close_button)
+        
+        layout.addLayout(buttons_layout)
+    
+    def showEvent(self, event):
+        """When dialog shows, focus search input and select current word if any."""
+        super().showEvent(event)
+        self.search_input.setFocus()
+        
+        # Pre-fill with selected text if any
+        if self.text_widget and self.text_widget.textCursor().hasSelection():
+            selected_text = self.text_widget.textCursor().selectedText()
+            if selected_text:
+                self.search_input.setText(selected_text)
+                self.search_input.selectAll()
+    
+    def _on_search_text_changed(self):
+        """Handle search text change."""
+        self._find_all_matches()
+    
+    def _on_options_changed(self):
+        """Handle search option change."""
+        self._find_all_matches()
+    
+    def _find_all_matches(self):
+        """Find all matches based on current search text and options."""
+        if not self.text_widget:
+            return
+        
+        search_text = self.search_input.text()
+        if not search_text:
+            self._clear_highlights()
+            self.matches = []
+            self.current_match_index = -1
+            self._update_ui()
+            return
+        
+        text = self.text_widget.toPlainText()
+        self.matches = []
+        
+        use_regex = self.regex_checkbox.isChecked()
+        case_sensitive = self.case_checkbox.isChecked()
+        whole_word = self.whole_word_checkbox.isChecked()
+        
+        if use_regex:
+            # Regex search
+            try:
+                flags = 0 if case_sensitive else re.IGNORECASE
+                pattern = re.compile(search_text, flags)
+                for match in pattern.finditer(text):
+                    # Check whole word if needed
+                    if whole_word:
+                        if not self._is_whole_word_match(text, match.start(), match.end()):
+                            continue
+                    self.matches.append((match.start(), match.end()))
+            except re.error:
+                # Invalid regex
+                self.counter_label.setText("Invalid regex pattern")
+                self.counter_label.setStyleSheet("color: red;")
+                self._clear_highlights()
+                return
+        else:
+            # Plain text search
+            if not case_sensitive:
+                text_lower = text.lower()
+                search_lower = search_text.lower()
+            else:
+                text_lower = text
+                search_lower = search_text
+            
+            start = 0
+            while True:
+                pos = text_lower.find(search_lower, start)
+                if pos == -1:
+                    break
+                
+                end = pos + len(search_text)
+                
+                # Check whole word if needed
+                if whole_word:
+                    if not self._is_whole_word_match(text, pos, end):
+                        start = pos + 1
+                        continue
+                
+                self.matches.append((pos, end))
+                start = pos + 1
+        
+        # Reset to first match
+        if self.matches:
+            self.current_match_index = 0
+        else:
+            self.current_match_index = -1
+        
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _is_whole_word_match(self, text, start, end):
+        """Check if match is a whole word."""
+        before_ok = start == 0 or not text[start - 1].isalnum()
+        after_ok = end >= len(text) or not text[end].isalnum()
+        return before_ok and after_ok
+    
+    def _highlight_all_matches(self):
+        """Highlight all matches in text widget."""
+        if not self.text_widget or not self.matches:
+            self._clear_highlights()
+            return
+        
+        extra_selections = []
+        
+        for i, (start, end) in enumerate(self.matches):
+            selection = QTextEdit.ExtraSelection()
+            
+            cursor = self.text_widget.textCursor()
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            
+            # Different color for current match
+            if i == self.current_match_index:
+                # Orange for current match
+                format = QTextCharFormat()
+                format.setBackground(QColor(255, 165, 0, 150))
+            else:
+                # Yellow for other matches
+                format = QTextCharFormat()
+                format.setBackground(QColor(255, 255, 0, 100))
+            
+            selection.cursor = cursor
+            selection.format = format
+            extra_selections.append(selection)
+        
+        self.text_widget.setExtraSelections(extra_selections)
+        
+        # Scroll to current match
+        if self.current_match_index >= 0:
+            start, end = self.matches[self.current_match_index]
+            cursor = self.text_widget.textCursor()
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            self.text_widget.setTextCursor(cursor)
+            self.text_widget.ensureCursorVisible()
+    
+    def _clear_highlights(self):
+        """Clear all highlights from text widget."""
+        if self.text_widget:
+            self.text_widget.setExtraSelections([])
+    
+    def _find_next(self):
+        """Navigate to next match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index + 1) % len(self.matches)
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _find_previous(self):
+        """Navigate to previous match."""
+        if not self.matches:
+            return
+        
+        self.current_match_index = (self.current_match_index - 1) % len(self.matches)
+        self._highlight_all_matches()
+        self._update_ui()
+    
+    def _update_ui(self):
+        """Update UI based on current state."""
+        has_matches = len(self.matches) > 0
+        
+        self.prev_button.setEnabled(has_matches)
+        self.next_button.setEnabled(has_matches)
+        
+        if has_matches:
+            self.counter_label.setText(f"Match {self.current_match_index + 1} of {len(self.matches)}")
+            self.counter_label.setStyleSheet("color: green; font-weight: bold;")
+        else:
+            search_text = self.search_input.text()
+            if search_text:
+                self.counter_label.setText("No matches found")
+                self.counter_label.setStyleSheet("color: red;")
+            else:
+                self.counter_label.setText("Enter text to search")
+                self.counter_label.setStyleSheet("color: gray; font-style: italic;")
+    
+    def closeEvent(self, event):
+        """Clear highlights when dialog closes."""
+        self._clear_highlights()
+        super().closeEvent(event)
+
+
+class JSXTextSearchDialog(TextSearchDialog):
+    """Modal search dialog specifically for JSX text input field."""
+    
+    def __init__(self, parent=None, text_widget=None):
+        super().__init__(parent, text_widget)
+        self.setModal(True)  # Make it modal
+        self.setWindowTitle(tr("text_search.title_jsx", "Search in JSX Text Input"))
 
 
 class TemplatesDialog(QDialog):
@@ -52,6 +320,20 @@ class TemplatesDialog(QDialog):
     
     TEMPLATES = {
         # Format Conversion Templates
+        "JSON": """{
+  "user": {
+    "name": "John Doe",
+    "age": 30,
+    "city": "New York",
+    "active": true
+  },
+  "items": [
+    "Apple",
+    "Banana",
+    "Orange"
+  ]
+}""",
+        
         "Key-Value": """name: John Doe
 age: 30
 city: New York
@@ -212,8 +494,19 @@ items[2]{id,name}:
         self._on_format_changed(self.format_combo.currentText())
     
     def _on_format_changed(self, format_name: str):
-        """Update example text when format changes."""
+        """Update example text and output tab name when format changes."""
         self.example_text.setPlainText(self.TEMPLATES.get(format_name, ""))
+        
+        # Update parent dock's output tab name to match selected format
+        if self.parent() and hasattr(self.parent(), 'jsx_output_tabs'):
+            # Tab index 1 is the JSON/format output tab (index 0 is Paths)
+            self.parent().jsx_output_tabs.setTabText(1, format_name)
+            
+            # Store selected format in parent dock and persist to settings
+            if hasattr(self.parent(), 'selected_output_format'):
+                self.parent().selected_output_format = format_name
+                if hasattr(self.parent(), 'settings'):
+                    self.parent().settings.setValue("selected_output_format", format_name)
     
     def get_selected_template(self) -> str:
         """Get the currently selected template text."""
@@ -254,10 +547,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         if not isinstance(self.jsx_recent_paths, list):
             self.jsx_recent_paths = []
         
+        # Initialize output format selection (for format conversion)
+        self.selected_output_format = self.settings.value("selected_output_format", "JSON", type=str)
+        
         # Flag to prevent signal processing during cleanup
         self._extraction_cleaning_up = False
         
-        super().__init__(tr("text_to_json.title", "Text to JSON Converter"), parent)
+        super().__init__(tr("text_to_json.title", "Format Converter"), parent)
         self.setObjectName("UnifiedTextToJsonDock")
     
     def _setup_ui(self) -> None:
@@ -295,6 +591,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         # Set main widget
         self.setWidget(main_widget)
+        
+        # Setup CTRL+F shortcut for text search
+        self.search_shortcut = QShortcut(QKeySequence.StandardKey.Find, self)
+        self.search_shortcut.activated.connect(self._on_search_shortcut)
         
         # Connect signals
         self._connect_signals()
@@ -342,6 +642,14 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_recent_btn.clicked.connect(self._jsx_show_recent_menu)
         path_layout.addWidget(self.jsx_recent_btn)
         
+        # Search button (only visible in Text mode)
+        self.jsx_search_btn = QPushButton(tr("text_search.btn_search", "Search"))
+        self.jsx_search_btn.setMaximumWidth(100)
+        self.jsx_search_btn.clicked.connect(self._jsx_open_search_dialog)
+        self.jsx_search_btn.setVisible(False)  # Hidden by default
+        self.jsx_search_btn.setToolTip(tr("text_search.tooltip_search", "Search in text input (Ctrl+F)"))
+        path_layout.addWidget(self.jsx_search_btn)
+        
         self.jsx_browse_btn = QPushButton(tr("base.btn_browse", "Browse"))
         self.jsx_browse_btn.setMaximumWidth(200)  # Increased for "Load from File..." text
         self.jsx_browse_btn.clicked.connect(self._jsx_browse_path)
@@ -355,6 +663,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         self.jsx_text_input.setFixedHeight(150)
         self.jsx_text_input.setVisible(False)  # Hidden by default
         layout.addWidget(self.jsx_text_input)
+        
+        # Setup Ctrl+F shortcut for text input (only works when text input has focus)
+        search_shortcut = QShortcut(QKeySequence("Ctrl+F"), self.jsx_text_input)
+        search_shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+        search_shortcut.activated.connect(self._jsx_open_search_dialog)
         
         # Mode and parameter section
         mode_layout = QHBoxLayout()
@@ -438,6 +751,53 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         layout.addLayout(options_row1)
         
+        # Limit parent keys row
+        limit_parent_keys_row = QHBoxLayout()
+        
+        self.jsx_limit_parent_keys_checkbox = QCheckBox(
+            tr("advanced_extractor.limit_parent_keys", "Limit parent keys")
+        )
+        self.jsx_limit_parent_keys_checkbox.setToolTip(
+            tooltip_tr("advanced_extractor.limit_parent_keys_tooltip",
+                      "Reduce JSON nesting depth by limiting number of parent keys in paths")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_checkbox)
+        
+        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.max_keys", "Max keys:")))
+        self.jsx_limit_parent_keys_spin = QSpinBox()
+        self.jsx_limit_parent_keys_spin.setRange(0, 999)
+        self.jsx_limit_parent_keys_spin.setValue(0)
+        self.jsx_limit_parent_keys_spin.setMaximumWidth(80)
+        self.jsx_limit_parent_keys_spin.setEnabled(False)  # Disabled by default
+        self.jsx_limit_parent_keys_spin.setToolTip(
+            tooltip_tr("advanced_extractor.max_keys_tooltip",
+                      "Maximum number of keys to keep (including leaf). 0 = keep only leaf")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_spin)
+        
+        limit_parent_keys_row.addWidget(QLabel(tr("advanced_extractor.keep_mode", "Mode:")))
+        self.jsx_limit_parent_keys_mode_combo = QComboBox()
+        self.jsx_limit_parent_keys_mode_combo.addItems([
+            tr("advanced_extractor.keep_from_start", "Keep from start"),
+            tr("advanced_extractor.keep_from_end", "Keep from end"),
+            tr("advanced_extractor.keep_both_ends", "Keep both ends")
+        ])
+        self.jsx_limit_parent_keys_mode_combo.setCurrentIndex(2)  # Default: Keep both ends
+        self.jsx_limit_parent_keys_mode_combo.setEnabled(False)  # Disabled by default
+        self.jsx_limit_parent_keys_mode_combo.setToolTip(
+            tooltip_tr("advanced_extractor.keep_mode_tooltip",
+                      "Start: keep first N parents\n"
+                      "End: keep last N parents\n"
+                      "Both: keep from both ends (CEIL(N/2) from start, FLOOR(N/2) from end)")
+        )
+        limit_parent_keys_row.addWidget(self.jsx_limit_parent_keys_mode_combo)
+        
+        # Connect checkbox to enable/disable controls
+        self.jsx_limit_parent_keys_checkbox.toggled.connect(self._jsx_on_limit_parent_keys_toggled)
+        
+        limit_parent_keys_row.addStretch()
+        layout.addLayout(limit_parent_keys_row)
+        
         # Options grid (2 rows x 4 columns)
         options_grid = QGridLayout()
         options_grid.setSpacing(10)
@@ -514,7 +874,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         case_layout.addWidget(QLabel(tr("advanced_extractor.case", "Case:")))
         self.jsx_case_combo = QComboBox()
-        self.jsx_case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab")])
+        self.jsx_case_combo.addItems([tr("combo.case_snake"), tr("combo.case_camel"), tr("combo.case_pascal"), tr("combo.case_kebab"), tr("combo.case_preserve", "preserve")])
         case_layout.addWidget(self.jsx_case_combo)
         
         self.jsx_uppercase_checkbox = QCheckBox(
@@ -720,16 +1080,18 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         selected_type = input_types[index]
         
         if selected_type == "text":
-            # Text mode: Hide path field, show text area
+            # Text mode: Hide path field, show text area and search button
             self.jsx_path_edit.setVisible(False)
             self.jsx_browse_btn.setText(tr("advanced_extractor.load_file", "Load from File..."))
             self.jsx_text_input.setVisible(True)
+            self.jsx_search_btn.setVisible(True)
             self.jsx_extensions_edit.setEnabled(False)
         else:
-            # Directory/File mode: Show path field, hide text area
+            # Directory/File mode: Show path field, hide text area and search button
             self.jsx_path_edit.setVisible(True)
             self.jsx_browse_btn.setText(tr("base.btn_browse", "Browse"))
             self.jsx_text_input.setVisible(False)
+            self.jsx_search_btn.setVisible(False)
             self.jsx_extensions_edit.setEnabled(True)
     
     def _jsx_update_avoid_mode(self):
@@ -742,6 +1104,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     def _jsx_on_avoid_cut_toggled(self, checked: bool) -> None:
         """Enable/disable the avoid cut direction dropdown based on checkbox state."""
         self.jsx_avoid_cut_direction_combo.setEnabled(checked)
+    
+    def _jsx_on_limit_parent_keys_toggled(self, checked: bool) -> None:
+        """Enable/disable limit parent keys controls based on checkbox state."""
+        self.jsx_limit_parent_keys_spin.setEnabled(checked)
+        self.jsx_limit_parent_keys_mode_combo.setEnabled(checked)
     
     def _jsx_update_status(self, message: str) -> None:
         """
@@ -769,15 +1136,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 "All Files (*);;HTML Files (*.html *.htm);;JSX/TSX Files (*.jsx *.tsx);;JavaScript Files (*.js *.ts)"
             )
             if file_path:
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        self.jsx_text_input.setPlainText(content)
-                except Exception as e:
-                    self.show_error(
-                        tr("advanced_extractor.error", "Error"),
-                        tr("advanced_extractor.load_error", f"Failed to load file: {str(e)}")
-                    )
+                self._jsx_load_file_to_text(file_path)
         elif input_type_index == 1:  # File mode
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
@@ -794,7 +1153,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 self.jsx_path_edit.setText(dir_path)
     
     def _jsx_show_recent_menu(self):
-        """Show recent paths menu (same pattern as File Explorer)."""
+        """Show recent paths menu - mode-aware behavior."""
         if not self.jsx_recent_paths:
             QMessageBox.information(
                 self,
@@ -803,10 +1162,35 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             )
             return
         
+        # Get current input mode
+        input_mode_index = self.jsx_input_type_combo.currentIndex()
+        is_text_mode = (input_mode_index == 2)
+        
+        # Filter recent paths based on mode
+        if is_text_mode:
+            # Text mode: Show only files (not directories)
+            filtered_paths = [p for p in self.jsx_recent_paths if os.path.isfile(p)]
+            if not filtered_paths:
+                QMessageBox.information(
+                    self,
+                    tr("file_list.recent_no_files_title", "No Recent Files"),
+                    tr("file_list.recent_no_files_message", "No recent files found. Only files can be loaded in Text mode.")
+                )
+                return
+            paths_to_show = filtered_paths
+        else:
+            # Directory/File mode: Show all
+            paths_to_show = self.jsx_recent_paths
+        
         menu = QMenu(self)
-        for path in self.jsx_recent_paths:
+        for path in paths_to_show:
             action = QAction(path, self)
-            action.triggered.connect(lambda checked, p=path: self.jsx_path_edit.setText(p))
+            if is_text_mode:
+                # Text mode: Load file content
+                action.triggered.connect(lambda checked, p=path: self._jsx_load_file_to_text(p))
+            else:
+                # Directory/File mode: Set path
+                action.triggered.connect(lambda checked, p=path: self.jsx_path_edit.setText(p))
             menu.addAction(action)
         
         menu.addSeparator()
@@ -815,6 +1199,43 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         menu.addAction(clear_action)
         
         menu.exec(self.jsx_recent_btn.mapToGlobal(self.jsx_recent_btn.rect().bottomLeft()))
+    
+    def _jsx_load_file_to_text(self, file_path: str):
+        """Load file content into text input (Text mode only)."""
+        if not os.path.isfile(file_path):
+            QMessageBox.warning(
+                self,
+                tr("text_to_json.not_file_title", "Not a File"),
+                tr("text_to_json.not_file_message", f"Path is not a file:\n{file_path}")
+            )
+            return
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                self.jsx_text_input.setPlainText(content)
+                
+                # Update hidden path field (for tracking)
+                self.jsx_path_edit.setText(file_path)
+                
+                # Add to recent list
+                self._jsx_add_to_recent(file_path)
+                
+                self._jsx_update_status(tr("text_to_json.file_loaded", f"File loaded: {os.path.basename(file_path)}"))
+                
+        except UnicodeDecodeError:
+            # Binary file error
+            QMessageBox.warning(
+                self,
+                tr("text_to_json.binary_file_title", "Cannot Load Binary File"),
+                tr("text_to_json.binary_file_message", f"Cannot load binary file as text:\n{file_path}\n\nPlease select a text file.")
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                tr("text_to_json.load_error_title", "Load Error"),
+                tr("text_to_json.load_error_message", f"Failed to load file:\n{file_path}\n\nError: {str(e)}")
+            )
     
     def _jsx_clear_recent(self):
         """Clear recent paths list."""
@@ -894,6 +1315,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             match_all = self.jsx_match_all_checkbox.isChecked()
             
             case_style = self.jsx_case_combo.currentText()
+            # Map display text to internal value
+            case_style_map = {
+                "snake_case": "snake",
+                "camelCase": "camel",
+                "PascalCase": "pascal",
+                "kebab-case": "kebab",
+                "preserve": "preserve"
+            }
+            case_style = case_style_map.get(case_style, "snake")  # Default to snake if not found
             to_upper = self.jsx_uppercase_checkbox.isChecked()
             limit = self.jsx_limit_edit.text().strip() or "all"
             avoid_cut = self.jsx_avoid_cut_checkbox.isChecked()
@@ -1051,17 +1481,62 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             pass  # Qt object was deleted
     
     def _on_extraction_finished(self, text_output: str, json_output: str):
-        """Handle extraction completion."""
+        """Handle extraction completion with format conversion."""
         try:
+            # Get selected output format
+            output_format = getattr(self, 'selected_output_format', 'JSON')
+            
+            # Apply parent key limiting if enabled
+            if json_output and self.jsx_limit_parent_keys_checkbox.isChecked():
+                try:
+                    json_data = json.loads(json_output)
+                    limit = self.jsx_limit_parent_keys_spin.value()
+                    mode_text = self.jsx_limit_parent_keys_mode_combo.currentText()
+                    
+                    # Map display text to internal mode
+                    mode_map = {
+                        "Keep from start": "start",
+                        "Keep from end": "end",
+                        "Keep both ends": "both"
+                    }
+                    mode = mode_map.get(mode_text, "both")
+                    
+                    # Apply limiting
+                    json_data = self._apply_parent_key_limiting(json_data, limit, mode)
+                    json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    
+                except Exception as limit_err:
+                    self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
+            
+            # Convert JSON output to selected format
+            converted_output = json_output
+            if json_output and output_format != "JSON":
+                try:
+                    # Parse JSON string to dict/list
+                    json_data = json.loads(json_output)
+                    
+                    # Convert to target format
+                    converted_output = convert_json_to_format(json_data, output_format)
+                    
+                except Exception as conv_err:
+                    # Conversion failed, fallback to JSON and show error
+                    converted_output = json_output
+                    error_msg = f"Failed to convert to {output_format} format: {str(conv_err)}\n\nFalling back to JSON output."
+                    self._jsx_update_status(f"⚠ Conversion error: {output_format}")
+                    self.show_warning(
+                        tr("text_to_json.conversion_error", "Conversion Error"),
+                        error_msg
+                    )
+            
             # Display results
             self.jsx_paths_output.setPlainText(text_output or "")
-            self.jsx_json_output.setPlainText(json_output or "")
+            self.jsx_json_output.setPlainText(converted_output or "")
             
-            # Add to history
+            # Add to history (store original JSON for compatibility)
             if hasattr(self, '_extraction_settings'):
                 self._jsx_add_to_history(
                     self._extraction_input_source,
-                    json_output,
+                    json_output,  # Store original JSON, not converted
                     self._extraction_settings
                 )
             
@@ -1321,6 +1796,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 tr("text_to_json.templates", "Template"),
                 tr("text_to_json.template_selected", f"Template selected:\n\n{template[:200]}...")
             )
+    
+    def _jsx_open_search_dialog(self):
+        """Open modal search dialog for JSX text input (Ctrl+F)."""
+        dialog = JSXTextSearchDialog(self, self.jsx_text_input)
+        dialog.exec()
     
     def _jsx_clear_all(self):
         """Clear all JSX mode fields."""
@@ -1594,6 +2074,115 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             
             dialog.accept()
     
+    def _apply_parent_key_limiting(self, data: Any, limit: int, mode: str) -> Any:
+        """
+        Recursively apply parent key limiting to JSON data.
+        
+        Args:
+            data: JSON data (dict, list, or primitive)
+            limit: Maximum number of keys to keep (including leaf)
+            mode: "start", "end", or "both"
+        
+        Returns:
+            Modified JSON data with limited parent keys
+        """
+        if not isinstance(data, dict) or limit <= 0:
+            return data
+        
+        def limit_path_keys(path_parts: List[str], value: Any) -> tuple:
+            """
+            Limit path keys and return (limited_path, value).
+            
+            Args:
+                path_parts: List of keys representing the path
+                value: The leaf value
+            
+            Returns:
+                Tuple of (limited_path_parts, value)
+            """
+            if len(path_parts) <= limit:
+                return (path_parts, value)  # No limiting needed
+            
+            parents = path_parts  # All keys are parents (value is separate)
+            parents_to_keep = limit
+            
+            if parents_to_keep <= 0:
+                return ([], value)  # Keep only leaf
+            
+            if mode == "start":
+                return (parents[:parents_to_keep], value)
+            elif mode == "end":
+                return (parents[-parents_to_keep:], value)
+            elif mode == "both":
+                from_start = (parents_to_keep + 1) // 2  # CEIL
+                from_end = parents_to_keep // 2          # FLOOR
+                
+                if from_end == 0:
+                    return (parents[:from_start], value)
+                else:
+                    return (parents[:from_start] + parents[-from_end:], value)
+            
+            return (path_parts, value)  # Default: no change
+        
+        def collect_paths(obj: Any, current_path: List[str] = None) -> List[tuple]:
+            """
+            Collect all leaf paths and values from nested dict.
+            
+            Returns:
+                List of (path_list, value) tuples
+            """
+            if current_path is None:
+                current_path = []
+            
+            paths = []
+            
+            if isinstance(obj, dict):
+                for key, val in obj.items():
+                    new_path = current_path + [key]
+                    if isinstance(val, dict):
+                        paths.extend(collect_paths(val, new_path))
+                    else:
+                        # Leaf value found
+                        paths.append((new_path, val))
+            else:
+                # Non-dict value at this level
+                paths.append((current_path, obj))
+            
+            return paths
+        
+        def rebuild_dict(paths: List[tuple]) -> Dict[str, Any]:
+            """
+            Rebuild nested dict from list of (path, value) tuples.
+            """
+            result = {}
+            
+            for path_parts, value in paths:
+                if not path_parts:
+                    # Edge case: no parents, only value
+                    # This shouldn't happen in normal extraction
+                    continue
+                
+                # Navigate/create nested structure
+                current = result
+                for i, key in enumerate(path_parts[:-1]):
+                    if key not in current:
+                        current[key] = {}
+                    current = current[key]
+                
+                # Set leaf value
+                current[path_parts[-1]] = value
+            
+            return result
+        
+        # Collect all paths
+        all_paths = collect_paths(data)
+        
+        # Apply limiting to each path
+        limited_paths = [limit_path_keys(path, val) for path, val in all_paths]
+        
+        # Rebuild dictionary
+        return rebuild_dict(limited_paths)
+    
     def _jsx_add_to_history(self, path: str, output_json: str, settings: dict) -> None:
         """Add extraction to history with full settings metadata."""
         entry = {
@@ -1717,3 +2306,23 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         else:
             # Primitive → Text content
             return f"{indent}{data}"
+    
+    # ========================================================================
+    # TEXT SEARCH FEATURE (CTRL+F)
+    # ========================================================================
+    
+    def _on_search_shortcut(self):
+        """Handle CTRL+F / Cmd+F shortcut."""
+        # Only open search if Text mode is active
+        selected_type = self.jsx_input_type_combo.currentData()
+        if selected_type == "text":
+            self._open_text_search()
+    
+    def _open_text_search(self):
+        """Open search dialog for text mode."""
+        if not hasattr(self, '_text_search_dialog') or self._text_search_dialog is None:
+            self._text_search_dialog = TextSearchDialog(self, self.jsx_text_input)
+        
+        self._text_search_dialog.show()
+        self._text_search_dialog.raise_()
+        self._text_search_dialog.activateWindow()

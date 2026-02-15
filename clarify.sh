@@ -60,52 +60,98 @@ if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)" 2>/d
     echo ""
 fi
 
-# Check if PySide6 is installed
-echo "Checking dependencies..."
-if ! python3 -c "import PySide6" 2>/dev/null; then
-    echo ""
-    echo "WARNING: PySide6 is not installed!"
-    echo "The GUI requires PySide6 to run."
-    echo ""
-    read -p "Would you like to install it now? (y/n): " INSTALL
+# Check if Poetry is installed and configured
+POETRY_CMD=""
+USE_POETRY=false
+
+echo "Checking environment..."
+
+if command -v poetry &> /dev/null; then
+    echo "✓ Poetry detected"
     
-    if [[ "$INSTALL" == "y" || "$INSTALL" == "Y" ]]; then
-        echo ""
-        echo "Installing PySide6..."
+    # Check if poetry.lock exists (poetry project)
+    if [ -f "poetry.lock" ]; then
+        echo "✓ Poetry project detected"
         
-        # Try pip3 first
-        if command -v pip3 &> /dev/null; then
-            python3 -m pip install PySide6
+        # Check if poetry environment is set up
+        if poetry env info &> /dev/null; then
+            echo "✓ Poetry virtualenv configured"
+            USE_POETRY=true
+            POETRY_CMD="poetry run"
+            
+            # Install dependencies if needed
+            if ! $POETRY_CMD python3 -c "import PySide6" 2>/dev/null; then
+                echo ""
+                echo "Installing dependencies with Poetry..."
+                poetry install --no-dev
+                echo ""
+            fi
         else
-            echo "ERROR: pip3 not found"
-            echo "Install manually: sudo apt install python3-pip"
+            echo "⚠ Poetry virtualenv not configured"
+            echo "Run: poetry install"
+        fi
+    fi
+fi
+
+if [ "$USE_POETRY" = false ]; then
+    echo "Using system Python"
+    
+    # Check if PySide6 is installed
+    echo "Checking dependencies..."
+    if ! python3 -c "import PySide6" 2>/dev/null; then
+        echo ""
+        echo "WARNING: PySide6 is not installed!"
+        echo "The GUI requires PySide6 to run."
+        echo ""
+        
+        # Suggest poetry if available
+        if command -v poetry &> /dev/null && [ -f "pyproject.toml" ]; then
+            echo "RECOMMENDED: Install with Poetry"
+            echo "  poetry install"
+            echo ""
+        fi
+        
+        read -p "Would you like to install it with pip now? (y/n): " INSTALL
+        
+        if [[ "$INSTALL" == "y" || "$INSTALL" == "Y" ]]; then
+            echo ""
+            echo "Installing PySide6..."
+            
+            # Try pip3 first
+            if command -v pip3 &> /dev/null; then
+                python3 -m pip install PySide6
+            else
+                echo "ERROR: pip3 not found"
+                echo "Install manually: sudo apt install python3-pip"
+                read -p "Press Enter to exit..."
+                exit 1
+            fi
+            
+            # Verify installation
+            if [ $? -ne 0 ]; then
+                echo ""
+                echo "ERROR: Failed to install PySide6"
+                echo ""
+                echo "Try one of these alternatives:"
+                echo "  • poetry install (recommended)"
+                echo "  • pip3 install --user PySide6"
+                echo "  • sudo apt install python3-pyside6.qtwidgets (Ubuntu/Debian)"
+                echo ""
+                read -p "Press Enter to exit..."
+                exit 1
+            fi
+            
+            echo ""
+            echo "PySide6 installed successfully!"
+            echo ""
+        else
+            echo ""
+            echo "Cannot launch GUI without PySide6"
+            echo "Install with: poetry install (recommended) or pip3 install PySide6"
+            echo ""
             read -p "Press Enter to exit..."
             exit 1
         fi
-        
-        # Verify installation
-        if [ $? -ne 0 ]; then
-            echo ""
-            echo "ERROR: Failed to install PySide6"
-            echo ""
-            echo "Try one of these alternatives:"
-            echo "  • pip3 install --user PySide6"
-            echo "  • sudo apt install python3-pyside6.qtwidgets (Ubuntu/Debian)"
-            echo ""
-            read -p "Press Enter to exit..."
-            exit 1
-        fi
-        
-        echo ""
-        echo "PySide6 installed successfully!"
-        echo ""
-    else
-        echo ""
-        echo "Cannot launch GUI without PySide6"
-        echo "Install manually with: pip3 install PySide6"
-        echo ""
-        read -p "Press Enter to exit..."
-        exit 1
     fi
 fi
 
@@ -113,8 +159,14 @@ fi
 echo "Launching Clarify..."
 echo ""
 
-# Run the application
-python3 -m src
+# Run the application with appropriate command
+if [ "$USE_POETRY" = true ]; then
+    echo "Running with Poetry virtualenv..."
+    $POETRY_CMD python3 -m src
+else
+    echo "Running with system Python..."
+    python3 -m src
+fi
 
 # Check exit code
 EXIT_CODE=$?
