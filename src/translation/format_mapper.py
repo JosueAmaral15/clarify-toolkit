@@ -1085,7 +1085,8 @@ class FormatMapper:
                             list_type = 'N'
                         
                         para_metadata_parts.append(f"{list_type},{level}")
-            except:
+            except (AttributeError, ValueError, TypeError) as e:
+                logger.debug(f"Paragraph is not a list item: {e}")
                 pass  # Not a list item
             
             # Detect heading level (Session 33)
@@ -1195,14 +1196,16 @@ class FormatMapper:
                             try:
                                 run_obj = Run(run_elem, paragraph)
                                 all_runs.append((run_obj, url))
-                            except:
+                            except (AttributeError, ValueError, TypeError) as e:
+                                logger.debug(f"Skipping invalid run in hyperlink: {e}")
                                 pass  # Skip invalid runs
                 elif 'r' in element.tag:
                     # Regular run (not in hyperlink)
                     try:
                         run_obj = Run(element, paragraph)
                         all_runs.append((run_obj, None))
-                    except:
+                    except (AttributeError, ValueError, TypeError) as e:
+                        logger.debug(f"Skipping invalid run: {e}")
                         pass  # Skip invalid runs
             
             # Process each run (both regular and hyperlink runs)
@@ -1972,7 +1975,8 @@ class FormatMapper:
         if table.table_style:
             try:
                 docx_table.style = table.table_style
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Table style '{table.table_style}' not found in document: {e}")
                 pass  # Style might not exist in document
         
         # Track which cells are covered by merges (to avoid duplicate processing)
@@ -2238,7 +2242,8 @@ class FormatMapper:
                     'FF0000': WD_COLOR_INDEX.RED,
                 }
                 run.font.highlight_color = rgb_to_highlight.get(hex_bg.upper(), WD_COLOR_INDEX.YELLOW)
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Failed to apply highlight color: {e}")
                 pass  # Skip if mapping fails
         
         # Apply superscript (Session 19)

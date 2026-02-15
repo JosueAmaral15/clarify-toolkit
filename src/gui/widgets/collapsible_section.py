@@ -145,7 +145,8 @@ class CollapsibleSection(QWidget):
 
             try:
                 self._animation.finished.disconnect()
-            except:
+            except (RuntimeError, TypeError) as e:
+                # Signal was not connected or already disconnected
                 pass
             self._animation.finished.connect(on_finished)
 

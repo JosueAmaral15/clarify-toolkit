@@ -367,7 +367,8 @@ class HTMLFormatMapper:
                     # Multiple spaces
                     try:
                         count = int(node.getAttribute('c'))
-                    except:
+                    except (ValueError, AttributeError, TypeError) as e:
+                        logger.warning(f"Error parsing space count attribute: {e}")
                         count = 1
                     para_text += '&nbsp;' * count
         
@@ -510,7 +511,8 @@ class HTMLFormatMapper:
             elif hasattr(node, 'qname') and node.qname[1] == 's':
                 try:
                     count = int(node.getAttribute('c'))
-                except:
+                except (ValueError, AttributeError, TypeError) as e:
+                    logger.warning(f"Error parsing space count attribute: {e}")
                     count = 1
                 text += '&nbsp;' * count
         
