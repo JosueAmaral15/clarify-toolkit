@@ -550,7 +550,7 @@ class HTMLFormatMapper:
         # Build HTML body
         body_parts = []
         
-        for segment in segments:
+        for i, segment in enumerate(segments):
             if segment.tag_type == 'br':
                 body_parts.append('<br>')
             elif segment.css_class:
@@ -566,7 +566,12 @@ class HTMLFormatMapper:
                     .replace('&amp;#10;', '&#10;')
                     .replace('&amp;nbsp;', '&nbsp;'))
                 
-                body_parts.append(f'<{segment.tag_type} class="{segment.css_class}">{escaped_text}</{segment.tag_type}>')
+                span_html = f'<{segment.tag_type} class="{segment.css_class}">{escaped_text}</{segment.tag_type}>'
+                body_parts.append(span_html)
+                
+                # Add space after span if next segment is also a span (prevent word merging in Google Translate)
+                if i + 1 < len(segments) and segments[i + 1].tag_type != 'br' and segments[i + 1].css_class:
+                    body_parts.append(' ')
             else:
                 # No formatting
                 body_parts.append(segment.text)
@@ -790,12 +795,20 @@ class HTMLToODTParser(HTMLParser):
     
     def handle_data(self, data):
         """Handle text content."""
-        # Skip whitespace in head/style
+        # Skip whitespace in head/style/title
         if self.current_tag in ['style', 'head', 'title']:
             return
         
-        # Skip whitespace-only data (HTML formatting between tags)
+        # Keep whitespace-only data if it contains actual spaces (for separation between spans)
+        # But skip if it's ONLY newlines (HTML formatting)
         if not data.strip():
+            # If contains space or tab, preserve it (between spans)
+            if ' ' in data or '\t' in data:
+                self.segments.append({
+                    'type': 'text',
+                    'text': ' ',  # Normalize to single space
+                    'class': None
+                })
             return
         
         # Decode HTML entities back to characters
