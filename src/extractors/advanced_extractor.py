@@ -311,29 +311,6 @@ class AdvancedExtractor:
         
         return modified_stack
 
-    def _extract_class_name_from_parser(self, parser, stack: List[str], tag: str) -> Optional[str]:
-        """
-        Extract class attribute from parser's class_map.
-        Returns joined class names with dash if multiple, or None if no class found.
-        """
-        if not self.use_class_names:
-            return None
-        
-        # Check if parser has class_map (only JSXParser)
-        if not hasattr(parser, 'class_map'):
-            return None
-        
-        # Look up class using stack + tag as key
-        stack_key = (tuple(stack), tag)
-        class_value = parser.class_map.get(stack_key)
-        
-        if class_value:
-            # Multiple classes: join with dash (e.g., "btn primary" -> "btn-primary")
-            class_names = class_value.split()
-            return "-".join(class_names) if class_names else None
-        
-        return None
-
     def _filter_standard(self, path: List[str]) -> List[str]:
         """Filter out standard HTML tags if no_standard=True."""
         if not self.no_standard:
@@ -410,22 +387,6 @@ class AdvancedExtractor:
         for t in path_tokens:
             node = node.setdefault(t, {})
         node[key] = raw_value
-        return root
-
-    def _record_text_bucket(self, path_tokens: List[str], value: str) -> Dict[str, Any]:
-        """
-        Insert value into a '_text' list under the given path:
-        DashboardPage: { Section: { _text: [ "line1", "line2", ... ] } }
-        """
-        root: Dict[str, Any] = {}
-        node = root
-        for t in path_tokens:
-            node = node.setdefault(t, {})
-        bucket = node.setdefault("_text", [])
-        if isinstance(bucket, list):
-            bucket.append(value)
-        else:
-            node["_text"] = [bucket, value]
         return root
 
     def deep_merge(self, a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
