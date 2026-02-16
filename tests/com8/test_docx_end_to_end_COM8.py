@@ -94,7 +94,7 @@ def test_cait_document_structure_preservation():
         
         # Test 1: Extract HTML
         print("\n1️⃣  Extracting HTML...")
-        html_string, css_manager = extract_html_from_docx(input_path)
+        html_string, css_manager, image_manager = extract_html_from_docx(input_path)
         print(f"   ✓ HTML extracted: {len(html_string)} chars")
         print(f"   ✓ CSS classes: {len(css_manager.class_to_format)}")
         
@@ -111,7 +111,7 @@ def test_cait_document_structure_preservation():
         
         # Test 3: Create DOCX
         print("\n3️⃣  Creating DOCX from HTML...")
-        create_docx_from_html(translated_html, output_path, css_manager)
+        create_docx_from_html(translated_html, output_path, css_manager, image_manager)
         print(f"   ✓ DOCX created")
         
         # Test 4: Verify output

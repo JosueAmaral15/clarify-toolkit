@@ -139,9 +139,10 @@ class HTMLSegment:
     """Represents a document element as HTML segment."""
     text: str
     css_class: str
-    tag_type: str  # 'div', 'span', 'br', 'line-break', or 'tab'
+    tag_type: str  # 'div', 'span', 'br', 'line-break', 'tab', or 'image'
     attributes: Optional[FormatAttributes]
     element_type: str = 'span'  # Extended type info
+    image_id: Optional[str] = None  # For image segments: 'IMG001', 'IMG002', etc.
 
 
 # ============================================================================
@@ -345,6 +346,7 @@ class DocxHtmlMapper:
         self.docx_path = docx_path
         self.doc = Document(docx_path)
         self.css_manager = CSSClassManager()
+        self.image_manager = ImageManager()
         self.segments: List[HTMLSegment] = []
     
     def extract_html_from_docx(self) -> str:
@@ -363,12 +365,76 @@ class DocxHtmlMapper:
         return html_string
     
     def _extract_segments(self):
-        """Extract all document content as flat segment list."""
+        """Extract all document content as flat segment list including images."""
         total_paras = len(self.doc.paragraphs)
+        
+        # Namespace constants
+        NS_W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+        NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
+        NS_WP = '{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}'
+        NS_R = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
         
         for para_idx, para in enumerate(self.doc.paragraphs):
             # Process all runs in paragraph
             for run in para.runs:
+                # Check for images FIRST (before text processing)
+                drawings = run._element.findall(f'.//{NS_W}drawing')
+                
+                if drawings:
+                    # Process each image in the run
+                    for drawing in drawings:
+                        try:
+                            # Get blip (image reference)
+                            blips = drawing.findall(f'.//{NS_A}blip')
+                            if not blips:
+                                continue
+                            
+                            blip = blips[0]
+                            embed_id = blip.get(f'{NS_R}embed')
+                            
+                            if not embed_id or embed_id not in self.doc.part.related_parts:
+                                print(f"[DocxHtmlMapper] WARNING: Image relationship {embed_id} not found")
+                                continue
+                            
+                            # Get image part
+                            image_part = self.doc.part.related_parts[embed_id]
+                            blob = image_part.blob
+                            content_type = image_part.content_type
+                            
+                            # Get dimensions
+                            extents = drawing.findall(f'.//{NS_WP}extent')
+                            if extents:
+                                ext = extents[0]
+                                width_emus = int(ext.get('cx') or 914400)
+                                height_emus = int(ext.get('cy') or 914400)
+                            else:
+                                # Default to 1" x 1"
+                                width_emus = 914400
+                                height_emus = 914400
+                            
+                            # Store in ImageManager
+                            image_id = self.image_manager.add_image(
+                                blob=blob,
+                                content_type=content_type,
+                                width_emus=width_emus,
+                                height_emus=height_emus,
+                                original_rId=embed_id
+                            )
+                            
+                            # Add image segment
+                            self.segments.append(HTMLSegment(
+                                text='',
+                                css_class='',
+                                tag_type='image',
+                                attributes=None,
+                                element_type='image',
+                                image_id=image_id
+                            ))
+                            
+                        except Exception as e:
+                            print(f"[DocxHtmlMapper] ERROR processing image: {e}")
+                            print(f"  Skipping image, continuing with text")
+                
                 # Extract format once for this run
                 run_format = self._extract_format_from_run(run)
                 css_class = self.css_manager.get_or_create_class(run_format)
@@ -513,6 +579,11 @@ class DocxHtmlMapper:
             
             elif seg.tag_type == 'tab':
                 html_parts.append('<span data-tab="1"></span>')
+            
+            elif seg.tag_type == 'image':
+                # Generate image placeholder
+                placeholder = self.image_manager.generate_placeholder(seg.image_id)
+                html_parts.append(placeholder)
         
         # HTML footer
         html_parts.append('</body>')
@@ -528,9 +599,10 @@ class DocxHtmlMapper:
 class HTMLToDocxParser(HTMLParser):
     """Parse HTML and create DOCX document."""
     
-    def __init__(self, css_class_manager: CSSClassManager):
+    def __init__(self, css_class_manager: CSSClassManager, image_manager: ImageManager):
         super().__init__()
         self.css_manager = css_class_manager
+        self.image_manager = image_manager
         self.doc = Document()
         self.current_para = None
         self.current_format = None
@@ -561,6 +633,11 @@ class HTMLToDocxParser(HTMLParser):
                 if self.current_para is None:
                     self.current_para = self.doc.add_paragraph()
                 self.current_para.add_run('\t')
+            
+            # Check for image marker
+            elif 'data-image' in attr_dict:
+                image_id = attr_dict['data-image']
+                self._reconstruct_image(image_id)
             
             else:
                 # Set format for upcoming text
@@ -626,6 +703,33 @@ class HTMLToDocxParser(HTMLParser):
             b = int(hex_color[4:6], 16)
             run.font.color.rgb = RGBColor(r, g, b)
     
+    def _reconstruct_image(self, image_id: str):
+        """Reconstruct image in DOCX from stored data."""
+        # Get image data from ImageManager
+        image_data = self.image_manager.get_image(image_id)
+        
+        if not image_data:
+            print(f"[HTMLToDocxParser] WARNING: Image {image_id} not found, skipping")
+            return
+        
+        # Ensure we have a paragraph
+        if self.current_para is None:
+            self.current_para = self.doc.add_paragraph()
+        
+        # Add image to paragraph
+        try:
+            image_stream = BytesIO(image_data.blob)
+            run = self.current_para.add_run()
+            run.add_picture(
+                image_stream,
+                width=Inches(image_data.get_width_inches())
+            )
+            print(f"[HTMLToDocxParser] Reconstructed {image_id} "
+                  f"({image_data.get_format()}, {image_data.get_width_inches():.2f}\")")
+        
+        except Exception as e:
+            print(f"[HTMLToDocxParser] ERROR reconstructing {image_id}: {e}")
+    
     def get_document(self) -> Document:
         """Return the created DOCX document."""
         return self.doc
@@ -644,12 +748,12 @@ def extract_html_from_docx(docx_path: str, output_html_path: Optional[str] = Non
         output_html_path: Optional path to save HTML (for debugging)
     
     Returns:
-        Tuple of (html_string, css_class_manager)
+        Tuple of (html_string, css_class_manager, image_manager)
     
     Example:
-        html, css_mgr = extract_html_from_docx('document.docx')
+        html, css_mgr, img_mgr = extract_html_from_docx('document.docx')
         translated_html = google_translate(html)
-        create_docx_from_html(translated_html, 'output.docx', css_mgr)
+        create_docx_from_html(translated_html, 'output.docx', css_mgr, img_mgr)
     """
     mapper = DocxHtmlMapper(docx_path)
     html_string = mapper.extract_html_from_docx()
@@ -658,13 +762,14 @@ def extract_html_from_docx(docx_path: str, output_html_path: Optional[str] = Non
         with open(output_html_path, 'w', encoding='utf-8') as f:
             f.write(html_string)
     
-    return html_string, mapper.css_manager
+    return html_string, mapper.css_manager, mapper.image_manager
 
 
 def create_docx_from_html(
     html_string: str,
     output_docx_path: str,
-    css_class_manager: CSSClassManager
+    css_class_manager: CSSClassManager,
+    image_manager: ImageManager
 ) -> None:
     """
     Create DOCX file from translated HTML.
@@ -673,13 +778,14 @@ def create_docx_from_html(
         html_string: Translated HTML with CSS classes and markers
         output_docx_path: Path to save output DOCX file
         css_class_manager: Manager used during extraction (for format lookup)
+        image_manager: Manager with stored images
     
     Example:
-        html, css_mgr = extract_html_from_docx('input.docx')
+        html, css_mgr, img_mgr = extract_html_from_docx('input.docx')
         translated = google_translate(html)
-        create_docx_from_html(translated, 'output.docx', css_mgr)
+        create_docx_from_html(translated, 'output.docx', css_mgr, img_mgr)
     """
-    parser = HTMLToDocxParser(css_class_manager)
+    parser = HTMLToDocxParser(css_class_manager, image_manager)
     parser.feed(html_string)
     doc = parser.get_document()
     doc.save(output_docx_path)
