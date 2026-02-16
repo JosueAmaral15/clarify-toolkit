@@ -474,14 +474,15 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Session COM8: NEW HTML-based format system for DOCX
+                    # Session COM8: NEW HTML-based format system for DOCX (with image support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager = extract_html_from_docx(file_path)
+                    # Extract as HTML (with CSS formatting and images)
+                    html_content, css_manager, image_manager = extract_html_from_docx(file_path)
                     
-                    # Store CSS manager for later DOCX creation
+                    # Store managers for later DOCX creation
                     self._css_manager = css_manager
+                    self._image_manager = image_manager
                     self._source_file_path = file_path
                     
                     # Parse HTML to extract plain text for UI preview (with tabs and line-breaks)
@@ -507,6 +508,10 @@ class GoogleTranslateDock(BaseDock):
                                 attr_dict = dict(attrs)
                                 if 'data-tab' in attr_dict:
                                     self.text_parts.append('\t')  # Add tab character
+                                # Check for image marker (show placeholder in preview)
+                                elif 'data-image' in attr_dict:
+                                    image_id = attr_dict['data-image']
+                                    self.text_parts.append(f'[{image_id}]')  # Show [IMG001] in preview
                         
                         def handle_endtag(self, tag):
                             if tag in ('head', 'style'):
@@ -648,17 +653,18 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Session COM8: NEW HTML-based format system for DOCX
+                    # Session COM8: NEW HTML-based format system for DOCX (with image support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager = extract_html_from_docx(file_path)
+                    # Extract as HTML (with CSS formatting and images)
+                    html_content, css_manager, image_manager = extract_html_from_docx(file_path)
                     
-                    # Store CSS manager for later DOCX creation
+                    # Store managers for later DOCX creation
                     self._css_manager = css_manager
+                    self._image_manager = image_manager
                     self._source_file_path = file_path
                     
-                    # Send HTML to translation (Google preserves HTML structure)
+                    # Send HTML to translation (Google preserves HTML structure and image markers)
                     text_to_translate = html_content
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
@@ -1096,16 +1102,34 @@ class GoogleTranslateDock(BaseDock):
         """
         Save translation as DOCX with formatting restored.
         
-        Session COM8: Uses NEW HTML-based format system if available.
+        Session COM8: Uses NEW HTML-based format system with image support.
         Falls back to old segment system for backward compatibility.
         
         Args:
             output_path: Path to save DOCX file
         """
         if self._translated_html and self._css_manager:
-            # NEW HTML system - use HTML to DOCX conversion
+            # NEW HTML system - use HTML to DOCX conversion with images
             from translation.docx_html_mapper import create_docx_from_html
-            create_docx_from_html(self._translated_html, output_path, self._css_manager)
+            
+            # Check if we have image_manager (new system) or not (old DOCX without images)
+            if hasattr(self, '_image_manager') and self._image_manager:
+                create_docx_from_html(
+                    self._translated_html,
+                    output_path,
+                    self._css_manager,
+                    self._image_manager
+                )
+            else:
+                # Old DOCX files without images - create empty ImageManager
+                from translation.docx_html_mapper import ImageManager
+                empty_image_manager = ImageManager()
+                create_docx_from_html(
+                    self._translated_html,
+                    output_path,
+                    self._css_manager,
+                    empty_image_manager
+                )
             
         elif self._translated_segments:
             # OLD system - use segment-based approach (backward compatibility)
