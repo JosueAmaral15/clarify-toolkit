@@ -1397,7 +1397,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 start_regex=start_regex,
                 end_regex=end_regex,
                 file_extensions=file_extensions,
-                use_class_names=use_class_names
+                use_class_names=use_class_names,
+                typescript_export=typescript_export,
+                exclude_numeric=exclude_numeric,
+                skip_empty=skip_empty
             )
             
             # Create progress dialog

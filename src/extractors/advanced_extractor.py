@@ -232,6 +232,9 @@ class AdvancedExtractor:
         root_alias: Optional[str] = None,
         file_extensions: Optional[List[str]] = None,
         use_class_names: bool = False,
+        typescript_export: bool = False,
+        exclude_numeric: bool = False,
+        skip_empty: bool = False,
     ):
         """
         Initialize AdvancedExtractor.
@@ -259,6 +262,9 @@ class AdvancedExtractor:
             root_alias: Root key for file hierarchy
             file_extensions: File patterns to process
             use_class_names: Use class names as keys instead of HTML tags
+            typescript_export: Export as TypeScript interface instead of JSON
+            exclude_numeric: Filter out numeric keys from output
+            skip_empty: Skip entries with empty/null values
         """
         self.param = param
         self.match_all = (param is None) or (not param.strip()) or (param.strip() == "*")
@@ -283,6 +289,11 @@ class AdvancedExtractor:
         self.file_extensions = file_extensions
         self.is_attribute_mode = is_attribute_mode
         self.use_class_names = use_class_names
+        
+        # Features from Text Extractor consolidation
+        self.typescript_export = typescript_export
+        self.exclude_numeric = exclude_numeric
+        self.skip_empty = skip_empty
 
     def _apply_limit_to_key(self, key: str) -> str:
         """
@@ -433,11 +444,19 @@ class AdvancedExtractor:
         derived from raw_value. The key is normalized using current case settings;
         the value is the original raw_value.
         """
+        # Skip empty values if enabled
+        if self.skip_empty and (not raw_value or not raw_value.strip()):
+            return {}
+        
         # First normalize the entire raw value to get the key
         key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
         
         # Apply limit to the normalized key using the helper method
         key = self._apply_limit_to_key(key)
+        
+        # Exclude numeric keys if enabled
+        if self.exclude_numeric and key.isdigit():
+            return {}
 
         # Build small tree: (... path_tokens ...) -> { key: raw_value }
         root: Dict[str, Any] = {}
@@ -799,6 +818,69 @@ class AdvancedExtractor:
         # Remove quotes from simple keys
         text = re.sub(r'\"([A-Za-z_][A-Za-z0-9_]*)\":', r'\1:', text)
         return text
+
+    def json_to_typescript(self, json_data: Dict[str, Any], interface_name: str = "Root") -> str:
+        """
+        Convert JSON structure to TypeScript interface definition.
+        
+        Args:
+            json_data: JSON dictionary to convert
+            interface_name: Name for the root interface
+            
+        Returns:
+            TypeScript interface definition as string
+        """
+        def infer_type(value: Any) -> str:
+            """Infer TypeScript type from Python value."""
+            if value is None:
+                return "null"
+            elif isinstance(value, bool):
+                return "boolean"
+            elif isinstance(value, int):
+                return "number"
+            elif isinstance(value, float):
+                return "number"
+            elif isinstance(value, str):
+                return "string"
+            elif isinstance(value, list):
+                if len(value) == 0:
+                    return "any[]"
+                # Infer from first element
+                elem_type = infer_type(value[0])
+                return f"{elem_type}[]"
+            elif isinstance(value, dict):
+                return "object"
+            else:
+                return "any"
+        
+        def generate_interface(data: Dict[str, Any], name: str, indent: int = 0) -> str:
+            """Recursively generate TypeScript interface."""
+            indent_str = "  " * indent
+            lines = [f"{indent_str}interface {name} {{"]
+            
+            nested_interfaces = []
+            
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    # Nested object - create separate interface
+                    nested_name = f"{name}_{key.capitalize()}"
+                    nested_interfaces.append(generate_interface(value, nested_name, indent))
+                    lines.append(f"{indent_str}  {key}: {nested_name};")
+                else:
+                    ts_type = infer_type(value)
+                    lines.append(f"{indent_str}  {key}: {ts_type};")
+            
+            lines.append(f"{indent_str}}}")
+            
+            # Add nested interfaces before parent
+            result = "\n\n".join(nested_interfaces)
+            if result:
+                result += "\n\n"
+            result += "\n".join(lines)
+            
+            return result
+        
+        return generate_interface(json_data, interface_name)
 
     def run(self, path: str) -> Tuple[str, Optional[str]]:
         """
