@@ -2,9 +2,9 @@
 """Test actual extraction with camelCase case style."""
 
 import sys
-sys.path.insert(0, 'src')
+# Path handled by pytest/PYTHONPATH
 
-from extractors.advanced_extractor import AdvancedExtractor
+from src.extractors.advanced_extractor import AdvancedExtractor
 
 # JSX test input with camelCase variables
 jsx_input = """

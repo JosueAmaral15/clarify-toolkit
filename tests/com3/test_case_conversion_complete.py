@@ -2,9 +2,9 @@
 """Complete test for all case conversion styles with camelCase splitting."""
 
 import sys
-sys.path.insert(0, 'src')
+# Path handled by pytest/PYTHONPATH
 
-from utils.normalization import normalize_token
+from src.utils.normalization import normalize_token
 
 # Test cases covering various input formats
 test_cases = [
