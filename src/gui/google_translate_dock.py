@@ -248,6 +248,12 @@ class GoogleTranslateDock(BaseDock):
         self.combo_to_lang = QComboBox()
         for code, name in GoogleTranslateAPI.LANGUAGES.items():
             self.combo_to_lang.addItem(f"{name} ({code.upper()})", code)
+        
+        # Language swap button
+        self.btn_swap_languages = QPushButton("⇄")  # Unicode swap arrows
+        self.btn_swap_languages.setMaximumWidth(40)
+        self.btn_swap_languages.setToolTip(tr("google_translate.tooltip_swap_languages") if "tooltip_swap_languages" in dir(tr) else "Swap source and target languages")
+        self.btn_swap_languages.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         # Input type selection
         self.chk_file_mode = QCheckBox(tr("google_translate.chk_file_mode"))
@@ -307,10 +313,12 @@ class GoogleTranslateDock(BaseDock):
 
     def _create_layout(self):
         """Arrange widgets in layout."""
-        # Language selection
+        # Language selection with swap button
         lang_layout = QHBoxLayout()
         lang_layout.addWidget(self.lbl_from_lang)
         lang_layout.addWidget(self.combo_from_lang, 1)
+        lang_layout.addSpacing(10)
+        lang_layout.addWidget(self.btn_swap_languages)  # Swap button between languages
         lang_layout.addSpacing(10)
         lang_layout.addWidget(self.lbl_to_lang)
         lang_layout.addWidget(self.combo_to_lang, 1)
@@ -384,6 +392,7 @@ class GoogleTranslateDock(BaseDock):
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
         self.btn_browse_file.clicked.connect(self._browse_file)
+        self.btn_swap_languages.clicked.connect(self._swap_languages)  # New swap button
 
         self.chk_file_mode.toggled.connect(self._toggle_file_mode)
         self.combo_from_lang.currentTextChanged.connect(self._save_preferences)
@@ -973,6 +982,45 @@ class GoogleTranslateDock(BaseDock):
             
             # Start automatic translation
             self._start_translation(text_to_translate, new_from_lang, new_to_lang)
+
+    def _swap_languages(self):
+        """Swap source and target language selections only (doesn't swap content)."""
+        # Get current language codes
+        from_code = self.combo_from_lang.currentData()
+        to_code = self.combo_to_lang.currentData()
+        
+        # Handle auto-detect case
+        if from_code == "auto":
+            # If From is "auto", use detected language if available
+            if self._last_detected_lang:
+                # Swap: From becomes To language, To becomes detected language
+                from_index = self.combo_from_lang.findData(to_code)
+                to_index = self.combo_to_lang.findData(self._last_detected_lang)
+                
+                if from_index >= 0:
+                    self.combo_from_lang.setCurrentIndex(from_index)
+                if to_index >= 0:
+                    self.combo_to_lang.setCurrentIndex(to_index)
+            else:
+                # No detected language yet, just swap To to From (From stays auto)
+                from_index = self.combo_from_lang.findData(to_code)
+                if from_index >= 0:
+                    self.combo_from_lang.setCurrentIndex(from_index)
+        else:
+            # Normal swap: exchange From and To languages
+            from_index = self.combo_from_lang.findData(to_code)
+            to_index = self.combo_to_lang.findData(from_code)
+            
+            if from_index >= 0:
+                self.combo_from_lang.setCurrentIndex(from_index)
+            if to_index >= 0:
+                self.combo_to_lang.setCurrentIndex(to_index)
+        
+        # Update status to indicate languages were swapped
+        self.lbl_status.setText("Languages swapped")
+        self.lbl_status.setStyleSheet("color: #3B82F6; font-style: italic;")
+        QTimer.singleShot(2000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
+
 
     def _copy_result(self):
         """Copy translation result to clipboard."""
