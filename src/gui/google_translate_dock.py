@@ -475,7 +475,7 @@ class GoogleTranslateDock(BaseDock):
                     self._css_manager = css_manager
                     self._source_file_path = file_path
                     
-                    # Parse HTML to extract plain text for UI preview (reuse ODT extractor)
+                    # Parse HTML to extract plain text for UI preview (with tabs and line-breaks)
                     from html.parser import HTMLParser
                     import html as html_module
                     
@@ -489,7 +489,15 @@ class GoogleTranslateDock(BaseDock):
                             if tag in ('head', 'style', 'meta'):
                                 self.in_head = True
                             elif tag == 'br':
+                                attr_dict = dict(attrs)
+                                classes = attr_dict.get('class', '').split()
+                                # Both brk1 (paragraph) and brk2 (line-break) show as newline in preview
                                 self.text_parts.append('\n')
+                            elif tag == 'span':
+                                # Check for tab marker
+                                attr_dict = dict(attrs)
+                                if 'data-tab' in attr_dict:
+                                    self.text_parts.append('\t')  # Add tab character
                         
                         def handle_endtag(self, tag):
                             if tag in ('head', 'style'):
@@ -506,8 +514,8 @@ class GoogleTranslateDock(BaseDock):
                     extractor.feed(html_content)
                     plain_text = extractor.get_text()
                     
-                    # Display in UI
-                    self.text_input.setPlainText(html_content)  # Store HTML for translation
+                    # Display preview in UI (with tabs visible)
+                    self.text_input.setPlainText(plain_text)
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
@@ -764,10 +772,15 @@ class GoogleTranslateDock(BaseDock):
                         self.current_tag = None
                         self.current_class = None
                         self.prev_class = None
+                        self.in_head = False
                         # Header classes (bold/large text that should have newlines around them)
                         self.header_classes = ['fmt1', 'fmt3', 'fmt4', 'fmt5', 'fmt7']
                     
                     def handle_starttag(self, tag, attrs):
+                        if tag in ('head', 'style', 'meta', 'script', 'title'):
+                            self.in_head = True
+                            return
+                        
                         if tag == 'br':
                             # Line break
                             self.text_parts.append('\n')
@@ -775,11 +788,14 @@ class GoogleTranslateDock(BaseDock):
                             return
                         
                         if tag == 'span':
-                            new_class = None
-                            for attr, value in attrs:
-                                if attr == 'class':
-                                    new_class = value
-                                    break
+                            # Check for tab marker first
+                            attr_dict = dict(attrs)
+                            if 'data-tab' in attr_dict:
+                                self.text_parts.append('\t')  # Add tab character
+                                return
+                            
+                            # Regular span with format class
+                            new_class = attr_dict.get('class')
                             
                             # Add newline on format class transition (header ↔ body)
                             if self.prev_class and new_class and self.prev_class != new_class:
@@ -795,6 +811,8 @@ class GoogleTranslateDock(BaseDock):
                         self.current_tag = tag
                     
                     def handle_endtag(self, tag):
+                        if tag in ('head', 'style', 'script'):
+                            self.in_head = False
                         if tag == 'span' and self.current_class:
                             self.prev_class = self.current_class
                         if tag == self.current_tag:
@@ -802,7 +820,7 @@ class GoogleTranslateDock(BaseDock):
                     
                     def handle_data(self, data):
                         # Skip data inside style/script/head tags
-                        if self.current_tag in ['style', 'script', 'head', 'title']:
+                        if self.in_head:
                             return
                         
                         # Inside content tags - decode entities and keep ALL content (including whitespace)
@@ -821,7 +839,7 @@ class GoogleTranslateDock(BaseDock):
                 extractor.feed(result)
                 plain_text = extractor.get_text()
                 
-                # Store translated HTML for ODT creation
+                # Store translated HTML for ODT/DOCX creation
                 self._translated_html = result
                 self._translated_segments = []  # Not used in HTML system
             else:
