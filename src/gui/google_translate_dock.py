@@ -465,15 +465,49 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    # Session COM8: NEW HTML-based format system for DOCX
+                    from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting)
+                    html_content, css_manager = extract_html_from_docx(file_path)
                     
-                    # Extract ONLY plain text for UI display (no tags visible to user)
-                    plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
+                    # Store CSS manager for later DOCX creation
+                    self._css_manager = css_manager
+                    self._source_file_path = file_path
                     
+                    # Parse HTML to extract plain text for UI preview (reuse ODT extractor)
+                    from html.parser import HTMLParser
+                    import html as html_module
+                    
+                    class TextExtractor(HTMLParser):
+                        def __init__(self):
+                            super().__init__()
+                            self.text_parts = []
+                            self.in_head = False
+                        
+                        def handle_starttag(self, tag, attrs):
+                            if tag in ('head', 'style', 'meta'):
+                                self.in_head = True
+                            elif tag == 'br':
+                                self.text_parts.append('\n')
+                        
+                        def handle_endtag(self, tag):
+                            if tag in ('head', 'style'):
+                                self.in_head = False
+                        
+                        def handle_data(self, data):
+                            if not self.in_head and data.strip():
+                                self.text_parts.append(html_module.unescape(data))
+                        
+                        def get_text(self):
+                            return ''.join(self.text_parts)
+                    
+                    extractor = TextExtractor()
+                    extractor.feed(html_content)
+                    plain_text = extractor.get_text()
+                    
+                    # Display in UI
+                    self.text_input.setPlainText(html_content)  # Store HTML for translation
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
@@ -597,14 +631,18 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    # Session COM8: NEW HTML-based format system for DOCX
+                    from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting)
+                    html_content, css_manager = extract_html_from_docx(file_path)
                     
-                    # Keep tagged text for translation (tags go to Google Translate)
-                    text_to_translate = formatted_text_with_tags
+                    # Store CSS manager for later DOCX creation
+                    self._css_manager = css_manager
+                    self._source_file_path = file_path
+                    
+                    # Send HTML to translation (Google preserves HTML structure)
+                    text_to_translate = html_content
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
                     from translation.html_format_mapper import HTMLFormatMapper
@@ -990,12 +1028,24 @@ class GoogleTranslateDock(BaseDock):
     
     def _save_as_docx(self, output_path: str):
         """
-        Save translation as DOCX with formatting restored from stored segments.
+        Save translation as DOCX with formatting restored.
+        
+        Session COM8: Uses NEW HTML-based format system if available.
+        Falls back to old segment system for backward compatibility.
         
         Args:
             output_path: Path to save DOCX file
         """
-        if not self._translated_segments:
+        if self._translated_html and self._css_manager:
+            # NEW HTML system - use HTML to DOCX conversion
+            from translation.docx_html_mapper import create_docx_from_html
+            create_docx_from_html(self._translated_html, output_path, self._css_manager)
+            
+        elif self._translated_segments:
+            # OLD system - use segment-based approach (backward compatibility)
+            FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
+            
+        else:
             # Fallback: no formatting, create plain text segment
             plain_text = self.text_output.toPlainText()
             
@@ -1005,9 +1055,7 @@ class GoogleTranslateDock(BaseDock):
             
             from ..translation.format_mapper import TextSegment
             self._translated_segments = [TextSegment(text=plain_text)]
-        
-        # Generate DOCX with formatting using stored segments
-        FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
+            FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
         
         # Update status
         self.lbl_status.setText(tr("google_translate.status_docx_saved"))
