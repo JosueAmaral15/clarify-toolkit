@@ -177,6 +177,10 @@ class AdvancedExtractor:
         end_regex: Optional[str] = None,
         root_alias: Optional[str] = None,
         file_extensions: Optional[List[str]] = None,
+        use_class_names: bool = False,
+        typescript_export: bool = False,
+        exclude_numeric: bool = False,
+        skip_empty: bool = False,
     ):
         """
         Initialize AdvancedExtractor.
@@ -203,6 +207,10 @@ class AdvancedExtractor:
             end_regex: End delimiter for generic mode
             root_alias: Root key for file hierarchy
             file_extensions: File patterns to process
+            use_class_names: Use class names as keys instead of HTML tags
+            typescript_export: Export as TypeScript interface instead of JSON
+            exclude_numeric: Filter out numeric keys from output
+            skip_empty: Skip entries with empty/null values
         """
         self.param = param
         self.match_all = (param is None) or (not param.strip()) or (param.strip() == "*")
@@ -226,6 +234,105 @@ class AdvancedExtractor:
         self.root_alias = root_alias or "Root"
         self.file_extensions = file_extensions
         self.is_attribute_mode = is_attribute_mode
+        self.use_class_names = use_class_names
+        
+        # Features from Text Extractor consolidation
+        self.typescript_export = typescript_export
+        self.exclude_numeric = exclude_numeric
+        self.skip_empty = skip_empty
+
+    def _apply_limit_to_key(self, key: str) -> str:
+        """
+        Apply character limit and avoid_cut logic to a key string.
+        Used for both class names and JSON keys.
+        """
+        if self.limit in (None, 'all', 'ALL', 'All'):
+            return key
+        
+        try:
+            limit_num = int(self.limit)
+        except ValueError:
+            return key
+        
+        if limit_num <= 0 or len(key) <= limit_num:
+            return key
+        
+        if self.avoid_cut:
+            # Cut at word boundary (underscore or dash)
+            if self.avoid_cut_direction == "after":
+                # Search AFTER limit for next separator
+                next_sep_pos = -1
+                for i in range(limit_num, len(key)):
+                    if key[i] in ('_', '-'):
+                        next_sep_pos = i
+                        break
+                if next_sep_pos > 0:
+                    return key[:next_sep_pos]
+                # No separator found after, keep full key
+                return key
+            else:
+                # Default: search BEFORE limit for last separator
+                truncated = key[:limit_num]
+                last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
+                if last_sep > 0:
+                    return truncated[:last_sep]
+                # No separator found, just truncate
+                return truncated
+        else:
+            # Hard cut at limit
+            return key[:limit_num]
+
+    def _replace_stack_with_class_names(self, parser, stack: List[str]) -> List[str]:
+        """
+        Replace tag names in stack with class names where available.
+        Used when use_class_names is enabled to convert entire path.
+        """
+        if not self.use_class_names or not hasattr(parser, 'class_map'):
+            return stack
+        
+        modified_stack = []
+        for i, tag in enumerate(stack):
+            # Build the key for this position in the stack
+            stack_up_to_here = tuple(stack[:i+1])
+            stack_key = (stack_up_to_here, tag)
+            
+            # Look up class name for this tag at this position
+            class_value = parser.class_map.get(stack_key)
+            if class_value:
+                # Join multiple classes with dash
+                class_names = class_value.split()
+                joined_class = "-".join(class_names) if class_names else tag
+                # Apply limit to the class name
+                limited_class = self._apply_limit_to_key(joined_class)
+                modified_stack.append(limited_class)
+            else:
+                # No class found, use tag name
+                modified_stack.append(tag)
+        
+        return modified_stack
+
+    def _extract_class_name_from_parser(self, parser, stack: List[str], tag: str) -> Optional[str]:
+        """
+        Extract class attribute from parser's class_map.
+        Returns joined class names with dash if multiple, or None if no class found.
+        """
+        if not self.use_class_names:
+            return None
+        
+        # Check if parser has class_map (only JSXParser)
+        if not hasattr(parser, 'class_map'):
+            return None
+        
+        # Look up class using stack + tag as key
+        stack_key = (tuple(stack), tag)
+        class_value = parser.class_map.get(stack_key)
+        
+        if class_value:
+            # Multiple classes: join with dash (e.g., "btn primary" -> "btn-primary")
+            class_names = class_value.split()
+            return "-".join(class_names) if class_names else None
+        
+        return None
 
     def _filter_standard(self, path: List[str]) -> List[str]:
         """Filter out standard HTML tags if no_standard=True."""
@@ -283,9 +390,19 @@ class AdvancedExtractor:
         derived from raw_value. The key is normalized using current case settings;
         the value is the original raw_value.
         """
-        # Normalize key from the raw value
-        trimmed = smart_truncate(raw_value, self.limit, self.avoid_cut, self.avoid_cut_direction)
-        key = normalize_token(trimmed, self.case_style, self.to_upper) or "text"
+        # Skip empty values if enabled
+        if self.skip_empty and (not raw_value or not raw_value.strip()):
+            return {}
+        
+        # First normalize the entire raw value to get the key
+        key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
+        
+        # Apply limit to the normalized key using the helper method
+        key = self._apply_limit_to_key(key)
+        
+        # Exclude numeric keys if enabled
+        if self.exclude_numeric and key.isdigit():
+            return {}
 
         # Build small tree: (... path_tokens ...) -> { key: raw_value }
         root: Dict[str, Any] = {}
@@ -602,11 +719,17 @@ class AdvancedExtractor:
             else:
                 # TAG-CONTENT MODE
                 tag_name = tag
-                if self.no_standard and (tag_name.lower() in STANDARD_HTML_TAGS):
-                    tokens = self._nearest_kept_ancestor_tokens(file_alias, stack)
+                
+                # Replace entire stack with class names if enabled
+                if self.use_class_names:
+                    modified_stack = self._replace_stack_with_class_names(parser, stack)
                 else:
-                    effective_key = tag_name
-                    tokens = self._build_path_tokens_with_key(file_alias, stack, effective_key)
+                    modified_stack = stack
+                
+                if self.no_standard and (tag_name.lower() in STANDARD_HTML_TAGS):
+                    tokens = self._nearest_kept_ancestor_tokens(file_alias, modified_stack)
+                else:
+                    tokens = self._build_path_tokens_with_key(file_alias, modified_stack, None)
 
                 # Additional token filtering
                 if self.avoid_keys and keys_to_avoid:
@@ -641,6 +764,69 @@ class AdvancedExtractor:
         # Remove quotes from simple keys
         text = re.sub(r'\"([A-Za-z_][A-Za-z0-9_]*)\":', r'\1:', text)
         return text
+
+    def json_to_typescript(self, json_data: Dict[str, Any], interface_name: str = "Root") -> str:
+        """
+        Convert JSON structure to TypeScript interface definition.
+        
+        Args:
+            json_data: JSON dictionary to convert
+            interface_name: Name for the root interface
+            
+        Returns:
+            TypeScript interface definition as string
+        """
+        def infer_type(value: Any) -> str:
+            """Infer TypeScript type from Python value."""
+            if value is None:
+                return "null"
+            elif isinstance(value, bool):
+                return "boolean"
+            elif isinstance(value, int):
+                return "number"
+            elif isinstance(value, float):
+                return "number"
+            elif isinstance(value, str):
+                return "string"
+            elif isinstance(value, list):
+                if len(value) == 0:
+                    return "any[]"
+                # Infer from first element
+                elem_type = infer_type(value[0])
+                return f"{elem_type}[]"
+            elif isinstance(value, dict):
+                return "object"
+            else:
+                return "any"
+        
+        def generate_interface(data: Dict[str, Any], name: str, indent: int = 0) -> str:
+            """Recursively generate TypeScript interface."""
+            indent_str = "  " * indent
+            lines = [f"{indent_str}interface {name} {{"]
+            
+            nested_interfaces = []
+            
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    # Nested object - create separate interface
+                    nested_name = f"{name}_{key.capitalize()}"
+                    nested_interfaces.append(generate_interface(value, nested_name, indent))
+                    lines.append(f"{indent_str}  {key}: {nested_name};")
+                else:
+                    ts_type = infer_type(value)
+                    lines.append(f"{indent_str}  {key}: {ts_type};")
+            
+            lines.append(f"{indent_str}}}")
+            
+            # Add nested interfaces before parent
+            result = "\n\n".join(nested_interfaces)
+            if result:
+                result += "\n\n"
+            result += "\n".join(lines)
+            
+            return result
+        
+        return generate_interface(json_data, interface_name)
 
     def run(self, path: str) -> Tuple[str, Optional[str]]:
         """

@@ -86,7 +86,7 @@ class ExtractionWorker(QObject):
                 # Format JSON
                 if merged_json:
                     if typescript_export:
-                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData", indent)
+                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData")
                     elif with_quotation_marks:
                         json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False)
                     else:
@@ -171,7 +171,7 @@ class ExtractionWorker(QObject):
                 
                 if self.extractor.convert_to_json:
                     if typescript_export:
-                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData", indent)
+                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData")
                     elif with_quotation_marks:
                         json_output = json.dumps(merged_json, ensure_ascii=False, indent=indent)
                     else:
