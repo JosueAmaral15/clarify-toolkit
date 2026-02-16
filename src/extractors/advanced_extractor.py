@@ -284,6 +284,47 @@ class AdvancedExtractor:
         self.is_attribute_mode = is_attribute_mode
         self.use_class_names = use_class_names
 
+    def _apply_limit_to_key(self, key: str) -> str:
+        """
+        Apply character limit and avoid_cut logic to a key string.
+        Used for both class names and JSON keys.
+        """
+        if self.limit in (None, 'all', 'ALL', 'All'):
+            return key
+        
+        try:
+            limit_num = int(self.limit)
+        except ValueError:
+            return key
+        
+        if limit_num <= 0 or len(key) <= limit_num:
+            return key
+        
+        if self.avoid_cut:
+            # Cut at word boundary (underscore or dash)
+            if self.avoid_cut_direction == "after":
+                # Search AFTER limit for next separator
+                next_sep_pos = -1
+                for i in range(limit_num, len(key)):
+                    if key[i] in ('_', '-'):
+                        next_sep_pos = i
+                        break
+                if next_sep_pos > 0:
+                    return key[:next_sep_pos]
+                # No separator found after, keep full key
+                return key
+            else:
+                # Default: search BEFORE limit for last separator
+                truncated = key[:limit_num]
+                last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
+                if last_sep > 0:
+                    return truncated[:last_sep]
+                # No separator found, just truncate
+                return truncated
+        else:
+            # Hard cut at limit
+            return key[:limit_num]
+
     def _replace_stack_with_class_names(self, parser, stack: List[str]) -> List[str]:
         """
         Replace tag names in stack with class names where available.
@@ -303,7 +344,10 @@ class AdvancedExtractor:
             if class_value:
                 # Join multiple classes with dash
                 class_names = class_value.split()
-                modified_stack.append("-".join(class_names) if class_names else tag)
+                joined_class = "-".join(class_names) if class_names else tag
+                # Apply limit to the class name
+                limited_class = self._apply_limit_to_key(joined_class)
+                modified_stack.append(limited_class)
             else:
                 # No class found, use tag name
                 modified_stack.append(tag)
@@ -389,9 +433,11 @@ class AdvancedExtractor:
         derived from raw_value. The key is normalized using current case settings;
         the value is the original raw_value.
         """
-        # Normalize key from the raw value
-        trimmed = smart_truncate(raw_value, self.limit, self.avoid_cut, self.avoid_cut_direction)
-        key = normalize_token(trimmed, self.case_style, self.to_upper) or "text"
+        # First normalize the entire raw value to get the key
+        key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
+        
+        # Apply limit to the normalized key using the helper method
+        key = self._apply_limit_to_key(key)
 
         # Build small tree: (... path_tokens ...) -> { key: raw_value }
         root: Dict[str, Any] = {}
