@@ -443,12 +443,6 @@ class InsertPanel(QWidget):
         if path:
             self.ed_path.setText(path)
 
-    # def _files(self) -> List[str]: # version 1
-    #     path = self.ed_path.text().strip()
-    #     inc = [g.strip() for g in re.split(r"[;,]", self.ed_inc.text()) if g.strip()]
-    #     exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
-    #     files = walk_files(path, inc, exc)
-    #     return list(files)
 
     def _conds(self) -> tuple[List[Condition], str]:
         """Return conditions and logic operator (AND/OR) - updated for v2.9.7"""
@@ -635,31 +629,6 @@ class InsertPanel(QWidget):
             )
         except Exception as e:
             logger.error(f"Failed to save history: {e}")
-
-    # def _do_search(self):
-    #     try:
-    #         patt = SearchOptions(False,
-    #                              False,
-    #                              False).compile(self.ed_text.toPlainText())
-    #     except ValueError as e:
-    #         QMessageBox.critical(self, "Invalid pattern", str(e)); return
-
-    #     matches: Dict[str, List[Tuple[int,int,str]]] = {}
-    #     for p in self._iter_files():
-    #         print(f"TESTE {p}")
-    #         try:
-    #             text = read_text(p)
-    #             lst: List[Tuple[int,int,str]] = []
-    #             for m in patt.finditer(text):
-    #                 line = text.count("\n", 0, m.start()) + 1
-    #                 col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
-    #                 snippet = text.splitlines()[line-1]
-    #                 lst.append((line, col, snippet))
-    #             if lst:
-    #                 matches[p] = lst
-    #         except Exception as e:
-    #             print(f"[WARN] {p}: {e}", file=sys.stderr)
-    #     self.results.populate(matches)
 
     def _files(self) -> List[str]:
         path = self.ed_path.text().strip()

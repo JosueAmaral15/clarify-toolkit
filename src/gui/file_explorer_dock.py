@@ -1454,29 +1454,10 @@ class FileExplorerDock(BaseDock):
 
     # ============================================================================
     # New Signal Handlers (v2.9.116 Integration)
-    # ============================================================================
     # Auto-search Methods (DISABLED - v2.9.117 - B.7)
     # Search now only triggered by clicking Browse/Search button
-    # ============================================================================
+    # Original implementation removed - see git history if needed
 
-    # def _on_search_params_changed(self):
-    #     """Handle search parameter changes (v2.9.116)."""
-    #     # Debounce: restart timer on each change (500ms delay)
-    #     if self.auto_search_timer.isActive():
-    #         self.auto_search_timer.stop()
-    #
-    #     # Only auto-search if directory is set
-    #     if self.ed_directory.text().strip():
-    #         self.auto_search_timer.start(500)  # 500ms debounce
-    #
-    # def _trigger_auto_search(self):
-    #     """Execute auto-search after debounce delay."""
-    #     filename_pattern = self.filename_panel.get_pattern()
-    #     content_query = self.content_panel.get_query()
-    #
-    #     # Only auto-search if there's actually a query
-    #     if filename_pattern or content_query:
-    #         self._list_files()
 
     def _on_replace_first(self):
         """Handle replace first occurrence (v2.9.116)."""
