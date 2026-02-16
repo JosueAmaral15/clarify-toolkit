@@ -395,6 +395,13 @@ items[2]{id,name}:
   1,Apple
   2,Banana""",
         
+        "BSON": """{
+  "name": "Alice",
+  "age": 30,
+  "active": true,
+  "tags": ["mongodb", "nosql"]
+}""",
+        
         # JSX/HTML Templates
         "JSX Button": """<Button 
   label="Click Me" 

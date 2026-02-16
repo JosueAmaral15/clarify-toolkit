@@ -42,6 +42,12 @@ try:
 except ImportError:
     TOON_AVAILABLE = False
 
+try:
+    from .bson import BsonAdapter
+    BSON_AVAILABLE = True
+except ImportError:
+    BSON_AVAILABLE = False
+
 
 def flatten_json_recursive(
     data: Union[Dict, List, Any],
@@ -573,6 +579,48 @@ def convert_json_to_toon(data: Union[Dict, List, str], **options) -> str:
     return '\n'.join(lines)
 
 
+def convert_json_to_bson(data: Union[Dict, List, str], **options) -> str:
+    """
+    Convert JSON to BSON (Binary JSON) format.
+    
+    BSON is a binary representation of JSON-like documents. Returns base64-encoded
+    binary data as a string for display purposes.
+    
+    Args:
+        data: JSON data to convert
+        **options: Not used currently
+    
+    Returns:
+        Base64-encoded BSON string
+    
+    Raises:
+        ImportError: If pymongo/bson not available
+    
+    Note:
+        BSON is primarily for MongoDB and binary transmission. The output is
+        base64-encoded for text display. To get actual binary, use BsonAdapter.encode()
+        directly.
+    
+    Example:
+        >>> data = {"name": "Alice", "age": 30}
+        >>> bson_str = convert_json_to_bson(data)
+        >>> # Returns: base64 encoded BSON bytes
+    """
+    if not BSON_AVAILABLE:
+        raise ImportError(
+            "BSON conversion requires pymongo. Install with: pip install pymongo"
+        )
+    
+    if isinstance(data, str):
+        data = json.loads(data)
+    
+    # Use BsonAdapter for conversion
+    import base64
+    bson_bytes = BsonAdapter.encode(data)
+    # Return base64 for text display
+    return base64.b64encode(bson_bytes).decode('utf-8')
+
+
 def convert_json_to_format(
     data: Union[Dict, List, str],
     format_name: str,
@@ -603,6 +651,7 @@ def convert_json_to_format(
         - Python Dict
         - Java Properties
         - TOON
+        - BSON
         - Key-Value
         - List
     
@@ -628,6 +677,7 @@ def convert_json_to_format(
         "PYTHON DICT": convert_json_to_python_dict,
         "JAVA PROPERTIES": convert_json_to_java_properties,
         "TOON": convert_json_to_toon,
+        "BSON": convert_json_to_bson,
         "KEY-VALUE": convert_json_to_java_properties,  # Alias for Java Properties
         "LIST": convert_json_to_json,  # Lists are already JSON arrays
         # JSX templates are input examples, output as JSON
