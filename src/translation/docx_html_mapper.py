@@ -23,12 +23,14 @@ Session: Phase 3 - DOCX Translation Implementation
 """
 
 import html
+import hashlib
 from dataclasses import dataclass
 from html.parser import HTMLParser
+from io import BytesIO
 from typing import Dict, List, Optional
 
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, RGBColor, Inches
 
 
 # ============================================================================
@@ -145,6 +147,147 @@ class HTMLSegment:
 # ============================================================================
 # CSS Class Management (Copied from html_format_mapper.py)
 # ============================================================================
+
+# ============================================================================
+# Image Management (NEW for Phase 1)
+# ============================================================================
+
+@dataclass
+class ImageData:
+    """Stores image binary data and metadata."""
+    
+    image_id: str              # 'IMG001', 'IMG002', etc.
+    blob: bytes                # Raw PNG/JPEG/GIF binary data
+    content_type: str          # 'image/png', 'image/jpeg', etc.
+    width_emus: int            # Width in EMUs (914400 = 1 inch)
+    height_emus: int           # Height in EMUs
+    original_rId: str          # Original relationship ID (e.g., 'rId9')
+    blob_hash: Optional[str]   # SHA256 hash for deduplication
+    
+    def get_format(self) -> str:
+        """Extract format from content_type."""
+        if 'png' in self.content_type:
+            return 'png'
+        elif 'jpeg' in self.content_type:
+            return 'jpg'
+        elif 'gif' in self.content_type:
+            return 'gif'
+        else:
+            return 'unknown'
+    
+    def get_width_inches(self) -> float:
+        """Convert EMUs to inches."""
+        return self.width_emus / 914400
+    
+    def get_height_inches(self) -> float:
+        """Convert EMUs to inches."""
+        return self.height_emus / 914400
+
+
+class ImageManager:
+    """Manages image storage and reconstruction for DOCX translation."""
+    
+    def __init__(self):
+        """Initialize image storage."""
+        self._images: Dict[str, ImageData] = {}  # image_id → ImageData
+        self._hash_to_id: Dict[str, str] = {}    # blob_hash → image_id
+        self._next_id: int = 1                   # Counter for IMG001, IMG002, etc.
+    
+    def add_image(self, blob: bytes, content_type: str, 
+                  width_emus: int, height_emus: int, 
+                  original_rId: str) -> str:
+        """
+        Add image to storage with deduplication.
+        
+        Returns:
+            image_id: Unique ID for this image (e.g., 'IMG001')
+        """
+        # Calculate hash for deduplication
+        blob_hash = hashlib.sha256(blob).hexdigest()
+        
+        # Check if image already exists (same binary data)
+        if blob_hash in self._hash_to_id:
+            existing_id = self._hash_to_id[blob_hash]
+            print(f"[ImageManager] Deduplication: reusing {existing_id} for {original_rId}")
+            return existing_id
+        
+        # Warn about large images
+        blob_size_mb = len(blob) / (1024 * 1024)
+        if blob_size_mb > 10:
+            print(f"[ImageManager] WARNING: Large image ({blob_size_mb:.1f}MB)")
+        
+        # Generate new ID
+        image_id = f"IMG{self._next_id:03d}"  # IMG001, IMG002, etc.
+        self._next_id += 1
+        
+        # Store image data
+        image_data = ImageData(
+            image_id=image_id,
+            blob=blob,
+            content_type=content_type,
+            width_emus=width_emus,
+            height_emus=height_emus,
+            original_rId=original_rId,
+            blob_hash=blob_hash
+        )
+        
+        self._images[image_id] = image_data
+        self._hash_to_id[blob_hash] = image_id
+        
+        print(f"[ImageManager] Stored {image_id}: {content_type}, "
+              f"{width_emus / 914400:.2f}\" x {height_emus / 914400:.2f}\", "
+              f"{len(blob)} bytes")
+        
+        # Check total memory usage
+        stats = self.get_statistics()
+        if stats['total_mb'] > 100:
+            print(f"[ImageManager] WARNING: High memory usage ({stats['total_mb']:.1f}MB)")
+        
+        return image_id
+    
+    def get_image(self, image_id: str) -> Optional[ImageData]:
+        """
+        Retrieve image by ID.
+        
+        Returns:
+            ImageData if found, None otherwise
+        """
+        return self._images.get(image_id)
+    
+    def generate_placeholder(self, image_id: str) -> str:
+        """
+        Generate HTML placeholder for image.
+        
+        Returns:
+            HTML string: '<span data-image="IMG001"></span>'
+        """
+        return f'<span data-image="{image_id}"></span>'
+    
+    def get_statistics(self) -> dict:
+        """
+        Get storage statistics for debugging.
+        
+        Returns:
+            Dict with counts and memory usage
+        """
+        total_images = len(self._images)
+        unique_blobs = len(self._hash_to_id)
+        total_bytes = sum(len(img.blob) for img in self._images.values())
+        
+        return {
+            'total_images': total_images,
+            'unique_blobs': unique_blobs,
+            'duplicates': total_images - unique_blobs,
+            'total_bytes': total_bytes,
+            'total_mb': total_bytes / (1024 * 1024)
+        }
+    
+    def clear(self):
+        """Clear all stored images (for memory management)."""
+        self._images.clear()
+        self._hash_to_id.clear()
+        self._next_id = 1
+
 
 class CSSClassManager:
     """
