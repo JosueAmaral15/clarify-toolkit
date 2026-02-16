@@ -192,6 +192,10 @@ class CSSClassManager:
         
         return "\n".join(css_lines)
     
+    def get_format(self, class_name: str) -> Optional[FormatAttributes]:
+        """Get format attributes for a CSS class."""
+        return self.class_to_format.get(class_name)
+    
     def to_dict(self) -> Dict:
         """Convert to dictionary for storage."""
         return {
