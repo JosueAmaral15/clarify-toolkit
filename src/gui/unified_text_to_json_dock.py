@@ -38,7 +38,6 @@ from PySide6.QtGui import QFont, QAction, QShortcut, QKeySequence, QTextCursor, 
 
 from .base_dock import BaseDock, FileInputMixin
 from .extraction_worker import ExtractionWorker
-from src.text_to_json import convert_text_to_json, detect_format
 from src.extractors.advanced_extractor import AdvancedExtractor
 from src.i18n.translator import tooltip_tr, tr
 from src.converters.json_output_converter import convert_json_to_format
