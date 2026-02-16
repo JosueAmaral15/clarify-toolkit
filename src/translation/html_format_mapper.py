@@ -145,7 +145,7 @@ class HTMLSegment:
     """Represents a text segment with HTML formatting."""
     text: str
     css_class: str
-    tag_type: str  # 'div', 'span', 'br' (paragraph break), or 'line-break' (soft break within paragraph)
+    tag_type: str  # 'div', 'span', 'br' (paragraph break), 'line-break' (soft break), or 'tab'
     attributes: FormatAttributes
 
 
@@ -375,7 +375,14 @@ class HTMLFormatMapper:
                             segments.append(HTMLSegment('\n', '', 'line-break', FormatAttributes()))
                             current_fmt = span_fmt  # Keep format after BR
                         elif elem_type == 'tab':
-                            para_text += '⟨TAB⟩'  # Placeholder that Google Translate won't modify
+                            # Save current text before tab
+                            if para_text:
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                            # Add tab segment
+                            segments.append(HTMLSegment('', '', 'tab', FormatAttributes()))
                         elif elem_type == 's':
                             # Multiple spaces
                             try:
@@ -396,7 +403,14 @@ class HTMLFormatMapper:
             elif hasattr(node, 'qname') and node.qname[1] in ['tab', 's']:
                 # Tab or space
                 if node.qname[1] == 'tab':
-                    para_text += '⟨TAB⟩'  # Placeholder that Google Translate won't modify
+                    # Save current text before tab
+                    if para_text:
+                        css_class = css_manager.get_or_create_class(current_fmt)
+                        tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                        segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                        para_text = ""
+                    # Add tab segment
+                    segments.append(HTMLSegment('', '', 'tab', FormatAttributes()))
                 elif node.qname[1] == 's':
                     # Multiple spaces
                     try:
@@ -598,6 +612,9 @@ class HTMLFormatMapper:
             elif segment.tag_type == 'line-break':
                 # Soft break (line break within paragraph)
                 body_parts.append('<br class="brk2">')
+            elif segment.tag_type == 'tab':
+                # Tab character - use empty span with data attribute
+                body_parts.append('<span data-tab="1"></span>')
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
@@ -793,6 +810,15 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
             from odf.text import LineBreak
             current_paragraph.addElement(LineBreak())
         
+        elif segment['type'] == 'tab':
+            # Tab character - add tab element within current paragraph
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Add tab element
+            from odf.text import Tab
+            current_paragraph.addElement(Tab())
+        
         elif segment['type'] == 'text':
             # Add text to current or new paragraph
             if current_paragraph is None:
@@ -801,43 +827,13 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
             text_content = segment['text']
             css_class = segment.get('class')
             
-            # Handle tab placeholders - need to split text and add Tab elements
-            if '⟨TAB⟩' in text_content:
-                from odf.text import Tab
-                parts = text_content.split('⟨TAB⟩')
-                
-                if css_class and css_class in styles_created:
-                    # Apply style to each part
-                    for i, part in enumerate(parts):
-                        if part:  # Non-empty text
-                            span = Span(stylename=styles_created[css_class], text=part)
-                            current_paragraph.addElement(span)
-                        if i < len(parts) - 1:  # Not the last part
-                            # Add tab element
-                            tab_elem = Tab()
-                            if css_class and css_class in styles_created:
-                                # Tab inside styled span
-                                span_for_tab = Span(stylename=styles_created[css_class])
-                                span_for_tab.addElement(tab_elem)
-                                current_paragraph.addElement(span_for_tab)
-                            else:
-                                current_paragraph.addElement(tab_elem)
-                else:
-                    # Plain text with tabs
-                    for i, part in enumerate(parts):
-                        if part:
-                            current_paragraph.addText(part)
-                        if i < len(parts) - 1:
-                            current_paragraph.addElement(Tab())
+            if css_class and css_class in styles_created:
+                # Apply style
+                span = Span(stylename=styles_created[css_class], text=text_content)
+                current_paragraph.addElement(span)
             else:
-                # No tabs - original logic
-                if css_class and css_class in styles_created:
-                    # Apply style
-                    span = Span(stylename=styles_created[css_class], text=text_content)
-                    current_paragraph.addElement(span)
-                else:
-                    # Plain text
-                    current_paragraph.addText(text_content)
+                # Plain text
+                current_paragraph.addText(text_content)
     
     # Add final paragraph if exists
     if current_paragraph is not None:
@@ -872,7 +868,15 @@ class HTMLToODTParser(HTMLParser):
             self.segments.append({'type': break_type})
             return
         
-        # Extract class attribute
+        # Handle span tags - check for tab marker
+        if tag == 'span':
+            # Check for data-tab attribute (tab marker)
+            for attr, value in attrs:
+                if attr == 'data-tab':
+                    self.segments.append({'type': 'tab'})
+                    return
+        
+        # Extract class attribute for regular spans
         for attr, value in attrs:
             if attr == 'class':
                 self.current_class = value
