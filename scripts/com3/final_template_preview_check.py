@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Final check: Compare each template output against its GUI preview example."""
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from src.converters.json_output_converter import convert_json_to_format
 
 print("="*80)
