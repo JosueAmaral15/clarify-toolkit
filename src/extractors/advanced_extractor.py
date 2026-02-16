@@ -23,6 +23,7 @@ import os
 import re
 import json
 from typing import List, Dict, Any, Optional, Tuple, Union
+from ..utils.normalization import is_standard_tag, normalize_token
 
 # Type aliases
 JSONLike = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -40,11 +41,6 @@ STANDARD_HTML_TAGS = {
     'button','select','datalist','optgroup','option','textarea','output','progress',
     'meter','fieldset','legend','details','summary','dialog','slot','template','canvas'
 }
-
-
-def is_standard_tag(name: str) -> bool:
-    """Check if tag name is a standard HTML tag."""
-    return name.lower() in STANDARD_HTML_TAGS
 
 
 def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[str]:
@@ -109,56 +105,6 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
 
         # Fallback: no whitespace found in the window (a very long first word).
         return sub
-
-
-def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
-    """
-    Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
-    optionally uppercase whole token.
-    Splits camelCase/PascalCase into words before applying conversion.
-    """
-    s = s.strip()
-    
-    # Special handling for 'preserve' mode - keep original case
-    if case_style == "preserve" or case_style == "none":
-        # Only remove non-alphanumeric characters, keep original case
-        cleaned = re.sub(r"[^0-9A-Za-z]+", "_", s)
-        # Remove leading/trailing underscores
-        token = cleaned.strip("_")
-        if to_upper:
-            token = token.upper()
-        return token
-    
-    # Step 1: Split camelCase/PascalCase into separate words
-    # Insert space before uppercase letters that follow lowercase or are followed by lowercase
-    with_spaces = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)  # lowerUpper → lower Upper
-    with_spaces = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', with_spaces)  # XMLParser → XML Parser
-    
-    # Step 2: Convert any remaining non-alphanumeric into space
-    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", with_spaces)
-    
-    # Step 3: Split into words
-    words = [w for w in cleaned.strip().split() if w]
-    
-    if not words:
-        token = ""
-    else:
-        if case_style == "snake":
-            token = "_".join(w.lower() for w in words)
-        elif case_style == "kebab":
-            token = "-".join(w.lower() for w in words)
-        elif case_style == "camel":
-            head = words[0].lower()
-            tail = [w[:1].upper() + w[1:].lower() for w in words[1:]]
-            token = head + "".join(tail)
-        elif case_style == "pascal":
-            token = "".join(w[:1].upper() + w[1:].lower() for w in words)
-        else:
-            # default snake
-            token = "_".join(w.lower() for w in words)
-    if to_upper:
-        token = token.upper()
-    return token
 
 
 def path_join(parts: List[str]) -> str:
