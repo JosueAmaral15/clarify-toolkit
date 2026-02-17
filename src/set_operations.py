@@ -359,6 +359,10 @@ def symmetric_difference(file_a: Dict[str, Any], file_b: Dict[str, Any], **opts)
     """
     prepared, _ = compare_files([file_a, file_b], **opts)
 
+    if len(prepared) < 2:
+        logger.error(f"symmetric_difference: Expected 2 prepared sets, got {len(prepared)}")
+        return {"symmetric_difference": []}
+
     result_set = prepared[0].symmetric_difference(prepared[1])
 
     return {"symmetric_difference": list(result_set)}
