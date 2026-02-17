@@ -260,14 +260,15 @@ class SetOperationsDock(BaseDock):
             if comparison_mode == "full_path":
                 history_comparison_mode = "full_path_value"
 
-            self.history_manager.add_operation(
-                operation_type=operation_type,
-                file1=files[0],
-                file2=files[1] if len(files) > 1 else files[0],
-                comparison_mode=history_comparison_mode,
-                result_count=result_count,
-                result_data=exec_result.results
-            )
+            if files and len(files) > 0:
+                self.history_manager.add_operation(
+                    operation_type=operation_type,
+                    file1=files[0],
+                    file2=files[1] if len(files) > 1 else files[0],
+                    comparison_mode=history_comparison_mode,
+                    result_count=result_count,
+                    result_data=exec_result.results
+                )
         except Exception as e:
             logger.warning(f"Failed to save operation to history: {e}")
 
@@ -276,8 +277,9 @@ class SetOperationsDock(BaseDock):
             from ..statistics_manager import StatisticsManager
 
             # Calculate stats for each file
-            file1_stats = StatisticsManager.calculate_statistics(file_dicts[0])
-            file2_stats = StatisticsManager.calculate_statistics(file_dicts[1] if len(file_dicts) > 1 else file_dicts[0])
+            if file_dicts and len(file_dicts) > 0:
+                file1_stats = StatisticsManager.calculate_statistics(file_dicts[0])
+                file2_stats = StatisticsManager.calculate_statistics(file_dicts[1] if len(file_dicts) > 1 else file_dicts[0])
 
             # Calculate stats for result
             result_count = SetOperationExecutor.calculate_result_count(exec_result.results)
