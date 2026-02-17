@@ -58,6 +58,7 @@ class TranslationWorker(QThread):
 
     progress_updated = Signal(int, str)  # progress, status
     translation_completed = Signal(str, bool, str, str)  # result, success, error, detected_lang
+    chunk_progress = Signal(int, int, int, str)  # Phase B: current_chunk, total_chunks, percentage, status_msg
 
     def __init__(self, api: GoogleTranslateAPI, text: str, from_lang: str, to_lang: str):
         super().__init__()
@@ -114,71 +115,40 @@ class TranslationWorker(QThread):
                     text_to_translate = self.text
                     self._placeholder_mapping = None
 
-            # For large texts, split into chunks
-            max_chunk_size = 5000  # Google Translate limit
-            text_chunks = []
-
-            if len(text_to_translate) > max_chunk_size:
-                # Split by paragraphs/double newlines to maintain context
-                if is_html_format:
-                    # For HTML, split on </p> or <br><br>
-                    paragraphs = text_to_translate.split("</p>")
-                else:
-                    # For plain text, split on double newlines
-                    separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
-                    paragraphs = text_to_translate.split(separator)
-                
-                current_chunk = ""
-
-                for paragraph in paragraphs:
-                    if len(current_chunk + paragraph) > max_chunk_size:
-                        if current_chunk:
-                            text_chunks.append(current_chunk.strip())
-                        current_chunk = paragraph
-                    else:
-                        separator_str = "</p>" if is_html_format else "\n\n"
-                        current_chunk += separator_str + paragraph if current_chunk else paragraph
-
-                if current_chunk:
-                    text_chunks.append(current_chunk.strip())
-            else:
-                text_chunks = [text_to_translate]
-
-            self.progress_updated.emit(50, f"Translating {len(text_chunks)} chunk(s)...")
-
-            translated_chunks = []
-            detected_language = self.from_lang  # Default to input language
-            total_chunks = len(text_chunks)
-
-            for i, chunk in enumerate(text_chunks):
+            # Phase B: Use new chunked translation API with progress callback
+            def progress_callback(current_chunk, total_chunks, percentage, status_msg):
+                """Progress callback for chunked translation."""
                 if self.is_cancelled:
                     return
-
-                progress = 50 + int((i / total_chunks) * 35)
-                self.progress_updated.emit(progress, f"Translating chunk {i+1}/{total_chunks}...")
-
-                result = self.api.translate_text(chunk, self.from_lang, self.to_lang)
-
-                if not result.success:
-                    self.translation_completed.emit("", False, result.error_message, self.from_lang)
-                    return
-
-                translated_chunks.append(result.translated_text)
                 
-                # Capture detected language from first chunk
-                if i == 0 and result.source_language:
-                    detected_language = result.source_language
-
-            # Combine translated chunks
-            if is_html_format:
-                final_result = "</p>".join(translated_chunks)
-            else:
-                separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
-                final_result = separator.join(translated_chunks)
+                # Emit chunk progress signal (for detailed tracking)
+                self.chunk_progress.emit(current_chunk, total_chunks, percentage, status_msg)
+                
+                # Update main progress bar (50-95% range for translation)
+                # 0-30% already used for preparation, 95-100% for restoration
+                translation_progress = 50 + int(percentage * 0.45)
+                self.progress_updated.emit(translation_progress, status_msg)
+            
+            self.progress_updated.emit(50, "Starting translation...")
+            
+            # Use new chunked translation API (automatically chunks if > 4500 chars)
+            result = self.api.translate_text_chunked(
+                text_to_translate,
+                self.from_lang,
+                self.to_lang,
+                progress_callback=progress_callback
+            )
+            
+            if not result.success:
+                self.translation_completed.emit("", False, result.error_message, self.from_lang)
+                return
+            
+            final_result = result.translated_text
+            detected_language = result.source_language or self.from_lang
             
             # Restore whitespace and format tags based on format type
             if is_html_format:
-                self.progress_updated.emit(93, "Restoring whitespace...")
+                self.progress_updated.emit(96, "Restoring whitespace...")
                 from translation.html_format_mapper import restore_special_whitespace
                 final_result = restore_special_whitespace(final_result)
             else:
@@ -188,10 +158,10 @@ class TranslationWorker(QThread):
                         restore_special_whitespace,
                         restore_tags_from_placeholders
                     )
-                    self.progress_updated.emit(93, "Restoring whitespace...")
+                    self.progress_updated.emit(96, "Restoring whitespace...")
                     final_result = restore_special_whitespace(final_result)
                     
-                    self.progress_updated.emit(96, "Restoring format tags...")
+                    self.progress_updated.emit(98, "Restoring format tags...")
                     final_result = restore_tags_from_placeholders(final_result, self._placeholder_mapping)
 
             self.progress_updated.emit(100, "Translation completed!")
@@ -471,6 +441,14 @@ class GoogleTranslateDock(BaseDock):
         )
 
         if file_path:
+            # Phase A: Clear previous translation state on new file load
+            self._translated_html = None
+            self._translated_segments = []
+            self._css_manager = None
+            self._image_manager = None
+            self._table_manager = None
+            self.text_output.clear()
+            
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
@@ -659,6 +637,11 @@ class GoogleTranslateDock(BaseDock):
 
     def _translate(self):
         """Start translation process."""
+        # Phase A: Clear previous translation state before starting new translation
+        self._translated_html = None
+        self._translated_segments = []
+        self.text_output.clear()
+        
         # Get text to translate
         text_to_translate = ""
 
@@ -755,6 +738,7 @@ class GoogleTranslateDock(BaseDock):
             try:
                 self.translation_worker.progress_updated.disconnect()
                 self.translation_worker.translation_completed.disconnect()
+                self.translation_worker.chunk_progress.disconnect()  # Phase B: Disconnect chunk signal
                 self.translation_worker.finished.disconnect()
             except (TypeError, RuntimeError):
                 # Signals already disconnected or worker deleted
@@ -774,6 +758,7 @@ class GoogleTranslateDock(BaseDock):
         # Connect signals BEFORE starting thread
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
+        self.translation_worker.chunk_progress.connect(self._on_chunk_progress)  # Phase B: Chunking progress
         
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
@@ -785,6 +770,25 @@ class GoogleTranslateDock(BaseDock):
         """Handle progress updates."""
         self.progress_bar.setValue(progress)
         self.lbl_status.setText(status)
+    
+    def _on_chunk_progress(self, current_chunk: int, total_chunks: int, percentage: int, status_msg: str):
+        """
+        Handle chunk-level progress updates (Phase B).
+        
+        Displays detailed progress for large document translations.
+        Example: "Chunk 5/10 (50%): Translating... (2341 chars)"
+        """
+        # Update progress bar with chunk percentage
+        # Note: translate_text_chunked already maps to 50-95% range in worker
+        
+        # Enhanced status message with chunk info
+        if total_chunks > 1:
+            # Multi-chunk translation: show detailed status
+            enhanced_status = f"{status_msg} [Chunk {current_chunk}/{total_chunks}]"
+            self.lbl_status.setText(enhanced_status)
+        else:
+            # Single chunk: use simple status
+            self.lbl_status.setText(status_msg)
 
     def _on_translation_completed(self, result: str, success: bool, error: str, detected_lang: str):
         """Handle translation completion."""
@@ -793,6 +797,12 @@ class GoogleTranslateDock(BaseDock):
         self.btn_cancel.setEnabled(False)
         self.progress_bar.setVisible(False)
 
+        if not success:
+            # Phase A: Clear state on translation failure
+            self._translated_html = None
+            self._translated_segments = []
+            self.text_output.clear()
+        
         if success:
             # Session 77: Check if result is HTML (from new format system)
             is_html_format = '<!DOCTYPE html>' in result or '<html>' in result
