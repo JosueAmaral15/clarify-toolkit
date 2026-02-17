@@ -875,6 +875,31 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         max_nesting_depth_row.addStretch()
         layout.addLayout(max_nesting_depth_row)
         
+        # Truncate parent key names row
+        truncate_keys_row = QHBoxLayout()
+        
+        self.jsx_truncate_parent_keys_checkbox = QCheckBox("Truncate parent key names")
+        self.jsx_truncate_parent_keys_checkbox.setToolTip(
+            "Truncate all parent (intermediate) key names in JSON output to specified character limit.\n"
+            "Example with limit=2: div→di, button→bu, Link→Li"
+        )
+        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_checkbox)
+        
+        self.jsx_truncate_parent_keys_spin = QSpinBox()
+        self.jsx_truncate_parent_keys_spin.setRange(1, 50)
+        self.jsx_truncate_parent_keys_spin.setValue(2)
+        self.jsx_truncate_parent_keys_spin.setMaximumWidth(80)
+        self.jsx_truncate_parent_keys_spin.setEnabled(False)
+        self.jsx_truncate_parent_keys_spin.setToolTip("Character limit for parent key names")
+        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_spin)
+        
+        self.jsx_truncate_parent_keys_checkbox.toggled.connect(
+            lambda checked: self.jsx_truncate_parent_keys_spin.setEnabled(checked)
+        )
+        
+        truncate_keys_row.addStretch()
+        layout.addLayout(truncate_keys_row)
+        
         # Case style and limits section
         case_layout = QHBoxLayout()
         
@@ -1539,6 +1564,36 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     
                 except Exception as limit_err:
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
+            
+            # Apply parent key name truncation if enabled
+            if json_output and self.jsx_truncate_parent_keys_checkbox.isChecked():
+                try:
+                    # Check if output is JS literal (without quotation marks)
+                    is_js_literal = hasattr(self, '_last_with_quotation_marks') and not self._last_with_quotation_marks
+                    
+                    if is_js_literal:
+                        # Convert JS literal to valid JSON
+                        import re
+                        json_text = re.sub(r'(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output)
+                        json_data = json.loads(json_text)
+                    else:
+                        # Parse JSON directly
+                        json_data = json.loads(json_output)
+                    
+                    char_limit = self.jsx_truncate_parent_keys_spin.value()
+                    
+                    # Apply truncation
+                    json_data = self._truncate_parent_keys(json_data, char_limit)
+                    
+                    # Convert back to appropriate format
+                    if is_js_literal:
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                        json_output = re.sub(r'"(\w+)"(\s*):', r'\1\2:', json_output)
+                    else:
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    
+                except Exception as truncate_err:
+                    self._jsx_update_status(f"⚠ Parent key truncation error: {str(truncate_err)}")
             
             # Convert JSON output to selected format
             converted_output = json_output
@@ -2214,6 +2269,34 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         # Rebuild dictionary
         return rebuild_dict(limited_paths)
+    
+    def _truncate_parent_keys(self, data: Any, char_limit: int) -> Any:
+        """
+        Recursively truncate all parent key names to char_limit characters.
+        Only affects dictionary keys, not leaf values.
+        
+        Args:
+            data: JSON data (dict, list, or primitive)
+            char_limit: Maximum characters for key names (e.g., 2 for 'di', 'bu')
+        
+        Returns:
+            Modified JSON data with truncated parent keys
+        """
+        if char_limit <= 0 or not isinstance(data, dict):
+            return data
+        
+        result = {}
+        for key, value in data.items():
+            # Truncate key name
+            truncated_key = key[:char_limit] if len(key) > char_limit else key
+            
+            # Recursively truncate nested dicts
+            if isinstance(value, dict):
+                result[truncated_key] = self._truncate_parent_keys(value, char_limit)
+            else:
+                result[truncated_key] = value
+        
+        return result
     
     def _jsx_add_to_history(self, path: str, output_json: str, settings: dict) -> None:
         """Add extraction to history with full settings metadata."""
