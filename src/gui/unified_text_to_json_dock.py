@@ -1530,10 +1530,11 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     # Check if output is JS literal (without quotation marks)
                     is_js_literal = hasattr(self, '_last_with_quotation_marks') and not self._last_with_quotation_marks
                     
+                    import re
+                    
                     if is_js_literal:
                         # Convert JS literal to valid JSON by adding quotes to keys
                         # Pattern: word character(s) followed by colon
-                        import re
                         json_text = re.sub(r'(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output)
                         json_data = json.loads(json_text)
                     else:
@@ -1563,6 +1564,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                         json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
                     
                 except Exception as limit_err:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    print(f"DEBUG: Parent key limiting error:\n{error_details}")
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
             
             # Apply parent key name truncation if enabled
