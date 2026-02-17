@@ -327,8 +327,12 @@ class AdvancedExtractor:
         tokens: List[str] = [file_root_token] + stack
         tokens = self._filter_standard(tokens)
         
-        # Apply limit to ALL tokens (including intermediate path keys)
-        tokens = [self._apply_limit_to_key(t) for t in tokens]
+        # Apply limit only to NON-HTML-tag tokens (class names, custom components, file roots)
+        # HTML tags (div, h1, p, etc.) should never be truncated
+        tokens = [
+            self._apply_limit_to_key(t) if not is_standard_tag(t) else t
+            for t in tokens
+        ]
 
         if self.include_key or (not self.include_key and not self.include_value):
             tokens.append(self.param)
@@ -348,13 +352,17 @@ class AdvancedExtractor:
         """Build path tokens including the matched key (attribute mode)."""
         tokens = [file_root_token] + self._filter_standard(stack)
         
-        # Apply limit to ALL tokens (including intermediate path keys)
-        tokens = [self._apply_limit_to_key(t) for t in tokens]
+        # Apply limit only to NON-HTML-tag tokens (class names, custom components, file roots)
+        # HTML tags (div, h1, p, etc.) should never be truncated
+        tokens = [
+            self._apply_limit_to_key(t) if not is_standard_tag(t) else t
+            for t in tokens
+        ]
 
         # Include the key segment when requested / in match-all
         if self.include_key or self.match_all or (not self.include_key and not self.include_value):
             if key_for_path and self.is_attribute_mode:
-                # Apply limit to the attribute key as well
+                # Apply limit to the attribute key (these are never HTML tags)
                 limited_key = self._apply_limit_to_key(key_for_path)
                 tokens.append(limited_key)
 
