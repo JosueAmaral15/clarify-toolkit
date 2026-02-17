@@ -602,8 +602,11 @@ class FormatMapper:
         if run.font.color.rgb:
             format_bits |= FormatBit.FONT_COLOR
             rgb = run.font.color.rgb
-            hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-            metadata_parts.append(hex_color)
+            if len(rgb) >= 3:
+                hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                metadata_parts.append(hex_color)
+            else:
+                logger.warning(f"Invalid RGB color format: {rgb}")
         
         # Detect highlight/background color
         if run.font.highlight_color:
@@ -1008,6 +1011,8 @@ class FormatMapper:
                                                     'width': width,
                                                     'color': color.replace('#', '')
                                                 }
+                                            else:
+                                                logger.warning(f"Invalid border format '{value}' for {side}, expected 'width style color'")
                                 if borders:
                                     cell_data.borders = borders
                 except (ValueError, KeyError):
@@ -1242,8 +1247,11 @@ class FormatMapper:
                     segment.add_format(FormatBit.FONT_COLOR)
                     rgb = run.font.color.rgb
                     # Convert RGB to hex string (e.g., FF0000 for red)
-                    hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-                    metadata_parts.append(hex_color)
+                    if len(rgb) >= 3:
+                        hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                        metadata_parts.append(hex_color)
+                    else:
+                        logger.warning(f"Invalid RGB color format: {rgb}")
                 
                 # Detect highlight/background color (Session 18)
                 if run.font.highlight_color:
