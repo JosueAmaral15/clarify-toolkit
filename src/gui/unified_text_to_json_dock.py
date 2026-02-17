@@ -1318,6 +1318,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             no_standard = self.jsx_no_standard_checkbox.isChecked()
             only_strings = self.jsx_only_strings_checkbox.isChecked()
             with_quotation_marks = self.jsx_quotation_marks_checkbox.isChecked()
+            
+            # Store for later use in parent key limiting
+            self._last_with_quotation_marks = with_quotation_marks
             match_all = self.jsx_match_all_checkbox.isChecked()
             
             case_style = self.jsx_case_combo.currentText()
@@ -1499,21 +1502,31 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Apply parent key limiting if enabled
             if json_output and self.jsx_limit_parent_keys_checkbox.isChecked():
                 try:
-                    json_data = json.loads(json_output)
-                    limit = self.jsx_limit_parent_keys_spin.value()
-                    mode_text = self.jsx_limit_parent_keys_mode_combo.currentText()
+                    # Check if output is JS literal (without quotation marks)
+                    # If so, we need to convert it to valid JSON first
+                    is_js_literal = hasattr(self, '_last_with_quotation_marks') and not self._last_with_quotation_marks
                     
-                    # Map display text to internal mode
-                    mode_map = {
-                        "Keep from start": "start",
-                        "Keep from end": "end",
-                        "Keep both ends": "both"
-                    }
-                    mode = mode_map.get(mode_text, "both")
-                    
-                    # Apply limiting
-                    json_data = self._apply_parent_key_limiting(json_data, limit, mode)
-                    json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    if is_js_literal:
+                        # Skip parent key limiting for JS literal format
+                        # because json.loads() would fail on unquoted keys
+                        self._jsx_update_status(f"⚠ Parent key limiting not supported with JS literal format (uncheck 'Include quotation marks')")
+                    else:
+                        # Parse JSON and apply limiting
+                        json_data = json.loads(json_output)
+                        limit = self.jsx_limit_parent_keys_spin.value()
+                        mode_text = self.jsx_limit_parent_keys_mode_combo.currentText()
+                        
+                        # Map display text to internal mode
+                        mode_map = {
+                            "Keep from start": "start",
+                            "Keep from end": "end",
+                            "Keep both ends": "both"
+                        }
+                        mode = mode_map.get(mode_text, "both")
+                        
+                        # Apply limiting
+                        json_data = self._apply_parent_key_limiting(json_data, limit, mode)
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
                     
                 except Exception as limit_err:
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
