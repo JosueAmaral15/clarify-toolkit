@@ -1534,8 +1534,9 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     
                     if is_js_literal:
                         # Convert JS literal to valid JSON by adding quotes to keys
-                        # Pattern: word character(s) followed by colon
-                        json_text = re.sub(r'(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output)
+                        # Use ^ anchor with MULTILINE to only match keys at line start
+                        # This avoids matching colons inside string values
+                        json_text = re.sub(r'^(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output, flags=re.MULTILINE)
                         json_data = json.loads(json_text)
                     else:
                         # Parse JSON directly
@@ -1577,8 +1578,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     
                     if is_js_literal:
                         # Convert JS literal to valid JSON
-                        import re
-                        json_text = re.sub(r'(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output)
+                        json_text = re.sub(r'^(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output, flags=re.MULTILINE)
                         json_data = json.loads(json_text)
                     else:
                         # Parse JSON directly
