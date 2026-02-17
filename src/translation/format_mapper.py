@@ -30,6 +30,359 @@ from typing import Dict, List, Optional, Tuple
 import re
 
 
+# ============================================================================
+# Session 75 - Placeholder Protection System for 100% Tag Preservation
+# ============================================================================
+
+def replace_tags_with_placeholders(tagged_text: str) -> Tuple[str, Dict[str, Dict[str, str]]]:
+    """
+    Replace format tags with Unicode placeholders before translation.
+    
+    This prevents Google Translate from corrupting or deleting format tags.
+    
+    Session 76 FIX: Now handles BOTH paired tags AND adjacent unpaired tags
+    
+    Example:
+        Input:  "<113|65536:Arial|0,0>RISKS</113|65536>"
+        Output: ("【FMT001】RISKS【/FMT001】", {mapping})
+        
+        Input:  "Header</113|65536><112|65536:Arial|0,0>Body"
+        Output: ("Header【FMTC001】【FMTO002】Body", {mapping})
+    
+    Args:
+        tagged_text: Text with format tags like <113|65536:Arial|0,0>text</113|65536>
+        
+    Returns:
+        (text_with_placeholders, mapping)
+        - text_with_placeholders: Text with 【FMTXXX】 placeholders
+        - mapping: Dict mapping IDs to original tag info
+        
+    Author: COM8 (Sessions 75, 76)
+    """
+    mapping = {}
+    counter = 1
+    result = tagged_text
+    
+    # PASS 1: Match complete tag pairs with content: <opening>text</closing>
+    # This handles the majority of normal formatted text
+    # BUT: Skip pairs with ONLY whitespace (those are span transitions)
+    paired_pattern = r'<(\d+(?:\|\d+)?:[^>]+)>([^<]+?)</(\d+(?:\|\d+)?)>'
+    
+    def replace_paired_match(match):
+        nonlocal counter
+        opening_tag = match.group(1)
+        text_inside = match.group(2)
+        closing_tag = match.group(3)
+        
+        # Session 76.3 FIX: If content is ONLY whitespace, don't treat as paired
+        # These are span transitions and should be handled as individual tags
+        if text_inside.strip() == '':
+            # Return unchanged - will be caught by Pass 2/3 as individual tags
+            return match.group(0)
+        
+        # Generate unique ID
+        fmt_id = f"FMT{counter:03d}"
+        counter += 1
+        
+        # Store original tag info
+        mapping[fmt_id] = {
+            'type': 'paired',
+            'opening': f'<{opening_tag}>',
+            'closing': f'</{closing_tag}>',
+            'original_text': text_inside
+        }
+        
+        # Return placeholder with Unicode brackets 【】
+        return f'【{fmt_id}】{text_inside}【/{fmt_id}】'
+    
+    # Replace all paired tags first
+    result = re.sub(paired_pattern, replace_paired_match, result)
+    
+    # PASS 2: Match remaining CLOSING tags (individual, unpaired)
+    # These appear at span transitions like: "text</TAG1><TAG2>text"
+    closing_pattern = r'</(\d+(?:\|\d+)?)>'
+    
+    def replace_closing_match(match):
+        nonlocal counter
+        closing_tag = match.group(1)
+        
+        fmt_id = f"FMTC{counter:03d}"  # C = Close
+        counter += 1
+        
+        mapping[fmt_id] = {
+            'type': 'closing',
+            'tag': f'</{closing_tag}>'
+        }
+        
+        return f'【{fmt_id}】'
+    
+    result = re.sub(closing_pattern, replace_closing_match, result)
+    
+    # PASS 3: Match remaining OPENING tags (individual, unpaired)
+    opening_pattern = r'<(\d+(?:\|\d+)?:[^>]+)>'
+    
+    def replace_opening_match(match):
+        nonlocal counter
+        opening_tag = match.group(1)
+        
+        fmt_id = f"FMTO{counter:03d}"  # O = Open
+        counter += 1
+        
+        mapping[fmt_id] = {
+            'type': 'opening',
+            'tag': f'<{opening_tag}>'
+        }
+        
+        return f'【{fmt_id}】'
+    
+    result = re.sub(opening_pattern, replace_opening_match, result)
+    
+    return result, mapping
+
+
+def restore_tags_from_placeholders(translated_text: str, mapping: Dict[str, Dict[str, str]]) -> str:
+    """
+    Restore original format tags from placeholders after translation.
+    
+    Session 76 UPDATE: Now handles 3 placeholder types:
+    - Paired: 【FMT001】text【/FMT001】 (normal formatted text)
+    - Closing: 【FMTC001】 (unpaired closing tag)
+    - Opening: 【FMTO001】 (unpaired opening tag)
+    
+    Handles severely corrupted placeholders where Google Translate:
+    - Added spaces: 【FMT001】 → 【F MT001】
+    - Deleted brackets: 【/FMT001】 → 【/FMT001 (missing closing 】)
+    
+    Example:
+        Input:  "【FMT001】RISKS【/FMT001】" or "Header【FMTC001】【FMTO002】Body"
+        Output: "<113|65536:Arial|0,0>RISKS</113|65536>" or "Header</113|65536><112|65536>Body"
+    
+    Args:
+        translated_text: Text with 【FMTXXX】 placeholders
+        mapping: Dict mapping IDs to original tag info
+        
+    Returns:
+        Text with restored tags
+        
+    Author: COM8 (Sessions 75, 76)
+    """
+    result = translated_text
+    
+    # PASS 1: Restore PAIRED tags (【FMT001】...【/FMT001】)
+    # ULTRA-PERMISSIVE: Allows spaces ANYWHERE, handles ASCII brackets too
+    # Matches: 【FMT001】, 【F MT007】, [FMT013], [ F M T 0 1 3 ]
+    pattern1_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】(.*?)【\s*/\s*F\s*M\s*T\s*\1\s*】'
+    pattern1_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\](.*?)\[\s*/\s*F\s*M\s*T\s*\1\s*\]'
+    
+    def restore_paired(match):
+        num = match.group(1).replace(' ', '')
+        translated_text_inside = match.group(2)
+        fmt_id = f"FMT{num}"
+        
+        if fmt_id not in mapping:
+            return match.group(0)
+        
+        tag_info = mapping[fmt_id]
+        if tag_info.get('type') == 'paired':
+            return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        else:
+            return match.group(0)
+    
+    result = re.sub(pattern1_unicode, restore_paired, result, flags=re.DOTALL)
+    result = re.sub(pattern1_ascii, restore_paired, result, flags=re.DOTALL)
+    
+    # PASS 2: Severely corrupted pairs (closing bracket deleted by Google)
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern2_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】(.*?)【\s*/\s*F\s*M\s*T\s*\1\s+'
+    pattern2_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\](.*?)\[\s*/\s*F\s*M\s*T\s*\1\s+'
+    
+    def restore_paired_broken(match):
+        num = match.group(1).replace(' ', '')
+        translated_text_inside = match.group(2)
+        fmt_id = f"FMT{num}"
+        
+        if fmt_id not in mapping:
+            return match.group(0)
+        
+        tag_info = mapping[fmt_id]
+        if tag_info.get('type') == 'paired':
+            return f'{tag_info["opening"]}{translated_text_inside}{tag_info["closing"]}'
+        else:
+            return match.group(0)
+    
+    result = re.sub(pattern2_unicode, restore_paired_broken, result, flags=re.DOTALL)
+    result = re.sub(pattern2_ascii, restore_paired_broken, result, flags=re.DOTALL)
+    
+    # PASS 3: Restore CLOSING tags (【FMTC001】)
+    # ULTRA-PERMISSIVE: Handles spaces anywhere + ASCII brackets
+    pattern_closing_unicode = r'【\s*F\s*M\s*T\s*C\s*(\d+)\s*[】\s]*'
+    pattern_closing_ascii = r'\[\s*F\s*M\s*T\s*C\s*(\d+)\s*[\]\s]*'
+    
+    def restore_closing(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMTC{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'closing':
+            return mapping[fmt_id]['tag']
+        else:
+            return ''
+    
+    result = re.sub(pattern_closing_unicode, restore_closing, result)
+    result = re.sub(pattern_closing_ascii, restore_closing, result)
+    
+    # PASS 4: Restore OPENING tags (【FMTO001】)
+    # ULTRA-PERMISSIVE: Handles spaces anywhere + ASCII brackets
+    pattern_opening_unicode = r'【\s*F\s*M\s*T\s*O\s*(\d+)\s*[】\s]*'
+    pattern_opening_ascii = r'\[\s*F\s*M\s*T\s*O\s*(\d+)\s*[\]\s]*'
+    
+    def restore_opening(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMTO{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'opening':
+            return mapping[fmt_id]['tag']
+        else:
+            return ''
+    
+    result = re.sub(pattern_opening_unicode, restore_opening, result)
+    result = re.sub(pattern_opening_ascii, restore_opening, result)
+    
+    # PASS 5: Cleanup orphaned paired opening tags (【FMT001】 with no closing)
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern3_unicode = r'【\s*F\s*M\s*T\s*(\d+)\s*】'
+    pattern3_ascii = r'\[\s*F\s*M\s*T\s*(\d+)\s*\]'
+    
+    def restore_orphan_opening(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMT{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
+            # Return just the opening tag (closing was lost)
+            return mapping[fmt_id]['opening']
+        else:
+            # Unknown ID or already processed - remove placeholder
+            return ''
+    
+    result = re.sub(pattern3_unicode, restore_orphan_opening, result)
+    result = re.sub(pattern3_ascii, restore_orphan_opening, result)
+    
+    # PASS 6: Cleanup orphaned paired closing tags (【/FMT001】)
+    # ULTRA-PERMISSIVE: Spaces anywhere + ASCII brackets
+    pattern4_unicode = r'【\s*/\s*F\s*M\s*T\s*(\d+)\s*[】\s]*'
+    pattern4_ascii = r'\[\s*/\s*F\s*M\s*T\s*(\d+)\s*[\]\s]*'
+    
+    def restore_orphan_closing(match):
+        num = match.group(1).replace(' ', '')
+        fmt_id = f"FMT{num}"
+        
+        if fmt_id in mapping and mapping[fmt_id].get('type') == 'paired':
+            return mapping[fmt_id]['closing']
+        else:
+            return ''
+    
+    result = re.sub(pattern4_unicode, restore_orphan_closing, result)
+    result = re.sub(pattern4_ascii, restore_orphan_closing, result)
+    
+    return result
+
+
+def protect_special_whitespace(text: str) -> str:
+    """
+    Protect special whitespace characters from Google Translate conversion.
+    
+    Google Translate often normalizes whitespace:
+    - Tabs (\t) → regular spaces
+    - Multiple spaces → single space
+    - Line breaks may be removed
+    - Non-breaking spaces may be converted
+    
+    This function replaces them with Unicode placeholders that Google preserves.
+    
+    Args:
+        text: Text with special whitespace characters
+        
+    Returns:
+        Text with whitespace protected by placeholders
+        
+    Example:
+        Input:  "text\t\ttab  spaces\nline"
+        Output: "text【TAB】【TAB】tab【SP2】spaces【BR】line"
+        
+    Author: COM8 (Session 75)
+    """
+    # Order matters! Process specific patterns before generic ones
+    
+    # Non-breaking space (U+00A0)
+    text = text.replace('\xa0', '【NBSP】')
+    
+    # Tabs
+    text = text.replace('\t', '【TAB】')
+    
+    # Line breaks (single \n)
+    # Note: \n\n will become 【BR】【BR】 which is fine for paragraph breaks
+    text = text.replace('\n', '【BR】')
+    
+    # Multiple consecutive spaces (2 or more)
+    # Pattern: "  " → 【SP2】, "   " → 【SP3】, etc.
+    def replace_spaces(match):
+        count = len(match.group(0))
+        return f'【SP{count}】'
+    
+    text = re.sub(r' {2,}', replace_spaces, text)
+    
+    return text
+
+
+def restore_special_whitespace(text: str) -> str:
+    """
+    Restore special whitespace from placeholders after translation.
+    
+    Reverses the protection applied by protect_special_whitespace().
+    Handles corrupted placeholders where Google Translate added spaces.
+    
+    Args:
+        text: Text with whitespace placeholders
+        
+    Returns:
+        Text with restored whitespace characters
+        
+    Example:
+        Input:  "text【TAB】【TA B】tab【SP2】spaces【BR】line"
+        Output: "text\t\ttab  spaces\nline"
+        
+    Note: Google Translate sometimes adds spaces inside placeholders:
+        【TAB】 → 【TA B】, 【BR】 → 【B R】, etc.
+        We use regex to handle both exact and corrupted patterns.
+        
+    Author: COM8 (Session 75, fixed after user caught incomplete testing)
+    """
+    # Restore in reverse order of protection
+    # Use VERY permissive regex to handle Google's creative corruption:
+    # - Spaces between letters: 【TA B】
+    # - Spaces before/after: 【 TAB】, 【TAB 】
+    # - Multiple spaces: 【T  A  B】
+    # Strategy: Match the bracket, then any mix of target letters and spaces, then bracket
+    
+    # Multiple spaces: 【SP2】 or 【S P2】 or 【 SP2】 or 【SP 2】 → "  ", etc.
+    def restore_spaces(match):
+        count = int(match.group(1))
+        return ' ' * count
+    
+    # Match 【, then S/P/digits with any spaces, then 】
+    text = re.sub(r'【[S\s]*P[\ s]*(\d+)[\s]*】', restore_spaces, text)
+    
+    # Character replacements - match letters in order with any whitespace between/around
+    # TAB: Match 【, then T/A/B in order with any spaces, then 】
+    text = re.sub(r'【[\s]*T[\s]*A[\s]*B[\s]*】', '\t', text)
+    # BR: Match 【, then B/R in order with any spaces, then 】
+    text = re.sub(r'【[\s]*B[\s]*R[\s]*】', '\n', text)
+    # NBSP: Match 【, then N/B/S/P in order with any spaces, then 】
+    text = re.sub(r'【[\s]*N[\s]*B[\s]*S[\s]*P[\s]*】', '\xa0', text)
+    
+    return text
+
+
+# ============================================================================
 # Format bit masks (powers of 2)
 class FormatBit:
     """Bit positions for different formatting types."""
@@ -249,8 +602,11 @@ class FormatMapper:
         if run.font.color.rgb:
             format_bits |= FormatBit.FONT_COLOR
             rgb = run.font.color.rgb
-            hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-            metadata_parts.append(hex_color)
+            if len(rgb) >= 3:
+                hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                metadata_parts.append(hex_color)
+            else:
+                logger.warning(f"Invalid RGB color format: {rgb}")
         
         # Detect highlight/background color
         if run.font.highlight_color:
@@ -655,6 +1011,8 @@ class FormatMapper:
                                                     'width': width,
                                                     'color': color.replace('#', '')
                                                 }
+                                            else:
+                                                logger.warning(f"Invalid border format '{value}' for {side}, expected 'width style color'")
                                 if borders:
                                     cell_data.borders = borders
                 except (ValueError, KeyError):
@@ -732,7 +1090,8 @@ class FormatMapper:
                             list_type = 'N'
                         
                         para_metadata_parts.append(f"{list_type},{level}")
-            except:
+            except (AttributeError, ValueError, TypeError) as e:
+                logger.debug(f"Paragraph is not a list item: {e}")
                 pass  # Not a list item
             
             # Detect heading level (Session 33)
@@ -746,7 +1105,7 @@ class FormatMapper:
                         para_metadata_parts.append(f"H{level}")
                     else:
                         para_metadata_parts.append("H1")  # Default
-                except:
+                except (AttributeError, IndexError, ValueError):
                     para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Detect alignment
@@ -842,14 +1201,16 @@ class FormatMapper:
                             try:
                                 run_obj = Run(run_elem, paragraph)
                                 all_runs.append((run_obj, url))
-                            except:
+                            except (AttributeError, ValueError, TypeError) as e:
+                                logger.debug(f"Skipping invalid run in hyperlink: {e}")
                                 pass  # Skip invalid runs
                 elif 'r' in element.tag:
                     # Regular run (not in hyperlink)
                     try:
                         run_obj = Run(element, paragraph)
                         all_runs.append((run_obj, None))
-                    except:
+                    except (AttributeError, ValueError, TypeError) as e:
+                        logger.debug(f"Skipping invalid run: {e}")
                         pass  # Skip invalid runs
             
             # Process each run (both regular and hyperlink runs)
@@ -886,8 +1247,11 @@ class FormatMapper:
                     segment.add_format(FormatBit.FONT_COLOR)
                     rgb = run.font.color.rgb
                     # Convert RGB to hex string (e.g., FF0000 for red)
-                    hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
-                    metadata_parts.append(hex_color)
+                    if len(rgb) >= 3:
+                        hex_color = f"{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+                        metadata_parts.append(hex_color)
+                    else:
+                        logger.warning(f"Invalid RGB color format: {rgb}")
                 
                 # Detect highlight/background color (Session 18)
                 if run.font.highlight_color:
@@ -1039,7 +1403,7 @@ class FormatMapper:
                                 para_metadata_parts.append("H1")  # Default
                         else:
                             para_metadata_parts.append("H1")  # Default
-                    except:
+                    except (AttributeError, IndexError, ValueError):
                         para_metadata_parts.append("H1")  # Default if parsing fails
             
             # Extract paragraph-level formatting
@@ -1196,6 +1560,33 @@ class FormatMapper:
                         text_content = str(child)
                         if text_content:
                             para_text_nodes.append((text_content, current_style_name, hyperlink_url))
+                    # Session 75 Fix: Handle special formatting elements
+                    elif hasattr(child, 'qname'):
+                        qname = child.qname[1] if isinstance(child.qname, tuple) else str(child.qname)
+                        
+                        # Tab character
+                        if qname == 'tab':
+                            para_text_nodes.append(('\t', current_style_name, hyperlink_url))
+                        
+                        # Line break (soft return within paragraph)
+                        elif qname == 'line-break':
+                            para_text_nodes.append(('\n', current_style_name, hyperlink_url))
+                        
+                        # Multiple spaces (text:s with count attribute)
+                        elif qname == 's':
+                            try:
+                                # Get space count from text:c attribute
+                                space_count = child.getAttribute('c')
+                                count = int(space_count) if space_count else 1
+                                para_text_nodes.append((' ' * count, current_style_name, hyperlink_url))
+                            except (ValueError, KeyError):
+                                # Default to single space if attribute missing
+                                para_text_nodes.append((' ', current_style_name, hyperlink_url))
+                        
+                        # Recursively process other container elements
+                        elif hasattr(child, 'childNodes'):
+                            extract_text_recursive(child, current_style_name, hyperlink_url)
+                    
                     elif hasattr(child, 'childNodes'):
                         # Recursively process container elements
                         extract_text_recursive(child, current_style_name, hyperlink_url)
@@ -1419,6 +1810,33 @@ class FormatMapper:
             return f'{{{{HYPERLINK_{index}}}}}'
         normalized = re.sub(hyperlink_pattern, replace_hyperlink, normalized, flags=re.DOTALL)
         
+        # Session 72 Fix: Helper to clean broken tag artifacts from Google Translate
+        def clean_tag_artifacts(text: str) -> str:
+            """
+            Remove broken tag artifacts that Google Translate sometimes creates.
+            
+            Google Translate can corrupt tags by:
+            - Adding spaces: <113|meta> → <113 | meta>
+            - Removing closing tags entirely: <113|meta>text → <113 | text (no closing tag)
+            - Splitting/merging text differently
+            
+            This function removes:
+            1. Incomplete opening tags: <113 |, < 113|, <113:meta (no closing >)
+            2. Complete but orphaned opening tags: <113|meta>, <113:meta>
+            3. Broken closing tags: </113|65536>, </ 113>
+            """
+            # Remove incomplete opening tags (no closing >): <113 | (stops at space/newline)
+            # Only match the tag token itself, NOT content after it
+            cleaned = re.sub(r'<\s*\d+\s*\|[^\s>]*', '', text)
+            
+            # Remove complete orphaned opening tags: <113|meta>, <113:meta>
+            cleaned = re.sub(r'<\s*\d+\s*(?:\|[^>]*)?\s*(?::[^>]*)?\s*>', '', cleaned)
+            
+            # Remove broken closing tags: </113|65536>, </ 113>
+            cleaned = re.sub(r'<\s*/\s*\d+(?:\s*\|\s*\d+)?\s*>', '', cleaned)
+            
+            return cleaned
+        
         # Pattern: <char|para:meta>text</char|para> or variations
         # Format: "char_bits|para_bits:char_meta|para_meta" or simpler combinations
         # Examples:
@@ -1437,7 +1855,11 @@ class FormatMapper:
             if match.start() > last_pos:
                 plain = normalized[last_pos:match.start()]
                 if plain:
-                    segments.append(TextSegment(text=plain))
+                    # Session 72 Fix: Clean broken tags from plain text
+                    cleaned_plain = clean_tag_artifacts(plain)
+                    # Session 75 Fix: Don't strip! Preserve \n\n for paragraph breaks
+                    if cleaned_plain:  # Keep whitespace/newlines
+                        segments.append(TextSegment(text=cleaned_plain))
             
             # Parse format bits (char|para or just char)
             format_str = match.group(1)
@@ -1476,7 +1898,11 @@ class FormatMapper:
         if last_pos < len(normalized):
             plain = normalized[last_pos:]
             if plain:
-                segments.append(TextSegment(text=plain))
+                # Session 72 Fix: Clean broken tags from remaining plain text
+                cleaned = clean_tag_artifacts(plain)
+                # Session 75 Fix: Don't strip! Preserve whitespace and newlines
+                if cleaned:  # Keep all whitespace
+                    segments.append(TextSegment(text=cleaned))
         
         # Restore hyperlink placeholders (Session 44)
         final_segments = []
@@ -1557,7 +1983,8 @@ class FormatMapper:
         if table.table_style:
             try:
                 docx_table.style = table.table_style
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Table style '{table.table_style}' not found in document: {e}")
                 pass  # Style might not exist in document
         
         # Track which cells are covered by merges (to avoid duplicate processing)
@@ -1823,7 +2250,8 @@ class FormatMapper:
                     'FF0000': WD_COLOR_INDEX.RED,
                 }
                 run.font.highlight_color = rgb_to_highlight.get(hex_bg.upper(), WD_COLOR_INDEX.YELLOW)
-            except:
+            except (ValueError, KeyError, AttributeError) as e:
+                logger.warning(f"Failed to apply highlight color: {e}")
                 pass  # Skip if mapping fails
         
         # Apply superscript (Session 19)
@@ -2577,31 +3005,84 @@ class FormatMapper:
                 # Safety: Remove any system tags that leaked
                 clean_text = FormatMapper.remove_tags(segment.text)
                 
-                # Handle hyperlinks (Session 44)
-                if segment.hyperlink_url:
-                    from odf.text import A
-                    link = A(href=segment.hyperlink_url)
+                # Session 75: Handle line breaks (\n) and tabs (\t) in text
+                # Split by \n to insert line breaks
+                if '\n' in clean_text or '\t' in clean_text:
+                    from odf.text import LineBreak, Tab
                     
-                    # Apply formatting to link content if needed
-                    style = get_or_create_style(segment.format_bits, segment.metadata)
-                    if style:
-                        span = Span(stylename=style)
-                        span.addText(clean_text)
-                        link.addElement(span)
-                    else:
-                        link.addText(clean_text)
-                    
-                    current_paragraph.addElement(link)
+                    # Process character by character to handle \n and \t
+                    i = 0
+                    while i < len(clean_text):
+                        if clean_text[i] == '\n':
+                            # Insert line break
+                            current_paragraph.addElement(LineBreak())
+                            i += 1
+                        elif clean_text[i] == '\t':
+                            # Insert tab
+                            current_paragraph.addElement(Tab())
+                            i += 1
+                        else:
+                            # Collect regular text until next special char
+                            j = i
+                            while j < len(clean_text) and clean_text[j] not in '\n\t':
+                                j += 1
+                            
+                            text_part = clean_text[i:j]
+                            if text_part:
+                                # Handle hyperlinks (Session 44)
+                                if segment.hyperlink_url:
+                                    from odf.text import A
+                                    link = A(href=segment.hyperlink_url)
+                                    
+                                    # Apply formatting to link content if needed
+                                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                                    if style:
+                                        span = Span(stylename=style)
+                                        span.addText(text_part)
+                                        link.addElement(span)
+                                    else:
+                                        link.addText(text_part)
+                                    
+                                    current_paragraph.addElement(link)
+                                else:
+                                    # Get or create style for this format
+                                    style = get_or_create_style(segment.format_bits, segment.metadata)
+                                    
+                                    if style:
+                                        span = Span(stylename=style)
+                                        span.addText(text_part)
+                                        current_paragraph.addElement(span)
+                                    else:
+                                        current_paragraph.addText(text_part)
+                            
+                            i = j
                 else:
-                    # Get or create style for this format
-                    style = get_or_create_style(segment.format_bits, segment.metadata)
-                    
-                    if style:
-                        span = Span(stylename=style)
-                        span.addText(clean_text)
-                        current_paragraph.addElement(span)
+                    # No special characters - add text directly
+                    # Handle hyperlinks (Session 44)
+                    if segment.hyperlink_url:
+                        from odf.text import A
+                        link = A(href=segment.hyperlink_url)
+                        
+                        # Apply formatting to link content if needed
+                        style = get_or_create_style(segment.format_bits, segment.metadata)
+                        if style:
+                            span = Span(stylename=style)
+                            span.addText(clean_text)
+                            link.addElement(span)
+                        else:
+                            link.addText(clean_text)
+                        
+                        current_paragraph.addElement(link)
                     else:
-                        current_paragraph.addText(clean_text)
+                        # Get or create style for this format
+                        style = get_or_create_style(segment.format_bits, segment.metadata)
+                        
+                        if style:
+                            span = Span(stylename=style)
+                            span.addText(clean_text)
+                            current_paragraph.addElement(span)
+                        else:
+                            current_paragraph.addText(clean_text)
         
         # Add final paragraph (even if empty)
         doc.text.addElement(current_paragraph)

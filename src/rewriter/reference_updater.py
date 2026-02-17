@@ -269,12 +269,20 @@ def apply_substitutions_to_file(
             # Create backup
             if create_backup:
                 backup_path = filepath + '.bak'
-                with open(backup_path, 'w', encoding='utf-8') as f:
-                    f.write(original_content)
+                try:
+                    with open(backup_path, 'w', encoding='utf-8') as f:
+                        f.write(original_content)
+                except (IOError, OSError, PermissionError) as e:
+                    logger.error(f"Failed to create backup at {backup_path}: {e}")
+                    raise RuntimeError(f"Cannot create backup: {e}") from e
 
             # Write updated content
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(content)
+            try:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(content)
+            except (IOError, OSError, PermissionError) as e:
+                logger.error(f"Failed to write updated content to {filepath}: {e}")
+                raise RuntimeError(f"Cannot write updated file: {e}") from e
 
         return substitutions_made
 

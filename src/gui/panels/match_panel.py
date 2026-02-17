@@ -8,6 +8,7 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 
 import os
 import sys
+import subprocess
 from typing import List, Optional
 
 from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex
@@ -92,9 +93,13 @@ class MatchPanel(QWidget):
             return
 
         # Open in OS file manager
-        if sys.platform.startswith("darwin"):
-            os.system(f'open -R "{path}"')
-        elif os.name == "nt":
-            os.system(f'explorer /select,"{path}"')
-        else:
-            os.system(f'xdg-open "{os.path.dirname(path)}"')
+        try:
+            if sys.platform.startswith("darwin"):
+                subprocess.run(["open", "-R", path], check=False, timeout=5)
+            elif os.name == "nt":
+                subprocess.run(["explorer", "/select,", path], check=False, timeout=5)
+            else:
+                subprocess.run(["xdg-open", os.path.dirname(path)], check=False, timeout=5)
+        except Exception as e:
+            QMessageBox.warning(self, tr("match_panel.msg_open_title"), 
+                              f"Failed to open file location: {e}")

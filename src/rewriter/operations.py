@@ -111,7 +111,8 @@ def join_keys(node: JSONNode) -> Tuple[JSONNode, int]:
                 sig = freeze(v)
                 if sig in seen: continue
                 seen.add(sig); uniq.append(v)
-            out.append((k, uniq[0] if len(uniq) == 1 else uniq))
+            if uniq:  # Only append if we have unique values
+                out.append((k, uniq[0] if len(uniq) == 1 else uniq))
         return out, removed_count
     if isinstance(node, list):
         result = []
@@ -340,7 +341,7 @@ def remove_duplicate_array_values(node: JSONNode, consecutive_only: bool = False
     if isinstance(node, list):
         if consecutive_only:
             # Remove only consecutive duplicates
-            if not node:
+            if not node or len(node) == 0:
                 return [], 0
             result = []
             prev_item, prev_removed = remove_duplicate_array_values(node[0], consecutive_only)
@@ -733,7 +734,7 @@ def skip_keys_without_siblings(node: JSONNode) -> Tuple[JSONNode, int]:
         if len(obj) > 1:
             return True  # This level has siblings
 
-        if not obj:
+        if not obj or len(obj) == 0:
             return False  # Empty object
 
         # Single child - check if it's an object with descendants

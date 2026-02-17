@@ -95,7 +95,7 @@ class ProcessingModal(QDialog):
         self._apply_styles()
 
         # Timer for loading animation
-        self._loading_timer = QTimer()
+        self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(self._animate_loading)
         self._loading_dots = 0
 

@@ -331,8 +331,11 @@ class ExportManager:
         if include_metadata:
             data = ExportManager.add_metadata(data, "export")
 
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=indent, ensure_ascii=False)
+        try:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=indent, ensure_ascii=False)
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Failed to export JSON to {output_path}: {e}") from e
 
     @staticmethod
     # pylint: disable=too-many-positional-arguments  # Export API design

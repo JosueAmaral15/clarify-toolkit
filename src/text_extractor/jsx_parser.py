@@ -18,6 +18,7 @@ Date: 2025-11-24
 
 import re
 from ..utils.logger import get_logger
+from ..utils.normalization import is_standard_tag
 
 logger = get_logger(__name__)
 from typing import List, Tuple, Optional, Dict
@@ -31,11 +32,6 @@ STANDARD_HTML_TAGS = {
     'a', 'img', 'ul', 'ol', 'li', 'table', 'tr', 'td', 'th', 'form', 'input',
     'button', 'select', 'option', 'textarea', 'label', 'br', 'strong', 'em'
 }
-
-
-def is_standard_tag(name: str) -> bool:
-    """Check if tag name is a standard HTML tag."""
-    return name.lower() in STANDARD_HTML_TAGS
 
 
 class JSXParser:

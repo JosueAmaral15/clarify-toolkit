@@ -211,7 +211,7 @@ class TextToJsonDock(BaseDock):
     def __init__(self, parent: QWidget | None = None):
         super().__init__("Text to JSON Converter", parent)
         self.conversion_history: List[Dict[str, str]] = []
-        self.live_preview_timer = QTimer()
+        self.live_preview_timer = QTimer(self)
         self.live_preview_timer.setSingleShot(True)
         self.live_preview_timer.timeout.connect(self._do_live_preview)
 

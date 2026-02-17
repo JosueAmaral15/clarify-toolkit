@@ -23,6 +23,7 @@ import os
 import re
 import json
 from typing import List, Dict, Any, Optional, Tuple, Union
+from ..utils.normalization import is_standard_tag, normalize_token
 
 # Type aliases
 JSONLike = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -40,11 +41,6 @@ STANDARD_HTML_TAGS = {
     'button','select','datalist','optgroup','option','textarea','output','progress',
     'meter','fieldset','legend','details','summary','dialog','slot','template','canvas'
 }
-
-
-def is_standard_tag(name: str) -> bool:
-    """Check if tag name is a standard HTML tag."""
-    return name.lower() in STANDARD_HTML_TAGS
 
 
 def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[str]:
@@ -109,56 +105,6 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
 
         # Fallback: no whitespace found in the window (a very long first word).
         return sub
-
-
-def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
-    """
-    Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
-    optionally uppercase whole token.
-    Splits camelCase/PascalCase into words before applying conversion.
-    """
-    s = s.strip()
-    
-    # Special handling for 'preserve' mode - keep original case
-    if case_style == "preserve" or case_style == "none":
-        # Only remove non-alphanumeric characters, keep original case
-        cleaned = re.sub(r"[^0-9A-Za-z]+", "_", s)
-        # Remove leading/trailing underscores
-        token = cleaned.strip("_")
-        if to_upper:
-            token = token.upper()
-        return token
-    
-    # Step 1: Split camelCase/PascalCase into separate words
-    # Insert space before uppercase letters that follow lowercase or are followed by lowercase
-    with_spaces = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)  # lowerUpper → lower Upper
-    with_spaces = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', with_spaces)  # XMLParser → XML Parser
-    
-    # Step 2: Convert any remaining non-alphanumeric into space
-    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", with_spaces)
-    
-    # Step 3: Split into words
-    words = [w for w in cleaned.strip().split() if w]
-    
-    if not words:
-        token = ""
-    else:
-        if case_style == "snake":
-            token = "_".join(w.lower() for w in words)
-        elif case_style == "kebab":
-            token = "-".join(w.lower() for w in words)
-        elif case_style == "camel":
-            head = words[0].lower()
-            tail = [w[:1].upper() + w[1:].lower() for w in words[1:]]
-            token = head + "".join(tail)
-        elif case_style == "pascal":
-            token = "".join(w[:1].upper() + w[1:].lower() for w in words)
-        else:
-            # default snake
-            token = "_".join(w.lower() for w in words)
-    if to_upper:
-        token = token.upper()
-    return token
 
 
 def path_join(parts: List[str]) -> str:
@@ -365,29 +311,6 @@ class AdvancedExtractor:
         
         return modified_stack
 
-    def _extract_class_name_from_parser(self, parser, stack: List[str], tag: str) -> Optional[str]:
-        """
-        Extract class attribute from parser's class_map.
-        Returns joined class names with dash if multiple, or None if no class found.
-        """
-        if not self.use_class_names:
-            return None
-        
-        # Check if parser has class_map (only JSXParser)
-        if not hasattr(parser, 'class_map'):
-            return None
-        
-        # Look up class using stack + tag as key
-        stack_key = (tuple(stack), tag)
-        class_value = parser.class_map.get(stack_key)
-        
-        if class_value:
-            # Multiple classes: join with dash (e.g., "btn primary" -> "btn-primary")
-            class_names = class_value.split()
-            return "-".join(class_names) if class_names else None
-        
-        return None
-
     def _filter_standard(self, path: List[str]) -> List[str]:
         """Filter out standard HTML tags if no_standard=True."""
         if not self.no_standard:
@@ -403,6 +326,9 @@ class AdvancedExtractor:
         """
         tokens: List[str] = [file_root_token] + stack
         tokens = self._filter_standard(tokens)
+        
+        # Apply limit to ALL tokens (including HTML tags and intermediate path keys)
+        tokens = [self._apply_limit_to_key(t) for t in tokens]
 
         if self.include_key or (not self.include_key and not self.include_value):
             tokens.append(self.param)
@@ -421,11 +347,16 @@ class AdvancedExtractor:
     ) -> List[str]:
         """Build path tokens including the matched key (attribute mode)."""
         tokens = [file_root_token] + self._filter_standard(stack)
+        
+        # Apply limit to ALL tokens (including HTML tags and intermediate path keys)
+        tokens = [self._apply_limit_to_key(t) for t in tokens]
 
         # Include the key segment when requested / in match-all
         if self.include_key or self.match_all or (not self.include_key and not self.include_value):
             if key_for_path and self.is_attribute_mode:
-                tokens.append(key_for_path)
+                # Apply limit to the attribute key as well
+                limited_key = self._apply_limit_to_key(key_for_path)
+                tokens.append(limited_key)
 
         return tokens
 
@@ -464,22 +395,6 @@ class AdvancedExtractor:
         for t in path_tokens:
             node = node.setdefault(t, {})
         node[key] = raw_value
-        return root
-
-    def _record_text_bucket(self, path_tokens: List[str], value: str) -> Dict[str, Any]:
-        """
-        Insert value into a '_text' list under the given path:
-        DashboardPage: { Section: { _text: [ "line1", "line2", ... ] } }
-        """
-        root: Dict[str, Any] = {}
-        node = root
-        for t in path_tokens:
-            node = node.setdefault(t, {})
-        bucket = node.setdefault("_text", [])
-        if isinstance(bucket, list):
-            bucket.append(value)
-        else:
-            node["_text"] = [bucket, value]
         return root
 
     def deep_merge(self, a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:

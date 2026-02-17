@@ -577,30 +577,6 @@ class SearchReplacePanel(QWidget):
         conds, logic_op = self._conds()
         return filter_files_by_conditions(files, conds, logic_op)
 
-    # def _do_search(self):
-    #     try:
-    #         patt = SearchOptions(self.chk_case.isChecked(),
-    #                              self.chk_word.isChecked(),
-    #                              self.chk_regex.isChecked()).compile(self.ed_query.text())
-    #     except ValueError as e:
-    #         QMessageBox.critical(self, "Invalid pattern", str(e)); return
-
-    #     matches: Dict[str, List[Tuple[int,int,str]]] = {}
-    #     for p in self._iter_files():
-    #         try:
-    #             text = read_text(p)
-    #             lst: List[Tuple[int,int,str]] = []
-    #             for m in patt.finditer(text):
-    #                 line = text.count("\n", 0, m.start()) + 1
-    #                 col = m.start() - (text.rfind("\n", 0, m.start()) + 1)
-    #                 snippet = text.splitlines()[line-1]
-    #                 lst.append((line, col, snippet))
-    #             if lst:
-    #                 matches[p] = lst
-    #         except Exception as e:
-    #             print(f"[WARN] {p}: {e}", file=sys.stderr)
-    #     self.results.populate(matches)
-
     def enable_buttons(self, state, include_buttons=True, include_advanced_conditions=True):
         if include_buttons:
             self.btn_browse.setEnabled(state)

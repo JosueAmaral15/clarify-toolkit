@@ -128,12 +128,15 @@ class FormatConverter:
 
         # Write output file
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        if target_format == Format.BSON:
-            with open(output_path, 'wb') as f:
-                f.write(result)
-        else:
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(result)
+        try:
+            if target_format == Format.BSON:
+                with open(output_path, 'wb') as f:
+                    f.write(result)
+            else:
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(result)
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Failed to write converted file to {output_path}: {e}") from e
 
         logger.info(f"Conversion complete: {output_path}")
 

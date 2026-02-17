@@ -49,13 +49,19 @@ class FileModificationCommand(Command):
 
     def execute(self) -> None:
         """Write new content to file."""
-        with open(self.filepath, 'w', encoding='utf-8') as f:
-            f.write(self.new_content)
+        try:
+            with open(self.filepath, 'w', encoding='utf-8') as f:
+                f.write(self.new_content)
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Cannot write to {self.filepath}: {e}") from e
 
     def undo(self) -> None:
         """Restore original content."""
-        with open(self.filepath, 'w', encoding='utf-8') as f:
-            f.write(self.original_content)
+        try:
+            with open(self.filepath, 'w', encoding='utf-8') as f:
+                f.write(self.original_content)
+        except (IOError, OSError, PermissionError) as e:
+            raise RuntimeError(f"Cannot restore {self.filepath}: {e}") from e
 
     def redo(self) -> None:
         """Re-apply new content."""

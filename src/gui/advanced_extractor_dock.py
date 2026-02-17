@@ -521,8 +521,15 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
                     "Text files (*.txt);;All files (*)"
                 )
                 if file_path:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(paths_text)
+                    try:
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(paths_text)
+                    except (IOError, OSError, PermissionError) as e:
+                        self.show_error(
+                            tr("advanced_extractor.error", "Error"),
+                            tr("advanced_extractor.save_error", f"Failed to save paths: {e}")
+                        )
+                        return
 
             # Save JSON
             if json_text:
@@ -533,8 +540,15 @@ class AdvancedExtractorDock(BaseDock, FileInputMixin):
                     "JSON files (*.json);;All files (*)"
                 )
                 if file_path:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(json_text)
+                    try:
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(json_text)
+                    except (IOError, OSError, PermissionError) as e:
+                        self.show_error(
+                            tr("advanced_extractor.error", "Error"),
+                            tr("advanced_extractor.save_error", f"Failed to save JSON: {e}")
+                        )
+                        return
 
             self.show_info(
                 tr("advanced_extractor.saved", "Saved"),

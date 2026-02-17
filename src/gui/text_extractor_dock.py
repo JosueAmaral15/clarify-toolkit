@@ -183,8 +183,10 @@ class TextExtractorDock(StandardToolDock):
         self.layout.addLayout(editor_btn_layout)
 
         # Store button references for tooltips (v2.9.66)
-        self.btn_extract = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Extract"][0]
-        self.btn_clear = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Clear"][0]
+        extract_buttons = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Extract"]
+        clear_buttons = [btn for btn in self.findChildren(QPushButton) if btn.text() == "Clear"]
+        self.btn_extract = extract_buttons[0] if extract_buttons else None
+        self.btn_clear = clear_buttons[0] if clear_buttons else None
 
         # Setup tooltips AFTER all widgets are created (v2.9.66)
         self._apply_tooltips()
@@ -303,12 +305,17 @@ class TextExtractorDock(StandardToolDock):
                 result = self._flatten_to_nested(result, options['exclude_numeric'], options['skip_empty'])
 
             # Save result
-            with open(output_path, 'w', encoding='utf-8') as f:
-                if self.chk_ts_export.isChecked():
-                    f.write("export default ")
-                json.dump(result, f, indent=2, ensure_ascii=False)
-                if self.chk_ts_export.isChecked():
-                    f.write(";")
+            try:
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    if self.chk_ts_export.isChecked():
+                        f.write("export default ")
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                    if self.chk_ts_export.isChecked():
+                        f.write(";")
+            except (IOError, OSError, PermissionError) as e:
+                logger.error(f"Failed to save text extractor output to {output_path}: {e}")
+                self.worker.signals.error.emit(f"Failed to save output: {e}")
+                return
 
             # Calculate statistics
             total_keys = self._count_keys(result)
@@ -514,7 +521,9 @@ class TextExtractorDock(StandardToolDock):
 
         # Apply case style
         case_style = options['case_style']
-        if case_style == 'snake':
+        if not tokens:
+            result = text  # No tokens to process
+        elif case_style == 'snake':
             result = '_'.join(t.lower() for t in tokens)
         elif case_style == 'camel':
             result = tokens[0].lower() + ''.join(t.capitalize() for t in tokens[1:])
