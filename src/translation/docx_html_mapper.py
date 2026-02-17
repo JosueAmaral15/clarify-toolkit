@@ -139,10 +139,11 @@ class HTMLSegment:
     """Represents a document element as HTML segment."""
     text: str
     css_class: str
-    tag_type: str  # 'div', 'span', 'br', 'line-break', 'tab', or 'image'
+    tag_type: str  # 'div', 'span', 'br', 'line-break', 'tab', 'image', or 'table'
     attributes: Optional[FormatAttributes]
     element_type: str = 'span'  # Extended type info
     image_id: Optional[str] = None  # For image segments: 'IMG001', 'IMG002', etc.
+    table_id: Optional[str] = None  # For table segments: 'TBL001', 'TBL002', etc.
 
 
 # ============================================================================
@@ -287,6 +288,252 @@ class ImageManager:
         """Clear all stored images (for memory management)."""
         self._images.clear()
         self._hash_to_id.clear()
+        self._next_id = 1
+
+
+# ============================================================================
+# Table Management (NEW for Phase 2)
+# ============================================================================
+
+@dataclass
+class TableData:
+    """Stores metadata for a single table."""
+    
+    table_id: str                     # 'TBL001', 'TBL002', etc.
+    rows: int                         # Number of rows
+    cols: int                         # Number of columns
+    cells: List[List[str]]            # 2D array [row][col] = text
+    style: Optional[str] = None       # Style name (e.g., "Normal Table")
+    document_index: Optional[int] = None  # Position in doc.element.body
+    
+    def get_cell(self, row: int, col: int) -> str:
+        """
+        Get cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+        
+        Returns:
+            Cell text, or empty string if out of bounds
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            return self.cells[row][col]
+        return ""
+    
+    def set_cell(self, row: int, col: int, text: str) -> None:
+        """
+        Set cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+            text: Cell content
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.cells[row][col] = text
+    
+    def to_html(self) -> str:
+        """
+        Convert to HTML table string.
+        
+        Returns:
+            HTML <table> element with data-table attribute
+        """
+        html_parts = [f'<table data-table="{self.table_id}">\n']
+        
+        for row_idx in range(self.rows):
+            html_parts.append('  <tr>\n')
+            for col_idx in range(self.cols):
+                cell_text = self.cells[row_idx][col_idx]
+                # HTML escape special characters
+                safe_text = html.escape(cell_text)
+                html_parts.append(f'    <td>{safe_text}</td>\n')
+            html_parts.append('  </tr>\n')
+        
+        html_parts.append('</table>')
+        return ''.join(html_parts)
+    
+    def get_dimensions(self) -> tuple:
+        """
+        Get table dimensions.
+        
+        Returns:
+            Tuple of (rows, cols)
+        """
+        return (self.rows, self.cols)
+
+
+class TableManager:
+    """
+    Manages collection of tables for DOCX↔HTML conversion.
+    
+    Tables are assigned unique IDs (TBL001, TBL002, etc.) and
+    stored with their metadata. During extraction, DOCX tables
+    are converted to HTML <table> elements. During reconstruction,
+    HTML tables are converted back to DOCX tables.
+    
+    Example:
+        >>> manager = TableManager()
+        >>> table_id = manager.add_table(
+        ...     rows=2, cols=2,
+        ...     cells=[['A', 'B'], ['C', 'D']]
+        ... )
+        >>> table_id
+        'TBL001'
+        >>> html = manager.generate_html_placeholder(table_id)
+        >>> print(html)
+        <table data-table="TBL001">
+          <tr><td>A</td><td>B</td></tr>
+          <tr><td>C</td><td>D</td></tr>
+        </table>
+    """
+    
+    def __init__(self):
+        """Initialize empty table manager."""
+        self._tables: Dict[str, TableData] = {}
+        self._document_order: List[str] = []  # Track table order
+        self._next_id: int = 1
+    
+    def add_table(
+        self,
+        rows: int,
+        cols: int,
+        cells: List[List[str]],
+        style: Optional[str] = None,
+        document_index: Optional[int] = None
+    ) -> str:
+        """
+        Add table to manager and return assigned ID.
+        
+        Args:
+            rows: Number of rows
+            cols: Number of columns
+            cells: 2D list of cell text [row][col]
+            style: Table style name (optional)
+            document_index: Position in document (optional)
+        
+        Returns:
+            table_id: Assigned table ID (e.g., "TBL001")
+        
+        Raises:
+            ValueError: If dimensions don't match cells array
+        """
+        # Validate dimensions
+        if len(cells) != rows:
+            raise ValueError(f"Expected {rows} rows, got {len(cells)}")
+        for row_idx, row in enumerate(cells):
+            if len(row) != cols:
+                raise ValueError(
+                    f"Row {row_idx} has {len(row)} cells, expected {cols}"
+                )
+        
+        # Generate ID
+        table_id = f"TBL{self._next_id:03d}"
+        self._next_id += 1
+        
+        # Create and store
+        table_data = TableData(
+            table_id=table_id,
+            rows=rows,
+            cols=cols,
+            cells=cells,
+            style=style,
+            document_index=document_index
+        )
+        self._tables[table_id] = table_data
+        self._document_order.append(table_id)
+        
+        return table_id
+    
+    def get_table(self, table_id: str) -> Optional[TableData]:
+        """
+        Get table by ID.
+        
+        Args:
+            table_id: Table identifier (e.g., "TBL001")
+        
+        Returns:
+            TableData if found, None otherwise
+        """
+        return self._tables.get(table_id)
+    
+    def has_table(self, table_id: str) -> bool:
+        """
+        Check if table exists.
+        
+        Args:
+            table_id: Table identifier
+        
+        Returns:
+            True if table exists, False otherwise
+        """
+        return table_id in self._tables
+    
+    def get_all_tables(self) -> List[TableData]:
+        """
+        Get all tables in document order.
+        
+        Returns:
+            List of TableData objects in document order
+        """
+        return [self._tables[tid] for tid in self._document_order]
+    
+    def get_table_count(self) -> int:
+        """
+        Get total number of tables.
+        
+        Returns:
+            Number of tables stored
+        """
+        return len(self._tables)
+    
+    def generate_html_placeholder(self, table_id: str) -> str:
+        """
+        Generate HTML placeholder for table.
+        
+        This is used during extraction to replace DOCX table
+        with HTML table that will be sent to Google Translate.
+        
+        Args:
+            table_id: Table identifier
+        
+        Returns:
+            HTML table string with data-table attribute
+        
+        Raises:
+            ValueError: If table_id not found
+        """
+        table_data = self.get_table(table_id)
+        if not table_data:
+            raise ValueError(f"Table not found: {table_id}")
+        
+        return table_data.to_html()
+    
+    def get_statistics(self) -> Dict:
+        """
+        Get statistics about stored tables.
+        
+        Returns:
+            Dictionary with table statistics
+        """
+        total_cells = sum(t.rows * t.cols for t in self._tables.values())
+        largest_table = max(
+            (t.rows * t.cols for t in self._tables.values()),
+            default=0
+        )
+        
+        return {
+            'table_count': len(self._tables),
+            'total_cells': total_cells,
+            'largest_table': largest_table,
+            'table_ids': list(self._document_order)
+        }
+    
+    def clear(self):
+        """Clear all stored tables and reset counter."""
+        self._tables.clear()
+        self._document_order.clear()
         self._next_id = 1
 
 
