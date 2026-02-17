@@ -474,18 +474,19 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Session COM8: NEW HTML-based format system for DOCX (with image support)
+                    # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Extract as HTML (with CSS formatting and images)
-                    html_content, css_manager, image_manager = extract_html_from_docx(file_path)
+                    # Extract as HTML (with CSS formatting, images, and tables)
+                    html_content, css_manager, image_manager, table_manager = extract_html_from_docx(file_path)
                     
                     # Store managers for later DOCX creation
                     self._css_manager = css_manager
                     self._image_manager = image_manager
+                    self._table_manager = table_manager
                     self._source_file_path = file_path
                     
-                    # Parse HTML to extract plain text for UI preview (with tabs and line-breaks)
+                    # Parse HTML to extract plain text for UI preview (with tabs, line-breaks, and tables)
                     from html.parser import HTMLParser
                     import html as html_module
                     
@@ -494,6 +495,8 @@ class GoogleTranslateDock(BaseDock):
                             super().__init__()
                             self.text_parts = []
                             self.in_head = False
+                            self.in_table = False
+                            self.table_row_cells = []
                         
                         def handle_starttag(self, tag, attrs):
                             if tag in ('head', 'style', 'meta'):
@@ -512,10 +515,28 @@ class GoogleTranslateDock(BaseDock):
                                 elif 'data-image' in attr_dict:
                                     image_id = attr_dict['data-image']
                                     self.text_parts.append(f'[{image_id}]')  # Show [IMG001] in preview
+                            elif tag == 'table':
+                                # Show table marker in preview
+                                attr_dict = dict(attrs)
+                                table_id = attr_dict.get('data-table', 'TABLE')
+                                self.text_parts.append(f'\n[{table_id}]\n')
+                                self.in_table = True
+                            elif tag == 'tr' and self.in_table:
+                                self.table_row_cells = []
+                            elif tag == 'td' and self.in_table:
+                                pass  # Cell content will be added via handle_data
                         
                         def handle_endtag(self, tag):
                             if tag in ('head', 'style'):
                                 self.in_head = False
+                            elif tag == 'td' and self.in_table:
+                                pass  # Cell ended
+                            elif tag == 'tr' and self.in_table:
+                                # Row ended - add separator
+                                pass
+                            elif tag == 'table':
+                                self.in_table = False
+                                self.text_parts.append('\n')
                         
                         def handle_data(self, data):
                             if not self.in_head and data.strip():
@@ -653,18 +674,19 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Session COM8: NEW HTML-based format system for DOCX (with image support)
+                    # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Extract as HTML (with CSS formatting and images)
-                    html_content, css_manager, image_manager = extract_html_from_docx(file_path)
+                    # Extract as HTML (with CSS formatting, images, and tables)
+                    html_content, css_manager, image_manager, table_manager = extract_html_from_docx(file_path)
                     
                     # Store managers for later DOCX creation
                     self._css_manager = css_manager
                     self._image_manager = image_manager
+                    self._table_manager = table_manager
                     self._source_file_path = file_path
                     
-                    # Send HTML to translation (Google preserves HTML structure and image markers)
+                    # Send HTML to translation (Google preserves HTML structure, image markers, and tables)
                     text_to_translate = html_content
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
@@ -1109,26 +1131,39 @@ class GoogleTranslateDock(BaseDock):
             output_path: Path to save DOCX file
         """
         if self._translated_html and self._css_manager:
-            # NEW HTML system - use HTML to DOCX conversion with images
+            # NEW HTML system - use HTML to DOCX conversion with images and tables
             from translation.docx_html_mapper import create_docx_from_html
             
-            # Check if we have image_manager (new system) or not (old DOCX without images)
-            if hasattr(self, '_image_manager') and self._image_manager:
+            # Check if we have image_manager and table_manager (new system)
+            image_manager = getattr(self, '_image_manager', None)
+            table_manager = getattr(self, '_table_manager', None)
+            
+            if image_manager or table_manager:
+                # New system with images and/or tables
+                from translation.docx_html_mapper import ImageManager, TableManager
+                
+                # Use existing managers or create empty ones
+                img_mgr = image_manager if image_manager else ImageManager()
+                tbl_mgr = table_manager if table_manager else TableManager()
+                
                 create_docx_from_html(
                     self._translated_html,
                     output_path,
                     self._css_manager,
-                    self._image_manager
+                    img_mgr,
+                    tbl_mgr
                 )
             else:
-                # Old DOCX files without images - create empty ImageManager
-                from translation.docx_html_mapper import ImageManager
+                # Old DOCX files without images/tables - create empty managers
+                from translation.docx_html_mapper import ImageManager, TableManager
                 empty_image_manager = ImageManager()
+                empty_table_manager = TableManager()
                 create_docx_from_html(
                     self._translated_html,
                     output_path,
                     self._css_manager,
-                    empty_image_manager
+                    empty_image_manager,
+                    empty_table_manager
                 )
             
         elif self._translated_segments:
