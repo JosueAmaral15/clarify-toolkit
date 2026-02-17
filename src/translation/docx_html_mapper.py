@@ -594,6 +594,7 @@ class DocxHtmlMapper:
         self.doc = Document(docx_path)
         self.css_manager = CSSClassManager()
         self.image_manager = ImageManager()
+        self.table_manager = TableManager()
         self.segments: List[HTMLSegment] = []
     
     def extract_html_from_docx(self) -> str:
@@ -724,6 +725,56 @@ class DocxHtmlMapper:
                     attributes=None,
                     element_type='para-break'
                 ))
+        
+        # Extract tables after all paragraphs
+        for table_idx, table in enumerate(self.doc.tables):
+            try:
+                # Get table dimensions
+                rows = len(table.rows)
+                cols = len(table.columns) if table.columns else 0
+                
+                # Skip empty tables
+                if rows == 0 or cols == 0:
+                    print(f"[DocxHtmlMapper] WARNING: Skipping empty table {table_idx} ({rows}x{cols})")
+                    continue
+                
+                # Extract cell content
+                cells = []
+                for row in table.rows:
+                    row_cells = []
+                    for cell in row.cells:
+                        # Join multiple paragraphs in cell with newline
+                        cell_text = '\n'.join(para.text for para in cell.paragraphs)
+                        row_cells.append(cell_text)
+                    cells.append(row_cells)
+                
+                # Get style name
+                style = table.style.name if table.style else None
+                
+                # Store in TableManager
+                table_id = self.table_manager.add_table(
+                    rows=rows,
+                    cols=cols,
+                    cells=cells,
+                    style=style,
+                    document_index=table_idx
+                )
+                
+                # Add table segment
+                self.segments.append(HTMLSegment(
+                    text='',
+                    css_class='',
+                    tag_type='table',
+                    attributes=None,
+                    element_type='table',
+                    table_id=table_id
+                ))
+                
+                print(f"[DocxHtmlMapper] Extracted table {table_id}: {rows}x{cols} cells")
+                
+            except Exception as e:
+                print(f"[DocxHtmlMapper] ERROR processing table {table_idx}: {e}")
+                print(f"  Skipping table, continuing with document")
     
     def _split_run_text(self, text: str) -> List[Dict[str, str]]:
         """
@@ -831,6 +882,11 @@ class DocxHtmlMapper:
                 # Generate image placeholder
                 placeholder = self.image_manager.generate_placeholder(seg.image_id)
                 html_parts.append(placeholder)
+            
+            elif seg.tag_type == 'table':
+                # Generate HTML table
+                table_html = self.table_manager.generate_html_placeholder(seg.table_id)
+                html_parts.append(table_html)
         
         # HTML footer
         html_parts.append('</body>')
@@ -846,14 +902,22 @@ class DocxHtmlMapper:
 class HTMLToDocxParser(HTMLParser):
     """Parse HTML and create DOCX document."""
     
-    def __init__(self, css_class_manager: CSSClassManager, image_manager: ImageManager):
+    def __init__(self, css_class_manager: CSSClassManager, image_manager: ImageManager, table_manager: Optional[TableManager] = None):
         super().__init__()
         self.css_manager = css_class_manager
         self.image_manager = image_manager
+        self.table_manager = table_manager if table_manager else TableManager()
         self.doc = Document()
         self.current_para = None
         self.current_format = None
         self.in_head = False  # Flag to ignore <head> content
+        
+        # Table parsing state
+        self._current_table_id = None
+        self._current_table_rows = []
+        self._current_table_row = []
+        self._current_cell_content = []
+        self._in_table = False
     
     def handle_starttag(self, tag, attrs):
         """Handle opening HTML tags."""
@@ -891,6 +955,22 @@ class HTMLToDocxParser(HTMLParser):
                 if classes:
                     self.current_format = self.css_manager.get_format(classes[0])
         
+        elif tag == 'table':
+            # Start table parsing
+            table_id = attr_dict.get('data-table')
+            if table_id:
+                self._in_table = True
+                self._current_table_id = table_id
+                self._current_table_rows = []
+        
+        elif tag == 'tr' and self._in_table:
+            # Start new row
+            self._current_table_row = []
+        
+        elif tag == 'td' and self._in_table:
+            # Start new cell
+            self._current_cell_content = []
+        
         elif tag == 'br':
             if 'brk1' in classes:
                 # Paragraph break - create new paragraph
@@ -907,6 +987,30 @@ class HTMLToDocxParser(HTMLParser):
         """Handle closing HTML tags."""
         if tag in ('head', 'style'):
             self.in_head = False
+        
+        elif tag == 'td' and self._in_table:
+            # End cell - save accumulated content
+            cell_text = ''.join(self._current_cell_content)
+            self._current_table_row.append(cell_text)
+            self._current_cell_content = []
+        
+        elif tag == 'tr' and self._in_table:
+            # End row - save to table rows
+            if self._current_table_row:
+                self._current_table_rows.append(self._current_table_row)
+                self._current_table_row = []
+        
+        elif tag == 'table' and self._in_table:
+            # End table - reconstruct DOCX table
+            if self._current_table_id and self._current_table_rows:
+                self._reconstruct_table(self._current_table_id, self._current_table_rows)
+            
+            # Reset table state
+            self._in_table = False
+            self._current_table_id = None
+            self._current_table_rows = []
+            self._current_table_row = []
+            self._current_cell_content = []
     
     def handle_data(self, data):
         """Handle text content."""
@@ -916,6 +1020,11 @@ class HTMLToDocxParser(HTMLParser):
         
         if not data.strip():
             return  # Skip whitespace-only text
+        
+        # If inside table cell, accumulate content
+        if self._in_table and self._current_cell_content is not None:
+            self._current_cell_content.append(data)
+            return
         
         if self.current_para is None:
             self.current_para = self.doc.add_paragraph()
@@ -977,6 +1086,52 @@ class HTMLToDocxParser(HTMLParser):
         except Exception as e:
             print(f"[HTMLToDocxParser] ERROR reconstructing {image_id}: {e}")
     
+    def _reconstruct_table(self, table_id: str, html_rows: List[List[str]]):
+        """
+        Reconstruct DOCX table from HTML data.
+        
+        Args:
+            table_id: Table identifier (e.g., 'TBL001')
+            html_rows: 2D list [row][col] of translated cell text
+        """
+        # Get original table metadata
+        table_data = self.table_manager.get_table(table_id)
+        
+        if not table_data:
+            print(f"[HTMLToDocxParser] WARNING: Table {table_id} not found, skipping")
+            return
+        
+        # Validate dimensions
+        rows = len(html_rows)
+        cols = len(html_rows[0]) if html_rows else 0
+        
+        if rows == 0 or cols == 0:
+            print(f"[HTMLToDocxParser] WARNING: Empty table {table_id}, skipping")
+            return
+        
+        # Create DOCX table
+        try:
+            doc_table = self.doc.add_table(rows=rows, cols=cols)
+            
+            # Apply style if available
+            if table_data.style:
+                try:
+                    doc_table.style = table_data.style
+                except KeyError:
+                    # Style not available in this document, use default
+                    print(f"[HTMLToDocxParser] WARNING: Style '{table_data.style}' not found, using default")
+            
+            # Fill cells with translated content
+            for row_idx, row_data in enumerate(html_rows):
+                for col_idx, cell_text in enumerate(row_data):
+                    if row_idx < len(doc_table.rows) and col_idx < len(doc_table.rows[row_idx].cells):
+                        doc_table.rows[row_idx].cells[col_idx].text = cell_text
+            
+            print(f"[HTMLToDocxParser] Reconstructed {table_id}: {rows}x{cols} cells")
+        
+        except Exception as e:
+            print(f"[HTMLToDocxParser] ERROR reconstructing {table_id}: {e}")
+    
     def get_document(self) -> Document:
         """Return the created DOCX document."""
         return self.doc
@@ -995,12 +1150,12 @@ def extract_html_from_docx(docx_path: str, output_html_path: Optional[str] = Non
         output_html_path: Optional path to save HTML (for debugging)
     
     Returns:
-        Tuple of (html_string, css_class_manager, image_manager)
+        Tuple of (html_string, css_class_manager, image_manager, table_manager)
     
     Example:
-        html, css_mgr, img_mgr = extract_html_from_docx('document.docx')
+        html, css_mgr, img_mgr, tbl_mgr = extract_html_from_docx('document.docx')
         translated_html = google_translate(html)
-        create_docx_from_html(translated_html, 'output.docx', css_mgr, img_mgr)
+        create_docx_from_html(translated_html, 'output.docx', css_mgr, img_mgr, tbl_mgr)
     """
     mapper = DocxHtmlMapper(docx_path)
     html_string = mapper.extract_html_from_docx()
@@ -1009,14 +1164,15 @@ def extract_html_from_docx(docx_path: str, output_html_path: Optional[str] = Non
         with open(output_html_path, 'w', encoding='utf-8') as f:
             f.write(html_string)
     
-    return html_string, mapper.css_manager, mapper.image_manager
+    return (html_string, mapper.css_manager, mapper.image_manager, mapper.table_manager)
 
 
 def create_docx_from_html(
     html_string: str,
     output_docx_path: str,
     css_class_manager: CSSClassManager,
-    image_manager: ImageManager
+    image_manager: ImageManager,
+    table_manager: Optional[TableManager] = None
 ) -> None:
     """
     Create DOCX file from translated HTML.
@@ -1026,13 +1182,18 @@ def create_docx_from_html(
         output_docx_path: Path to save output DOCX file
         css_class_manager: Manager used during extraction (for format lookup)
         image_manager: Manager with stored images
+        table_manager: Manager with stored tables (optional, defaults to empty)
     
     Example:
-        html, css_mgr, img_mgr = extract_html_from_docx('input.docx')
+        html, css_mgr, img_mgr, tbl_mgr = extract_html_from_docx('input.docx')
         translated = google_translate(html)
-        create_docx_from_html(translated, 'output.docx', css_mgr, img_mgr)
+        create_docx_from_html(translated, 'output.docx', css_mgr, img_mgr, tbl_mgr)
     """
-    parser = HTMLToDocxParser(css_class_manager, image_manager)
+    # Use provided table_manager or create empty one for backward compatibility
+    if table_manager is None:
+        table_manager = TableManager()
+    
+    parser = HTMLToDocxParser(css_class_manager, image_manager, table_manager)
     parser.feed(html_string)
     doc = parser.get_document()
     doc.save(output_docx_path)
@@ -1059,10 +1220,10 @@ def translate_docx(
         translate_docx('input.docx', 'output.docx', my_translator)
     """
     # 1. Extract
-    html_string, css_manager = extract_html_from_docx(input_docx_path)
+    html_string, css_manager, image_manager, table_manager = extract_html_from_docx(input_docx_path)
     
     # 2. Translate
     translated_html = translate_function(html_string)
     
     # 3. Create
-    create_docx_from_html(translated_html, output_docx_path, css_manager)
+    create_docx_from_html(translated_html, output_docx_path, css_manager, image_manager, table_manager)
