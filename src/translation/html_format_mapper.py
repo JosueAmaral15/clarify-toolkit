@@ -928,12 +928,15 @@ class HTMLFormatMapper:
         
         rows = len(rows_elements)
         
-        # Determine columns (from first row)
+        # Determine maximum columns across ALL rows (not just first row)
+        # Phase 2 FIX: Handle irregular tables properly
         cols = 0
-        if rows > 0:
-            for child in rows_elements[0].childNodes:
+        for row_elem in rows_elements:
+            row_cell_count = 0
+            for child in row_elem.childNodes:
                 if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
-                    cols += 1
+                    row_cell_count += 1
+            cols = max(cols, row_cell_count)
         
         # Extract cell text
         cells = []
@@ -955,9 +958,12 @@ class HTMLFormatMapper:
                     cell_text = ' '.join(cell_paragraphs)
                     row_cells.append(cell_text)
             
-            # Pad row if needed (in case of irregular tables)
+            # Pad row to match max columns (handles irregular tables)
             while len(row_cells) < cols:
                 row_cells.append('')
+            
+            # Trim row if it somehow exceeds max columns
+            row_cells = row_cells[:cols]
             
             cells.append(row_cells)
         
