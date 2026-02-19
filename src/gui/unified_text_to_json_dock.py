@@ -876,29 +876,29 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         layout.addLayout(max_nesting_depth_row)
         
         # Truncate parent key names row
-        truncate_keys_row = QHBoxLayout()
-        
-        self.jsx_truncate_parent_keys_checkbox = QCheckBox("Truncate parent key names")
-        self.jsx_truncate_parent_keys_checkbox.setToolTip(
-            "Truncate all parent (intermediate) key names in JSON output to specified character limit.\n"
-            "Example with limit=2: div→di, button→bu, Link→Li"
-        )
-        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_checkbox)
-        
-        self.jsx_truncate_parent_keys_spin = QSpinBox()
-        self.jsx_truncate_parent_keys_spin.setRange(1, 50)
-        self.jsx_truncate_parent_keys_spin.setValue(2)
-        self.jsx_truncate_parent_keys_spin.setMaximumWidth(80)
-        self.jsx_truncate_parent_keys_spin.setEnabled(False)
-        self.jsx_truncate_parent_keys_spin.setToolTip("Character limit for parent key names")
-        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_spin)
-        
-        self.jsx_truncate_parent_keys_checkbox.toggled.connect(
-            lambda checked: self.jsx_truncate_parent_keys_spin.setEnabled(checked)
-        )
-        
-        truncate_keys_row.addStretch()
-        layout.addLayout(truncate_keys_row)
+        #        truncate_keys_row = QHBoxLayout()
+        #        
+        #        self.jsx_truncate_parent_keys_checkbox = QCheckBox("Truncate parent key names")
+        #        self.jsx_truncate_parent_keys_checkbox.setToolTip(
+        #            "Truncate all parent (intermediate) key names in JSON output to specified character limit.\n"
+        #            "Example with limit=2: div→di, button→bu, Link→Li"
+        #        )
+        #        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_checkbox)
+        #        
+        #        self.jsx_truncate_parent_keys_spin = QSpinBox()
+        #        self.jsx_truncate_parent_keys_spin.setRange(1, 50)
+        #        self.jsx_truncate_parent_keys_spin.setValue(2)
+        #        self.jsx_truncate_parent_keys_spin.setMaximumWidth(80)
+        #        self.jsx_truncate_parent_keys_spin.setEnabled(False)
+        #        self.jsx_truncate_parent_keys_spin.setToolTip("Character limit for parent key names")
+        #        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_spin)
+        #        
+        #        self.jsx_truncate_parent_keys_checkbox.toggled.connect(
+        #            lambda checked: self.jsx_truncate_parent_keys_spin.setEnabled(checked)
+        #        )
+        #        
+        #        truncate_keys_row.addStretch()
+        #        layout.addLayout(truncate_keys_row)
         
         # Case style and limits section
         case_layout = QHBoxLayout()
@@ -1571,6 +1571,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
             
             # Apply parent key name truncation if enabled
+            '''
             if json_output and self.jsx_truncate_parent_keys_checkbox.isChecked():
                 try:
                     # Check if output is JS literal (without quotation marks)
@@ -1598,6 +1599,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     
                 except Exception as truncate_err:
                     self._jsx_update_status(f"⚠ Parent key truncation error: {str(truncate_err)}")
+            '''
             
             # Convert JSON output to selected format
             converted_output = json_output

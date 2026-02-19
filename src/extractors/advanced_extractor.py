@@ -62,9 +62,10 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
 def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_direction: str = "before") -> str:
     """
     Truncate text by char limit. If limit is 'all' or None -> return original.
-    If avoid_cut=True, cut at whitespace boundary:
-      - 'before': cut at last whitespace <= limit (existing behavior)
-      - 'after': cut at next whitespace >= limit (new behavior)
+    If avoid_cut=True, cut at word boundary:
+      - Word boundary = whitespace OR non-letter/non-underscore character (e.g., -, ., :, etc.)
+      - 'before': cut at last word boundary <= limit
+      - 'after': cut at next word boundary >= limit
     """
     # pylint: disable=too-many-return-statements  # Multiple early exit conditions
     if not text or limit in (None, 'all', 'ALL', 'All'):
@@ -82,28 +83,34 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
     if not avoid_cut:
         return sub
 
+    def is_word_boundary(char: str) -> bool:
+        """Check if character is a word boundary (whitespace or non-letter/non-underscore)."""
+        return char.isspace() or not (char.isalnum() or char == '_')
+
     # Direction-aware cutting
     if avoid_cut_direction == "after":
-        # Search AFTER limit for next whitespace
+        # Search AFTER limit for next word boundary
         for i in range(n, len(text)):
-            if text[i].isspace():
+            if is_word_boundary(text[i]):
                 return text[:i].rstrip()
-        # No whitespace found after limit, return full text
+        # No word boundary found after limit, return full text
         return text
     else:
-        # Original "before" behavior: cut at last whitespace before limit
-        # If we ended already on whitespace, just strip trailing whitespace.
-        if sub[-1].isspace():
-            return sub.rstrip()
+        # "before" behavior: cut at last word boundary before limit
+        # If we ended already on word boundary, strip trailing delimiters
+        if sub[-1].isspace() or not (sub[-1].isalnum() or sub[-1] == '_'):
+            return sub.rstrip(''.join(c for c in sub if is_word_boundary(c)))
 
-        # Find the last whitespace run before the cut and cut right before it.
-        m = re.search(r'\s+\S*$', sub, flags=re.UNICODE)
-        if m:
-            cut = m.start()
-            if cut > 0:
-                return sub[:cut].rstrip()
+        # Find the last word boundary before the cut
+        # Search backwards from position n-1
+        for i in range(n - 1, -1, -1):
+            if is_word_boundary(text[i]):
+                # Cut right after this boundary, but strip trailing delimiters
+                result = text[:i+1].rstrip(''.join(c for c in text[:i+1] if is_word_boundary(c)))
+                if result:
+                    return result
 
-        # Fallback: no whitespace found in the window (a very long first word).
+        # Fallback: no word boundary found (very long first word)
         return sub
 
 
