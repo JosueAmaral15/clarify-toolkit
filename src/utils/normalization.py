@@ -130,6 +130,14 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
         if to_upper:
             return s.upper()
         
+        # For snake_case: lowercase everything (single word)
+        if case_style == "snake" and s:
+            return s.lower()
+        
+        # For kebab-case: lowercase everything (single word)
+        if case_style == "kebab" and s:
+            return s.lower()
+        
         # For camelCase: lowercase first character
         # Special case: if it's already mixed case (e.g., 'expandedItems'), keep as-is
         # But if it's all uppercase (e.g., 'FAQ') or Title case (e.g., 'Category'), lowercase first char
@@ -154,10 +162,14 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
         # Replace any non-alphanumeric with underscore
         token = re.sub(r"[^0-9A-Za-z]+", "_", s)
         token = token.strip("_")
+        # snake_case should be all lowercase
+        token = token.lower()
     elif case_style == "kebab":
         # Replace any non-alphanumeric with hyphen
         token = re.sub(r"[^0-9A-Za-z]+", "-", s)
         token = token.strip("-")
+        # kebab-case should be all lowercase
+        token = token.lower()
     elif case_style == "camel" or case_style == "pascal":
         # For camel/pascal with separators, we need to process each segment
         # Split by non-alphanumeric, then join back
