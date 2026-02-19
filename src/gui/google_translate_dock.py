@@ -534,11 +534,12 @@ class GoogleTranslateDock(BaseDock):
                     # Session 77: NEW HTML-based format system
                     from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
+                    # Extract as HTML (with CSS formatting + images) - Phase 1 COM8
+                    html_content, css_manager_or_path, image_manager = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Store CSS manager for later ODT creation
+                    # Store CSS manager and image manager for later ODT creation
                     self._css_manager = css_manager_or_path
+                    self._image_manager = image_manager  # Phase 1: Store image manager
                     self._source_file_path = file_path
                     
                     # Parse HTML to extract plain text for UI preview
@@ -675,11 +676,12 @@ class GoogleTranslateDock(BaseDock):
                     # Session 77: NEW HTML-based format system
                     from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
+                    # Extract as HTML (with CSS formatting + images) - Phase 1 COM8
+                    html_content, css_manager_or_path, image_manager = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Store CSS manager for later ODT creation
+                    # Store CSS manager and image manager for later ODT creation
                     self._css_manager = css_manager_or_path
+                    self._image_manager = image_manager  # Phase 1: Store image manager
                     self._source_file_path = file_path
                     
                     # Store empty segments (HTML system doesn't use segments)
@@ -1214,10 +1216,12 @@ class GoogleTranslateDock(BaseDock):
         print(f"  _translated_segments: {len(self._translated_segments)} segments")
         
         if self._translated_html and self._css_manager:
-            # Session 77: NEW HTML system - use HTML to ODT conversion
+            # Session 77: NEW HTML system - use HTML to ODT conversion (Phase 1: with images)
             print(f"  → Using HTML system")
             from translation.html_format_mapper import create_odt_from_html
-            create_odt_from_html(self._translated_html, self._css_manager, output_path)
+            # Phase 1 - COM8: Pass image_manager if available
+            image_mgr = getattr(self, '_image_manager', None)
+            create_odt_from_html(self._translated_html, self._css_manager, output_path, image_mgr)
             print(f"  → ODT created successfully")
             
         elif self._translated_segments:

@@ -23,19 +23,21 @@ Session: 77 - Complete HTML refactor (Option B)
 """
 
 import html
+import hashlib
 import json
 import os
 import psutil
 import re
 import sys
 import tempfile
+import zipfile
 from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 from xml.dom import minidom
 
-from odf import opendocument, text as odf_text, style as odf_style, table as odf_table
+from odf import opendocument, text as odf_text, style as odf_style, table as odf_table, draw as odf_draw
 from odf.element import Text as ODFText
 
 
@@ -246,6 +248,148 @@ class CSSClassManager:
 
 
 # ============================================================================
+# Image Management (NEW for Phase 1 - COM8)
+# ============================================================================
+
+@dataclass
+class ODTImageData:
+    """Stores image binary data and metadata for ODT files."""
+    
+    image_id: str              # 'IMG001', 'IMG002', etc.
+    blob: bytes                # Raw PNG/JPEG/GIF binary data
+    format: str                # 'png', 'jpeg', 'gif'
+    width_cm: float            # Width in centimeters
+    height_cm: float           # Height in centimeters
+    original_href: str         # Original path (e.g., 'Pictures/image1.png')
+    blob_hash: Optional[str]   # SHA256 hash for deduplication
+    
+    def get_width_inches(self) -> float:
+        """Convert cm to inches (1 inch = 2.54 cm)."""
+        return self.width_cm / 2.54
+    
+    def get_height_inches(self) -> float:
+        """Convert cm to inches."""
+        return self.height_cm / 2.54
+
+
+class ODTImageManager:
+    """
+    Manages image storage and reconstruction for ODT translation.
+    
+    Adapted from DOCX ImageManager (docx_html_mapper.py).
+    Stores images extracted from ODT Pictures/ folder.
+    """
+    
+    def __init__(self):
+        """Initialize image storage."""
+        self._images: Dict[str, ODTImageData] = {}  # image_id → ODTImageData
+        self._hash_to_id: Dict[str, str] = {}       # blob_hash → image_id
+        self._next_id: int = 1                      # Counter for IMG001, IMG002, etc.
+    
+    def add_image(self, blob: bytes, img_format: str, 
+                  width_cm: float, height_cm: float, 
+                  original_href: str) -> str:
+        """
+        Add image to storage with deduplication.
+        
+        Args:
+            blob: Raw image binary data
+            img_format: Image format ('png', 'jpeg', 'gif')
+            width_cm: Image width in centimeters
+            height_cm: Image height in centimeters
+            original_href: Original href (e.g., 'Pictures/image1.png')
+        
+        Returns:
+            image_id: Unique ID for this image (e.g., 'IMG001')
+        """
+        # Calculate hash for deduplication
+        blob_hash = hashlib.sha256(blob).hexdigest()
+        
+        # Check if image already exists (same binary data)
+        if blob_hash in self._hash_to_id:
+            existing_id = self._hash_to_id[blob_hash]
+            print(f"[ODTImageManager] Deduplication: reusing {existing_id} for {original_href}")
+            return existing_id
+        
+        # Warn about large images
+        blob_size_mb = len(blob) / (1024 * 1024)
+        if blob_size_mb > 10:
+            print(f"[ODTImageManager] WARNING: Large image ({blob_size_mb:.1f}MB)")
+        
+        # Generate new ID
+        image_id = f"IMG{self._next_id:03d}"  # IMG001, IMG002, etc.
+        self._next_id += 1
+        
+        # Store image data
+        image_data = ODTImageData(
+            image_id=image_id,
+            blob=blob,
+            format=img_format,
+            width_cm=width_cm,
+            height_cm=height_cm,
+            original_href=original_href,
+            blob_hash=blob_hash
+        )
+        
+        self._images[image_id] = image_data
+        self._hash_to_id[blob_hash] = image_id
+        
+        print(f"[ODTImageManager] Stored {image_id}: {img_format}, "
+              f"{width_cm:.2f}cm x {height_cm:.2f}cm, "
+              f"{len(blob)} bytes")
+        
+        # Check total memory usage
+        stats = self.get_statistics()
+        if stats['total_mb'] > 100:
+            print(f"[ODTImageManager] WARNING: High memory usage ({stats['total_mb']:.1f}MB)")
+        
+        return image_id
+    
+    def get_image(self, image_id: str) -> Optional[ODTImageData]:
+        """
+        Retrieve image by ID.
+        
+        Returns:
+            ODTImageData if found, None otherwise
+        """
+        return self._images.get(image_id)
+    
+    def generate_placeholder(self, image_id: str) -> str:
+        """
+        Generate HTML placeholder for image.
+        
+        Returns:
+            HTML string: '<span data-image="IMG001"></span>'
+        """
+        return f'<span data-image="{image_id}"></span>'
+    
+    def get_statistics(self) -> dict:
+        """
+        Get storage statistics for debugging.
+        
+        Returns:
+            Dict with counts and memory usage
+        """
+        total_images = len(self._images)
+        unique_blobs = len(self._hash_to_id)
+        total_bytes = sum(len(img.blob) for img in self._images.values())
+        
+        return {
+            'total_images': total_images,
+            'unique_blobs': unique_blobs,
+            'duplicates': total_images - unique_blobs,
+            'total_bytes': total_bytes,
+            'total_mb': total_bytes / (1024 * 1024)
+        }
+    
+    def clear(self):
+        """Clear all stored images (for memory management)."""
+        self._images.clear()
+        self._hash_to_id.clear()
+        self._next_id = 1
+
+
+# ============================================================================
 # ODT Extraction to HTML
 # ============================================================================
 
@@ -253,25 +397,72 @@ class HTMLFormatMapper:
     """Convert ODT documents to/from HTML for translation."""
     
     @staticmethod
-    def extract_html_from_odt(file_path: str) -> Tuple[str, object]:
+    def extract_html_from_odt(file_path: str) -> Tuple[str, object, Optional['ODTImageManager']]:
         """
-        Extract ODT content as HTML with CSS formatting.
+        Extract ODT content as HTML with CSS formatting and images.
+        
+        Phase 1 - COM8: Added image extraction support
         
         Args:
             file_path: Path to .odt file
             
         Returns:
-            Tuple of (html_string, css_manager_or_path)
-            - html_string: Full HTML document with structure
+            Tuple of (html_string, css_manager_or_path, image_manager)
+            - html_string: Full HTML document with structure and image placeholders
             - css_manager_or_path: CSSClassManager object OR path to JSON file
               (automatic decision based on available RAM)
+            - image_manager: ODTImageManager with extracted images (or None if no images)
         """
         doc = opendocument.load(file_path)
         css_manager = CSSClassManager()
+        image_manager = ODTImageManager()  # Phase 1: Create image manager
         segments: List[HTMLSegment] = []
         
         # Build style dictionary
         styles = HTMLFormatMapper._build_style_dict(doc)
+        
+        # Phase 1: Extract images from ODT Pictures/ folder
+        try:
+            with zipfile.ZipFile(file_path, 'r') as odt_zip:
+                # Get list of image files in Pictures/ folder
+                image_files = [f for f in odt_zip.namelist() if f.startswith('Pictures/') and not f.endswith('/')]
+                
+                if image_files:
+                    print(f"[ODT Extract] Found {len(image_files)} image(s) in Pictures/")
+                    
+                    for img_path in image_files:
+                        # Read image binary data
+                        with odt_zip.open(img_path) as img_file:
+                            blob = img_file.read()
+                        
+                        # Determine format from extension
+                        img_ext = os.path.splitext(img_path)[1].lower()
+                        img_format = {
+                            '.png': 'png',
+                            '.jpg': 'jpeg',
+                            '.jpeg': 'jpeg',
+                            '.gif': 'gif',
+                        }.get(img_ext, 'unknown')
+                        
+                        # Default size (will be refined when we parse draw:frame)
+                        # For now, use default 3in x 2in (7.62cm x 5.08cm)
+                        width_cm = 7.62
+                        height_cm = 5.08
+                        
+                        # Add to image manager
+                        image_id = image_manager.add_image(
+                            blob=blob,
+                            img_format=img_format,
+                            width_cm=width_cm,
+                            height_cm=height_cm,
+                            original_href=img_path
+                        )
+                        
+                        print(f"[ODT Extract] Stored {image_id} from {img_path}")
+                else:
+                    print(f"[ODT Extract] No images found in Pictures/")
+        except Exception as e:
+            print(f"[ODT Extract] Warning: Could not extract images: {e}")
         
         # Process all text elements (paragraphs AND headings) in document order
         # Get all P and H elements from body
@@ -285,7 +476,8 @@ class HTMLFormatMapper:
         
         for i, (elem_type, elem) in enumerate(text_elements):
             # Extract element (works for both P and H)
-            elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager)
+            # Phase 1: Pass image_manager for image marker insertion
+            elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager, image_manager)
             
             # Skip adding BR if this element is empty (reduces excess blank lines)
             has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
@@ -305,10 +497,10 @@ class HTMLFormatMapper:
             temp_file = tempfile.mktemp(suffix='_css_mapping_COM8.json')
             with open(temp_file, 'w', encoding='utf-8') as f:
                 json.dump(css_manager.to_dict(), f, indent=2)
-            return html, temp_file
+            return html, temp_file, image_manager
         else:
             # Keep in memory
-            return html, css_manager
+            return html, css_manager, image_manager
     
     @staticmethod
     def _build_style_dict(doc) -> Dict:
@@ -325,8 +517,13 @@ class HTMLFormatMapper:
         return styles
     
     @staticmethod
-    def _extract_paragraph(para, styles: Dict, css_manager: CSSClassManager) -> List[HTMLSegment]:
-        """Extract paragraph with formatting."""
+    def _extract_paragraph(para, styles: Dict, css_manager: CSSClassManager, 
+                          image_manager: Optional['ODTImageManager'] = None) -> List[HTMLSegment]:
+        """
+        Extract paragraph with formatting and images.
+        
+        Phase 1 - COM8: Added image_manager parameter for image detection.
+        """
         segments = []
         
         # Get paragraph style
@@ -422,6 +619,43 @@ class HTMLFormatMapper:
                     except:
                         count = 1
                     para_text += '&nbsp;' * count
+            elif hasattr(node, 'qname') and node.qname[0] == odf_draw.DRAWNS and node.qname[1] == 'frame':
+                # Phase 1 - COM8: Image frame detected
+                if image_manager:
+                    # Save accumulated text before image
+                    if para_text:
+                        css_class = css_manager.get_or_create_class(current_fmt)
+                        tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                        segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                        para_text = ""
+                    
+                    # Find draw:image element inside frame
+                    for child in node.childNodes:
+                        if hasattr(child, 'qname') and child.qname[0] == odf_draw.DRAWNS and child.qname[1] == 'image':
+                            try:
+                                # Get image href
+                                href = child.getAttribute('href')
+                                if href:
+                                    # Find corresponding image_id by href
+                                    # The image was already stored during zip extraction
+                                    # We need to match by href
+                                    image_id = None
+                                    for img_id, img_data in image_manager._images.items():
+                                        if img_data.original_href == href:
+                                            image_id = img_id
+                                            break
+                                    
+                                    if image_id:
+                                        # Insert image placeholder
+                                        placeholder = image_manager.generate_placeholder(image_id)
+                                        # Add as special segment (will be converted to HTML marker)
+                                        segments.append(HTMLSegment(placeholder, '', 'image', FormatAttributes()))
+                                        print(f"[ODT Extract] Inserted placeholder for {image_id} (href: {href})")
+                                    else:
+                                        print(f"[ODT Extract] Warning: Image href '{href}' not found in ImageManager")
+                            except Exception as e:
+                                print(f"[ODT Extract] Error processing image: {e}")
+                            break  # Only process first image in frame
         
         # Save remaining text
         if para_text:
@@ -619,6 +853,9 @@ class HTMLFormatMapper:
             elif segment.tag_type == 'tab':
                 # Tab character - use empty span with data attribute
                 body_parts.append('<span data-tab="1"></span>')
+            elif segment.tag_type == 'image':
+                # Phase 1 - COM8: Image placeholder (already in correct format)
+                body_parts.append(segment.text)  # text contains: <span data-image="IMG001"></span>
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
@@ -711,14 +948,18 @@ def restore_special_whitespace(html: str) -> str:
 # ODT Creation from HTML
 # ============================================================================
 
-def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
+def create_odt_from_html(html: str, css_manager_or_path, output_path: str, 
+                         image_manager: Optional['ODTImageManager'] = None):
     """
     Create ODT file from translated HTML.
+    
+    Phase 1 - COM8: Added image_manager parameter for image restoration.
     
     Args:
         html: Translated HTML document
         css_manager_or_path: CSSClassManager object or path to JSON file
         output_path: Where to save ODT file
+        image_manager: Optional ODTImageManager with images to restore
     """
     from html.parser import HTMLParser
     from odf.opendocument import OpenDocumentText
@@ -735,7 +976,7 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
         css_manager = css_manager_or_path
     
     # Parse HTML
-    parser = HTMLToODTParser(css_manager)
+    parser = HTMLToODTParser(css_manager, image_manager)  # Phase 1: Pass image_manager
     parser.feed(html)
     
     # Create ODT document
@@ -838,6 +1079,30 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
             else:
                 # Plain text
                 current_paragraph.addText(text_content)
+        
+        elif segment['type'] == 'image':
+            # Phase 1 - COM8: Handle image restoration
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            image_data = segment['image_data']
+            
+            # Create draw:frame and draw:image elements
+            from odf.draw import Frame, Image
+            
+            # Convert dimensions back to ODF format (cm)
+            width_cm = f"{image_data.width_cm:.2f}cm"
+            height_cm = f"{image_data.height_cm:.2f}cm"
+            
+            # Create frame
+            frame = Frame(width=width_cm, height=height_cm, anchortype="as-char")
+            
+            # Create image reference (will be written to Pictures/ later)
+            image_href = f"Pictures/{image_data.image_id}.{image_data.format}"
+            img = Image(href=image_href)
+            
+            frame.addElement(img)
+            current_paragraph.addElement(frame)
     
     # Add final paragraph if exists
     if current_paragraph is not None:
@@ -845,20 +1110,49 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
     
     # Save ODT
     doc.save(output_path)
+    
+    # Phase 1 - COM8: Write images to Pictures/ folder in ODT zip
+    if image_manager and image_manager.get_statistics()['total_images'] > 0:
+        import zipfile
+        import tempfile
+        import shutil
+        
+        # Create temp directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Extract ODT to temp dir
+            temp_odt = os.path.join(tmpdir, 'temp.odt')
+            shutil.copy(output_path, temp_odt)
+            
+            # Open ODT as zip and add images
+            with zipfile.ZipFile(temp_odt, 'a') as odt_zip:
+                # Create Pictures/ folder and write images
+                for image_id, img_data in image_manager._images.items():
+                    image_filename = f"Pictures/{image_id}.{img_data.format}"
+                    odt_zip.writestr(image_filename, img_data.blob)
+            
+            # Replace original with updated ODT
+            shutil.move(temp_odt, output_path)
 
 
 class HTMLToODTParser(HTMLParser):
-    """Parse HTML and extract segments for ODT creation."""
+    """Parse HTML and extract segments for ODT creation.
     
-    def __init__(self, css_manager: CSSClassManager):
+    Phase 1 - COM8: Extended to handle image restoration from data-image attributes.
+    """
+    
+    def __init__(self, css_manager: CSSClassManager, image_manager: Optional['ODTImageManager'] = None):
         super().__init__()
         self.css_manager = css_manager
+        self.image_manager = image_manager
         self.segments = []
         self.current_tag = None
         self.current_class = None
     
     def handle_starttag(self, tag, attrs):
-        """Handle opening tags."""
+        """Handle opening tags.
+        
+        Phase 1 - COM8: Added detection for data-image attributes (image markers).
+        """
         self.current_tag = tag
         
         # Handle self-closing BR tag immediately
@@ -872,12 +1166,24 @@ class HTMLToODTParser(HTMLParser):
             self.segments.append({'type': break_type})
             return
         
-        # Handle span tags - check for tab marker
+        # Handle span tags - check for tab marker AND image marker
         if tag == 'span':
             # Check for data-tab attribute (tab marker)
             for attr, value in attrs:
                 if attr == 'data-tab':
                     self.segments.append({'type': 'tab'})
+                    return
+                # Phase 1 - COM8: Check for data-image attribute (image marker)
+                if attr == 'data-image' and self.image_manager:
+                    # Extract image ID and add to segments
+                    image_id = value
+                    image_data = self.image_manager.get_image(image_id)
+                    if image_data:
+                        self.segments.append({
+                            'type': 'image',
+                            'image_id': image_id,
+                            'image_data': image_data
+                        })
                     return
         
         # Extract class attribute for regular spans
