@@ -929,13 +929,21 @@ class HTMLFormatMapper:
         rows = len(rows_elements)
         
         # Determine maximum columns across ALL rows (not just first row)
-        # Phase 2 FIX: Handle irregular tables properly
+        # Phase 2 FIX: Handle irregular tables + merged cells (colspan)
         cols = 0
         for row_elem in rows_elements:
             row_cell_count = 0
             for child in row_elem.childNodes:
                 if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
-                    row_cell_count += 1
+                    # Check for colspan attribute
+                    colspan = child.getAttribute('numbercolumnsspanned')
+                    if colspan:
+                        try:
+                            row_cell_count += int(colspan)
+                        except (ValueError, TypeError):
+                            row_cell_count += 1
+                    else:
+                        row_cell_count += 1
             cols = max(cols, row_cell_count)
         
         # Extract cell text
@@ -957,6 +965,16 @@ class HTMLFormatMapper:
                     # Join paragraphs with space
                     cell_text = ' '.join(cell_paragraphs)
                     row_cells.append(cell_text)
+                    
+                    # Handle colspan: add empty cells for spanned columns
+                    colspan = child.getAttribute('numbercolumnsspanned')
+                    if colspan:
+                        try:
+                            span_count = int(colspan) - 1  # -1 because we already added the cell
+                            for _ in range(span_count):
+                                row_cells.append('')  # Add empty cells for colspan
+                        except (ValueError, TypeError):
+                            pass
             
             # Pad row to match max columns (handles irregular tables)
             while len(row_cells) < cols:
