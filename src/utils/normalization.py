@@ -125,10 +125,26 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
     has_separators = bool(re.search(r"[^0-9A-Za-z]", s))
     
     if not has_separators:
-        # Input is pure alphanumeric (e.g., 'expandedItems', 'filteredFAQs')
+        # Input is pure alphanumeric (e.g., 'expandedItems', 'filteredFAQs', 'Category')
         # Don't split camelCase - treat as single joined word
         if to_upper:
             return s.upper()
+        
+        # For camelCase: lowercase first character
+        # Special case: if it's already mixed case (e.g., 'expandedItems'), keep as-is
+        # But if it's all uppercase (e.g., 'FAQ') or Title case (e.g., 'Category'), lowercase first char
+        if case_style == "camel" and s:
+            # Check if it's already proper camelCase (first char lowercase, has uppercase elsewhere)
+            if s[0].islower() and any(c.isupper() for c in s[1:]):
+                # Already camelCase like 'expandedItems'
+                return s
+            # Otherwise, lowercase the first character
+            return s[0].lower() + s[1:].lower() if len(s) > 1 else s.lower()
+        
+        # For pascal, uppercase the first character
+        if case_style == "pascal" and s:
+            return s[0].upper() + s[1:] if len(s) > 1 else s.upper()
+        
         return s
     
     # Input has separators - replace them but DON'T split camelCase words
