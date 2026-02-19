@@ -132,10 +132,6 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
 
         # Fallback: no word boundary found (very long first word)
         return sub
-                    return result
-
-        # Fallback: no word boundary found (very long first word)
-        return sub
 
 
 def path_join(parts: List[str]) -> str:
