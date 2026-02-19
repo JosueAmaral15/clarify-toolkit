@@ -390,6 +390,222 @@ class ODTImageManager:
 
 
 # ============================================================================
+# Table Management (Phase 2 - COM8)
+# ============================================================================
+
+@dataclass
+class ODTTableData:
+    """
+    Stores metadata for a single ODT table.
+    
+    Phase 2 - COM8: Adapted from DOCX TableData for ODF format.
+    """
+    
+    table_id: str                     # 'TBL001', 'TBL002', etc.
+    rows: int                         # Number of rows
+    cols: int                         # Number of columns
+    cells: List[List[str]]            # 2D array [row][col] = text
+    name: Optional[str] = None        # table:name attribute from ODF
+    
+    def get_cell(self, row: int, col: int) -> str:
+        """
+        Get cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+        
+        Returns:
+            Cell text, or empty string if out of bounds
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            return self.cells[row][col]
+        return ""
+    
+    def set_cell(self, row: int, col: int, text: str) -> None:
+        """
+        Set cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+            text: Cell content
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.cells[row][col] = text
+    
+    def to_html(self) -> str:
+        """
+        Convert to HTML table with data-table marker.
+        
+        Returns:
+            HTML <table> element with data-table attribute
+        """
+        html_parts = [f'<table data-table="{self.table_id}">\n']
+        
+        for row_idx in range(self.rows):
+            html_parts.append('  <tr>\n')
+            for col_idx in range(self.cols):
+                cell_text = self.cells[row_idx][col_idx]
+                # HTML escape special characters
+                safe_text = html.escape(cell_text)
+                html_parts.append(f'    <td>{safe_text}</td>\n')
+            html_parts.append('  </tr>\n')
+        
+        html_parts.append('</table>')
+        return ''.join(html_parts)
+    
+    def get_dimensions(self) -> tuple:
+        """
+        Get table dimensions.
+        
+        Returns:
+            Tuple of (rows, cols)
+        """
+        return (self.rows, self.cols)
+
+
+class ODTTableManager:
+    """
+    Manages collection of tables for ODT↔HTML conversion.
+    
+    Phase 2 - COM8: Adapted from DOCX TableManager for ODF format.
+    
+    Tables are assigned unique IDs (TBL001, TBL002, etc.) and stored
+    with their metadata. During extraction, ODT tables are converted
+    to HTML <table> elements. During reconstruction, HTML tables are
+    converted back to ODT tables.
+    
+    Example:
+        >>> manager = ODTTableManager()
+        >>> table_id = manager.add_table(
+        ...     rows=2, cols=2,
+        ...     cells=[['A', 'B'], ['C', 'D']]
+        ... )
+        >>> table_id
+        'TBL001'
+        >>> table_data = manager.get_table(table_id)
+        >>> print(table_data.to_html())
+        <table data-table="TBL001">
+          <tr><td>A</td><td>B</td></tr>
+          <tr><td>C</td><td>D</td></tr>
+        </table>
+    """
+    
+    def __init__(self):
+        """Initialize empty table manager."""
+        self._tables: Dict[str, ODTTableData] = {}
+        self._document_order: List[str] = []  # Track table order
+        self._next_id: int = 1
+    
+    def add_table(
+        self,
+        rows: int,
+        cols: int,
+        cells: List[List[str]],
+        name: Optional[str] = None
+    ) -> str:
+        """
+        Add table to manager and return assigned ID.
+        
+        Args:
+            rows: Number of rows
+            cols: Number of columns
+            cells: 2D list of cell text [row][col]
+            name: ODF table:name attribute (optional)
+        
+        Returns:
+            table_id: Assigned table ID (e.g., "TBL001")
+        
+        Raises:
+            ValueError: If dimensions don't match cells array
+        """
+        # Validate dimensions
+        if len(cells) != rows:
+            raise ValueError(f"Expected {rows} rows, got {len(cells)}")
+        for row_idx, row in enumerate(cells):
+            if len(row) != cols:
+                raise ValueError(
+                    f"Row {row_idx} has {len(row)} cells, expected {cols}"
+                )
+        
+        # Generate ID
+        table_id = f"TBL{self._next_id:03d}"
+        self._next_id += 1
+        
+        # Create and store
+        table_data = ODTTableData(
+            table_id=table_id,
+            rows=rows,
+            cols=cols,
+            cells=cells,
+            name=name
+        )
+        self._tables[table_id] = table_data
+        self._document_order.append(table_id)
+        
+        print(f"[ODTTableManager] Stored {table_id}: {rows}×{cols} table")
+        
+        return table_id
+    
+    def get_table(self, table_id: str) -> Optional[ODTTableData]:
+        """
+        Get table by ID.
+        
+        Args:
+            table_id: Table identifier (e.g., "TBL001")
+        
+        Returns:
+            ODTTableData if found, None otherwise
+        """
+        return self._tables.get(table_id)
+    
+    def has_table(self, table_id: str) -> bool:
+        """
+        Check if table exists.
+        
+        Args:
+            table_id: Table identifier
+        
+        Returns:
+            True if table exists, False otherwise
+        """
+        return table_id in self._tables
+    
+    def get_all_tables(self) -> List[ODTTableData]:
+        """
+        Get all tables in document order.
+        
+        Returns:
+            List of ODTTableData objects in document order
+        """
+        return [self._tables[tid] for tid in self._document_order]
+    
+    def get_statistics(self) -> dict:
+        """
+        Get storage statistics for debugging.
+        
+        Returns:
+            Dict with counts and table info
+        """
+        total_cells = sum(
+            t.rows * t.cols for t in self._tables.values()
+        )
+        
+        return {
+            'total_tables': len(self._tables),
+            'table_ids': list(self._document_order),
+            'total_cells': total_cells
+        }
+    
+    def clear(self):
+        """Clear all stored tables (for memory management)."""
+        self._tables.clear()
+        self._document_order.clear()
+        self._next_id = 1
+
+
+# ============================================================================
 # ODT Extraction to HTML
 # ============================================================================
 
@@ -397,25 +613,28 @@ class HTMLFormatMapper:
     """Convert ODT documents to/from HTML for translation."""
     
     @staticmethod
-    def extract_html_from_odt(file_path: str) -> Tuple[str, object, Optional['ODTImageManager']]:
+    def extract_html_from_odt(file_path: str) -> Tuple[str, object, Optional['ODTImageManager'], Optional['ODTTableManager']]:
         """
-        Extract ODT content as HTML with CSS formatting and images.
+        Extract ODT content as HTML with CSS formatting, images, and tables.
         
         Phase 1 - COM8: Added image extraction support
+        Phase 2 - COM8: Added table extraction support
         
         Args:
             file_path: Path to .odt file
             
         Returns:
-            Tuple of (html_string, css_manager_or_path, image_manager)
-            - html_string: Full HTML document with structure and image placeholders
+            Tuple of (html_string, css_manager_or_path, image_manager, table_manager)
+            - html_string: Full HTML document with structure, image placeholders, and tables
             - css_manager_or_path: CSSClassManager object OR path to JSON file
               (automatic decision based on available RAM)
             - image_manager: ODTImageManager with extracted images (or None if no images)
+            - table_manager: ODTTableManager with extracted tables (or None if no tables)
         """
         doc = opendocument.load(file_path)
         css_manager = CSSClassManager()
         image_manager = ODTImageManager()  # Phase 1: Create image manager
+        table_manager = ODTTableManager()  # Phase 2: Create table manager
         segments: List[HTMLSegment] = []
         
         # Build style dictionary
@@ -464,8 +683,8 @@ class HTMLFormatMapper:
         except Exception as e:
             print(f"[ODT Extract] Warning: Could not extract images: {e}")
         
-        # Process all text elements (paragraphs AND headings) in document order
-        # Get all P and H elements from body
+        # Process all text elements (paragraphs, headings, AND tables) in document order
+        # Phase 2: Also detect tables
         text_elements = []
         for elem in doc.text.childNodes:
             if hasattr(elem, 'qname'):
@@ -473,16 +692,29 @@ class HTMLFormatMapper:
                     text_elements.append(('p', elem))
                 elif elem.qname == (odf_text.TEXTNS, 'h'):
                     text_elements.append(('h', elem))
+                elif elem.qname[1] == 'table':  # Phase 2: Detect table:table
+                    text_elements.append(('table', elem))
         
         for i, (elem_type, elem) in enumerate(text_elements):
-            # Extract element (works for both P and H)
-            # Phase 1: Pass image_manager for image marker insertion
-            elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager, image_manager)
-            
-            # Skip adding BR if this element is empty (reduces excess blank lines)
-            has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
-            
-            segments.extend(elem_segments)
+            if elem_type == 'table':
+                # Phase 2 - COM8: Extract table
+                table_html = HTMLFormatMapper._extract_table(elem, table_manager)
+                # Add as raw HTML segment - HTMLSegment requires all 4 parameters
+                segments.append(HTMLSegment(
+                    text=table_html,
+                    css_class='',
+                    tag_type='table',
+                    attributes=FormatAttributes()  # Phase 2: Add empty attributes
+                ))
+            else:
+                # Extract paragraph/heading (works for both P and H)
+                # Phase 1: Pass image_manager for image marker insertion
+                elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager, image_manager)
+                
+                # Skip adding BR if this element is empty (reduces excess blank lines)
+                has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
+                
+                segments.extend(elem_segments)
         
         # Generate HTML structure
         html = HTMLFormatMapper._generate_html(segments, css_manager)
@@ -497,10 +729,10 @@ class HTMLFormatMapper:
             temp_file = tempfile.mktemp(suffix='_css_mapping_COM8.json')
             with open(temp_file, 'w', encoding='utf-8') as f:
                 json.dump(css_manager.to_dict(), f, indent=2)
-            return html, temp_file, image_manager
+            return html, temp_file, image_manager, table_manager  # Phase 2: Return table_manager
         else:
             # Keep in memory
-            return html, css_manager, image_manager
+            return html, css_manager, image_manager, table_manager  # Phase 2: Return table_manager
     
     @staticmethod
     def _build_style_dict(doc) -> Dict:
@@ -667,6 +899,108 @@ class HTMLFormatMapper:
         segments.append(HTMLSegment('\n', '', 'br', FormatAttributes()))
         
         return segments
+    
+    @staticmethod
+    def _extract_table(table_elem, table_manager: 'ODTTableManager') -> str:
+        """
+        Extract table from ODF element and store in TableManager.
+        
+        Phase 2 - COM8: Table extraction for ODT files.
+        
+        Args:
+            table_elem: odf.table.Table element
+            table_manager: ODTTableManager to store table
+        
+        Returns:
+            HTML table string with data-table marker
+        """
+        from odf import table as odf_table
+        from odf.text import P as TextP
+        
+        # Get table name attribute
+        table_name = table_elem.getAttribute('name') if hasattr(table_elem, 'getAttribute') else None
+        
+        # Extract rows
+        rows_elements = []
+        for child in table_elem.childNodes:
+            if hasattr(child, 'qname') and child.qname[1] == 'table-row':
+                rows_elements.append(child)
+        
+        rows = len(rows_elements)
+        
+        # Determine columns (from first row)
+        cols = 0
+        if rows > 0:
+            for child in rows_elements[0].childNodes:
+                if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
+                    cols += 1
+        
+        # Extract cell text
+        cells = []
+        for row_elem in rows_elements:
+            row_cells = []
+            
+            for child in row_elem.childNodes:
+                if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
+                    # Extract text from paragraphs in cell
+                    cell_paragraphs = []
+                    for cell_child in child.childNodes:
+                        if hasattr(cell_child, 'qname') and cell_child.qname[1] == 'p':
+                            # Get text content from paragraph
+                            para_text = HTMLFormatMapper._get_text_content(cell_child)
+                            if para_text.strip():
+                                cell_paragraphs.append(para_text)
+                    
+                    # Join paragraphs with space
+                    cell_text = ' '.join(cell_paragraphs)
+                    row_cells.append(cell_text)
+            
+            # Pad row if needed (in case of irregular tables)
+            while len(row_cells) < cols:
+                row_cells.append('')
+            
+            cells.append(row_cells)
+        
+        # Store in manager
+        if rows > 0 and cols > 0:
+            table_id = table_manager.add_table(
+                rows=rows,
+                cols=cols,
+                cells=cells,
+                name=table_name
+            )
+            
+            # Return HTML
+            table_data = table_manager.get_table(table_id)
+            return table_data.to_html()
+        else:
+            # Empty table
+            return '<table></table>'
+    
+    @staticmethod
+    def _get_text_content(element) -> str:
+        """
+        Recursively extract text content from ODF element.
+        
+        Phase 2 - COM8: Helper for table cell text extraction.
+        
+        Args:
+            element: ODF element
+        
+        Returns:
+            Plain text content
+        """
+        text_parts = []
+        
+        if hasattr(element, 'data'):
+            # Text node
+            text_parts.append(element.data)
+        
+        if hasattr(element, 'childNodes'):
+            for child in element.childNodes:
+                text_parts.append(HTMLFormatMapper._get_text_content(child))
+        
+        return ''.join(text_parts)
     
     @staticmethod
     def _extract_paragraph_format(para, para_style, para_style_name: Optional[str]) -> FormatAttributes:
@@ -856,6 +1190,9 @@ class HTMLFormatMapper:
             elif segment.tag_type == 'image':
                 # Phase 1 - COM8: Image placeholder (already in correct format)
                 body_parts.append(segment.text)  # text contains: <span data-image="IMG001"></span>
+            elif segment.tag_type == 'table':
+                # Phase 2 - COM8: Table (already in HTML format with data-table marker)
+                body_parts.append(segment.text)  # text contains: <table data-table="TBL001">...</table>
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
@@ -949,17 +1286,20 @@ def restore_special_whitespace(html: str) -> str:
 # ============================================================================
 
 def create_odt_from_html(html: str, css_manager_or_path, output_path: str, 
-                         image_manager: Optional['ODTImageManager'] = None):
+                         image_manager: Optional['ODTImageManager'] = None,
+                         table_manager: Optional['ODTTableManager'] = None):
     """
     Create ODT file from translated HTML.
     
     Phase 1 - COM8: Added image_manager parameter for image restoration.
+    Phase 2 - COM8: Added table_manager parameter for table restoration.
     
     Args:
         html: Translated HTML document
         css_manager_or_path: CSSClassManager object or path to JSON file
         output_path: Where to save ODT file
         image_manager: Optional ODTImageManager with images to restore
+        table_manager: Optional ODTTableManager with tables to restore
     """
     from html.parser import HTMLParser
     from odf.opendocument import OpenDocumentText
@@ -976,7 +1316,7 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str,
         css_manager = css_manager_or_path
     
     # Parse HTML
-    parser = HTMLToODTParser(css_manager, image_manager)  # Phase 1: Pass image_manager
+    parser = HTMLToODTParser(css_manager, image_manager, table_manager)  # Phase 2: Pass table_manager
     parser.feed(html)
     
     # Create ODT document
@@ -1103,6 +1443,37 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str,
             
             frame.addElement(img)
             current_paragraph.addElement(frame)
+        
+        elif segment['type'] == 'table':
+            # Phase 2 - COM8: Handle table restoration
+            if current_paragraph is not None:
+                doc.text.addElement(current_paragraph)
+                current_paragraph = None
+            
+            table_data = segment['table_data']
+            
+            # Create ODF table
+            from odf.table import Table, TableColumn, TableRow, TableCell
+            from odf.text import P as TableP
+            
+            odt_table = Table(name=table_data.name or f"Table{table_data.table_id}")
+            
+            # Add column definitions
+            for _ in range(table_data.cols):
+                odt_table.addElement(TableColumn())
+            
+            # Add rows and cells
+            for row_idx in range(table_data.rows):
+                row = TableRow()
+                for col_idx in range(table_data.cols):
+                    cell = TableCell()
+                    cell_text = table_data.get_cell(row_idx, col_idx)
+                    p = TableP(text=cell_text)
+                    cell.addElement(p)
+                    row.addElement(cell)
+                odt_table.addElement(row)
+            
+            doc.text.addElement(odt_table)
     
     # Add final paragraph if exists
     if current_paragraph is not None:
@@ -1138,22 +1509,49 @@ class HTMLToODTParser(HTMLParser):
     """Parse HTML and extract segments for ODT creation.
     
     Phase 1 - COM8: Extended to handle image restoration from data-image attributes.
+    Phase 2 - COM8: Extended to handle table restoration from data-table attributes.
     """
     
-    def __init__(self, css_manager: CSSClassManager, image_manager: Optional['ODTImageManager'] = None):
+    def __init__(self, css_manager: CSSClassManager, 
+                 image_manager: Optional['ODTImageManager'] = None,
+                 table_manager: Optional['ODTTableManager'] = None):
         super().__init__()
         self.css_manager = css_manager
         self.image_manager = image_manager
+        self.table_manager = table_manager  # Phase 2: Store table manager
         self.segments = []
         self.current_tag = None
         self.current_class = None
+        self.in_table = False  # Phase 2: Track if parsing table
+        self.current_table_id = None  # Phase 2: Current table being parsed
     
     def handle_starttag(self, tag, attrs):
         """Handle opening tags.
         
         Phase 1 - COM8: Added detection for data-image attributes (image markers).
+        Phase 2 - COM8: Added detection for data-table attributes (table markers).
         """
         self.current_tag = tag
+        
+        # Phase 2: Handle table tags
+        if tag == 'table':
+            for attr, value in attrs:
+                if attr == 'data-table' and self.table_manager:
+                    self.in_table = True
+                    self.current_table_id = value
+                    # Add table segment
+                    table_data = self.table_manager.get_table(value)
+                    if table_data:
+                        self.segments.append({
+                            'type': 'table',
+                            'table_id': value,
+                            'table_data': table_data
+                        })
+                    return
+        
+        # Phase 2: Skip content inside tables (handled by table segment)
+        if self.in_table and tag in ['tr', 'td', 'th', 'tbody', 'thead']:
+            return
         
         # Handle self-closing BR tag immediately
         if tag == 'br':
@@ -1193,7 +1591,16 @@ class HTMLToODTParser(HTMLParser):
                 break
     
     def handle_endtag(self, tag):
-        """Handle closing tags."""
+        """Handle closing tags.
+        
+        Phase 2 - COM8: Added table state tracking.
+        """
+        # Phase 2: Reset table state
+        if tag == 'table':
+            self.in_table = False
+            self.current_table_id = None
+            return
+        
         self.current_tag = None
         self.current_class = None
     
