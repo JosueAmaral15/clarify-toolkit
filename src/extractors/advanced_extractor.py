@@ -252,42 +252,15 @@ class AdvancedExtractor:
         """
         Apply character limit and avoid_cut logic to a key string.
         Used for both class names and JSON keys.
+        Uses enhanced word boundary detection (spaces, special chars, NOT underscores).
         """
-        if self.limit in (None, 'all', 'ALL', 'All'):
-            return key
-        
-        try:
-            limit_num = int(self.limit)
-        except ValueError:
-            return key
-        
-        if limit_num <= 0 or len(key) <= limit_num:
-            return key
-        
-        if self.avoid_cut:
-            # Cut at word boundary (underscore or dash)
-            if self.avoid_cut_direction == "after":
-                # Search AFTER limit for next separator
-                next_sep_pos = -1
-                for i in range(limit_num, len(key)):
-                    if key[i] in ('_', '-'):
-                        next_sep_pos = i
-                        break
-                if next_sep_pos > 0:
-                    return key[:next_sep_pos]
-                # No separator found after, keep full key
-                return key
-            else:
-                # Default: search BEFORE limit for last separator
-                truncated = key[:limit_num]
-                last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
-                if last_sep > 0:
-                    return truncated[:last_sep]
-                # No separator found, just truncate
-                return truncated
-        else:
-            # Hard cut at limit
-            return key[:limit_num]
+        # Use the enhanced smart_truncate function with word boundary detection
+        return smart_truncate(
+            key, 
+            self.limit, 
+            self.avoid_cut, 
+            self.avoid_cut_direction
+        )
 
     def _replace_stack_with_class_names(self, parser, stack: List[str]) -> List[str]:
         """
