@@ -66,6 +66,9 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
       - Word boundary = whitespace OR non-letter/non-underscore character (e.g., -, ., :, etc.)
       - 'before': cut at last word boundary <= limit
       - 'after': cut at next word boundary >= limit
+    
+    IMPORTANT: Only counts alphanumeric + underscore characters for limit.
+    Non-alphanumeric characters at start (like {, ", /, *, etc.) are skipped.
     """
     # pylint: disable=too-many-return-statements  # Multiple early exit conditions
     if not text or limit in (None, 'all', 'ALL', 'All'):
@@ -75,13 +78,28 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
     except Exception:  # pylint: disable=broad-exception-caught  # Parse robustness
         return text
 
-    if n <= 0 or len(text) <= n:
+    if n <= 0:
         return text
-
-    sub = text[:n]
+    
+    # Strip leading non-alphanumeric characters (except underscore)
+    # This handles cases like "{t.pages..." or "{/* Category Filter */}"
+    start_pos = 0
+    for i, char in enumerate(text):
+        if char.isalnum() or char == '_':
+            start_pos = i
+            break
+    else:
+        # No alphanumeric characters found
+        return text
+    
+    # Work with cleaned text (from first valid char)
+    cleaned_text = text[start_pos:]
+    
+    if len(cleaned_text) <= n:
+        return cleaned_text
 
     if not avoid_cut:
-        return sub
+        return cleaned_text[:n]
 
     def is_word_boundary(char: str) -> bool:
         """Check if character is a word boundary (whitespace or non-letter/non-underscore)."""
@@ -90,13 +108,15 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
     # Direction-aware cutting
     if avoid_cut_direction == "after":
         # Search AFTER limit for next word boundary
-        for i in range(n, len(text)):
-            if is_word_boundary(text[i]):
-                return text[:i].rstrip()
+        for i in range(n, len(cleaned_text)):
+            if is_word_boundary(cleaned_text[i]):
+                return cleaned_text[:i].rstrip()
         # No word boundary found after limit, return full text
-        return text
+        return cleaned_text
     else:
         # "before" behavior: cut at last word boundary before limit
+        sub = cleaned_text[:n]
+        
         # If we ended already on word boundary, strip trailing delimiters
         if sub[-1].isspace() or not (sub[-1].isalnum() or sub[-1] == '_'):
             return sub.rstrip(''.join(c for c in sub if is_word_boundary(c)))
@@ -104,10 +124,14 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
         # Find the last word boundary before the cut
         # Search backwards from position n-1
         for i in range(n - 1, -1, -1):
-            if is_word_boundary(text[i]):
+            if is_word_boundary(cleaned_text[i]):
                 # Cut right after this boundary, but strip trailing delimiters
-                result = text[:i+1].rstrip(''.join(c for c in text[:i+1] if is_word_boundary(c)))
+                result = cleaned_text[:i+1].rstrip(''.join(c for c in cleaned_text[:i+1] if is_word_boundary(c)))
                 if result:
+                    return result
+
+        # Fallback: no word boundary found (very long first word)
+        return sub
                     return result
 
         # Fallback: no word boundary found (very long first word)
