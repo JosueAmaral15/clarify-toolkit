@@ -33,7 +33,7 @@ def test_odt_image_preservation(odt_path: str):
     print("-" * 70)
     
     try:
-        html_content, css_manager, image_manager = HTMLFormatMapper.extract_html_from_odt(odt_path)
+        html_content, css_manager, image_manager, table_manager = HTMLFormatMapper.extract_html_from_odt(odt_path)
         
         stats = image_manager.get_statistics()
         print(f"✓ Extraction successful")
@@ -86,7 +86,7 @@ def test_odt_image_preservation(odt_path: str):
         output_path = tmp.name
     
     try:
-        create_odt_from_html(translated_html, css_manager, output_path, image_manager)
+        create_odt_from_html(translated_html, css_manager, output_path, image_manager, None)  # No tables for image test
         print(f"✓ ODT created: {output_path}")
         print(f"  Output size: {os.path.getsize(output_path):,} bytes")
     except Exception as e:
