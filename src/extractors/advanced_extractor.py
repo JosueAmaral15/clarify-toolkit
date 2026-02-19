@@ -359,11 +359,17 @@ class AdvancedExtractor:
         if self.skip_empty and (not raw_value or not raw_value.strip()):
             return {}
         
-        # First normalize the entire raw value to get the key
-        key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
+        # Apply limit FIRST on raw value (before normalization)
+        # This ensures word boundaries (dots, spaces, etc.) are preserved for truncation
+        raw_value_limited = smart_truncate(
+            raw_value,
+            self.limit,
+            self.avoid_cut,
+            self.avoid_cut_direction
+        )
         
-        # Apply limit to the normalized key using the helper method
-        key = self._apply_limit_to_key(key)
+        # Then normalize the truncated value to get the key
+        key = normalize_token(raw_value_limited, self.case_style, self.to_upper) or "text"
         
         # Exclude numeric keys if enabled
         if self.exclude_numeric and key.isdigit():
