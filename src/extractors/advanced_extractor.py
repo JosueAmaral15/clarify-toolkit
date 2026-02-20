@@ -613,6 +613,70 @@ class AdvancedExtractor:
 
         return True
 
+    def _apply_include_flags(self, data: Dict[str, Any]) -> Any:
+        """
+        Transform the merged JSON based on include_key and include_value flags.
+        
+        - Both TRUE: Return as-is (full structure with keys and values)
+        - Key only: Keep structure but replace leaf values with arrays of keys
+        - Value only: Return flat list of all values (no structure)
+        - Both FALSE: Return empty dict
+        """
+        # Both FALSE → empty
+        if not self.include_key and not self.include_value:
+            return {}
+        
+        # Both TRUE → no transformation needed
+        if self.include_key and self.include_value:
+            return data
+        
+        # Value only → collect all leaf values into flat list
+        if not self.include_key and self.include_value:
+            values = []
+            self._collect_values(data, values)
+            return values
+        
+        # Key only → keep structure but replace {key: value} with [key1, key2, ...]
+        if self.include_key and not self.include_value:
+            return self._extract_keys_only(data)
+        
+        return data
+    
+    def _collect_values(self, obj: Any, result: list):
+        """Recursively collect all leaf string values into a flat list."""
+        if isinstance(obj, dict):
+            for value in obj.values():
+                self._collect_values(value, result)
+        elif isinstance(obj, list):
+            for item in obj:
+                self._collect_values(item, result)
+        elif isinstance(obj, str):
+            result.append(obj)
+    
+    def _extract_keys_only(self, obj: Any) -> Any:
+        """
+        Transform structure to show only keys.
+        Converts {parent: {key1: val1, key2: val2}} → {parent: [key1, key2]}
+        """
+        if not isinstance(obj, dict):
+            return obj
+        
+        result = {}
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                # Check if this dict contains only leaf key:value pairs
+                has_only_leaves = all(isinstance(v, str) for v in value.values())
+                if has_only_leaves:
+                    # Replace with array of keys
+                    result[key] = list(value.keys())
+                else:
+                    # Recurse deeper
+                    result[key] = self._extract_keys_only(value)
+            else:
+                result[key] = value
+        
+        return result
+
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
         """
         Process text content and extract parameters/content.
@@ -730,6 +794,9 @@ class AdvancedExtractor:
                     merged_json = self.prune_to_key(merged_json, self.param, -1)
                 else:
                     merged_json = self.prune_to_key(merged_json, self.param, -2)
+        
+        # Post-process: transform based on include_key and include_value flags
+        merged_json = self._apply_include_flags(merged_json)
 
         return out_lines, merged_json
 
