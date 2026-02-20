@@ -815,9 +815,16 @@ if _PYSIDE:
             # Check if tool is already open
             if tool_name in self.tool_tabs:
                 _existing_widget, existing_index = self.tool_tabs[tool_name]
-                # Switch to existing tab
-                self.tabs.setCurrentIndex(existing_index)
-                return existing_index
+                # Validate that the tab still exists at that index
+                if 0 <= existing_index < self.tabs.count():
+                    # Verify widget matches (tab might have been closed/reordered)
+                    if self.tabs.widget(existing_index) == _existing_widget:
+                        # Switch to existing tab
+                        self.tabs.setCurrentIndex(existing_index)
+                        return existing_index
+                # Tab index is invalid or widget doesn't match - remove stale entry
+                self.logger.warning(f"Tool '{tool_name}' tracked at invalid index {existing_index}, recreating...")
+                del self.tool_tabs[tool_name]
 
             # Add new tab
             tab_index = self.tabs.addTab(widget, title)
