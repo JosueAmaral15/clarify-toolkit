@@ -1219,13 +1219,28 @@ class GoogleTranslateDock(BaseDock):
         
         if self._translated_html and self._css_manager:
             # Session 77: NEW HTML system - use HTML to ODT conversion (Phase 1: with images)
-            print(f"  → Using HTML system")
-            from translation.html_format_mapper import create_odt_from_html
-            # Phase 1 - COM8: Pass image_manager if available
-            # Phase 2 - COM8: Pass table_manager if available
-            image_mgr = getattr(self, '_image_manager', None)
-            table_mgr = getattr(self, '_table_manager', None)
-            create_odt_from_html(self._translated_html, self._css_manager, output_path, image_mgr, table_mgr)
+            # COM8 2026-02-20: PROPER ODT fix (Option B) - preserve original structure
+            print(f"  → Using HTML system (Option B: preserve structure)")
+            
+            # Check if we have original file path (needed for Option B)
+            original_odt = getattr(self, '_source_file_path', None)
+            
+            if original_odt and os.path.exists(original_odt) and original_odt.endswith('.odt'):
+                # Option B: Preserve original ODT structure (PROPER fix)
+                from translation.html_format_mapper import create_odt_from_original
+                image_mgr = getattr(self, '_image_manager', None)
+                table_mgr = getattr(self, '_table_manager', None)
+                create_odt_from_original(original_odt, self._translated_html, self._css_manager, 
+                                        output_path, image_mgr, table_mgr)
+                print(f"  → ODT created with preserved structure (Option B)")
+            else:
+                # Fallback: Use old method if no original file (shouldn't happen for ODT workflow)
+                print(f"  → WARNING: No original ODT path, using fallback method")
+                from translation.html_format_mapper import create_odt_from_html
+                image_mgr = getattr(self, '_image_manager', None)
+                table_mgr = getattr(self, '_table_manager', None)
+                create_odt_from_html(self._translated_html, self._css_manager, output_path, image_mgr, table_mgr)
+            
             print(f"  → ODT created successfully")
             
         elif self._translated_segments:

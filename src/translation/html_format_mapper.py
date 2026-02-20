@@ -1529,6 +1529,352 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str,
             shutil.move(temp_odt, output_path)
 
 
+def create_odt_from_original(original_odt_path: str, html: str, css_manager_or_path, 
+                              output_path: str, 
+                              image_manager: Optional['ODTImageManager'] = None,
+                              table_manager: Optional['ODTTableManager'] = None):
+    """
+    Create ODT from translated HTML by preserving original ODT structure.
+    
+    This is the PROPER fix for ODT corruption (Option B).
+    Instead of creating a new ODT from scratch (which loses metadata, embedded objects,
+    settings, thumbnails, etc.), this function:
+    1. Extracts the original ODT to a temp directory
+    2. Generates new content.xml from translated HTML
+    3. Preserves ALL other files (manifest.rdf, settings.xml, Objects/, Configurations2/, etc.)
+    4. Updates META-INF/manifest.xml for any new/changed images
+    5. Packages everything into the output ODT
+    
+    This ensures LibreOffice can open the file without corruption warnings.
+    
+    Args:
+        original_odt_path: Path to original .odt file (REQUIRED to preserve structure)
+        html: Translated HTML document
+        css_manager_or_path: CSSClassManager object or path to JSON file
+        output_path: Where to save ODT file
+        image_manager: Optional ODTImageManager with images to restore
+        table_manager: Optional ODTTableManager with tables to restore
+    
+    Author: COM8
+    Date: 2026-02-20
+    Session: Option B - Proper ODT fix
+    """
+    from html.parser import HTMLParser
+    from odf import opendocument
+    from odf.style import Style, TextProperties, ParagraphProperties
+    from odf.text import P, Span
+    import zipfile
+    import tempfile
+    import shutil
+    import xml.etree.ElementTree as ET
+    
+    # Load CSS manager
+    if isinstance(css_manager_or_path, str):
+        with open(css_manager_or_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        css_manager = CSSClassManager.from_dict(data)
+    else:
+        css_manager = css_manager_or_path
+    
+    # Parse HTML to get segments
+    parser = HTMLToODTParser(css_manager, image_manager, table_manager)
+    parser.feed(html)
+    
+    # Create temp directory for ODT manipulation
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Step 1: Extract original ODT to preserve structure
+        extract_dir = os.path.join(tmpdir, 'odt_extract')
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        with zipfile.ZipFile(original_odt_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        print(f"[ODT Fix] Extracted original ODT structure ({len(os.listdir(extract_dir))} top-level items)")
+        
+        # Step 2: Generate new content.xml from translated HTML
+        # Load original content.xml to preserve its structure
+        content_xml_path = os.path.join(extract_dir, 'content.xml')
+        
+        # Parse original content.xml to get namespaces and document structure
+        tree = ET.parse(content_xml_path)
+        root = tree.getroot()
+        
+        # Get namespace map (preserve all xmlns declarations)
+        namespaces = dict([node for _, node in ET.iterparse(content_xml_path, events=['start-ns'])])
+        
+        # Register namespaces for proper serialization
+        for prefix, uri in namespaces.items():
+            ET.register_namespace(prefix if prefix else 'office', uri)
+        
+        # Find office:body and office:text elements
+        office_ns = namespaces.get('office', '')
+        text_ns = namespaces.get('text', '')
+        
+        office_body = root.find(f'{{{office_ns}}}body', namespaces)
+        if office_body is None:
+            raise ValueError("Could not find office:body in content.xml")
+        
+        office_text = office_body.find(f'{{{office_ns}}}text', namespaces)
+        if office_text is None:
+            raise ValueError("Could not find office:text in office:body")
+        
+        # Clear existing content in office:text (but preserve structure)
+        office_text.clear()
+        office_text.tag = f'{{{office_ns}}}text'  # Restore tag
+        
+        # Step 3: Build new content from parsed HTML segments
+        # We'll use odfpy to generate proper ODF elements, then insert into XML tree
+        
+        # Create temporary ODT document to generate elements
+        from odf.opendocument import OpenDocumentText
+        temp_doc = OpenDocumentText()
+        
+        # Create styles from CSS classes (reuse logic from create_odt_from_html)
+        styles_created = {}
+        for class_name, fmt in css_manager.class_to_format.items():
+            # Create text style
+            style = Style(name=f"Style_{class_name}", family="text")
+            text_props = TextProperties()
+            
+            if fmt.bold:
+                text_props.setAttribute("fontweight", "bold")
+            if fmt.italic:
+                text_props.setAttribute("fontstyle", "italic")
+            if fmt.underline:
+                text_props.setAttribute("textunderlinestyle", "solid")
+                text_props.setAttribute("textunderlinewidth", "auto")
+            if fmt.strikethrough:
+                text_props.setAttribute("textlinethroughstyle", "solid")
+            if fmt.font_family:
+                text_props.setAttribute("fontfamily", fmt.font_family)
+            if fmt.font_size:
+                text_props.setAttribute("fontsize", f"{fmt.font_size}pt")
+            if fmt.font_color:
+                text_props.setAttribute("color", f"#{fmt.font_color}")
+            if fmt.highlight_color:
+                text_props.setAttribute("backgroundcolor", f"#{fmt.highlight_color}")
+            
+            style.addElement(text_props)
+            temp_doc.automaticstyles.addElement(style)
+            styles_created[class_name] = style
+            
+            # Create paragraph style if needed
+            if fmt.alignment or fmt.line_spacing or fmt.indent_first or fmt.indent_left or fmt.indent_right:
+                para_style = Style(name=f"ParaStyle_{class_name}", family="paragraph")
+                para_props = ParagraphProperties()
+                
+                if fmt.alignment:
+                    align_map = {'L': 'left', 'C': 'center', 'R': 'right', 'J': 'justify'}
+                    para_props.setAttribute("textalign", align_map.get(fmt.alignment, 'left'))
+                if fmt.line_spacing:
+                    para_props.setAttribute("lineheight", f"{int(fmt.line_spacing * 100)}%")
+                if fmt.indent_first:
+                    para_props.setAttribute("textindent", f"{fmt.indent_first * 0.0353:.2f}cm")
+                if fmt.indent_left:
+                    para_props.setAttribute("marginleft", f"{fmt.indent_left * 0.0353:.2f}cm")
+                if fmt.indent_right:
+                    para_props.setAttribute("marginright", f"{fmt.indent_right * 0.0353:.2f}cm")
+                
+                para_style.addElement(para_props)
+                temp_doc.automaticstyles.addElement(para_style)
+                styles_created[f"para_{class_name}"] = para_style
+        
+        # Build ODT content from parsed segments (reuse logic)
+        current_paragraph = None
+        
+        for segment in parser.segments:
+            if segment['type'] == 'br':
+                if current_paragraph is not None:
+                    temp_doc.text.addElement(current_paragraph)
+                    current_paragraph = None
+                else:
+                    empty_para = P()
+                    temp_doc.text.addElement(empty_para)
+            
+            elif segment['type'] == 'line-break':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                from odf.text import LineBreak
+                current_paragraph.addElement(LineBreak())
+            
+            elif segment['type'] == 'tab':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                from odf.text import Tab
+                current_paragraph.addElement(Tab())
+            
+            elif segment['type'] == 'text':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                text_content = segment['text']
+                css_class = segment.get('class')
+                
+                if css_class and css_class in styles_created:
+                    span = Span(stylename=styles_created[css_class], text=text_content)
+                    current_paragraph.addElement(span)
+                else:
+                    current_paragraph.addText(text_content)
+            
+            elif segment['type'] == 'image':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                image_data = segment['image_data']
+                from odf.draw import Frame, Image
+                
+                width_cm = f"{image_data.width_cm:.2f}cm"
+                height_cm = f"{image_data.height_cm:.2f}cm"
+                frame = Frame(width=width_cm, height=height_cm, anchortype="as-char")
+                image_href = f"Pictures/{image_data.image_id}.{image_data.format}"
+                img = Image(href=image_href)
+                frame.addElement(img)
+                current_paragraph.addElement(frame)
+            
+            elif segment['type'] == 'table':
+                if current_paragraph is not None:
+                    temp_doc.text.addElement(current_paragraph)
+                    current_paragraph = None
+                
+                table_data = segment['table_data']
+                from odf.table import Table, TableColumn, TableRow, TableCell
+                from odf.text import P as TableP
+                
+                odt_table = Table(name=table_data.name or f"Table{table_data.table_id}")
+                
+                for _ in range(table_data.cols):
+                    odt_table.addElement(TableColumn())
+                
+                for row_idx in range(table_data.rows):
+                    row = TableRow()
+                    for col_idx in range(table_data.cols):
+                        cell = TableCell()
+                        cell_text = table_data.get_cell(row_idx, col_idx)
+                        p = TableP(text=cell_text)
+                        cell.addElement(p)
+                        row.addElement(cell)
+                    odt_table.addElement(row)
+                
+                temp_doc.text.addElement(odt_table)
+        
+        if current_paragraph is not None:
+            temp_doc.text.addElement(current_paragraph)
+        
+        # Step 4: Save temp_doc to get proper content.xml with new content
+        temp_odt_path = os.path.join(tmpdir, 'temp_generated.odt')
+        temp_doc.save(temp_odt_path)
+        
+        # Extract generated content.xml and automatic-styles
+        with zipfile.ZipFile(temp_odt_path, 'r') as temp_zip:
+            generated_content = temp_zip.read('content.xml')
+        
+        # Parse generated content to extract office:automatic-styles and office:text
+        generated_tree = ET.fromstring(generated_content)
+        generated_ns = dict([node for _, node in ET.iterparse(zipfile.ZipFile(temp_odt_path).open('content.xml'), events=['start-ns'])])
+        
+        gen_office_ns = generated_ns.get('office', '')
+        gen_automatic_styles = generated_tree.find(f'{{{gen_office_ns}}}automatic-styles', generated_ns)
+        gen_body = generated_tree.find(f'{{{gen_office_ns}}}body', generated_ns)
+        gen_text = gen_body.find(f'{{{gen_office_ns}}}text', generated_ns) if gen_body is not None else None
+        
+        # Replace automatic-styles in original (preserve font-face-decls and other styles)
+        original_auto_styles = root.find(f'{{{office_ns}}}automatic-styles', namespaces)
+        if original_auto_styles is not None and gen_automatic_styles is not None:
+            # Clear and copy
+            original_auto_styles.clear()
+            original_auto_styles.tag = gen_automatic_styles.tag
+            original_auto_styles.attrib = gen_automatic_styles.attrib
+            for child in gen_automatic_styles:
+                original_auto_styles.append(child)
+        
+        # Replace content in office:text
+        if gen_text is not None:
+            for child in gen_text:
+                office_text.append(child)
+        
+        # Step 5: Write updated content.xml back to extracted directory
+        tree.write(content_xml_path, encoding='utf-8', xml_declaration=True)
+        
+        print(f"[ODT Fix] Generated new content.xml with {len(parser.segments)} segments")
+        
+        # Step 6: Handle images - write to Pictures/ folder
+        pictures_dir = os.path.join(extract_dir, 'Pictures')
+        if image_manager and image_manager.get_statistics()['total_images'] > 0:
+            os.makedirs(pictures_dir, exist_ok=True)
+            
+            for image_id, img_data in image_manager._images.items():
+                image_filename = f"{image_id}.{img_data.format}"
+                image_path = os.path.join(pictures_dir, image_filename)
+                with open(image_path, 'wb') as img_file:
+                    img_file.write(img_data.blob)
+            
+            print(f"[ODT Fix] Restored {len(image_manager._images)} image(s) to Pictures/")
+            
+            # Step 7: Update META-INF/manifest.xml to include new images
+            manifest_path = os.path.join(extract_dir, 'META-INF', 'manifest.xml')
+            if os.path.exists(manifest_path):
+                manifest_tree = ET.parse(manifest_path)
+                manifest_root = manifest_tree.getroot()
+                manifest_ns = {'manifest': 'urn:oasis:names:tc:opendocument:xmlns:manifest:1.0'}
+                
+                # Get existing file entries
+                existing_paths = {elem.get(f'{{{manifest_ns["manifest"]}}}full-path') 
+                                  for elem in manifest_root.findall('manifest:file-entry', manifest_ns)}
+                
+                # Add Pictures/ directory entry if missing
+                if 'Pictures/' not in existing_paths:
+                    ET.SubElement(manifest_root, f'{{{manifest_ns["manifest"]}}}file-entry', {
+                        f'{{{manifest_ns["manifest"]}}}full-path': 'Pictures/',
+                        f'{{{manifest_ns["manifest"]}}}media-type': ''
+                    })
+                
+                # Add image file entries
+                mime_types = {
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'gif': 'image/gif',
+                    'bmp': 'image/bmp',
+                    'svg': 'image/svg+xml'
+                }
+                
+                for image_id, img_data in image_manager._images.items():
+                    img_path = f"Pictures/{image_id}.{img_data.format}"
+                    if img_path not in existing_paths:
+                        mime_type = mime_types.get(img_data.format.lower(), 'application/octet-stream')
+                        ET.SubElement(manifest_root, f'{{{manifest_ns["manifest"]}}}file-entry', {
+                            f'{{{manifest_ns["manifest"]}}}full-path': img_path,
+                            f'{{{manifest_ns["manifest"]}}}media-type': mime_type
+                        })
+                
+                manifest_tree.write(manifest_path, encoding='utf-8', xml_declaration=True)
+                print(f"[ODT Fix] Updated manifest.xml with image entries")
+        
+        # Step 8: Package everything into output ODT (preserve ALL files and directories)
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as output_zip:
+            # First, add all directories (including empty ones)
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for dir_name in dirs:
+                    dir_path = os.path.join(root_dir, dir_name)
+                    arcname = os.path.relpath(dir_path, extract_dir) + '/'
+                    # Write directory entry
+                    output_zip.writestr(arcname, '')
+            
+            # Then, add all files
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    file_path = os.path.join(root_dir, file)
+                    arcname = os.path.relpath(file_path, extract_dir)
+                    output_zip.write(file_path, arcname)
+        
+        print(f"[ODT Fix] Created ODT preserving original structure: {output_path}")
+        
+        # Count files in output
+        with zipfile.ZipFile(output_path, 'r') as check_zip:
+            file_count = len(check_zip.namelist())
+            print(f"[ODT Fix] Output ODT contains {file_count} files (preserving structure)")
+
+
 class HTMLToODTParser(HTMLParser):
     """Parse HTML and extract segments for ODT creation.
     
