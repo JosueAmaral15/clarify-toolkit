@@ -1549,6 +1549,33 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str,
                 odt_table.addElement(row)
             
             doc.text.addElement(odt_table)
+        
+        elif segment['type'] == 'link':
+            # PHASE 2/3 - COM8: Hyperlink restoration
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Create text:a element (ODF hyperlink)
+            from odf.text import A as Link
+            
+            href = segment['href']
+            link_text = segment['text']
+            link_class = segment.get('class')
+            
+            # Create link element
+            link_element = Link(href=href)
+            
+            # Add text with optional formatting
+            if link_class and link_class in styles_created:
+                # Link text has formatting
+                link_span = Span(stylename=styles_created[link_class], text=link_text)
+                link_element.addElement(link_span)
+            else:
+                # Plain link text
+                link_element.addText(link_text)
+            
+            # Add link to paragraph
+            current_paragraph.addElement(link_element)
     
     # Add final paragraph if exists
     if current_paragraph is not None:
@@ -1807,6 +1834,35 @@ def create_odt_from_original(original_odt_path: str, html: str, css_manager_or_p
                     odt_table.addElement(row)
                 
                 temp_doc.text.addElement(odt_table)
+            
+            elif segment['type'] == 'link':
+                # PHASE 2/3 - COM8: Hyperlink restoration
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                # Create text:a element (ODF hyperlink)
+                from odf.text import A as Link
+                
+                href = segment['href']
+                link_text = segment['text']
+                link_class = segment.get('class')
+                
+                # Create link element
+                link_element = Link(href=href)
+                
+                # Add text with optional formatting
+                if link_class and link_class in styles_created:
+                    # Link text has formatting (e.g., bold, italic)
+                    link_span = Span(stylename=styles_created[link_class], text=link_text)
+                    link_element.addElement(link_span)
+                else:
+                    # Plain link text
+                    link_element.addText(link_text)
+                
+                # Add link to paragraph
+                current_paragraph.addElement(link_element)
+                
+                print(f"[ODT Restore] Hyperlink: {href} -> \"{link_text[:50]}\"")
         
         if current_paragraph is not None:
             temp_doc.text.addElement(current_paragraph)
@@ -1945,6 +2001,11 @@ class HTMLToODTParser(HTMLParser):
         self.current_class = None
         self.in_table = False  # Phase 2: Track if parsing table
         self.current_table_id = None  # Phase 2: Current table being parsed
+        # PHASE 2/3 - COM8: Hyperlink tracking
+        self.in_link = False
+        self.link_href = None
+        self.link_text = []
+        self.link_class = None
     
     def handle_starttag(self, tag, attrs):
         """Handle opening tags.
@@ -1953,6 +2014,17 @@ class HTMLToODTParser(HTMLParser):
         Phase 2 - COM8: Added detection for data-table attributes (table markers).
         """
         self.current_tag = tag
+        
+        # PHASE 2/3 - COM8: Handle hyperlink tags <a href="...">
+        if tag == 'a':
+            # Extract href attribute
+            for attr, value in attrs:
+                if attr == 'href':
+                    self.in_link = True
+                    self.link_href = value
+                    self.link_text = []
+                    self.link_class = self.current_class  # May have class from outer span
+                    return
         
         # Phase 2: Handle table tags
         if tag == 'table':
@@ -2015,7 +2087,28 @@ class HTMLToODTParser(HTMLParser):
         """Handle closing tags.
         
         Phase 2 - COM8: Added table state tracking.
+        Phase 2/3 - COM8: Added hyperlink state tracking.
         """
+        # PHASE 2/3 - COM8: Handle closing </a> tag
+        if tag == 'a' and self.in_link:
+            # Combine collected link text
+            link_text_combined = ''.join(self.link_text)
+            
+            # Create link segment
+            self.segments.append({
+                'type': 'link',
+                'href': self.link_href,
+                'text': link_text_combined,
+                'class': self.link_class
+            })
+            
+            # Reset link state
+            self.in_link = False
+            self.link_href = None
+            self.link_text = []
+            self.link_class = None
+            return
+        
         # Phase 2: Reset table state
         if tag == 'table':
             self.in_table = False
@@ -2029,6 +2122,13 @@ class HTMLToODTParser(HTMLParser):
         """Handle text content."""
         # Skip whitespace in head/style/title
         if self.current_tag in ['style', 'head', 'title']:
+            return
+        
+        # PHASE 2/3 - COM8: If inside a link, collect text for link segment
+        if self.in_link:
+            import html
+            text = html.unescape(data)
+            self.link_text.append(text)
             return
         
         # Keep whitespace-only data if it contains actual spaces (for separation between spans)
