@@ -822,7 +822,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Use class names as keys instead of HTML tags. "
                       "Multiple classes joined with dash. Falls back to tag if no class.")
         )
-        options_grid.addWidget(self.jsx_use_class_names_checkbox, 1, 2)
+        options_grid.addWidget(self.jsx_use_class_names_checkbox, 0, 2)
         
         # Column 3 in row 1 is empty for future expansion
         
@@ -1347,6 +1347,10 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Store for later use in parent key limiting
             self._last_with_quotation_marks = with_quotation_marks
             match_all = self.jsx_match_all_checkbox.isChecked()
+            
+            # If Match All checkbox is checked, override param to "*"
+            if match_all:
+                param = "*"
             
             case_style = self.jsx_case_combo.currentText()
             # Map display text to internal value
