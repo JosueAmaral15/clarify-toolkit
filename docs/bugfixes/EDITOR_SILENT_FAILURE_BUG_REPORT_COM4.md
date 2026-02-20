@@ -18,7 +18,7 @@ Clicking "File → Open Editor" or pressing Ctrl+E does **nothing**:
 
 ### The Problem
 
-**Stale tab tracking in `self.tool_tabs` dictionary.**
+**Two-part issue: Stale tab tracking + broken dock reference.**
 
 #### How It Happens:
 
@@ -28,45 +28,58 @@ Clicking "File → Open Editor" or pressing Ctrl+E does **nothing**:
 
 2. **Session 2**: Clarify starts, calls `_restore_tab_state()`
    - Tries to restore Editor by calling `_show_editor()`
-   - If restoration **fails or is incomplete**, widget might not be added to QTabWidget
-   - BUT `self.tool_tabs["editor"]` still exists with stale index!
+   - If EditorDock init **fails**, it sets:
+     - `self.dock_editor = None` (broken dock reference)
+     - `self.tool_tabs["editor"] = (None, -1)` (stale tracking)
 
 3. **User clicks "Open Editor"**:
-   - `_add_tool_tab()` line 816: checks `if "editor" in self.tool_tabs`
-   - Finds entry, tries `self.tabs.setCurrentIndex(existing_index)`
-   - Index is **invalid** (tab doesn't exist) → nothing happens!
-   - No error because `setCurrentIndex()` silently fails on invalid index
+   - `_show_editor()` checks `hasattr(self, 'dock_editor')` → **TRUE** (it's None, but exists!)
+   - Doesn't create new EditorDock, passes **None** to `_add_tool_tab()`
+   - `_add_tool_tab()` tries to add None widget → silently fails
+   - No error, no tab created!
 
 ### Code Location
 
 **File**: `src/app.py`
-**Method**: `_add_tool_tab()`
-**Lines**: 815-820 (before fix)
+
+**Issue 1**: `_show_editor()` line 794
+**Issue 2**: `_add_tool_tab()` lines 815-820
 
 ```python
-# BUGGY CODE (before fix):
+# BUGGY CODE 1 (_show_editor):
+if not hasattr(self, 'dock_editor'):  # ⚠️ Doesn't check if dock is None!
+    from .gui import EditorDock
+    self.dock_editor = EditorDock(self)
+self._add_tool_tab(self.dock_editor, "Editor", "editor")  # ⚠️ Passes None!
+
+# BUGGY CODE 2 (_add_tool_tab):
 if tool_name in self.tool_tabs:
     _existing_widget, existing_index = self.tool_tabs[tool_name]
-    # Switch to existing tab
     self.tabs.setCurrentIndex(existing_index)  # ⚠️ Silently fails if index invalid!
     return existing_index
 ```
 
 **Why Silent?**
 - `QTabWidget.setCurrentIndex()` doesn't raise exception on invalid index
-- Just does nothing if index < 0 or >= count()
-- No validation of tracked index
+- `hasattr()` returns True even if attribute value is None
+- `QTabWidget.addTab(None, ...)` silently fails
 
 ## The Fix
 
-**Commit**: f852b13
+**Commits**: f852b13, 00bad30
 **Date**: 2026-02-20
-**Changes**: Added validation before switching tabs
+**Changes**: Two-part fix for dock validation and tracking cleanup
 
 ### Fixed Code
 
 ```python
-# FIXED CODE:
+# FIXED CODE 1 (_show_editor):
+if not hasattr(self, 'dock_editor') or self.dock_editor is None:  # ✅ Check None!
+    from .gui import EditorDock
+    self.dock_editor = EditorDock(self)
+self._add_tool_tab(self.dock_editor, "Editor", "editor")
+
+# FIXED CODE 2 (_add_tool_tab):
 if tool_name in self.tool_tabs:
     _existing_widget, existing_index = self.tool_tabs[tool_name]
     # ✅ Validate that the tab still exists at that index
@@ -79,14 +92,16 @@ if tool_name in self.tool_tabs:
     # ✅ Tab index is invalid or widget doesn't match - remove stale entry
     self.logger.warning(f"Tool '{tool_name}' tracked at invalid index {existing_index}, recreating...")
     del self.tool_tabs[tool_name]
+    # Note: _show_* methods handle dock recreation via None check
 
 # Continue to create new tab...
 ```
 
 ### What Changed
 
-1. **Index bounds check**: `0 <= existing_index < self.tabs.count()`
-2. **Widget verification**: `self.tabs.widget(existing_index) == _existing_widget`
+1. **Dock None check**: `or self.dock_editor is None` in `_show_editor()` → recreates dock if broken
+2. **Index bounds check**: `0 <= existing_index < self.tabs.count()` → validates tab exists
+3. **Widget verification**: `self.tabs.widget(existing_index) == _existing_widget` → ensures correct tab
 3. **Stale entry cleanup**: `del self.tool_tabs[tool_name]`
 4. **Debug logging**: Warning message for investigation
 5. **Graceful recovery**: Falls through to create new tab
