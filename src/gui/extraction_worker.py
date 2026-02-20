@@ -57,7 +57,7 @@ class ExtractionWorker(QObject):
     
     def execute_extraction(self, path: str = None, text_content: str = None,
                           input_type_index: int = 0,
-                          typescript_export: bool = False,
+                          #typescript_export: bool = False,
                           with_quotation_marks: bool = True,
                           indent: int = 2):
         """
@@ -85,9 +85,11 @@ class ExtractionWorker(QObject):
                 
                 # Format JSON
                 if merged_json:
+                    '''
                     if typescript_export:
                         json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData")
-                    elif with_quotation_marks:
+                    '''
+                    if with_quotation_marks:
                         json_output = json.dumps(merged_json, indent=indent, ensure_ascii=False)
                     else:
                         json_output = self.extractor.json_to_js_literal(merged_json, indent=indent)
@@ -170,9 +172,10 @@ class ExtractionWorker(QObject):
                 result_text = "\n".join(all_lines) if all_lines else "(no matches)"
                 
                 if self.extractor.convert_to_json:
-                    if typescript_export:
-                        json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData")
-                    elif with_quotation_marks:
+                    # TypeScript export feature commented out (not implemented yet)
+                    # if typescript_export:
+                    #     json_output = self.extractor.json_to_typescript(merged_json, "ExtractedData")
+                    if with_quotation_marks:
                         json_output = json.dumps(merged_json, ensure_ascii=False, indent=indent)
                     else:
                         json_output = self.extractor.json_to_js_literal(merged_json, indent=indent)

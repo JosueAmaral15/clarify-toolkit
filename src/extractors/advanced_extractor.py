@@ -205,7 +205,7 @@ class AdvancedExtractor:
         root_alias: Optional[str] = None,
         file_extensions: Optional[List[str]] = None,
         use_class_names: bool = False,
-        typescript_export: bool = False,
+        #typescript_export: bool = False,
         exclude_numeric: bool = False,
         skip_empty: bool = False,
     ):
@@ -264,7 +264,7 @@ class AdvancedExtractor:
         self.use_class_names = use_class_names
         
         # Features from Text Extractor consolidation
-        self.typescript_export = typescript_export
+        #self.typescript_export = typescript_export
         self.exclude_numeric = exclude_numeric
         self.skip_empty = skip_empty
 

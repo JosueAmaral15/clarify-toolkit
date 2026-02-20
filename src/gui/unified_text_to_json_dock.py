@@ -777,7 +777,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Note: Parameter field empty or '*' automatically enables this.")
         )
         options_grid.addWidget(self.jsx_match_all_checkbox, 0, 1)
-        
+        '''
         self.jsx_typescript_export_checkbox = QCheckBox(
             tr("advanced_extractor.typescript_export", "TypeScript export")
         )
@@ -786,7 +786,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Export as TypeScript interface instead of JSON")
         )
         options_grid.addWidget(self.jsx_typescript_export_checkbox, 0, 2)
-        
+        '''
         self.jsx_exclude_numeric_checkbox = QCheckBox(
             tr("advanced_extractor.exclude_numeric", "Exclude numeric keys")
         )
@@ -1367,7 +1367,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             avoid_keys = self.jsx_avoid_keys_edit.text().strip()
             avoid_keys_param = self.avoid_keys_parameter
             
-            typescript_export = self.jsx_typescript_export_checkbox.isChecked()
+            #typescript_export = self.jsx_typescript_export_checkbox.isChecked()
             exclude_numeric = self.jsx_exclude_numeric_checkbox.isChecked()
             skip_empty = self.jsx_skip_empty_checkbox.isChecked()
             use_class_names = self.jsx_use_class_names_checkbox.isChecked()
@@ -1393,7 +1393,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 'only_strings': only_strings,
                 'with_quotation_marks': with_quotation_marks,
                 'match_all': match_all,
-                'typescript_export': typescript_export,
+                #'typescript_export': typescript_export,
                 'exclude_numeric': exclude_numeric,
                 'skip_empty': skip_empty,
                 'use_class_names': use_class_names,
@@ -1432,7 +1432,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 end_regex=end_regex,
                 file_extensions=file_extensions,
                 use_class_names=use_class_names,
-                typescript_export=typescript_export,
+                #typescript_export=typescript_export,
                 exclude_numeric=exclude_numeric,
                 skip_empty=skip_empty
             )
@@ -1470,7 +1470,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self._extraction_thread.started.connect(
                 lambda: self._extraction_worker.execute_extraction(
                     path, text_content, input_type_index,
-                    typescript_export, with_quotation_marks, indent
+                    #typescript_export, 
+                    with_quotation_marks, indent
                 )
             )
             self._extraction_thread.start()
@@ -2147,7 +2148,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_only_strings_checkbox.setChecked(settings.get('only_strings', False))
             self.jsx_quotation_marks_checkbox.setChecked(settings.get('with_quotation_marks', True))
             self.jsx_match_all_checkbox.setChecked(settings.get('match_all', False))
-            self.jsx_typescript_export_checkbox.setChecked(settings.get('typescript_export', False))
+            #self.jsx_typescript_export_checkbox.setChecked(settings.get('typescript_export', False))
             self.jsx_exclude_numeric_checkbox.setChecked(settings.get('exclude_numeric', False))
             self.jsx_skip_empty_checkbox.setChecked(settings.get('skip_empty', False))
             self.jsx_use_class_names_checkbox.setChecked(settings.get('use_class_names', False))
