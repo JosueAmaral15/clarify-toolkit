@@ -791,7 +791,7 @@ if _PYSIDE:
 
         def _show_editor(self):
             """Show editor as tab (Task #46 - v2.9.16 / v2.9.40)."""
-            if not hasattr(self, 'dock_editor'):
+            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
             self._add_tool_tab(self.dock_editor, "Editor", "editor")
@@ -825,6 +825,7 @@ if _PYSIDE:
                 # Tab index is invalid or widget doesn't match - remove stale entry
                 self.logger.warning(f"Tool '{tool_name}' tracked at invalid index {existing_index}, recreating...")
                 del self.tool_tabs[tool_name]
+                # Note: Don't delete dock attribute - _show_* methods will handle recreation
 
             # Add new tab
             tab_index = self.tabs.addTab(widget, title)
