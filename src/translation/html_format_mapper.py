@@ -823,6 +823,52 @@ class HTMLFormatMapper:
                             except:
                                 count = 1
                             para_text += '&nbsp;' * count
+            elif hasattr(node, 'qname') and node.qname[1] == 'a':
+                # PHASE 1 - COM8: Hyperlink detected (text:a element)
+                # Save accumulated text before link
+                if para_text:
+                    css_class = css_manager.get_or_create_class(current_fmt)
+                    tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                    segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                    para_text = ""
+                
+                # Extract href attribute (xlink:href in ODF)
+                try:
+                    href = node.getAttribute('href')
+                except (ValueError, KeyError):
+                    href = ''
+                
+                # Extract link text content (may contain spans with formatting)
+                link_text = ""
+                link_fmt = current_fmt  # Inherit paragraph format by default
+                
+                for link_child in node.childNodes:
+                    if isinstance(link_child, ODFText):
+                        # Plain text in link
+                        link_text += str(link_child)
+                    elif hasattr(link_child, 'qname') and link_child.qname[1] == 'span':
+                        # Link contains formatted text (bold, italic, etc.)
+                        link_fmt = HTMLFormatMapper._extract_span_format(link_child, styles, para_fmt)
+                        for span_child in link_child.childNodes:
+                            if isinstance(span_child, ODFText):
+                                link_text += str(span_child)
+                
+                # Escape href for HTML safety
+                href_escaped = html.escape(href, quote=True)
+                link_text_escaped = html.escape(link_text)
+                
+                # Create HTML hyperlink as inline element
+                # We'll add it as raw HTML text that won't be double-escaped
+                link_html = f'<a href="{href_escaped}">{link_text_escaped}</a>'
+                
+                # Add as special 'link' segment with the full HTML
+                # This preserves the link structure through translation
+                segments.append(HTMLSegment(link_html, '', 'link', FormatAttributes()))
+                
+                print(f"[ODT Extract] Hyperlink: {href} -> \"{link_text[:50]}\"")
+                
+                # Resume with current format
+                current_fmt = link_fmt
             elif hasattr(node, 'qname') and node.qname[1] == 'line-break':
                 # Line break within paragraph (soft break)
                 if para_text:
@@ -1217,6 +1263,11 @@ class HTMLFormatMapper:
             elif segment.tag_type == 'table':
                 # Phase 2 - COM8: Table (already in HTML format with data-table marker)
                 body_parts.append(segment.text)  # text contains: <table data-table="TBL001">...</table>
+            elif segment.tag_type == 'link':
+                # PHASE 1 - COM8: Hyperlink (already in HTML format)
+                # segment.text contains: <a href="...">text</a>
+                # Output raw HTML without escaping
+                body_parts.append(segment.text)
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
