@@ -777,7 +777,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Note: Parameter field empty or '*' automatically enables this.")
         )
         options_grid.addWidget(self.jsx_match_all_checkbox, 0, 1)
-        
+        '''
         self.jsx_typescript_export_checkbox = QCheckBox(
             tr("advanced_extractor.typescript_export", "TypeScript export")
         )
@@ -786,7 +786,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Export as TypeScript interface instead of JSON")
         )
         options_grid.addWidget(self.jsx_typescript_export_checkbox, 0, 2)
-        
+        '''
         self.jsx_exclude_numeric_checkbox = QCheckBox(
             tr("advanced_extractor.exclude_numeric", "Exclude numeric keys")
         )
@@ -822,7 +822,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                       "Use class names as keys instead of HTML tags. "
                       "Multiple classes joined with dash. Falls back to tag if no class.")
         )
-        options_grid.addWidget(self.jsx_use_class_names_checkbox, 1, 2)
+        options_grid.addWidget(self.jsx_use_class_names_checkbox, 0, 2)
         
         # Column 3 in row 1 is empty for future expansion
         
@@ -874,6 +874,31 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         max_nesting_depth_row.addStretch()
         layout.addLayout(max_nesting_depth_row)
+        
+        # Truncate parent key names row
+        #        truncate_keys_row = QHBoxLayout()
+        #        
+        #        self.jsx_truncate_parent_keys_checkbox = QCheckBox("Truncate parent key names")
+        #        self.jsx_truncate_parent_keys_checkbox.setToolTip(
+        #            "Truncate all parent (intermediate) key names in JSON output to specified character limit.\n"
+        #            "Example with limit=2: div→di, button→bu, Link→Li"
+        #        )
+        #        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_checkbox)
+        #        
+        #        self.jsx_truncate_parent_keys_spin = QSpinBox()
+        #        self.jsx_truncate_parent_keys_spin.setRange(1, 50)
+        #        self.jsx_truncate_parent_keys_spin.setValue(2)
+        #        self.jsx_truncate_parent_keys_spin.setMaximumWidth(80)
+        #        self.jsx_truncate_parent_keys_spin.setEnabled(False)
+        #        self.jsx_truncate_parent_keys_spin.setToolTip("Character limit for parent key names")
+        #        truncate_keys_row.addWidget(self.jsx_truncate_parent_keys_spin)
+        #        
+        #        self.jsx_truncate_parent_keys_checkbox.toggled.connect(
+        #            lambda checked: self.jsx_truncate_parent_keys_spin.setEnabled(checked)
+        #        )
+        #        
+        #        truncate_keys_row.addStretch()
+        #        layout.addLayout(truncate_keys_row)
         
         # Case style and limits section
         case_layout = QHBoxLayout()
@@ -1318,7 +1343,14 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             no_standard = self.jsx_no_standard_checkbox.isChecked()
             only_strings = self.jsx_only_strings_checkbox.isChecked()
             with_quotation_marks = self.jsx_quotation_marks_checkbox.isChecked()
+            
+            # Store for later use in parent key limiting
+            self._last_with_quotation_marks = with_quotation_marks
             match_all = self.jsx_match_all_checkbox.isChecked()
+            
+            # If Match All checkbox is checked, override param to "*"
+            if match_all:
+                param = "*"
             
             case_style = self.jsx_case_combo.currentText()
             # Map display text to internal value
@@ -1339,7 +1371,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             avoid_keys = self.jsx_avoid_keys_edit.text().strip()
             avoid_keys_param = self.avoid_keys_parameter
             
-            typescript_export = self.jsx_typescript_export_checkbox.isChecked()
+            #typescript_export = self.jsx_typescript_export_checkbox.isChecked()
             exclude_numeric = self.jsx_exclude_numeric_checkbox.isChecked()
             skip_empty = self.jsx_skip_empty_checkbox.isChecked()
             use_class_names = self.jsx_use_class_names_checkbox.isChecked()
@@ -1365,7 +1397,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 'only_strings': only_strings,
                 'with_quotation_marks': with_quotation_marks,
                 'match_all': match_all,
-                'typescript_export': typescript_export,
+                #'typescript_export': typescript_export,
                 'exclude_numeric': exclude_numeric,
                 'skip_empty': skip_empty,
                 'use_class_names': use_class_names,
@@ -1404,7 +1436,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 end_regex=end_regex,
                 file_extensions=file_extensions,
                 use_class_names=use_class_names,
-                typescript_export=typescript_export,
+                #typescript_export=typescript_export,
                 exclude_numeric=exclude_numeric,
                 skip_empty=skip_empty
             )
@@ -1442,7 +1474,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self._extraction_thread.started.connect(
                 lambda: self._extraction_worker.execute_extraction(
                     path, text_content, input_type_index,
-                    typescript_export, with_quotation_marks, indent
+                    #typescript_export, 
+                    with_quotation_marks, indent
                 )
             )
             self._extraction_thread.start()
@@ -1499,7 +1532,21 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Apply parent key limiting if enabled
             if json_output and self.jsx_limit_parent_keys_checkbox.isChecked():
                 try:
-                    json_data = json.loads(json_output)
+                    # Check if output is JS literal (without quotation marks)
+                    is_js_literal = hasattr(self, '_last_with_quotation_marks') and not self._last_with_quotation_marks
+                    
+                    import re
+                    
+                    if is_js_literal:
+                        # Convert JS literal to valid JSON by adding quotes to keys
+                        # Use ^ anchor with MULTILINE to only match keys at line start
+                        # This avoids matching colons inside string values
+                        json_text = re.sub(r'^(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output, flags=re.MULTILINE)
+                        json_data = json.loads(json_text)
+                    else:
+                        # Parse JSON directly
+                        json_data = json.loads(json_output)
+                    
                     limit = self.jsx_limit_parent_keys_spin.value()
                     mode_text = self.jsx_limit_parent_keys_mode_combo.currentText()
                     
@@ -1513,10 +1560,51 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     
                     # Apply limiting
                     json_data = self._apply_parent_key_limiting(json_data, limit, mode)
-                    json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    
+                    # Convert back to appropriate format
+                    if is_js_literal:
+                        # Convert back to JS literal (remove quotes from keys)
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                        json_output = re.sub(r'"(\w+)"(\s*):', r'\1\2:', json_output)
+                    else:
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
                     
                 except Exception as limit_err:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    print(f"DEBUG: Parent key limiting error:\n{error_details}")
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
+            
+            # Apply parent key name truncation if enabled
+            '''
+            if json_output and self.jsx_truncate_parent_keys_checkbox.isChecked():
+                try:
+                    # Check if output is JS literal (without quotation marks)
+                    is_js_literal = hasattr(self, '_last_with_quotation_marks') and not self._last_with_quotation_marks
+                    
+                    if is_js_literal:
+                        # Convert JS literal to valid JSON
+                        json_text = re.sub(r'^(\s*)(\w+)(\s*):', r'\1"\2"\3:', json_output, flags=re.MULTILINE)
+                        json_data = json.loads(json_text)
+                    else:
+                        # Parse JSON directly
+                        json_data = json.loads(json_output)
+                    
+                    char_limit = self.jsx_truncate_parent_keys_spin.value()
+                    
+                    # Apply truncation
+                    json_data = self._truncate_parent_keys(json_data, char_limit)
+                    
+                    # Convert back to appropriate format
+                    if is_js_literal:
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                        json_output = re.sub(r'"(\w+)"(\s*):', r'\1\2:', json_output)
+                    else:
+                        json_output = json.dumps(json_data, indent=2, ensure_ascii=False)
+                    
+                except Exception as truncate_err:
+                    self._jsx_update_status(f"⚠ Parent key truncation error: {str(truncate_err)}")
+            '''
             
             # Convert JSON output to selected format
             converted_output = json_output
@@ -2064,7 +2152,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.jsx_only_strings_checkbox.setChecked(settings.get('only_strings', False))
             self.jsx_quotation_marks_checkbox.setChecked(settings.get('with_quotation_marks', True))
             self.jsx_match_all_checkbox.setChecked(settings.get('match_all', False))
-            self.jsx_typescript_export_checkbox.setChecked(settings.get('typescript_export', False))
+            #self.jsx_typescript_export_checkbox.setChecked(settings.get('typescript_export', False))
             self.jsx_exclude_numeric_checkbox.setChecked(settings.get('exclude_numeric', False))
             self.jsx_skip_empty_checkbox.setChecked(settings.get('skip_empty', False))
             self.jsx_use_class_names_checkbox.setChecked(settings.get('use_class_names', False))
@@ -2192,6 +2280,34 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         # Rebuild dictionary
         return rebuild_dict(limited_paths)
+    
+    def _truncate_parent_keys(self, data: Any, char_limit: int) -> Any:
+        """
+        Recursively truncate all parent key names to char_limit characters.
+        Only affects dictionary keys, not leaf values.
+        
+        Args:
+            data: JSON data (dict, list, or primitive)
+            char_limit: Maximum characters for key names (e.g., 2 for 'di', 'bu')
+        
+        Returns:
+            Modified JSON data with truncated parent keys
+        """
+        if char_limit <= 0 or not isinstance(data, dict):
+            return data
+        
+        result = {}
+        for key, value in data.items():
+            # Truncate key name
+            truncated_key = key[:char_limit] if len(key) > char_limit else key
+            
+            # Recursively truncate nested dicts
+            if isinstance(value, dict):
+                result[truncated_key] = self._truncate_parent_keys(value, char_limit)
+            else:
+                result[truncated_key] = value
+        
+        return result
     
     def _jsx_add_to_history(self, path: str, output_json: str, settings: dict) -> None:
         """Add extraction to history with full settings metadata."""

@@ -62,9 +62,13 @@ def kept_prefix(file_root: str, stack: list[str], drop_standard: bool) -> list[s
 def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_direction: str = "before") -> str:
     """
     Truncate text by char limit. If limit is 'all' or None -> return original.
-    If avoid_cut=True, cut at whitespace boundary:
-      - 'before': cut at last whitespace <= limit (existing behavior)
-      - 'after': cut at next whitespace >= limit (new behavior)
+    If avoid_cut=True, cut at word boundary:
+      - Word boundary = whitespace OR non-letter/non-underscore character (e.g., -, ., :, etc.)
+      - 'before': cut at last word boundary <= limit
+      - 'after': cut at next word boundary >= limit
+    
+    IMPORTANT: Only counts alphanumeric + underscore characters for limit.
+    Non-alphanumeric characters at start (like {, ", /, *, etc.) are skipped.
     """
     # pylint: disable=too-many-return-statements  # Multiple early exit conditions
     if not text or limit in (None, 'all', 'ALL', 'All'):
@@ -74,36 +78,59 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool, avoid_cut_d
     except Exception:  # pylint: disable=broad-exception-caught  # Parse robustness
         return text
 
-    if n <= 0 or len(text) <= n:
+    if n <= 0:
         return text
-
-    sub = text[:n]
+    
+    # Strip leading non-alphanumeric characters (except underscore)
+    # This handles cases like "{t.pages..." or "{/* Category Filter */}"
+    start_pos = 0
+    for i, char in enumerate(text):
+        if char.isalnum() or char == '_':
+            start_pos = i
+            break
+    else:
+        # No alphanumeric characters found
+        return text
+    
+    # Work with cleaned text (from first valid char)
+    cleaned_text = text[start_pos:]
+    
+    if len(cleaned_text) <= n:
+        return cleaned_text
 
     if not avoid_cut:
-        return sub
+        return cleaned_text[:n]
+
+    def is_word_boundary(char: str) -> bool:
+        """Check if character is a word boundary (whitespace or non-letter/non-underscore)."""
+        return char.isspace() or not (char.isalnum() or char == '_')
 
     # Direction-aware cutting
     if avoid_cut_direction == "after":
-        # Search AFTER limit for next whitespace
-        for i in range(n, len(text)):
-            if text[i].isspace():
-                return text[:i].rstrip()
-        # No whitespace found after limit, return full text
-        return text
+        # Search AFTER limit for next word boundary
+        for i in range(n, len(cleaned_text)):
+            if is_word_boundary(cleaned_text[i]):
+                return cleaned_text[:i].rstrip()
+        # No word boundary found after limit, return full text
+        return cleaned_text
     else:
-        # Original "before" behavior: cut at last whitespace before limit
-        # If we ended already on whitespace, just strip trailing whitespace.
-        if sub[-1].isspace():
-            return sub.rstrip()
+        # "before" behavior: cut at last word boundary before limit
+        sub = cleaned_text[:n]
+        
+        # If we ended already on word boundary, strip trailing delimiters
+        if sub[-1].isspace() or not (sub[-1].isalnum() or sub[-1] == '_'):
+            return sub.rstrip(''.join(c for c in sub if is_word_boundary(c)))
 
-        # Find the last whitespace run before the cut and cut right before it.
-        m = re.search(r'\s+\S*$', sub, flags=re.UNICODE)
-        if m:
-            cut = m.start()
-            if cut > 0:
-                return sub[:cut].rstrip()
+        # Find the last word boundary before the cut
+        # Search backwards from position n-1
+        for i in range(n - 1, -1, -1):
+            if is_word_boundary(cleaned_text[i]):
+                # Cut right after this boundary, but strip trailing delimiters
+                result = cleaned_text[:i+1].rstrip(''.join(c for c in cleaned_text[:i+1] if is_word_boundary(c)))
+                if result:
+                    return result
 
-        # Fallback: no whitespace found in the window (a very long first word).
+        # Fallback: no word boundary found (very long first word)
         return sub
 
 
@@ -178,7 +205,7 @@ class AdvancedExtractor:
         root_alias: Optional[str] = None,
         file_extensions: Optional[List[str]] = None,
         use_class_names: bool = False,
-        typescript_export: bool = False,
+        #typescript_export: bool = False,
         exclude_numeric: bool = False,
         skip_empty: bool = False,
     ):
@@ -237,7 +264,7 @@ class AdvancedExtractor:
         self.use_class_names = use_class_names
         
         # Features from Text Extractor consolidation
-        self.typescript_export = typescript_export
+        #self.typescript_export = typescript_export
         self.exclude_numeric = exclude_numeric
         self.skip_empty = skip_empty
 
@@ -245,42 +272,15 @@ class AdvancedExtractor:
         """
         Apply character limit and avoid_cut logic to a key string.
         Used for both class names and JSON keys.
+        Uses enhanced word boundary detection (spaces, special chars, NOT underscores).
         """
-        if self.limit in (None, 'all', 'ALL', 'All'):
-            return key
-        
-        try:
-            limit_num = int(self.limit)
-        except ValueError:
-            return key
-        
-        if limit_num <= 0 or len(key) <= limit_num:
-            return key
-        
-        if self.avoid_cut:
-            # Cut at word boundary (underscore or dash)
-            if self.avoid_cut_direction == "after":
-                # Search AFTER limit for next separator
-                next_sep_pos = -1
-                for i in range(limit_num, len(key)):
-                    if key[i] in ('_', '-'):
-                        next_sep_pos = i
-                        break
-                if next_sep_pos > 0:
-                    return key[:next_sep_pos]
-                # No separator found after, keep full key
-                return key
-            else:
-                # Default: search BEFORE limit for last separator
-                truncated = key[:limit_num]
-                last_sep = max(truncated.rfind('_'), truncated.rfind('-'))
-                if last_sep > 0:
-                    return truncated[:last_sep]
-                # No separator found, just truncate
-                return truncated
-        else:
-            # Hard cut at limit
-            return key[:limit_num]
+        # Use the enhanced smart_truncate function with word boundary detection
+        return smart_truncate(
+            key, 
+            self.limit, 
+            self.avoid_cut, 
+            self.avoid_cut_direction
+        )
 
     def _replace_stack_with_class_names(self, parser, stack: List[str]) -> List[str]:
         """
@@ -379,11 +379,17 @@ class AdvancedExtractor:
         if self.skip_empty and (not raw_value or not raw_value.strip()):
             return {}
         
-        # First normalize the entire raw value to get the key
-        key = normalize_token(raw_value, self.case_style, self.to_upper) or "text"
+        # Apply limit FIRST on raw value (before normalization)
+        # This ensures word boundaries (dots, spaces, etc.) are preserved for truncation
+        raw_value_limited = smart_truncate(
+            raw_value,
+            self.limit,
+            self.avoid_cut,
+            self.avoid_cut_direction
+        )
         
-        # Apply limit to the normalized key using the helper method
-        key = self._apply_limit_to_key(key)
+        # Then normalize the truncated value to get the key
+        key = normalize_token(raw_value_limited, self.case_style, self.to_upper) or "text"
         
         # Exclude numeric keys if enabled
         if self.exclude_numeric and key.isdigit():
@@ -607,6 +613,70 @@ class AdvancedExtractor:
 
         return True
 
+    def _apply_include_flags(self, data: Dict[str, Any]) -> Any:
+        """
+        Transform the merged JSON based on include_key and include_value flags.
+        
+        - Both TRUE: Return as-is (full structure with keys and values)
+        - Key only: Keep structure but replace leaf values with arrays of keys
+        - Value only: Return flat list of all values (no structure)
+        - Both FALSE: Return empty dict
+        """
+        # Both FALSE → empty
+        if not self.include_key and not self.include_value:
+            return {}
+        
+        # Both TRUE → no transformation needed
+        if self.include_key and self.include_value:
+            return data
+        
+        # Value only → collect all leaf values into flat list
+        if not self.include_key and self.include_value:
+            values = []
+            self._collect_values(data, values)
+            return values
+        
+        # Key only → keep structure but replace {key: value} with [key1, key2, ...]
+        if self.include_key and not self.include_value:
+            return self._extract_keys_only(data)
+        
+        return data
+    
+    def _collect_values(self, obj: Any, result: list):
+        """Recursively collect all leaf string values into a flat list."""
+        if isinstance(obj, dict):
+            for value in obj.values():
+                self._collect_values(value, result)
+        elif isinstance(obj, list):
+            for item in obj:
+                self._collect_values(item, result)
+        elif isinstance(obj, str):
+            result.append(obj)
+    
+    def _extract_keys_only(self, obj: Any) -> Any:
+        """
+        Transform structure to show only keys.
+        Converts {parent: {key1: val1, key2: val2}} → {parent: [key1, key2]}
+        """
+        if not isinstance(obj, dict):
+            return obj
+        
+        result = {}
+        for key, value in obj.items():
+            if isinstance(value, dict):
+                # Check if this dict contains only leaf key:value pairs
+                has_only_leaves = all(isinstance(v, str) for v in value.values())
+                if has_only_leaves:
+                    # Replace with array of keys
+                    result[key] = list(value.keys())
+                else:
+                    # Recurse deeper
+                    result[key] = self._extract_keys_only(value)
+            else:
+                result[key] = value
+        
+        return result
+
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
         """
         Process text content and extract parameters/content.
@@ -724,6 +794,9 @@ class AdvancedExtractor:
                     merged_json = self.prune_to_key(merged_json, self.param, -1)
                 else:
                     merged_json = self.prune_to_key(merged_json, self.param, -2)
+        
+        # Post-process: transform based on include_key and include_value flags
+        merged_json = self._apply_include_flags(merged_json)
 
         return out_lines, merged_json
 

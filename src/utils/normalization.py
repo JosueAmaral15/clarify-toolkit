@@ -91,15 +91,24 @@ def smart_truncate(text: str, limit: Optional[str], avoid_cut: bool) -> str:
 
 def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
     """
-    Normalize a string to snake/camel/pascal/kebab/preserve; drop non-alnum (after spaces);
-    optionally uppercase whole token.
+    Normalize a string to snake/camel/pascal/kebab/preserve.
+    
+    IMPORTANT: Only splits camelCase/PascalCase when there are OTHER separators present.
+    If input contains ONLY alphanumeric characters (no spaces, dots, hyphens, etc.),
+    it's treated as a single joined word and NOT split.
+    
+    Examples:
+      - 'expandedItems' (no separators) → 'expandedItems' (preserved as-is)
+      - 'expanded items test' (spaces) → 'expanded_items_test' (snake_case)
+      - 'expanded.items.test' (dots) → 'expanded_items_test' (snake_case)
+      - 'expandedItems to make test' (mixed) → 'expandedItems_to_make_test' (keep expandedItems)
+    
     Steps:
-    - Lowercase for snake/kebab; for camel/pascal, lowercase then apply.
-    - Replace non-letter/digit with space; split words; rebuild.
-    - For 'preserve' mode, keeps original case intact (only removes special chars).
-    - Splits camelCase/PascalCase into words before applying conversion.
+    - Check if input contains separators (spaces, dots, hyphens, etc.)
+    - If NO separators → keep as-is (don't split camelCase)
+    - If HAS separators → replace separators with spaces, but DON'T split individual words
+    - Apply case_style conversion only to the separator replacement
     """
-    # remove quotes around e.g. "Today's Practice" if present (we get raw value text usually)
     s = s.strip()
     
     # Special handling for 'preserve' mode - keep original case
@@ -112,34 +121,73 @@ def normalize_token(s: str, case_style: str, to_upper: bool) -> str:
             token = token.upper()
         return token
     
-    # Step 1: Split camelCase/PascalCase into separate words
-    # Insert space before uppercase letters that follow lowercase or are followed by lowercase
-    # Examples: "expandedItems" → "expanded Items", "FAQs" → "FAQs", "faqData" → "faq Data"
-    with_spaces = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)  # lowerUpper → lower Upper
-    with_spaces = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', with_spaces)  # XMLParser → XML Parser
+    # Check if input contains ANY non-alphanumeric characters (separators)
+    has_separators = bool(re.search(r"[^0-9A-Za-z]", s))
     
-    # Step 2: Convert any remaining non-alphanumeric into space
-    cleaned = re.sub(r"[^0-9A-Za-z]+", " ", with_spaces)
+    if not has_separators:
+        # Input is pure alphanumeric (e.g., 'expandedItems', 'filteredFAQs', 'Category')
+        # Don't split camelCase - treat as single joined word
+        if to_upper:
+            return s.upper()
+        
+        # For snake_case: lowercase everything (single word)
+        if case_style == "snake" and s:
+            return s.lower()
+        
+        # For kebab-case: lowercase everything (single word)
+        if case_style == "kebab" and s:
+            return s.lower()
+        
+        # For camelCase: lowercase first character
+        # Special case: if it's already mixed case (e.g., 'expandedItems'), keep as-is
+        # But if it's all uppercase (e.g., 'FAQ') or Title case (e.g., 'Category'), lowercase first char
+        if case_style == "camel" and s:
+            # Check if it's already proper camelCase (first char lowercase, has uppercase elsewhere)
+            if s[0].islower() and any(c.isupper() for c in s[1:]):
+                # Already camelCase like 'expandedItems'
+                return s
+            # Otherwise, lowercase the first character
+            return s[0].lower() + s[1:].lower() if len(s) > 1 else s.lower()
+        
+        # For pascal, uppercase the first character
+        if case_style == "pascal" and s:
+            return s[0].upper() + s[1:] if len(s) > 1 else s.upper()
+        
+        return s
     
-    # Step 3: Split into words
-    words = [w for w in cleaned.strip().split() if w]
+    # Input has separators - replace them but DON'T split camelCase words
+    # Just replace non-alphanumeric with the appropriate separator for the case style
     
-    if not words:
-        token = ""
-    else:
-        if case_style == "snake":
-            token = "_".join(w.lower() for w in words)
-        elif case_style == "kebab":
-            token = "-".join(w.lower() for w in words)
-        elif case_style == "camel":
-            head = words[0].lower()
-            tail = [w[:1].upper() + w[1:].lower() for w in words[1:]]
-            token = head + "".join(tail)
-        elif case_style == "pascal":
-            token = "".join(w[:1].upper() + w[1:].lower() for w in words)
+    if case_style == "snake":
+        # Replace any non-alphanumeric with underscore
+        token = re.sub(r"[^0-9A-Za-z]+", "_", s)
+        token = token.strip("_")
+        # snake_case should be all lowercase
+        token = token.lower()
+    elif case_style == "kebab":
+        # Replace any non-alphanumeric with hyphen
+        token = re.sub(r"[^0-9A-Za-z]+", "-", s)
+        token = token.strip("-")
+        # kebab-case should be all lowercase
+        token = token.lower()
+    elif case_style == "camel" or case_style == "pascal":
+        # For camel/pascal with separators, we need to process each segment
+        # Split by non-alphanumeric, then join back
+        segments = re.split(r"[^0-9A-Za-z]+", s)
+        segments = [seg for seg in segments if seg]
+        
+        if case_style == "camel" and segments:
+            # First segment as-is (keep its case), rest capitalize first letter
+            token = segments[0] + "".join(seg[:1].upper() + seg[1:] if len(seg) > 1 else seg.upper() for seg in segments[1:])
+        elif case_style == "pascal" and segments:
+            # All segments capitalize first letter
+            token = "".join(seg[:1].upper() + seg[1:] if len(seg) > 1 else seg.upper() for seg in segments)
         else:
-            # default snake
-            token = "_".join(w.lower() for w in words)
+            token = "".join(segments)
+    else:
+        # default snake
+        token = re.sub(r"[^0-9A-Za-z]+", "_", s)
+        token = token.strip("_")
 
     if to_upper:
         token = token.upper()
