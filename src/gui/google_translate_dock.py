@@ -58,6 +58,7 @@ class TranslationWorker(QThread):
 
     progress_updated = Signal(int, str)  # progress, status
     translation_completed = Signal(str, bool, str, str)  # result, success, error, detected_lang
+    chunk_progress = Signal(int, int, int, str)  # Phase B: current_chunk, total_chunks, percentage, status_msg
 
     def __init__(self, api: GoogleTranslateAPI, text: str, from_lang: str, to_lang: str):
         super().__init__()
@@ -114,71 +115,40 @@ class TranslationWorker(QThread):
                     text_to_translate = self.text
                     self._placeholder_mapping = None
 
-            # For large texts, split into chunks
-            max_chunk_size = 5000  # Google Translate limit
-            text_chunks = []
-
-            if len(text_to_translate) > max_chunk_size:
-                # Split by paragraphs/double newlines to maintain context
-                if is_html_format:
-                    # For HTML, split on </p> or <br><br>
-                    paragraphs = text_to_translate.split("</p>")
-                else:
-                    # For plain text, split on double newlines
-                    separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
-                    paragraphs = text_to_translate.split(separator)
-                
-                current_chunk = ""
-
-                for paragraph in paragraphs:
-                    if len(current_chunk + paragraph) > max_chunk_size:
-                        if current_chunk:
-                            text_chunks.append(current_chunk.strip())
-                        current_chunk = paragraph
-                    else:
-                        separator_str = "</p>" if is_html_format else "\n\n"
-                        current_chunk += separator_str + paragraph if current_chunk else paragraph
-
-                if current_chunk:
-                    text_chunks.append(current_chunk.strip())
-            else:
-                text_chunks = [text_to_translate]
-
-            self.progress_updated.emit(50, f"Translating {len(text_chunks)} chunk(s)...")
-
-            translated_chunks = []
-            detected_language = self.from_lang  # Default to input language
-            total_chunks = len(text_chunks)
-
-            for i, chunk in enumerate(text_chunks):
+            # Phase B: Use new chunked translation API with progress callback
+            def progress_callback(current_chunk, total_chunks, percentage, status_msg):
+                """Progress callback for chunked translation."""
                 if self.is_cancelled:
                     return
-
-                progress = 50 + int((i / total_chunks) * 35)
-                self.progress_updated.emit(progress, f"Translating chunk {i+1}/{total_chunks}...")
-
-                result = self.api.translate_text(chunk, self.from_lang, self.to_lang)
-
-                if not result.success:
-                    self.translation_completed.emit("", False, result.error_message, self.from_lang)
-                    return
-
-                translated_chunks.append(result.translated_text)
                 
-                # Capture detected language from first chunk
-                if i == 0 and result.source_language:
-                    detected_language = result.source_language
-
-            # Combine translated chunks
-            if is_html_format:
-                final_result = "</p>".join(translated_chunks)
-            else:
-                separator = "【BR】【BR】" if self._placeholder_mapping else "\n\n"
-                final_result = separator.join(translated_chunks)
+                # Emit chunk progress signal (for detailed tracking)
+                self.chunk_progress.emit(current_chunk, total_chunks, percentage, status_msg)
+                
+                # Update main progress bar (50-95% range for translation)
+                # 0-30% already used for preparation, 95-100% for restoration
+                translation_progress = 50 + int(percentage * 0.45)
+                self.progress_updated.emit(translation_progress, status_msg)
+            
+            self.progress_updated.emit(50, "Starting translation...")
+            
+            # Use new chunked translation API (automatically chunks if > 4500 chars)
+            result = self.api.translate_text_chunked(
+                text_to_translate,
+                self.from_lang,
+                self.to_lang,
+                progress_callback=progress_callback
+            )
+            
+            if not result.success:
+                self.translation_completed.emit("", False, result.error_message, self.from_lang)
+                return
+            
+            final_result = result.translated_text
+            detected_language = result.source_language or self.from_lang
             
             # Restore whitespace and format tags based on format type
             if is_html_format:
-                self.progress_updated.emit(93, "Restoring whitespace...")
+                self.progress_updated.emit(96, "Restoring whitespace...")
                 from translation.html_format_mapper import restore_special_whitespace
                 final_result = restore_special_whitespace(final_result)
             else:
@@ -188,10 +158,10 @@ class TranslationWorker(QThread):
                         restore_special_whitespace,
                         restore_tags_from_placeholders
                     )
-                    self.progress_updated.emit(93, "Restoring whitespace...")
+                    self.progress_updated.emit(96, "Restoring whitespace...")
                     final_result = restore_special_whitespace(final_result)
                     
-                    self.progress_updated.emit(96, "Restoring format tags...")
+                    self.progress_updated.emit(98, "Restoring format tags...")
                     final_result = restore_tags_from_placeholders(final_result, self._placeholder_mapping)
 
             self.progress_updated.emit(100, "Translation completed!")
@@ -248,6 +218,12 @@ class GoogleTranslateDock(BaseDock):
         self.combo_to_lang = QComboBox()
         for code, name in GoogleTranslateAPI.LANGUAGES.items():
             self.combo_to_lang.addItem(f"{name} ({code.upper()})", code)
+        
+        # Language swap button
+        self.btn_swap_languages = QPushButton("⇄")  # Unicode swap arrows
+        self.btn_swap_languages.setMaximumWidth(40)
+        self.btn_swap_languages.setToolTip(tr("google_translate.tooltip_swap_languages") if "tooltip_swap_languages" in dir(tr) else "Swap source and target languages")
+        self.btn_swap_languages.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         # Input type selection
         self.chk_file_mode = QCheckBox(tr("google_translate.chk_file_mode"))
@@ -307,10 +283,12 @@ class GoogleTranslateDock(BaseDock):
 
     def _create_layout(self):
         """Arrange widgets in layout."""
-        # Language selection
+        # Language selection with swap button
         lang_layout = QHBoxLayout()
         lang_layout.addWidget(self.lbl_from_lang)
         lang_layout.addWidget(self.combo_from_lang, 1)
+        lang_layout.addSpacing(10)
+        lang_layout.addWidget(self.btn_swap_languages)  # Swap button between languages
         lang_layout.addSpacing(10)
         lang_layout.addWidget(self.lbl_to_lang)
         lang_layout.addWidget(self.combo_to_lang, 1)
@@ -384,6 +362,7 @@ class GoogleTranslateDock(BaseDock):
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
         self.btn_browse_file.clicked.connect(self._browse_file)
+        self.btn_swap_languages.clicked.connect(self._swap_languages)  # New swap button
 
         self.chk_file_mode.toggled.connect(self._toggle_file_mode)
         self.combo_from_lang.currentTextChanged.connect(self._save_preferences)
@@ -462,28 +441,106 @@ class GoogleTranslateDock(BaseDock):
         )
 
         if file_path:
+            # Phase A: Clear previous translation state on new file load
+            self._translated_html = None
+            self._translated_segments = []
+            self._css_manager = None
+            self._image_manager = None
+            self._table_manager = None
+            self.text_output.clear()
+            
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
+                    from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting, images, and tables)
+                    html_content, css_manager, image_manager, table_manager = extract_html_from_docx(file_path)
                     
-                    # Extract ONLY plain text for UI display (no tags visible to user)
-                    plain_text = FormatMapper.extract_plain_text_from_segments(self._source_segments)
+                    # Store managers for later DOCX creation
+                    self._css_manager = css_manager
+                    self._image_manager = image_manager
+                    self._table_manager = table_manager
+                    self._source_file_path = file_path
                     
+                    # Parse HTML to extract plain text for UI preview (with tabs, line-breaks, and tables)
+                    from html.parser import HTMLParser
+                    import html as html_module
+                    
+                    class TextExtractor(HTMLParser):
+                        def __init__(self):
+                            super().__init__()
+                            self.text_parts = []
+                            self.in_head = False
+                            self.in_table = False
+                            self.table_row_cells = []
+                        
+                        def handle_starttag(self, tag, attrs):
+                            if tag in ('head', 'style', 'meta'):
+                                self.in_head = True
+                            elif tag == 'br':
+                                attr_dict = dict(attrs)
+                                classes = attr_dict.get('class', '').split()
+                                # Both brk1 (paragraph) and brk2 (line-break) show as newline in preview
+                                self.text_parts.append('\n')
+                            elif tag == 'span':
+                                # Check for tab marker
+                                attr_dict = dict(attrs)
+                                if 'data-tab' in attr_dict:
+                                    self.text_parts.append('\t')  # Add tab character
+                                # Check for image marker (show placeholder in preview)
+                                elif 'data-image' in attr_dict:
+                                    image_id = attr_dict['data-image']
+                                    self.text_parts.append(f'[{image_id}]')  # Show [IMG001] in preview
+                            elif tag == 'table':
+                                # Show table marker in preview
+                                attr_dict = dict(attrs)
+                                table_id = attr_dict.get('data-table', 'TABLE')
+                                self.text_parts.append(f'\n[{table_id}]\n')
+                                self.in_table = True
+                            elif tag == 'tr' and self.in_table:
+                                self.table_row_cells = []
+                            elif tag == 'td' and self.in_table:
+                                pass  # Cell content will be added via handle_data
+                        
+                        def handle_endtag(self, tag):
+                            if tag in ('head', 'style'):
+                                self.in_head = False
+                            elif tag == 'td' and self.in_table:
+                                pass  # Cell ended
+                            elif tag == 'tr' and self.in_table:
+                                # Row ended - add separator
+                                pass
+                            elif tag == 'table':
+                                self.in_table = False
+                                self.text_parts.append('\n')
+                        
+                        def handle_data(self, data):
+                            if not self.in_head and data.strip():
+                                self.text_parts.append(html_module.unescape(data))
+                        
+                        def get_text(self):
+                            return ''.join(self.text_parts)
+                    
+                    extractor = TextExtractor()
+                    extractor.feed(html_content)
+                    plain_text = extractor.get_text()
+                    
+                    # Display preview in UI (with tabs visible)
+                    self.text_input.setPlainText(plain_text)
                     self.lbl_status.setText(f"DOCX loaded with formatting. {len(plain_text)} characters.")
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
                     from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
+                    # Extract as HTML (with CSS formatting, images, and tables) - Phase 2 COM8
+                    html_content, css_manager_or_path, image_manager, table_manager = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Store CSS manager for later ODT creation
+                    # Store managers for later ODT creation
                     self._css_manager = css_manager_or_path
+                    self._image_manager = image_manager  # Phase 1: Store image manager
+                    self._table_manager = table_manager  # Phase 2: Store table manager
                     self._source_file_path = file_path
                     
                     # Parse HTML to extract plain text for UI preview
@@ -582,6 +639,11 @@ class GoogleTranslateDock(BaseDock):
 
     def _translate(self):
         """Start translation process."""
+        # Phase A: Clear previous translation state before starting new translation
+        self._translated_html = None
+        self._translated_segments = []
+        self.text_output.clear()
+        
         # Get text to translate
         text_to_translate = ""
 
@@ -597,23 +659,31 @@ class GoogleTranslateDock(BaseDock):
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
                 if file_path.lower().endswith('.docx'):
-                    # Extract formatted text with tags (backend only)
-                    formatted_text_with_tags = FormatMapper.extract_formatted_text_from_docx(file_path)
+                    # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
+                    from translation.docx_html_mapper import extract_html_from_docx
                     
-                    # Parse tags to get segments (store formatting)
-                    self._source_segments = FormatMapper.parse_tagged_text(formatted_text_with_tags)
+                    # Extract as HTML (with CSS formatting, images, and tables)
+                    html_content, css_manager, image_manager, table_manager = extract_html_from_docx(file_path)
                     
-                    # Keep tagged text for translation (tags go to Google Translate)
-                    text_to_translate = formatted_text_with_tags
+                    # Store managers for later DOCX creation
+                    self._css_manager = css_manager
+                    self._image_manager = image_manager
+                    self._table_manager = table_manager
+                    self._source_file_path = file_path
+                    
+                    # Send HTML to translation (Google preserves HTML structure, image markers, and tables)
+                    text_to_translate = html_content
                 elif file_path.lower().endswith('.odt'):
                     # Session 77: NEW HTML-based format system
                     from translation.html_format_mapper import HTMLFormatMapper
                     
-                    # Extract as HTML (with CSS formatting)
-                    html_content, css_manager_or_path = HTMLFormatMapper.extract_html_from_odt(file_path)
+                    # Extract as HTML (with CSS formatting, images, and tables) - Phase 2 COM8
+                    html_content, css_manager_or_path, image_manager, table_manager = HTMLFormatMapper.extract_html_from_odt(file_path)
                     
-                    # Store CSS manager for later ODT creation
+                    # Store managers for later ODT creation
                     self._css_manager = css_manager_or_path
+                    self._image_manager = image_manager  # Phase 1: Store image manager
+                    self._table_manager = table_manager  # Phase 2: Store table manager
                     self._source_file_path = file_path
                     
                     # Store empty segments (HTML system doesn't use segments)
@@ -672,6 +742,7 @@ class GoogleTranslateDock(BaseDock):
             try:
                 self.translation_worker.progress_updated.disconnect()
                 self.translation_worker.translation_completed.disconnect()
+                self.translation_worker.chunk_progress.disconnect()  # Phase B: Disconnect chunk signal
                 self.translation_worker.finished.disconnect()
             except (TypeError, RuntimeError):
                 # Signals already disconnected or worker deleted
@@ -691,6 +762,7 @@ class GoogleTranslateDock(BaseDock):
         # Connect signals BEFORE starting thread
         self.translation_worker.progress_updated.connect(self._on_progress_updated)
         self.translation_worker.translation_completed.connect(self._on_translation_completed)
+        self.translation_worker.chunk_progress.connect(self._on_chunk_progress)  # Phase B: Chunking progress
         
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
@@ -702,6 +774,25 @@ class GoogleTranslateDock(BaseDock):
         """Handle progress updates."""
         self.progress_bar.setValue(progress)
         self.lbl_status.setText(status)
+    
+    def _on_chunk_progress(self, current_chunk: int, total_chunks: int, percentage: int, status_msg: str):
+        """
+        Handle chunk-level progress updates (Phase B).
+        
+        Displays detailed progress for large document translations.
+        Example: "Chunk 5/10 (50%): Translating... (2341 chars)"
+        """
+        # Update progress bar with chunk percentage
+        # Note: translate_text_chunked already maps to 50-95% range in worker
+        
+        # Enhanced status message with chunk info
+        if total_chunks > 1:
+            # Multi-chunk translation: show detailed status
+            enhanced_status = f"{status_msg} [Chunk {current_chunk}/{total_chunks}]"
+            self.lbl_status.setText(enhanced_status)
+        else:
+            # Single chunk: use simple status
+            self.lbl_status.setText(status_msg)
 
     def _on_translation_completed(self, result: str, success: bool, error: str, detected_lang: str):
         """Handle translation completion."""
@@ -710,6 +801,12 @@ class GoogleTranslateDock(BaseDock):
         self.btn_cancel.setEnabled(False)
         self.progress_bar.setVisible(False)
 
+        if not success:
+            # Phase A: Clear state on translation failure
+            self._translated_html = None
+            self._translated_segments = []
+            self.text_output.clear()
+        
         if success:
             # Session 77: Check if result is HTML (from new format system)
             is_html_format = '<!DOCTYPE html>' in result or '<html>' in result
@@ -726,10 +823,15 @@ class GoogleTranslateDock(BaseDock):
                         self.current_tag = None
                         self.current_class = None
                         self.prev_class = None
+                        self.in_head = False
                         # Header classes (bold/large text that should have newlines around them)
                         self.header_classes = ['fmt1', 'fmt3', 'fmt4', 'fmt5', 'fmt7']
                     
                     def handle_starttag(self, tag, attrs):
+                        if tag in ('head', 'style', 'meta', 'script', 'title'):
+                            self.in_head = True
+                            return
+                        
                         if tag == 'br':
                             # Line break
                             self.text_parts.append('\n')
@@ -737,11 +839,14 @@ class GoogleTranslateDock(BaseDock):
                             return
                         
                         if tag == 'span':
-                            new_class = None
-                            for attr, value in attrs:
-                                if attr == 'class':
-                                    new_class = value
-                                    break
+                            # Check for tab marker first
+                            attr_dict = dict(attrs)
+                            if 'data-tab' in attr_dict:
+                                self.text_parts.append('\t')  # Add tab character
+                                return
+                            
+                            # Regular span with format class
+                            new_class = attr_dict.get('class')
                             
                             # Add newline on format class transition (header ↔ body)
                             if self.prev_class and new_class and self.prev_class != new_class:
@@ -757,6 +862,8 @@ class GoogleTranslateDock(BaseDock):
                         self.current_tag = tag
                     
                     def handle_endtag(self, tag):
+                        if tag in ('head', 'style', 'script'):
+                            self.in_head = False
                         if tag == 'span' and self.current_class:
                             self.prev_class = self.current_class
                         if tag == self.current_tag:
@@ -764,7 +871,7 @@ class GoogleTranslateDock(BaseDock):
                     
                     def handle_data(self, data):
                         # Skip data inside style/script/head tags
-                        if self.current_tag in ['style', 'script', 'head', 'title']:
+                        if self.in_head:
                             return
                         
                         # Inside content tags - decode entities and keep ALL content (including whitespace)
@@ -783,7 +890,7 @@ class GoogleTranslateDock(BaseDock):
                 extractor.feed(result)
                 plain_text = extractor.get_text()
                 
-                # Store translated HTML for ODT creation
+                # Store translated HTML for ODT/DOCX creation
                 self._translated_html = result
                 self._translated_segments = []  # Not used in HTML system
             else:
@@ -918,6 +1025,45 @@ class GoogleTranslateDock(BaseDock):
             # Start automatic translation
             self._start_translation(text_to_translate, new_from_lang, new_to_lang)
 
+    def _swap_languages(self):
+        """Swap source and target language selections only (doesn't swap content)."""
+        # Get current language codes
+        from_code = self.combo_from_lang.currentData()
+        to_code = self.combo_to_lang.currentData()
+        
+        # Handle auto-detect case
+        if from_code == "auto":
+            # If From is "auto", use detected language if available
+            if self._last_detected_lang:
+                # Swap: From becomes To language, To becomes detected language
+                from_index = self.combo_from_lang.findData(to_code)
+                to_index = self.combo_to_lang.findData(self._last_detected_lang)
+                
+                if from_index >= 0:
+                    self.combo_from_lang.setCurrentIndex(from_index)
+                if to_index >= 0:
+                    self.combo_to_lang.setCurrentIndex(to_index)
+            else:
+                # No detected language yet, just swap To to From (From stays auto)
+                from_index = self.combo_from_lang.findData(to_code)
+                if from_index >= 0:
+                    self.combo_from_lang.setCurrentIndex(from_index)
+        else:
+            # Normal swap: exchange From and To languages
+            from_index = self.combo_from_lang.findData(to_code)
+            to_index = self.combo_to_lang.findData(from_code)
+            
+            if from_index >= 0:
+                self.combo_from_lang.setCurrentIndex(from_index)
+            if to_index >= 0:
+                self.combo_to_lang.setCurrentIndex(to_index)
+        
+        # Update status to indicate languages were swapped
+        self.lbl_status.setText("Languages swapped")
+        self.lbl_status.setStyleSheet("color: #3B82F6; font-style: italic;")
+        QTimer.singleShot(2000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
+
+
     def _copy_result(self):
         """Copy translation result to clipboard."""
         result = self.text_output.toPlainText()
@@ -998,12 +1144,55 @@ class GoogleTranslateDock(BaseDock):
     
     def _save_as_docx(self, output_path: str):
         """
-        Save translation as DOCX with formatting restored from stored segments.
+        Save translation as DOCX with formatting restored.
+        
+        Session COM8: Uses NEW HTML-based format system with image support.
+        Falls back to old segment system for backward compatibility.
         
         Args:
             output_path: Path to save DOCX file
         """
-        if not self._translated_segments:
+        if self._translated_html and self._css_manager:
+            # NEW HTML system - use HTML to DOCX conversion with images and tables
+            from translation.docx_html_mapper import create_docx_from_html
+            
+            # Check if we have image_manager and table_manager (new system)
+            image_manager = getattr(self, '_image_manager', None)
+            table_manager = getattr(self, '_table_manager', None)
+            
+            if image_manager or table_manager:
+                # New system with images and/or tables
+                from translation.docx_html_mapper import ImageManager, TableManager
+                
+                # Use existing managers or create empty ones
+                img_mgr = image_manager if image_manager else ImageManager()
+                tbl_mgr = table_manager if table_manager else TableManager()
+                
+                create_docx_from_html(
+                    self._translated_html,
+                    output_path,
+                    self._css_manager,
+                    img_mgr,
+                    tbl_mgr
+                )
+            else:
+                # Old DOCX files without images/tables - create empty managers
+                from translation.docx_html_mapper import ImageManager, TableManager
+                empty_image_manager = ImageManager()
+                empty_table_manager = TableManager()
+                create_docx_from_html(
+                    self._translated_html,
+                    output_path,
+                    self._css_manager,
+                    empty_image_manager,
+                    empty_table_manager
+                )
+            
+        elif self._translated_segments:
+            # OLD system - use segment-based approach (backward compatibility)
+            FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
+            
+        else:
             # Fallback: no formatting, create plain text segment
             plain_text = self.text_output.toPlainText()
             
@@ -1013,9 +1202,7 @@ class GoogleTranslateDock(BaseDock):
             
             from ..translation.format_mapper import TextSegment
             self._translated_segments = [TextSegment(text=plain_text)]
-        
-        # Generate DOCX with formatting using stored segments
-        FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
+            FormatMapper.create_docx_from_segments(self._translated_segments, output_path)
         
         # Update status
         self.lbl_status.setText(tr("google_translate.status_docx_saved"))
@@ -1039,10 +1226,29 @@ class GoogleTranslateDock(BaseDock):
         print(f"  _translated_segments: {len(self._translated_segments)} segments")
         
         if self._translated_html and self._css_manager:
-            # Session 77: NEW HTML system - use HTML to ODT conversion
-            print(f"  → Using HTML system")
-            from translation.html_format_mapper import create_odt_from_html
-            create_odt_from_html(self._translated_html, self._css_manager, output_path)
+            # Session 77: NEW HTML system - use HTML to ODT conversion (Phase 1: with images)
+            # COM8 2026-02-20: PROPER ODT fix (Option B) - preserve original structure
+            print(f"  → Using HTML system (Option B: preserve structure)")
+            
+            # Check if we have original file path (needed for Option B)
+            original_odt = getattr(self, '_source_file_path', None)
+            
+            if original_odt and os.path.exists(original_odt) and original_odt.endswith('.odt'):
+                # Option B: Preserve original ODT structure (PROPER fix)
+                from translation.html_format_mapper import create_odt_from_original
+                image_mgr = getattr(self, '_image_manager', None)
+                table_mgr = getattr(self, '_table_manager', None)
+                create_odt_from_original(original_odt, self._translated_html, self._css_manager, 
+                                        output_path, image_mgr, table_mgr)
+                print(f"  → ODT created with preserved structure (Option B)")
+            else:
+                # Fallback: Use old method if no original file (shouldn't happen for ODT workflow)
+                print(f"  → WARNING: No original ODT path, using fallback method")
+                from translation.html_format_mapper import create_odt_from_html
+                image_mgr = getattr(self, '_image_manager', None)
+                table_mgr = getattr(self, '_table_manager', None)
+                create_odt_from_html(self._translated_html, self._css_manager, output_path, image_mgr, table_mgr)
+            
             print(f"  → ODT created successfully")
             
         elif self._translated_segments:

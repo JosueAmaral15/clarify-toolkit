@@ -23,19 +23,21 @@ Session: 77 - Complete HTML refactor (Option B)
 """
 
 import html
+import hashlib
 import json
 import os
 import psutil
 import re
 import sys
 import tempfile
+import zipfile
 from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import Dict, List, Optional, Tuple
 from xml.dom import minidom
 
-from odf import opendocument, text as odf_text, style as odf_style, table as odf_table
+from odf import opendocument, text as odf_text, style as odf_style, table as odf_table, draw as odf_draw
 from odf.element import Text as ODFText
 
 
@@ -145,7 +147,7 @@ class HTMLSegment:
     """Represents a text segment with HTML formatting."""
     text: str
     css_class: str
-    tag_type: str  # 'div' or 'span'
+    tag_type: str  # 'div', 'span', 'br' (paragraph break), 'line-break' (soft break), or 'tab'
     attributes: FormatAttributes
 
 
@@ -191,6 +193,10 @@ class CSSClassManager:
                 css_lines.append(f".{class_name} {{ {css_declaration}; }}")
         
         return "\n".join(css_lines)
+    
+    def get_format(self, class_name: str) -> Optional[FormatAttributes]:
+        """Get format attributes for a CSS class."""
+        return self.class_to_format.get(class_name)
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for storage."""
@@ -242,6 +248,364 @@ class CSSClassManager:
 
 
 # ============================================================================
+# Image Management (NEW for Phase 1 - COM8)
+# ============================================================================
+
+@dataclass
+class ODTImageData:
+    """Stores image binary data and metadata for ODT files."""
+    
+    image_id: str              # 'IMG001', 'IMG002', etc.
+    blob: bytes                # Raw PNG/JPEG/GIF binary data
+    format: str                # 'png', 'jpeg', 'gif'
+    width_cm: float            # Width in centimeters
+    height_cm: float           # Height in centimeters
+    original_href: str         # Original path (e.g., 'Pictures/image1.png')
+    blob_hash: Optional[str]   # SHA256 hash for deduplication
+    
+    def get_width_inches(self) -> float:
+        """Convert cm to inches (1 inch = 2.54 cm)."""
+        return self.width_cm / 2.54
+    
+    def get_height_inches(self) -> float:
+        """Convert cm to inches."""
+        return self.height_cm / 2.54
+
+
+class ODTImageManager:
+    """
+    Manages image storage and reconstruction for ODT translation.
+    
+    Adapted from DOCX ImageManager (docx_html_mapper.py).
+    Stores images extracted from ODT Pictures/ folder.
+    """
+    
+    def __init__(self):
+        """Initialize image storage."""
+        self._images: Dict[str, ODTImageData] = {}  # image_id → ODTImageData
+        self._hash_to_id: Dict[str, str] = {}       # blob_hash → image_id
+        self._next_id: int = 1                      # Counter for IMG001, IMG002, etc.
+    
+    def add_image(self, blob: bytes, img_format: str, 
+                  width_cm: float, height_cm: float, 
+                  original_href: str) -> str:
+        """
+        Add image to storage with deduplication.
+        
+        Args:
+            blob: Raw image binary data
+            img_format: Image format ('png', 'jpeg', 'gif')
+            width_cm: Image width in centimeters
+            height_cm: Image height in centimeters
+            original_href: Original href (e.g., 'Pictures/image1.png')
+        
+        Returns:
+            image_id: Unique ID for this image (e.g., 'IMG001')
+        """
+        # Calculate hash for deduplication
+        blob_hash = hashlib.sha256(blob).hexdigest()
+        
+        # Check if image already exists (same binary data)
+        if blob_hash in self._hash_to_id:
+            existing_id = self._hash_to_id[blob_hash]
+            print(f"[ODTImageManager] Deduplication: reusing {existing_id} for {original_href}")
+            return existing_id
+        
+        # Warn about large images
+        blob_size_mb = len(blob) / (1024 * 1024)
+        if blob_size_mb > 10:
+            print(f"[ODTImageManager] WARNING: Large image ({blob_size_mb:.1f}MB)")
+        
+        # Generate new ID
+        image_id = f"IMG{self._next_id:03d}"  # IMG001, IMG002, etc.
+        self._next_id += 1
+        
+        # Store image data
+        image_data = ODTImageData(
+            image_id=image_id,
+            blob=blob,
+            format=img_format,
+            width_cm=width_cm,
+            height_cm=height_cm,
+            original_href=original_href,
+            blob_hash=blob_hash
+        )
+        
+        self._images[image_id] = image_data
+        self._hash_to_id[blob_hash] = image_id
+        
+        print(f"[ODTImageManager] Stored {image_id}: {img_format}, "
+              f"{width_cm:.2f}cm x {height_cm:.2f}cm, "
+              f"{len(blob)} bytes")
+        
+        # Check total memory usage
+        stats = self.get_statistics()
+        if stats['total_mb'] > 100:
+            print(f"[ODTImageManager] WARNING: High memory usage ({stats['total_mb']:.1f}MB)")
+        
+        return image_id
+    
+    def get_image(self, image_id: str) -> Optional[ODTImageData]:
+        """
+        Retrieve image by ID.
+        
+        Returns:
+            ODTImageData if found, None otherwise
+        """
+        return self._images.get(image_id)
+    
+    def generate_placeholder(self, image_id: str) -> str:
+        """
+        Generate HTML placeholder for image.
+        
+        Returns:
+            HTML string: '<span data-image="IMG001"></span>'
+        """
+        return f'<span data-image="{image_id}"></span>'
+    
+    def get_statistics(self) -> dict:
+        """
+        Get storage statistics for debugging.
+        
+        Returns:
+            Dict with counts and memory usage
+        """
+        total_images = len(self._images)
+        unique_blobs = len(self._hash_to_id)
+        total_bytes = sum(len(img.blob) for img in self._images.values())
+        
+        return {
+            'total_images': total_images,
+            'unique_blobs': unique_blobs,
+            'duplicates': total_images - unique_blobs,
+            'total_bytes': total_bytes,
+            'total_mb': total_bytes / (1024 * 1024)
+        }
+    
+    def clear(self):
+        """Clear all stored images (for memory management)."""
+        self._images.clear()
+        self._hash_to_id.clear()
+        self._next_id = 1
+
+
+# ============================================================================
+# Table Management (Phase 2 - COM8)
+# ============================================================================
+
+@dataclass
+class ODTTableData:
+    """
+    Stores metadata for a single ODT table.
+    
+    Phase 2 - COM8: Adapted from DOCX TableData for ODF format.
+    """
+    
+    table_id: str                     # 'TBL001', 'TBL002', etc.
+    rows: int                         # Number of rows
+    cols: int                         # Number of columns
+    cells: List[List[str]]            # 2D array [row][col] = text
+    name: Optional[str] = None        # table:name attribute from ODF
+    
+    def get_cell(self, row: int, col: int) -> str:
+        """
+        Get cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+        
+        Returns:
+            Cell text, or empty string if out of bounds
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            return self.cells[row][col]
+        return ""
+    
+    def set_cell(self, row: int, col: int, text: str) -> None:
+        """
+        Set cell text at row, col (0-indexed).
+        
+        Args:
+            row: Row index (0-based)
+            col: Column index (0-based)
+            text: Cell content
+        """
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.cells[row][col] = text
+    
+    def to_html(self) -> str:
+        """
+        Convert to HTML table with data-table marker.
+        
+        Returns:
+            HTML <table> element with data-table attribute
+        """
+        html_parts = [f'<table data-table="{self.table_id}">\n']
+        
+        for row_idx in range(self.rows):
+            html_parts.append('  <tr>\n')
+            for col_idx in range(self.cols):
+                cell_text = self.cells[row_idx][col_idx]
+                # HTML escape special characters
+                safe_text = html.escape(cell_text)
+                html_parts.append(f'    <td>{safe_text}</td>\n')
+            html_parts.append('  </tr>\n')
+        
+        html_parts.append('</table>')
+        return ''.join(html_parts)
+    
+    def get_dimensions(self) -> tuple:
+        """
+        Get table dimensions.
+        
+        Returns:
+            Tuple of (rows, cols)
+        """
+        return (self.rows, self.cols)
+
+
+class ODTTableManager:
+    """
+    Manages collection of tables for ODT↔HTML conversion.
+    
+    Phase 2 - COM8: Adapted from DOCX TableManager for ODF format.
+    
+    Tables are assigned unique IDs (TBL001, TBL002, etc.) and stored
+    with their metadata. During extraction, ODT tables are converted
+    to HTML <table> elements. During reconstruction, HTML tables are
+    converted back to ODT tables.
+    
+    Example:
+        >>> manager = ODTTableManager()
+        >>> table_id = manager.add_table(
+        ...     rows=2, cols=2,
+        ...     cells=[['A', 'B'], ['C', 'D']]
+        ... )
+        >>> table_id
+        'TBL001'
+        >>> table_data = manager.get_table(table_id)
+        >>> print(table_data.to_html())
+        <table data-table="TBL001">
+          <tr><td>A</td><td>B</td></tr>
+          <tr><td>C</td><td>D</td></tr>
+        </table>
+    """
+    
+    def __init__(self):
+        """Initialize empty table manager."""
+        self._tables: Dict[str, ODTTableData] = {}
+        self._document_order: List[str] = []  # Track table order
+        self._next_id: int = 1
+    
+    def add_table(
+        self,
+        rows: int,
+        cols: int,
+        cells: List[List[str]],
+        name: Optional[str] = None
+    ) -> str:
+        """
+        Add table to manager and return assigned ID.
+        
+        Args:
+            rows: Number of rows
+            cols: Number of columns
+            cells: 2D list of cell text [row][col]
+            name: ODF table:name attribute (optional)
+        
+        Returns:
+            table_id: Assigned table ID (e.g., "TBL001")
+        
+        Raises:
+            ValueError: If dimensions don't match cells array
+        """
+        # Validate dimensions
+        if len(cells) != rows:
+            raise ValueError(f"Expected {rows} rows, got {len(cells)}")
+        for row_idx, row in enumerate(cells):
+            if len(row) != cols:
+                raise ValueError(
+                    f"Row {row_idx} has {len(row)} cells, expected {cols}"
+                )
+        
+        # Generate ID
+        table_id = f"TBL{self._next_id:03d}"
+        self._next_id += 1
+        
+        # Create and store
+        table_data = ODTTableData(
+            table_id=table_id,
+            rows=rows,
+            cols=cols,
+            cells=cells,
+            name=name
+        )
+        self._tables[table_id] = table_data
+        self._document_order.append(table_id)
+        
+        print(f"[ODTTableManager] Stored {table_id}: {rows}×{cols} table")
+        
+        return table_id
+    
+    def get_table(self, table_id: str) -> Optional[ODTTableData]:
+        """
+        Get table by ID.
+        
+        Args:
+            table_id: Table identifier (e.g., "TBL001")
+        
+        Returns:
+            ODTTableData if found, None otherwise
+        """
+        return self._tables.get(table_id)
+    
+    def has_table(self, table_id: str) -> bool:
+        """
+        Check if table exists.
+        
+        Args:
+            table_id: Table identifier
+        
+        Returns:
+            True if table exists, False otherwise
+        """
+        return table_id in self._tables
+    
+    def get_all_tables(self) -> List[ODTTableData]:
+        """
+        Get all tables in document order.
+        
+        Returns:
+            List of ODTTableData objects in document order
+        """
+        return [self._tables[tid] for tid in self._document_order]
+    
+    def get_statistics(self) -> dict:
+        """
+        Get storage statistics for debugging.
+        
+        Returns:
+            Dict with counts and table info
+        """
+        total_cells = sum(
+            t.rows * t.cols for t in self._tables.values()
+        )
+        
+        return {
+            'total_tables': len(self._tables),
+            'table_ids': list(self._document_order),
+            'total_cells': total_cells
+        }
+    
+    def clear(self):
+        """Clear all stored tables (for memory management)."""
+        self._tables.clear()
+        self._document_order.clear()
+        self._next_id = 1
+
+
+# ============================================================================
 # ODT Extraction to HTML
 # ============================================================================
 
@@ -249,42 +613,108 @@ class HTMLFormatMapper:
     """Convert ODT documents to/from HTML for translation."""
     
     @staticmethod
-    def extract_html_from_odt(file_path: str) -> Tuple[str, object]:
+    def extract_html_from_odt(file_path: str) -> Tuple[str, object, Optional['ODTImageManager'], Optional['ODTTableManager']]:
         """
-        Extract ODT content as HTML with CSS formatting.
+        Extract ODT content as HTML with CSS formatting, images, and tables.
+        
+        Phase 1 - COM8: Added image extraction support
+        Phase 2 - COM8: Added table extraction support
         
         Args:
             file_path: Path to .odt file
             
         Returns:
-            Tuple of (html_string, css_manager_or_path)
-            - html_string: Full HTML document with structure
+            Tuple of (html_string, css_manager_or_path, image_manager, table_manager)
+            - html_string: Full HTML document with structure, image placeholders, and tables
             - css_manager_or_path: CSSClassManager object OR path to JSON file
               (automatic decision based on available RAM)
+            - image_manager: ODTImageManager with extracted images (or None if no images)
+            - table_manager: ODTTableManager with extracted tables (or None if no tables)
         """
         doc = opendocument.load(file_path)
         css_manager = CSSClassManager()
+        image_manager = ODTImageManager()  # Phase 1: Create image manager
+        table_manager = ODTTableManager()  # Phase 2: Create table manager
         segments: List[HTMLSegment] = []
         
         # Build style dictionary
         styles = HTMLFormatMapper._build_style_dict(doc)
         
-        # Process all paragraphs
-        paragraphs = doc.getElementsByType(odf_text.P)
-        for i, para in enumerate(paragraphs):
-            para_segments = HTMLFormatMapper._extract_paragraph(para, styles, css_manager)
-            segments.extend(para_segments)
-            
-            # Add line break after each paragraph (except the last one)
-            # This preserves document structure: each ODT paragraph becomes a line in HTML
-            if i < len(paragraphs) - 1:
-                # Create BR segment with empty FormatAttributes
+        # Phase 1: Extract images from ODT Pictures/ folder
+        try:
+            with zipfile.ZipFile(file_path, 'r') as odt_zip:
+                # Get list of image files in Pictures/ folder
+                image_files = [f for f in odt_zip.namelist() if f.startswith('Pictures/') and not f.endswith('/')]
+                
+                if image_files:
+                    print(f"[ODT Extract] Found {len(image_files)} image(s) in Pictures/")
+                    
+                    for img_path in image_files:
+                        # Read image binary data
+                        with odt_zip.open(img_path) as img_file:
+                            blob = img_file.read()
+                        
+                        # Determine format from extension
+                        img_ext = os.path.splitext(img_path)[1].lower()
+                        img_format = {
+                            '.png': 'png',
+                            '.jpg': 'jpeg',
+                            '.jpeg': 'jpeg',
+                            '.gif': 'gif',
+                        }.get(img_ext, 'unknown')
+                        
+                        # Default size (will be refined when we parse draw:frame)
+                        # For now, use default 3in x 2in (7.62cm x 5.08cm)
+                        width_cm = 7.62
+                        height_cm = 5.08
+                        
+                        # Add to image manager
+                        image_id = image_manager.add_image(
+                            blob=blob,
+                            img_format=img_format,
+                            width_cm=width_cm,
+                            height_cm=height_cm,
+                            original_href=img_path
+                        )
+                        
+                        print(f"[ODT Extract] Stored {image_id} from {img_path}")
+                else:
+                    print(f"[ODT Extract] No images found in Pictures/")
+        except Exception as e:
+            print(f"[ODT Extract] Warning: Could not extract images: {e}")
+        
+        # Process all text elements (paragraphs, headings, AND tables) in document order
+        # Phase 2: Also detect tables
+        text_elements = []
+        for elem in doc.text.childNodes:
+            if hasattr(elem, 'qname'):
+                if elem.qname == (odf_text.TEXTNS, 'p'):
+                    text_elements.append(('p', elem))
+                elif elem.qname == (odf_text.TEXTNS, 'h'):
+                    text_elements.append(('h', elem))
+                elif elem.qname[1] == 'table':  # Phase 2: Detect table:table
+                    text_elements.append(('table', elem))
+        
+        for i, (elem_type, elem) in enumerate(text_elements):
+            if elem_type == 'table':
+                # Phase 2 - COM8: Extract table
+                table_html = HTMLFormatMapper._extract_table(elem, table_manager)
+                # Add as raw HTML segment - HTMLSegment requires all 4 parameters
                 segments.append(HTMLSegment(
-                    tag_type='br',
-                    css_class=None,
-                    text='',
-                    attributes=FormatAttributes()
+                    text=table_html,
+                    css_class='',
+                    tag_type='table',
+                    attributes=FormatAttributes()  # Phase 2: Add empty attributes
                 ))
+            else:
+                # Extract paragraph/heading (works for both P and H)
+                # Phase 1: Pass image_manager for image marker insertion
+                elem_segments = HTMLFormatMapper._extract_paragraph(elem, styles, css_manager, image_manager)
+                
+                # Skip adding BR if this element is empty (reduces excess blank lines)
+                has_content = any(seg.text.strip() for seg in elem_segments if seg.tag_type != 'br')
+                
+                segments.extend(elem_segments)
         
         # Generate HTML structure
         html = HTMLFormatMapper._generate_html(segments, css_manager)
@@ -299,10 +729,10 @@ class HTMLFormatMapper:
             temp_file = tempfile.mktemp(suffix='_css_mapping_COM8.json')
             with open(temp_file, 'w', encoding='utf-8') as f:
                 json.dump(css_manager.to_dict(), f, indent=2)
-            return html, temp_file
+            return html, temp_file, image_manager, table_manager  # Phase 2: Return table_manager
         else:
             # Keep in memory
-            return html, css_manager
+            return html, css_manager, image_manager, table_manager  # Phase 2: Return table_manager
     
     @staticmethod
     def _build_style_dict(doc) -> Dict:
@@ -319,8 +749,13 @@ class HTMLFormatMapper:
         return styles
     
     @staticmethod
-    def _extract_paragraph(para, styles: Dict, css_manager: CSSClassManager) -> List[HTMLSegment]:
-        """Extract paragraph with formatting."""
+    def _extract_paragraph(para, styles: Dict, css_manager: CSSClassManager, 
+                          image_manager: Optional['ODTImageManager'] = None) -> List[HTMLSegment]:
+        """
+        Extract paragraph with formatting and images.
+        
+        Phase 1 - COM8: Added image_manager parameter for image detection.
+        """
         segments = []
         
         # Get paragraph style
@@ -343,26 +778,118 @@ class HTMLFormatMapper:
                 # Plain text node
                 para_text += str(node)
             elif hasattr(node, 'qname') and node.qname[1] == 'span':
-                # Formatted span
-                span_text, span_fmt = HTMLFormatMapper._extract_span(node, styles, para_fmt)
+                # Get span format
+                span_fmt = HTMLFormatMapper._extract_span_format(node, styles, para_fmt)
                 
-                # If format changed, create new segment
-                if span_text:
+                # Process span content, handling line-breaks
+                for child in node.childNodes:
+                    if isinstance(child, ODFText):
+                        # Text content
+                        if para_text:
+                            # Check if format changed
+                            if current_fmt != span_fmt:
+                                # Save accumulated text with previous format
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                        current_fmt = span_fmt
+                        para_text += str(child)
+                    elif hasattr(child, 'qname'):
+                        elem_type = child.qname[1]
+                        if elem_type == 'line-break':
+                            # Save current text before line break
+                            if para_text:
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                            # Add line-break segment (soft break within paragraph)
+                            segments.append(HTMLSegment('\n', '', 'line-break', FormatAttributes()))
+                            current_fmt = span_fmt  # Keep format after BR
+                        elif elem_type == 'tab':
+                            # Save current text before tab
+                            if para_text:
+                                css_class = css_manager.get_or_create_class(current_fmt)
+                                tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                                segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                                para_text = ""
+                            # Add tab segment
+                            segments.append(HTMLSegment('', '', 'tab', FormatAttributes()))
+                        elif elem_type == 's':
+                            # Multiple spaces
+                            try:
+                                count = int(child.getAttribute('c'))
+                            except:
+                                count = 1
+                            para_text += '&nbsp;' * count
+            elif hasattr(node, 'qname') and node.qname[1] == 'a':
+                # PHASE 1 - COM8: Hyperlink detected (text:a element)
+                # Save accumulated text before link
+                if para_text:
+                    css_class = css_manager.get_or_create_class(current_fmt)
+                    tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                    segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                    para_text = ""
+                
+                # Extract href attribute (xlink:href in ODF)
+                try:
+                    href = node.getAttribute('href')
+                except (ValueError, KeyError):
+                    href = ''
+                
+                # Extract link text content (may contain spans with formatting)
+                link_text = ""
+                link_fmt = current_fmt  # Inherit paragraph format by default
+                
+                for link_child in node.childNodes:
+                    if isinstance(link_child, ODFText):
+                        # Plain text in link
+                        link_text += str(link_child)
+                    elif hasattr(link_child, 'qname') and link_child.qname[1] == 'span':
+                        # Link contains formatted text (bold, italic, etc.)
+                        link_fmt = HTMLFormatMapper._extract_span_format(link_child, styles, para_fmt)
+                        for span_child in link_child.childNodes:
+                            if isinstance(span_child, ODFText):
+                                link_text += str(span_child)
+                
+                # Escape href for HTML safety
+                href_escaped = html.escape(href, quote=True)
+                link_text_escaped = html.escape(link_text)
+                
+                # Create HTML hyperlink as inline element
+                # We'll add it as raw HTML text that won't be double-escaped
+                link_html = f'<a href="{href_escaped}">{link_text_escaped}</a>'
+                
+                # Add as special 'link' segment with the full HTML
+                # This preserves the link structure through translation
+                segments.append(HTMLSegment(link_html, '', 'link', FormatAttributes()))
+                
+                print(f"[ODT Extract] Hyperlink: {href} -> \"{link_text[:50]}\"")
+                
+                # Resume with current format
+                current_fmt = link_fmt
+            elif hasattr(node, 'qname') and node.qname[1] == 'line-break':
+                # Line break within paragraph (soft break)
+                if para_text:
+                    # Save accumulated text
+                    css_class = css_manager.get_or_create_class(current_fmt)
+                    tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                    segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                    para_text = ""
+                # Add line-break segment (soft break within paragraph)
+                segments.append(HTMLSegment('', '', 'line-break', FormatAttributes()))
+            elif hasattr(node, 'qname') and node.qname[1] in ['tab', 's']:
+                # Tab or space
+                if node.qname[1] == 'tab':
+                    # Save current text before tab
                     if para_text:
-                        # Save accumulated text with previous format
                         css_class = css_manager.get_or_create_class(current_fmt)
                         tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
                         segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
                         para_text = ""
-                    
-                    # Add span segment
-                    css_class = css_manager.get_or_create_class(span_fmt)
-                    segments.append(HTMLSegment(span_text, css_class, 'span', span_fmt))
-                    current_fmt = para_fmt  # Reset to paragraph format
-            elif hasattr(node, 'qname') and node.qname[1] in ['tab', 's']:
-                # Tab or space
-                if node.qname[1] == 'tab':
-                    para_text += '&#9;'  # HTML entity for tab
+                    # Add tab segment
+                    segments.append(HTMLSegment('', '', 'tab', FormatAttributes()))
                 elif node.qname[1] == 's':
                     # Multiple spaces
                     try:
@@ -371,6 +898,43 @@ class HTMLFormatMapper:
                         logger.warning(f"Error parsing space count attribute: {e}")
                         count = 1
                     para_text += '&nbsp;' * count
+            elif hasattr(node, 'qname') and node.qname[0] == odf_draw.DRAWNS and node.qname[1] == 'frame':
+                # Phase 1 - COM8: Image frame detected
+                if image_manager:
+                    # Save accumulated text before image
+                    if para_text:
+                        css_class = css_manager.get_or_create_class(current_fmt)
+                        tag_type = HTMLFormatMapper._decide_tag_type(para_text, current_fmt)
+                        segments.append(HTMLSegment(para_text, css_class, tag_type, current_fmt))
+                        para_text = ""
+                    
+                    # Find draw:image element inside frame
+                    for child in node.childNodes:
+                        if hasattr(child, 'qname') and child.qname[0] == odf_draw.DRAWNS and child.qname[1] == 'image':
+                            try:
+                                # Get image href
+                                href = child.getAttribute('href')
+                                if href:
+                                    # Find corresponding image_id by href
+                                    # The image was already stored during zip extraction
+                                    # We need to match by href
+                                    image_id = None
+                                    for img_id, img_data in image_manager._images.items():
+                                        if img_data.original_href == href:
+                                            image_id = img_id
+                                            break
+                                    
+                                    if image_id:
+                                        # Insert image placeholder
+                                        placeholder = image_manager.generate_placeholder(image_id)
+                                        # Add as special segment (will be converted to HTML marker)
+                                        segments.append(HTMLSegment(placeholder, '', 'image', FormatAttributes()))
+                                        print(f"[ODT Extract] Inserted placeholder for {image_id} (href: {href})")
+                                    else:
+                                        print(f"[ODT Extract] Warning: Image href '{href}' not found in ImageManager")
+                            except Exception as e:
+                                print(f"[ODT Extract] Error processing image: {e}")
+                            break  # Only process first image in frame
         
         # Save remaining text
         if para_text:
@@ -382,6 +946,132 @@ class HTMLFormatMapper:
         segments.append(HTMLSegment('\n', '', 'br', FormatAttributes()))
         
         return segments
+    
+    @staticmethod
+    def _extract_table(table_elem, table_manager: 'ODTTableManager') -> str:
+        """
+        Extract table from ODF element and store in TableManager.
+        
+        Phase 2 - COM8: Table extraction for ODT files.
+        
+        Args:
+            table_elem: odf.table.Table element
+            table_manager: ODTTableManager to store table
+        
+        Returns:
+            HTML table string with data-table marker
+        """
+        from odf import table as odf_table
+        from odf.text import P as TextP
+        
+        # Get table name attribute
+        table_name = table_elem.getAttribute('name') if hasattr(table_elem, 'getAttribute') else None
+        
+        # Extract rows
+        rows_elements = []
+        for child in table_elem.childNodes:
+            if hasattr(child, 'qname') and child.qname[1] == 'table-row':
+                rows_elements.append(child)
+        
+        rows = len(rows_elements)
+        
+        # Determine maximum columns across ALL rows (not just first row)
+        # Phase 2 FIX: Handle irregular tables + merged cells (colspan)
+        cols = 0
+        for row_elem in rows_elements:
+            row_cell_count = 0
+            for child in row_elem.childNodes:
+                if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
+                    # Check for colspan attribute
+                    colspan = child.getAttribute('numbercolumnsspanned')
+                    if colspan:
+                        try:
+                            row_cell_count += int(colspan)
+                        except (ValueError, TypeError):
+                            row_cell_count += 1
+                    else:
+                        row_cell_count += 1
+            cols = max(cols, row_cell_count)
+        
+        # Extract cell text
+        cells = []
+        for row_elem in rows_elements:
+            row_cells = []
+            
+            for child in row_elem.childNodes:
+                if hasattr(child, 'qname') and child.qname[1] == 'table-cell':
+                    # Extract text from paragraphs in cell
+                    cell_paragraphs = []
+                    for cell_child in child.childNodes:
+                        if hasattr(cell_child, 'qname') and cell_child.qname[1] == 'p':
+                            # Get text content from paragraph
+                            para_text = HTMLFormatMapper._get_text_content(cell_child)
+                            if para_text.strip():
+                                cell_paragraphs.append(para_text)
+                    
+                    # Join paragraphs with space
+                    cell_text = ' '.join(cell_paragraphs)
+                    row_cells.append(cell_text)
+                    
+                    # Handle colspan: add empty cells for spanned columns
+                    colspan = child.getAttribute('numbercolumnsspanned')
+                    if colspan:
+                        try:
+                            span_count = int(colspan) - 1  # -1 because we already added the cell
+                            for _ in range(span_count):
+                                row_cells.append('')  # Add empty cells for colspan
+                        except (ValueError, TypeError):
+                            pass
+            
+            # Pad row to match max columns (handles irregular tables)
+            while len(row_cells) < cols:
+                row_cells.append('')
+            
+            # Trim row if it somehow exceeds max columns
+            row_cells = row_cells[:cols]
+            
+            cells.append(row_cells)
+        
+        # Store in manager
+        if rows > 0 and cols > 0:
+            table_id = table_manager.add_table(
+                rows=rows,
+                cols=cols,
+                cells=cells,
+                name=table_name
+            )
+            
+            # Return HTML
+            table_data = table_manager.get_table(table_id)
+            return table_data.to_html()
+        else:
+            # Empty table
+            return '<table></table>'
+    
+    @staticmethod
+    def _get_text_content(element) -> str:
+        """
+        Recursively extract text content from ODF element.
+        
+        Phase 2 - COM8: Helper for table cell text extraction.
+        
+        Args:
+            element: ODF element
+        
+        Returns:
+            Plain text content
+        """
+        text_parts = []
+        
+        if hasattr(element, 'data'):
+            # Text node
+            text_parts.append(element.data)
+        
+        if hasattr(element, 'childNodes'):
+            for child in element.childNodes:
+                text_parts.append(HTMLFormatMapper._get_text_content(child))
+        
+        return ''.join(text_parts)
     
     @staticmethod
     def _extract_paragraph_format(para, para_style, para_style_name: Optional[str]) -> FormatAttributes:
@@ -428,8 +1118,8 @@ class HTMLFormatMapper:
         return fmt
     
     @staticmethod
-    def _extract_span(span, styles: Dict, para_fmt: FormatAttributes) -> Tuple[str, FormatAttributes]:
-        """Extract span text and formatting."""
+    def _extract_span_format(span, styles: Dict, para_fmt: FormatAttributes) -> FormatAttributes:
+        """Extract span formatting only (not text content)."""
         # Start with paragraph format as base
         fmt = FormatAttributes(
             alignment=para_fmt.alignment,
@@ -501,7 +1191,14 @@ class HTMLFormatMapper:
                 except (ValueError, KeyError):
                     pass
         
-        # Extract text content
+        return fmt
+    
+    @staticmethod
+    def _extract_span(span, styles: Dict, para_fmt: FormatAttributes) -> Tuple[str, FormatAttributes]:
+        """Extract span text and formatting."""
+        fmt = HTMLFormatMapper._extract_span_format(span, styles, para_fmt)
+        
+        # Extract text content (note: does NOT handle line-breaks inside spans!)
         text = ""
         for node in span.childNodes:
             if isinstance(node, ODFText):
@@ -554,7 +1251,25 @@ class HTMLFormatMapper:
         
         for i, segment in enumerate(segments):
             if segment.tag_type == 'br':
-                body_parts.append('<br>')
+                # Hard break (paragraph separator)
+                body_parts.append('<br class="brk1">')
+            elif segment.tag_type == 'line-break':
+                # Soft break (line break within paragraph)
+                body_parts.append('<br class="brk2">')
+            elif segment.tag_type == 'tab':
+                # Tab character - use empty span with data attribute
+                body_parts.append('<span data-tab="1"></span>')
+            elif segment.tag_type == 'image':
+                # Phase 1 - COM8: Image placeholder (already in correct format)
+                body_parts.append(segment.text)  # text contains: <span data-image="IMG001"></span>
+            elif segment.tag_type == 'table':
+                # Phase 2 - COM8: Table (already in HTML format with data-table marker)
+                body_parts.append(segment.text)  # text contains: <table data-table="TBL001">...</table>
+            elif segment.tag_type == 'link':
+                # PHASE 1 - COM8: Hyperlink (already in HTML format)
+                # segment.text contains: <a href="...">text</a>
+                # Output raw HTML without escaping
+                body_parts.append(segment.text)
             elif segment.css_class:
                 # Escape HTML special characters in text
                 escaped_text = (segment.text
@@ -572,7 +1287,7 @@ class HTMLFormatMapper:
                 body_parts.append(span_html)
                 
                 # Add space after span if next segment is also a span (prevent word merging in Google Translate)
-                if i + 1 < len(segments) and segments[i + 1].tag_type != 'br' and segments[i + 1].css_class:
+                if i + 1 < len(segments) and segments[i + 1].tag_type not in ('br', 'line-break') and segments[i + 1].css_class:
                     body_parts.append(' ')
             else:
                 # No formatting
@@ -647,14 +1362,21 @@ def restore_special_whitespace(html: str) -> str:
 # ODT Creation from HTML
 # ============================================================================
 
-def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
+def create_odt_from_html(html: str, css_manager_or_path, output_path: str, 
+                         image_manager: Optional['ODTImageManager'] = None,
+                         table_manager: Optional['ODTTableManager'] = None):
     """
     Create ODT file from translated HTML.
+    
+    Phase 1 - COM8: Added image_manager parameter for image restoration.
+    Phase 2 - COM8: Added table_manager parameter for table restoration.
     
     Args:
         html: Translated HTML document
         css_manager_or_path: CSSClassManager object or path to JSON file
         output_path: Where to save ODT file
+        image_manager: Optional ODTImageManager with images to restore
+        table_manager: Optional ODTTableManager with tables to restore
     """
     from html.parser import HTMLParser
     from odf.opendocument import OpenDocumentText
@@ -671,7 +1393,7 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
         css_manager = css_manager_or_path
     
     # Parse HTML
-    parser = HTMLToODTParser(css_manager)
+    parser = HTMLToODTParser(css_manager, image_manager, table_manager)  # Phase 2: Pass table_manager
     parser.feed(html)
     
     # Create ODT document
@@ -732,7 +1454,7 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
     
     for segment in parser.segments:
         if segment['type'] == 'br':
-            # End current paragraph (even if empty)
+            # Hard break - end current paragraph and start new one
             if current_paragraph is not None:
                 doc.text.addElement(current_paragraph)
                 current_paragraph = None
@@ -740,6 +1462,24 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
                 # Consecutive BR = empty paragraph
                 empty_para = P()
                 doc.text.addElement(empty_para)
+        
+        elif segment['type'] == 'line-break':
+            # Soft break - add line-break element within current paragraph
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Add line-break element
+            from odf.text import LineBreak
+            current_paragraph.addElement(LineBreak())
+        
+        elif segment['type'] == 'tab':
+            # Tab character - add tab element within current paragraph
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Add tab element
+            from odf.text import Tab
+            current_paragraph.addElement(Tab())
         
         elif segment['type'] == 'text':
             # Add text to current or new paragraph
@@ -756,6 +1496,88 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
             else:
                 # Plain text
                 current_paragraph.addText(text_content)
+        
+        elif segment['type'] == 'image':
+            # Phase 1 - COM8: Handle image restoration
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            image_data = segment['image_data']
+            
+            # Create draw:frame and draw:image elements
+            from odf.draw import Frame, Image
+            
+            # Convert dimensions back to ODF format (cm)
+            width_cm = f"{image_data.width_cm:.2f}cm"
+            height_cm = f"{image_data.height_cm:.2f}cm"
+            
+            # Create frame
+            frame = Frame(width=width_cm, height=height_cm, anchortype="as-char")
+            
+            # Create image reference (will be written to Pictures/ later)
+            image_href = f"Pictures/{image_data.image_id}.{image_data.format}"
+            img = Image(href=image_href)
+            
+            frame.addElement(img)
+            current_paragraph.addElement(frame)
+        
+        elif segment['type'] == 'table':
+            # Phase 2 - COM8: Handle table restoration
+            if current_paragraph is not None:
+                doc.text.addElement(current_paragraph)
+                current_paragraph = None
+            
+            table_data = segment['table_data']
+            
+            # Create ODF table
+            from odf.table import Table, TableColumn, TableRow, TableCell
+            from odf.text import P as TableP
+            
+            odt_table = Table(name=table_data.name or f"Table{table_data.table_id}")
+            
+            # Add column definitions
+            for _ in range(table_data.cols):
+                odt_table.addElement(TableColumn())
+            
+            # Add rows and cells
+            for row_idx in range(table_data.rows):
+                row = TableRow()
+                for col_idx in range(table_data.cols):
+                    cell = TableCell()
+                    cell_text = table_data.get_cell(row_idx, col_idx)
+                    p = TableP(text=cell_text)
+                    cell.addElement(p)
+                    row.addElement(cell)
+                odt_table.addElement(row)
+            
+            doc.text.addElement(odt_table)
+        
+        elif segment['type'] == 'link':
+            # PHASE 2/3 - COM8: Hyperlink restoration
+            if current_paragraph is None:
+                current_paragraph = P()
+            
+            # Create text:a element (ODF hyperlink)
+            from odf.text import A as Link
+            
+            href = segment['href']
+            link_text = segment['text']
+            link_class = segment.get('class')
+            
+            # Create link element
+            link_element = Link(href=href)
+            
+            # Add text with optional formatting
+            if link_class and link_class in styles_created:
+                # Link text has formatting
+                link_span = Span(stylename=styles_created[link_class], text=link_text)
+                link_element.addElement(link_span)
+            else:
+                # Plain link text
+                link_element.addText(link_text)
+            
+            # Add link to paragraph
+            current_paragraph.addElement(link_element)
     
     # Add final paragraph if exists
     if current_paragraph is not None:
@@ -763,35 +1585,538 @@ def create_odt_from_html(html: str, css_manager_or_path, output_path: str):
     
     # Save ODT
     doc.save(output_path)
+    
+    # Phase 1 - COM8: Write images to Pictures/ folder in ODT zip
+    if image_manager and image_manager.get_statistics()['total_images'] > 0:
+        import zipfile
+        import tempfile
+        import shutil
+        
+        # Create temp directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Extract ODT to temp dir
+            temp_odt = os.path.join(tmpdir, 'temp.odt')
+            shutil.copy(output_path, temp_odt)
+            
+            # Open ODT as zip and add images
+            with zipfile.ZipFile(temp_odt, 'a') as odt_zip:
+                # Create Pictures/ folder and write images
+                for image_id, img_data in image_manager._images.items():
+                    image_filename = f"Pictures/{image_id}.{img_data.format}"
+                    odt_zip.writestr(image_filename, img_data.blob)
+            
+            # Replace original with updated ODT
+            shutil.move(temp_odt, output_path)
+
+
+def create_odt_from_original(original_odt_path: str, html: str, css_manager_or_path, 
+                              output_path: str, 
+                              image_manager: Optional['ODTImageManager'] = None,
+                              table_manager: Optional['ODTTableManager'] = None):
+    """
+    Create ODT from translated HTML by preserving original ODT structure.
+    
+    This is the PROPER fix for ODT corruption (Option B).
+    Instead of creating a new ODT from scratch (which loses metadata, embedded objects,
+    settings, thumbnails, etc.), this function:
+    1. Extracts the original ODT to a temp directory
+    2. Generates new content.xml from translated HTML
+    3. Preserves ALL other files (manifest.rdf, settings.xml, Objects/, Configurations2/, etc.)
+    4. Updates META-INF/manifest.xml for any new/changed images
+    5. Packages everything into the output ODT
+    
+    This ensures LibreOffice can open the file without corruption warnings.
+    
+    Args:
+        original_odt_path: Path to original .odt file (REQUIRED to preserve structure)
+        html: Translated HTML document
+        css_manager_or_path: CSSClassManager object or path to JSON file
+        output_path: Where to save ODT file
+        image_manager: Optional ODTImageManager with images to restore
+        table_manager: Optional ODTTableManager with tables to restore
+    
+    Author: COM8
+    Date: 2026-02-20
+    Session: Option B - Proper ODT fix
+    """
+    from html.parser import HTMLParser
+    from odf import opendocument
+    from odf.style import Style, TextProperties, ParagraphProperties
+    from odf.text import P, Span
+    import zipfile
+    import tempfile
+    import shutil
+    import xml.etree.ElementTree as ET
+    
+    # Load CSS manager
+    if isinstance(css_manager_or_path, str):
+        with open(css_manager_or_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        css_manager = CSSClassManager.from_dict(data)
+    else:
+        css_manager = css_manager_or_path
+    
+    # Parse HTML to get segments
+    parser = HTMLToODTParser(css_manager, image_manager, table_manager)
+    parser.feed(html)
+    
+    # Create temp directory for ODT manipulation
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Step 1: Extract original ODT to preserve structure
+        extract_dir = os.path.join(tmpdir, 'odt_extract')
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        with zipfile.ZipFile(original_odt_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        print(f"[ODT Fix] Extracted original ODT structure ({len(os.listdir(extract_dir))} top-level items)")
+        
+        # Step 2: Generate new content.xml from translated HTML
+        # Load original content.xml to preserve its structure
+        content_xml_path = os.path.join(extract_dir, 'content.xml')
+        
+        # Parse original content.xml to get namespaces and document structure
+        tree = ET.parse(content_xml_path)
+        root = tree.getroot()
+        
+        # Get namespace map (preserve all xmlns declarations)
+        namespaces = dict([node for _, node in ET.iterparse(content_xml_path, events=['start-ns'])])
+        
+        # Register namespaces for proper serialization
+        for prefix, uri in namespaces.items():
+            ET.register_namespace(prefix if prefix else 'office', uri)
+        
+        # Find office:body and office:text elements
+        office_ns = namespaces.get('office', '')
+        text_ns = namespaces.get('text', '')
+        
+        office_body = root.find(f'{{{office_ns}}}body', namespaces)
+        if office_body is None:
+            raise ValueError("Could not find office:body in content.xml")
+        
+        office_text = office_body.find(f'{{{office_ns}}}text', namespaces)
+        if office_text is None:
+            raise ValueError("Could not find office:text in office:body")
+        
+        # Clear existing content in office:text (but preserve structure)
+        office_text.clear()
+        office_text.tag = f'{{{office_ns}}}text'  # Restore tag
+        
+        # Step 3: Build new content from parsed HTML segments
+        # We'll use odfpy to generate proper ODF elements, then insert into XML tree
+        
+        # Create temporary ODT document to generate elements
+        from odf.opendocument import OpenDocumentText
+        temp_doc = OpenDocumentText()
+        
+        # Create styles from CSS classes (reuse logic from create_odt_from_html)
+        styles_created = {}
+        for class_name, fmt in css_manager.class_to_format.items():
+            # Create text style
+            style = Style(name=f"Style_{class_name}", family="text")
+            text_props = TextProperties()
+            
+            if fmt.bold:
+                text_props.setAttribute("fontweight", "bold")
+            if fmt.italic:
+                text_props.setAttribute("fontstyle", "italic")
+            if fmt.underline:
+                text_props.setAttribute("textunderlinestyle", "solid")
+                text_props.setAttribute("textunderlinewidth", "auto")
+            if fmt.strikethrough:
+                text_props.setAttribute("textlinethroughstyle", "solid")
+            if fmt.font_family:
+                text_props.setAttribute("fontfamily", fmt.font_family)
+            if fmt.font_size:
+                text_props.setAttribute("fontsize", f"{fmt.font_size}pt")
+            if fmt.font_color:
+                text_props.setAttribute("color", f"#{fmt.font_color}")
+            if fmt.highlight_color:
+                text_props.setAttribute("backgroundcolor", f"#{fmt.highlight_color}")
+            
+            style.addElement(text_props)
+            temp_doc.automaticstyles.addElement(style)
+            styles_created[class_name] = style
+            
+            # Create paragraph style if needed
+            if fmt.alignment or fmt.line_spacing or fmt.indent_first or fmt.indent_left or fmt.indent_right:
+                para_style = Style(name=f"ParaStyle_{class_name}", family="paragraph")
+                para_props = ParagraphProperties()
+                
+                if fmt.alignment:
+                    align_map = {'L': 'left', 'C': 'center', 'R': 'right', 'J': 'justify'}
+                    para_props.setAttribute("textalign", align_map.get(fmt.alignment, 'left'))
+                if fmt.line_spacing:
+                    para_props.setAttribute("lineheight", f"{int(fmt.line_spacing * 100)}%")
+                if fmt.indent_first:
+                    para_props.setAttribute("textindent", f"{fmt.indent_first * 0.0353:.2f}cm")
+                if fmt.indent_left:
+                    para_props.setAttribute("marginleft", f"{fmt.indent_left * 0.0353:.2f}cm")
+                if fmt.indent_right:
+                    para_props.setAttribute("marginright", f"{fmt.indent_right * 0.0353:.2f}cm")
+                
+                para_style.addElement(para_props)
+                temp_doc.automaticstyles.addElement(para_style)
+                styles_created[f"para_{class_name}"] = para_style
+        
+        # Build ODT content from parsed segments (reuse logic)
+        current_paragraph = None
+        
+        for segment in parser.segments:
+            if segment['type'] == 'br':
+                if current_paragraph is not None:
+                    temp_doc.text.addElement(current_paragraph)
+                    current_paragraph = None
+                else:
+                    empty_para = P()
+                    temp_doc.text.addElement(empty_para)
+            
+            elif segment['type'] == 'line-break':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                from odf.text import LineBreak
+                current_paragraph.addElement(LineBreak())
+            
+            elif segment['type'] == 'tab':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                from odf.text import Tab
+                current_paragraph.addElement(Tab())
+            
+            elif segment['type'] == 'text':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                text_content = segment['text']
+                css_class = segment.get('class')
+                
+                if css_class and css_class in styles_created:
+                    span = Span(stylename=styles_created[css_class], text=text_content)
+                    current_paragraph.addElement(span)
+                else:
+                    current_paragraph.addText(text_content)
+            
+            elif segment['type'] == 'image':
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                image_data = segment['image_data']
+                from odf.draw import Frame, Image
+                
+                width_cm = f"{image_data.width_cm:.2f}cm"
+                height_cm = f"{image_data.height_cm:.2f}cm"
+                frame = Frame(width=width_cm, height=height_cm, anchortype="as-char")
+                image_href = f"Pictures/{image_data.image_id}.{image_data.format}"
+                img = Image(href=image_href)
+                frame.addElement(img)
+                current_paragraph.addElement(frame)
+            
+            elif segment['type'] == 'table':
+                if current_paragraph is not None:
+                    temp_doc.text.addElement(current_paragraph)
+                    current_paragraph = None
+                
+                table_data = segment['table_data']
+                from odf.table import Table, TableColumn, TableRow, TableCell
+                from odf.text import P as TableP
+                
+                odt_table = Table(name=table_data.name or f"Table{table_data.table_id}")
+                
+                for _ in range(table_data.cols):
+                    odt_table.addElement(TableColumn())
+                
+                for row_idx in range(table_data.rows):
+                    row = TableRow()
+                    for col_idx in range(table_data.cols):
+                        cell = TableCell()
+                        cell_text = table_data.get_cell(row_idx, col_idx)
+                        p = TableP(text=cell_text)
+                        cell.addElement(p)
+                        row.addElement(cell)
+                    odt_table.addElement(row)
+                
+                temp_doc.text.addElement(odt_table)
+            
+            elif segment['type'] == 'link':
+                # PHASE 2/3 - COM8: Hyperlink restoration
+                if current_paragraph is None:
+                    current_paragraph = P()
+                
+                # Create text:a element (ODF hyperlink)
+                from odf.text import A as Link
+                
+                href = segment['href']
+                link_text = segment['text']
+                link_class = segment.get('class')
+                
+                # Create link element
+                link_element = Link(href=href)
+                
+                # Add text with optional formatting
+                if link_class and link_class in styles_created:
+                    # Link text has formatting (e.g., bold, italic)
+                    link_span = Span(stylename=styles_created[link_class], text=link_text)
+                    link_element.addElement(link_span)
+                else:
+                    # Plain link text
+                    link_element.addText(link_text)
+                
+                # Add link to paragraph
+                current_paragraph.addElement(link_element)
+                
+                print(f"[ODT Restore] Hyperlink: {href} -> \"{link_text[:50]}\"")
+        
+        if current_paragraph is not None:
+            temp_doc.text.addElement(current_paragraph)
+        
+        # Step 4: Save temp_doc to get proper content.xml with new content
+        temp_odt_path = os.path.join(tmpdir, 'temp_generated.odt')
+        temp_doc.save(temp_odt_path)
+        
+        # Extract generated content.xml and automatic-styles
+        with zipfile.ZipFile(temp_odt_path, 'r') as temp_zip:
+            generated_content = temp_zip.read('content.xml')
+        
+        # Parse generated content to extract office:automatic-styles and office:text
+        generated_tree = ET.fromstring(generated_content)
+        generated_ns = dict([node for _, node in ET.iterparse(zipfile.ZipFile(temp_odt_path).open('content.xml'), events=['start-ns'])])
+        
+        gen_office_ns = generated_ns.get('office', '')
+        gen_automatic_styles = generated_tree.find(f'{{{gen_office_ns}}}automatic-styles', generated_ns)
+        gen_body = generated_tree.find(f'{{{gen_office_ns}}}body', generated_ns)
+        gen_text = gen_body.find(f'{{{gen_office_ns}}}text', generated_ns) if gen_body is not None else None
+        
+        # Replace automatic-styles in original (preserve font-face-decls and other styles)
+        original_auto_styles = root.find(f'{{{office_ns}}}automatic-styles', namespaces)
+        if original_auto_styles is not None and gen_automatic_styles is not None:
+            # Clear and copy
+            original_auto_styles.clear()
+            original_auto_styles.tag = gen_automatic_styles.tag
+            original_auto_styles.attrib = gen_automatic_styles.attrib
+            for child in gen_automatic_styles:
+                original_auto_styles.append(child)
+        
+        # Replace content in office:text
+        if gen_text is not None:
+            for child in gen_text:
+                office_text.append(child)
+        
+        # Step 5: Write updated content.xml back to extracted directory
+        tree.write(content_xml_path, encoding='utf-8', xml_declaration=True)
+        
+        print(f"[ODT Fix] Generated new content.xml with {len(parser.segments)} segments")
+        
+        # Step 6: Handle images - write to Pictures/ folder
+        pictures_dir = os.path.join(extract_dir, 'Pictures')
+        if image_manager and image_manager.get_statistics()['total_images'] > 0:
+            os.makedirs(pictures_dir, exist_ok=True)
+            
+            for image_id, img_data in image_manager._images.items():
+                image_filename = f"{image_id}.{img_data.format}"
+                image_path = os.path.join(pictures_dir, image_filename)
+                with open(image_path, 'wb') as img_file:
+                    img_file.write(img_data.blob)
+            
+            print(f"[ODT Fix] Restored {len(image_manager._images)} image(s) to Pictures/")
+            
+            # Step 7: Update META-INF/manifest.xml to include new images
+            manifest_path = os.path.join(extract_dir, 'META-INF', 'manifest.xml')
+            if os.path.exists(manifest_path):
+                manifest_tree = ET.parse(manifest_path)
+                manifest_root = manifest_tree.getroot()
+                manifest_ns = {'manifest': 'urn:oasis:names:tc:opendocument:xmlns:manifest:1.0'}
+                
+                # Get existing file entries
+                existing_paths = {elem.get(f'{{{manifest_ns["manifest"]}}}full-path') 
+                                  for elem in manifest_root.findall('manifest:file-entry', manifest_ns)}
+                
+                # Add Pictures/ directory entry if missing
+                if 'Pictures/' not in existing_paths:
+                    ET.SubElement(manifest_root, f'{{{manifest_ns["manifest"]}}}file-entry', {
+                        f'{{{manifest_ns["manifest"]}}}full-path': 'Pictures/',
+                        f'{{{manifest_ns["manifest"]}}}media-type': ''
+                    })
+                
+                # Add image file entries
+                mime_types = {
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'gif': 'image/gif',
+                    'bmp': 'image/bmp',
+                    'svg': 'image/svg+xml'
+                }
+                
+                for image_id, img_data in image_manager._images.items():
+                    img_path = f"Pictures/{image_id}.{img_data.format}"
+                    if img_path not in existing_paths:
+                        mime_type = mime_types.get(img_data.format.lower(), 'application/octet-stream')
+                        ET.SubElement(manifest_root, f'{{{manifest_ns["manifest"]}}}file-entry', {
+                            f'{{{manifest_ns["manifest"]}}}full-path': img_path,
+                            f'{{{manifest_ns["manifest"]}}}media-type': mime_type
+                        })
+                
+                manifest_tree.write(manifest_path, encoding='utf-8', xml_declaration=True)
+                print(f"[ODT Fix] Updated manifest.xml with image entries")
+        
+        # Step 8: Package everything into output ODT (preserve ALL files and directories)
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as output_zip:
+            # First, add all directories (including empty ones)
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for dir_name in dirs:
+                    dir_path = os.path.join(root_dir, dir_name)
+                    arcname = os.path.relpath(dir_path, extract_dir) + '/'
+                    # Write directory entry
+                    output_zip.writestr(arcname, '')
+            
+            # Then, add all files
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for file in files:
+                    file_path = os.path.join(root_dir, file)
+                    arcname = os.path.relpath(file_path, extract_dir)
+                    output_zip.write(file_path, arcname)
+        
+        print(f"[ODT Fix] Created ODT preserving original structure: {output_path}")
+        
+        # Count files in output
+        with zipfile.ZipFile(output_path, 'r') as check_zip:
+            file_count = len(check_zip.namelist())
+            print(f"[ODT Fix] Output ODT contains {file_count} files (preserving structure)")
 
 
 class HTMLToODTParser(HTMLParser):
-    """Parse HTML and extract segments for ODT creation."""
+    """Parse HTML and extract segments for ODT creation.
     
-    def __init__(self, css_manager: CSSClassManager):
+    Phase 1 - COM8: Extended to handle image restoration from data-image attributes.
+    Phase 2 - COM8: Extended to handle table restoration from data-table attributes.
+    """
+    
+    def __init__(self, css_manager: CSSClassManager, 
+                 image_manager: Optional['ODTImageManager'] = None,
+                 table_manager: Optional['ODTTableManager'] = None):
         super().__init__()
         self.css_manager = css_manager
+        self.image_manager = image_manager
+        self.table_manager = table_manager  # Phase 2: Store table manager
         self.segments = []
         self.current_tag = None
         self.current_class = None
+        self.in_table = False  # Phase 2: Track if parsing table
+        self.current_table_id = None  # Phase 2: Current table being parsed
+        # PHASE 2/3 - COM8: Hyperlink tracking
+        self.in_link = False
+        self.link_href = None
+        self.link_text = []
+        self.link_class = None
     
     def handle_starttag(self, tag, attrs):
-        """Handle opening tags."""
+        """Handle opening tags.
+        
+        Phase 1 - COM8: Added detection for data-image attributes (image markers).
+        Phase 2 - COM8: Added detection for data-table attributes (table markers).
+        """
         self.current_tag = tag
+        
+        # PHASE 2/3 - COM8: Handle hyperlink tags <a href="...">
+        if tag == 'a':
+            # Extract href attribute
+            for attr, value in attrs:
+                if attr == 'href':
+                    self.in_link = True
+                    self.link_href = value
+                    self.link_text = []
+                    self.link_class = self.current_class  # May have class from outer span
+                    return
+        
+        # Phase 2: Handle table tags
+        if tag == 'table':
+            for attr, value in attrs:
+                if attr == 'data-table' and self.table_manager:
+                    self.in_table = True
+                    self.current_table_id = value
+                    # Add table segment
+                    table_data = self.table_manager.get_table(value)
+                    if table_data:
+                        self.segments.append({
+                            'type': 'table',
+                            'table_id': value,
+                            'table_data': table_data
+                        })
+                    return
+        
+        # Phase 2: Skip content inside tables (handled by table segment)
+        if self.in_table and tag in ['tr', 'td', 'th', 'tbody', 'thead']:
+            return
         
         # Handle self-closing BR tag immediately
         if tag == 'br':
-            self.segments.append({'type': 'br'})
+            # Check class attribute to distinguish paragraph vs line break
+            break_type = 'br'  # Default to paragraph break (brk1)
+            for attr, value in attrs:
+                if attr == 'class' and value == 'brk2':
+                    break_type = 'line-break'
+                    break
+            self.segments.append({'type': break_type})
             return
         
-        # Extract class attribute
+        # Handle span tags - check for tab marker AND image marker
+        if tag == 'span':
+            # Check for data-tab attribute (tab marker)
+            for attr, value in attrs:
+                if attr == 'data-tab':
+                    self.segments.append({'type': 'tab'})
+                    return
+                # Phase 1 - COM8: Check for data-image attribute (image marker)
+                if attr == 'data-image' and self.image_manager:
+                    # Extract image ID and add to segments
+                    image_id = value
+                    image_data = self.image_manager.get_image(image_id)
+                    if image_data:
+                        self.segments.append({
+                            'type': 'image',
+                            'image_id': image_id,
+                            'image_data': image_data
+                        })
+                    return
+        
+        # Extract class attribute for regular spans
         for attr, value in attrs:
             if attr == 'class':
                 self.current_class = value
                 break
     
     def handle_endtag(self, tag):
-        """Handle closing tags."""
+        """Handle closing tags.
+        
+        Phase 2 - COM8: Added table state tracking.
+        Phase 2/3 - COM8: Added hyperlink state tracking.
+        """
+        # PHASE 2/3 - COM8: Handle closing </a> tag
+        if tag == 'a' and self.in_link:
+            # Combine collected link text
+            link_text_combined = ''.join(self.link_text)
+            
+            # Create link segment
+            self.segments.append({
+                'type': 'link',
+                'href': self.link_href,
+                'text': link_text_combined,
+                'class': self.link_class
+            })
+            
+            # Reset link state
+            self.in_link = False
+            self.link_href = None
+            self.link_text = []
+            self.link_class = None
+            return
+        
+        # Phase 2: Reset table state
+        if tag == 'table':
+            self.in_table = False
+            self.current_table_id = None
+            return
+        
         self.current_tag = None
         self.current_class = None
     
@@ -799,6 +2124,13 @@ class HTMLToODTParser(HTMLParser):
         """Handle text content."""
         # Skip whitespace in head/style/title
         if self.current_tag in ['style', 'head', 'title']:
+            return
+        
+        # PHASE 2/3 - COM8: If inside a link, collect text for link segment
+        if self.in_link:
+            import html
+            text = html.unescape(data)
+            self.link_text.append(text)
             return
         
         # Keep whitespace-only data if it contains actual spaces (for separation between spans)
