@@ -239,7 +239,7 @@ def test_json_editor_tab_tooltips(qtbot):
 
 
 def test_editor_dock_tooltips(qtbot):
-    """Verify Editor Dock has tooltips on all interactive widgets (v2.9.49)."""
+    """Verify Clarify Editor has tooltips on all interactive widgets (v2.9.49)."""
     dock = EditorDock()
     qtbot.addWidget(dock)
     
@@ -257,8 +257,8 @@ def test_editor_dock_tooltips(qtbot):
     
     for widget, name in critical_widgets:
         tooltip = widget.toolTip()
-        assert tooltip != "", f"Editor Dock - {name} missing tooltip"
-        assert len(tooltip) >= 10, f"Editor Dock - {name} tooltip too short: '{tooltip}'"
+        assert tooltip != "", f"Clarify Editor - {name} missing tooltip"
+        assert len(tooltip) >= 10, f"Clarify Editor - {name} tooltip too short: '{tooltip}'"
         print(f"✓ {name}: {tooltip[:60]}...")
 
 
@@ -478,7 +478,7 @@ def test_tooltip_coverage_summary(qtbot):
         ("Case Converter", CaseConverterDock()),
         ("JSON Rewriter", JsonRewriterDock()),
         ("AI Processor", AIProcessorDock()),
-        ("Editor Dock", EditorDock()),
+        ("Clarify Editor", EditorDock()),
         ("JSON Search", JsonSearchDock()),
         ("JSON Translate", JsonTranslateDock()),
         ("Tutorials", TutorialsDock()),

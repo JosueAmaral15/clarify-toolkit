@@ -1,5 +1,5 @@
 """
-Editor Dock - Integrated File Editor
+Editor Dock - Clarify Editor
 
 Simple text editor with syntax highlighting for common file types.
 Allows opening, editing, and saving files directly within Clarify.
@@ -22,6 +22,7 @@ Refactored in v2.9.114 (Phase 2.5):
 
 from __future__ import annotations
 
+import difflib
 import os
 from datetime import datetime
 from typing import List
@@ -343,6 +344,7 @@ class EditorDock(BaseDock):
         "open": {"text_key": "editor.btn_open"},
         "save": {"text_key": "editor.btn_save"},
         "save_as": {"text_key": "editor.btn_save_as"},
+        "compare_with_saved": {"text_key": "editor.btn_compare_with_saved"},
         "enable_saving": {"text_key": "editor.btn_enable_saving"},
         "export": {"text_key": "editor.btn_export"},
         "close_tab": {"text_key": "editor.btn_close_tab"},
@@ -378,8 +380,8 @@ class EditorDock(BaseDock):
             "attr": "menu_file",
             "title_key": "editor.menu_file",
             "items": (
-                "new", "open", "save", "save_as", "enable_saving", "export",
-                "close_tab", None, "auto_save",
+                "new", "open", "save", "save_as", "compare_with_saved",
+                "enable_saving", "export", "close_tab", None, "auto_save",
             ),
         },
         "edit": {
@@ -406,6 +408,7 @@ class EditorDock(BaseDock):
     _ACTION_ENABLE_RULES = {
         "save": "has_tab",
         "save_as": "has_tab",
+        "compare_with_saved": "has_file_path",
         "enable_saving": "is_edit_only",
         "close_tab": "has_tab",
         "export": "has_editor",
@@ -457,7 +460,7 @@ class EditorDock(BaseDock):
         self.render_whitespace_enabled = self.settings.value("render_whitespace_enabled", False, type=bool)
 
         # NOW call super().__init__() which triggers _setup_ui()
-        super().__init__("File Editor", parent)
+        super().__init__("Clarify Editor", parent)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -662,6 +665,7 @@ class EditorDock(BaseDock):
             "open": lambda _checked=False: self._open_file(),
             "save": lambda _checked=False: self._save_file(),
             "save_as": lambda _checked=False: self._save_file_as(),
+            "compare_with_saved": lambda _checked=False: self._compare_current_tab_with_saved(),
             "enable_saving": lambda _checked=False: self._enable_saving_current_tab(),
             "export": lambda _checked=False: self._export_current_tab(),
             "close_tab": lambda _checked=False: self._close_current_tab(),
@@ -698,6 +702,7 @@ class EditorDock(BaseDock):
         context = {
             "has_tab": tab is not None,
             "has_editor": tab is not None and hasattr(tab, 'editor'),
+            "has_file_path": tab is not None and bool(getattr(tab, 'file_path', None)),
             "is_edit_only": tab is not None and bool(getattr(tab, 'edit_only_mode', False)),
         }
 
@@ -1406,6 +1411,79 @@ class EditorDock(BaseDock):
                 tr("editor_tab.export_error_title"),
                 tr("editor_tab.export_error_message").format(exc)
             )
+
+    @staticmethod
+    def _build_saved_file_diff(file_path: str, saved_text: str, current_text: str) -> str:
+        """Build a unified diff between the on-disk file and the editor buffer."""
+        filename = os.path.basename(file_path) if file_path else "Untitled"
+        diff_lines = difflib.unified_diff(
+            saved_text.splitlines(keepends=True),
+            current_text.splitlines(keepends=True),
+            fromfile=f"{filename} (saved)",
+            tofile=f"{filename} (current)",
+        )
+        return "".join(diff_lines)
+
+    def _compare_current_tab_with_saved(self):
+        """Compare current editor content with the file currently saved on disk."""
+        tab = self.tab_widget.currentWidget()
+        if not tab or not hasattr(tab, 'editor'):
+            return
+
+        file_path = getattr(tab, 'file_path', None)
+        if not file_path:
+            QMessageBox.information(
+                self,
+                tr("editor.compare_no_file_title"),
+                tr("editor.compare_no_file_message"),
+            )
+            return
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file_obj:
+                saved_text = file_obj.read()
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                tr("editor.msg_error_title"),
+                tr("editor.compare_read_error").format(error=str(exc)),
+            )
+            return
+
+        current_text = tab.editor.toPlainText()
+        if saved_text == current_text:
+            self.lbl_status.setText(tr("editor.status_compare_no_changes"))
+            QMessageBox.information(
+                self,
+                tr("editor.compare_no_changes_title"),
+                tr("editor.compare_no_changes_message"),
+            )
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("editor.compare_dialog_title"))
+        dialog.resize(900, 600)
+
+        layout = QVBoxLayout(dialog)
+        diff_view = QTextEdit()
+        diff_view.setReadOnly(True)
+        diff_view.setAcceptRichText(False)
+        diff_view.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        diff_view.setFont(tab.editor.font())
+        diff_view.setPlainText(
+            self._build_saved_file_diff(file_path, saved_text, current_text)
+        )
+        layout.addWidget(diff_view)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+        btn_close = QPushButton(tr("editor.btn_close"))
+        btn_close.clicked.connect(dialog.close)
+        button_row.addWidget(btn_close)
+        layout.addLayout(button_row)
+
+        self.lbl_status.setText(tr("editor.status_compare_changes"))
+        dialog.exec()
 
     def _enable_saving_current_tab(self):
         """Convert the current edit-only tab into a file-backed tab."""

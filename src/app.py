@@ -390,21 +390,21 @@ if _PYSIDE:
 
         def _load_json_from_converter(self, json_str: str):
             """Load JSON from text converter into main editor (stays in Text to JSON dock)."""
-            # Open Editor as a dedicated tab (not as dock)
+            # Open Clarify Editor as a dedicated tab (not as dock)
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
-                self._add_tool_tab(self.dock_editor, "Editor", "editor")
+                self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
             self.dock_editor.load_json_string(json_str)
             # Don't switch - stay in Text to JSON tab
         
         def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
             """Load content from text converter into main editor and switch to Editor tab."""
-            # Open Editor as a dedicated tab (not as dock)
+            # Open Clarify Editor as a dedicated tab (not as dock)
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
-                self._add_tool_tab(self.dock_editor, "Editor", "editor")
+                self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
             self.dock_editor.load_json_string(content)
             
             # SWITCH to Editor tab
@@ -794,7 +794,7 @@ if _PYSIDE:
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
-            self._add_tool_tab(self.dock_editor, "Editor", "editor")
+            self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
 
         # ============================================================================
         # Tab Management System (v2.9.40 - Task: Tools as tabs)

@@ -68,11 +68,11 @@ def test_tutorials_dock_instantiation(qtbot):
 
 @pytest.mark.timeout(5)
 def test_editor_dock_instantiation(qtbot):
-    """Test Editor Dock can be instantiated safely."""
+    """Test Clarify Editor can be instantiated safely."""
     from src.gui.editor_dock import EditorDock
     
     dock = EditorDock()
     qtbot.addWidget(dock)
     
-    assert dock.windowTitle() == "File Editor"
+    assert dock.windowTitle() == "Clarify Editor"
     assert dock.isVisible() is False

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Test suite for EditorDock (Integrated File Editor).
+Test suite for EditorDock (Clarify Editor).
 
 Tests:
 - Editor initialization and UI components
@@ -38,6 +38,7 @@ class TestEditorDockInitialization:
             break
         
         assert editor_dock is not None
+        assert editor_dock.windowTitle() == "Clarify Editor"
         
     def test_tab_widget_exists(self, main_window):
         """Test that tab widget for multiple files exists."""
@@ -79,6 +80,7 @@ class TestEditorDockInitialization:
             "open",
             "save",
             "save_as",
+            "compare_with_saved",
             "enable_saving",
             "export",
             "close_tab",
@@ -128,6 +130,7 @@ class TestEditorDockInitialization:
         assert editor_dock.action_word_wrap.isCheckable()
         assert editor_dock.action_render_whitespace.isCheckable()
         assert editor_dock.action_show_line_numbers.isCheckable()
+        assert hasattr(editor_dock, 'action_compare_with_saved')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -138,6 +141,38 @@ class TestEditorDockInitialization:
             assert "background-color: transparent" in stylesheet
         finally:
             editor_dock.deleteLater()
+
+    def test_compare_with_saved_action_requires_file_path(self, qapp, tmp_path):
+        """Test Compare with Saved is only enabled for file-backed tabs."""
+        editor_dock = EditorDock()
+        try:
+            assert not editor_dock.action_compare_with_saved.isEnabled()
+
+            editor_dock._new_file()
+            assert not editor_dock.action_compare_with_saved.isEnabled()
+
+            saved_file = tmp_path / "example.txt"
+            saved_file.write_text("saved\n", encoding="utf-8")
+            tab = editor_dock.tab_widget.currentWidget()
+            tab.file_path = str(saved_file)
+
+            editor_dock._refresh_editor_menus()
+            assert editor_dock.action_compare_with_saved.isEnabled()
+        finally:
+            editor_dock.deleteLater()
+
+    def test_compare_with_saved_builds_unified_diff(self):
+        """Test Compare with Saved uses a readable unified diff."""
+        diff = EditorDock._build_saved_file_diff(
+            "/tmp/example.txt",
+            "one\ntwo\n",
+            "one\nthree\n",
+        )
+
+        assert "--- example.txt (saved)" in diff
+        assert "+++ example.txt (current)" in diff
+        assert "-two" in diff
+        assert "+three" in diff
 
 
 class TestEditorTab:

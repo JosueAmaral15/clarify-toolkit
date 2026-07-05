@@ -710,3 +710,58 @@ Plano imediato:
   - Foi gerada captura offscreen em `/tmp/clarify-editor-theme-check.png`; visualmente, `File`, `Edit` e `View` ficaram sem marcacao escura indevida, e o gutter ficou escuro.
 - Proximo passo imediato:
   - Fazer commit e push pequeno com a correcao visual do tema.
+
+## 2026-07-05 - Pre-acao - Ideias para Clarify Editor conforme TASKS
+
+- Pedido do usuario: analisar o que mais poderia ser incluido no Clarify Editor conforme `TASKS.md`.
+- Possibilidade citada pelo usuario: renomear `File Editor` para `Clarify Editor`, por ser um nome mais explicito e melhor.
+- Objetivo imediato:
+  - Ler `TASKS.md` no estado atual do projeto.
+  - Comparar as tarefas/listas com o que ja foi feito no Clarify Editor.
+  - Responder com recomendacoes curtas, sem implementar mudancas ainda.
+  - Registrar o pos-acao antes de encerrar.
+
+## 2026-07-05 - Pos-acao - Ideias para Clarify Editor conforme TASKS
+
+- Arquivos/contexto lidos:
+  - `docs/TASKS.md`
+  - `docs/pt/TASKS.md`
+  - `src/gui/editor_dock.py`
+  - `src/app.py`
+  - `src/gui/menu_builder.py`
+  - testes que citam `File Editor` ou `EditorDock`
+- Conclusao resumida:
+  - `docs/TASKS.md` esta mais atualizado que `docs/pt/TASKS.md`; a versao PT ainda mostra como pendentes algumas features que a versao principal ja marca como concluidas.
+  - O item `Task #46 - Editor de Arquivos Integrado` esta marcado como completo, mas o editor evoluiu alem de um simples `File Editor`.
+  - Renomear a interface de `File Editor` para `Clarify Editor` faz sentido como ajuste de identidade e alinhamento com o escopo atual.
+  - Boas proximas ideias, conforme `TASKS.md`, incluem validacao JSON em tempo real mais avancada, interface GraphQL/JSON query, integracao Git, macros/automacao e recursos de IA/search no estilo VS Code.
+- Nenhuma mudanca de codigo foi feita nesta etapa alem deste registro no historico.
+
+## 2026-07-05 - Pre-acao - Melhorias priorizadas do Clarify Editor
+
+- Pedido do usuario: priorizar modificacoes no Clarify Editor conforme tarefas e sugestoes discutidas.
+- Escopo escolhido para esta etapa:
+  - Renomear a interface de `File Editor` para `Clarify Editor`.
+  - Manter foco no editor, sem expandir para macros, IA completa ou Git completo nesta fatia.
+  - Adicionar uma melhoria pratica alinhada ao roadmap: comparacao do conteudo aberto com a versao salva em disco.
+  - Atualizar i18n/testes conforme necessario.
+  - Rodar checks e testes focados antes de finalizar.
+
+## 2026-07-05 - Pos-acao - Melhorias priorizadas do Clarify Editor
+
+- Mudancas realizadas:
+  - A identidade visivel do editor foi renomeada de `File Editor` para `Clarify Editor`.
+  - A aba principal aberta via app agora usa o titulo `Clarify Editor`, mantendo o identificador interno `editor` para preservar integracoes/configuracoes.
+  - O menu principal do app agora mostra `Open Clarify Editor` / `Abrir Clarify Editor`.
+  - O menu `File` do Clarify Editor ganhou a opcao `Compare with Saved` / `Comparar com Salvo`.
+  - A comparacao fica habilitada apenas em abas com caminho de arquivo e mostra um diff unificado entre o conteudo do editor e o arquivo salvo em disco.
+  - Traducoes `en` e `pt_BR` foram atualizadas para os novos rotulos, tooltips e mensagens.
+  - Testes foram atualizados para o novo nome e para a nova acao de comparacao.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py src/app.py tests/gui/test_editor_dock.py tests/test_gui_safety_basic.py tests/test_tooltip_presence.py` passou.
+  - `python -m json.tool src/i18n/en.json` passou.
+  - `python -m json.tool src/i18n/pt_BR.json` passou.
+  - `git diff --check` nos arquivos tocados passou.
+  - Testes focados finais passaram: 9 testes (`9 passed in 196.53s`), cobrindo criacao do dock, menus, nova acao `Compare with Saved`, diff, estilo da menu bar, tooltips e instanciacao segura.
+- Observacao:
+  - Uma tentativa de rodar o arquivo completo `tests/gui/test_editor_dock.py` ficou muito lenta/bloqueada e foi interrompida; depois disso foi executado um conjunto focado e mais adequado para esta mudanca.
