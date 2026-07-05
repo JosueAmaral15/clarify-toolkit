@@ -680,3 +680,33 @@ Plano imediato:
   - Durante uma execucao serial, o processo Qt/headless teve um segfault ao iniciar o teste de Go To Line; o mesmo teste passou quando reexecutado isoladamente em novo processo.
 - Proximo passo imediato:
   - Preparar commit apenas com arquivos relacionados ao Clarify Editor/refatoracao e `history-chat.md`, depois fazer push para `origin/main`.
+
+## 2026-07-05 - Pre-acao - Ajuste visual do tema do EditorDock
+
+- Pedido do usuario: analisar problema visual apos clicar em `Show Line Numbers`.
+- Problemas relatados:
+  - A area de numeros de linha ficou clara, mas deveria acompanhar o tema escuro.
+  - As palavras `File`, `Edit` e `View` no menu bar parecem ter uma marcacao escura ao redor das letras, destoando do plano de fundo.
+- Objetivo imediato:
+  - Localizar como o tema escuro e aplicado ao `EditorDock`, ao menu bar e ao gutter de line numbers.
+  - Corrigir o visual sem alterar funcionalidades.
+  - Rodar checks/testes focados e registrar o resultado.
+
+## 2026-07-05 - Pos-acao - Ajuste visual do tema do EditorDock
+
+- Diagnostico:
+  - O gutter de numeros de linha usava cores fixas claras (`#f4f4f4` e `#6b7280`), por isso ficava incompatível com o tema escuro.
+  - A `QMenuBar` local do `EditorDock` tinha stylesheet proprio apenas para padding; isso podia interferir no estilo global e deixar uma marcacao visual estranha em `File`, `Edit` e `View`.
+- Mudanca realizada:
+  - O controlador de line numbers agora escolhe cores a partir da paleta do editor: em tema escuro usa fundo `#252526` e texto `#858585`.
+  - O stylesheet local da `QMenuBar` foi escopado para `QMenuBar#editor_menu_bar` e define fundo transparente nos itens normais, mantendo o padding sem criar caixas escuras nas letras.
+  - Foram adicionados testes de regressao para o fundo transparente da menu bar e para as cores escuras do gutter.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py` passou.
+  - `python -m json.tool src/i18n/en.json` passou.
+  - `python -m json.tool src/i18n/pt_BR.json` passou.
+  - `git diff --check -- src/gui/editor_dock.py tests/gui/test_editor_dock.py history-chat.md` passou.
+  - Testes focados passaram: estrutura de menus, estilo transparente da menu bar, render whitespace, gutter escuro com line numbers, tooltips do EditorDock e presenca de tooltips.
+  - Foi gerada captura offscreen em `/tmp/clarify-editor-theme-check.png`; visualmente, `File`, `Edit` e `View` ficaram sem marcacao escura indevida, e o gutter ficou escuro.
+- Proximo passo imediato:
+  - Fazer commit e push pequeno com a correcao visual do tema.

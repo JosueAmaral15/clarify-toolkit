@@ -288,8 +288,9 @@ class _LineNumberController(QObject):
 
     def paint(self, event):
         painter = QPainter(self.area)
-        painter.fillRect(event.rect(), QColor("#f4f4f4"))
-        painter.setPen(QColor("#6b7280"))
+        background_color, text_color = self._theme_colors()
+        painter.fillRect(event.rect(), background_color)
+        painter.setPen(text_color)
         painter.setFont(self.editor.font())
 
         block = self.editor.document().firstBlock()
@@ -313,6 +314,13 @@ class _LineNumberController(QObject):
                 )
 
             block = block.next()
+
+    def _theme_colors(self) -> tuple[QColor, QColor]:
+        """Return gutter colors that match the editor's current light/dark palette."""
+        base_color = self.editor.palette().color(self.editor.backgroundRole())
+        if base_color.lightness() < 128:
+            return QColor("#252526"), QColor("#858585")
+        return QColor("#f4f4f4"), QColor("#6b7280")
 
 
 class EditorDock(BaseDock):
@@ -460,8 +468,19 @@ class EditorDock(BaseDock):
         self.menu_bar.setObjectName("editor_menu_bar")
         self.menu_bar.setNativeMenuBar(False)
         self.menu_bar.setStyleSheet("""
-            QMenuBar::item {
+            QMenuBar#editor_menu_bar {
+                background-color: transparent;
+                border: none;
+            }
+            QMenuBar#editor_menu_bar::item {
                 padding: 6px 16px;
+                background-color: transparent;
+                color: palette(window-text);
+            }
+            QMenuBar#editor_menu_bar::item:selected,
+            QMenuBar#editor_menu_bar::item:pressed {
+                background-color: palette(button);
+                border-radius: 3px;
             }
         """)
         self._action_by_id = {}

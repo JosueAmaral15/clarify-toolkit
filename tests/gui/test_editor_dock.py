@@ -23,6 +23,7 @@ import tempfile
 # Import from clarify package
 from src.app import MainWindow
 from src.gui.editor_dock import EditorDock, EditorTab, _EditorFindDialog
+from src.theme_manager import ThemeManager
 
 
 class TestEditorDockInitialization:
@@ -127,6 +128,16 @@ class TestEditorDockInitialization:
         assert editor_dock.action_word_wrap.isCheckable()
         assert editor_dock.action_render_whitespace.isCheckable()
         assert editor_dock.action_show_line_numbers.isCheckable()
+
+    def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
+        """Test that the local menu bar padding style does not paint dark text boxes."""
+        editor_dock = EditorDock()
+        try:
+            stylesheet = editor_dock.menu_bar.styleSheet()
+            assert "QMenuBar#editor_menu_bar::item" in stylesheet
+            assert "background-color: transparent" in stylesheet
+        finally:
+            editor_dock.deleteLater()
 
 
 class TestEditorTab:
@@ -354,6 +365,31 @@ class TestEditorOperations:
             assert editor_dock.action_render_whitespace.isChecked() is False
         finally:
             editor_dock._set_render_whitespace_enabled(original_state)
+
+    def test_line_number_gutter_uses_dark_theme_colors(self, qapp):
+        """Test that line numbers follow the dark editor theme."""
+        original_palette = qapp.palette()
+        original_stylesheet = qapp.styleSheet()
+        editor_dock = None
+
+        try:
+            ThemeManager.apply_theme(qapp, "dark")
+            editor_dock = EditorDock()
+            editor_dock._new_file()
+            tab = editor_dock.tab_widget.currentWidget()
+            tab.editor.setPlainText("one\ntwo\nthree")
+
+            editor_dock._set_show_line_numbers_enabled(True)
+            controller = getattr(tab.editor, '_clarify_line_numbers')
+            background_color, text_color = controller._theme_colors()
+
+            assert background_color.lightness() < 80
+            assert text_color.lightness() > background_color.lightness()
+        finally:
+            if editor_dock is not None:
+                editor_dock.deleteLater()
+            qapp.setPalette(original_palette)
+            qapp.setStyleSheet(original_stylesheet)
 
 
 class TestEditOnlyMode:
