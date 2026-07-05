@@ -12,15 +12,17 @@ Tests:
 - Find/Replace functionality
 - Modified state tracking
 """
+import re
+
 import pytest
-from PySide6.QtWidgets import QTextEdit, QPushButton, QTabWidget, QLineEdit, QCheckBox
-from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QTextEdit, QPushButton, QTabWidget, QMenuBar, QCheckBox
+from PySide6.QtGui import QFont, QTextCursor, QTextOption
 from pathlib import Path
 import tempfile
 
 # Import from clarify package
 from src.app import MainWindow
-from src.gui.editor_dock import EditorDock, EditorTab
+from src.gui.editor_dock import EditorDock, EditorTab, _EditorFindDialog
 
 
 class TestEditorDockInitialization:
@@ -48,8 +50,8 @@ class TestEditorDockInitialization:
         assert hasattr(editor_dock, 'tab_widget')
         assert isinstance(editor_dock.tab_widget, QTabWidget)
         
-    def test_toolbar_buttons_exist(self, main_window):
-        """Test that toolbar buttons are created."""
+    def test_file_menu_exists(self, main_window):
+        """Test that file actions are available in the File menu."""
         # Find EditorDock
         editor_dock = None
         for dock in main_window.findChildren(EditorDock):
@@ -57,13 +59,74 @@ class TestEditorDockInitialization:
             break
         
         assert editor_dock is not None
-        # Essential buttons
-        assert hasattr(editor_dock, 'btn_open')
-        assert isinstance(editor_dock.btn_open, QPushButton)
-        assert hasattr(editor_dock, 'btn_save')
-        assert isinstance(editor_dock.btn_save, QPushButton)
-        assert hasattr(editor_dock, 'btn_close')
-        assert isinstance(editor_dock.btn_close, QPushButton)
+        assert hasattr(editor_dock, 'menu_bar')
+        assert isinstance(editor_dock.menu_bar, QMenuBar)
+        assert hasattr(editor_dock, 'menu_file')
+        assert editor_dock.menu_file.title() == "File"
+        assert hasattr(editor_dock, 'menu_edit')
+        assert editor_dock.menu_edit.title() == "Edit"
+        assert hasattr(editor_dock, 'menu_view')
+        assert editor_dock.menu_view.title() == "View"
+
+        file_actions = [
+            action.data()
+            for action in editor_dock.menu_file.actions()
+            if not action.isSeparator()
+        ]
+        assert file_actions == [
+            "new",
+            "open",
+            "save",
+            "save_as",
+            "enable_saving",
+            "export",
+            "close_tab",
+            "auto_save",
+        ]
+
+        edit_actions = [
+            action.data()
+            for action in editor_dock.menu_edit.actions()
+            if not action.isSeparator()
+        ]
+        assert edit_actions == [
+            "undo",
+            "redo",
+            "cut",
+            "copy",
+            "paste",
+            "delete",
+            "select_all",
+            "find",
+            "find_replace",
+            "go_to_line",
+            "duplicate_line",
+            "toggle_line_comment",
+            "indent",
+            "outdent",
+            "move_line_up",
+            "move_line_down",
+            "insert_datetime",
+            "trim_trailing_spaces",
+        ]
+
+        view_actions = [
+            action.data()
+            for action in editor_dock.menu_view.actions()
+            if not action.isSeparator()
+        ]
+        assert view_actions == [
+            "word_wrap",
+            "render_whitespace",
+            "show_line_numbers",
+            "small_text",
+            "large_text",
+            "normal_size",
+        ]
+        assert editor_dock.action_auto_save.isCheckable()
+        assert editor_dock.action_word_wrap.isCheckable()
+        assert editor_dock.action_render_whitespace.isCheckable()
+        assert editor_dock.action_show_line_numbers.isCheckable()
 
 
 class TestEditorTab:
@@ -128,6 +191,169 @@ class TestEditorOperations:
         tab.editor.setPlainText("Content to clear")
         tab.editor.clear()
         assert tab.editor.toPlainText() == ""
+
+    def test_edit_menu_undo_redo(self, main_window):
+        """Test that Edit menu Undo and Redo affect the current tab."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+
+        tab.editor.insertPlainText("abc")
+        assert tab.editor.toPlainText() == "abc"
+
+        editor_dock.action_undo.trigger()
+        assert tab.editor.toPlainText() == ""
+
+        editor_dock.action_redo.trigger()
+        assert tab.editor.toPlainText() == "abc"
+
+    def test_go_to_line_moves_cursor(self, main_window):
+        """Test that Go To Line moves the cursor in the current tab."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+        tab.editor.setPlainText("one\ntwo\nthree")
+
+        assert editor_dock._go_to_line_in_current_tab(3) is True
+
+        assert tab.editor.textCursor().blockNumber() == 2
+        assert editor_dock.lbl_status.text() == "Moved to line 3 of 3"
+
+    def test_common_edit_menu_actions(self, main_window):
+        """Test common editor actions added from desktop editor conventions."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+
+        tab.editor.setPlainText("alpha\nbeta  \n")
+        cursor = tab.editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        tab.editor.setTextCursor(cursor)
+        editor_dock.action_duplicate_line.trigger()
+        assert tab.editor.toPlainText() == "alpha\nalpha\nbeta  \n"
+
+        tab.editor.setPlainText("abc")
+        cursor = tab.editor.textCursor()
+        cursor.setPosition(1)
+        cursor.setPosition(2, QTextCursor.KeepAnchor)
+        tab.editor.setTextCursor(cursor)
+        editor_dock.action_delete.trigger()
+        assert tab.editor.toPlainText() == "ac"
+
+        editor_dock.action_select_all.trigger()
+        assert tab.editor.textCursor().selectedText() == "ac"
+
+        tab.editor.setPlainText("")
+        editor_dock.action_insert_datetime.trigger()
+        assert re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", tab.editor.toPlainText())
+
+        tab.editor.setPlainText("a  \nb\t \n")
+        editor_dock.action_trim_trailing_spaces.trigger()
+        assert tab.editor.toPlainText() == "a\nb\n"
+        assert editor_dock.lbl_status.text() == "Trimmed 4 trailing space(s)"
+
+    def test_word_wrap_toggle_applies_to_current_tab(self, main_window):
+        """Test that Word Wrap toggles QTextEdit line wrapping."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        original_state = editor_dock.word_wrap_enabled
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+
+        try:
+            editor_dock._set_word_wrap_enabled(False)
+            assert tab.editor.lineWrapMode() == QTextEdit.LineWrapMode.NoWrap
+            assert editor_dock.action_word_wrap.isChecked() is False
+
+            editor_dock._set_word_wrap_enabled(True)
+            assert tab.editor.lineWrapMode() == QTextEdit.LineWrapMode.WidgetWidth
+            assert editor_dock.action_word_wrap.isChecked() is True
+        finally:
+            editor_dock._set_word_wrap_enabled(original_state)
+
+    def test_vscode_line_editing_actions(self, main_window):
+        """Test VS Code-inspired line editing actions."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+        tab.file_path = "example.py"
+
+        tab.editor.setPlainText("alpha\n    beta\n")
+        tab.editor.selectAll()
+        editor_dock.action_toggle_line_comment.trigger()
+        assert tab.editor.toPlainText() == "# alpha\n    # beta\n"
+
+        tab.editor.selectAll()
+        editor_dock.action_toggle_line_comment.trigger()
+        assert tab.editor.toPlainText() == "alpha\n    beta\n"
+
+        tab.editor.setPlainText("one\ntwo")
+        tab.editor.selectAll()
+        editor_dock.action_indent.trigger()
+        assert tab.editor.toPlainText() == "    one\n    two"
+
+        tab.editor.selectAll()
+        editor_dock.action_outdent.trigger()
+        assert tab.editor.toPlainText() == "one\ntwo"
+
+        tab.editor.setPlainText("one\ntwo\nthree")
+        cursor = tab.editor.textCursor()
+        cursor.setPosition(len("one\n"))
+        tab.editor.setTextCursor(cursor)
+        editor_dock.action_move_line_up.trigger()
+        assert tab.editor.toPlainText() == "two\none\nthree"
+
+        editor_dock.action_move_line_down.trigger()
+        assert tab.editor.toPlainText() == "one\ntwo\nthree"
+
+    def test_render_whitespace_toggle_applies_to_current_tab(self, main_window):
+        """Test that Render Whitespace toggles QTextOption flags."""
+        editor_dock = None
+        for dock in main_window.findChildren(EditorDock):
+            editor_dock = dock
+            break
+
+        assert editor_dock is not None
+        original_state = editor_dock.render_whitespace_enabled
+        editor_dock.action_new.trigger()
+        tab = editor_dock.tab_widget.currentWidget()
+
+        try:
+            editor_dock._set_render_whitespace_enabled(True)
+            flags = tab.editor.document().defaultTextOption().flags()
+            assert flags & QTextOption.Flag.ShowTabsAndSpaces
+            assert editor_dock.action_render_whitespace.isChecked() is True
+
+            editor_dock._set_render_whitespace_enabled(False)
+            flags = tab.editor.document().defaultTextOption().flags()
+            assert not flags & QTextOption.Flag.ShowTabsAndSpaces
+            assert editor_dock.action_render_whitespace.isChecked() is False
+        finally:
+            editor_dock._set_render_whitespace_enabled(original_state)
 
 
 class TestEditOnlyMode:
@@ -209,6 +435,79 @@ class TestSyntaxHighlighting:
 
 class TestFindReplaceFeature:
     """Test find/replace functionality."""
+
+    def test_find_dialog_option_checkboxes_exist(self, qapp):
+        """Test that Find dialogs expose match option checkboxes."""
+        editor = QTextEdit()
+        dialog = _EditorFindDialog(editor)
+
+        assert hasattr(dialog, 'chk_case_sensitive')
+        assert isinstance(dialog.chk_case_sensitive, QCheckBox)
+        assert dialog.chk_case_sensitive.text() == "Case Sensitive"
+        assert hasattr(dialog, 'chk_whole_word')
+        assert isinstance(dialog.chk_whole_word, QCheckBox)
+        assert dialog.chk_whole_word.text() == "Whole Word"
+        assert hasattr(dialog, 'chk_regex')
+        assert isinstance(dialog.chk_regex, QCheckBox)
+        assert dialog.chk_regex.text() == "Regex"
+
+        replace_dialog = _EditorFindDialog(editor, replace_enabled=True)
+        assert hasattr(replace_dialog, 'chk_case_sensitive')
+        assert hasattr(replace_dialog, 'chk_whole_word')
+        assert hasattr(replace_dialog, 'chk_regex')
+
+    def test_find_dialog_case_sensitive(self, qapp):
+        """Test that Case Sensitive affects find behavior."""
+        editor = QTextEdit()
+        editor.setPlainText("Foo foo")
+        dialog = _EditorFindDialog(editor)
+        dialog.find_input.setText("foo")
+        dialog.chk_case_sensitive.setChecked(True)
+
+        assert dialog._find_next() is True
+
+        cursor = editor.textCursor()
+        assert cursor.selectionStart() == 4
+        assert cursor.selectedText() == "foo"
+
+    def test_find_dialog_whole_word(self, qapp):
+        """Test that Whole Word skips matches inside larger words."""
+        editor = QTextEdit()
+        editor.setPlainText("foobar foo")
+        dialog = _EditorFindDialog(editor)
+        dialog.find_input.setText("foo")
+        dialog.chk_whole_word.setChecked(True)
+
+        assert dialog._find_next() is True
+
+        cursor = editor.textCursor()
+        assert cursor.selectionStart() == 7
+        assert cursor.selectedText() == "foo"
+
+    def test_find_replace_dialog_regex_replace_all(self, qapp):
+        """Test that Regex affects replace all behavior."""
+        editor = QTextEdit()
+        editor.setPlainText("a1 a2 ax")
+        dialog = _EditorFindDialog(editor, replace_enabled=True)
+        dialog.find_input.setText(r"a\d")
+        dialog.replace_input.setText("hit")
+        dialog.chk_regex.setChecked(True)
+
+        dialog._replace_all()
+
+        assert editor.toPlainText() == "hit hit ax"
+        assert dialog.lbl_status.text() == "Replaced 2 occurrence(s)"
+
+    def test_find_dialog_invalid_regex_sets_status(self, qapp):
+        """Test that invalid regex patterns are reported in the dialog."""
+        editor = QTextEdit()
+        editor.setPlainText("abc")
+        dialog = _EditorFindDialog(editor)
+        dialog.find_input.setText("[")
+        dialog.chk_regex.setChecked(True)
+
+        assert dialog._find_next() is False
+        assert dialog.lbl_status.text().startswith("Invalid regex:")
     
     def test_find_field_exists(self, main_window):
         """Test that find field exists in EditorDock."""
@@ -291,7 +590,7 @@ class TestTooltipsEditorDock:
     """Test that tooltips are set for accessibility."""
     
     def test_toolbar_tooltips(self, main_window):
-        """Test that toolbar buttons have tooltips."""
+        """Test that file menu has tooltips."""
         # Find EditorDock
         editor_dock = None
         for dock in main_window.findChildren(EditorDock):
@@ -299,9 +598,10 @@ class TestTooltipsEditorDock:
             break
         
         assert editor_dock is not None
-        assert editor_dock.btn_open.toolTip() != ""
-        assert editor_dock.btn_save.toolTip() != ""
-        assert editor_dock.btn_close.toolTip() != ""
+        assert editor_dock.menu_bar.toolTip() != ""
+        assert editor_dock.menu_file.menuAction().toolTip() != ""
+        assert editor_dock.menu_edit.menuAction().toolTip() != ""
+        assert editor_dock.menu_view.menuAction().toolTip() != ""
         
     def test_tab_toolbar_tooltips(self, main_window):
         """Test that EditorTab toolbar buttons have tooltips."""

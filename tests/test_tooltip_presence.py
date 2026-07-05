@@ -243,15 +243,13 @@ def test_editor_dock_tooltips(qtbot):
     dock = EditorDock()
     qtbot.addWidget(dock)
     
-    # Critical widgets (8 total: 6 existing updated + 2 new)
+    # Critical widgets/actions (6 total: File/Edit/View menus + tab widget + status)
     critical_widgets = [
-        # Toolbar buttons (6)
-        (dock.btn_new, "btn_new"),
-        (dock.btn_open, "btn_open"),
-        (dock.btn_save, "btn_save"),
-        (dock.btn_save_as, "btn_save_as"),
-        (dock.btn_close_tab, "btn_close_tab"),
-        (dock.chk_auto_save, "chk_auto_save"),
+        # File actions
+        (dock.menu_bar, "menu_bar"),
+        (dock.menu_file.menuAction(), "menu_file"),
+        (dock.menu_edit.menuAction(), "menu_edit"),
+        (dock.menu_view.menuAction(), "menu_view"),
         # Tab widget & Status (2) - NEW in v2.9.49
         (dock.tab_widget, "tab_widget"),
         (dock.lbl_status, "lbl_status"),
