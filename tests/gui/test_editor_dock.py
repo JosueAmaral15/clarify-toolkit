@@ -23,6 +23,7 @@ import tempfile
 # Import from clarify package
 from src.app import MainWindow
 from src.gui.editor_dock import EditorDock, EditorTab, _EditorFindDialog
+from src.gui.json_editor_tab import JsonEditorTab
 from src.theme_manager import ThemeManager
 
 
@@ -69,6 +70,8 @@ class TestEditorDockInitialization:
         assert editor_dock.menu_edit.title() == "Edit"
         assert hasattr(editor_dock, 'menu_view')
         assert editor_dock.menu_view.title() == "View"
+        assert hasattr(editor_dock, 'menu_json')
+        assert editor_dock.menu_json.title() == "JSON"
 
         file_actions = [
             action.data()
@@ -126,11 +129,27 @@ class TestEditorDockInitialization:
             "large_text",
             "normal_size",
         ]
+
+        json_actions = [
+            action.data()
+            for action in editor_dock.menu_json.actions()
+            if not action.isSeparator()
+        ]
+        assert json_actions == [
+            "json_format_2",
+            "json_format_4",
+            "json_minify",
+            "json_validate",
+            "json_search",
+            "json_collapse_tree",
+            "json_expand_tree",
+        ]
         assert editor_dock.action_auto_save.isCheckable()
         assert editor_dock.action_word_wrap.isCheckable()
         assert editor_dock.action_render_whitespace.isCheckable()
         assert editor_dock.action_show_line_numbers.isCheckable()
         assert hasattr(editor_dock, 'action_compare_with_saved')
+        assert hasattr(editor_dock, 'action_json_validate')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -173,6 +192,67 @@ class TestEditorDockInitialization:
         assert "+++ example.txt (current)" in diff
         assert "-two" in diff
         assert "+three" in diff
+
+    def test_json_menu_actions_only_enable_for_json_tabs(self, qapp):
+        """Test JSON menu actions are enabled only when the current tab is JSON."""
+        editor_dock = EditorDock()
+        try:
+            assert not editor_dock.action_json_validate.isEnabled()
+
+            editor_dock._new_file()
+            assert not editor_dock.action_json_validate.isEnabled()
+
+            json_tab = JsonEditorTab()
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+            editor_dock._refresh_editor_menus()
+
+            assert editor_dock.action_json_format_2.isEnabled()
+            assert editor_dock.action_json_validate.isEnabled()
+            assert editor_dock.action_json_expand_tree.isEnabled()
+        finally:
+            editor_dock.deleteLater()
+
+    def test_json_menu_formats_current_json_tab(self, qapp):
+        """Test JSON menu formatting updates the active JSON tab."""
+        editor_dock = EditorDock()
+        try:
+            json_tab = JsonEditorTab()
+            json_tab.editor.setPlainText('{"alpha":1,"nested":{"beta":2}}')
+            json_tab.is_modified = False
+
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+
+            assert editor_dock._format_current_json_tab(2) is True
+            text = json_tab.editor.toPlainText()
+            assert '\n  "alpha": 1,' in text
+            assert json_tab.is_modified is True
+            assert editor_dock.lbl_status.text() == "JSON formatted with 2 spaces"
+        finally:
+            editor_dock.deleteLater()
+
+    def test_json_menu_validates_current_json_tab(self, qapp):
+        """Test JSON menu validation updates the dock status."""
+        editor_dock = EditorDock()
+        try:
+            json_tab = JsonEditorTab()
+            json_tab.editor.setPlainText('{"alpha": 1}')
+
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+
+            assert editor_dock._validate_current_json_tab() is True
+            assert editor_dock.lbl_status.text() == "Valid JSON"
+
+            json_tab.editor.setPlainText('{"alpha": }')
+            assert editor_dock._validate_current_json_tab() is False
+            assert "Invalid JSON at line" in editor_dock.lbl_status.text()
+        finally:
+            editor_dock.deleteLater()
 
 
 class TestEditorTab:
@@ -673,6 +753,7 @@ class TestTooltipsEditorDock:
         assert editor_dock.menu_file.menuAction().toolTip() != ""
         assert editor_dock.menu_edit.menuAction().toolTip() != ""
         assert editor_dock.menu_view.menuAction().toolTip() != ""
+        assert editor_dock.menu_json.menuAction().toolTip() != ""
         
     def test_tab_toolbar_tooltips(self, main_window):
         """Test that EditorTab toolbar buttons have tooltips."""

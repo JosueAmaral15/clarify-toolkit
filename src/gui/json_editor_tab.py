@@ -42,7 +42,7 @@ from src.i18n.translator import tr, tooltip_tr
 
 from .dialogs import JsonSearchDialog
 from .json_validator import JsonValidator
-from .widgets import JsonTreeWidget
+from .widgets import JsonTreeWidget, SyntaxHighlighter
 
 
 class JsonEditorTab(QWidget):
@@ -100,6 +100,7 @@ class JsonEditorTab(QWidget):
             tr("json_editor.combo_2spaces"), tr("json_editor.combo_4spaces"),
             tr("json_editor.combo_minify")
         ])
+        self.combo_indent.setToolTip(tooltip_tr("json_editor.tooltip_indent"))
 
         self.btn_validate = QPushButton(tr("json_editor.btn_validate"))
         self.btn_validate.setToolTip(tooltip_tr("json_editor.tooltip_validate"))
@@ -181,7 +182,6 @@ class JsonEditorTab(QWidget):
         layout.addWidget(splitter)
 
         # Setup syntax highlighter
-        from .editor_dock import SyntaxHighlighter
         self.highlighter = SyntaxHighlighter(self.editor.document(), "json")
 
     def _connect_signals(self):

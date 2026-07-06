@@ -243,13 +243,14 @@ def test_editor_dock_tooltips(qtbot):
     dock = EditorDock()
     qtbot.addWidget(dock)
     
-    # Critical widgets/actions (6 total: File/Edit/View menus + tab widget + status)
+    # Critical widgets/actions (7 total: File/Edit/View/JSON menus + tab widget + status)
     critical_widgets = [
         # File actions
         (dock.menu_bar, "menu_bar"),
         (dock.menu_file.menuAction(), "menu_file"),
         (dock.menu_edit.menuAction(), "menu_edit"),
         (dock.menu_view.menuAction(), "menu_view"),
+        (dock.menu_json.menuAction(), "menu_json"),
         # Tab widget & Status (2) - NEW in v2.9.49
         (dock.tab_widget, "tab_widget"),
         (dock.lbl_status, "lbl_status"),

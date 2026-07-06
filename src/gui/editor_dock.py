@@ -373,6 +373,13 @@ class EditorDock(BaseDock):
         "small_text": {"text_key": "editor.btn_small_text"},
         "large_text": {"text_key": "editor.btn_large_text"},
         "normal_size": {"text_key": "editor.btn_normal_size"},
+        "json_format_2": {"text_key": "editor.btn_json_format_2"},
+        "json_format_4": {"text_key": "editor.btn_json_format_4"},
+        "json_minify": {"text_key": "editor.btn_json_minify"},
+        "json_validate": {"text_key": "editor.btn_json_validate"},
+        "json_search": {"text_key": "editor.btn_json_search"},
+        "json_collapse_tree": {"text_key": "editor.btn_json_collapse_tree"},
+        "json_expand_tree": {"text_key": "editor.btn_json_expand_tree"},
     }
 
     _MENU_SPECS = {
@@ -401,6 +408,15 @@ class EditorDock(BaseDock):
             "items": (
                 "word_wrap", "render_whitespace", "show_line_numbers",
                 None, "small_text", "large_text", "normal_size",
+            ),
+        },
+        "json": {
+            "attr": "menu_json",
+            "title_key": "editor.menu_json",
+            "items": (
+                "json_format_2", "json_format_4", "json_minify",
+                None, "json_validate", "json_search",
+                None, "json_collapse_tree", "json_expand_tree",
             ),
         },
     }
@@ -433,6 +449,13 @@ class EditorDock(BaseDock):
         "small_text": "has_editor",
         "large_text": "has_editor",
         "normal_size": "has_editor",
+        "json_format_2": "is_json_tab",
+        "json_format_4": "is_json_tab",
+        "json_minify": "is_json_tab",
+        "json_validate": "is_json_tab",
+        "json_search": "is_json_tab",
+        "json_collapse_tree": "is_json_tab",
+        "json_expand_tree": "is_json_tab",
     }
 
     _ACTION_CHECKED_ATTRIBUTES = {
@@ -490,6 +513,7 @@ class EditorDock(BaseDock):
         self._setup_file_menu()
         self._setup_edit_menu()
         self._setup_view_menu()
+        self._setup_json_menu()
         self._refresh_editor_menus()
 
         toolbar.addWidget(self.menu_bar)
@@ -629,6 +653,10 @@ class EditorDock(BaseDock):
         """Create the local View menu bar actions."""
         self._setup_editor_menu("view")
 
+    def _setup_json_menu(self) -> None:
+        """Create the local JSON menu bar actions."""
+        self._setup_editor_menu("json")
+
     def _setup_editor_menu(self, menu_id: str) -> None:
         """Build one editor menu from the declarative menu/action specs."""
         menu_spec = self._MENU_SPECS[menu_id]
@@ -694,6 +722,13 @@ class EditorDock(BaseDock):
             "small_text": lambda _checked=False: self._change_current_text_size(-1),
             "large_text": lambda _checked=False: self._change_current_text_size(1),
             "normal_size": lambda _checked=False: self._set_current_text_size(self.normal_text_font_size),
+            "json_format_2": lambda _checked=False: self._format_current_json_tab(2),
+            "json_format_4": lambda _checked=False: self._format_current_json_tab(4),
+            "json_minify": lambda _checked=False: self._format_current_json_tab(None),
+            "json_validate": lambda _checked=False: self._validate_current_json_tab(),
+            "json_search": lambda _checked=False: self._search_current_json_tab(),
+            "json_collapse_tree": lambda _checked=False: self._set_current_json_tree_expanded(False),
+            "json_expand_tree": lambda _checked=False: self._set_current_json_tree_expanded(True),
         }
 
     def _refresh_editor_menus(self) -> None:
@@ -703,6 +738,7 @@ class EditorDock(BaseDock):
             "has_tab": tab is not None,
             "has_editor": tab is not None and hasattr(tab, 'editor'),
             "has_file_path": tab is not None and bool(getattr(tab, 'file_path', None)),
+            "is_json_tab": isinstance(tab, JsonEditorTab),
             "is_edit_only": tab is not None and bool(getattr(tab, 'edit_only_mode', False)),
         }
 
@@ -1383,6 +1419,95 @@ class EditorDock(BaseDock):
         self.lbl_status.setText(
             tr("editor.status_go_to_line").format(line=target_line, max=line_count)
         )
+        return True
+
+    def _current_json_tab(self):
+        """Return the current tab when it is a JsonEditorTab."""
+        tab = self.tab_widget.currentWidget()
+        if isinstance(tab, JsonEditorTab):
+            return tab
+        return None
+
+    def _replace_json_tab_text(self, tab: JsonEditorTab, text: str) -> None:
+        """Replace JSON tab text, mark it modified, and refresh validation/title."""
+        if tab.editor.toPlainText() != text:
+            tab.editor.blockSignals(True)
+            tab.editor.setPlainText(text)
+            tab.editor.blockSignals(False)
+            tab.is_modified = True
+            tab.modified_changed.emit(True)
+
+        tab._validate()
+        self._update_tab_title(tab)
+
+    def _format_current_json_tab(self, indent: int | None) -> bool:
+        """Format or minify the active JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        text = tab.editor.toPlainText()
+        if indent is None:
+            success, result = tab.validator.minify_json(text)
+        else:
+            success, result = tab.validator.format_json(text, indent)
+
+        if not success:
+            self.lbl_status.setText(tr("editor.status_json_format_failed"))
+            QMessageBox.warning(self, tr("json_editor.msg_format_error_title"), result)
+            return False
+
+        self._replace_json_tab_text(tab, result)
+        if indent is None:
+            self.lbl_status.setText(tr("editor.status_json_minified"))
+        else:
+            self.lbl_status.setText(
+                tr("editor.status_json_formatted").format(spaces=indent)
+            )
+        return True
+
+    def _validate_current_json_tab(self) -> bool:
+        """Validate the active JSON tab and update the dock status bar."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        result = tab.validator.validate(tab.editor.toPlainText())
+        tab._validate()
+        if result.is_valid:
+            self.lbl_status.setText(tr("editor.status_json_valid"))
+            return True
+
+        self.lbl_status.setText(
+            tr("editor.status_json_invalid").format(
+                line=result.line,
+                col=result.col,
+                error=result.error_msg,
+            )
+        )
+        return False
+
+    def _search_current_json_tab(self) -> bool:
+        """Open the JSON search dialog for the active JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        tab._show_search()
+        return True
+
+    def _set_current_json_tree_expanded(self, expanded: bool) -> bool:
+        """Expand or collapse the JSON tree in the active JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        if expanded:
+            tab.tree.expandAll()
+            self.lbl_status.setText(tr("editor.status_json_tree_expanded"))
+        else:
+            tab.tree.collapseAll()
+            self.lbl_status.setText(tr("editor.status_json_tree_collapsed"))
         return True
 
     def _export_current_tab(self):

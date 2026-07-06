@@ -765,3 +765,31 @@ Plano imediato:
   - Testes focados finais passaram: 9 testes (`9 passed in 196.53s`), cobrindo criacao do dock, menus, nova acao `Compare with Saved`, diff, estilo da menu bar, tooltips e instanciacao segura.
 - Observacao:
   - Uma tentativa de rodar o arquivo completo `tests/gui/test_editor_dock.py` ficou muito lenta/bloqueada e foi interrompida; depois disso foi executado um conjunto focado e mais adequado para esta mudanca.
+
+## 2026-07-06 - Pre-acao - Continuacao das melhorias do Clarify Editor
+
+- Pedido do usuario: continuar o trabalho nas melhorias do Clarify Editor.
+- Contexto herdado:
+  - A identidade `Clarify Editor` e a acao `Compare with Saved` ja foram implementadas, testadas, commitadas e enviadas ao `origin/main`.
+  - O worktree ainda contem mudancas antigas e nao relacionadas em docs/File Explorer; esta etapa deve evita-las.
+- Objetivo imediato:
+  - Ler o estado atual do `EditorDock`, `JsonEditorTab` e `TASKS.md`.
+  - Escolher uma melhoria pequena e relevante para o Clarify Editor, alinhada ao roadmap, sem abrir escopo grande de Git, IA ou macros.
+  - Atualizar traducoes/testes conforme necessario.
+  - Rodar validacoes focadas, registrar o pos-acao e fazer commit/push se tudo estiver funcionando.
+
+## 2026-07-06 - Pos-acao - Menu JSON no Clarify Editor
+
+- Mudancas realizadas:
+  - Adicionado menu `JSON` na menu bar do Clarify Editor.
+  - O menu inclui `Format JSON (2 Spaces)`, `Format JSON (4 Spaces)`, `Minify JSON`, `Validate JSON`, `Search JSON`, `Collapse Tree` e `Expand Tree`.
+  - As acoes JSON ficam habilitadas apenas quando a aba atual e `JsonEditorTab`.
+  - A formatacao/validacao do menu reutiliza `JsonValidator`, atualiza o status do dock e preserva o estado de modificado da aba.
+  - Corrigido `JsonEditorTab` para importar `SyntaxHighlighter` de `src/gui/widgets`, local correto apos o refactor anterior.
+  - Adicionado tooltip ao `combo_indent` do `JsonEditorTab`, usando chave i18n ja existente.
+  - Atualizados `en`, `pt_BR`, testes focados e `docs/TASKS.md`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py src/gui/json_editor_tab.py tests/gui/test_editor_dock.py tests/test_tooltip_presence.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check` nos arquivos tocados passou.
+  - Testes finais focados passaram: `25 passed in 55.89s`, cobrindo menu JSON, acoes JSON, tooltips e `tests/test_json_editor.py`.
