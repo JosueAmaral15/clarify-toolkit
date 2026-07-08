@@ -822,3 +822,31 @@ Plano imediato:
   - Testes focados passaram: `24 passed, 2 skipped in 10.99s`.
 - Observacao:
   - Os 2 testes de validacao real por JSON Schema foram pulados porque o Python atual nao tem `jsonschema` importavel, apesar de `pyproject.toml` declarar `jsonschema>=4.0.0`. O fallback sem a dependencia foi testado e passou.
+
+## 2026-07-08 - Pre-acao - Geracao de JSON Schema no Clarify Editor
+
+- Pedido do usuario: prosseguir com as tarefas.
+- Contexto herdado:
+  - O Clarify Editor ja tem menu `JSON`, validacao de sintaxe e `Validate with Schema...`.
+  - A meta longa em `docs/TASKS.md` ainda inclui recursos de JSON Schema/autocomplete/quick-fix.
+- Escopo escolhido:
+  - Adicionar `Generate Schema...` ao menu `JSON`.
+  - Inferir um JSON Schema basico a partir do conteudo da aba JSON atual.
+  - Mostrar o schema gerado em dialogo somente leitura, com opcoes de copiar e salvar.
+  - Criar helpers testaveis para inferencia de schema sem depender de GUI.
+  - Atualizar i18n, testes, `docs/TASKS.md`, validar, commitar e enviar.
+
+## 2026-07-08 - Pos-acao - Geracao de JSON Schema no Clarify Editor
+
+- Mudancas realizadas:
+  - Adicionada acao `JSON -> Generate Schema...` no Clarify Editor.
+  - A acao infere um JSON Schema basico a partir da aba JSON atual.
+  - O schema gerado e exibido em dialogo somente leitura com botoes para copiar e salvar.
+  - Foram criados helpers testaveis para inferir schema de objetos, arrays e tipos primitivos.
+  - A mesclagem de schemas em arrays heterogeneos agrupa objetos semelhantes e usa `anyOf` quando necessario.
+  - Atualizados textos `en` e `pt_BR`, testes focados e `docs/TASKS.md`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check` nos arquivos tocados passou.
+  - Testes focados passaram: `27 passed in 15.27s`.

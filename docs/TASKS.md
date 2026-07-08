@@ -1453,6 +1453,7 @@ result = convert_text_to_json(text, "auto")
     * ✅ Smoke test: py_compile OK, 7 JSON válidos
     * ✅ **Clarify Editor JSON Menu (06/07/2026)**: menu `JSON` na menu bar com Format 2 spaces, Format 4 spaces, Minify, Validate, Search, Collapse Tree e Expand Tree; ações habilitadas apenas para abas `JsonEditorTab`; corrigido import de `SyntaxHighlighter` e tooltip de `combo_indent`.
     * ✅ **JSON Schema Validation Slice (06/07/2026)**: ação `JSON → Validate with Schema...` para validar a aba JSON atual contra arquivo JSON Schema selecionado, reutilizando `jsonschema` já presente no projeto; helper testável para validação sem diálogo.
+    * ✅ **JSON Schema Generation Slice (08/07/2026)**: ação `JSON → Generate Schema...` para inferir schema básico da aba JSON atual, com dialog somente leitura e opções de copiar/salvar; helpers testáveis para objetos, arrays e tipos primitivos.
     * **Sprint**: ~25 minutos (dock complexo: 1047 linhas, 2 classes - EditorDock + EditorTab, syntax highlighter, auto-save, edit-only mode)
     * **Progresso**: Tooltips Expansion - 14/15 docks (93.3%)
   - **[X] v2.9.77 - Base Dock (15/12/2025)**:

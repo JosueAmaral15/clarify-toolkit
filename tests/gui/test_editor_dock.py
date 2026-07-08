@@ -14,6 +14,7 @@ Tests:
 """
 import re
 import builtins
+import json
 
 import pytest
 from PySide6.QtWidgets import QTextEdit, QPushButton, QTabWidget, QMenuBar, QCheckBox
@@ -142,6 +143,7 @@ class TestEditorDockInitialization:
             "json_minify",
             "json_validate",
             "json_validate_schema",
+            "json_generate_schema",
             "json_search",
             "json_collapse_tree",
             "json_expand_tree",
@@ -153,6 +155,7 @@ class TestEditorDockInitialization:
         assert hasattr(editor_dock, 'action_compare_with_saved')
         assert hasattr(editor_dock, 'action_json_validate')
         assert hasattr(editor_dock, 'action_json_validate_schema')
+        assert hasattr(editor_dock, 'action_json_generate_schema')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -214,6 +217,7 @@ class TestEditorDockInitialization:
             assert editor_dock.action_json_format_2.isEnabled()
             assert editor_dock.action_json_validate.isEnabled()
             assert editor_dock.action_json_validate_schema.isEnabled()
+            assert editor_dock.action_json_generate_schema.isEnabled()
             assert editor_dock.action_json_expand_tree.isEnabled()
         finally:
             editor_dock.deleteLater()
@@ -237,6 +241,48 @@ class TestEditorDockInitialization:
             assert editor_dock.lbl_status.text() == "JSON formatted with 2 spaces"
         finally:
             editor_dock.deleteLater()
+
+    def test_json_schema_generation_helper_infers_object_schema(self):
+        """Test JSON Schema generation helper infers common object types."""
+        success, schema_text = EditorDock._generate_json_schema_text(
+            '{"name": "Ada", "age": 36, "active": true}'
+        )
+
+        assert success is True
+        schema = json.loads(schema_text)
+        assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+        assert schema["type"] == "object"
+        assert schema["properties"]["name"] == {"type": "string"}
+        assert schema["properties"]["age"] == {"type": "integer"}
+        assert schema["properties"]["active"] == {"type": "boolean"}
+        assert schema["required"] == ["active", "age", "name"]
+
+    def test_json_schema_generation_helper_merges_array_items(self):
+        """Test JSON Schema generation helper merges heterogeneous array items."""
+        success, schema_text = EditorDock._generate_json_schema_text(
+            '[{"id": 1, "name": "A"}, {"id": 2}, null]'
+        )
+
+        assert success is True
+        schema = json.loads(schema_text)
+        assert schema["type"] == "array"
+        item_schema = schema["items"]
+        assert "anyOf" in item_schema
+        assert {"type": "null"} in item_schema["anyOf"]
+        object_schema = next(
+            item for item in item_schema["anyOf"]
+            if item.get("type") == "object"
+        )
+        assert object_schema["properties"]["id"] == {"type": "integer"}
+        assert object_schema["properties"]["name"] == {"type": "string"}
+        assert object_schema["required"] == ["id"]
+
+    def test_json_schema_generation_helper_reports_invalid_json(self):
+        """Test JSON Schema generation helper reports invalid input JSON."""
+        success, message = EditorDock._generate_json_schema_text('{"name": }')
+
+        assert success is False
+        assert "JSON parse error" in message
 
     def test_json_schema_validation_helper_accepts_valid_data(self):
         """Test JSON Schema validation helper accepts matching JSON."""

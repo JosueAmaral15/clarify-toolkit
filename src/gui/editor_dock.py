@@ -379,6 +379,7 @@ class EditorDock(BaseDock):
         "json_minify": {"text_key": "editor.btn_json_minify"},
         "json_validate": {"text_key": "editor.btn_json_validate"},
         "json_validate_schema": {"text_key": "editor.btn_json_validate_schema"},
+        "json_generate_schema": {"text_key": "editor.btn_json_generate_schema"},
         "json_search": {"text_key": "editor.btn_json_search"},
         "json_collapse_tree": {"text_key": "editor.btn_json_collapse_tree"},
         "json_expand_tree": {"text_key": "editor.btn_json_expand_tree"},
@@ -417,7 +418,8 @@ class EditorDock(BaseDock):
             "title_key": "editor.menu_json",
             "items": (
                 "json_format_2", "json_format_4", "json_minify",
-                None, "json_validate", "json_validate_schema", "json_search",
+                None, "json_validate", "json_validate_schema", "json_generate_schema",
+                "json_search",
                 None, "json_collapse_tree", "json_expand_tree",
             ),
         },
@@ -456,6 +458,7 @@ class EditorDock(BaseDock):
         "json_minify": "is_json_tab",
         "json_validate": "is_json_tab",
         "json_validate_schema": "is_json_tab",
+        "json_generate_schema": "is_json_tab",
         "json_search": "is_json_tab",
         "json_collapse_tree": "is_json_tab",
         "json_expand_tree": "is_json_tab",
@@ -730,6 +733,7 @@ class EditorDock(BaseDock):
             "json_minify": lambda _checked=False: self._format_current_json_tab(None),
             "json_validate": lambda _checked=False: self._validate_current_json_tab(),
             "json_validate_schema": lambda _checked=False: self._validate_current_json_tab_with_schema(),
+            "json_generate_schema": lambda _checked=False: self._show_generated_json_schema(),
             "json_search": lambda _checked=False: self._search_current_json_tab(),
             "json_collapse_tree": lambda _checked=False: self._set_current_json_tree_expanded(False),
             "json_expand_tree": lambda _checked=False: self._set_current_json_tree_expanded(True),
@@ -1602,6 +1606,209 @@ class EditorDock(BaseDock):
             tr("editor.schema_invalid_message").format(error=message),
         )
         return False
+
+    @classmethod
+    def _merge_json_schemas(cls, schemas: list[dict]) -> dict:
+        """Merge inferred schemas into one permissive schema."""
+        schemas = [schema for schema in schemas if schema]
+        if not schemas:
+            return {}
+
+        unique = {
+            json.dumps(schema, sort_keys=True, ensure_ascii=False): schema
+            for schema in schemas
+        }
+        if len(unique) == 1:
+            return next(iter(unique.values()))
+
+        schema_types = {schema.get("type") for schema in schemas}
+        if schema_types == {"object"}:
+            property_schemas: dict[str, list[dict]] = {}
+            required_sets = []
+            for schema in schemas:
+                for key, value_schema in schema.get("properties", {}).items():
+                    property_schemas.setdefault(key, []).append(value_schema)
+                required_sets.append(set(schema.get("required", [])))
+
+            merged = {"type": "object"}
+            if property_schemas:
+                merged["properties"] = {
+                    key: cls._merge_json_schemas(values)
+                    for key, values in sorted(property_schemas.items())
+                }
+            if required_sets:
+                required = sorted(set.intersection(*required_sets))
+                if required:
+                    merged["required"] = required
+            return merged
+
+        if schema_types == {"array"}:
+            item_schemas = [
+                schema["items"]
+                for schema in schemas
+                if "items" in schema
+            ]
+            merged = {"type": "array"}
+            if item_schemas:
+                merged["items"] = cls._merge_json_schemas(item_schemas)
+            return merged
+
+        if len(schema_types) == 1 and None not in schema_types:
+            return {"type": next(iter(schema_types))}
+
+        grouped_schemas: dict[str, list[dict]] = {}
+        for schema in schemas:
+            grouped_schemas.setdefault(str(schema.get("type")), []).append(schema)
+        if len(grouped_schemas) > 1:
+            merged_groups = [
+                cls._merge_json_schemas(grouped_schemas[key])
+                for key in sorted(grouped_schemas)
+            ]
+            unique_groups = {
+                json.dumps(schema, sort_keys=True, ensure_ascii=False): schema
+                for schema in merged_groups
+            }
+            return {
+                "anyOf": [
+                    unique_groups[key]
+                    for key in sorted(unique_groups)
+                ]
+            }
+
+        return {
+            "anyOf": [
+                unique[key]
+                for key in sorted(unique)
+            ]
+        }
+
+    @classmethod
+    def _infer_json_schema(cls, value) -> dict:
+        """Infer a basic JSON Schema fragment from a Python JSON value."""
+        if isinstance(value, dict):
+            schema = {"type": "object"}
+            if value:
+                schema["properties"] = {
+                    key: cls._infer_json_schema(item)
+                    for key, item in sorted(value.items())
+                }
+                schema["required"] = sorted(value)
+            return schema
+
+        if isinstance(value, list):
+            schema = {"type": "array"}
+            if value:
+                schema["items"] = cls._merge_json_schemas([
+                    cls._infer_json_schema(item)
+                    for item in value
+                ])
+            return schema
+
+        if isinstance(value, bool):
+            return {"type": "boolean"}
+        if value is None:
+            return {"type": "null"}
+        if isinstance(value, int):
+            return {"type": "integer"}
+        if isinstance(value, float):
+            return {"type": "number"}
+        return {"type": "string"}
+
+    @classmethod
+    def _generate_json_schema_text(cls, json_text: str) -> tuple[bool, str]:
+        """Generate a formatted JSON Schema from JSON document text."""
+        try:
+            value = json.loads(json_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                f"JSON parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+            )
+
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            **cls._infer_json_schema(value),
+        }
+        return True, json.dumps(schema, indent=2, ensure_ascii=False)
+
+    def _save_generated_json_schema(self, schema_text: str) -> bool:
+        """Save generated schema text to a selected file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            tr("editor.generate_schema_save_title"),
+            "",
+            tr("editor.schema_dialog_filter"),
+        )
+        if not file_path:
+            return False
+
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file_obj:
+                file_obj.write(schema_text)
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                tr("editor.msg_error_title"),
+                tr("editor.generate_schema_save_error").format(error=str(exc)),
+            )
+            return False
+
+        self.lbl_status.setText(
+            tr("editor.status_json_schema_saved").format(file=os.path.basename(file_path))
+        )
+        return True
+
+    def _show_generated_json_schema(self) -> bool:
+        """Generate and display a basic JSON Schema for the active JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        success, result = self._generate_json_schema_text(tab.editor.toPlainText())
+        if not success:
+            self.lbl_status.setText(tr("editor.status_json_schema_generate_failed"))
+            QMessageBox.warning(
+                self,
+                tr("editor.generate_schema_error_title"),
+                tr("editor.generate_schema_parse_error").format(error=result),
+            )
+            return False
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("editor.generate_schema_dialog_title"))
+        dialog.resize(820, 620)
+
+        layout = QVBoxLayout(dialog)
+        schema_view = QTextEdit()
+        schema_view.setReadOnly(True)
+        schema_view.setAcceptRichText(False)
+        schema_view.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        schema_view.setFont(tab.editor.font())
+        schema_view.setPlainText(result)
+        layout.addWidget(schema_view)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+
+        btn_copy = QPushButton(tr("editor.btn_copy_schema"))
+        btn_copy.clicked.connect(lambda _checked=False: (
+            QApplication.clipboard().setText(result),
+            self.lbl_status.setText(tr("editor.status_json_schema_copied")),
+        ))
+        button_row.addWidget(btn_copy)
+
+        btn_save = QPushButton(tr("editor.btn_save_schema"))
+        btn_save.clicked.connect(lambda _checked=False: self._save_generated_json_schema(result))
+        button_row.addWidget(btn_save)
+
+        btn_close = QPushButton(tr("editor.btn_close"))
+        btn_close.clicked.connect(dialog.close)
+        button_row.addWidget(btn_close)
+        layout.addLayout(button_row)
+
+        self.lbl_status.setText(tr("editor.status_json_schema_generated"))
+        dialog.exec()
+        return True
 
     def _search_current_json_tab(self) -> bool:
         """Open the JSON search dialog for the active JSON tab."""
