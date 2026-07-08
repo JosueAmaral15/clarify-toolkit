@@ -13,6 +13,7 @@ Tests:
 - Modified state tracking
 """
 import re
+import builtins
 
 import pytest
 from PySide6.QtWidgets import QTextEdit, QPushButton, QTabWidget, QMenuBar, QCheckBox
@@ -140,6 +141,7 @@ class TestEditorDockInitialization:
             "json_format_4",
             "json_minify",
             "json_validate",
+            "json_validate_schema",
             "json_search",
             "json_collapse_tree",
             "json_expand_tree",
@@ -150,6 +152,7 @@ class TestEditorDockInitialization:
         assert editor_dock.action_show_line_numbers.isCheckable()
         assert hasattr(editor_dock, 'action_compare_with_saved')
         assert hasattr(editor_dock, 'action_json_validate')
+        assert hasattr(editor_dock, 'action_json_validate_schema')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -210,6 +213,7 @@ class TestEditorDockInitialization:
 
             assert editor_dock.action_json_format_2.isEnabled()
             assert editor_dock.action_json_validate.isEnabled()
+            assert editor_dock.action_json_validate_schema.isEnabled()
             assert editor_dock.action_json_expand_tree.isEnabled()
         finally:
             editor_dock.deleteLater()
@@ -233,6 +237,64 @@ class TestEditorDockInitialization:
             assert editor_dock.lbl_status.text() == "JSON formatted with 2 spaces"
         finally:
             editor_dock.deleteLater()
+
+    def test_json_schema_validation_helper_accepts_valid_data(self):
+        """Test JSON Schema validation helper accepts matching JSON."""
+        pytest.importorskip("jsonschema")
+
+        schema_text = """
+        {
+          "type": "object",
+          "required": ["name", "age"],
+          "properties": {
+            "name": {"type": "string"},
+            "age": {"type": "integer"}
+          }
+        }
+        """
+        is_valid, message = EditorDock._validate_json_text_with_schema(
+            '{"name": "Ada", "age": 36}',
+            schema_text,
+        )
+
+        assert is_valid is True
+        assert message == ""
+
+    def test_json_schema_validation_helper_reports_schema_errors(self):
+        """Test JSON Schema validation helper reports path-specific errors."""
+        pytest.importorskip("jsonschema")
+
+        schema_text = """
+        {
+          "type": "object",
+          "properties": {
+            "age": {"type": "integer"}
+          }
+        }
+        """
+        is_valid, message = EditorDock._validate_json_text_with_schema(
+            '{"age": "old"}',
+            schema_text,
+        )
+
+        assert is_valid is False
+        assert "$.age" in message
+        assert "integer" in message
+
+    def test_json_schema_validation_helper_reports_missing_dependency(self, monkeypatch):
+        """Test JSON Schema validation reports when jsonschema is unavailable."""
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "jsonschema" or name.startswith("jsonschema."):
+                raise ImportError("blocked jsonschema")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+        is_valid, message = EditorDock._validate_json_text_with_schema("{}", "{}")
+
+        assert is_valid is False
+        assert "jsonschema package" in message
 
     def test_json_menu_validates_current_json_tab(self, qapp):
         """Test JSON menu validation updates the dock status."""

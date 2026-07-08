@@ -23,6 +23,7 @@ Refactored in v2.9.114 (Phase 2.5):
 from __future__ import annotations
 
 import difflib
+import json
 import os
 from datetime import datetime
 from typing import List
@@ -377,6 +378,7 @@ class EditorDock(BaseDock):
         "json_format_4": {"text_key": "editor.btn_json_format_4"},
         "json_minify": {"text_key": "editor.btn_json_minify"},
         "json_validate": {"text_key": "editor.btn_json_validate"},
+        "json_validate_schema": {"text_key": "editor.btn_json_validate_schema"},
         "json_search": {"text_key": "editor.btn_json_search"},
         "json_collapse_tree": {"text_key": "editor.btn_json_collapse_tree"},
         "json_expand_tree": {"text_key": "editor.btn_json_expand_tree"},
@@ -415,7 +417,7 @@ class EditorDock(BaseDock):
             "title_key": "editor.menu_json",
             "items": (
                 "json_format_2", "json_format_4", "json_minify",
-                None, "json_validate", "json_search",
+                None, "json_validate", "json_validate_schema", "json_search",
                 None, "json_collapse_tree", "json_expand_tree",
             ),
         },
@@ -453,6 +455,7 @@ class EditorDock(BaseDock):
         "json_format_4": "is_json_tab",
         "json_minify": "is_json_tab",
         "json_validate": "is_json_tab",
+        "json_validate_schema": "is_json_tab",
         "json_search": "is_json_tab",
         "json_collapse_tree": "is_json_tab",
         "json_expand_tree": "is_json_tab",
@@ -726,6 +729,7 @@ class EditorDock(BaseDock):
             "json_format_4": lambda _checked=False: self._format_current_json_tab(4),
             "json_minify": lambda _checked=False: self._format_current_json_tab(None),
             "json_validate": lambda _checked=False: self._validate_current_json_tab(),
+            "json_validate_schema": lambda _checked=False: self._validate_current_json_tab_with_schema(),
             "json_search": lambda _checked=False: self._search_current_json_tab(),
             "json_collapse_tree": lambda _checked=False: self._set_current_json_tree_expanded(False),
             "json_expand_tree": lambda _checked=False: self._set_current_json_tree_expanded(True),
@@ -1484,6 +1488,118 @@ class EditorDock(BaseDock):
                 col=result.col,
                 error=result.error_msg,
             )
+        )
+        return False
+
+    @staticmethod
+    def _format_json_schema_path(path) -> str:
+        """Format a jsonschema absolute_path into a concise JSONPath-like label."""
+        label = "$"
+        for part in path:
+            if isinstance(part, int):
+                label += f"[{part}]"
+            else:
+                label += f".{part}"
+        return label
+
+    @classmethod
+    def _format_json_schema_errors(cls, errors) -> str:
+        """Format a small validation error summary for UI and tests."""
+        error_list = list(errors)
+        lines = [
+            f"{cls._format_json_schema_path(error.absolute_path)}: {error.message}"
+            for error in error_list[:5]
+        ]
+        if len(error_list) > 5:
+            lines.append(f"... {len(error_list) - 5} more error(s)")
+        return "\n".join(lines)
+
+    @classmethod
+    def _validate_json_text_with_schema(cls, json_text: str, schema_text: str) -> tuple[bool, str]:
+        """Validate JSON document text against JSON Schema text."""
+        try:
+            instance = json.loads(json_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                f"JSON parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+            )
+
+        try:
+            schema = json.loads(schema_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                f"Schema parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+            )
+
+        try:
+            from jsonschema import SchemaError
+            from jsonschema.validators import validator_for
+        except ImportError:
+            return False, "JSON Schema validation requires the jsonschema package."
+
+        try:
+            validator_cls = validator_for(schema)
+            validator_cls.check_schema(schema)
+            validator = validator_cls(schema)
+            errors = sorted(
+                validator.iter_errors(instance),
+                key=lambda error: tuple(str(part) for part in error.absolute_path),
+            )
+        except SchemaError as exc:
+            return False, f"Invalid schema: {exc.message}"
+        except Exception as exc:
+            return False, f"Schema validation error: {exc}"
+
+        if errors:
+            return False, cls._format_json_schema_errors(errors)
+        return True, ""
+
+    def _validate_current_json_tab_with_schema(self) -> bool:
+        """Validate the active JSON tab against a selected JSON Schema file."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        schema_path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("editor.schema_dialog_title"),
+            "",
+            tr("editor.schema_dialog_filter"),
+        )
+        if not schema_path:
+            return False
+
+        try:
+            with open(schema_path, 'r', encoding='utf-8') as file_obj:
+                schema_text = file_obj.read()
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                tr("editor.msg_error_title"),
+                tr("editor.schema_read_error").format(error=str(exc)),
+            )
+            return False
+
+        is_valid, message = self._validate_json_text_with_schema(
+            tab.editor.toPlainText(),
+            schema_text,
+        )
+        if is_valid:
+            self.lbl_status.setText(tr("editor.status_json_schema_valid"))
+            QMessageBox.information(
+                self,
+                tr("editor.schema_valid_title"),
+                tr("editor.schema_valid_message"),
+            )
+            return True
+
+        self.lbl_status.setText(tr("editor.status_json_schema_invalid"))
+        QMessageBox.warning(
+            self,
+            tr("editor.schema_invalid_title"),
+            tr("editor.schema_invalid_message").format(error=message),
         )
         return False
 

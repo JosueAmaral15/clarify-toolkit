@@ -793,3 +793,32 @@ Plano imediato:
   - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
   - `git diff --check` nos arquivos tocados passou.
   - Testes finais focados passaram: `25 passed in 55.89s`, cobrindo menu JSON, acoes JSON, tooltips e `tests/test_json_editor.py`.
+
+## 2026-07-06 - Pre-acao - Validacao JSON Schema no Clarify Editor
+
+- Pedido do usuario: continuar com as tarefas do Clarify Editor.
+- Contexto herdado:
+  - O Clarify Editor ja tem menus `File`, `Edit`, `View` e `JSON`.
+  - `docs/TASKS.md` ainda lista como meta futura a validacao JSON com JSON Schema.
+  - `pyproject.toml` ja inclui `jsonschema>=4.0.0`, entao a proxima fatia pode reutilizar a dependencia existente.
+- Escopo escolhido:
+  - Adicionar `Validate with Schema...` ao menu `JSON`.
+  - Permitir selecionar um arquivo de schema JSON e validar a aba JSON atual.
+  - Criar helper testavel para validar texto JSON contra texto de schema, sem depender do dialog.
+  - Atualizar i18n, testes, `docs/TASKS.md` e registrar o pos-acao antes de finalizar.
+
+## 2026-07-08 - Pos-acao - Validacao JSON Schema no Clarify Editor
+
+- Mudancas realizadas:
+  - Adicionada acao `JSON -> Validate with Schema...` no Clarify Editor.
+  - A acao permite selecionar um arquivo JSON Schema e validar o JSON da aba atual.
+  - Criado helper `_validate_json_text_with_schema()` para validar texto JSON contra texto de schema de forma testavel.
+  - A validacao usa `jsonschema` quando a dependencia esta instalada e mostra mensagem clara quando o pacote esta ausente no ambiente atual.
+  - Atualizados textos `en` e `pt_BR`, testes focados e `docs/TASKS.md`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py tests/test_tooltip_presence.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check` nos arquivos tocados passou.
+  - Testes focados passaram: `24 passed, 2 skipped in 10.99s`.
+- Observacao:
+  - Os 2 testes de validacao real por JSON Schema foram pulados porque o Python atual nao tem `jsonschema` importavel, apesar de `pyproject.toml` declarar `jsonschema>=4.0.0`. O fallback sem a dependencia foi testado e passou.
