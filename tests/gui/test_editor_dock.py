@@ -144,6 +144,8 @@ class TestEditorDockInitialization:
             "json_validate",
             "json_validate_schema",
             "json_generate_schema",
+            "json_set_active_schema",
+            "json_clear_active_schema",
             "json_search",
             "json_collapse_tree",
             "json_expand_tree",
@@ -156,6 +158,8 @@ class TestEditorDockInitialization:
         assert hasattr(editor_dock, 'action_json_validate')
         assert hasattr(editor_dock, 'action_json_validate_schema')
         assert hasattr(editor_dock, 'action_json_generate_schema')
+        assert hasattr(editor_dock, 'action_json_set_active_schema')
+        assert hasattr(editor_dock, 'action_json_clear_active_schema')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -218,6 +222,16 @@ class TestEditorDockInitialization:
             assert editor_dock.action_json_validate.isEnabled()
             assert editor_dock.action_json_validate_schema.isEnabled()
             assert editor_dock.action_json_generate_schema.isEnabled()
+            assert editor_dock.action_json_set_active_schema.isEnabled()
+            assert not editor_dock.action_json_clear_active_schema.isEnabled()
+
+            editor_dock._set_active_json_schema_for_tab(
+                json_tab,
+                '{"type": "object"}',
+                "/tmp/schema.json",
+            )
+            editor_dock._refresh_editor_menus()
+            assert editor_dock.action_json_clear_active_schema.isEnabled()
             assert editor_dock.action_json_expand_tree.isEnabled()
         finally:
             editor_dock.deleteLater()
@@ -283,6 +297,61 @@ class TestEditorDockInitialization:
 
         assert success is False
         assert "JSON parse error" in message
+
+    def test_active_schema_auto_validation_updates_status(self, qapp, monkeypatch):
+        """Test active schema validation updates status after syntax validation."""
+        editor_dock = EditorDock()
+        try:
+            json_tab = JsonEditorTab()
+            json_tab.editor.setPlainText('{"name": "Ada"}')
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+            editor_dock._set_active_json_schema_for_tab(
+                json_tab,
+                '{"type": "object"}',
+                "/tmp/person.schema.json",
+            )
+
+            monkeypatch.setattr(
+                EditorDock,
+                "_validate_json_text_with_schema",
+                classmethod(lambda cls, json_text, schema_text: (True, "")),
+            )
+            editor_dock._on_json_validation_changed(json_tab, True)
+
+            assert editor_dock.lbl_status.text() == (
+                "JSON matches active schema: person.schema.json"
+            )
+        finally:
+            editor_dock.deleteLater()
+
+    def test_clear_active_schema_removes_schema_from_current_tab(self, qapp):
+        """Test clearing active schema removes tab metadata and refreshes actions."""
+        editor_dock = EditorDock()
+        try:
+            json_tab = JsonEditorTab()
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+            editor_dock._set_active_json_schema_for_tab(
+                json_tab,
+                '{"type": "object"}',
+                "/tmp/person.schema.json",
+            )
+            editor_dock._refresh_editor_menus()
+            assert editor_dock.action_json_clear_active_schema.isEnabled()
+
+            assert editor_dock._clear_active_json_schema_for_current_tab() is True
+
+            assert getattr(json_tab, '_clarify_active_schema_text') is None
+            assert getattr(json_tab, '_clarify_active_schema_path') is None
+            assert not editor_dock.action_json_clear_active_schema.isEnabled()
+            assert editor_dock.lbl_status.text() == (
+                "Active schema cleared: person.schema.json"
+            )
+        finally:
+            editor_dock.deleteLater()
 
     def test_json_schema_validation_helper_accepts_valid_data(self):
         """Test JSON Schema validation helper accepts matching JSON."""

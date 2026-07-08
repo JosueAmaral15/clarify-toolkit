@@ -380,6 +380,8 @@ class EditorDock(BaseDock):
         "json_validate": {"text_key": "editor.btn_json_validate"},
         "json_validate_schema": {"text_key": "editor.btn_json_validate_schema"},
         "json_generate_schema": {"text_key": "editor.btn_json_generate_schema"},
+        "json_set_active_schema": {"text_key": "editor.btn_json_set_active_schema"},
+        "json_clear_active_schema": {"text_key": "editor.btn_json_clear_active_schema"},
         "json_search": {"text_key": "editor.btn_json_search"},
         "json_collapse_tree": {"text_key": "editor.btn_json_collapse_tree"},
         "json_expand_tree": {"text_key": "editor.btn_json_expand_tree"},
@@ -419,7 +421,8 @@ class EditorDock(BaseDock):
             "items": (
                 "json_format_2", "json_format_4", "json_minify",
                 None, "json_validate", "json_validate_schema", "json_generate_schema",
-                "json_search",
+                None, "json_set_active_schema", "json_clear_active_schema",
+                None, "json_search",
                 None, "json_collapse_tree", "json_expand_tree",
             ),
         },
@@ -459,6 +462,8 @@ class EditorDock(BaseDock):
         "json_validate": "is_json_tab",
         "json_validate_schema": "is_json_tab",
         "json_generate_schema": "is_json_tab",
+        "json_set_active_schema": "is_json_tab",
+        "json_clear_active_schema": "has_active_schema",
         "json_search": "is_json_tab",
         "json_collapse_tree": "is_json_tab",
         "json_expand_tree": "is_json_tab",
@@ -641,6 +646,15 @@ class EditorDock(BaseDock):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
         if hasattr(tab, 'edit_only_changed'):
             tab.edit_only_changed.connect(lambda _enabled=False, t=tab: self._on_tab_mode_changed(t))
+        if (
+            isinstance(tab, JsonEditorTab)
+            and hasattr(tab, 'validation_changed')
+            and not getattr(tab, '_clarify_schema_validation_connected', False)
+        ):
+            tab.validation_changed.connect(
+                lambda is_valid, _message="", t=tab: self._on_json_validation_changed(t, is_valid)
+            )
+            setattr(tab, '_clarify_schema_validation_connected', True)
 
         self._apply_auto_save_to_tab(tab)
         self._apply_word_wrap_to_tab(tab)
@@ -734,6 +748,8 @@ class EditorDock(BaseDock):
             "json_validate": lambda _checked=False: self._validate_current_json_tab(),
             "json_validate_schema": lambda _checked=False: self._validate_current_json_tab_with_schema(),
             "json_generate_schema": lambda _checked=False: self._show_generated_json_schema(),
+            "json_set_active_schema": lambda _checked=False: self._set_active_json_schema_for_current_tab(),
+            "json_clear_active_schema": lambda _checked=False: self._clear_active_json_schema_for_current_tab(),
             "json_search": lambda _checked=False: self._search_current_json_tab(),
             "json_collapse_tree": lambda _checked=False: self._set_current_json_tree_expanded(False),
             "json_expand_tree": lambda _checked=False: self._set_current_json_tree_expanded(True),
@@ -747,6 +763,9 @@ class EditorDock(BaseDock):
             "has_editor": tab is not None and hasattr(tab, 'editor'),
             "has_file_path": tab is not None and bool(getattr(tab, 'file_path', None)),
             "is_json_tab": isinstance(tab, JsonEditorTab),
+            "has_active_schema": isinstance(tab, JsonEditorTab) and bool(
+                getattr(tab, '_clarify_active_schema_text', None)
+            ),
             "is_edit_only": tab is not None and bool(getattr(tab, 'edit_only_mode', False)),
         }
 
@@ -1606,6 +1625,126 @@ class EditorDock(BaseDock):
             tr("editor.schema_invalid_message").format(error=message),
         )
         return False
+
+    @staticmethod
+    def _active_json_schema_label(tab: JsonEditorTab) -> str:
+        """Return a short label for the active schema on a JSON tab."""
+        schema_path = getattr(tab, '_clarify_active_schema_path', None)
+        if schema_path:
+            return os.path.basename(schema_path)
+        return "schema"
+
+    def _set_active_json_schema_for_tab(
+        self,
+        tab: JsonEditorTab,
+        schema_text: str,
+        schema_path: str | None = None,
+    ) -> None:
+        """Store active JSON Schema metadata on a tab."""
+        setattr(tab, '_clarify_active_schema_text', schema_text)
+        setattr(tab, '_clarify_active_schema_path', schema_path)
+
+    def _validate_json_tab_against_active_schema(
+        self,
+        tab: JsonEditorTab,
+        show_message: bool = False,
+    ) -> bool:
+        """Validate one JSON tab against its active schema."""
+        schema_text = getattr(tab, '_clarify_active_schema_text', None)
+        if not schema_text:
+            return False
+
+        schema_label = self._active_json_schema_label(tab)
+        is_valid, message = self._validate_json_text_with_schema(
+            tab.editor.toPlainText(),
+            schema_text,
+        )
+        if is_valid:
+            self.lbl_status.setText(
+                tr("editor.status_json_active_schema_valid").format(schema=schema_label)
+            )
+            if show_message:
+                QMessageBox.information(
+                    self,
+                    tr("editor.active_schema_valid_title"),
+                    tr("editor.active_schema_valid_message").format(schema=schema_label),
+                )
+            return True
+
+        self.lbl_status.setText(
+            tr("editor.status_json_active_schema_invalid").format(schema=schema_label)
+        )
+        if show_message:
+            QMessageBox.warning(
+                self,
+                tr("editor.active_schema_invalid_title"),
+                tr("editor.active_schema_invalid_message").format(
+                    schema=schema_label,
+                    error=message,
+                ),
+            )
+        return False
+
+    def _on_json_validation_changed(self, tab: JsonEditorTab, is_valid: bool) -> None:
+        """Revalidate active schema after the JSON tab syntax validator runs."""
+        if tab is not self.tab_widget.currentWidget():
+            return
+        if not is_valid:
+            return
+        if not getattr(tab, '_clarify_active_schema_text', None):
+            return
+
+        self._validate_json_tab_against_active_schema(tab, show_message=False)
+
+    def _set_active_json_schema_for_current_tab(self) -> bool:
+        """Choose and store an active schema for the current JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        schema_path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("editor.active_schema_dialog_title"),
+            "",
+            tr("editor.schema_dialog_filter"),
+        )
+        if not schema_path:
+            return False
+
+        try:
+            with open(schema_path, 'r', encoding='utf-8') as file_obj:
+                schema_text = file_obj.read()
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                tr("editor.msg_error_title"),
+                tr("editor.schema_read_error").format(error=str(exc)),
+            )
+            return False
+
+        self._set_active_json_schema_for_tab(tab, schema_text, schema_path)
+        self._refresh_editor_menus()
+        schema_label = self._active_json_schema_label(tab)
+        self.lbl_status.setText(
+            tr("editor.status_json_active_schema_set").format(schema=schema_label)
+        )
+        self._validate_json_tab_against_active_schema(tab, show_message=True)
+        return True
+
+    def _clear_active_json_schema_for_current_tab(self) -> bool:
+        """Clear the active schema from the current JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        schema_label = self._active_json_schema_label(tab)
+        setattr(tab, '_clarify_active_schema_text', None)
+        setattr(tab, '_clarify_active_schema_path', None)
+        self._refresh_editor_menus()
+        self.lbl_status.setText(
+            tr("editor.status_json_active_schema_cleared").format(schema=schema_label)
+        )
+        return True
 
     @classmethod
     def _merge_json_schemas(cls, schemas: list[dict]) -> dict:

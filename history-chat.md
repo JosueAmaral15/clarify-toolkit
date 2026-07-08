@@ -850,3 +850,31 @@ Plano imediato:
   - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
   - `git diff --check` nos arquivos tocados passou.
   - Testes focados passaram: `27 passed in 15.27s`.
+
+## 2026-07-08 - Pre-acao - Schema ativo por aba no Clarify Editor
+
+- Pedido do usuario: fazer as proximas tarefas.
+- Contexto herdado:
+  - O Clarify Editor ja gera JSON Schema basico e valida manualmente contra schema selecionado.
+  - A meta longa em `docs/TASKS.md` ainda fala em validacao JSON em tempo real com JSON Schema.
+- Escopo escolhido:
+  - Adicionar acoes `Set Active Schema...` e `Clear Active Schema` ao menu `JSON`.
+  - Guardar o schema ativo na aba JSON atual.
+  - Revalidar automaticamente contra o schema ativo quando a validacao debounced do `JsonEditorTab` informar JSON sintaticamente valido.
+  - Evitar popups na validacao automatica; usar apenas status do dock.
+  - Atualizar i18n, testes, `docs/TASKS.md`, validar, commitar e enviar.
+
+## 2026-07-08 - Pos-acao - Schema ativo por aba no Clarify Editor
+
+- Mudancas realizadas:
+  - Adicionadas acoes `JSON -> Set Active Schema...` e `JSON -> Clear Active Schema`.
+  - O schema ativo fica armazenado na aba JSON atual.
+  - Quando o `JsonEditorTab` conclui sua validacao debounced de sintaxe com JSON valido, o `EditorDock` revalida automaticamente contra o schema ativo.
+  - A validacao automatica evita popups e atualiza apenas o status do dock.
+  - O estado do menu passa a habilitar `Clear Active Schema` apenas quando a aba atual tem schema ativo.
+  - Atualizados textos `en` e `pt_BR`, testes focados e `docs/TASKS.md`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check` nos arquivos tocados passou.
+  - Testes focados passaram: `29 passed in 31.92s`.
