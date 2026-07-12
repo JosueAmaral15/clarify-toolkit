@@ -146,6 +146,7 @@ class TestEditorDockInitialization:
             "json_generate_schema",
             "json_set_active_schema",
             "json_clear_active_schema",
+            "json_insert_missing_required",
             "json_search",
             "json_collapse_tree",
             "json_expand_tree",
@@ -160,6 +161,7 @@ class TestEditorDockInitialization:
         assert hasattr(editor_dock, 'action_json_generate_schema')
         assert hasattr(editor_dock, 'action_json_set_active_schema')
         assert hasattr(editor_dock, 'action_json_clear_active_schema')
+        assert hasattr(editor_dock, 'action_json_insert_missing_required')
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -224,6 +226,7 @@ class TestEditorDockInitialization:
             assert editor_dock.action_json_generate_schema.isEnabled()
             assert editor_dock.action_json_set_active_schema.isEnabled()
             assert not editor_dock.action_json_clear_active_schema.isEnabled()
+            assert not editor_dock.action_json_insert_missing_required.isEnabled()
 
             editor_dock._set_active_json_schema_for_tab(
                 json_tab,
@@ -232,6 +235,7 @@ class TestEditorDockInitialization:
             )
             editor_dock._refresh_editor_menus()
             assert editor_dock.action_json_clear_active_schema.isEnabled()
+            assert editor_dock.action_json_insert_missing_required.isEnabled()
             assert editor_dock.action_json_expand_tree.isEnabled()
         finally:
             editor_dock.deleteLater()
@@ -352,6 +356,130 @@ class TestEditorDockInitialization:
             )
         finally:
             editor_dock.deleteLater()
+
+    def test_insert_missing_required_fields_helper_adds_placeholders(self):
+        """Test required-field quick fix inserts placeholders for common types."""
+        schema_text = json.dumps({
+            "type": "object",
+            "required": ["name", "age", "active", "tags", "profile", "score", "empty"],
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"},
+                "active": {"type": "boolean"},
+                "tags": {"type": "array"},
+                "profile": {"type": "object"},
+                "score": {"type": "number"},
+                "empty": {"type": "null"},
+            },
+        })
+
+        success, updated_text, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                '{"name": "Ada"}',
+                schema_text,
+            )
+        )
+
+        assert success is True
+        assert inserted_fields == ["age", "active", "tags", "profile", "score", "empty"]
+        assert json.loads(updated_text) == {
+            "name": "Ada",
+            "age": 0,
+            "active": False,
+            "tags": [],
+            "profile": {},
+            "score": 0.0,
+            "empty": None,
+        }
+
+    def test_insert_missing_required_fields_helper_uses_schema_defaults(self):
+        """Test required-field quick fix prefers schema default values."""
+        schema_text = json.dumps({
+            "type": "object",
+            "required": ["role", "settings", "state"],
+            "properties": {
+                "role": {"type": "string", "default": "reader"},
+                "settings": {
+                    "type": "object",
+                    "default": {"theme": "dark", "lineNumbers": True},
+                },
+                "state": {"enum": ["draft", "published"]},
+            },
+        })
+
+        success, updated_text, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                "{}",
+                schema_text,
+            )
+        )
+
+        assert success is True
+        assert inserted_fields == ["role", "settings", "state"]
+        assert json.loads(updated_text) == {
+            "role": "reader",
+            "settings": {"theme": "dark", "lineNumbers": True},
+            "state": "draft",
+        }
+
+    def test_insert_missing_required_fields_helper_reports_no_missing_fields(self):
+        """Test required-field quick fix leaves complete objects unchanged."""
+        json_text = '{"name": "Ada"}'
+        schema_text = json.dumps({
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}},
+        })
+
+        success, updated_text, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(json_text, schema_text)
+        )
+
+        assert success is True
+        assert updated_text == json_text
+        assert inserted_fields == []
+
+    def test_insert_missing_required_fields_helper_rejects_invalid_input(self):
+        """Test required-field quick fix reports invalid JSON and unsupported roots."""
+        success, message, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                '{"name": }',
+                "{}",
+            )
+        )
+        assert success is False
+        assert "JSON parse error" in message
+        assert inserted_fields == []
+
+        success, message, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                "[]",
+                "{}",
+            )
+        )
+        assert success is False
+        assert "root to be an object" in message
+        assert inserted_fields == []
+
+        success, message, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                "{}",
+                '{"type": "array"}',
+            )
+        )
+        assert success is False
+        assert "object schema" in message
+        assert inserted_fields == []
+
+        success, message, inserted_fields = (
+            EditorDock._insert_missing_required_fields_from_schema(
+                "{}",
+                '{"required": "name"}',
+            )
+        )
+        assert success is False
+        assert "required field must be a list" in message
+        assert inserted_fields == []
 
     def test_json_schema_validation_helper_accepts_valid_data(self):
         """Test JSON Schema validation helper accepts matching JSON."""

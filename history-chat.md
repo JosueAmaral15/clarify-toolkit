@@ -10,6 +10,38 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-12 - Pre-acao - Quick-fix de campos obrigatorios no Clarify Editor
+
+- Pedido do usuario: continuar as tarefas do Clarify Editor.
+- Contexto retomado:
+  - O Clarify Editor ja tem menu `JSON`, validacao manual com JSON Schema, geracao de schema e schema ativo por aba.
+  - `docs/TASKS.md` ainda lista como meta futura as quick-fix actions, incluindo adicionar campos obrigatorios ausentes.
+  - O workspace tem alteracoes antigas fora do Clarify Editor; esta fatia deve ficar isolada em arquivos do editor, i18n, testes, docs/TASKS.md e este historico.
+- Escopo escolhido:
+  - Adicionar uma acao `JSON -> Insert Missing Required Fields...`.
+  - Usar o JSON Schema ativo da aba atual para identificar campos `required` ausentes no objeto raiz.
+  - Inserir valores padrao vindos de `default` no schema, ou placeholders seguros por tipo quando nao houver default.
+  - Criar helper testavel sem depender de dialogos Qt.
+  - Atualizar i18n, testes focados, `docs/TASKS.md`, validar, commitar e enviar.
+
+## 2026-07-12 - Pos-acao - Quick-fix de campos obrigatorios no Clarify Editor
+
+- Mudancas realizadas:
+  - Adicionada acao `JSON -> Insert Missing Required Fields...` ao menu JSON do Clarify Editor.
+  - A acao fica habilitada apenas quando a aba JSON atual tem schema ativo.
+  - Criado helper `_insert_missing_required_fields_from_schema()` para inserir campos obrigatorios ausentes no objeto raiz.
+  - O helper prefere `default`, `const` ou primeiro valor de `enum`; quando nao ha valor sugerido, usa placeholder por tipo (`string`, `integer`, `number`, `boolean`, `array`, `object`, `null`).
+  - O fluxo GUI confirma antes de modificar a aba e atualiza o status do dock.
+  - Atualizados textos EN/PT-BR, tooltip, testes focados e `docs/TASKS.md`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- history-chat.md docs/TASKS.md src/gui/editor_dock.py src/i18n/en.json src/i18n/pt_BR.json tests/gui/test_editor_dock.py` passou.
+  - Testes focados passaram: `25 passed in 7.84s`.
+- Observacoes:
+  - A primeira execucao do pytest dentro da sandbox falhou antes da coleta porque o logger tentou gravar em `/home/josue/.clarify/logs/clarify.log`, caminho somente leitura na sandbox. A execucao foi repetida com permissao elevada e passou.
+  - Esta fatia cobre campos obrigatorios no objeto raiz; quick-fixes aninhados, autocomplete e highlight visual de erros ainda pertencem a meta longa de validacao JSON em tempo real.
+
 ## 2026-06-08 - Pre-acao - Criar historico local da conversa
 
 O usuario pediu para criar `history-chat.md` na raiz do projeto Clarify. Ele explicou a analogia de um diario: se uma pessoa perde memoria, o diario ajuda a recuperar acontecimentos recentes e antigos. O usuario tambem pediu para ler `/home/josue/Documents/josue-writter-workspace/global-history-chat.md` como exemplo de formato.

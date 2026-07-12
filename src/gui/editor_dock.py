@@ -382,6 +382,7 @@ class EditorDock(BaseDock):
         "json_generate_schema": {"text_key": "editor.btn_json_generate_schema"},
         "json_set_active_schema": {"text_key": "editor.btn_json_set_active_schema"},
         "json_clear_active_schema": {"text_key": "editor.btn_json_clear_active_schema"},
+        "json_insert_missing_required": {"text_key": "editor.btn_json_insert_missing_required"},
         "json_search": {"text_key": "editor.btn_json_search"},
         "json_collapse_tree": {"text_key": "editor.btn_json_collapse_tree"},
         "json_expand_tree": {"text_key": "editor.btn_json_expand_tree"},
@@ -422,6 +423,7 @@ class EditorDock(BaseDock):
                 "json_format_2", "json_format_4", "json_minify",
                 None, "json_validate", "json_validate_schema", "json_generate_schema",
                 None, "json_set_active_schema", "json_clear_active_schema",
+                "json_insert_missing_required",
                 None, "json_search",
                 None, "json_collapse_tree", "json_expand_tree",
             ),
@@ -464,6 +466,7 @@ class EditorDock(BaseDock):
         "json_generate_schema": "is_json_tab",
         "json_set_active_schema": "is_json_tab",
         "json_clear_active_schema": "has_active_schema",
+        "json_insert_missing_required": "has_active_schema",
         "json_search": "is_json_tab",
         "json_collapse_tree": "is_json_tab",
         "json_expand_tree": "is_json_tab",
@@ -750,6 +753,9 @@ class EditorDock(BaseDock):
             "json_generate_schema": lambda _checked=False: self._show_generated_json_schema(),
             "json_set_active_schema": lambda _checked=False: self._set_active_json_schema_for_current_tab(),
             "json_clear_active_schema": lambda _checked=False: self._clear_active_json_schema_for_current_tab(),
+            "json_insert_missing_required": lambda _checked=False: (
+                self._insert_missing_required_fields_for_current_tab()
+            ),
             "json_search": lambda _checked=False: self._search_current_json_tab(),
             "json_collapse_tree": lambda _checked=False: self._set_current_json_tree_expanded(False),
             "json_expand_tree": lambda _checked=False: self._set_current_json_tree_expanded(True),
@@ -1743,6 +1749,154 @@ class EditorDock(BaseDock):
         self._refresh_editor_menus()
         self.lbl_status.setText(
             tr("editor.status_json_active_schema_cleared").format(schema=schema_label)
+        )
+        return True
+
+    @classmethod
+    def _placeholder_for_json_schema(cls, schema: dict):
+        """Return a conservative placeholder value for a JSON Schema fragment."""
+        if not isinstance(schema, dict):
+            return None
+
+        if "default" in schema:
+            return json.loads(json.dumps(schema["default"], ensure_ascii=False))
+        if "const" in schema:
+            return json.loads(json.dumps(schema["const"], ensure_ascii=False))
+        if isinstance(schema.get("enum"), list) and schema["enum"]:
+            return json.loads(json.dumps(schema["enum"][0], ensure_ascii=False))
+
+        for composition_key in ("oneOf", "anyOf"):
+            options = schema.get(composition_key)
+            if isinstance(options, list):
+                for option in options:
+                    if isinstance(option, dict):
+                        return cls._placeholder_for_json_schema(option)
+
+        schema_type = schema.get("type")
+        if isinstance(schema_type, list):
+            schema_type = next((item for item in schema_type if item != "null"), "null")
+
+        if schema_type is None:
+            if isinstance(schema.get("properties"), dict):
+                schema_type = "object"
+            elif "items" in schema:
+                schema_type = "array"
+
+        placeholders = {
+            "string": "",
+            "integer": 0,
+            "number": 0.0,
+            "boolean": False,
+            "array": [],
+            "object": {},
+            "null": None,
+        }
+        return placeholders.get(schema_type)
+
+    @classmethod
+    def _insert_missing_required_fields_from_schema(
+        cls,
+        json_text: str,
+        schema_text: str,
+    ) -> tuple[bool, str, list[str]]:
+        """Insert top-level missing required fields using a JSON Schema."""
+        try:
+            document = json.loads(json_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                f"JSON parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+                [],
+            )
+
+        try:
+            schema = json.loads(schema_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                f"Schema parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+                [],
+            )
+
+        if not isinstance(document, dict):
+            return False, "Quick fix requires the current JSON root to be an object.", []
+        if not isinstance(schema, dict):
+            return False, "Quick fix requires the active schema root to be an object schema.", []
+
+        schema_type = schema.get("type")
+        schema_types = schema_type if isinstance(schema_type, list) else [schema_type]
+        if schema_type is not None and "object" not in schema_types:
+            return False, "Quick fix requires the active schema root to be an object schema.", []
+
+        required_fields = schema.get("required", [])
+        if not isinstance(required_fields, list):
+            return False, "Schema required field must be a list.", []
+
+        properties = schema.get("properties", {})
+        if not isinstance(properties, dict):
+            properties = {}
+
+        missing_fields = [
+            field
+            for field in required_fields
+            if isinstance(field, str) and field not in document
+        ]
+        if not missing_fields:
+            return True, json_text, []
+
+        updated_document = dict(document)
+        for field in missing_fields:
+            field_schema = properties.get(field, {})
+            updated_document[field] = cls._placeholder_for_json_schema(field_schema)
+
+        updated_text = json.dumps(updated_document, indent=2, ensure_ascii=False)
+        return True, updated_text, missing_fields
+
+    def _insert_missing_required_fields_for_current_tab(self) -> bool:
+        """Insert top-level required fields missing from the active JSON tab."""
+        tab = self._current_json_tab()
+        if tab is None:
+            return False
+
+        schema_text = getattr(tab, '_clarify_active_schema_text', None)
+        if not schema_text:
+            return False
+
+        success, result, inserted_fields = self._insert_missing_required_fields_from_schema(
+            tab.editor.toPlainText(),
+            schema_text,
+        )
+        if not success:
+            self.lbl_status.setText(tr("editor.status_json_required_insert_failed"))
+            QMessageBox.warning(
+                self,
+                tr("editor.insert_missing_required_failed_title"),
+                tr("editor.insert_missing_required_failed_message").format(error=result),
+            )
+            return False
+
+        if not inserted_fields:
+            self.lbl_status.setText(tr("editor.status_json_required_none"))
+            QMessageBox.information(
+                self,
+                tr("editor.insert_missing_required_none_title"),
+                tr("editor.insert_missing_required_none_message"),
+            )
+            return True
+
+        field_list = ", ".join(inserted_fields)
+        reply = QMessageBox.question(
+            self,
+            tr("editor.insert_missing_required_title"),
+            tr("editor.insert_missing_required_message").format(fields=field_list),
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return False
+
+        self._replace_json_tab_text(tab, result)
+        self.lbl_status.setText(
+            tr("editor.status_json_required_inserted").format(fields=field_list)
         )
         return True
 
