@@ -343,6 +343,90 @@ class TestJsonEditorTabIntegration(unittest.TestCase):
         self.assertEqual(candidates, [])
         self.assertIn("Schema parse error", message)
 
+    def test_schema_completion_rejects_too_large_schema_text(self):
+        """Test schema autocomplete avoids parsing oversized schema text."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        original_limit = JsonEditorTab.SCHEMA_COMPLETION_MAX_SCHEMA_CHARS
+        JsonEditorTab.SCHEMA_COMPLETION_MAX_SCHEMA_CHARS = 10
+        try:
+            success, candidates, message = (
+                JsonEditorTab.schema_completion_candidates_from_schema_text(
+                    '{"type": "object"}'
+                )
+            )
+        finally:
+            JsonEditorTab.SCHEMA_COMPLETION_MAX_SCHEMA_CHARS = original_limit
+
+        self.assertFalse(success)
+        self.assertEqual(candidates, [])
+        self.assertIn("too large", message)
+
+    def test_schema_completion_candidate_extraction_is_bounded(self):
+        """Test schema autocomplete caps candidate extraction."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        original_limit = JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES
+        JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES = 3
+        try:
+            schema_text = json.dumps({
+                "type": "object",
+                "properties": {
+                    f"field_{index:02d}": {"type": "string"}
+                    for index in range(10)
+                },
+            })
+            success, candidates, message = (
+                JsonEditorTab.schema_completion_candidates_from_schema_text(schema_text)
+            )
+        finally:
+            JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES = original_limit
+
+        self.assertTrue(success)
+        self.assertEqual(candidates, ["field_00", "field_01", "field_02"])
+        self.assertIn("limited to 3 candidates", message)
+
+    def test_schema_completion_depth_is_bounded_without_recursion(self):
+        """Test deep schemas are limited without recursive traversal."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        schema = {"type": "object", "properties": {}}
+        current = schema
+        for index in range(10):
+            child = {"type": "object", "properties": {}}
+            current["properties"][f"level_{index}"] = child
+            current = child
+
+        original_depth = JsonEditorTab.SCHEMA_COMPLETION_MAX_DEPTH
+        JsonEditorTab.SCHEMA_COMPLETION_MAX_DEPTH = 2
+        try:
+            success, candidates, message = (
+                JsonEditorTab.schema_completion_candidates_from_schema_text(
+                    json.dumps(schema)
+                )
+            )
+        finally:
+            JsonEditorTab.SCHEMA_COMPLETION_MAX_DEPTH = original_depth
+
+        self.assertTrue(success)
+        self.assertEqual(candidates, ["level_0", "level_1", "level_2"])
+        self.assertIn("depth limit", message)
+
+    def test_schema_completion_model_is_bounded(self):
+        """Test direct candidate updates cannot overfill the completer model."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        original_limit = JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES
+        JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES = 2
+        try:
+            tab = JsonEditorTab()
+            tab.set_schema_completion_candidates(["gamma", "alpha", "beta"])
+        finally:
+            JsonEditorTab.SCHEMA_COMPLETION_MAX_CANDIDATES = original_limit
+
+        self.assertEqual(tab._schema_key_candidates, ["alpha", "gamma"])
+        self.assertEqual(tab.schema_completion_model.rowCount(), 2)
+
     def test_schema_completion_inserts_inside_quoted_key(self):
         """Test schema completion replaces the current quoted key prefix."""
         from src.gui.json_editor_tab import JsonEditorTab

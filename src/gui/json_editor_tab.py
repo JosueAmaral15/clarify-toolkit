@@ -68,6 +68,10 @@ class JsonEditorTab(QWidget):
     modified_changed = Signal(bool)
     validation_changed = Signal(bool, str)  # (is_valid, error_msg)
     edit_only_changed = Signal(bool)  # Emitted when edit-only mode changes
+    SCHEMA_COMPLETION_MAX_SCHEMA_CHARS = 1_000_000
+    SCHEMA_COMPLETION_MAX_CANDIDATES = 500
+    SCHEMA_COMPLETION_MAX_NODES = 5_000
+    SCHEMA_COMPLETION_MAX_DEPTH = 80
 
     def __init__(self, file_path: Optional[str] = None, parent=None, edit_only_mode: bool = False):
         super().__init__(parent)
@@ -233,42 +237,121 @@ class JsonEditorTab(QWidget):
         self.validation_timer.start()
 
     @classmethod
-    def _schema_completion_candidates_from_schema(cls, schema) -> list[str]:
-        """Extract unique property names from a JSON Schema tree."""
+    def _schema_completion_candidates_from_schema(cls, schema) -> tuple[list[str], str]:
+        """Extract unique property names from a JSON Schema tree with limits."""
         candidates: set[str] = set()
+        stack: list[tuple[object, int]] = [(schema, 0)]
+        nodes_visited = 0
+        limit_message = ""
 
-        def walk(fragment) -> None:
+        def remember_limit(message: str) -> None:
+            nonlocal limit_message
+            if not limit_message:
+                limit_message = message
+
+        def push(fragment, depth: int) -> bool:
+            if not isinstance(fragment, (dict, list)):
+                return True
+            if depth > cls.SCHEMA_COMPLETION_MAX_DEPTH:
+                remember_limit(
+                    f"Schema completion depth limit reached "
+                    f"({cls.SCHEMA_COMPLETION_MAX_DEPTH})."
+                )
+                return True
+            if nodes_visited + len(stack) >= cls.SCHEMA_COMPLETION_MAX_NODES:
+                remember_limit(
+                    f"Schema completion node limit reached "
+                    f"({cls.SCHEMA_COMPLETION_MAX_NODES})."
+                )
+                return False
+            stack.append((fragment, depth))
+            return True
+
+        def add_candidate(key: str) -> bool:
+            if key in candidates:
+                return True
+            if len(candidates) >= cls.SCHEMA_COMPLETION_MAX_CANDIDATES:
+                remember_limit(
+                    f"Schema completion limited to "
+                    f"{cls.SCHEMA_COMPLETION_MAX_CANDIDATES} candidates."
+                )
+                return False
+            candidates.add(key)
+            return True
+
+        while stack:
+            fragment, depth = stack.pop()
+            if nodes_visited >= cls.SCHEMA_COMPLETION_MAX_NODES:
+                remember_limit(
+                    f"Schema completion node limit reached "
+                    f"({cls.SCHEMA_COMPLETION_MAX_NODES})."
+                )
+                break
+
+            nodes_visited += 1
+            if depth > cls.SCHEMA_COMPLETION_MAX_DEPTH:
+                remember_limit(
+                    f"Schema completion depth limit reached "
+                    f"({cls.SCHEMA_COMPLETION_MAX_DEPTH})."
+                )
+                continue
+
+            if isinstance(fragment, list):
+                for item in reversed(fragment):
+                    if not push(item, depth + 1):
+                        break
+                continue
+
             if not isinstance(fragment, dict):
-                return
+                continue
 
+            should_stop = False
             properties = fragment.get("properties")
             if isinstance(properties, dict):
                 for key, value_schema in properties.items():
-                    if isinstance(key, str) and key:
-                        candidates.add(key)
-                    walk(value_schema)
+                    if isinstance(key, str) and key and not add_candidate(key):
+                        should_stop = True
+                        break
+                    if not push(value_schema, depth + 1):
+                        should_stop = True
+                        break
+            if should_stop:
+                break
 
             items = fragment.get("items")
-            if isinstance(items, dict):
-                walk(items)
-            elif isinstance(items, list):
-                for item in items:
-                    walk(item)
+            if isinstance(items, list):
+                for item in reversed(items):
+                    if not push(item, depth + 1):
+                        should_stop = True
+                        break
+            elif not push(items, depth + 1):
+                should_stop = True
+            if should_stop:
+                break
 
             for group_key in ("allOf", "anyOf", "oneOf"):
                 group = fragment.get(group_key)
                 if isinstance(group, list):
-                    for item in group:
-                        walk(item)
+                    for item in reversed(group):
+                        if not push(item, depth + 1):
+                            should_stop = True
+                            break
+                if should_stop:
+                    break
+            if should_stop:
+                break
 
             for definitions_key in ("$defs", "definitions"):
                 definitions = fragment.get(definitions_key)
                 if isinstance(definitions, dict):
                     for item in definitions.values():
-                        walk(item)
+                        if not push(item, depth + 1):
+                            should_stop = True
+                            break
+                if should_stop:
+                    break
 
-        walk(schema)
-        return sorted(candidates)
+        return sorted(candidates), limit_message
 
     @classmethod
     def schema_completion_candidates_from_schema_text(
@@ -276,6 +359,15 @@ class JsonEditorTab(QWidget):
         schema_text: str,
     ) -> tuple[bool, list[str], str]:
         """Extract autocomplete candidates from JSON Schema text."""
+        if len(schema_text) > cls.SCHEMA_COMPLETION_MAX_SCHEMA_CHARS:
+            return (
+                False,
+                [],
+                "Schema is too large for autocomplete candidate extraction "
+                f"({len(schema_text)} chars; limit "
+                f"{cls.SCHEMA_COMPLETION_MAX_SCHEMA_CHARS}).",
+            )
+
         try:
             schema = json.loads(schema_text)
         except json.JSONDecodeError as exc:
@@ -285,15 +377,19 @@ class JsonEditorTab(QWidget):
                 f"Schema parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
             )
 
-        return True, cls._schema_completion_candidates_from_schema(schema), ""
+        candidates, limit_message = cls._schema_completion_candidates_from_schema(schema)
+        return True, candidates, limit_message
 
     def set_schema_completion_candidates(self, candidates: list[str]) -> None:
         """Update schema-backed key autocomplete candidates."""
-        self._schema_key_candidates = sorted({
-            candidate
-            for candidate in candidates
-            if isinstance(candidate, str) and candidate
-        })
+        unique_candidates: set[str] = set()
+        for candidate in candidates:
+            if isinstance(candidate, str) and candidate:
+                unique_candidates.add(candidate)
+            if len(unique_candidates) >= self.SCHEMA_COMPLETION_MAX_CANDIDATES:
+                break
+
+        self._schema_key_candidates = sorted(unique_candidates)
         self.schema_completion_model.setStringList(self._schema_key_candidates)
 
     def set_schema_completion_candidates_from_schema_text(self, schema_text: str) -> bool:

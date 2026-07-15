@@ -10,6 +10,37 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-15 - Pre-acao - Limites de memoria do autocomplete por schema
+
+- Pedido do usuario: continuar as tarefas, com alerta para tomar cuidado com vazamento de memoria ou estouro de memoria por causa de consumo recente muito alto.
+- Contexto retomado:
+  - A fatia anterior adicionou autocomplete de chaves por JSON Schema ativo no `JsonEditorTab`.
+  - A implementacao inicial fazia uma caminhada recursiva pelo schema e mantinha todos os candidatos encontrados.
+  - Embora funcione para schemas normais, schemas muito grandes, muito profundos ou gerados automaticamente podem causar consumo alto de memoria/CPU.
+- Escopo escolhido:
+  - Tornar a extracao de candidatos do autocomplete mais defensiva.
+  - Adicionar limites explicitos para tamanho do schema, quantidade de nos visitados, profundidade e numero de candidatos.
+  - Trocar a caminhada recursiva por varredura iterativa para reduzir risco de estouro de pilha.
+  - Adicionar testes focados para schemas enormes/profundos e validar sem rodar suites GUI grandes desnecessarias.
+
+## 2026-07-15 - Pos-acao - Limites de memoria do autocomplete por schema
+
+- Mudancas realizadas:
+  - `JsonEditorTab` agora limita a extracao de candidatos de autocomplete por JSON Schema a 1.000.000 caracteres de schema, 500 candidatos, 5.000 nos visitados e profundidade 80.
+  - A caminhada por schema deixou de ser recursiva e passou a usar pilha iterativa, reduzindo risco de estouro de pilha em schemas profundos.
+  - O setter direto `set_schema_completion_candidates()` tambem limita a quantidade enviada ao `QStringListModel`, evitando crescimento acidental do modelo Qt.
+  - `docs/TASKS.md` foi atualizado para registrar que o autocomplete por schema foi endurecido contra consumo excessivo de memoria/CPU.
+  - Foram adicionados testes para schema grande demais, limite de candidatos, limite de profundidade sem recursao e limite do modelo de autocomplete.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/json_editor_tab.py tests/test_json_editor.py` passou.
+  - `git diff --check -- history-chat.md docs/TASKS.md src/gui/json_editor_tab.py tests/test_json_editor.py` passou.
+  - `tests/test_json_editor.py`: `29 passed in 2.08s`.
+  - Medicao com `/usr/bin/time -v` no teste principal: pico de RSS `138228 kbytes`, sem swap.
+  - `tests/gui/test_editor_dock.py::TestEditorDockInitialization::test_clear_active_schema_removes_schema_from_current_tab`: `1 passed in 1.60s`.
+- Observacoes:
+  - Os limites afetam apenas o autocomplete; validacao por schema ativo continua usando o schema configurado normalmente.
+  - A decisao foi evitar suites GUI grandes em processo unico nesta etapa, porque elas ja demonstraram consumo/tempo alto e nao eram necessarias para validar esta alteracao.
+
 ## 2026-07-15 - Pre-acao - Autocomplete por schema no Clarify Editor
 
 - Pedido do usuario: prosseguir com as tarefas do Clarify Editor.
