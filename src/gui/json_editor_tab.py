@@ -27,12 +27,13 @@ from __future__ import annotations
 
 import os
 import json
+import re
 from typing import Optional, Tuple
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import QEvent, QStringListModel, Qt, Signal, QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
-    QLabel, QSplitter, QMessageBox, QComboBox
+    QLabel, QSplitter, QMessageBox, QComboBox, QCompleter
 )
 from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QTextFormat
 
@@ -75,6 +76,7 @@ class JsonEditorTab(QWidget):
         self.edit_only_mode = edit_only_mode  # State pattern: changes save behavior
         self.validator = JsonValidator()
         self._diagnostic_selections: dict[str, list[QTextEdit.ExtraSelection]] = {}
+        self._schema_key_candidates: list[str] = []
         self.validation_timer = QTimer(self)
         self.validation_timer.setSingleShot(True)
         self.validation_timer.setInterval(500)  # 500ms debounce
@@ -167,6 +169,7 @@ class JsonEditorTab(QWidget):
         self.editor.setToolTip(tooltip_tr("json_editor.tooltip_editor"))
         font = QFont("Courier New", 10)
         self.editor.setFont(font)
+        self.editor.installEventFilter(self)
         editor_layout.addWidget(self.editor)
 
         splitter.addWidget(editor_container)
@@ -185,6 +188,14 @@ class JsonEditorTab(QWidget):
         # Setup syntax highlighter
         self.highlighter = SyntaxHighlighter(self.editor.document(), "json")
 
+        # Schema key autocomplete. Candidates are provided by EditorDock when a
+        # JSON Schema is associated with the current tab.
+        self.schema_completion_model = QStringListModel(self)
+        self.schema_key_completer = QCompleter(self.schema_completion_model, self)
+        self.schema_key_completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.schema_key_completer.setCompletionMode(QCompleter.PopupCompletion)
+        self.schema_key_completer.setWidget(self.editor)
+
     def _connect_signals(self):
         self.btn_regex_insert.clicked.connect(self._toggle_regex_insert_panel)
         # """Connect signals."""  # Commented placeholder
@@ -199,6 +210,18 @@ class JsonEditorTab(QWidget):
         self.btn_search.clicked.connect(self._show_search)
         self.btn_collapse.clicked.connect(self.tree.collapseAll)
         self.btn_expand.clicked.connect(self.tree.expandAll)
+        self.schema_key_completer.activated[str].connect(self._insert_schema_completion)
+
+    def eventFilter(self, watched, event):
+        """Handle editor-level shortcuts that QTextEdit does not expose directly."""
+        if (
+            watched is self.editor
+            and event.type() == QEvent.Type.KeyPress
+            and event.key() == Qt.Key_Space
+            and event.modifiers() & Qt.ControlModifier
+        ):
+            return self._show_schema_completions()
+        return False
 
     def _on_text_changed(self):
         """Handle text changes - mark as modified and schedule validation."""
@@ -208,6 +231,135 @@ class JsonEditorTab(QWidget):
 
         # Schedule validation (debounced)
         self.validation_timer.start()
+
+    @classmethod
+    def _schema_completion_candidates_from_schema(cls, schema) -> list[str]:
+        """Extract unique property names from a JSON Schema tree."""
+        candidates: set[str] = set()
+
+        def walk(fragment) -> None:
+            if not isinstance(fragment, dict):
+                return
+
+            properties = fragment.get("properties")
+            if isinstance(properties, dict):
+                for key, value_schema in properties.items():
+                    if isinstance(key, str) and key:
+                        candidates.add(key)
+                    walk(value_schema)
+
+            items = fragment.get("items")
+            if isinstance(items, dict):
+                walk(items)
+            elif isinstance(items, list):
+                for item in items:
+                    walk(item)
+
+            for group_key in ("allOf", "anyOf", "oneOf"):
+                group = fragment.get(group_key)
+                if isinstance(group, list):
+                    for item in group:
+                        walk(item)
+
+            for definitions_key in ("$defs", "definitions"):
+                definitions = fragment.get(definitions_key)
+                if isinstance(definitions, dict):
+                    for item in definitions.values():
+                        walk(item)
+
+        walk(schema)
+        return sorted(candidates)
+
+    @classmethod
+    def schema_completion_candidates_from_schema_text(
+        cls,
+        schema_text: str,
+    ) -> tuple[bool, list[str], str]:
+        """Extract autocomplete candidates from JSON Schema text."""
+        try:
+            schema = json.loads(schema_text)
+        except json.JSONDecodeError as exc:
+            return (
+                False,
+                [],
+                f"Schema parse error at line {exc.lineno}, col {exc.colno}: {exc.msg}",
+            )
+
+        return True, cls._schema_completion_candidates_from_schema(schema), ""
+
+    def set_schema_completion_candidates(self, candidates: list[str]) -> None:
+        """Update schema-backed key autocomplete candidates."""
+        self._schema_key_candidates = sorted({
+            candidate
+            for candidate in candidates
+            if isinstance(candidate, str) and candidate
+        })
+        self.schema_completion_model.setStringList(self._schema_key_candidates)
+
+    def set_schema_completion_candidates_from_schema_text(self, schema_text: str) -> bool:
+        """Extract and apply schema autocomplete candidates for this tab."""
+        success, candidates, _message = self.schema_completion_candidates_from_schema_text(
+            schema_text
+        )
+        if not success:
+            self.clear_schema_completion_candidates()
+            return False
+
+        self.set_schema_completion_candidates(candidates)
+        return True
+
+    def clear_schema_completion_candidates(self) -> None:
+        """Clear schema-backed autocomplete candidates."""
+        self.set_schema_completion_candidates([])
+
+    def _schema_completion_context(self) -> tuple[str, str]:
+        """Return the current key prefix and insertion mode."""
+        cursor = self.editor.textCursor()
+        left_text = cursor.block().text()[:cursor.positionInBlock()]
+
+        quoted_match = re.search(r'"([^"\\]*)$', left_text)
+        if quoted_match:
+            return quoted_match.group(1), "quoted"
+
+        word_match = re.search(r"([A-Za-z_][A-Za-z0-9_-]*)$", left_text)
+        if word_match:
+            return word_match.group(1), "word"
+
+        return "", "empty"
+
+    def _show_schema_completions(self) -> bool:
+        """Show schema key completions at the current cursor position."""
+        if not self._schema_key_candidates:
+            return False
+
+        prefix, _mode = self._schema_completion_context()
+        self.schema_key_completer.setCompletionPrefix(prefix)
+        if self.schema_key_completer.completionCount() == 0:
+            return False
+
+        popup = self.schema_key_completer.popup()
+        popup.setCurrentIndex(self.schema_key_completer.completionModel().index(0, 0))
+        self.schema_key_completer.complete(self.editor.cursorRect())
+        return True
+
+    def _insert_schema_completion(self, completion: str) -> None:
+        """Insert a schema completion using the current editor context."""
+        prefix, mode = self._schema_completion_context()
+        cursor = self.editor.textCursor()
+
+        if prefix:
+            cursor.movePosition(
+                QTextCursor.PreviousCharacter,
+                QTextCursor.KeepAnchor,
+                len(prefix),
+            )
+
+        if mode == "quoted":
+            cursor.insertText(completion)
+        else:
+            cursor.insertText(f'"{completion}": ')
+
+        self.editor.setTextCursor(cursor)
 
     def _apply_diagnostic_selections(self) -> None:
         """Apply all active diagnostic highlights to the text editor."""

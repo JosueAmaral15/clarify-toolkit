@@ -377,16 +377,18 @@ class TestEditorDockInitialization:
             editor_dock.tab_widget.setCurrentIndex(index)
             editor_dock._set_active_json_schema_for_tab(
                 json_tab,
-                '{"type": "object"}',
+                '{"type": "object", "properties": {"name": {"type": "string"}}}',
                 "/tmp/person.schema.json",
             )
             editor_dock._refresh_editor_menus()
             assert editor_dock.action_json_clear_active_schema.isEnabled()
+            assert json_tab._schema_key_candidates == ["name"]
 
             assert editor_dock._clear_active_json_schema_for_current_tab() is True
 
             assert getattr(json_tab, '_clarify_active_schema_text') is None
             assert getattr(json_tab, '_clarify_active_schema_path') is None
+            assert json_tab._schema_key_candidates == []
             assert not editor_dock.action_json_clear_active_schema.isEnabled()
             assert editor_dock.lbl_status.text() == (
                 "Active schema cleared: person.schema.json"

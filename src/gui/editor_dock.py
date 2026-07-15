@@ -286,7 +286,7 @@ class _LineNumberController(QObject):
     def eventFilter(self, watched, event):
         if watched is self.editor and event.type() in (QEvent.Resize, QEvent.Show):
             self.update()
-        return super().eventFilter(watched, event)
+        return False
 
     def paint(self, event):
         painter = QPainter(self.area)
@@ -1669,6 +1669,7 @@ class EditorDock(BaseDock):
         """Store active JSON Schema metadata on a tab."""
         setattr(tab, '_clarify_active_schema_text', schema_text)
         setattr(tab, '_clarify_active_schema_path', schema_path)
+        tab.set_schema_completion_candidates_from_schema_text(schema_text)
 
     def _validate_json_tab_against_active_schema(
         self,
@@ -1771,6 +1772,7 @@ class EditorDock(BaseDock):
         setattr(tab, '_clarify_active_schema_text', None)
         setattr(tab, '_clarify_active_schema_path', None)
         tab.clear_diagnostic("json_schema")
+        tab.clear_schema_completion_candidates()
         self._refresh_editor_menus()
         self.lbl_status.setText(
             tr("editor.status_json_active_schema_cleared").format(schema=schema_label)

@@ -10,6 +10,43 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-15 - Pre-acao - Autocomplete por schema no Clarify Editor
+
+- Pedido do usuario: prosseguir com as tarefas do Clarify Editor.
+- Contexto retomado:
+  - A fatia anterior adicionou highlight visual de erros JSON/Schema no `JsonEditorTab`.
+  - A proxima recomendacao prioritaria era autocomplete/sugestoes por schema.
+  - O schema ativo ja fica armazenado na aba JSON pelo `EditorDock`, entao a nova fatia pode derivar candidatos de `properties` do schema ativo.
+- Escopo escolhido:
+  - Adicionar suporte inicial a autocomplete de chaves do schema ativo com `Ctrl+Space` no editor JSON.
+  - Gerar candidatos a partir de `properties` aninhadas do JSON Schema, sem tentar ainda inferir contexto profundo perfeito.
+  - Limpar candidatos quando o schema ativo for removido.
+  - Atualizar testes focados, `docs/TASKS.md`, validar, commitar e enviar.
+
+## 2026-07-15 - Pos-acao - Autocomplete por schema no Clarify Editor
+
+- Mudancas realizadas:
+  - `JsonEditorTab` agora mantem uma lista de candidatos de chaves extraidas do JSON Schema ativo.
+  - O autocomplete e acionado com `Ctrl+Space` no editor JSON e usa `QCompleter`.
+  - A extracao percorre `properties`, `items`, `allOf`, `anyOf`, `oneOf`, `$defs` e `definitions`, gerando uma lista unica e ordenada de nomes de propriedades.
+  - Ao associar um schema ativo pelo `EditorDock`, os candidatos da aba JSON sao atualizados; ao limpar o schema ativo, os candidatos tambem sao limpos.
+  - Tooltips `en` e `pt_BR` foram atualizados para mencionar `Ctrl+Space`.
+  - `docs/TASKS.md` foi atualizado com a fatia `Schema Key Autocomplete Slice`.
+  - Durante os testes, foi identificado que alguns `eventFilter` retornavam `super().eventFilter(...)` para eventos nao tratados; isso podia causar reentrada/lentidao em testes GUI. O retorno foi ajustado para `False` em filtros relevantes e o import dinamico de `QEvent` no filtro global foi removido.
+- Validacoes executadas:
+  - `python -m py_compile src/app.py src/gui/panels/search_replace_panel.py src/gui/json_editor_tab.py src/gui/editor_dock.py tests/test_json_editor.py tests/gui/test_editor_dock.py` passou.
+  - JSON de i18n validado por `json.load()` em `src/i18n/en.json` e `src/i18n/pt_BR.json`.
+  - `git diff --check` nos arquivos tocados passou.
+  - `tests/test_json_editor.py`: `25 passed in 1.55s`.
+  - `tests/gui/test_editor_dock.py::TestEditorDockInitialization`: `20 passed, 2 skipped in 74.36s`.
+  - `tests/gui/test_editor_dock.py::TestEditorOperations::test_line_number_gutter_uses_dark_theme_colors`: `1 passed in 1.85s`.
+  - `tests/test_tooltip_presence.py::test_editor_dock_tooltips`: `1 passed in 0.93s`.
+  - Smoke test manual do `SearchReplacePanel.eventFilter` passou sem crash.
+- Observacoes:
+  - O autocomplete inicial e amplo por schema, nao perfeitamente contextual por caminho JSON ainda.
+  - A proxima evolucao natural e sugerir valores por `enum`/`const`/`default` ou melhorar contexto aninhado por caminho JSON.
+  - Rodar o arquivo completo `tests/gui/test_editor_dock.py` em um unico processo continuou pesado demais; a validacao foi feita em grupos menores e determinicos.
+
 ## 2026-07-15 - Pre-acao - Highlight visual de erros no Clarify Editor
 
 - Pedido do usuario: prosseguir com as recomendacoes para o Clarify Editor.

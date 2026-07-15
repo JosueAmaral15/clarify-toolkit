@@ -134,7 +134,7 @@ logger = get_logger(__name__)
 _PYSIDE = True
 
 try:
-    from PySide6.QtCore import QByteArray, Qt
+    from PySide6.QtCore import QByteArray, QEvent, Qt
     from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QDockWidget, QMessageBox
@@ -1548,11 +1548,9 @@ if _PYSIDE:
 
         def eventFilter(self, obj, event):
             """Global event filter for Shift+Scroll horizontal scrolling (v2.9.115)."""
-            from PySide6.QtCore import QEvent
-
             # Only handle wheel events
             if event.type() != QEvent.Wheel:
-                return super().eventFilter(obj, event)
+                return False
 
             # Shift+Scroll OR Ctrl+Shift+Scroll - Horizontal scroll
             if event.modifiers() == Qt.ShiftModifier or event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
@@ -1582,7 +1580,7 @@ if _PYSIDE:
                 return True  # Event handled, don't propagate
 
             # Pass to parent for default handling
-            return super().eventFilter(obj, event)
+            return False
 
         def wheelEvent(self, event):
             """Handle mouse wheel for font scaling (v2.9.35)."""

@@ -1008,7 +1008,7 @@
     "json_editor.msg_target_not_found": "Chave '{key}' não encontrada no JSON.\n\nChaves disponíveis: {available}",
     "json_editor.msg_target_not_found_title": "Destino Não Encontrado",
     "json_editor.tooltip_collapse": "Recolher todos os nós na visualização em árvore JSON | Ctrl+E para abrir Editor",
-    "json_editor.tooltip_editor": "Editor de texto JSON com destaque de sintaxe e validação em tempo real | Ctrl+S para salvar | Ctrl+E para abrir Editor",
+    "json_editor.tooltip_editor": "Editor JSON com destaque de sintaxe, validação e autocomplete de chaves do schema | Ctrl+Space para chaves do schema | Ctrl+S para salvar | Ctrl+E para abrir Editor",
     "json_editor.tooltip_expand": "Expandir todos os nós na visualização em árvore JSON | Ctrl+E para abrir Editor",
     "json_editor.tooltip_format": "Formatar JSON com indentação | Ctrl+E para abrir Editor",
     "json_editor.tooltip_indent": "Estilo de indentação (2/4 espaços ou JSON compacto minificado) | Ctrl+E para abrir Editor",

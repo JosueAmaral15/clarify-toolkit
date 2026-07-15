@@ -293,6 +293,86 @@ class TestJsonEditorTabIntegration(unittest.TestCase):
             )
         )
 
+    def test_schema_completion_candidates_from_schema_text(self):
+        """Test schema autocomplete candidates include nested properties."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        schema_text = json.dumps({
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "profile": {
+                    "type": "object",
+                    "properties": {
+                        "email": {"type": "string"},
+                        "roles": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {"label": {"type": "string"}},
+                            },
+                        },
+                    },
+                },
+            },
+            "$defs": {
+                "audit": {
+                    "type": "object",
+                    "properties": {"createdAt": {"type": "string"}},
+                },
+            },
+        })
+
+        success, candidates, message = (
+            JsonEditorTab.schema_completion_candidates_from_schema_text(schema_text)
+        )
+
+        self.assertTrue(success)
+        self.assertEqual(message, "")
+        self.assertEqual(candidates, ["createdAt", "email", "label", "name", "profile", "roles"])
+
+    def test_schema_completion_candidates_report_invalid_schema_json(self):
+        """Test schema autocomplete candidate extraction reports schema parse errors."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        success, candidates, message = (
+            JsonEditorTab.schema_completion_candidates_from_schema_text('{"properties": }')
+        )
+
+        self.assertFalse(success)
+        self.assertEqual(candidates, [])
+        self.assertIn("Schema parse error", message)
+
+    def test_schema_completion_inserts_inside_quoted_key(self):
+        """Test schema completion replaces the current quoted key prefix."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        tab = JsonEditorTab()
+        tab.set_schema_completion_candidates(["email"])
+        tab.editor.setPlainText('{\n  "em"\n}')
+        cursor = tab.editor.textCursor()
+        cursor.setPosition(tab.editor.toPlainText().find('"em"') + 3)
+        tab.editor.setTextCursor(cursor)
+
+        tab._insert_schema_completion("email")
+
+        self.assertIn('"email"', tab.editor.toPlainText())
+
+    def test_schema_completion_inserts_json_key_when_outside_quotes(self):
+        """Test schema completion inserts a JSON key snippet outside quoted keys."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        tab = JsonEditorTab()
+        tab.set_schema_completion_candidates(["profile"])
+        tab.editor.setPlainText("{\n  \n}")
+        cursor = tab.editor.textCursor()
+        cursor.setPosition(tab.editor.toPlainText().find("\n  ") + 3)
+        tab.editor.setTextCursor(cursor)
+
+        tab._insert_schema_completion("profile")
+
+        self.assertIn('"profile": ', tab.editor.toPlainText())
+
 
 if __name__ == '__main__':
     unittest.main()

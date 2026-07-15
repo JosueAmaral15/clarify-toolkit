@@ -355,7 +355,7 @@ class SearchReplacePanel(QWidget):
                     self._splitter.setSizes(self._original_sizes)
                     self._is_expanded = False
 
-        return super().eventFilter(obj, event)
+        return False
 
     def change_advanced_conditions(self):
         self.enable_buttons(not self.is_file.isChecked(), include_buttons=False)

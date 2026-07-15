@@ -996,7 +996,7 @@
   "json_editor.msg_target_not_found": "Key '{key}' not found in JSON.\n\nAvailable keys: {available}",
   "json_editor.msg_target_not_found_title": "Target Not Found",
   "json_editor.tooltip_collapse": "Collapse all nodes in JSON tree view | Ctrl+E to open Editor",
-  "json_editor.tooltip_editor": "JSON text editor with syntax highlighting and real-time validation | Ctrl+S to save | Ctrl+E to open Editor",
+  "json_editor.tooltip_editor": "JSON text editor with syntax highlighting, validation, and schema key completion | Ctrl+Space for schema keys | Ctrl+S to save | Ctrl+E to open Editor",
   "json_editor.tooltip_expand": "Expand all nodes in JSON tree view | Ctrl+E to open Editor",
   "json_editor.tooltip_format": "Pretty print JSON with indentation | Ctrl+E to open Editor",
   "json_editor.tooltip_indent": "Indentation style (2/4 spaces or compact minified JSON) | Ctrl+E to open Editor",
