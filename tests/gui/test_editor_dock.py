@@ -319,13 +319,50 @@ class TestEditorDockInitialization:
 
             monkeypatch.setattr(
                 EditorDock,
-                "_validate_json_text_with_schema",
-                classmethod(lambda cls, json_text, schema_text: (True, "")),
+                "_validate_json_text_with_schema_detail",
+                classmethod(lambda cls, json_text, schema_text: (True, "", ())),
             )
             editor_dock._on_json_validation_changed(json_tab, True)
 
             assert editor_dock.lbl_status.text() == (
                 "JSON matches active schema: person.schema.json"
+            )
+        finally:
+            editor_dock.deleteLater()
+
+    def test_active_schema_auto_validation_marks_schema_errors(self, qapp, monkeypatch):
+        """Test active schema failures add a visual diagnostic to the JSON tab."""
+        editor_dock = EditorDock()
+        try:
+            json_tab = JsonEditorTab()
+            json_tab.editor.setPlainText('{"age": "old"}')
+            editor_dock._prepare_tab_for_dock(json_tab)
+            index = editor_dock.tab_widget.addTab(json_tab, json_tab.get_display_title())
+            editor_dock.tab_widget.setCurrentIndex(index)
+            editor_dock._set_active_json_schema_for_tab(
+                json_tab,
+                '{"type": "object"}',
+                "/tmp/person.schema.json",
+            )
+
+            monkeypatch.setattr(
+                EditorDock,
+                "_validate_json_text_with_schema_detail",
+                classmethod(lambda cls, json_text, schema_text: (
+                    False,
+                    "$.age: 'old' is not of type 'integer'",
+                    ("age",),
+                )),
+            )
+            editor_dock._on_json_validation_changed(json_tab, True)
+
+            assert editor_dock.lbl_status.text() == (
+                "JSON does not match active schema: person.schema.json"
+            )
+            assert "Schema error" in json_tab.lbl_validation.text()
+            assert any(
+                '"age"' in selection.cursor.selectedText()
+                for selection in json_tab.editor.extraSelections()
             )
         finally:
             editor_dock.deleteLater()

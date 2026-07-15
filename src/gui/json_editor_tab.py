@@ -34,7 +34,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton,
     QLabel, QSplitter, QMessageBox, QComboBox
 )
-from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QTextFormat
 
 from src.core.insert import insert_at_line
 from src.gui.panels import InsertPanel, RegexInsertPanel
@@ -74,6 +74,7 @@ class JsonEditorTab(QWidget):
         self.is_modified = False
         self.edit_only_mode = edit_only_mode  # State pattern: changes save behavior
         self.validator = JsonValidator()
+        self._diagnostic_selections: dict[str, list[QTextEdit.ExtraSelection]] = {}
         self.validation_timer = QTimer(self)
         self.validation_timer.setSingleShot(True)
         self.validation_timer.setInterval(500)  # 500ms debounce
@@ -208,6 +209,105 @@ class JsonEditorTab(QWidget):
         # Schedule validation (debounced)
         self.validation_timer.start()
 
+    def _apply_diagnostic_selections(self) -> None:
+        """Apply all active diagnostic highlights to the text editor."""
+        selections = []
+        for source in sorted(self._diagnostic_selections):
+            selections.extend(self._diagnostic_selections[source])
+        self.editor.setExtraSelections(selections)
+
+    def clear_diagnostic(self, source: str | None = None) -> None:
+        """Clear one diagnostic source or all active diagnostic highlights."""
+        if source is None:
+            self._diagnostic_selections.clear()
+        else:
+            self._diagnostic_selections.pop(source, None)
+        self._apply_diagnostic_selections()
+
+    def _cursor_for_line_col(self, line: int, col: int) -> QTextCursor | None:
+        """Return a cursor positioned at a 1-based line and column."""
+        block = self.editor.document().findBlockByNumber(max(0, line - 1))
+        if not block.isValid():
+            return None
+
+        block_text_length = len(block.text())
+        column_offset = min(max(0, col - 1), max(0, block_text_length))
+        cursor = QTextCursor(block)
+        cursor.setPosition(block.position() + column_offset)
+        return cursor
+
+    def show_diagnostic(
+        self,
+        line: int,
+        col: int,
+        message: str,
+        source: str = "json",
+        length: int = 1,
+    ) -> None:
+        """Show a line highlight and wave underline for a validation diagnostic."""
+        cursor = self._cursor_for_line_col(line, col)
+        if cursor is None:
+            self.clear_diagnostic(source)
+            return
+
+        line_selection = QTextEdit.ExtraSelection()
+        line_selection.cursor = QTextCursor(cursor.block())
+        line_selection.format.setBackground(QColor(244, 71, 71, 32))
+        line_selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+        if message:
+            line_selection.format.setToolTip(message)
+
+        underline_selection = QTextEdit.ExtraSelection()
+        underline_selection.cursor = QTextCursor(cursor)
+        underline_length = max(1, length)
+        underline_selection.cursor.movePosition(
+            QTextCursor.NextCharacter,
+            QTextCursor.KeepAnchor,
+            underline_length,
+        )
+        underline_format = QTextCharFormat()
+        underline_format.setUnderlineStyle(QTextCharFormat.SpellCheckUnderline)
+        underline_format.setUnderlineColor(QColor("#F44747"))
+        if message:
+            underline_format.setToolTip(message)
+        underline_selection.format = underline_format
+
+        self._diagnostic_selections[source] = [line_selection, underline_selection]
+        self._apply_diagnostic_selections()
+
+    def _line_col_for_json_path(self, path: tuple) -> tuple[int, int]:
+        """Best-effort lookup for a JSONPath-like tuple in the editor text."""
+        if not path:
+            return (1, 1)
+
+        text = self.editor.toPlainText()
+        first_key = next((part for part in path if isinstance(part, str)), None)
+        if not first_key:
+            return (1, 1)
+
+        needle = json.dumps(first_key, ensure_ascii=False)
+        offset = text.find(needle)
+        if offset < 0:
+            return (1, 1)
+
+        before = text[:offset]
+        line = before.count("\n") + 1
+        line_start = before.rfind("\n") + 1
+        col = offset - line_start + 1
+        return (line, col)
+
+    def show_schema_diagnostic(self, message: str, path: tuple = ()) -> None:
+        """Show a schema validation diagnostic at the best matching JSON location."""
+        first_line = message.splitlines()[0] if message else "Schema validation error"
+        self.lbl_validation.setText(f"✗ Schema error: {first_line}")
+        self.lbl_validation.setStyleSheet("color: #F44747; font-weight: bold;")
+        line, col = self._line_col_for_json_path(path)
+        length = 1
+        first_key = next((part for part in path if isinstance(part, str)), None)
+        if first_key:
+            length = len(json.dumps(first_key, ensure_ascii=False))
+        self.show_diagnostic(line, col, message, source="json_schema", length=length)
+
     def _validate(self):
         """
         Validate JSON and update UI indicators.
@@ -221,6 +321,8 @@ class JsonEditorTab(QWidget):
             self.lbl_validation.setText("✓ Valid JSON")
             self.lbl_validation.setStyleSheet("color: #6A9955; font-weight: bold;")
             self.editor.setStyleSheet("")
+            self.clear_diagnostic("json")
+            self.clear_diagnostic("json_schema")
 
             # Update tree view
             self.tree.build_tree(text)
@@ -231,6 +333,8 @@ class JsonEditorTab(QWidget):
             self.lbl_validation.setText(error_text)
             self.lbl_validation.setStyleSheet("color: #F44747; font-weight: bold;")
             self.editor.setStyleSheet("QTextEdit { border: 2px solid #F44747; }")
+            self.show_diagnostic(result.line, result.col, error_text, source="json")
+            self.clear_diagnostic("json_schema")
 
             self.validation_changed.emit(False, error_text)
 

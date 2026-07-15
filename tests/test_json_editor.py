@@ -251,6 +251,48 @@ class TestJsonEditorTabIntegration(unittest.TestCase):
         
         self.assertIn("✗ Invalid JSON", tab.lbl_validation.text())
 
+    def test_invalid_json_creates_visual_diagnostic(self):
+        """Test invalid JSON adds editor diagnostic selections."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        tab = JsonEditorTab()
+        tab.editor.setPlainText('{\n  "invalid": \n}')
+        tab._validate()
+
+        self.assertIn("✗ Invalid JSON", tab.lbl_validation.text())
+        self.assertGreaterEqual(len(tab.editor.extraSelections()), 2)
+
+    def test_valid_json_clears_visual_diagnostic(self):
+        """Test valid JSON clears existing diagnostic selections."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        tab = JsonEditorTab()
+        tab.show_diagnostic(1, 1, "Synthetic error")
+        self.assertGreaterEqual(len(tab.editor.extraSelections()), 1)
+
+        tab.editor.setPlainText('{"valid": true}')
+        tab._validate()
+
+        self.assertIn("✓ Valid JSON", tab.lbl_validation.text())
+        self.assertEqual(len(tab.editor.extraSelections()), 0)
+
+    def test_schema_diagnostic_highlights_json_path(self):
+        """Test schema diagnostics highlight the best matching JSON key."""
+        from src.gui.json_editor_tab import JsonEditorTab
+
+        tab = JsonEditorTab()
+        tab.editor.setPlainText('{\n  "age": "old"\n}')
+        tab.show_schema_diagnostic("$.age: 'old' is not of type 'integer'", ("age",))
+
+        self.assertIn("✗ Schema error", tab.lbl_validation.text())
+        self.assertGreaterEqual(len(tab.editor.extraSelections()), 2)
+        self.assertTrue(
+            any(
+                '"age"' in selection.cursor.selectedText()
+                for selection in tab.editor.extraSelections()
+            )
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

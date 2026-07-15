@@ -10,6 +10,57 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-15 - Pre-acao - Highlight visual de erros no Clarify Editor
+
+- Pedido do usuario: prosseguir com as recomendacoes para o Clarify Editor.
+- Contexto retomado:
+  - A recomendacao prioritaria anterior foi implementar highlight visual de erros JSON/Schema.
+  - O Clarify Editor ja tem validacao JSON, schema ativo por aba, validacao debounced contra schema ativo e quick-fix de campos obrigatorios no objeto raiz.
+  - `docs/TASKS.md` ainda lista como meta pendente a validacao JSON em tempo real com highlight de erros, autocomplete, sugestoes por schema e quick-fixes.
+- Escopo escolhido:
+  - Adicionar marcacao visual discreta no editor para erros de JSON e, quando possivel, erros de JSON Schema.
+  - Reaproveitar os sinais/validadores existentes para evitar uma reescrita grande do editor.
+  - Atualizar testes focados, i18n/docs se necessario, validar, commitar e enviar se tudo estiver funcionando.
+
+## 2026-07-15 - Pos-acao - Highlight visual de erros no Clarify Editor
+
+- Mudancas realizadas:
+  - `JsonEditorTab` agora mantem diagnosticos visuais por fonte (`json` e `json_schema`) usando `QTextEdit.ExtraSelection`.
+  - Erros de sintaxe JSON passam a marcar a linha com fundo vermelho discreto e o ponto do erro com sublinhado ondulado.
+  - Falhas de JSON Schema ativo passam a usar uma validacao detalhada que retorna o caminho do primeiro erro, marcando a chave correspondente quando possivel.
+  - A marca de schema e limpa quando o schema volta a passar, quando o schema ativo e removido, ou quando o JSON fica sintaticamente invalido.
+  - A API antiga `_validate_json_text_with_schema()` foi preservada e delega para a nova `_validate_json_text_with_schema_detail()`.
+  - `docs/TASKS.md` foi atualizado com a fatia `Visual Validation Highlight Slice`.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/json_editor_tab.py src/gui/editor_dock.py tests/test_json_editor.py tests/gui/test_editor_dock.py` passou.
+  - `git diff --check -- history-chat.md docs/TASKS.md src/gui/json_editor_tab.py src/gui/editor_dock.py tests/test_json_editor.py tests/gui/test_editor_dock.py` passou.
+  - Testes focados passaram: `26 passed in 2.40s`.
+- Observacoes:
+  - O highlight de schema e best-effort: quando o erro tem caminho como `$.age`, ele marca a chave encontrada; erros sem caminho especifico, como campo obrigatorio ausente na raiz, caem no inicio do documento.
+  - Ainda faltam autocomplete por schema, sugestoes de valores e quick-fixes aninhados.
+
+## 2026-07-12 - Pre-acao - Levantar pendencias do Clarify Editor
+
+- Pedido do usuario: perguntar o que ainda falta para o Clarify Editor.
+- Contexto retomado:
+  - O Clarify Editor ja recebeu menu bar, acoes File/Edit/View, acoes JSON, validacao com JSON Schema, schema ativo por aba, geracao de schema e quick-fix de campos obrigatorios no objeto raiz.
+  - `docs/TASKS.md` ainda tem metas longas relacionadas a validacao JSON em tempo real, autocomplete, sugestoes por schema e melhorias de edicao.
+- Plano imediato:
+  - Conferir `docs/TASKS.md`, os trechos atuais do `EditorDock` e testes para separar o que ja foi feito do que ainda falta.
+  - Responder de forma resumida com prioridades praticas para as proximas fatias.
+
+## 2026-07-12 - Pos-acao - Pendencias do Clarify Editor levantadas
+
+- Consulta realizada:
+  - Conferido `docs/TASKS.md` nas secoes do Editor Dock e metas avancadas.
+  - Conferido `src/gui/editor_dock.py` para confirmar que ja existem menus `File`, `Edit`, `View` e `JSON`, schema ativo, validacao com schema, geracao de schema e quick-fix raiz para campos obrigatorios.
+  - Conferidos testes em `tests/gui/test_editor_dock.py` relacionados ao menu JSON e quick-fix.
+- Conclusao resumida:
+  - O que mais falta no Clarify Editor esta concentrado em validacao visual em tempo real, autocomplete/sugestoes por schema, quick-fixes aninhados, melhorias de navegacao/edicao e uma possivel integracao Git no menu.
+  - A prioridade recomendada para a proxima fatia e highlight visual de erros JSON/Schema no editor, pois fecha uma lacuna direta de `docs/TASKS.md` e aumenta a utilidade do schema ativo.
+- Observacao:
+  - Nenhum teste foi executado nesta consulta; foi apenas levantamento de estado e resposta ao usuario.
+
 ## 2026-07-12 - Pre-acao - Quick-fix de campos obrigatorios no Clarify Editor
 
 - Pedido do usuario: continuar as tarefas do Clarify Editor.
