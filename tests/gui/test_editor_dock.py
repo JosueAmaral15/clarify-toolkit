@@ -55,113 +55,112 @@ class TestEditorDockInitialization:
         assert hasattr(editor_dock, 'tab_widget')
         assert isinstance(editor_dock.tab_widget, QTabWidget)
         
-    def test_file_menu_exists(self, main_window):
+    def test_file_menu_exists(self, qapp):
         """Test that file actions are available in the File menu."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
-        assert editor_dock is not None
-        assert hasattr(editor_dock, 'menu_bar')
-        assert isinstance(editor_dock.menu_bar, QMenuBar)
-        assert hasattr(editor_dock, 'menu_file')
-        assert editor_dock.menu_file.title() == "File"
-        assert hasattr(editor_dock, 'menu_edit')
-        assert editor_dock.menu_edit.title() == "Edit"
-        assert hasattr(editor_dock, 'menu_view')
-        assert editor_dock.menu_view.title() == "View"
-        assert hasattr(editor_dock, 'menu_json')
-        assert editor_dock.menu_json.title() == "JSON"
+        editor_dock = EditorDock()
+        try:
+            assert hasattr(editor_dock, 'menu_bar')
+            assert isinstance(editor_dock.menu_bar, QMenuBar)
+            assert hasattr(editor_dock, 'menu_file')
+            assert editor_dock.menu_file.title() == "File"
+            assert hasattr(editor_dock, 'menu_edit')
+            assert editor_dock.menu_edit.title() == "Edit"
+            assert hasattr(editor_dock, 'menu_view')
+            assert editor_dock.menu_view.title() == "View"
+            assert hasattr(editor_dock, 'menu_json')
+            assert editor_dock.menu_json.title() == "JSON"
 
-        file_actions = [
-            action.data()
-            for action in editor_dock.menu_file.actions()
-            if not action.isSeparator()
-        ]
-        assert file_actions == [
-            "new",
-            "open",
-            "save",
-            "save_as",
-            "compare_with_saved",
-            "enable_saving",
-            "export",
-            "close_tab",
-            "auto_save",
-        ]
+            file_actions = [
+                action.data()
+                for action in editor_dock.menu_file.actions()
+                if not action.isSeparator()
+            ]
+            assert file_actions == [
+                "new",
+                "open",
+                "save",
+                "save_as",
+                "compare_with_saved",
+                "reload_from_disk",
+                "enable_saving",
+                "export",
+                "close_tab",
+                "auto_save",
+            ]
 
-        edit_actions = [
-            action.data()
-            for action in editor_dock.menu_edit.actions()
-            if not action.isSeparator()
-        ]
-        assert edit_actions == [
-            "undo",
-            "redo",
-            "cut",
-            "copy",
-            "paste",
-            "delete",
-            "select_all",
-            "find",
-            "find_replace",
-            "go_to_line",
-            "duplicate_line",
-            "toggle_line_comment",
-            "indent",
-            "outdent",
-            "move_line_up",
-            "move_line_down",
-            "insert_datetime",
-            "trim_trailing_spaces",
-        ]
+            edit_actions = [
+                action.data()
+                for action in editor_dock.menu_edit.actions()
+                if not action.isSeparator()
+            ]
+            assert edit_actions == [
+                "undo",
+                "redo",
+                "cut",
+                "copy",
+                "paste",
+                "delete",
+                "select_all",
+                "find",
+                "find_replace",
+                "go_to_line",
+                "duplicate_line",
+                "toggle_line_comment",
+                "indent",
+                "outdent",
+                "move_line_up",
+                "move_line_down",
+                "insert_datetime",
+                "trim_trailing_spaces",
+            ]
 
-        view_actions = [
-            action.data()
-            for action in editor_dock.menu_view.actions()
-            if not action.isSeparator()
-        ]
-        assert view_actions == [
-            "word_wrap",
-            "render_whitespace",
-            "show_line_numbers",
-            "small_text",
-            "large_text",
-            "normal_size",
-        ]
+            view_actions = [
+                action.data()
+                for action in editor_dock.menu_view.actions()
+                if not action.isSeparator()
+            ]
+            assert view_actions == [
+                "word_wrap",
+                "render_whitespace",
+                "show_line_numbers",
+                "small_text",
+                "large_text",
+                "normal_size",
+            ]
 
-        json_actions = [
-            action.data()
-            for action in editor_dock.menu_json.actions()
-            if not action.isSeparator()
-        ]
-        assert json_actions == [
-            "json_format_2",
-            "json_format_4",
-            "json_minify",
-            "json_validate",
-            "json_validate_schema",
-            "json_generate_schema",
-            "json_set_active_schema",
-            "json_clear_active_schema",
-            "json_insert_missing_required",
-            "json_search",
-            "json_collapse_tree",
-            "json_expand_tree",
-        ]
-        assert editor_dock.action_auto_save.isCheckable()
-        assert editor_dock.action_word_wrap.isCheckable()
-        assert editor_dock.action_render_whitespace.isCheckable()
-        assert editor_dock.action_show_line_numbers.isCheckable()
-        assert hasattr(editor_dock, 'action_compare_with_saved')
-        assert hasattr(editor_dock, 'action_json_validate')
-        assert hasattr(editor_dock, 'action_json_validate_schema')
-        assert hasattr(editor_dock, 'action_json_generate_schema')
-        assert hasattr(editor_dock, 'action_json_set_active_schema')
-        assert hasattr(editor_dock, 'action_json_clear_active_schema')
-        assert hasattr(editor_dock, 'action_json_insert_missing_required')
+            json_actions = [
+                action.data()
+                for action in editor_dock.menu_json.actions()
+                if not action.isSeparator()
+            ]
+            assert json_actions == [
+                "json_format_2",
+                "json_format_4",
+                "json_minify",
+                "json_validate",
+                "json_validate_schema",
+                "json_generate_schema",
+                "json_set_active_schema",
+                "json_clear_active_schema",
+                "json_insert_missing_required",
+                "json_search",
+                "json_collapse_tree",
+                "json_expand_tree",
+            ]
+            assert editor_dock.action_auto_save.isCheckable()
+            assert editor_dock.action_word_wrap.isCheckable()
+            assert editor_dock.action_render_whitespace.isCheckable()
+            assert editor_dock.action_show_line_numbers.isCheckable()
+            assert hasattr(editor_dock, 'action_compare_with_saved')
+            assert hasattr(editor_dock, 'action_reload_from_disk')
+            assert hasattr(editor_dock, 'action_json_validate')
+            assert hasattr(editor_dock, 'action_json_validate_schema')
+            assert hasattr(editor_dock, 'action_json_generate_schema')
+            assert hasattr(editor_dock, 'action_json_set_active_schema')
+            assert hasattr(editor_dock, 'action_json_clear_active_schema')
+            assert hasattr(editor_dock, 'action_json_insert_missing_required')
+        finally:
+            editor_dock.deleteLater()
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -892,6 +891,76 @@ class TestFileOperations:
         
         # Save operation would be triggered by button click
         # (actual save logic depends on implementation)
+
+    def test_external_file_change_marks_open_tab(self, qapp, tmp_path):
+        """Test an externally modified open file is marked in the editor tab."""
+        folder = tmp_path / "notes"
+        folder.mkdir()
+        test_file = folder / "note.txt"
+        test_file.write_text("before\n", encoding="utf-8")
+        editor_dock = EditorDock()
+
+        try:
+            editor_dock.open_file_path(str(test_file))
+            tab = editor_dock.tab_widget.currentWidget()
+            normalized_file = EditorDock._normalized_file_path(str(test_file))
+            normalized_folder = EditorDock._normalized_file_path(str(folder))
+
+            assert normalized_file in editor_dock._watched_file_paths
+            assert normalized_folder in editor_dock._watched_dir_paths
+
+            test_file.write_text("after\n", encoding="utf-8")
+            assert editor_dock._check_tab_external_state(tab) == "modified"
+            editor_dock._update_tab_title(tab)
+            editor_dock._show_external_status_for_current_tab()
+
+            assert "[external]" in editor_dock.tab_widget.tabText(editor_dock.tab_widget.currentIndex())
+            assert "File changed on disk" in editor_dock.lbl_status.text()
+            assert getattr(tab, '_clarify_auto_save_paused_for_external_change') is True
+        finally:
+            editor_dock.deleteLater()
+
+    def test_missing_open_file_marks_tab_missing(self, qapp, tmp_path):
+        """Test an externally removed open file is marked as missing."""
+        test_file = tmp_path / "removed.txt"
+        test_file.write_text("content\n", encoding="utf-8")
+        editor_dock = EditorDock()
+
+        try:
+            editor_dock.open_file_path(str(test_file))
+            tab = editor_dock.tab_widget.currentWidget()
+
+            test_file.unlink()
+            assert editor_dock._check_tab_external_state(tab) == "missing"
+            editor_dock._update_tab_title(tab)
+            editor_dock._refresh_editor_menus()
+
+            assert "[missing]" in editor_dock.tab_widget.tabText(editor_dock.tab_widget.currentIndex())
+            assert not editor_dock.action_reload_from_disk.isEnabled()
+        finally:
+            editor_dock.deleteLater()
+
+    def test_reload_from_disk_clears_external_change(self, qapp, tmp_path):
+        """Test Reload from Disk accepts the external file version."""
+        test_file = tmp_path / "reload.txt"
+        test_file.write_text("old\n", encoding="utf-8")
+        editor_dock = EditorDock()
+
+        try:
+            editor_dock.open_file_path(str(test_file))
+            tab = editor_dock.tab_widget.currentWidget()
+
+            test_file.write_text("new\n", encoding="utf-8")
+            assert editor_dock._check_tab_external_state(tab) == "modified"
+
+            assert editor_dock._reload_current_tab_from_disk() is True
+
+            assert tab.editor.toPlainText() == "new\n"
+            assert getattr(tab, '_clarify_external_state') == "clean"
+            assert "[external]" not in editor_dock.tab_widget.tabText(editor_dock.tab_widget.currentIndex())
+            assert editor_dock.lbl_status.text() == "Reloaded from disk: reload.txt"
+        finally:
+            editor_dock.deleteLater()
 
 
 class TestSyntaxHighlighting:

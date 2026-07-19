@@ -10,6 +10,38 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-19 - Pre-acao - Deteccao de modificacao externa no Clarify Editor
+
+- Pedido do usuario: fazer a proxima tarefa do Clarify Editor.
+- Contexto retomado:
+  - A proxima tarefa registrada em `docs/TASKS.md` e detectar quando arquivo aberto no Clarify Editor foi modificado externamente/offline, removido ou renomeado no disco.
+  - A tarefa deve ser implementada de forma leve, sem varredura recursiva pesada em pastas grandes.
+  - O worktree ainda contem mudancas antigas e nao relacionadas em docs/File Explorer, que devem ficar fora desta fatia.
+- Escopo escolhido:
+  - Estudar o ciclo atual de abertura/salvamento de abas no `EditorDock`.
+  - Adicionar rastreamento por arquivo aberto com `QFileSystemWatcher` quando possivel e fallback por metadados de arquivo.
+  - Expor estado claro no status/aba quando o arquivo foi alterado/removido externamente.
+  - Adicionar testes focados e validar sem rodar suites GUI grandes em processo unico.
+
+## 2026-07-19 - Pos-acao - Deteccao de modificacao externa no Clarify Editor
+
+- Implementado em `src/gui/editor_dock.py`:
+  - `File -> Reload from Disk`.
+  - Watcher leve com `QFileSystemWatcher` apenas para arquivos abertos e seus diretorios pais.
+  - Fallback por assinatura de disco (`mtime`, tamanho, inode e device).
+  - Marcadores de aba `[external]` e `[missing]` quando o arquivo aberto muda ou desaparece no disco.
+  - Status visual para conflito externo e pausa de auto-save ate o usuario decidir.
+  - Protecao em `Save` para escolher `Keep Editor Version`, `Save As...` ou cancelar quando ha conflito externo.
+- Atualizado `docs/TASKS.md` marcando a fatia como concluida.
+- Testes/validacoes feitas:
+  - `python -m py_compile src/gui/editor_dock.py tests/gui/test_editor_dock.py`
+  - `python -m json.tool src/i18n/en.json`
+  - `python -m json.tool src/i18n/pt_BR.json`
+  - `QT_QPA_PLATFORM=offscreen python -m pytest -q tests/gui/test_editor_dock.py::TestFileOperations`
+  - `QT_QPA_PLATFORM=offscreen python -m pytest -q tests/gui/test_editor_dock.py::TestEditorDockInitialization::test_file_menu_exists ...::test_compare_with_saved_builds_unified_diff`
+  - `git diff --check -- history-chat.md docs/TASKS.md src/gui/editor_dock.py src/i18n/en.json src/i18n/pt_BR.json tests/gui/test_editor_dock.py`
+- Observacao: a suite completa `tests/gui/test_editor_dock.py` ficou lenta/presa em execucao offscreen e foi interrompida para evitar consumo desnecessario; os testes focados e classes diretamente alteradas passaram.
+
 ## 2026-07-19 - Pre-acao - Novas tarefas e auditoria do Text Extractor
 
 - Pedido do usuario:

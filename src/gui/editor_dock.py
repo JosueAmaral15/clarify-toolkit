@@ -28,7 +28,9 @@ import os
 from datetime import datetime
 from typing import List
 
-from PySide6.QtCore import QEvent, QObject, QRegularExpression, QSize, Qt, QTimer
+from PySide6.QtCore import (
+    QEvent, QFileSystemWatcher, QObject, QRegularExpression, QSize, Qt, QTimer
+)
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar, QPushButton,
     QVBoxLayout, QWidget,
@@ -346,6 +348,7 @@ class EditorDock(BaseDock):
         "save": {"text_key": "editor.btn_save"},
         "save_as": {"text_key": "editor.btn_save_as"},
         "compare_with_saved": {"text_key": "editor.btn_compare_with_saved"},
+        "reload_from_disk": {"text_key": "editor.btn_reload_from_disk"},
         "enable_saving": {"text_key": "editor.btn_enable_saving"},
         "export": {"text_key": "editor.btn_export"},
         "close_tab": {"text_key": "editor.btn_close_tab"},
@@ -394,7 +397,8 @@ class EditorDock(BaseDock):
             "title_key": "editor.menu_file",
             "items": (
                 "new", "open", "save", "save_as", "compare_with_saved",
-                "enable_saving", "export", "close_tab", None, "auto_save",
+                "reload_from_disk", "enable_saving", "export", "close_tab",
+                None, "auto_save",
             ),
         },
         "edit": {
@@ -434,6 +438,7 @@ class EditorDock(BaseDock):
         "save": "has_tab",
         "save_as": "has_tab",
         "compare_with_saved": "has_file_path",
+        "reload_from_disk": "can_reload_from_disk",
         "enable_saving": "is_edit_only",
         "close_tab": "has_tab",
         "export": "has_editor",
@@ -478,6 +483,9 @@ class EditorDock(BaseDock):
         "render_whitespace": "render_whitespace_enabled",
         "show_line_numbers": "show_line_numbers_enabled",
     }
+
+    MAX_EXTERNAL_FILE_WATCHES = 128
+    MAX_EXTERNAL_DIR_WATCHES = 128
 
     def __init__(self, parent=None):
         # Initialize attributes BEFORE super().__init__() which calls _setup_ui()
@@ -529,6 +537,7 @@ class EditorDock(BaseDock):
         self._setup_view_menu()
         self._setup_json_menu()
         self._refresh_editor_menus()
+        self._setup_external_file_watcher()
 
         toolbar.addWidget(self.menu_bar)
         toolbar.addStretch()
@@ -580,12 +589,292 @@ class EditorDock(BaseDock):
         for action_id, handler in handlers.items():
             self._action_by_id[action_id].triggered.connect(handler)
 
+        self._file_watcher.fileChanged.connect(self._on_watched_file_changed)
+        self._file_watcher.directoryChanged.connect(self._on_watched_directory_changed)
+
         self.tab_widget.tabCloseRequested.connect(self._close_tab)
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
 
         # Context menu on tabs
         self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab_widget.customContextMenuRequested.connect(self._show_tab_context_menu)
+
+    def _setup_external_file_watcher(self) -> None:
+        """Create bounded watchers for files currently open in editor tabs."""
+        self._file_watcher = QFileSystemWatcher(self)
+        self._watched_file_paths: set[str] = set()
+        self._watched_dir_paths: set[str] = set()
+
+    @staticmethod
+    def _normalized_file_path(file_path: str | None) -> str:
+        """Return a stable absolute path for comparison and watcher registration."""
+        if not file_path:
+            return ""
+        return os.path.abspath(os.path.normpath(file_path))
+
+    @staticmethod
+    def _file_disk_signature(file_path: str | None):
+        """Return lightweight file identity/content-change metadata."""
+        normalized_path = EditorDock._normalized_file_path(file_path)
+        if not normalized_path:
+            return None
+
+        try:
+            stat_result = os.stat(normalized_path)
+        except OSError:
+            return None
+
+        return (
+            stat_result.st_mtime_ns,
+            stat_result.st_size,
+            getattr(stat_result, 'st_ino', 0),
+            getattr(stat_result, 'st_dev', 0),
+        )
+
+    def _tab_tracked_file_path(self, tab) -> str:
+        """Return the file-backed path currently tracked for a tab."""
+        return getattr(tab, '_clarify_disk_path', '') or self._normalized_file_path(
+            getattr(tab, 'file_path', None)
+        )
+
+    def _track_tab_disk_state(self, tab) -> None:
+        """Refresh the saved-on-disk baseline for a file-backed tab."""
+        if tab is None:
+            return
+
+        file_path = self._normalized_file_path(getattr(tab, 'file_path', None))
+        if not file_path or getattr(tab, 'edit_only_mode', False):
+            self._clear_tab_disk_state(tab, refresh_watchers=False)
+            self._refresh_external_file_watchers()
+            return
+
+        signature = self._file_disk_signature(file_path)
+        setattr(tab, '_clarify_disk_path', file_path)
+        setattr(tab, '_clarify_disk_signature', signature)
+        self._set_tab_external_state(tab, "clean" if signature is not None else "missing")
+        self._refresh_external_file_watchers()
+
+    def _clear_tab_disk_state(self, tab, refresh_watchers: bool = True) -> None:
+        """Remove Clarify Editor disk-tracking metadata from a tab."""
+        if tab is None:
+            return
+
+        setattr(tab, '_clarify_disk_path', '')
+        setattr(tab, '_clarify_disk_signature', None)
+        setattr(tab, '_clarify_external_state', "clean")
+        if hasattr(tab, '_clarify_auto_save_paused_for_external_change'):
+            delattr(tab, '_clarify_auto_save_paused_for_external_change')
+
+        if refresh_watchers:
+            self._refresh_external_file_watchers()
+
+    def _set_tab_external_state(self, tab, state: str) -> None:
+        """Set external-change state and pause auto-save while user decision is needed."""
+        previous_state = getattr(tab, '_clarify_external_state', "clean")
+        setattr(tab, '_clarify_external_state', state)
+
+        if state != "clean":
+            self._pause_tab_auto_save_for_external_change(tab)
+        elif (
+            previous_state != "clean"
+            and getattr(tab, '_clarify_auto_save_paused_for_external_change', False)
+        ):
+            if hasattr(tab, '_clarify_auto_save_paused_for_external_change'):
+                delattr(tab, '_clarify_auto_save_paused_for_external_change')
+            if self.auto_save_enabled:
+                self._apply_auto_save_to_tab(tab)
+
+    def _pause_tab_auto_save_for_external_change(self, tab) -> None:
+        """Prevent auto-save from overwriting disk while an external change is unresolved."""
+        if getattr(tab, '_clarify_auto_save_paused_for_external_change', False):
+            return
+
+        if hasattr(tab, 'set_auto_save'):
+            tab.set_auto_save(False)
+        elif hasattr(tab, 'auto_save_timer'):
+            tab.auto_save_timer.stop()
+
+        setattr(tab, '_clarify_auto_save_paused_for_external_change', True)
+
+    def _refresh_external_file_watchers(self) -> None:
+        """Watch open files and their parent folders without scanning folder trees."""
+        if not hasattr(self, '_file_watcher') or not hasattr(self, 'tab_widget'):
+            return
+
+        desired_files: set[str] = set()
+        desired_dirs: set[str] = set()
+
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if getattr(tab, 'edit_only_mode', False):
+                continue
+
+            file_path = self._tab_tracked_file_path(tab)
+            if not file_path:
+                continue
+
+            parent_dir = os.path.dirname(file_path)
+            if os.path.exists(file_path) and len(desired_files) < self.MAX_EXTERNAL_FILE_WATCHES:
+                desired_files.add(file_path)
+            if os.path.isdir(parent_dir) and len(desired_dirs) < self.MAX_EXTERNAL_DIR_WATCHES:
+                desired_dirs.add(parent_dir)
+
+        self._replace_watched_paths(self._watched_file_paths, desired_files)
+        self._replace_watched_paths(self._watched_dir_paths, desired_dirs)
+
+    def _replace_watched_paths(self, current_paths: set[str], desired_paths: set[str]) -> None:
+        """Synchronize one QFileSystemWatcher path set with desired paths."""
+        for old_path in sorted(current_paths - desired_paths):
+            self._file_watcher.removePath(old_path)
+            current_paths.discard(old_path)
+
+        for new_path in sorted(desired_paths - current_paths):
+            if self._file_watcher.addPath(new_path):
+                current_paths.add(new_path)
+
+    def _on_watched_file_changed(self, file_path: str) -> None:
+        """Handle QFileSystemWatcher notifications for file content changes."""
+        self._check_external_state_for_path(file_path)
+        self._refresh_external_file_watchers()
+
+    def _on_watched_directory_changed(self, directory_path: str) -> None:
+        """Handle parent-folder notifications such as file removal or rename."""
+        normalized_dir = self._normalized_file_path(directory_path)
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            file_path = self._tab_tracked_file_path(tab)
+            if file_path and os.path.dirname(file_path) == normalized_dir:
+                self._check_tab_external_state(tab)
+                self._update_tab_title(tab)
+
+        self._show_external_status_for_current_tab()
+        self._refresh_editor_menus()
+        self._refresh_external_file_watchers()
+
+    def _check_external_state_for_path(self, file_path: str) -> bool:
+        """Check all tabs backed by a given path for external changes."""
+        normalized_path = self._normalized_file_path(file_path)
+        affected = False
+
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if self._tab_tracked_file_path(tab) != normalized_path:
+                continue
+
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+            affected = True
+
+        if affected:
+            self._show_external_status_for_current_tab()
+            self._refresh_editor_menus()
+
+        return affected
+
+    def _check_tab_external_state(self, tab) -> str:
+        """Compare the current file state with the tab's last known disk baseline."""
+        if tab is None or getattr(tab, 'edit_only_mode', False):
+            return "clean"
+
+        file_path = self._normalized_file_path(getattr(tab, 'file_path', None))
+        if not file_path:
+            self._clear_tab_disk_state(tab, refresh_watchers=False)
+            return "clean"
+
+        tracked_path = getattr(tab, '_clarify_disk_path', '')
+        if tracked_path and tracked_path != file_path:
+            self._track_tab_disk_state(tab)
+            return getattr(tab, '_clarify_external_state', "clean")
+
+        baseline_signature = getattr(tab, '_clarify_disk_signature', None)
+        current_signature = self._file_disk_signature(file_path)
+
+        if baseline_signature is None and current_signature is not None:
+            setattr(tab, '_clarify_disk_path', file_path)
+            setattr(tab, '_clarify_disk_signature', current_signature)
+            self._set_tab_external_state(tab, "clean")
+            return "clean"
+
+        if current_signature is None:
+            self._set_tab_external_state(tab, "missing")
+            return "missing"
+
+        if current_signature != baseline_signature:
+            self._set_tab_external_state(tab, "modified")
+            return "modified"
+
+        self._set_tab_external_state(tab, "clean")
+        return "clean"
+
+    def _display_title_for_tab(self, tab) -> str:
+        """Return the user-visible tab title with external-change badges."""
+        title = tab.get_display_title()
+        external_state = getattr(tab, '_clarify_external_state', "clean")
+        if external_state == "modified":
+            return f"{title} [external]"
+        if external_state == "missing":
+            return f"{title} [missing]"
+        return title
+
+    def _show_external_status_for_current_tab(self) -> bool:
+        """Show the current tab's external-change state in the status bar."""
+        tab = self.tab_widget.currentWidget()
+        if tab is None:
+            return False
+
+        external_state = getattr(tab, '_clarify_external_state', "clean")
+        if external_state == "clean":
+            return False
+
+        file_path = self._tab_tracked_file_path(tab)
+        filename = os.path.basename(file_path) if file_path else tab.get_tab_title()
+
+        if external_state == "modified":
+            self.lbl_status.setStyleSheet("color: #DCDCAA; font-weight: bold;")
+            self.lbl_status.setText(
+                "File changed on disk: "
+                f"{filename}. Use File > Reload from Disk, Compare with Saved, "
+                "Save, or Save As."
+            )
+            return True
+
+        self.lbl_status.setStyleSheet("color: #F44747; font-weight: bold;")
+        self.lbl_status.setText(
+            f"File missing on disk: {filename}. Use Save As or Close Tab."
+        )
+        return True
+
+    def _save_decision_for_external_change(self, tab) -> str:
+        """Ask whether Save should overwrite an unresolved external disk change."""
+        external_state = self._check_tab_external_state(tab)
+        if external_state == "clean":
+            return "save"
+
+        file_path = self._tab_tracked_file_path(tab)
+        filename = os.path.basename(file_path) if file_path else tab.get_tab_title()
+        message = (
+            f"'{filename}' changed on disk after it was opened."
+            if external_state == "modified"
+            else f"'{filename}' is missing on disk."
+        )
+
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("External File Change")
+        dialog.setText(message)
+        dialog.setInformativeText("Choose how to handle the editor buffer.")
+        btn_keep = dialog.addButton("Keep Editor Version", QMessageBox.AcceptRole)
+        btn_save_as = dialog.addButton(tr("editor.btn_save_as"), QMessageBox.ActionRole)
+        btn_cancel = dialog.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
+
+        dialog.exec_()
+        clicked = dialog.clickedButton()
+        if clicked == btn_keep:
+            return "save"
+        if clicked == btn_save_as:
+            return "save_as"
+        if clicked == btn_cancel:
+            return "cancel"
+        return "cancel"
 
     def _apply_auto_save_to_tab(self, tab) -> None:
         """Apply current auto-save setting and connect status updates once."""
@@ -717,6 +1006,7 @@ class EditorDock(BaseDock):
             "save": lambda _checked=False: self._save_file(),
             "save_as": lambda _checked=False: self._save_file_as(),
             "compare_with_saved": lambda _checked=False: self._compare_current_tab_with_saved(),
+            "reload_from_disk": lambda _checked=False: self._reload_current_tab_from_disk(),
             "enable_saving": lambda _checked=False: self._enable_saving_current_tab(),
             "export": lambda _checked=False: self._export_current_tab(),
             "close_tab": lambda _checked=False: self._close_current_tab(),
@@ -768,6 +1058,12 @@ class EditorDock(BaseDock):
             "has_tab": tab is not None,
             "has_editor": tab is not None and hasattr(tab, 'editor'),
             "has_file_path": tab is not None and bool(getattr(tab, 'file_path', None)),
+            "can_reload_from_disk": (
+                tab is not None
+                and bool(getattr(tab, 'file_path', None))
+                and os.path.exists(getattr(tab, 'file_path', ''))
+                and not bool(getattr(tab, 'edit_only_mode', False))
+            ),
             "is_json_tab": isinstance(tab, JsonEditorTab),
             "has_active_schema": isinstance(tab, JsonEditorTab) and bool(
                 getattr(tab, '_clarify_active_schema_text', None)
@@ -909,7 +1205,10 @@ class EditorDock(BaseDock):
         self._prepare_tab_for_dock(tab)
 
         # Use display title (includes JSON icon if JSON file, 🔒 if edit-only)
-        index = self.tab_widget.addTab(tab, tab.get_display_title())
+        index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+        if not edit_only:
+            self._track_tab_disk_state(tab)
+            self._update_tab_title(tab)
         self.tab_widget.setCurrentIndex(index)
         self._refresh_editor_menus()
 
@@ -964,10 +1263,18 @@ class EditorDock(BaseDock):
             self._save_file_as()
             return
 
+        save_decision = self._save_decision_for_external_change(tab)
+        if save_decision == "save_as":
+            self._save_file_as()
+            return
+        if save_decision != "save":
+            return
+
         # Handle different tab types
         if isinstance(tab, JsonEditorTab):
             success, error_msg = tab.save_file()
             if success:
+                self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
             else:
@@ -975,6 +1282,7 @@ class EditorDock(BaseDock):
         else:
             # EditorTab
             if tab.save_file():
+                self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
             else:
@@ -1004,6 +1312,7 @@ class EditorDock(BaseDock):
         if isinstance(tab, JsonEditorTab):
             success, error_msg = tab.save_file(file_path)
             if success:
+                self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
                 self._refresh_editor_menus()
@@ -1014,6 +1323,7 @@ class EditorDock(BaseDock):
         else:
             # EditorTab
             if tab.save_file(file_path):
+                self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
                 self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
                 self._refresh_editor_menus()
@@ -2253,6 +2563,57 @@ class EditorDock(BaseDock):
         self.lbl_status.setText(tr("editor.status_compare_changes"))
         dialog.exec()
 
+    def _reload_current_tab_from_disk(self) -> bool:
+        """Reload the current file-backed tab from disk."""
+        tab = self.tab_widget.currentWidget()
+        if not tab or not hasattr(tab, 'editor'):
+            return False
+
+        file_path = self._normalized_file_path(getattr(tab, 'file_path', None))
+        if not file_path:
+            QMessageBox.information(
+                self,
+                tr("editor.compare_no_file_title"),
+                tr("editor.compare_no_file_message"),
+            )
+            return False
+
+        if not os.path.exists(file_path):
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+            self._show_external_status_for_current_tab()
+            QMessageBox.warning(
+                self,
+                "File Missing",
+                f"File no longer exists on disk:\n{file_path}",
+            )
+            return False
+
+        if getattr(tab, 'is_modified', False):
+            reply = QMessageBox.question(
+                self,
+                "Reload from Disk",
+                "Reloading will discard unsaved editor changes.\n\nContinue?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return False
+
+        if not tab.load_file(file_path):
+            QMessageBox.critical(
+                self,
+                tr("editor.file_open_error_title"),
+                tr("editor.file_open_error").format(file=file_path),
+            )
+            return False
+
+        self._track_tab_disk_state(tab)
+        self._update_tab_title(tab)
+        self._refresh_editor_menus()
+        self.lbl_status.setStyleSheet("color: #6A9955;")
+        self.lbl_status.setText(f"Reloaded from disk: {os.path.basename(file_path)}")
+        return True
+
     def _enable_saving_current_tab(self):
         """Convert the current edit-only tab into a file-backed tab."""
         tab = self.tab_widget.currentWidget()
@@ -2261,6 +2622,7 @@ class EditorDock(BaseDock):
 
         if hasattr(tab, '_enable_file_saving'):
             tab._enable_file_saving()
+            self._track_tab_disk_state(tab)
         else:
             reply = QMessageBox.question(
                 self,
@@ -2272,6 +2634,7 @@ class EditorDock(BaseDock):
                 tab.edit_only_mode = False
                 if hasattr(tab, 'edit_only_changed'):
                     tab.edit_only_changed.emit(False)
+                self._track_tab_disk_state(tab)
 
         self._refresh_editor_menus()
 
@@ -2344,15 +2707,22 @@ class EditorDock(BaseDock):
                 elif reply == QMessageBox.Cancel:
                     return
 
+        self._clear_tab_disk_state(tab, refresh_watchers=False)
         self.tab_widget.removeTab(index)
+        self._refresh_external_file_watchers()
         self.lbl_status.setText(f"Closed: {tab.get_tab_title()}")
         self._refresh_editor_menus()
 
     def _on_tab_changed(self, index: int):
         """Handle tab change with edit-only mode indicators."""
-        self._refresh_editor_menus()
         if index >= 0:
             tab = self.tab_widget.widget(index)
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+            self._refresh_editor_menus()
+
+            if self._show_external_status_for_current_tab():
+                return
 
             # Get editor type
             if isinstance(tab, JsonEditorTab):
@@ -2374,6 +2744,7 @@ class EditorDock(BaseDock):
             else:
                 self.lbl_status.setText(f"{editor_type}{mode_text}: {tab.get_tab_title()}")
         else:
+            self._refresh_editor_menus()
             self.lbl_status.setText(tr("editor.lbl_status_ready"))
             self.lbl_status.setStyleSheet("color: #6A9955;")
 
@@ -2381,10 +2752,11 @@ class EditorDock(BaseDock):
         """Update tab title based on modified state."""
         index = self.tab_widget.indexOf(tab)
         if index >= 0:
-            self.tab_widget.setTabText(index, tab.get_display_title())
+            self.tab_widget.setTabText(index, self._display_title_for_tab(tab))
 
     def _on_tab_mode_changed(self, tab: EditorTab):
         """Refresh title, status, and menu state after tab mode changes."""
+        self._track_tab_disk_state(tab)
         self._update_tab_title(tab)
         index = self.tab_widget.indexOf(tab)
         if index == self.tab_widget.currentIndex():
@@ -2459,6 +2831,8 @@ class EditorDock(BaseDock):
     def _on_auto_saved(self, tab: EditorTab):
         """Handle auto-save completion."""
         if hasattr(tab, 'file_path') and tab.file_path:
+            self._track_tab_disk_state(tab)
+            self._update_tab_title(tab)
             filename = os.path.basename(tab.file_path)
             self.lbl_status.setText(f"💾 Auto-saved: {filename}")
 
@@ -2501,7 +2875,10 @@ class EditorDock(BaseDock):
                 tab.file_path = None
 
             self._prepare_tab_for_dock(tab)
-            index = self.tab_widget.addTab(tab, tab.get_display_title())
+            index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+            if not edit_only:
+                self._track_tab_disk_state(tab)
+                self._update_tab_title(tab)
             self.tab_widget.setCurrentIndex(index)
             self._refresh_editor_menus()
 
