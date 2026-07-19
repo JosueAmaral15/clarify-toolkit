@@ -136,15 +136,6 @@ class DockFactory:
             main_window, JsonRewriterDock, 'dock_rewriter'
         )
 
-    @staticmethod
-    def create_text_extractor_dock(main_window: 'QMainWindow') -> 'QDockWidget':
-        """Create Text Extractor dock."""
-        from ..gui import TextExtractorDock
-        return DockFactory.create_dock(
-            main_window, TextExtractorDock, 'dock_text_extractor'
-        )
-
-    @staticmethod
     def create_placeholder_replacer_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Placeholder Replacer dock."""
         from ..gui import PlaceholderReplacerDock

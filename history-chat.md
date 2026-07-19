@@ -10,6 +10,40 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-19 - Pre-acao - Novas tarefas e auditoria do Text Extractor
+
+- Pedido do usuario:
+  - Incluir tarefa para o Clarify Editor detectar quando arquivo aberto foi modificado externamente/offline, inclusive em contexto de pasta.
+  - Verificar se existe alguma tarefa bloqueante.
+  - Avaliar se a ferramenta `Open Text Extractor` ainda faz sentido; caso nao faca, ela deve ser removida.
+- Contexto retomado:
+  - O worktree ainda contem muitas mudancas antigas e nao relacionadas em docs/File Explorer.
+  - O historico do projeto ja aponta consolidacao de ferramentas de extracao e possivel redundancia do Text Extractor.
+- Escopo imediato:
+  - Auditar referencias atuais ao Text Extractor no menu/factory/app/testes.
+  - Conferir `docs/TASKS.md` para registrar as novas tarefas sem misturar mudancas antigas do worktree.
+  - Responder de forma objetiva se ha bloqueio real antes de qualquer remocao.
+
+## 2026-07-19 - Pos-acao - Novas tarefas e auditoria do Text Extractor
+
+- Mudancas realizadas:
+  - `docs/TASKS.md` recebeu a tarefa `External File Change Detection Slice`, para o Clarify Editor detectar arquivos abertos modificados externamente/offline, removidos ou renomeados no disco, com watcher leve/fallback por `mtime` e sem varredura recursiva pesada.
+  - A auditoria confirmou que `Open Text Extractor` nao faz sentido como ferramenta publica separada: o README o marca como `LEGACY`, o relatorio de consolidacao diz que ele foi substituido/removido, e a funcao equivalente existe em `UnifiedTextToJsonDock`/`AdvancedExtractorDock`.
+  - Removida a acao publica `Open Text Extractor` do menu Tools, do `TabManager`, do `DockFactory`, dos metodos de abertura do `MainWindow` e do gerenciador de atalhos.
+  - `Ctrl+Shift+E` agora fica associado a `Advanced Extractor` no `ShortcutManager` e no menu.
+  - `tests/test_docks_factory.py` e `tests/test_keyboard_shortcuts.py` foram ajustados para a nova lista de ferramentas publicas.
+- Validacoes executadas:
+  - `python -m py_compile src/app.py src/gui/menu_builder.py src/gui/tab_manager.py src/gui/dock_factory.py src/shortcut_manager.py tests/test_docks_factory.py tests/test_keyboard_shortcuts.py` passou.
+  - `tests/test_keyboard_shortcuts.py`: `26 passed in 0.26s`.
+  - Smoke test do `MainWindow` confirmou `has_text_extractor=False`, `has_advanced_extractor=True` e `advanced_shortcut=Ctrl+Shift+E`; pico de RSS `126844 kbytes`, sem swap.
+  - Uma tentativa de rodar `tests/test_docks_factory.py` completo foi interrompida por custo/tempo apos ~2m23s; pico de RSS `217212 kbytes`, sem swap, e 3 testes ja haviam avancado.
+  - `git diff --check` nos arquivos tocados passou.
+- Bloqueios e riscos:
+  - Nao ha bloqueio para iniciar a tarefa de deteccao de modificacao externa no Clarify Editor.
+  - A remocao fisica completa de `TextExtractorDock` ainda deve ser uma tarefa separada, porque varios testes historicos importam o modulo diretamente.
+  - O worktree segue com muitas mudancas antigas e nao relacionadas em docs/File Explorer; commits devem continuar isolando arquivos por escopo.
+  - O smoke test revelou erros antigos de plugins (`export_to_postgresql` e `slack_notifications` com relative import alem do pacote), mas isso nao bloqueia esta fatia.
+
 ## 2026-07-15 - Pre-acao - Limites de memoria do autocomplete por schema
 
 - Pedido do usuario: continuar as tarefas, com alerta para tomar cuidado com vazamento de memoria ou estouro de memoria por causa de consumo recente muito alto.

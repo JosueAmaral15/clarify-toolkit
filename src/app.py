@@ -361,9 +361,6 @@ if _PYSIDE:
         def _open_rewrite(self):
             DockFactory.create_json_rewriter_dock(self)
 
-        def _open_text_extractor(self):
-            DockFactory.create_text_extractor_dock(self)
-
         def _open_placeholder_replacer(self):
             DockFactory.create_placeholder_replacer_dock(self)
 
@@ -485,11 +482,6 @@ if _PYSIDE:
             """Show JSON Rewriter as tab (create on-demand)."""
             from .gui.tab_manager import TabManager
             TabManager.show_rewriter(self)
-
-        def _show_text_extractor(self):
-            """Show Text Extractor as tab (create on-demand)."""
-            from .gui.tab_manager import TabManager
-            TabManager.show_text_extractor(self)
 
         def _show_placeholder_replacer(self):
             """Show Placeholder Replacer as tab (create on-demand)."""
@@ -1180,7 +1172,6 @@ if _PYSIDE:
             self.act_redo.setText(tr("menu.edit.redo"))
             self.act_open_translate.setText(tr("menu.tools.json_translate"))
             self.act_open_rewriter.setText(tr("menu.tools.json_rewriter"))
-            # DEPRECATED: self.act_open_text_extractor.setText(tr("menu.tools.text_extractor"))
             self.act_open_placeholder_replacer.setText(tr("menu.tools.placeholder_replacer"))
             self.act_open_ai_processor.setText(tr("menu.tools.ai_processor"))
             self.act_open_json_search.setText(tr("menu.tools.json_search"))
@@ -1393,11 +1384,11 @@ if _PYSIDE:
                 (self.act_open_set_operations, "open_set_operations", "Perform set operations on JSON"),
                 (self.act_open_ai_processor, "open_ai_processor", "Process JSON with AI"),
                 (self.act_open_case_converter, "open_case_converter", "Convert text case"),
-                # DEPRECATED: (self.act_open_text_extractor, "open_text_extractor", "Extract text from files"),
                 (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON / Extract from JSX"),
                 (self.act_open_placeholder_replacer, "open_placeholder_replacer", "Replace placeholders in text"),
                 (self.act_open_translate, "open_translate", "Translate JSON content"),
                 (self.act_open_file_explorer, "open_file_explorer", "Unified file explorer with advanced search"),
+                (self.act_open_advanced_extractor, "open_advanced_extractor", "Extract JSX/HTML with advanced options"),
 
                 # View menu
                 (self.act_toggle_history, "toggle_history", "Show/hide operation history"),

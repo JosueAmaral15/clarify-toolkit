@@ -47,6 +47,8 @@ class TestShortcutManager(unittest.TestCase):
         # Tools menu
         self.assertIn("open_json_search", ShortcutManager.SHORTCUTS)
         self.assertIn("open_ai_processor", ShortcutManager.SHORTCUTS)
+        self.assertIn("open_advanced_extractor", ShortcutManager.SHORTCUTS)
+        self.assertNotIn("open_text_extractor", ShortcutManager.SHORTCUTS)
 
         # Navigation
         self.assertIn("next_dock", ShortcutManager.SHORTCUTS)

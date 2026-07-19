@@ -1,7 +1,7 @@
 """
 Test DockFactory integration (Phase 3.3)
 
-Tests that all 14 docks can be created successfully via their menu action methods.
+Tests that all public docks can be created successfully via their menu action methods.
 Converted to pytest format for Sprint 1 (v2.9.115).
 """
 import pytest
@@ -33,7 +33,6 @@ def main_window(qapp, qtbot):
 DOCK_TEST_CASES = [
     ('_open_trans', 'dock_translate'),
     ('_open_rewrite', 'dock_rewriter'),
-    ('_open_text_extractor', 'dock_text_extractor'),
     ('_open_placeholder_replacer', 'dock_placeholder_replacer'),
     ('_open_ai_processor', 'dock_ai_processor'),
     ('_open_json_search', 'dock_json_search'),
@@ -73,7 +72,7 @@ def test_dock_creation(main_window, method_name, attr_name):
 
 
 def test_all_docks_count(main_window):
-    """Test that all 14 expected docks can be created."""
+    """Test that all expected public docks can be created."""
     created_docks = []
     
     for method_name, attr_name in DOCK_TEST_CASES:
@@ -83,6 +82,7 @@ def test_all_docks_count(main_window):
         if hasattr(main_window, attr_name):
             created_docks.append(attr_name)
     
-    # Verify all 14 docks were created
-    assert len(created_docks) == 14, f"Expected 14 docks, but created {len(created_docks)}: {created_docks}"
-
+    assert len(created_docks) == len(DOCK_TEST_CASES), (
+        f"Expected {len(DOCK_TEST_CASES)} docks, but created "
+        f"{len(created_docks)}: {created_docks}"
+    )

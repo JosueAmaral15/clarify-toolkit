@@ -1458,6 +1458,7 @@ result = convert_text_to_json(text, "auto")
     * ✅ **JSON Schema Quick Fix Slice (12/07/2026)**: ação `JSON → Insert Missing Required Fields...` usa o schema ativo da aba JSON para inserir campos obrigatórios ausentes no objeto raiz, preferindo `default`, `const` ou `enum` do schema e usando placeholders por tipo quando necessário.
     * ✅ **Visual Validation Highlight Slice (15/07/2026)**: `JsonEditorTab` agora aplica seleção visual discreta e sublinhado ondulado no ponto do erro JSON; falhas de schema ativo também marcam o melhor caminho JSON encontrado e limpam o destaque quando o schema volta a passar ou é removido.
     * ✅ **Schema Key Autocomplete Slice (15/07/2026)**: `JsonEditorTab` agora extrai candidatos de autocomplete de `properties` do JSON Schema ativo e mostra sugestões de chaves com `Ctrl+Space`; os candidatos são atualizados ao definir/limpar schema ativo. A extração foi endurecida com varredura iterativa e limites de tamanho, profundidade, nós visitados e quantidade de candidatos para evitar consumo excessivo de memória/CPU em schemas grandes.
+    * ⏳ **External File Change Detection Slice (19/07/2026 - TODO)**: Clarify Editor deve detectar quando um arquivo aberto foi modificado externamente/offline ou removido/renomeado no disco, inclusive quando a aba veio de arquivo dentro de uma pasta. Implementar watcher leve por arquivo/pasta com `QFileSystemWatcher` ou fallback por `mtime`, status visual por aba, e decisões explícitas `Reload`, `Compare`, `Keep Editor Version`, `Save As...`; evitar varredura recursiva pesada e limitar watchers para não consumir memória em pastas grandes.
     * **Sprint**: ~25 minutos (dock complexo: 1047 linhas, 2 classes - EditorDock + EditorTab, syntax highlighter, auto-save, edit-only mode)
     * **Progresso**: Tooltips Expansion - 14/15 docks (93.3%)
   - **[X] v2.9.77 - Base Dock (15/12/2025)**:
@@ -1523,6 +1524,7 @@ result = convert_text_to_json(text, "auto")
     * **Sprint**: ~55 minutos (39% mais widgets que v2.9.66, alta complexidade: advanced filters panel com presets system)
     * **Progresso**: Tooltips Expansion - 5/15 docks (33.3%)
   - **[X] v2.9.66 - Text Extractor Dock (11/12/2025)**:
+    * ⚠️ **Legacy Tool Consolidation Note (19/07/2026)**: `Open Text Extractor` não deve ser mantido como ferramenta pública separada; a função de extração JSX/HTML foi substituída por `UnifiedTextToJsonDock`/`AdvancedExtractorDock`, e a ação pública legada foi removida do menu/atalhos. O módulo `TextExtractorDock` ainda pode existir temporariamente para compatibilidade de testes históricos até limpeza física separada.
     * ✅ **23 tooltips totais**: 4 melhorados (combo_mode, combo_case, chk_exclude_numeric, chk_skip_empty removidas hardcoded) + 19 novos
     * ✅ **Input/Output** (5): ed_input (HTML/JSX file/dir Ctrl+O), btn_browse_input (Ctrl+O), chk_is_file (single vs directory), ed_output (JSON/TS Ctrl+S), btn_browse_output (Ctrl+S)
     * ✅ **Extraction** (2): combo_mode (3 modes: JSX Attributes/Tag Content/Generic Scope), ed_param (specific or all params)

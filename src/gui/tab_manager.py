@@ -35,8 +35,6 @@ class TabManager:
                       'JSON Translate', 'translate'),
         'rewriter': ('dock_rewriter', 'JsonRewriterDock',
                      'JSON Rewriter', 'rewriter'),
-        'text_extractor': ('dock_text_extractor', 'TextExtractorDock',
-                          'Text Extractor', 'text_extractor'),
         'placeholder_replacer': ('dock_placeholder_replacer',
                                 'PlaceholderReplacerDock',
                                 'Placeholder Replacer', 'placeholder_replacer'),
@@ -85,11 +83,6 @@ class TabManager:
     def show_rewriter(main_window) -> None:
         """Show JSON Rewriter as tab."""
         TabManager.show_tool_tab(main_window, 'rewriter')
-
-    @staticmethod
-    def show_text_extractor(main_window) -> None:
-        """Show Text Extractor as tab."""
-        TabManager.show_tool_tab(main_window, 'text_extractor')
 
     @staticmethod
     def show_placeholder_replacer(main_window) -> None:
