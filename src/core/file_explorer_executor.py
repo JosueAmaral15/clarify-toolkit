@@ -175,6 +175,20 @@ class UnifiedFileExplorerExecutor(QObject):
         exclude_globs = filters.get("exclude_globs", [])
 
         if include_globs or exclude_globs:
+            def matches_glob(file_path: str, file_name: str, pattern: str) -> bool:
+                rel_path = os.path.relpath(file_path, directory)
+                rel_path_posix = rel_path.replace(os.sep, "/")
+                path_posix = file_path.replace(os.sep, "/")
+
+                return (
+                    pattern in file_path.split(os.sep)
+                    or fnmatch.fnmatch(file_name, pattern)
+                    or fnmatch.fnmatch(rel_path, pattern)
+                    or fnmatch.fnmatch(rel_path_posix, pattern)
+                    or fnmatch.fnmatch(file_path, pattern)
+                    or fnmatch.fnmatch(path_posix, pattern)
+                )
+
             filtered_files = []
             for file_info in file_list:
                 file_path = file_info.path
@@ -183,14 +197,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 # Check exclude globs first (higher priority)
                 excluded = False
                 for pattern in exclude_globs:
-                    # Check if pattern exists as a path component (directory name)
-                    # This correctly handles .venv, node_modules, etc.
-                    path_components = file_path.split(os.sep)
-                    if pattern in path_components:
-                        excluded = True
-                        break
-                    # Also check if pattern matches filename (for patterns like *.pyc)
-                    if fnmatch.fnmatch(file_name, pattern):
+                    if matches_glob(file_path, file_name, pattern):
                         excluded = True
                         break
 
@@ -201,7 +208,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 if include_globs:
                     included = False
                     for pattern in include_globs:
-                        if fnmatch.fnmatch(file_path, pattern) or fnmatch.fnmatch(file_name, pattern):
+                        if matches_glob(file_path, file_name, pattern):
                             included = True
                             break
 

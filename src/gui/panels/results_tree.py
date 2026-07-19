@@ -13,7 +13,7 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 import os
 import sys
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect
 from PySide6.QtGui import QColor, QPainter, QTextDocument
@@ -27,6 +27,18 @@ from ...i18n import tr
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+ITEM_TYPE_ROLE = int(Qt.ItemDataRole.UserRole)
+PATH_ROLE = ITEM_TYPE_ROLE + 1
+RESULT_PATH_ROLE = ITEM_TYPE_ROLE + 2
+MATCH_DATA_ROLE = ITEM_TYPE_ROLE + 3
+
+ITEM_TYPE_SUMMARY = "summary"
+ITEM_TYPE_ROOT = "root"
+ITEM_TYPE_DIRECTORY = "directory"
+ITEM_TYPE_FILE = "file"
+ITEM_TYPE_MATCH = "match"
+ITEM_TYPE_MESSAGE = "message"
 
 
 class WordWrapDelegate(QStyledItemDelegate):
@@ -201,6 +213,12 @@ class ResultsTree(QTreeWidget):
         # Status label at bottom of tree (v2.5.1)
         self._status_label = None  # Will be set by parent
 
+        # Tree hierarchy state. Display text stays human-friendly; full paths live in item data.
+        self._base_path: Optional[str] = None
+        self._summary_item: Optional[QTreeWidgetItem] = None
+        self._tree_root_item: Optional[QTreeWidgetItem] = None
+        self._directory_items: Dict[str, QTreeWidgetItem] = {}
+
         # Custom delegate for word wrap (v2.9.118)
         self._delegate = WordWrapDelegate(self)
         self.setItemDelegate(self._delegate)
@@ -224,6 +242,22 @@ class ResultsTree(QTreeWidget):
         if self._word_wrap_enabled:
             self.scheduleDelayedItemsLayout()
             self.viewport().update()
+
+    def clear(self):  # pylint: disable=invalid-name  # Qt override
+        """Clear visible items and internal result lookup state."""
+        super().clear()
+        if hasattr(self, "_matches_data"):
+            self._matches_data = {}
+        if hasattr(self, "_summary_item"):
+            self._summary_item = None
+        if hasattr(self, "_tree_root_item"):
+            self._tree_root_item = None
+        if hasattr(self, "_directory_items"):
+            self._directory_items = {}
+
+    def set_base_path(self, base_path: Optional[str]):
+        """Set the preferred root path for hierarchical display."""
+        self._base_path = self._normalize_path(base_path) if base_path else None
 
     def set_word_wrap(self, enabled: bool):
         """Toggle word wrap mode (v2.9.118 - fixed with custom delegate)."""
@@ -271,22 +305,265 @@ class ResultsTree(QTreeWidget):
 
         # Refresh display if there's data
         if self._matches_data:
-            self.populate(self._matches_data, sort_results=False)
+            self.populate(self._matches_data, sort_results=False, base_path=self._base_path)
             # Force viewport update
             self.viewport().update()
 
+    @staticmethod
+    def _normalize_path(path: str) -> str:
+        """Return an absolute normalized path without changing Unicode characters."""
+        try:
+            return os.path.abspath(os.path.normpath(os.fspath(path)))
+        except (OSError, TypeError, ValueError):
+            return os.path.normpath(str(path))
+
+    @staticmethod
+    def _display_name(path: str) -> str:
+        """Return a compact label for a path, preserving roots such as '/'."""
+        normalized = os.path.normpath(path)
+        return os.path.basename(normalized) or normalized
+
+    def _resolve_root_path(self, paths: List[str], base_path: Optional[str] = None) -> Optional[str]:
+        """Resolve the tree root from an explicit base path or common result parent."""
+        if base_path:
+            return self._normalize_path(base_path)
+
+        if self._base_path:
+            return self._base_path
+
+        if not paths:
+            return None
+
+        candidate_dirs = []
+        for path in paths:
+            normalized = self._normalize_path(path)
+            if os.path.isdir(normalized):
+                candidate_dirs.append(normalized)
+            else:
+                candidate_dirs.append(os.path.dirname(normalized) or normalized)
+
+        try:
+            root_path = os.path.commonpath(candidate_dirs)
+        except ValueError:
+            root_path = candidate_dirs[0]
+
+        return root_path or os.path.abspath(os.curdir)
+
+    def _set_item_metadata(
+        self,
+        item: QTreeWidgetItem,
+        item_type: str,
+        path: Optional[str] = None,
+        result_path: Optional[str] = None,
+        match_data: Optional[Tuple[int, int, str]] = None,
+    ):
+        """Attach stable metadata so actions never depend on visible labels."""
+        item.setData(0, ITEM_TYPE_ROLE, item_type)
+        if path:
+            item.setData(0, PATH_ROLE, path)
+            item.setToolTip(0, path)
+        if result_path:
+            item.setData(0, RESULT_PATH_ROLE, result_path)
+            item.setToolTip(0, result_path)
+        if match_data is not None:
+            item.setData(0, MATCH_DATA_ROLE, match_data)
+
+    def _item_type(self, item: Optional[QTreeWidgetItem]) -> Optional[str]:
+        """Return the metadata item type."""
+        if not item:
+            return None
+        return item.data(0, ITEM_TYPE_ROLE)
+
+    def _is_summary_item(self, item: QTreeWidgetItem) -> bool:
+        """Return True if item is the summary header."""
+        item_type = self._item_type(item)
+        return item_type == ITEM_TYPE_SUMMARY or item.text(0).startswith(("📊 Results:", "Results:"))
+
+    def _result_path_for_item(self, item: Optional[QTreeWidgetItem]) -> Optional[str]:
+        """Return the full result path represented by item or its result parent."""
+        current = item
+        while current is not None:
+            result_path = current.data(0, RESULT_PATH_ROLE)
+            if result_path:
+                return result_path
+            current = current.parent()
+
+        if item and not item.parent() and not self._is_summary_item(item):
+            text = item.text(0)
+            if text and os.path.exists(text):
+                return text
+        return None
+
+    def _collect_selected_result_paths(self, preserve_order: bool = False):
+        """Collect unique full paths represented by current selection."""
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return [] if preserve_order else set()
+
+        paths = []
+        seen = set()
+        for item in selected_items:
+            if self._is_summary_item(item) or self._item_type(item) in {ITEM_TYPE_ROOT, ITEM_TYPE_MESSAGE}:
+                continue
+            path = self._result_path_for_item(item)
+            if path and path not in seen:
+                seen.add(path)
+                paths.append(path)
+
+        return paths if preserve_order else set(paths)
+
+    def _root_label(self, root_path: str) -> str:
+        """Build the visible root node label."""
+        name = self._display_name(root_path)
+        return tr("results_tree.root_label", "Root: {0}").format(name)
+
+    def _ensure_summary(self, total_files: int, total_matches: int):
+        """Create or update the summary header."""
+        if total_files <= 0:
+            return
+
+        label = f"Results: {total_matches} matches in {total_files} file(s)"
+        if self._summary_item is None:
+            self._summary_item = QTreeWidgetItem([label])
+            self._set_item_metadata(self._summary_item, ITEM_TYPE_SUMMARY)
+            self.addTopLevelItem(self._summary_item)
+        else:
+            self._summary_item.setText(0, label)
+
+        self._summary_item.setForeground(0, QColor(0, 150, 0))
+        font = self._summary_item.font(0)
+        font.setBold(True)
+        self._summary_item.setFont(0, font)
+
+    def _ensure_tree_root(self, root_path: str) -> QTreeWidgetItem:
+        """Create the display root node if needed."""
+        root_path = self._normalize_path(root_path)
+        if self._tree_root_item is not None:
+            return self._tree_root_item
+
+        self._tree_root_item = QTreeWidgetItem([self._root_label(root_path)])
+        self._set_item_metadata(self._tree_root_item, ITEM_TYPE_ROOT, path=root_path)
+        font = self._tree_root_item.font(0)
+        font.setBold(True)
+        self._tree_root_item.setFont(0, font)
+        self._tree_root_item.setExpanded(True)
+
+        self.addTopLevelItem(self._tree_root_item)
+        self._directory_items[root_path] = self._tree_root_item
+        return self._tree_root_item
+
+    @staticmethod
+    def _find_child(parent: QTreeWidgetItem, text: str) -> Optional[QTreeWidgetItem]:
+        """Find a direct child by visible text."""
+        for index in range(parent.childCount()):
+            child = parent.child(index)
+            if child.text(0) == text:
+                return child
+        return None
+
+    def _relative_parts(self, path: str, root_path: str) -> List[str]:
+        """Split a result path into parts relative to root_path."""
+        try:
+            relative_path = os.path.relpath(path, root_path)
+        except ValueError:
+            relative_path = path
+
+        if relative_path in ("", "."):
+            return []
+
+        if os.altsep:
+            relative_path = relative_path.replace(os.altsep, os.sep)
+        return [part for part in relative_path.split(os.sep) if part and part != "."]
+
+    def _ensure_directory_item(self, parent: QTreeWidgetItem, name: str, path: str) -> QTreeWidgetItem:
+        """Create or reuse a directory node."""
+        path = self._normalize_path(path)
+        if path in self._directory_items:
+            return self._directory_items[path]
+
+        item = self._find_child(parent, name)
+        if item is None:
+            item = QTreeWidgetItem([name])
+            parent.addChild(item)
+
+        self._set_item_metadata(item, ITEM_TYPE_DIRECTORY, path=path)
+        self._directory_items[path] = item
+        return item
+
+    def _create_match_item(self, file_path: str, line: int, col: int, snippet: str) -> QTreeWidgetItem:
+        """Create a match row under a file/path node."""
+        snippet_clean = snippet.strip()
+        truncated = False
+        if not self._word_wrap_enabled and len(snippet_clean) > 120:
+            snippet_clean = snippet_clean[:120] + "..."
+            truncated = True
+
+        leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
+        self._set_item_metadata(
+            leaf,
+            ITEM_TYPE_MATCH,
+            result_path=file_path,
+            match_data=(line, col, snippet),
+        )
+
+        tooltip = f"File: {file_path}\nLine: {line}\nColumn: {col}"
+        if truncated:
+            tooltip = f"{tooltip}\n\nFull content:\n{snippet.strip()}"
+        leaf.setToolTip(0, tooltip)
+        return leaf
+
+    def _add_path_result(
+        self,
+        file_path: str,
+        matches_list: List[Tuple[int, int, str]],
+        root_path: str,
+        sort_results: bool = False,
+    ):
+        """Add a file/path result to the hierarchical tree."""
+        file_path = self._normalize_path(file_path)
+        root_path = self._normalize_path(root_path)
+        current = self._ensure_tree_root(root_path)
+
+        parts = self._relative_parts(file_path, root_path)
+        if parts:
+            for index, part in enumerate(parts):
+                is_leaf = index == len(parts) - 1
+                node_path = self._normalize_path(os.path.join(root_path, *parts[: index + 1]))
+
+                if is_leaf:
+                    child = self._find_child(current, part)
+                    if child is None:
+                        child = QTreeWidgetItem([part])
+                        current.addChild(child)
+
+                    item_type = ITEM_TYPE_DIRECTORY if os.path.isdir(file_path) else ITEM_TYPE_FILE
+                    self._set_item_metadata(child, item_type, path=file_path, result_path=file_path)
+                    current = child
+                else:
+                    current = self._ensure_directory_item(current, part, node_path)
+        else:
+            current.setData(0, RESULT_PATH_ROLE, file_path)
+
+        items = sorted(matches_list, key=lambda x: (x[0], x[1])) if sort_results else matches_list
+        for line, col, snippet in items:
+            current.addChild(self._create_match_item(file_path, line, col, snippet))
+        current.setExpanded(True)
+
     def _on_item_hover(self, item: QTreeWidgetItem, _column: int):
         """Show position info when hovering over match items (v2.5.1)."""
-        if item and item.parent():  # This is a match item (has parent = file item)
+        if item and self._item_type(item) == ITEM_TYPE_MATCH:
             text = item.text(0)
             # Extract line:col from the beginning of text
             if ":" in text:
                 try:
-                    pos_part = text.split()[0]  # Get "line:col" part
-                    line, col = pos_part.split(":")
+                    match_data = item.data(0, MATCH_DATA_ROLE)
+                    if match_data:
+                        line, col, _snippet = match_data
+                    else:
+                        pos_part = text.split()[0]  # Get "line:col" part
+                        line, col = pos_part.split(":")
 
-                    # Get file path from parent
-                    file_path = item.parent().text(0)
+                    file_path = self._result_path_for_item(item) or ""
 
                     # Set tooltip
                     tooltip = f"File: {file_path}\nLine: {line}\nColumn: {col}"
@@ -302,125 +579,90 @@ class ResultsTree(QTreeWidget):
             if self._status_label:
                 self._status_label.setText("")
 
-    def populate(self, matches: Dict[str, List[Tuple[int, int, str]]], sort_results: bool = False):
+    def populate(
+        self,
+        matches: Dict[str, List[Tuple[int, int, str]]],
+        sort_results: bool = False,
+        base_path: Optional[str] = None,
+    ):
         """
         Populate tree with search results.
 
         Args:
             matches: Dictionary mapping file paths to list of (line, col, snippet) tuples
             sort_results: If True, sort files alphabetically and matches by line number (v2.9.5)
+            base_path: Optional root path used to display results as a real directory tree
         """
         self.setUpdatesEnabled(False)
         try:
+            normalized_matches = {
+                self._normalize_path(path): list(items)
+                for path, items in matches.items()
+            }
+            root_path = self._resolve_root_path(list(normalized_matches.keys()), base_path)
+
             self.clear()
-            self._matches_data = matches  # Store for export
+            self._matches_data = normalized_matches  # Store for export
+            self._base_path = root_path
 
             # Calculate statistics
-            total_files = len(matches)
-            total_matches = sum(len(items) for items in matches.values())
+            total_files = len(normalized_matches)
+            total_matches = sum(len(items) for items in normalized_matches.values())
 
             # Add summary header at the top
-            if total_files > 0:
-                summary = QTreeWidgetItem([f"📊 Results: {total_matches} matches in {total_files} file(s)"])
-                summary.setForeground(0, QColor(0, 150, 0))  # Green color
-                font = summary.font(0)
-                font.setBold(True)
-                summary.setFont(0, font)
-                self.addTopLevelItem(summary)
+            self._ensure_summary(total_files, total_matches)
 
             # Sort file paths if requested (v2.9.5)
-            paths = sorted(matches.keys()) if sort_results else matches.keys()
+            paths = sorted(normalized_matches.keys()) if sort_results else normalized_matches.keys()
 
-            # Add file matches
-            for path in paths:
-                items = matches[path]
-                top = QTreeWidgetItem([path])
-                self.addTopLevelItem(top)
-
-                # Sort items by line number if requested
-                if sort_results:
-                    items = sorted(items, key=lambda x: (x[0], x[1]))  # Sort by line, then col
-
-                for line, col, snippet in items:
-                    # Truncate long snippets only if word wrap is disabled (v2.9.117)
-                    snippet_clean = snippet.strip()
-                    if not self._word_wrap_enabled and len(snippet_clean) > 120:
-                        snippet_clean = snippet_clean[:120] + "..."
-
-                    leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
-
-                    # Store full snippet in tooltip if truncated and word wrap is off
-                    if not self._word_wrap_enabled and len(snippet.strip()) > 120:
-                        leaf.setToolTip(0, f"Full content:\n{snippet.strip()}")
-
-                    top.addChild(leaf)
+            if root_path:
+                for path in paths:
+                    self._add_path_result(path, normalized_matches[path], root_path, sort_results=sort_results)
             self.expandAll()
         finally:
             self.setUpdatesEnabled(True)
 
-    def add_file_result(self, file_path: str, matches_list: List[Tuple[int, int, str]]):
+    def add_file_result(
+        self,
+        file_path: str,
+        matches_list: List[Tuple[int, int, str]],
+        base_path: Optional[str] = None,
+    ):
         """
         Add a single file result to the tree incrementally (for batch processing).
 
         Args:
             file_path: Path to the file
             matches_list: List of (line, col, snippet) tuples for this file
+            base_path: Optional root path used to keep incremental results under one root
         """
+        if base_path:
+            self.set_base_path(base_path)
+
+        file_path = self._normalize_path(file_path)
+
         # Store in matches data for export
         if file_path not in self._matches_data:
             self._matches_data[file_path] = []
         self._matches_data[file_path].extend(matches_list)
 
-        # Create file node
-        top = QTreeWidgetItem([file_path])
-        self.addTopLevelItem(top)
-
-        # Add match children
-        for line, col, snippet in matches_list:
-            # Truncate long snippets only if word wrap is disabled
-            snippet_clean = snippet.strip()
-            if not self._word_wrap_enabled and len(snippet_clean) > 120:
-                snippet_clean = snippet_clean[:120] + "..."
-
-            leaf = QTreeWidgetItem([f"{line}:{col}  {snippet_clean}"])
-
-            # Store full snippet in tooltip if truncated and word wrap is off
-            if not self._word_wrap_enabled and len(snippet.strip()) > 120:
-                leaf.setToolTip(0, f"Full content:\n{snippet.strip()}")
-
-            top.addChild(leaf)
-
-        # Auto-expand the file node
-        top.setExpanded(True)
+        root_path = self._resolve_root_path([file_path], self._base_path)
+        if root_path:
+            self._base_path = root_path
+            self._ensure_summary(
+                len(self._matches_data),
+                sum(len(items) for items in self._matches_data.values()),
+            )
+            self._add_path_result(file_path, matches_list, root_path)
+            self.expandAll()
 
     def sort_results(self):
         """
         Sort all results in the tree alphabetically by file path.
         Called after batch processing is complete.
         """
-        self.setUpdatesEnabled(False)
-        try:
-            # Collect all items (skip summary header if present)
-            items = []
-            for i in range(self.topLevelItemCount()):
-                item = self.topLevelItem(i)
-                text = item.text(0)
-                # Skip summary header (starts with 📊)
-                if not text.startswith("📊"):
-                    items.append((text, item))
-
-            # Sort by file path
-            items.sort(key=lambda x: x[0])
-
-            # Re-add items in sorted order
-            for idx, (_, item) in enumerate(items):
-                self.takeTopLevelItem(self.indexOfTopLevelItem(item))
-                # Insert after summary if it exists, otherwise at beginning
-                has_summary = self.topLevelItemCount() > 0 and self.topLevelItem(0).text(0).startswith("📊")
-                insert_pos = idx + (1 if has_summary else 0)
-                self.insertTopLevelItem(insert_pos, item)
-        finally:
-            self.setUpdatesEnabled(True)
+        if self._matches_data:
+            self.populate(self._matches_data, sort_results=True, base_path=self._base_path)
 
     def print_message(self, message: str = ""):
         """Display a single message in the tree."""
@@ -429,6 +671,7 @@ class ResultsTree(QTreeWidget):
             self.clear()
             self._matches_data = {}  # Clear data when showing message
             top = QTreeWidgetItem([message])
+            self._set_item_metadata(top, ITEM_TYPE_MESSAGE)
             self.addTopLevelItem(top)
             self.expandAll()
         finally:
@@ -487,7 +730,7 @@ class ResultsTree(QTreeWidget):
         copy_action.triggered.connect(self._copy_selected)
 
         # Copy all action
-        copy_all_action = menu.addAction("📋 Copy All ReResposta: sults")
+        copy_all_action = menu.addAction("📋 Copy All Results")
         copy_all_action.setEnabled(bool(self._matches_data))
         copy_all_action.triggered.connect(self._copy_all)
 
@@ -543,21 +786,23 @@ class ResultsTree(QTreeWidget):
 
         for item in selected_items:
             # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
+            if self._is_summary_item(item):
                 continue
 
-            # If it's a file item (no parent)
-            if not item.parent():
-                file_path = item.text(0)
+            item_type = self._item_type(item)
+            file_path = self._result_path_for_item(item)
+            if not file_path:
+                continue
+
+            # If it's a result file/path item
+            if item_type != ITEM_TYPE_MATCH:
                 # Add blank line before new file (except first one)
                 if last_file is not None:
                     lines.append("")
                 lines.append(file_path)
                 last_file = file_path
-            # If it's a match item (has parent)
+            # If it's a match item
             else:
-                # Get file path from parent and match text
-                file_path = item.parent().text(0)
                 match_text = item.text(0)
 
                 # If parent file wasn't selected, add it first
@@ -609,20 +854,7 @@ class ResultsTree(QTreeWidget):
             return
 
         # Collect unique file paths from selection
-        file_paths = set()
-        for item in selected_items:
-            # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
-                continue
-
-            # If it's a file item (no parent), use it directly
-            if not item.parent():
-                file_paths.add(item.text(0))
-            # If it's a match item, get parent file path
-            else:
-                parent_text = item.parent().text(0)
-                if not parent_text.startswith("📊"):
-                    file_paths.add(parent_text)
+        file_paths = self._collect_selected_result_paths()
 
         # Ensure dock_editor exists
         if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
@@ -666,22 +898,7 @@ class ResultsTree(QTreeWidget):
             return
 
         # Collect unique file paths from selection
-        file_paths = []  # Use list to preserve order
-        for item in selected_items:
-            # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
-                continue
-
-            # If it's a file item (no parent), use it directly
-            if not item.parent():
-                path = item.text(0)
-                if path not in file_paths:
-                    file_paths.append(path)
-            # If it's a match item, get parent file path
-            else:
-                parent_text = item.parent().text(0)
-                if not parent_text.startswith("📊") and parent_text not in file_paths:
-                    file_paths.append(parent_text)
+        file_paths = self._collect_selected_result_paths(preserve_order=True)
 
         # Ensure dock_editor exists
         if not hasattr(main_window, 'dock_editor') or main_window.dock_editor is None:
@@ -759,20 +976,7 @@ class ResultsTree(QTreeWidget):
             return
 
         # Collect unique file paths from selection
-        file_paths = set()
-        for item in selected_items:
-            # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
-                continue
-
-            # If it's a file item (no parent), use it directly
-            if not item.parent():
-                file_paths.add(item.text(0))
-            # If it's a match item, get parent file path
-            else:
-                parent_text = item.parent().text(0)
-                if not parent_text.startswith("📊"):
-                    file_paths.add(parent_text)
+        file_paths = self._collect_selected_result_paths()
 
         # Open each file
         opened_count = 0
@@ -844,20 +1048,7 @@ class ResultsTree(QTreeWidget):
             return
 
         # Collect unique file paths from selection
-        file_paths = set()
-        for item in selected_items:
-            # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
-                continue
-
-            # If it's a file item (no parent), use it directly
-            if not item.parent():
-                file_paths.add(item.text(0))
-            # If it's a match item, get parent file path
-            else:
-                parent_text = item.parent().text(0)
-                if not parent_text.startswith("📊"):
-                    file_paths.add(parent_text)
+        file_paths = self._collect_selected_result_paths()
 
         # Open each file's location
         opened_count = 0
@@ -892,20 +1083,7 @@ class ResultsTree(QTreeWidget):
             return
 
         # Collect file paths from selection
-        file_paths = []
-        for item in selected_items:
-            # Skip summary header
-            if item.text(0).startswith("📊 Results:"):
-                continue
-
-            # If it's a file item (no parent), use it directly
-            if not item.parent():
-                file_paths.append(item.text(0))
-            # If it's a match item, get parent file path
-            else:
-                parent_text = item.parent().text(0)
-                if not parent_text.startswith("📊") and parent_text not in file_paths:
-                    file_paths.append(parent_text)
+        file_paths = self._collect_selected_result_paths(preserve_order=True)
 
         if not file_paths:
             return

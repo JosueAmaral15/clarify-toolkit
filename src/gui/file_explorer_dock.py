@@ -72,6 +72,10 @@ from .widgets import (
 # Initialize logger for structured logging (Protocolo Simplicidade 3 - Etapa 6)
 logger = get_logger(__name__)
 
+PROGRESS_DIALOG_WIDTH = 560
+PROGRESS_DIALOG_LABEL_WIDTH = 500
+PROGRESS_ITEM_MAX_CHARS = 72
+
 
 class FileExplorerDock(BaseDock):
     """
@@ -141,6 +145,7 @@ class FileExplorerDock(BaseDock):
 
         # Progress dialog for long operations
         self.progress_dialog = None
+        self._progress_label = None
 
         # Batch processing state (v2.9.123)
         self._batch_processing_active = False
@@ -834,13 +839,16 @@ class FileExplorerDock(BaseDock):
         for file_data in self.last_browse_results:
             file_path = file_data["path"]
             file_name = file_data["name"]
-            is_dir = file_data.get("is_dir", False)
-            icon = "📁" if is_dir else "📄"
-            matches_dict[file_path] = [(1, 0, f"{icon} {file_name}")]
+            matches_dict[file_path] = [(1, 0, file_name)]
 
         # Populate tree
         sort_results = self.chk_sort_results.isChecked()
-        self.results_tree.populate(matches_dict, sort_results=sort_results)
+        base_path = None
+        if hasattr(self, "_current_browse_params"):
+            base_path = self._current_browse_params.get("directory")
+        if not base_path:
+            base_path = self.ed_directory.text().strip()
+        self.results_tree.populate(matches_dict, sort_results=sort_results, base_path=base_path)
 
         logger.info(f"Synced {len(matches_dict)} browse results to tree view")
 
@@ -1163,32 +1171,65 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # PANEL FILTERS (existing functionality)
         # ============================================================================
-        # Regex filter
-        if panel_filters.get("regex_enabled") and panel_filters.get("regex_pattern"):
-            filters["regex"] = {"enabled": True, "pattern": panel_filters["regex_pattern"]}
+        # Regex filter. FileFilterPanel returns nested keys; keep flat-key
+        # fallback for older saved state/tests.
+        regex_config = panel_filters.get("regex", {})
+        if isinstance(regex_config, dict):
+            regex_enabled = regex_config.get("enabled", False)
+            regex_pattern = regex_config.get("pattern", "")
+        else:
+            regex_enabled = panel_filters.get("regex_enabled", False)
+            regex_pattern = panel_filters.get("regex_pattern", "")
 
-        # Size filter (convert to bytes)
+        if regex_enabled and regex_pattern:
+            filters["regex"] = {"enabled": True, "pattern": regex_pattern}
+
+        # Size filter. FileFilterPanel._parse_size() already converts values to bytes.
         size_config = {}
-        if panel_filters.get("size_min"):
-            min_val = panel_filters["size_min"]
-            min_unit = panel_filters.get("size_min_unit", "B")
-            size_config["min"] = min_val * FileFilterPanel.SIZE_UNITS[min_unit]
+        panel_size = panel_filters.get("size", {})
+        if isinstance(panel_size, dict):
+            min_size = panel_size.get("min")
+            max_size = panel_size.get("max")
+        else:
+            def legacy_size_to_bytes(value, unit):
+                if value in (None, ""):
+                    return None
+                try:
+                    return int(float(value) * FileFilterPanel.SIZE_UNITS.get(unit, 1))
+                except (TypeError, ValueError):
+                    return None
 
-        if panel_filters.get("size_max"):
-            max_val = panel_filters["size_max"]
-            max_unit = panel_filters.get("size_max_unit", "B")
-            size_config["max"] = max_val * FileFilterPanel.SIZE_UNITS[max_unit]
+            min_size = legacy_size_to_bytes(
+                panel_filters.get("size_min"), panel_filters.get("size_min_unit", "B")
+            )
+            max_size = legacy_size_to_bytes(
+                panel_filters.get("size_max"), panel_filters.get("size_max_unit", "B")
+            )
+
+        if min_size is not None:
+            size_config["min"] = min_size
+
+        if max_size is not None:
+            size_config["max"] = max_size
 
         if size_config:
             filters["size"] = size_config
 
-        # MTime filter (convert to date objects)
+        # MTime filter. FileFilterPanel returns dates in a nested mtime dict.
         mtime_config = {}
-        if panel_filters.get("mtime_after_enabled") and panel_filters.get("mtime_after"):
-            mtime_config["after"] = panel_filters["mtime_after"]
+        panel_mtime = panel_filters.get("mtime", {})
+        if isinstance(panel_mtime, dict):
+            after = panel_mtime.get("after")
+            before = panel_mtime.get("before")
+        else:
+            after = panel_filters.get("mtime_after") if panel_filters.get("mtime_after_enabled") else None
+            before = panel_filters.get("mtime_before") if panel_filters.get("mtime_before_enabled") else None
 
-        if panel_filters.get("mtime_before_enabled") and panel_filters.get("mtime_before"):
-            mtime_config["before"] = panel_filters["mtime_before"]
+        if after:
+            mtime_config["after"] = after
+
+        if before:
+            mtime_config["before"] = before
 
         if mtime_config:
             filters["mtime"] = mtime_config
@@ -1655,33 +1696,99 @@ class FileExplorerDock(BaseDock):
         """Handle advanced conditions changes."""
         # Could auto-filter results when conditions change
 
+    @staticmethod
+    def _elide_middle(text: str, max_chars: int = PROGRESS_ITEM_MAX_CHARS) -> str:
+        """Shorten long text without letting progress dialogs resize around it."""
+        if len(text) <= max_chars:
+            return text
+        if max_chars <= 3:
+            return "." * max_chars
+
+        remaining = max_chars - 3
+        prefix_len = remaining // 2
+        suffix_len = remaining - prefix_len
+        return f"{text[:prefix_len]}...{text[-suffix_len:]}"
+
+    @classmethod
+    def _format_progress_item(cls, message: str) -> str:
+        """Return a compact, user-facing item name for progress text."""
+        text = str(message or "").strip()
+        if not text:
+            return ""
+
+        prefix = ""
+        if text.startswith("Replacing in "):
+            prefix = "Replacing in "
+            text = text[len(prefix):].strip()
+
+        compact_source = text.rstrip("/\\")
+        if "/" in compact_source or "\\" in compact_source:
+            compact_source = os.path.basename(compact_source) or compact_source
+
+        compact_source = cls._elide_middle(compact_source)
+        return f"{prefix}{compact_source}" if prefix else compact_source
+
+    @classmethod
+    def _format_progress_message(
+        cls, message: str, current: Optional[int] = None, total: Optional[int] = None
+    ) -> str:
+        """Build bounded progress text for the modal label."""
+        item = cls._format_progress_item(message)
+        if current is not None and total is not None:
+            return f"Processing {current}/{total}: {item}" if item else f"Processing {current}/{total}"
+        return f"Processing: {item}" if item else tr("file_list.progress_processing")
+
+    def _ensure_progress_dialog(self):
+        """Create the progress dialog with a fixed width and bounded label."""
+        if self.progress_dialog:
+            return
+
+        logger.debug("Creating progress dialog")
+        self.progress_dialog = QProgressDialog(
+            tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
+        )
+        self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
+        self.progress_dialog.setWindowModality(Qt.WindowModal)
+        self.progress_dialog.setMinimumDuration(0)  # Show immediately
+        self.progress_dialog.setFixedWidth(PROGRESS_DIALOG_WIDTH)
+        self.progress_dialog.setSizeGripEnabled(False)
+
+        self._progress_label = QLabel(tr("file_list.progress_processing"), self.progress_dialog)
+        self._progress_label.setWordWrap(True)
+        self._progress_label.setMaximumWidth(PROGRESS_DIALOG_LABEL_WIDTH)
+        self._progress_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.progress_dialog.setLabel(self._progress_label)
+
+        self.progress_dialog.canceled.connect(self.executor.cancel)
+        self.progress_dialog.show()  # Explicitly show
+        self.progress_dialog.raise_()  # Bring to front
+        logger.debug("Progress dialog created, shown, and raised")
+
+    def _set_progress_dialog_message(
+        self, message: str, current: Optional[int] = None, total: Optional[int] = None
+    ):
+        """Update progress dialog label without exposing long paths in the modal."""
+        self._ensure_progress_dialog()
+        display_message = self._format_progress_message(message, current, total)
+        self.progress_dialog.setLabelText(display_message)
+
+        if self._progress_label:
+            tooltip = str(message or "")
+            if current is not None and total is not None:
+                tooltip = f"{tooltip}\n({current}/{total})" if tooltip else f"({current}/{total})"
+            self._progress_label.setToolTip(tooltip)
+
     def _on_progress(self, message: str):
         """Handle progress updates from executor (v2.9.116)."""
         logger.debug(f"_on_progress() called with message: {message[:50]}...")
-        # Show progress dialog if not already visible
-        if not self.progress_dialog:
-            logger.debug("Creating progress dialog")
-            self.progress_dialog = QProgressDialog(
-                tr("file_list.progress_processing"), tr("file_list.progress_cancel"), 0, 100, self
-            )
-            self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
-            self.progress_dialog.setWindowModality(Qt.WindowModal)
-            self.progress_dialog.setMinimumDuration(0)  # Show immediately
-            self.progress_dialog.canceled.connect(self.executor.cancel)
-            self.progress_dialog.show()  # Explicitly show
-            self.progress_dialog.raise_()  # Bring to front
-            logger.debug("Progress dialog created, shown, and raised")
-
-        # Update message
-        self.progress_dialog.setLabelText(message)
+        self._set_progress_dialog_message(message)
 
     def _on_progress_detailed(self, current: int, total: int, message: str):
         """Handle detailed progress updates (v2.9.116)."""
-        if self.progress_dialog:
-            # Calculate percentage
-            percentage = int((current / total) * 100) if total > 0 else 0
-            self.progress_dialog.setValue(percentage)
-            self.progress_dialog.setLabelText(f"{message}\n({current}/{total})")
+        self._ensure_progress_dialog()
+        percentage = int((current / total) * 100) if total > 0 else 0
+        self.progress_dialog.setValue(percentage)
+        self._set_progress_dialog_message(message, current, total)
 
     def _on_batch_ready(self, batch: list, batch_num: int, total_batches: int):
         """
@@ -1718,6 +1825,7 @@ class FileExplorerDock(BaseDock):
 
             # Clear tree before adding items
             self.results_tree.clear()
+            self.results_tree.set_base_path(self._current_search_params.get("directory"))
 
             # CRITICAL: Temporarily switch to Tree view for batch processing
             # Qt's QTreeWidget requires visibility to properly add items
@@ -1978,7 +2086,7 @@ class FileExplorerDock(BaseDock):
         self.last_was_search = False
 
         # BUGFIX v2.9.119: If user is in tree view, also populate tree with browse results
-        if self._user_manually_changed_view and self.results_stack.currentIndex():
+        if self._user_manually_changed_view and self.results_stack.currentIndex() == 0:
             self._sync_browse_to_tree()
         logger.debug(f"Stored {len(files_data)} browse results for view sync")
 

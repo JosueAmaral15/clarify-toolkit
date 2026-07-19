@@ -20,6 +20,27 @@ from PySide6.QtCore import Qt
 # This avoids import errors from relative imports in the codebase
 
 
+def test_progress_message_compacts_long_paths():
+    """Progress text should not expose full paths that resize the modal."""
+    dock_py = Path("src/gui/file_explorer_dock.py")
+    content = dock_py.read_text()
+
+    assert "def _format_progress_message" in content
+    assert "def _format_progress_item" in content
+    assert "os.path.basename(compact_source)" in content
+    assert 'setLabelText(f"{message}\\n({current}/{total})")' not in content
+
+
+def test_progress_dialog_has_fixed_width_configuration():
+    """Progress dialog should have a fixed width instead of resizing around label text."""
+    dock_py = Path("src/gui/file_explorer_dock.py")
+    content = dock_py.read_text()
+
+    assert "PROGRESS_DIALOG_WIDTH" in content
+    assert "setFixedWidth(PROGRESS_DIALOG_WIDTH)" in content
+    assert "setLabel(self._progress_label)" in content
+
+
 def test_phase_a_implementation_exists():
     """
     Test that Phase A implementation exists in app.py.
@@ -84,21 +105,22 @@ def test_phase_b2_resultstree_integration():
     print("✓ Phase B.2: ResultsTree integration implemented")
 
 
-def test_phase_b3_separate_buttons():
+def test_phase_b3_unified_browse_search_button():
     """
-    Test that Phase B.3 separate Browse/Search buttons are implemented.
-    
-    PHASE B.3: Replaced unified button with separate buttons
+    Test that Phase B.3 smart Browse/Search action is implemented.
+
+    Current contract: one command button chooses Browse vs Search from criteria.
     """
     dock_py = Path("src/gui/file_explorer_dock.py")
     content = dock_py.read_text()
-    
-    # Check for separate buttons
+
+    # Directory browse still exists; Browse/Search execution is intentionally unified.
     assert "btn_browse" in content, "btn_browse not created"
-    assert "btn_search" in content, "btn_search not created"
-    assert "Browse" in content, "Browse button text not found"
-    
-    print("✓ Phase B.3: Separate Browse/Search buttons implemented")
+    assert "btn_list" in content, "smart Browse/Search button not created"
+    assert "_list_files_smart" in content, "smart Browse/Search handler not found"
+    assert "file_list.btn_list" in content, "smart Browse/Search translation key not used"
+
+    print("✓ Phase B.3: Unified Browse/Search command implemented")
 
 
 def test_phase_b4_statistics_panel():
@@ -178,26 +200,21 @@ def test_phase_b6_collapsible_sections():
     print("✓ Phase B.6: Collapsible sections implemented")
 
 
-def test_phase_c1_hover_expansion():
+def test_phase_c1_hover_expansion_intentionally_disabled():
     """
-    Test that Phase C.1 hover expansion is implemented.
-    
-    PHASE C.1: HoverExpandFilter for panel expansion on hover
+    Test that Phase C.1 hover expansion remains intentionally disabled.
+
+    Hover expansion was a useful experiment, but the current UI contract keeps
+    the splitter stable because automatic expansion was distracting.
     """
     dock_py = Path("src/gui/file_explorer_dock.py")
     content = dock_py.read_text()
-    
-    # Check for HoverExpandFilter
-    assert "class HoverExpandFilter" in content, \
-        "HoverExpandFilter class not found"
-    assert "_hover_filter" in content, \
-        "_hover_filter not created"
-    assert "_original_sizes" in content, \
-        "_original_sizes not stored"
-    assert "eventFilter" in content, \
-        "eventFilter method not found"
-    
-    print("✓ Phase C.1: Hover expansion implemented")
+
+    assert "HOVER EXPANSION DISABLED" in content
+    assert "Hover expansion removed" in content
+    assert "class HoverExpandFilter" not in content
+
+    print("✓ Phase C.1: Hover expansion intentionally disabled")
 
 
 def test_phase_c2_context_menu():
@@ -250,9 +267,10 @@ def test_integration_all_phases_complete():
     # B.2: ResultsTree
     assert "results_stack" in dock_content
     
-    # B.3: Buttons
+    # B.3: Smart Browse/Search command
     assert "btn_browse" in dock_content
-    assert "btn_search" in dock_content
+    assert "btn_list" in dock_content
+    assert "_list_files_smart" in dock_content
     
     # B.4: Statistics
     assert "lbl_files_count" in dock_content
@@ -263,8 +281,9 @@ def test_integration_all_phases_complete():
     # B.6: Collapsible
     assert "section_filters" in dock_content
     
-    # C.1: Hover
-    assert "class HoverExpandFilter" in dock_content
+    # C.1: Hover expansion intentionally disabled
+    assert "HOVER EXPANSION DISABLED" in dock_content
+    assert "class HoverExpandFilter" not in dock_content
     
     # C.2: Context menu (results_tree.py)
     tree_py = Path("src/gui/panels/results_tree.py")

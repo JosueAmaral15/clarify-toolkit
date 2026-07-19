@@ -10,6 +10,86 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-19 - Pre-acao - Estabilizacao inicial do File Explorer
+
+- Pedido do usuario:
+  - Continuar as tarefas.
+  - Sempre informar o que falta.
+  - Ter cuidado para nao descartar padroes de codigo que podem ser uteis em outras ferramentas.
+- Contexto:
+  - A fila atual em `docs/TASKS.md` prioriza estabilizar a fatia File Explorer ja alterada no worktree antes de implementar busca em texto/binario.
+  - O worktree contem mudancas antigas em `src/core/file_explorer_executor.py`, `src/gui/file_explorer_dock.py`, `src/gui/panels/results_tree.py` e testes novos/alterados de File Explorer.
+- Plano:
+  - Nao remover padroes compartilhaveis nem "limpar" por aparencia; primeiro validar comportamento.
+  - Rodar validacoes focadas em globs, filtros, tree/results e progress dialog.
+  - Corrigir apenas falhas diretamente ligadas a essa estabilizacao.
+  - Ao final, registrar o que foi feito e listar o que ainda falta.
+
+## 2026-07-19 - Pos-acao - Estabilizacao inicial do File Explorer
+
+- Mudancas realizadas/validadas:
+  - A fatia File Explorer ja alterada no worktree foi estabilizada com validacoes focadas.
+  - `tests/test_file_explorer_v2_9_117.py` foi ajustado para o contrato atual do codigo:
+    - `btn_list` e `_list_files_smart` como acao unificada Browse/Search.
+    - hover expansion intencionalmente desativado, preservando a decisao documentada no codigo.
+  - `docs/TASKS.md` marcou `P0 - Estabilizar a fatia File Explorer ja alterada no worktree` como concluida.
+- Validacoes executadas:
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py src/gui/panels/results_tree.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_advanced_size_filters.py tests/test_file_explorer_top_options_and_globs.py tests/test_results_tree_unicode_hierarchy.py`
+  - `QT_QPA_PLATFORM=offscreen python -m pytest -q tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py` -> 17 passed.
+  - `QT_QPA_PLATFORM=offscreen python -m pytest -q tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py` -> 10 passed.
+- Decisao de engenharia:
+  - Nao reintroduzir `btn_search` separado nem `HoverExpandFilter`, porque o codigo atual ja documenta um botao inteligente unificado e hover expansion desativado por ser distrativo.
+  - Nao tratar padroes reutilizaveis como lixo; as proximas limpezas devem preservar o que pode ser reaproveitado por outras tools.
+- O que falta:
+  - Implementar a nova opcao de busca `Text/ASCII`, `Binary` ou `Both`.
+  - Converter testes estaticos restantes para testes comportamentais quando houver API testavel.
+  - Documentar a nova opcao depois da implementacao.
+
+## 2026-07-19 - Pre-acao - File Explorer busca texto/binario e fila prioritaria
+
+- Pedido do usuario:
+  - Incluir em `docs/TASKS.md` que o File Explorer deve permitir buscas em arquivos de texto/ASCII, arquivos binarios ou ambos.
+  - Sugerir e organizar tarefas para estabilidade, coerencia e limpeza adequada do projeto.
+  - Comecar pelas mais prioritarias conforme o Protocolo Simplicidade.
+- Contexto verificado:
+  - O caminho antigo do protocolo com `Programacao/protocolos/...` nao existe; a copia atual lida foi `programming/protocolos/protocolos-simplicidade/pt/PROTOCOLO_SIMPLICIDADE_3.md`.
+  - O topo de `docs/TASKS.md` marca a integracao File Explorer como completa, mas ainda havia blocos antigos pendentes logo abaixo, gerando incoerencia.
+  - O worktree ja continha alteracoes antigas em `src/core/file_explorer_executor.py`, `src/gui/file_explorer_dock.py` e `tests/test_file_explorer_v2_9_117.py`; elas nao deveriam ser sobrescritas nesta etapa.
+- Plano:
+  - Fazer apenas uma edicao documental segura em `docs/TASKS.md`.
+  - Criar uma fila operacional P0/P1/P2 para a proxima implementacao.
+  - Validar whitespace do diff e registrar o encerramento.
+
+## 2026-07-19 - Pos-acao - File Explorer busca texto/binario e fila prioritaria
+
+- Mudancas realizadas:
+  - `docs/TASKS.md` recebeu a fila `File Explorer Stability, Coherence and Cleanup (19/07/2026)`.
+  - A prioridade P0 agora registra explicitamente a opcao de busca em `Text/ASCII files`, `Binary files` ou `Text + Binary files`.
+  - A tarefa define semantica inicial: texto como ASCII/UTF-8 sem bytes nulos, binario como falha de classificacao textual ou presenca de bytes nulos, amostra limitada para classificacao e `replace` restrito a texto ate existir plano seguro.
+  - Foram adicionadas tarefas P0/P1/P2 para estabilizar a fatia File Explorer ja alterada, limpar incoerencias do `TASKS.md`, trocar testes estaticos frageis por testes comportamentais e documentar a nova opcao apos implementacao.
+  - A secao antiga de Fase 4 foi marcada como registro historico a revalidar, pois conflita com o Status Geral que indica fases concluidas.
+- Validacao executada:
+  - `git diff --check -- docs/TASKS.md history-chat.md` passou.
+- Observacao:
+  - Nao houve implementacao de codigo nesta etapa; a proxima acao prioritaria deve estabilizar/testar as mudancas File Explorer ja existentes no worktree antes de adicionar a feature de busca texto/binario.
+
+## 2026-07-19 - Pre-acao - Levantamento do que falta no Clarify Editor
+
+- Pedido do usuario: identificar o que ainda falta dentro do escopo de tarefas do Clarify Editor.
+- Plano:
+  - Verificar `docs/TASKS.md` e buscar itens pendentes relacionados ao Clarify Editor.
+  - Separar tarefas explicitamente pendentes de oportunidades ou riscos tecnicos.
+  - Responder de forma resumida, sem iniciar nova implementacao nesta etapa.
+
+## 2026-07-19 - Pos-acao - Levantamento do que falta no Clarify Editor
+
+- Resultado do levantamento:
+  - A secao principal `v2.9.76 - Editor Dock` esta marcada como concluida no `docs/TASKS.md`, incluindo menu JSON, schema validation/generation, active schema, quick fix, highlight visual, autocomplete de chaves e deteccao de modificacao externa.
+  - O item antigo `Real-time JSON Validation` ainda aparece como `[]` em `Advanced Features & Long-term Goals`, mas quase todos os subitens ja foram implementados em fatias recentes.
+  - Pendencia real identificada dentro desse item antigo: sugestoes de valores baseadas em schema ainda nao foram confirmadas/implementadas; tambem vale atualizar o proprio `docs/TASKS.md` para deixar esse item como parcialmente concluido ou dividir o restante.
+  - `Open Text Extractor` ja consta como consolidado/removido da interface publica; limpeza fisica do modulo legado pode ficar como tarefa separada se os testes historicos deixarem de depender dele.
+  - Nao foi identificada tarefa bloqueante especifica do Clarify Editor; ha risco tecnico de suite GUI completa lenta/presa em offscreen, entao proximas mudancas devem continuar com testes focados e, se necessario, investigar esse comportamento.
+
 ## 2026-07-19 - Pre-acao - Deteccao de modificacao externa no Clarify Editor
 
 - Pedido do usuario: fazer a proxima tarefa do Clarify Editor.

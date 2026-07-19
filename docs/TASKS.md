@@ -95,34 +95,41 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - [x] test_executor_methods (browse/search/replace)
   - [x] **RESULTADO**: 6/6 tests passed (100%) 🎉
 
-### Tarefas Fase 4 (Lógica - 1.5h) ⏳ PRÓXIMA
-    - Mover: ed_directory, btn_browse, btn_recent
-    - Mover: combo_type (Any/Files/Dirs)
-    - Mover: chk_all, chk_long, chk_human, chk_recursive
-  - [ ] 🔍 **Section 2**: Search & Replace (sempre expanded)
-    - Adicionar: FileNameQueryPanel (pattern + clear)
-    - Adicionar: ContentQueryPanel (multi-line editor)
-    - Adicionar: SearchOptionsPanel (case, word, regex)
-    - Adicionar: ReplacePanel (editor + buttons)
-  - [ ] ⚙️ **Section 3**: Filters (collapsible)
-    - Manter: FileFilterPanel existente
-  - [ ] 🎯 **Section 4**: Advanced Conditions (collapsible)
-    - Adicionar: ConditionsGrid (AND/OR logic)
-  - [ ] 💾 **Section 5**: Presets (collapsible)
-    - Manter: PresetManager existente
-- [ ] **3.3**: Conectar sinais dos widgets (30 min)
-  - [ ] FileNameQueryPanel.pattern_changed → trigger search
-  - [ ] ContentQueryPanel.query_changed → update search params
-  - [ ] SearchOptionsPanel.options_changed → update options
-  - [ ] ReplacePanel.replace_first_requested → execute replace
-  - [ ] ReplacePanel.replace_all_requested → execute replace
-  - [ ] ConditionsGrid.conditions_changed → filter results
-- [ ] **3.4**: Substituir FileListExecutor por UnifiedFileExplorerExecutor (30 min)
-  - [ ] Trocar `FileListExecutor.list_files()` por `executor.execute_browse()`
-  - [ ] Adicionar `executor.execute_search()` para busca
-  - [ ] Adicionar `executor.execute_replace()` para replace
-  - [ ] Conectar sinais de progresso: progress, progress_detailed
-  - [ ] Implementar pause/cancel handlers
+### Fila Prioritária - File Explorer Stability, Coherence and Cleanup (19/07/2026)
+
+Ordem conforme Protocolo Simplicidade 3: clareza do requisito, menor fatia segura, testes críticos, documentação coerente e limpeza sem misturar escopos.
+
+- [ ] **P0 - Search File Content Scope (Text/ASCII, Binary, Both)**:
+  - Adicionar em `File Explorer -> Search Options` uma opção explícita para escolher onde a busca de conteúdo deve rodar:
+    - `Text/ASCII files` (padrão seguro);
+    - `Binary files`;
+    - `Text + Binary files`.
+  - Definir a semântica antes de codar:
+    - `Text/ASCII files`: arquivos textuais decodificáveis sem erro e sem bytes nulos; aceitar ASCII/UTF-8 como texto para não quebrar conteúdos em português.
+    - `Binary files`: arquivos que falham na classificação textual ou contêm bytes nulos; busca deve ser por bytes, com snippets limitados/seguros.
+    - `Text + Binary files`: executar os dois caminhos sem tentar decodificar binário como texto.
+  - Implementar classificação por amostra limitada de bytes, sem ler arquivos grandes inteiros apenas para decidir tipo.
+  - Manter `replace` restrito a texto até existir plano seguro para substituição binária.
+  - Testes mínimos: arquivo ASCII, UTF-8 com acentos, arquivo com bytes nulos, arquivo binário contendo padrão, opção padrão não lendo binário como texto, modo `Both` retornando ambos.
+- [x] **P0 - Estabilizar a fatia File Explorer já alterada no worktree (19/07/2026)**:
+  - ✅ Validados isoladamente glob include/exclude, filtros de tamanho/data, sincronização table/tree e progress dialog com textos longos.
+  - ✅ Ajustados testes v2.9.117 para o contrato atual: `btn_list` unificado Browse/Search e hover expansion deliberadamente desativado.
+  - ✅ Validação focada: `py_compile` dos módulos/testes File Explorer e 27 testes passando em `test_file_explorer_v2_9_117.py`, `test_file_explorer_top_options_and_globs.py`, `test_file_explorer_advanced_size_filters.py` e `test_results_tree_unicode_hierarchy.py`.
+  - ✅ Sem rodar suíte GUI ampla em processo único; foram usados testes focados para reduzir risco de lentidão/memória.
+- [ ] **P1 - Limpeza de coerência do `TASKS.md` do File Explorer**:
+  - Consolidar status duplicado da integração v2.9.116, pois o topo diz `100% COMPLETO`, mas ainda há blocos antigos com checkboxes pendentes.
+  - Preservar histórico útil, mas deixar uma única fila operacional atual para evitar decisões erradas no futuro.
+- [ ] **P1 - Substituir testes estáticos frágeis por testes comportamentais**:
+  - Parcial em 19/07/2026: testes obsoletos de `btn_search`/`HoverExpandFilter` foram alinhados ao comportamento atual, mas ainda há testes de presença que podem ser convertidos para testes comportamentais.
+  - Reduzir testes que apenas procuram strings no código quando houver API testável equivalente.
+  - Priorizar executor/filtros/progresso, porque são pontos de risco para regressão e consumo de memória.
+- [ ] **P2 - Documentação de usuário e tooltip/i18n da nova opção**:
+  - Atualizar manual/README depois que a semântica de `Text/ASCII`, `Binary` e `Both` estiver implementada e testada.
+  - Incluir aviso de segurança: busca binária não deve abrir arquivo inteiro nem exibir conteúdo bruto extenso.
+
+### Registro histórico antigo da Fase 4 (revalidar antes de usar)
+
+Nota de coerência (19/07/2026): os blocos abaixo pertencem ao plano original da integração v2.9.116 e podem estar duplicados ou obsoletos, porque o Status Geral acima já marca Fases 3-6 como completas. A fila operacional atual do File Explorer é a seção "Fila Prioritária - File Explorer Stability, Coherence and Cleanup".
 
 ### Tarefas Fase 4 (Lógica)
 - [ ] **4.1**: Implementar busca unificada (1h)
