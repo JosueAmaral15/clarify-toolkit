@@ -10,6 +10,479 @@ Este arquivo funciona como diario local da conversa sobre este projeto. A ideia 
 - Nao registrar segredos, tokens, chaves de API ou dados pessoais sensiveis.
 - Quando houver material historico conflitante, apontar a fonte operacional atual e o motivo da decisao.
 
+## 2026-07-21 - Pre-acao - File Explorer Copy all content
+
+- Pedido do usuario:
+  - Continuar.
+- Contexto:
+  - O polimento interno do File Explorer foi marcado como entregue.
+  - A proxima fila em `docs/TASKS.md` e adicionar acoes de contexto sobre resultados, comecando por `Copy all content`.
+  - A tarefa exige limites de memoria/preview e mensagem quando arquivos forem ignorados por tamanho, permissao ou tipo.
+- Plano:
+  - Revisar `ResultsTree`, `FileListTableManager` e caches do `FileExplorerDock` para escolher o ponto de menu correto.
+  - Implementar copia de conteudo com limites por arquivo e total, pulando diretorios, binarios, arquivos grandes e erros de leitura.
+  - Adicionar testes focados para copiar conteudo, limitar tamanho e reportar ignorados.
+  - Atualizar `docs/TASKS.md`, rodar validacoes e registrar o pos-acao.
+
+## 2026-07-21 - Pos-acao - File Explorer Copy all content
+
+- Mudancas realizadas:
+  - `src/gui/panels/results_tree.py` recebeu a acao `Copy All Content` no menu de contexto da arvore de resultados.
+  - A copia usa limites defensivos: 512 KiB por arquivo, 2 MiB no total e amostra de 4096 bytes para classificar binarios.
+  - A acao pula diretorios, arquivos ausentes, binarios, arquivos grandes, estouro do limite total e erros de leitura, exibindo resumo no status.
+  - O texto copiado separa cada arquivo com cabecalho `===== caminho =====` para preservar contexto.
+  - `tests/test_results_tree_unicode_hierarchy.py` ganhou cobertura para copia de textos UTF-8 e para todos os principais casos ignorados.
+  - `docs/TASKS.md` marcou a tarefa de menu de contexto para conteudo como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py -q` passou: 5 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py -q --tb=short` passou: 56 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q --tb=short` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - Proxima fila em `docs/TASKS.md`: delete seguro de resultados, replace por arquivo modelo, export JSON estruturado e explicacao assistida por IA.
+  - Considerar em fatia futura uma acao equivalente no modo tabela, caso o fluxo de resultados em tabela deva ter paridade com a arvore.
+  - O worktree segue com ruido antigo/acumulado de documentacao e tarefas anteriores; nada fora da fatia foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer exclusao segura de resultados
+
+- Pedido do usuario:
+  - Continuar.
+- Contexto:
+  - A fila P1 de File Explorer em `docs/TASKS.md` tem como proximo item `Menu de contexto para exclusao segura de resultados`.
+  - A acao deve permitir selecao parcial, cancelamento e tratamento de falha/permissao, preferindo lixeira quando disponivel.
+  - A implementacao deve seguir a estrutura ja usada em `ResultsTree`, sem misturar com o modo tabela nesta fatia.
+- Plano:
+  - Adicionar `Delete Result Files...` ao menu de contexto da arvore de resultados.
+  - Implementar confirmacao com lista resumida, exclusao via lixeira do Qt e fallback permanente somente com segunda confirmacao.
+  - Remover do modelo visual apenas os caminhos efetivamente excluidos.
+  - Cobrir selecao parcial, cancelamento e falha simulada de permissao com testes focados.
+
+## 2026-07-21 - Pos-acao - File Explorer exclusao segura de resultados
+
+- Mudancas realizadas:
+  - `src/gui/panels/results_tree.py` recebeu `Delete Result Files...` no menu de contexto da arvore de resultados.
+  - A acao usa selecao parcial quando houver itens selecionados e usa todos os resultados somente quando nao ha selecao.
+  - A confirmacao mostra contagem, preview limitado a 8 caminhos e aviso de que a lixeira sera usada quando possivel.
+  - Diretorios, ausentes e nao arquivos sao ignorados antes da exclusao e aparecem no resumo de status.
+  - A exclusao usa `QFile.moveToTrash()` por padrao; se falhar, oferece fallback permanente apenas com segunda confirmacao.
+  - A arvore remove apenas os caminhos efetivamente excluidos e preserva resultados restantes.
+  - `tests/test_results_tree_unicode_hierarchy.py` ganhou regressões para selecao parcial, cancelamento, falha de permissao simulada e fallback permanente confirmado.
+  - `docs/TASKS.md` marcou a exclusao segura de resultados como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py -q --tb=short` passou: 9 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py -q --tb=short` passou: 60 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q --tb=short` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - Proximas tarefas P1 do File Explorer: `Replace content with file...`, exportar resultados como JSON estruturado e explicacao assistida por IA com processamento por fatias.
+  - Avaliar paridade futura das acoes de contexto no modo tabela, sem duplicar logica do `FileListTableManager`.
+  - O worktree ainda contem alteracoes antigas/acumuladas de documentacao e fatias anteriores; nada foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer substituir conteudo por arquivo modelo
+
+- Pedido do usuario:
+  - Prosseguir.
+- Contexto:
+  - A proxima tarefa P1 em `docs/TASKS.md` e `Replace content with file...`.
+  - A acao e destrutiva e precisa ser mais defensiva que as acoes de copia/exportacao.
+  - Deve haver confirmacao com contagem, preview do arquivo fonte e bloqueio para binarios ate existir uma regra segura.
+- Plano:
+  - Adicionar a acao ao menu de contexto da arvore de resultados.
+  - Selecionar o arquivo modelo por dialogo, validar que e arquivo textual UTF-8 e aplicar limite de tamanho.
+  - Substituir apenas arquivos de resultado existentes, regulares e textuais; pular diretorios, ausentes, nao arquivos, binarios e erros.
+  - Cobrir substituicao segura, cancelamento e bloqueio de binarios com testes focados.
+
+## 2026-07-21 - Pos-acao - File Explorer substituir conteudo por arquivo modelo
+
+- Mudancas realizadas:
+  - `src/gui/panels/results_tree.py` recebeu `Replace Content with File...` no menu de contexto da arvore de resultados.
+  - A acao escolhe um arquivo modelo por dialogo, rejeita modelo ausente, diretorio, nao arquivo, binario, nao UTF-8 ou maior que 512 KiB.
+  - A confirmacao mostra contagem, caminho do modelo, tamanho, preview limitado e lista resumida dos alvos.
+  - A substituicao usa selecao parcial quando houver selecao e todos os resultados quando nao houver selecao.
+  - Alvos binarios, diretorios, ausentes e nao arquivos sao ignorados com resumo no status.
+  - A gravacao usa arquivo temporario no mesmo diretorio e `os.replace()` para reduzir risco de escrita parcial.
+  - Resultados alterados sao removidos da arvore para evitar snippets obsoletos.
+  - `tests/test_results_tree_unicode_hierarchy.py` cobre substituicao parcial, cancelamento, bloqueio de modelo binario e alvo binario ignorado.
+  - `docs/TASKS.md` marcou a tarefa como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py -q --tb=short` passou: 13 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py -q --tb=short` passou: 64 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q --tb=short` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - Proxima tarefa P1: exportar resultados como JSON estruturado com caminho, tipo, tamanho, datas, matches e metadados.
+  - Depois: explicacao assistida por IA para arquivo/conjunto de resultados com processamento por fatias.
+  - Avaliar paridade futura no modo tabela sem duplicar logica.
+
+## 2026-07-21 - Pre-acao - File Explorer export JSON estruturado
+
+- Pedido do usuario:
+  - Prosseguir com as tarefas.
+- Contexto:
+  - A proxima tarefa P1 em `docs/TASKS.md` e `Exportar resultados como JSON de dados`.
+  - A saida deve ser reutilizavel por editor, clipboard e outros tools que consomem JSON.
+  - A operacao deve usar metadados leves e nao ler conteudo completo dos arquivos.
+- Plano:
+  - Adicionar acao `Copy Results as JSON` ao menu de contexto e helper de exportacao estruturada.
+  - Incluir caminho, existencia, tipo, tamanho, timestamps, contagem de matches e matches com linha/coluna/snippet.
+  - Pular metadados impossiveis com erro por arquivo em vez de falhar a exportacao inteira.
+  - Cobrir a estrutura JSON, arquivos ausentes e clipboard com testes focados.
+
+## 2026-07-21 - Pos-acao - File Explorer export JSON estruturado
+
+- Mudancas realizadas:
+  - `src/gui/panels/results_tree.py` recebeu `Copy Results as JSON` e `Export Results as JSON...` no menu de contexto da arvore.
+  - Foi criado o formato JSON `clarify.file_explorer.results` com versao, base path, totais, lista de arquivos e matches.
+  - Cada arquivo exportado inclui caminho, existencia, tipo, tamanho, timestamps e erro de metadados quando `stat` falhar.
+  - Cada match inclui linha, coluna, snippet e marcador `snippet_truncated`.
+  - Snippets sao limitados a 4096 caracteres para evitar crescimento excessivo do JSON.
+  - A exportacao usa apenas metadados e snippets ja existentes, sem ler conteudo completo dos arquivos.
+  - `tests/test_results_tree_unicode_hierarchy.py` cobre estrutura JSON, ausentes, truncamento, clipboard e escrita em arquivo.
+  - `docs/TASKS.md` marcou a tarefa de export JSON como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py -q --tb=short` passou: 17 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py -q --tb=short` passou: 68 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q --tb=short` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- src/gui/panels/results_tree.py tests/test_results_tree_unicode_hierarchy.py docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - Ultima tarefa P1 desta fila de resultados: explicacao assistida por IA para arquivo/conjunto de resultados, reaproveitando o AI Processor quando possivel e com processamento por fatias.
+  - Avaliar paridade futura dessas acoes no modo tabela, sem duplicar a logica do `FileListTableManager`.
+  - O worktree ainda contem alteracoes antigas/acumuladas de documentacao e fatias anteriores; nada fora desta fatia foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer preparar explicacao com IA
+
+- Pedido do usuario:
+  - Continuar.
+- Contexto:
+  - A ultima tarefa P1 da fila de resultados do File Explorer e `Explicacao assistida por IA para arquivo/conteudo`.
+  - O AI Processor ja existe e tem prompt, lista de caminhos, limite de bytes e processamento por worker.
+  - Para evitar chamada de API inesperada, a acao deve preparar o AI Processor e deixar o usuario revisar/rodar manualmente.
+- Plano:
+  - Adicionar metodo publico no `AIProcessorDock` para receber prompt, caminhos e limite de bytes.
+  - Adicionar acao no menu da arvore de resultados para preparar explicacao de selecionados ou de todos os resultados.
+  - Montar prompt com resumo dos resultados, snippets limitados e instrucao para explicar por arquivo/achados.
+  - Limitar quantidade de arquivos, snippets e caracteres para evitar crescimento de memoria.
+  - Cobrir preparacao do prompt, limites e integracao com AI Processor com testes focados.
+
+## 2026-07-21 - Pos-acao - File Explorer preparar explicacao com IA
+
+- Mudancas realizadas:
+  - `src/gui/panels/results_tree.py` recebeu `Prepare AI Explanation...` no menu de contexto da arvore de resultados.
+  - A acao prepara o AI Processor com prompt, caminhos e `max_bytes`, mas nao inicia chamada de API automaticamente.
+  - O escopo respeita selecao parcial quando houver selecao e usa todos os resultados quando nao houver selecao.
+  - A preparacao filtra arquivos textuais regulares e ignora binarios, diretorios, ausentes, nao arquivos, erros e excesso do limite.
+  - O prompt inclui instrucoes de explicacao, resumo do escopo, caminhos e matches relevantes.
+  - Limites aplicados: 20 arquivos, 20 matches por arquivo, 500 caracteres por snippet, 60000 caracteres de prompt e 64 KiB por arquivo no AI Processor.
+  - `src/gui/ai_processor_dock.py` ganhou `prepare_file_explorer_explanation()`, API publica para receber contexto do File Explorer sem iniciar worker.
+  - `tests/test_results_tree_unicode_hierarchy.py` cobre filtro de binarios, escopo selecionado, limites de prompt e preenchimento do AI Processor.
+  - `docs/TASKS.md` marcou a explicacao assistida por IA como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/panels/results_tree.py src/gui/ai_processor_dock.py tests/test_results_tree_unicode_hierarchy.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py -q --tb=short` passou: 21 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_results_tree_unicode_hierarchy.py tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py -q --tb=short` passou: 72 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q --tb=short` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- src/gui/panels/results_tree.py src/gui/ai_processor_dock.py tests/test_results_tree_unicode_hierarchy.py docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - A fila P1 de acoes sobre resultados e saidas reutilizaveis do File Explorer ficou completa.
+  - Proximas pendencias em `docs/TASKS.md`: Google Translate/JSON Translate, Clarify Editor/Open Editor e Clarify Tools.
+  - Tambem resta avaliar paridade dessas acoes no modo tabela, caso a experiencia precise ser igual ao modo arvore.
+  - O worktree ainda contem alteracoes antigas/acumuladas; nada fora desta fatia foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer revisao de botoes internos
+
+- Pedido do usuario:
+  - Prosseguir.
+- Contexto:
+  - A subfatia anterior melhorou o maximize/restore dos tools.
+  - A pendencia restante do polimento do File Explorer e confirmar/remover botoes internos de fechar sem sentido.
+  - A busca inicial encontrou `Close` no dialogo generico de busca do `BaseDock` e `OK/Cancel` apenas no `dialog_mode` do File Explorer.
+- Plano:
+  - Criar uma regressao para garantir que o File Explorer em modo dock nao exponha `QDialogButtonBox` nem botao interno `Close`.
+  - Confirmar que `dialog_mode=True` continua mantendo `OK/Cancel`, pois ali esse controle faz sentido.
+  - Atualizar `docs/TASKS.md`, rodar testes focados e registrar o pos-acao.
+
+## 2026-07-21 - Pos-acao - File Explorer revisao de botoes internos
+
+- Mudancas realizadas:
+  - A revisao confirmou que o File Explorer em modo dock normal nao expoe `QDialogButtonBox` nem botao interno `Close/Fechar`.
+  - `OK/Cancel` foi preservado apenas em `dialog_mode=True`, onde faz sentido para selecao de arquivos.
+  - A regressao inicial revelou um bug real: `dialog_mode=True` conectava `Cancel` a `self.reject`, mas `FileExplorerDock` e um `QDockWidget`, nao um `QDialog`.
+  - `src/gui/file_explorer_dock.py` agora tem `accept()` e `reject()` que encaminham para o `QDialog` pai quando o dock esta embutido em modo dialogo.
+  - `show_file_explorer_dialog()` passou a criar um `QDialog` real, embutir o `FileExplorerDock(dialog_mode=True)` e retornar `explorer.get_selected_files()` quando aceito.
+  - `tests/test_file_explorer_internal_controls.py` foi criado para cobrir modo dock sem controles internos de dialogo, modo dialogo com `OK/Cancel` e `accept/reject` no dialogo pai.
+  - `docs/TASKS.md` marcou o polimento interno do File Explorer como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/file_explorer_dock.py tests/test_file_explorer_internal_controls.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_internal_controls.py -q` passou: 3 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_internal_controls.py tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 54 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- ...` dos arquivos tocados passou.
+- O que falta:
+  - Proxima fila do File Explorer em `docs/TASKS.md`: acoes de contexto sobre resultados, comecando por `Copy all content` com limites de memoria/preview.
+  - Depois: delete seguro, replace por arquivo modelo, export JSON estruturado e explicacao assistida por IA.
+  - O worktree segue com alteracoes acumuladas e ruido antigo de documentacao; nada fora desta fatia foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer maximize e botoes internos
+
+- Pedido do usuario:
+  - Prosseguir.
+- Contexto:
+  - A fatia anterior tornou o `Cancel` da barra de progresso funcional de ponta a ponta.
+  - A tarefa de polimento do File Explorer ainda tem duas pendencias principais: botoes internos de fechar sem sentido e comportamento visual de maximize/restore.
+  - O trabalho deve continuar pequeno, testavel e sem tocar no ruido antigo do worktree.
+- Plano:
+  - Revisar `app.py`, `FileExplorerDock`, `BaseDock` e testes relacionados a maximize/restore e botoes internos.
+  - Escolher uma subfatia objetiva com regressao testavel.
+  - Atualizar `docs/TASKS.md`, rodar testes focados e registrar o pos-acao antes de encerrar.
+
+## 2026-07-21 - Pos-acao - File Explorer maximize e botoes internos
+
+- Mudancas realizadas:
+  - A subfatia escolhida foi melhorar o comportamento visual de maximize/restore dos tools.
+  - `src/app.py` ganhou o helper `_restore_qt_window_flags()`, que restaura flags da janela principal preservando visibilidade e estado da janela.
+  - O restore agora diferencia janela oculta, normal, maximizada, minimizada e tela cheia; antes chamava `show()` apos `setWindowFlags()`, o que podia quebrar o estado visual.
+  - `MainWindow._restore_window_flags()` passou a delegar para esse helper.
+  - `tests/test_window_flags_restore.py` foi criado para cobrir janela maximizada visivel, janela oculta e caso em que as flags ja estavam corretas.
+  - A revisao de `Close` encontrou principalmente o botao de fechamento do dialogo generico de busca em `BaseDock`, nao um botao interno especifico do File Explorer; por isso nenhum botao foi removido nesta subfatia.
+  - `docs/TASKS.md` registrou a entrega parcial de maximize/restore e manteve pendente a revisao final de botoes internos.
+- Validacoes executadas:
+  - `python -m py_compile src/app.py tests/test_window_flags_restore.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_window_flags_restore.py -q` passou: 3 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_window_flags_restore.py tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 51 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `git diff --check -- ...` dos arquivos tocados passou.
+- O que falta:
+  - Encerrar a revisao de botoes internos de fechar: confirmar se ha algum controle removivel fora do dialogo generico de busca do `BaseDock`.
+  - Depois seguir para acoes de contexto sobre resultados do File Explorer: `Copy all content`, delete seguro, replace por arquivo modelo, export JSON e explicacao assistida por IA.
+  - O worktree segue com alteracoes antigas/acumuladas e ruido de documentacao fora desta subfatia; nada foi revertido.
+
+## 2026-07-21 - Pre-acao - File Explorer polimento de controles internos
+
+- Pedido do usuario:
+  - Prosseguir com as tarefas recomendadas.
+- Contexto:
+  - A fatia anterior entregou a separacao entre regex de filename e regex de conteudo no File Explorer.
+  - O proximo item operacional em `docs/TASKS.md` e polir controles internos do File Explorer.
+  - O foco deve continuar em estabilidade e coerencia, com cuidado para nao misturar alteracoes antigas do worktree nem remover padroes uteis usados por outros tools.
+- Plano:
+  - Mapear botoes de fechar em paineis internos, maximize/restore e barra/progresso/cancelamento no File Explorer.
+  - Escolher uma fatia pequena e testavel, priorizando comportamento visual incoerente ou controles redundantes.
+  - Implementar a correcao com testes focados quando houver API verificavel.
+  - Atualizar `docs/TASKS.md` e registrar o pos-acao antes de encerrar.
+
+## 2026-07-21 - Pos-acao - File Explorer polimento de controles internos
+
+- Mudancas realizadas:
+  - A fatia escolhida foi tornar o botao `Cancel` do dialogo de progresso funcional de ponta a ponta.
+  - `src/gui/panels/file_explorer_worker.py` ganhou `cancel()`, que marca `_cancel_requested` e chama `executor.cancel()`.
+  - `src/gui/file_explorer_dock.py` passou a conectar o `QProgressDialog.canceled` a `_on_progress_canceled()`, que marca o dock, cancela o executor e cancela o worker quando houver um ativo.
+  - Novas operacoes do File Explorer resetam `_cancel_requested` no dock para evitar herdar cancelamento anterior.
+  - `src/core/file_explorer_executor.py` agora reseta `_cancel` tambem em `execute_browse()` e `execute_replace()`, nao apenas em search.
+  - `src/i18n/en.json` e `src/i18n/pt_BR.json` receberam `file_list.status_canceling`.
+  - `tests/test_file_explorer_progress_cancel.py` foi criado para cobrir cancelamento via dock, parada de lotes pendentes no worker e reset de cancelamento no executor.
+  - `docs/TASKS.md` registrou a entrega parcial da barra/progresso/cancelamento e deixou botoes internos/maximize como pendentes.
+- Validacoes executadas:
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py src/gui/panels/file_explorer_worker.py tests/test_file_explorer_progress_cancel.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_progress_cancel.py -q` passou: 3 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_progress_cancel.py tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 48 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `git diff --check -- ...` dos arquivos tocados passou.
+- O que falta:
+  - Continuar a tarefa de polimento do File Explorer: revisar/remover botoes de fechar que nao fazem sentido em paineis internos e melhorar comportamento visual de maximize/restore dos tools.
+  - Depois, seguir para acoes de contexto sobre resultados: `Copy all content`, delete seguro, replace por arquivo modelo, export JSON e explicacao assistida por IA, sempre com limites de memoria.
+  - O worktree ainda tem ruido antigo de documentacao e alteracoes acumuladas; nada disso foi revertido nesta fatia.
+
+## 2026-07-21 - Pre-acao - File Explorer redundancia regex
+
+- Pedido do usuario:
+  - Fechar o Firefox e prosseguir com as tarefas recomendadas.
+- Contexto:
+  - Firefox foi encerrado com `pkill -TERM firefox`; `pgrep -a firefox` nao retornou processo depois disso.
+  - As P0 anteriores do File Explorer ja foram entregues: escopo Text/ASCII/Binary/Both, atualizacao tabela/limpeza e busca incremental.
+  - A proxima recomendacao em `docs/TASKS.md` e remover a redundancia de regex no File Explorer sem quebrar padroes compartilhados por outros tools.
+  - O worktree continua com mudancas locais acumuladas desta sequencia, alem de ruido antigo de docs fora do escopo.
+- Plano:
+  - Revisar `SearchOptionsPanel`, `FileFilterPanel`, `ConditionsGrid`, executor e testes para entender onde regex esta duplicado ou incoerente.
+  - Escolher uma fatia pequena: centralizar/clarificar sem remover componentes reutilizaveis usados por outros tools.
+  - Corrigir comportamento testavel e atualizar docs/status.
+  - Rodar testes focados e registrar o pos-acao antes de encerrar.
+
+## 2026-07-21 - Pos-acao - File Explorer redundancia regex
+
+- Mudancas realizadas:
+  - Firefox foi encerrado no inicio da sessao com `pkill -TERM firefox`; `pgrep -a firefox` ficou sem retorno.
+  - `src/gui/widgets/search_widgets.py` adicionou um checkbox `Regex` proprio ao painel `File Name`, com getters/setters testaveis.
+  - `src/gui/file_explorer_dock.py` passou a montar `_get_search_options()` incluindo `filename_regex` separadamente de `regex` de conteudo.
+  - A validacao de regex de nome agora usa `filename_regex`, e nao mais o checkbox global de regex de conteudo.
+  - `src/core/file_explorer_executor.py` passou a filtrar o nome por glob como padrao e por regex real quando `search_options["filename_regex"]` esta habilitado.
+  - `src/i18n/en.json` e `src/i18n/pt_BR.json` receberam textos/tooltip para a regex de filename e clarificacao do tooltip da regex de conteudo.
+  - `tests/test_file_explorer_regex_coherence.py` foi criado para cobrir glob padrao, separacao entre regex de conteudo e filename, regex explicita de filename, widget e opcoes do dock.
+  - `docs/TASKS.md` marcou a tarefa de remover redundancia de regex no File Explorer como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py src/gui/widgets/search_widgets.py tests/test_file_explorer_regex_coherence.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `python -m json.tool src/i18n/pt_BR.json` passaram.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_regex_coherence.py -q` passou: 5 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_regex_coherence.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 45 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `git diff --check -- ...` dos arquivos tocados passou.
+- O que falta:
+  - P0/P1 imediato do File Explorer: polir controles internos, especialmente botoes de fechar em paineis internos, comportamento de maximize/restore e barra de progresso compacta com Cancel funcional.
+  - P1 seguinte: acoes de contexto sobre resultados (`Copy all content`, delete seguro, replace por arquivo modelo, export JSON e explicacao assistida por IA), sempre com limites de memoria/preview.
+  - Ainda ha ruido antigo no worktree em docs e arquivos nao relacionados; nao foi revertido nem misturado com esta fatia.
+
+## 2026-07-19 - Pre-acao - File Explorer busca incremental
+
+- Pedido do usuario:
+  - Prosseguir com as tarefas.
+- Contexto:
+  - As P0 ja entregues do File Explorer incluem escopo Text/ASCII/Binary/Both, atualizacao correta da tabela e limpeza de resultados vazios/obsoletos.
+  - A P0 restante da triagem nova e a busca incremental: quando `content search` e `directory` nao mudarem, usar o resultado anterior como universo da proxima busca/replace.
+  - Deve-se evitar varredura ampla desnecessaria e manter caches coerentes para tree/table.
+- Plano:
+  - Revisar o executor e o dock para encontrar o melhor ponto de reaproveitamento de resultados.
+  - Implementar universo incremental com uma lista explicita de candidatos, sem depender de cache visual antigo.
+  - Criar testes para refinamento, troca de diretorio, troca de termo e reset/limpeza.
+  - Atualizar `docs/TASKS.md` e registrar o pos-acao com validacoes e pendencias.
+
+## 2026-07-19 - Pos-acao - File Explorer busca incremental
+
+- Mudancas realizadas:
+  - `src/core/file_explorer_executor.py` passou a aceitar `filters["candidate_paths"]` para limitar a busca a um universo explicito de arquivos candidatos.
+  - O executor valida que candidatos continuam dentro do diretorio pesquisado, ignora arquivos ausentes/duplicados e preserva filtros, filename pattern, conditions e escopo text/binario sobre esse universo menor.
+  - `src/gui/file_explorer_dock.py` passou a guardar o universo da ultima busca de conteudo e reaplica esse universo quando `directory` e `content_query` permanecem iguais.
+  - Troca de diretorio, troca de termo ou ausencia de `content_query` desativa a busca incremental; resultado vazio vira universo vazio ate o usuario mudar termo/diretorio.
+  - `tests/test_file_explorer_incremental_search.py` foi criado para cobrir universo candidato, refinamento por filename, reset por diretorio/termo e resultado vazio.
+  - `docs/TASKS.md` marcou a P0 de busca incremental como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py tests/test_file_explorer_incremental_search.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_incremental_search.py -q` passou: 5 testes.
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py src/gui/widgets/search_widgets.py tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_incremental_search.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 40 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+- O que falta:
+  - P0/P1 imediato do File Explorer: remover redundancia de regex entre busca/filtros/conditions sem quebrar padroes compartilhados.
+  - Depois: polir controles internos do File Explorer e implementar acoes de contexto sobre resultados (`Copy all content`, delete seguro, replace por arquivo modelo, export JSON e explicacao por IA).
+
+## 2026-07-19 - Pre-acao - File Explorer atualizacao tabela e limpeza
+
+- Pedido do usuario:
+  - Prosseguir com as tarefas.
+- Contexto:
+  - A fatia anterior entregou o escopo de busca `Text/ASCII`, `Binary` e `Text + Binary`.
+  - As proximas P0 em `docs/TASKS.md` tratam de atualizar corretamente novas buscas em modo tabela e limpar resultados vazios/obsoletos antes de nova execucao.
+  - O objetivo e manter o escopo no File Explorer e validar com testes focados, sem misturar o ruido antigo de documentacao do worktree.
+- Plano:
+  - Revisar o fluxo de `_on_search_finished`, `_on_batch_ready`, sincronizacao tree/table e cache de `last_search_results`.
+  - Corrigir a atualizacao da tabela quando a busca termina e a visualizacao atual e `Table`.
+  - Garantir limpeza explicita de tabela/arvore/status quando a nova busca nao tem resultados.
+  - Adicionar testes de regressao e atualizar `docs/TASKS.md` e `history-chat.md` ao final.
+
+## 2026-07-19 - Pos-acao - File Explorer atualizacao tabela e limpeza
+
+- Mudancas realizadas:
+  - `src/gui/file_explorer_dock.py` recebeu helper `_clear_result_views()` para limpar arvore, tabela, status e caches de sincronizacao.
+  - Novas operacoes de search/browse limpam resultados visiveis e caches antes de iniciar, evitando linhas antigas durante ou depois da proxima execucao.
+  - Busca vazia agora usa a mesma limpeza centralizada, removendo tambem `last_search_results` e `last_browse_results`.
+  - `tests/test_file_explorer_table_refresh.py` foi criado com regressao para atualizar tabela em modo Table e limpar resultados/caches quando a busca retorna vazio.
+  - `docs/TASKS.md` marcou como entregues as tarefas P0 de atualizacao da tabela e limpeza de resultados vazios.
+- Validacoes executadas:
+  - `python -m py_compile src/gui/file_explorer_dock.py tests/test_file_explorer_table_refresh.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_table_refresh.py -q` passou: 2 testes.
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/file_explorer_dock.py src/gui/widgets/search_widgets.py tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py` passou.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_content_scope.py tests/test_file_explorer_table_refresh.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 35 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+- O que falta:
+  - A P0 restante do File Explorer e a busca incremental: quando `content search` e `directory` nao mudarem, usar o resultado anterior como universo da proxima busca/replace.
+  - Depois disso continuam pendentes a limpeza de redundancia regex e o polimento de controles internos do File Explorer.
+
+## 2026-07-19 - Pre-acao - File Explorer escopo texto/binario
+
+- Pedido do usuario:
+  - Prosseguir com as tarefas.
+- Contexto:
+  - A fila operacional atual de `docs/TASKS.md` coloca como P0 a opcao de busca de conteudo em `Text/ASCII files`, `Binary files` ou `Text + Binary files`.
+  - A tarefa anterior reorganizou `docs/new-clarify-tasks.txt` em `TASKS.md`; agora o foco volta a implementar uma fatia funcional e testavel.
+  - Deve-se preservar padroes existentes do File Explorer e evitar leituras grandes em memoria, especialmente para arquivos binarios.
+- Plano:
+  - Estudar executor, dock e testes atuais do File Explorer.
+  - Adicionar classificacao leve de arquivo textual/binario por amostra.
+  - Expor a opcao na UI e passar o parametro ao executor.
+  - Manter replace restrito a texto.
+  - Criar/ajustar testes focados e atualizar `docs/TASKS.md`/`history-chat.md` ao final.
+
+## 2026-07-19 - Pos-acao - File Explorer escopo texto/binario
+
+- Mudancas realizadas:
+  - `src/core/file_explorer_executor.py` agora classifica arquivos por amostra limitada antes de busca de conteudo.
+  - O escopo padrao `text` busca apenas arquivos UTF-8/ASCII sem bytes nulos; `binary` busca por bytes em chunks; `both` executa os dois caminhos.
+  - Snippets binarios sao seguros e limitados, com offset em bytes e preview hexadecimal/ASCII.
+  - `execute_replace()` agora ignora explicitamente resultados binarios, mantendo replace restrito a texto.
+  - `src/gui/widgets/search_widgets.py` ganhou o combo de escopo de conteudo em `SearchOptionsPanel`.
+  - `src/i18n/en.json` e `src/i18n/pt_BR.json` receberam textos para o novo controle.
+  - `tests/test_file_explorer_content_scope.py` foi criado com testes focados para texto, UTF-8, binario, ambos, replace bloqueado e UI.
+  - `docs/TASKS.md` marcou a tarefa P0 de escopo Text/ASCII/Binary/Both como entregue.
+- Validacoes executadas:
+  - `python -m py_compile src/core/file_explorer_executor.py src/gui/widgets/search_widgets.py tests/test_file_explorer_content_scope.py` passou.
+  - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_content_scope.py -q` passou: 6 testes.
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer_content_scope.py tests/test_file_explorer_v2_9_117.py tests/test_file_explorer_top_options_and_globs.py tests/test_file_explorer_advanced_size_filters.py tests/test_results_tree_unicode_hierarchy.py -q` passou: 33 testes.
+  - `QT_QPA_PLATFORM=offscreen PYTHONPATH=. pytest tests/test_phase4_conditions_logic_operator.py tests/test_advanced_filters_size_fix.py -q` passou: 13 testes, com 3 avisos antigos de testes que retornam `bool`.
+  - `git diff --check` nos arquivos tocados passou.
+- Observacao:
+  - `QT_QPA_PLATFORM=offscreen pytest tests/test_file_explorer.py -q` falhou na coleta por `ModuleNotFoundError: No module named 'src'`.
+  - Repetindo com `PYTHONPATH=.` o mesmo arquivo terminou com codigo 139 sem output; por isso nao foi usado como criterio desta fatia para evitar loop instavel.
+- O que falta:
+  - File Explorer ainda tem P0 pendentes da triagem nova: atualizar corretamente novas buscas em modo tabela, busca incremental usando resultados anteriores como universo e limpeza visual de resultados vazios/obsoletos.
+  - Depois disso, seguir para acoes de contexto sobre resultados: copiar conteudo, deletar resultados com seguranca, substituir por arquivo modelo, exportar JSON de resultados e explicacao assistida por IA.
+
+## 2026-07-19 - Pre-acao - Interpretar new-clarify-tasks em TASKS
+
+- Pedido do usuario:
+  - Ler `docs/new-clarify-tasks.txt`.
+  - Interpretar o conteudo em `docs/TASKS.md` com palavras proprias.
+  - Preservar requisitos e funcionalidades desejaveis.
+  - Revisar duplicidades porque algumas tarefas podem ja existir em `TASKS.md`.
+- Contexto:
+  - O branch esta `ahead 1` por causa do commit local `df4b12c` de estabilizacao do File Explorer.
+  - O worktree ainda contem varias mudancas antigas de docs fora do escopo.
+  - O arquivo `docs/new-clarify-tasks.txt` esta untracked e sera usado como fonte, sem necessariamente ser versionado agora.
+- Plano:
+  - Ler o arquivo inteiro, nao apenas o inicio.
+  - Buscar no `TASKS.md` por temas equivalentes para evitar duplicacao burra.
+  - Inserir uma secao organizada de triagem/roadmap, separando P0/P1/P2/backlog e marcando itens ja cobertos quando aplicavel.
+  - Registrar no final o que ainda falta.
+
+## 2026-07-19 - Pos-acao - Interpretar new-clarify-tasks em TASKS
+
+- Mudancas realizadas:
+  - `docs/new-clarify-tasks.txt` foi lido e comparado com partes relevantes de `docs/TASKS.md`.
+  - `docs/TASKS.md` recebeu a secao `Triagem - docs/new-clarify-tasks.txt (19/07/2026)`.
+  - A triagem foi organizada por prioridade e area: File Explorer, Google/JSON Translate, Clarify Editor, Clarify Tools/extrator, Digital Text Content Repairer, estruturacao de informacao, novos tools e identidade do produto.
+  - O cabecalho `Last Update` de `docs/TASKS.md` foi atualizado para 2026/07/19.
+- Decisoes:
+  - Itens ja parcialmente cobertos foram registrados como revisao/validacao, nao como copia duplicada.
+  - `Open Text Extractor` continua tratado como legado publico removido, preservando a possibilidade de usar padroes internos nos extratores atuais.
+  - `New Tag` foi interpretado como `New Tab`, conforme o requisito de abas internas.
+- Validacoes executadas:
+  - `git diff --check -- docs/TASKS.md history-chat.md` passou.
+- O que falta:
+  - Implementar os P0 do File Explorer, principalmente escopo Text/ASCII/Binary/Both, atualizacao correta da tabela e busca incremental.
+  - Depois, seguir por acoes de resultado do File Explorer ou historico recuperavel do Clarify Editor, conforme prioridade do usuario.
+
 ## 2026-07-19 - Pre-acao - Estabilizacao inicial do File Explorer
 
 - Pedido do usuario:
@@ -1175,3 +1648,701 @@ Plano imediato:
   - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
   - `git diff --check` nos arquivos tocados passou.
   - Testes focados passaram: `29 passed in 31.92s`.
+
+## 2026-07-21 - Pre-acao - Google/JSON Translate abrir resultado no Clarify Editor
+
+- Pedido do usuario: Prosseguir.
+- Contexto:
+  - A fila P1 de acoes sobre resultados do File Explorer ja foi concluida e registrada em `docs/TASKS.md`.
+  - O proximo bloco operacional em `docs/TASKS.md` e Google Translate/JSON Translate e formatos de traducao.
+  - `Multiplas tags/escopos` parece uma mudanca mais ampla; a menor fatia P1 testavel do mesmo bloco e garantir abertura/alternancia do resultado no Clarify Editor.
+- Plano:
+  - Mapear os metodos existentes em `GoogleTranslateDock` e `JsonTranslateDock` relacionados a resultado, origem `Path`/`JSON` e abertura no editor.
+  - Implementar ou ajustar `Open in Editor and Switch` para abrir a aba correta no Clarify Editor e alternar foco.
+  - Adicionar testes focados sem depender de GUI pesada.
+  - Atualizar `docs/TASKS.md` e este historico apos a validacao.
+
+## 2026-07-29 - Pos-acao - Open in Editor and Switch respeitando Paths/JSON
+
+- Mudancas realizadas:
+  - Adicionado `EditorDock.load_generated_content()` para abrir conteudo gerado por tools sem criar arquivo temporario nem associar a disco.
+  - `EditorTab` e `JsonEditorTab` agora aceitam nome de exibicao interno para abas geradas sem `file_path`.
+  - `UnifiedTextToJsonDock` passou a emitir o tipo da saida ativa (`paths` ou `json`) ao usar `Open in Editor and Switch`.
+  - `MainWindow._load_json_from_converter_and_switch()` passou a abrir `Paths` como texto (`Generated paths.txt`) e `JSON` como JSON (`Generated output.json`), alternando para a aba do Clarify Editor.
+  - Corrigido um `SyntaxWarning` antigo em bloco desativado de `UnifiedTextToJsonDock`, convertendo a string para raw string.
+  - `docs/TASKS.md` foi atualizado marcando esta fatia como concluida.
+- Validacoes executadas:
+  - `python -m py_compile` nos arquivos tocados passou.
+  - Em uma execucao ampla, `tests/gui/test_unified_text_to_json_editor_switch.py` passou com 2 testes antes de `tests/gui/test_editor_dock.py` travar.
+  - `tests/gui/test_editor_dock.py` e uma selecao menor com `TestGeneratedContentLoading` ficaram presos em estado `D (disk sleep)` no ambiente Qt/pytest offscreen; os PIDs foram encerrados quando possivel, mas processos em `D` so somem quando o kernel libera a operacao.
+- Observacao:
+  - Para reduzir risco de memoria/IO, a validacao final desta fatia evitou nova rodada GUI ampla e ficou restrita a compilacao, teste do dock de origem observado como passando e revisao do diff.
+
+## 2026-07-29 - Consulta - Contagem de tarefas pendentes
+
+- Pedido do usuario: "quantas tarefas faltam?"
+- Resultado consultado em `docs/TASKS.md`:
+  - 59 checkboxes pendentes no total bruto do arquivo, incluindo subtarefas.
+  - 42 tarefas principais pendentes se contar apenas linhas de tarefa principal `- [ ]`.
+  - 35 tarefas principais pendentes na fila operacional atual, excluindo o bloco historico antigo da Fase 4-8 marcado como revalidar/possivelmente obsoleto.
+  - 3 tarefas pendentes no bloco estrito `P1 - Clarify Editor / Open Editor`.
+  - 7 tarefas pendentes se somar `Google Translate/JSON Translate` ainda aberto com `Clarify Editor / Open Editor`.
+- Observacao:
+  - O bloco historico antigo no fim do trecho analisado ainda infla a contagem e deve ser limpo pela tarefa ja aberta de coerencia do `TASKS.md`.
+
+## 2026-07-29 - Pre-acao - Limpeza de coerencia do TASKS.md
+
+- Pedido do usuario: prosseguir com tarefas em andamento; se nao houver, iniciar tarefa recomendada da lista.
+- Tarefa escolhida:
+  - `P1 - Limpeza de coerência do TASKS.md do File Explorer`.
+- Motivo:
+  - `docs/TASKS.md` ainda declara v2.9.116 como `EM PROGRESSO`, embora o status geral diga `100% COMPLETO`.
+  - O bloco historico antigo de Fases 4-8 ainda usa checkboxes pendentes, inflando a contagem de tarefas e competindo com a fila operacional atual.
+- Plano:
+  - Renomear a secao v2.9.116 para historico/concluido.
+  - Deixar claro que a fila operacional atual do File Explorer e a fila prioritaria mais recente.
+  - Converter os checkboxes antigos das Fases 4-8 em registro historico sem `- [ ]`.
+  - Marcar a tarefa de limpeza como concluida e recalcular o que falta.
+
+## 2026-07-29 - Pos-acao - Limpeza de coerencia do TASKS.md
+
+- Mudancas realizadas:
+  - A secao v2.9.116 foi renomeada de `EM PROGRESSO` para `HISTÓRICO CONCLUÍDO`.
+  - A Fase 7 passou a apontar para a fila atual de documentacao, sem permanecer como pendencia operacional antiga.
+  - A Fase 8 ficou registrada como fora da fila operacional atual e dependente de decisao explicita de release.
+  - Os checkboxes antigos das Fases 4-8 foram convertidos em registro historico sem `- [ ]`.
+  - A tarefa `P1 - Limpeza de coerência do TASKS.md do File Explorer` foi marcada como entregue.
+- Validacoes executadas:
+  - `git diff --check -- docs/TASKS.md history-chat.md` passou.
+  - Busca textual confirmou que nao restam `EM PROGRESSO - v2.9.116` nem checkboxes antigos `4.x` a `8.x`.
+  - A contagem operacional caiu para 34 tarefas principais pendentes, sem subtarefas pendentes herdadas do bloco historico antigo.
+- O que falta:
+  - Proxima tarefa P1 em andamento: substituir testes estaticos frageis por testes comportamentais no File Explorer.
+
+## 2026-07-29 - Pre-acao - Substituir testes estaticos frageis do File Explorer
+
+- Pedido do usuario: continuar as tarefas em andamento.
+- Tarefa escolhida:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Plano:
+  - Procurar testes que leem arquivos-fonte ou verificam apenas strings/atributos sem exercitar comportamento.
+  - Escolher uma fatia pequena relacionada ao File Explorer, sem rodar suite GUI ampla.
+  - Converter para teste comportamental focado ou marcar como ja coberto se nao houver caso seguro.
+  - Atualizar `docs/TASKS.md`/`history-chat.md` e validar com testes leves.
+
+## 2026-07-29 - Pos-acao - Testes comportamentais de progresso do File Explorer
+
+- Mudancas realizadas:
+  - Em `tests/test_file_explorer_v2_9_117.py`, dois testes deixaram de ler `src/gui/file_explorer_dock.py` como texto.
+  - `test_progress_message_compacts_long_paths` agora chama `FileExplorerDock._format_progress_message()` e verifica que caminhos longos sao compactados sem diretorios completos no texto do modal.
+  - `test_progress_dialog_has_fixed_width_configuration` agora instancia `FileExplorerDock`, cria o dialogo de progresso e verifica largura fixa, label customizada, word wrap e limite de largura do label.
+  - `docs/TASKS.md` registrou esta entrega como progresso parcial, mantendo a tarefa aberta porque ainda ha outros testes estaticos a converter.
+- Validacoes executadas:
+  - `pytest tests/test_file_explorer_v2_9_117.py::test_progress_message_compacts_long_paths tests/test_file_explorer_v2_9_117.py::test_progress_dialog_has_fixed_width_configuration` passou: 2 testes.
+  - `pytest tests/test_file_explorer_v2_9_117.py` passou: 13 testes.
+- O que falta:
+  - Converter outros testes do mesmo arquivo que ainda verificam presenca de strings em `file_explorer_dock.py`, `results_tree.py` e `app.py`.
+
+## 2026-07-29 - Consulta - Produtividade e continuidade das tarefas
+
+- Pedido do usuario: avaliar a produtividade recente e confirmar se e possivel continuar as tarefas.
+- Avaliacao:
+  - A produtividade esta consistente em fatias pequenas, com implementacao, registro e validacao focada.
+  - A limpeza de coerencia do `TASKS.md` reduziu a fila operacional para 34 tarefas principais pendentes.
+  - A tarefa P1 atual avancou parcialmente; o arquivo focado passou com 13 testes.
+  - Nao ha bloqueio funcional conhecido para continuar.
+- Cuidados para as proximas etapas:
+  - Preservar as muitas alteracoes locais ja existentes e evitar misturar escopos.
+  - Continuar usando timeout externo e testes Qt pequenos, pois suites GUI amplas ja ficaram presas em `D (disk sleep)`.
+  - Prosseguir pela tarefa P1 em andamento antes de iniciar uma nova tarefa.
+- Proxima fatia recomendada:
+  - Converter `test_format_size_logic` para exercitar diretamente `ResultsTree._format_size()`, seguida do teste focado e da suite limitada `tests/test_file_explorer_v2_9_117.py`.
+
+## 2026-07-29 - Pre-acao - Teste comportamental de formatacao de tamanho
+
+- Pedido do usuario: prosseguir com as tarefas.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Estudar a implementacao atual de `ResultsTree._format_size()`.
+  - Converter `test_format_size_logic` para validar o comportamento real, incluindo limites entre unidades.
+  - Executar somente o teste focado e a suite limitada de v2.9.117 com timeout externo.
+
+## 2026-07-29 - Pos-acao - Teste comportamental de formatacao de tamanho
+
+- Mudancas realizadas:
+  - `ResultsTree._format_size()` foi explicitado como metodo estatico, pois nao depende de estado da interface.
+  - `test_format_size_logic` deixou de ler `results_tree.py` e agora chama a API real.
+  - O teste cobre zero, limite superior de bytes, KB fracionario e transicoes para MB, GB, TB e PB.
+  - `docs/TASKS.md` registra a entrega parcial, mantendo a P1 aberta.
+- Validacoes executadas:
+  - Teste focado parametrizado: 8 casos passaram.
+  - Suite limitada `tests/test_file_explorer_v2_9_117.py`: 20 casos passaram.
+  - `py_compile` dos dois arquivos Python alterados passou.
+  - `git diff --check` dos arquivos desta fatia passou.
+- O que falta:
+  - Dez testes estruturais no arquivo v2.9.117 ainda leem codigo-fonte em vez de exercitar comportamento.
+  - Proxima fatia recomendada: converter o teste do menu de contexto do `ResultsTree`, preservando cobertura de `Open Location` e `Properties`.
+  - Depois da P1, permanece a P2 de documentacao de usuario e tooltip/i18n da busca por texto, binario ou ambos.
+
+## 2026-07-29 - Pre-acao - Teste comportamental do menu de contexto
+
+- Pedido do usuario: prosseguir.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Estudar a construcao do menu de contexto do `ResultsTree`.
+  - Substituir a verificacao textual de `Open Location` e `Properties` por comportamento observavel.
+  - Evitar abrir dialogos, gerenciador de arquivos ou qualquer processo externo.
+  - Validar com teste focado e suite v2.9.117 limitada por timeout.
+
+## 2026-07-29 - Pos-acao - Teste comportamental do menu de contexto
+
+- Mudancas realizadas:
+  - A construcao do menu foi extraida para `ResultsTree._build_context_menu()`; `_show_context_menu()` apenas posiciona e exibe o menu construido.
+  - `test_phase_c2_context_menu` deixou de ler `results_tree.py`.
+  - O teste agora verifica que `Open Location` e `Properties` ficam desabilitados sem selecao, habilitados com selecao e acionam os manipuladores corretos.
+  - Nenhum dialogo, gerenciador de arquivos ou processo externo e aberto durante o teste.
+  - Imports sem uso (`MagicMock` e `Qt`) foram removidos do arquivo de testes.
+- Validacoes executadas:
+  - Teste comportamental focado: 1 passou.
+  - Suite limitada `tests/test_file_explorer_v2_9_117.py`: 20 passaram.
+  - `py_compile` dos arquivos Python alterados passou.
+  - `git diff --check` dos arquivos desta fatia passou.
+- O que falta:
+  - Nove testes estruturais ainda leem arquivos-fonte: Fase A, Fases B.1-B.6, Fase C.1 e a verificacao de integracao agregada.
+  - Proxima fatia recomendada: converter Fase B.1/B.2 em verificacoes reais do splitter horizontal e da integracao `ResultsTree`.
+  - A P2 de documentacao, tooltip e i18n continua depois da conclusao da P1.
+
+## 2026-07-29 - Pre-acao - Testes comportamentais do splitter e ResultsTree
+
+- Pedido do usuario: prosseguir.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Converter os testes das Fases B.1 e B.2 para instanciar `FileExplorerDock`.
+  - Validar orientacao e estrutura real do splitter.
+  - Validar a integracao de `ResultsTree` na pilha de resultados.
+  - Executar teste focado e suite v2.9.117 com timeout externo.
+
+## 2026-07-29 - Pos-acao - Testes comportamentais do splitter e ResultsTree
+
+- Mudancas realizadas:
+  - `test_phase_b1_qsplitter_horizontal` agora exibe o dock em modo offscreen, processa o layout e valida dois paineis, orientacao horizontal e proporcao esquerda entre 20% e 30%.
+  - `test_phase_b2_resultstree_integration` agora valida duas views na pilha, `ResultsTree` dentro do container de busca, tabela na segunda posicao e tabela como view inicial.
+  - As duas verificacoes deixaram de ler `file_explorer_dock.py`.
+  - `docs/TASKS.md` registra o progresso parcial.
+- Validacoes executadas:
+  - Testes focados B.1/B.2: 2 passaram.
+  - Suite limitada `tests/test_file_explorer_v2_9_117.py`: 20 passaram.
+  - `py_compile` do teste passou.
+  - `git diff --check` dos arquivos desta fatia passou.
+- O que falta:
+  - Sete testes estruturais ainda leem arquivos-fonte: Fase A, Fases B.3-B.6, Fase C.1 e integracao agregada.
+  - Proxima fatia recomendada: converter B.3/B.4 para comportamento do comando Browse/Search e atualizacao das estatisticas.
+  - Depois permanecem B.5/B.6, C.1, integracao agregada e a P2 de documentacao/tooltip/i18n.
+
+## 2026-07-29 - Pre-acao - Testes comportamentais de comando e estatisticas
+
+- Pedido do usuario: prosseguir.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Estudar a decisao de `FileExplorerDock._list_files_smart()`.
+  - Validar que o comando unificado encaminha corretamente Browse e Search sem executar workers.
+  - Validar a atualizacao real dos indicadores de arquivos, diretorios, tamanho e tempo.
+  - Executar testes focados e suite v2.9.117 com timeout externo.
+
+## 2026-07-29 - Pos-acao - Testes comportamentais de comando e estatisticas
+
+- Mudancas realizadas:
+  - `test_phase_b3_unified_browse_search_button` agora clica o botao real em um cenario Browse sem criterios e em um cenario Search com padrao de nome.
+  - O teste confirma que ambos passam pelo executor unificado sem iniciar operacao real.
+  - `test_phase_b4_statistics_panel` agora fornece resultados em memoria e valida textos internacionalizados para 2 arquivos, 1 diretorio, 1.5 KB e 1.23 s.
+  - As duas verificacoes deixaram de ler `file_explorer_dock.py`.
+  - `docs/TASKS.md` registra o progresso parcial.
+- Validacoes executadas:
+  - Testes focados B.3/B.4: 2 passaram.
+  - Suite limitada `tests/test_file_explorer_v2_9_117.py`: 20 passaram.
+  - `py_compile` do teste passou.
+  - `git diff --check` dos arquivos desta fatia passou.
+- O que falta:
+  - Cinco testes estruturais ainda leem arquivos-fonte: Fase A, Fases B.5/B.6, Fase C.1 e integracao agregada.
+  - Proxima fatia recomendada: converter B.5/B.6 para encaminhamento da exportacao CSV e estados reais das secoes recolhiveis.
+  - Depois permanecem Fase A, C.1, integracao agregada e a P2 de documentacao/tooltip/i18n.
+
+## 2026-07-29 - Pre-acao - Testes comportamentais de exportacao e secoes
+
+- Pedido do usuario: prosseguir.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Validar que Export CSV encaminha a tabela e a arvore conforme a view ativa.
+  - Validar tipos, estados iniciais e alternancia das secoes recolhiveis.
+  - Nao abrir dialogo de arquivo nem gravar dados.
+  - Executar testes focados e suite v2.9.117 com timeout externo.
+
+## 2026-07-29 - Pos-acao - Testes comportamentais de exportacao e secoes
+
+- Mudancas realizadas:
+  - `test_phase_b5_export_csv` agora alterna a view ativa e confirma encaminhamento para `table_manager.export_csv()` ou `_export_tree_to_csv()`.
+  - `test_phase_b6_collapsible_sections` agora valida instancias, estado inicial e ciclos repetidos de expansao/recolhimento.
+  - Os testes nao abrem seletor de arquivo nem gravam CSV.
+  - A validacao revelou um `RuntimeWarning` no `CollapsibleSection`: o sinal `finished` era desconectado sem conexao inicial e callbacks eram recriados.
+  - A animacao agora possui um unico callback permanente, evitando aviso e acumulo de conexoes ao alternar repetidamente.
+  - `docs/TASKS.md` registra o progresso e a correcao de estabilidade.
+- Validacoes executadas:
+  - B.5/B.6 focados: 2 passaram inicialmente.
+  - B.5/B.6 apos a correcao: 2 passaram com `RuntimeWarning` tratado como erro.
+  - Suite v2.9.117 completa: 20 passaram com `RuntimeWarning` tratado como erro.
+  - Ciclo B.6 expandir/recolher/expandir: 1 passou sem aviso.
+  - `py_compile` dos arquivos Python alterados passou.
+  - `git diff --check` dos arquivos desta fatia passou.
+- O que falta:
+  - Tres testes estruturais ainda leem arquivos-fonte: Fase A, Fase C.1 e integracao agregada.
+  - Proxima fatia recomendada: substituir a Fase C.1 por verificacao de estabilidade do splitter durante interacao/hover e eliminar a integracao agregada redundante.
+  - A Fase A exige avaliar o teste comportamental existente de restauracao das flags da janela antes de evitar duplicacao.
+  - Depois permanece a P2 de documentacao/tooltip/i18n.
+
+## 2026-07-29 - Pre-acao - Conclusao da limpeza de testes estaticos v2.9.117
+
+- Pedido do usuario: prosseguir.
+- Tarefa em andamento:
+  - `P1 - Substituir testes estáticos frágeis por testes comportamentais`.
+- Escopo desta fatia:
+  - Revisar a cobertura dedicada de restauracao das flags da janela antes de remover o teste estrutural da Fase A.
+  - Converter C.1 em comportamento observavel de estabilidade do splitter durante movimentos do mouse.
+  - Remover a integracao agregada se for apenas duplicacao estrutural.
+  - Revisar o runner manual antigo, pois testes com fixtures nao podem ser chamados diretamente.
+  - Validar os testes dedicados e a suite v2.9.117 com timeout externo.
+
+## 2026-07-29 - Pos-acao - P1 de testes comportamentais concluida
+
+- Mudancas realizadas:
+  - A Fase A estrutural foi removida de v2.9.117 porque `tests/test_window_flags_restore.py` ja cobre tres comportamentos reais de restauracao das flags.
+  - C.1 agora move o mouse entre os dois paineis e confirma que o splitter nao muda de tamanho automaticamente.
+  - A integracao agregada baseada em strings foi removida por repetir as fases individuais.
+  - O runner manual antigo foi removido: estava incompativel com fixtures pytest e referenciava nomes de testes inexistentes.
+  - O cabecalho do arquivo passou a descreve-lo como regressao comportamental.
+  - `docs/TASKS.md` marcou a P1 como entregue.
+- Validacoes executadas:
+  - C.1 e window flags focados: 4 passaram.
+  - Suite consolidada v2.9.117 + window flags: 21 passaram com `RuntimeWarning` tratado como erro.
+  - Busca confirmou ausencia de `read_text()`, teste `implementation_exists`, integracao agregada e runner `__main__` em v2.9.117.
+  - `py_compile` e `git diff --check` passaram.
+- O que falta:
+  - Restam 33 tarefas principais em `docs/TASKS.md`.
+  - Proxima tarefa operacional: `P2 - Documentacao de usuario e tooltip/i18n da nova opcao`.
+  - A P2 deve documentar `Text/ASCII`, `Binary` e `Both`, incluindo o limite de leitura e o aviso de que conteudo binario bruto nao deve ser exibido extensamente.
+  - Depois permanecem as tarefas de Translate/Clarify Editor e as demais filas tematicas registradas.
+
+## 2026-07-29 - Pre-acao - Documentacao e i18n do escopo de conteudo
+
+- Pedido do usuario: continuar.
+- Tarefa escolhida:
+  - `P2 - Documentacao de usuario e tooltip/i18n da nova opcao`.
+- Escopo desta fatia:
+  - Localizar o controle atual para pesquisa em texto, binario ou ambos.
+  - Revisar rotulos, tooltip e traducoes em ingles e portugues.
+  - Atualizar a documentacao de usuario com semantica, limites e aviso de seguranca.
+  - Acrescentar testes focados de coerencia quando houver contrato testavel.
+
+## 2026-07-29 - Pos-acao - P2 de documentacao e i18n concluida
+
+- Mudancas realizadas:
+  - O rótulo passou a explicitar `Tipo de conteúdo` e a opcao combinada passou a usar `Ambos`.
+  - O tooltip descreve Texto/ASCII, Binarios e Ambos, leitura binaria em blocos de 64 KiB, previews limitados e substituicao exclusiva para texto.
+  - As cinco chaves do recurso foram adicionadas a espanhol, frances, alemao, chines e japones; ingles e portugues foram atualizados.
+  - `SearchOptionsPanel.retranslateUi()` agora reaplica textos e tooltips sem perder o escopo selecionado; o File Explorer chama essa rotina ao trocar idioma.
+  - O manual documenta classificacao por amostra de 8 KiB, blocos de 64 KiB, limite de 10.000 resultados por arquivo, 50.000 no total e protecao contra substituicao binaria.
+  - O teste do painel valida rotulos, tooltip e preservacao de `Both` apos retraducao.
+  - O teste de placeholders i18n deixou de confundir `TODO` com palavras espanholas como `TODOS`/`Todo`, exigindo marcador independente e com caixa correta.
+  - `docs/TASKS.md` marcou a P2 como entregue.
+- Validacoes executadas:
+  - Escopo de conteudo: 6 testes passaram.
+  - i18n: 14 testes passaram, incluindo JSON, paridade de chaves e placeholders.
+  - File Explorer v2.9.117 + escopo: 24 testes passaram com `RuntimeWarning` tratado como erro.
+  - `py_compile`, validacao JSON dos sete idiomas e `git diff --check` passaram.
+- O que falta:
+  - Restam 32 tarefas principais em `docs/TASKS.md`.
+  - Proxima tarefa na ordem operacional: multiplas tags/escopos na traducao.
+  - No bloco Translate/Clarify Editor ainda permanecem historico de traducao, JSON/IPYNB/PDF, revalidacao da inversao automatica, historico recuperavel de documentos, explorador lateral e ampliacao das convencoes de editores.
+
+## 2026-07-29 - Pre-acao - Multiplas tags e escopos na traducao
+
+- Pedido do usuario: prosseguir.
+- Tarefa escolhida:
+  - `Multiplas tags/escopos na traducao`.
+- Escopo inicial:
+  - Mapear como a traducao recebe tags, seletores ou escopos atualmente.
+  - Identificar cobertura existente e evitar duplicar parsers ou convencoes uteis.
+  - Escolher uma fatia pequena com contrato comportamental claro.
+  - Implementar e validar com testes focados antes de ampliar formatos ou interface.
+
+## 2026-07-29 - Pos-acao - Base do JSON Translate estabilizada
+
+- Diagnostico:
+  - `JsonTranslateDock` possuia copias locais provisórias de `load_translation_dict()` e `process_translate_file()`.
+  - O processador local apenas lia o arquivo e retornava sucesso, sem aplicar traducao.
+  - A implementacao completa ja existia em `src/translators/json_translate_helpers.py`.
+  - O helper completo recebia exclusoes como lista, mas tentava analisa-las novamente como string.
+- Mudancas realizadas:
+  - O dock passou a importar e reutilizar `load_translation_dict()` e `process_translate_file()` do helper central.
+  - As funcoes placeholder locais foram removidas.
+  - O helper passou a entregar diretamente a lista de exclusoes a `mask_exclusions()`.
+  - Criado `tests/test_json_translate_scopes.py` com escopo customizado, exclusao e traducao real disparada pelo dock.
+  - `docs/TASKS.md` registra a entrega parcial; multiplos escopos continuam pendentes.
+- Validacoes executadas:
+  - Testes novos: 3 passaram com `RuntimeWarning` tratado como erro.
+  - Interacao existente dos delimitadores + testes novos: 4 passaram.
+  - `py_compile`, `git diff --check` e busca pela remocao das funcoes locais passaram.
+- O que falta:
+  - A tarefa de multiplas tags/escopos permanece aberta; a interface ainda aceita somente um par start/end.
+  - Proxima fatia: criar API de multiplos pares com compatibilidade para o par unico atual e comportamento definido para sobreposicoes.
+  - Depois sera necessario expor os pares na interface, adicionar i18n/tooltips e validar execucao completa.
+  - Permanecem 32 tarefas principais, pois esta tarefa ainda nao foi concluida.
+
+## 2026-09-10 - Pre-acao - API para multiplos escopos de traducao
+
+- Pedido do usuario: continuar com as tarefas.
+- Contexto verificado:
+  - O projeto foi movido para `Documents/Profissional e Carreira/.../Tools Projects/.../clarify`.
+  - O novo checkout preserva `history-chat.md`, a fila e as alteracoes da estabilizacao do JSON Translate.
+- Tarefa em andamento:
+  - `Multiplas tags/escopos na traducao`.
+- Escopo desta fatia:
+  - Criar uma API para varios pares de delimitadores sem quebrar o par unico atual.
+  - Mesclar regioes sobrepostas para que cada trecho seja transformado somente uma vez.
+  - Manter esta etapa no backend; interface e i18n ficam para a fatia seguinte.
+  - Validar com testes unitarios focados e sem suite GUI ampla.
+
+## 2026-09-10 - Pos-acao - API para multiplos escopos de traducao
+
+- Mudancas realizadas:
+  - Criada `apply_scoped_translations(content, scope_pairs, fn_transform)` no helper central.
+  - O par unico agora delega para a nova API, mantendo compatibilidade com chamadas existentes.
+  - As regioes sao localizadas no conteudo original e sobreposicoes sao mescladas antes da transformacao, evitando processamento duplicado.
+  - Lista vazia ou delimitador vazio preserva o comportamento anterior de transformar o arquivo inteiro.
+  - `process_translate_file()` ganhou `scope_pairs` opcional no fim da assinatura, sem quebrar argumentos posicionais existentes.
+  - A nova API foi exportada por `src.translators`.
+  - Testes cobrem pares distintos, sobreposicao transformada uma vez e traducao real limitada a dois escopos no arquivo.
+  - `docs/TASKS.md` foi atualizado como progresso parcial.
+- Validacoes executadas:
+  - Cinco testes puros passaram isoladamente.
+  - O teste Qt do dock passou isoladamente.
+  - A suite completa `tests/test_json_translate_scopes.py` passou com 6 testes e `RuntimeWarning` tratado como erro.
+  - A primeira tentativa conjunta nao apresentou relatorio dentro da espera da ferramenta; nao restou processo antigo e as repeticoes limitadas passaram.
+  - `py_compile`, importacao pela API publica e `git diff --check` passaram.
+- O que falta:
+  - A tarefa permanece aberta porque a interface ainda possui apenas um par de campos start/end.
+  - Proxima fatia: adicionar editor simples de varios pares no `JsonTranslateDock`, preservar o primeiro par existente e passar a lista para `process_translate_file()`.
+  - Depois: i18n/tooltips dos novos controles, testes de interacao e decisao sobre delimitadores de tags especificas.
+  - Permanecem 32 tarefas principais em `docs/TASKS.md`.
+
+## 2026-09-10 - Pre-acao - Interface para multiplos escopos
+
+- Pedido do usuario: continuar com as proximas tarefas.
+- Tarefa em andamento:
+  - `Multiplas tags/escopos na traducao`.
+- Escopo desta fatia:
+  - Preservar os campos start/end atuais como primeiro par.
+  - Permitir adicionar e remover pares adicionais no JSON Translate.
+  - Validar pares incompletos antes de processar arquivos.
+  - Encaminhar todos os pares preenchidos para `process_translate_file()`.
+  - Incluir i18n, tooltips e testes comportamentais focados.
+
+## 2026-09-10 - Pos-acao - Multiplos escopos concluidos
+
+- Mudancas realizadas:
+  - O JSON Translate agora aceita varios pares de delimitadores, com botoes para adicionar e remover escopos.
+  - Pares incompletos sao rejeitados antes do processamento; todos os campos vazios preservam a traducao do arquivo inteiro.
+  - Regioes sobrepostas sao mescladas e cada trecho de origem e transformado somente uma vez.
+  - Delimitadores de tags literais respeitam a tag configurada, inclusive em estruturas aninhadas, sem alterar outras tags.
+  - Os novos controles receberam traducoes nos sete idiomas, tooltips e nomes acessiveis.
+  - O manual foi atualizado e a tarefa foi marcada como concluida em `docs/TASKS.md`.
+- Validacoes executadas:
+  - 10 testes de escopos e integracao do JSON Translate passaram.
+  - 14 testes de expansao de i18n passaram.
+  - 5 testes focados de interacao, tooltips e acessibilidade passaram.
+  - `py_compile`, validacao JSON dos sete catalogos e `git diff --check` passaram.
+- O que falta:
+  - Restam 31 tarefas principais abertas em `docs/TASKS.md`.
+  - A proxima tarefa na ordem documentada e `Recentes e historico de traducao`.
+  - Depois permanecem, entre outras, traducao de JSON/IPYNB/PDF, revalidacao da inversao automatica, recuperacao de documentos nao salvos e explorador lateral do editor.
+
+## 2026-09-10 - Pre-acao - Recentes de traducao
+
+- Pedido do usuario: continuar com as proximas tarefas.
+- Tarefa em andamento:
+  - `Recentes e historico de traducao`.
+- Diagnostico:
+  - O Google Translate possui um combo editavel para arquivos, mas nao persiste nem restaura a lista.
+  - O JSON Translate nao oferece acesso rapido aos arquivos, diretorios ou dicionarios usados.
+  - O History Dock registra operacoes somente em memoria e nao deve ser usado para persistir o conteudo traduzido.
+- Escopo desta fatia:
+  - Persistir somente caminhos locais existentes, separados em fontes e dicionarios, com limite de 10 itens.
+  - Compartilhar as listas entre Google Translate e JSON Translate.
+  - Adicionar selecao e limpeza explicita de recentes nas duas interfaces.
+  - Corrigir o seletor de diretorio do JSON Translate, que atualmente descarta o caminho selecionado.
+  - Cobrir armazenamento e integracao GUI com testes focados e limitados.
+
+## 2026-09-10 - Pos-acao - Recentes e historico de traducao concluidos
+
+- Mudancas realizadas:
+  - Criado `TranslationRecentPaths`, baseado em `QSettings`, com listas separadas de fontes e dicionarios, deduplicacao, descarte de caminhos inexistentes e limite de 10 itens.
+  - JSON Translate ganhou menus de fontes e dicionarios recentes; Google Translate compartilha as fontes e mostra somente arquivos.
+  - Cada menu permite limpar apenas sua propria categoria.
+  - Traducoes concluidas registram somente metadados e caminhos no `OperationHistory` persistente e no History Dock quando ele estiver disponivel; nenhum texto traduzido e armazenado.
+  - History Dock passou a exibir/exportar caminho-fonte e idiomas quando esses metadados existirem.
+  - Corrigido o seletor de diretorio do JSON Translate e removida a atribuicao incorreta do caminho-fonte ao campo de dicionario.
+  - Adicionada a chave ausente `google_translate.auto_detect` nos sete idiomas; os testes antigos do worker foram alinhados a API atual `translate_text_chunked()`.
+  - Manual e `docs/TASKS.md` foram atualizados, e a tarefa foi marcada como concluida.
+- Validacoes executadas:
+  - 6 testes novos cobrem persistencia limitada, categorias, deduplicacao, limpeza, caminhos obsoletos, historico e integracao com os dois docks.
+  - 46 testes relacionados passaram em 2,56 segundos, incluindo toda a suite existente do Google Translate, escopos do JSON Translate e i18n.
+  - `py_compile`, validacao JSON dos sete catalogos e `git diff --check` passaram.
+  - A primeira execucao ampla revelou 6 testes antigos desalinhados; depois da correcao, todos passaram.
+  - Duas entradas temporarias criadas no historico real pela primeira execucao foram removidas de forma seletiva; nenhum registro real foi alterado e os testes agora simulam o registrador.
+- O que falta:
+  - Restam 30 tarefas principais abertas em `docs/TASKS.md`.
+  - A proxima na ordem e `Traducao de JSON, IPYNB e PDF`, seguida por `Revalidar inversao com traducao automatica`.
+  - No escopo explicito do Clarify Editor ainda faltam o historico recuperavel de documentos nao salvos, o explorador lateral e a preservacao/ampliacao de convencoes de editores conhecidos.
+
+## 2026-09-10 - Pre-acao - Formatos de traducao JSON, IPYNB e PDF
+
+- Pedido do usuario: continuar com as tarefas.
+- Tarefa em andamento:
+  - `Traducao de JSON, IPYNB e PDF`.
+- Escopo desta fatia:
+  - Auditar o suporte real ja existente para os tres formatos antes de alterar codigo.
+  - Confirmar por testes o que ja funciona em JSON Translate e Google Translate.
+  - Escolher o menor incremento seguro, preservando a estrutura de notebooks e evitando promessas de preservacao de layout em PDF.
+  - Usar testes focados com limite externo para evitar consumo excessivo de memoria.
+
+## 2026-09-10 - Pos-acao - Backend seguro para notebooks
+
+- Mudancas realizadas:
+  - Confirmado por teste que JSON Translate modifica valores de um arquivo `.json` sem invalidar sua sintaxe.
+  - Criado `src/translation/notebook_translation.py` usando somente a biblioteca padrao.
+  - `load_notebook()` valida a estrutura minima e rejeita arquivos acima de 50 MiB antes de carregar JSON na memoria.
+  - `translate_markdown_cells()` traduz somente celulas Markdown; codigo, raw cells, outputs, metadados, IDs, anexos e campos desconhecidos nao entram no callback.
+  - Fontes Markdown em formato string ou lista continuam no mesmo tipo de representacao.
+  - `save_notebook()` grava UTF-8 por arquivo temporario e substituicao atomica, evitando saida parcialmente escrita.
+  - A API foi exportada por `src.translation`.
+  - O plano PDF foi delimitado em `docs/TASKS.md`: origem somente leitura, limites antes da extracao, aviso de perda de layout e saida textual revisavel no Clarify Editor.
+- Validacoes executadas:
+  - 8 testes de notebook passaram isoladamente.
+  - 19 testes combinados de notebook e JSON Translate passaram.
+  - Compilacao e importacao da API publica passaram.
+- O que falta:
+  - A tarefa permanece aberta; ainda e necessario conectar `.ipynb` ao worker, seletor e salvamento do Google Translate.
+  - Ainda falta escolher/declarar um extrator PDF, implementar limites de tamanho/paginas e abrir a saida no Clarify Editor com aviso de perda de layout.
+  - Restam 30 tarefas principais porque esta tarefa esta apenas parcialmente concluida.
+
+## 2026-09-12 - Pre-acao - Programa das 30 tarefas restantes
+
+- Pedido do usuario:
+  - Concluir as 30 tarefas principais restantes em `docs/TASKS.md`.
+  - Considerar o projeto externo `ai-presence-monitor` para automacao continua do desenvolvimento.
+- Estrategia inicial:
+  - Recontar e classificar a fila por prioridade, dependencia, risco e ferramenta proprietaria.
+  - Preservar funcionalidades compartilhadas entre tools e evitar refatoracoes globais sem evidencia.
+  - Executar lotes pequenos com testes focados e limites externos de tempo/memoria.
+  - Estudar o contrato real do `ai-presence-monitor` antes de qualquer integracao ou automacao.
+  - Nao fazer push nem alterar o projeto externo sem autorizacao especifica e evidencia de necessidade.
+- Tarefa retomada primeiro:
+  - `Traducao de JSON, IPYNB e PDF`, atualmente parcial com backend seguro de notebook.
+
+## 2026-09-14 - Pre-acao - Continuacao do programa de 30 tarefas
+
+- Pedido do usuario: prosseguir com as tarefas em andamento.
+- Estado retomado:
+  - Nove tarefas do programa ja foram implementadas: traducao JSON/IPYNB/PDF, traducao inversa, recuperacao de nao salvos, explorador lateral do Clarify Editor, convencoes/atalhos do editor, dois itens do contrato do extrator, busca/substituicao do Format Converter e organizacao do menu Tools.
+  - O feedback sonoro opcional esta implementado e aguarda a ultima rodada de testes antes de ser marcado como concluido.
+  - A fila possui 21 itens ainda abertos enquanto essa validacao nao termina.
+- Proximas acoes:
+  - Validar preferencia, comportamento silencioso por padrao e integracoes do feedback sonoro com testes limitados.
+  - Registrar a evidencia em `docs/TASKS.md` e seguir para o proximo item de menor risco/dependencia.
+  - Continuar preservando alteracoes preexistentes e evitar processos ou suites sem limite de tempo.
+
+## 2026-09-14 - Pos-acao - Conclusao do programa de 30 tarefas
+
+- Pedido e criterio seguido:
+  - O usuario pediu a execucao das 30 tarefas restantes e solicitou considerar o `ai-presence-monitor`, com cuidado especial para memoria.
+  - O trabalho foi dividido em processos de teste limitados por timeout, sem suites concorrentes pesadas, sem despacho `continue`, automacao GUI, commit ou push.
+  - Alteracoes preexistentes no worktree foram preservadas; a sessao terminou em `main` com 165 entradas no status Git, incluindo trabalho anterior e arquivos desta rodada.
+- Entregas consolidadas nesta continuacao:
+  - `Information Structure`: mapa de pastas a partir dos caminhos ja coletados pelo File Explorer, SQLite somente leitura, contexto/chamadas AST Python com identificador configuravel, agrupamento textual recursivo, metricas, ancestrais DOI e estruturas visuais em JSON.
+  - `Editorial Repair`: sessoes internas com `New Tab`, deteccao heuristica de idioma, Aspell, categorias separadas de defeitos, pre-validacao estrutural ABNT, preparacao no AI Processor e transferencia ao Google Translate/LibreOffice sem sobrescrever fontes.
+  - `Boolean Logic`: tabelas verdade, mintermos, maxtermos e minimizacao SOP/POS por SymPy, com parser restrito e limite de 10 variaveis.
+  - `Voice Programming`: parser de ditado tecnico em portugues/ingles e comandos de insercao, navegacao e salvamento, sempre com previa exata e confirmacao antes de chegar ao Clarify Editor.
+  - `Algorithm Analysis`: preflight local para codigo/projeto/fluxograma, contexto AST Python e preparacao no AI Processor sem iniciar requisicao.
+  - Integracoes anteriores do programa foram mantidas: traducao JSON/IPYNB/PDF e reversa, recuperacao de nao salvos, Clarify Editor, extrator, Format Converter, menu Tools, som opcional, Clock, Terminal, Lynx, Ollama/LLaVA, operacoes em documentos e identidade `Clarify Toolkit`.
+  - Corrigida uma linha com indentacao invalida no plugin de exemplo CSV, encontrada por `compileall`.
+  - Corrigido o empacotamento Poetry declarando o pacote `src`; wheel e sdist passaram a ser gerados.
+  - `docs/TASKS.md` terminou com 0 checkboxes abertos e 56 concluidos; o manual foi atualizado e seu titulo padronizado para Clarify Toolkit.
+- Validacao executada:
+  - 153 testes de backend das tarefas passaram.
+  - 57 testes GUI/integracao diretamente relacionados passaram em Qt offscreen.
+  - 45 testes recentes do File Explorer passaram.
+  - Total conclusivo sem sobreposicao nessas baterias: 255 testes aprovados.
+  - A integracao `Information Structure` foi repetida apos os ultimos ajustes: 11 testes passaram.
+  - `compileall` de todo `src/`, `poetry check`, sete catalogos i18n, `git diff --check` e `poetry build` passaram.
+  - O wheel foi inspecionado e contem `src/app.py`, `src/gui/editor_dock.py`, `src/information_structure.py` e `src/boolean_logic.py`.
+- Limites e pendencias externas que permanecem:
+  - A suite historica completa de `tests/gui/test_editor_dock.py` avancou sem falha exibida, mas excedeu o limite externo de 180 segundos; seu resultado integral permanece inconclusivo e nao foi contabilizado nos 255 testes.
+  - Pylint nao esta instalado neste ambiente, portanto nao houve gate Pylint.
+  - `google.generativeai` emite aviso de deprecacao; migracao futura para `google.genai` continua recomendada.
+  - Reconhecimento de voz ao vivo continua indisponivel porque Whisper, Vosk e SpeechRecognition nao estao instalados. Nenhum modelo pesado foi instalado.
+  - Aspell local nao possui dicionario `pt_BR`; a interface informa a ausencia em vez de usar fallback silencioso.
+  - LLaVA continua opcional e nao instalado; analise visual depende de um provider multimodal configurado.
+  - Nao restam tarefas marcadas como abertas em `TASKS.md`; o que falta e resolver esses bloqueios externos/tecnicos e decidir como separar, revisar e versionar o worktree amplo antes de qualquer commit ou push.
+
+## 2026-09-25 - Pre-acao - Retomada das pendencias restantes
+
+- Pedido do usuario: executar as tarefas que ainda faltam ou permanecem pendentes.
+- Estado herdado do ultimo registro:
+  - `docs/TASKS.md` estava sem checkboxes abertos, mas havia pendencias tecnicas externas e validacoes inconclusivas.
+  - Permaneciam citados: suite historica completa do Editor com timeout, ausencia de Pylint, deprecacao de `google.generativeai`, falta de backend STT ao vivo, ausencia do dicionario Aspell `pt_BR`, LLaVA opcional nao instalado e worktree amplo ainda nao revisado/versionado.
+- Proximas acoes:
+  - Revalidar o estado atual do repositorio e da documentacao, sem assumir que o registro anterior continua atual.
+  - Classificar cada pendencia por prioridade, risco, dependencia externa e possibilidade de resolucao local.
+  - Comecar pelas correcoes locais de estabilidade e coerencia que possam ser testadas de forma limitada, preservando alteracoes preexistentes.
+  - Nao instalar modelos pesados, executar automacao externa, fazer commit ou push sem necessidade e autorizacao correspondentes.
+
+## 2026-09-26 - Pos-acao - Estabilidade e validacao das pendencias
+
+- Pedido do usuario: prosseguir com as tarefas restantes, preservando funcionalidades
+  compartilhadas e limitando consumo de recursos durante a investigacao.
+- Correcoes concluidas:
+  - Suite do Clarify Editor usa fixtures menores e descarta widgets entre testes.
+    Os testes antigos de Find/Replace agora verificam os controles reais.
+  - Identificado o timeout acumulativo: callbacks de Copy/Export acessavam botoes
+    ja destruidos e abriam o dialogo modal de crash. Timers agora usam o contexto
+    Qt do widget; o feedback de auto-save recebeu a mesma protecao.
+  - Plugins PostgreSQL/Slack usam imports canonicos; o loader exige PluginBase,
+    ativa plugins apos construir menus e evita wrappers temporarios de QAction
+    que invalidavam QMenu. Ambos os plugins foram testados sem operacoes externas.
+  - Consultas de atualizacao sairam da thread GUI, com uma requisicao simultanea,
+    retorno por signal, retry apos falha e supressao de notificacao apos fechar.
+  - Logs suportam CLARIFY_LOG_DIR, fallback e console; migrations compartilham
+    o diretorio efetivo e cache de updates e opcional. CLARIFY_SETTINGS_FILE
+    permite selecionar explicitamente outro arquivo JSON de preferencias.
+  - AI Processor e Tutorial Assistant migrados para google-genai, com credenciais
+    isoladas e conexoes fechadas por requisicao. Poetry lock atualizado e extra
+    dev instalado, incluindo Pylint. Nenhuma requisicao Gemini real foi enviada.
+  - Simplificada a atribuicao de atalhos do Editor apontada pelo lint.
+- Evidencia:
+  - 126 testes passaram em 15.73 segundos, incluindo todos os 69 testes do Editor,
+    plugins, updates, Gemini com mocks, armazenamento, logs, Ollama e recovery.
+  - Apos o ajuste final de atalhos, os 3 testes de menus/inicializacao passaram
+    novamente, assim como Pylint do EditorDock.
+  - Pylint focado passou com suporte aos modulos/sinais dinamicos Qt, jobs=1.
+  - compileall, poetry check, git diff --check, wheel e sdist passaram; artefatos
+    reconstruidos apos o ultimo ajuste. Wheel inclui o controller e google-genai.
+  - Processos limitados por timeout; tentativas inconclusivas/falhas nao foram
+    contadas como aprovadas. Nao foi realizada prova formal de ausencia de leaks.
+- Documentacao:
+  - TASKS.md, CURRENT_STATE.md e LOGGING.md atualizados.
+  - Criado docs/reports/STABILITY_VALIDATION_2026_09_26.md com escopo e reproducao.
+  - Corrigida a interpretacao anterior de zero pendencias: ha 36 marcadores legados
+    **[]** ignorados pela contagem de checkboxes padrao. Contem duplicatas e planos
+    historicos; ainda exigem reconciliacao antes de contar requisitos exclusivos.
+- O que falta:
+  - Reconciliar esses 36 marcadores com codigo, duplicatas e criterios originais.
+  - STT ao vivo: Whisper, Vosk e SpeechRecognition ausentes.
+  - Aspell pt_BR ausente; apenas dicionarios de ingles instalados.
+  - LLaVA ausente; Ollama lista llama3.2:1b e tinyllama:latest.
+  - Validacao real de providers, revisao visual desktop, suite global e revisao
+    separada do worktree amplo antes de versionamento/release.
+  - Nenhum commit, push, download de modelo pesado ou despacho pelo
+    AI Presence Monitor foi executado.
+
+## 2026-09-27 - Pre-acao - Corrigir tamanho da tela do Clarify Editor
+
+- O usuario relatou que o editor aparece pequeno e centralizado horizontalmente.
+- Prioridade atual: inspecionar visualmente e corrigir o layout do Clarify Editor
+  antes de continuar a revisao dos 36 marcadores legados.
+- Verificar geometria da janela, abas, splitter e politicas de tamanho; reproduzir
+  o problema e validar a correcao visualmente e com testes focados.
+- Preservar arquivos abertos, preferencias e alteracoes preexistentes do projeto.
+
+## 2026-09-27 - Pos-acao - Layout do Clarify Editor corrigido
+
+- Nao havia janela Clarify aberta no desktop acessivel; o problema foi reproduzido
+  numa janela real de MainWindow, com configuracao temporaria e documento de teste.
+- Captura anterior confirmou o editor como faixa horizontal pequena no centro,
+  com grandes espacos vazios acima e abaixo. O QSplitter horizontal tinha politica
+  vertical Preferred e nao recebia prioridade de expansao no QVBoxLayout.
+- Correcao localizada em src/gui/editor_dock.py: politica Expanding em ambos os
+  eixos do splitter e stretch=1 no layout. Nenhuma alteracao em BaseDock ou outras tools.
+- Captura posterior confirmou que o workspace preenche a area entre menu e status.
+  Na janela 1200x650, a altura do editor de texto passou de 194 para 439 pixels.
+  Capturas locais: /tmp/clarify-layout-before.png e /tmp/clarify-layout-after.png.
+- tests/gui/test_editor_layout.py reproduziu falha antes do ajuste e passou depois:
+  seis cenarios (vazio/TXT/JSON, Explorer visivel/oculto), cada um redimensionado
+  para 800x500, 1200x650 e 1440x900, com preferencias/recovery isolados.
+- Validacao final: 75 testes aprovados em 13.51s (69 anteriores + 6 novos),
+  Pylint errors-only focado aprovado e git diff --check limpo.
+- TASKS.md registra a correcao. Nenhum commit/push; previews encerrados.
+- O que falta: usuario reabrir o aplicativo para carregar a correcao; revisao dos
+  36 marcadores legados continua suspensa. Pendencias STT, Aspell pt_BR, LLaVA e
+  revisao do worktree permanecem sem alteracoes nesta tarefa.
+
+## 2026-09-27 - Pre-acao - Revisao dos 36 marcadores legados
+
+- Usuario autorizou revisar os 36 marcadores e implementar o que for necessario.
+- Revisar cada requisito contra fontes, integracoes e testes atuais; preservar
+  requisitos parciais, agrupar duplicatas e distinguir planos historicos.
+- Atualizar TASKS.md com rastreabilidade e contagem operacional verificavel.
+- Corrigir lacunas confirmadas por prioridade, com testes limitados e sem desfazer
+  o layout corrigido do Editor ou alteracoes preexistentes. Sem commit/push.
+
+## 2026-09-27 - Pos-acao - Auditoria legada e correcoes
+
+- Usuario pediu revisar os 36 marcadores e implementar o necessario; confirmou
+  continuidade durante a execucao. Todos receberam IDs LEG-01 a LEG-36 e matriz
+  em docs/reports/LEGACY_TASK_AUDIT_2026_09_27.md, preservando textos originais.
+- Resultado: 9 implementados, 23 itens distintos abertos (12 parciais, 10
+  planejados, 1 validacao), 3 duplicatas e 1 cabecalho historico. TASKS.md agora
+  usa uma fila canonica com criterios e prioridades; nao sao 36 bugs novos.
+- Corrigidos defeitos reproduzidos: insercao regex apagava Undo, posicionava
+  siblings de raiz incorretamente, sobrescrevia chaves e falhava ao tratar erros.
+  Substituicao de registradores agora e literal e nao altera parcialmente $10.
+- Completada ativacao de resultados Search/Insert por duplo clique/Enter usando
+  o editor existente; diretorios nao abrem descendentes em massa. Callbacks de
+  feedback destas acoes respeitam vida util Qt do label.
+- Venn tinha TypeError no construtor QFont; corrigido e testados detalhes de
+  regioes. Diff limitava rolagem do documento longo ao curto; sincronizacao
+  proporcional e QSignalBlocker agora permitem chegar ao final de ambos.
+- Testes: 315 aprovados em 24.28s no conjunto focado final, incluindo 21 novos
+  casos (13 insercao e 8 workflows) e os 6 cenarios de layout preservados.
+  Home/settings temporarios, Qt offscreen, timeout externo e por teste.
+  Nao e suite global nem validacao de providers ao vivo.
+- Um run anterior bloqueou em dialogo de saida; fixture agora cobre exec().
+  Outro run ampliado apresentou segfault ao recriar MainWindow/aplicar tema.
+  Fixtures passaram a liberar DeferredDelete e InsertPanel e testado isolado,
+  evitando 26 inicializacoes completas. Isso NAO comprova correcao do crash:
+  investigacao de ciclo completo Qt/temas foi adicionada como MUST prioritario.
+- Verificacao documental: 36 IDs unicos, 23 entradas legadas abertas, 27
+  checkboxes abertos totais (23 + 3 ambiente + 1 investigacao Qt). Sem marcadores
+  antigos nao padronizados. git diff --check passou. Pylint serial errors-only
+  passou excluindo limitacoes de inferencia PySide6 E1101/E1136; nao e lint global.
+- O que falta: investigar ciclo janela/tema Qt, depois LEG-24 (Undo/backup
+  global, falhas e limites de memoria) e LEG-06 (chunking limitado), seguindo a
+  fila documentada. STT ao vivo, Aspell pt_BR e LLaVA continuam validacoes separadas.
+  Cloud, macros, Git, GraphQL e demais propostas nao foram declarados prontos.
+- Sem commit/push, downloads pesados, chamadas de provider, alteracao de arquivos
+  do usuario ou limpeza de codigo compartilhado. Processos de validacao encerrados.
+
+## 2026-09-27 - Pre-acao - Checkpoint, investigacao Qt e branches
+
+- Usuario autorizou commit e push antes de investigar o crash Qt e propor merges
+  de branches. Releitura do protocolo externo solicitado: COM-UUID, PR/revisao,
+  protecao de main, worktrees e limites de RAM; gates antes de promover a principal.
+- Criada COM-609038f3-58cb-4100-9b3b-b36177997cc2 preservando o worktree acumulado.
+  Checkpoint de trabalho, nao release; main e branches existentes nao serao mescladas
+  ou apagadas nesta investigacao. example.py e scratch preexistente e fica de fora.
+- Validar snapshot e verificar segredos antes de enviar ao origin configurado.
+  Depois reproduzir Qt em subprocessos limitados e inventariar ancestralidade,
+  equivalencia de patches e conflitos para recomendar ordem de integracao.

@@ -1,7 +1,9 @@
 # 📚 Clarify Documentation Index
 
-**Versão**: 2.9.111  
-**Última atualização**: 23 de Dezembro de 2025
+**Estado**: Documentação operacional alinhada ao checkout atual
+**Última atualização**: 8 de Junho de 2026
+
+> **Nota de manutenção:** este repositório contém documentação ativa e muitos registros históricos de sprints, sessões, investigações e migrações. Use [CURRENT_STATE.md](CURRENT_STATE.md), este índice, `../README.md`, `../CONTRIBUTING.md`, `guides/PROJECT_STRUCTURE.md`, `guides/ROOT_STRUCTURE.md`, `wiki/`, `api/` e `processes/` como referência operacional. Documentos em `reports/`, `sessions/`, `sprints/`, `study/`, `programmers/`, `archive/`, `pt/`, `en/` e planos antigos podem citar comandos ou arquivos que existiam em checkouts anteriores.
 
 ---
 
@@ -11,12 +13,13 @@
 docs/
 ├── INDEX.md                    # Este arquivo (navegação principal)
 ├── README.md                   # Introdução à documentação
-├── PROJECT_SUMMARY.md          # Executive summary do projeto
+├── CURRENT_STATE.md            # Estado operacional atual do checkout
 ├── TASKS.md                    # Task tracking (histórico)
 │
 ├── 📋 guides/                  # Guias de uso
+│   ├── PROJECT_SUMMARY.md      # Executive summary do projeto
+│   ├── PROJECT_STRUCTURE.md    # Estrutura atual do projeto
 │   ├── jsx-extractor-guide.md
-│   ├── SHORTCUTS_CUSTOMIZATION.md
 │   ├── TOOLTIP_GUIDELINES.md
 │   └── ...
 │
@@ -47,7 +50,8 @@ docs/
 │
 ├── 🛡️ protocols/             # Protocolos e checklists
 │   ├── PROTOCOL_CHECKLIST.md
-│   └── protocolos/            # Protocolos detalhados
+│   ├── simplicity/            # Protocolo ativo
+│   └── compliance/            # Relatórios de conformidade
 │
 ├── 🩹 patches/                # Patches e rollbacks
 │   ├── insert_panel_integration.patch
@@ -72,10 +76,11 @@ docs/
 ## 🚀 Quick Start
 
 ### Para Novos Desenvolvedores
-1. [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) - Visão geral do projeto
-2. [../README.md](../README.md) - Instruções de instalação
-3. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Como contribuir
-4. [architecture/](architecture/) - Entender a arquitetura
+1. [CURRENT_STATE.md](CURRENT_STATE.md) - Estado operacional atual do checkout
+2. [PROJECT_SUMMARY.md](guides/PROJECT_SUMMARY.md) - Visão geral do projeto
+3. [../README.md](../README.md) - Instruções de instalação
+4. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Como contribuir
+5. [architecture/](architecture/) - Entender a arquitetura
 
 ### Para Usuários
 1. [../README.md](../README.md) - Features e instalação
@@ -86,7 +91,7 @@ docs/
 
 ## 📝 Especificações por Versão
 
-### v2.9 (Current - 100% Complete)
+### v2.9 Milestones
 
 | Feature | Spec | LOC | Tests | Status |
 |---------|------|-----|-------|--------|
@@ -94,10 +99,10 @@ docs/
 | **Reusable Panels** | [v2.9.110](specifications/v2.9/v2.9.110-SPECIFICATION.md) | 1,140 | 18 | ✅ |
 | **Regex Insert** | [v2.9.111](specifications/v2.9/v2.9.111-SPECIFICATION.md) | 1,140 | 14 | ✅ |
 
-**Release**: [RELEASE_v2.9.109.md](releases/RELEASE_v2.9.109.md)  
+**Release**: [RELEASE_v2.9.109.md](releases/RELEASE_v2.9.109.md)
 **Report**: [FINAL_REPORT_v2.9.md](releases/FINAL_REPORT_v2.9.md)
 
-### v2.10 (Planned)
+### v2.10 Planning
 
 | Feature | Spec | Timeline | Priority |
 |---------|------|----------|----------|
@@ -111,7 +116,7 @@ docs/
 
 ### CI/CD
 - [CI_CD_SETUP.md](processes/CI_CD_SETUP.md) - Configuração de CI/CD
-- [../github/workflows/](../.github/workflows/) - GitHub Actions
+- [GitHub Actions](../.github/workflows/) - Workflows do repositório
 
 ### Error Handling
 - [ERROR_HANDLING.md](processes/ERROR_HANDLING.md) - Estratégias de tratamento de erros
@@ -127,11 +132,11 @@ docs/
 
 ### Development Protocols
 - [PROTOCOL_CHECKLIST.md](protocols/PROTOCOL_CHECKLIST.md) - Checklist de desenvolvimento
-- [protocolos/](protocolos/) - Protocolos detalhados
+- [SIMPLICITY_PROTOCOL_3.md](protocols/simplicity/SIMPLICITY_PROTOCOL_3.md) - Protocolo ativo detalhado
 
 ### UI/UX Guidelines
 - [TOOLTIP_GUIDELINES.md](guides/TOOLTIP_GUIDELINES.md) - Diretrizes para tooltips
-- [SHORTCUTS_CUSTOMIZATION.md](guides/SHORTCUTS_CUSTOMIZATION.md) - Customização de atalhos
+- [Keyboard Shortcuts](wiki/keyboard-shortcuts.md) - Atalhos e customização
 
 ---
 
@@ -139,8 +144,8 @@ docs/
 
 ### Features
 - [jsx-extractor-guide.md](guides/jsx-extractor-guide.md) - JSX Parameter Extractor
-- [PROJECT_TEMPLATES.md](PROJECT_TEMPLATES.md) - Templates de projeto
-- [RECIPES.md](RECIPES.md) - Recipes e exemplos
+- [PROJECT_TEMPLATES.md](guides/PROJECT_TEMPLATES.md) - Templates de projeto
+- [features-overview.md](wiki/features-overview.md) - Visão geral das ferramentas
 
 ### Patches e Rollbacks
 - [patches/insert_panel_integration.patch](patches/insert_panel_integration.patch) - Patch de integração
@@ -164,14 +169,14 @@ docs/
 
 | Métrica | Valor |
 |---------|-------|
-| **Versão** | 2.9.111 |
+| **Linha histórica principal** | v2.9.x |
 | **LOC** | 70,590+ |
 | **Testes** | 91/94 (97%) |
 | **Coverage** | 97% |
 | **Commits** | 215+ |
-| **Documentos** | 50+ |
+| **Documentos** | 700+ arquivos Markdown, incluindo histórico |
 
-Ver [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) para detalhes completos.
+Ver [CURRENT_STATE.md](CURRENT_STATE.md) para a nota de versão atual e [PROJECT_SUMMARY.md](guides/PROJECT_SUMMARY.md) para o resumo do projeto.
 
 ---
 
@@ -181,7 +186,8 @@ Ver [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) para detalhes completos.
 - [README](../README.md) - Página principal
 - [CHANGELOG](../CHANGELOG.md) - Histórico de mudanças
 - [CONTRIBUTING](../CONTRIBUTING.md) - Guia de contribuição
-- [PROJECT_STRUCTURE](../PROJECT_STRUCTURE.md) - Estrutura do projeto
+- [CURRENT_STATE](CURRENT_STATE.md) - Estado operacional atual
+- [PROJECT_STRUCTURE](guides/PROJECT_STRUCTURE.md) - Estrutura do projeto
 - [SECURITY](../SECURITY.md) - Política de segurança
 
 ### Repositório
@@ -195,7 +201,7 @@ Ver [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) para detalhes completos.
 
 1. **Estrutura**: Siga a organização de pastas acima
 2. **Formato**: Use Markdown (.md)
-3. **Templates**: Veja [PROJECT_TEMPLATES.md](PROJECT_TEMPLATES.md)
+3. **Templates**: Veja [PROJECT_TEMPLATES.md](guides/PROJECT_TEMPLATES.md)
 4. **Specs**: Especificações em `specifications/v{major}.{minor}/`
 5. **Guias**: Guias práticos em `guides/`
 6. **Traduções**: Adicione versões em `en/` ou `pt/`
@@ -215,7 +221,8 @@ Ver [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) para detalhes completos.
 
 ### Por Categoria
 - **Instalação**: [../README.md#instalação](../README.md)
-- **Features**: [PROJECT_SUMMARY.md#major-features](PROJECT_SUMMARY.md)
+- **Estado atual**: [CURRENT_STATE.md](CURRENT_STATE.md)
+- **Features**: [PROJECT_SUMMARY.md](guides/PROJECT_SUMMARY.md)
 - **API**: [api/](api/)
 - **Arquitetura**: [architecture/](architecture/)
 - **Testes**: [processes/](processes/)
@@ -226,6 +233,6 @@ Ver [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) para detalhes completos.
 
 ---
 
-**Última atualização**: 2025-12-23  
-**Mantido por**: Josue Amaral  
+**Última atualização**: 2026-06-08
+**Mantido por**: Josue Amaral
 **Licença**: MIT

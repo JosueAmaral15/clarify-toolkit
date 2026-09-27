@@ -1,4 +1,4 @@
-# Clarify - Advanced Text Processing & JSON Manipulation System
+# Clarify Toolkit - Advanced Text Processing & JSON Manipulation System
 
 [![CI](https://github.com/JosueAmaral15/clarify/actions/workflows/ci.yml/badge.svg)](https://github.com/JosueAmaral15/clarify/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/JosueAmaral15/clarify/branch/main/graph/badge.svg)](https://codecov.io/gh/JosueAmaral15/clarify)
@@ -14,7 +14,7 @@
 
 ## 📋 Descrição
 
-**Clarify** é um sistema completo e modular para processamento de texto e manipulação de JSON, com interface gráfica (GUI) moderna e linha de comando (CLI) poderosa.
+**Clarify Toolkit** é um sistema completo e modular para processamento de texto e manipulação de JSON, com interface gráfica (GUI) moderna e linha de comando (CLI) poderosa.
 
 ### ✨ Versão 2.9.111 - 100% Feature Complete! 🎉
 - ✅ **100% COULD HAVE tasks** implementadas (36/36)
@@ -191,16 +191,28 @@ For contributors and developers:
 - **[📚 API Documentation](https://josueamaral15.github.io/clarify/)** - Complete API reference (Sphinx)
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - How to contribute to Clarify
 - **[📝 Changelog](CHANGELOG.md)** - Version history and changes
-- **[📋 Project Structure](PROJECT_STRUCTURE.md)** - Codebase organization
+- **[📋 Project Structure](docs/guides/PROJECT_STRUCTURE.md)** - Codebase organization
 - **[🎯 Tasks & Roadmap](docs/TASKS.md)** - Development tasks and priorities
 
 ---
+
+## Estado atual deste checkout
+
+Esta documentação foi revisada contra a árvore atual do repositório. O comando canônico para iniciar o Clarify a partir da raiz é:
+
+```bash
+python -m src
+```
+
+Os launchers primários ficam na raiz (`clarify.sh`, `clarify.command`, `clarify.bat`). `main.py` é uma ferramenta de validação de imports para desenvolvimento. Muitos arquivos em `docs/`, especialmente `reports/`, `sessions/`, `sprints/`, `study/`, `programmers/`, `archive/` e `pt/en` de migração, são registros históricos e podem citar nomes antigos como `clarify.py` ou `requirements.txt`.
 
 ## �📁 Estrutura do Projeto
 
 ```
 clarify/
-├── 📄 clarify.py              # ⭐ Ponto de entrada principal (USE ESTE)
+├── 📄 clarify.sh              # Launcher Linux/Unix
+├── 📄 clarify.command         # Launcher macOS
+├── 📄 clarify.bat             # Launcher Windows
 ├── 📄 main.py                 # Script de teste/validação modular
 │
 ├── 📁 src/                    # 🆕 Todo código fonte organizado aqui
@@ -270,9 +282,6 @@ clarify/
 │   ├── backup/               # Backups antigos do código
 │   └── old/                  # Versões antigas do projeto
 │
-├── 📄 clarify_gui.sh         # Launcher script para Linux/Mac
-├── 📄 clarify_gui.bat        # Launcher script para Windows
-│
 ├── pyproject.toml            # Poetry configuration
 ├── poetry.lock               # Dependency lock
 └── README.md                 # Este arquivo
@@ -285,7 +294,13 @@ clarify/
 ```bash
 git clone https://github.com/JosueAmaral15/clarify.git
 cd clarify
-pip install PySide6  # Necessário para GUI
+poetry install
+```
+
+Sem Poetry, instale o pacote no ambiente virtual usando `pyproject.toml`:
+
+```bash
+python -m pip install -e .
 ```
 
 #### 📦 Dependências Opcionais
@@ -302,34 +317,36 @@ Se `openpyxl` não estiver instalado, ao tentar exportar para Excel você verá:
 
 **Instalação completa** (todas as dependências):
 ```bash
-pip install -r requirements.txt  # Todas as bibliotecas principais + opcionais
+poetry install  # Dependências principais do pyproject.toml
 ```
 
 ### 🖥️ Modo GUI (Recomendado)
 
 ```bash
-python clarify.py            # Método direto
-# OU
 python -m src                # Executar como módulo Python
+# OU use o launcher da sua plataforma:
+./clarify.sh                 # Linux/Unix
+./clarify.command            # macOS
+clarify.bat                  # Windows
 ```
 
 ### 💻 Modo CLI
 
 ```bash
 # Busca
-python clarify.py search ./src --query "foo" --include "*.ts;*.tsx"
+python -m src search ./src foo --include "*.ts" "*.tsx"
 
 # Substituição
-python clarify.py replace ./src --query "foo" --replacement "bar" --all
+python -m src replace ./src foo bar --all
 
 # Inserção
-python clarify.py insert ./src --line 1 --text "HEADER" --mode insert_above
+python -m src insert ./src 1 "HEADER" --mode insert_above
 
 # JSON Translator
-python clarify.py translate ./web --dictionary dict.ts --root-name t
+python -m src translate ./web dict.ts --root t
 
 # JSON Rewriter (com bug fix)
-python clarify.py dedupe en.ts --join-keys --eliminate-duplicates -o en2.ts
+python -m src dedupe en.ts --join-keys --eliminate-duplicates -o en2.ts
 ```
 
 ### 🧪 Validar Arquitetura Modular
@@ -421,9 +438,9 @@ def walk(v):
 
 ## ⚠️ Importante
 
-**Para uso completo, utilize `python clarify.py`** - ponto de entrada principal.
+**Para uso completo, utilize `python -m src`** - ponto de entrada principal deste checkout.
 
-**Alternativa**: `python -m src` - executar como módulo Python.
+**Alternativa GUI**: use `clarify.sh`, `clarify.command` ou `clarify.bat` na raiz.
 
 **Para validação modular, use `python main.py test`** - valida arquitetura modular.
 
@@ -436,13 +453,13 @@ def walk(v):
 python main.py test
 
 # Executar aplicação completa
-python clarify.py
-
-# Executar como módulo Python
 python -m src
 
-# Ver ajuda CLI
-python clarify.py --help
+# Executar via launcher Linux/Unix
+./clarify.sh
+
+# Ver ajuda de um subcomando CLI
+python -m src search --help
 ```
 
 ## 📚 Documentação Adicional
@@ -488,18 +505,19 @@ MIT License
 ## 💡 Dica
 
 Para melhor experiência:
-- **GUI (Launcher)**: Clique duplo em `clarify_gui.bat` (Windows) ou `clarify_gui.sh` (Linux/Mac)
-- **GUI (Python)**: `python clarify.py` ou `python -m src` (interface completa)
-- **CLI**: `python clarify.py <comando>` (linha de comando)
+- **GUI (Launcher)**: clique duplo em `clarify.bat` (Windows), `clarify.command` (macOS) ou `clarify.sh` (Linux/Unix)
+- **GUI (Python)**: `python -m src` (interface completa)
+- **CLI**: `python -m src <comando>` (linha de comando)
 - **Validação**: `python main.py test` (validar arquitetura modular)
 - **Documentação**: `docs/README.md` (índice bilíngue)
 
 ### 🚀 Launchers GUI
 Criados scripts de conveniência para iniciar a GUI com um clique:
-- **Windows**: `clarify_gui.bat` - Double-click para executar
-- **Linux/Mac**: `clarify_gui.sh` - Double-click ou `./clarify_gui.sh`
+- **Windows**: `clarify.bat` - Double-click para executar
+- **Linux/Unix**: `clarify.sh` - Double-click ou `./clarify.sh`
+- **macOS**: `clarify.command` - Double-click ou `./clarify.command`
 - Ambos verificam dependências e oferecem instalar PySide6 se necessário
-- Ver [LAUNCHERS.md](LAUNCHERS.md) para detalhes
+- Ver [launchers/LAUNCHERS_README.md](launchers/LAUNCHERS_README.md) para detalhes
 
 ## 📝 Changelog v2.1.0 (2025-11-23)
 

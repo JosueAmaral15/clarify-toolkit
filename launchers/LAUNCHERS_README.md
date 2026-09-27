@@ -123,14 +123,9 @@ chmod +x clarify.sh
 python3 -m src
 ```
 
-### Using the convenience wrapper
-```bash
-python3 clarify.py
-```
-
 ### Using main.py (development/testing)
 ```bash
-python3 main.py
+python3 main.py test
 ```
 
 ---
@@ -143,6 +138,7 @@ These are the original launchers (kept for compatibility):
 - `launchers/clarify_gui.bat` (Windows)
 - `launchers/clarify_gui.sh` (Linux)
 - `launchers/clarify_gui.command` (macOS)
+- `launchers/clarify.py` (legacy wrapper; prefer `python -m src` from the project root)
 
 **Note:** Root launchers (`clarify.bat`, `clarify.sh`, `clarify.command`) are recommended as they're easier to find and use.
 
@@ -173,7 +169,7 @@ If you encounter issues:
 
 **Common Issues:**
 - Python not in PATH → Reinstall Python with PATH option
-- Missing dependencies → Run `pip3 install -r requirements.txt`
+- Missing dependencies → Run `poetry install` or `python3 -m pip install -e .`
 - Configuration errors → Check `config/` directory
 - Display issues (Linux) → Ensure X11/Wayland is running
 

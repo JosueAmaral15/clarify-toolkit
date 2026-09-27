@@ -97,6 +97,7 @@ from .theme_manager import ThemeManager
 
 # Internationalization: runtime language switching (Task #24 - v2.9.10)
 from .i18n import switch_language, tr, tooltip_tr
+from .product_identity import EDITOR_NAME, PRODUCT_NAME
 
 # JSON Search: search keys and values in JSON/TS/TSX files
 # (All removed - unused in app.py)
@@ -234,6 +235,34 @@ def read_translation_dict(path: str) -> Dict[str, Any]:
 if _PYSIDE:
     # ResultsTree removed - unused (COM4)
 
+    def _restore_qt_window_flags(window, desired_flags) -> bool:
+        """
+        Restore Qt window flags while preserving visibility and window state.
+
+        setWindowFlags() hides the window and can drop maximized/fullscreen state
+        on some Linux window managers, so restore the state explicitly.
+        """
+        if window.windowFlags() == desired_flags:
+            return False
+
+        was_visible = window.isVisible()
+        window_state = window.windowState()
+
+        window.setWindowFlags(desired_flags)
+        window.setWindowState(window_state)
+
+        if was_visible:
+            if window_state & Qt.WindowFullScreen:
+                window.showFullScreen()
+            elif window_state & Qt.WindowMaximized:
+                window.showMaximized()
+            elif window_state & Qt.WindowMinimized:
+                window.showMinimized()
+            else:
+                window.show()
+
+        return True
+
     # ============================ Code-aware JSON Translator ============================
     # CodeAwareJSONTranslator removed - unused (COM4 - 2026-01-29)
     class MainWindow(QMainWindow):
@@ -250,6 +279,14 @@ if _PYSIDE:
             self.dock_formula_builder = None
             self.dock_advanced_extractor = None
             self.dock_editor = None
+            self.dock_clock = None
+            self.dock_terminal = None
+            self.dock_lynx = None
+            self.dock_information_structure = None
+            self.dock_editorial_repair = None
+            self.dock_boolean_logic = None
+            self.dock_voice_programming = None
+            self.dock_algorithm_analysis = None
             self.tool_tabs = {}
 
             # Fix: Configure window flags for Linux compatibility (v2.9.117)
@@ -391,18 +428,31 @@ if _PYSIDE:
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
-                self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
-            self.dock_editor.load_json_string(json_str)
+                self._add_tool_tab(self.dock_editor, EDITOR_NAME, "editor")
+            self.dock_editor.load_generated_content(
+                json_str,
+                "Generated output.json",
+                extension=".json",
+            )
             # Don't switch - stay in Text to JSON tab
         
-        def _load_json_from_converter_and_switch(self, content: str, switch_to_file: bool):
+        def _load_json_from_converter_and_switch(self, content: str, output_kind="json"):
             """Load content from text converter into main editor and switch to Editor tab."""
-            # Open Clarify Editor as a dedicated tab (not as dock)
-            if not hasattr(self, 'dock_editor') or self.dock_editor is None:
-                from .gui import EditorDock
-                self.dock_editor = EditorDock(self)
-                self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
-            self.dock_editor.load_json_string(content)
+            self._show_editor()
+
+            normalized_kind = output_kind.lower() if isinstance(output_kind, str) else "json"
+            if normalized_kind == "paths":
+                display_name = "Generated paths.txt"
+                extension = ".txt"
+            else:
+                display_name = "Generated output.json"
+                extension = ".json"
+
+            self.dock_editor.load_generated_content(
+                content,
+                display_name,
+                extension=extension,
+            )
             
             # SWITCH to Editor tab
             if hasattr(self, 'tool_tabs') and "editor" in self.tool_tabs:
@@ -507,6 +557,21 @@ if _PYSIDE:
             """Show Google Translate as tab (create on-demand)."""
             from .gui.tab_manager import TabManager
             TabManager.show_google_translate(self)
+            dock = self.dock_google_translate
+            if not getattr(dock, "_editor_output_connected", False):
+                dock.open_in_editor_requested.connect(
+                    self._load_translation_in_editor
+                )
+                dock._editor_output_connected = True
+
+        def _load_translation_in_editor(self, content: str, display_name: str):
+            """Open a translation result as an unsaved text editor tab."""
+            self._show_editor()
+            self.dock_editor.load_generated_content(
+                content,
+                display_name,
+                extension=".txt",
+            )
 
         def _show_text_to_json(self):
             """Show Unified Text to JSON Converter (Format Conversion + JSX Extraction)."""
@@ -575,6 +640,108 @@ if _PYSIDE:
                 self.dock_formula_builder = FormulaDock(self)
             self._add_tool_tab(self.dock_formula_builder, "Formula Builder", "formula_builder")
 
+        def _show_clock(self):
+            """Show the clock, stopwatch, and countdown utility."""
+            if self.dock_clock is None:
+                from .gui import ClockDock
+
+                self.dock_clock = ClockDock(self)
+            self._add_tool_tab(self.dock_clock, "Clock", "clock")
+
+        def _show_terminal(self):
+            """Show the bounded integrated command runner."""
+            if self.dock_terminal is None:
+                from .gui import TerminalDock
+
+                self.dock_terminal = TerminalDock(self)
+            self._add_tool_tab(self.dock_terminal, "Terminal", "terminal")
+
+        def _show_lynx(self):
+            """Show the optional Lynx text browser integration."""
+            if self.dock_lynx is None:
+                from .gui import LynxDock
+
+                self.dock_lynx = LynxDock(self)
+            self._add_tool_tab(self.dock_lynx, "Lynx", "lynx")
+
+        def _show_information_structure(self):
+            """Show bounded folder, code, database, text, and document maps."""
+            if self.dock_information_structure is None:
+                from .gui import InformationStructureDock
+
+                self.dock_information_structure = InformationStructureDock(self)
+                self.dock_information_structure.open_in_editor_requested.connect(
+                    self._load_information_structure_in_editor
+                )
+            self._add_tool_tab(
+                self.dock_information_structure,
+                "Information Structure",
+                "information_structure",
+            )
+
+        def _load_information_structure_in_editor(self, content: str, display_name: str):
+            self._show_editor()
+            self.dock_editor.load_generated_content(content, display_name, extension=".json")
+
+        def _show_editorial_repair(self):
+            """Show independent, review-first editorial sessions."""
+            if self.dock_editorial_repair is None:
+                from .gui import EditorialRepairDock
+
+                self.dock_editorial_repair = EditorialRepairDock(self)
+                self.dock_editorial_repair.prepare_ai_requested.connect(
+                    self._prepare_editorial_ai_review
+                )
+                self.dock_editorial_repair.google_translate_requested.connect(
+                    self._prepare_editorial_translation
+                )
+            self._add_tool_tab(self.dock_editorial_repair, "Editorial Repair", "editorial_repair")
+
+        def _prepare_editorial_ai_review(self, prompt: str, paths: list, max_bytes: int):
+            self._show_ai_processor()
+            self.dock_ai_processor.prepare_file_explorer_explanation(prompt, paths, max_bytes)
+
+        def _prepare_editorial_translation(self, text: str):
+            self._show_google_translate()
+            self.dock_google_translate.chk_file_mode.setChecked(False)
+            self.dock_google_translate.text_input.setPlainText(text)
+
+        def _show_boolean_logic(self):
+            """Show truth-table generation and exact bounded minimization."""
+            if self.dock_boolean_logic is None:
+                from .gui import BooleanLogicDock
+
+                self.dock_boolean_logic = BooleanLogicDock(self)
+            self._add_tool_tab(self.dock_boolean_logic, "Boolean Logic", "boolean_logic")
+
+        def _show_voice_programming(self):
+            """Show confirmation-gated programming dictation commands."""
+            if self.dock_voice_programming is None:
+                from .gui import VoiceProgrammingDock
+
+                self.dock_voice_programming = VoiceProgrammingDock(self)
+                self.dock_voice_programming.confirmed_command.connect(
+                    self._apply_confirmed_voice_command
+                )
+            self._add_tool_tab(self.dock_voice_programming, "Voice Programming", "voice_programming")
+
+        def _apply_confirmed_voice_command(self, command: dict):
+            self._show_editor()
+            self.dock_editor.apply_confirmed_voice_command(command)
+
+        def _show_algorithm_analysis(self):
+            """Show local preflight and AI Processor preparation for algorithms."""
+            if self.dock_algorithm_analysis is None:
+                from .gui import AlgorithmAnalysisDock
+
+                self.dock_algorithm_analysis = AlgorithmAnalysisDock(self)
+                self.dock_algorithm_analysis.prepare_ai_requested.connect(
+                    self._prepare_editorial_ai_review
+                )
+            self._add_tool_tab(
+                self.dock_algorithm_analysis, "Algorithm Analysis", "algorithm_analysis"
+            )
+
         def _show_advanced_extractor(self):
             """Show Advanced Extractor as tab (v2.9.115 - Sprint 2)."""
             if not hasattr(self, 'dock_advanced_extractor') or self.dock_advanced_extractor is None:
@@ -599,15 +766,15 @@ if _PYSIDE:
             dialog.show()
 
         def _about_dialog(self):
-            """Show About Clarify dialog."""
-            about_text = """<h2>Clarify</h2>
+            """Show the product About dialog."""
+            about_text = f"""<h2>{PRODUCT_NAME}</h2>
             <p><b>Text Processing Tool</b></p>
             <p>Version: 2.9.64 (Logging System Integration)</p>
             <p>A powerful tool for JSON processing, translation, AI integration, and more.</p>
             <p><a href="https://github.com/JosueAmaral15/clarify">GitHub Repository</a></p>
             <p>© 2025 Josue Amaral</p>
             """
-            QMessageBox.about(self, "About Clarify", about_text)
+            QMessageBox.about(self, f"About {PRODUCT_NAME}", about_text)
 
         def _view_logs(self):
             """
@@ -691,11 +858,11 @@ if _PYSIDE:
             if not enabled:
                 return
 
-            # Perform check in background thread to avoid blocking startup
             from PySide6.QtCore import QTimer
-
-            # Delay check by 3 seconds to avoid slowing down startup
-            QTimer.singleShot(3000, self._perform_update_check)
+            self._update_timer = QTimer(self)
+            self._update_timer.setSingleShot(True)
+            self._update_timer.timeout.connect(self._perform_update_check)
+            self._update_timer.start(3000)
 
         def _check_for_updates_manual(self):
             """
@@ -703,40 +870,11 @@ if _PYSIDE:
 
             Forces fresh check (bypasses cache) and shows result with ManualCheckDialog.
             """
-            from .update_checker import check_for_updates
-            from . import __version__
             from .gui.update_notification_dialog import ManualCheckDialog
-            from PySide6.QtCore import QTimer
-
-            # Create and show dialog
-            dialog = ManualCheckDialog(self)
-            dialog.show_checking()
-
-            # Process events to show dialog
-            QApplication.processEvents()
-
-            # Force fresh check
-            has_update, release_info = check_for_updates(__version__, force=True)
-
-            # Build result dict
-            result = {
-                "success": True,
-                "current_version": __version__,
-                "update_available": has_update
-            }
-
-            if has_update and release_info:
-                result["latest_version"] = release_info.get('version', 'Unknown')
-
-                # Check if user opted to skip this version
-                from .gui.update_notification_dialog import UpdateNotificationDialog
-
-                if UpdateNotificationDialog.should_show_for_version(release_info['version']):
-                    # Show update dialog after a brief delay
-                    QTimer.singleShot(1000, lambda: self._show_update_dialog(release_info))
-
-            # Show result in manual check dialog
-            dialog.show_result(result)
+            if getattr(self, "_manual_update_dialog", None) is None:
+                self._manual_update_dialog = ManualCheckDialog(self)
+            self._manual_update_dialog.show_checking()
+            self._start_update_check(force=True)
 
         def _perform_update_check(self):
             """
@@ -744,24 +882,30 @@ if _PYSIDE:
 
             Called by auto-check timer. Silent operation - only shows dialog if update found.
             """
-            from .update_checker import check_for_updates
+            self._start_update_check(force=False)
+
+        def _start_update_check(self, force):
             from . import __version__
+            from .gui.update_check_controller import UpdateCheckController
 
-            try:
-                has_update, release_info = check_for_updates(__version__, force=False)
+            if getattr(self, "_updates_closed", False):
+                return
+            if not hasattr(self, "_update_controller"):
+                self._update_controller = UpdateCheckController(self)
+                self._update_controller.completed.connect(self._on_update_checked)
+            self._update_controller.start(__version__, force=force)
 
-                if has_update and release_info:
-                    # Check if user opted to skip this version
-                    from .gui.update_notification import UpdateNotificationDialog
-
-                    if UpdateNotificationDialog.should_show_for_version(release_info['version']):
-                        self._show_update_dialog(release_info)
-                    # else: silently skip (user previously opted out)
-                # else: no update or error - stay silent
-
-            except Exception as e:
-                # Silent failure - don't bother user during startup
-                logger.debug(f"Update check failed silently: {e}")
+        def _on_update_checked(self, result):
+            if getattr(self, "_updates_closed", False):
+                return
+            dialog = getattr(self, "_manual_update_dialog", None)
+            if dialog is not None:
+                dialog.show_result(result)
+            info = result.get("release_info")
+            if result.get("update_available") and info:
+                from .gui.update_notification import UpdateNotificationDialog
+                if UpdateNotificationDialog.should_show_for_version(info["version"]):
+                    self._show_update_dialog(info)
 
         def _show_update_dialog(self, release_info: dict):
             """
@@ -786,7 +930,7 @@ if _PYSIDE:
             if not hasattr(self, 'dock_editor') or self.dock_editor is None:
                 from .gui import EditorDock
                 self.dock_editor = EditorDock(self)
-            self._add_tool_tab(self.dock_editor, "Clarify Editor", "editor")
+            self._add_tool_tab(self.dock_editor, EDITOR_NAME, "editor")
 
         # ============================================================================
         # Tab Management System (v2.9.40 - Task: Tools as tabs)
@@ -951,12 +1095,7 @@ if _PYSIDE:
             - Any operation that might affect window flags
             """
             if hasattr(self, '_desired_window_flags'):
-                current_flags = self.windowFlags()
-                if current_flags != self._desired_window_flags:
-                    # Flags were modified - restore them
-                    self.setWindowFlags(self._desired_window_flags)
-                    # Show window again (setWindowFlags hides window)
-                    self.show()
+                _restore_qt_window_flags(self, self._desired_window_flags)
 
         def _apply_tab_close_button_style(self):
             """Apply theme-appropriate styling to tab close buttons (v2.9.40)."""
@@ -1804,6 +1943,11 @@ if _PYSIDE:
         def closeEvent(self, event):
             """Handle window close event using WindowSettings (v2.9.114 - Phase 3.5)."""
             WindowSettings.handle_close_event(self, event)
+            if event.isAccepted():
+                self._updates_closed = True
+                timer = getattr(self, "_update_timer", None)
+                if timer is not None:
+                    timer.stop()
 
         def _build_ui(self):
             """Build UI using UIBuilder (Phase 3.9)."""

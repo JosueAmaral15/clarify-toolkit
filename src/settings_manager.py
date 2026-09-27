@@ -30,6 +30,7 @@ class SettingsManager:
         "window_geometry": None,
         "last_directory": str(Path.home()),
         "auto_save": True,
+        "completion_sound": False,
         "show_tooltips": True,
         "confirm_on_exit": True,
         "ai_provider": "OpenAI (ChatGPT)",
@@ -41,7 +42,9 @@ class SettingsManager:
     def __init__(self, config_file: Optional[str] = None):
         """Initialize settings manager."""
         if config_file is None:
-            self.config_file = Path.home() / '.clarify_settings.json'
+            self.config_file = Path(
+                os.environ.get("CLARIFY_SETTINGS_FILE", str(Path.home() / '.clarify_settings.json'))
+            ).expanduser()
         else:
             self.config_file = Path(config_file)
 

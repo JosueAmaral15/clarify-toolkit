@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSignalBlocker
 from PySide6.QtGui import QFont, QTextCharFormat, QColor, QSyntaxHighlighter
 from src.i18n.translator import tr, tooltip_tr
 from ..diff_analyzer import DiffAnalyzer
@@ -194,8 +194,14 @@ class DiffViewerDialog(QDialog):
         layout.addWidget(splitter)
 
         # Synchronized scrolling
-        self.text_a.verticalScrollBar().valueChanged.connect(lambda val: self.text_b.verticalScrollBar().setValue(val))
-        self.text_b.verticalScrollBar().valueChanged.connect(lambda val: self.text_a.verticalScrollBar().setValue(val))
+        left_scroll = self.text_a.verticalScrollBar()
+        right_scroll = self.text_b.verticalScrollBar()
+        left_scroll.valueChanged.connect(
+            lambda _value: self._sync_scroll(left_scroll, right_scroll)
+        )
+        right_scroll.valueChanged.connect(
+            lambda _value: self._sync_scroll(right_scroll, left_scroll)
+        )
 
         # Buttons
         btn_layout = QHBoxLayout()
@@ -212,6 +218,15 @@ class DiffViewerDialog(QDialog):
         btn_layout.addWidget(btn_close)
 
         layout.addLayout(btn_layout)
+
+    @staticmethod
+    def _sync_scroll(source, target):
+        """Keep relative position without feeding clamped values back to source."""
+        source_range = source.maximum() - source.minimum()
+        fraction = (source.value() - source.minimum()) / source_range if source_range else 0
+        value = target.minimum() + round(fraction * (target.maximum() - target.minimum()))
+        with QSignalBlocker(target):
+            target.setValue(value)
 
     def _populate_views(self):
         """Populate text views with formatted JSON and apply highlighting."""

@@ -17,15 +17,15 @@ Features:
 
 from __future__ import annotations
 
-import json
 from typing import Any, Dict, List, Tuple
+
+from src.document_set_loader import load_document_set, validate_document_set_path
 
 from src.set_operations import (
     difference,
     intersection,
     symmetric_difference,
     union,
-    validate_file_path,
 )
 
 
@@ -84,21 +84,19 @@ class SetOperationExecutor:
         try:
             for file_path in file_paths:
                 # Security validation (CWE-22)
-                if not validate_file_path(file_path):
+                if not validate_document_set_path(file_path):
                     return False, [], (
                         f"Invalid or insecure file path:\n{file_path}\n\n"
-                        "File must exist, be readable, and have .json extension."
+                        "File must exist, be at most 50 MiB, and use JSON, TXT, "
+                        "DOCX, ODT, IPYNB, or PDF format."
                     )
 
-                with open(file_path, "r", encoding="utf-8") as f:
-                    file_dicts.append(json.load(f))
+                file_dicts.append(load_document_set(file_path))
 
             return True, file_dicts, ""
 
         except FileNotFoundError as e:
             return False, [], f"File not found: {e.filename}"
-        except json.JSONDecodeError as e:
-            return False, [], f"Invalid JSON in file:\n{e}"
         except Exception as e:  # pylint: disable=broad-exception-caught  # File loading robustness
             return False, [], f"Error loading files: {e}"
 

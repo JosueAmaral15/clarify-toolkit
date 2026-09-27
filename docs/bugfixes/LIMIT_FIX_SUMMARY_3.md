@@ -152,7 +152,7 @@ Created `test_limit_intermediate_keys_fix_3.py` with 3 comprehensive test cases:
 
 ### Created:
 2. **test_limit_intermediate_keys_fix_3.py** (manual verification test, 280 lines)
-3. **LIMIT_FEATURE_BUG_ACTION_PLAN_3.md** (investigation documentation, 500+ lines)
+3. **../action-plans/development/LIMIT_FEATURE_BUG_ACTION_PLAN_3.md** (investigation documentation, 500+ lines)
 4. **LIMIT_FIX_SUMMARY_3.md** (this file)
 
 ---

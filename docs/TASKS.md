@@ -2,19 +2,152 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2025/12/26 - v2.9.116 Integration Complete (Phase 3)
+**Last Update**: 2026/09/27 - Auditoria dos 36 marcadores e correcoes verificadas
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
+## Retomada de Estabilidade - 26/09/2026
+
+Esta fila complementa as entregas do programa de 30 tarefas. Os 36 marcadores
+antigos foram auditados individualmente: **9 implementados, 23 itens distintos
+abertos, 3 duplicatas e 1 cabecalho historico**. Os 23 incluem requisitos parciais,
+validacao e propostas futuras, nao 23 bugs. Os textos originais permanecem abaixo
+com IDs LEG-01 a LEG-36; a fila canonica e a secao seguinte.
+Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md).
+
+- [x] **MUST: validar a suite completa do Clarify Editor**. Os 69 testes passam;
+  fixtures usam componentes isolados, descartam widgets Qt e evitam consultas de
+  atualizacao externas. Testes antigos de Find/Replace agora exercitam os controles.
+  Corrigido callback de Copy/Export que acessava botao ja destruido ao fechar a aba;
+  feedback de auto-save tambem usa contexto Qt com vida util limitada ao editor.
+- [x] **MUST: corrigir inicializacao dos plugins incluidos**. Imports usam `src`,
+  descoberta exige heranca de `PluginBase`, ativacao ocorre apos construir menus e
+  navegacao usa menus pertencentes a janela. Testes verificam ambos os plugins.
+- [x] **MUST: retirar consultas de atualizacao da thread GUI**. Apenas uma consulta
+  simultanea; resultados retornam por signal, falhas permitem nova tentativa e
+  fechar a janela impede notificacoes tardias.
+- [x] **SHOULD: tolerar indisponibilidade de logs/cache**. Logging tem fallback e
+  modo console; migrations usam o diretorio efetivo dos logs; cache de atualizacao
+  e opcional. `CLARIFY_SETTINGS_FILE` permite escolher explicitamente outro arquivo
+  de configuracao, sem mover silenciosamente preferencias para armazenamento temporario.
+- [x] **SHOULD: migrar Gemini para `google-genai`**. AI Processor e Tutorial
+  Assistant usam cliente com credenciais isoladas e fechamento por requisicao.
+  Validacao local com mocks; acesso real ao provider ainda depende de credenciais.
+- [x] **SHOULD: disponibilizar Pylint**. Extra `dev` instalado; verificacao focada
+  de erros usa suporte aos modulos dinamicos do PySide6. Nao representa lint global.
+- [x] **MUST: corrigir editor pequeno no centro da tela (27/09/2026)**.
+  O splitter horizontal tinha politica vertical `Preferred`, deixando espacos
+  vazios acima/abaixo do documento. Agora expande nos dois eixos e recebe o espaco
+  vertical restante do layout. Capturas reais antes/depois confirmam a correcao;
+  seis cenarios de regressao cobrem abas vazias/TXT/JSON, Explorer visivel/oculto
+  e redimensionamento em 800x500, 1200x650 e 1440x900. Revisao do backlog retomada
+  por autorizacao do usuario, preservando esta correcao.
+- [x] **MUST: reconciliar os 36 marcadores legados** com evidencias no codigo,
+  IDs rastreaveis, requisitos originais preservados e fila deduplicada abaixo.
+- [x] **MUST: reparar implementacoes legadas confirmadas por testes**: insercao
+  regex preserva Undo e ordem, rejeita sobrescrita silenciosa e trata erros;
+  Venn abre sem TypeError; Diff permite rolar documentos de tamanhos diferentes.
+- [x] **SHOULD: completar LEG-27**: duplo clique/Enter em arquivo ou match abre
+  Clarify Editor. Diretorios nao abrem arquivos em massa; clique simples seleciona.
+- [ ] **MUST / estabilidade: investigar ciclo repetido de janela/tema Qt.**
+  A ampliacao da suite apresentou segfault em `ThemeManager._apply_system_theme`
+  durante recriacao de MainWindow. Fixtures agora descartam widgets pendentes e
+  testes unitarios de InsertPanel usam o componente isolado (315 testes passam).
+  Isso nao comprova correcao do ciclo completo: reproduzir em subprocesso e
+  validar alternancia de temas/reabertura antes de declarar estabilidade global.
+- [ ] **SHOULD / ambiente: validar reconhecimento de voz ao vivo** apos selecionar
+  e configurar um backend STT. Whisper, Vosk e SpeechRecognition continuam ausentes.
+- [ ] **SHOULD / ambiente: validar revisao em portugues com Aspell `pt_BR`**.
+  A instalacao local possui apenas dicionarios de ingles.
+- [ ] **COULD / ambiente: validar analise visual local com LLaVA**. Ollama possui
+  `llama3.2:1b` e `tinyllama:latest`; nenhum modelo multimodal foi instalado.
+
+O worktree amplo continua exigindo revisao separada antes de versionamento/release.
+Ver [registro de validacao](reports/STABILITY_VALIDATION_2026_09_26.md).
+
+## Fila Canonica - Legado Auditado (27/09/2026)
+
+**Restam 23 itens legados + 3 validacoes de ambiente + 1 investigacao Qt = 27
+itens abertos nestas filas.** Isto nao e estimativa de sprints nem contagem de bugs; varios
+itens sao epicos. As anotacoes LEG junto aos textos originais sao referencias,
+nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
+
+### MUST - Integridade E Recursos
+
+- [ ] **LEG-24: Undo/Redo global e backup seguro.** Conectar mutacoes de arquivo ao
+  CommandManager; reter comandos quando undo/redo falha, garantir rollback de
+  operacoes multi-arquivo e limitar historico por bytes, incluindo registradores.
+  Undo do editor e recovery ja existem, mas nao cobrem todas as tools.
+
+### SHOULD - Completar Fluxos Existentes
+
+- [ ] **LEG-06: chunking no AI Processor.** Modos opcionais por bytes (KB/MB/GB)
+  ou numero de partes, helper por tokens e percentual 1-99%; reservar prompt e
+  saida, processar sequencialmente com cancelamento e sem truncar dados silenciosamente.
+- [ ] **LEG-02: insercao em grupos.** Delimitadores por word keys, linha/coluna
+  especifica e limiar de ocorrencias, com preview e testes de fronteira.
+- [ ] **LEG-03: diferencas entre className.** Reutilizar substituicao de tags por
+  classes; definir com o usuario quais conjuntos/caminhos comparar antes de codificar.
+- [ ] **LEG-07: traducao rapida/avancada via IA.** Preservar texto e formatos ricos,
+  destino selecionavel, Gemini Flash como preferencia configuravel e chunking
+  de LEG-06. Nao confundir com os tradutores Google existentes.
+- [ ] **LEG-10: revisao da localizacao atual.** Verificar strings/UI nos seis
+  idiomas-alvo e diferenciar termos tecnicos de ingles residual; catalogos ja
+  passam paridade de chaves. Nao repetir o antigo lote de 540 traducoes.
+- [ ] **LEG-12: workspace hierarquico multi-arquivo JSON/TXT/TOON.** Busca por ID
+  e hierarquia, edicao seletiva, merge e validacao; reutilizar conversores existentes.
+- [ ] **LEG-16: sugestoes de valores por JSON Schema.** Reutilizar diagnosticos,
+  autocomplete de chaves e quick fixes existentes; cobrir enum/default e contexto.
+- [ ] **LEG-31: memoria de resultados de busca.** Uniao ordenada/arvore por arquivo,
+  concatenacao, historico limitado e recall para ResultsTree, nao apenas slots JSON.
+- [ ] **LEG-35: preview de slots no painel lateral.** Add/Recall/Clear e cinco
+  slots ja existem; falta preview inline de conteudo. LEG-36 e duplicata.
+
+### COULD - Novas Capacidades
+
+- [ ] **LEG-05: busca visual de imagens/videos.** Consultas naturais, filtros
+  cor/objetos/rostos/OCR/EXIF, preview destacado, cache SQLite e indexacao em lotes
+  limitada; definir provider/CLIP e suporte HEIC/frames antes de downloads pesados.
+- [ ] **LEG-11: organizacao contextual de arquivos.** Propor pastas por nome e
+  conteudo, preview, colisao explicita e reversao antes de mover qualquer arquivo.
+- [ ] **LEG-13: arquivos como banco de dados.** JSON/TOON, SELECT/JOIN/agregacoes,
+  filtros SQL/NoSQL e resultados inspecionaveis; inclui LEG-30 sem duplicar escopo.
+- [ ] **LEG-14: macros Python/blocos e agendamento.** Isolamento real, permissoes,
+  limites e cancelamento antes de executar codigo; inclui LEG-26.
+- [ ] **LEG-15: cloud sync e colaboracao.** Drive/Dropbox/OneDrive, presets,
+  compartilhamento, versoes/diffs, comentarios e conflitos; DummyProvider nao conta.
+- [ ] **LEG-17: consultas GraphQL.** Queries aninhadas, aliases e fragments;
+  mutations somente com preview, validacao e estrategia de recuperacao.
+- [ ] **LEG-18: Git na interface.** Status/diff, commit, branches, conflitos,
+  push/pull por acao explicita; nao confundir com scripts Git de desenvolvimento.
+- [ ] **LEG-19: orientacao adaptativa e low-code.** Receitas Python, sugestoes a
+  partir de uso consentido e programacao em blocos sobre a base de LEG-14.
+- [ ] **LEG-21: busca semantica textual entre arquivos.** Explicar resultados com
+  IA ja existe; falta recuperar resultados por intencao, com limites e privacidade.
+- [ ] **LEG-23: distribuicao Linux.** Estudar formato/loja e custo de manutencao;
+  build reproduzivel, instalar/desinstalar e validar antes de publicar.
+- [ ] **LEG-28: geracao e traducao de algoritmos.** Definir linguagens/artefatos
+  Python/JS/React, preview e validacao; analise existente nao compila nem executa.
+- [ ] **LEG-34: Formula Builder visual.** Reutilizar executor/templates e adicionar
+  canvas de arquivos/operadores e preview real de resultados com limites de recursos.
+
+### WOULD - Pesquisa Dependente De Definicao
+
+- [ ] **LEG-25: historico longo com Egg Cell Compactor e IA.** Definir formato,
+  reversibilidade, privacidade, retencao e orcamento de armazenamento com o usuario.
+  Depende de backup confiavel (LEG-24); nao prometer guardar tudo indefinidamente.
+
 ---
 
-## 🚧 EM PROGRESSO - v2.9.116: Integração Search/Replace → File Explorer
+## ✅ HISTÓRICO CONCLUÍDO - v2.9.116: Integração Search/Replace → File Explorer
 
 **Data Início**: 25/12/2025  
 **Data Conclusão**: Janeiro 2026 (v2.9.116)  
 **Progresso**: ✅ **100% COMPLETO**  
 **Documento Completo**: [INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md](../INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md)  
 **Verificação**: [PHASE_4_COMPLETION_REPORT.md](../PHASE_4_COMPLETION_REPORT.md)
+
+> Nota de coerência (29/07/2026): esta seção preserva o histórico da integração v2.9.116. A fila operacional atual do File Explorer fica em "Fila Prioritária - File Explorer Stability, Coherence and Cleanup"; blocos antigos não devem ser tratados como tarefas abertas sem revalidação.
 
 ### Status Geral
 - ✅ **Fase 1: Planejamento** (30 min) - COMPLETO
@@ -40,10 +173,11 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - ✅ ConditionsGrid widget funcional
   - ✅ Collapsible sections funcionando
 - ✅ **Fase 6: Testes Manual** (30 min) - COMPLETO
-- ⚠️ **Fase 7: Documentação** (30 min) - PARCIAL
+- ⚠️ **Fase 7: Documentação** (30 min) - HISTÓRICO / COBERTA PELA FILA ATUAL DE DOCS
   - ✅ PHASE_4_COMPLETION_REPORT.md criado (2026-01-22)
-  - ⏳ User documentation pendente
-- ⏳ **Fase 8: Deploy** (30 min) - PENDENTE (aguardando decisão do usuário)
+  - ℹ️ Documentação de usuário segue nas filas atuais de docs/manual quando aplicável.
+- ℹ️ **Fase 8: Deploy** (30 min) - FORA DA FILA OPERACIONAL ATUAL
+  - Release/tag/deprecation notices dependem de decisão explícita antes de entrar novamente como tarefa.
 
 ### Tarefas Fase 2 (Componentes) ✅ COMPLETO
 - [x] **2.1**: Criar `src/gui/widgets/search_widgets.py` ✅
@@ -99,71 +233,338 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Ordem conforme Protocolo Simplicidade 3: clareza do requisito, menor fatia segura, testes críticos, documentação coerente e limpeza sem misturar escopos.
 
-- [ ] **P0 - Search File Content Scope (Text/ASCII, Binary, Both)**:
-  - Adicionar em `File Explorer -> Search Options` uma opção explícita para escolher onde a busca de conteúdo deve rodar:
+- [x] **P0 - Search File Content Scope (Text/ASCII, Binary, Both) - entregue em 19/07/2026**:
+  - ✅ Adicionada em `File Explorer -> Search Options` uma opção explícita para escolher onde a busca de conteúdo deve rodar:
     - `Text/ASCII files` (padrão seguro);
     - `Binary files`;
     - `Text + Binary files`.
-  - Definir a semântica antes de codar:
-    - `Text/ASCII files`: arquivos textuais decodificáveis sem erro e sem bytes nulos; aceitar ASCII/UTF-8 como texto para não quebrar conteúdos em português.
-    - `Binary files`: arquivos que falham na classificação textual ou contêm bytes nulos; busca deve ser por bytes, com snippets limitados/seguros.
-    - `Text + Binary files`: executar os dois caminhos sem tentar decodificar binário como texto.
-  - Implementar classificação por amostra limitada de bytes, sem ler arquivos grandes inteiros apenas para decidir tipo.
-  - Manter `replace` restrito a texto até existir plano seguro para substituição binária.
-  - Testes mínimos: arquivo ASCII, UTF-8 com acentos, arquivo com bytes nulos, arquivo binário contendo padrão, opção padrão não lendo binário como texto, modo `Both` retornando ambos.
+  - ✅ Semântica implementada:
+    - `Text/ASCII files`: arquivos UTF-8/ASCII sem bytes nulos e sem excesso de controles; aceita UTF-8 com acentos.
+    - `Binary files`: arquivos com bytes nulos, falha de UTF-8 estrito ou excesso de controles; busca por bytes em chunks com snippets seguros/limitados.
+    - `Text + Binary files`: executa os dois caminhos sem tentar decodificar binário como texto.
+  - ✅ Classificação usa amostra limitada de bytes, sem ler arquivos grandes inteiros apenas para decidir tipo.
+  - ✅ `replace` permanece restrito a texto; resultados binários são ignorados com erro claro.
+  - ✅ Testes cobrem arquivo ASCII, UTF-8 com acentos, arquivo com bytes nulos, binário contendo padrão, padrão não lendo binário como texto, modo `Both` retornando ambos e replace bloqueado em binário.
 - [x] **P0 - Estabilizar a fatia File Explorer já alterada no worktree (19/07/2026)**:
   - ✅ Validados isoladamente glob include/exclude, filtros de tamanho/data, sincronização table/tree e progress dialog com textos longos.
   - ✅ Ajustados testes v2.9.117 para o contrato atual: `btn_list` unificado Browse/Search e hover expansion deliberadamente desativado.
   - ✅ Validação focada: `py_compile` dos módulos/testes File Explorer e 27 testes passando em `test_file_explorer_v2_9_117.py`, `test_file_explorer_top_options_and_globs.py`, `test_file_explorer_advanced_size_filters.py` e `test_results_tree_unicode_hierarchy.py`.
   - ✅ Sem rodar suíte GUI ampla em processo único; foram usados testes focados para reduzir risco de lentidão/memória.
-- [ ] **P1 - Limpeza de coerência do `TASKS.md` do File Explorer**:
-  - Consolidar status duplicado da integração v2.9.116, pois o topo diz `100% COMPLETO`, mas ainda há blocos antigos com checkboxes pendentes.
-  - Preservar histórico útil, mas deixar uma única fila operacional atual para evitar decisões erradas no futuro.
-- [ ] **P1 - Substituir testes estáticos frágeis por testes comportamentais**:
+- [x] **P1 - Limpeza de coerência do `TASKS.md` do File Explorer - entregue em 29/07/2026**:
+  - ✅ Consolidado o status duplicado da integração v2.9.116: a seção antiga agora é histórico concluído, não "EM PROGRESSO".
+  - ✅ Preservado o histórico útil das Fases 4-8, mas sem checkboxes pendentes no bloco antigo.
+  - ✅ A fila operacional atual do File Explorer ficou concentrada em "Fila Prioritária - File Explorer Stability, Coherence and Cleanup".
+- [x] **P1 - Substituir testes estáticos frágeis por testes comportamentais - entregue em 29/07/2026**:
   - Parcial em 19/07/2026: testes obsoletos de `btn_search`/`HoverExpandFilter` foram alinhados ao comportamento atual, mas ainda há testes de presença que podem ser convertidos para testes comportamentais.
-  - Reduzir testes que apenas procuram strings no código quando houver API testável equivalente.
-  - Priorizar executor/filtros/progresso, porque são pontos de risco para regressão e consumo de memória.
-- [ ] **P2 - Documentação de usuário e tooltip/i18n da nova opção**:
-  - Atualizar manual/README depois que a semântica de `Text/ASCII`, `Binary` e `Both` estiver implementada e testada.
-  - Incluir aviso de segurança: busca binária não deve abrir arquivo inteiro nem exibir conteúdo bruto extenso.
+  - Parcial em 29/07/2026: os testes de progresso em `tests/test_file_explorer_v2_9_117.py` deixaram de ler o código-fonte e passaram a exercitar `_format_progress_message()` e `_ensure_progress_dialog()` diretamente.
+  - Parcial em 29/07/2026: `test_format_size_logic` passou a validar diretamente `ResultsTree._format_size()` nos limites de B, KB, MB, GB, TB e PB.
+  - Parcial em 29/07/2026: o menu de contexto do `ResultsTree` ganhou construcao separada da exibicao; o teste agora valida estado habilitado e acionamento de `Open Location` e `Properties` sem abrir UI ou processos externos.
+  - Parcial em 29/07/2026: os testes B.1/B.2 agora instanciam o `FileExplorerDock` e verificam orientacao/proporcao do splitter e integracao real entre `ResultsTree`, container de busca e tabela.
+  - Parcial em 29/07/2026: os testes B.3/B.4 agora clicam o comando unificado em cenarios Browse/Search e validam os textos reais de arquivos, diretorios, tamanho total e tempo.
+  - Parcial em 29/07/2026: os testes B.5/B.6 agora validam o encaminhamento CSV por view e os estados/expansao reais das secoes recolhiveis, sem dialogo ou escrita em disco; a animacao passou a usar um callback permanente, eliminando aviso e acumulo de conexoes.
+  - Concluido em 29/07/2026: C.1 passou a validar estabilidade real do splitter durante movimentos do mouse; a verificacao agregada e o runner manual obsoleto foram removidos.
+  - A Fase A ficou concentrada em `tests/test_window_flags_restore.py`, com tres cenarios comportamentais, sem duplicacao textual em v2.9.117.
+  - Validacao final: 21 testes passaram nos arquivos v2.9.117 e window flags, com `RuntimeWarning` tratado como erro.
+- [x] **P2 - Documentação de usuário e tooltip/i18n da nova opção - entregue em 29/07/2026**:
+  - Manual atualizado com `Text/ASCII`, `Binary` e `Both`, classificacao por amostra de 8 KiB, leitura binaria em blocos de 64 KiB e limites de resultados.
+  - Tooltip explicita previews binarios limitados e substituicao exclusiva para texto.
+  - Rotulos e tooltip incluidos em ingles, portugues, espanhol, frances, alemao, chines e japones, preservando paridade das chaves.
+  - `SearchOptionsPanel.retranslateUi()` atualiza os controles internos sem perder o escopo selecionado.
+  - Validacao: 24 testes de File Explorer/escopo e 14 testes de i18n passaram.
 
-### Registro histórico antigo da Fase 4 (revalidar antes de usar)
+### Triagem - `docs/new-clarify-tasks.txt` (19/07/2026)
 
-Nota de coerência (19/07/2026): os blocos abaixo pertencem ao plano original da integração v2.9.116 e podem estar duplicados ou obsoletos, porque o Status Geral acima já marca Fases 3-6 como completas. A fila operacional atual do File Explorer é a seção "Fila Prioritária - File Explorer Stability, Coherence and Cleanup".
+Fonte revisada: `docs/new-clarify-tasks.txt`. Os itens abaixo foram reescritos para evitar duplicacao literal, preservar os requisitos desejados e separar o que parece ja coberto do que ainda precisa de implementacao ou validacao.
 
-### Tarefas Fase 4 (Lógica)
-- [ ] **4.1**: Implementar busca unificada (1h)
-  - [ ] List + Search + Replace em um único pipeline
-  - [ ] Aplicar condições avançadas a todos os modos
-  - [ ] Progress tracking unificado
-- [ ] **4.2**: Testes unitários novos componentes (30 min)
+#### P0 - File Explorer: consistencia de busca e estabilidade visual
 
-### Tarefas Fase 5 (UI/UX)
-- [ ] **5.1**: Polimento visual (30 min)
-  - [ ] Icons para cada seção (📁🔍⚙️🎯💾)
-  - [ ] Tooltips descritivos
-  - [ ] Keyboard shortcuts
-- [ ] **5.2**: Responsividade (30 min)
-  - [ ] QScrollArea para overflow vertical
-  - [ ] Salvar estado collapse/expand
+- [x] **Atualizacao correta dos resultados em modo tabela - entregue em 19/07/2026**:
+  - ✅ Novas buscas limpam explicitamente tabela, arvore e caches antes de executar.
+  - ✅ Quando a busca termina em modo tabela, a tabela e sincronizada com os resultados atuais e substitui linhas antigas.
+  - ✅ Coberta a troca entre tabela/arvore para evitar que resultados antigos sejam recuperados de caches internos.
+- [x] **Busca incremental usando o resultado anterior como conjunto universo - entregue em 19/07/2026**:
+  - ✅ Quando `content search` e `directory` nao mudam, o proximo Search/Replace usa os arquivos encontrados anteriormente como universo de candidatos.
+  - ✅ A busca incremental refina o resultado anterior com novos filtros/padroes, sem expandir para uma nova varredura completa.
+  - ✅ Troca de diretorio, troca de termo ou ausencia de `content search` reseta a regra incremental.
+  - ✅ Testes cobrem universo candidato no executor, refinamento por filename, troca de diretorio, troca de termo e resultado vazio como universo vazio.
+- [x] **Limpeza de resultados vazios antes de nova execucao - entregue em 19/07/2026**:
+  - ✅ Se o resultado final fica vazio, tabela, arvore e caches de sincronizacao sao limpos.
+  - ✅ A UI deixa de exibir selecoes, linhas ou caminhos obsoletos depois de uma busca sem resultados.
+- [x] **Remover redundancia de regex no File Explorer - entregue em 21/07/2026**:
+  - ✅ O campo principal `File Name` continua usando glob/wildcards por padrao (`*.py`, `test_*.json`).
+  - ✅ Um checkbox `Regex` proprio foi adicionado ao painel de nome de arquivo; quando habilitado, o executor usa regex real para o nome do arquivo.
+  - ✅ O checkbox `Regex` das opcoes de busca ficou semantico para busca de conteudo, sem alterar implicitamente o modo do filtro de nome.
+  - ✅ Filtros avancados e `Advanced Conditions` foram preservados, pois continuam sendo caminhos uteis e separados para filtros por filename/path/content.
+  - ✅ Testes cobrem glob padrao, regex de conteudo nao afetando filename, regex explicita de filename, widget do painel e composicao de opcoes no dock.
+- [x] **Polir controles internos do File Explorer - entregue em 21/07/2026**:
+  - ✅ Modo dock auditado: nao ha `QDialogButtonBox` nem botao interno `Close/Fechar` exposto no File Explorer normal.
+  - ✅ O `OK/Cancel` foi preservado somente em `dialog_mode=True`, onde faz sentido para selecao de arquivos.
+  - ✅ Corrigido o contrato do `dialog_mode`: `show_file_explorer_dialog()` agora cria um `QDialog` real, e `FileExplorerDock.accept()/reject()` encaminham para o dialogo pai.
+  - ✅ Maximize/restore dos tools recebeu helper em `app.py` para restaurar flags da janela principal preservando visibilidade e estado maximizado/tela cheia/minimizado.
+  - ✅ O botao `Cancel` do dialogo de progresso agora cancela o executor, marca o estado interno do dock e interrompe a emissao de lotes pendentes pelo worker.
+  - ✅ A barra de progresso permanece compacta e limitada por `PROGRESS_DIALOG_WIDTH = 560`, dentro do intervalo aproximado de 300 a 600 px.
+  - ✅ Testes cobrem modo dock sem botoes internos de dialogo, modo dialogo com `OK/Cancel`, `accept/reject` no dialogo pai, cancelamento do progresso e maximize/restore.
 
-### Tarefas Fase 6 (Testes)
-- [ ] **6.1**: Testes de integração (1h)
-  - [ ] Browse + Search + Replace workflow completo
-  - [ ] Condições avançadas com operadores AND/OR
-  - [ ] Export CSV com resultados filtrados
+#### P1 - File Explorer: acoes sobre resultados e saidas reutilizaveis
 
-### Tarefas Fase 7 (Documentação)
-- [ ] **7.1**: Atualizar docs (30 min)
-  - [ ] README.md - nova feature
-  - [ ] CHANGELOG.md - v2.9.116
-  - [ ] Capturas de tela
+- [x] **Menu de contexto para conteudo dos arquivos encontrados - entregue em 21/07/2026**:
+  - ✅ Adicionada acao `Copy All Content` ao menu de contexto da arvore de resultados de busca.
+  - ✅ A copia usa limites defensivos: ate 512 KiB por arquivo e ate 2 MiB no total por execucao.
+  - ✅ Diretorios, arquivos ausentes, binarios, arquivos grandes, estouro do limite total e erros de leitura sao ignorados com resumo no status.
+  - ✅ O conteudo copiado preserva cabecalhos por arquivo (`===== path =====`) para manter a origem rastreavel no clipboard.
+  - ✅ Testes cobrem copia de texto UTF-8, binarios, diretorios, ausentes, arquivos grandes e limite total.
+- [x] **Menu de contexto para exclusao segura de resultados - entregue em 21/07/2026**:
+  - ✅ Adicionada acao `Delete Result Files...` ao menu de contexto da arvore de resultados.
+  - ✅ Quando ha selecao, a acao opera apenas sobre os arquivos de resultado selecionados; sem selecao, usa todos os resultados atuais.
+  - ✅ A confirmacao mostra contagem, lista resumida dos arquivos afetados e avisa que a lixeira sera usada quando possivel.
+  - ✅ Diretorios, caminhos ausentes e nao arquivos sao ignorados antes da exclusao com resumo no status.
+  - ✅ A exclusao usa `QFile.moveToTrash()` por padrao e so oferece exclusao permanente se mover para a lixeira falhar.
+  - ✅ A arvore remove apenas caminhos efetivamente excluidos, mantendo resultados nao afetados visiveis.
+  - ✅ Testes cobrem selecao parcial, cancelamento e falha simulada de permissao.
+- [x] **Menu de contexto para substituir conteudo por arquivo modelo - entregue em 21/07/2026**:
+  - ✅ Adicionada acao `Replace Content with File...` ao menu de contexto da arvore de resultados.
+  - ✅ A acao usa selecao parcial quando houver itens selecionados e usa todos os resultados atuais quando nao ha selecao.
+  - ✅ O arquivo modelo e selecionado por dialogo, deve ser textual UTF-8 e fica limitado a 512 KiB para evitar carregamento grande.
+  - ✅ A confirmacao mostra contagem, caminho do modelo, tamanho, preview limitado do conteudo e lista resumida dos alvos.
+  - ✅ Alvos binarios, diretorios, ausentes e nao arquivos sao ignorados; binarios continuam bloqueados ate existir regra segura.
+  - ✅ A gravacao usa arquivo temporario no mesmo diretorio e `os.replace()` para reduzir risco de arquivo parcialmente escrito.
+  - ✅ Resultados alterados sao removidos da arvore para evitar snippets obsoletos apos a substituicao.
+  - ✅ Testes cobrem substituicao com selecao parcial, cancelamento, bloqueio de modelo binario e alvo binario ignorado.
+- [x] **Exportar resultados como JSON de dados - entregue em 21/07/2026**:
+  - ✅ Adicionadas acoes `Copy Results as JSON` e `Export Results as JSON...` ao menu de contexto da arvore de resultados.
+  - ✅ A saida usa o formato `clarify.file_explorer.results` com versao, base path, totais, lista de arquivos e matches.
+  - ✅ Cada arquivo inclui caminho, existencia, tipo, tamanho em bytes, datas de acesso/modificacao/criacao quando disponiveis e erro de metadados por arquivo quando houver falha.
+  - ✅ Matches incluem linha, coluna, snippet e marcador de truncamento.
+  - ✅ Snippets sao limitados a 4096 caracteres para evitar JSON excessivo por match.
+  - ✅ A exportacao nao le conteudo completo dos arquivos; usa apenas metadados leves e os snippets ja existentes nos resultados.
+  - ✅ Testes cobrem estrutura JSON, caminhos ausentes, truncamento de snippets, clipboard e escrita em arquivo.
+- [x] **Explicacao assistida por IA para arquivo/conteudo - entregue em 21/07/2026**:
+  - ✅ Adicionada acao `Prepare AI Explanation...` ao menu de contexto da arvore de resultados.
+  - ✅ A acao abre/prepara o AI Processor com prompt, arquivos alvo e limite de bytes, mas nao inicia chamada de API automaticamente.
+  - ✅ Quando ha selecao, prepara apenas os arquivos selecionados; sem selecao, usa todos os resultados atuais.
+  - ✅ O prompt inclui instrucoes de explicacao, resumo do escopo, caminhos e matches com snippets limitados.
+  - ✅ Preparacao limitada a 20 arquivos, 20 matches por arquivo, 500 caracteres por snippet e 60000 caracteres de prompt.
+  - ✅ Arquivos binarios, diretorios, ausentes, nao arquivos, erros de acesso e excedentes do limite sao ignorados com resumo no status.
+  - ✅ O AI Processor recebe `max_bytes` de 64 KiB por arquivo para manter processamento por fatias/limites antes de enviar conteudo.
+  - ✅ `AIProcessorDock.prepare_file_explorer_explanation()` foi adicionado como API publica para preencher prompt/caminhos sem iniciar worker.
+  - ✅ Testes cobrem filtro de binarios, escopo selecionado, limites de prompt e preenchimento do AI Processor.
 
-### Tarefas Fase 8 (Deploy)
-- [ ] **8.1**: Release (30 min)
-  - [ ] Git commit + tag v2.9.116
-  - [ ] GitHub release notes
-  - [ ] Deprecation notices para search_replace_panel.py
+#### P1 - Google Translate, JSON Translate e formatos de traducao
+
+- [x] **Multiplas tags/escopos na traducao - entregue em 10/09/2026**:
+  - Permitir que o usuario defina mais de uma tag, delimitador ou escopo de traducao em uma mesma execucao.
+  - Reutilizar a logica de escopos ja existente onde ela for compativel.
+  - Parcial em 29/07/2026: `JsonTranslateDock` deixou de usar o processador placeholder local e passou a reutilizar `json_translate_helpers.process_translate_file()`.
+  - Parcial em 29/07/2026: corrigido o repasse de exclusoes ja analisadas; testes cobrem escopo customizado, lista de exclusoes e traducao real iniciada pelo dock.
+  - Parcial em 10/09/2026: criada `apply_scoped_translations()` para varios pares; regioes sobrepostas sao unificadas e transformadas uma vez, mantendo compatibilidade com `apply_scoped_translation()` e com o modo de arquivo inteiro.
+  - Parcial em 10/09/2026: `process_translate_file()` aceita `scope_pairs` opcional; 6 testes comportamentais cobrem par unico, pares distintos, sobreposicao, exclusoes e integracao do dock.
+  - Concluido em 10/09/2026: `JsonTranslateDock` permite adicionar/remover pares, rejeita linhas incompletas e encaminha todos os escopos configurados ao helper central.
+  - Tags especificas respeitam os regexes configurados; traducoes, tooltips e acessibilidade foram incluidos nos sete idiomas.
+  - Validacao final: 10 testes de escopo, 14 de i18n e 5 de interacao/tooltip/acessibilidade passaram.
+- [x] **Abrir e alternar resultado para o Clarify Editor - entregue em 29/07/2026**:
+  - ✅ `Open in Editor and Switch` passa a enviar ao Clarify Editor o conteudo da aba de saida ativa.
+  - ✅ Quando a aba ativa e `Paths`, o resultado abre como texto em `Generated paths.txt`.
+  - ✅ Quando a aba ativa e `JSON`, o resultado abre em aba JSON como `Generated output.json`.
+  - ✅ O fluxo usa a abertura centralizada do Clarify Editor e alterna o foco para a aba do editor.
+- [x] **Recentes e historico de traducao - entregue em 10/09/2026**:
+  - Consolidar o que ja existe no History Dock/Google Translate e acrescentar, se faltar, um botao de recentes focado em arquivos/diretorios/dicionarios usados.
+  - `TranslationRecentPaths` compartilha entre os tradutores listas persistentes e separadas de fontes e dicionarios, limitadas a 10 caminhos locais existentes.
+  - JSON Translate aceita arquivos e diretorios recentes, alem de dicionarios; Google Translate filtra a lista compartilhada para exibir somente arquivos.
+  - Cada menu permite limpar apenas sua categoria, e caminhos inexistentes sao removidos automaticamente.
+  - Traducoes concluidas sao registradas no `OperationHistory` e no History Dock quando ele estiver aberto, somente com metadados e caminhos, sem conteudo traduzido.
+  - Corrigido o seletor de diretorio do JSON Translate, que descartava a selecao, e removida uma atribuicao indevida do caminho-fonte ao campo de dicionario.
+  - Validacao focada: 6 testes novos e 46 testes relacionados passaram cobrindo armazenamento, limite, deduplicacao, descarte de caminhos obsoletos, integracao GUI, historico, escopos, worker atual e i18n.
+- [x] **Traducao de JSON, IPYNB e PDF - entregue em 12/09/2026**:
+  - Revisar o que ja esta completo em JSON Translate.
+  - Planejar IPYNB preservando celulas, metadados e outputs quando aplicavel.
+  - Planejar PDF com extracao segura, aviso de perda de layout e saida revisavel no editor.
+  - Parcial em 10/09/2026: confirmado por teste que JSON Translate processa arquivos `.json` e mantem JSON sintaticamente valido.
+  - Parcial em 10/09/2026: criado backend `.ipynb` sem dependencia adicional; somente celulas Markdown sao traduzidas, enquanto codigo, raw cells, outputs, metadados, IDs, anexos e campos desconhecidos permanecem fora do callback.
+  - O carregamento de notebook rejeita estrutura invalida e arquivos acima de 50 MiB antes do `json.load`; o salvamento usa substituicao atomica.
+  - IPYNB integrado ao seletor, worker em segundo plano e salvamento atomico: somente celulas Markdown preenchidas seguem para a API; codigo, outputs e metadados permanecem intactos.
+  - Plano PDF definido: abrir a origem somente para leitura, nunca sobrescrever o PDF, limitar tamanho/paginas antes da extracao e avisar explicitamente que o layout nao sera preservado.
+  - PDF usa `pdfinfo` e `pdftotext` do Poppler, com limite de 50 MiB, 500 paginas, 100 MiB de texto extraido e timeout. A origem e somente leitura e PDFs sem texto informam que OCR e necessario.
+  - A interface avisa que layout e imagens nao sao preservados; o resultado pode ser salvo como texto/documento ou aberto como aba nao salva no Clarify Editor para revisao.
+  - Validacao final: 64 testes focados passaram para PDF, IPYNB, Google Translate, i18n e acessibilidade; todos os sete catalogos i18n e os modulos alterados foram validados. A suite global de tooltips ainda possui falha preexistente em `SetOperationsDock.ed_file_a`, fora deste item.
+- [x] **Revalidar inversao com traducao automatica - entregue em 12/09/2026**:
+  - O item `Inverter e traduzir automaticamente a inversao` aparece como concluido na fonte, mas deve ser confirmado contra o codigo e testes antes de ser tratado como encerrado.
+  - A inversao troca os idiomas e inicia automaticamente a traducao do resultado anterior; quando a origem era automatica, usa somente um idioma detectado reconhecido.
+  - Sem deteccao confiavel, informa o impedimento e nao inicia uma traducao invalida do idioma de destino para ele mesmo.
+  - Resultados vindos de arquivo passam para modo texto antes da inversao, evitando reler ou registrar indevidamente o arquivo original.
+  - Validacao: 4 testes comportamentais novos e 37 testes relacionados de traducao/i18n passaram.
+
+#### P1 - Clarify Editor / Open Editor
+
+- [x] **Historico recuperavel de documentos nao salvos - entregue em 13/09/2026**:
+  - Manter por padrao 24 horas de conteudo nao salvo para recuperacao, com tempo ajustavel pelo usuario.
+  - Definir politica de armazenamento local, limpeza automatica e limite de tamanho para evitar crescimento indefinido.
+  - Snapshots UTF-8 sao gravados atomicamente em armazenamento local privado, 1,5 segundo apos alteracoes, sem substituir o arquivo de origem.
+  - Limites: 2 MiB por documento, 20 documentos e 20 MiB totais; itens expirados, corrompidos ou excedentes sao removidos automaticamente.
+  - O menu File oferece `Recover Unsaved...` e retencao ajustavel entre 1 hora e 30 dias. Restauracoes abrem como abas nao salvas; salvar ou descartar a aba remove seu snapshot.
+  - Validacao: 5 testes do armazenamento e 2 testes de integracao do EditorDock passaram, alem de 24 testes focados do menu/ciclo de abas. Uma execucao ampla foi encerrada pelo limite externo apos 29 testes sem falhas; a classe isolada apontada como lenta passou 4/4 em 75 segundos.
+- [x] **Explorador lateral no editor - entregue em 13/09/2026**:
+  - Incluir um navegador de arquivos no lado esquerdo do Clarify Editor, no estilo VS Code, integrado com o File Explorer quando possivel.
+  - Evitar duplicar logica de listagem, filtros e watchers ja existentes.
+  - Implementado com `QFileSystemModel` lazy em um splitter redimensionavel; nao executa busca recursiva nem replica filtros, resultados ou workers do File Explorer.
+  - `File > Open Folder...` define e persiste a raiz, `View > Show Explorer` controla a visibilidade e duplo clique abre arquivos pela API central `open_file_path()` do editor.
+  - Validacao: 2 testes comportamentais do explorador e 22 testes relacionados de menu, recuperacao e i18n passaram.
+- [x] **Preservar e ampliar convencoes de editores conhecidos - entregue em 13/09/2026**:
+  - Comparar funcionalidades esperadas de nano, Xed, Notepad e Notepad++ com o que ja existe no Clarify Editor.
+  - Priorizar atalhos e comandos ja solicitados: `Ctrl+F`, `Ctrl+R`, `Ctrl+G`/`Ctrl+L`/`Ctrl+I`, `Ctrl+S`, `Ctrl+X`, `Ctrl+V`, `Ctrl+C`.
+  - Revalidar itens ja implementados, como line numbers, menus File/Edit/View/JSON, undo/redo, find/replace e deteccao de modificacao externa.
+  - Auditoria confirmou menus e comandos inspirados em nano, Xed, Notepad, Notepad++ e VS Code: arquivo, undo/redo, clipboard, busca/substituicao, linha, comentarios, indentacao, movimento de linhas, whitespace, word wrap, tamanho, JSON e mudancas externas.
+  - Corrigida a diferenca entre tooltips e comportamento: `Ctrl+N`, `Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+S`, `Ctrl+W`, `Ctrl+X`, `Ctrl+C`, `Ctrl+V`, `Ctrl+F` e `Ctrl+R` agora estao vinculados aos QActions.
+  - Adicionado `Select Line` (`Ctrl+L`) e `Ctrl+I` como alternativa de indentacao, preservando `Ctrl+]`; `Go To Line` continua em `Ctrl+G`.
+  - Validacao: 2 testes comportamentais de menu/selecao e 27 testes relacionados de i18n/acessibilidade passaram.
+
+#### P1 - Clarify Tools: semantica de extracao por chave/valor
+
+- [x] **Formalizar modos de saida do extrator - entregue em 13/09/2026**:
+  - `Key + value`: gerar JSON aninhado preservando chaves extraidas e valores correspondentes.
+  - `Key only`: gerar estrutura com chaves/caminhos, sem carregar valores.
+  - `Value only`: gerar colecao de valores extraidos, sem nomes de chave.
+  - `Neither`: gerar objeto vazio quando ambos os modos estiverem desabilitados.
+  - Corrigido o modo `Key only` para nunca transportar valores escalares de origem em ramos mistos; a representacao usa listas JSON validas para combinar chaves simples e ramos aninhados.
+  - Os quatro modos sao aplicados pelo backend `AdvancedExtractor` e documentados como contrato compartilhado pelas interfaces suportadas.
+- [x] **Converter exemplos em fixtures/testes - entregue em 13/09/2026**:
+  - Transformar os exemplos do arquivo de entrada em casos pequenos e validos para testes, corrigindo trechos que hoje sao ilustrativos e nao JSON estrito.
+  - Conferir se o comportamento pertence ao `UnifiedTextToJsonDock`/`AdvancedExtractorDock` e nao ao antigo `Open Text Extractor` publico.
+  - Criada fixture JSON estrita a partir do exemplo FAQ, cobrindo as quatro combinacoes de `Include key`/`Include value`.
+  - Validacao: 29 testes do backend passaram, incluindo 5 novos testes de contrato; 2 testes GUI confirmaram os controles independentes no `UnifiedTextToJsonDock` e no `AdvancedExtractorDock`.
+
+#### P2 - Digital Text Content Repairer e revisao editorial
+
+- [x] **Revisao ortografica/gramatical automatica para livros - fundacao entregue em 14/09/2026**:
+  - Detectar o idioma do documento, traduzir para uma lingua ponte quando fizer sentido e retornar ao idioma original para auxiliar revisao.
+  - Permitir uso de Google Translate e, quando disponivel, recursos de ortografia do LibreOffice/Microsoft Word.
+  - Separar correcao ortografica, gramatical e reescrita editorial para publicacao.
+  - `Editorial Repair` oferece sessoes independentes, deteccao heuristica de idioma, Aspell quando houver dicionario local, preparacao no AI Processor e integracao com Google Translate/LibreOffice, sempre sem sobrescrever o original.
+- [x] **Diagnostico de defeitos textuais - entregue em 14/09/2026**:
+  - Identificar omissao, informacao estranha, inconsistencia, ambiguidade e fato incorreto como categorias distintas.
+  - Mostrar sugestoes revisaveis pelo usuario, sem sobrescrever documentos originais automaticamente.
+  - O resultado separa as cinco categorias em JSON e classifica fatos externos somente como itens que exigem verificacao.
+- [x] **Adequacao editorial ABNT - pre-validacao estrutural entregue em 14/09/2026**:
+  - Planejar validacao de estrutura de livro, sumario e elementos basicos conforme ABNT.
+  - Atualizar/corrigir sumario quando a hierarquia do documento mudar.
+  - Identifica saltos de nivel/secoes basicas ausentes e gera previa de sumario sem mutacao; paginacao, tipografia, referencias e normas vigentes permanecem sob validacao especializada.
+  - Validacao combinada: 6 testes de backend e 2 testes GUI passaram em Qt offscreen.
+
+#### P2 - Estruturacao de informacao, mapas mentais e grafos
+
+- [x] **Mapas mentais recursivos de pastas - entregue em 14/09/2026**:
+  - Gerar mapa mental do conteudo de uma pasta, de forma recursiva, integrado ao File Explorer.
+  - Reutilizar metadados ja coletados pela busca para evitar nova varredura pesada.
+  - A acao contextual envia somente caminhos ja coletados pelo File Explorer, com limite de 50.000 itens e sem nova varredura.
+- [x] **Estruturacao de arquivos de banco por nodos e arestas - entregue em 14/09/2026**:
+  - Criar tool para representar estruturas de dados/arquivos de banco como grafo.
+  - Investigar identificacao por sequencias binarias ou inteiros para nodos, arestas e niveis.
+  - SQLite e aberto com URI `mode=ro`; tabelas, colunas e chaves estrangeiras usam identificadores textuais estaveis. IDs binarios/inteiros foram descartados por reduzirem legibilidade sem ganho funcional atual.
+- [x] **Arvore de contexto de codigo - entregue em 14/09/2026**:
+  - Mapear conexoes entre funcoes, metodos, classes, modulos, imports e bibliotecas.
+  - Permitir identificadores configuraveis pelo usuario; por padrao, reconhecer funcoes/metodos por parenteses e distinguir metodo dentro de classe de funcao livre.
+  - O AST oficial do Python distingue modulo, classe, funcao, metodo, import e chamada, com linhas e relacoes de inclusao.
+- [x] **Organizacao hierarquica de textos soltos - entregue em 14/09/2026**:
+  - Agrupar paragrafos e textos embaralhados em capitulos, subcapitulos, titulos e subtitulos.
+  - Usar repeticao de palavras-chave/frases como criterio inicial de agrupamento recursivo.
+  - Agrupa por frequencia documental de palavras-chave, preservando integralmente texto e posicao originais.
+- [x] **Grafos de uso de funcoes e complexidade textual - entregue em 14/09/2026**:
+  - Gerar grafo de uso de funcoes em algoritmos Python.
+  - Investigar se medidas do grafo ajudam a comparar complexidade entre textos, codigos ou fluxos.
+  - Grafo de chamadas e contagem de decisoes/chamadas complementam metricas de frases, paragrafos e diversidade lexical.
+- [x] **Estrutura visual de artigos cientificos por referencias - entregue em 14/09/2026**:
+  - Representar referencias bibliograficas como pais/ancestrais para comparar artigos com ancestrais comuns.
+  - Apoiar sugestao de ordem de leitura, artigos mais simples e combinacoes de artigos.
+  - DOIs formam nodos ancestrais compartilhados; a ordem de leitura por quantidade de referencias e explicitamente heuristica.
+- [x] **Transformacoes visuais de documentos - entregue em 14/09/2026**:
+  - Converter documentos do usuario em arvore hierarquica, diagrama de inclusao, diagrama de barras, numeracao por niveis e representacao de aninhamento.
+  - `Information Structure` gera hierarquia, arestas de inclusao, contagens por nivel e numeracao em JSON que pode ser aberto no Clarify Editor.
+  - Limites de entrada, nodos e saida sao explicitos. Validacao: 8 testes de backend, 3 testes GUI e teste de menu passaram.
+
+#### P2 - Novos tools, produto e integracoes amplas
+
+- [x] **Organizacao do seletor/lista de tools - entregue em 13/09/2026**:
+  - Reorganizar o dropdown/lista de tools em grupos mais claros, incluindo subgrupo JSON.
+  - Usar nomenclatura consistente com menus, docks e documentacao.
+  - O menu Tools agora possui os grupos Editing, JSON, Text and Translation, Artificial Intelligence, Files e Utilities, sem recriar QActions nem alterar atalhos.
+  - Os menus e submenus ficam retidos pelo MainWindow, evitando descarte prematuro de objetos Qt e permitindo extensao posterior.
+  - Validacao: teste GUI de estrutura/pertencimento e 14 testes de consistencia i18n passaram; os sete catalogos JSON foram validados.
+- [x] **Processamento com feedback sonoro opcional - entregue em 14/09/2026**:
+  - Adicionar checkbox para tocar som ao concluir processamento.
+  - Manter silencioso por padrao ou respeitar preferencia global do usuario.
+  - Adicionada preferencia global persistente, desativada por padrao, e um servico compartilhado que emite somente um beep do sistema sem manter objetos de audio em memoria.
+  - Integrado a conclusoes bem-sucedidas de Google Translate, Format Converter/Advanced Extraction, AI Processor, JSON Search e Case Converter; falhas/cancelamentos nao disparam som.
+  - Validacao: 2 testes do servico, 1 teste de persistencia da preferencia e 31 testes relacionados de Google Translate/Format Converter passaram; compilacao e os sete catalogos i18n foram validados.
+- [x] **Abas internas por tool - entregue em 14/09/2026**:
+  - Permitir mais de uma aba interna em tools relevantes com botao `New Tab`.
+  - Corrigir a nomenclatura do requisito original, que usa `New Tag`, para `New Tab`.
+  - `Editorial Repair` implementa sessoes independentes com `New Tab`; Clarify Editor, Clock e extratores preservam suas abas internas especializadas.
+- [x] **Terminal integrado como tool - entregue em 14/09/2026**:
+  - Adicionar terminal interno com limites claros de seguranca, diretorio atual visivel e integracao com logs quando possivel.
+  - Adicionado executor explicito em Utilities com diretorio atual visivel/selecionavel, argumentos interpretados por `shlex` e execucao direta por QProcess, sem shell implicito.
+  - Permite um processo por vez, combina stdout/stderr, limita a saida retida a 1 MiB/5.000 blocos e oferece Stop com escalonamento de terminate para kill.
+  - O fechamento aguarda de forma limitada e encerra qualquer filho restante; conclusoes com codigo zero reutilizam o feedback global opcional.
+  - Validacao: 4 testes de parsing, execucao real, limite de saida e cleanup de processo, mais teste de pertencimento ao menu Utilities, passaram em Qt offscreen.
+- [x] **Busca/substituicao no Format Converter em modo texto - entregue em 13/09/2026**:
+  - Em modo texto, suportar `Ctrl+F` e `Enter` para encontrar/substituir no conteudo atual.
+  - Corrigido o roteamento de `Ctrl+F`, que consultava dados inexistentes do seletor de entrada. Os modos Directory, File e Text agora possuem identificadores estaveis.
+  - O dialogo permite substituir a ocorrencia atual ou todas, preservando Regex, Case sensitive e Whole word; grupos de regex podem ser reutilizados na substituicao.
+  - Validacao: 4 testes novos e 4 testes relacionados do Format Converter passaram em modo Qt offscreen.
+- [x] **Gerador de tabela verdade e minimizacao logica - entregue em 14/09/2026**:
+  - Criar tool para mintermos, maxtermos e caminho inverso: tabela verdade como entrada e Quine-McCluskey como saida.
+  - `Boolean Logic` usa SymPy 1.14 para tabelas, mintermos, maxtermos e SOP/POS minimizadas. O parser rejeita chamadas/avaliacao arbitraria e limita a 10 variaveis (1.024 linhas).
+  - Validacao: 4 testes de backend, 1 teste GUI e teste de menu passaram.
+- [x] **Lynx como tool separado - entregue em 14/09/2026**:
+  - Avaliar integracao do navegador textual Lynx como ferramenta propria, sem misturar com editor ou File Explorer.
+  - Adicionada tool lazy separada em Utilities, baseada em `lynx -dump`, limitada a URLs HTTP/HTTPS e sem escrita em arquivos do usuario.
+  - A execucao direta por QProcess possui timeout de 30 segundos, Stop, cleanup no fechamento e limite de 2 MiB/10.000 blocos de texto retido.
+  - Ausencia do executavel desabilita a navegacao com estado explicito; a instalacao local foi identificada como Lynx 2.9.0dev.10.
+  - Validacao: 4 testes de URL, argumentos, ausencia e bloqueio de esquema local, mais teste de pertencimento ao menu, passaram em Qt offscreen.
+- [x] **Ollama/LLaVA como IA offline - entregue em 14/09/2026**:
+  - Adicionar caminho opcional para IA offline local, priorizando isolamento, configuracao simples e limites de memoria.
+  - Ollama foi integrado como provider do AI Processor, sem API key e sem dependencia de internet, reutilizando o pipeline e workers existentes.
+  - A API local usa somente biblioteca padrao, timeout finito, respostas de ate 8 MiB, contexto 4096, saida 1024 tokens e imagens de ate 10 MiB para modelos multimodais como LLaVA.
+  - A lista vem de `/api/tags`; nenhum modelo e baixado automaticamente. Nesta maquina, o servico Ollama 0.5.4 esta ativo com `llama3.2:1b` e `tinyllama:latest`; `llava:latest` nao esta instalado e a verificacao informa isso explicitamente.
+  - Validacao: 4 testes de descoberta/payload/limites/roteamento de imagem e 1 teste GUI de provider sem chave passaram; verificacao ao vivo confirmou o modelo `llama3.2:1b`.
+- [x] **Operacoes logicas em varios formatos de documento - entregue em 14/09/2026**:
+  - Estender interseccao e outras operacoes logicas para DOCX, ODT, JSON, IPYNB e PDF.
+  - Definir antes como cada formato vira uma representacao comparavel.
+  - JSON preserva a representacao estrutural existente. TXT, DOCX, ODT, IPYNB e PDF viram conjuntos canonicos de unidades textuais normalizadas e deduplicadas por SHA-256 sob o namespace comum `content`.
+  - Limites: 50 MiB por arquivo, 50.000 unidades, 4.096 caracteres por unidade; PDF reutiliza Poppler limitado e notebooks reutilizam o carregador validado.
+  - O seletor da tool aceita os seis formatos e o executor reutiliza sem alteracao os algoritmos existentes de interseccao, uniao, diferenca e diferenca simetrica.
+  - Validacao: 50 testes preexistentes de Set Operations e 6 testes novos de representacao/carga/interseccao passaram.
+- [x] **Produto e identidade visual - entregue em 14/09/2026**:
+  - Padronizar o nome publico como `Clarify Toolkit` quando a mudanca for aprovada no codigo, docs e UI.
+  - Planejar alteracao de icone sem quebrar empacotamento, atalhos e referencias em documentacao.
+  - A solicitacao de concluir as 30 tarefas foi tratada como aprovacao: janela, About, metadata do pacote, README ativo e manual usam `Clarify Toolkit`; `Clarify Editor` permanece o nome do componente editor.
+  - Nome do produto e nome do editor foram centralizados em constantes para evitar divergencia futura.
+  - O carregamento atual de icone e o conjunto SVG/PNG 32/64/128/256/512/ICO foram auditados. Como ja estao integrados e nao houve um novo desenho aprovado, os assets foram preservados para nao introduzir risco de empacotamento.
+  - Validacao: 3 testes novos de identidade/assets, 14 testes i18n e 7 testes focados do EditorDock passaram; compilacao e os sete catalogos foram validados.
+- [x] **Assistente de voz para programacao - investigacao e fundacao segura entregues em 14/09/2026**:
+  - Investigar reconhecedor de voz voltado a desenvolvimento, capaz de ler linhas, escrever trechos, criar comandos e lidar com pontuacao, parenteses, colchetes e chaves.
+  - Tratar como projeto grande, separado do editor basico, com forte camada de confirmacao antes de modificar arquivos.
+  - `Voice Programming` normaliza ditado tecnico em portugues/ingles e interpreta insercao, ir para linha e salvar, sempre com previa e checkbox de confirmacao antes de chegar ao Clarify Editor.
+  - Whisper, Vosk e SpeechRecognition nao estao instalados; captacao/transcricao ao vivo permanece bloqueada por backend externo e e informada na UI. Nenhum modelo pesado foi instalado.
+  - Validacao: 3 testes de parser/status, 1 teste GUI de confirmacao e teste de menu passaram.
+- [x] **IA para analise de algoritmos, projetos e fluxogramas - entregue em 14/09/2026**:
+  - Planejar assistente que leia codigo/projetos/fluxogramas e aponte erros de logica e programacao.
+  - Reutilizar o AI Processor e futuras arvores de contexto antes de criar nova arquitetura.
+  - `Algorithm Analysis` faz preflight local, inclui AST para Python e prepara codigo, diretorio ou imagem no AI Processor sem iniciar envio. Fluxogramas exigem provider multimodal e diretorios nao sao apresentados como prova holistica.
+  - Validacao: 3 testes de backend, 1 teste GUI, 8 testes compartilhados do grafo e teste de menu passaram.
+- [x] **Clock app interno - entregue em 14/09/2026**:
+  - Avaliar inclusao de um app de relogio/cronometro/temporizador dentro do Clarify Toolkit.
+  - Adicionada tool lazy em Utilities com relogio local, cronometro e temporizador regressivo em abas internas.
+  - Os tres QTimers pertencem ao widget, nao criam threads e sao interrompidos no fechamento; o fim da contagem reutiliza o feedback sonoro global opcional.
+  - Validacao: 3 testes de formatacao/transicoes/cleanup, teste de pertencimento ao menu e 2 testes do feedback compartilhado passaram.
+
+### Registro histórico antigo das Fases 4-8 (revalidar antes de usar)
+
+Nota de coerência (29/07/2026): os itens abaixo pertencem ao plano original da integração v2.9.116. Eles foram preservados como histórico sem checkboxes para não inflar a fila operacional, porque o status geral acima já marca a integração como concluída e a fila atual do File Explorer está centralizada em "Fila Prioritária - File Explorer Stability, Coherence and Cleanup".
+
+- **Fase 4 (Lógica)**: busca unificada, pipeline List/Search/Replace, condições avançadas e progress tracking unificado.
+- **Fase 5 (UI/UX)**: polimento visual, ícones por seção, tooltips, atalhos, responsividade, QScrollArea e persistência de collapse/expand.
+- **Fase 6 (Testes)**: workflow Browse/Search/Replace, condições avançadas AND/OR e export CSV com resultados filtrados.
+- **Fase 7 (Documentação)**: README, changelog e capturas de tela da integração.
+- **Fase 8 (Deploy)**: commit/tag/release notes/deprecation notices, dependentes de decisão explícita de release.
 
 ---
 
@@ -1161,8 +1562,8 @@ result = convert_text_to_json(text, "auto")
 
 - **[X]** Possibilidade de buscar chaves e valores JSON (ex: `t.auth.brandTitle`) *(v3.0.0 - JSON Search)*
 - **[X]** Incluir 'is file' em outros lugares para pegar mais arquivos com caminhos de diretórios **(v2.9.6)**
-- **[]** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
-- **[]** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
+- **LEG-01 | IMPLEMENTADO:** Adicionar feature para inserir novos chaves/valores em chaves existentes com regex e conceito de registrador de memória
+- **LEG-02 | PARCIAL:** Incluir possibilidade de inserir novo valor em modo grupo, onde word keys podem ser usadas para inserir novo valor entre essas word keys, em linha separada ou coluna específica. Usuário pode entrar contagem de ocorrências tolerada (threshold)
 - **[X]** Quando o usuário clicar em Tools do menu de contexto, e escolher uma opção, o sistema deve abrir em uma nova aba, como ocorre com as abas Search/Replace e Insert. Todas essas abas devem ter um ícone de X vermelho, em que quando clicado, fecha a aba, tendo o usuário novamente clicar em uma das opções Tools para abrir uma aba.
 - **[X]** Adicionar possibilidade de reescrever JSON substituindo chave e objeto em outros lugares se valor da chave é mesmo e chaves têm diferentes nomes *(v2.9.27 - Task #52: Remove Duplicate Objects)*
   - **Sprint A (MVP - COMPLETO - 01/12/2025)**:
@@ -1223,8 +1624,8 @@ result = convert_text_to_json(text, "auto")
       - ✅ Protocolo Simplicidade 1 v1.6 aplicado (11 perguntas Q&A + 9 tasks)
     * ❌ **Reference Resolver Sprint B Remaining (Avançado - PENDENTE)**:
       - ❌ Cross-file references: NÃO IMPLEMENTAR (decisão do usuário)
-- **[]** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
-- **[]** Inserir opção 'Salvar automaticamente' no menu Files do menu de contexto para salvar conteúdo em arquivos sem o usuário precisar clicar em salvar, quando estiver no editor de arquivos. Além disso, deve haver a opção de pertinência de conteúdo não salvo no aplicativo em abas não fechadas do editor de arquivos, e dentro do editor de arquivos (à parte das abas/guias principais dos tools) devem ter outras abas/guias.
+- **LEG-03 | PARCIAL:** Permitir usuário escolher className names ao invés de tag names para fazer chaves JSON. Usuário pode escolher pegar apenas diferença entre className names
+- **LEG-04 | IMPLEMENTADO:** Inserir opção 'Salvar automaticamente' no menu Files do menu de contexto para salvar conteúdo em arquivos sem o usuário precisar clicar em salvar, quando estiver no editor de arquivos. Além disso, deve haver a opção de pertinência de conteúdo não salvo no aplicativo em abas não fechadas do editor de arquivos, e dentro do editor de arquivos (à parte das abas/guias principais dos tools) devem ter outras abas/guias.
 - **[X]** Permitir no tool AI Processor a possibilidade de se utilizar palavras-chave ou palavras reservadas para escrever instruções dinâmicas e personalizadas. Por exemplo, incluir a palavra chave count, que quando colocada como {{count}}, desta maneira, faz com que haja a possibilidade de inserção de código permitido dentro de {{}}. Neste caso, se o usuário digitar {{count}}, isto quer dizer que count vai variar de 0 a N iterações, podendo seguir o seguinte exemplo de instrução: 'Quero que você processe agora o capítulo {{count+1}} do livro Meu Desafio Constante', podendo {{count+1}} aceitar também aritmética. *(v2.9.79 - Dynamic Template Variables)*
 - **[X]** Quando usuário precisa reestruturar JSON e transformar texto em objeto JSON, aplicação deve permitir colar conteúdo de texto na GUI e então performar reestruturação *(v2.9.24 - Task #49: Text to JSON Converter)*
 - **[X]** Ao buscar outras chaves e objetos JSON (ex: `t.pages.contact.title` com word-key 'contact'), não apenas chaves devem ser encontradas, valores à direita das chaves também *(v2.9.23 - Task #48: JSON Value Search)*
@@ -1279,9 +1680,9 @@ result = convert_text_to_json(text, "auto")
 - **[X]** Adicionar sistema de temas (Light, Dark, System) em toda a aplicação **(v2.9.4)**
 - **[X]** Adicionar opções de undo e redo para mudanças feitas (Command Pattern, Ctrl+Z/Ctrl+Y, 10 níveis) **(v2.9.8)**
 - **[X]** Traduzir aplicação para idiomas mais falados do mundo **(v2.9.10 - Task #24: Sistema i18n com EN/PT-BR)**
-- **[]** **AI-Powered Image/Video Search in File Explorer**: Adicionar inteligência artificial que lê imagens ou procura imagens e vídeos conforme pesquisa do usuário no File Explorer, de acordo com descrição de input do usuário. Funcionalidades: (1) Análise de conteúdo visual usando APIs de Computer Vision (Google Vision AI, Azure Computer Vision, ou modelo local como CLIP); (2) Busca por descrição em linguagem natural (ex: "fotos de cachorro", "vídeos de reunião", "imagens com texto"); (3) Filtros avançados (cor dominante, objetos detectados, faces, texto OCR, metadata EXIF); (4) Preview com highlights dos elementos encontrados; (5) Integração com File Explorer existente (novo modo "AI Visual Search" ao lado de Table/Tree); (6) Cache de análises para performance (armazenar resultados em SQLite local); (7) Batch processing para indexar diretórios grandes; (8) Suporte a formatos: imagens (JPG, PNG, GIF, WebP, HEIC) e vídeos (MP4, AVI, MOV, MKV - análise de frames-chave). Implementação sugerida: novo módulo `src/ai/visual_search.py`, componente GUI `src/gui/panels/visual_search_panel.py`, integração com FileExplorerDock, e configuração de API keys em Settings.
-- **[]** No AI Processor (Open AI Processor), para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, deve haver um grupo específico que pode com um checkbox ser habilitado ou não pelo usuário: um campo de quantidade de bytes à direita uma seleção (dropdown) de medida de bytes (KB, MB, GB, etc) para favorecer a experiência de usuário durante a modificação, por exemplo, multiplicando com 1000, multiplicando com 2 elevado a 3 ou fazendo deslocamento à esquerda dependendo da medida. Além disso, mais à direita deve ter um botão de máximo de tokens (maximum tokens) para facilitar os cortes do arquivo na edição inteligente de arquivos com inteligência artificial. Quando o botão é clicado, a sessão de quantidade de bytes é atualmente atualizada para o máximo de bytes conforme o máximo de tokens dependendo do modelo. E, ao lado direito, com campo de porcentagem que varia de 1% a 99% de bytes conforme o máximo de tokens permitidos. Como alternativa, à direita deve haver um outro campo numérico para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, podendo com um radio button ser uma alternativa em relação à especificação de bytes. Um outro botão de max tokens para essa quantidade de cortes explícita do arquivo (enviar partes do arquivo a cada requisição) deve ser colocada com um campo para especificar a porcentagem desejada ou esperada que atualiza o campo de quantidade de cortes.
-- **[]** Incluir tool de tradução rápida (somente para txt ou arquivos cujo conteúdo é ASCII) e outro tool de tradução avançada para outros idiomas (em que se pode traduzir outros formatos de arquivo visual como docx e pdf, mas com mais opções), em que se utiliza os recursos do AI Processor para fatiar o arquivo em partes até o máximo de tokens possível (99% do token) a fim de traduzir de um idioma para outro idioma aquele arquivo, podendo ser salvo em outro arquivo ou em outro lugar à escolha do usuário. Por exemplo, traduzir de inglês para português, tendo como principal API o Gemini Flash.
+- **LEG-05 | PLANEJADO:** **AI-Powered Image/Video Search in File Explorer**: Adicionar inteligência artificial que lê imagens ou procura imagens e vídeos conforme pesquisa do usuário no File Explorer, de acordo com descrição de input do usuário. Funcionalidades: (1) Análise de conteúdo visual usando APIs de Computer Vision (Google Vision AI, Azure Computer Vision, ou modelo local como CLIP); (2) Busca por descrição em linguagem natural (ex: "fotos de cachorro", "vídeos de reunião", "imagens com texto"); (3) Filtros avançados (cor dominante, objetos detectados, faces, texto OCR, metadata EXIF); (4) Preview com highlights dos elementos encontrados; (5) Integração com File Explorer existente (novo modo "AI Visual Search" ao lado de Table/Tree); (6) Cache de análises para performance (armazenar resultados em SQLite local); (7) Batch processing para indexar diretórios grandes; (8) Suporte a formatos: imagens (JPG, PNG, GIF, WebP, HEIC) e vídeos (MP4, AVI, MOV, MKV - análise de frames-chave). Implementação sugerida: novo módulo `src/ai/visual_search.py`, componente GUI `src/gui/panels/visual_search_panel.py`, integração com FileExplorerDock, e configuração de API keys em Settings.
+- **LEG-06 | PLANEJADO:** No AI Processor (Open AI Processor), para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, deve haver um grupo específico que pode com um checkbox ser habilitado ou não pelo usuário: um campo de quantidade de bytes à direita uma seleção (dropdown) de medida de bytes (KB, MB, GB, etc) para favorecer a experiência de usuário durante a modificação, por exemplo, multiplicando com 1000, multiplicando com 2 elevado a 3 ou fazendo deslocamento à esquerda dependendo da medida. Além disso, mais à direita deve ter um botão de máximo de tokens (maximum tokens) para facilitar os cortes do arquivo na edição inteligente de arquivos com inteligência artificial. Quando o botão é clicado, a sessão de quantidade de bytes é atualmente atualizada para o máximo de bytes conforme o máximo de tokens dependendo do modelo. E, ao lado direito, com campo de porcentagem que varia de 1% a 99% de bytes conforme o máximo de tokens permitidos. Como alternativa, à direita deve haver um outro campo numérico para especificar a quantidade de vezes que o arquivo deve ser 'fatiado', ou seja, enviado por partes a cada requisição, podendo com um radio button ser uma alternativa em relação à especificação de bytes. Um outro botão de max tokens para essa quantidade de cortes explícita do arquivo (enviar partes do arquivo a cada requisição) deve ser colocada com um campo para especificar a porcentagem desejada ou esperada que atualiza o campo de quantidade de cortes.
+- **LEG-07 | PARCIAL:** Incluir tool de tradução rápida (somente para txt ou arquivos cujo conteúdo é ASCII) e outro tool de tradução avançada para outros idiomas (em que se pode traduzir outros formatos de arquivo visual como docx e pdf, mas com mais opções), em que se utiliza os recursos do AI Processor para fatiar o arquivo em partes até o máximo de tokens possível (99% do token) a fim de traduzir de um idioma para outro idioma aquele arquivo, podendo ser salvo em outro arquivo ou em outro lugar à escolha do usuário. Por exemplo, traduzir de inglês para português, tendo como principal API o Gemini Flash.
 
 #### Quality Assurance & Testing
 
@@ -1587,7 +1988,7 @@ result = convert_text_to_json(text, "auto")
     * **ERRO CRÍTICO EVITADO**: Loop infinito em testes GUI sem timeout (violou Protocolo v1.5 Etapa 9.1)
     * **Lição Aprendida**: SEMPRE usar @pytest.mark.timeout(5) + dry-run + QT_QPA_PLATFORM=offscreen
   - **[X]** **v2.9.97 - Code Coverage Analysis (22/12/2025 - CONCLUÍDO)**: Infraestrutura de code coverage com pytest-cov (~100 linhas config/CI). **Config** (`.coveragerc`, +8 lines): Adicionado `fail_under = 80` threshold, `sort = Name` para relatórios ordenados, manteve branch coverage + comprehensive exclude_lines (pragma/debug/__main__/__repr__/__str__/abstractmethod/Protocol/overload). **CI Integration** (`scripts/ci_quality_check.sh`, +16 lines): Adicionado Step 5/6 "Code Coverage Analysis", comando `pytest tests/ --cov=src --cov-report=term --cov-report=html --cov-report=xml --cov-fail-under=80`, extrai coverage % de output, fail se <80%, exibe localização htmlcov/index.html no summary. **README Badge** (`README.md`, +1 line): Adicionado badge "Coverage 80%+" shields.io green badge após codecov badge, link para htmlcov/index.html. **Features**: Terminal report com missing lines, HTML navegável (htmlcov/), XML para CI/CD (coverage.xml), 80% minimum threshold (configurable), pipeline fail se below threshold, comprehensive omit patterns (tests, archive, __init__, scripts, add/, .venv). **Dependencies**: pytest-cov>=4.1.0 já presente em pyproject.toml dev dependencies desde projeto inicial. **Architecture**: Config file (.coveragerc INI format) + CI script bash integration + README badge. **Patterns**: Configuration as Code (.coveragerc centralized), Pipeline as Code (CI quality gates), Fail Fast (threshold enforcement). **Use Cases**: "Verificar coverage atual antes commit", "Gerar HTML report para análise detalhada", "Falhar CI se coverage cair <80%", "Identificar código sem testes". **Score Matriz**: 24.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Coerência 5, Urgência 3). **Time**: ~45min (config updates + CI integration + README badge). **Commit**: 8f04c9f "feat: code coverage analysis with pytest-cov (v2.9.97)". **Note**: Coverage atual 0% é esperado - testes unitários existentes focam em funcionalidades específicas, não cobertura ampla. Tarefa implementou **infraestrutura** para medir coverage, não os testes propriamente ditos.
-  - **[]** **Roadmap de Sprints (Plano v2.9.53-55 - 09/12/2025)**:
+  - **LEG-08 | HISTORICO:** **Roadmap de Sprints (Plano v2.9.53-55 - 09/12/2025)**:
     * **[X]** v2.9.53 - Quality Assurance (COULD HAVE - Opção B) - ✅ CONCLUÍDO:
       - ✅ GUI Automated Tests (5 testes, 5/5 passing em 1.83s)
       - ✅ Performance Benchmarks (14 testes, 14/14 passing em 36.59s, baseline estabelecida)
@@ -1609,16 +2010,16 @@ result = convert_text_to_json(text, "auto")
       - 📊 **Achado**: Sistema tem 100% coverage em EN/PT_BR, demais idiomas precisam LIMPEZA não TRADUÇÃO
       - **Total**: ~0.5h de análise
       - Estimativa: 4-6h (3 sprints de 1.5-2h cada)
-    * **[]** v2.9.54 - Contributing Guide (COULD HAVE - Opção C):
+    * **LEG-09 | IMPLEMENTADO:** v2.9.54 - Contributing Guide (COULD HAVE - Opção C):
       - Criar CONTRIBUTING.md completo
       - Code of Conduct, Bug Reports, Feature Requests
       - Development Setup, Code Style, Testing, PR Process
       - Estimativa: 2-3h (1 sprint)
-    * **[]** v2.9.55 - Tradução Completa (SHOULD HAVE - Opção A):
+    * **LEG-10 | VALIDACAO:** v2.9.55 - Tradução Completa (SHOULD HAVE - Opção A):
       - 90 keys × 6 idiomas = 540 traduções
       - PT-BR, ES, FR, DE, ZH, JA
       - Estimativa: 4-6h (1 sprint extenso)
-    * **[]** Fornecer possibilidade de organização de arquivos em pastas ou diretórios, automaticamente, por contexto de conteúdo e nome de arquivo
+    * **LEG-11 | PLANEJADO:** Fornecer possibilidade de organização de arquivos em pastas ou diretórios, automaticamente, por contexto de conteúdo e nome de arquivo
 
 ---
 
@@ -1653,29 +2054,29 @@ result = convert_text_to_json(text, "auto")
 ---
 
 #### Advanced Features & Long-term Goals
-- **[]** TOON format: adicionar possibilidade de trabalhar com múltiplos arquivos JSON (e TXT também) em formato hierárquico de texto aninhado (Tree Object-Oriented Notation) como `{1}["pages"]["home"]: "Homepage"` seria representado como `[1]: pages > home = "Homepage"`, incluindo busca por índices e atualização seletiva de campos. Operações: buscar objeto por ID/hierarquia, modificar valor mantendo TOON structure, converter TOON ↔ JSON, merge TOON files, validar sintaxe. Use case: gerenciar traduções distribuídas sem parsing JSON completo.
-- **[]** File as Database: adicionar possibilidade de realizar processamento SGBD-like em arquivos JSON onde arquivos JSON podem ser tratados como tabelas de banco de dados relacional, incluindo operações JOIN entre múltiplos arquivos, projeções de chaves específicas (SELECT), agregações (COUNT, SUM, AVG), e filtros complexos com sintaxe SQL-like. Use case: análise de dados JSON sem PostgreSQL/MongoDB.
-- **[]** Macro System: Sistema de macros com 2 interfaces (Python snippet e block programming visual). Python: executar código arbitrário em contexto sandbox com acesso controlado a API do Clarify (open_file, search_keys, rewrite_json). Visual: drag-and-drop de blocos (Load File → Filter Keys → Transform Values → Save Result). Incluir scheduler para executar macros periodicamente. Use case: automação de workflows repetitivos.
-- **[]** Cloud Sync & Collaboration: Adicionar sincronização em nuvem para configurações e presets. Suporte: Google Drive, Dropbox, OneDrive. Permitir: compartilhar operation presets com time, histórico versionado (Git-like diffs), comentários em configurações. Implementar conflict resolution (local vs remote changes). Use case: times distribuídos compartilhando workflows.
-- **[]** Real-time JSON Validation: Validar JSON em tempo real durante edição no EditorDock. Usar JSON Schema para validação customizada. Features: highlight de erros (red underline), auto-complete de chaves conhecidas, sugestões de valores baseados em schema, quick-fix actions (add missing required field). Integrar com `jsonschema` library.
-- **[]** GraphQL Query Interface: Adicionar interface para consultar arquivos JSON usando sintaxe GraphQL. Permitir: queries aninhadas, aliases, fragments, mutations (modificar JSON via query). Exemplo: `{ user { name posts { title } } }` retorna apenas campos solicitados. Use case: extrair dados complexos sem código Python.
-- **[]** Version Control Integration: Integrar com Git diretamente no app. Features: commit changes, view diff, create branches, merge conflicts resolution (visual merge tool), push/pull. Exibir status de arquivos (modified/staged/untracked) no File List. Incluir "Git" menu com operações comuns. Use case: gerenciar versionamento sem sair do Clarify.
-- **[]** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos e low-code;
-- **[]** Incluir tutoriais de uso
-- **[]** Incluir busca com ajuda de inteligência artificial (da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F).
-- **[]** Embutir assistente virtual para uso com IA;
-- **[]** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
-- **[]** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
-- **[]** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período
-- **[]** Permitir usuário fazer macros e algoritmos com features da aplicação para utilidades mais complexas, com código Python ou programação em blocos
-- **[]** Quando usuário clicar em resultado de busca ou insert, aplicação deve abrir arquivo em editor próprio
-- **[]** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript). Esses algoritmos 
-- **[]** Fazer com que Clarify não apenas reconheça arquivos JSON, como também arquivos TOON, que é um novo conceito de armazenamento e reestruturação de dados;
-- **[]** Fazer processamento de arquivos JSON e TOON como se fosse um Sistema de Gerenciamento de Base de Dados (SGBD), aproveitando o editor de texto/código para executar comandos semelhantes de SQL e NoSQL, sendo que devem combinar diversos comandos de forma que seja avançado e ao mesmo tempo simples, como é a semântica e sintaxe do Python em comparação com o C: Python é simples, confortável de codificar e poderoso ao mesmo tempo por ter ferramentas avançadas, se aproximando da linguagem humana.
+- **LEG-12 | PARCIAL:** TOON format: adicionar possibilidade de trabalhar com múltiplos arquivos JSON (e TXT também) em formato hierárquico de texto aninhado (Tree Object-Oriented Notation) como `{1}["pages"]["home"]: "Homepage"` seria representado como `[1]: pages > home = "Homepage"`, incluindo busca por índices e atualização seletiva de campos. Operações: buscar objeto por ID/hierarquia, modificar valor mantendo TOON structure, converter TOON ↔ JSON, merge TOON files, validar sintaxe. Use case: gerenciar traduções distribuídas sem parsing JSON completo.
+- **LEG-13 | PLANEJADO:** File as Database: adicionar possibilidade de realizar processamento SGBD-like em arquivos JSON onde arquivos JSON podem ser tratados como tabelas de banco de dados relacional, incluindo operações JOIN entre múltiplos arquivos, projeções de chaves específicas (SELECT), agregações (COUNT, SUM, AVG), e filtros complexos com sintaxe SQL-like. Use case: análise de dados JSON sem PostgreSQL/MongoDB.
+- **LEG-14 | PLANEJADO:** Macro System: Sistema de macros com 2 interfaces (Python snippet e block programming visual). Python: executar código arbitrário em contexto sandbox com acesso controlado a API do Clarify (open_file, search_keys, rewrite_json). Visual: drag-and-drop de blocos (Load File → Filter Keys → Transform Values → Save Result). Incluir scheduler para executar macros periodicamente. Use case: automação de workflows repetitivos.
+- **LEG-15 | PLANEJADO:** Cloud Sync & Collaboration: Adicionar sincronização em nuvem para configurações e presets. Suporte: Google Drive, Dropbox, OneDrive. Permitir: compartilhar operation presets com time, histórico versionado (Git-like diffs), comentários em configurações. Implementar conflict resolution (local vs remote changes). Use case: times distribuídos compartilhando workflows.
+- **LEG-16 | PARCIAL:** Real-time JSON Validation: Validar JSON em tempo real durante edição no EditorDock. Usar JSON Schema para validação customizada. Features: highlight de erros (red underline), auto-complete de chaves conhecidas, sugestões de valores baseados em schema, quick-fix actions (add missing required field). Integrar com `jsonschema` library.
+- **LEG-17 | PLANEJADO:** GraphQL Query Interface: Adicionar interface para consultar arquivos JSON usando sintaxe GraphQL. Permitir: queries aninhadas, aliases, fragments, mutations (modificar JSON via query). Exemplo: `{ user { name posts { title } } }` retorna apenas campos solicitados. Use case: extrair dados complexos sem código Python.
+- **LEG-18 | PLANEJADO:** Version Control Integration: Integrar com Git diretamente no app. Features: commit changes, view diff, create branches, merge conflicts resolution (visual merge tool), push/pull. Exibir status de arquivos (modified/staged/untracked) no File List. Incluir "Git" menu com operações comuns. Use case: gerenciar versionamento sem sair do Clarify.
+- **LEG-19 | PARCIAL:** Além de fornecer tutoriais, modelos de uso de código, métodos Python disponíveis e código Python pronto para usuários que querem automatizar projetos no Clarify, aplicação pode aprender padrões de uso e apresentar ideias de algoritmos, passos ou instruções para completar tarefas repetitivas. Incluir programação em blocos e low-code;
+- **LEG-20 | IMPLEMENTADO:** Incluir tutoriais de uso
+- **LEG-21 | PARCIAL:** Incluir busca com ajuda de inteligência artificial (da mesma maneira como acontece com as pesquisas avançadas com IA no Visual Studio Code quando se pressiona CTRL+SHIFT+F).
+- **LEG-22 | IMPLEMENTADO:** Embutir assistente virtual para uso com IA;
+- **LEG-23 | PLANEJADO:** Pesquisar possibilidade de embutir Clarify no gerenciador de aplicativos Linux e quanto se ganha fazendo isso. Uma vez instalado, compilar código antes de enviar;
+- **LEG-24 | PARCIAL:** Adicionar backup de dados do usuário para undo/redo com ECC, ou usar arquitetura de comando Gof
+- **LEG-25 | PLANEJADO:** Adicionar backup de dados com arquitetura de comando, com Egg Cell Compactor e IA para armazenar todas mudanças feitas pelo usuário mesmo por longo período
+- **LEG-26 | DUPLICADO LEG-14:** Permitir usuário fazer macros e algoritmos com features da aplicação para utilidades mais complexas, com código Python ou programação em blocos
+- **LEG-27 | IMPLEMENTADO:** Quando usuário clicar em resultado de busca ou insert, aplicação deve abrir arquivo em editor próprio
+- **LEG-28 | PARCIAL:** Fazer Clarify capaz de criar algoritmos para performar tarefas do usuário, e não apenas isso, também compilar ou traduzir para linguagem de programação (Python, React, Javascript). Esses algoritmos
+- **LEG-29 | IMPLEMENTADO:** Fazer com que Clarify não apenas reconheça arquivos JSON, como também arquivos TOON, que é um novo conceito de armazenamento e reestruturação de dados;
+- **LEG-30 | DUPLICADO LEG-13:** Fazer processamento de arquivos JSON e TOON como se fosse um Sistema de Gerenciamento de Base de Dados (SGBD), aproveitando o editor de texto/código para executar comandos semelhantes de SQL e NoSQL, sendo que devem combinar diversos comandos de forma que seja avançado e ao mesmo tempo simples, como é a semântica e sintaxe do Python em comparação com o C: Python é simples, confortável de codificar e poderoso ao mesmo tempo por ter ferramentas avançadas, se aproximando da linguagem humana.
 
 #### Calculator & Set Operations
 
-- **[]** Calculator: Adicionar conceitos de calculadora como registrador de memória, adição, concatenação e recall de memória padrão com histórico de modificações. A ideia seria a seguinte: o registro de memória seria o resultado do processamento, por exemplo, de busca, do painel de resultado de buscas. A adição significa: adicione um resultado de busca com outro resultado de forma que estes se complementem, por exemplo, em ordem alfabética ou unindo resultados de um mesmo arquivo (quando é em formato de árvore) no painel de resultados. Concatenação iria concatenar um resultado a outro, colocando o segundo resultado debaixo do primeiro no painel de resultados. O recall de memória iria chamar resultados salvos e jogar no painel de resultados, como pesquisas pela palavra "span".
+- **LEG-31 | PARCIAL:** Calculator: Adicionar conceitos de calculadora como registrador de memória, adição, concatenação e recall de memória padrão com histórico de modificações. A ideia seria a seguinte: o registro de memória seria o resultado do processamento, por exemplo, de busca, do painel de resultado de buscas. A adição significa: adicione um resultado de busca com outro resultado de forma que estes se complementem, por exemplo, em ordem alfabética ou unindo resultados de um mesmo arquivo (quando é em formato de árvore) no painel de resultados. Concatenação iria concatenar um resultado a outro, colocando o segundo resultado debaixo do primeiro no painel de resultados. O recall de memória iria chamar resultados salvos e jogar no painel de resultados, como pesquisas pela palavra "span".
 - **[✅]** Set: Adicionar operações de conjunto lógico de arquivos JSON como interseção, diferença, união e diferença exclusiva. Incluir checkboxes para incluir chaves e/ou valores nesta operação de conjunto, em que, por exemplo, se for escolhida a intersecção entre arquivo A e arquivo B, ambos JSON, se tem valores equivalentes tanto em A quanto em B no sentido de chave e valor (title: "Tarefas de Casa"), no sentido de caminhos de chave e valor (t.pages.home.features.title, title: "Tarefas de Casa"), e somente no sentido de caminhos de chave (t.pages.home.features.title); **✅ Completa v2.9.32 - 02/12/2025**
 - **[X]** Verificar se na pasta add existe alguma funcionalidade que ainda não foi implementada;
 
@@ -1685,8 +2086,8 @@ result = convert_text_to_json(text, "auto")
 
 ##### Visualização e Análise
 - **[X]** **v2.9.96 - Comparative Statistics Dashboard (22/12/2024 - CONCLUÍDO)**: Dashboard de estatísticas comparativas para operações de conjunto (~240 linhas totais). **Backend** (`src/statistics_manager.py`, 200 lines): StatisticsManager utility class, calculate_statistics(data) (analisa JSON recursivamente: total_keys, unique_keys, max_depth, size_bytes, value_types distribution string/number/bool/null/array/object, duplicate_keys), _analyze_recursive() (traversal recursivo com depth tracking), calculate_overlap_percentage() (% overlap entre file1/file2 baseado em result count), format_size() (bytes → B/KB/MB/GB), format_statistics_text() (single dataset), format_comparative_statistics() (3 datasets side-by-side ASCII table). **GUI Integration** (`src/gui/set_operations_dock.py`, +40 lines): txt_statistics QTextEdit (monospace font, max height 300px, hidden by default), _execute() modificado para calcular stats após success (file1_stats + file2_stats + result_stats + overlap_pct), display em formato tabular "File A | File B | Result", _clear_all() modificado para ocultar stats. **Features**: 6 métricas por dataset (Total Keys, Unique Keys, Duplicate Keys, Max Depth, Size formatted, Value Types 6 tipos), overlap percentage (0-100%), side-by-side comparison ASCII table, auto-hide quando clear, monospace formatting para alinhamento, recursive depth analysis (nested objects/arrays). **Architecture**: Utility class (StatisticsManager static methods) + GUI integration (QTextEdit abaixo Results). **Patterns**: Utility/Helper class (static methods), Visitor (recursive traversal), Template Method (format methods). **Use Cases**: "Ver profundidade máxima dos JSONs", "Comparar tamanhos File A vs File B", "Analisar distribuição de tipos", "% overlap em interseção". **Score Matriz**: 25.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Clareza 5, Urgência 3). **Time**: ~2h (Sprint A 200L + Sprint B 40L). **Commit**: 885deb6 "feat: comparative statistics dashboard for Set Operations (v2.9.96)".
-- **[]** Venn Diagram Visualizer: Adicionar diagrama de Venn interativo mostrando visualmente as interseções/uniões entre arquivos JSON. Usar QGraphicsView para renderizar círculos sobrepostos com contadores de elementos em cada seção. Permitir clique para ver detalhes dos elementos em cada região.
-- **[]** Diff Viewer Side-by-Side: Implementar visualização lado-a-lado (split view) das diferenças entre arquivos após operações de conjunto. Usar cores para destacar: verde (único em A), vermelho (único em B), amarelo (comum). Sincronizar scroll entre painéis.
+- **LEG-32 | IMPLEMENTADO:** Venn Diagram Visualizer: Adicionar diagrama de Venn interativo mostrando visualmente as interseções/uniões entre arquivos JSON. Usar QGraphicsView para renderizar círculos sobrepostos com contadores de elementos em cada seção. Permitir clique para ver detalhes dos elementos em cada região.
+- **LEG-33 | IMPLEMENTADO:** Diff Viewer Side-by-Side: Implementar visualização lado-a-lado (split view) das diferenças entre arquivos após operações de conjunto. Usar cores para destacar: verde (único em A), vermelho (único em B), amarelo (comum). Sincronizar scroll entre painéis.
 
 ##### Exportação e Integração
 - **[X]** **v2.9.93 - Multi-Format Export (22/12/2024 - CONCLUÍDO)**: Sistema de exportação multi-formato para resultados de Set Operations (~340 linhas totais). **Backend** (`src/export_manager.py`, 290 lines): ExportManager class com 5 exporters (CSV flat key-value, Excel XLSX com formatação/cores/auto-width via openpyxl, YAML nested via pyyaml, TOML flattened dot notation via tomli-w opcional, JSON pretty-print), flatten_dict() helper (converte a.b.c em dot notation), add_metadata() (timestamp + operation type + tool version). **GUI Integration** (`src/gui/set_operations_dock.py`, +50 lines): Botão "Export..." ao lado de "Save Result", QFileDialog com format filter (CSV/Excel/YAML/TOML/JSON), auto-detect format de selected filter, enable/disable com result availability, error handling user-friendly com guidance "pip install openpyxl tomli-w". **Dependencies** (`pyproject.toml`): openpyxl>=3.1.0 adicionado, pyyaml já instalado (v2.9.90), tomli-w opcional (graceful fallback se ausente). **Features**: Flatten nested JSON para formatos tabulares, include metadata (exported_at, operation, Clarify v2.9.93), format auto-detection de extensão, graceful degradation (missing libs mostram error dialog). **Architecture**: Backend (ExportManager strategy pattern) + GUI (1 button + dialog). **Patterns**: Strategy (format-specific exporters), Factory (export() dispatcher), Template Method (add_metadata). **Use Cases**: "Exportar intersecção para Excel", "Análise CSV no spreadsheet", "Share YAML config com time". **Score Matriz**: 28.5 pontos (Simplicidade 4, Dependências 4, Valor 3, Clareza 5, Urgência 3). **Time**: ~2h30 (Sprint A 290L + Sprint B 50L). **Commit**: d47ba50 "feat: multi-format export for Set Operations (v2.9.93)".
@@ -1696,15 +2097,15 @@ result = convert_text_to_json(text, "auto")
 ##### Histórico e Presets
 - **[X]** **v2.9.94 - Operation History (22/12/2024 - CONCLUÍDO)**: Sistema de histórico de operações executadas (~410 linhas totais). **Backend** (`src/history_manager.py`, 180 lines): HistoryManager class singleton, QSettings storage (last 50 operations max), add_operation() (salva timestamp/op_type/files/comparison_mode/result_count/result_data), get_history() (retorna lista completa), get_entry(index) (operação específica), clear_history(), export_history(filepath) (JSON com metadata), format_entry_display() (format para QListWidget). **GUI** (`src/gui/history_dialog.py`, 230 lines): HistoryDialog non-modal, QListWidget exibindo operações (most recent first), info label "Last 50 operations", QTextEdit details (timestamp/files/mode/results), 4 botões (🔄 Re-execute, 📤 Export History, 🗑️ Clear All, Close), re_execute_requested signal para SetOperationsDock, validação de files existence antes re-execute, confirmation dialog antes clear. **Integration** (`src/gui/set_operations_dock.py`, +80 lines): HistoryManager instance em __init__, _execute() modificado para salvar em history após success (primary operation type + result count), 📜 History button adicionado no btn_layout, _show_history() method (abre HistoryDialog + conecta signal), _re_execute_from_history(entry) method (set files/mode/operation + auto-execute). **Features**: Persistent storage (QSettings), last 50 operations (FIFO), display format "[DD/MM/YYYY HH:MM:SS] file1 op file2 (mode) → N results", re-execute com files validation, export JSON com total_operations metadata, clear com confirmation, double-click para re-execute. **Architecture**: Backend (HistoryManager singleton) + GUI (HistoryDialog non-modal) + Integration (SetOperationsDock connect signal). **Patterns**: Singleton (HistoryManager única instância), Observer (Qt signal re_execute_requested), Template Method (format_entry_display). **Use Cases**: "Ver histórico de operações", "Re-executar operação anterior", "Exportar histórico para análise", "Limpar histórico antigo". **Score Matriz**: 30.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Clareza 5, Urgência 3). **Time**: ~2h30 (Sprint A 180L + Sprint B 230L). **Commit**: cf05288 "feat: operation history for Set Operations (v2.9.94)".
 - **[X]** **v2.9.95 - Operation Presets (22/12/2024 - CONCLUÍDO)**: Sistema de presets salvos para configurações frequentes (~650 linhas totais). **Backend** (`src/presets_manager.py`, 220 lines): PresetsManager singleton, QSettings storage, 3 DEFAULT_PRESETS (Quick Intersection key_value, Full Path Union, Difference ignore case), get_presets() (lista todos), get_preset(name) (preset específico), save_preset(preset) (cria/atualiza), delete_preset(name), rename_preset(old_name, new_name), create_preset_from_current() (factory method com 8 params: name/op_type/comparison_mode/4 options/favorite_files). **GUI** (`src/gui/presets_dialog.py`, 260 lines): PresetsDialog com QListWidget + QTextEdit details, info label "Saved presets for Set Operations", QGroupBox "Preset Details", 4 botões (✅ Load Preset, ✏️ Rename, 🗑️ Delete, Close), preset_load_requested signal, _format_details() (exibe operation/mode/options/favorite_files), QInputDialog para rename, QMessageBox confirmations (delete/rename conflicts), double-click para load. **Integration** (`src/gui/set_operations_dock.py`, +170 lines): PresetsManager instance em __init__, 💾 Save Preset button (entre Execute e Clear), 📋 Presets button (ao lado de History), _save_current_as_preset() method (QInputDialog name + overwrite confirmation + factory + save), _show_presets() method (abre dialog + conecta signal), _load_preset(preset) method (set mode/operation/4 options/favorite_files em UI), preset_load_requested signal connection. **Features**: 3 default presets auto-created first run, save current config with name, load preset into UI (auto-populate), rename with conflict check, delete with confirmation, favorite files (últimos 2 arquivos usados), persistent QSettings. **Architecture**: Backend (PresetsManager singleton) + GUI (PresetsDialog) + Integration (SetOperationsDock 2 buttons + 2 methods). **Patterns**: Singleton (PresetsManager), Factory (create_preset_from_current), Observer (preset_load_requested signal), Template Method (format_details). **Use Cases**: "Salvar config 'Daily Merge' (∪ key_value ignore_case)", "Carregar preset 'Quick Intersection'", "Renomear preset", "Deletar preset obsoleto". **Score Matriz**: 26.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Clareza 5, Urgência 4). **Time**: ~2h30 (Sprint A 220L + Sprint B 260L + Integration 170L). **Commit**: fae1cab "feat: operation presets for Set Operations (v2.9.95)".
-- **[]** Formula Builder: Interface visual para construir operações complexas: (A ∩ B) ∪ (C − D). Drag-and-drop de arquivos em canvas, selecionar operadores entre eles, preview em tempo real do resultado. Salvar fórmulas como templates reutilizáveis.
+- **LEG-34 | PARCIAL:** Formula Builder: Interface visual para construir operações complexas: (A ∩ B) ∪ (C − D). Drag-and-drop de arquivos em canvas, selecionar operadores entre eles, preview em tempo real do resultado. Salvar fórmulas como templates reutilizáveis.
 
 ##### Calculator Integration (Expandir task existente)
-- **[]** Calculator + Set Operations Integration: Integrar resultados de Set Operations com Calculator. Memory slots para armazenar até 5 resultados de operações diferentes. Operações: Add (mesclar 2 resultados), Recall (chamar resultado salvo), Clear (limpar slot). Exibir preview de cada slot no painel lateral.
+- **LEG-35 | PARCIAL:** Calculator + Set Operations Integration: Integrar resultados de Set Operations com Calculator. Memory slots para armazenar até 5 resultados de operações diferentes. Operações: Add (mesclar 2 resultados), Recall (chamar resultado salvo), Clear (limpar slot). Exibir preview de cada slot no painel lateral.
 - **[X]** **v2.9.98 - Set Statistics in Calculator (22/12/2025 - CONCLUÍDO)**: Calculator Memory com estatísticas para result sets (~645 linhas totais). **Backend** (`src/calculator_memory.py`, 235 lines): CalculatorMemory class, 5 memory slots (A, B, C, D, E), QSettings persistence (survives restart), store_result(slot, data, source) (auto-calcula stats com StatisticsManager v2.9.96), recall_result(slot) (retorna JSON data), get_slot_info(slot) (data+stats+metadata), get_slot_stats(slot), clear_slot(slot), clear_all_slots(), get_all_slots_summary() (para table display), is_slot_empty(slot), get_occupied_slots(), compare_slots(slot1, slot2) (diff calculation: total_keys_diff, unique_keys_diff, size_diff, depth_diff), _load_slots() (from QSettings on init), _save_slot() (to QSettings), _get_timestamp(). **GUI** (`src/gui/calculator_dock.py`, 330 lines): CalculatorDock widget, QTableWidget 5 rows × 8 cols (Slot Name, Source, Count, Size formatted, Max Depth, Unique Keys, Duplicate Keys, Value Types compact "S:X N:Y B:Z"), slot selector QComboBox, 3 actions (📤 Recall, 👁️ View Details, 🗑️ Clear), compare section (2 slot selectors + ⚖️ Compare button), CompareDialog (side-by-side stats + difference summary monospace), clear all button (red background, confirmation), data_recalled Signal for integration, store_result(data, source) method, _refresh_table() (sync UI com memory state), _recall_slot() (emit signal + info dialog), _view_details() (full stats monospace MessageBox), _clear_slot() (confirmation), _clear_all_slots() (confirmation), _compare_slots() (opens CompareDialog). **Integration** (`src/app.py`, +24 lines): _show_calculator() method, Calculator menu item "Tools → 🧮 Calculator Memory", bi-directional connection Set Operations ↔ Calculator (store_in_calculator_requested signal). **Set Operations Integration** (`src/gui/set_operations_dock.py`, +56 lines): store_in_calculator_requested Signal, btn_store_calc button "🧮 Store in Calculator", _store_in_calculator() method (emit signal com operation source description "Set Operations: ∩ (file1, file2)"), enable/disable btn_store_calc com btn_save/btn_export. **Features**: 5 persistent slots QSettings, 6 metrics/slot (Count, Size bytes formatted, Max Depth, Unique Keys, Duplicate Keys, Value Types string/number/bool/null/array/object), auto-calculate stats (StatisticsManager reuse), recall + emit signal (integration-ready), compare side-by-side (2 slots diff summary), view details (full stats monospace), clear all confirmation (occupied slots list), seamless Set Operations workflow (1-click store). **Architecture**: Backend (CalculatorMemory data model + persistence) + Frontend (CalculatorDock table view + CompareDialog) + Integration (Qt Signal cross-dock). **Patterns**: Singleton-like (QSettings single instance), Observer (Qt Signal), Strategy (StatisticsManager reused), Model-View separation. **Use Cases**: "Armazenar resultado Set Operations slot A", "Comparar stats slot A vs slot B", "Recall slot C para análise", "Ver distribuição de tipos slot D". **Score Matriz**: 24.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Coerência 5, Urgência 3). **Time**: ~2h (Sprint A 235L + Sprint B 330L + Integration 80L). **Commit**: 0f514a1 "feat: Calculator Memory with statistics for JSON result sets (v2.9.98)".
 - **[X]** **v2.9.99 - Diff Viewer Side-by-Side (23/12/2025 - CONCLUÍDO)**: Visualizador de diferenças com split view para Set Operations (~605 linhas totais). **Backend** (`src/diff_analyzer.py`, 235 lines): DiffAnalyzer class, analyze(data_a, data_b, comparison_mode) (categoriza diferenças em 4 grupos: only_in_a keys exclusivos A, only_in_b keys exclusivos B, common keys com mesmo valor, modified keys com valores diferentes), _flatten_dict() (converte nested dict/list para dot-notation recursivamente, dict → "a.b.c", list → "a[0].b"), _values_equal() (comparação mode-aware: key_value, full_path_value, key_only), format_diff_summary() (text summary com counts ASCII format), export_diff_html() (HTML com inline CSS, side-by-side panels, colors preserved, monospace Courier New). **Frontend** (`src/gui/diff_viewer_dialog.py`, 300 lines): JsonSyntaxHighlighter(QSyntaxHighlighter) (color highlights lines: green #c8f7c5 only A, red #ffcccb only B, yellow #ffffcc common, orange #ffd9b3 modified, 4 QTextCharFormat backgrounds, highlightBlock() override), DiffViewerDialog(QDialog) (split view QSplitter, 2 QTextEdit left/right File A/B, summary QGroupBox com counts, legend color samples, export HTML button), _init_ui() (layout creation, synchronized scrolling text_a.verticalScrollBar ↔ text_b.verticalScrollBar via valueChanged signals), _populate_views() (formats JSON sorted by category then key, applies JsonSyntaxHighlighter to both documents, indent 2 spaces), _export_html() (QFileDialog → DiffAnalyzer.export_diff_html()). **Integration** (`src/gui/set_operations_dock.py`, +70 lines): btn_view_diff QPushButton "🔍 View Diff" after btn_store_calc, _view_diff() method (opens DiffViewerDialog with file_a_data + file_b_data + file names + comparison_mode), stores original data in _execute() before flattening (self.file_a_data, self.file_b_data), signal connection btn_view_diff.clicked → _view_diff, enable/disable logic (True after execute, False on clear). **Features**: Split view synchronized scrolling both panels scroll together, color highlighting 4 categories visual distinction, summary counts per category statistics, legend visual guide with sample boxes, export HTML preserves colors documentation-friendly, comparison mode support key_value/full_path_value/key_only, natural workflow Execute → View Results → View Diff → Export HTML. **Architecture**: Backend (DiffAnalyzer categorization + flatten algorithm) + Frontend (JsonSyntaxHighlighter + DiffViewerDialog split view) + Integration (Set Operations stores original data). **Patterns**: Strategy (diff categorization 4 groups), Observer (Qt signals for integration), Template Method (format_diff_summary, export_diff_html), Decorator (JsonSyntaxHighlighter for colors), Model-View separation (DiffAnalyzer ↔ DiffViewerDialog). **Use Cases**: "Comparar 2 configs antes e depois migration", "Ver quais keys foram adicionados/removidos", "Exportar diff visual para documentação", "Identificar mudanças entre versions JSON". **Score Matriz**: 23.0 pontos (Simplicidade 3, Dependências 4, Valor 4, Coerência 5, Urgência 3). **Time**: ~2h30min (Sprint A 235L + Sprint B 300L + Integration 70L). **Commit**: 1d72493 "feat: diff viewer side-by-side for Set Operations (v2.9.99)".
 
 ##### Calculator Integration (Expandir task existente)
-- **[]** Calculator + Set Operations Integration: Integrar resultados de Set Operations com Calculator. Memory slots para armazenar até 5 resultados de operações diferentes. Operações: Add (mesclar 2 resultados), Recall (chamar resultado salvo), Clear (limpar slot). Exibir preview de cada slot no painel lateral.
+- **LEG-36 | DUPLICADO LEG-35:** Calculator + Set Operations Integration: Integrar resultados de Set Operations com Calculator. Memory slots para armazenar até 5 resultados de operações diferentes. Operações: Add (mesclar 2 resultados), Recall (chamar resultado salvo), Clear (limpar slot). Exibir preview de cada slot no painel lateral.
 - **[X]** **v2.9.98 - Set Statistics in Calculator (22/12/2025 - CONCLUÍDO)**: Calculator Memory com estatísticas para result sets (~645 linhas totais). **Backend** (`src/calculator_memory.py`, 235 lines): CalculatorMemory class, 5 memory slots (A, B, C, D, E), QSettings persistence (survives restart), store_result(slot, data, source) (auto-calcula stats com StatisticsManager v2.9.96), recall_result(slot) (retorna JSON data), get_slot_info(slot) (data+stats+metadata), get_slot_stats(slot), clear_slot(slot), clear_all_slots(), get_all_slots_summary() (para table display), is_slot_empty(slot), get_occupied_slots(), compare_slots(slot1, slot2) (diff calculation: total_keys_diff, unique_keys_diff, size_diff, depth_diff), _load_slots() (from QSettings on init), _save_slot() (to QSettings), _get_timestamp(). **GUI** (`src/gui/calculator_dock.py`, 330 lines): CalculatorDock widget, QTableWidget 5 rows × 8 cols (Slot Name, Source, Count, Size formatted, Max Depth, Unique Keys, Duplicate Keys, Value Types compact "S:X N:Y B:Z"), slot selector QComboBox, 3 actions (📤 Recall, 👁️ View Details, 🗑️ Clear), compare section (2 slot selectors + ⚖️ Compare button), CompareDialog (side-by-side stats + difference summary monospace), clear all button (red background, confirmation), data_recalled Signal for integration, store_result(data, source) method, _refresh_table() (sync UI com memory state), _recall_slot() (emit signal + info dialog), _view_details() (full stats monospace MessageBox), _clear_slot() (confirmation), _clear_all_slots() (confirmation), _compare_slots() (opens CompareDialog). **Integration** (`src/app.py`, +24 lines): _show_calculator() method, Calculator menu item "Tools → 🧮 Calculator Memory", bi-directional connection Set Operations ↔ Calculator (store_in_calculator_requested signal). **Set Operations Integration** (`src/gui/set_operations_dock.py`, +56 lines): store_in_calculator_requested Signal, btn_store_calc button "🧮 Store in Calculator", _store_in_calculator() method (emit signal com operation source description "Set Operations: ∩ (file1, file2)"), enable/disable btn_store_calc com btn_save/btn_export. **Features**: 5 persistent slots QSettings, 6 metrics/slot (Count, Size bytes formatted, Max Depth, Unique Keys, Duplicate Keys, Value Types string/number/bool/null/array/object), auto-calculate stats (StatisticsManager reuse), recall + emit signal (integration-ready), compare side-by-side (2 slots diff summary), view details (full stats monospace), clear all confirmation (occupied slots list), seamless Set Operations workflow (1-click store). **Architecture**: Backend (CalculatorMemory data model + persistence) + Frontend (CalculatorDock table view + CompareDialog) + Integration (Qt Signal cross-dock). **Patterns**: Singleton-like (QSettings single instance), Observer (Qt Signal), Strategy (StatisticsManager reused), Model-View separation. **Use Cases**: "Armazenar resultado Set Operations slot A", "Comparar stats slot A vs slot B", "Recall slot C para análise", "Ver distribuição de tipos slot D". **Score Matriz**: 24.0 pontos (Simplicidade 4, Dependências 5, Valor 3, Coerência 5, Urgência 3). **Time**: ~2h (Sprint A 235L + Sprint B 330L + Integration 80L). **Commit**: 0f514a1 "feat: Calculator Memory with statistics for JSON result sets (v2.9.98)".
 - **[X]** **v2.9.101 - Calculator + Set Operations Integration (23/12/2025 - CONCLUÍDO)**: Operações entre memory slots e integração bi-direcional com Set Operations (~886 linhas totais). **Backend** (`src/calculator_operations.py`, 267 lines): CalculatorOperations class, add() (deep merge usando MergeManager._merge_recursive v2.9.100 para consistência), intersection() (A∩B common keys via set_operations.py flatten/normalize/unflatten), union() (A∪B all keys, B overwrites A), difference() (A−B keys only in A), validate_operation_data() (check slots not empty + dict/list types), get_operation_description() (human-readable "Add: Slot A + Slot B"). **Frontend RecallDialog** (`src/gui/recall_dialog.py`, 217 lines): RecallDialog(QDialog) com 3 actions (📤 Export to File via QFileDialog, 📋 Copy to Clipboard via QApplication.clipboard, 🔄 Send to Set Operations via signal), header slot info (name + source + timestamp), statistics summary (Count/Size/Depth/Unique/Dup/Types), data preview QTextEdit read-only Courier 10pt JSON formatted, send_to_set_operations Signal(dict, str) para integration. **Frontend PreviewDialog** (`src/gui/operation_preview_dialog.py`, 192 lines): OperationPreviewDialog(QDialog) preview antes store, operation description header, result message, statistics summary QGroupBox, result data preview QTextEdit (empty result → red warning background), storage options (slot selector QComboBox + available_slots list), buttons (💾 Store green, Discard), empty result confirmation (QMessageBox question), get_storage_info() returns (store: bool, target_slot: str). **GUI Integration CalculatorDock** (`src/gui/calculator_dock.py`, +163 lines): imports CalculatorOperations/RecallDialog/OperationPreviewDialog, send_to_set_operations Signal(dict, str), self.operations instance, Operations panel QGroupBox (2 slot selectors combo_op_slot1/combo_op_slot2, 4 buttons ➕Add/∩Intersection/∪Union/−Difference), _execute_operation(operation) (validate slots different, recall data1+data2, call operations method, calculate stats, show OperationPreviewDialog, store if approved), _recall_slot() enhanced (open RecallDialog com 3 actions), _handle_send_to_set_operations() (emit signal com source description). **Set Operations Integration** (`src/gui/set_operations_dock.py`, +47 lines): receive_calculator_data(data, source_description) (save to temp file calculator_slot_data_X.json, populate ed_file_a with temp_path, show success MessageBox). **App Integration** (`src/app.py`, +11 lines): _show_calculator() enhanced (bi-directional signals: Set Ops → Calculator store_in_calculator_requested + Calculator → Set Ops send_to_set_operations). **Features**: 4 operations between slots (Add deep merge, ∩/∪/− via set_operations.py), recall enhanced 3 actions (export/copy/send), preview mandatory before store (result stats + empty warning), slot validation (different slots, not empty, dict/list types), comparison_mode support (key_value default para operations), auto-store in available slot (first empty C/D/E), integration workflow (Calculator Recall → Send to Set Ops File A → Execute → Store back in Calculator), reuses v2.9.100 MergeManager + set_operations.py (maximum consistency). **Architecture**: Backend (CalculatorOperations reuses existing managers) + Frontend (2 dialogs RecallDialog + OperationPreviewDialog) + Integration (bi-directional Qt signals Calculator ↔ Set Operations). **Patterns**: Strategy (4 operation types), Observer (Qt signals cross-dock), Reuse (MergeManager + set_operations + StatisticsManager), Template Method (operation workflow validate → execute → preview → store). **Use Cases**: "Merge Slot A + Slot B → store em Slot C", "Intersection A∩B → preview → discard se empty", "Recall Slot D → Export JSON + Copy clipboard", "Recall Slot E → Send to Set Ops → Execute ∪ File B → Store resultado Slot A". **Score Matriz**: 18.0 pontos (Simplicidade 3, Dependências 5, Valor 3, Coerência 4, Urgência 3). **Time**: ~3h30min (Sprint A 267L + Sprint B 409L + Integration 210L). **Commit**: 88d9111 "feat: Calculator + Set Operations integration (v2.9.101)".
 

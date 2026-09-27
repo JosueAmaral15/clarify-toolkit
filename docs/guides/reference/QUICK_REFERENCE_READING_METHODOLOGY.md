@@ -1,8 +1,8 @@
 # QUICK REFERENCE: Documentation Reading Methodology
 ## Single-Page Summary
 
-**Recommended Approach**: 6-Sprint Pragmatic Model  
-**Total Time**: 12-15 hours for complete understanding  
+**Recommended Approach**: 6-Sprint Pragmatic Model
+**Total Time**: 12-15 hours for complete understanding
 **Key Principle**: 80% knowledge (practical) > 100% memorization (impossible)
 
 ---
@@ -10,9 +10,9 @@
 ## 🎯 The 6 Pragmatic Sprints
 
 ### Sprint 1: CRITICAL (2-3h) 🔴
-**What to read**: Architecture, project overview, core guides  
-**Goal**: Understand what Clarify does and how it's organized  
-**Success**: Can explain project to someone in 3 sentences  
+**What to read**: Architecture, project overview, core guides
+**Goal**: Understand what Clarify does and how it's organized
+**Success**: Can explain project to someone in 3 sentences
 
 **Files**:
 - README.md
@@ -23,9 +23,9 @@
 ---
 
 ### Sprint 2: HIGH (2-3h) 🟠
-**What to read**: Design patterns, major features, analysis  
-**Goal**: Understand architecture patterns and feature design  
-**Success**: Can design new features following established patterns  
+**What to read**: Design patterns, major features, analysis
+**Goal**: Understand architecture patterns and feature design
+**Success**: Can design new features following established patterns
 
 **Files**:
 - docs/architecture/IMPORT_TREE_ANALOGY.md
@@ -35,9 +35,9 @@
 ---
 
 ### Sprint 3: MEDIUM (2-3h) 🟡
-**What to read**: Features, internationalization, specific implementations  
-**Goal**: Understand specific features deeply  
-**Success**: Can work on features independently  
+**What to read**: Features, internationalization, specific implementations
+**Goal**: Understand specific features deeply
+**Success**: Can work on features independently
 
 **Files**:
 - docs/pt/ (feature documentation)
@@ -46,9 +46,9 @@
 ---
 
 ### Sprint 4: NORMAL (2h) 🟢
-**What to read**: Integration, processes, migration  
-**Goal**: Understand system integration and development processes  
-**Success**: Know how components connect and work together  
+**What to read**: Integration, processes, migration
+**Goal**: Understand system integration and development processes
+**Success**: Know how components connect and work together
 
 **Files**:
 - docs/plans/INTEGRATION_*.md
@@ -57,9 +57,9 @@
 ---
 
 ### Sprint 5: LOW (2h) 🔵
-**What to read**: Planning, investigations, English docs  
-**Goal**: Understand decisions and project history  
-**Success**: Know why things are structured this way  
+**What to read**: Planning, investigations, English docs
+**Goal**: Understand decisions and project history
+**Success**: Know why things are structured this way
 
 **Files**:
 - Planning documents
@@ -68,9 +68,9 @@
 ---
 
 ### Sprint 6: OPTIONAL (1-2h) ⚪
-**What to read**: Tutorials, archives, edge cases  
-**Goal**: Know where to find specific information  
-**Success**: Comfortable with documentation navigation  
+**What to read**: Tutorials, archives, edge cases
+**Goal**: Know where to find specific information
+**Success**: Comfortable with documentation navigation
 
 **Files**:
 - docs/tutorials/
@@ -173,11 +173,11 @@
 
 ## 🚀 Minimum Viable Path (If Time-Constrained)
 
-**Just Sprints 1-3**: 6-9 hours  
+**Just Sprints 1-3**: 6-9 hours
 **Gives**: 80% knowledge needed for development
 
 1. ✅ Sprint 1 (2-3h) - Foundation
-2. ✅ Sprint 2 (2-3h) - Architecture  
+2. ✅ Sprint 2 (2-3h) - Architecture
 3. ✅ Sprint 3 (2-3h) - Features
 
 Then expand to Sprints 4-6 as needed.
@@ -189,7 +189,7 @@ Then expand to Sprints 4-6 as needed.
 **Most Important Files**:
 ```
 docs/architecture/ARCHITECTURE.md        - System design
-docs/protocolos/SIMPLICITY_PROTOCOL_3.md - Development process
+docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md - Development process
 docs/INDEX.md                             - Documentation map
 docs/pt/                                  - Feature documentation
 ```
@@ -263,20 +263,20 @@ cat docs/INDEX.md
 ## 🏁 Final Goal
 
 **You are ready when**:
-✅ Can design new features  
-✅ Understand system architecture  
-✅ Know where to find information  
-✅ Can debug issues independently  
-✅ Comfortable modifying code  
+✅ Can design new features
+✅ Understand system architecture
+✅ Know where to find information
+✅ Can debug issues independently
+✅ Comfortable modifying code
 
-**This typically takes**: 9-15 hours with pragmatic approach  
+**This typically takes**: 9-15 hours with pragmatic approach
 **Actual benchmark**: Programmer #4 achieved it in **9h 15min** (62% faster than estimate!)
 
 ---
 
-**Version**: 1.0  
-**Based on**: Analysis of 4 ACTION_PLAN files + 9 other documentation files  
-**Validated by**: 6 programmers' actual reading experiences  
+**Version**: 1.0
+**Based on**: Analysis of 4 ACTION_PLAN files + 9 other documentation files
+**Validated by**: 6 programmers' actual reading experiences
 **Status**: Ready to use
 
 **Next Step**: Pick Sprint 1 and start reading!

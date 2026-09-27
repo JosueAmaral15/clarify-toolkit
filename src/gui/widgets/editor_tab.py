@@ -156,7 +156,7 @@ class EditorTab(QWidget):
         clipboard.setText(self.editor.toPlainText())
         # Visual feedback
         self.btn_copy.setText(tr("editor_tab.btn_copied"))
-        QTimer.singleShot(1500, lambda: self.btn_copy.setText(tr("editor_tab.btn_copy")))
+        QTimer.singleShot(1500, self, lambda: self.btn_copy.setText(tr("editor_tab.btn_copy")))
 
     def _export_to_file(self):
         """Export content to file."""
@@ -176,7 +176,7 @@ class EditorTab(QWidget):
 
             # Visual feedback
             self.btn_export.setText(tr("editor_tab.btn_exported"))
-            QTimer.singleShot(1500, lambda: self.btn_export.setText(tr("editor_tab.btn_export")))
+            QTimer.singleShot(1500, self, lambda: self.btn_export.setText(tr("editor_tab.btn_export")))
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -338,6 +338,9 @@ class EditorTab(QWidget):
         """Get title for tab (filename or 'Untitled')."""
         if self.file_path:
             return os.path.basename(self.file_path)
+        display_name = getattr(self, "_clarify_display_name", None)
+        if display_name:
+            return display_name
         return "Untitled"
 
     def get_display_title(self) -> str:

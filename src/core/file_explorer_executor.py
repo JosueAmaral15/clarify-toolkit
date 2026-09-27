@@ -28,6 +28,13 @@ logger = get_logger(__name__)
 # Memory optimization constants (v2.9.120 - 2026-01-09)
 MAX_SNIPPET_LENGTH = 200  # Maximum characters to store per match snippet
 MAX_TOTAL_MATCHES = 50000  # Maximum total matches across all files
+TEXT_SAMPLE_BYTES = 8192  # Lightweight sample for text/binary classification
+BINARY_SEARCH_CHUNK_SIZE = 64 * 1024
+BINARY_REGEX_OVERLAP_BYTES = 4096
+BINARY_SNIPPET_CONTEXT_BYTES = 24
+CONTENT_SCOPE_TEXT = "text"
+CONTENT_SCOPE_BINARY = "binary"
+CONTENT_SCOPE_BOTH = "both"
 
 
 @dataclass
@@ -116,6 +123,8 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
+        self._cancel = False
+
         logger.debug(
             f"EXECUTOR execute_browse() | ENTER - "
             f"dir={directory}, recursive={recursive}, show_hidden={show_hidden}"
@@ -233,7 +242,7 @@ class UnifiedFileExplorerExecutor(QObject):
         directory: str,
         filename_pattern: Optional[str] = None,
         content_query: Optional[str] = None,
-        search_options: Dict[str, bool] = None,
+        search_options: Dict[str, Any] = None,
         show_hidden: bool = False,
         recursive: bool = False,
         filters: Dict[str, Any] = None,
@@ -245,9 +254,9 @@ class UnifiedFileExplorerExecutor(QObject):
 
         Args:
             directory: Directory path
-            filename_pattern: Wildcard pattern (*.py, test_*)
+            filename_pattern: Wildcard pattern (*.py, test_*) or regex when filename_regex is enabled
             content_query: Text to search in file content
-            search_options: {case_sensitive, whole_word, regex}
+            search_options: {case_sensitive, whole_word, regex, filename_regex, content_scope}
             show_hidden: Show hidden files
             recursive: Recurse into subdirectories
             filters: Filter configuration
@@ -263,13 +272,18 @@ class UnifiedFileExplorerExecutor(QObject):
         self._cancel = False
 
         search_options = search_options or {}
+        filters = dict(filters or {})
+        candidate_paths = filters.get("candidate_paths")
 
         # Step 1: List files
         logger.debug(
             f"EXECUTOR execute_search() | Calling execute_browse("
             f"dir={directory}, show_hidden={show_hidden}, recursive={recursive})"
         )
-        browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
+        if candidate_paths is not None:
+            browse_result = self._execute_browse_from_candidates(directory, candidate_paths, show_hidden, filters)
+        else:
+            browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
         logger.debug(
@@ -346,22 +360,49 @@ class UnifiedFileExplorerExecutor(QObject):
         # Step 2: Apply filename pattern filter
         if filename_pattern:
             before_filter = len(files_to_search)
-            files_to_search = [
-                f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
-            ]
+            if search_options.get("filename_regex", False):
+                try:
+                    flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
+                    filename_regex = re.compile(filename_pattern, flags)
+                except re.error as e:
+                    error_message = f"Invalid filename regex pattern: {e}"
+                    logger.error("%s | pattern=%s", error_message, filename_pattern[:50], exc_info=True)
+                    self.error.emit(error_message)
+                    stats = FileListExecutor.calculate_statistics([])
+                    stats["errors"] = [error_message]
+                    stats["total_matches"] = 0
+                    stats["files_with_matches"] = 0
+                    return {"files": [], "stats": stats}
+
+                files_to_search = [
+                    f for f in files_to_search if not f.is_dir and filename_regex.search(f.name.rstrip("/"))
+                ]
+                filename_filter_mode = "regex"
+            else:
+                files_to_search = [
+                    f for f in files_to_search if not f.is_dir and fnmatch.fnmatch(f.name.rstrip("/"), filename_pattern)
+                ]
+                filename_filter_mode = "glob"
+
             logger.debug(
-                f"EXECUTOR execute_search() | After filename filter: "
-                f"{before_filter} → {len(files_to_search)} files"
+                "EXECUTOR execute_search() | After filename %s filter: %d → %d files",
+                filename_filter_mode,
+                before_filter,
+                len(files_to_search),
             )
             logger.debug(
-                "[SEARCH DEBUG] Filename pattern '%s' filter: %d → %d files",
-                filename_pattern, before_filter, len(files_to_search)
+                "[SEARCH DEBUG] Filename pattern '%s' (%s) filter: %d → %d files",
+                filename_pattern, filename_filter_mode, before_filter, len(files_to_search)
             )
 
         # Step 3: Apply content search
         search_results = []
         total_files = len(files_to_search)
         total_match_count = 0  # Track total matches across all files (v2.9.120)
+        content_scope = self._normalize_content_scope(search_options.get("content_scope", CONTENT_SCOPE_TEXT))
+        text_files_searched = 0
+        binary_files_searched = 0
+        content_scope_skipped = 0
 
         for idx, file_info in enumerate(files_to_search, 1):
             if self._cancel:
@@ -390,9 +431,18 @@ class UnifiedFileExplorerExecutor(QObject):
                     search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
                     continue
 
-                # Read file and search
-                text = read_text(file_info.path)
-                matches = self._search_in_text(text, content_query, search_options)
+                file_kind = self._classify_content_file(file_info.path)
+                if not self._content_scope_allows(file_kind, content_scope):
+                    content_scope_skipped += 1
+                    continue
+
+                if file_kind == CONTENT_SCOPE_BINARY:
+                    binary_files_searched += 1
+                    matches = self._search_in_binary_file(file_info.path, content_query, search_options)
+                else:
+                    text_files_searched += 1
+                    text = read_text(file_info.path)
+                    matches = self._search_in_text(text, content_query, search_options)
 
                 if matches:
                     search_results.append(SearchResult(file_info=file_info, matches=matches, match_count=len(matches)))
@@ -414,6 +464,15 @@ class UnifiedFileExplorerExecutor(QObject):
         stats = FileListExecutor.calculate_statistics(file_infos)
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
+        if candidate_paths is not None:
+            stats["incremental_universe"] = True
+            stats["candidate_paths_count"] = len(candidate_paths)
+            stats["candidate_paths_errors"] = browse_result["stats"].get("candidate_paths_errors", [])
+        if content_query:
+            stats["content_scope"] = content_scope
+            stats["text_files_searched"] = text_files_searched
+            stats["binary_files_searched"] = binary_files_searched
+            stats["content_scope_skipped"] = content_scope_skipped
 
         logger.debug("[SEARCH DEBUG] Final results: %d files, %d matches", len(search_results), stats["total_matches"])
 
@@ -431,6 +490,105 @@ class UnifiedFileExplorerExecutor(QObject):
             )
 
         return {"files": search_results, "stats": stats}
+
+    def _execute_browse_from_candidates(
+        self, directory: str, candidate_paths: List[str], show_hidden: bool, filters: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Build search candidates from an explicit prior-result universe."""
+        directory_abs = os.path.abspath(directory)
+        filters_without_candidates = dict(filters)
+        filters_without_candidates.pop("candidate_paths", None)
+
+        type_filter = filters_without_candidates.get("type", "any")
+        include_globs = filters_without_candidates.get("include_globs", [])
+        exclude_globs = filters_without_candidates.get("exclude_globs", [])
+        file_list: List[FileInfo] = []
+        errors: List[str] = []
+        seen_paths = set()
+
+        for raw_path in candidate_paths:
+            try:
+                path = os.path.abspath(str(raw_path))
+                if path in seen_paths:
+                    continue
+                seen_paths.add(path)
+
+                if os.path.commonpath([directory_abs, path]) != directory_abs:
+                    errors.append(f"Candidate outside directory ignored: {raw_path}")
+                    continue
+
+                if not os.path.exists(path):
+                    errors.append(f"Candidate no longer exists: {raw_path}")
+                    continue
+
+                rel_path = os.path.relpath(path, directory_abs)
+                if not show_hidden and self._path_has_hidden_part(rel_path):
+                    continue
+
+                file_info = FileListExecutor._get_file_info(path)
+                if type_filter == "files" and file_info.is_dir:
+                    continue
+                if type_filter == "dirs" and not file_info.is_dir:
+                    continue
+
+                if not file_info.is_dir:
+                    depth = self._relative_file_depth(rel_path)
+                    if not FileListExecutor._matches_filters(
+                        path, os.path.basename(path), depth, filters_without_candidates
+                    ):
+                        continue
+
+                excluded = any(
+                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, directory_abs)
+                    for pattern in exclude_globs
+                )
+                if excluded:
+                    continue
+
+                if include_globs and not any(
+                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, directory_abs)
+                    for pattern in include_globs
+                ):
+                    continue
+
+                file_list.append(file_info)
+            except Exception as exc:  # pylint: disable=broad-exception-caught  # Candidate robustness
+                errors.append(f"Error accessing candidate {raw_path}: {exc}")
+
+        search_results = [SearchResult(file_info=file_info, matches=[], match_count=0) for file_info in file_list]
+        stats = FileListExecutor.calculate_statistics(file_list)
+        stats["errors"] = errors
+        stats["candidate_paths_errors"] = errors
+        return {"files": search_results, "stats": stats}
+
+    @staticmethod
+    def _path_has_hidden_part(relative_path: str) -> bool:
+        """Return True if any relative path component is hidden."""
+        return any(part.startswith(".") for part in relative_path.split(os.sep) if part not in ("", "."))
+
+    @staticmethod
+    def _relative_file_depth(relative_path: str) -> int:
+        """Return FileListExecutor-compatible recursive depth for a file path."""
+        parent = os.path.dirname(relative_path)
+        if parent in ("", "."):
+            return 0
+        return len([part for part in parent.split(os.sep) if part])
+
+    @staticmethod
+    def _matches_glob(file_path: str, file_name: str, pattern: str, directory: str) -> bool:
+        """Match path/name using the same glob semantics used by browse mode."""
+        rel_path = os.path.relpath(file_path, directory)
+        rel_path_posix = rel_path.replace(os.sep, "/")
+        path_posix = file_path.replace(os.sep, "/")
+
+        return (
+            pattern in file_path.split(os.sep)
+            or fnmatch.fnmatch(file_name, pattern)
+            or fnmatch.fnmatch(rel_path, pattern)
+            or fnmatch.fnmatch(rel_path_posix, pattern)
+            or fnmatch.fnmatch(file_path, pattern)
+            or fnmatch.fnmatch(path_posix, pattern)
+        )
 
     # pylint: disable=too-many-positional-arguments  # Complex replace parameters required
     def execute_replace(
@@ -456,6 +614,7 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with replacement results
         """
+        self._cancel = False
         search_options = search_options or {}
         replaced_count = 0
         files_modified = 0
@@ -469,6 +628,11 @@ class UnifiedFileExplorerExecutor(QObject):
             self.progress.emit(f"Replacing in {file_path}")
 
             try:
+                if self._classify_content_file(file_path) == CONTENT_SCOPE_BINARY:
+                    errors.append(f"Skipped binary file {file_path}: replace supports text files only")
+                    self.error.emit(errors[-1])
+                    continue
+
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
@@ -488,6 +652,44 @@ class UnifiedFileExplorerExecutor(QObject):
                 self.error.emit(errors[-1])
 
         return {"replaced_count": replaced_count, "files_modified": files_modified, "errors": errors}
+
+    @staticmethod
+    def _normalize_content_scope(scope: str) -> str:
+        """Normalize content search scope to a supported value."""
+        if scope in {CONTENT_SCOPE_TEXT, CONTENT_SCOPE_BINARY, CONTENT_SCOPE_BOTH}:
+            return scope
+        return CONTENT_SCOPE_TEXT
+
+    @staticmethod
+    def _classify_content_file(path: str) -> str:
+        """Classify a file as text or binary using a bounded byte sample."""
+        with open(path, "rb") as fh:
+            sample = fh.read(TEXT_SAMPLE_BYTES)
+
+        if not sample:
+            return CONTENT_SCOPE_TEXT
+
+        if b"\x00" in sample:
+            return CONTENT_SCOPE_BINARY
+
+        try:
+            sample.decode("utf-8")
+        except UnicodeDecodeError:
+            return CONTENT_SCOPE_BINARY
+
+        allowed_controls = {7, 8, 9, 10, 12, 13, 27}
+        control_count = sum(1 for byte in sample if byte < 32 and byte not in allowed_controls)
+        if control_count / len(sample) > 0.30:
+            return CONTENT_SCOPE_BINARY
+
+        return CONTENT_SCOPE_TEXT
+
+    @staticmethod
+    def _content_scope_allows(file_kind: str, content_scope: str) -> bool:
+        """Return whether a classified file should be searched for the selected content scope."""
+        if content_scope == CONTENT_SCOPE_BOTH:
+            return True
+        return file_kind == content_scope
 
     def _search_in_text(self, text: str, query: str, options: Dict[str, bool]) -> List[SearchMatch]:
         """Search for query in text and return matches."""
@@ -573,6 +775,87 @@ class UnifiedFileExplorerExecutor(QObject):
             self.error.emit(f"Search error: {e}")
 
         return matches
+
+    def _search_in_binary_file(self, path: str, query: str, options: Dict[str, bool]) -> List[SearchMatch]:
+        """Search for UTF-8 query bytes in a binary file without loading it all in memory."""
+        query_bytes = query.encode("utf-8")
+        if not query_bytes:
+            return []
+
+        use_regex = options.get("regex", False)
+        whole_word = options.get("whole_word", False)
+        case_sensitive = options.get("case_sensitive", False)
+
+        pattern = query_bytes if use_regex else re.escape(query_bytes)
+        if whole_word:
+            pattern = rb"\b" + pattern + rb"\b"
+
+        flags = 0 if case_sensitive else re.IGNORECASE
+        try:
+            regex = re.compile(pattern, flags)
+        except re.error as e:
+            logger.error("Invalid binary regex pattern: %s", pattern[:50], exc_info=True)
+            self.error.emit(f"Invalid regex pattern: {e}")
+            return []
+
+        if use_regex:
+            overlap = BINARY_REGEX_OVERLAP_BYTES
+        else:
+            overlap = min(max(len(query_bytes) - 1, 0), BINARY_SEARCH_CHUNK_SIZE)
+
+        matches: List[SearchMatch] = []
+        carry = b""
+        file_offset = 0
+        match_count = 0
+        max_matches_per_file = 10000
+
+        with open(path, "rb") as fh:
+            while True:
+                if self._cancel:
+                    break
+
+                chunk = fh.read(BINARY_SEARCH_CHUNK_SIZE)
+                if not chunk:
+                    break
+
+                window = carry + chunk
+                window_base_offset = file_offset - len(carry)
+                new_data_start = len(carry)
+
+                for match in regex.finditer(window):
+                    if self._cancel:
+                        break
+                    if match.end() <= new_data_start:
+                        continue
+                    if match_count >= max_matches_per_file:
+                        logger.warning("Max binary matches reached: %d", max_matches_per_file)
+                        self.error.emit(f"Too many matches (>{max_matches_per_file}). Results truncated.")
+                        return matches
+
+                    absolute_offset = window_base_offset + match.start()
+                    snippet = self._format_binary_snippet(window, match.start(), match.end(), absolute_offset)
+                    matches.append(SearchMatch(line=1, col=absolute_offset, snippet=snippet))
+                    match_count += 1
+
+                file_offset += len(chunk)
+                carry = window[-overlap:] if overlap else b""
+
+        return matches
+
+    @staticmethod
+    def _format_binary_snippet(window: bytes, match_start: int, match_end: int, absolute_offset: int) -> str:
+        """Format a safe bounded binary snippet around a match."""
+        context_start = max(0, match_start - BINARY_SNIPPET_CONTEXT_BYTES)
+        context_end = min(len(window), match_end + BINARY_SNIPPET_CONTEXT_BYTES)
+        snippet_bytes = window[context_start:context_end]
+        preview_bytes = snippet_bytes[:64]
+        hex_preview = preview_bytes.hex(" ")
+        ascii_preview = "".join(chr(byte) if 32 <= byte < 127 else "." for byte in preview_bytes)
+        if len(snippet_bytes) > len(preview_bytes):
+            hex_preview += " ..."
+            ascii_preview += "..."
+        snippet = f"bytes {absolute_offset}-{absolute_offset + (match_end - match_start)}: {hex_preview} | {ascii_preview}"
+        return snippet[:MAX_SNIPPET_LENGTH]
 
     # pylint: disable=too-many-positional-arguments  # Complex replace parameters required
     def _replace_in_text(

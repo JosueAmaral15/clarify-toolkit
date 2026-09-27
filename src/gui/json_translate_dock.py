@@ -14,13 +14,22 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QCheckBox, QFileDialog, QGridLayout, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QWidget
+    QLineEdit, QMenu, QMessageBox, QPushButton, QWidget
 )
 
 from src.accessibility_manager import AccessibilityManager
 from src.i18n.translator import tooltip_tr, tr
+from src.translators.json_translate_helpers import (
+    load_translation_dict,
+    process_translate_file,
+)
+from src.translation.recent_paths import (
+    TranslationRecentPaths,
+    record_translation_operation,
+)
 from src.utils import parse_exclusion_patterns, walk_files
 
 from .base_dock import BaseDock
@@ -28,50 +37,6 @@ from .base_dock import BaseDock
 # Type checking imports
 if TYPE_CHECKING:
     pass  # Type hints removed
-
-
-# Import translation helper functions (assumed to exist in app.py or a module)
-def load_translation_dict(dict_path: str) -> dict:
-    """Load translation dictionary from JSON/TS file."""
-    import json
-
-    from src.utils import load_ts_object
-
-    if dict_path.endswith((".ts", ".tsx", ".js", ".jsx")):
-        return load_ts_object(dict_path)
-    with open(dict_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def process_translate_file(
-    filepath: str,
-    dictionary: dict,  # pylint: disable=unused-argument  # Future implementation
-    root_alias: str,  # pylint: disable=unused-argument  # Future implementation
-    start_rx: str,  # pylint: disable=unused-argument  # Future implementation
-    end_rx: str,  # pylint: disable=unused-argument  # Future implementation
-    make_backup: bool,  # pylint: disable=unused-argument  # Future implementation
-    dont_override: bool,  # pylint: disable=unused-argument  # Future implementation
-    inverse: bool,  # pylint: disable=unused-argument  # Future implementation
-    exclude_patterns: list,  # pylint: disable=unused-argument  # Future implementation
-    emit_export: bool = True,  # pylint: disable=unused-argument  # Future implementation
-    preserve_uppercase: bool = False,  # pylint: disable=unused-argument  # Future implementation
-) -> tuple[bool, str]:
-    """
-    Process a single file for translation.
-    Returns (success: bool, error_message: str)
-    """
-    # This function should implement the actual translation logic
-    # For now, returning a placeholder implementation
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            _ = f.read()  # Content read but not used yet
-
-        # TODO: Implement actual translation logic here
-        # This is a placeholder that mimics the original behavior
-
-        return (True, "")
-    except Exception as e:
-        return (False, str(e))
 
 
 class JsonTranslateDock(BaseDock):
@@ -91,6 +56,7 @@ class JsonTranslateDock(BaseDock):
     """
 
     def __init__(self, parent: QWidget | None = None):
+        self.recent_paths = TranslationRecentPaths()
         super().__init__(tr("json_translate.title"), parent)
         self._apply_accessibility()
 
@@ -105,12 +71,14 @@ class JsonTranslateDock(BaseDock):
         # Root path section
         self.lbl_path = QLabel(tr("json_translate.lbl_path"))
         self.ed_path = QLineEdit()
+        self.btn_recent_path = QPushButton(tr("translation_recent.btn_recent"))
         self.btn_browse = QPushButton(tr("json_translate.btn_browse"))
         self.is_file = QCheckBox(tr("json_translate.is_file"))
 
         # Dictionary file section
         self.lbl_dict = QLabel(tr("json_translate.lbl_dict"))
         self.ed_dict = QLineEdit()
+        self.btn_recent_dict = QPushButton(tr("translation_recent.btn_recent"))
         self.btn_open = QPushButton(tr("json_translate.btn_open"))
 
         # Variable name
@@ -123,6 +91,18 @@ class JsonTranslateDock(BaseDock):
         self.ed_start = QLineEdit("<[^>]*?>")  # default: start of HTML/JSX tag
         self.lbl_end = QLabel(tr("json_translate.lbl_end"))
         self.ed_end = QLineEdit("</[^>]*?>")  # default: end tag
+        self.btn_add_scope = QPushButton(tr("json_translate.btn_add_scope"))
+        self.btn_add_scope.setObjectName("btn_add_scope")
+        self.scope_rows = [
+            {
+                "start_label": self.lbl_start,
+                "start": self.ed_start,
+                "end_label": self.lbl_end,
+                "end": self.ed_end,
+                "remove": None,
+            }
+        ]
+        self._next_scope_grid_row = 1
 
         # Exclusion patterns
         self.lbl_exclude = QLabel(tr("json_translate.lbl_exclude"))
@@ -172,7 +152,8 @@ class JsonTranslateDock(BaseDock):
 
         # Row 0: Root path
         grid_layout.addWidget(self.lbl_path, 0, 0)
-        grid_layout.addWidget(self.ed_path, 0, 1, 1, 2)
+        grid_layout.addWidget(self.ed_path, 0, 1)
+        grid_layout.addWidget(self.btn_recent_path, 0, 2)
         grid_layout.addWidget(self.btn_browse, 0, 3)
 
         # Row 1: Is file checkbox
@@ -180,7 +161,8 @@ class JsonTranslateDock(BaseDock):
 
         # Row 2: Dictionary file
         grid_layout.addWidget(self.lbl_dict, 2, 0)
-        grid_layout.addWidget(self.ed_dict, 2, 1, 1, 2)
+        grid_layout.addWidget(self.ed_dict, 2, 1)
+        grid_layout.addWidget(self.btn_recent_dict, 2, 2)
         grid_layout.addWidget(self.btn_open, 2, 3)
 
         # Row 3: Variable name
@@ -188,10 +170,15 @@ class JsonTranslateDock(BaseDock):
         grid_layout.addWidget(self.object_variable_name, 3, 1, 1, 2)
 
         # Row 4: Scope delimiters
-        grid_layout.addWidget(self.lbl_start, 4, 0)
-        grid_layout.addWidget(self.ed_start, 4, 1)
-        grid_layout.addWidget(self.lbl_end, 4, 2)
-        grid_layout.addWidget(self.ed_end, 4, 3)
+        self.scope_container = QWidget()
+        self.scope_layout = QGridLayout(self.scope_container)
+        self.scope_layout.setContentsMargins(0, 0, 0, 0)
+        self.scope_layout.addWidget(self.lbl_start, 0, 0)
+        self.scope_layout.addWidget(self.ed_start, 0, 1)
+        self.scope_layout.addWidget(self.lbl_end, 0, 2)
+        self.scope_layout.addWidget(self.ed_end, 0, 3)
+        self.scope_layout.addWidget(self.btn_add_scope, 0, 4)
+        grid_layout.addWidget(self.scope_container, 4, 0, 1, 4)
 
         # Row 5: Exclusion patterns
         grid_layout.addWidget(self.lbl_exclude, 5, 0)
@@ -219,10 +206,17 @@ class JsonTranslateDock(BaseDock):
     def _connect_signals(self) -> None:
         """Connect widget signals to slots."""
         self.btn_browse.clicked.connect(self._browse_root)
+        self.btn_recent_path.clicked.connect(
+            lambda: self._show_recent_menu("source", self.btn_recent_path)
+        )
         self.btn_open.clicked.connect(self._browse_dict)
+        self.btn_recent_dict.clicked.connect(
+            lambda: self._show_recent_menu("dictionary", self.btn_recent_dict)
+        )
         self.btn_run.clicked.connect(self._run)
         self.btn_swap.clicked.connect(self._swap_dictionaries)
         self.btn_undo.clicked.connect(self._undo_translation)
+        self.btn_add_scope.clicked.connect(lambda: self._add_scope_row())
         # Task #43 - v2.9.13: Update stats on path/dict changes
         self.ed_path.textChanged.connect(self._update_stats)
         self.ed_dict.textChanged.connect(self._update_stats)
@@ -240,9 +234,11 @@ class JsonTranslateDock(BaseDock):
     def _apply_tooltips(self) -> None:
         """Apply internationalized tooltips to all widgets."""
         self.ed_path.setToolTip(tooltip_tr("json_translate.ed_path"))
+        self.btn_recent_path.setToolTip(tooltip_tr("translation_recent.source"))
         self.btn_browse.setToolTip(tooltip_tr("json_translate.btn_browse"))
         self.is_file.setToolTip(tooltip_tr("json_translate.is_file"))
         self.ed_dict.setToolTip(tooltip_tr("json_translate.ed_dict"))
+        self.btn_recent_dict.setToolTip(tooltip_tr("translation_recent.dictionary"))
         self.btn_open.setToolTip(tooltip_tr("json_translate.btn_open"))
         self.object_variable_name.setToolTip(tooltip_tr("json_translate.object_variable_name"))
         self.ed_start.setToolTip(tooltip_tr("json_translate.ed_start"))
@@ -257,6 +253,80 @@ class JsonTranslateDock(BaseDock):
         self.btn_run.setToolTip(tooltip_tr("json_translate.btn_run"))
         self.btn_swap.setToolTip(tooltip_tr("json_translate.btn_swap"))
         self.btn_undo.setToolTip(tooltip_tr("json_translate.btn_undo"))
+        self.btn_add_scope.setToolTip(tooltip_tr("json_translate.btn_add_scope"))
+
+    def _add_scope_row(self, start_rx: str = "", end_rx: str = "") -> None:
+        """Add an optional delimiter pair below the primary scope."""
+        start_label = QLabel(tr("json_translate.lbl_start"))
+        start_edit = QLineEdit(start_rx)
+        end_label = QLabel(tr("json_translate.lbl_end"))
+        end_edit = QLineEdit(end_rx)
+        remove_button = QPushButton("−")
+        remove_button.setFixedWidth(32)
+        remove_button.setToolTip(tooltip_tr("json_translate.btn_remove_scope"))
+
+        row = {
+            "start_label": start_label,
+            "start": start_edit,
+            "end_label": end_label,
+            "end": end_edit,
+            "remove": remove_button,
+        }
+        grid_row = self._next_scope_grid_row
+        self._next_scope_grid_row += 1
+        self.scope_rows.append(row)
+        self.scope_layout.addWidget(start_label, grid_row, 0)
+        self.scope_layout.addWidget(start_edit, grid_row, 1)
+        self.scope_layout.addWidget(end_label, grid_row, 2)
+        self.scope_layout.addWidget(end_edit, grid_row, 3)
+        self.scope_layout.addWidget(remove_button, grid_row, 4)
+
+        scope_tooltip_start = tooltip_tr("json_translate.ed_start")
+        scope_tooltip_end = tooltip_tr("json_translate.ed_end")
+        start_edit.setToolTip(scope_tooltip_start)
+        end_edit.setToolTip(scope_tooltip_end)
+        start_edit.returnPressed.connect(self._run)
+        end_edit.returnPressed.connect(self._run)
+        remove_button.clicked.connect(lambda: self._remove_scope_row(row))
+
+        row_number = len(self.scope_rows)
+        AccessibilityManager.set_accessible_widget(
+            start_edit,
+            f"JSON Translate - Input - Start Delimiter Regex {row_number}",
+            "Regex pattern marking where an additional translation scope begins",
+        )
+        AccessibilityManager.set_accessible_widget(
+            end_edit,
+            f"JSON Translate - Input - End Delimiter Regex {row_number}",
+            "Regex pattern marking where an additional translation scope ends",
+        )
+        AccessibilityManager.set_accessible_widget(
+            remove_button,
+            f"JSON Translate - Button - Remove Scope {row_number}",
+            "Remove this additional translation scope",
+        )
+
+    def _remove_scope_row(self, row: dict) -> None:
+        """Remove an additional scope row and its widgets."""
+        if row not in self.scope_rows or row is self.scope_rows[0]:
+            return
+        self.scope_rows.remove(row)
+        for widget in row.values():
+            if widget is not None:
+                self.scope_layout.removeWidget(widget)
+                widget.deleteLater()
+
+    def _get_scope_pairs(self) -> list[tuple[str, str]] | None:
+        """Return complete scope pairs, or None when a row is incomplete."""
+        pairs = []
+        for row in self.scope_rows:
+            start_rx = row["start"].text().strip()
+            end_rx = row["end"].text().strip()
+            if bool(start_rx) != bool(end_rx):
+                return None
+            if start_rx and end_rx:
+                pairs.append((start_rx, end_rx))
+        return pairs
 
     # UI Helper Methods
 
@@ -266,8 +336,12 @@ class JsonTranslateDock(BaseDock):
             path, _ = QFileDialog.getOpenFileName(self, tr("json_translate.dialog_select_file"))
             if path:
                 self.ed_path.setText(path)
+                self.recent_paths.add("source", path)
         else:
-            _ = QFileDialog.getExistingDirectory(self, tr("json_translate.dialog_select_folder"))
+            path = QFileDialog.getExistingDirectory(self, tr("json_translate.dialog_select_folder"))
+            if path:
+                self.ed_path.setText(path)
+                self.recent_paths.add("source", path)
 
     def _browse_dict(self) -> None:
         """Browse for dictionary file."""
@@ -276,6 +350,39 @@ class JsonTranslateDock(BaseDock):
             "JSON/TS (*.json *.ts *.js);;All files (*)"
         )
         if path:
+            self.ed_dict.setText(path)
+            self.recent_paths.add("dictionary", path)
+
+    def _show_recent_menu(self, category: str, anchor: QPushButton) -> None:
+        """Show a bounded list of recent translation paths."""
+        recent = self.recent_paths.get(category)
+        if not recent:
+            QMessageBox.information(
+                self,
+                tr("translation_recent.empty_title"),
+                tr("translation_recent.empty_message"),
+            )
+            return
+
+        menu = QMenu(self)
+        for path in recent:
+            action = QAction(path, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=path: self._select_recent_path(category, selected)
+            )
+            menu.addAction(action)
+        menu.addSeparator()
+        clear_action = QAction(tr("translation_recent.clear"), menu)
+        clear_action.triggered.connect(lambda: self.recent_paths.clear(category))
+        menu.addAction(clear_action)
+        menu.exec(anchor.mapToGlobal(anchor.rect().bottomLeft()))
+
+    def _select_recent_path(self, category: str, path: str) -> None:
+        """Apply a recent source or dictionary path to its field."""
+        if category == "source":
+            self.ed_path.setText(path)
+            self.is_file.setChecked(os.path.isfile(path))
+        elif category == "dictionary":
             self.ed_dict.setText(path)
 
     def _update_stats(self) -> None:
@@ -334,9 +441,6 @@ class JsonTranslateDock(BaseDock):
         else:
             self.lbl_stats.setText(tr("json_translate.lbl_stats_ready"))
 
-            # Core Processing
-            self.ed_dict.setText(path)
-
     # Core Processing
 
     def _run(self) -> None:
@@ -352,10 +456,18 @@ class JsonTranslateDock(BaseDock):
         inverse = self.chk_inverse_json_translate.isChecked()
         emit_export = self.chk_emit_export.isChecked()
         preserve_uppercase = self.chk_preserve_uppercase.isChecked()
+        scope_pairs = self._get_scope_pairs()
 
         # Validation
         if not path or not dpath:
             QMessageBox.warning(self, tr("json_translate.error_missing"), tr("json_translate.error_missing_msg"))
+            return
+        if scope_pairs is None:
+            QMessageBox.warning(
+                self,
+                tr("json_translate.error_missing"),
+                tr("json_translate.error_incomplete_scope_msg"),
+            )
             return
 
         # Load dictionary
@@ -364,6 +476,9 @@ class JsonTranslateDock(BaseDock):
         except Exception as e:
             QMessageBox.critical(self, tr("json_translate.error_dict"), str(e))
             return
+
+        self.recent_paths.add("source", path)
+        self.recent_paths.add("dictionary", dpath)
 
         # Parse exclusion patterns
         exclude_patterns = parse_exclusion_patterns(exclude_csv)
@@ -391,6 +506,7 @@ class JsonTranslateDock(BaseDock):
                 exclude_patterns,
                 emit_export,
                 preserve_uppercase,
+                scope_pairs=scope_pairs,
             )
             if ok:
                 changed += 1
@@ -404,6 +520,18 @@ class JsonTranslateDock(BaseDock):
                 f"\n{tr('json_translate.result_errors')} {len(errors)}\n"
                 + "\n".join(errors[:5])
             )
+        record_translation_operation(
+            self,
+            "json_translate",
+            "JSON Translate",
+            {
+                "source_path": path,
+                "dictionary": dpath,
+                "files_processed": len(paths),
+                "files_modified": changed,
+                "errors": len(errors),
+            },
+        )
         QMessageBox.information(self, tr("json_translate.dialog_translate"), msg)
 
     def _swap_dictionaries(self) -> None:
@@ -515,6 +643,11 @@ class JsonTranslateDock(BaseDock):
             "Open file browser to select file or directory",
         )
         AccessibilityManager.set_accessible_widget(
+            self.btn_recent_path,
+            "JSON Translate - Button - Recent Sources",
+            "Select or clear recently used source files and directories",
+        )
+        AccessibilityManager.set_accessible_widget(
             self.is_file,
             "JSON Translate - Checkbox - Is File",
             "Check if root path is a file (unchecked for directory)",
@@ -531,6 +664,11 @@ class JsonTranslateDock(BaseDock):
         )
         AccessibilityManager.set_accessible_widget(
             self.btn_open, "JSON Translate - Button - Browse Dictionary", "Open file browser to select dictionary file"
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_recent_dict,
+            "JSON Translate - Button - Recent Dictionaries",
+            "Select or clear recently used translation dictionaries",
         )
 
         # Variable name
@@ -559,6 +697,11 @@ class JsonTranslateDock(BaseDock):
             self.ed_end,
             "JSON Translate - Input - End Delimiter Regex",
             "Regex pattern marking where translation scope ends",
+        )
+        AccessibilityManager.set_accessible_widget(
+            self.btn_add_scope,
+            "JSON Translate - Button - Add Scope",
+            "Add another start and end delimiter pair",
         )
 
         # Exclusion patterns

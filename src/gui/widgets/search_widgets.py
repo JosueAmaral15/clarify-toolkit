@@ -27,7 +27,7 @@ from src.i18n.translator import tr
 
 class FileNameQueryPanel(QWidget):
     """
-    Widget for file name pattern input with regex support.
+    Widget for file name pattern input with optional regex support.
 
     Signals:
         pattern_changed: Emitted when pattern text changes
@@ -56,6 +56,16 @@ class FileNameQueryPanel(QWidget):
         self.ed_pattern.textChanged.connect(self.pattern_changed.emit)
         layout.addWidget(self.ed_pattern, stretch=1)
 
+        self.chk_filename_regex = QCheckBox(tr("search.chk_filename_regex", "Regex"))
+        self.chk_filename_regex.setToolTip(
+            tr(
+                "search.tooltip_filename_regex",
+                "Treat the filename pattern as a regular expression instead of a wildcard glob.",
+            )
+        )
+        self.chk_filename_regex.toggled.connect(lambda _: self.pattern_changed.emit(self.get_pattern()))
+        layout.addWidget(self.chk_filename_regex)
+
         # Clear button
         btn_clear = QPushButton(tr("search.btn_clear_filename"))
         btn_clear.setToolTip(tr("search.tooltip_clear_filename"))
@@ -73,6 +83,14 @@ class FileNameQueryPanel(QWidget):
     def set_pattern(self, pattern: str):
         """Set filename pattern."""
         self.ed_pattern.setText(pattern)
+
+    def get_use_regex(self) -> bool:
+        """Return True when filename pattern should be treated as regex."""
+        return self.chk_filename_regex.isChecked()
+
+    def set_use_regex(self, enabled: bool):
+        """Set filename regex mode."""
+        self.chk_filename_regex.setChecked(enabled)
 
     def clear(self):
         """Clear filename pattern (v2.9.117)."""
@@ -128,7 +146,7 @@ class ContentQueryPanel(QWidget):
 
 class SearchOptionsPanel(QWidget):
     """
-    Checkboxes for search options (case-sensitive, whole-word, regex).
+    Checkboxes for content search options (case-sensitive, whole-word, regex).
 
     Signals:
         options_changed: Emitted when any option changes
@@ -144,8 +162,8 @@ class SearchOptionsPanel(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        label = QLabel(tr("search.lbl_options"))
-        layout.addWidget(label)
+        self.lbl_options = QLabel(tr("search.lbl_options"))
+        layout.addWidget(self.lbl_options)
 
         # Case-sensitive
         self.chk_case = QCheckBox(tr("search.chk_case_sensitive"))
@@ -171,6 +189,25 @@ class SearchOptionsPanel(QWidget):
         self.chk_multi_query.toggled.connect(self._emit_options)
         layout.addWidget(self.chk_multi_query)
 
+        scope_tooltip = tr(
+            "search.tooltip_content_scope",
+            "Text/ASCII (default): search decoded text files.\n"
+            "Binary: scan raw bytes in 64 KiB chunks.\n"
+            "Both: search both types.\n"
+            "Binary previews are limited; Replace remains text-only.",
+        )
+        self.lbl_content_scope = QLabel(tr("search.lbl_content_scope", "Content type:"))
+        self.lbl_content_scope.setToolTip(scope_tooltip)
+        layout.addWidget(self.lbl_content_scope)
+
+        self.combo_content_scope = QComboBox()
+        self.combo_content_scope.addItem(tr("search.content_scope_text", "Text/ASCII"), "text")
+        self.combo_content_scope.addItem(tr("search.content_scope_binary", "Binary"), "binary")
+        self.combo_content_scope.addItem(tr("search.content_scope_both", "Both"), "both")
+        self.combo_content_scope.setToolTip(scope_tooltip)
+        self.combo_content_scope.currentIndexChanged.connect(lambda _: self._emit_options())
+        layout.addWidget(self.combo_content_scope)
+
         layout.addStretch()
 
     def _emit_options(self):
@@ -183,6 +220,7 @@ class SearchOptionsPanel(QWidget):
             "whole_word": self.chk_word.isChecked(),
             "regex": self.chk_regex.isChecked(),
             "multi_query": self.chk_multi_query.isChecked(),
+            "content_scope": self.combo_content_scope.currentData() or "text",
         }
 
     def set_options(self, options: dict):
@@ -191,6 +229,35 @@ class SearchOptionsPanel(QWidget):
         self.chk_word.setChecked(options.get("whole_word", False))
         self.chk_regex.setChecked(options.get("regex", False))
         self.chk_multi_query.setChecked(options.get("multi_query", False))
+        content_scope = options.get("content_scope", "text")
+        index = self.combo_content_scope.findData(content_scope)
+        self.combo_content_scope.setCurrentIndex(index if index >= 0 else 0)
+
+    def retranslateUi(self):  # pylint: disable=invalid-name
+        """Refresh labels and tooltips while preserving the selected scope."""
+        self.lbl_options.setText(tr("search.lbl_options"))
+        self.chk_case.setText(tr("search.chk_case_sensitive"))
+        self.chk_case.setToolTip(tr("search.tooltip_case_sensitive"))
+        self.chk_word.setText(tr("search.chk_whole_word"))
+        self.chk_word.setToolTip(tr("search.tooltip_whole_word"))
+        self.chk_regex.setText(tr("search.chk_regex"))
+        self.chk_regex.setToolTip(tr("search.tooltip_regex"))
+        self.chk_multi_query.setText(tr("search.chk_multi_line"))
+        self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
+
+        self.lbl_content_scope.setText(tr("search.lbl_content_scope", "Content type:"))
+        scope_tooltip = tr(
+            "search.tooltip_content_scope",
+            "Text/ASCII (default): search decoded text files.\n"
+            "Binary: scan raw bytes in 64 KiB chunks.\n"
+            "Both: search both types.\n"
+            "Binary previews are limited; Replace remains text-only.",
+        )
+        self.lbl_content_scope.setToolTip(scope_tooltip)
+        self.combo_content_scope.setToolTip(scope_tooltip)
+        self.combo_content_scope.setItemText(0, tr("search.content_scope_text", "Text/ASCII"))
+        self.combo_content_scope.setItemText(1, tr("search.content_scope_binary", "Binary"))
+        self.combo_content_scope.setItemText(2, tr("search.content_scope_both", "Both"))
 
 
 class ReplacePanel(QWidget):

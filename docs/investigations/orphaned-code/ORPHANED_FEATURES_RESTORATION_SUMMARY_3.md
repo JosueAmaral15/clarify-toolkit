@@ -314,7 +314,7 @@ All previous tests still pass - no breaking changes to existing functionality.
 
 ### Documentation Files
 
-- ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md (this action plan)
+- ../../action-plans/cleanup/ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md (this action plan)
 - ORPHANED_FEATURES_RESTORATION_SUMMARY_3.md (this summary)
 - docs/features/MAX_NESTING_DEPTH_3.md (max nesting depth feature)
 - LIMIT_PARENT_KEYS_3.md → MAX_NESTING_DEPTH_3.md (renamed)

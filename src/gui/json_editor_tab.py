@@ -739,12 +739,12 @@ class JsonEditorTab(QWidget):
 
             # Format and update editor
             formatted = json.dumps(new_json, indent=2, ensure_ascii=False)
-            self.editor.blockSignals(True)
-            self.editor.setPlainText(formatted)
-            self.editor.blockSignals(False)
-
-            # Mark as modified
-            self._on_text_changed()
+            cursor = self.editor.textCursor()
+            cursor.beginEditBlock()
+            cursor.select(QTextCursor.Document)
+            cursor.insertText(formatted)
+            cursor.endEditBlock()
+            self.editor.setTextCursor(cursor)
 
             # Hide panel
             self.regex_insert_panel.setVisible(False)
@@ -768,7 +768,7 @@ class JsonEditorTab(QWidget):
                 tr("json_editor.msg_json_error_title"),
                 tr("json_editor.msg_json_error").format(error=str(e))
             )
-        except Exception as _:
+        except Exception as e:
             QMessageBox.critical(
                 self,
                 tr("json_editor.msg_insert_error_title"),
@@ -827,6 +827,8 @@ class JsonEditorTab(QWidget):
         # Ensure target is dict
         if not isinstance(target, dict):
             raise ValueError(f"Target '{path[-1]}' is not an object, cannot insert inside")
+        if new_key in target:
+            raise ValueError(f"Key '{new_key}' already exists; insertion would overwrite it")
 
         # Insert new key
         target[new_key] = self._parse_value(new_value)
@@ -834,70 +836,31 @@ class JsonEditorTab(QWidget):
 
     def _insert_before(self, obj, path, new_key, new_value):
         """Insert before target key (sibling)."""
-        if len(path) < 2:
-            # Root level insert
-            new_obj = {new_key: self._parse_value(new_value)}
-            new_obj.update(obj)
-            return new_obj
-
-        # Navigate to parent
-        parent = obj
-        for key in path[:-1]:
-            parent = parent[key]
-
-        target_key = path[-1]
-
-        # Rebuild dict with new key before target
-        if isinstance(parent, dict):
-            new_parent = {}
-            for k, v in parent.items():
-                if k == target_key:
-                    new_parent[new_key] = self._parse_value(new_value)
-                new_parent[k] = v
-
-            # Update parent reference
-            if len(path) == 1:
-                return new_parent
-            else:
-                # Navigate and update
-                temp = obj
-                for key in path[:-2]:
-                    temp = temp[key]
-                temp[path[-2]] = new_parent
-
-        return obj
+        return self._insert_sibling(obj, path, new_key, new_value, before=True)
 
     def _insert_after(self, obj, path, new_key, new_value):
         """Insert after target key (sibling)."""
-        if len(path) < 2:
-            # Root level insert
-            obj[new_key] = self._parse_value(new_value)
-            return obj
+        return self._insert_sibling(obj, path, new_key, new_value, before=False)
 
-        # Navigate to parent
+    def _insert_sibling(self, obj, path, new_key, new_value, *, before):
+        """Insert adjacent to a key, preserving order at any object depth."""
         parent = obj
         for key in path[:-1]:
             parent = parent[key]
-
+        if not isinstance(parent, dict):
+            raise ValueError("Sibling insertion requires an object")
+        if new_key in parent:
+            raise ValueError(f"Key '{new_key}' already exists; insertion would overwrite it")
         target_key = path[-1]
-
-        # Rebuild dict with new key after target
-        if isinstance(parent, dict):
-            new_parent = {}
-            for k, v in parent.items():
-                new_parent[k] = v
-                if k == target_key:
-                    new_parent[new_key] = self._parse_value(new_value)
-
-            # Update parent reference
-            if len(path) == 1:
-                return new_parent
-            else:
-                temp = obj
-                for key in path[:-2]:
-                    temp = temp[key]
-                temp[path[-2]] = new_parent
-
+        new_parent = {}
+        for key, value in parent.items():
+            if key == target_key and before:
+                new_parent[new_key] = self._parse_value(new_value)
+            new_parent[key] = value
+            if key == target_key and not before:
+                new_parent[new_key] = self._parse_value(new_value)
+        parent.clear()
+        parent.update(new_parent)
         return obj
 
     def _parse_value(self, value_str: str):
@@ -1004,6 +967,9 @@ class JsonEditorTab(QWidget):
         """Get title for tab."""
         if self.file_path:
             return os.path.basename(self.file_path)
+        display_name = getattr(self, "_clarify_display_name", None)
+        if display_name:
+            return display_name
         return "Untitled.json"
 
     def get_display_title(self) -> str:

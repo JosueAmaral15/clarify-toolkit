@@ -31,6 +31,7 @@ import logging
 import logging.handlers
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -106,32 +107,14 @@ class ClarifyLogger:
         log_level_name = os.getenv("CLARIFY_LOG_LEVEL", "INFO").upper()
         log_level = getattr(logging, log_level_name, DEFAULT_LOG_LEVEL)
 
-        # Create logs directory
-        log_dir = DEFAULT_LOG_DIR
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / DEFAULT_LOG_FILE
-
         # Get root logger
         root_logger = logging.getLogger("clarify")
         root_logger.setLevel(log_level)
 
         # Remove existing handlers (avoid duplicates)
-        root_logger.handlers.clear()
-
-        # File handler with rotation
-        file_handler = logging.handlers.RotatingFileHandler(
-            filename=log_file,
-            maxBytes=MAX_LOG_SIZE,
-            backupCount=BACKUP_COUNT,
-            encoding='utf-8'
-        )
-        file_handler.setLevel(log_level)
-        file_formatter = logging.Formatter(
-            fmt=DEFAULT_LOG_FORMAT,
-            datefmt=DEFAULT_DATE_FORMAT
-        )
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+            handler.close()
 
         # Console handler (stdout)
         console_handler = logging.StreamHandler(sys.stdout)
@@ -142,6 +125,57 @@ class ClarifyLogger:
         )
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
+
+        requested_log_dir = os.getenv("CLARIFY_LOG_DIR")
+        primary_log_dir = Path(requested_log_dir).expanduser() if requested_log_dir else DEFAULT_LOG_DIR
+        fallback_log_dir = (
+            Path(tempfile.gettempdir())
+            / f"clarify-{getattr(os, 'getuid', lambda: 'user')()}"
+            / "logs"
+        )
+        log_dir = primary_log_dir
+        log_file = primary_log_dir / DEFAULT_LOG_FILE
+        file_error = None
+
+        for candidate in dict.fromkeys((primary_log_dir, fallback_log_dir)):
+            try:
+                candidate.mkdir(parents=True, exist_ok=True, mode=0o700)
+                candidate_file = candidate / DEFAULT_LOG_FILE
+                file_handler = logging.handlers.RotatingFileHandler(
+                    filename=candidate_file,
+                    maxBytes=MAX_LOG_SIZE,
+                    backupCount=BACKUP_COUNT,
+                    encoding='utf-8'
+                )
+                file_handler.setLevel(log_level)
+                file_handler.setFormatter(logging.Formatter(
+                    fmt=DEFAULT_LOG_FORMAT,
+                    datefmt=DEFAULT_DATE_FORMAT
+                ))
+                root_logger.addHandler(file_handler)
+                log_dir = candidate
+                log_file = candidate_file
+                break
+            except OSError as exc:
+                file_error = exc
+        else:
+            log_dir = primary_log_dir
+            log_file = primary_log_dir / DEFAULT_LOG_FILE
+
+        if file_error and log_dir != primary_log_dir:
+            root_logger.warning(
+                "Primary log directory unavailable (%s); using fallback: %s",
+                file_error,
+                log_dir,
+            )
+        elif file_error and not any(
+            isinstance(handler, logging.handlers.RotatingFileHandler)
+            for handler in root_logger.handlers
+        ):
+            root_logger.warning(
+                "File logging unavailable (%s); continuing with console logging only",
+                file_error,
+            )
 
         # Log initialization
         root_logger.info(

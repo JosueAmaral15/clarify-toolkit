@@ -71,6 +71,7 @@ class CollapsibleSection(QWidget):
         self._animation = QPropertyAnimation(self.content_frame, b"maximumHeight")
         self._animation.setDuration(self._animation_duration)
         self._animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self._animation.finished.connect(self._on_animation_finished)
 
     def setContent(self, widget: QWidget):
         """
@@ -129,7 +130,6 @@ class CollapsibleSection(QWidget):
             start_height = self.content_frame.height()
             self._animation.setStartValue(start_height)
             self._animation.setEndValue(0)
-            self._animation.finished.connect(lambda: self.content_frame.setVisible(False))
         else:
             # Expanding: animate from 0 to content height
             self.content_frame.setVisible(True)
@@ -140,17 +140,14 @@ class CollapsibleSection(QWidget):
             self._animation.setStartValue(0)
             self._animation.setEndValue(content_height)
 
-            def on_finished():
-                self.content_frame.setMaximumHeight(16777215)
-
-            try:
-                self._animation.finished.disconnect()
-            except (RuntimeError, TypeError) as e:
-                # Signal was not connected or already disconnected
-                pass
-            self._animation.finished.connect(on_finished)
-
         self._animation.start()
+
+    def _on_animation_finished(self):
+        """Apply the final frame state without accumulating signal callbacks."""
+        if self._is_collapsed:
+            self.content_frame.setVisible(False)
+        else:
+            self.content_frame.setMaximumHeight(16777215)
 
     def setAnimationDuration(self, duration_ms: int):
         """Set animation duration in milliseconds."""

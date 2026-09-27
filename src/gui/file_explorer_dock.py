@@ -133,6 +133,7 @@ class FileExplorerDock(BaseDock):
         self.last_browse_results = []  # files_data for table view
         self.last_was_search = False  # Track if last operation was search or browse
         self._user_manually_changed_view = False  # Track if user manually switched view (v2.9.118 bugfix)
+        self._last_content_search_universe = None  # Explicit candidate universe for incremental search
 
         self._load_preferences()
 
@@ -361,6 +362,7 @@ class FileExplorerDock(BaseDock):
         self.filename_panel.setToolTip(tr("file_explorer.tooltip_filename_panel"))
         self.content_panel.setToolTip(tr("file_explorer.tooltip_content_panel"))
         self.search_options_panel.setToolTip(tr("file_explorer.tooltip_search_options"))
+        self.search_options_panel.retranslateUi()
         self.replace_panel.setToolTip(tr("file_explorer.tooltip_replace_panel"))
 
         # Filters section
@@ -852,6 +854,64 @@ class FileExplorerDock(BaseDock):
 
         logger.info(f"Synced {len(matches_dict)} browse results to tree view")
 
+    def _clear_result_views(
+        self, clear_search_cache: bool = True, clear_browse_cache: bool = True, status_text: str = ""
+    ):
+        """Clear visible result widgets and their view-sync caches."""
+        self.results_tree.clear()
+        if hasattr(self, "table_manager") and self.table_manager:
+            self.table_manager.clear()
+
+        if clear_search_cache:
+            self.last_search_results = {}
+        if clear_browse_cache:
+            self.last_browse_results = []
+
+        if status_text:
+            self.results_status.setText(status_text)
+        else:
+            self.results_status.clear()
+
+    def _get_incremental_candidate_paths(self, directory: str, content_query: str) -> Optional[List[str]]:
+        """Return previous result paths when the current search can be refined incrementally."""
+        if not content_query:
+            return None
+
+        universe = self._last_content_search_universe
+        if not universe:
+            return None
+
+        if universe.get("directory") != directory:
+            return None
+
+        if universe.get("content_query") != content_query:
+            return None
+
+        return list(universe.get("paths", []))
+
+    def _attach_incremental_universe_filter(
+        self, filters: Dict[str, Any], directory: str, content_query: str
+    ) -> Optional[List[str]]:
+        """Attach previous-result candidate paths to filters when incremental search applies."""
+        candidate_paths = self._get_incremental_candidate_paths(directory, content_query)
+        if candidate_paths is None:
+            return None
+
+        filters["candidate_paths"] = candidate_paths
+        return candidate_paths
+
+    def _remember_content_search_universe(self, directory: str, content_query: str, files_list: List):
+        """Store file paths from the latest content search as the next incremental universe."""
+        if not content_query:
+            self._last_content_search_universe = None
+            return
+
+        self._last_content_search_universe = {
+            "directory": directory,
+            "content_query": content_query,
+            "paths": [search_result.file_info.path for search_result in files_list],
+        }
+
     def _format_permissions(self, stat_info, long_format: bool = False) -> str:
         """Format file permissions from stat info."""
         import stat as stat_module
@@ -922,6 +982,12 @@ class FileExplorerDock(BaseDock):
         # Execute unified operation (executor will handle both modes)
         self._list_files()
 
+    def _get_search_options(self) -> Dict[str, Any]:
+        """Return content search options plus filename pattern mode."""
+        search_options = self.search_options_panel.get_options()
+        search_options["filename_regex"] = self.filename_panel.get_use_regex()
+        return search_options
+
     def _list_files(self):
         """List or search files with unified executor (v2.9.116)."""
         # Start timer (v2.9.117 - B.4)
@@ -977,6 +1043,7 @@ class FileExplorerDock(BaseDock):
 
         # Get advanced filters
         filters = self._build_filters()
+        self._cancel_requested = False
 
         # Add type filter to filters dict
         if type_filter_data == "files":
@@ -992,13 +1059,13 @@ class FileExplorerDock(BaseDock):
         # Get search parameters from new widgets
         filename_pattern = self.filename_panel.get_pattern()
         content_query = self.content_panel.get_query()
-        search_options = self.search_options_panel.get_options()
+        search_options = self._get_search_options()
         conditions = self.conditions_grid.get_conditions()
         logic_operator = self.conditions_grid.get_logic_operator()
 
         # SECURITY: Validate regex patterns BEFORE starting search
         # Prevents "Invalid regex pattern" errors during execution
-        if filename_pattern and search_options.get("regex", False):
+        if filename_pattern and search_options.get("filename_regex", False):
             try:
                 flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
                 re.compile(filename_pattern, flags)
@@ -1028,6 +1095,7 @@ class FileExplorerDock(BaseDock):
         is_search = bool(filename_pattern or content_query)
 
         if is_search:
+            incremental_candidate_paths = self._attach_incremental_universe_filter(filters, directory, content_query)
             logger.info(
                 "Executing search operation",
                 extra={
@@ -1035,8 +1103,18 @@ class FileExplorerDock(BaseDock):
                     "content_query": content_query[:50] if content_query else None,
                     "recursive": recursive,
                     "case_sensitive": search_options.get("case_sensitive", False),
+                    "incremental_candidate_count": (
+                        len(incremental_candidate_paths) if incremental_candidate_paths is not None else None
+                    ),
                 },
             )
+
+            self._clear_result_views(
+                clear_search_cache=True,
+                clear_browse_cache=True,
+                status_text=tr("file_list.status_searching", "Searching..."),
+            )
+            self.last_was_search = True
 
             # ============================================================================
             # v2.9.122: Use threading for progress bar support
@@ -1047,6 +1125,9 @@ class FileExplorerDock(BaseDock):
                 "filename_pattern": filename_pattern,
                 "content_query": content_query,
                 "search_options": search_options,
+                "incremental_candidate_count": (
+                    len(incremental_candidate_paths) if incremental_candidate_paths is not None else None
+                ),
                 "start_time": time.time()
             }
 
@@ -1093,6 +1174,13 @@ class FileExplorerDock(BaseDock):
             # BROWSE MODE: Populate FileListTable (v2.9.117 - B.2)
             # ============================================================================
             logger.info("Executing browse operation", extra={"recursive": recursive, "show_hidden": show_hidden})
+            self._last_content_search_universe = None
+            self._clear_result_views(
+                clear_search_cache=True,
+                clear_browse_cache=True,
+                status_text=tr("file_list.status_browsing", "Browsing..."),
+            )
+            self.last_was_search = False
 
             # ============================================================================
             # v2.9.122: Use threading for progress bar support
@@ -1484,6 +1572,33 @@ class FileExplorerDock(BaseDock):
 
         self.accept()
 
+    def _parent_dialog(self) -> Optional[QDialog]:
+        """Return nearest QDialog parent when embedded in dialog mode."""
+        parent = self.parent()
+        while parent is not None:
+            if isinstance(parent, QDialog):
+                return parent
+            parent = parent.parent() if hasattr(parent, "parent") else None
+        return None
+
+    def accept(self):
+        """Accept the parent dialog when running in dialog mode."""
+        self._dialog_result = QDialog.Accepted
+        parent_dialog = self._parent_dialog()
+        if parent_dialog is not None:
+            parent_dialog.accept()
+        else:
+            self.close()
+
+    def reject(self):
+        """Reject the parent dialog when running in dialog mode."""
+        self._dialog_result = QDialog.Rejected
+        parent_dialog = self._parent_dialog()
+        if parent_dialog is not None:
+            parent_dialog.reject()
+        else:
+            self.close()
+
     def get_selected_files(self) -> List[str]:
         """
         Get list of selected files (NEW - dialog mode).
@@ -1759,10 +1874,23 @@ class FileExplorerDock(BaseDock):
         self._progress_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.progress_dialog.setLabel(self._progress_label)
 
-        self.progress_dialog.canceled.connect(self.executor.cancel)
+        self.progress_dialog.canceled.connect(self._on_progress_canceled)
         self.progress_dialog.show()  # Explicitly show
         self.progress_dialog.raise_()  # Bring to front
         logger.debug("Progress dialog created, shown, and raised")
+
+    def _on_progress_canceled(self):
+        """Cancel the active File Explorer operation from the progress dialog."""
+        self._cancel_requested = True
+        self.executor.cancel()
+
+        worker = getattr(self, "_worker", None)
+        if worker is not None and hasattr(worker, "cancel"):
+            worker.cancel()
+
+        if self.progress_dialog:
+            self.progress_dialog.setLabelText(tr("file_list.status_canceling", "Canceling..."))
+            self.progress_dialog.setCancelButtonText(tr("file_list.status_canceling", "Canceling..."))
 
     def _set_progress_dialog_message(
         self, message: str, current: Optional[int] = None, total: Optional[int] = None
@@ -1952,9 +2080,11 @@ class FileExplorerDock(BaseDock):
         # never get cleared in _on_batch_ready(). Explicitly clear them here.
         if not total_files:
             logger.info("[BUGFIX] Search returned 0 files - clearing tree and table to remove stale results")
-            self.results_tree.clear()
-            if hasattr(self, 'table_manager') and self.table_manager:
-                self.table_manager.clear()
+            self._clear_result_views(
+                clear_search_cache=True,
+                clear_browse_cache=True,
+                status_text=tr("file_list.status_no_results", "No results"),
+            )
             # Close progress dialog since no batches will trigger this
             if self.progress_dialog:
                 self.progress_dialog.close()
@@ -1967,6 +2097,7 @@ class FileExplorerDock(BaseDock):
 
         # Store for view sync (lightweight)
         self.last_was_search = True
+        self._remember_content_search_universe(directory, content_query, files_list)
 
         # Update statistics (lightweight - just counters)
         self._update_statistics(files_list, time.time() - start_time)
@@ -1988,6 +2119,7 @@ class FileExplorerDock(BaseDock):
                     "case_sensitive": search_options.get("case_sensitive", False),
                     "whole_word": search_options.get("whole_word", False),
                     "regex": search_options.get("regex", False),
+                    "filename_regex": search_options.get("filename_regex", False),
                 },
             )
 
@@ -2229,10 +2361,15 @@ def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[Li
         >>> if files:
         ...     print(f"Selected {len(files)} files")
     """
-    dialog = FileExplorerDock(parent, dialog_mode=True)
-    dialog.ed_directory.setText(initial_dir or os.getcwd())
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(tr("file_list.title", "File Explorer"))
+    layout = QVBoxLayout(dialog)
+
+    explorer = FileExplorerDock(dialog, dialog_mode=True)
+    explorer.ed_directory.setText(initial_dir or os.getcwd())
+    layout.addWidget(explorer)
     dialog.resize(800, 600)
 
     if dialog.exec() == QDialog.Accepted:
-        return dialog.get_selected_files()
+        return explorer.get_selected_files()
     return None

@@ -4,11 +4,11 @@ This directory contains convenient launcher scripts for starting Clarify in GUI 
 
 ## 🪟 Windows
 
-**File**: `clarify_gui.bat`
+**File**: `clarify.bat` (root launcher)
 
 **Usage**:
-- Double-click `clarify_gui.bat` in Windows Explorer
-- Or run from Command Prompt: `clarify_gui.bat`
+- Double-click `clarify.bat` in Windows Explorer
+- Or run from Command Prompt: `clarify.bat`
 
 **Features**:
 - ✅ Automatically checks Python installation
@@ -19,16 +19,16 @@ This directory contains convenient launcher scripts for starting Clarify in GUI 
 
 ## 🐧 Linux / 🍎 macOS
 
-**File**: `clarify_gui.sh`
+**File**: `clarify.sh` (Linux/Unix root launcher) or `clarify.command` (macOS root launcher)
 
 **First-time setup**:
 ```bash
-chmod +x clarify_gui.sh
+chmod +x clarify.sh clarify.command
 ```
 
 **Usage**:
-- Double-click `clarify_gui.sh` in file manager (may need to allow execution)
-- Or run from terminal: `./clarify_gui.sh`
+- Double-click `clarify.sh` or `clarify.command` in the file manager (may need to allow execution)
+- Or run from terminal: `./clarify.sh` or `./clarify.command`
 
 **Features**:
 - ✅ Automatically checks Python 3 installation
@@ -44,13 +44,13 @@ Both scripts:
 2. Display Python version
 3. Check if PySide6 (GUI library) is installed
 4. Offer to install PySide6 if missing
-5. Launch `python clarify.py` (GUI mode)
+5. Launch `python -m src` (GUI mode)
 6. Show any errors that occur
 
 ## ⚠️ Requirements
 
-- **Python 3.10+** must be installed
-- **PySide6** required for GUI (scripts can install it)
+- **Python 3.12+** must be installed
+- **PySide6** is required for GUI. Prefer installing the project with `poetry install` or `python -m pip install -e .`.
 
 ## 🔧 Troubleshooting
 
@@ -60,18 +60,21 @@ Both scripts:
 - Check Python: Open CMD and type `python --version`
 
 ### Linux/macOS
-- If "Permission denied", run: `chmod +x clarify_gui.sh`
+- If "Permission denied", run: `chmod +x clarify.sh clarify.command`
 - If Python not found, install: `sudo apt install python3` (Ubuntu/Debian)
 - Check Python: `python3 --version`
 
 ### PySide6 Installation Failed
 Manual installation:
 ```bash
-# Using pip
-pip install PySide6
-
 # Using Poetry (recommended)
 poetry install
+
+# Without Poetry
+python -m pip install -e .
+
+# Last-resort direct GUI dependency install
+python -m pip install PySide6
 ```
 
 ## 💡 Alternative Methods
@@ -80,15 +83,15 @@ You can also launch Clarify GUI without these scripts:
 
 ```bash
 # Direct Python execution
-python clarify.py
+python -m src
 
 # As a module
 python -m src
 
 # Using Poetry
-poetry run python clarify.py
+poetry run python -m src
 ```
 
 ## 📚 More Information
 
-See main [README.md](README.md) for complete documentation.
+See the root [README.md](../../README.md) and [CURRENT_STATE.md](../CURRENT_STATE.md) for current operational guidance.

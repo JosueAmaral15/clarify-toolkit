@@ -64,6 +64,13 @@ class PreferencesDialog(QDialog):
         self.chk_auto_save = QCheckBox(tr("dialog.preferences.auto_save"))
         self.chk_auto_save.setChecked(self.settings.get("auto_save", True))
 
+        self.chk_completion_sound = QCheckBox(
+            tr("dialog.preferences.completion_sound", "Play a sound after processing")
+        )
+        self.chk_completion_sound.setChecked(
+            self.settings.get("completion_sound", False)
+        )
+
         # Update checker preference (v2.9.45)
         self.chk_check_updates = QCheckBox(tr("dialog.preferences.check_updates"))
         self.chk_check_updates.setChecked(
@@ -78,6 +85,7 @@ class PreferencesDialog(QDialog):
         general_layout.addWidget(self.chk_tooltips)
         general_layout.addWidget(self.chk_confirm_exit)
         general_layout.addWidget(self.chk_auto_save)
+        general_layout.addWidget(self.chk_completion_sound)
         general_layout.addWidget(self.chk_check_updates)
         general_group.setLayout(general_layout)
 
@@ -97,7 +105,8 @@ class PreferencesDialog(QDialog):
         self.settings.update_multiple({
             "show_tooltips": self.chk_tooltips.isChecked(),
             "confirm_on_exit": self.chk_confirm_exit.isChecked(),
-            "auto_save": self.chk_auto_save.isChecked()
+            "auto_save": self.chk_auto_save.isChecked(),
+            "completion_sound": self.chk_completion_sound.isChecked(),
         })
 
         # Save update checker preference to QSettings (v2.9.45)

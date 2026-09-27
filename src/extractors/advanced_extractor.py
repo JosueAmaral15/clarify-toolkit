@@ -655,27 +655,37 @@ class AdvancedExtractor:
     
     def _extract_keys_only(self, obj: Any) -> Any:
         """
-        Transform structure to show only keys.
-        Converts {parent: {key1: val1, key2: val2}} → {parent: [key1, key2]}
+        Transform a structure so that source values cannot leak into the result.
+
+        Dictionaries containing only nested dictionaries preserve their object
+        hierarchy. At a level containing leaves, the result is a JSON array:
+        leaf entries become key names and nested entries become one-key objects.
+        Lists retain only nested structures because scalar list items have no key.
         """
+        if isinstance(obj, list):
+            return [
+                self._extract_keys_only(item)
+                for item in obj
+                if isinstance(item, (dict, list))
+            ]
+
         if not isinstance(obj, dict):
-            return obj
-        
-        result = {}
-        for key, value in obj.items():
-            if isinstance(value, dict):
-                # Check if this dict contains only leaf key:value pairs
-                has_only_leaves = all(isinstance(v, str) for v in value.values())
-                if has_only_leaves:
-                    # Replace with array of keys
-                    result[key] = list(value.keys())
+            return None
+
+        has_leaf = any(not isinstance(value, (dict, list)) for value in obj.values())
+        if has_leaf:
+            entries = []
+            for key, value in obj.items():
+                if isinstance(value, (dict, list)):
+                    entries.append({key: self._extract_keys_only(value)})
                 else:
-                    # Recurse deeper
-                    result[key] = self._extract_keys_only(value)
-            else:
-                result[key] = value
-        
-        return result
+                    entries.append(key)
+            return entries
+
+        return {
+            key: self._extract_keys_only(value)
+            for key, value in obj.items()
+        }
 
     def process_text(self, file_alias: str, text: str) -> Tuple[List[str], Dict[str, Any]]:
         """

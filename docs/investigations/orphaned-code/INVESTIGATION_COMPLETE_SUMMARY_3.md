@@ -233,14 +233,14 @@ Output displayed in selected format
 ## Documentation Delivered
 
 ### Investigation Phase (Study Branch)
-1. `ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md` (Initial restoration)
+1. `../../action-plans/cleanup/ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md` (Initial restoration)
 2. `ORPHANED_FEATURES_RESTORATION_SUMMARY_3.md` (5 features restored)
 3. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE1_3.md` (Import analysis)
 4. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE2_3.md` (GUI audit)
 5. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE3_3.md` (Converters investigation)
 6. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE4_3.md` (Backend analysis)
 7. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` (Final compilation, 27KB)
-8. `CLEANUP_DECISION_AND_ACTION_PLAN_3.md` (Implementation plan, 18KB)
+8. `../../action-plans/cleanup/CLEANUP_DECISION_AND_ACTION_PLAN_3.md` (Implementation plan, 18KB)
 
 **Total:** ~107KB documentation
 
@@ -440,7 +440,7 @@ The Format Converter tool is now:
 
 **See Also:**
 - `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` - Full investigation report
-- `CLEANUP_DECISION_AND_ACTION_PLAN_3.md` - Implementation action plan
+- `../../action-plans/cleanup/CLEANUP_DECISION_AND_ACTION_PLAN_3.md` - Implementation action plan
 - `docs/features/ADVANCED_CONVERTERS.md` - User guide
 
 **Protocol:** SIMPLICITY_PROTOCOL_3  

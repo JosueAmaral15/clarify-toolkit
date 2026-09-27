@@ -286,31 +286,34 @@ class TestPluginSystemIntegration:
         app.menuBar.return_value = MagicMock()
         return app
     
-    def test_full_plugin_lifecycle(self, mock_app):
+    @pytest.mark.parametrize("plugin_id", ["export_to_postgresql", "slack_notifications"])
+    def test_full_plugin_lifecycle(self, qapp, tmp_path, plugin_id):
         """Test complete plugin lifecycle: discover -> load -> activate -> event -> deactivate."""
-        loader = PluginLoader(mock_app)
-        
-        # Discover plugins (may find real plugins in plugins/ folder)
-        discovered = loader.discover_plugins()
-        
-        # If plugins found, test activation
-        if discovered:
-            first_plugin_id = discovered[0].id
-            
-            # Load plugin
-            plugin = loader.load_plugin(first_plugin_id)
-            
-            if plugin is not None:
-                # Activate
-                success = loader.activate_plugin(first_plugin_id)
-                
-                # Emit test event
-                loader.emit_event("test_event", {"test": "data"})
-                
-                # Deactivate
-                loader.deactivate_plugin(first_plugin_id)
-                
-                assert success or not discovered[0].enabled
+        from PySide6.QtWidgets import QMainWindow
+
+        window = QMainWindow()
+        file_menu = window.menuBar().addMenu("File")
+        file_menu.setObjectName("m_file")
+        loader = PluginLoader(window)
+        loader.settings = QSettings(str(tmp_path / "plugins.ini"), QSettings.IniFormat)
+        try:
+            loader.discover_plugins()
+            assert plugin_id in loader.metadata
+            original_path = list(sys.path)
+            plugin = loader.load_plugin(plugin_id)
+            assert isinstance(plugin, PluginBase)
+            assert sys.path == original_path
+            plugin.settings = loader.settings
+            assert loader.activate_plugin(plugin_id)
+            assert plugin._registered_actions
+            loader.emit_event("test_event", {"test": "data"})
+            assert loader.unload_plugin(plugin_id)
+            assert not plugin._registered_actions
+            assert loader.get_plugin(plugin_id) is None
+        finally:
+            window.close()
+            window.deleteLater()
+            qapp.processEvents()
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ This document describes the CI/CD Quality Gates setup for the Clarify project, s
 ### 4. Pre-commit Hooks
 - **Purpose**: Automatic quality checks before commits
 - **Configuration**: `.pre-commit-config.yaml`
-- **Installation**: 
+- **Installation**:
   ```bash
   pip install pre-commit
   pre-commit install
@@ -168,7 +168,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - run: pip install -r requirements.txt
+      - run: python -m pip install -e ".[dev]"
       - run: ./ci_quality_check.sh
 ```
 

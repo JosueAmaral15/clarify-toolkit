@@ -1,11 +1,11 @@
-# Clarify Project Icons
+# Clarify Toolkit Project Icons
 
 **Data**: 21 de Dezembro de 2025  
 **Autor**: Josué Amaral  
 
 ## 🎨 Identidade Visual
 
-Este documento descreve os ícones criados para o projeto **Clarify** conforme especificado na **Etapa 8** do Protocolo Simplicidade 3.
+Este documento descreve os ícones usados pelo **Clarify Toolkit** conforme especificado na **Etapa 8** do Protocolo Simplicidade 3.
 
 ## 📄 Conceito do Ícone
 

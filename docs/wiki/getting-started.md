@@ -14,6 +14,7 @@ Welcome to Clarify! This guide will help you install and configure Clarify for f
 - **PySide6** 6.9.3+ (Qt for Python)
 - **pytest** (for testing)
 - Standard library only (no external dependencies for core features)
+- **Poppler tools** (`pdfinfo` and `pdftotext`) for optional PDF text translation
 
 ## 🔧 Installation
 
@@ -34,10 +35,12 @@ source venv/bin/activate
 venv\Scripts\activate
 
 # 4. Install dependencies
-pip install -r requirements.txt
+poetry install
+# or, without Poetry:
+python -m pip install -e .
 
 # 5. Run Clarify
-python main.py
+python -m src
 ```
 
 ### Option 2: Using pip (Future)

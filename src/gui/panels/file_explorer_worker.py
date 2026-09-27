@@ -68,6 +68,11 @@ class FileExplorerWorker(QObject):
         self.executor = executor
         self._cancel_requested = False  # For cancellation support (v2.9.123)
 
+    def cancel(self):
+        """Request cancellation for executor work and pending batch emission."""
+        self._cancel_requested = True
+        self.executor.cancel()
+
     def _build_matches_dict(self, result: dict) -> dict:
         """
         Build matches dictionary from executor result.

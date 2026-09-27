@@ -198,6 +198,20 @@ def process_file(
     if progress_callback:
         progress_callback(f"Reading {os.path.basename(file_path)}...")
 
+    image_extensions = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+    if (
+        os.path.splitext(file_path)[1].lower() in image_extensions
+        and hasattr(client, "chat_with_image")
+    ):
+        image_prompt = f"{prompt}\n\n# Image file: {file_path}"
+        return client.chat_with_image(
+            "You are a helpful assistant. Analyze the provided image and respond "
+            "according to the user's instructions.",
+            image_prompt,
+            file_path,
+            max_bytes=max_bytes,
+        )
+
     content = read_file_safe(file_path, max_bytes)
 
     # Apply scope filter if enabled

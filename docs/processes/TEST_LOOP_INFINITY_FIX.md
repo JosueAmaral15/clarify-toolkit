@@ -1,8 +1,8 @@
 # 🐛 Loop Infinito em Testes GUI - Análise e Correção
 
-**Data**: 04 de Dezembro de 2025  
-**Problema**: Testes GUI demoravam 10+ horas sem finalizar  
-**Causa Raiz**: Loop infinito causado por `QMessageBox` bloqueante  
+**Data**: 04 de Dezembro de 2025
+**Problema**: Testes GUI demoravam 10+ horas sem finalizar
+**Causa Raiz**: Loop infinito causado por `QMessageBox` bloqueante
 **Status**: ✅ **CORRIGIDO**
 
 ---
@@ -70,7 +70,7 @@ def main_window(qapp):
 @pytest.fixture
 def main_window(qapp, mock_message_box, mock_file_dialog):
     """Create MainWindow instance for testing.
-    
+
     CRITICAL: Uses mock_message_box to prevent blocking QMessageBox dialogs
     during window.close() cleanup (closeEvent confirmation).
     """
@@ -93,13 +93,13 @@ def main_window(qapp, mock_message_box, mock_file_dialog):
 def test_dock_creation(self, main_window):
     """Test that EditorDock initializes without errors."""
     # window created by fixture
-    
+
     # Find EditorDock in window's children  # ← window não existe!
     editor_dock = None
     for dock in window.findChildren(EditorDock):
         editor_dock = dock
         break
-    
+
     assert editor_dock is not None
 ```
 
@@ -112,7 +112,7 @@ def test_dock_creation(self, main_window):
     for dock in main_window.findChildren(EditorDock):  # ← usa main_window
         editor_dock = dock
         break
-    
+
     assert editor_dock is not None
 ```
 
@@ -161,13 +161,13 @@ pytest tests/gui/test_editor_dock.py --collect-only
 ### Lição Aprendida
 
 > **"Etapa 9.1 NÃO É OPCIONAL"**
-> 
+>
 > Protocolo Simplicidade 3 v3.0 declara explicitamente:
 > - Timeout máximo obrigatório (30s por teste)
 > - Ambiente headless obrigatório (testes GUI sem display)
 > - Dry-run obrigatório (verificar antes de executar)
 > - Mocking obrigatório (QMessageBox, QFileDialog)
-> 
+>
 > **Consequência de violar Etapa 9.1**: Loop infinito, 10+ horas perdidas.
 
 ---
@@ -226,7 +226,7 @@ QT_QPA_PLATFORM=offscreen pytest tests/gui/test_editor_dock.py -v --timeout=30
 
 ## 📚 Referências
 
-- **Protocolo Simplicidade 3 v3.0**: `docs/protocolos/PROTOCOLO_SIMPLICIDADE_3.md`
+- **Protocolo Simplicidade 3 v3.0**: `docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md`
 - **Etapa 9.1**: Linhas 1300-1500 (Segurança em Testes - OBRIGATÓRIO)
 - **Etapa 11**: Linhas 1700-1800 (Organizar Pasta Raiz - OBRIGATÓRIO)
 - **pytest-qt**: https://pytest-qt.readthedocs.io/
@@ -234,7 +234,7 @@ QT_QPA_PLATFORM=offscreen pytest tests/gui/test_editor_dock.py -v --timeout=30
 
 ---
 
-**Autor**: GitHub Copilot (Claude Sonnet 4.5)  
-**Revisado por**: Josué Amaral  
-**Status**: Implementado e validado  
+**Autor**: GitHub Copilot (Claude Sonnet 4.5)
+**Revisado por**: Josué Amaral
+**Status**: Implementado e validado
 **Próxima Ação**: Executar testes com timeout + headless

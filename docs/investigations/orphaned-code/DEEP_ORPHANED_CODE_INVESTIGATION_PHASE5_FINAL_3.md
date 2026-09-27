@@ -821,7 +821,7 @@ This investigation was conducted thoroughly following SIMPLICITY_PROTOCOL_3. All
 1. `test_skip_empty_restoration_3.py` - Tests for skip_empty feature
 2. `test_classname_restoration.py` - Tests for use_class_names feature
 3. `test_apply_limit_restoration.py` - Tests for _apply_limit_to_key restoration
-4. `ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md` - Restoration action plan
+4. `../../action-plans/cleanup/ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md` - Restoration action plan
 5. `ORPHANED_FEATURES_RESTORATION_SUMMARY_3.md` - Restoration summary
 6. `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE[1-5]_3.md` - 5 phase reports
 

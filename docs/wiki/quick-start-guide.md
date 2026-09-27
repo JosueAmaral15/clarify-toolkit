@@ -30,8 +30,8 @@ Create a file named `config.json` with duplicate keys:
 
 ### Step 2: Open in Clarify (30 seconds)
 
-1. **Launch Clarify**: `python main.py`
-2. **Open the file**: 
+1. **Launch Clarify**: `python -m src`
+2. **Open the file**:
    - `File → Open` or `Ctrl+O`
    - Select `config.json`
 3. **File appears in Editor** dock

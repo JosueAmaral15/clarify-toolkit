@@ -18,66 +18,78 @@ import json
 
 import pytest
 from PySide6.QtWidgets import QTextEdit, QPushButton, QTabWidget, QMenuBar, QCheckBox
-from PySide6.QtGui import QFont, QTextCursor, QTextOption
+from PySide6.QtGui import QFont, QKeySequence, QTextCursor, QTextOption
 from pathlib import Path
 import tempfile
 
 # Import from clarify package
 from src.app import MainWindow
+from src.editor_recovery import UnsavedRecoveryStore
 from src.gui.editor_dock import EditorDock, EditorTab, _EditorFindDialog
 from src.gui.json_editor_tab import JsonEditorTab
 from src.theme_manager import ThemeManager
 
 
+@pytest.fixture(autouse=True)
+def cleanup_editor_widgets(qapp):
+    """Dispose top-level test widgets before applying themes in later tests."""
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    existing = set(qapp.topLevelWidgets())
+    yield
+    for widget in set(qapp.topLevelWidgets()) - existing:
+        widget.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+
+
+@pytest.fixture
+def editor_dock(qapp):
+    """Create only the editor component for editor-specific behavior tests."""
+    dock = EditorDock()
+    yield dock
+    dock.close()
+    dock.deleteLater()
+    qapp.processEvents()
+
+
 class TestEditorDockInitialization:
     """Test EditorDock initialization and UI setup."""
     
-    def test_dock_creation(self, main_window):
+    def test_dock_creation(self, editor_dock):
         """Test that EditorDock initializes without errors."""
-        # Find EditorDock in main_window's children
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
         assert editor_dock is not None
         assert editor_dock.windowTitle() == "Clarify Editor"
         
-    def test_tab_widget_exists(self, main_window):
+    def test_tab_widget_exists(self, editor_dock):
         """Test that tab widget for multiple files exists."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
         assert editor_dock is not None
         assert hasattr(editor_dock, 'tab_widget')
         assert isinstance(editor_dock.tab_widget, QTabWidget)
         
-    def test_file_menu_exists(self, qapp):
+    def test_file_menu_exists(self, editor_dock):
         """Test that file actions are available in the File menu."""
-        editor_dock = EditorDock()
-        try:
-            assert hasattr(editor_dock, 'menu_bar')
-            assert isinstance(editor_dock.menu_bar, QMenuBar)
-            assert hasattr(editor_dock, 'menu_file')
-            assert editor_dock.menu_file.title() == "File"
-            assert hasattr(editor_dock, 'menu_edit')
-            assert editor_dock.menu_edit.title() == "Edit"
-            assert hasattr(editor_dock, 'menu_view')
-            assert editor_dock.menu_view.title() == "View"
-            assert hasattr(editor_dock, 'menu_json')
-            assert editor_dock.menu_json.title() == "JSON"
+        assert hasattr(editor_dock, 'menu_bar')
+        assert isinstance(editor_dock.menu_bar, QMenuBar)
+        assert hasattr(editor_dock, 'menu_file')
+        assert editor_dock.menu_file.title() == "File"
+        assert hasattr(editor_dock, 'menu_edit')
+        assert editor_dock.menu_edit.title() == "Edit"
+        assert hasattr(editor_dock, 'menu_view')
+        assert editor_dock.menu_view.title() == "View"
+        assert hasattr(editor_dock, 'menu_json')
+        assert editor_dock.menu_json.title() == "JSON"
 
-            file_actions = [
-                action.data()
-                for action in editor_dock.menu_file.actions()
-                if not action.isSeparator()
-            ]
-            assert file_actions == [
+        file_actions = [
+            action.data()
+            for action in editor_dock.menu_file.actions()
+            if not action.isSeparator()
+        ]
+        assert file_actions == [
                 "new",
                 "open",
+                "open_folder",
+                "recover_unsaved",
+                "recovery_retention",
                 "save",
                 "save_as",
                 "compare_with_saved",
@@ -86,14 +98,14 @@ class TestEditorDockInitialization:
                 "export",
                 "close_tab",
                 "auto_save",
-            ]
+        ]
 
-            edit_actions = [
-                action.data()
-                for action in editor_dock.menu_edit.actions()
-                if not action.isSeparator()
-            ]
-            assert edit_actions == [
+        edit_actions = [
+            action.data()
+            for action in editor_dock.menu_edit.actions()
+            if not action.isSeparator()
+        ]
+        assert edit_actions == [
                 "undo",
                 "redo",
                 "cut",
@@ -101,6 +113,7 @@ class TestEditorDockInitialization:
                 "paste",
                 "delete",
                 "select_all",
+                "select_line",
                 "find",
                 "find_replace",
                 "go_to_line",
@@ -112,28 +125,29 @@ class TestEditorDockInitialization:
                 "move_line_down",
                 "insert_datetime",
                 "trim_trailing_spaces",
-            ]
+        ]
 
-            view_actions = [
-                action.data()
-                for action in editor_dock.menu_view.actions()
-                if not action.isSeparator()
-            ]
-            assert view_actions == [
+        view_actions = [
+            action.data()
+            for action in editor_dock.menu_view.actions()
+            if not action.isSeparator()
+        ]
+        assert view_actions == [
+                "show_explorer",
                 "word_wrap",
                 "render_whitespace",
                 "show_line_numbers",
                 "small_text",
                 "large_text",
                 "normal_size",
-            ]
+        ]
 
-            json_actions = [
-                action.data()
-                for action in editor_dock.menu_json.actions()
-                if not action.isSeparator()
-            ]
-            assert json_actions == [
+        json_actions = [
+            action.data()
+            for action in editor_dock.menu_json.actions()
+            if not action.isSeparator()
+        ]
+        assert json_actions == [
                 "json_format_2",
                 "json_format_4",
                 "json_minify",
@@ -146,21 +160,92 @@ class TestEditorDockInitialization:
                 "json_search",
                 "json_collapse_tree",
                 "json_expand_tree",
-            ]
-            assert editor_dock.action_auto_save.isCheckable()
-            assert editor_dock.action_word_wrap.isCheckable()
-            assert editor_dock.action_render_whitespace.isCheckable()
-            assert editor_dock.action_show_line_numbers.isCheckable()
-            assert hasattr(editor_dock, 'action_compare_with_saved')
-            assert hasattr(editor_dock, 'action_reload_from_disk')
-            assert hasattr(editor_dock, 'action_json_validate')
-            assert hasattr(editor_dock, 'action_json_validate_schema')
-            assert hasattr(editor_dock, 'action_json_generate_schema')
-            assert hasattr(editor_dock, 'action_json_set_active_schema')
-            assert hasattr(editor_dock, 'action_json_clear_active_schema')
-            assert hasattr(editor_dock, 'action_json_insert_missing_required')
+        ]
+        assert editor_dock.action_auto_save.isCheckable()
+        assert editor_dock.action_word_wrap.isCheckable()
+        assert editor_dock.action_render_whitespace.isCheckable()
+        assert editor_dock.action_show_line_numbers.isCheckable()
+        assert editor_dock.action_show_explorer.isCheckable()
+        assert hasattr(editor_dock, 'action_compare_with_saved')
+        assert hasattr(editor_dock, 'action_reload_from_disk')
+        assert hasattr(editor_dock, 'action_json_validate')
+        assert hasattr(editor_dock, 'action_json_validate_schema')
+        assert hasattr(editor_dock, 'action_json_generate_schema')
+        assert hasattr(editor_dock, 'action_json_set_active_schema')
+        assert hasattr(editor_dock, 'action_json_clear_active_schema')
+        assert hasattr(editor_dock, 'action_json_insert_missing_required')
+        assert editor_dock.action_save.shortcut() == QKeySequence("Ctrl+S")
+        assert editor_dock.action_cut.shortcut() == QKeySequence("Ctrl+X")
+        assert editor_dock.action_copy.shortcut() == QKeySequence("Ctrl+C")
+        assert editor_dock.action_paste.shortcut() == QKeySequence("Ctrl+V")
+        assert editor_dock.action_find.shortcut() == QKeySequence("Ctrl+F")
+        assert editor_dock.action_find_replace.shortcut() == QKeySequence("Ctrl+R")
+        assert editor_dock.action_go_to_line.shortcut() == QKeySequence("Ctrl+G")
+        assert editor_dock.action_select_line.shortcut() == QKeySequence("Ctrl+L")
+        assert QKeySequence("Ctrl+I") in editor_dock.action_indent.shortcuts()
+
+
+class TestGeneratedContentLoading:
+    """Test loading generated tool outputs into Clarify Editor tabs."""
+
+    def test_load_generated_paths_content_uses_text_tab(self, qapp):
+        """Generated paths output should open as an unsaved text tab."""
+        editor_dock = EditorDock()
+        try:
+            tab = editor_dock.load_generated_content(
+                "Component.title\nComponent.subtitle",
+                "Generated paths.txt",
+                extension=".txt",
+            )
+
+            assert isinstance(tab, EditorTab)
+            assert not isinstance(tab, JsonEditorTab)
+            assert tab.file_path is None
+            assert tab.editor.toPlainText() == "Component.title\nComponent.subtitle"
+            assert "Generated paths.txt" in editor_dock.tab_widget.tabText(
+                editor_dock.tab_widget.currentIndex()
+            )
         finally:
             editor_dock.deleteLater()
+
+
+    def test_load_generated_json_content_uses_json_tab(self, qapp):
+        """Generated JSON output should open in the JSON editor tab type."""
+        editor_dock = EditorDock()
+        try:
+            tab = editor_dock.load_generated_content(
+                '{"title": "Hello"}',
+                "Generated output.json",
+                extension=".json",
+            )
+
+            assert isinstance(tab, JsonEditorTab)
+            assert tab.file_path is None
+            assert tab.editor.toPlainText() == '{"title": "Hello"}'
+            assert "Generated output.json" in editor_dock.tab_widget.tabText(
+                editor_dock.tab_widget.currentIndex()
+            )
+        finally:
+            editor_dock.deleteLater()
+
+    def test_converter_switch_paths_opens_text_tab_and_focuses_editor(self, main_window):
+        """Converter paths output should switch to Clarify Editor as text."""
+        main_window._load_json_from_converter_and_switch("Component.title", "paths")
+
+        assert main_window.tabs.currentWidget() is main_window.dock_editor
+        tab = main_window.dock_editor.tab_widget.currentWidget()
+        assert isinstance(tab, EditorTab)
+        assert not isinstance(tab, JsonEditorTab)
+        assert tab.editor.toPlainText() == "Component.title"
+
+    def test_converter_switch_json_opens_json_tab_and_focuses_editor(self, main_window):
+        """Converter JSON output should switch to Clarify Editor as JSON."""
+        main_window._load_json_from_converter_and_switch('{"title": "Hello"}', "json")
+
+        assert main_window.tabs.currentWidget() is main_window.dock_editor
+        tab = main_window.dock_editor.tab_widget.currentWidget()
+        assert isinstance(tab, JsonEditorTab)
+        assert tab.editor.toPlainText() == '{"title": "Hello"}'
 
     def test_editor_menu_bar_style_uses_transparent_item_background(self, qapp):
         """Test that the local menu bar padding style does not paint dark text boxes."""
@@ -598,27 +683,121 @@ class TestEditorDockInitialization:
             editor_dock.deleteLater()
 
 
+class TestUnsavedRecovery:
+    """Test bounded recovery integration without touching user storage."""
+
+    def test_modified_tab_is_checkpointed_and_discarded_when_clean(
+        self, qapp, tmp_path
+    ):
+        editor_dock = EditorDock()
+        editor_dock.recovery_store = UnsavedRecoveryStore(tmp_path)
+        try:
+            editor_dock._new_file()
+            tab = editor_dock.tab_widget.currentWidget()
+            tab.editor.setPlainText("draft content")
+            editor_dock._checkpoint_unsaved_tabs()
+
+            snapshots = editor_dock.recovery_store.list()
+            assert len(snapshots) == 1
+            assert snapshots[0].content == "draft content"
+
+            tab.is_modified = False
+            editor_dock._on_tab_recovery_state_changed(tab, False)
+            assert editor_dock.recovery_store.list() == []
+        finally:
+            editor_dock._recovery_timer.stop()
+            editor_dock.deleteLater()
+
+    def test_snapshot_restores_as_unsaved_tab_without_backing_file(
+        self, qapp, tmp_path
+    ):
+        editor_dock = EditorDock()
+        editor_dock.recovery_store = UnsavedRecoveryStore(tmp_path)
+        try:
+            snapshot = editor_dock.recovery_store.save(
+                "recovered-tab",
+                title="notes.txt",
+                content="recover me",
+                file_path="/tmp/original-notes.txt",
+                extension=".txt",
+            )
+
+            tab = editor_dock._restore_recovery_snapshot(snapshot)
+
+            assert tab.editor.toPlainText() == "recover me"
+            assert tab.file_path is None
+            assert tab.is_modified is True
+            assert tab._clarify_recovery_source_path == "/tmp/original-notes.txt"
+            assert "Recovered - notes.txt" in editor_dock.tab_widget.tabText(
+                editor_dock.tab_widget.currentIndex()
+            )
+        finally:
+            editor_dock._recovery_timer.stop()
+            editor_dock.deleteLater()
+
+
+class TestEditorExplorer:
+    """Test the lazy filesystem explorer integrated into EditorDock."""
+
+    def test_explorer_root_and_visibility_are_configurable(self, qapp, tmp_path):
+        editor_dock = EditorDock()
+        original_root = editor_dock.explorer_root_path
+        original_visibility = editor_dock.show_explorer_enabled
+        try:
+            assert editor_dock._set_explorer_root(str(tmp_path)) is True
+            assert editor_dock.explorer_model.rootPath() == str(tmp_path)
+
+            editor_dock._set_explorer_visible(False)
+            assert not editor_dock.explorer_panel.isVisible()
+            assert not editor_dock.action_show_explorer.isChecked()
+        finally:
+            editor_dock._set_explorer_root(original_root)
+            editor_dock._set_explorer_visible(original_visibility)
+            editor_dock.deleteLater()
+
+    def test_double_click_file_uses_existing_open_file_api(
+        self, qapp, tmp_path
+    ):
+        source = tmp_path / "sidebar.txt"
+        source.write_text("opened from explorer", encoding="utf-8")
+        editor_dock = EditorDock()
+        original_root = editor_dock.explorer_root_path
+        try:
+            editor_dock._set_explorer_root(str(tmp_path))
+            qapp.processEvents()
+            index = editor_dock.explorer_model.index(str(source))
+            assert index.isValid()
+
+            editor_dock._open_explorer_index(index)
+
+            tab = editor_dock.tab_widget.currentWidget()
+            assert tab.file_path == str(source)
+            assert tab.editor.toPlainText() == "opened from explorer"
+        finally:
+            editor_dock._set_explorer_root(original_root)
+            editor_dock.deleteLater()
+
 class TestEditorTab:
     """Test EditorTab (single editor instance)."""
     
-    def test_editor_tab_creation(self, main_window):
+    def test_editor_tab_creation(self, qapp):
         """Test that EditorTab can be created."""
         tab = EditorTab()
         assert tab is not None
         
-    def test_editor_widget_exists(self, main_window):
+    def test_editor_widget_exists(self, qapp):
         """Test that text editor widget exists."""
         tab = EditorTab()
         assert hasattr(tab, 'editor')
         assert isinstance(tab.editor, QTextEdit)
         
-    def test_monospace_font_applied(self, main_window):
+    def test_monospace_font_applied(self, qapp):
         """Test that monospace font is applied to editor."""
         tab = EditorTab()
         font = tab.editor.font()
         assert font.family() in ["Courier New", "Courier", "Monaco", "Monospace"]
         
-    def test_toolbar_buttons_in_tab(self, main_window):
+    def test_toolbar_buttons_in_tab(self, qapp):
         """Test that EditorTab has its own toolbar buttons."""
         tab = EditorTab()
         
@@ -634,14 +813,30 @@ class TestEditorTab:
 class TestEditorOperations:
     """Test editor operations."""
     
-    def test_text_input(self, main_window):
+    def test_text_input(self, qapp):
         """Test that editor accepts text input."""
         tab = EditorTab()
         test_text = "Hello, World!\nLine 2\nLine 3"
         tab.editor.setPlainText(test_text)
         assert tab.editor.toPlainText() == test_text
+
+    def test_select_current_line(self, qapp):
+        editor_dock = EditorDock()
+        try:
+            editor_dock._new_file()
+            tab = editor_dock.tab_widget.currentWidget()
+            tab.editor.setPlainText("first\nsecond\nthird")
+            cursor = tab.editor.textCursor()
+            cursor.setPosition(8)
+            tab.editor.setTextCursor(cursor)
+
+            editor_dock._select_current_line()
+
+            assert tab.editor.textCursor().selectedText() == "second"
+        finally:
+            editor_dock.deleteLater()
         
-    def test_modified_state_tracking(self, main_window):
+    def test_modified_state_tracking(self, qapp):
         """Test that modified state is tracked."""
         tab = EditorTab()
         
@@ -654,21 +849,15 @@ class TestEditorOperations:
         # Modified state should change
         # (Note: actual behavior depends on implementation)
         
-    def test_clear_content(self, main_window):
+    def test_clear_content(self, qapp):
         """Test that editor content can be cleared."""
         tab = EditorTab()
         tab.editor.setPlainText("Content to clear")
         tab.editor.clear()
         assert tab.editor.toPlainText() == ""
 
-    def test_edit_menu_undo_redo(self, main_window):
+    def test_edit_menu_undo_redo(self, editor_dock):
         """Test that Edit menu Undo and Redo affect the current tab."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
 
@@ -681,14 +870,8 @@ class TestEditorOperations:
         editor_dock.action_redo.trigger()
         assert tab.editor.toPlainText() == "abc"
 
-    def test_go_to_line_moves_cursor(self, main_window):
+    def test_go_to_line_moves_cursor(self, editor_dock):
         """Test that Go To Line moves the cursor in the current tab."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
         tab.editor.setPlainText("one\ntwo\nthree")
@@ -698,14 +881,8 @@ class TestEditorOperations:
         assert tab.editor.textCursor().blockNumber() == 2
         assert editor_dock.lbl_status.text() == "Moved to line 3 of 3"
 
-    def test_common_edit_menu_actions(self, main_window):
+    def test_common_edit_menu_actions(self, editor_dock):
         """Test common editor actions added from desktop editor conventions."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
 
@@ -736,14 +913,8 @@ class TestEditorOperations:
         assert tab.editor.toPlainText() == "a\nb\n"
         assert editor_dock.lbl_status.text() == "Trimmed 4 trailing space(s)"
 
-    def test_word_wrap_toggle_applies_to_current_tab(self, main_window):
+    def test_word_wrap_toggle_applies_to_current_tab(self, editor_dock):
         """Test that Word Wrap toggles QTextEdit line wrapping."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         original_state = editor_dock.word_wrap_enabled
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
@@ -759,14 +930,8 @@ class TestEditorOperations:
         finally:
             editor_dock._set_word_wrap_enabled(original_state)
 
-    def test_vscode_line_editing_actions(self, main_window):
+    def test_vscode_line_editing_actions(self, editor_dock):
         """Test VS Code-inspired line editing actions."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
         tab.file_path = "example.py"
@@ -799,14 +964,8 @@ class TestEditorOperations:
         editor_dock.action_move_line_down.trigger()
         assert tab.editor.toPlainText() == "one\ntwo\nthree"
 
-    def test_render_whitespace_toggle_applies_to_current_tab(self, main_window):
+    def test_render_whitespace_toggle_applies_to_current_tab(self, editor_dock):
         """Test that Render Whitespace toggles QTextOption flags."""
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-
-        assert editor_dock is not None
         original_state = editor_dock.render_whitespace_enabled
         editor_dock.action_new.trigger()
         tab = editor_dock.tab_widget.currentWidget()
@@ -853,18 +1012,18 @@ class TestEditorOperations:
 class TestEditOnlyMode:
     """Test edit-only mode functionality."""
     
-    def test_edit_only_mode_creation(self, main_window):
+    def test_edit_only_mode_creation(self, qapp):
         """Test that EditorTab can be created in edit-only mode."""
         tab = EditorTab(edit_only_mode=True)
         assert tab.edit_only_mode is True
         
-    def test_enable_saving_button_visible(self, main_window):
+    def test_enable_saving_button_visible(self, qapp):
         """Test that Enable Saving button is visible in edit-only mode."""
         tab = EditorTab(edit_only_mode=True)
         assert hasattr(tab, 'btn_enable_saving')
-        assert tab.btn_enable_saving.isVisible() is True
+        assert not tab.btn_enable_saving.isHidden()
         
-    def test_enable_saving_button_hidden_normal_mode(self, main_window):
+    def test_enable_saving_button_hidden_normal_mode(self, qapp):
         """Test that Enable Saving button is hidden in normal mode."""
         tab = EditorTab(edit_only_mode=False)
         assert hasattr(tab, 'btn_enable_saving')
@@ -1073,43 +1232,29 @@ class TestFindReplaceFeature:
         assert dialog._find_next() is False
         assert dialog.lbl_status.text().startswith("Invalid regex:")
     
-    def test_find_field_exists(self, main_window):
+    def test_find_field_exists(self, qapp):
         """Test that find field exists in EditorDock."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
+        tab = EditorTab()
+        dialog = _EditorFindDialog(tab.editor)
+        dialog.find_input.setText("needle")
+        assert dialog.find_input.text() == "needle"
         
-        # Find field should exist (might be in a dialog or panel)
-        # Implementation-specific: check if EditorDock has find functionality
-        # Skip for now as implementation varies
-        pytest.skip("Find functionality implementation varies")
-        
-    def test_replace_field_exists(self, main_window):
+    def test_replace_field_exists(self, qapp):
         """Test that replace field exists in EditorDock."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
-        # Replace field should exist (might be in a dialog or panel)
-        # Implementation-specific
-        pytest.skip("Replace functionality implementation varies")
+        tab = EditorTab()
+        tab.editor.setPlainText("needle needle")
+        dialog = _EditorFindDialog(tab.editor, replace_enabled=True)
+        dialog.find_input.setText("needle")
+        dialog.replace_input.setText("replacement")
+        dialog.btn_replace_all.click()
+        assert tab.editor.toPlainText() == "replacement replacement"
 
 
 class TestTabManagement:
     """Test tab management for multiple files."""
     
-    def test_tab_widget_accepts_new_tabs(self, main_window):
+    def test_tab_widget_accepts_new_tabs(self, editor_dock):
         """Test that tab widget can accept new editor tabs."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
         assert editor_dock is not None
         initial_count = editor_dock.tab_widget.count()
         
@@ -1119,14 +1264,8 @@ class TestTabManagement:
         
         assert editor_dock.tab_widget.count() == initial_count + 1
         
-    def test_tab_close_button_exists(self, main_window):
+    def test_tab_close_button_exists(self, editor_dock):
         """Test that tabs have close buttons."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
         assert editor_dock is not None
         # Tab widget should allow closing tabs
         assert editor_dock.tab_widget.tabsClosable() is True
@@ -1134,8 +1273,25 @@ class TestTabManagement:
 
 class TestClipboardOperations:
     """Test clipboard operations (copy content)."""
+
+    def test_delayed_feedback_does_not_run_after_tab_deletion(self, qtbot, tmp_path, monkeypatch):
+        from PySide6.QtCore import QCoreApplication, QEvent
+        from PySide6.QtWidgets import QFileDialog
+        from shiboken6 import isValid
+
+        target = tmp_path / "export.txt"
+        monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *args: (str(target), ""))
+        tab = EditorTab()
+        tab.editor.setPlainText("copied and exported")
+        tab._copy_to_clipboard()
+        tab._export_to_file()
+        assert target.read_text() == "copied and exported"
+        tab.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+        assert not isValid(tab)
+        qtbot.wait(1600)
     
-    def test_copy_to_clipboard(self, main_window):
+    def test_copy_to_clipboard(self, qapp):
         """Test that content can be copied to clipboard."""
         tab = EditorTab()
         test_text = "Copy this text"
@@ -1153,14 +1309,8 @@ class TestClipboardOperations:
 class TestTooltipsEditorDock:
     """Test that tooltips are set for accessibility."""
     
-    def test_toolbar_tooltips(self, main_window):
+    def test_toolbar_tooltips(self, editor_dock):
         """Test that file menu has tooltips."""
-        # Find EditorDock
-        editor_dock = None
-        for dock in main_window.findChildren(EditorDock):
-            editor_dock = dock
-            break
-        
         assert editor_dock is not None
         assert editor_dock.menu_bar.toolTip() != ""
         assert editor_dock.menu_file.menuAction().toolTip() != ""
@@ -1168,7 +1318,7 @@ class TestTooltipsEditorDock:
         assert editor_dock.menu_view.menuAction().toolTip() != ""
         assert editor_dock.menu_json.menuAction().toolTip() != ""
         
-    def test_tab_toolbar_tooltips(self, main_window):
+    def test_tab_toolbar_tooltips(self, qapp):
         """Test that EditorTab toolbar buttons have tooltips."""
         tab = EditorTab()
         

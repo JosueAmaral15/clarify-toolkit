@@ -187,7 +187,7 @@ tokens = [self._apply_limit_to_key(t) for t in tokens]
    Refs: User report 2026-02-17
    ```
 3. Git commit and push
-4. Create summary document: `LIMIT_FIX_SUMMARY_3.md`
+4. Create summary document: `../../bugfixes/LIMIT_FIX_SUMMARY_3.md`
 
 ---
 
@@ -258,7 +258,7 @@ tokens = [self._apply_limit_to_key(t) for t in tokens]
 
 ### Files to Create:
 2. ⏳ **test_limit_intermediate_keys_3.py** (new test file)
-3. ⏳ **LIMIT_FIX_SUMMARY_3.md** (summary document)
+3. ⏳ **../../bugfixes/LIMIT_FIX_SUMMARY_3.md** (summary document)
 
 ### Dependencies:
 - None (pure bug fix, no new dependencies)
@@ -512,4 +512,3 @@ if self.include_key or self.match_all or (not self.include_key and not self.incl
 
 ### Conclusion:
 🎉 **Bug fix verified!** All intermediate keys now respect the Limit setting.
-

@@ -254,7 +254,7 @@ are nested deeper and currently skipped.
 |------|---------------|-------------|
 | `src/translation/html_format_mapper.py` | +175 | All 3 phases |
 | `test_hyperlinks_preservation_COM8.py` | +246 (new) | Test suite |
-| `ACTION_PLAN_HYPERLINK_FIX_COM8.md` | +233 (new) | Planning doc |
+| `../action-plans/development/ACTION_PLAN_HYPERLINK_FIX_COM8.md` | +233 (new) | Planning doc |
 
 ### Specific Changes
 - **Phase 1** (lines ~826-876): `_extract_paragraph()` - hyperlink detection
@@ -360,4 +360,4 @@ Hyperlinks are now fully supported in the ODT translation workflow. All common l
 
 ---
 
-**Questions?** See `ACTION_PLAN_HYPERLINK_FIX_COM8.md` or run the test suite.
+**Questions?** See `../action-plans/development/ACTION_PLAN_HYPERLINK_FIX_COM8.md` or run the test suite.

@@ -16,7 +16,7 @@ from .utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    import google.generativeai as genai
+    from google import genai
     _GEMINI_AVAILABLE = True
 except ImportError:
     _GEMINI_AVAILABLE = False
@@ -50,12 +50,7 @@ class TutorialAssistant:
         self.knowledge_base: Dict = {}
         self.tutorials_content: Dict[str, str] = {}
 
-        # Initialize Gemini if available
-        if self.available:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
-        else:
-            self.model = None
+        self.model = 'gemini-2.5-flash'
 
         # Load knowledge base
         self._load_knowledge_base()
@@ -183,7 +178,8 @@ If the question is unclear, ask for clarification.
 """
 
             # Call Gemini API
-            response = self.model.generate_content(prompt)
+            with genai.Client(api_key=self.api_key) as client:
+                response = client.models.generate_content(model=self.model, contents=prompt)
             response_text = response.text.strip()
 
             # Update conversation history

@@ -1,20 +1,28 @@
 """
-Integration tests for File Explorer v2.9.117 corrections.
+Behavioral regression tests for File Explorer v2.9.117 corrections.
 
-Tests all 8 phases (A-C) of the integration plan:
-- Phase A: Maximize button fix (MainWindow in app.py)
+Tests the File Explorer phases of the integration plan:
 - Phase B.1-6: Layout refactoring and feature additions
 - Phase C.1-2: Visual polish and UX improvements
 
-NOTE: Phase A tests require MainWindow from app.py, not FileExplorerDock.
-Phase B and C tests use FileExplorerDock.
+Phase A window-flag behavior is covered by tests/test_window_flags_restore.py.
 """
 
 import pytest
-import sys
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from types import SimpleNamespace
+from unittest.mock import patch
 from PySide6.QtCore import Qt
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QLabel, QTreeWidgetItem
+
+from src.i18n import tr
+from src.gui.file_explorer_dock import (
+    FileExplorerDock,
+    PROGRESS_DIALOG_LABEL_WIDTH,
+    PROGRESS_DIALOG_WIDTH,
+)
+from src.gui.panels.results_tree import ResultsTree
+from src.gui.widgets.collapsible_section import CollapsibleSection
 
 # Tests are designed to validate code structure without full app initialization
 # This avoids import errors from relative imports in the codebase
@@ -22,341 +30,241 @@ from PySide6.QtCore import Qt
 
 def test_progress_message_compacts_long_paths():
     """Progress text should not expose full paths that resize the modal."""
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
+    long_name = "deeply_nested_component_" * 8 + "extremely_long_name.json"
+    long_path = f"/very/long/project/path/src/features/{long_name}"
 
-    assert "def _format_progress_message" in content
-    assert "def _format_progress_item" in content
-    assert "os.path.basename(compact_source)" in content
-    assert 'setLabelText(f"{message}\\n({current}/{total})")' not in content
+    message = FileExplorerDock._format_progress_message(long_path, current=12, total=99)
+    item = message.removeprefix("Processing 12/99: ")
+
+    assert message.startswith("Processing 12/99: ")
+    assert long_path not in message
+    assert "/" not in item
+    assert item.endswith("name.json")
+    assert "..." in item
 
 
-def test_progress_dialog_has_fixed_width_configuration():
+def test_progress_dialog_has_fixed_width_configuration(qapp):
     """Progress dialog should have a fixed width instead of resizing around label text."""
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
+    dock = FileExplorerDock()
+    try:
+        dock._ensure_progress_dialog()
 
-    assert "PROGRESS_DIALOG_WIDTH" in content
-    assert "setFixedWidth(PROGRESS_DIALOG_WIDTH)" in content
-    assert "setLabel(self._progress_label)" in content
-
-
-def test_phase_a_implementation_exists():
-    """
-    Test that Phase A implementation exists in app.py.
-    
-    PHASE A: Critical fix for Issue #6 - Maximize button
-    - Verifies _desired_window_flags in MainWindow
-    - Verifies _restore_window_flags method
-    """
-    app_py = Path("src/app.py")
-    assert app_py.exists(), "app.py not found"
-    
-    content = app_py.read_text()
-    
-    # Check for _desired_window_flags
-    assert "_desired_window_flags" in content, \
-        "Missing _desired_window_flags in app.py"
-    assert "Qt.WindowMaximizeButtonHint" in content, \
-        "WindowMaximizeButtonHint not set"
-    
-    # Check for _restore_window_flags method
-    assert "def _restore_window_flags" in content, \
-        "Missing _restore_window_flags method in app.py"
-    
-    print("✓ Phase A: Maximize button fix implemented in app.py")
+        assert dock.progress_dialog.minimumWidth() == PROGRESS_DIALOG_WIDTH
+        assert dock.progress_dialog.maximumWidth() == PROGRESS_DIALOG_WIDTH
+        assert dock._progress_label in dock.progress_dialog.findChildren(QLabel)
+        assert dock._progress_label.wordWrap() is True
+        assert dock._progress_label.maximumWidth() == PROGRESS_DIALOG_LABEL_WIDTH
+    finally:
+        if dock.progress_dialog:
+            dock.progress_dialog.close()
+        dock.deleteLater()
 
 
-def test_phase_b1_qsplitter_horizontal():
-    """
-    Test that Phase B.1 horizontal QSplitter is implemented.
-    
-    PHASE B.1: Horizontal layout refactoring (25%/75% split)
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    assert dock_py.exists(), "file_explorer_dock.py not found"
-    
-    content = dock_py.read_text()
-    
-    # Check for QSplitter
-    assert "QSplitter" in content, "QSplitter not imported"
-    assert "self.splitter = QSplitter" in content, \
-        "splitter not created"
-    assert "Qt.Orientation.Horizontal" in content or "Qt.Horizontal" in content, \
-        "Splitter not set to horizontal"
-    
-    print("✓ Phase B.1: QSplitter horizontal implemented")
+def test_phase_b1_qsplitter_horizontal(qapp):
+    """The controls/results splitter should render horizontally near a 25/75 ratio."""
+    dock = FileExplorerDock()
+    try:
+        dock.resize(1200, 800)
+        dock.show()
+        qapp.processEvents()
+
+        sizes = dock.splitter.sizes()
+        total_size = sum(sizes)
+        assert dock.splitter.orientation() == Qt.Orientation.Horizontal
+        assert dock.splitter.count() == 2
+        assert total_size > 0
+        assert 0.20 <= sizes[0] / total_size <= 0.30
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
 
 
-def test_phase_b2_resultstree_integration():
-    """
-    Test that Phase B.2 ResultsTree integration is implemented.
-    
-    PHASE B.2: QStackedWidget with ResultsTree and FileListTable
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-    
-    # Check for QStackedWidget
-    assert "QStackedWidget" in content, "QStackedWidget not imported"
-    assert "results_stack" in content, "results_stack not created"
-    assert "ResultsTree" in content, "ResultsTree not imported"
-    
-    print("✓ Phase B.2: ResultsTree integration implemented")
+def test_phase_b2_resultstree_integration(qapp):
+    """The results stack should contain the search tree and browse table."""
+    dock = FileExplorerDock()
+    try:
+        tree_container = dock.results_stack.widget(0)
+
+        assert dock.results_stack.count() == 2
+        assert isinstance(dock.results_tree, ResultsTree)
+        assert tree_container.isAncestorOf(dock.results_tree)
+        assert dock.results_stack.widget(1) is dock.table_manager
+        assert dock.results_stack.currentIndex() == 1
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
 
 
-def test_phase_b3_unified_browse_search_button():
-    """
-    Test that Phase B.3 smart Browse/Search action is implemented.
+def test_phase_b3_unified_browse_search_button(qapp):
+    """The command button should dispatch browse and search inputs through one executor."""
+    dock = FileExplorerDock()
+    try:
+        with (
+            patch.object(dock.filename_panel, "get_pattern", side_effect=["", "*.py"]),
+            patch.object(dock.content_panel, "get_query", side_effect=["", ""]),
+            patch.object(dock, "_list_files") as list_files,
+        ):
+            dock.btn_list.click()
+            dock.btn_list.click()
 
-    Current contract: one command button chooses Browse vs Search from criteria.
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-
-    # Directory browse still exists; Browse/Search execution is intentionally unified.
-    assert "btn_browse" in content, "btn_browse not created"
-    assert "btn_list" in content, "smart Browse/Search button not created"
-    assert "_list_files_smart" in content, "smart Browse/Search handler not found"
-    assert "file_list.btn_list" in content, "smart Browse/Search translation key not used"
-
-    print("✓ Phase B.3: Unified Browse/Search command implemented")
-
-
-def test_phase_b4_statistics_panel():
-    """
-    Test that Phase B.4 statistics panel is implemented.
-    
-    PHASE B.4: 4 metrics - Files, Dirs, Size, Time
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-    
-    # Check for statistics labels
-    assert "lbl_files_count" in content, "lbl_files_count not created"
-    assert "lbl_dirs_count" in content, "lbl_dirs_count not created"
-    assert "lbl_total_size" in content, "lbl_total_size not created"
-    assert "lbl_exec_time" in content, "lbl_exec_time not created"
-    
-    # Check for update method
-    assert "def _update_statistics" in content, \
-        "_update_statistics method not found"
-    
-    print("✓ Phase B.4: Statistics panel implemented")
+        assert dock.btn_list.isEnabled() is True
+        assert dock.btn_list.objectName() == "btn_list"
+        assert list_files.call_count == 2
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
 
 
-def test_phase_b5_export_csv():
-    """
-    Test that Phase B.5 CSV export is implemented.
-    
-    PHASE B.5: Export CSV button for both browse and search modes
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-    
-    # Check for export button
-    assert "btn_export_csv" in content, "btn_export_csv not created"
-    assert "Export CSV" in content, "Export CSV text not found"
-    
-    # Check for export methods
-    assert "def _export_results_csv" in content, \
-        "_export_results_csv method not found"
-    assert "def _export_tree_to_csv" in content, \
-        "_export_tree_to_csv method not found"
-    
-    print("✓ Phase B.5: Export CSV implemented")
-
-
-def test_phase_b6_collapsible_sections():
-    """
-    Test that Phase B.6 collapsible sections are implemented.
-    
-    PHASE B.6: CollapsibleSection widget with animations
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-    
-    # Check for CollapsibleSection usage
-    assert "CollapsibleSection" in content, \
-        "CollapsibleSection not imported"
-    assert "section_filters" in content, "section_filters not created"
-    assert "section_conditions" in content, "section_conditions not created"
-    assert "section_presets" in content, "section_presets not created"
-    
-    # Check CollapsibleSection widget file
-    widget_py = Path("src/gui/widgets/collapsible_section.py")
-    assert widget_py.exists(), "collapsible_section.py not found"
-    
-    widget_content = widget_py.read_text()
-    assert "class CollapsibleSection" in widget_content, \
-        "CollapsibleSection class not found"
-    assert "QPropertyAnimation" in widget_content, \
-        "QPropertyAnimation not used"
-    assert "setCollapsed" in widget_content, \
-        "setCollapsed method not found"
-    assert "isCollapsed" in widget_content, \
-        "isCollapsed method not found"
-    
-    print("✓ Phase B.6: Collapsible sections implemented")
-
-
-def test_phase_c1_hover_expansion_intentionally_disabled():
-    """
-    Test that Phase C.1 hover expansion remains intentionally disabled.
-
-    Hover expansion was a useful experiment, but the current UI contract keeps
-    the splitter stable because automatic expansion was distracting.
-    """
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    content = dock_py.read_text()
-
-    assert "HOVER EXPANSION DISABLED" in content
-    assert "Hover expansion removed" in content
-    assert "class HoverExpandFilter" not in content
-
-    print("✓ Phase C.1: Hover expansion intentionally disabled")
-
-
-def test_phase_c2_context_menu():
-    """
-    Test that Phase C.2 enhanced context menu is implemented.
-    
-    PHASE C.2: Open Location and Properties actions
-    """
-    tree_py = Path("src/gui/panels/results_tree.py")
-    assert tree_py.exists(), "results_tree.py not found"
-    
-    content = tree_py.read_text()
-    
-    # Check for new methods
-    assert "def _open_file_location" in content, \
-        "_open_file_location method not found"
-    assert "def _show_file_properties" in content, \
-        "_show_file_properties method not found"
-    assert "def _format_size" in content, \
-        "_format_size helper not found"
-    
-    # Check for context menu actions
-    assert "Open Location" in content, \
-        "Open Location action not found"
-    assert "Properties" in content, \
-        "Properties action not found"
-    
-    print("✓ Phase C.2: Enhanced context menu implemented")
-
-
-def test_integration_all_phases_complete():
-    """
-    Integration test verifying all phases are implemented.
-    
-    Checks presence of all critical components from Phases A-C.
-    """
-    # Phase A (app.py)
-    app_py = Path("src/app.py")
-    app_content = app_py.read_text()
-    assert "_desired_window_flags" in app_content
-    assert "_restore_window_flags" in app_content
-    
-    # Phases B and C (file_explorer_dock.py)
-    dock_py = Path("src/gui/file_explorer_dock.py")
-    dock_content = dock_py.read_text()
-    
-    # B.1: QSplitter
-    assert "self.splitter = QSplitter" in dock_content
-    
-    # B.2: ResultsTree
-    assert "results_stack" in dock_content
-    
-    # B.3: Smart Browse/Search command
-    assert "btn_browse" in dock_content
-    assert "btn_list" in dock_content
-    assert "_list_files_smart" in dock_content
-    
-    # B.4: Statistics
-    assert "lbl_files_count" in dock_content
-    
-    # B.5: Export CSV
-    assert "btn_export_csv" in dock_content
-    
-    # B.6: Collapsible
-    assert "section_filters" in dock_content
-    
-    # C.1: Hover expansion intentionally disabled
-    assert "HOVER EXPANSION DISABLED" in dock_content
-    assert "class HoverExpandFilter" not in dock_content
-    
-    # C.2: Context menu (results_tree.py)
-    tree_py = Path("src/gui/panels/results_tree.py")
-    tree_content = tree_py.read_text()
-    assert "_open_file_location" in tree_content
-    assert "_show_file_properties" in tree_content
-    
-    print("✓ Integration: All phases (A-C) complete")
-
-
-def test_format_size_logic():
-    """
-    Test _format_size formatting logic directly.
-    
-    PHASE C.2: Human-readable size formatting (B → KB → MB → GB → TB → PB)
-    """
-    # Read the implementation from results_tree.py
-    tree_py = Path("src/gui/panels/results_tree.py")
-    content = tree_py.read_text()
-    
-    # Verify the method exists and has size conversion logic
-    assert "_format_size" in content, "_format_size method not found"
-    assert "1024" in content, "1024 constant not found (KB conversion)"
-    assert "KB" in content and "MB" in content, "Size units not found"
-    
-    print("✓ _format_size: Logic validated")
-
-
-if __name__ == "__main__":
-    # Run tests manually without pytest
-    print("=" * 60)
-    print("v2.9.117 Integration Tests - Manual Execution")
-    print("=" * 60)
-    print()
-    
-    tests = [
-        ("Phase A", test_phase_a_implementation_exists),
-        ("Phase B.1", test_phase_b1_qsplitter_horizontal),
-        ("Phase B.2", test_phase_b2_resultstree_integration),
-        ("Phase B.3", test_phase_b3_separate_buttons),
-        ("Phase B.4", test_phase_b4_statistics_panel),
-        ("Phase B.5", test_phase_b5_export_csv),
-        ("Phase B.6", test_phase_b6_collapsible_sections),
-        ("Phase C.1", test_phase_c1_hover_expansion),
-        ("Phase C.2", test_phase_c2_context_menu),
-        ("Integration", test_integration_all_phases_complete),
-        ("Helper Logic", test_format_size_logic),
+def test_phase_b4_statistics_panel(qapp):
+    """Statistics should count files/directories and format size and elapsed time."""
+    dock = FileExplorerDock()
+    results = [
+        SimpleNamespace(file_info=SimpleNamespace(is_dir=False, size=1024)),
+        SimpleNamespace(file_info=SimpleNamespace(is_dir=False, size=512)),
+        SimpleNamespace(file_info=SimpleNamespace(is_dir=True, size=4096)),
     ]
-    
-    passed = 0
-    failed = 0
-    
-    for name, test_func in tests:
-        try:
-            test_func()
-            passed += 1
-        except AssertionError as e:
-            print(f"✗ {name}: FAILED")
-            print(f"  Error: {e}")
-            failed += 1
-        except Exception as e:
-            print(f"✗ {name}: ERROR")
-            print(f"  Exception: {e}")
-            failed += 1
-    
-    print()
-    print("=" * 60)
-    print(f"Results: {passed} passed, {failed} failed out of {len(tests)} tests")
-    print("=" * 60)
-    
-    if failed == 0:
-        print("✓ ALL TESTS PASSED")
-        sys.exit(0)
-    else:
-        print(f"✗ {failed} TESTS FAILED")
-        sys.exit(1)
+
+    try:
+        dock._update_statistics(results, elapsed_time=1.234)
+
+        assert dock.lbl_files_count.text() == tr("file_list.stats_files").format("2")
+        assert dock.lbl_dirs_count.text() == tr("file_list.stats_dirs").format("1")
+        assert dock.lbl_total_size.text() == tr("file_list.stats_size").format("1.5 KB")
+        assert dock.lbl_exec_time.text() == tr("file_list.stats_time").format("1.23")
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
+
+
+def test_phase_b5_export_csv(qapp):
+    """CSV export should use the table or tree exporter for the active view."""
+    dock = FileExplorerDock()
+    try:
+        with (
+            patch.object(dock.table_manager, "export_csv") as export_table,
+            patch.object(dock, "_export_tree_to_csv") as export_tree,
+        ):
+            dock.results_stack.setCurrentIndex(1)
+            dock._export_results_csv()
+            export_table.assert_called_once_with()
+            export_tree.assert_not_called()
+
+            dock.results_stack.setCurrentIndex(0)
+            dock._export_results_csv()
+            export_tree.assert_called_once_with()
+
+        assert dock.btn_export_csv.isEnabled() is True
+        assert dock.btn_export_csv.objectName() == "btn_export"
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
+
+
+def test_phase_b6_collapsible_sections(qapp):
+    """Advanced sections should start collapsed and expand from their headers."""
+    dock = FileExplorerDock()
+    sections = (dock.section_filters, dock.section_conditions, dock.section_presets)
+
+    try:
+        assert all(isinstance(section, CollapsibleSection) for section in sections)
+        assert all(section.isCollapsed() for section in sections)
+        assert all(section.content_frame.isHidden() for section in sections)
+
+        dock.section_filters.setAnimationDuration(0)
+        for expected_collapsed in (False, True, False):
+            dock.section_filters.header_button.click()
+            qapp.processEvents()
+
+            assert dock.section_filters.isCollapsed() is expected_collapsed
+            assert dock.section_filters.header_button.isChecked() is not expected_collapsed
+            assert dock.section_filters.content_frame.isHidden() is expected_collapsed
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
+
+
+def test_phase_c1_hover_keeps_splitter_stable(qapp):
+    """Moving across either pane should not resize the splitter automatically."""
+    dock = FileExplorerDock()
+    try:
+        dock.resize(1200, 800)
+        dock.show()
+        qapp.processEvents()
+        initial_sizes = dock.splitter.sizes()
+
+        for pane_index in (0, 1, 0):
+            pane = dock.splitter.widget(pane_index)
+            QTest.mouseMove(pane, pane.rect().center())
+            qapp.processEvents()
+            assert dock.splitter.sizes() == initial_sizes
+    finally:
+        dock.close()
+        dock.deleteLater()
+        qapp.processEvents()
+
+
+def test_phase_c2_context_menu(qapp):
+    """Location and properties actions should follow selection and invoke handlers."""
+    tree = ResultsTree()
+    item = QTreeWidgetItem(["result.txt"])
+    tree.addTopLevelItem(item)
+
+    try:
+        menu_without_selection = tree._build_context_menu()
+        actions_without_selection = {
+            action.text(): action for action in menu_without_selection.actions()
+        }
+        location_text = next(
+            text for text in actions_without_selection if text.endswith("Open Location")
+        )
+        properties_text = next(
+            text for text in actions_without_selection if text.endswith("Properties")
+        )
+        assert actions_without_selection[location_text].isEnabled() is False
+        assert actions_without_selection[properties_text].isEnabled() is False
+
+        item.setSelected(True)
+        with (
+            patch.object(tree, "_open_file_location") as open_location,
+            patch.object(tree, "_show_file_properties") as show_properties,
+        ):
+            menu_with_selection = tree._build_context_menu()
+            actions_with_selection = {
+                action.text(): action for action in menu_with_selection.actions()
+            }
+
+            location_action = actions_with_selection[location_text]
+            properties_action = actions_with_selection[properties_text]
+            assert location_action.isEnabled() is True
+            assert properties_action.isEnabled() is True
+
+            location_action.trigger()
+            properties_action.trigger()
+            open_location.assert_called_once_with()
+            show_properties.assert_called_once_with()
+    finally:
+        tree.deleteLater()
+
+
+@pytest.mark.parametrize(
+    ("size", "expected"),
+    [
+        (0, "0.0 B"),
+        (1023, "1023.0 B"),
+        (1024, "1.0 KB"),
+        (1536, "1.5 KB"),
+        (1024**2, "1.0 MB"),
+        (1024**3, "1.0 GB"),
+        (1024**4, "1.0 TB"),
+        (1024**5, "1.0 PB"),
+    ],
+)
+def test_format_size_logic(size, expected):
+    """File sizes should use binary thresholds and human-readable units."""
+    assert ResultsTree._format_size(size) == expected

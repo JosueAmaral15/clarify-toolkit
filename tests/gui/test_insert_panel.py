@@ -18,8 +18,18 @@ from PySide6.QtWidgets import (QLineEdit, QCheckBox, QPushButton, QPlainTextEdit
 from pathlib import Path
 
 # Import from clarify package
-from src.app import MainWindow
+from types import SimpleNamespace
+from src.gui.panels.insert_panel import InsertPanel
 from src.core import InsertMode
+
+
+@pytest.fixture
+def main_window(qtbot):
+    """These component tests need an InsertPanel, not 26 full application startups."""
+    panel = InsertPanel()
+    qtbot.addWidget(panel)
+    panel.show()
+    return SimpleNamespace(insert_panel=panel)
 
 
 class TestInsertPanelInitialization:

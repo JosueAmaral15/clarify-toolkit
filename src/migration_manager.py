@@ -21,7 +21,7 @@ Usage:
 import json
 import logging
 import sys
-from .utils.logger import get_logger
+from .utils.logger import get_logger, get_log_file
 
 logger = get_logger(__name__)
 from datetime import datetime
@@ -48,12 +48,10 @@ class MigrationManager:
     def __init__(self):
         self.logger = self._setup_logging()
         self.migrations_dir = Path(__file__).parent / "migrations"
-        self.migrations_dir.mkdir(exist_ok=True)
 
     def _setup_logging(self) -> logging.Logger:
         """Setup migrations logger."""
-        log_dir = Path.home() / ".clarify" / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
+        log_dir = get_log_file().parent
         log_file = log_dir / "migrations.log"
 
         logger = logging.getLogger("migrations")
@@ -65,15 +63,15 @@ class MigrationManager:
 
         # RotatingFileHandler (5MB, 3 backups)
         from logging.handlers import RotatingFileHandler
-        handler = RotatingFileHandler(
-            log_file,
-            maxBytes=5 * 1024 * 1024,
-            backupCount=3
-        )
-        handler.setFormatter(
-            logging.Formatter("[%(asctime)s] %(levelname)s: %(message)s")
-        )
-        logger.addHandler(handler)
+        try:
+            handler = RotatingFileHandler(
+                log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+            )
+            handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s: %(message)s"))
+            logger.addHandler(handler)
+        except OSError:
+            # Diagnostic file availability must not prevent migrations.
+            pass
 
         # Console handler
         console = logging.StreamHandler()

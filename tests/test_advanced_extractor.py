@@ -277,6 +277,40 @@ class TestProcessText:
         assert "CustomComponent" in paths_text
 
 
+class TestOutputModes:
+    """Lock the four key/value output combinations to fixture examples."""
+
+    @pytest.fixture(scope="class")
+    def output_modes_fixture(self):
+        fixture_path = Path(__file__).parent / "fixtures" / "advanced_extractor_output_modes.json"
+        return json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    def test_fixture_covers_every_key_value_combination(self, output_modes_fixture):
+        combinations = {
+            (mode["include_key"], mode["include_value"])
+            for mode in output_modes_fixture["modes"]
+        }
+
+        assert combinations == {(True, True), (True, False), (False, True), (False, False)}
+
+    @pytest.mark.parametrize(
+        "mode_name",
+        ["key_and_value", "key_only", "value_only", "neither"],
+    )
+    def test_apply_include_flags_matches_fixture(self, output_modes_fixture, mode_name):
+        mode = next(
+            item for item in output_modes_fixture["modes"] if item["name"] == mode_name
+        )
+        extractor = create_extractor(
+            include_key=mode["include_key"],
+            include_value=mode["include_value"],
+        )
+
+        result = extractor._apply_include_flags(output_modes_fixture["source"])
+
+        assert result == mode["expected"]
+
+
 class TestPruneToKey:
     """Test prune_to_key() tree pruning."""
     

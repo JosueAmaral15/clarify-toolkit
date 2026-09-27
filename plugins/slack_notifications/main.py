@@ -18,14 +18,10 @@ Version: 1.0.0
 """
 
 import json
-import sys
 from pathlib import Path
 from datetime import datetime
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
-from plugins.plugin_base import PluginBase
+from src.plugins.plugin_base import PluginBase
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QCheckBox, QGroupBox,

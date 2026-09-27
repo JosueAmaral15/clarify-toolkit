@@ -7,7 +7,7 @@ Provides QApplication, monkeypatched dialogs, and test utilities.
 """
 import pytest
 from PySide6.QtWidgets import QApplication, QMessageBox, QFileDialog
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QCoreApplication, QEvent, Qt
 import sys
 
 
@@ -127,16 +127,24 @@ def sample_search_results():
 
 
 @pytest.fixture
-def main_window(qapp, mock_message_box, mock_file_dialog):
+def main_window(qapp, mock_message_box, mock_file_dialog, monkeypatch):
     """Create MainWindow instance for testing.
     
     CRITICAL: Uses mock_message_box to prevent blocking QMessageBox dialogs
     during window.close() cleanup (closeEvent confirmation).
     """
     from src.app import MainWindow
+
+    # Startup update checks use the network and must not outlive a GUI test.
+    monkeypatch.setattr(MainWindow, "_auto_check_for_updates", lambda self: None)
+    # Fresh settings enable a custom exit dialog using exec(), not question().
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: QMessageBox.Yes)
     window = MainWindow(qapp)
     yield window
     window.close()  # Safe now - QMessageBox.question returns QMessageBox.Yes automatically
+    window.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+    qapp.processEvents()
 
 
 import json

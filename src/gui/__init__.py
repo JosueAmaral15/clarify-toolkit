@@ -41,6 +41,14 @@ from .set_operations_dock import SetOperationsDock
 from .shortcuts_dialog import ShortcutsDialog
 from .google_translate_dock import GoogleTranslateDock
 from .formula_dock import FormulaDock
+from .clock_dock import ClockDock
+from .terminal_dock import TerminalDock
+from .lynx_dock import LynxDock
+from .information_structure_dock import InformationStructureDock
+from .editorial_repair_dock import EditorialRepairDock
+from .boolean_logic_dock import BooleanLogicDock
+from .voice_programming_dock import VoiceProgrammingDock
+from .algorithm_analysis_dock import AlgorithmAnalysisDock
 
 __all__ = [
     # Base classes
@@ -60,7 +68,12 @@ __all__ = [
     'JsonRewriterDock', 'HistoryDock', 'FileListDock', 'FileExplorerDock',
     'TutorialsDock',
     'EditorDock', 'TextToJsonDock', 'JSXExtractorDock', 'SetOperationsDock',
-    'GoogleTranslateDock', 'FormulaDock',
+    'GoogleTranslateDock', 'FormulaDock', 'ClockDock', 'TerminalDock', 'LynxDock',
+    'InformationStructureDock',
+    'EditorialRepairDock',
+    'BooleanLogicDock',
+    'VoiceProgrammingDock',
+    'AlgorithmAnalysisDock',
     # Editor components
     'JsonEditorTab', 'JsonValidator',
     # Dialogs

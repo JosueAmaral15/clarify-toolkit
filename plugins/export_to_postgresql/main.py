@@ -17,17 +17,11 @@ Version: 1.0.0
 """
 
 import json
-import sys
-from pathlib import Path
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
-from plugins.plugin_base import PluginBase
+from src.plugins.plugin_base import PluginBase
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QTextEdit, QMessageBox,
-    QFileDialog, QGroupBox, QFormLayout
+    QFileDialog, QGroupBox, QFormLayout, QMenu
 )
 from PySide6.QtCore import Qt
 
@@ -138,20 +132,12 @@ class ExportToPostgreSQLPlugin(PluginBase):
         
         # Add menu item directly to File menu using reference
         # Avoid text-based lookup to prevent i18n issues
-        file_menu = None
-        for action in app.menuBar().actions():
-            menu = action.menu()
-            if menu and menu.objectName() == "m_file":
-                file_menu = menu
-                break
-        
-        if not file_menu:
-            # Fallback: find by trying first menu (usually File)
-            file_menu = app.menuBar().actions()[0].menu() if app.menuBar().actions() else None
+        menu_bar = app.menuBar()
+        file_menu = menu_bar.findChild(QMenu, "m_file")
         
         if file_menu:
             # Add separator before export options
-            file_menu.addSeparator()
+            self._registered_actions.append(file_menu.addSeparator())
             # Create and add action
             from PySide6.QtGui import QAction
             action = QAction("📊 Export to PostgreSQL...", app)

@@ -44,5 +44,4 @@ class ExportCSVPlugin(PluginBase):
         except (IOError, OSError, PermissionError) as e:
             QMessageBox.critical(app, "Erro", f"Falha ao salvar CSV: {e}")
             return
-                writer.writerow([str(data)])
         QMessageBox.information(app, "Exportar CSV", f"Arquivo salvo em: {path}")

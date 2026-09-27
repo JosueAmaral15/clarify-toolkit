@@ -221,6 +221,12 @@ class HistoryDock(BaseDock):
                         f.write(f"Mode: {details['mode']}\n")
                     if 'dictionary' in details:
                         f.write(f"Dictionary: {details['dictionary']}\n")
+                    if 'source_path' in details:
+                        f.write(f"Source: {details['source_path']}\n")
+                    if 'source_language' in details:
+                        f.write(f"Source Language: {details['source_language']}\n")
+                    if 'target_language' in details:
+                        f.write(f"Target Language: {details['target_language']}\n")
                     if 'transformations' in details:
                         f.write(f"Transformations: {', '.join(details['transformations'])}\n")
                     if 'files_processed' in details:
@@ -263,6 +269,14 @@ class HistoryDock(BaseDock):
                 import os
                 dict_name = os.path.basename(details['dictionary'])
                 detail_parts.append(f"Dict: {dict_name}")
+            if 'source_path' in details and details['source_path']:
+                import os
+                source_name = os.path.basename(details['source_path'])
+                detail_parts.append(f"Source: {source_name}")
+            if 'source_language' in details and 'target_language' in details:
+                detail_parts.append(
+                    f"{details['source_language']} → {details['target_language']}"
+                )
             if 'transformations' in details:
                 trans = ', '.join(details['transformations'])
                 detail_parts.append(f"Trans: {trans}")

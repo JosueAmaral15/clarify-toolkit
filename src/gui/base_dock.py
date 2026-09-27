@@ -73,6 +73,12 @@ class BaseDock(QDockWidget):
         """Show warning message dialog."""
         QMessageBox.warning(self, title, message)
 
+    def notify_processing_completed(self) -> bool:
+        """Emit the shared optional completion feedback."""
+        from src.processing_feedback import notify_processing_completed
+
+        return notify_processing_completed()
+
 
 class FileInputMixin:
     """Mixin for file/directory input with browse button."""

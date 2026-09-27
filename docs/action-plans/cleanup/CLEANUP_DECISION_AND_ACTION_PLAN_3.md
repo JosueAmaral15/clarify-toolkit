@@ -191,7 +191,7 @@ Impact:
 - No changes to existing functionality
 
 Next Phase: GUI integration (make accessible to users)
-Investigation: Phase 5 Final Report (DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md)
+Investigation: Phase 5 Final Report (`../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md`)
 Phase: 2 of 3 (dependency restoration)
 "
 ```
@@ -394,7 +394,7 @@ Closes orphaned code investigation:
 - 1 line orphaned imports: REMOVED ✅
 - Format Converter now 100% clean! 🎉
 
-Investigation: See DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md
+Investigation: See `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md`
 Phase: 3 of 3 (GUI integration - COMPLETE)
 "
 ```
@@ -619,12 +619,12 @@ git checkout <commit-before-investigation>
 
 ### Investigation Documentation
 - `ACTION_PLAN_RESTORE_ORPHANED_FEATURES_3.md` - Initial restoration plan
-- `ORPHANED_FEATURES_RESTORATION_SUMMARY_3.md` - Restoration summary
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE1_3.md` - Import analysis
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE2_3.md` - GUI audit
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE3_3.md` - Converters investigation
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE4_3.md` - Backend analysis
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` - Final compilation
+- `../../investigations/orphaned-code/ORPHANED_FEATURES_RESTORATION_SUMMARY_3.md` - Restoration summary
+- `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE1_3.md` - Import analysis
+- `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE2_3.md` - GUI audit
+- `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE3_3.md` - Converters investigation
+- `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE4_3.md` - Backend analysis
+- `../../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` - Final compilation
 
 ### Key Files to Modify
 - `src/extractors/advanced_extractor.py` - Remove 2 methods (Phase 1)

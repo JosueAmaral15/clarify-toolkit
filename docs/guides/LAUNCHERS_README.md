@@ -49,7 +49,7 @@ All launcher scripts automatically:
 ## 📦 Requirements
 
 ### Python
-- **Version:** Python 3.10 or higher
+- **Version:** Python 3.12 or higher
 - **Check:** Run `python --version` or `python3 --version`
 - **Install:**
   - **Windows:** [python.org/downloads](https://www.python.org/downloads/) (check "Add to PATH")
@@ -59,7 +59,7 @@ All launcher scripts automatically:
 ### PySide6
 - **Purpose:** GUI framework (Qt for Python)
 - **Auto-install:** Scripts offer to install automatically
-- **Manual install:** `pip install PySide6` or `pip3 install PySide6`
+- **Manual install:** from the project root, prefer `poetry install` or `python -m pip install -e .`
 
 ---
 
@@ -80,17 +80,14 @@ All launcher scripts automatically:
 
 **Option 2:** Install manually
 ```bash
-# Standard installation
-pip3 install PySide6
+# Recommended from project root
+poetry install
 
-# User installation (no admin needed)
-pip3 install --user PySide6
+# Without Poetry
+python -m pip install -e .
 
-# Linux: System package (Ubuntu/Debian)
-sudo apt install python3-pyside6.qtwidgets
-
-# macOS: Homebrew
-brew install pyside6
+# Last-resort direct GUI dependency install
+python -m pip install PySide6
 ```
 
 ### macOS: "Developer not verified" or security warning
@@ -123,14 +120,9 @@ chmod +x clarify.sh
 python3 -m src
 ```
 
-### Using the convenience wrapper
-```bash
-python3 clarify.py
-```
-
 ### Using main.py (development/testing)
 ```bash
-python3 main.py
+python3 main.py test
 ```
 
 ---
@@ -152,12 +144,12 @@ These are the original launchers (kept for compatibility):
 
 These launchers follow **Protocolo Simplicidade 3** guidelines:
 
-✅ **Security:** No system modifications without user consent  
-✅ **Solo Developer:** Simple, self-documenting scripts  
-✅ **Production Ready:** Comprehensive error handling  
-✅ **User Friendly:** Clear messages and automatic dependency handling  
-✅ **Cross-Platform:** Works on Windows, Linux, and macOS  
-✅ **Documented:** Inline comments and this README  
+✅ **Security:** No system modifications without user consent
+✅ **Solo Developer:** Simple, self-documenting scripts
+✅ **Production Ready:** Comprehensive error handling
+✅ **User Friendly:** Clear messages and automatic dependency handling
+✅ **Cross-Platform:** Works on Windows, Linux, and macOS
+✅ **Documented:** Inline comments and this README
 
 ---
 
@@ -165,7 +157,7 @@ These launchers follow **Protocolo Simplicidade 3** guidelines:
 
 If you encounter issues:
 
-1. **Check Python version:** `python3 --version` (must be 3.10+)
+1. **Check Python version:** `python3 --version` (must be 3.12+)
 2. **Check PySide6:** `python3 -c "import PySide6"`
 3. **Run manually:** `cd <project_root> && python3 -m src`
 4. **Check logs:** Look for error messages in the console
@@ -173,7 +165,7 @@ If you encounter issues:
 
 **Common Issues:**
 - Python not in PATH → Reinstall Python with PATH option
-- Missing dependencies → Run `pip3 install -r requirements.txt`
+- Missing dependencies → Run `poetry install` or `python -m pip install -e .`
 - Configuration errors → Check `config/` directory
 - Display issues (Linux) → Ensure X11/Wayland is running
 
@@ -207,6 +199,6 @@ If you encounter issues:
 
 ---
 
-**Created:** 2026-01-07  
-**Protocol:** Simplicidade 3  
+**Created:** 2026-01-07
+**Protocol:** Simplicidade 3
 **Version:** 1.0.0

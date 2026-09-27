@@ -2,7 +2,9 @@
 
 Welcome to the Clarify project documentation! This index provides organized access to all project documentation.
 
-**Quick Links**: [For Developers](#for-developers) | [For Contributors](#for-contributors) | [By Programmer](#by-programmer) | [Resources](#resources)
+**Quick Links**: [Current State](CURRENT_STATE.md) | [For Developers](#for-developers) | [For Contributors](#for-contributors) | [By Programmer](#by-programmer) | [Resources](#resources)
+
+> **Current checkout note:** use [CURRENT_STATE.md](CURRENT_STATE.md), the root `README.md`, this index, `INDEX.md`, `guides/PROJECT_STRUCTURE.md`, `guides/ROOT_STRUCTURE.md`, `wiki/`, `api/`, and `processes/` for current operational guidance. Large areas such as `reports/`, `sessions/`, `sprints/`, `study/`, `programmers/`, `archive/`, `pt/`, `en/`, and old migration notes are historical records; preserve them, but verify commands and paths against the current tree before using them.
 
 ---
 
@@ -11,6 +13,7 @@ Welcome to the Clarify project documentation! This index provides organized acce
 Essential documentation for understanding and working with the Clarify codebase.
 
 ### Architecture & Design
+- **[Current State](CURRENT_STATE.md)** - Current commands, entry points, log paths, and version consistency notes
 - **[Architecture](architecture/)** - System design and component architecture
   - [GUI Architecture](architecture/gui/) - User interface design patterns
   - [Core Architecture](architecture/) - Core system components
@@ -145,14 +148,14 @@ Additional resources for learning and reference.
 
 ## 📊 Documentation Statistics
 
-**Total Files**: ~774 markdown files  
-**Organized**: 243+ files from root  
-**Programmers**: 4 active (COM2, COM3, COM4, COM8)  
-**Sessions**: 11 phases documented  
-**Sprints**: 75 sprint documents  
+**Total Files**: ~774 markdown files
+**Organized**: 243+ files from root
+**Programmers**: 4 active (COM2, COM3, COM4, COM8)
+**Sessions**: 11 phases documented
+**Sprints**: 75 sprint documents
 
-**Last Organization**: 2026-02-17 by COM4  
-**Protocol**: SIMPLICITY_PROTOCOL_3 v4.5  
+**Last Organization**: 2026-02-17 by COM4
+**Protocol**: SIMPLICITY_PROTOCOL_3 v4.5
 
 ---
 
@@ -221,7 +224,7 @@ For questions about documentation organization:
 
 ---
 
-**Last Updated**: 2026-02-17  
-**Organized By**: COM4 (Programmer 4)  
-**Documentation Version**: 1.0.0  
+**Last Updated**: 2026-02-17
+**Organized By**: COM4 (Programmer 4)
+**Documentation Version**: 1.0.0
 **Total Organization Time**: 4 hours (8 phases)

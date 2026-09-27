@@ -30,6 +30,7 @@ from PySide6.QtCore import QObject, Signal, QSettings
 
 
 from .utils.logger import get_logger
+from .plugins.plugin_base import PluginBase
 
 logger = get_logger(__name__)
 
@@ -176,8 +177,8 @@ class PluginLoader(QObject):
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
                 if (isinstance(attr, type) and
-                    hasattr(attr, 'activate') and
-                    attr.__name__ != 'PluginBase'):
+                    issubclass(attr, PluginBase) and
+                    attr is not PluginBase):
                     plugin_class = attr
                     break
 

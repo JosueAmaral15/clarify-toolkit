@@ -25,9 +25,9 @@ Functions:
 from __future__ import annotations
 import json
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Sequence
 
-from ..utils import read_text, write_text, safe_backup_file, parse_exclusion_patterns
+from ..utils import read_text, write_text, safe_backup_file
 from ..rewriter import find_object_block, ts_block_to_json_text
 
 
@@ -100,6 +100,123 @@ _TAG_OPEN_RE  = re.compile(r"<\s*([A-Za-z][\w:-]*)[^>]*?>", re.DOTALL)
 _TAG_CLOSE_RE = re.compile(r"</\s*([A-Za-z][\w:-]*)\s*>", re.DOTALL)
 
 
+def _merge_scoped_spans(spans: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Return sorted, non-overlapping spans for one-pass transformation."""
+    merged: list[list[int]] = []
+    for start, end in sorted(spans):
+        if start >= end:
+            continue
+        if not merged or start >= merged[-1][1]:
+            merged.append([start, end])
+            continue
+        merged[-1][1] = max(merged[-1][1], end)
+    return [(start, end) for start, end in merged]
+
+
+def _find_tag_balanced_inner_spans(
+    content: str,
+    start_rx: str = "<[^>]*?>",
+    end_rx: str = "</[^>]*?>",
+) -> list[tuple[int, int]]:
+    """Find inner spans of matching balanced HTML/XML-like elements."""
+    spans: list[tuple[int, int]] = []
+    i = 0
+    n = len(content)
+    opening_pattern = (
+        _TAG_OPEN_RE
+        if start_rx == "<[^>]*?>"
+        else re.compile(start_rx, re.DOTALL)
+    )
+    closing_pattern = (
+        _TAG_CLOSE_RE
+        if end_rx == "</[^>]*?>"
+        else re.compile(end_rx, re.DOTALL)
+    )
+
+    while i < n:
+        opening = opening_pattern.search(content, i)
+        if not opening:
+            break
+
+        opening_tag = _TAG_OPEN_RE.fullmatch(opening.group(0))
+        if not opening_tag:
+            i = opening.end()
+            continue
+
+        tag_name = opening_tag.group(1)
+        depth = 1
+        cursor = opening.end()
+        while cursor < n and depth > 0:
+            next_open = _TAG_OPEN_RE.search(content, cursor)
+            next_close = _TAG_CLOSE_RE.search(content, cursor)
+            candidates = [match for match in (next_open, next_close) if match]
+            if not candidates:
+                return spans
+
+            next_tag = min(candidates, key=lambda match: match.start())
+            if next_tag.re is _TAG_OPEN_RE and next_tag.group(1) == tag_name:
+                depth += 1
+            elif next_tag.re is _TAG_CLOSE_RE and next_tag.group(1) == tag_name:
+                depth -= 1
+                if depth == 0:
+                    if closing_pattern.fullmatch(next_tag.group(0)):
+                        spans.append((opening.end(), next_tag.start()))
+                    i = next_tag.end()
+                    break
+            cursor = next_tag.end()
+        else:
+            break
+
+    return spans
+
+
+def _find_scoped_inner_spans(content: str, start_rx: str, end_rx: str) -> list[tuple[int, int]]:
+    """Find transformable regions for one delimiter pair."""
+    start_rx = (start_rx or "").strip()
+    end_rx = (end_rx or "").strip()
+    if not start_rx or not end_rx:
+        return [(0, len(content))]
+
+    generic_tag_mode = (
+        start_rx == "<[^>]*?>" and end_rx == "</[^>]*?>"
+    ) or (
+        start_rx.startswith("<") and end_rx.startswith("</")
+    )
+    if generic_tag_mode:
+        return _find_tag_balanced_inner_spans(content, start_rx, end_rx)
+
+    start = re.compile(start_rx, re.DOTALL)
+    end = re.compile(end_rx, re.DOTALL)
+    spans: list[tuple[int, int]] = []
+    cursor = 0
+    while cursor < len(content):
+        opening = start.search(content, cursor)
+        if not opening:
+            break
+        closing = end.search(content, opening.end())
+        if not closing:
+            break
+        spans.append((opening.end(), closing.start()))
+        cursor = closing.end()
+    return spans
+
+
+def _transform_scoped_spans(
+    content: str,
+    spans: list[tuple[int, int]],
+    fn_transform: Callable[[str], str],
+) -> str:
+    """Transform each merged source span exactly once."""
+    out: list[str] = []
+    cursor = 0
+    for start, end in _merge_scoped_spans(spans):
+        out.append(content[cursor:start])
+        out.append(fn_transform(content[start:end]))
+        cursor = end
+    out.append(content[cursor:])
+    return "".join(out)
+
+
 def _apply_scoped_translation_tag_balanced(content: str, fn_transform) -> str:
     """
     Tag-balanced scope:
@@ -110,70 +227,8 @@ def _apply_scoped_translation_tag_balanced(content: str, fn_transform) -> str:
       - Leave tags themselves untouched.
     We process outermost-to-innermost to ensure all text within elements is covered.
     """
-    out = []
-    i = 0
-    n = len(content)
-
-    while i < n:
-        m_open = _TAG_OPEN_RE.search(content, i)
-        if not m_open:
-            out.append(content[i:])
-            break
-
-        # Write everything before the opening tag
-        out.append(content[i:m_open.start()])
-
-        tag_name = m_open.group(1)
-        tag_open_end = m_open.end()
-
-        # Find matching closing tag for tag_name (with nesting of the *same* tag)
-        depth = 1
-        j = tag_open_end
-        while j < n and depth > 0:
-            m_next_open  = _TAG_OPEN_RE.search(content, j)
-            m_next_close = _TAG_CLOSE_RE.search(content, j)
-
-            if not m_next_close and not m_next_open:
-                # unmatched => give up and dump the rest
-                out.append(content[m_open.start():])
-                return "".join(out)
-
-            # choose the nearest next tag of any kind
-            candidates = [m for m in (m_next_open, m_next_close) if m]
-            m_next = min(candidates, key=lambda m: m.start())
-
-            if m_next.re is _TAG_OPEN_RE and m_next.group(1) == tag_name:
-                depth += 1
-                j = m_next.end()
-                continue
-
-            if m_next.re is _TAG_CLOSE_RE and m_next.group(1) == tag_name:
-                depth -= 1
-                j = m_next.end()
-                if not depth:
-                    # We have a full <tag> ... </tag> region
-                    open_tag  = content[m_open.start():tag_open_end]
-                    inner     = content[tag_open_end:m_next.start()]
-                    close_tag = content[m_next.start():j]
-
-                    out.append(open_tag)
-                    out.append(fn_transform(inner))
-                    out.append(close_tag)
-
-                    i = j
-                    break
-
-                continue
-
-            # A different tag; skip past it and continue searching
-            j = m_next.end()
-
-        # If loop exited without finding matching close (depth > 0), append rest and break
-        if depth > 0:
-            out.append(content[m_open.start():])
-            break
-
-    return "".join(out)
+    spans = _find_tag_balanced_inner_spans(content)
+    return _transform_scoped_spans(content, spans, fn_transform)
 
 
 def mask_existing_placeholders(text: str) -> tuple[str, list[str]]:
@@ -206,53 +261,31 @@ def apply_scoped_translation(content: str,
 
     Otherwise we fall back to simple flat pairing using the provided regexes.
     """
-    start_rx = (start_rx or "").strip()
-    end_rx = (end_rx or "").strip()
+    return apply_scoped_translations(content, [(start_rx, end_rx)], fn_transform)
 
-    if not start_rx or not end_rx:
-        # no scope => transform whole file
+
+def apply_scoped_translations(
+    content: str,
+    scope_pairs: Sequence[tuple[str, str]],
+    fn_transform: Callable[[str], str],
+) -> str:
+    """Apply a transform to the union of one or more delimiter-pair scopes.
+
+    Regions are resolved against the original content and overlapping regions
+    are merged, so no source text is transformed more than once. An empty list,
+    or a pair with an empty delimiter, preserves the legacy whole-file behavior.
+    """
+    if not scope_pairs:
         return fn_transform(content)
 
-    # Detect "generic tag" mode
-    generic_tag_mode = (
-        start_rx == "<[^>]*?>" and end_rx == "</[^>]*?>"
-    ) or (
-        start_rx.startswith("<") and end_rx.startswith("</")
-    )
+    spans: list[tuple[int, int]] = []
+    for start_rx, end_rx in scope_pairs:
+        pair_spans = _find_scoped_inner_spans(content, start_rx, end_rx)
+        if pair_spans == [(0, len(content))]:
+            return fn_transform(content)
+        spans.extend(pair_spans)
 
-    if generic_tag_mode:
-        return _apply_scoped_translation_tag_balanced(content, fn_transform)
-
-    # Fallback: flat regex pairing (previous behavior)
-    start = re.compile(start_rx, re.DOTALL)
-    end = re.compile(end_rx, re.DOTALL)
-
-    out = []
-    i = 0
-    n = len(content)
-
-    while i < n:
-        mstart = start.search(content, i)
-        if not mstart:
-            out.append(content[i:])
-            break
-        out.append(content[i:mstart.start()])
-        mend = end.search(content, mstart.end())
-        if not mend:
-            out.append(content[mstart.start():])
-            break
-
-        before = content[mstart.start():mstart.end()]
-        inner  = content[mstart.end():mend.start()]
-        after  = content[mend.start():mend.end()]
-
-        out.append(before)
-        out.append(fn_transform(inner))
-        out.append(after)
-
-        i = mend.end()
-
-    return "".join(out)
+    return _transform_scoped_spans(content, spans, fn_transform)
 
 
 def process_translate_file(path: str,
@@ -265,7 +298,9 @@ def process_translate_file(path: str,
                            inverse: bool,
                            exclude_patterns: list[str],
                            emit_export: bool = True,
-                           preserve_uppercase: bool = False) -> tuple[bool, Optional[str]]:
+                           preserve_uppercase: bool = False,
+                           scope_pairs: Optional[Sequence[tuple[str, str]]] = None,
+                           ) -> tuple[bool, Optional[str]]:
     """
     Load file, translate (forward or inverse) honoring scope, options, and exclusions.
     Returns (changed, error_message).
@@ -282,6 +317,7 @@ def process_translate_file(path: str,
         exclude_patterns: Patterns to exclude from translation
         emit_export: Emit export statement (for TS/JS)
         preserve_uppercase: Preserve uppercase in translations
+        scope_pairs: Optional list of delimiter pairs; overrides start/end when provided
         
     Returns:
         (changed, error_message) tuple
@@ -301,8 +337,7 @@ def process_translate_file(path: str,
     # Mask exclusions if any
     if exclude_patterns:
         from ..utils import mask_exclusions, unmask_exclusions
-        skip_rx_list = parse_exclusion_patterns(exclude_patterns)
-        masked, exc_guards = mask_exclusions(masked, skip_rx_list)
+        masked, exc_guards = mask_exclusions(masked, exclude_patterns)
     else:
         exc_guards = []
 
@@ -316,7 +351,8 @@ def process_translate_file(path: str,
         return tr.translate_text_to_refs(chunk)
 
     # Apply scoped translation
-    translated = apply_scoped_translation(masked, start_rx, end_rx, transform_chunk)
+    pairs = scope_pairs if scope_pairs is not None else [(start_rx, end_rx)]
+    translated = apply_scoped_translations(masked, pairs, transform_chunk)
 
     # Unmask exclusions
     if exc_guards:

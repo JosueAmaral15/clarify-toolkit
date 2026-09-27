@@ -25,17 +25,21 @@ from __future__ import annotations
 import difflib
 import json
 import os
+import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import List
 
 from PySide6.QtCore import (
-    QEvent, QFileSystemWatcher, QObject, QRegularExpression, QSize, Qt, QTimer
+    QDir, QEvent, QFileSystemWatcher, QObject, QRegularExpression, QSize, Qt,
+    QTimer
 )
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar, QPushButton,
     QVBoxLayout, QWidget,
     QLabel, QFileDialog, QMessageBox, QTextEdit, QTabWidget,
-    QCheckBox, QMenu, QApplication
+    QCheckBox, QFileSystemModel, QFrame, QMenu, QApplication, QSplitter,
+    QTreeView, QSizePolicy
 )
 from PySide6.QtGui import (
     QAction, QColor, QKeySequence, QPainter, QTextCursor, QTextDocument,
@@ -43,6 +47,8 @@ from PySide6.QtGui import (
 )
 
 from src.i18n.translator import tooltip_tr, tr
+from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
+from src.product_identity import EDITOR_NAME
 
 from .base_dock import BaseDock
 from .json_editor_tab import JsonEditorTab
@@ -343,29 +349,33 @@ class EditorDock(BaseDock):
     """
 
     _ACTION_SPECS = {
-        "new": {"text_key": "editor.btn_new"},
-        "open": {"text_key": "editor.btn_open"},
-        "save": {"text_key": "editor.btn_save"},
-        "save_as": {"text_key": "editor.btn_save_as"},
+        "new": {"text_key": "editor.btn_new", "shortcut": QKeySequence.StandardKey.New},
+        "open": {"text_key": "editor.btn_open", "shortcut": QKeySequence.StandardKey.Open},
+        "open_folder": {"text_key": "editor.btn_open_folder"},
+        "recover_unsaved": {"text_key": "editor.btn_recover_unsaved"},
+        "recovery_retention": {"text_key": "editor.btn_recovery_retention"},
+        "save": {"text_key": "editor.btn_save", "shortcut": QKeySequence.StandardKey.Save},
+        "save_as": {"text_key": "editor.btn_save_as", "shortcut": QKeySequence.StandardKey.SaveAs},
         "compare_with_saved": {"text_key": "editor.btn_compare_with_saved"},
         "reload_from_disk": {"text_key": "editor.btn_reload_from_disk"},
         "enable_saving": {"text_key": "editor.btn_enable_saving"},
         "export": {"text_key": "editor.btn_export"},
-        "close_tab": {"text_key": "editor.btn_close_tab"},
+        "close_tab": {"text_key": "editor.btn_close_tab", "shortcut": QKeySequence.StandardKey.Close},
         "auto_save": {"text_key": "editor.chk_auto_save", "checkable": True},
         "undo": {"text_key": "editor.btn_undo", "shortcut": QKeySequence.StandardKey.Undo},
         "redo": {"text_key": "editor.btn_redo", "shortcut": QKeySequence.StandardKey.Redo},
-        "cut": {"text_key": "editor.btn_cut"},
-        "copy": {"text_key": "editor.btn_copy"},
-        "paste": {"text_key": "editor.btn_paste"},
+        "cut": {"text_key": "editor.btn_cut", "shortcut": QKeySequence.StandardKey.Cut},
+        "copy": {"text_key": "editor.btn_copy", "shortcut": QKeySequence.StandardKey.Copy},
+        "paste": {"text_key": "editor.btn_paste", "shortcut": QKeySequence.StandardKey.Paste},
         "delete": {"text_key": "editor.btn_delete", "shortcut": QKeySequence.StandardKey.Delete},
         "select_all": {"text_key": "editor.btn_select_all", "shortcut": QKeySequence.StandardKey.SelectAll},
-        "find": {"text_key": "editor.btn_find"},
-        "find_replace": {"text_key": "editor.btn_find_replace"},
+        "select_line": {"text_key": "editor.btn_select_line", "shortcut": "Ctrl+L"},
+        "find": {"text_key": "editor.btn_find", "shortcut": QKeySequence.StandardKey.Find},
+        "find_replace": {"text_key": "editor.btn_find_replace", "shortcut": "Ctrl+R"},
         "go_to_line": {"text_key": "editor.btn_go_to_line", "shortcut": "Ctrl+G"},
         "duplicate_line": {"text_key": "editor.btn_duplicate_line", "shortcut": "Ctrl+D"},
         "toggle_line_comment": {"text_key": "editor.btn_toggle_line_comment", "shortcut": "Ctrl+/"},
-        "indent": {"text_key": "editor.btn_indent", "shortcut": "Ctrl+]"},
+        "indent": {"text_key": "editor.btn_indent", "shortcuts": ("Ctrl+]", "Ctrl+I")},
         "outdent": {"text_key": "editor.btn_outdent", "shortcut": "Ctrl+["},
         "move_line_up": {"text_key": "editor.btn_move_line_up", "shortcut": "Alt+Up"},
         "move_line_down": {"text_key": "editor.btn_move_line_down", "shortcut": "Alt+Down"},
@@ -374,6 +384,7 @@ class EditorDock(BaseDock):
         "word_wrap": {"text_key": "editor.chk_word_wrap", "checkable": True},
         "render_whitespace": {"text_key": "editor.chk_render_whitespace", "checkable": True},
         "show_line_numbers": {"text_key": "editor.chk_show_line_numbers", "checkable": True},
+        "show_explorer": {"text_key": "editor.chk_show_explorer", "checkable": True},
         "small_text": {"text_key": "editor.btn_small_text"},
         "large_text": {"text_key": "editor.btn_large_text"},
         "normal_size": {"text_key": "editor.btn_normal_size"},
@@ -396,7 +407,9 @@ class EditorDock(BaseDock):
             "attr": "menu_file",
             "title_key": "editor.menu_file",
             "items": (
-                "new", "open", "save", "save_as", "compare_with_saved",
+                "new", "open", "open_folder", "recover_unsaved",
+                "recovery_retention", None,
+                "save", "save_as", "compare_with_saved",
                 "reload_from_disk", "enable_saving", "export", "close_tab",
                 None, "auto_save",
             ),
@@ -406,7 +419,8 @@ class EditorDock(BaseDock):
             "title_key": "editor.menu_edit",
             "items": (
                 "undo", "redo", None, "cut", "copy", "paste", "delete",
-                "select_all", None, "find", "find_replace", "go_to_line",
+                "select_all", "select_line", None, "find", "find_replace",
+                "go_to_line",
                 None, "duplicate_line", "toggle_line_comment", "indent",
                 "outdent", "move_line_up", "move_line_down",
                 "insert_datetime", "trim_trailing_spaces",
@@ -416,6 +430,7 @@ class EditorDock(BaseDock):
             "attr": "menu_view",
             "title_key": "editor.menu_view",
             "items": (
+                "show_explorer", None,
                 "word_wrap", "render_whitespace", "show_line_numbers",
                 None, "small_text", "large_text", "normal_size",
             ),
@@ -449,6 +464,7 @@ class EditorDock(BaseDock):
         "paste": "has_editor",
         "delete": "has_editor",
         "select_all": "has_editor",
+        "select_line": "has_editor",
         "find": "has_editor",
         "find_replace": "has_editor",
         "go_to_line": "has_editor",
@@ -482,6 +498,7 @@ class EditorDock(BaseDock):
         "word_wrap": "word_wrap_enabled",
         "render_whitespace": "render_whitespace_enabled",
         "show_line_numbers": "show_line_numbers_enabled",
+        "show_explorer": "show_explorer_enabled",
     }
 
     MAX_EXTERNAL_FILE_WATCHES = 128
@@ -503,9 +520,22 @@ class EditorDock(BaseDock):
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
         self.render_whitespace_enabled = self.settings.value("render_whitespace_enabled", False, type=bool)
+        self.show_explorer_enabled = self.settings.value(
+            "show_explorer_enabled", True, type=bool
+        )
+        self.explorer_root_path = self.settings.value(
+            "explorer_root_path", str(Path.home()), type=str
+        )
+        self.recovery_retention_hours = self.settings.value(
+            "recovery_retention_hours", 24, type=int
+        )
+        self.recovery_store = UnsavedRecoveryStore(
+            retention_hours=self.recovery_retention_hours
+        )
+        self._restored_recovery_ids: set[str] = set()
 
         # NOW call super().__init__() which triggers _setup_ui()
-        super().__init__("Clarify Editor", parent)
+        super().__init__(EDITOR_NAME, parent)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -545,10 +575,22 @@ class EditorDock(BaseDock):
         self.layout.addLayout(toolbar)
 
         # Tab widget for multiple files
+        self.editor_splitter = QSplitter(Qt.Horizontal)
+        self.editor_splitter.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        self._setup_explorer_panel()
+
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
-        self.layout.addWidget(self.tab_widget)
+        self.editor_splitter.addWidget(self.explorer_panel)
+        self.editor_splitter.addWidget(self.tab_widget)
+        self.editor_splitter.setStretchFactor(0, 0)
+        self.editor_splitter.setStretchFactor(1, 1)
+        self.editor_splitter.setSizes([240, 760])
+        self.explorer_panel.setVisible(self.show_explorer_enabled)
+        self.layout.addWidget(self.editor_splitter, 1)
 
         # Status bar
         status_layout = QHBoxLayout()
@@ -557,6 +599,12 @@ class EditorDock(BaseDock):
         status_layout.addWidget(self.lbl_status)
         status_layout.addStretch()
         self.layout.addLayout(status_layout)
+
+        self._recovery_timer = QTimer(self)
+        self._recovery_timer.setSingleShot(True)
+        self._recovery_timer.setInterval(1500)
+        self._recovery_timer.timeout.connect(self._checkpoint_unsaved_tabs)
+        self.recovery_store.prune()
 
         # Apply tooltips
         self._apply_tooltips()
@@ -578,6 +626,71 @@ class EditorDock(BaseDock):
         # Status Label
         self.lbl_status.setToolTip(tooltip_tr("editor.lbl_status"))
 
+    def _setup_explorer_panel(self) -> None:
+        """Create a lazy filesystem navigation tree for the editor sidebar."""
+        self.explorer_panel = QFrame()
+        self.explorer_panel.setMinimumWidth(180)
+        self.explorer_panel.setMaximumWidth(480)
+        self.explorer_panel.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding
+        )
+        explorer_layout = QVBoxLayout(self.explorer_panel)
+        explorer_layout.setContentsMargins(0, 0, 4, 0)
+        explorer_layout.addWidget(QLabel(tr("editor.lbl_explorer")))
+
+        self.explorer_model = QFileSystemModel(self.explorer_panel)
+        self.explorer_model.setFilter(
+            QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot
+        )
+        self.explorer_tree = QTreeView(self.explorer_panel)
+        self.explorer_tree.setModel(self.explorer_model)
+        self.explorer_tree.setHeaderHidden(True)
+        for column in range(1, self.explorer_model.columnCount()):
+            self.explorer_tree.hideColumn(column)
+        self.explorer_tree.doubleClicked.connect(self._open_explorer_index)
+        self.explorer_tree.setToolTip(tooltip_tr("editor.explorer_tree"))
+        explorer_layout.addWidget(self.explorer_tree)
+        self._set_explorer_root(self.explorer_root_path, persist=False)
+
+    def _set_explorer_root(self, folder_path: str, *, persist: bool = True) -> bool:
+        """Set a validated folder as the lazy explorer root."""
+        normalized = self._normalized_file_path(folder_path)
+        if not normalized or not os.path.isdir(normalized):
+            normalized = str(Path.home())
+        root_index = self.explorer_model.setRootPath(normalized)
+        self.explorer_tree.setRootIndex(root_index)
+        self.explorer_root_path = normalized
+        if persist:
+            self.settings.setValue("explorer_root_path", normalized)
+        return os.path.isdir(normalized)
+
+    def _open_explorer_folder(self) -> None:
+        """Choose the navigation root without invoking a recursive search."""
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            tr("editor.dialog_open_folder_title"),
+            self.explorer_root_path,
+        )
+        if folder_path:
+            self._set_explorer_root(folder_path)
+            self._set_explorer_visible(True)
+
+    def _open_explorer_index(self, index) -> None:
+        """Open files from the sidebar through the editor's existing API."""
+        if not index.isValid() or self.explorer_model.isDir(index):
+            return
+        file_path = self.explorer_model.filePath(index)
+        if os.path.isfile(file_path):
+            self.open_file_path(file_path)
+
+    def _set_explorer_visible(self, visible: bool) -> None:
+        """Show or hide the editor explorer and persist the preference."""
+        self.show_explorer_enabled = visible
+        self.explorer_panel.setVisible(visible)
+        self.settings.setValue("show_explorer_enabled", visible)
+        self._refresh_editor_menus()
+
     def _connect_signals(self):
         """Connect widget signals."""
         handlers = self._action_signal_handlers()
@@ -597,6 +710,10 @@ class EditorDock(BaseDock):
 
         # Context menu on tabs
         self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tab_widget.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Expanding
+        )
         self.tab_widget.customContextMenuRequested.connect(self._show_tab_context_menu)
 
     def _setup_external_file_watcher(self) -> None:
@@ -936,6 +1053,11 @@ class EditorDock(BaseDock):
 
         if hasattr(tab, 'modified_changed'):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
+            tab.modified_changed.connect(
+                lambda modified=False, t=tab: self._on_tab_recovery_state_changed(
+                    t, modified
+                )
+            )
         if hasattr(tab, 'edit_only_changed'):
             tab.edit_only_changed.connect(lambda _enabled=False, t=tab: self._on_tab_mode_changed(t))
         if (
@@ -988,11 +1110,15 @@ class EditorDock(BaseDock):
         action.setData(action_id)
         action.setCheckable(bool(spec.get("checkable", False)))
 
-        shortcut = spec.get("shortcut")
-        if shortcut is not None:
-            if isinstance(shortcut, str):
-                shortcut = QKeySequence(shortcut)
-            action.setShortcut(shortcut)
+        shortcuts = spec.get("shortcuts")
+        if shortcuts:
+            action.setShortcuts([QKeySequence(item) for item in shortcuts])
+        else:
+            shortcut = spec.get("shortcut")
+            if shortcut is not None:
+                if isinstance(shortcut, str):
+                    shortcut = QKeySequence(shortcut)
+                action.setShortcut(shortcut)
 
         setattr(self, f"action_{action_id}", action)
         self._action_by_id[action_id] = action
@@ -1003,6 +1129,9 @@ class EditorDock(BaseDock):
         return {
             "new": lambda _checked=False: self._new_file(),
             "open": lambda _checked=False: self._open_file(),
+            "open_folder": lambda _checked=False: self._open_explorer_folder(),
+            "recover_unsaved": lambda _checked=False: self._show_recovery_dialog(),
+            "recovery_retention": lambda _checked=False: self._set_recovery_retention(),
             "save": lambda _checked=False: self._save_file(),
             "save_as": lambda _checked=False: self._save_file_as(),
             "compare_with_saved": lambda _checked=False: self._compare_current_tab_with_saved(),
@@ -1018,6 +1147,7 @@ class EditorDock(BaseDock):
             "paste": lambda _checked=False: self._paste_current_tab(),
             "delete": lambda _checked=False: self._delete_current_selection(),
             "select_all": lambda _checked=False: self._select_all_current_tab(),
+            "select_line": lambda _checked=False: self._select_current_line(),
             "find": lambda _checked=False: self._show_find_dialog(False),
             "find_replace": lambda _checked=False: self._show_find_dialog(True),
             "go_to_line": lambda _checked=False: self._show_go_to_line_dialog(),
@@ -1032,6 +1162,7 @@ class EditorDock(BaseDock):
             "word_wrap": lambda checked: self._set_word_wrap_enabled(checked),
             "render_whitespace": lambda checked: self._set_render_whitespace_enabled(checked),
             "show_line_numbers": lambda checked: self._set_show_line_numbers_enabled(checked),
+            "show_explorer": lambda checked: self._set_explorer_visible(checked),
             "small_text": lambda _checked=False: self._change_current_text_size(-1),
             "large_text": lambda _checked=False: self._change_current_text_size(1),
             "normal_size": lambda _checked=False: self._set_current_text_size(self.normal_text_font_size),
@@ -1402,6 +1533,15 @@ class EditorDock(BaseDock):
         tab.editor.selectAll()
         self.lbl_status.setText(tr("editor.status_selected_all"))
 
+    def _select_current_line(self):
+        """Select the current line using the conventional Ctrl+L command."""
+        tab = self.tab_widget.currentWidget()
+        if not tab or not hasattr(tab, 'editor'):
+            return
+        cursor = tab.editor.textCursor()
+        cursor.select(QTextCursor.LineUnderCursor)
+        tab.editor.setTextCursor(cursor)
+
     def _duplicate_current_line_or_selection(self):
         """Duplicate the selected text or current line."""
         tab = self.tab_widget.currentWidget()
@@ -1763,6 +1903,22 @@ class EditorDock(BaseDock):
             tr("editor.status_go_to_line").format(line=target_line, max=line_count)
         )
         return True
+
+    def apply_confirmed_voice_command(self, command: dict) -> bool:
+        """Apply a command already reviewed and confirmed in the voice tool."""
+        tab = self.tab_widget.currentWidget()
+        if not tab or not hasattr(tab, "editor"):
+            return False
+        action = command.get("action")
+        if action == "insert_text":
+            tab.editor.textCursor().insertText(str(command.get("text", "")))
+            self.lbl_status.setText("Confirmed voice text inserted")
+            return True
+        if action == "go_to_line":
+            return self._go_to_line_in_current_tab(int(command.get("line", 1)))
+        if action == "save":
+            return bool(self._save_file())
+        return False
 
     def _current_json_tab(self):
         """Return the current tab when it is a JsonEditorTab."""
@@ -2708,6 +2864,7 @@ class EditorDock(BaseDock):
                     return
 
         self._clear_tab_disk_state(tab, refresh_watchers=False)
+        self._discard_recovery_for_tab(tab)
         self.tab_widget.removeTab(index)
         self._refresh_external_file_watchers()
         self.lbl_status.setText(f"Closed: {tab.get_tab_title()}")
@@ -2780,6 +2937,127 @@ class EditorDock(BaseDock):
         self.lbl_status.setText(status_text)
         self._refresh_editor_menus()
 
+    def _on_tab_recovery_state_changed(self, tab, modified: bool) -> None:
+        """Schedule a snapshot for changed tabs or clear one after saving."""
+        if modified:
+            self._recovery_timer.start()
+        else:
+            self._discard_recovery_for_tab(tab)
+
+    def _checkpoint_unsaved_tabs(self) -> None:
+        """Persist all modified text buffers using bounded local snapshots."""
+        skipped = 0
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if not hasattr(tab, "editor") or not getattr(tab, "is_modified", False):
+                self._discard_recovery_for_tab(tab)
+                continue
+
+            snapshot_id = getattr(tab, "_clarify_recovery_id", "")
+            if not snapshot_id:
+                snapshot_id = uuid.uuid4().hex
+                setattr(tab, "_clarify_recovery_id", snapshot_id)
+
+            display_name = getattr(
+                tab, "_clarify_display_name", tab.get_tab_title()
+            )
+            extension = os.path.splitext(display_name)[1] or os.path.splitext(
+                getattr(tab, "file_path", "") or ""
+            )[1] or ".txt"
+            try:
+                self.recovery_store.save(
+                    snapshot_id,
+                    title=display_name,
+                    content=tab.editor.toPlainText(),
+                    file_path=getattr(tab, "file_path", "") or "",
+                    extension=extension,
+                )
+            except (RecoverySnapshotError, OSError):
+                skipped += 1
+
+        if skipped:
+            self.lbl_status.setText(
+                tr("editor.status_recovery_skipped").format(count=skipped)
+            )
+
+    def _discard_recovery_for_tab(self, tab) -> None:
+        """Discard a tab's local recovery snapshot when no longer needed."""
+        snapshot_id = getattr(tab, "_clarify_recovery_id", "") if tab else ""
+        if snapshot_id:
+            self.recovery_store.discard(snapshot_id)
+
+    def _show_recovery_dialog(self) -> None:
+        """Offer to recover or discard all currently available snapshots."""
+        snapshots = [
+            snapshot
+            for snapshot in self.recovery_store.list()
+            if snapshot.snapshot_id not in self._restored_recovery_ids
+        ]
+        if not snapshots:
+            QMessageBox.information(
+                self,
+                tr("editor.recovery_none_title"),
+                tr("editor.recovery_none_message"),
+            )
+            return
+
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(tr("editor.recovery_dialog_title"))
+        dialog.setText(
+            tr("editor.recovery_dialog_message").format(count=len(snapshots))
+        )
+        recover_button = dialog.addButton(
+            tr("editor.btn_recover_all"), QMessageBox.AcceptRole
+        )
+        discard_button = dialog.addButton(
+            tr("editor.btn_discard_all"), QMessageBox.DestructiveRole
+        )
+        dialog.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
+        dialog.exec_()
+
+        if dialog.clickedButton() == discard_button:
+            self.recovery_store.discard_all()
+            self._restored_recovery_ids.clear()
+            return
+        if dialog.clickedButton() != recover_button:
+            return
+
+        for snapshot in snapshots:
+            self._restore_recovery_snapshot(snapshot)
+        self.lbl_status.setText(
+            tr("editor.status_recovered_documents").format(count=len(snapshots))
+        )
+
+    def _restore_recovery_snapshot(self, snapshot):
+        """Restore one snapshot as an unsaved tab, never over its source file."""
+        display_name = tr("editor.recovered_name").format(name=snapshot.title)
+        tab = self.load_generated_content(
+            snapshot.content,
+            display_name,
+            extension=snapshot.extension,
+        )
+        setattr(tab, "_clarify_recovery_id", snapshot.snapshot_id)
+        setattr(tab, "_clarify_recovery_source_path", snapshot.file_path)
+        self._restored_recovery_ids.add(snapshot.snapshot_id)
+        return tab
+
+    def _set_recovery_retention(self) -> None:
+        """Let the user adjust snapshot retention from 1 hour to 30 days."""
+        hours, accepted = QInputDialog.getInt(
+            self,
+            tr("editor.recovery_retention_title"),
+            tr("editor.recovery_retention_message"),
+            self.recovery_retention_hours,
+            1,
+            24 * 30,
+        )
+        if not accepted:
+            return
+        self.recovery_retention_hours = hours
+        self.recovery_store.retention_hours = hours
+        self.recovery_store.prune()
+        self.settings.setValue("recovery_retention_hours", hours)
+
     def _set_show_line_numbers_enabled(self, enabled: bool):
         """Apply line-number visibility to the dock and all open tabs."""
         self.show_line_numbers_enabled = enabled
@@ -2837,7 +3115,7 @@ class EditorDock(BaseDock):
             self.lbl_status.setText(f"💾 Auto-saved: {filename}")
 
             # Reset status after 2 seconds
-            QTimer.singleShot(2000, lambda: self._on_tab_changed(self.tab_widget.currentIndex()))
+            QTimer.singleShot(2000, self, lambda: self._on_tab_changed(self.tab_widget.currentIndex()))
 
     def _add_recent_file(self, file_path: str):
         """Add file to recent files list."""
@@ -2909,6 +3187,44 @@ class EditorDock(BaseDock):
     def save_file(self):
         """Public API for saving current file (v2.9.40)."""
         self._save_file()
+
+    def load_generated_content(
+        self,
+        content: str,
+        display_name: str = "Untitled.txt",
+        *,
+        extension: str | None = None,
+        edit_only: bool = False,
+    ):
+        """
+        Load generated tool output into a new editor tab.
+
+        Unlike open_file_path(), this does not create or track a real file on
+        disk. The optional extension controls the editor type used for syntax
+        and JSON-specific behavior.
+        """
+        normalized_extension = (extension or os.path.splitext(display_name)[1] or ".txt").lower()
+        if normalized_extension and not normalized_extension.startswith("."):
+            normalized_extension = f".{normalized_extension}"
+
+        if normalized_extension == ".json":
+            tab = JsonEditorTab(None, self, edit_only_mode=edit_only)
+        else:
+            tab = EditorTab(None, self, edit_only_mode=edit_only)
+
+        setattr(tab, "_clarify_display_name", display_name)
+        self._prepare_tab_for_dock(tab)
+        tab.editor.setPlainText(content)
+        tab.is_modified = not edit_only
+
+        index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+        self.tab_widget.setCurrentIndex(index)
+        self._refresh_editor_menus()
+
+        editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
+        mode_text = " (Edit-Only)" if edit_only else ""
+        self.lbl_status.setText(f"Loaded generated content in {editor_type}{mode_text}: {display_name}")
+        return tab
     
     def load_json_string(self, json_str: str):
         """

@@ -8,11 +8,9 @@ clarify/
 │   ├── README.md                  # Project introduction
 │   ├── CHANGELOG.md               # Version history
 │   ├── CONTRIBUTING.md            # Contribution guide
-│   ├── PROJECT_STRUCTURE.md       # Architecture overview
 │   ├── SECURITY.md                # Security policy
 │   ├── pyproject.toml             # Project configuration
-│   ├── poetry.lock                # Dependency lock
-│   └── requirements-docs.txt      # Docs dependencies
+│   └── poetry.lock                # Dependency lock
 │
 ├── 🔧 Configuration
 │   ├── .gitignore                 # Git ignore rules
@@ -24,11 +22,11 @@ clarify/
 │       └── examples/              # Config examples
 │
 ├── 🚀 Launchers
-│   ├── main.py                    # Main entry point
-│   ├── launchers/                 # Platform-specific launchers
-│   │   ├── clarify.py            # CLI launcher
-│   │   ├── clarify_gui.sh        # Linux GUI launcher
-│   │   └── clarify_gui.bat       # Windows GUI launcher
+│   ├── clarify.sh                 # Linux/Unix root launcher
+│   ├── clarify.command            # macOS root launcher
+│   ├── clarify.bat                # Windows root launcher
+│   ├── main.py                    # Development import validation
+│   └── launchers/                 # Compatibility launchers
 │
 ├── 📦 Source Code
 │   └── src/                       # Application source code
@@ -48,6 +46,7 @@ clarify/
 ├── 📚 Documentation
 │   └── docs/                      # Comprehensive docs
 │       ├── INDEX.md              # Documentation index
+│       ├── CURRENT_STATE.md      # Current checkout guidance
 │       ├── guides/               # User guides
 │       ├── architecture/         # Architecture docs
 │       ├── specifications/       # Feature specs
@@ -88,23 +87,23 @@ clarify/
 ## 🎯 Quick Navigation
 
 ### 👨‍💻 For Developers
-- **Start here**: [README.md](README.md)
+- **Start here**: [README.md](../../README.md)
 - **Project structure**: [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Documentation**: [docs/INDEX.md](docs/INDEX.md)
-- **Architecture**: [docs/architecture/](docs/architecture/)
+- **Contributing**: [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- **Documentation**: [docs/INDEX.md](../INDEX.md)
+- **Architecture**: [docs/architecture/](../architecture/)
 
 ### 📖 For Users
-- **Installation**: [README.md#installation](README.md)
-- **User guides**: [docs/guides/](docs/guides/)
-- **Tutorials**: [docs/tutorials/](docs/tutorials/)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+- **Installation**: [README.md#installation](../../README.md#installation)
+- **User guides**: [docs/guides/](./)
+- **Tutorials**: [docs/tutorials/](../tutorials/)
+- **Changelog**: [CHANGELOG.md](../../CHANGELOG.md)
 
 ### 🔧 For Contributors
-- **Setup**: [CONTRIBUTING.md#setup](CONTRIBUTING.md)
-- **Testing**: [tests/](tests/)
-- **CI/CD**: [.github/workflows/](.github/workflows/)
-- **Code style**: [.pylintrc](.pylintrc), [.pre-commit-config.yaml](.pre-commit-config.yaml)
+- **Setup**: [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- **Testing**: [tests/](../../tests/)
+- **CI/CD**: [.github/workflows/](../../.github/workflows/)
+- **Code style**: [.pylintrc](../../.pylintrc), [.pre-commit-config.yaml](../../.pre-commit-config.yaml)
 
 ---
 
@@ -123,16 +122,18 @@ clarify/
 ### Entry Points
 | File | Location | Purpose |
 |------|----------|---------|
-| `main.py` | Root | Main entry point |
-| `clarify.py` | `launchers/` | CLI launcher |
-| `clarify_gui.sh` | `launchers/` | Linux GUI |
-| `clarify_gui.bat` | `launchers/` | Windows GUI |
+| `python -m src` | Root command | Main GUI/CLI entry point |
+| `clarify.sh` | Root | Linux/Unix GUI launcher |
+| `clarify.command` | Root | macOS GUI launcher |
+| `clarify.bat` | Root | Windows GUI launcher |
+| `main.py` | Root | Development import validation (`python main.py test`) |
 
 ### Documentation
 | Document | Location | Purpose |
 |----------|----------|---------|
 | `INDEX.md` | `docs/` | Documentation index |
-| `PROJECT_SUMMARY.md` | `docs/` | Executive summary |
+| `CURRENT_STATE.md` | `docs/` | Current checkout guidance |
+| `PROJECT_SUMMARY.md` | `docs/guides/` | Executive summary |
 | Feature specs | `docs/specifications/` | Feature documentation |
 | Guides | `docs/guides/` | User guides |
 | Release notes | `docs/releases/` | Version releases |
@@ -256,6 +257,6 @@ rm -rf dist/ build/ *.egg-info/
 
 ---
 
-**Version**: 2.9.111  
-**Last Updated**: 2025-12-23  
+**Version note**: v2.9.x documentation milestones; see `docs/CURRENT_STATE.md` for current checkout notes
+**Last Updated**: 2026-06-08
 **Maintained by**: Josue Amaral

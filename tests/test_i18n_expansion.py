@@ -5,6 +5,7 @@ Tests the addition of 5 new languages (ES, FR, DE, ZH, JA) to the i18n system.
 """
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -205,6 +206,10 @@ class TestI18nExpansion:
     def test_no_placeholder_strings(self):
         """Verify no placeholder strings like 'TODO', 'FIXME', or '[translation needed]'"""
         placeholders = ["TODO", "FIXME", "[translation needed]", "TRANSLATE_ME", "XXX"]
+        placeholder_patterns = {
+            placeholder: re.compile(rf"(?<!\w){re.escape(placeholder)}(?!\w)")
+            for placeholder in placeholders
+        }
 
         for lang in self.NEW_LANGUAGES:
             file_path = self.I18N_DIR / f"{lang}.json"
@@ -213,8 +218,10 @@ class TestI18nExpansion:
 
             for key, value in data.items():
                 if not key.startswith("_") and isinstance(value, str):
-                    for placeholder in placeholders:
-                        assert placeholder not in value, f"{lang}.json key '{key}' contains placeholder: {placeholder}"
+                    for placeholder, pattern in placeholder_patterns.items():
+                        assert not pattern.search(
+                            value
+                        ), f"{lang}.json key '{key}' contains placeholder: {placeholder}"
 
 
 if __name__ == "__main__":

@@ -19,8 +19,8 @@ Version: 2.9.109
 
 from typing import Any, Dict, Optional, Callable
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QDockWidget
-from PySide6.QtCore import QSettings
+from PySide6.QtWidgets import QDockWidget, QMenu
+from PySide6.QtCore import QSettings, Qt
 
 
 
@@ -201,31 +201,16 @@ class PluginBase:
         # Navigate/create menu hierarchy
         current_menu = None
         for part in parts:
+            parent = menu_bar if current_menu is None else current_menu
+            # Query owned menus directly: temporary QAction.menu() wrappers can
+            # invalidate QMenu objects on supported PySide6 versions.
+            current_menu = next(
+                (menu for menu in parent.findChildren(QMenu, options=Qt.FindDirectChildrenOnly)
+                 if menu.title().replace("&", "").lower() == part.lower()),
+                None,
+            )
             if current_menu is None:
-                # Find or create top-level menu
-                # Use case-insensitive comparison to find existing menus
-                part_lower = part.lower()
-                for action in menu_bar.actions():
-                    # Compare normalized text (remove &, lower case)
-                    menu_text = action.text().replace("&", "").lower()
-                    if menu_text == part_lower or action.text() == part:
-                        current_menu = action.menu()
-                        break
-                if current_menu is None:
-                    current_menu = menu_bar.addMenu(part)
-            else:
-                # Find or create submenu
-                found = False
-                part_lower = part.lower()
-                for action in current_menu.actions():
-                    if action.menu():
-                        menu_text = action.text().replace("&", "").lower()
-                        if menu_text == part_lower or action.text() == part:
-                            current_menu = action.menu()
-                            found = True
-                            break
-                if not found:
-                    current_menu = current_menu.addMenu(part)
+                current_menu = parent.addMenu(part)
 
         # Create action
         action = QAction(text, app)

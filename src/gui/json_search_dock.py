@@ -382,6 +382,7 @@ class JsonSearchDock(StandardToolDock):
         self.btn_search.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
         self.btn_save_results.setEnabled(bool(results))  # Enable if we have results
+        self.notify_processing_completed()
 
     def _on_failed(self, error):
         """Handle search failure."""

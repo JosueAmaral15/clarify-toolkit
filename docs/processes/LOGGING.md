@@ -49,6 +49,15 @@ logger.info(
 
 ### Environment Variables
 
+`CLARIFY_LOG_DIR` overrides the log directory. If that location is unavailable,
+Clarify tries the operating system's temporary directory under `clarify-<uid>/logs`.
+If both locations fail, logging continues on the console. Migration logs use the
+same effective directory and do not prevent startup when file logging fails.
+
+`CLARIFY_SETTINGS_FILE` selects the JSON preferences file explicitly; its default
+remains `~/.clarify_settings.json`. This does not relocate QSettings or other app
+storage. Preferences are never silently redirected to temporary storage.
+
 Set `CLARIFY_LOG_LEVEL` to control log verbosity:
 
 ```bash
@@ -59,7 +68,7 @@ export CLARIFY_LOG_LEVEL=DEBUG
 set CLARIFY_LOG_LEVEL=DEBUG
 
 # Run application
-python clarify.py
+python -m src
 ```
 
 **Available Levels**:
@@ -96,7 +105,7 @@ Logs are stored in:
 
 - **Max size**: 10 MB per log file
 - **Backups**: 5 rotating backups (`clarify.log.1`, `clarify.log.2`, etc.)
-- **Total storage**: ~50 MB (10 MB × 5 backups)
+- **Total storage**: up to approximately 60 MB (active file plus five backups)
 
 ### Accessing Log Files
 
@@ -132,7 +141,7 @@ logger = get_logger(__name__)
 
 def process_data(data):
     logger.info(f"Processing {len(data)} items")
-    
+
     try:
         result = heavy_computation(data)
         logger.debug(f"Computation result: {result}")
@@ -151,7 +160,7 @@ class DataProcessor:
     def __init__(self):
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
         self.logger.info("DataProcessor initialized")
-    
+
     def process(self, data):
         self.logger.debug(f"Input data: {data}")
         result = self._internal_process(data)
@@ -170,9 +179,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.logger = get_logger("clarify.gui.MainWindow")
         self.logger.info("MainWindow initialized")
-        
+
         self._setup_ui()
-    
+
     def on_button_clicked(self):
         self.logger.debug("Button clicked")
         try:
@@ -414,13 +423,13 @@ logger = get_logger(__name__)
 def process_files(directory: str):
     """Process all JSON files in directory."""
     logger.info(f"Starting file processing in: {directory}")
-    
+
     files = list(Path(directory).glob("*.json"))
     logger.info(f"Found {len(files)} JSON files")
-    
+
     processed = 0
     errors = 0
-    
+
     for file in files:
         try:
             logger.debug(f"Processing: {file.name}")
@@ -434,30 +443,30 @@ def process_files(directory: str):
                 exc_info=True,
                 extra={"file": str(file), "error_type": type(e).__name__}
             )
-    
+
     logger.info(
         f"Processing complete: {processed} successful, {errors} errors",
         extra={"total": len(files), "success_rate": processed/len(files)*100}
     )
-    
+
     return processed, errors
 
 def process_single_file(file: Path):
     """Process a single JSON file."""
     logger.debug(f"Reading file: {file}")
-    
+
     with open(file, 'r') as f:
         data = json.load(f)
-    
+
     logger.debug(f"File contains {len(data)} items")
-    
+
     # Process data...
     result = transform_data(data)
-    
+
     logger.debug(f"Writing result to: {file}")
     with open(file, 'w') as f:
         json.dump(result, f, indent=2)
-    
+
     logger.info(f"File processed: {file.name} ({len(result)} items)")
 ```
 
@@ -477,9 +486,9 @@ def setup_logging():
 def test_my_function(caplog):
     """Test with log capture."""
     logger = get_logger(__name__)
-    
+
     my_function()
-    
+
     # Assert specific logs appeared
     assert "Expected log message" in caplog.text
     assert any(record.levelname == "ERROR" for record in caplog.records)

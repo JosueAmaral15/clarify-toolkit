@@ -322,6 +322,7 @@ def test_json_translate_dock_tooltips(qtbot):
         # Scope delimiters (2)
         (dock.ed_start, "ed_start"),
         (dock.ed_end, "ed_end"),
+        (dock.btn_add_scope, "btn_add_scope"),
         # Exclusion patterns (1)
         (dock.ed_exclude, "ed_exclude"),
         # Options checkboxes (5)

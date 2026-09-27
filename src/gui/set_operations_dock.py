@@ -74,7 +74,11 @@ class SetOperationsDock(BaseDock):
         # === File Selection Section ===
         self.file_selector = FileSelectionWidget(
             title="File Selection",
-            file_filter="JSON Files (*.json);;All Files (*)"
+            file_filter=(
+                "Supported Documents (*.json *.txt *.docx *.odt *.ipynb *.pdf);;"
+                "JSON Files (*.json);;Text Documents (*.txt *.docx *.odt);;"
+                "Notebooks (*.ipynb);;PDF Documents (*.pdf)"
+            )
         )
         main_layout.addWidget(self.file_selector)
 

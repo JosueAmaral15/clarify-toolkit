@@ -34,8 +34,8 @@ git clone https://github.com/JosueAmaral15/clarify.git
 cd clarify
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
+python -m pip install -e .
+python -m src
 ```
 
 ### Q: Can I use pip to install Clarify?
@@ -168,14 +168,14 @@ Translation files are simple JSON: `src/i18n/{lang}.json`
 ### Q: Clarify won't start. What should I do?
 **A**:
 1. **Check Python version**: `python --version` (must be 3.12+)
-2. **Reinstall dependencies**: `pip install -r requirements.txt --force-reinstall`
-3. **Check logs**: `logs/clarify.log` for error messages
+2. **Reinstall dependencies**: `python -m pip install -e .`
+3. **Check logs**: `~/.clarify/logs/clarify.log` for error messages
 4. **Run tests**: `pytest tests/ -v` to diagnose issues
 
 ### Q: I get "Module not found" errors
 **A**: Install missing dependencies:
 ```bash
-pip install PySide6 pytest pytest-qt
+python -m pip install -e ".[dev]"
 ```
 
 ### Q: Performance is slow with large files
@@ -224,7 +224,7 @@ For very large files (>500 MB), consider using CLI tools instead.
 **A**:
 - **Built-in**: `Help → Tutorials` (interactive lessons)
 - **Wiki**: [Quick Start Guide](quick-start-guide.md)
-- **Docs**: [RECIPES.md](../RECIPES.md) (practical examples)
+- **Docs**: [Features Overview](features-overview.md) and [Getting Started](getting-started.md)
 
 ### Q: How do I report bugs?
 **A**: [GitHub Issues](https://github.com/JosueAmaral15/clarify/issues/new?template=bug_report.md)
@@ -233,7 +233,7 @@ Please include:
 - Clarify version
 - OS and Python version
 - Steps to reproduce
-- Error logs (`logs/clarify.log`)
+- Error logs (`~/.clarify/logs/clarify.log`)
 
 ### Q: Can I request features?
 **A**: Yes! [Feature Request Template](https://github.com/JosueAmaral15/clarify/issues/new?template=feature_request.md)
@@ -253,13 +253,13 @@ Please include:
 **A**: Yes! Clarify has a CLI for most operations:
 ```bash
 # Example: JSON Rewriter
-python -m src.rewriter.cli deduplicate input.json --output output.json
+python -m src dedupe input.json --output output.json
 
 # Example: Search/Replace
-python -m src.cli.search --path /data --find "old" --replace "new"
+python -m src replace /data old new --all
 ```
 
-See CLI help: `python -m src.cli --help`
+See CLI help: `python -m src --help`
 
 ### Q: Can I create custom docks/plugins?
 **A**: Plugin system is planned for v3.0. For now, you can:

@@ -1,0 +1,5 @@
+Clarify Issues:
+
+- Don't recognize special characteres such as line breaks;
+- Don't have hotkeys for File (Open, Save, etc) and Edit (Copy, Paste, etc) options;
+- DOn't have the left panel to navigate between folders like the xed application feature;

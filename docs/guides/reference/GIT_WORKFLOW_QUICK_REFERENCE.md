@@ -1,7 +1,7 @@
 # Git Workflow - Quick Reference Card
 
-**Last Updated**: 2026-01-18  
-**For**: Clarify Project - Branch-Based Workflow  
+**Last Updated**: 2026-01-18
+**For**: Clarify Project - Branch-Based Workflow
 **Audience**: All programmers working on the project
 
 ---
@@ -302,7 +302,7 @@ git diff origin/main              # Review all changes
 ## 🔗 References
 
 - Full documentation: `PROJECT_UPDATE_FILE_RENAMING_STANDARDIZATION.md`
-- Protocol: `docs/protocolos/SIMPLICITY_PROTOCOL_3.md`
+- Protocol: `docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md`
 - Contributing: `CONTRIBUTING.md`
 
 ---

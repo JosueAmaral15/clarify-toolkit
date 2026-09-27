@@ -75,6 +75,14 @@ class TextSearchDialog(QDialog):
         self.search_input.returnPressed.connect(self._find_next)
         search_layout.addWidget(self.search_input)
         layout.addLayout(search_layout)
+
+        replace_layout = QHBoxLayout()
+        replace_layout.addWidget(QLabel("Replace with:"))
+        self.replace_input = QLineEdit()
+        self.replace_input.setPlaceholderText("Enter replacement text...")
+        self.replace_input.returnPressed.connect(self._replace_current)
+        replace_layout.addWidget(self.replace_input)
+        layout.addLayout(replace_layout)
         
         # Options checkboxes
         options_layout = QHBoxLayout()
@@ -110,6 +118,16 @@ class TextSearchDialog(QDialog):
         self.next_button.clicked.connect(self._find_next)
         self.next_button.setEnabled(False)
         buttons_layout.addWidget(self.next_button)
+
+        self.replace_button = QPushButton("Replace")
+        self.replace_button.clicked.connect(self._replace_current)
+        self.replace_button.setEnabled(False)
+        buttons_layout.addWidget(self.replace_button)
+
+        self.replace_all_button = QPushButton("Replace All")
+        self.replace_all_button.clicked.connect(self._replace_all)
+        self.replace_all_button.setEnabled(False)
+        buttons_layout.addWidget(self.replace_all_button)
         
         buttons_layout.addStretch()
         
@@ -279,6 +297,43 @@ class TextSearchDialog(QDialog):
         self.current_match_index = (self.current_match_index - 1) % len(self.matches)
         self._highlight_all_matches()
         self._update_ui()
+
+    def _replacement_for_match(self, matched_text):
+        """Return replacement text, expanding regex groups when enabled."""
+        replacement = self.replace_input.text()
+        if not self.regex_checkbox.isChecked():
+            return replacement
+
+        flags = 0 if self.case_checkbox.isChecked() else re.IGNORECASE
+        try:
+            match = re.fullmatch(self.search_input.text(), matched_text, flags)
+            return match.expand(replacement) if match else replacement
+        except (re.error, IndexError):
+            return replacement
+
+    def _replace_current(self):
+        """Replace the current match and continue to the next match."""
+        if not self.text_widget or not self.matches or self.current_match_index < 0:
+            return
+
+        start, end = self.matches[self.current_match_index]
+        text = self.text_widget.toPlainText()
+        replacement = self._replacement_for_match(text[start:end])
+        self.text_widget.setPlainText(text[:start] + replacement + text[end:])
+        self._find_all_matches()
+
+    def _replace_all(self):
+        """Replace every current match from end to start to keep offsets stable."""
+        if not self.text_widget or not self.matches:
+            return
+
+        text = self.text_widget.toPlainText()
+        for start, end in reversed(self.matches):
+            replacement = self._replacement_for_match(text[start:end])
+            text = text[:start] + replacement + text[end:]
+
+        self.text_widget.setPlainText(text)
+        self._find_all_matches()
     
     def _update_ui(self):
         """Update UI based on current state."""
@@ -286,6 +341,8 @@ class TextSearchDialog(QDialog):
         
         self.prev_button.setEnabled(has_matches)
         self.next_button.setEnabled(has_matches)
+        self.replace_button.setEnabled(has_matches)
+        self.replace_all_button.setEnabled(has_matches)
         
         if has_matches:
             self.counter_label.setText(f"Match {self.current_match_index + 1} of {len(self.matches)}")
@@ -537,7 +594,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     # Signal emitted when user wants to open result in editor
     open_in_editor_requested = Signal(str)  # JSON string
-    open_in_editor_and_switch_requested = Signal(str, bool)  # (content, switch_to_file)
+    open_in_editor_and_switch_requested = Signal(str, str)  # (content, output_kind)
     
     def __init__(self, parent: QWidgetType | None = None):
         # Initialize JSX extraction state BEFORE calling super().__init__
@@ -626,11 +683,15 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         # Input type dropdown (replaces "Is File?" checkbox)
         path_layout.addWidget(QLabel(tr("advanced_extractor.input_type", "Input:")))
         self.jsx_input_type_combo = QComboBox()
-        self.jsx_input_type_combo.addItems([
-            tr("advanced_extractor.input_directory", "Directory"),
-            tr("advanced_extractor.input_file", "File"),
-            tr("advanced_extractor.input_text", "Text")
-        ])
+        self.jsx_input_type_combo.addItem(
+            tr("advanced_extractor.input_directory", "Directory"), "directory"
+        )
+        self.jsx_input_type_combo.addItem(
+            tr("advanced_extractor.input_file", "File"), "file"
+        )
+        self.jsx_input_type_combo.addItem(
+            tr("advanced_extractor.input_text", "Text"), "text"
+        )
         self.jsx_input_type_combo.setMaximumWidth(120)
         self.jsx_input_type_combo.currentIndexChanged.connect(self._jsx_on_input_type_changed)
         path_layout.addWidget(self.jsx_input_type_combo)
@@ -1107,8 +1168,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _jsx_on_input_type_changed(self, index: int):
         """Handle input type dropdown change (Directory/File/Text)."""
-        input_types = ["directory", "file", "text"]
-        selected_type = input_types[index]
+        selected_type = self.jsx_input_type_combo.itemData(index)
         
         if selected_type == "text":
             # Text mode: Hide path field, show text area and search button
@@ -1576,7 +1636,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                     self._jsx_update_status(f"⚠ Parent key limiting error: {str(limit_err)}")
             
             # Apply parent key name truncation if enabled
-            '''
+            r'''
             if json_output and self.jsx_truncate_parent_keys_checkbox.isChecked():
                 try:
                     # Check if output is JS literal (without quotation marks)
@@ -1658,6 +1718,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
                 tr("advanced_extractor.success", "Success"),
                 tr("advanced_extractor.extracted", success_msg)
             )
+            self.notify_processing_completed()
             
         finally:
             self._cleanup_extraction_thread()
@@ -1996,10 +2057,12 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Paths tab is active
             content = self.jsx_paths_output.toPlainText().strip()
             tab_name = "Paths"
+            output_kind = "paths"
         else:
             # JSON tab is active
             content = self.jsx_json_output.toPlainText().strip()
             tab_name = "JSON"
+            output_kind = "json"
         
         if not content:
             self.show_warning(
@@ -2009,7 +2072,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             return
         
         # Emit signal to open in editor AND switch to file
-        self.open_in_editor_and_switch_requested.emit(content, True)
+        self.open_in_editor_and_switch_requested.emit(content, output_kind)
         self._jsx_update_status(f"✓ Opened {tab_name} in editor and switched")
     
     

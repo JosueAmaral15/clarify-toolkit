@@ -10,15 +10,18 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 # pylint: disable=logging-fstring-interpolation  # Performance not critical
 # pylint: disable=subprocess-run-check  # Open commands don't need check
 
+import json
 import os
 import sys
+import tempfile
 
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from PySide6.QtCore import Qt, QTimer, QModelIndex, QRect
+from PySide6.QtCore import QFile, Qt, QTimer, QModelIndex, QRect
 from PySide6.QtGui import QColor, QPainter, QTextDocument
 from PySide6.QtWidgets import (
-    QApplication, QHeaderView, QMenu,
+    QApplication, QFileDialog, QHeaderView, QMenu,
     QMessageBox, QStyledItemDelegate, QStyle,
     QStyleOptionViewItem, QTreeWidget, QTreeWidgetItem
 )
@@ -32,6 +35,20 @@ ITEM_TYPE_ROLE = int(Qt.ItemDataRole.UserRole)
 PATH_ROLE = ITEM_TYPE_ROLE + 1
 RESULT_PATH_ROLE = ITEM_TYPE_ROLE + 2
 MATCH_DATA_ROLE = ITEM_TYPE_ROLE + 3
+COPY_CONTENT_SAMPLE_BYTES = 4096
+COPY_CONTENT_MAX_FILE_BYTES = 512 * 1024
+COPY_CONTENT_MAX_TOTAL_BYTES = 2 * 1024 * 1024
+DELETE_CONFIRM_PREVIEW_LIMIT = 8
+REPLACE_TEMPLATE_MAX_BYTES = 512 * 1024
+REPLACE_TEMPLATE_PREVIEW_CHARS = 2000
+RESULTS_JSON_FORMAT = "clarify.file_explorer.results"
+RESULTS_JSON_VERSION = 1
+RESULTS_JSON_SNIPPET_MAX_CHARS = 4096
+AI_EXPLAIN_MAX_FILES = 20
+AI_EXPLAIN_MAX_MATCHES_PER_FILE = 20
+AI_EXPLAIN_MAX_SNIPPET_CHARS = 500
+AI_EXPLAIN_MAX_PROMPT_CHARS = 60000
+AI_EXPLAIN_MAX_BYTES_PER_FILE = 64 * 1024
 
 ITEM_TYPE_SUMMARY = "summary"
 ITEM_TYPE_ROOT = "root"
@@ -204,6 +221,7 @@ class ResultsTree(QTreeWidget):
         # Enable context menu (v2.9.2)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_menu)
+        self.itemActivated.connect(self._activate_result)
 
         # DISABLED: Mouse tracking causes horizontal scrolling/jumping when hovering
         # The itemEntered signal triggers updates that affect column width
@@ -716,8 +734,8 @@ class ResultsTree(QTreeWidget):
 
         return "\n".join(lines)
 
-    def _show_context_menu(self, position):
-        """Show context menu at cursor position (v2.9.2)."""
+    def _build_context_menu(self) -> QMenu:
+        """Build the context menu without displaying it."""
         menu = QMenu(self)
 
         # Get selected items
@@ -733,6 +751,37 @@ class ResultsTree(QTreeWidget):
         copy_all_action = menu.addAction("📋 Copy All Results")
         copy_all_action.setEnabled(bool(self._matches_data))
         copy_all_action.triggered.connect(self._copy_all)
+
+        # Copy all file content action
+        copy_content_action = menu.addAction("📋 Copy All Content")
+        copy_content_action.setEnabled(bool(self._matches_data))
+        copy_content_action.triggered.connect(self._copy_all_content)
+
+        copy_json_action = menu.addAction("📋 Copy Results as JSON")
+        copy_json_action.setEnabled(bool(self._matches_data))
+        copy_json_action.triggered.connect(self._copy_results_as_json)
+
+        export_json_action = menu.addAction("💾 Export Results as JSON...")
+        export_json_action.setEnabled(bool(self._matches_data))
+        export_json_action.triggered.connect(self._export_results_as_json)
+
+        explain_ai_action = menu.addAction("🤖 Prepare AI Explanation...")
+        explain_ai_action.setEnabled(bool(self._matches_data))
+        explain_ai_action.triggered.connect(self._prepare_ai_explanation)
+
+        folder_map_action = menu.addAction("Folder map from results")
+        folder_map_action.setEnabled(bool(self._matches_data))
+        folder_map_action.triggered.connect(self._open_folder_map)
+
+        menu.addSeparator()
+
+        delete_results_action = menu.addAction("🗑️ Delete Result Files...")
+        delete_results_action.setEnabled(bool(self._matches_data))
+        delete_results_action.triggered.connect(self._delete_result_files)
+
+        replace_content_action = menu.addAction("📝 Replace Content with File...")
+        replace_content_action.setEnabled(bool(self._matches_data))
+        replace_content_action.triggered.connect(self._replace_content_with_file)
 
         menu.addSeparator()
 
@@ -772,7 +821,26 @@ class ResultsTree(QTreeWidget):
         properties_action.setEnabled(has_selection)
         properties_action.triggered.connect(self._show_file_properties)
 
-        # Show menu at cursor position
+        return menu
+
+    def _open_folder_map(self):
+        """Send existing result paths to Information Structure without rescanning."""
+        if not self._matches_data:
+            return
+        main_window = self._get_main_window()
+        if main_window is None or not hasattr(main_window, "_show_information_structure"):
+            return
+        root = self._resolve_root_path(list(self._matches_data), self._base_path)
+        if not root:
+            return
+        main_window._show_information_structure()
+        dock = getattr(main_window, "dock_information_structure", None)
+        if dock is not None:
+            dock.prepare_folder_map(root, list(self._matches_data))
+
+    def _show_context_menu(self, position):
+        """Show context menu at cursor position (v2.9.2)."""
+        menu = self._build_context_menu()
         menu.exec_(self.mapToGlobal(position))
 
     def _copy_selected(self):
@@ -837,6 +905,1001 @@ class ResultsTree(QTreeWidget):
                 self._status_label.setText(f"✅ Copied all results ({total_matches} matches) to clipboard")
                 QTimer.singleShot(3000, lambda: self._status_label.setText(""))
 
+    @staticmethod
+    def _is_probably_binary_file(path: str) -> bool:
+        """Return True when a bounded sample suggests the file is binary."""
+        with open(path, "rb") as file_obj:
+            sample = file_obj.read(COPY_CONTENT_SAMPLE_BYTES)
+
+        if not sample:
+            return False
+
+        if b"\x00" in sample:
+            return True
+
+        try:
+            sample.decode("utf-8")
+        except UnicodeDecodeError:
+            return True
+
+        allowed_controls = {7, 8, 9, 10, 12, 13, 27}
+        control_count = sum(1 for byte in sample if byte < 32 and byte not in allowed_controls)
+        return control_count / len(sample) > 0.30
+
+    def _build_all_content_clipboard_text(
+        self,
+        max_file_bytes: int = COPY_CONTENT_MAX_FILE_BYTES,
+        max_total_bytes: int = COPY_CONTENT_MAX_TOTAL_BYTES,
+    ) -> Tuple[str, Dict[str, int]]:
+        """Build bounded clipboard text with full content for result files."""
+        stats = {
+            "copied": 0,
+            "skipped_binary": 0,
+            "skipped_directory": 0,
+            "skipped_missing": 0,
+            "skipped_size": 0,
+            "skipped_total_limit": 0,
+            "skipped_error": 0,
+            "bytes_copied": 0,
+        }
+        sections = []
+
+        for path in self._matches_data.keys():
+            try:
+                if not os.path.exists(path):
+                    stats["skipped_missing"] += 1
+                    continue
+
+                if os.path.isdir(path):
+                    stats["skipped_directory"] += 1
+                    continue
+
+                file_size = os.path.getsize(path)
+                if file_size > max_file_bytes:
+                    stats["skipped_size"] += 1
+                    continue
+
+                if self._is_probably_binary_file(path):
+                    stats["skipped_binary"] += 1
+                    continue
+
+                if stats["bytes_copied"] + file_size > max_total_bytes:
+                    stats["skipped_total_limit"] += 1
+                    continue
+
+                with open(path, "r", encoding="utf-8") as file_obj:
+                    content = file_obj.read()
+
+                sections.append(f"===== {path} =====\n{content}")
+                stats["copied"] += 1
+                stats["bytes_copied"] += file_size
+            except (OSError, UnicodeError):
+                stats["skipped_error"] += 1
+
+        return "\n\n".join(sections), stats
+
+    @staticmethod
+    def _format_copy_content_status(stats: Dict[str, int]) -> str:
+        """Format a compact copy-content status summary."""
+        skipped = (
+            stats["skipped_binary"]
+            + stats["skipped_directory"]
+            + stats["skipped_missing"]
+            + stats["skipped_size"]
+            + stats["skipped_total_limit"]
+            + stats["skipped_error"]
+        )
+        parts = [f"✅ Copied content from {stats['copied']} file(s)"]
+        if skipped:
+            parts.append(
+                "skipped "
+                f"{skipped} "
+                f"(binary {stats['skipped_binary']}, "
+                f"dirs {stats['skipped_directory']}, "
+                f"missing {stats['skipped_missing']}, "
+                f"large {stats['skipped_size']}, "
+                f"limit {stats['skipped_total_limit']}, "
+                f"errors {stats['skipped_error']})"
+            )
+        return "; ".join(parts)
+
+    def _copy_all_content(self):
+        """Copy bounded textual content from all result files to clipboard."""
+        text, stats = self._build_all_content_clipboard_text()
+        if text:
+            QApplication.clipboard().setText(text)
+
+        if self._status_label:
+            self._status_label.setText(self._format_copy_content_status(stats))
+            QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+
+    @staticmethod
+    def _timestamp_to_iso(timestamp: float) -> str:
+        """Convert a filesystem timestamp to local ISO format."""
+        return datetime.fromtimestamp(timestamp).astimezone().isoformat(timespec="seconds")
+
+    @staticmethod
+    def _truncate_json_snippet(snippet: str) -> Tuple[str, bool]:
+        """Limit snippets stored in exported JSON."""
+        if len(snippet) <= RESULTS_JSON_SNIPPET_MAX_CHARS:
+            return snippet, False
+        return snippet[:RESULTS_JSON_SNIPPET_MAX_CHARS], True
+
+    def _file_metadata_for_json(self, path: str) -> Dict[str, object]:
+        """Return lightweight metadata for a result path without reading file content."""
+        metadata: Dict[str, object] = {
+            "path": path,
+            "exists": os.path.exists(path),
+            "type": "missing",
+        }
+
+        if not metadata["exists"]:
+            return metadata
+
+        try:
+            stat_info = os.stat(path)
+            if os.path.isdir(path):
+                path_type = "directory"
+            elif os.path.isfile(path):
+                path_type = "file"
+            else:
+                path_type = "other"
+
+            metadata.update(
+                {
+                    "type": path_type,
+                    "size_bytes": stat_info.st_size,
+                    "modified_at": self._timestamp_to_iso(stat_info.st_mtime),
+                    "accessed_at": self._timestamp_to_iso(stat_info.st_atime),
+                    "created_at": self._timestamp_to_iso(stat_info.st_ctime),
+                }
+            )
+        except OSError as exc:
+            metadata["metadata_error"] = str(exc)
+
+        return metadata
+
+    def export_to_json_data(self) -> Dict[str, object]:
+        """Export results as structured JSON-compatible data."""
+        files = []
+        total_matches = 0
+
+        for path, matches in self._matches_data.items():
+            file_entry = self._file_metadata_for_json(path)
+            file_matches = []
+
+            for line, col, snippet in matches:
+                snippet_text, truncated = self._truncate_json_snippet(str(snippet))
+                file_matches.append(
+                    {
+                        "line": line,
+                        "column": col,
+                        "snippet": snippet_text,
+                        "snippet_truncated": truncated,
+                    }
+                )
+
+            total_matches += len(file_matches)
+            file_entry["matches_count"] = len(file_matches)
+            file_entry["matches"] = file_matches
+            files.append(file_entry)
+
+        return {
+            "format": RESULTS_JSON_FORMAT,
+            "version": RESULTS_JSON_VERSION,
+            "base_path": self._base_path,
+            "total_files": len(files),
+            "total_matches": total_matches,
+            "files": files,
+        }
+
+    def export_to_json_text(self) -> str:
+        """Export results as formatted JSON text."""
+        if not self._matches_data:
+            return ""
+        return json.dumps(self.export_to_json_data(), ensure_ascii=False, indent=2)
+
+    def _copy_results_as_json(self):
+        """Copy structured JSON results to the clipboard."""
+        text = self.export_to_json_text()
+        if not text:
+            return
+
+        QApplication.clipboard().setText(text)
+        if self._status_label:
+            total_matches = sum(len(items) for items in self._matches_data.values())
+            self._status_label.setText(f"Copied JSON results ({total_matches} matches) to clipboard")
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+
+    def _export_results_as_json(self):
+        """Save structured JSON results to a file."""
+        text = self.export_to_json_text()
+        if not text:
+            QMessageBox.information(self, "Export Results as JSON", "No results to export.")
+            return
+
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Results as JSON",
+            "clarify_search_results.json",
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not filepath:
+            return
+
+        try:
+            with open(filepath, "w", encoding="utf-8") as file_obj:
+                file_obj.write(text)
+                file_obj.write("\n")
+        except OSError as exc:
+            QMessageBox.critical(self, "Export Results as JSON", f"Failed to save JSON results:\n{exc}")
+            return
+
+        if self._status_label:
+            self._status_label.setText(f"Exported JSON results to {filepath}")
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+
+    @staticmethod
+    def _empty_ai_explain_stats() -> Dict[str, int]:
+        """Return a fresh AI-explanation stats dict."""
+        return {
+            "candidates": 0,
+            "skipped_binary": 0,
+            "skipped_directory": 0,
+            "skipped_missing": 0,
+            "skipped_non_file": 0,
+            "skipped_file_limit": 0,
+            "skipped_error": 0,
+        }
+
+    def _prepare_ai_explanation_candidates(self, paths: List[str]) -> Tuple[List[str], Dict[str, int]]:
+        """Filter result paths to a bounded list of textual files for AI processing."""
+        stats = self._empty_ai_explain_stats()
+        candidates = []
+        seen = set()
+
+        for path in paths:
+            if path in seen:
+                continue
+            seen.add(path)
+
+            try:
+                if not os.path.exists(path):
+                    stats["skipped_missing"] += 1
+                    continue
+                if os.path.isdir(path):
+                    stats["skipped_directory"] += 1
+                    continue
+                if not os.path.isfile(path):
+                    stats["skipped_non_file"] += 1
+                    continue
+                if self._is_probably_binary_file(path):
+                    stats["skipped_binary"] += 1
+                    continue
+                if len(candidates) >= AI_EXPLAIN_MAX_FILES:
+                    stats["skipped_file_limit"] += 1
+                    continue
+            except (OSError, UnicodeError):
+                stats["skipped_error"] += 1
+                continue
+
+            candidates.append(path)
+
+        stats["candidates"] = len(candidates)
+        return candidates, stats
+
+    @staticmethod
+    def _truncate_for_ai_prompt(text: str, limit: int) -> Tuple[str, bool]:
+        """Return text truncated to a bounded prompt segment."""
+        if len(text) <= limit:
+            return text, False
+        return text[:limit], True
+
+    def _build_ai_explanation_prompt(
+        self,
+        file_paths: List[str],
+        stats: Dict[str, int],
+        scope: str,
+    ) -> str:
+        """Build a bounded prompt for AI explanation of File Explorer results."""
+        scope_label = "selected File Explorer results" if scope == "selected" else "all current File Explorer results"
+        skipped = (
+            stats["skipped_binary"]
+            + stats["skipped_directory"]
+            + stats["skipped_missing"]
+            + stats["skipped_non_file"]
+            + stats["skipped_file_limit"]
+            + stats["skipped_error"]
+        )
+        lines = [
+            "Explain these File Explorer search results.",
+            "",
+            "Instructions:",
+            "- Explain the relevant purpose or role of each file.",
+            "- Explain why the listed matches may matter.",
+            "- Call out likely risks, repeated patterns, or suspicious findings.",
+            "- Suggest concrete next checks, but do not claim certainty about content that was not provided.",
+            (
+                f"- The AI Processor will read at most {AI_EXPLAIN_MAX_BYTES_PER_FILE} "
+                "bytes from each file; treat unseen content as unknown."
+            ),
+            "",
+            "Result scope:",
+            f"- Scope: {scope_label}",
+            f"- Files prepared for AI Processor: {len(file_paths)}",
+            f"- Files or paths skipped before preparation: {skipped}",
+            "",
+            "Search result context:",
+        ]
+
+        for path in file_paths:
+            matches = self._matches_data.get(path, [])
+            lines.append("")
+            lines.append(f"## {path}")
+            lines.append(f"- Matches in result: {len(matches)}")
+
+            for line, col, snippet in matches[:AI_EXPLAIN_MAX_MATCHES_PER_FILE]:
+                snippet_text, truncated = self._truncate_for_ai_prompt(
+                    str(snippet).replace("\n", " "),
+                    AI_EXPLAIN_MAX_SNIPPET_CHARS,
+                )
+                suffix = " [truncated]" if truncated else ""
+                lines.append(f"- line {line}, column {col}: {snippet_text}{suffix}")
+
+            omitted = len(matches) - AI_EXPLAIN_MAX_MATCHES_PER_FILE
+            if omitted > 0:
+                lines.append(f"- ... {omitted} additional match(es) omitted from prompt context")
+
+            current_prompt = "\n".join(lines)
+            if len(current_prompt) > AI_EXPLAIN_MAX_PROMPT_CHARS:
+                lines.append("")
+                lines.append("Prompt context truncated to stay within Clarify's safety limit.")
+                break
+
+        prompt = "\n".join(lines)
+        if len(prompt) > AI_EXPLAIN_MAX_PROMPT_CHARS:
+            prompt = prompt[:AI_EXPLAIN_MAX_PROMPT_CHARS] + "\n\nPrompt context truncated."
+        return prompt
+
+    @staticmethod
+    def _format_ai_explanation_status(prepared_count: int, stats: Dict[str, int]) -> str:
+        """Format a compact status summary for AI explanation preparation."""
+        skipped = (
+            stats["skipped_binary"]
+            + stats["skipped_directory"]
+            + stats["skipped_missing"]
+            + stats["skipped_non_file"]
+            + stats["skipped_file_limit"]
+            + stats["skipped_error"]
+        )
+        parts = [f"Prepared AI explanation for {prepared_count} file(s)"]
+        if skipped:
+            parts.append(
+                "skipped "
+                f"{skipped} "
+                f"(binary {stats['skipped_binary']}, "
+                f"dirs {stats['skipped_directory']}, "
+                f"missing {stats['skipped_missing']}, "
+                f"non-files {stats['skipped_non_file']}, "
+                f"limit {stats['skipped_file_limit']}, "
+                f"errors {stats['skipped_error']})"
+            )
+        return "; ".join(parts)
+
+    def _get_or_create_ai_processor(self):
+        """Return the main window AI Processor dock, creating/showing it when possible."""
+        main_window = self._get_main_window()
+        if not main_window:
+            return None
+
+        if hasattr(main_window, "_show_ai_processor"):
+            main_window._show_ai_processor()
+        elif not getattr(main_window, "dock_ai_processor", None):
+            from src.gui.dock_factory import DockFactory
+            DockFactory.create_ai_processor_dock(main_window)
+
+        return getattr(main_window, "dock_ai_processor", None)
+
+    def _prepare_ai_explanation(self):
+        """Prepare the AI Processor to explain selected or all File Explorer results."""
+        if not self._matches_data:
+            return
+
+        paths, scope = self._collect_result_scope_paths()
+        candidates, stats = self._prepare_ai_explanation_candidates(paths)
+
+        if not candidates:
+            message = self._format_ai_explanation_status(0, stats)
+            if self._status_label:
+                self._status_label.setText(message)
+                QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+            QMessageBox.information(
+                self,
+                "Prepare AI Explanation",
+                "No existing textual result files were found in the current result scope.",
+            )
+            return
+
+        ai_processor = self._get_or_create_ai_processor()
+        if ai_processor is None or not hasattr(ai_processor, "prepare_file_explorer_explanation"):
+            QMessageBox.warning(
+                self,
+                "Prepare AI Explanation",
+                "AI Processor is not available.",
+            )
+            return
+
+        prompt = self._build_ai_explanation_prompt(candidates, stats, scope)
+        prepared_count = ai_processor.prepare_file_explorer_explanation(
+            prompt,
+            candidates,
+            AI_EXPLAIN_MAX_BYTES_PER_FILE,
+        )
+
+        if self._status_label:
+            self._status_label.setText(self._format_ai_explanation_status(prepared_count, stats))
+            QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+
+    def _collect_result_scope_paths(self) -> Tuple[List[str], str]:
+        """Return selected result paths, or all result paths when nothing is selected."""
+        if self.selectedItems():
+            return self._collect_selected_result_paths(preserve_order=True), "selected"
+        return list(self._matches_data.keys()), "all"
+
+    @staticmethod
+    def _empty_delete_stats() -> Dict[str, int]:
+        """Return a fresh result-deletion stats dict."""
+        return {
+            "candidates": 0,
+            "moved_to_trash": 0,
+            "permanent_deleted": 0,
+            "skipped_directory": 0,
+            "skipped_missing": 0,
+            "skipped_non_file": 0,
+            "failed": 0,
+        }
+
+    def _collect_delete_scope_paths(self) -> Tuple[List[str], str]:
+        """Return selected result paths, or all result paths when nothing is selected."""
+        return self._collect_result_scope_paths()
+
+    @staticmethod
+    def _prepare_delete_candidates(paths: List[str]) -> Tuple[List[str], Dict[str, int]]:
+        """Filter result paths to existing regular files and count skipped paths."""
+        stats = ResultsTree._empty_delete_stats()
+        candidates = []
+        seen = set()
+
+        for path in paths:
+            if path in seen:
+                continue
+            seen.add(path)
+
+            if not os.path.exists(path):
+                stats["skipped_missing"] += 1
+                continue
+            if os.path.isdir(path):
+                stats["skipped_directory"] += 1
+                continue
+            if not os.path.isfile(path):
+                stats["skipped_non_file"] += 1
+                continue
+
+            candidates.append(path)
+
+        stats["candidates"] = len(candidates)
+        return candidates, stats
+
+    @staticmethod
+    def _format_delete_paths_preview(paths: List[str], limit: int = DELETE_CONFIRM_PREVIEW_LIMIT) -> str:
+        """Format a bounded path preview for destructive confirmation dialogs."""
+        shown = paths[:limit]
+        lines = [f"- {path}" for path in shown]
+        remaining = len(paths) - len(shown)
+        if remaining > 0:
+            lines.append(f"- ... and {remaining} more")
+        return "\n".join(lines)
+
+    def _format_delete_confirmation(self, paths: List[str], stats: Dict[str, int], scope: str) -> str:
+        """Build the confirmation text for deleting result files."""
+        scope_label = "selected result files" if scope == "selected" else "all current result files"
+        skipped = stats["skipped_directory"] + stats["skipped_missing"] + stats["skipped_non_file"]
+        lines = [
+            f"Delete {len(paths)} {scope_label}?",
+            "",
+            "Files will be moved to the trash when possible.",
+            "",
+            self._format_delete_paths_preview(paths),
+        ]
+        if skipped:
+            lines.extend(
+                [
+                    "",
+                    (
+                        "Skipped before deletion: "
+                        f"{stats['skipped_directory']} directories, "
+                        f"{stats['skipped_missing']} missing, "
+                        f"{stats['skipped_non_file']} non-files."
+                    ),
+                ]
+            )
+        return "\n".join(lines)
+
+    def _confirm_delete_result_files(self, paths: List[str], stats: Dict[str, int], scope: str) -> bool:
+        """Ask the user to confirm deletion of result files."""
+        reply = QMessageBox.question(
+            self,
+            "Delete Result Files",
+            self._format_delete_confirmation(paths, stats, scope),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        return reply == QMessageBox.Yes
+
+    def _confirm_permanent_delete_result_files(self, paths: List[str]) -> bool:
+        """Ask whether failed trash moves should fall back to permanent deletion."""
+        message = (
+            f"Moving {len(paths)} file(s) to the trash failed.\n\n"
+            "Permanently delete these files instead?\n\n"
+            f"{self._format_delete_paths_preview(paths)}"
+        )
+        reply = QMessageBox.warning(
+            self,
+            "Permanently Delete Files",
+            message,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        return reply == QMessageBox.Yes
+
+    @staticmethod
+    def _move_result_file_to_trash(path: str) -> bool:
+        """Move a file to the system trash using Qt."""
+        return bool(QFile.moveToTrash(path))
+
+    @staticmethod
+    def _delete_result_file_permanently(path: str) -> bool:
+        """Delete a file permanently."""
+        os.remove(path)
+        return True
+
+    @staticmethod
+    def _delete_paths_with_operator(paths: List[str], delete_func, success_key: str):
+        """Run a delete operation and return stats, removed paths and failed paths."""
+        stats = ResultsTree._empty_delete_stats()
+        removed_paths = []
+        failed_paths = []
+
+        for path in paths:
+            if not os.path.exists(path):
+                stats["skipped_missing"] += 1
+                continue
+            if os.path.isdir(path):
+                stats["skipped_directory"] += 1
+                continue
+            if not os.path.isfile(path):
+                stats["skipped_non_file"] += 1
+                continue
+
+            try:
+                result = delete_func(path)
+            except (OSError, RuntimeError) as exc:
+                logger.error(f"Error deleting result file {path}: {exc}")
+                failed_paths.append(path)
+                continue
+
+            if result is False:
+                failed_paths.append(path)
+            else:
+                removed_paths.append(path)
+                stats[success_key] += 1
+
+        stats["failed"] = len(failed_paths)
+        return stats, removed_paths, failed_paths
+
+    @staticmethod
+    def _merge_delete_stats(target: Dict[str, int], source: Dict[str, int]):
+        """Merge delete stats into target."""
+        for key, value in source.items():
+            if key == "failed":
+                continue
+            target[key] = target.get(key, 0) + value
+
+    def _delete_result_file_paths(self, paths: List[str], allow_permanent_fallback: bool = False):
+        """Delete result files, preferring trash and optionally falling back to permanent delete."""
+        stats, removed_paths, failed_paths = self._delete_paths_with_operator(
+            paths,
+            self._move_result_file_to_trash,
+            "moved_to_trash",
+        )
+
+        if allow_permanent_fallback and failed_paths:
+            permanent_stats, permanent_removed_paths, failed_paths = self._delete_paths_with_operator(
+                failed_paths,
+                self._delete_result_file_permanently,
+                "permanent_deleted",
+            )
+            self._merge_delete_stats(stats, permanent_stats)
+            removed_paths.extend(permanent_removed_paths)
+
+        stats["failed"] = len(failed_paths)
+        return stats, removed_paths, failed_paths
+
+    def _remove_paths_from_results(self, removed_paths: List[str]):
+        """Remove result paths from the visible tree data."""
+        if not removed_paths:
+            return
+
+        removed = set(removed_paths)
+        remaining = {
+            path: matches
+            for path, matches in self._matches_data.items()
+            if path not in removed
+        }
+
+        if remaining:
+            self.populate(remaining, sort_results=False, base_path=self._base_path)
+        else:
+            self.clear()
+
+    @staticmethod
+    def _format_delete_result_status(stats: Dict[str, int]) -> str:
+        """Format a compact status summary for result deletion."""
+        removed = stats["moved_to_trash"] + stats["permanent_deleted"]
+        skipped = stats["skipped_directory"] + stats["skipped_missing"] + stats["skipped_non_file"]
+        parts = [f"Removed {removed} file(s)"]
+        if stats["moved_to_trash"]:
+            parts.append(f"trash {stats['moved_to_trash']}")
+        if stats["permanent_deleted"]:
+            parts.append(f"permanent {stats['permanent_deleted']}")
+        if skipped:
+            parts.append(
+                "skipped "
+                f"{skipped} "
+                f"(dirs {stats['skipped_directory']}, "
+                f"missing {stats['skipped_missing']}, "
+                f"non-files {stats['skipped_non_file']})"
+            )
+        if stats["failed"]:
+            parts.append(f"failed {stats['failed']}")
+        return "; ".join(parts)
+
+    def _delete_result_files(self):
+        """Delete selected result files, or all result files when nothing is selected."""
+        if not self._matches_data:
+            return
+
+        paths, scope = self._collect_delete_scope_paths()
+        if not paths:
+            QMessageBox.information(
+                self,
+                "Delete Result Files",
+                "No result file paths are selected.",
+            )
+            return
+
+        candidates, stats = self._prepare_delete_candidates(paths)
+        if not candidates:
+            if self._status_label:
+                self._status_label.setText(self._format_delete_result_status(stats))
+                QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+            QMessageBox.information(
+                self,
+                "Delete Result Files",
+                "No existing regular files were found in the current result scope.",
+            )
+            return
+
+        if not self._confirm_delete_result_files(candidates, stats, scope):
+            if self._status_label:
+                self._status_label.setText("Delete result files canceled")
+                QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+            return
+
+        delete_stats, deleted_paths, failed_paths = self._delete_result_file_paths(candidates)
+        self._merge_delete_stats(delete_stats, stats)
+
+        if failed_paths and self._confirm_permanent_delete_result_files(failed_paths):
+            fallback_stats, fallback_deleted_paths, failed_paths = self._delete_paths_with_operator(
+                failed_paths,
+                self._delete_result_file_permanently,
+                "permanent_deleted",
+            )
+            self._merge_delete_stats(delete_stats, fallback_stats)
+            deleted_paths.extend(fallback_deleted_paths)
+
+        delete_stats["failed"] = len(failed_paths)
+        self._remove_paths_from_results(deleted_paths)
+
+        if self._status_label:
+            self._status_label.setText(self._format_delete_result_status(delete_stats))
+            QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+
+    def _choose_replacement_template_path(self) -> Optional[str]:
+        """Ask for the source text file used to replace result file content."""
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Replacement Template",
+            "",
+            "Text Files (*.txt *.md *.json *.py *.csv *.xml *.html *.css *.js *.ts *.tsx *.yaml *.yml);;All Files (*)",
+        )
+        return filepath or None
+
+    def _read_replacement_template(
+        self,
+        path: str,
+        max_bytes: int = REPLACE_TEMPLATE_MAX_BYTES,
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Read a bounded UTF-8 replacement template, rejecting binary or oversized files."""
+        try:
+            if not os.path.exists(path):
+                return None, "The selected template file does not exist."
+            if os.path.isdir(path):
+                return None, "The selected template path is a directory."
+            if not os.path.isfile(path):
+                return None, "The selected template path is not a regular file."
+
+            file_size = os.path.getsize(path)
+            if file_size > max_bytes:
+                return None, f"The selected template is larger than {self._format_size(max_bytes)}."
+
+            if self._is_probably_binary_file(path):
+                return None, "Binary template files are not supported for this operation."
+
+            with open(path, "r", encoding="utf-8") as file_obj:
+                return file_obj.read(), None
+        except (OSError, UnicodeError) as exc:
+            return None, f"Failed to read the selected template: {exc}"
+
+    @staticmethod
+    def _format_template_preview(content: str, limit: int = REPLACE_TEMPLATE_PREVIEW_CHARS) -> str:
+        """Return a bounded preview of the replacement template."""
+        preview = content[:limit]
+        if len(content) > limit:
+            preview += "\n..."
+        return preview
+
+    @staticmethod
+    def _empty_replace_stats() -> Dict[str, int]:
+        """Return a fresh replace-content stats dict."""
+        return {
+            "candidates": 0,
+            "replaced": 0,
+            "skipped_binary": 0,
+            "skipped_directory": 0,
+            "skipped_missing": 0,
+            "skipped_non_file": 0,
+            "failed": 0,
+        }
+
+    def _prepare_replace_candidates(self, paths: List[str]) -> Tuple[List[str], Dict[str, int]]:
+        """Filter result paths to existing textual regular files."""
+        stats = self._empty_replace_stats()
+        candidates = []
+        seen = set()
+
+        for path in paths:
+            if path in seen:
+                continue
+            seen.add(path)
+
+            try:
+                if not os.path.exists(path):
+                    stats["skipped_missing"] += 1
+                    continue
+                if os.path.isdir(path):
+                    stats["skipped_directory"] += 1
+                    continue
+                if not os.path.isfile(path):
+                    stats["skipped_non_file"] += 1
+                    continue
+                if self._is_probably_binary_file(path):
+                    stats["skipped_binary"] += 1
+                    continue
+            except (OSError, UnicodeError):
+                stats["failed"] += 1
+                continue
+
+            candidates.append(path)
+
+        stats["candidates"] = len(candidates)
+        return candidates, stats
+
+    def _format_replace_confirmation(
+        self,
+        paths: List[str],
+        stats: Dict[str, int],
+        source_path: str,
+        replacement_content: str,
+        scope: str,
+    ) -> str:
+        """Build the confirmation text for replacing result file content."""
+        scope_label = "selected result files" if scope == "selected" else "all current result files"
+        skipped = (
+            stats["skipped_binary"]
+            + stats["skipped_directory"]
+            + stats["skipped_missing"]
+            + stats["skipped_non_file"]
+            + stats["failed"]
+        )
+        lines = [
+            f"Replace the full content of {len(paths)} {scope_label}?",
+            "",
+            "This overwrites each target file with the selected template content.",
+            "",
+            f"Template: {source_path}",
+            f"Template size: {self._format_size(len(replacement_content.encode('utf-8')))}",
+            "",
+            "Template preview:",
+            self._format_template_preview(replacement_content),
+            "",
+            "Target files:",
+            self._format_delete_paths_preview(paths),
+        ]
+        if skipped:
+            lines.extend(
+                [
+                    "",
+                    (
+                        "Skipped before replacement: "
+                        f"{stats['skipped_binary']} binary, "
+                        f"{stats['skipped_directory']} directories, "
+                        f"{stats['skipped_missing']} missing, "
+                        f"{stats['skipped_non_file']} non-files, "
+                        f"{stats['failed']} errors."
+                    ),
+                ]
+            )
+        return "\n".join(lines)
+
+    def _confirm_replace_content_with_file(
+        self,
+        paths: List[str],
+        stats: Dict[str, int],
+        source_path: str,
+        replacement_content: str,
+        scope: str,
+    ) -> bool:
+        """Ask the user to confirm replacing result file content."""
+        reply = QMessageBox.warning(
+            self,
+            "Replace Content with File",
+            self._format_replace_confirmation(paths, stats, source_path, replacement_content, scope),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        return reply == QMessageBox.Yes
+
+    @staticmethod
+    def _write_text_file_atomically(path: str, content: str):
+        """Write UTF-8 text through a temporary file in the same directory."""
+        directory = os.path.dirname(path) or os.curdir
+        fd = None
+        temp_path = None
+        try:
+            stat_info = os.stat(path)
+            fd, temp_path = tempfile.mkstemp(prefix=".clarify-replace-", suffix=".tmp", dir=directory)
+            with os.fdopen(fd, "w", encoding="utf-8") as file_obj:
+                fd = None
+                file_obj.write(content)
+                file_obj.flush()
+                os.fsync(file_obj.fileno())
+            os.chmod(temp_path, stat_info.st_mode & 0o777)
+            os.replace(temp_path, path)
+            temp_path = None
+        finally:
+            if fd is not None:
+                os.close(fd)
+            if temp_path and os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def _replace_result_file_paths(self, paths: List[str], replacement_content: str):
+        """Replace target file content and return stats plus replaced paths."""
+        stats = self._empty_replace_stats()
+        replaced_paths = []
+
+        for path in paths:
+            try:
+                self._write_text_file_atomically(path, replacement_content)
+            except (OSError, UnicodeError) as exc:
+                logger.error(f"Error replacing result file {path}: {exc}")
+                stats["failed"] += 1
+                continue
+
+            replaced_paths.append(path)
+            stats["replaced"] += 1
+
+        return stats, replaced_paths
+
+    @staticmethod
+    def _merge_replace_stats(target: Dict[str, int], source: Dict[str, int]):
+        """Merge replace-content stats into target."""
+        for key, value in source.items():
+            target[key] = target.get(key, 0) + value
+
+    @staticmethod
+    def _format_replace_content_status(stats: Dict[str, int]) -> str:
+        """Format a compact status summary for replace-content actions."""
+        skipped = (
+            stats["skipped_binary"]
+            + stats["skipped_directory"]
+            + stats["skipped_missing"]
+            + stats["skipped_non_file"]
+        )
+        parts = [f"Replaced {stats['replaced']} file(s)"]
+        if skipped:
+            parts.append(
+                "skipped "
+                f"{skipped} "
+                f"(binary {stats['skipped_binary']}, "
+                f"dirs {stats['skipped_directory']}, "
+                f"missing {stats['skipped_missing']}, "
+                f"non-files {stats['skipped_non_file']})"
+            )
+        if stats["failed"]:
+            parts.append(f"failed {stats['failed']}")
+        return "; ".join(parts)
+
+    def _replace_content_with_file(self):
+        """Replace selected or all result files with the content of a text template file."""
+        if not self._matches_data:
+            return
+
+        source_path = self._choose_replacement_template_path()
+        if not source_path:
+            return
+
+        replacement_content, template_error = self._read_replacement_template(source_path)
+        if template_error:
+            if self._status_label:
+                self._status_label.setText(template_error)
+                QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+            QMessageBox.warning(self, "Replace Content with File", template_error)
+            return
+
+        paths, scope = self._collect_result_scope_paths()
+        if not paths:
+            QMessageBox.information(
+                self,
+                "Replace Content with File",
+                "No result file paths are selected.",
+            )
+            return
+
+        candidates, stats = self._prepare_replace_candidates(paths)
+        if not candidates:
+            if self._status_label:
+                self._status_label.setText(self._format_replace_content_status(stats))
+                QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+            QMessageBox.information(
+                self,
+                "Replace Content with File",
+                "No existing textual result files were found in the current result scope.",
+            )
+            return
+
+        if not self._confirm_replace_content_with_file(candidates, stats, source_path, replacement_content, scope):
+            if self._status_label:
+                self._status_label.setText("Replace content with file canceled")
+                QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+            return
+
+        replace_stats, replaced_paths = self._replace_result_file_paths(candidates, replacement_content)
+        self._merge_replace_stats(replace_stats, stats)
+        self._remove_paths_from_results(replaced_paths)
+
+        if self._status_label:
+            self._status_label.setText(self._format_replace_content_status(replace_stats))
+            QTimer.singleShot(5000, lambda: self._status_label.setText(""))
+
+    def _activate_result(self, item, _column):
+        """Open one activated file/match without opening a whole directory."""
+        if self._item_type(item) not in (ITEM_TYPE_FILE, ITEM_TYPE_MATCH):
+            return
+        self.clearSelection()
+        item.setSelected(True)
+        self._open_in_editor_and_switch()
+
     def _open_in_editor(self):
         """Open selected files in Clarify editor."""
         selected_items = self.selectedItems()
@@ -879,7 +1942,7 @@ class ResultsTree(QTreeWidget):
         # Show feedback
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor")
-            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+            QTimer.singleShot(3000, self._status_label, lambda: self._status_label.setText(""))
 
     def _open_in_editor_and_switch(self):
         """Open selected files in Clarify editor and switch focus to editor (v2.9.121)."""
@@ -941,7 +2004,7 @@ class ResultsTree(QTreeWidget):
         # Show feedback
         if self._status_label and opened_count > 0:
             self._status_label.setText(f"✅ Opened {opened_count} file(s) in editor and switched focus")
-            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+            QTimer.singleShot(3000, self._status_label, lambda: self._status_label.setText(""))
 
     def _get_main_window(self):
         """Get reference to main window."""
@@ -1113,7 +2176,8 @@ class ResultsTree(QTreeWidget):
             # Show in message box
             QMessageBox.information(self, "File Properties", "\n".join(info_lines))
 
-    def _format_size(self, size: int) -> str:
+    @staticmethod
+    def _format_size(size: int) -> str:
         """Format size in human-readable format."""
         for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size < 1024.0:

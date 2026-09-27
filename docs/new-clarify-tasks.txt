@@ -1,0 +1,361 @@
+issues:
+    • modo tabela nao atualiza novas pesquisas
+    • se o content search e o directory não mudaram, entao usar o resultado como conjunto universo para a pesquisa posterior, quando botao search/replace é clicado.
+    • remove the close button from the internal panels;
+
+
+file explorer
+    • copiar conteúdo dos arquivos do resultado (right click -> copy all)
+    • deletar arquivos do resultado (right click -> delete)
+    • substituir os arquivos do resultado por um arquivo específico (right click -> replace content)
+    • when does not have more elements to search, delete the mode table and tree results before executing a new search.
+    • progress bar width a less width, maximum 600px, minimum 300px, with cancel button.
+    • remove the tools close and improve the maximize button.
+    • include artificial intelligence that explains the file and the content file;
+    • turn the result into JSON data;
+
+Google translate
+• allow multiple tags
+• include open and switch to editor
+• add recent button
+• add translation history
+• add JSON translation
+• add ipynb translation
+• add pdf translation
+
+Digital Text Content Repairer
+
+• Implementar programa que faz a revisão ortográfica automaticamente de livros utilizando os recursos de tradução do Google Translate. Primeiro, deve-se detectar automaticamente a língua estrangeira do livro, depois traduzir para a língua universal (inglês) e novamente traduzir retornando para a língua original, deixando com a inteligência artificial do Google Translate toda a revisão ortográfica. Utilizador do Google Translate para traduzir documentos e para corrigir erros de português. Pode ser utilizado também recursos de ortografia tanto do LibreOffice quanto do Microsoft Word;
+    • Correct grammatical errors;
+    • Correcting grammatical errors more thoroughly;
+    • Review and rewrite the content to publish (more thoroughly);
+
+Information structuring
+
+    • include the mental maps about the folder content, recursively. Connect with the file explorer;
+    • Adicionar estruturacao de arquivo de banco de dados como tool. Utilizar conceito numérico de mapas mentais com números binários para determinar identificação e rápida formação de nodos e arestas;
+    • Adicionar tool de árvore de contexto, ou seja, um mapa mental que indica a conexao entre diferentes functions, methods, class, modules and libraries. Devem haver campos de entrada de identificação de funções, classes e importações, sendo que as funções e os métodos, por default, tem como identificação os parênteses. Para isso, se o possível metodo ou a possível função não for classe, modulo, importação ou biblioteca, e ter parênteses e/ou a identificação explícita do sufixo que identifica o método ou a função, então será colocado como função ou método. E a diferença entre função e método é que o método está dentro da classe, a função não está.
+    • Adicionar tool de organização hierárquica (por exemplo, organizar textos e parágrafos soltos em capítulos e subcapítulos, como filosofias aleatórias soltas sem uma ordem lógica);
+    • Implementar software que cria um grafo com o uso das funções de algoritmos em Python. Constatar que assim também tem como validar a diferença de complexidade dos textos;
+    • Implementar sistema que realiza uma organização de textos e parágrafos embaralhados, como, por exemplo, organizar em títulos e subtítulos o livro de provérbios da Bíblia.
+    • adicionar a possibilidade de estruturação de artigos científicos em que a referências bibliográficas se tornam pais, e os pais dos pais das referências bibliográficas são ancestrais, visualmente, para analisar ancestrais em comum, artigos mais simples para leitura e compreensão, adaptação de leitura para o usuário e combinações de artigos em um;
+    • Existe uma forma para se conseguir traduzir os mapas mentais (a fim de salvar matematicamente sem utilização de matrizes adjacentes e incidentes) e para conseguir simplificar e organizar conteúdos embaralhados de livros e apostilas, como, por exemplo, o livro de provérbios da Bíblia. Uma dessas formas é achar padrões da mesma maneira como realizando a fatoração de polinômios com fatores comuns em evidência. É justamente esse tipo de fatoração que irá demarcar quais são os elementos que estão mais acima da hierarquia e quais são os elementos que estão abaixo da hierarquia - ou quais são os elementos que estão em um nível superior ou em um nível inferior. Enquanto que, em relação aos mapas mentais, devemos identificar cada elemento do mapa mental com uma sequência de bits que tem uma determinada largura - para depois traduzir o número binário resultante ou essa sequência de bits em um número inteiro e decimal antes de analisar quais números pertencem a um intercalo entre 2^n e 2^(n+1), ou para achar padrões ou repetições de números binários dentro de uma mesma sequência de bits - a organização do conteúdo de livros (cujo conteúdo está embaralhado) devemos analisar palavras-chave ou frases que se repetem, agrupá-las e depois realizar isso de maneira recursiva analisando novamente as palavras ou frases que se repetem dentro de um determinado grupo antes de realizar um novo agrupamento aninhado.
+    • Implementar software que realiza diversas operações em documentos do usuário:
+Transformar em:
+árvore hierárquica;
+diagrama de inclusão;
+diagrama de barras;
+numeração por níveis;
+Aninhamento;
+
+• Corrigir erros (ortográficos, gramaticais, etc) do idioma ou de uma linguagem;
+Corrigir defeitos:
+Omissão;
+informação estranha;
+inconsistência;
+ambiguidade;
+fato incorreto;
+
+Legitimar como um livro que segue as normas ABNT;
+Corrigir ou atualizar sumário;
+
+New features:
+    X Inverter e traduzir automaticamente a inversão;
+    • the dropdown tool must be more organized, with JSON subgroup;
+    • include sound after each processing with checkbox;
+    • Permitir a abertura de Mais de uma aba, internamente, em todos os tools com o botão 'New Tag'
+    • add terminal as tool;
+    • in the format converter, when in text mode, the current text with find and replace must work with hotkeys like CTRL+F  and ENTER to search;
+    • add truth table generator with minterms and maxterms, and the reverse with truth table as input and the Quine-MCcluskey method as output;
+    • Adicionar Lynx como um tool à parte;
+    • Adicionar Ollama -> Llava como tool para inteligencia artificial offline;
+    • include the intersection and other logic operations to docx, odt, JSON, ipynb and pdf files;
+    • Call "Clarify Toolkit" instead of "System Management JSON Files - Clarify"
+    • Change the icon;
+    •  Utilizando do conceito de árvores de assimilação e Associação, implementar inteligência artificial que seria um reconhecedor de voz e que gerencia com o usuário a escrita de algoritmos, por exemplo, na linguagem de programação Python. Um exemplo de comando que o usuário poderia dar seria o seguinte: user: - "What is written on line 256?"; computer: - "What is written on line 256 is: dec = string.decode ()"; user: - "Write on line 256 the following: dec = string.encode ('base64', 'strict')"; computer: - "Line 256 has been changed.  Would you like to hear what is written on this line?"; user: - "No, thanks!"; user: - "Create a new command."; computer: - "What is the new command?"; user: - "The name is execute, two parameters and the function is: for i in referenced: new line formatted (string[0].split (i)"; computer: - "New command created! Would you like to hear the new command?"; user: - "No, I do not want.";
+• Implementar aplicativo que, utilizando-se de inteligências artificiais para reconhecimento da fala, seria um dos principais complementos de reconhecimento de fala de aplicativos orientados para o desenvolvimento e programação. Pontuações, soletrar palavras, abrir e fechar parênteses, colchetes e chaves são algumas das funcionalidades que podem ser implementadas no aplicativo. Fazer parceria com o Google e com aplicativos de desenvolvimento;
+• Implementar inteligência artificial com aprendizagem profunda que faz a leitura de algoritmos - ou de projetos e fluxogramas - para a análise e identificação de erros de lógica e de programação;
+• [] I want the 'Open in Editor and Switch' button with the current tab selected (Path or JSON). Any questions?
+[] include the explorer browser (like VS code) at the left of the Edit;
+• Include the Clock app inside;
+
+
+
+
+Open editor
+    • Copy the nano features;
+    • Copy the xed features;
+    • Copy the notepad features;
+    • copy the notepad++ features;
+    • show the line numbers with checkbox;
+    • the user have 24 hours to access the document history to recover the file content not saved by default, but this time can be adjusted;
+    • show the files browser;
+    • add hotkeys:
+          CTRL+ F: find
+          CTRL + R: replace
+          CTRL + G, CTRL + l or CTRL + i: go to the line
+          CTRL + R: replace
+          CTRL + S: save
+          CTRL + X: cut
+          CTRL + V: paste
+          CTRL + C: copy
+
+
+• remover a redundancia de pesquisa regex que está no filter e também em outros lugares do File Explorer do Clarify
+
+Clarify Tools
+- Both TRUE:
+
+{
+  "FAQPage": {
+    "div": {
+      "h1": {
+        "t_pages_contact_quicklinks_faq": "{t.pages.contact.quickLinks.faq}"
+      },
+      "p": {
+        "t_pages_faq_header_subtitle": "{t.pages.faq.header.subtitle}",
+        "t_pages_faq_empty_title": "{t.pages.faq.empty.title}",
+        "t_pages_faq_empty_description": "{t.pages.faq.empty.description}",
+        "t_pages_faqpage_cantfindwhat": "{t.pages.FAQPage.canTFindWhat}",
+        "sentence": "{sentence}",
+        "index": "index"
+      },
+      "div": {
+        "search_bar": "{/* Search Bar */}",
+        "t_pages_faq_faqdata_index_answer_split_map_sentence_string_index_number": "t.pages.faq.faqData[index].answer.split('. ').map((sentence:string, index:number) => (",
+        "expandeditems_has_item_id": "expandedItems.has(item.id) && (",
+        "filteredfaqs_map_item_index": "filteredFAQs.map((item, index) => (",
+        "faqcategories_map_category_index": "faqCategories.map((category,index) => (",
+        "filteredfaqs_length_0": "filteredFAQs.length === 0 ? (",
+        "category_filter": "{/* Category Filter */}",
+        "faq_items": "{/* FAQ Items */}",
+        "still_have_questions": "{/* Still Have Questions */}"
+      },
+      "h3": {
+        "t_pages_faq_faqdata_index_question": "{t.pages.faq.faqData[index].question}"
+      },
+      "button": {
+        "expandeditems_has_item_id": "expandedItems.has(item.id) ? (",
+        "t_pages_faq_categories_index": "{t.pages.faq.categories[index]}"
+      },
+      "Link": {
+        "t_pages_faq_cta_contactsupport": "{t.pages.faq.cta.contactSupport}",
+        "t_pages_faq_cta_visithelpcenter": "{t.pages.faq.cta.visitHelpCenter}"
+      },
+      "h2": {
+        "t_pages_faq_cta_title": "{t.pages.faq.cta.title}"
+      },
+      "hero_section": "{/* Hero Section */}"
+    }
+  }
+}
+
+- Only key:
+
+{
+  "FAQPage": {
+    "div": [
+      "h1": "t_pages_contact_quicklinks_faq",
+      "p": [
+        "t_pages_faq_header_subtitle",
+        "t_pages_faq_empty_title",
+        "t_pages_faq_empty_description",
+        "t_pages_faqpage_cantfindwhat",
+        "sentence",
+        "index"
+      ],
+      "div": [
+        "search_bar",
+        "t_pages_faq_faqdata_index_answer_split_map_sentence_string_index_number",
+        "expandeditems_has_item_id",
+        "filteredfaqs_map_item_index",
+        "faqcategories_map_category_index",
+        "filteredfaqs_length_0",
+        "category_filter",
+        "faq_items",
+        "still_have_questions"
+      ],
+      "h3": "t_pages_faq_faqdata_index_question"
+      "button": [
+        "expandeditems_has_item_id",
+        "t_pages_faq_categories_index"
+      ],
+      "Link": [
+        "t_pages_faq_cta_contactsupport",
+        "t_pages_faq_cta_visithelpcenter"
+      ],
+      "h2": "t_pages_faq_cta_title",
+      "hero_section"
+    ]
+  }
+}
+
+- Only value:
+
+{
+  "{t.pages.contact.quickLinks.faq}"
+  "{t.pages.faq.header.subtitle}",
+  "{t.pages.faq.empty.title}",
+  "{t.pages.faq.empty.description}",
+  "{t.pages.FAQPage.canTFindWhat}",
+  "{sentence}",
+  "index"
+  "{/* Search Bar */}",
+  "t.pages.faq.faqData[index].answer.split('. ').map((sentence:string, index:number) => (",
+  "expandedItems.has(item.id) && (",
+  "filteredFAQs.map((item, index) => (",
+  "faqCategories.map((category,index) => (",
+  "filteredFAQs.length === 0 ? (",
+  "{/* Category Filter */}",
+  "{/* FAQ Items */}",
+  "{/* Still Have Questions */}",
+  "{t.pages.faq.faqData[index].question}"
+  "expandedItems.has(item.id) ? (",
+  "{t.pages.faq.categories[index]}",
+  "{t.pages.faq.cta.contactSupport}",
+  "{t.pages.faq.cta.visitHelpCenter}"
+  "{t.pages.faq.cta.title}"
+  "{/* Hero Section */}"
+}
+
+- Both FALSE:
+
+{}
+
+Issues:
+
+• Table mode does not update new searches
+
+• If the content search and directory have not changed, then use the result as the universe set for subsequent searches when the search/replace button is clicked.
+
+• Remove the close button from the internal panels;
+
+File Explorer
+
+• Copy content from the result files (right click -> copy all)
+
+• Delete files from the result (right click -> delete)
+
+• Replace the result files with a specific file (right click -> replace content)
+
+• When there are no more elements to search, delete the mode table and tree results before executing a new search.
+
+• Reduce the progress bar width, maximum 600px, minimum 300px, with a cancel button.
+
+• Remove the tools close and improve the maximize button.
+
+• Include artificial intelligence that explains the file and the content file;
+
+• Turn the result into JSON data;
+
+Google Translate
+• Allow multiple tags
+• Include open and switch to editor
+• Add recent button
+• Add translation history
+• Add JSON translation
+• Add IPYNB translation
+• Add PDF translation
+
+Digital Text Content Repairer
+
+• Implement a program that automatically spell-checks books using Google Translate's translation features. First, it should automatically detect the book's foreign language, then translate it into the universal language (English), and then translate it back to the original language, leaving all spell-checking to Google Translate's artificial intelligence. Use Google Translate to translate documents and correct Portuguese errors. Spelling features from both LibreOffice and Microsoft Word can also be used;
+
+• Correct grammatical errors;
+
+• Correct grammatical errors more thoroughly;
+
+• Review and rewrite the content to publish (more thoroughly);
+
+Information Structuring
+
+• Include mental maps about the folder content recursively. Connect with the file explorer;
+
+• Add database file structuring as a tool. Use the numerical concept of mind maps with binary numbers to determine identification and quickly form nodes and edges;
+
+• Add a context tree tool, that is, a mind map that indicates the connection between different functions, methods, classes, modules, and libraries. There should be input fields to identify functions, classes, and imports, with functions and methods, by default, being identified by parentheses. For this, if the possible method or function is not a class, module, import, or library, and has parentheses and/or the explicit identification of the suffix that identifies the method or function, then it will be placed as a function or method. And the difference between a function and a method is that the method is inside the class, the function is not.
+
+• Add a hierarchical organization tool (for example, organizing loose texts and paragraphs into chapters and subchapters, like random philosophies without a logical order);
+• Implement software that creates a graph using Python algorithm functions. Verify that this also allows for validating the difference in text complexity;
+
+• Implement a system that organizes scrambled texts and paragraphs, such as organizing the Book of Proverbs from the Bible into titles and subtitles.
+
+• Add the possibility of structuring scientific articles where bibliographic references become parents, and the parents of the parents of the bibliographic references are ancestors, visually, to analyze common ancestors, simpler articles for reading and comprehension, adaptation of reading for the user, and combinations of articles into one;
+
+• Is there a way to translate mind maps (in order to save them mathematically without using adjacent and incident matrices) and to simplify and organize scrambled content from books and handouts, such as the Book of Proverbs from the Bible? One of these ways is to find patterns in the same way as performing polynomial factorization with common factors highlighted. It is precisely this type of factorization that will demarcate which elements are higher up in the hierarchy and which elements are lower down – or which elements are at a higher level or a lower level. Whereas, in relation to mind maps, we must identify each element of the mind map with a sequence of bits that has a certain width – to then translate the resulting binary number or this sequence of bits into an integer and decimal number before analyzing which numbers belong to an interval between 2^n and 2^(n+1), or to find patterns or repetitions of binary numbers within the same sequence of bits – the organization of the content of books (whose content is scrambled) requires us to analyze keywords or phrases that are repeated, etc.
+• Upload them and then recursively analyze the words or phrases that are repeated within a given group before creating a new nested grouping.
+
+• Implement software that performs various operations on user documents:
+Transform into:
+hierarchical tree;
+inclusion diagram;
+bar chart;
+level numbering;
+nesting;
+
+• Correct errors (spelling, grammar, etc.) in the language;
+Correct defects:
+Omission;
+extraneous information;
+inconsistency;
+ambiguity;
+incorrect fact;
+
+Legitimate as a book that follows ABNT standards;
+Correct or update table of contents;
+
+New features:
+
+Invert and automatically translate the inversion;
+
+• the dropdown tool must be more organized, with JSON subgroups;
+
+• include sound after each processing with checkboxes;
+
+• Allow opening more than one tab internally in all tools using the 'New Tag' button;
+
+• Add terminal as a tool;
+
+• In the format converter, when in text mode, the current text with find and replace must work with hotkeys like CTRL+F and ENTER to search;
+
+• Add truth table generator with minterms and maxterms, and the reverse with truth table as input and the Quine-McCluskey method as output;
+
+• Add Lynx as a separate tool;
+
+• Add Ollama -> Llava as a tool for offline artificial intelligence;
+
+• Include the intersection and other logic operations for docx, odt, JSON, ipynb, and pdf files;
+
+• Call "Clarify Toolkit" instead of "System Management JSON Files - Clarify";
+
+• Change the icon;
+
+• Using the concept of assimilation and association trees, implement artificial intelligence that would be a voice recognizer and that manages the writing of algorithms with the user, for example, in the Python programming language. An example of a command that the user could give would be the following: user: - "What is written on line 256?"; computer: - "What is written on line 256 is: dec = string.decode ()"; user: - "Write on line 256 the following: dec = string.encode ('base64', 'strict')"; computer: - "Line 256 has been changed. Would you like to hear what is written on this line?"; user: - "No, thanks!"; user: - "Create a new command."; computer: - "What is the new command?"; user: - "The name is execute, two parameters and the function is: for i in referenced: new line formatted (string[0].split (i)"; computer: - "New command created! Would you like to hear the new command?"; user: - "No, I do not want.";
+• Implement an application that, using artificial intelligence for speech recognition, would be one of the main speech recognition complements for development and programming-oriented applications. Punctuation, spelling words, opening and closing parentheses, brackets, and braces are some of the functionalities that can be implemented in the application. Partner with Google and development applications;
+• Implement artificial intelligence with deep learning that reads algorithms - or projects and flowcharts - for the analysis and identification of logic and programming errors;
+• [] I want the 'Open in Editor and Switch' button with the current tab selected (Path or JSON). Any questions?
+[] Include the explorer browser (like VS Code) at the left of the Edit;
+
+• Include the Clock app inside;
+
+
+
+
+Open editor
+• Copy the nano features;
+• Copy the xed features;
+• Copy the notepad features;
+• copy the notepad++ features;
+• show the line numbers with checkbox;
+• the user has 24 hours to access the document history to recover the file content not saved by default, but this time can be adjusted;
+• show the files browser;
+• add hotkeys:
+CTRL+F: find
+CTRL + R: replace
+CTRL + G, CTRL + l or CTRL + i: go to the line
+CTRL + R: replace
+CTRL + S: save
+CTRL + X: cut
+CTRL + V: paste
+CTRL + C: copy
+• remove regex search redundancy that is in the filter and also elsewhere in Clarify's File Explorer

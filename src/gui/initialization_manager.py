@@ -116,10 +116,6 @@ class InitializationManager:
         discovered = main_window.plugin_loader.discover_plugins()
         main_window.logger.info(f"[PluginSystem] Discovered {len(discovered)} plugin(s)")
 
-        # Auto-activate enabled plugins
-        activated = main_window.plugin_loader.activate_all_plugins()
-        main_window.logger.info(f"[PluginSystem] Activated {activated} plugin(s)")
-
         # Track tool tabs (v2.9.40 - Task: Tools as tabs)
         main_window.tool_tabs = {}  # Maps tool_name -> (widget, tab_index)
 
@@ -144,6 +140,8 @@ class InitializationManager:
         main_window._build_icon()
         main_window._build_ui()
         main_window._build_menu()
+        activated = main_window.plugin_loader.activate_all_plugins()
+        main_window.logger.info(f"[PluginSystem] Activated {activated} plugin(s)")
         main_window._restore_prefs()
         main_window._apply_saved_settings()
 

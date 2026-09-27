@@ -123,14 +123,17 @@ clarify/
 │       ├── clarify.py
 │       └── clarify_patched.py
 │
+├── clarify.sh                   # Root launcher (Linux/Unix)
+├── clarify.command              # Root launcher (macOS)
+├── clarify.bat                  # Root launcher (Windows)
 ├── pyproject.toml               # Poetry configuration
 ├── poetry.lock                  # Dependency lock file
 ├── README.md                    # Project documentation
 ├── CHANGELOG.md                 # Version history
-├── PROJECT_STRUCTURE.md         # This file
-├── main.py                      # Entry point (legacy)
-└── clarify.py                   # Entry point (main)
+└── main.py                      # Development import validation
 ```
+
+> This tree reflects the current checkout at the time of this documentation update. Some historical docs still mention a root `clarify.py` or `requirements.txt`; those names are preserved in older reports but are not the primary paths in this checkout.
 
 ## 🏗️ Architecture Overview
 
@@ -171,30 +174,29 @@ clarify/
 
 ### GUI Mode (Default)
 ```bash
-python -m src.app
-# or
-python clarify.py
-# or
-./launchers/clarify_gui.sh  # Linux/Mac
-launchers/clarify_gui.bat   # Windows
+python -m src
+# or use a root launcher:
+./clarify.sh       # Linux/Unix
+./clarify.command  # macOS
+clarify.bat        # Windows
 ```
 
 ### CLI Mode
 ```bash
 # Search
-python -m src.app search ./src --query "function" --include "*.py"
+python -m src search ./src function --include "*.py"
 
 # Replace
-python -m src.app replace ./src --query "old" --replacement "new" --all
+python -m src replace ./src old new --all
 
 # Insert
-python -m src.app insert ./src --line 1 --text "# Header" --mode insert_above
+python -m src insert ./src 1 "# Header" --mode insert_above
 
 # Translate
-python -m src.app translate ./web --dictionary dict.ts
+python -m src translate ./web dict.ts
 
 # Dedupe/Rewrite
-python -m src.app dedupe en.ts --from-ts --join-keys --eliminate-duplicates
+python -m src dedupe en.ts --from-ts --join-keys --eliminate-duplicates
 ```
 
 ## 📦 Dependencies
@@ -212,7 +214,7 @@ python -m src.app dedupe en.ts --from-ts --join-keys --eliminate-duplicates
 ```bash
 poetry install
 # or
-pip install -r requirements.txt
+python -m pip install -e .
 ```
 
 ## 🔧 Development

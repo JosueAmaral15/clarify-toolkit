@@ -5,7 +5,7 @@ Common problems and their solutions. If you encounter an issue not listed here, 
 ## 🚨 Installation Issues
 
 ### Problem: "python: command not found"
-**Symptoms**: Can't run `python main.py`
+**Symptoms**: Can't run `python -m src`
 
 **Solution**:
 1. **Check Python installation**:
@@ -28,7 +28,9 @@ source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate     # Windows
 
 # Install dependencies
-pip install -r requirements.txt
+poetry install
+# or, without Poetry:
+python -m pip install -e .
 
 # If still failing, install directly
 pip install PySide6==6.9.3
@@ -37,7 +39,7 @@ pip install PySide6==6.9.3
 ---
 
 ### Problem: "ModuleNotFoundError: No module named 'src'"
-**Symptoms**: Error when running `python main.py`
+**Symptoms**: Error when running Clarify
 
 **Solution**:
 ```bash
@@ -48,10 +50,10 @@ cd /path/to/clarify
 pwd  # Should show .../clarify
 
 # Run with Python module syntax
-python -m src.app
+python -m src
 
-# Or use main.py
-python main.py
+# Or validate imports only
+python main.py test
 ```
 
 ---
@@ -64,14 +66,14 @@ python main.py
 **Diagnosis**:
 1. **Check logs**:
    ```bash
-   cat logs/clarify.log  # Linux/macOS
-   type logs\clarify.log # Windows
+   cat ~/.clarify/logs/clarify.log  # Linux/macOS
+   type %USERPROFILE%\.clarify\logs\clarify.log # Windows
    ```
 2. **Look for errors**: Search for "ERROR" or "CRITICAL"
 
 **Common Causes**:
 - **Corrupted settings**: Delete `~/.config/Clarify/` and restart
-- **Missing dependencies**: Reinstall requirements
+- **Missing dependencies**: Reinstall project dependencies
 - **Python version**: Verify Python 3.12+
 
 **Solution**:
@@ -81,10 +83,12 @@ rm -rf ~/.config/Clarify/  # Linux/macOS
 del %APPDATA%\Clarify      # Windows
 
 # 2. Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
+poetry install
+# or, without Poetry:
+python -m pip install -e .
 
-# 3. Run with verbose logging
-python main.py --debug
+# 3. Run the application
+python -m src
 ```
 
 ---
@@ -101,11 +105,11 @@ python main.py --debug
    ```bash
    export QT_DEBUG_PLUGINS=1  # Linux/macOS
    set QT_DEBUG_PLUGINS=1     # Windows
-   python main.py
+   python -m src
    ```
 3. **Use offscreen platform** (headless testing):
    ```bash
-   QT_QPA_PLATFORM=offscreen python main.py
+   QT_QPA_PLATFORM=offscreen python -m src
    ```
 
 ---
@@ -153,7 +157,7 @@ python main.py --debug
 
 3. **Use CLI for very large operations**:
    ```bash
-   python -m src.cli.search --path /huge/dir --find "pattern"
+   python -m src search /huge/dir pattern
    ```
 
 ---
@@ -223,7 +227,7 @@ python main.py --debug
 - **Example**:
   ```json
   {"key": "old", "key": "new"}
-  
+
   Keep First → {"key": "old"}
   Keep Last  → {"key": "new"}
   ```
@@ -347,13 +351,13 @@ QT_QPA_PLATFORM=offscreen pytest tests/gui/ -v
 **Solution**:
 ```bash
 # Enable debug logging
-python main.py --debug
+CLARIFY_LOG_LEVEL=DEBUG python -m src
 
 # Check log file
-tail -f logs/clarify.log  # Live view
+tail -f ~/.clarify/logs/clarify.log  # Live view
 
 # Filter errors only
-grep ERROR logs/clarify.log
+grep ERROR ~/.clarify/logs/clarify.log
 ```
 
 ---
@@ -392,7 +396,7 @@ If your issue isn't listed:
 - Clarify version: `Help → About`
 - OS and Python version
 - Steps to reproduce
-- Error logs: `logs/clarify.log`
+- Error logs: `~/.clarify/logs/clarify.log`
 - Screenshots (if UI issue)
 
 ---
@@ -404,4 +408,4 @@ If your issue isn't listed:
 
 ---
 
-**Last Updated**: December 21, 2024
+**Last Updated**: June 8, 2026

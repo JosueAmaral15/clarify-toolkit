@@ -55,7 +55,10 @@ class UpdateChecker:
 
     def _ensure_cache_dir(self) -> None:
         """Create cache directory if it doesn't exist."""
-        self.CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            self.CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass  # Updates can still be checked without a writable cache.
 
     def check_for_updates(self, force: bool = False) -> Tuple[bool, Optional[Dict]]:
         """
@@ -99,7 +102,7 @@ class UpdateChecker:
             # Cache result
             self._save_cache(has_update, release_info)
 
-            return has_update, release_info if has_update else None
+            return has_update, release_info
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Offline or network error - fail gracefully
@@ -218,7 +221,7 @@ class UpdateChecker:
 
             return has_update, release_info
 
-        except (json.JSONDecodeError, ValueError, KeyError):
+        except (OSError, json.JSONDecodeError, ValueError, KeyError):
             # Corrupted cache - ignore
             return None
 

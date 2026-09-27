@@ -20,6 +20,7 @@ import re
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import List
 
 from PySide6.QtWidgets import (
     QGridLayout, QLabel, QLineEdit, QCheckBox,
@@ -30,11 +31,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSettings
 
 from src.ai_processor import (
-    OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, AVAILABLE_MODELS,
+    OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, OllamaClient, AVAILABLE_MODELS,
     count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available,
     is_claude_available, save_results,
     list_files_recursive as ai_list_files,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models,
+    list_ollama_models,
     preview_template, has_templates
 )
 from src.core.filters import Condition
@@ -101,7 +103,8 @@ class AIProcessorDock(StandardToolDock):
             "OpenAI (ChatGPT)",
             "Google Gemini",
             "Anthropic Claude",
-            "Perplexity"
+            "Perplexity",
+            "Ollama (Local)",
         ])
         self.combo_provider.currentIndexChanged.connect(self._on_provider_changed)
         self.combo_provider.setToolTip(tooltip_tr("ai_processor.tooltip_provider"))
@@ -512,6 +515,43 @@ class AIProcessorDock(StandardToolDock):
             e.lbl_path.setText(f"Path {i}:")
             e.btn_remove.setEnabled(i > 1)
 
+    def prepare_file_explorer_explanation(
+        self,
+        prompt: str,
+        file_paths: List[str],
+        max_bytes: int,
+    ) -> int:
+        """Prepare AI Processor to explain File Explorer result files without starting processing."""
+        needed_entries = max(1, len(file_paths))
+        while len(self.path_entries) < needed_entries:
+            self._add_path_entry()
+
+        while len(self.path_entries) > needed_entries:
+            entry = self.path_entries[-1]
+            self.path_entries.remove(entry)
+            entry.deleteLater()
+
+        for index, entry in enumerate(self.path_entries):
+            path = file_paths[index] if index < len(file_paths) else ""
+            entry.ed_path.setText(path)
+            entry.chk_is_file.setChecked(bool(path))
+            entry.btn_remove.setEnabled(index > 0)
+            entry.path_number = index + 1
+            entry.lbl_path.setText(f"Path {index + 1}:")
+
+        self.ed_prompt.setPlainText(prompt)
+        self.spin_max_bytes.setValue(max_bytes)
+        self.chk_line_by_line.setChecked(False)
+        self.clear_results(self.text_results)
+        self.append_result(
+            self.text_results,
+            (
+                "Prepared from File Explorer. Review the prompt, provider, model, "
+                "API key and max bytes before clicking Process."
+            ),
+        )
+        return len(file_paths)
+
     def _connect_signals(self):
         """Connect signals."""
         self._setup_enter_key_execution(self.ed_api_key, self.ed_extensions)
@@ -559,11 +599,11 @@ class AIProcessorDock(StandardToolDock):
     def _refresh_models(self):
         """Refresh models list from API."""
         api_key = self.ed_api_key.text().strip()
-        if not api_key:
+        provider = self.combo_provider.currentText()
+        if "Ollama" not in provider and not api_key:
             self.show_warning("No API Key", "Please enter an API key first")
             return
 
-        provider = self.combo_provider.currentText()
         self.show_info("Refreshing...", f"Fetching models from {provider}")
 
         try:
@@ -579,6 +619,9 @@ class AIProcessorDock(StandardToolDock):
             elif "Perplexity" in provider:
                 models = list_perplexity_models(api_key)
                 provider_key = 'perplexity'
+            elif "Ollama" in provider:
+                models = list_ollama_models()
+                provider_key = 'ollama'
             else:
                 return
 
@@ -608,7 +651,7 @@ class AIProcessorDock(StandardToolDock):
         elif "Gemini" in provider:
             provider_key = 'gemini'
             if not is_gemini_available():
-                self.show_warning("SDK Missing", "Gemini SDK not installed.\nRun: pip install google-generativeai")
+                self.show_warning("SDK Missing", "Gemini SDK not installed.\nRun: pip install google-genai")
         elif "Claude" in provider:
             provider_key = 'claude'
             if not is_claude_available():
@@ -620,8 +663,14 @@ class AIProcessorDock(StandardToolDock):
                     "SDK Missing",
                     "OpenAI SDK not installed (required for Perplexity).\nRun: pip install openai"
                 )
+        elif "Ollama" in provider:
+            provider_key = 'ollama'
         else:
             return
+
+        is_local = provider_key == "ollama"
+        self.ed_api_key.setEnabled(not is_local)
+        self.btn_verify.setText("Verify Service" if is_local else tr("ai_processor.btn_verify"))
 
         # Load models from cache first, fallback to static list
         models = self.models_cache.get(provider_key, AVAILABLE_MODELS.get(provider_key, []))
@@ -632,15 +681,15 @@ class AIProcessorDock(StandardToolDock):
     def _verify_key(self):
         """Verify API key."""
         api_key = self.ed_api_key.text().strip()
-        if not api_key:
+        provider = self.combo_provider.currentText()
+        if "Ollama" not in provider and not api_key:
             self.show_warning("No Key", "Please enter an API key")
             return
 
-        if not has_internet():
+        if "Ollama" not in provider and not has_internet():
             self.show_warning("No Internet", "No internet connection detected")
             return
 
-        provider = self.combo_provider.currentText()
         model_name = self.combo_model.currentData()
 
         try:
@@ -652,6 +701,8 @@ class AIProcessorDock(StandardToolDock):
                 client = ClaudeClient(api_key, model_name)
             elif "Perplexity" in provider:
                 client = PerplexityClient(api_key, model_name)
+            elif "Ollama" in provider:
+                client = OllamaClient(None, model_name)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
 
@@ -666,10 +717,10 @@ class AIProcessorDock(StandardToolDock):
     def _get_client(self):
         """Get AI client."""
         api_key = self.ed_api_key.text().strip()
-        if not api_key:
+        provider = self.combo_provider.currentText()
+        if "Ollama" not in provider and not api_key:
             raise ValueError("No API key provided")
 
-        provider = self.combo_provider.currentText()
         model_name = self.combo_model.currentData()
 
         if "OpenAI" in provider:
@@ -680,6 +731,8 @@ class AIProcessorDock(StandardToolDock):
             return ClaudeClient(api_key, model_name)
         elif "Perplexity" in provider:
             return PerplexityClient(api_key, model_name)
+        elif "Ollama" in provider:
+            return OllamaClient(None, model_name)
         else:
             raise ValueError(f"Unknown provider: {provider}")
 
@@ -830,6 +883,7 @@ class AIProcessorDock(StandardToolDock):
         self.append_result(self.text_results, f"\n✅ Processing complete! {len(responses)} response(s) received.")
         self.btn_process.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
+        self.notify_processing_completed()
 
     def _on_failed(self, error):
         """Handle failure."""

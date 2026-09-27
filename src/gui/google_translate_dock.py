@@ -43,13 +43,27 @@ from PySide6.QtWidgets import (
     QSplitter,
     QFrame,
     QApplication,
+    QMenu,
 )
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QAction, QFont
 
 from ..gui.base_dock import BaseDock
 from ..translation.google_translate import GoogleTranslateAPI, TranslationResult
 from ..translation.document_parser import extract_text_from_document, DocumentParserError
 from ..translation.format_mapper import FormatMapper
+from ..translation.notebook_translation import (
+    NotebookFormatError,
+    load_notebook,
+    markdown_cell_count,
+    notebook_markdown_text,
+    save_notebook,
+    translate_markdown_cells,
+)
+from ..translation.pdf_translation import PdfExtractionError, extract_pdf_text
+from ..translation.recent_paths import (
+    TranslationRecentPaths,
+    record_translation_operation,
+)
 from ..i18n import tr, tooltip_tr
 
 
@@ -171,6 +185,98 @@ class TranslationWorker(QThread):
             self.translation_completed.emit("", False, f"Translation error: {str(e)}", self.from_lang)
 
 
+class _NotebookTranslationCancelled(Exception):
+    """Internal control flow for a cancelled notebook worker."""
+
+
+class NotebookTranslationWorker(QThread):
+    """Translate notebook Markdown cells without exposing code or outputs."""
+
+    progress_updated = Signal(int, str)
+    chunk_progress = Signal(int, int, int, str)
+    translation_completed = Signal(object, str, bool, str, str)
+
+    def __init__(self, api, notebook, from_lang: str, to_lang: str):
+        super().__init__()
+        self.api = api
+        self.notebook = notebook
+        self.from_lang = from_lang
+        self.to_lang = to_lang
+        self.is_cancelled = False
+
+    def cancel(self):
+        """Request cancellation before the next Markdown cell."""
+        self.is_cancelled = True
+
+    def run(self):
+        """Translate Markdown cells sequentially in the worker thread."""
+        try:
+            total_cells = markdown_cell_count(self.notebook)
+            if total_cells == 0:
+                self.translation_completed.emit(
+                    None,
+                    "",
+                    False,
+                    tr("google_translate.error_notebook_no_markdown"),
+                    self.from_lang,
+                )
+                return
+
+            completed_cells = 0
+            detected_language = self.from_lang
+
+            def translate_cell(text: str) -> str:
+                nonlocal completed_cells, detected_language
+                if self.is_cancelled:
+                    raise _NotebookTranslationCancelled()
+
+                cell_number = completed_cells + 1
+
+                def report_chunk(_current, _total, percentage, status):
+                    overall = int(
+                        ((completed_cells + (percentage / 100)) / total_cells) * 100
+                    )
+                    self.chunk_progress.emit(
+                        cell_number, total_cells, overall, status
+                    )
+                    self.progress_updated.emit(overall, status)
+
+                result = self.api.translate_text_chunked(
+                    text,
+                    self.from_lang,
+                    self.to_lang,
+                    progress_callback=report_chunk,
+                )
+                if not result.success:
+                    raise RuntimeError(result.error_message)
+                if completed_cells == 0 and result.source_language:
+                    detected_language = result.source_language
+                completed_cells += 1
+                self.progress_updated.emit(
+                    int((completed_cells / total_cells) * 100),
+                    tr("google_translate.status_notebook_cell").format(
+                        current=completed_cells, total=total_cells
+                    ),
+                )
+                return result.translated_text
+
+            translate_markdown_cells(self.notebook, translate_cell)
+            preview = notebook_markdown_text(self.notebook)
+            self.translation_completed.emit(
+                self.notebook, preview, True, "", detected_language
+            )
+        except _NotebookTranslationCancelled:
+            return
+        except Exception as exc:
+            self.translation_completed.emit(
+                None,
+                "",
+                False,
+                f"Notebook translation error: {exc}",
+                self.from_lang,
+            )
+
+
 class GoogleTranslateDock(BaseDock):
     """
     Google Translate Dock for text and file translation.
@@ -179,11 +285,15 @@ class GoogleTranslateDock(BaseDock):
     with caching, retry mechanism, and support for 7 languages.
     """
 
+    open_in_editor_requested = Signal(str, str)
+
     def __init__(self, parent=None):
         self.api = GoogleTranslateAPI()
+        self.recent_paths = TranslationRecentPaths()
         self.translation_worker = None
         self._finished_workers = []  # Keep references to finished workers
         self._last_detected_lang = None  # Store detected language from last translation
+        self._pending_history_details = None
         
         # Store formatting data (backend only - never shown to user)
         self._source_segments = []  # Original document formatting (TextSegment list) - OLD SYSTEM
@@ -193,6 +303,7 @@ class GoogleTranslateDock(BaseDock):
         self._css_manager = None  # CSS class manager for HTML-based translation
         self._source_file_path = None  # Source file path for format reference
         self._translated_html = None  # Translated HTML content
+        self._translated_notebook = None
         
         super().__init__(tr("menu.tools.google_translate"), parent)
 
@@ -232,6 +343,7 @@ class GoogleTranslateDock(BaseDock):
         self.lbl_file = QLabel(tr("google_translate.lbl_file"))
         self.ed_file_path = QComboBox()
         self.ed_file_path.setEditable(True)
+        self.btn_recent_file = QPushButton(tr("translation_recent.btn_recent"))
         self.btn_browse_file = QPushButton(tr("google_translate.btn_browse"))
         self.btn_browse_file.setMaximumWidth(100)
 
@@ -262,6 +374,11 @@ class GoogleTranslateDock(BaseDock):
 
         self.btn_save_as = QPushButton(tr("google_translate.btn_save_as"))
         self.btn_save_as.setEnabled(False)
+
+        self.btn_open_in_editor = QPushButton(
+            tr("google_translate.btn_open_in_editor")
+        )
+        self.btn_open_in_editor.setEnabled(False)
 
         self.btn_reverse = QPushButton(tr("google_translate.btn_reverse"))
         self.btn_reverse.setEnabled(False)
@@ -297,6 +414,7 @@ class GoogleTranslateDock(BaseDock):
         file_layout = QHBoxLayout()
         file_layout.addWidget(self.lbl_file)
         file_layout.addWidget(self.ed_file_path, 1)
+        file_layout.addWidget(self.btn_recent_file)
         file_layout.addWidget(self.btn_browse_file)
 
         # Create splitter for input/output text areas
@@ -330,6 +448,7 @@ class GoogleTranslateDock(BaseDock):
         btn_layout.addWidget(self.btn_translate)
         btn_layout.addWidget(self.btn_copy_result)
         btn_layout.addWidget(self.btn_save_as)
+        btn_layout.addWidget(self.btn_open_in_editor)
         btn_layout.addWidget(self.btn_reverse)
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addWidget(self.btn_cancel)
@@ -340,7 +459,12 @@ class GoogleTranslateDock(BaseDock):
         self.layout.addLayout(options_layout)
 
         # File input widgets (initially hidden)
-        self.file_widgets = [self.lbl_file, self.ed_file_path, self.btn_browse_file]
+        self.file_widgets = [
+            self.lbl_file,
+            self.ed_file_path,
+            self.btn_recent_file,
+            self.btn_browse_file,
+        ]
         file_group = QGroupBox(tr("google_translate.group_file_selection"))
         file_group.setLayout(file_layout)
         self.layout.addWidget(file_group)
@@ -358,10 +482,12 @@ class GoogleTranslateDock(BaseDock):
         self.btn_translate.clicked.connect(self._translate)
         self.btn_copy_result.clicked.connect(self._copy_result)
         self.btn_save_as.clicked.connect(self._save_as)
+        self.btn_open_in_editor.clicked.connect(self._open_result_in_editor)
         self.btn_reverse.clicked.connect(self._reverse_translation)
         self.btn_clear.clicked.connect(self._clear)
         self.btn_cancel.clicked.connect(self._cancel_translation)
         self.btn_browse_file.clicked.connect(self._browse_file)
+        self.btn_recent_file.clicked.connect(self._show_recent_files)
         self.btn_swap_languages.clicked.connect(self._swap_languages)  # New swap button
 
         self.chk_file_mode.toggled.connect(self._toggle_file_mode)
@@ -384,6 +510,11 @@ class GoogleTranslateDock(BaseDock):
                 "google_translate.file_mode", "Enable to translate entire text files instead of manual text input."
             )
         )
+        self.btn_recent_file.setToolTip(tooltip_tr("translation_recent.source"))
+        self.btn_recent_file.setAccessibleName("Google Translate - Button - Recent Files")
+        self.btn_recent_file.setAccessibleDescription(
+            "Select or clear recently used translation source files"
+        )
         self.text_input.setToolTip(
             tooltip_tr(
                 "google_translate.input_text",
@@ -398,12 +529,19 @@ class GoogleTranslateDock(BaseDock):
         self.btn_copy_result.setToolTip(
             tooltip_tr("google_translate.copy_result", "Copy translation result to clipboard | Ctrl+C")
         )
+        self.btn_open_in_editor.setToolTip(
+            tooltip_tr(
+                "google_translate.open_in_editor",
+                "Open the translated text in Clarify Editor for review and editing.",
+            )
+        )
         self.btn_clear.setToolTip(
             tooltip_tr("google_translate.clear_btn", "Clear input and output text areas | Ctrl+L")
         )
 
     def _load_preferences(self):
         """Load saved preferences."""
+        self._refresh_recent_files()
         # Set default language combo selections
         # From: Auto-detect (index 0)
         self.combo_from_lang.setCurrentIndex(0)
@@ -417,6 +555,53 @@ class GoogleTranslateDock(BaseDock):
     def _save_preferences(self):
         """Save user preferences (placeholder for QSettings)."""
         pass  # Could implement QSettings here
+
+    def _refresh_recent_files(self) -> None:
+        """Populate the editable file combo without replacing typed text."""
+        current_path = self.ed_file_path.currentText()
+        self.ed_file_path.blockSignals(True)
+        self.ed_file_path.clear()
+        self.ed_file_path.addItems(
+            path for path in self.recent_paths.get("source") if os.path.isfile(path)
+        )
+        self.ed_file_path.setCurrentIndex(-1)
+        self.ed_file_path.setEditText(current_path)
+        self.ed_file_path.blockSignals(False)
+
+    def _show_recent_files(self) -> None:
+        """Show recently used translation source files."""
+        recent = [
+            path for path in self.recent_paths.get("source") if os.path.isfile(path)
+        ]
+        if not recent:
+            QMessageBox.information(
+                self,
+                tr("translation_recent.empty_title"),
+                tr("translation_recent.empty_message"),
+            )
+            return
+
+        menu = QMenu(self)
+        for path in recent:
+            action = QAction(path, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=path: self._select_recent_file(selected)
+            )
+            menu.addAction(action)
+        menu.addSeparator()
+        clear_action = QAction(tr("translation_recent.clear"), menu)
+        clear_action.triggered.connect(self._clear_recent_files)
+        menu.addAction(clear_action)
+        menu.exec(self.btn_recent_file.mapToGlobal(self.btn_recent_file.rect().bottomLeft()))
+
+    def _select_recent_file(self, path: str) -> None:
+        """Select a recent file without starting a network operation."""
+        self.ed_file_path.setCurrentText(path)
+
+    def _clear_recent_files(self) -> None:
+        """Clear translation source history and refresh the combo."""
+        self.recent_paths.clear("source")
+        self._refresh_recent_files()
 
     def _toggle_file_mode(self, enabled: bool):
         """Toggle between text and file input modes."""
@@ -432,17 +617,18 @@ class GoogleTranslateDock(BaseDock):
             self.lbl_input.setText(tr("google_translate.lbl_input"))
 
     def _browse_file(self):
-        """Browse for file to translate (supports .txt, .docx, .odt)."""
+        """Browse for a supported file to translate."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select File to Translate",
             "",
-            "Text Files (*.txt);;Word Documents (*.docx);;OpenDocument (*.odt);;All Files (*)"
+            "Text Files (*.txt);;Jupyter Notebooks (*.ipynb);;PDF Documents (*.pdf);;Word Documents (*.docx);;OpenDocument (*.odt);;All Files (*)"
         )
 
         if file_path:
             # Phase A: Clear previous translation state on new file load
             self._translated_html = None
+            self._translated_notebook = None
             self._translated_segments = []
             self._css_manager = None
             self._image_manager = None
@@ -451,7 +637,28 @@ class GoogleTranslateDock(BaseDock):
             
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
-                if file_path.lower().endswith('.docx'):
+                if file_path.lower().endswith('.ipynb'):
+                    notebook = load_notebook(file_path)
+                    plain_text = notebook_markdown_text(notebook)
+                    cell_count = markdown_cell_count(notebook)
+                    self._source_file_path = file_path
+                    self._source_segments = []
+                    self.lbl_status.setText(
+                        tr("google_translate.status_notebook_loaded").format(
+                            count=cell_count
+                        )
+                    )
+                elif file_path.lower().endswith('.pdf'):
+                    extraction = extract_pdf_text(file_path)
+                    plain_text = extraction.text
+                    self._source_file_path = file_path
+                    self._source_segments = []
+                    self.lbl_status.setText(
+                        tr("google_translate.status_pdf_loaded").format(
+                            pages=extraction.page_count
+                        )
+                    )
+                elif file_path.lower().endswith('.docx'):
                     # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
@@ -622,13 +829,16 @@ class GoogleTranslateDock(BaseDock):
                     self.lbl_status.setText(f"File loaded successfully. {len(plain_text)} characters.")
 
                 self.ed_file_path.setCurrentText(file_path)
+                self.recent_paths.add("source", file_path)
+                self._refresh_recent_files()
+                self.ed_file_path.setCurrentText(file_path)
                 self.text_input.setPlainText(plain_text[:5000])  # Show preview (plain text only)
 
                 if len(plain_text) > 5000:
                     current_status = self.lbl_status.text()
                     self.lbl_status.setText(f"{current_status} Showing first 5000 chars.")
 
-            except DocumentParserError as e:
+            except (DocumentParserError, NotebookFormatError, PdfExtractionError) as e:
                 QMessageBox.warning(
                     self, tr("google_translate.msg_file_error_title"), f"Could not parse file:\n{str(e)}"
                 )
@@ -641,11 +851,13 @@ class GoogleTranslateDock(BaseDock):
         """Start translation process."""
         # Phase A: Clear previous translation state before starting new translation
         self._translated_html = None
+        self._translated_notebook = None
         self._translated_segments = []
         self.text_output.clear()
         
         # Get text to translate
         text_to_translate = ""
+        notebook_to_translate = None
 
         if self.chk_file_mode.isChecked():
             # File mode - read full file using document parser
@@ -658,7 +870,17 @@ class GoogleTranslateDock(BaseDock):
 
             try:
                 # Use format mapper for DOCX/ODT files to extract formatting
-                if file_path.lower().endswith('.docx'):
+                if file_path.lower().endswith('.ipynb'):
+                    notebook_to_translate = load_notebook(file_path)
+                    text_to_translate = notebook_markdown_text(notebook_to_translate)
+                    self._source_file_path = file_path
+                    self._source_segments = []
+                elif file_path.lower().endswith('.pdf'):
+                    extraction = extract_pdf_text(file_path)
+                    text_to_translate = extraction.text
+                    self._source_file_path = file_path
+                    self._source_segments = []
+                elif file_path.lower().endswith('.docx'):
                     # Session COM8: NEW HTML-based format system for DOCX (with image and table support)
                     from translation.docx_html_mapper import extract_html_from_docx
                     
@@ -695,7 +917,7 @@ class GoogleTranslateDock(BaseDock):
                     # Use plain text parser for other file types
                     text_to_translate = extract_text_from_document(file_path)
                     self._source_segments = []  # No formatting for plain text files
-            except DocumentParserError as e:
+            except (DocumentParserError, NotebookFormatError, PdfExtractionError) as e:
                 QMessageBox.warning(
                     self,
                     tr("google_translate.msg_file_error_title"),
@@ -729,10 +951,20 @@ class GoogleTranslateDock(BaseDock):
             return
 
         # Start translation in background
-        self._start_translation(text_to_translate, from_lang, to_lang)
+        if self.chk_file_mode.isChecked():
+            self.recent_paths.add("source", self.ed_file_path.currentText().strip())
+            self._refresh_recent_files()
+            self.ed_file_path.setCurrentText(file_path)
+        if notebook_to_translate is not None:
+            self._start_notebook_translation(
+                notebook_to_translate, from_lang, to_lang
+            )
+        else:
+            self._start_translation(text_to_translate, from_lang, to_lang)
 
     def _start_translation(self, text: str, from_lang: str, to_lang: str):
         """Start background translation."""
+        self._translated_notebook = None
         # Prevent starting new worker while one is running (fixes crash on duplicate calls)
         if self.translation_worker and self.translation_worker.isRunning():
             return
@@ -756,6 +988,15 @@ class GoogleTranslateDock(BaseDock):
         self.lbl_status.setText(tr("google_translate.status_starting"))
         self.text_output.clear()
 
+        source_path = self.ed_file_path.currentText().strip() if self.chk_file_mode.isChecked() else ""
+        self._pending_history_details = {
+            "mode": "file" if source_path else "text",
+            "source_path": source_path,
+            "source_language": from_lang,
+            "target_language": to_lang,
+            "files_processed": 1 if source_path else 0,
+        }
+
         # Create and start worker
         self.translation_worker = TranslationWorker(self.api, text, from_lang, to_lang)
         
@@ -766,9 +1007,54 @@ class GoogleTranslateDock(BaseDock):
         
         # Store finished workers to prevent premature deletion
         # For QThread subclass, do NOT use finished->deleteLater pattern
-        self.translation_worker.finished.connect(lambda: self._on_worker_finished(self.translation_worker))
+        worker = self.translation_worker
+        worker.finished.connect(lambda finished_worker=worker: self._on_worker_finished(finished_worker))
         
-        self.translation_worker.start()
+        worker.start()
+
+    def _start_notebook_translation(self, notebook, from_lang: str, to_lang: str):
+        """Start structure-preserving notebook translation."""
+        if self.translation_worker and self.translation_worker.isRunning():
+            return
+
+        self.btn_translate.setEnabled(False)
+        self.btn_cancel.setEnabled(True)
+        self.progress_bar.setVisible(True)
+        self.progress_bar.setValue(0)
+        self.lbl_status.setText(tr("google_translate.status_starting"))
+        self.text_output.clear()
+
+        source_path = self.ed_file_path.currentText().strip()
+        self._pending_history_details = {
+            "mode": "notebook",
+            "source_path": source_path,
+            "source_language": from_lang,
+            "target_language": to_lang,
+            "files_processed": 1,
+        }
+
+        worker = NotebookTranslationWorker(
+            self.api, notebook, from_lang, to_lang
+        )
+        self.translation_worker = worker
+        worker.progress_updated.connect(self._on_progress_updated)
+        worker.chunk_progress.connect(self._on_chunk_progress)
+        worker.translation_completed.connect(
+            self._on_notebook_translation_completed
+        )
+        worker.finished.connect(
+            lambda finished_worker=worker: self._on_worker_finished(finished_worker)
+        )
+        worker.start()
+
+    def _on_notebook_translation_completed(
+        self, notebook, preview: str, success: bool, error: str, detected_lang: str
+    ):
+        """Store the translated notebook and reuse common completion UI."""
+        self._translated_notebook = notebook if success else None
+        self._on_translation_completed(
+            preview, success, error, detected_lang
+        )
 
     def _on_progress_updated(self, progress: int, status: str):
         """Handle progress updates."""
@@ -794,7 +1080,13 @@ class GoogleTranslateDock(BaseDock):
             # Single chunk: use simple status
             self.lbl_status.setText(status_msg)
 
-    def _on_translation_completed(self, result: str, success: bool, error: str, detected_lang: str):
+    def _on_translation_completed(
+        self,
+        result: str,
+        success: bool,
+        error: str,
+        detected_lang: str = "",
+    ):
         """Handle translation completion."""
         # Reset UI
         self.btn_translate.setEnabled(True)
@@ -907,14 +1199,26 @@ class GoogleTranslateDock(BaseDock):
             self.text_output.setPlainText(plain_text)
             self.btn_copy_result.setEnabled(True)
             self.btn_save_as.setEnabled(True)
+            self.btn_open_in_editor.setEnabled(True)
             self.btn_reverse.setEnabled(True)
             self._last_detected_lang = detected_lang  # Store detected language
             self.lbl_status.setText(tr("google_translate.status_completed"))
             self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
+            if self._pending_history_details is not None:
+                details = dict(self._pending_history_details)
+                details["detected_language"] = detected_lang
+                record_translation_operation(
+                    self,
+                    "google_translate",
+                    "Google Translate",
+                    details,
+                )
+            self.notify_processing_completed()
         else:
             self.text_output.setPlainText(f"Translation failed: {error}")
             self.btn_copy_result.setEnabled(False)
             self.btn_save_as.setEnabled(False)
+            self.btn_open_in_editor.setEnabled(False)
             self.lbl_status.setText(tr("google_translate.status_failed"))
             self.lbl_status.setStyleSheet("color: #EF4444; font-weight: bold;")
 
@@ -926,6 +1230,7 @@ class GoogleTranslateDock(BaseDock):
 
         # Worker cleanup handled by _on_worker_finished
         self.translation_worker = None
+        self._pending_history_details = None
 
     def _on_worker_finished(self, worker):
         """Handle worker thread finishing - keep reference alive."""
@@ -947,14 +1252,17 @@ class GoogleTranslateDock(BaseDock):
             self.btn_cancel.setEnabled(False)
             self.progress_bar.setVisible(False)
             self.lbl_status.setText(tr("google_translate.text_cancelled"))
+            self._pending_history_details = None
 
     def _clear(self):
         """Clear all input and output fields."""
         self.text_input.clear()
         self.text_output.clear()
         self.ed_file_path.clearEditText()
+        self._translated_notebook = None
         self.btn_copy_result.setEnabled(False)
         self.btn_save_as.setEnabled(False)
+        self.btn_open_in_editor.setEnabled(False)
         self.btn_reverse.setEnabled(False)
         self.lbl_status.setText(tr("google_translate.status_ready"))
         self.lbl_status.setStyleSheet("color: #666; font-style: italic;")
@@ -971,22 +1279,26 @@ class GoogleTranslateDock(BaseDock):
         
         # Store the output text before swapping (this will become the new input)
         output_text = self.text_output.toPlainText()
+        if not output_text.strip():
+            return
         
         # Also store translated segments with formatting for document mode
         has_formatting = bool(self._translated_segments)
         
         # Swap languages
         if from_code == "auto":
-            # Use detected language if available, otherwise keep auto-detect
-            if self._last_detected_lang:
-                # Set From to target language, To to detected language
-                from_index = self.combo_from_lang.findData(to_code)
-                to_index = self.combo_to_lang.findData(self._last_detected_lang)
-                
-                if from_index >= 0:
-                    self.combo_from_lang.setCurrentIndex(from_index)
-                if to_index >= 0:
-                    self.combo_to_lang.setCurrentIndex(to_index)
+            detected_index = self.combo_to_lang.findData(self._last_detected_lang)
+            if detected_index < 0 or self._last_detected_lang == to_code:
+                QMessageBox.warning(
+                    self,
+                    tr("google_translate.reverse_unavailable_title"),
+                    tr("google_translate.reverse_unavailable_message"),
+                )
+                return
+
+            from_index = self.combo_from_lang.findData(to_code)
+            self.combo_from_lang.setCurrentIndex(from_index)
+            self.combo_to_lang.setCurrentIndex(detected_index)
         else:
             # Normal swap when From is not auto-detect
             from_index = self.combo_from_lang.findData(to_code)
@@ -997,9 +1309,9 @@ class GoogleTranslateDock(BaseDock):
             if to_index >= 0:
                 self.combo_to_lang.setCurrentIndex(to_index)
         
-        # Swap input/output text
-        input_text = self.text_input.toPlainText()
-        
+        # The translated output is now a text input, not the original file.
+        if self.chk_file_mode.isChecked():
+            self.chk_file_mode.setChecked(False)
         self.text_input.setPlainText(output_text)
         self.text_output.clear()  # Clear output before auto-translation
         
@@ -1009,21 +1321,17 @@ class GoogleTranslateDock(BaseDock):
             self._source_segments, self._translated_segments = self._translated_segments, self._source_segments
         
         # Auto-trigger translation with the swapped text
-        if output_text.strip():
-            # Get new language selections after swap
-            new_from_lang = self.combo_from_lang.currentData()
-            new_to_lang = self.combo_to_lang.currentData()
-            
-            # Prepare text for translation (with formatting tags if available)
-            if has_formatting and self._source_segments:
-                # Use tagged text for translation to preserve formatting
-                text_to_translate = "".join(seg.to_tagged_text() for seg in self._source_segments)
-            else:
-                # Plain text mode
-                text_to_translate = output_text
-            
-            # Start automatic translation
-            self._start_translation(text_to_translate, new_from_lang, new_to_lang)
+        new_from_lang = self.combo_from_lang.currentData()
+        new_to_lang = self.combo_to_lang.currentData()
+
+        if has_formatting and self._source_segments:
+            text_to_translate = "".join(
+                segment.to_tagged_text() for segment in self._source_segments
+            )
+        else:
+            text_to_translate = output_text
+
+        self._start_translation(text_to_translate, new_from_lang, new_to_lang)
 
     def _swap_languages(self):
         """Swap source and target language selections only (doesn't swap content)."""
@@ -1075,6 +1383,19 @@ class GoogleTranslateDock(BaseDock):
             self.btn_copy_result.setText(tr("google_translate.btn_copied"))
             QTimer.singleShot(2000, lambda: self.btn_copy_result.setText(tr("google_translate.btn_copy_result")))
 
+    def _open_result_in_editor(self):
+        """Send the reviewable plain-text result to Clarify Editor."""
+        result = self.text_output.toPlainText()
+        if not result:
+            return
+
+        source_path = self._source_file_path or ""
+        source_stem = Path(source_path).stem if source_path else "translation"
+        self.open_in_editor_requested.emit(
+            result,
+            f"{source_stem}_translated.txt",
+        )
+
     def _save_as(self):
         """Save translation result to file (TXT, DOCX, or ODT based on dropdown selection)."""
         result = self.text_output.toPlainText()
@@ -1085,7 +1406,9 @@ class GoogleTranslateDock(BaseDock):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         default_filename = f"translation_{timestamp}"  # NO extension - dropdown determines it
         
-        if self._translated_segments:
+        if self._translated_notebook is not None:
+            file_filter = "Jupyter Notebooks (*.ipynb);;Text Files (*.txt)"
+        elif self._translated_segments:
             # Has formatting data - suggest DOCX first
             file_filter = "Word Documents (*.docx);;OpenDocument (*.odt);;Text Files (*.txt)"
         else:
@@ -1103,7 +1426,11 @@ class GoogleTranslateDock(BaseDock):
         if file_path:
             try:
                 # Determine extension from selected filter (dropdown)
-                if 'docx' in selected_filter.lower() or 'word' in selected_filter.lower():
+                if 'ipynb' in selected_filter.lower() or 'jupyter' in selected_filter.lower():
+                    if not file_path.lower().endswith('.ipynb'):
+                        file_path += '.ipynb'
+                    save_notebook(self._translated_notebook, file_path)
+                elif 'docx' in selected_filter.lower() or 'word' in selected_filter.lower():
                     # User selected Word Documents
                     if not file_path.lower().endswith('.docx'):
                         file_path += '.docx'

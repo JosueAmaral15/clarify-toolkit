@@ -17,6 +17,7 @@ import pytest
 import logging
 import tempfile
 import os
+import subprocess
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 import sys
@@ -325,6 +326,27 @@ class TestEnvironmentConfiguration:
         # Note: This test may not work perfectly because logger is initialized on import
         # In a real scenario, we'd need to reinitialize the logger
         pass  # Placeholder for environment testing
+
+    def test_unwritable_log_directory_falls_back_without_breaking_import(self):
+        """Import must survive read-only homes and container-style filesystems."""
+        env = os.environ.copy()
+        env["CLARIFY_LOG_DIR"] = "/proc/clarify-unwritable/logs"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from src.utils.logger import get_log_file; print(get_log_file())",
+            ],
+            cwd=Path(__file__).parent.parent,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert "/tmp/clarify-" in result.stdout
 
 
 if __name__ == "__main__":

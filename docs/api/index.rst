@@ -3,6 +3,12 @@ Clarify API Documentation
 
 Welcome to **Clarify's** API documentation! This documentation covers the public API for developers who want to understand, extend, or integrate with Clarify programmatically.
 
+.. note::
+
+   This API documentation is a generated-reference scaffold and may lag behind the
+   source tree. For current commands, entry points, and version notes, see
+   ``docs/CURRENT_STATE.md``.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -58,6 +64,7 @@ Quick Links
 * :doc:`core` - Core search, replace, and insert operations
 * :doc:`rewriter` - JSON rewriting and manipulation
 * :doc:`gui` - GUI components and docks
+* `Current checkout state <../CURRENT_STATE.md>`_
 * `GitHub Repository <https://github.com/JosueAmaral15/clarify>`_
 * `User Manual <../wiki/README.md>`_
 
@@ -70,8 +77,8 @@ Installation for Development
    cd clarify
    python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\\Scripts\\activate
-   pip install -r requirements.txt
-   pip install -r requirements-docs.txt  # For building docs
+   python -m pip install -e .
+   python -m pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints
 
 Building Documentation
 ----------------------
@@ -81,7 +88,7 @@ Building Documentation
    cd docs/api
    make html  # Linux/macOS
    make.bat html  # Windows
-   
+
    # Open in browser
    open _build/html/index.html  # macOS
    xdg-open _build/html/index.html  # Linux

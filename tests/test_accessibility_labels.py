@@ -42,6 +42,7 @@ class TestJsonTranslateDockAccessibility:
         # Test buttons
         assert dock.btn_browse.accessibleName() == "JSON Translate - Button - Browse Root Path"
         assert dock.btn_open.accessibleName() == "JSON Translate - Button - Browse Dictionary"
+        assert dock.btn_add_scope.accessibleName() == "JSON Translate - Button - Add Scope"
         assert dock.btn_run.accessibleName() == "JSON Translate - Button - Run Translation"
         assert dock.btn_swap.accessibleName() == "JSON Translate - Button - Swap Dictionaries"
         assert dock.btn_undo.accessibleName() == "JSON Translate - Button - Undo with Backup"
@@ -100,6 +101,7 @@ class TestJsonTranslateDockAccessibility:
             dock.ed_exclude,
             dock.btn_browse,
             dock.btn_open,
+            dock.btn_add_scope,
             dock.btn_run,
             dock.btn_swap,
             dock.btn_undo,

@@ -328,8 +328,8 @@ pip install toon-llm
 - `src/converters/toon.py` - TOON adapter implementation
 - `tests/test_converters.py` - Professional adapter tests (43 tests)
 - `tests/test_gui_advanced_converters.py` - GUI integration tests (16 tests)
-- `CLEANUP_DECISION_AND_ACTION_PLAN_3.md` - Investigation action plan
-- `DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` - Investigation report
+- `../action-plans/cleanup/CLEANUP_DECISION_AND_ACTION_PLAN_3.md` - Investigation action plan
+- `../investigations/orphaned-code/DEEP_ORPHANED_CODE_INVESTIGATION_PHASE5_FINAL_3.md` - Investigation report
 
 ---
 

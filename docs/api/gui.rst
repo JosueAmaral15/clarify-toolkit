@@ -19,11 +19,11 @@ Main Application
 Classes
 ~~~~~~~
 
-.. autoclass:: src.app.ClarifyApp
+.. autoclass:: src.app.MainWindow
    :members:
    :undoc-members:
    :show-inheritance:
-   
+
    .. automethod:: __init__
 
 Docks
@@ -37,10 +37,10 @@ Editor Dock
    :undoc-members:
    :show-inheritance:
 
-Search Dock
-~~~~~~~~~~~
+Search/Replace Panel
+~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: src.gui.search_replace_panel
+.. automodule:: src.gui.panels.search_replace_panel
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,7 +48,7 @@ Search Dock
 Insert Panel
 ~~~~~~~~~~~~
 
-.. automodule:: src.gui.insert_panel
+.. automodule:: src.gui.panels.insert_panel
    :members:
    :undoc-members:
    :show-inheritance:
@@ -56,7 +56,7 @@ Insert Panel
 JSON Rewriter Dock
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:: src.gui.rewriter_dock
+.. automodule:: src.gui.json_rewriter_dock
    :members:
    :undoc-members:
    :show-inheritance:
@@ -64,7 +64,7 @@ JSON Rewriter Dock
 Layout Manager
 --------------
 
-.. automodule:: src.gui.layout_manager
+.. automodule:: src.layout_manager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -72,11 +72,11 @@ Layout Manager
 Classes
 ~~~~~~~
 
-.. autoclass:: src.gui.layout_manager.LayoutManager
+.. autoclass:: src.layout_manager.LayoutManager
    :members:
    :undoc-members:
    :show-inheritance:
-   
+
    .. automethod:: __init__
    .. automethod:: save_layout
    .. automethod:: load_layout

@@ -109,6 +109,7 @@ class MenuBuilder:
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_tools = menu_bar.addMenu(tr("menu.tools"))
+        main_window.tools_menu = m_tools
 
         # Fixed tabs accessibility (v2.9.40.2 - Task: menu for closed tabs)
         main_window.act_open_search_replace = QAction(tr("menu.tools.search_replace"), main_window)
@@ -127,6 +128,30 @@ class MenuBuilder:
         main_window.act_open_calculator.setStatusTip(tr("menu.status.calculator"))
         main_window.act_open_formula_builder = QAction(tr("menu.tools.formula_builder"), main_window)
         main_window.act_open_formula_builder.setStatusTip(tr("menu.status.formula_builder"))
+        main_window.act_open_clock = QAction(
+            tr("menu.tools.clock", "Clock, Stopwatch and Timer"), main_window
+        )
+        main_window.act_open_terminal = QAction(
+            tr("menu.tools.terminal", "Terminal"), main_window
+        )
+        main_window.act_open_lynx = QAction(
+            tr("menu.tools.lynx", "Lynx Text Browser"), main_window
+        )
+        main_window.act_open_information_structure = QAction(
+            tr("menu.tools.information_structure", "Information Structure"), main_window
+        )
+        main_window.act_open_editorial_repair = QAction(
+            tr("menu.tools.editorial_repair", "Editorial Repair"), main_window
+        )
+        main_window.act_open_boolean_logic = QAction(
+            tr("menu.tools.boolean_logic", "Boolean Logic"), main_window
+        )
+        main_window.act_open_voice_programming = QAction(
+            tr("menu.tools.voice_programming", "Voice Programming"), main_window
+        )
+        main_window.act_open_algorithm_analysis = QAction(
+            tr("menu.tools.algorithm_analysis", "Algorithm Analysis"), main_window
+        )
         main_window.act_open_file_explorer = QAction(tr("menu.tools.file_explorer"), main_window)
         main_window.act_open_file_explorer.setStatusTip(tr("menu.status.file_explorer"))
         main_window.act_open_file_explorer.setShortcut("Ctrl+Shift+F")
@@ -134,24 +159,50 @@ class MenuBuilder:
         main_window.act_open_advanced_extractor.setStatusTip(tr("menu.status.advanced_extractor"))
         main_window.act_open_advanced_extractor.setShortcut("Ctrl+Shift+E")
 
-        # Add actions to menu
-        m_tools.addAction(main_window.act_open_search_replace)
-        m_tools.addAction(main_window.act_open_insert)
-        m_tools.addSeparator()
-        m_tools.addAction(main_window.act_open_translate)
-        m_tools.addAction(main_window.act_open_rewriter)
-        m_tools.addAction(main_window.act_open_placeholder_replacer)
-        m_tools.addAction(main_window.act_open_ai_processor)
-        m_tools.addAction(main_window.act_open_json_search)
-        m_tools.addAction(main_window.act_open_case_converter)
-        m_tools.addAction(main_window.act_open_text_to_json)
-        m_tools.addAction(main_window.act_open_google_translate)
-        m_tools.addAction(main_window.act_open_set_operations)
-        m_tools.addAction(main_window.act_open_calculator)
-        m_tools.addAction(main_window.act_open_formula_builder)
-        m_tools.addSeparator()
-        m_tools.addAction(main_window.act_open_file_explorer)
-        m_tools.addAction(main_window.act_open_advanced_extractor)
+        # Group tools by user workflow while preserving the public actions.
+        editing_menu = m_tools.addMenu(tr("menu.tools.group_editing", "Editing"))
+        json_menu = m_tools.addMenu(tr("menu.tools.group_json", "JSON"))
+        text_menu = m_tools.addMenu(
+            tr("menu.tools.group_text_translation", "Text and Translation")
+        )
+        ai_menu = m_tools.addMenu(tr("menu.tools.group_ai", "Artificial Intelligence"))
+        files_menu = m_tools.addMenu(tr("menu.tools.group_files", "Files"))
+        utilities_menu = m_tools.addMenu(tr("menu.tools.group_utilities", "Utilities"))
+        main_window.tool_group_menus = {
+            "editing": editing_menu,
+            "json": json_menu,
+            "text_translation": text_menu,
+            "ai": ai_menu,
+            "files": files_menu,
+            "utilities": utilities_menu,
+        }
+
+        editing_menu.addAction(main_window.act_open_search_replace)
+        editing_menu.addAction(main_window.act_open_insert)
+
+        json_menu.addAction(main_window.act_open_translate)
+        json_menu.addAction(main_window.act_open_rewriter)
+        json_menu.addAction(main_window.act_open_placeholder_replacer)
+        json_menu.addAction(main_window.act_open_json_search)
+        json_menu.addAction(main_window.act_open_text_to_json)
+        json_menu.addAction(main_window.act_open_set_operations)
+        json_menu.addAction(main_window.act_open_advanced_extractor)
+
+        text_menu.addAction(main_window.act_open_case_converter)
+        text_menu.addAction(main_window.act_open_google_translate)
+        text_menu.addAction(main_window.act_open_editorial_repair)
+
+        ai_menu.addAction(main_window.act_open_ai_processor)
+        ai_menu.addAction(main_window.act_open_voice_programming)
+        ai_menu.addAction(main_window.act_open_algorithm_analysis)
+        files_menu.addAction(main_window.act_open_file_explorer)
+        files_menu.addAction(main_window.act_open_information_structure)
+        utilities_menu.addAction(main_window.act_open_calculator)
+        utilities_menu.addAction(main_window.act_open_formula_builder)
+        utilities_menu.addAction(main_window.act_open_clock)
+        utilities_menu.addAction(main_window.act_open_terminal)
+        utilities_menu.addAction(main_window.act_open_lynx)
+        utilities_menu.addAction(main_window.act_open_boolean_logic)
 
         # Connect actions
         main_window.act_open_search_replace.triggered.connect(main_window._show_search_replace)
@@ -167,6 +218,22 @@ class MenuBuilder:
         main_window.act_open_set_operations.triggered.connect(main_window._show_set_operations)
         main_window.act_open_calculator.triggered.connect(main_window._show_calculator)
         main_window.act_open_formula_builder.triggered.connect(main_window._show_formula_builder)
+        main_window.act_open_clock.triggered.connect(main_window._show_clock)
+        main_window.act_open_terminal.triggered.connect(main_window._show_terminal)
+        main_window.act_open_lynx.triggered.connect(main_window._show_lynx)
+        main_window.act_open_information_structure.triggered.connect(
+            main_window._show_information_structure
+        )
+        main_window.act_open_editorial_repair.triggered.connect(
+            main_window._show_editorial_repair
+        )
+        main_window.act_open_boolean_logic.triggered.connect(main_window._show_boolean_logic)
+        main_window.act_open_voice_programming.triggered.connect(
+            main_window._show_voice_programming
+        )
+        main_window.act_open_algorithm_analysis.triggered.connect(
+            main_window._show_algorithm_analysis
+        )
         main_window.act_open_advanced_extractor.triggered.connect(main_window._show_advanced_extractor)
         main_window.act_open_file_explorer.triggered.connect(main_window._show_file_explorer)
 

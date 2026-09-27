@@ -1,0 +1,81 @@
+{
+  "source": {
+    "FAQPage": {
+      "div": {
+        "h1": {
+          "t_pages_contact_quicklinks_faq": "{t.pages.contact.quickLinks.faq}"
+        },
+        "p": {
+          "t_pages_faq_header_subtitle": "{t.pages.faq.header.subtitle}",
+          "sentence": "{sentence}",
+          "index": "index"
+        },
+        "hero_section": "{/* Hero Section */}"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "key_and_value",
+      "include_key": true,
+      "include_value": true,
+      "expected": {
+        "FAQPage": {
+          "div": {
+            "h1": {
+              "t_pages_contact_quicklinks_faq": "{t.pages.contact.quickLinks.faq}"
+            },
+            "p": {
+              "t_pages_faq_header_subtitle": "{t.pages.faq.header.subtitle}",
+              "sentence": "{sentence}",
+              "index": "index"
+            },
+            "hero_section": "{/* Hero Section */}"
+          }
+        }
+      }
+    },
+    {
+      "name": "key_only",
+      "include_key": true,
+      "include_value": false,
+      "expected": {
+        "FAQPage": {
+          "div": [
+            {
+              "h1": [
+                "t_pages_contact_quicklinks_faq"
+              ]
+            },
+            {
+              "p": [
+                "t_pages_faq_header_subtitle",
+                "sentence",
+                "index"
+              ]
+            },
+            "hero_section"
+          ]
+        }
+      }
+    },
+    {
+      "name": "value_only",
+      "include_key": false,
+      "include_value": true,
+      "expected": [
+        "{t.pages.contact.quickLinks.faq}",
+        "{t.pages.faq.header.subtitle}",
+        "{sentence}",
+        "index",
+        "{/* Hero Section */}"
+      ]
+    },
+    {
+      "name": "neither",
+      "include_key": false,
+      "include_value": false,
+      "expected": {}
+    }
+  ]
+}

@@ -300,7 +300,9 @@ class VennDiagramDialog(QDialog):
 
         # Add instruction text
         instruction = QGraphicsTextItem("Click any region to view details →")
-        instruction.setFont(QFont("", 10, QFont.StyleItalic))
+        instruction_font = QFont("", 10)
+        instruction_font.setItalic(True)
+        instruction.setFont(instruction_font)
         instruction.setDefaultTextColor(QColor("#666666"))
         instruction.setPos(scene_width / 2 - 120, scene_height - 40)
         self.scene.addItem(instruction)

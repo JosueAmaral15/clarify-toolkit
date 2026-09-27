@@ -13,12 +13,18 @@ Version: 2.9.78
 
 import pytest
 import sys
-from unittest.mock import Mock, patch
+import json
+from types import SimpleNamespace
+from unittest.mock import ANY, Mock, patch
 from PySide6.QtWidgets import QApplication
 from PySide6.QtTest import QTest
 from PySide6.QtCore import Qt
 
-from src.gui.google_translate_dock import GoogleTranslateDock, TranslationWorker
+from src.gui.google_translate_dock import (
+    GoogleTranslateDock,
+    NotebookTranslationWorker,
+    TranslationWorker,
+)
 from src.translation.google_translate import TranslationResult
 
 # Ensure QApplication exists for GUI tests
@@ -174,6 +180,12 @@ class TestGoogleTranslateDock:
         assert not self.dock.btn_translate.isEnabled()
         assert self.dock.btn_cancel.isEnabled()
         assert self.dock.progress_bar.isVisible()
+
+        finished_callback = mock_worker.finished.connect.call_args.args[0]
+        self.dock.translation_worker = None
+        with patch.object(self.dock, "_on_worker_finished") as on_finished:
+            finished_callback()
+        on_finished.assert_called_once_with(mock_worker)
     
     @pytest.mark.timeout(5)
     def test_translation_completion_success(self):
@@ -211,6 +223,196 @@ class TestGoogleTranslateDock:
         assert self.dock.progress_bar.value() == 50
         assert self.dock.lbl_status.text() == "Translating..."
 
+    def test_browse_notebook_previews_only_markdown(self, tmp_path):
+        notebook_path = tmp_path / "sample.ipynb"
+        notebook_path.write_text(
+            json.dumps(
+                {
+                    "cells": [
+                        {"cell_type": "markdown", "metadata": {}, "source": ["Hello\n"]},
+                        {
+                            "cell_type": "code",
+                            "metadata": {},
+                            "source": ["print('secret')"],
+                            "outputs": [],
+                            "execution_count": None,
+                        },
+                    ],
+                    "metadata": {},
+                    "nbformat": 4,
+                    "nbformat_minor": 5,
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.dock.recent_paths = Mock()
+        self.dock.recent_paths.get.return_value = []
+
+        with patch(
+            "src.gui.google_translate_dock.QFileDialog.getOpenFileName",
+            return_value=(str(notebook_path), "Jupyter Notebooks (*.ipynb)"),
+        ):
+            self.dock._browse_file()
+
+        assert self.dock.text_input.toPlainText() == "Hello\n"
+        assert "secret" not in self.dock.text_input.toPlainText()
+        assert "1 Markdown cell" in self.dock.lbl_status.text()
+
+    def test_notebook_translation_routes_to_dedicated_worker(self, tmp_path):
+        notebook_path = tmp_path / "sample.ipynb"
+        notebook_path.write_text(
+            json.dumps(
+                {
+                    "cells": [{"cell_type": "markdown", "metadata": {}, "source": "Hello"}],
+                    "metadata": {},
+                    "nbformat": 4,
+                    "nbformat_minor": 5,
+                }
+            ),
+            encoding="utf-8",
+        )
+        self.dock.recent_paths = Mock()
+        self.dock.recent_paths.get.return_value = []
+        self.dock.chk_file_mode.setChecked(True)
+        self.dock.ed_file_path.setCurrentText(str(notebook_path))
+
+        with patch.object(self.dock, "_start_notebook_translation") as start:
+            self.dock._translate()
+
+        start.assert_called_once()
+        notebook, from_lang, to_lang = start.call_args.args
+        assert notebook["cells"][0]["source"] == "Hello"
+        assert from_lang == "auto"
+        assert to_lang == "pt"
+
+    def test_save_translated_notebook_as_ipynb(self, tmp_path):
+        output = tmp_path / "translated"
+        self.dock._translated_notebook = {
+            "cells": [{"cell_type": "markdown", "metadata": {}, "source": "Olá"}],
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 5,
+        }
+        self.dock.text_output.setPlainText("Olá")
+
+        with patch(
+            "src.gui.google_translate_dock.QFileDialog.getSaveFileName",
+            return_value=(str(output), "Jupyter Notebooks (*.ipynb)"),
+        ):
+            self.dock._save_as()
+
+        saved = json.loads((tmp_path / "translated.ipynb").read_text(encoding="utf-8"))
+        assert saved["cells"][0]["source"] == "Olá"
+
+    def test_browse_pdf_shows_bounded_text_preview(self, tmp_path):
+        pdf_path = tmp_path / "report.pdf"
+        pdf_path.write_bytes(b"%PDF-test")
+        self.dock.recent_paths = Mock()
+        self.dock.recent_paths.get.return_value = []
+
+        with (
+            patch(
+                "src.gui.google_translate_dock.QFileDialog.getOpenFileName",
+                return_value=(str(pdf_path), "PDF Documents (*.pdf)"),
+            ),
+            patch(
+                "src.gui.google_translate_dock.extract_pdf_text",
+                return_value=SimpleNamespace(text="Extracted PDF text", page_count=3),
+            ) as extract,
+        ):
+            self.dock._browse_file()
+
+        extract.assert_called_once_with(str(pdf_path))
+        assert self.dock.text_input.toPlainText() == "Extracted PDF text"
+        assert "3 page(s)" in self.dock.lbl_status.text()
+        assert "not preserved" in self.dock.lbl_status.text()
+
+    def test_pdf_translation_routes_extracted_text_to_plain_worker(self, tmp_path):
+        pdf_path = tmp_path / "report.pdf"
+        pdf_path.write_bytes(b"%PDF-test")
+        self.dock.recent_paths = Mock()
+        self.dock.recent_paths.get.return_value = []
+        self.dock.chk_file_mode.setChecked(True)
+        self.dock.ed_file_path.setCurrentText(str(pdf_path))
+
+        with (
+            patch(
+                "src.gui.google_translate_dock.extract_pdf_text",
+                return_value=SimpleNamespace(text="Full PDF text", page_count=2),
+            ),
+            patch.object(self.dock, "_start_translation") as start,
+        ):
+            self.dock._translate()
+
+        start.assert_called_once_with("Full PDF text", "auto", "pt")
+
+    def test_open_result_in_editor_emits_reviewable_text_and_name(self):
+        emitted = []
+        self.dock.open_in_editor_requested.connect(
+            lambda content, name: emitted.append((content, name))
+        )
+        self.dock._source_file_path = "/tmp/report.pdf"
+        self.dock._on_translation_completed("Translated PDF", True, "")
+
+        assert self.dock.btn_open_in_editor.isEnabled()
+        self.dock._open_result_in_editor()
+
+        assert emitted == [("Translated PDF", "report_translated.txt")]
+
+    def test_reverse_translation_swaps_languages_and_starts_automatically(self):
+        self.dock.combo_from_lang.setCurrentIndex(
+            self.dock.combo_from_lang.findData("en")
+        )
+        self.dock.combo_to_lang.setCurrentIndex(
+            self.dock.combo_to_lang.findData("pt")
+        )
+        self.dock.text_output.setPlainText("Olá")
+
+        with patch.object(self.dock, "_start_translation") as start:
+            self.dock._reverse_translation()
+
+        assert self.dock.text_input.toPlainText() == "Olá"
+        assert self.dock.combo_from_lang.currentData() == "pt"
+        assert self.dock.combo_to_lang.currentData() == "en"
+        start.assert_called_once_with("Olá", "pt", "en")
+
+    def test_reverse_translation_uses_detected_source_language(self):
+        self.dock._last_detected_lang = "en"
+        self.dock.text_output.setPlainText("Olá")
+
+        with patch.object(self.dock, "_start_translation") as start:
+            self.dock._reverse_translation()
+
+        assert self.dock.combo_from_lang.currentData() == "pt"
+        assert self.dock.combo_to_lang.currentData() == "en"
+        start.assert_called_once_with("Olá", "pt", "en")
+
+    def test_reverse_translation_requires_a_recognized_detected_language(self):
+        self.dock._last_detected_lang = "auto"
+        self.dock.text_output.setPlainText("Olá")
+
+        with (
+            patch.object(self.dock, "_start_translation") as start,
+            patch("src.gui.google_translate_dock.QMessageBox.warning") as warning,
+        ):
+            self.dock._reverse_translation()
+
+        warning.assert_called_once()
+        start.assert_not_called()
+        assert self.dock.combo_from_lang.currentData() == "auto"
+        assert self.dock.combo_to_lang.currentData() == "pt"
+
+    def test_reverse_translation_leaves_file_mode_before_reusing_output(self):
+        self.dock.chk_file_mode.setChecked(True)
+        self.dock._last_detected_lang = "en"
+        self.dock.text_output.setPlainText("Olá")
+
+        with patch.object(self.dock, "_start_translation"):
+            self.dock._reverse_translation()
+
+        assert not self.dock.chk_file_mode.isChecked()
+        assert not self.dock.text_input.isReadOnly()
+
 
 class TestTranslationWorker:
     """Test TranslationWorker thread."""
@@ -247,7 +449,7 @@ class TestTranslationWorker:
             source_language="en",
             target_language="pt"
         )
-        api.translate_text.return_value = mock_result
+        api.translate_text_chunked.return_value = mock_result
         
         # Create worker
         worker = TranslationWorker(api, "Hello", "en", "pt")
@@ -261,10 +463,12 @@ class TestTranslationWorker:
             worker.run()
         
         # Verify API was called
-        api.translate_text.assert_called_with("Hello", "en", "pt")
+        api.translate_text_chunked.assert_called_once_with(
+            "Hello", "en", "pt", progress_callback=ANY
+        )
         
         # Verify signals were emitted
-        worker.translation_completed.emit.assert_called_with("Olá", True, "")
+        worker.translation_completed.emit.assert_called_with("Olá", True, "", "en")
     
     @pytest.mark.timeout(10)
     def test_worker_failed_translation(self):
@@ -275,7 +479,7 @@ class TestTranslationWorker:
             success=False,
             error_message="Network error"
         )
-        api.translate_text.return_value = mock_result
+        api.translate_text_chunked.return_value = mock_result
         
         # Create worker
         worker = TranslationWorker(api, "Hello", "en", "pt")
@@ -289,11 +493,11 @@ class TestTranslationWorker:
             worker.run()
         
         # Verify failure was handled
-        worker.translation_completed.emit.assert_called_with("", False, "Network error")
+        worker.translation_completed.emit.assert_called_with("", False, "Network error", "en")
     
     @pytest.mark.timeout(10)
-    def test_worker_large_text_chunking(self):
-        """Test worker handles large text by chunking."""
+    def test_worker_delegates_large_text_chunking(self):
+        """Test worker delegates large text to the chunked API."""
         # Create large text (over 5000 chars) with paragraph breaks for chunking
         large_text = "Hello World!\n\n" * 400  # ~5600 chars total, creating 2+ chunks
         
@@ -305,7 +509,7 @@ class TestTranslationWorker:
             source_language="en",
             target_language="pt"
         )
-        api.translate_text.return_value = mock_result
+        api.translate_text_chunked.return_value = mock_result
         
         # Create worker
         worker = TranslationWorker(api, large_text, "en", "pt")
@@ -316,12 +520,60 @@ class TestTranslationWorker:
         with patch('time.sleep'):  # Speed up test
             worker.run()
         
-        # Verify multiple API calls were made (for chunks)
-        assert api.translate_text.call_count >= 2
+        api.translate_text_chunked.assert_called_once_with(
+            large_text, "en", "pt", progress_callback=ANY
+        )
         
         # Verify final result combines chunks
         final_result = worker.translation_completed.emit.call_args[0][0]
         assert len(final_result) > 0
+
+
+class TestNotebookTranslationWorker:
+    """Test notebook-specific worker behavior without starting a thread."""
+
+    def test_worker_translates_only_markdown_cells(self):
+        notebook = {
+            "cells": [
+                {"cell_type": "markdown", "metadata": {}, "source": "Hello"},
+                {
+                    "cell_type": "code",
+                    "metadata": {},
+                    "source": "print('Hello')",
+                    "outputs": [{"output_type": "stream", "text": "Hello"}],
+                },
+            ],
+            "metadata": {},
+            "nbformat": 4,
+            "nbformat_minor": 5,
+        }
+        api = Mock()
+        api.translate_text_chunked.return_value = TranslationResult(
+            success=True,
+            translated_text="Olá",
+            source_language="en",
+            target_language="pt",
+        )
+        worker = NotebookTranslationWorker(api, notebook, "auto", "pt")
+        worker.progress_updated = Mock()
+        worker.chunk_progress = Mock()
+        worker.translation_completed = Mock()
+
+        worker.run()
+
+        api.translate_text_chunked.assert_called_once_with(
+            "Hello", "auto", "pt", progress_callback=ANY
+        )
+        emitted_notebook, preview, success, error, detected = (
+            worker.translation_completed.emit.call_args.args
+        )
+        assert success is True
+        assert error == ""
+        assert detected == "en"
+        assert preview == "Olá"
+        assert emitted_notebook["cells"][0]["source"] == "Olá"
+        assert emitted_notebook["cells"][1]["source"] == "print('Hello')"
+        assert emitted_notebook["cells"][1]["outputs"][0]["text"] == "Hello"
 
 
 if __name__ == "__main__":

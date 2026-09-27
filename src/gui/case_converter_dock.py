@@ -250,6 +250,7 @@ class CaseConverterDock(StandardToolDock):
         )
         self.btn_convert.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
+        self.notify_processing_completed()
 
     def _on_failed(self, error):
         """Handle processing failure."""

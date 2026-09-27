@@ -250,6 +250,7 @@ class TestJSONEditorIntegration:
         from src.gui.json_editor_tab import JsonEditorTab
         
         editor = JsonEditorTab()
+        editor.show()
         
         # Initially hidden
         assert not editor.regex_insert_panel.isVisible()
@@ -321,6 +322,14 @@ def qapp():
     if app is None:
         app = QApplication([])
     yield app
+
+
+@pytest.fixture(autouse=True)
+def dismiss_feedback_dialogs(monkeypatch):
+    """Feedback dialogs must not block automated insert tests."""
+    from PySide6.QtWidgets import QMessageBox
+
+    monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: QMessageBox.Ok)
 
 
 if __name__ == "__main__":

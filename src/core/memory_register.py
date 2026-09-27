@@ -204,15 +204,12 @@ class MemoryRegister:
             result = register.replace_in_text(template)
             # result = '"fullName": "John"'
         """
-        result = template
-
-        # Sort by index descending to avoid replacing $1 before $10
-        for idx in sorted(self.registers.keys(), reverse=True):
-            placeholder = f"${idx}"
-            if placeholder in result:
-                result = result.replace(placeholder, self.registers[idx].value)
-
-        return result
+        # Substitute original tokens once; captured text is literal, not a template.
+        return re.sub(
+            r"\$([0-9]+)",
+            lambda match: self.get(int(match.group(1)), match.group(0)),
+            template,
+        )
 
     def clear(self):
         """Clear all registers."""

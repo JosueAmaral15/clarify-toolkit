@@ -71,13 +71,16 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # 3. Install dependencies
-pip install -r requirements.txt
+poetry install
+
+# Alternative without Poetry
+python -m pip install -e .
 
 # 4. Install development dependencies
-pip install pytest pytest-qt pytest-cov pytest-timeout black isort pylint psutil
+python -m pip install pytest pytest-qt pytest-cov pytest-timeout black isort pylint psutil
 
 # 5. Run Clarify
-python -m src.app
+python -m src
 ```
 
 ### Project Structure
@@ -95,7 +98,7 @@ clarify/
 ├── docs/                # Documentation
 │   ├── TASKS.md         # Project backlog (MoSCoW)
 │   ├── tutorials/       # User tutorials
-│   └── protocolos/      # Development protocols
+│   └── protocols/       # Development protocols and compliance notes
 ├── CHANGELOG.md         # Release notes
 └── README.md            # Project overview
 ```
@@ -244,18 +247,18 @@ To add a new language (e.g., Italian - `it`):
 
 ### Available Protocols
 
-1. **Simplicidade 1** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_1.md`) - v2.0
+1. **Simplicidade 1** - historical protocol variant
    - **For**: Solo developers, prototyping, internal non-critical projects
    - **Features**: Fast iteration, minimal overhead
    - **Steps**: 9 mandatory steps (requirements → testing → rollback)
 
-2. **Simplicidade 2** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_2.md`) - v2.2
+2. **Simplicidade 2** - historical protocol variant
    - **For**: Teams (3+ developers), production systems requiring compliance
    - **Features**: Code review, retrospectives, ADR, accessibility, API docs
    - **Steps**: 16 mandatory + 3 optional steps
    - **Overhead**: 4-6h per task (justified by quality gains)
 
-3. **Simplicidade 3** (`docs/protocolos/PROTOCOLO_SIMPLICIDADE_3.md`) - v3.1 ⭐
+3. **Simplicidade 3** (`docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md`) - active protocol reference ⭐
    - **For**: Solo developer in production (most Clarify contributions)
    - **Features**: Hybrid approach, AI suggestions, security without bureaucracy
    - **Steps**: 16 mandatory + 3 optional steps
