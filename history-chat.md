@@ -2346,3 +2346,44 @@ Plano imediato:
 - Validar snapshot e verificar segredos antes de enviar ao origin configurado.
   Depois reproduzir Qt em subprocessos limitados e inventariar ancestralidade,
   equivalencia de patches e conflitos para recomendar ordem de integracao.
+
+## 2026-09-27 - Pos-acao - Checkpoint enviado e investigacao concluida
+
+- Usuario confirmou explicitamente checkpoint de todo o trabalho acumulado.
+  Commit af77ee9 (184 arquivos) enviado para
+  COM-609038f3-58cb-4100-9b3b-b36177997cc2 antes da investigacao.
+  example.py preexistente ficou excluido. Main local df4b12c e remoto 63071da
+  permaneceram inalterados; sem merges, exclusoes, prune ou force-push.
+- Releitura das secoes relevantes do SIMPLICITY_PROTOCOL_3 externo: COM-UUID,
+  PRs, protecao da principal, worktrees, limites de recursos e gates. Develop
+  e proposta opcional de integracao, nao obrigacao atribuida ao protocolo.
+- Seis de sete branches locais antigas ja sao ancestrais de main. COM4 tem
+  contribuicao liquida de 22 documentos Markdown, sem delta de codigo fonte;
+  suas duas refs remotas nao devem ser integradas como trabalhos independentes.
+  Simulacoes read-only nao indicaram conflitos contra main/checkpoint. gh-pages
+  deve ficar separado. Tres registros de worktree antigos precisam verificacao
+  de diretorios movidos/backups antes de qualquer limpeza autorizada.
+- GitHub Actions do checkpoint: startup_failure, zero jobs, causa nao provada.
+  Branches remotas sem protecao. Dependabot: 23 alertas da principal, incluindo
+  um critico; anyio 4.12.1 no checkpoint continua afetado. Nenhuma dependencia ou
+  workflow alterado; falta corrigir e validar antes de promover para main.
+- Qt: controles simples e ciclos completos MainWindow/temas passaram isolados,
+  inclusive comparacao de cleanup deferred/queued. Script permanente em
+  scripts/diagnostics/qt_lifecycle_probe.py: tres ciclos simples e dois completos
+  passaram, zero widgets restantes por ciclo, picos 59.1/199.8 MiB.
+  Nao reproduziu nem demonstrou correcao da causa do segfault combinado.
+- Reruns de 315/113/27 casos e tentativa de ordem mista foram interrompidos pelo
+  limite de RAM do sistema (85%); nao contam como aprovados. Os 315 testes
+  anteriores continuam evidencia historica do mesmo codigo, nao novo run global.
+  Probes sao seriais, settings temporarios, timeout e limite de RSS; nenhuma
+  aplicacao do usuario foi encerrada. AST/diff check passaram e teste mockado
+  confirmou que RAM >=85% impede criar o subprocesso.
+- Relatorio BRANCH_AND_QT_INVESTIGATION_2026_09_27.md registra evidencias e plano:
+  reparar seguranca/CI, escolher develop opcional, revisar PR do checkpoint,
+  integrar COM4 uma vez com documentos arquivados e somente depois promover main.
+- TASKS.md: 30 itens abertos verificados (23 legados + 3 ambiente + 1 Qt +
+  3 seguranca/CI/integracao). Prioridades seguintes: seguranca/CI para promocao,
+  investigacao Qt e LEG-24 para estabilidade; LEG-06 vem depois. STT ao vivo,
+  Aspell pt_BR e LLaVA continuam dependentes de ambiente/validacao especifica.
+- Follow-up de diagnostico e documentacao preparado para commit/push na mesma
+  branch autorizada; sem alteracao de codigo de producao nesta investigacao.

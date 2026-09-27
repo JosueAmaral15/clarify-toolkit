@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/27 - Auditoria dos 36 marcadores e correcoes verificadas
+**Last Update**: 2026/09/27 - Checkpoint, investigacao Qt e plano de integracao Git
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -55,6 +55,25 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   testes unitarios de InsertPanel usam o componente isolado (315 testes passam).
   Isso nao comprova correcao do ciclo completo: reproduzir em subprocesso e
   validar alternancia de temas/reabertura antes de declarar estabilidade global.
+  Probes isolados de temas e MainWindow passaram sem reproduzir o crash; o script
+  `scripts/diagnostics/qt_lifecycle_probe.py` limita RAM/tempo e registra widgets
+  restantes. Tentativa de reproduzir a ordem da suite foi interrompida por RAM.
+  Causa raiz e validacao da suite combinada continuam pendentes.
+- [ ] **MUST / seguranca: revisar e corrigir dependencias vulneraveis.** GitHub
+  reporta 23 alertas abertos na branch padrao (1 critico, 12 altos, 7 moderados,
+  3 baixos). O lock do checkpoint ainda usa anyio 4.12.1, afetado pelo alerta
+  critico (<4.14.2). Atualizar com testes de compatibilidade e nova auditoria;
+  nao supor que os 23 alertas da principal sejam todos aplicaveis ao checkpoint.
+- [ ] **MUST / integracao: restaurar CI e comprovar gates de promocao.** O run do
+  checkpoint terminou em startup_failure sem jobs: causa ainda nao determinada.
+  Revisar validacao dos workflows, instalacao de dependencias e constraints no
+  shell; comprovar testes, cobertura, analise estatica e seguranca exigidos pelo
+  protocolo. Configurar protecao de main por PR/checks mediante aprovacao.
+- [ ] **SHOULD / Git: integrar trabalho pendente por PRs revisados.** Definir se
+  develop sera usado como integracao; revisar separadamente checkpoint e os 22
+  documentos historicos exclusivos de COM4, arquivando estes em docs. Seis branches
+  locais antigas ja estao em main. Nao mesclar gh-pages nem duplicar COM4; limpeza
+  de branches/worktrees somente apos verificacao e autorizacao explicita.
 - [ ] **SHOULD / ambiente: validar reconhecimento de voz ao vivo** apos selecionar
   e configurar um backend STT. Whisper, Vosk e SpeechRecognition continuam ausentes.
 - [ ] **SHOULD / ambiente: validar revisao em portugues com Aspell `pt_BR`**.
@@ -62,12 +81,15 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
 - [ ] **COULD / ambiente: validar analise visual local com LLaVA**. Ollama possui
   `llama3.2:1b` e `tinyllama:latest`; nenhum modelo multimodal foi instalado.
 
-O worktree amplo continua exigindo revisao separada antes de versionamento/release.
+O trabalho acumulado foi preservado em `af77ee9` e enviado para a branch
+`COM-609038f3-58cb-4100-9b3b-b36177997cc2`; nao e uma release ou merge em main.
+Ver [investigacao e ordem proposta de integracao](reports/BRANCH_AND_QT_INVESTIGATION_2026_09_27.md).
 Ver [registro de validacao](reports/STABILITY_VALIDATION_2026_09_26.md).
 
 ## Fila Canonica - Legado Auditado (27/09/2026)
 
-**Restam 23 itens legados + 3 validacoes de ambiente + 1 investigacao Qt = 27
+**Restam 23 itens legados + 3 validacoes de ambiente + 1 investigacao Qt +
+3 tarefas de seguranca/CI/integracao Git = 30
 itens abertos nestas filas.** Isto nao e estimativa de sprints nem contagem de bugs; varios
 itens sao epicos. As anotacoes LEG junto aos textos originais sao referencias,
 nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
