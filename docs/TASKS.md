@@ -68,12 +68,18 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   checkpoint terminou em startup_failure sem jobs: causa ainda nao determinada.
   Revisar validacao dos workflows, instalacao de dependencias e constraints no
   shell; comprovar testes, cobertura, analise estatica e seguranca exigidos pelo
-  protocolo. Configurar protecao de main por PR/checks mediante aprovacao.
-- [ ] **SHOULD / Git: integrar trabalho pendente por PRs revisados.** Definir se
-  develop sera usado como integracao; revisar separadamente checkpoint e os 22
-  documentos historicos exclusivos de COM4, arquivando estes em docs. Seis branches
-  locais antigas ja estao em main. Nao mesclar gh-pages nem duplicar COM4; limpeza
-  de branches/worktrees somente apos verificacao e autorizacao explicita.
+  protocolo. Protecao de main/develop bloqueada por HTTP 403 no plano GitHub do
+  repo privado; decisao de plano/visibilidade depende do usuario, sem mudanca
+  automatica. Disciplina de PR/checks documentada, ainda sem enforcement remoto.
+- [ ] **SHOULD / Git: integrar trabalho pendente por PRs revisados.** Develop
+  criado local/remoto de origin/main 63071da por solicitacao do usuario; fluxo
+  COM-UUID -> PR develop -> PR main. Ver [guia Git](guides/reference/GIT_WORKFLOW_QUICK_REFERENCE.md).
+  Revisar separadamente checkpoint e os 22
+  documentos historicos exclusivos de COM4, arquivando estes em docs. Limpeza
+  autorizada concluida: seis branches locais e cinco remotas ja integradas foram
+  excluidas; tres worktrees arquivados foram localizados e tiveram caminhos
+  reparados, sem apagar diretorios. Nao mesclar gh-pages nem duplicar COM4;
+  checkpoint/COM4 continuam preservados e aguardam integracao revisada.
 - [ ] **SHOULD / ambiente: validar reconhecimento de voz ao vivo** apos selecionar
   e configurar um backend STT. Whisper, Vosk e SpeechRecognition continuam ausentes.
 - [ ] **SHOULD / ambiente: validar revisao em portugues com Aspell `pt_BR`**.

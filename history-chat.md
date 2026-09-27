@@ -2387,3 +2387,114 @@ Plano imediato:
   Aspell pt_BR e LLaVA continuam dependentes de ambiente/validacao especifica.
 - Follow-up de diagnostico e documentacao preparado para commit/push na mesma
   branch autorizada; sem alteracao de codigo de producao nesta investigacao.
+
+## 2026-09-27 - Pre-acao - Revisao de branches antes de continuar
+
+- Usuario pediu revisar quais branches precisam merge ou exclusao antes de
+  continuar tarefas. Escopo desta etapa: verificacao e recomendacoes, sem
+  executar merges, apagar refs, podar worktrees ou criar develop.
+- Revalidar remoto e ancestralidade contra origin/main, diferencas COM4,
+  checkpoint publicado e registros de worktree. Preservar example.py e
+  documentar criterios de limpeza sem confundir branch antiga com trabalho perdido.
+
+## 2026-09-27 - Pos-acao - Decisao recomendada para cada branch
+
+- Fetch sem prune e inventario GitHub confirmaram nove branches locais e dez
+  remotas, sem PRs. Comparacao feita contra origin/main 63071da.
+- Seis refs locais ja integradas: COM1-documentation-reading,
+  COM3-before-cleanup, COM3-documentation-study, COM8-documentation-reading,
+  COM9 e COM10-documentation-reading-phases-6-7. Nao precisam merge.
+- Cinco branches remotas ja integradas: COM1-documentation-reading, COM2,
+  COM3-documentation-study, COM6-documentation-reading-phases-6-7 e
+  COM8-documentation-reading. Recomendada exclusao somente apos autorizacao e
+  verificacao de dependencias/worktrees; COM3/COM8 locais tem registros obsoletos.
+- Preservar checkpoint local/remoto 135e37c: tres commits alem de origin/main.
+  Commit local de main df4b12c ja esta publicado no checkpoint; integrar pela PR,
+  sem push direto separado. Gates de seguranca/CI continuam pendentes.
+- Preservar COM4 local e origin/clarify-COM4-code-study baa0032; os 22 documentos
+  exclusivos nao possuem copia byte-identica entre blobs rastreados do checkpoint.
+  Simulacao de merge continua sem conflitos textuais, mas requer revisao/arquivo.
+  origin/COM4-code-study d3eda30 e ancestral do mais novo e redundante; adiar
+  exclusao ate integrar o tip preservado, sem fazer dois merges do mesmo trabalho.
+- Manter main e gh-pages (destino confirmado no workflow de documentacao).
+  Develop nao e necessario para limpar branches ja integradas.
+- Relatorio existente recebeu matriz completa de recomendacoes. Diff check
+  passou; continuam 30 tarefas abertas. Sem testes da aplicacao nesta revisao Git.
+  Nenhum merge, exclusao, prune, commit ou push; somente relatorio e diario
+  alterados, example.py preservado. Limpeza aguarda aprovacao explicita.
+
+## 2026-09-27 - Pre-acao - Limpeza autorizada de branches integradas
+
+- Usuario aprovou a proxima acao de branches e autorizou as recomendacoes.
+  Executar somente limpeza das seis refs locais e cinco remotas ja integradas,
+  apos nova verificacao; manter checkpoint, COM4, main e gh-pages.
+- Inspecionar registros antigos e preservar metadados antes de remover registros
+  comprovadamente obsoletos. Revalidar ancestralidade e tips remotos para evitar
+  excluir trabalho novo; manter alteracoes documentais e example.py intactos.
+- Merges de checkpoint/COM4 continuam separados e condicionados a revisao/gates.
+
+## 2026-09-27 - Pos-acao - Limpeza concluida e worktrees recuperados
+
+- Apos autorizacao, revalidado origin/main 63071da e confirmado que todas as
+  seis refs locais/cinco remotas candidatas sao ancestrais da principal publicada
+  e do checkpoint. SHA de cada nome registrado no relatorio para recuperacao.
+- Descoberta importante: os tres worktrees estavam movidos para
+  ../old/Other work-trees-old/, com indexes e status limpos. Nao foram podados
+  nem apagados. Backup dos metadados e links .git em
+  .git/worktree-registration-backup-20260927-before-cleanup.tar.gz; git worktree
+  repair restaurou os caminhos. COM3/COM8 ficaram detached nos mesmos commits,
+  preservando arquivos; COM4 continua anexado a sua branch.
+- Excluidas seis branches locais com git branch -d: COM1-documentation-reading,
+  COM3-before-cleanup, COM3-documentation-study, COM8-documentation-reading,
+  COM9 e COM10-documentation-reading-phases-6-7.
+- Excluidas cinco remotas em operacao atomica com leases de SHA esperado:
+  COM1-documentation-reading, COM2, COM3-documentation-study,
+  COM6-documentation-reading-phases-6-7 e COM8-documentation-reading.
+  Nenhum historico de branch preservada foi reescrito.
+- Verificacao final: tres branches locais, cinco remotas; tips main/checkpoint/
+  COM4/gh-pages mantidos. Os tres worktrees arquivados continuam limpos e o
+  dry-run de prune nao encontra candidatos. Diff check passou.
+- Relatorio e TASKS.md atualizados. Permanecem 30 tarefas: limpeza e uma parte
+  concluida da tarefa Git, mas integracao checkpoint/COM4 e gates seguranca/CI
+  continuam abertos. Nao criado develop, nao executado merge nem teste da app.
+- Alteracoes documentais desta revisao permanecem sem novo commit; unico push
+  desta etapa foi a exclusao remota autorizada. example.py continua preservado.
+
+## 2026-09-27 - Pre-acao - Criacao de develop conforme protocolo
+
+- Usuario solicitou criar develop e seguir o protocolo Simplicity 3. Relidas
+  secoes COM-UUID/PR (2602-2835), CI (11238-11380) e gates (11810-11846).
+  Develop e escolha explicita do usuario; o protocolo nao o exige por nome.
+- Criar develop local/remoto exatamente de origin/main 63071da, sem promover
+  checkpoint/COM4. Manter trabalho documental em nova COM-UUID e publicar
+  registros conforme fluxo de commit/push do protocolo, excluindo example.py.
+- Adotar COM-UUID -> PR develop -> PR main; nao trabalhar diretamente nas
+  branches permanentes. Gates de qualidade existentes continuam pendentes.
+- Consulta GitHub de protecao retornou 403: recurso requer GitHub Pro ou repo
+  publico neste ambiente privado. Nao alterar visibilidade, plano ou cobranca.
+
+## 2026-09-27 - Pos-acao - Develop criado e fluxo documentado
+
+- Develop local/remoto criado em 63071dacf9fadd605f5fa5ab78643f132408e9b7,
+  identico a origin/main; tracking origin/develop configurado. Push com lease
+  exigiu ausencia da ref para nao sobrescrever criacao concorrente.
+- Main local df4b12c, origin/main 63071da, checkpoint 135e37c e COM4 intactos.
+  Nao houve merge, mudanca de branch padrao, visibilidade ou plano GitHub.
+- Nova COM-3168ba3b-697a-41f5-ba9d-8e1b75a05ee2 baseada no checkpoint preserva
+  registros documentais pendentes. Como e empilhada no checkpoint, futura PR
+  para develop inclui essa ancestralidade ate a integracao anterior; nao tratar
+  esse diff completo como somente documentacao.
+- CONTRIBUTING e guia Git ativo atualizados: COM-UUID -> PR develop -> PR main,
+  gates antes de integracao, testes limitados, review e cleanup apos merge.
+  Copia antiga em docs/reports identificada como historica. TASKS/relatorio
+  incorporam decisao develop e resultados da limpeza anterior.
+- Protecao consultada para main e develop: HTTP 403 por restricao do plano em
+  repositorio privado. Regras sao procedimentais, nao enforcement remoto.
+  Habilitacao requer decisao do usuario; nenhum upgrade ou exposicao do repo.
+- Run develop 36339841831 terminou em startup_failure. CI, dependencias,
+  cobertura/quality gates e investigacao Qt continuam pendentes. Restam 30 tarefas.
+- Verificados SHA local/remoto, upstream, diff vazio develop/origin-main, main
+  inalterado, links locais do guia e git diff --check. Nenhum codigo de app
+  modificado ou suite executada nesta operacao de refs/documentacao.
+- Documentacao e registros preparados para commit/push na nova COM conforme
+  protocolo; example.py excluido. Nenhuma PR aberta ou mesclada nesta etapa.

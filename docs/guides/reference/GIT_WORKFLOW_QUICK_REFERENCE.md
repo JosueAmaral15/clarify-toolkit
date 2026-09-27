@@ -1,312 +1,109 @@
-# Git Workflow - Quick Reference Card
+# Git Workflow - Quick Reference
 
-**Last Updated**: 2026-01-18
-**For**: Clarify Project - Branch-Based Workflow
-**Audience**: All programmers working on the project
+Updated: 2026-09-27. Current Clarify policy, selected by the maintainer under
+Simplicity 3. This replaces the old direct-to-main examples.
 
----
+## Branch Roles
 
-## ⚡ Daily Workflow (Most Common)
+| Branch | Purpose | Changes enter through |
+| --- | --- | --- |
+| `COM-<UUID>` | AI task work | Scoped commits on the task branch |
+| `develop` | Shared integration | Reviewed task PRs with validation evidence |
+| `main` | Stable/default branch | Reviewed promotion PR from develop |
+| `gh-pages` | Generated documentation | Documentation publishing workflow only |
 
-```bash
-# 1. Switch to your branch
-git checkout COM<N>
+Simplicity 3 requires COM-UUID branches for AI work and a reviewed PR even for
+solo development. It does not mandate develop by name: the maintainer explicitly
+selected the `COM-UUID -> develop -> main` policy on 2026-09-27. Human contributors
+may use descriptive COM1-feature branches. Do not commit directly to develop or
+main, bypass failed checks, or merge gh-pages into application branches.
 
-# 2. Make changes
-vim <file>
+## Start A Task
 
-# 3. Stage all changes
-git add -A
-
-# 4. Commit with descriptive message
-git commit -m "docs: update feature documentation"
-
-# 5. Push to remote
-git push origin COM<N>
-```
-
----
-
-## 🌿 Creating New Branch
-
-### **Pattern 1: COM-UUID** (Protocol Standard)
-```bash
-# Linux/Mac
-git checkout -b COM-$(uuidgen | tr '[:upper:]' '[:lower:]')
-
-# Python (cross-platform)
-git checkout -b COM-$(python -c "import uuid; print(uuid.uuid4())")
-
-# Example result: COM-a5e531b2-5d4f-a827-b3c8-24a52b27f281
-```
-
-### **Pattern 2: COM<N>-feature** (Recommended ⭐)
-```bash
-# Feature
-git checkout -b COM2-add-search-filter
-
-# Bug fix
-git checkout -b COM2-fix-threading-bug
-
-# Refactor
-git checkout -b COM5-refactor-ui-components
-```
-
-**Use Pattern 2 for most work!**
-
----
-
-## 📦 Common Tasks
-
-### **Sync with Main**
-```bash
-# Get latest main changes
-git fetch origin main
-
-# Merge main into your branch
-git merge origin/main
-
-# Or rebase (cleaner history)
-git rebase origin/main
-```
-
-### **Save Work in Progress**
-```bash
-# Stash changes
-git stash save "WIP: implementing feature X"
-
-# Switch branches
-git checkout main
-
-# Later, restore stashed work
-git checkout COM2
-git stash pop
-```
-
-### **View Status**
-```bash
-# Check current branch and changes
-git status
-
-# View commit history
-git log --oneline
-
-# See what changed
-git diff
-```
-
-### **Undo Changes**
-```bash
-# Discard unstaged changes to file
-git checkout -- <file>
-
-# Unstage file (keep changes)
-git reset HEAD <file>
-
-# Undo last commit (keep changes)
-git reset --soft HEAD~1
-
-# Undo last commit (discard changes) ⚠️
-git reset --hard HEAD~1
-```
-
----
-
-## 🔀 Merge to Main
-
-### **Standard Merge**
-```bash
-# 1. Ensure branch is up-to-date
-git checkout COM2
-git fetch origin main
-git merge origin/main
-
-# 2. Push your branch
-git push origin COM2
-
-# 3. Ask user/AI to merge COM2 → main
-# Or merge manually:
-git checkout main
-git merge COM2
-git push origin main
-```
-
-### **If Conflicts Occur**
-```bash
-# Merge shows conflicts
-git merge origin/main
-# Auto-merging file.py
-# CONFLICT (content): Merge conflict in file.py
-
-# 1. Open conflicted files and resolve
-vim file.py
-
-# 2. Stage resolved files
-git add file.py
-
-# 3. Complete merge
-git commit -m "merge: resolve conflicts with main"
-
-# 4. Push
-git push origin COM2
-```
-
----
-
-## 🧹 Cleanup After Merge
+Inspect the worktree first. Preserve unrelated edits; do not automatically stash,
+reset, clean, or switch a dirty worktree. A separate worktree is preferable when
+another task is active.
 
 ```bash
-# Switch to main
-git checkout main
-
-# Pull merged changes
-git pull origin main
-
-# Delete local branch
-git branch -d COM2
-
-# Delete remote branch
-git push origin --delete COM2
+git status --short --branch
+git worktree list
+git fetch origin
+# Only in a clean worktree, create a new AI branch from published develop:
+git switch --no-track -c "COM-$(python -c 'import uuid; print(uuid.uuid4())')" origin/develop
 ```
 
----
-
-## 📝 File Naming
-
-### ✅ **Correct**
-```
-SESSION_1_SUMMARY.md
-CODE_STUDY_PHASE1_REPORT.md
-ACTION_PLAN_FIX_BUG.md
-```
-
-### ❌ **Incorrect**
-```
-SESSION_1_SUMMARY_2.md         # No suffixes (unless conflict)
-docs/COM2/SESSION_1_SUMMARY.md # No programmer folders
-session_1_summary.md           # Use SCREAMING_SNAKE_CASE
-```
-
-**Exception**: Keep `_2` suffix when conflicts exist with other programmer's version.
-
----
-
-## 🎯 Commit Message Format
-
-**Format**: `<type>: <description>`
-
-**Types:**
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation only
-- `refactor:` - Code restructuring
-- `test:` - Adding tests
-- `chore:` - Maintenance
-
-**Examples:**
-```bash
-git commit -m "feat: add search filter to JSON dock"
-git commit -m "fix: resolve threading issue in search worker"
-git commit -m "docs: update README with new installation steps"
-git commit -m "refactor: extract validation logic to mixin"
-```
-
----
-
-## 🚨 Emergency Commands
-
-### **Abort Merge**
-```bash
-git merge --abort
-```
-
-### **Undo Last Commit (Keep Changes)**
-```bash
-git reset --soft HEAD~1
-```
-
-### **Restore Deleted File**
-```bash
-git checkout HEAD -- <file>
-```
-
-### **View Stashed Work**
-```bash
-git stash list
-git stash show stash@{0}
-```
-
-### **Force Push (Use Carefully!)**
-```bash
-# Only on YOUR branch, NEVER on main
-git push --force origin COM2
-```
-
----
-
-## 📊 Useful One-Liners
+Update root `history-chat.md` before work and before ending the session. Stage
+only intended files, review the staged diff, validate according to change risk,
+and commit with a Conventional Commit message. Push the task branch when
+authorized; never include unrelated scratch files or credentials.
 
 ```bash
-# View all branches
-git branch -a
-
-# See which files changed
-git diff --name-only
-
-# Find who wrote a file
-git log --follow <filename>
-
-# See line-by-line authors
-git blame <filename>
-
-# List recent commits
-git log --oneline -10
-
-# See commit details
-git show <commit-hash>
-
-# Check if branch is up-to-date with main
-git fetch origin main
-git log COM2..origin/main
-
-# View all remote branches
-git branch -r
+git diff --cached --check
+git diff --cached
+# After validation and commit:
+git push --set-upstream origin HEAD
 ```
 
----
+Use PR base `develop` for task integration. Obtain approval before opening or
+merging a PR when it has not already been authorized. Record self-review even
+when working alone. Retain branch names until their work is integrated.
 
-## ✅ Pre-Merge Checklist
+## Integration And Promotion Gates
 
-Before merging to main:
+Before merging into develop, review the full base-to-head diff, not only the last
+commit. Record exact tested SHA, test commands/results, skips, limitations and
+rollback approach. Use focused tests plus integration/GUI tests appropriate to
+the affected behavior; incomplete or guarded runs are not passing evidence.
 
-- [ ] All tests pass (`pytest` / `npm test`)
-- [ ] Code quality checks pass (`pylint`, `black`, `eslint`)
-- [ ] No debug statements (print, console.log)
-- [ ] Documentation updated (README, docstrings)
-- [ ] CHANGELOG.md updated
-- [ ] Commit messages are descriptive
-- [ ] Branch is up-to-date with main
-- [ ] No merge conflicts
+Before promotion from develop to main, additionally confirm:
 
-**Quick verify:**
-```bash
-git status                        # No uncommitted changes
-git log --oneline COM2 ^main      # Review commits
-pytest tests/                     # Tests pass
-pylint src/ --rcfile=.pylintrc    # Quality check
-git diff origin/main              # Review all changes
-```
+- Local and external coverage evidence, with 80% new-code coverage as the
+  protocol's recommended default and no unexplained regression.
+- Approved SonarQube/SonarCloud quality gate, SAST, dependency and secret checks.
+- Passing CI for the actual promotion candidate and reviewed changes.
+- Updated documentation and a viable rollback plan. No deployment follows
+  automatically from branch creation or a checkpoint push.
 
----
+After the initial bootstrap, integrations into either permanent branch require
+these applicable gates; develop is not an escape route for failed checks.
+Run GUI validation serially with offscreen Qt, temporary settings, explicit
+timeouts and active memory monitoring. Stop at 85% total system RAM. Do not
+re-run large suites under memory pressure just to obtain a green result.
 
-## 🔗 References
+After successful integration and approval, verify ancestry against the published
+target and inspect linked worktrees before deleting a task branch. Prefer normal
+`git branch -d`; remote deletion needs authorization and a current tip check.
+Never remove an archived worktree merely because its registration path is stale.
 
-- Full documentation: `PROJECT_UPDATE_FILE_RENAMING_STANDARDIZATION.md`
-- Protocol: `docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md`
-- Contributing: `CONTRIBUTING.md`
+## Current Bootstrap And Limitations
 
----
+`develop` was created locally and on origin at
+`63071dacf9fadd605f5fa5ab78643f132408e9b7`, exactly the published main tip.
+It tracks origin/develop. This created a reference to existing history; it did
+not merge the checkpoint, release code or change main/default-branch settings.
 
-**Remember**: Pattern 2 (`COM<N>-feature`) is recommended for daily work! ⭐
+The existing checkpoint COM branch remains pending integration. The branch
+recording this setup is stacked on that checkpoint to preserve accumulated local
+documentation changes. Its future PR must account for that ancestry: do not
+describe the whole develop-to-branch diff as documentation-only before the
+checkpoint is integrated. New independent tasks start from origin/develop.
 
-**Questions?** Check full documentation or ask project maintainer.
+GitHub returned HTTP 403 for main/develop protection on this private repository:
+the current plan requires an upgrade or public visibility for that feature.
+Neither was changed. PR/check discipline is currently procedural, **not enforced
+by server protection**. Enabling protection requires a maintainer decision; once
+available, require PRs/checks, disallow force pushes/deletion and avoid admin
+bypass. For solo work, use documented self-review without requiring an impossible
+second-person approval.
+
+The bootstrap [develop CI run](https://github.com/JosueAmaral15/clarify/actions/runs/36339841831)
+ended with startup_failure. Existing CI targets main/develop, but a trigger is
+not proof of functioning gates. Dependency alerts, Qt investigation, CI repair
+and external quality/coverage setup remain open. Do not merge pending work while
+these promotion requirements lack evidence.
+
+See [TASKS](../../TASKS.md), the
+[branch investigation](../../reports/BRANCH_AND_QT_INVESTIGATION_2026_09_27.md),
+and [Contributing](../../../CONTRIBUTING.md). The authoritative protocol reread
+for this decision was the maintainer's external English SIMPLICITY_PROTOCOL_3.md;
+the repository also contains a [protocol reference](../../protocols/simplicity/SIMPLICITY_PROTOCOL_3.md).

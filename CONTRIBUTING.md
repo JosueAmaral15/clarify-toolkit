@@ -149,8 +149,9 @@ src/i18n/
 git clone https://github.com/YOUR_USERNAME/clarify.git
 cd clarify
 
-# 3. Create a branch for translations
-git checkout -b improve-translations-es
+# 3. Create a task branch from published develop (clean worktree required)
+git fetch origin
+git switch --no-track -c "COM-$(python -c 'import uuid; print(uuid.uuid4())')" origin/develop
 
 # 4. Edit the translation file
 nano src/i18n/es.json  # or use your favorite editor
@@ -160,9 +161,9 @@ git add src/i18n/es.json
 git commit -m "feat(i18n): improve Spanish translations for menu items"
 
 # 6. Push to your fork
-git push origin improve-translations-es
+git push --set-upstream origin HEAD
 
-# 7. Open a Pull Request on GitHub
+# 7. Open a Pull Request on GitHub targeting Clarify's develop branch
 ```
 
 ### Translation File Format
@@ -444,12 +445,18 @@ If throughput drops >10%, explain why in PR description.
 
 ## 🔄 Pull Request Process
 
+The maintainer-selected flow is **COM-UUID -> develop -> main**. AI tasks use
+COM-UUID branches; task PRs target `develop`, and reviewed promotion PRs target
+`main`. Do not commit directly to either permanent branch. See the
+[current Git workflow](docs/guides/reference/GIT_WORKFLOW_QUICK_REFERENCE.md)
+for quality gates, pending checkpoint ancestry and branch-protection limitations.
+
 ### Before Submitting
 
-1. **Create a branch**: `git checkout -b feature/my-awesome-feature`
+1. **Create a task branch** from `origin/develop` in a clean worktree, using COM-UUID for AI work.
 2. **Follow code style**: Run `black`, `isort`, `pylint`
 3. **Write tests**: Add tests for new functionality
-4. **Run tests**: Ensure all tests pass (`pytest`)
+4. **Run bounded tests**: Validate affected behavior with timeouts and resource monitoring; record exact results and limitations. Complete the protocol gates before promotion.
 5. **Update docs**: Modify `CHANGELOG.md` (Unreleased section) and `TASKS.md` if applicable
 6. **Commit messages**: Use [Conventional Commits](https://www.conventionalcommits.org/)
    - `feat(i18n): add Spanish translations`

@@ -1,5 +1,9 @@
 # Git Workflow - Quick Reference Card
 
+> Historical 2026-01-18 reference, not the active branch policy. Its direct-main
+> and force-push examples are superseded by the
+> [current COM-UUID -> develop -> main guide](../guides/reference/GIT_WORKFLOW_QUICK_REFERENCE.md).
+
 **Last Updated**: 2026-01-18  
 **For**: Clarify Project - Branch-Based Workflow  
 **Audience**: All programmers working on the project
