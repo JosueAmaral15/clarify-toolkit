@@ -2649,3 +2649,19 @@ Plano imediato:
 - Commit local na COM atual inclui trabalho proprio pendente do Editor e auditoria,
   sem example.py. Sem push/merge/promocao; main/develop e bloqueios externos
   preservados. Nao chamar finish enquanto houver continuacao autorizada em curso.
+
+### Resultado Do Dispatch Nativo
+
+- Checkpoint de implementacao criado: 584709e, 14 arquivos proprios; worktree
+  ficou somente com example.py nao rastreado, preservado e fora do commit.
+- Uma unica chamada real de continue retornou exit 0 / dispatch_started para
+  worker clarify-b09a84f1, sessao 019ea8a0-6d60-7f03-90b9-c420603158d1 e marcador
+  CLARIFY_FE_PAR_CONTINUE_20260928_FE07. A CLI aguardou delay de 15s antes de
+  destacar o transporte; processo CLI terminou normalmente.
+- Transporte destacado usa stdout/stderr DEVNULL, nao oferece log persistente
+  de entrega. Probe posterior nao encontrou queue ainda ativo; isso pode indicar
+  envio ou falha, nao comprova processamento. Nao reenviar nem trocar de sessao.
+  Verificar marcador/hook na retomada antes de afirmar sucesso da continuidade.
+- Monitor permanece ativo para o batch autorizado, sem finish antecipado. Se
+  nao houver retomada, entrega continua incerta; nenhum dos seis itens pendentes
+  foi declarado concluido por causa do dispatch. Registro nao altera codigo.
