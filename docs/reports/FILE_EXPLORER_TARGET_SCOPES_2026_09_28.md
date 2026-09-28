@@ -4,6 +4,7 @@ Date: 2026-09-28
 Branch: `COM-f4922ddf-dee2-4de5-a53f-cfae7955af88`
 Base: implementation checkpoint `54032ee`, followed by dispatch journal `932b41a`.
 Scope: **FE-PAR-03**, with a regression-discovered FE-PAR-07 cleanup correction.
+Implementation checkpoint: `d4551cb` (local only; 11 owned files).
 The [lifecycle report](FILE_EXPLORER_LIFECYCLE_2026_09_28.md) and
 [first-stage report](FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md) retain
 their historical evidence/counts; current pending state is in `docs/TASKS.md`.
@@ -117,10 +118,15 @@ changes. Do not rewind the entire checkpoint or disturb unrelated work.
 Monitor 0.9.0 remains active with current hooks. Doctor confirms integrity/schema,
 five hooks, native queue and existing automation/native controls; its exit 2 is
 the still-failed reply-observer service. No restart/control change/migration.
-The received FE03 marker confirms processing of the preceding dispatch. Next
-continuation must be one native call to the exact same worker/session, only after
-local commit; uncertain dispatch is never retried. Detached initiation is not
-delivery/processing proof, which must be verified at the next received marker.
+The received FE03 marker confirms processing of the preceding dispatch. Exact
+worker/session FE04 dry-run passed, and no pending Codex queue process was found
+before dispatch. After local commit `d4551cb`, one real native call waited 15
+seconds and returned exit 0 / `dispatch_started`, targeting worker
+`notebook-josue:codex:project=clarify-b09a84f1` and session
+`019ea8a0-6d60-7f03-90b9-c420603158d1`, with unique marker
+`CLARIFY_FE_PAR_CONTINUE_20260928_FE04`. CLI exited; the authorized detached queue
+has no captured delivery log. Detached initiation is not delivery/processing
+proof: verify the received marker/hook at resumption. No retry.
 
 Remaining approved tasks: **FE-PAR-04, 05, 06 and 08**, next cross-line search (04).
 The **30 older backlog items are out of this automation scope**: 34 open total.

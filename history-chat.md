@@ -2783,3 +2783,18 @@ Plano imediato:
   Commit local em COM-f4922ddf-dee2-4de5-a53f-cfae7955af88, preservando example.py;
   sem push/promocao. Uma continuacao exata FE04 somente apos checkpoint validado,
   registrar resultado real sem retry incerto. Finish ao concluir batch ou sem via segura.
+
+### Checkpoint E Dispatch FE-PAR-04
+
+- FE-PAR-03 commitado em d4551cb na COM-f4922ddf-dee2-4de5-a53f-cfae7955af88,
+  11 arquivos proprios. Worktree ficou somente example.py nao rastreado;
+  SHA-256 antes/depois identico, sem push/promocao ou alteracao de main/develop.
+- Dry-run nativo com alvo exato passou; nenhum processo Codex queue pendente
+  encontrado antes do envio. Uma unica chamada real, marcador
+  CLARIFY_FE_PAR_CONTINUE_20260928_FE04, esperou 15s e retornou exit 0 /
+  dispatch_started para worker notebook-josue:codex:project=clarify-b09a84f1 e
+  sessao 019ea8a0-6d60-7f03-90b9-c420603158d1. CLI terminou; fila destacada autorizada.
+- Inicio nao comprova entrega/processamento; stdout/stderr destacados nao fornecem
+  log de entrega. Nao reenviar por incerteza. Verificar marcador/hook ao retomar,
+  criando nova COM a partir do checkpoint e deste journal. Monitor continua ativo
+  so para FE04/05/06/08. Nao expandir os 30 legados nem executar finish antecipado.
