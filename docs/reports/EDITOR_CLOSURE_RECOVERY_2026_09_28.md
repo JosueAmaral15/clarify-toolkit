@@ -3,7 +3,7 @@
 Date: 2026-09-28. Task: CE-REC-01 (MUST).
 Branch: `COM-e8a3ba95-8b6e-4792-ab9c-6458d4fadd5a`.
 Base: FE04 `631994b` plus dispatch journal `4d28cfb` (includes header24 `136b44e`).
-Local implementation checkpoint is recorded in the history/dispatch journal.
+Local implementation checkpoint: `d67a7d8` (11 scoped paths, no push).
 
 ## Delivered
 
@@ -128,3 +128,16 @@ gates remain unresolved. Only one exact-session native continuation after commit
 Remaining finite queue: **FE-PAR-05,06,08**. Overall 33 open including 30 legacy
 items outside automation. Finish the exact worker when this finite queue completes
 or cannot continue safely; never dispatch again merely because delivery is uncertain.
+
+## Continuation Journal
+
+After the local checkpoint, status/hook were active and RAM43.8%; no prior Codex
+queue process remained. Dry-run passed, then exactly one native continuation was
+called for marker `CLARIFY_FE_PAR_CONTINUE_20260928_FE05`, worker
+`notebook-josue:codex:project=clarify-b09a84f1`, session
+`019ea8a0-6d60-7f03-90b9-c420603158d1`, delay15s and detached queue.
+CLI exited0 with `dispatch_started`. This is initiation, not proof of receipt or
+completed FE05 work; never retry uncertainty. The next received marker must verify
+this checkpoint plus journal before creating a fresh COM-UUID branch.
+The worker remains active only for FE05/06/08; reply-observer remains failed and
+was not restarted. Finish on finite completion or an unsafe continuation barrier.

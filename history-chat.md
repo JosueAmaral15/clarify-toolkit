@@ -2959,3 +2959,16 @@ Plano imediato:
 - Commit local nesta COM apos validar; sem push/promocao/gates contornados. Uma
   unica continuacao nativa FE05 para sessao exata depois do checkpoint, sem retry
   se resultado incerto; monitor termina quando fila finita completar ou insegura.
+
+### Checkpoint E Dispatch FE-PAR-05
+
+- CE-REC-01 commitado localmente em d67a7d8,11 paths desta etapa; worktree apenas
+  example.py nao rastreado/hash inalterado. Main/develop e remotos nao promovidos.
+- Hooks/status ativos e RAM43.8%, doctor apenas observerfailed conhecido, nenhuma
+  fila Codex anterior pendente. Dry-run exato passou; uma unica chamada real native
+  esperou15s, exit0/dispatch_started, FE05: CLARIFY_FE_PAR_CONTINUE_20260928_FE05.
+  Worker notebook-josue:codex:project=clarify-b09a84f1; sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1. CLI terminou, queue destacada autorizada.
+- Inicio nao confirma entrega/processamento; nunca retry por incerteza. Retomada
+  verifica d67a7d8+journal e criaCOMnova. Restam FE05/06/08 (3 fila,33globais).
+  Fila legada30 excluida; finishworker ao completar ou sem caminho seguro.
