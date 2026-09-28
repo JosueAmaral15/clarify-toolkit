@@ -3089,3 +3089,40 @@ Plano imediato:
   stop/finish exato se falha nativa isolada ou guarda bloquear. FE08 e a ultima
   etapa: SEM novo dispatch/backlog legado depois; finalizar apenas worker exato
   ao completar ou sem caminho seguro, deixando outros workers/services intocados.
+
+## 2026-09-28 - Pre-acao - FE-PAR-08
+
+- Marcador FE08 recebido confirma processamento sem reenvio. Checkpoint7353fc7
+  e journal09e6952 conferidos; novaCOM-31276ed6-c7bd-4919-b03d-ec7d2076d144.
+- Monitor/hook active, doctor0.9.0 somente observerfailed conhecido; sem restart.
+  RAM44.0%, example.py hash058053d...fcee preservado e excluido.
+- Auditar fonte/preferencia compartilhada, log e filtro de extensao; reusar APIs,
+  preservar consumers/FE06/escopos/cache/lifecycle/CE recovery. Sem controles
+  duplicados ou hover expansion. Ultima FE08 apenas; nao iniciar30legados.
+- Validar modulos GUI isolados/seriais .venv/offscreen,85%/600MiB/180s/pytest20s
+  incluindo fixtures. Sem MainWindow/providers/documentos reais. Crash combinado
+  FE05 nao resolvido; parar e finish exato se crash isolado ou guard abort ocorrer.
+  Commit local sem push/promocao; ao terminar, finish worker exato, SEM dispatch.
+
+## 2026-09-28 - Pos-acao - FE-PAR-08
+
+- Implementada somente ultima etapa aprovada: fonte de Search/Replace/fixed Qt
+  reutilizada nos campos/log e tamanho de acessibilidade atualizado; sem novo store.
+- Log Qt plain/read-only em memoria:200 entradas de512 chars, uma entrada por
+  evento, callbacks filtrados por lifecycle existente; sem persistencia/hover.
+- Estado Off/On/All de extensoes descobrivel no header recolhido; presets guardam
+  rascunho/ativacao, Clear desliga, legado compativel. Removido gate duplicado so
+  no Explorer; File List preservado. Cache inclui flag/lista efetiva, sem recache
+  obsoleto apos edicao em pausa; normalizacao coerente nas duas views.
+- 721 testes focados distintos (43 novos) passaram,24 modulos seriais isolados,
+  offscreen/temporarios/85%/600MiB/180s/pytest20s incluindo fixtures. Pico Qt242.1MiB.
+  Primeiro run39/40 revelou FontChange, corrigido; repeats nao contados em dobro.
+  Pylint-E3 passou com anotacao apenas dos imports Qt dinamicos, sem desativar
+  no-member; AST4/JSON2/diff passaram. example.py hash original preservado.
+- Crash FE05 combinado signal11/210.7MiB permanece NAO RESOLVIDO; estes passes
+  isolados nao provam correcao, ausencia de leaks, suite global ou UX desktop.
+  Sem guard abort/crash nativo/timeout nesta etapa. CI/security pendentes.
+- Docs/TASKS.md: fila finita0 pendentes,30 legados fora do escopo. Commit local
+  na COM atual, sem push/main/develop. Finish exato apos checkpoint local, sem
+  novo dispatch; outros workers/services intocados. Monitor auto-start=false
+  conferido para nao reativar worker idle por hooks posteriores ao finish.

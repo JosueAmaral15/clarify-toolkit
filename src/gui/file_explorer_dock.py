@@ -49,9 +49,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QMainWindow,
     QAbstractItemView,
+    QPlainTextEdit,
 )
 from PySide6.QtCore import Qt, QSettings, QThread, QEvent, QTimer
-from PySide6.QtGui import QAction, QShortcut, QKeySequence
+from PySide6.QtGui import QAction, QShortcut, QKeySequence, QFont, QFontDatabase
 
 from src.core.file_explorer_executor import (
     UnifiedFileExplorerExecutor, MAX_TARGET_PATH_BYTES, normalize_target_paths, resolve_target_scope,
@@ -80,6 +81,8 @@ logger = get_logger(__name__)
 PROGRESS_DIALOG_WIDTH = 560
 PROGRESS_DIALOG_LABEL_WIDTH = 500
 PROGRESS_ITEM_MAX_CHARS = 72
+OPERATION_LOG_MAX_ENTRIES = 200
+OPERATION_LOG_MAX_ENTRY_CHARS = 512
 
 
 class FileExplorerDock(BaseDock):
@@ -163,6 +166,15 @@ class FileExplorerDock(BaseDock):
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
+        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        font.setPointSizeF(self.font().pointSizeF())
+        search_panel = getattr(self._main_window_ref, "tab_search", None)
+        if search_panel is not None and hasattr(search_panel, "ed_query"):
+            font = search_panel.ed_query.font()
+        self.set_editor_fonts(font)
+        self.filter_panel.ed_extensions.textChanged.connect(self._on_extension_filter_changed)
+        self.filter_panel.chk_use_ext_filter.toggled.connect(self._on_extension_filter_changed)
+        self._update_extension_filter_state()
         self.combo_target_scope.currentIndexChanged.connect(self._on_target_scope_changed)
         self.ed_directory.textChanged.connect(self._invalidate_target_cache)
         self.chk_recursive.toggled.connect(self._invalidate_target_cache)
@@ -278,6 +290,9 @@ class FileExplorerDock(BaseDock):
 
         # Advanced Filters Panel (extracted component)
         self.filter_panel = FileFilterPanel()
+        # The outer section handles expansion; individual filters retain their switches.
+        self.filter_panel.setCheckable(False)
+        self.filter_panel.ed_extensions.setEnabled(False)
         self.section_filters.setContent(self.filter_panel)
 
         # ============================================================================
@@ -358,7 +373,9 @@ class FileExplorerDock(BaseDock):
         # Update section titles
         self.section_directory.setTitle(tr("file_list.section_directory"))
         self.section_search.setTitle(tr("file_list.section_search"))
-        self.section_filters.setTitle(tr("file_list.section_filters"))
+        self._update_extension_filter_state()
+        self.section_log.setTitle(tr("file_explorer.operation_log"))
+        self.operation_log.setAccessibleName(tr("file_explorer.operation_log"))
         self.section_conditions.setTitle(tr("file_list.section_conditions"))
         if hasattr(self, "section_presets"):
             self.section_presets.setTitle(tr("file_list.section_presets"))
@@ -597,6 +614,17 @@ class FileExplorerDock(BaseDock):
         # Add status bar below results
         right_layout.addWidget(self.results_status)
 
+        self.operation_log = QPlainTextEdit()
+        self.operation_log.setReadOnly(True)
+        self.operation_log.setUndoRedoEnabled(False)
+        self.operation_log.setMaximumBlockCount(OPERATION_LOG_MAX_ENTRIES)
+        self.operation_log.setFixedHeight(112)
+        self.operation_log.setAccessibleName(tr("file_explorer.operation_log"))
+        self.section_log = CollapsibleSection(tr("file_explorer.operation_log"))
+        self.section_log.setContent(self.operation_log)
+        self.section_log.setCollapsed(True)
+        right_layout.addWidget(self.section_log)
+
         # ============================================================================
         # STATISTICS PANEL (v2.9.117 - B.4)
         # ============================================================================
@@ -763,7 +791,9 @@ class FileExplorerDock(BaseDock):
                      file_revision(os.stat(paths[0])) if scope == "file" else None,
                      tuple(sorted(self._get_search_options().items())),
                      tuple(tuple(sorted(condition.items())) for condition in self.conditions_grid.get_conditions()),
-                     self.conditions_grid.get_logic_operator())
+                     self.conditions_grid.get_logic_operator(),
+                     self.filter_panel.chk_use_ext_filter.isChecked(),
+                     tuple(self.filter_panel.get_filters()["extensions"]))
         return scope, value if scope != "selected" else root, root, paths, signature
 
     def _toggle_word_wrap(self, enabled: bool):
@@ -846,7 +876,7 @@ class FileExplorerDock(BaseDock):
             if extensions:
                 _, ext = os.path.splitext(file_path)
                 ext = ext.lower().lstrip(".")
-                if ext not in extensions:
+                if ext not in [value.lstrip(".").lower() for value in extensions]:
                     return False
 
             # Regex filter (on filename)
@@ -879,7 +909,7 @@ class FileExplorerDock(BaseDock):
 
         # Get Advanced Filters if enabled
         advanced_filters = None
-        if hasattr(self, 'filter_panel') and self.filter_panel.isChecked():
+        if hasattr(self, 'filter_panel') and (not self.filter_panel.isCheckable() or self.filter_panel.isChecked()):
             advanced_filters = self.filter_panel.get_filters()
             logger.info(f"Advanced Filters ENABLED: {advanced_filters}")
         else:
@@ -1783,6 +1813,7 @@ class FileExplorerDock(BaseDock):
         self._worker.moveToThread(self._worker_thread)
         self._worker_thread.finished.connect(receiver.thread_finished)
         self._ensure_progress_dialog()
+        self._append_operation_log(tr("file_explorer.log_started").format(kind))
         self._worker_thread.start()
         return True
 
@@ -1802,6 +1833,8 @@ class FileExplorerDock(BaseDock):
             self._batch_processing_active = False
             self.results_status.setText(tr("file_list.status_canceling", "Canceling...").rstrip(".") + " - stopped")
         elif error or result is None:
+            detail = (error or "No result")[:OPERATION_LOG_MAX_ENTRY_CHARS]
+            self._append_operation_log(tr("file_explorer.log_failed").format(kind, detail))
             self._on_operation_error(error or "Operation ended without a result")
         else:
             # Cancel remains meaningful until settlement, even if the result
@@ -1816,6 +1849,11 @@ class FileExplorerDock(BaseDock):
                     result["stats"] = dict(result.get("stats", {}), cancelled=True)
                     if kind == "search":
                         result["stats"].update(total_matches=0, files_with_matches=0)
+            stats = result.get("stats", {})
+            cancelled = self._cancel_requested or stats.get("cancelled") or result.get("cancelled")
+            outcome = tr("file_explorer.log_cancelled" if cancelled else "file_explorer.log_finished")
+            count = result.get("files_modified", 0) if kind == "replace" else len(result.get("files", []))
+            self._append_operation_log(outcome.format(kind, count))
             getattr(self, f"_on_{kind}_finished")(result)
         self._discard_callbacks = False
         if action:
@@ -2102,6 +2140,44 @@ class FileExplorerDock(BaseDock):
         percentage = int((current / total) * 100) if total > 0 else 0
         self._set_progress_value(percentage)
         self._set_progress_dialog_message(message, current, total)
+        self._append_operation_log(f"{current}/{total}: {message[:OPERATION_LOG_MAX_ENTRY_CHARS]}")
+
+    def set_editor_fonts(self, font: QFont):
+        """Reuse the Search/Replace font API without another preference control."""
+        self.content_panel.set_font(font)
+        self.replace_panel.set_font(font)
+        self.operation_log.setFont(font)
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() in (QEvent.ApplicationFontChange, QEvent.FontChange) and hasattr(self, "operation_log"):
+            font = self.content_panel.ed_query.font()
+            font.setPointSizeF(self.font().pointSizeF())
+            self.set_editor_fonts(font)
+
+    def _append_operation_log(self, message: str):
+        if self._discard_callbacks:
+            return
+        # Slice before normalization, and keep one plain-text Qt block per event.
+        entry = message[:OPERATION_LOG_MAX_ENTRY_CHARS]
+        entry = entry.translate(str.maketrans({"\n": " ", "\r": " ", "\u2028": " ", "\u2029": " ", "\x00": " "}))
+        self.operation_log.appendPlainText(entry)
+
+    def _on_operation_diagnostic(self, message: str):
+        self.results_status.setToolTip(message[:500])
+        self._append_operation_log(message)
+
+    def _update_extension_filter_state(self):
+        enabled = self.filter_panel.chk_use_ext_filter.isChecked()
+        extensions = self.filter_panel.get_filters()["extensions"]
+        state = "off" if not enabled else "on" if extensions else "all"
+        self.section_filters.setTitle(
+            f"{tr('file_list.section_filters')} - {tr('file_explorer.extensions_' + state)}")
+        self.section_filters.header_button.setToolTip(tr("file_list.tooltip_use_ext_filter"))
+
+    def _on_extension_filter_changed(self, *_args):
+        self._invalidate_target_cache()
+        self._update_extension_filter_state()
 
     def _set_progress_value(self, value):
         # Modal QProgressDialog.setValue() recursively processes queued callbacks.

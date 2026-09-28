@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - condicoes enriquecidas validadas; proximo FE-PAR-08
+**Last Update**: 2026/09/28 - FE-PAR-08 validado; fila finita concluida
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -10,8 +10,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
 primeiro; validar codigo ja em andamento e impedir perda de documentos tem
-precedencia sobre adicionar outras features. Contagem atual: **31 abertos = 30
-anteriores + 1 FE-PAR**; os dois novos itens Editor foram validados.
+precedencia sobre adicionar outras features. Contagem atual: **30 abertos, todos
+legados fora do escopo**; a fila finita FE-PAR/Editor foi validada e concluida.
 
 - [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
   inicial16 por24, incluindo reticencias (21 + `...`), tooltip com caminho completo,
@@ -52,8 +52,8 @@ anteriores + 1 FE-PAR**; os dois novos itens Editor foram validados.
   (334 distintos), com guardas; nao suite global nem certificacao nativa.
   [Evidencias e limites](reports/EDITOR_CLOSURE_RECOVERY_2026_09_28.md).
 
-Ordem finita: CE-HDR-01, CE-REC-01 e FE-PAR-04/05/06 concluidos; falta
-FE-PAR-08. O requisito de recovery
+Ordem finita: CE-HDR-01, CE-REC-01 e FE-PAR-01..08 concluidos; nenhum item
+pendente nesta fila. O requisito de recovery
 complementa a entrega historica de13/09 abaixo, nao a declara inexistente.
 Nao expandir automaticamente aos30 legados nem prometer recuperar alteracoes
 feitas depois do ultimo checkpoint em caso de kill/queda abrupta de energia.
@@ -64,7 +64,7 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado FE-PAR: **7 concluidos, 1 pendente**. Contagem geral na fila atual acima.
+Estado FE-PAR: **8 concluidos, 0 pendentes**. Contagem geral na fila atual acima.
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
@@ -164,17 +164,27 @@ Proximo FE-PAR-08, com um unico dispatch apos o novo checkpoint.
   Follow-up FE-PAR-03: receiver independente e GUI-affine no registro central
   evita callback perdido ao destruir dock/thread; cleanup repetido retestado.
   Regex/IO em curso nao sao interrompidos no meio: pausa/cancelam no checkpoint.
-- [ ] **FE-PAR-08 / COULD: coerencia de apresentacao.** Preferencia monospace
+- [x] **FE-PAR-08 / COULD: coerencia de apresentacao.** Preferencia monospace
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
+  Entregue: APIs de fonte existentes reutilizadas, fonte Search/Replace ou fallback
+  fixed Qt e tamanho compartilhado/acessibilidade; nenhum novo store de preferencias.
+  Log plain text em memoria,200 entradas de512 caracteres, sem callbacks tardios
+  ou persistencia; expansao apenas por clique. Estado Off/On/All no header de filtros,
+  preset restaura ativacao/rascunho, Clear desliga, formatos antigos compativeis.
+  Gate redundante removido apenas no Explorer; File List compartilhado preservado.
+  Identidade/cache inclui estado efetivo de extensoes, inclusive durante pausa;
+  normalizacao de extensoes coerente nas duas views. 43 casos novos,721 focados
+  distintos passaram isolados com guardas; Pylint-E3/AST4/JSON2/diff passaram.
+  [Evidencias e limites](reports/FILE_EXPLORER_PRESENTATION_2026_09_28.md).
 
-Proxima e ultima etapa da fila: **FE-PAR-08 (COULD)**, coerencia de apresentacao.
-Nao iniciar backlog legado automaticamente.
+Fila finita concluida: **0 pendentes; 30 legados fora do escopo**.
+SEM nova continuacao nativa ou inicio de backlog legado automaticamente.
 Continuacao anterior encerrada por pressao de memoria, sem dispatch seguinte.
 Retomada atual inclui apenas esta fila e os dois itens Editor explicitamente novos.
-Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,
-apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
-Um dispatch nativo por etapa concluida, sessao exata e sem retry incerto.
+Observer de respostas failed nao sera reiniciado automaticamente.
+As etapas anteriores usaram um dispatch nativo por etapa concluida, sessao exata
+e sem retry incerto; FE08 encerra apenas o worker exato, sem novo dispatch.
 Commits locais em COM-UUID; sem push/promocao com gates CI/security pendentes.
 
 ## Retomada de Estabilidade - 26/09/2026

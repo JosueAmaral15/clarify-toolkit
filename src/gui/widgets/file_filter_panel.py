@@ -231,6 +231,7 @@ class FileFilterPanel(QGroupBox):
             },
             'extensions': self._parse_extensions(self.ed_extensions.text()) if self.chk_use_ext_filter.isChecked() else [],
             'use_ext_filter': self.chk_use_ext_filter.isChecked(),
+            'extensions_text': self.ed_extensions.text(),
             'depth': self.spn_depth.value(),
             'exclude_dirs': self._get_excluded_dirs()
         }
@@ -243,6 +244,24 @@ class FileFilterPanel(QGroupBox):
         Args:
             filters: Filter dictionary
         """
+        # Keep the inactive draft separate from the effective extension list.
+        extensions = filters.get('extensions', [])
+        max_length = self.ed_extensions.maxLength()
+        if (not isinstance(extensions, list) or len(extensions) > max_length
+                or any(not isinstance(ext, str) for ext in extensions)):
+            raise ValueError("Extensions must be a list of strings")
+        if sum(len(ext) for ext in extensions) + max(0, len(extensions) - 1) > max_length:
+            raise ValueError("Extensions exceed the field limit")
+        extension_text = filters.get('extensions_text')
+        if extension_text is None:
+            extension_text = ','.join(extensions)
+        use_extensions = filters.get('use_ext_filter', bool(extensions))
+        if (not isinstance(extension_text, str) or len(extension_text) > max_length
+                or len(extension_text.encode('utf-16-le')) // 2 > max_length):
+            raise ValueError("Extension draft exceeds the field limit or is not text")
+        if not isinstance(use_extensions, bool):
+            raise ValueError("Extension filter activation must be boolean")
+
         # Regex
         if 'regex' in filters:
             self.ed_regex.setText(filters['regex'].get('pattern', ''))
@@ -272,8 +291,10 @@ class FileFilterPanel(QGroupBox):
                 self.chk_mtime_before_enabled.setChecked(True)
 
         # Extensions
-        if 'extensions' in filters:
-            self.ed_extensions.setText(','.join(filters['extensions']))
+        if any(key in filters for key in ('extensions', 'extensions_text', 'use_ext_filter')):
+            self.ed_extensions.setText(extension_text)
+            self.chk_use_ext_filter.setChecked(use_extensions)
+            self.ed_extensions.setEnabled(use_extensions)
 
         # Depth
         if 'depth' in filters:
@@ -297,6 +318,8 @@ class FileFilterPanel(QGroupBox):
         self.chk_mtime_after_enabled.setChecked(False)
         self.chk_mtime_before_enabled.setChecked(False)
         self.ed_extensions.clear()
+        self.chk_use_ext_filter.setChecked(False)
+        self.ed_extensions.setEnabled(False)
         self.spn_depth.setValue(0)
 
         # Reset exclude dirs to defaults

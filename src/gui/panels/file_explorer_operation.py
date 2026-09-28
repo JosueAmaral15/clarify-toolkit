@@ -1,7 +1,9 @@
 """Qt-bound progress controls and lifetime-scoped File Explorer signal routing."""
 
+# pylint: disable=no-name-in-module  # PySide6 exposes extension types dynamically.
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QLabel, QToolButton, QStyle
+# pylint: enable=no-name-in-module
 
 from src.i18n.translator import tr
 
@@ -67,7 +69,7 @@ class ExplorerOperationReceiver(QObject):
     @Slot(str)
     def diagnostic(self, message):
         if self.accepts_updates():
-            self.dock.results_status.setToolTip(str(message)[:500])
+            self.dock._on_operation_diagnostic(message)
 
     @Slot(object)
     def completed(self, result):
