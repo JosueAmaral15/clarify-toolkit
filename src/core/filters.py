@@ -1,6 +1,7 @@
 """Advanced file filtering with conditions on filename, path, extension, size, mtime, and content."""
 
 import os
+import math
 import re
 from dataclasses import dataclass
 from typing import Iterable, List, Sequence
@@ -19,6 +20,12 @@ OPS = {
     "<": lambda a, b: a < b,
     ">=": lambda a, b: a >= b,
     "<=": lambda a, b: a <= b,
+}
+
+OPERATOR_ALIASES = {
+    "=": "equals", "==": "equals", "!=": "not equals",
+    "greater than": ">", "less than": "<",
+    "greater than or equal": ">=", "less than or equal": "<=",
 }
 
 
@@ -217,6 +224,37 @@ class Condition:
     whole_word: bool = False         # Match whole words only (for contains/not contains)
     use_regex: bool = False          # Use value as regex pattern
 
+    def __post_init__(self):
+        self.operator = OPERATOR_ALIASES.get(self.operator, self.operator)
+        if self.operator == "regex":
+            self.operator = "contains"
+            self.use_regex = True
+
+    @classmethod
+    def from_mapping(cls, data):
+        """Normalize old UI/preset operators and validate before filtering files."""
+        if not isinstance(data, dict):
+            raise ValueError("Condition must be a mapping")
+        condition = cls(
+            field=data.get("field", ""), operator=data.get("operator", ""),
+            value=str(data.get("value", "")), scope_type=data.get("scope_type", ""),
+            scope_value=data.get("scope_value", ""),
+            case_sensitive=data.get("case_sensitive", True),
+            whole_word=data.get("whole_word", False),
+            use_regex=data.get("regex", data.get("use_regex", False)),
+        )
+        if condition.field not in {"filename", "path", "ext", "size", "mtime", "content"}:
+            raise ValueError("Unknown condition field")
+        numeric = condition.field in {"size", "mtime"}
+        allowed = {"equals", "not equals", ">", "<", ">=", "<="} if numeric else set(OPS) - {">", "<", ">=", "<="}
+        if condition.operator not in allowed:
+            raise ValueError("Condition operator does not support the selected field")
+        if numeric and not math.isfinite(float(condition.value)):
+            raise ValueError("Numeric condition requires a finite value")
+        if condition.use_regex and not numeric:
+            re.compile(condition.value)
+        return condition
+
     # pylint: disable=too-many-return-statements  # String matching requires checking all operators
     def _apply_string_matching(self, text: str, pattern: str, operator: str) -> bool:
         """
@@ -230,7 +268,7 @@ class Condition:
 
                 # Add word boundary if whole_word is enabled
                 if self.whole_word and operator in ("contains", "not contains"):
-                    regex_pattern = r'\b' + regex_pattern + r'\b'
+                    regex_pattern = r'\b(?:' + regex_pattern + r')\b'
 
                 compiled = re.compile(regex_pattern, flags)
                 found = bool(compiled.search(text))
@@ -246,7 +284,7 @@ class Condition:
                 elif operator == "starts with":
                     return bool(compiled.match(text))
                 elif operator == "ends with":
-                    return bool(compiled.search(text + '$'))
+                    return bool(re.search(r'(?:' + regex_pattern + r')\Z', text, flags))
                 else:
                     return False
             except re.error:
@@ -281,7 +319,7 @@ class Condition:
         return False
 
     # pylint: disable=too-many-return-statements  # Field validation requires early returns
-    def matches(self, path: str) -> bool:
+    def matches(self, path: str, *, content: str | None = None) -> bool:
         """Check if path matches this condition."""
         try:
             if self.field == "filename":
@@ -294,7 +332,7 @@ class Condition:
                 return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field == "ext":
                 actual_value = os.path.splitext(path)[1].lstrip(".")
-                expected_value = self.value
+                expected_value = self.value if self.use_regex else self.value.lstrip(".")
                 return self._apply_string_matching(actual_value, expected_value, self.operator)
             if self.field in ("size", "mtime"):
                 st = os.stat(path)
@@ -302,7 +340,7 @@ class Condition:
                 expected_value = float(self.value)
                 return OPS[self.operator](actual_value, expected_value)
             if self.field == "content":
-                txt = read_text(path)
+                txt = read_text(path) if content is None else content
                 # Apply scope filtering if specified
                 if self.scope_type and self.scope_type != "none":
                     txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex)
@@ -336,12 +374,29 @@ def filter_files_by_conditions(
 
     for file_path in files:
         try:
+            cached_content = None
+            content_error = False
+
+            def evaluate(condition):
+                nonlocal cached_content, content_error
+                if condition.field == "content":
+                    if content_error:
+                        return False
+                    if cached_content is None:
+                        try:
+                            cached_content = read_text(file_path)
+                        except (OSError, UnicodeError):
+                            content_error = True
+                            return False
+                    return condition.matches(file_path, content=cached_content)
+                return condition.matches(file_path)
+
             if logic_operator == "OR":
                 # At least one condition must match (disjunction)
-                ok = any(c.matches(file_path) for c in conds)
+                ok = any(evaluate(c) for c in conds)
             else:
                 # All conditions must match (conjunction) - default behavior
-                ok = all(c.matches(file_path) for c in conds)
+                ok = all(evaluate(c) for c in conds)
 
             if ok:
                 out.append(file_path)

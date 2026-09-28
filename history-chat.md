@@ -2498,3 +2498,154 @@ Plano imediato:
   modificado ou suite executada nesta operacao de refs/documentacao.
 - Documentacao e registros preparados para commit/push na nova COM conforme
   protocolo; example.py excluido. Nenhuma PR aberta ou mesclada nesta etapa.
+
+## 2026-09-28 - Pre-acao - Nome da pasta no Explorer do Clarify Editor
+
+- Usuario pediu nome da pasta selecionada ao lado de EXPLORER, com no maximo
+  16 caracteres visiveis. Usar a raiz atual do Explorer, incluindo restauracao
+  de preferencias e Open Folder; nomes longos terao 13 caracteres e tres pontos.
+- Mostrar caminho completo em tooltip, manter caption traduzida e texto de nome
+  como plain text. Preservar largura do sidebar e mudancas de raiz existentes.
+- Trabalho em COM-27dd5900-dd10-4e25-a5df-c35d52b2eac3, empilhada na branch
+  corrente com o Editor pendente; main/develop nao serao modificados.
+  Testes focados seriais/headless com settings temporarios e limite ativo de RAM.
+
+## 2026-09-28 - Pos-acao - Nome da pasta no header Explorer
+
+- Header agora mostra nome da raiz atual ao lado de EXPLORER, mantendo caption
+  traduzida. Maximo 16 caracteres de nome: nomes maiores usam 13 + tres pontos.
+  Tooltip mostra caminho completo; formato plain text impede markup de nomes.
+- Atualizacao conectada ao metodo existente _set_explorer_root: restauracao
+  inicial, Open Folder, troca de pasta e fallback continuam coerentes. Layout
+  horizontal permite reduzir sidebar sem expandir ou sobrepor caption/nome.
+- Acrescentados oito casos para nome curto/exato/longo/Unicode/markup, raiz
+  inicial/fallback, Open Folder/cancelamento e largura reduzida. Primeiro run
+  falhou por nome de teste contendo /; corrigida fixture, nao defeito da app.
+- Run final focado: 16 testes passaram em 5.03s (14 layout/header + 2 Explorer),
+  offscreen, settings/home temporarios, timeout e monitor de RAM; pico 241.9 MiB.
+  Nenhum run global ou provider ao vivo. AST e git diff --check passaram.
+- Captura /tmp/clarify-explorer-header-20260928.png inspecionada em tema escuro:
+  EXPLORER e selected-fold... alinhados, sem sobreposicao. Probe encerrou com
+  exit 0, pico 181.9 MiB. Nenhuma aplicacao do usuario encerrada.
+- TASKS.md registra entrega concluida; permanecem 30 itens abertos existentes,
+  incluindo seguranca/CI, investigacao Qt e integracao checkpoint/COM4.
+- Sem commit/push/merge nesta solicitacao. Branch COM empilhada preserva trabalho
+  anterior; main/develop e example.py nao foram modificados.
+
+## 2026-09-28 - Pre-acao - Arquivos ocultos no Explorer do Editor
+
+- Usuario pediu mostrar arquivos ocultos como .env e .env example no sidebar
+  Explorer. Adicionar QDir.Hidden ao filtro existente, incluindo diretorios
+  ocultos, sem mostrar entradas especiais . e .. nem criar nova opcao de menu.
+- Preservar alteracoes locais do header anterior em nova
+  COM-baf08b7a-b14a-4bc3-b01a-c556219baf7c. Testar listagem real do modelo Qt,
+  subpastas ocultas e abertura de dotfiles com conteudo ficticio, sem ler .env
+  real do projeto. Validacao serial/headless e limitada por RAM/timeout.
+
+## 2026-09-28 - Pos-acao - Explorer mostra arquivos ocultos
+
+- Adicionado QDir.Hidden ao filtro QFileSystemModel do Editor. Dotfiles e
+  diretorios ocultos aparecem junto dos itens normais; . e .. seguem excluidos.
+  Nenhuma nova opcao/menu ou leitura de credenciais reais foi introduzida.
+- Quatro novos casos validam listagem .env/.env.example/.env example, .config
+  com .settings e abertura dos tres dotfiles com dados ficticios. Teste de
+  listagem usa directoryLoaded e panel visivel para sincronizar carga lazy;
+  primeiras tentativas tinham timeout por sincronizacao/indexes da fixture.
+- Duas tentativas de coleta foram interrompidas no limite de RAM de 85%, sem
+  resultados. Esperado headroom estavel antes de validar; nenhum app encerrado.
+- Run final: 20 testes passaram em 7.34s (layout/header/ocultos + Explorer),
+  pico RSS 242.6 MiB. Repeticao focada: 4 passaram em 5.24s, pico 197.3 MiB.
+  Qt offscreen, HOME/settings temporarios, timeout de 20s e guard de recursos.
+  Nao representa suite global. AST e git diff --check passaram.
+- TASKS registra entrega concluida; continuam 30 itens abertos existentes.
+  Header de pasta anterior preservado. Sem commit/push/merge; main/develop e
+  example.py intactos. Toda validacao iniciada nesta etapa terminou.
+
+## 2026-09-28 - Pre-acao - Comparacao Search/Replace e File Explorer
+
+- Usuario pediu inspecionar todos os recursos Search/Replace ausentes no File
+  Explorer e recomendar quais transferir. Escopo: analise de fontes, integracoes,
+  testes e backlog atuais, sem implementar, mover ou remover recursos.
+- Distinguir funcionalidades realmente ausentes, equivalentes ja existentes,
+  recursos parciais e capacidades especificas de texto/JSON que nao pertencem
+  ao File Explorer. Preservar mudancas pendentes do Clarify Editor.
+
+## 2026-09-28 - Pos-acao - Comparacao Search/Replace versus File Explorer
+
+- Inspecionados painel ativo, widgets, workers/executor, core filters/replace/
+  multi_query, ResultsTree compartilhado, consumidores AI Processor, testes e
+  backlog. Arquivos BACKUP/NEW e comparativo 2025 nao tratados como estado atual.
+- Maioria dos recursos basicos ja existe no Explorer: queries, matching options,
+  extensoes/globs, replace UI, arvore/contexto compartilhados, export e historico.
+  Lacunas reais: alvo arquivo unico, busca cross-line, scopes/parametro de
+  condicao, whole-word por condicao, starts/ends-with e pause/resume integrado.
+- Controles existentes incompletos: Preserve Case nao e passado pelo dock;
+  multi_query nao e consumido pelo executor. Retorno replace difere do contrato
+  esperado pela UI e worker usa kwargs incompatveis. Conditions numericas usam
+  operadores divergentes, conteudo late ignora valor/opcoes e OR early/late falha.
+- Sete probes diagnosticos passaram em 4.70s, pico 188.1 MiB; sucesso significa
+  reproduzir lacunas, nao certificar saude da app. Confirmados cross-line ausente,
+  multi_query sem efeito, content condition ignorada, operador numerico divergente,
+  OR repartido incorreto, retorno replace divergente e AttributeError no lancamento
+  content search do proprio SearchReplacePanel. Sem iniciar worker desse painel.
+- Ambiente offscreen/temporario, timeout/guard RAM; nenhum .env ou arquivo real
+  do usuario acessado/modificado. Probes em /tmp/test_clarify_feature_parity_20260928.py.
+- Relatorio SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md inclui inventario e
+  ordem: reparar contratos primeiro, alvo unico, modos de texto separados,
+  condicoes enriquecidas e pause/coordination; fonte uniforme/logs sao opcionais.
+  Nao copiar hover expansion, batch overwrite sem limites, sinais nao usados ou
+  substituir modal apenas por paridade. Preservar recurso compartilhado de edicao
+  de resultados no AI Processor, nao remover Search/Replace nesta revisao.
+- Sem implementar recursos, atualizar requisitos TASKS, commit/push/merge ou
+  alterar codigo de producao. Permanecem 30 itens abertos; recomendacoes novas
+  ainda nao contam como tarefas aprovadas. Diff check passou; Editor anterior e
+  example.py intactos. Todos os processos iniciados na revisao encerrados.
+
+## 2026-09-28 - Pre-acao - Paridade aprovada do File Explorer
+
+- Usuario autorizou implementar recomendacoes da auditoria Search/Replace e
+  usar AI Presence Monitor para continuidade. Oito itens FE-PAR organizados
+  por prioridade; corrigir contratos e condicoes antes de ampliar modos de busca.
+- Branch COM-7bf189e1-fee8-410b-9929-bf58e6d8d2ca criada do HEAD atual,
+  preservando mudancas pendentes do Editor e auditoria. example.py e alheio.
+- Monitor instalado 0.9.0: banco integro, hooks e Codex queue disponiveis;
+  doctor strict falha porque reply-observer.service esta failed. Nao reiniciar,
+  migrar ou mudar controles silenciosamente. Continuacao nativa direta deve ser
+  validada por dry-run e sessao exata, sem fallback GUI ou emissao duplicada.
+- Validacao serial/offscreen com limites de RAM/tempo; registrar resultados
+  por etapa, nao declarar release pronta nem promover sem gates de CI/seguranca.
+
+## 2026-09-28 - Pos-acao - FE-PAR-01/02 e checkpoint de continuidade
+
+- FE-PAR-01 entregue: contrato dock/worker/executor corrigido, Preserve Case com
+  backreferences/delecao, selecao da vista ativa, confirmacao e worker com slot Qt
+  comprovadamente fora da GUI. Escrita atomica limitada preserva CRLF/mode/uid/gid/
+  xattrs; rejeita links e revisoes alteradas, reporta falhas/cancelamento parciais.
+  Limites 4 MiB, 1000 arquivos, 10000 matches/arquivo e 50 erros. Undo global e
+  shutdown/pause completo seguem pendentes, sem prometer rollback multi-arquivo.
+- FE-PAR-02 entregue: aliases numericos antigos, conteudo real, AND/OR completo,
+  OR independente da ordem, cache de conteudo limitado e erros visiveis. Shared
+  filters preservados e validados, com regex Ends With/Whole Word e extensoes
+  corrigidos; Clear Conditions deixa de chamar deleteLater em dict.
+- Reteste do Editor revelou rootIndex invalido por lazy loading. Rebind sempre
+  usa pasta atual e preserva sidebar oculto; primeira tentativa deslocou chamada
+  de visibilidade, detectada pelos testes e corrigida antes do checkpoint.
+- Runs finais: 160 Explorer (6.93s, 232.0 MiB), 52 shared conditions (0.93s,
+  71.5 MiB), 21 Editor (6.35s, 242.4 MiB); repeticao Editor 21 (6.26s, 243.8 MiB).
+  233 testes distintos, nao suite global. AST/diff check passaram. Pylint -E
+  focado passou com suporte a connect dinamico Qt; primeiro run teve somente
+  esses falsos positivos. Pico Pylint 385.1 MiB, jobs=1.
+- Uma tentativa foi abortada antes da coleta por RAM >=85%; retomada so apos
+  cinco amostras estaveis <80%. Todos os processos de validacao terminaram.
+  Nenhum app/documento real/credencial acessado ou encerrado para validar.
+- TASKS e relatorio registram 2 FE-PAR concluidos, 6 pendentes + 30 anteriores
+  = 36 abertos. Proxima etapa FE-PAR-07 (MUST) antes dos SHOULD; depois 03-06/08.
+  Batch autorizado e finito, nao prosseguir automaticamente pelos 30 legados.
+- Monitor iniciado uma vez; hooks registram atividade real. Observer de respostas
+  failed nao reiniciado; transporte nativo direto disponivel, dry-run passou com
+  worker/sessao exatos e nenhum continue pendente. Apos commit local, agendar uma
+  unica continuacao destacada com marcador CLARIFY_FE_PAR_CONTINUE_20260928_FE07.
+  Dispatch iniciado nao e prova de entrega/processamento; verificar hook na retomada.
+- Commit local na COM atual inclui trabalho proprio pendente do Editor e auditoria,
+  sem example.py. Sem push/merge/promocao; main/develop e bloqueios externos
+  preservados. Nao chamar finish enquanto houver continuacao autorizada em curso.

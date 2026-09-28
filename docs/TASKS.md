@@ -2,9 +2,61 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/27 - Checkpoint, investigacao Qt e plano de integracao Git
+**Last Update**: 2026/09/28 - Paridade Search/Replace aprovada para File Explorer
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## File Explorer - Paridade Aprovada (28/09/2026)
+
+Implementar em etapas verificadas, preservando consumidores compartilhados e
+limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
+LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
+Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
+Estado: **2 concluidos, 6 pendentes; 36 itens abertos no total (30 anteriores + 6).**
+Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
+
+- [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
+  dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
+  ativa, manter backreferences regex e tratar erros/cancelamento honestamente.
+  Escrita atomica por arquivo, limites de entrada e confirmacao antes de alterar.
+  Entregue: worker com slot Qt, selecao explicita nas duas vistas, contrato
+  compativel, contagens de resultados parciais e Preserve Case/backreferences.
+  Limites: 4 MiB por entrada/saida, 1000 arquivos, 10000 matches por arquivo,
+  50 erros; preserva CRLF/permissoes/metadados e rejeita links/edicoes concorrentes.
+  Confirmacao com preview limitado antes de Replace First/All; Undo global e
+  lifecycle/pause completo permanecem LEG-24 e FE-PAR-07, respectivamente.
+- [x] **FE-PAR-02 / MUST: condicoes coerentes.** Normalizar operadores numericos,
+  avaliar valor/opcoes de condicoes de conteudo e AND/OR misto sem prefiltragem
+  incorreta; compartilhar semantica com core filters e testar presets antigos.
+  Entregue: aliases antigos normalizados, predicate de conteudo real, AND/OR
+  completo e ordem OR independente, leitura de conteudo limitada/cache por arquivo,
+  diagnostico de condicao invalida em vez de retornar resultados sem filtro.
+  UI emite dados canonicos; Clear Conditions nao chama deleteLater em dict.
+  Shared filters mantem consumidores e foram testados separadamente.
+- [ ] **FE-PAR-03 / SHOULD: escopo de alvo explicito.** Arquivo unico, pasta ou
+  resultados selecionados; nao percorrer irmaos nem ampliar selecao implicitamente.
+  Invalidar cache incremental ao trocar escopo e testar as duas vistas.
+- [ ] **FE-PAR-04 / SHOULD: busca de bloco cross-line.** Opcao separada de
+  multi-query, posicoes/snippets corretos, limites de bytes/matches e cancelamento;
+  informar entradas grandes ou modos binarios nao suportados, sem truncar ocultamente.
+- [ ] **FE-PAR-05 / SHOULD: consultas independentes por linha.** Conectar controle
+  multi-query ao executor, manter separacao de cross-line, validar regex e limites;
+  resultados deterministas e testes de consultas vazias, repetidas e sobrepostas.
+- [ ] **FE-PAR-06 / SHOULD: condicoes enriquecidas.** Whole Word por condicao,
+  Starts/Ends With, scope e parametro; round-trip de presets e compatibilidade
+  de condicoes anteriores. Reutilizar extracao de escopo existente.
+- [ ] **FE-PAR-07 / MUST: pause/resume e ciclo de worker.** Pausa cooperativa
+  real, cancelamento durante pausa, uma operacao por dock, fechamento/cleanup
+  seguro e ausencia de callbacks tardios; teste de responsividade e recursos.
+- [ ] **FE-PAR-08 / COULD: coerencia de apresentacao.** Preferencia monospace
+  compartilhada, log operacional limitado e estado de filtro por extensao
+  descobrivel, sem novos controles duplicados ou expansao por hover.
+
+Proxima etapa executavel: **FE-PAR-07 (MUST)**, antes dos recursos SHOULD.
+Validar pausa/cancelamento/fechamento e threads reais de search/browse/replace;
+registrar operacoes no ciclo da aplicacao, sem force termination durante escrita.
+Depois FE-PAR-03, 04, 05, 06 e 08. Continuacao autorizada e finita via monitor,
+apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
 
 ## Retomada de Estabilidade - 26/09/2026
 
@@ -49,6 +101,19 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   Venn abre sem TypeError; Diff permite rolar documentos de tamanhos diferentes.
 - [x] **SHOULD: completar LEG-27**: duplo clique/Enter em arquivo ou match abre
   Clarify Editor. Diretorios nao abrem arquivos em massa; clique simples seleciona.
+- [x] **SHOULD / Clarify Editor: nome da pasta atual ao lado de EXPLORER.**
+  Nome da raiz limitado a 16 caracteres (13 + `...` quando longo), caminho
+  completo em tooltip e texto plain text. Atualiza na inicializacao, Open Folder
+  e fallback. Validacao focada: 16 testes passaram, incluindo oito novos cenarios
+  de header e regressao do layout; captura offscreen em tema escuro revisada.
+- [x] **SHOULD / Clarify Editor: exibir arquivos e pastas ocultos no Explorer.**
+  Filtro QFileSystemModel inclui Hidden e preserva NoDotAndDotDot. Casos reais
+  cobrem .env, .env.example, .env example, subpasta oculta e abertura no Editor,
+  usando somente arquivos ficticios temporarios. Conjunto focado: 20 testes
+  passaram, incluindo regressao do header/layout e fluxos anteriores do Explorer.
+  Reteste nesta etapa revelou rootIndex invalido durante lazy loading; rebind
+  usa sempre a pasta atual sem reabrir sidebar oculto nem navegar para carga antiga.
+  Conjunto atualizado de 21 testes passou duas vezes em subprocessos isolados.
 - [ ] **MUST / estabilidade: investigar ciclo repetido de janela/tema Qt.**
   A ampliacao da suite apresentou segfault em `ThemeManager._apply_system_theme`
   durante recriacao de MainWindow. Fixtures agora descartam widgets pendentes e

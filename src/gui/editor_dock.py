@@ -637,12 +637,26 @@ class EditorDock(BaseDock):
         )
         explorer_layout = QVBoxLayout(self.explorer_panel)
         explorer_layout.setContentsMargins(0, 0, 4, 0)
-        explorer_layout.addWidget(QLabel(tr("editor.lbl_explorer")))
+        header = QHBoxLayout()
+        header.setSpacing(8)
+        self.explorer_title_label = QLabel(tr("editor.lbl_explorer"))
+        self.explorer_title_label.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred
+        )
+        self.explorer_folder_label = QLabel()
+        self.explorer_folder_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.explorer_folder_label.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+        )
+        header.addWidget(self.explorer_title_label)
+        header.addWidget(self.explorer_folder_label, 1)
+        explorer_layout.addLayout(header)
 
         self.explorer_model = QFileSystemModel(self.explorer_panel)
         self.explorer_model.setFilter(
-            QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot
+            QDir.AllDirs | QDir.Files | QDir.Hidden | QDir.NoDotAndDotDot
         )
+        self.explorer_model.directoryLoaded.connect(self._sync_explorer_root_index)
         self.explorer_tree = QTreeView(self.explorer_panel)
         self.explorer_tree.setModel(self.explorer_model)
         self.explorer_tree.setHeaderHidden(True)
@@ -661,6 +675,10 @@ class EditorDock(BaseDock):
         root_index = self.explorer_model.setRootPath(normalized)
         self.explorer_tree.setRootIndex(root_index)
         self.explorer_root_path = normalized
+        folder_name = Path(normalized).name or normalized
+        display_name = folder_name if len(folder_name) <= 16 else folder_name[:13] + "..."
+        self.explorer_folder_label.setText(display_name)
+        self.explorer_folder_label.setToolTip(normalized)
         if persist:
             self.settings.setValue("explorer_root_path", normalized)
         return os.path.isdir(normalized)
@@ -675,6 +693,12 @@ class EditorDock(BaseDock):
         if folder_path:
             self._set_explorer_root(folder_path)
             self._set_explorer_visible(True)
+
+    def _sync_explorer_root_index(self, _loaded_path: str) -> None:
+        """Keep the selected root bound across loads without changing visibility."""
+        root_index = self.explorer_model.index(self.explorer_root_path)
+        if root_index.isValid() and root_index != self.explorer_tree.rootIndex():
+            self.explorer_tree.setRootIndex(root_index)
 
     def _open_explorer_index(self, index) -> None:
         """Open files from the sidebar through the editor's existing API."""

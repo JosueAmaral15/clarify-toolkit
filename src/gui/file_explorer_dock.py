@@ -990,6 +990,8 @@ class FileExplorerDock(BaseDock):
 
     def _list_files(self):
         """List or search files with unified executor (v2.9.116)."""
+        if self._operation_running():
+            return
         # Start timer (v2.9.117 - B.4)
 
         directory = self.ed_directory.text().strip()
@@ -1615,201 +1617,140 @@ class FileExplorerDock(BaseDock):
     # Original implementation removed - see git history if needed
 
 
-    def _on_replace_first(self):
-        """Handle replace first occurrence (v2.9.116)."""
-        query = self.content_panel.get_query()
-        replacement = self.replace_panel.get_replacement()
-
-        if not query:
-            QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
-            return
-
-        # Get selected files from table
-        selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
-        if not selected_rows:
-            QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
-            return
-
-        # Collect file paths and create SearchResult objects
+    def _selected_replacement_results(self):
+        """Use only explicit selections from the visible results view."""
         from src.core.file_list_executor import FileInfo
         from src.core.file_explorer_executor import SearchResult
 
-        search_results = []
-        for row in sorted(selected_rows):
-            path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
-            if path_item:
-                file_path = path_item.text()
-                # Create minimal FileInfo
-                file_info = FileInfo(
-                    name=os.path.basename(file_path),
-                    path=file_path,
-                    size=0,
-                    mtime="",
-                    permissions="",
-                    owner="",
-                    group="",
-                    is_dir=False,
-                )
-                # Create SearchResult with empty matches (will be found during replace)
-                search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
-
-        # Get search options
-        search_options = self.search_options_panel.get_options()
-
-        # Execute replace first
-        result = self.executor.execute_replace(
-            files=search_results,
-            search_query=query,
-            replacement=replacement,
-            search_options=search_options,
-            replace_all=False,  # Replace first only
-        )
-
-        # Show result
-        if result.get("success"):
-            files_modified = result.get("files_modified", 0)
-            replacements_made = result.get("replacements_made", 0)
-            QMessageBox.information(
-                self, "Replace Complete", f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
-            )
-
-            # Save to history (History Integration for replace operations)
-            try:
-                from src.gui.progress import OperationHistory
-
-                history = OperationHistory()
-
-                history.add_operation(
-                    "file_explorer_replace_first",
-                    {
-                        "search_query": query,
-                        "replacement": replacement,
-                        "files_modified": files_modified,
-                        "replacements_made": replacements_made,
-                    },
-                )
-
-                # Add to History Dock if available
-                if hasattr(self, "dock_history"):
-                    self.dock_history.add_operation(
-                        "File Explorer Replace First",
-                        {"files_modified": files_modified, "replacements": replacements_made},
-                    )
-            except Exception as e:
-                logger.error(f"Failed to save history: {e}")
-
-            # Refresh file list to show updated sizes/times
-            self._list_files()
+        if self.results_stack.currentIndex() == 0:
+            paths = self.results_tree._collect_selected_result_paths(preserve_order=True)
         else:
-            error = result.get("error", "Unknown error")
-            QMessageBox.warning(
-                self, tr("file_list.replace_failed_title"), tr("file_list.replace_failed_message").format(error)
-            )
+            rows = sorted({item.row() for item in self.table_manager.table.selectedItems()})
+            paths = [
+                self.table_manager.table.item(row, 4).text()
+                for row in rows if self.table_manager.table.item(row, 4)
+            ]
+        unique_paths = dict.fromkeys(os.path.abspath(path) for path in paths)
+        return [
+            SearchResult(
+                FileInfo(os.path.basename(path), path, 0, "", "", "", "", False), [], 0
+            ) for path in unique_paths if os.path.isfile(path)
+        ]
+
+    def _operation_running(self):
+        thread = getattr(self, "_worker_thread", None)
+        return thread is not None and thread.isRunning()
+
+    def _on_replace_first(self):
+        """Replace the first occurrence in each explicitly selected file."""
+        self._start_replace(replace_all=False)
 
     def _on_replace_all(self):
-        """Handle replace all occurrences (v2.9.116)."""
-        query = self.content_panel.get_query()
-        replacement = self.replace_panel.get_replacement()
+        """Replace all occurrences in explicitly selected files."""
+        self._start_replace(replace_all=True)
 
+    def _start_replace(self, replace_all):
+        if self._operation_running():
+            return
+        query = self.content_panel.get_query()
         if not query:
             QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
             return
-
-        # Get selected files from table
-        selected_rows = set(item.row() for item in self.table_manager.table.selectedItems())
-        if not selected_rows:
+        files = self._selected_replacement_results()
+        if not files:
             QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
-
-        # Collect file paths and create SearchResult objects
-        from src.core.file_list_executor import FileInfo
-        from src.core.file_explorer_executor import SearchResult
-
-        search_results = []
-        for row in sorted(selected_rows):
-            path_item = self.table_manager.table.item(row, 4)  # Column 4 is path
-            if path_item:
-                file_path = path_item.text()
-                # Create minimal FileInfo
-                file_info = FileInfo(
-                    name=os.path.basename(file_path),
-                    path=file_path,
-                    size=0,
-                    mtime="",
-                    permissions="",
-                    owner="",
-                    group="",
-                    is_dir=False,
-                )
-                # Create SearchResult
-                search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
-
-        # Confirm with user
-        reply = QMessageBox.question(
-            self,
-            tr("file_list.confirm_replace_title"),
-            tr("file_list.confirm_replace_message").format(len(search_results)),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-
-        if reply != QMessageBox.Yes:
+        from src.core.file_explorer_executor import MAX_REPLACE_FILES
+        if len(files) > MAX_REPLACE_FILES:
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"),
+                                "At most 1000 selected files can be replaced in one operation.")
+            return
+        options = dict(self.search_options_panel.get_options())
+        if options.get("multi_query"):
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"),
+                                "Replacement of independent multi-queries is not supported.")
+            return
+        replacement = self.replace_panel.get_replacement()
+        summary = tr("file_list.confirm_replace_message").format(len(files))
+        mode = "All occurrences per file" if replace_all else "First occurrence per file"
+        preview = "\n".join(self._elide_middle(item.file_info.path, 120) for item in files[:5])
+        summary += f"\n\n{mode}\nFind: {query[:160]!r}\nReplace: {replacement[:160]!r}\n\n{preview}"
+        if len(files) > 5:
+            summary += f"\n... ({len(files)} files)"
+        if QMessageBox.question(self, tr("file_list.confirm_replace_title"), summary,
+                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
             return
 
-        # Get search options
-        search_options = self.search_options_panel.get_options()
+        from PySide6.QtCore import QThread
+        from src.gui.panels.file_explorer_worker import FileExplorerWorker
 
-        # Execute replace all
-        result = self.executor.execute_replace(
-            files=search_results,
-            search_query=query,
-            replacement=replacement,
-            search_options=search_options,
-            replace_all=True,  # Replace all occurrences
+        self._cancel_requested = False
+        self._replace_all_requested = replace_all
+        self._worker_thread = QThread(self)
+        self._worker = FileExplorerWorker(self.executor)
+        self._worker.configure_replace(
+            files=files, search_text=query, replace_text=replacement,
+            search_options=options, preserve_case=self.replace_panel.get_preserve_case(),
+            replace_all=replace_all,
         )
+        self._worker.moveToThread(self._worker_thread)
+        self._worker.progress.connect(self._on_progress)
+        self._worker.finished.connect(self._on_replace_finished)
+        self._worker.error.connect(self._on_operation_error)
+        self._worker_thread.started.connect(self._worker.run_replace)
+        self._worker_thread.finished.connect(self._worker.deleteLater)
+        self._ensure_progress_dialog()
+        self._worker_thread.start()
 
-        # Show result
+    def _on_replace_finished(self, result):
+        """Report partial results honestly; history contains counts, not file text."""
+        if self.progress_dialog:
+            self.progress_dialog.close()
+            self.progress_dialog = None
+        self._cleanup_worker_thread()
+        modified = result.get("files_modified", 0)
+        count = result.get("replacements_made", 0)
+        summary = f"Modified {modified} file(s)\n{count} replacement(s) made"
+        if result.get("cancelled"):
+            summary += "\nOperation cancelled; completed files were not rolled back."
+        errors = result.get("errors", [])
+        if errors:
+            summary += "\n\n" + "\n".join(self._elide_middle(str(error), 240) for error in errors[:5])
+            if len(errors) > 5:
+                summary += f"\n... ({len(errors)} errors)"
         if result.get("success"):
-            files_modified = result.get("files_modified", 0)
-            replacements_made = result.get("replacements_made", 0)
-            QMessageBox.information(
-                self, "Replace Complete", f"Modified {files_modified} file(s)\n{replacements_made} replacement(s) made"
-            )
-
-            # Save to history (History Integration for replace all operations)
+            QMessageBox.information(self, "Replace Complete", summary)
+        else:
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"), summary)
+        if modified:
             try:
                 from src.gui.progress import OperationHistory
 
-                history = OperationHistory()
-
-                history.add_operation(
-                    "file_explorer_replace_all",
-                    {
-                        "search_query": query,
-                        "replacement": replacement,
-                        "files_modified": files_modified,
-                        "replacements_made": replacements_made,
-                    },
-                )
-
-                # Add to History Dock if available
+                operation = "file_explorer_replace_all" if self._replace_all_requested else "file_explorer_replace_first"
+                OperationHistory().add_operation(operation, {
+                    "files_modified": modified, "replacements_made": count,
+                    "cancelled": result.get("cancelled", False), "errors": len(errors),
+                })
                 if hasattr(self, "dock_history"):
-                    self.dock_history.add_operation(
-                        "File Explorer Replace All",
-                        {"files_modified": files_modified, "replacements": replacements_made},
-                    )
-            except Exception as e:
-                logger.error(f"Failed to save history: {e}")
-
-            # Refresh file list to show updated sizes/times
+                    label = "File Explorer Replace All" if self._replace_all_requested else "File Explorer Replace First"
+                    self.dock_history.add_operation(label, {
+                        "files_modified": modified, "replacements": count,
+                        "cancelled": result.get("cancelled", False), "errors": len(errors),
+                    })
+            except Exception as exc:
+                logger.error("Failed to save replacement history: %s", exc)
             self._list_files()
-        else:
-            error = result.get("error", "Unknown error")
-            QMessageBox.warning(self, tr("file_explorer.warning_replace_failed"), f"Error: {error}")
 
     def _on_conditions_changed(self, conditions: list):
         """Handle advanced conditions changes."""
         # Could auto-filter results when conditions change
+
+    def _report_result_errors(self, result):
+        """Keep completion diagnostics bounded and visible without repeated modals."""
+        errors = result.get("stats", {}).get("errors", [])
+        self.results_status.setToolTip("\n".join(str(error)[:500] for error in errors[:5]))
+        if errors:
+            self.results_status.setText(self.results_status.text() + f"; {len(errors)} error(s)")
 
     @staticmethod
     def _elide_middle(text: str, max_chars: int = PROGRESS_ITEM_MAX_CHARS) -> str:
@@ -2097,7 +2038,10 @@ class FileExplorerDock(BaseDock):
 
         # Store for view sync (lightweight)
         self.last_was_search = True
-        self._remember_content_search_universe(directory, content_query, files_list)
+        if result.get("stats", {}).get("errors"):
+            self._last_content_search_universe = None
+        else:
+            self._remember_content_search_universe(directory, content_query, files_list)
 
         # Update statistics (lightweight - just counters)
         self._update_statistics(files_list, time.time() - start_time)
@@ -2141,6 +2085,8 @@ class FileExplorerDock(BaseDock):
 
         # Cleanup thread
         self._cleanup_worker_thread()
+
+        self._report_result_errors(result)
 
     def _on_browse_finished(self, result):
         """
@@ -2252,6 +2198,7 @@ class FileExplorerDock(BaseDock):
 
         # Update status label
         self.results_status.setText(f"Found {len(files_list)} file(s)")
+        self._report_result_errors(result)
 
         # Cleanup thread
         self._cleanup_worker_thread()

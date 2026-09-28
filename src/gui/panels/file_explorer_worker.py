@@ -16,7 +16,7 @@ Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 # pylint: disable=line-too-long  # Long log messages
 # pylint: disable=logging-fstring-interpolation  # Performance not critical
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Slot
 
 from ...core.file_explorer_executor import UnifiedFileExplorerExecutor
 from ...utils.logger import get_logger
@@ -72,6 +72,22 @@ class FileExplorerWorker(QObject):
         """Request cancellation for executor work and pending batch emission."""
         self._cancel_requested = True
         self.executor.cancel()
+
+    def configure_replace(self, **request):
+        """Store an operation snapshot before moving to its thread."""
+        self._replace_request = request
+
+    @Slot()
+    def run_replace(self):
+        """Qt-bound entry point, executed in this worker's thread."""
+        if self._cancel_requested:
+            self.finished.emit({
+                "success": False, "cancelled": True, "replaced_count": 0,
+                "replacements_made": 0, "files_modified": 0, "errors": [],
+                "error": "Operation cancelled",
+            })
+            return
+        self.execute_replace(**self._replace_request)
 
     def _build_matches_dict(self, result: dict) -> dict:
         """
@@ -278,7 +294,9 @@ class FileExplorerWorker(QObject):
         files: list,
         search_text: str,
         replace_text: str,
-        search_options: dict
+        search_options: dict,
+        preserve_case: bool = False,
+        replace_all: bool = False,
     ):
         """
         Execute replace operation in worker thread.
@@ -296,9 +314,11 @@ class FileExplorerWorker(QObject):
             # Execute replace (blocking in worker thread)
             result = self.executor.execute_replace(
                 files=files,
-                search_text=search_text,
-                replace_text=replace_text,
-                search_options=search_options
+                search_query=search_text,
+                replacement=replace_text,
+                search_options=search_options,
+                preserve_case=preserve_case,
+                replace_all=replace_all,
             )
 
             # Emit result to UI thread

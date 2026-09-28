@@ -11,6 +11,7 @@ Date: 2025/12/25
 from __future__ import annotations
 
 import os
+import stat
 import re
 import fnmatch
 from typing import Dict, List, Tuple, Any, Optional
@@ -19,6 +20,8 @@ from dataclasses import dataclass
 from PySide6.QtCore import QObject, Signal  # pylint: disable=no-name-in-module  # Qt dynamic
 
 from .file_list_executor import FileInfo, FileListExecutor
+from .search_replace import preserve_case_like
+from ..utils.atomic_files import file_revision, write_existing_text_atomically
 from ..utils import read_text
 from ..utils.logger import get_logger
 
@@ -29,6 +32,10 @@ logger = get_logger(__name__)
 MAX_SNIPPET_LENGTH = 200  # Maximum characters to store per match snippet
 MAX_TOTAL_MATCHES = 50000  # Maximum total matches across all files
 TEXT_SAMPLE_BYTES = 8192  # Lightweight sample for text/binary classification
+MAX_REPLACE_FILE_BYTES = 4 * 1024 * 1024
+MAX_REPLACE_FILES = 1000
+MAX_REPLACE_MATCHES = 10000
+MAX_OPERATION_ERRORS = 50
 BINARY_SEARCH_CHUNK_SIZE = 64 * 1024
 BINARY_REGEX_OVERLAP_BYTES = 4096
 BINARY_SNIPPET_CONTEXT_BYTES = 24
@@ -144,40 +151,24 @@ class UnifiedFileExplorerExecutor(QObject):
             file_list = [f for f in file_list if f.is_dir]
         # "any" or other values: keep all files
 
-        # Step 2.5: Apply advanced conditions if provided (v2.9.116 - Phase 4)
+        # Evaluate the complete expression, including content, with shared semantics.
+        condition_errors = []
         if conditions:
             try:
-                # pylint: disable=import-outside-toplevel  # Circular import avoidance
-                from ..core.filters import filter_files_by_conditions, Condition
-
-                # Convert dict conditions to Condition objects
-                condition_objects = []
-                for cond_dict in conditions:
-                    condition_obj = Condition(
-                        field=cond_dict.get("field", ""),
-                        operator=cond_dict.get("operator", ""),
-                        value=cond_dict.get("value", ""),
-                        scope_type=cond_dict.get("scope_type", ""),
-                        scope_value=cond_dict.get("scope_value", ""),
-                        case_sensitive=cond_dict.get("case_sensitive", True),
-                        whole_word=cond_dict.get("whole_word", False),
-                        use_regex=cond_dict.get("regex", False),
-                    )
-                    condition_objects.append(condition_obj)
-
-                file_paths = [f.path for f in file_list]
-                original_count = len(file_paths)
-
-                filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
-
-                # Convert back to FileInfo objects
-                filtered_paths_set = set(filtered_paths)
-                file_list = [f for f in file_list if f.path in filtered_paths_set]
-
-                filtered_count = original_count - len(file_list)
-                logger.info("Advanced conditions filtered %d files in browse mode", filtered_count)
-            except Exception as e:  # pylint: disable=broad-exception-caught  # Filter robustness
-                logger.error("Error applying conditions in browse mode: %s", e, exc_info=True)
+                objects, logic = self._prepare_conditions(conditions, logic_operator)
+            except (ValueError, TypeError, re.error) as exc:
+                return self._condition_failure(str(exc))
+            filtered = []
+            for file_info in file_list:
+                if self._cancel:
+                    break
+                try:
+                    if self._matches_condition_objects(file_info.path, objects, logic):
+                        filtered.append(file_info)
+                except (OSError, UnicodeError, ValueError) as exc:
+                    if len(condition_errors) < MAX_OPERATION_ERRORS:
+                        condition_errors.append(f"Condition failed for {file_info.path}: {exc}")
+            file_list = filtered
 
         # Step 3: Apply include/exclude glob filters (from Search/Replace)
         include_globs = filters.get("include_globs", [])
@@ -232,7 +223,7 @@ class UnifiedFileExplorerExecutor(QObject):
         search_results = [SearchResult(file_info=file_info, matches=[], match_count=0) for file_info in file_list]
 
         stats = FileListExecutor.calculate_statistics(file_list)
-        stats["errors"] = result.errors
+        stats["errors"] = (result.errors + condition_errors)[:MAX_OPERATION_ERRORS]
 
         return {"files": search_results, "stats": stats}
 
@@ -291,71 +282,11 @@ class UnifiedFileExplorerExecutor(QObject):
             len(files_to_search), recursive, show_hidden
         )
 
-        # OPTIMIZATION: Apply advanced conditions EARLY to avoid unnecessary file I/O
-        # (Sprint 1 - Task 1.1 - Fase 2 + BUGFIX)
-        # FIX: Separate content-based vs non-content-based conditions
-        # - Size, extension, date → Apply EARLY (before content search)
-        # - Content → Apply LATE (after reading file)
-        if conditions:
-            # Separate conditions by type
-            early_conditions = []  # size, ext, filename, path, mtime
-            late_conditions = []  # content (needs file read)
-
-            for cond in conditions:
-                field = cond.get("field", "")
-                if field == "content":
-                    late_conditions.append(cond)
-                else:
-                    early_conditions.append(cond)
-
-            # Apply non-content conditions EARLY
-            if early_conditions:
-                try:
-                    # pylint: disable=import-outside-toplevel  # Circular import avoidance
-                    from ..core.filters import filter_files_by_conditions, Condition
-
-                    # Convert dict conditions to Condition objects
-                    condition_objects = []
-                    for cond_dict in early_conditions:
-                        condition_obj = Condition(
-                            field=cond_dict.get("field", ""),
-                            operator=cond_dict.get("operator", ""),
-                            value=cond_dict.get("value", ""),
-                            scope_type=cond_dict.get("scope_type", ""),
-                            scope_value=cond_dict.get("scope_value", ""),
-                            case_sensitive=cond_dict.get("case_sensitive", True),
-                            whole_word=cond_dict.get("whole_word", False),
-                            use_regex=cond_dict.get(
-                                "regex", False
-                            ),  # Note: dict uses 'regex', Condition uses 'use_regex'
-                        )
-                        condition_objects.append(condition_obj)
-
-                    file_paths = [f.path for f in files_to_search]
-                    original_count = len(file_paths)
-
-                    filtered_paths = filter_files_by_conditions(file_paths, condition_objects, logic_operator)
-
-                    filtered_out = original_count - len(filtered_paths)
-
-                    logger.info(
-                        "Applied %d non-content conditions EARLY (before content search)",
-                        len(early_conditions),
-                        extra={
-                            "logic": logic_operator,
-                            "filtered_out": filtered_out,
-                            "remaining": len(filtered_paths),
-                            "original_count": original_count,
-                        },
-                    )
-
-                    # Keep only files that passed conditions
-                    files_to_search = [f for f in files_to_search if f.path in filtered_paths]
-                except Exception as e:  # pylint: disable=broad-exception-caught  # Filter robustness
-                    logger.error("Failed to apply early conditions: %s", e, exc_info=True)
-                    # Continue without early filtering on error
-
-        logger.debug("Files to search after filters+conditions: %d", len(files_to_search))
+        try:
+            condition_objects, condition_logic = self._prepare_conditions(conditions, logic_operator)
+        except (ValueError, TypeError, re.error) as exc:
+            return self._condition_failure(str(exc))
+        condition_errors = list(browse_result["stats"].get("errors", []))[:MAX_OPERATION_ERRORS]
 
         # Step 2: Apply filename pattern filter
         if filename_pattern:
@@ -427,6 +358,11 @@ class UnifiedFileExplorerExecutor(QObject):
 
             try:
                 # If no content query, just list matching files
+                condition_cache = {}
+                if not self._matches_condition_objects(
+                    file_info.path, condition_objects, condition_logic, condition_cache
+                ):
+                    continue
                 if not content_query:
                     search_results.append(SearchResult(file_info=file_info, matches=[], match_count=0))
                     continue
@@ -441,7 +377,7 @@ class UnifiedFileExplorerExecutor(QObject):
                     matches = self._search_in_binary_file(file_info.path, content_query, search_options)
                 else:
                     text_files_searched += 1
-                    text = read_text(file_info.path)
+                    text = condition_cache["text"] if "text" in condition_cache else read_text(file_info.path)
                     matches = self._search_in_text(text, content_query, search_options)
 
                 if matches:
@@ -449,21 +385,17 @@ class UnifiedFileExplorerExecutor(QObject):
                     total_match_count += len(matches)  # Update total counter
 
             except Exception as e:  # pylint: disable=broad-exception-caught  # File search robustness
-                self.error.emit(f"Error processing {file_info.path}: {e}")
+                if len(condition_errors) < MAX_OPERATION_ERRORS:
+                    condition_errors.append(f"Error processing {file_info.path}: {e}")
 
-        # Step 4: Apply content-based conditions if provided (LATE - after reading files)
-        # NOTE: Content conditions need file content, so applied AFTER search
-        if conditions:
-            late_conditions = [c for c in conditions if c.get("field") == "content"]
-            if late_conditions:
-                logger.debug("Applying %d content-based conditions LATE", len(late_conditions))
-                search_results = self._apply_conditions(search_results, late_conditions, logic_operator)
+
 
         # Calculate statistics
         file_infos = [sr.file_info for sr in search_results]
         stats = FileListExecutor.calculate_statistics(file_infos)
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
+        stats["errors"] = condition_errors
         if candidate_paths is not None:
             stats["incremental_universe"] = True
             stats["candidate_paths_count"] = len(candidate_paths)
@@ -620,38 +552,70 @@ class UnifiedFileExplorerExecutor(QObject):
         files_modified = 0
         errors = []
 
+        def outcome():
+            return {
+                "success": not errors and not self._cancel,
+                "cancelled": self._cancel,
+                "replaced_count": replaced_count,
+                "replacements_made": replaced_count,
+                "files_modified": files_modified,
+                "errors": errors,
+                "error": "\n".join(errors) or ("Operation cancelled" if self._cancel else ""),
+            }
+
+        if not search_query or len(files) > MAX_REPLACE_FILES:
+            errors.append("A nonempty query and at most 1000 selected files are required")
+            return outcome()
+        if search_options.get("multi_query"):
+            errors.append("Replacement of independent multi-queries is not supported")
+            return outcome()
+        if any(len(value) > MAX_REPLACE_FILE_BYTES or len(value.encode("utf-8")) > MAX_REPLACE_FILE_BYTES
+               for value in (search_query, replacement)):
+            errors.append("Replacement query or value exceeds the 4 MiB limit")
+            return outcome()
+        try:
+            self._compile_replace_pattern(search_query, search_options)
+        except re.error as exc:
+            errors.append(f"Invalid replacement regex: {exc}")
+            return outcome()
+
+        seen = set()
         for search_result in files:
             if self._cancel:
                 break
-
-            file_path = search_result.file_info.path
+            file_path = os.path.abspath(search_result.file_info.path)
+            if file_path in seen:
+                continue
+            seen.add(file_path)
             self.progress.emit(f"Replacing in {file_path}")
-
             try:
+                info = os.lstat(file_path)
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    raise ValueError("Replacement requires a regular file without links")
+                if info.st_size > MAX_REPLACE_FILE_BYTES:
+                    raise ValueError("Text replacement file exceeds the 4 MiB limit")
                 if self._classify_content_file(file_path) == CONTENT_SCOPE_BINARY:
-                    errors.append(f"Skipped binary file {file_path}: replace supports text files only")
-                    self.error.emit(errors[-1])
-                    continue
-
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-
+                    raise ValueError("replace supports text files only; skipped binary file")
+                with open(file_path, "rb") as source:
+                    raw = source.read(MAX_REPLACE_FILE_BYTES + 1)
+                if len(raw) > MAX_REPLACE_FILE_BYTES:
+                    raise ValueError("Text replacement file exceeds the 4 MiB limit")
+                content = raw.decode("utf-8")
                 new_content, count = self._replace_in_text(
                     content, search_query, replacement, preserve_case, replace_all, search_options
                 )
-
                 if count > 0:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(new_content)
-
+                    if self._cancel:
+                        break
+                    write_existing_text_atomically(file_path, new_content, file_revision(info))
                     replaced_count += count
                     files_modified += 1
-
-            except Exception as e:  # pylint: disable=broad-exception-caught  # Replace robustness
-                errors.append(f"Error replacing in {file_path}: {e}")
-                self.error.emit(errors[-1])
-
-        return {"replaced_count": replaced_count, "files_modified": files_modified, "errors": errors}
+            except (OSError, UnicodeError, ValueError, re.error) as exc:
+                errors.append(f"Error replacing in {file_path}: {exc}")
+                if len(errors) >= MAX_OPERATION_ERRORS:
+                    errors[-1] += "; error limit reached; remaining files were not processed"
+                    break
+        return outcome()
 
     @staticmethod
     def _normalize_content_scope(scope: str) -> str:
@@ -867,59 +831,42 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Tuple of (new_text, replacement_count)
         """
-        case_sensitive = options.get("case_sensitive", False)
-        whole_word = options.get("whole_word", False)
-        use_regex = options.get("regex", False)
+        if not query:
+            raise ValueError("Replacement query must not be empty")
+        regex = self._compile_replace_pattern(query, options)
+        fragments = []
+        last_end = 0
+        count = 0
+        output_bytes = 0
+        for match in regex.finditer(text):
+            if self._cancel:
+                return text, 0
+            if count >= MAX_REPLACE_MATCHES:
+                raise ValueError("Replacement exceeds the 10000 matches per file limit")
+            value = match.expand(replacement) if options.get("regex") else replacement
+            if preserve_case:
+                value = preserve_case_like(match.group(0), value)
+            prefix = text[last_end:match.start()]
+            output_bytes += len(prefix.encode("utf-8")) + len(value.encode("utf-8"))
+            if output_bytes > MAX_REPLACE_FILE_BYTES:
+                raise ValueError("Replacement output exceeds the 4 MiB limit")
+            fragments.extend((prefix, value))
+            last_end = match.end()
+            count += 1
+            if not replace_all:
+                break
+        suffix = text[last_end:]
+        if output_bytes + len(suffix.encode("utf-8")) > MAX_REPLACE_FILE_BYTES:
+            raise ValueError("Replacement output exceeds the 4 MiB limit")
+        fragments.append(suffix)
+        return "".join(fragments), count
 
-        try:
-            # Build regex pattern
-            if use_regex:
-                pattern = query
-            else:
-                pattern = re.escape(query)
-
-            if whole_word:
-                pattern = r"\b" + pattern + r"\b"
-
-            # SECURITY OWASP A03: Regex DoS Prevention
-            flags = 0 if case_sensitive else re.IGNORECASE
-            try:
-                regex = re.compile(pattern, flags)
-            except re.error:
-                logger.error("Invalid regex in replace: %s", pattern[:50], exc_info=True)
-                return (text, 0)  # Return original text unchanged
-
-            # BUG FIX: Escape backslashes in replacement string when NOT using regex mode
-            # This prevents "bad escape \S" errors when user input contains backslashes
-            # In regex mode, allow backreferences like \1, \2, \g<name>
-            if not use_regex:
-                # Escape backslashes to treat them literally (e.g., \S becomes \\S)
-                # This allows users to type literal backslashes without regex interpretation
-                safe_replacement = replacement.replace("\\", "\\\\")
-            else:
-                # In regex mode, keep backslashes for backreferences (\1, \2, etc)
-                safe_replacement = replacement
-
-            # Perform replacement
-            if replace_all:
-                if preserve_case:
-                    new_text, count = self._replace_preserve_case(text, regex, safe_replacement)
-                else:
-                    new_text = regex.sub(safe_replacement, text)
-                    count = len(regex.findall(text))
-            else:
-                # Replace first occurrence only
-                if preserve_case:
-                    new_text, count = self._replace_preserve_case(text, regex, safe_replacement, count=1)
-                else:
-                    new_text = regex.sub(safe_replacement, text, count=1)
-                    count = 1 if regex.search(text) else 0
-
-            return new_text, count
-
-        except re.error as e:
-            self.error.emit(f"Replacement error: {e}")
-            return text, 0
+    @staticmethod
+    def _compile_replace_pattern(query, options):
+        pattern = query if options.get("regex") else re.escape(query)
+        if options.get("whole_word"):
+            pattern = r"\b(?:" + pattern + r")\b"
+        return re.compile(pattern, 0 if options.get("case_sensitive") else re.IGNORECASE)
 
     def _replace_preserve_case(
         self, text: str, pattern: re.Pattern, replacement: str, count: int = 0
@@ -954,99 +901,69 @@ class UnifiedFileExplorerExecutor(QObject):
     @staticmethod
     def _apply_case_pattern(original: str, replacement: str) -> str:
         """Apply case pattern from original to replacement."""
-        if original.isupper():
-            return replacement.upper()
-        elif original.islower():
-            return replacement.lower()
-        elif original[0].isupper():
-            return replacement[0].upper() + replacement[1:].lower()
-        return replacement
+        return preserve_case_like(original, replacement)
 
-    def _apply_conditions(
-        self, results: List[SearchResult], conditions: List[Dict[str, Any]], logic_operator: str
-    ) -> List[SearchResult]:
-        """
-        Apply advanced conditions to filter results.
+    @staticmethod
+    def _prepare_conditions(conditions, logic_operator):
+        from .filters import Condition
 
-        Conditions format:
-        [
-            {
-                'field': 'ext',  # filename, path, ext, size, mtime, content
-                'operator': '=',  # =, !=, contains, >, <, >=, <=
-                'value': '.py',
-                'scope': 'all',  # For content: 'all' or 'any'
-                'case_sensitive': False,
-                'whole_word': False,
-                'regex': False
-            },
-            ...
-        ]
-        """
-        if not conditions:
-            return results
+        if not isinstance(logic_operator, str):
+            raise ValueError("Condition logic must be AND or OR")
+        logic = logic_operator.upper()
+        if logic not in {"AND", "OR"}:
+            raise ValueError("Condition logic must be AND or OR")
+        return [Condition.from_mapping(data) for data in (conditions or [])], logic
 
-        filtered = []
+    @staticmethod
+    def _condition_failure(message):
+        stats = FileListExecutor.calculate_statistics([])
+        stats.update(errors=[f"Invalid conditions: {message}"], total_matches=0, files_with_matches=0)
+        return {"files": [], "stats": stats}
 
-        for result in results:
-            matches_conditions = []
+    def _matches_condition_objects(self, path, objects, logic, content_cache=None):
+        cache = content_cache if content_cache is not None else {}
 
-            for condition in conditions:
-                matches = self._check_condition(result, condition)
-                matches_conditions.append(matches)
+        def evaluate(condition):
+            if condition.field != "content":
+                return condition.matches(path)
+            if not os.path.isfile(path):
+                return False
+            if "text" not in cache:
+                if os.path.getsize(path) > MAX_REPLACE_FILE_BYTES:
+                    raise ValueError("Content condition file exceeds the 4 MiB limit")
+                if self._classify_content_file(path) != CONTENT_SCOPE_TEXT:
+                    raise ValueError("Content conditions require UTF-8 text, not binary files")
+                with open(path, "rb") as source:
+                    raw = source.read(MAX_REPLACE_FILE_BYTES + 1)
+                if len(raw) > MAX_REPLACE_FILE_BYTES:
+                    raise ValueError("Content condition file exceeds the 4 MiB limit")
+                cache["text"] = raw.decode("utf-8")
+            return condition.matches(path, content=cache["text"])
 
-            # Apply logic operator
-            if logic_operator == "AND":
-                if all(matches_conditions):
-                    filtered.append(result)
-            else:  # OR
-                if any(matches_conditions):
-                    filtered.append(result)
-
-        return filtered
-
-    # pylint: disable=too-many-return-statements  # Condition checking requires early returns
-    def _check_condition(self, result: SearchResult, condition: Dict[str, Any]) -> bool:
-        """Check if result matches a single condition."""
-        field = condition.get("field")
-        operator = condition.get("operator")
-        value = condition.get("value")
-
-        file_info = result.file_info
-
-        # Get field value
-        if field == "filename":
-            field_value = file_info.name
-        elif field == "path":
-            field_value = file_info.path
-        elif field == "ext":
-            field_value = os.path.splitext(file_info.name)[1]
-        elif field == "size":
-            field_value = file_info.size
-        elif field == "mtime":
-            field_value = file_info.mtime
-        elif field == "content":
-            # Content already searched, check match count
-            return result.match_count > 0
-        else:
-            return False
-
-        # Apply operator
-        if operator == "=":
-            return str(field_value) == str(value)
-        elif operator == "!=":
-            return str(field_value) != str(value)
-        elif operator == "contains":
-            return str(value).lower() in str(field_value).lower()
-        elif operator == ">":
-            return field_value > value
-        elif operator == "<":
-            return field_value < value
-        elif operator == ">=":
-            return field_value >= value
-        elif operator == "<=":
-            return field_value <= value
-
+        if not objects:
+            return True
+        if logic == "AND":
+            return all(evaluate(condition) for condition in objects)
+        first_error = None
+        for condition in objects:
+            try:
+                if evaluate(condition):
+                    return True
+            except (OSError, UnicodeError, ValueError) as exc:
+                first_error = first_error or exc
+        if first_error is not None:
+            raise first_error
         return False
+
+    def _apply_conditions(self, results, conditions, logic_operator):
+        """Compatibility entry point using the complete shared expression."""
+        objects, logic = self._prepare_conditions(conditions, logic_operator)
+        return [result for result in results if self._matches_condition_objects(
+            result.file_info.path, objects, logic
+        )]
+
+    def _check_condition(self, result, condition):
+        return bool(self._apply_conditions([result], [condition], "AND"))
 
 
 __all__ = ["UnifiedFileExplorerExecutor", "SearchResult", "SearchMatch"]

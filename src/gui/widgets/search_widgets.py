@@ -415,17 +415,12 @@ class ConditionsGrid(QWidget):
 
         # Operator selector
         combo_operator = QComboBox()
-        combo_operator.addItems([
-            "equals",
-            "not equals",
-            "contains",
-            "not contains",
-            "greater than",
-            "less than",  # was "<"
-            "greater than or equal",  # was ">="
-            "less than or equal",  # was "<="
-            "regex"
-        ])
+        from ...core.filters import OPERATOR_ALIASES
+
+        for label in ("equals", "not equals", "contains", "not contains",
+                      "greater than", "less than", "greater than or equal",
+                      "less than or equal", "regex"):
+            combo_operator.addItem(label, OPERATOR_ALIASES.get(label, label))
         combo_operator.setToolTip(tr("search.tooltip_operator"))
         row_layout.addWidget(combo_operator)
 
@@ -502,7 +497,7 @@ class ConditionsGrid(QWidget):
     def clear_conditions(self):
         """Remove all condition rows."""
         for row in self.condition_rows:
-            row.deleteLater()
+            row["widget"].deleteLater()
         self.condition_rows.clear()
         self._emit_conditions()
 
@@ -520,7 +515,7 @@ class ConditionsGrid(QWidget):
             if field is None:  # Fallback to text if no data
                 field = field_combo.currentText().lower()
 
-            operator = row_data["operator"].currentText()
+            operator = row_data["operator"].currentData() or row_data["operator"].currentText()
             value = row_data["value"].text().strip()
 
             # Skip empty conditions
