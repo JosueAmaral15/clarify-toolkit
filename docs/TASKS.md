@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - header24 validado; recovery organizado e FE04 retomado
+**Last Update**: 2026/09/28 - header24 e FE04 validados; proximo recovery no fechamento
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -10,8 +10,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
 primeiro; validar codigo ja em andamento e impedir perda de documentos tem
-precedencia sobre adicionar outras features. Contagem atual: **35 abertos = 30
-anteriores + 4 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
+precedencia sobre adicionar outras features. Contagem atual: **34 abertos = 30
+anteriores + 3 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
 
 - [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
   inicial16 por24, incluindo reticencias (21 + `...`), tooltip com caminho completo,
@@ -40,8 +40,8 @@ anteriores + 4 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
   Save/Discard/Cancel existentes. Testar edicao seguida de fechamento imediato,
   reabertura em nova instancia, multiplas abas, quota/IO/corrupcao/retencao e cleanup.
 
-Ordem finita: CE-HDR-01 concluido; validar/reparar FE-PAR-04 ja
-em andamento, CE-REC-01 (MUST), depois FE-PAR-05/06/08. O requisito de recovery
+Ordem finita: CE-HDR-01 e FE-PAR-04 concluidos; CE-REC-01 (MUST), depois
+FE-PAR-05/06/08. O requisito de recovery
 complementa a entrega historica de13/09 abaixo, nao a declara inexistente.
 Nao expandir automaticamente aos30 legados nem prometer recuperar alteracoes
 feitas depois do ultimo checkpoint em caso de kill/queda abrupta de energia.
@@ -52,13 +52,14 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado FE-PAR: **4 concluidos, 4 pendentes**. Contagem geral na fila atual acima.
+Estado FE-PAR: **5 concluidos, 3 pendentes**. Contagem geral na fila atual acima.
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
-FE-PAR-04 em andamento: [draft e bloqueio de recursos](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md).
-Stop anterior: RAM persistiu acima de85%, sem suite/lint/commit de implementacao ou
-dispatch FE05. Retomada atual autorizada pelo usuario com RAM43.1%; manter guardas.
+FE-PAR-04: [stop historico](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md) e
+[validacao apos retomada](reports/FILE_EXPLORER_CROSS_LINE_VALIDATION_2026_09_28.md).
+Stop anterior por RAM85% preservado no report; retomada com RAM43.1% manteve guardas
+e validou394 testes focados distintos. Nenhum dispatch FE05; proximo CE-REC-01.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -89,15 +90,18 @@ dispatch FE05. Retomada atual autorizada pelo usuario com RAM43.1%; manter guard
   Limites: 1000 caminhos, 4096 bytes/caminho, 1 MiB agregado e 50 erros de alvo.
   69 novos casos e 345 testes focados distintos passaram, incluindo threads reais,
   ambas vistas, nomes com espacos, limites e invalidacao; nao suite global.
-- [ ] **FE-PAR-04 / SHOULD: busca de bloco cross-line.** Opcao separada de
+- [x] **FE-PAR-04 / SHOULD: busca de bloco cross-line.** Opcao separada de
   multi-query, posicoes/snippets corretos, limites de bytes/matches e cancelamento;
   informar entradas grandes ou modos binarios nao suportados, sem truncar ocultamente.
-  Draft nao validado na COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f: controle separado,
-  limites 4 MiB/arquivo e 64 KiB/consulta, budgets de matches e diagnosticos,
-  posicoes LF/CRLF/Unicode, testes escritos e rejeicao explicita de Replace nesse modo.
-  Precisa executar regressao nova, Explorer/shared/Editor/lifecycle, lint e captura
-  antes de marcar entregue ou commitar codigo. Alteracoes de codigo permanecem
-  locais nao commitadas; preservar example.py. Nao tratar o draft como funcionando.
+  Entregue na COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f: controle separado,
+  limites4 MiB/arquivo e64 KiB/consulta,10000 matches/arquivo e50000/operacao sem
+  ultrapassar budget; parcial/erros visiveis e cache invalidado se incompleto.
+  Posicoes LF/CRLF/Unicode e snippets escapados proximos ao match; reader limitado
+  com checkpoints/growth-check, rejeicao de binario/arquivo especial e Replace
+  nesse modo. Decoder incremental evita confundir sample UTF-8 cortado com binario.
+  48 casos novos,313 Explorer,52 shared,22 Editor/flows e7 ThreadManager passaram
+  (394 distintos); repeat84 cross-line/lifecycle, lint/AST/JSON e captura tambem.
+  Regex/IO em curso nao tem deadline interno nem interrupcao a forca; nao suite global.
 - [ ] **FE-PAR-05 / SHOULD: consultas independentes por linha.** Conectar controle
   multi-query ao executor, manter separacao de cross-line, validar regex e limites;
   resultados deterministas e testes de consultas vazias, repetidas e sobrepostas.
@@ -120,8 +124,8 @@ dispatch FE05. Retomada atual autorizada pelo usuario com RAM43.1%; manter guard
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa: **FE-PAR-04 (SHOULD)**: validar/reparar o draft cross-line quando
-houver headroom sustentado de RAM; ainda nao concluida. Depois FE-PAR-05, 06 e 08.
+Proxima etapa: **CE-REC-01 (MUST)**, buffering/lifecycle recuperavel no Editor.
+Depois FE-PAR-05,06 e08. Nao iniciar backlog legado automaticamente.
 Continuacao anterior encerrada por pressao de memoria, sem dispatch seguinte.
 Retomada atual inclui apenas esta fila e os dois itens Editor explicitamente novos.
 Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,

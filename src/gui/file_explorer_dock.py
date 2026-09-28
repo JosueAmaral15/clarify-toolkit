@@ -1865,6 +1865,10 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, tr("file_list.replace_failed_title"),
                                 "Replacement of independent multi-queries is not supported.")
             return
+        if options.get("cross_line"):
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"),
+                                "Cross-line block replacement is not supported; disable Cross-line Block first.")
+            return
         replacement = self.replace_panel.get_replacement()
         summary = tr("file_list.confirm_replace_message").format(len(files))
         mode = "All occurrences per file" if replace_all else "First occurrence per file"

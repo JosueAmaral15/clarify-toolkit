@@ -14,6 +14,7 @@ import os
 import stat
 import re
 import fnmatch
+import codecs
 import threading
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
@@ -46,6 +47,9 @@ CONTENT_SCOPE_BOTH = "both"
 MAX_TARGET_PATHS = 1000
 MAX_TARGET_PATH_BYTES = 4096
 MAX_TARGET_TOTAL_BYTES = 1024 * 1024
+MAX_CROSS_LINE_FILE_BYTES = 4 * 1024 * 1024
+MAX_CROSS_LINE_QUERY_BYTES = 64 * 1024
+MAX_CROSS_LINE_MATCHES = 10000
 
 
 def normalize_target_paths(paths):
@@ -355,6 +359,16 @@ class UnifiedFileExplorerExecutor(QObject):
         search_options = search_options or {}
         filters = dict(filters or {})
         candidate_paths = filters.get("candidate_paths")
+        cross_line = bool(search_options.get("cross_line", False))
+        block_regex = None
+        if cross_line:
+            try:
+                block_regex = self._compile_cross_line_query(content_query, search_options)
+            except (ValueError, TypeError, re.error) as exc:
+                stats = FileListExecutor.calculate_statistics([])
+                stats.update(errors=[f"Invalid cross-line search: {exc}"], total_matches=0,
+                             files_with_matches=0, cancelled=self._cancel, cross_line=True, partial=True)
+                return {"files": [], "stats": stats}
 
         # Step 1: List files
         logger.debug(
@@ -424,9 +438,13 @@ class UnifiedFileExplorerExecutor(QObject):
         text_files_searched = 0
         binary_files_searched = 0
         content_scope_skipped = 0
+        match_limit_reached = False
 
         for idx, file_info in enumerate(files_to_search, 1):
             if not self.checkpoint():
+                break
+            if cross_line and len(condition_errors) >= MAX_OPERATION_ERRORS:
+                condition_errors[-1] += "; error limit reached; remaining files were not searched"
                 break
 
             # Check global match limit (v2.9.120 - Memory optimization)
@@ -437,6 +455,9 @@ class UnifiedFileExplorerExecutor(QObject):
                 )
                 logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
                 self.error.emit(warning_msg)
+                if cross_line:
+                    condition_errors.append(warning_msg)
+                    match_limit_reached = True
                 break
 
             self.progress.emit(file_info.path)
@@ -448,6 +469,8 @@ class UnifiedFileExplorerExecutor(QObject):
 
             try:
                 # If no content query, just list matching files
+                if cross_line and not stat.S_ISREG(os.stat(file_info.path).st_mode):
+                    raise ValueError("Cross-line search requires a regular file")
                 condition_cache = {}
                 if not self._matches_condition_objects(
                     file_info.path, condition_objects, condition_logic, condition_cache
@@ -458,6 +481,8 @@ class UnifiedFileExplorerExecutor(QObject):
                     continue
 
                 file_kind = self._classify_content_file(file_info.path)
+                if cross_line and file_kind == CONTENT_SCOPE_BINARY:
+                    raise ValueError("Cross-line search requires UTF-8 text; binary file is unsupported")
                 if not self._content_scope_allows(file_kind, content_scope):
                     content_scope_skipped += 1
                     continue
@@ -467,8 +492,22 @@ class UnifiedFileExplorerExecutor(QObject):
                     matches = self._search_in_binary_file(file_info.path, content_query, search_options)
                 else:
                     text_files_searched += 1
-                    text = condition_cache["text"] if "text" in condition_cache else read_text(file_info.path)
-                    matches = self._search_in_text(text, content_query, search_options)
+                    if cross_line:
+                        text = condition_cache.get("text")
+                        if text is None:
+                            text = self._read_cross_line_text(file_info.path)
+                        if text is None:
+                            break
+                        matches, limited = self._search_cross_line(
+                            text, block_regex, min(MAX_CROSS_LINE_MATCHES, MAX_TOTAL_MATCHES - total_match_count)
+                        )
+                        if limited:
+                            condition_errors.append(f"Cross-line match limit reached for {file_info.path}; "
+                                                    "results are partial")
+                            match_limit_reached = True
+                    else:
+                        text = condition_cache["text"] if "text" in condition_cache else read_text(file_info.path)
+                        matches = self._search_in_text(text, content_query, search_options)
 
                 if matches:
                     search_results.append(SearchResult(file_info=file_info, matches=matches, match_count=len(matches)))
@@ -487,6 +526,9 @@ class UnifiedFileExplorerExecutor(QObject):
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
         stats["errors"] = condition_errors
         stats["cancelled"] = self._cancel
+        if cross_line:
+            stats.update(cross_line=True, partial=bool(condition_errors or self._cancel),
+                         match_limit_reached=match_limit_reached)
         if candidate_paths is not None:
             stats["incremental_universe"] = True
             stats["candidate_paths_count"] = len(candidate_paths)
@@ -669,6 +711,9 @@ class UnifiedFileExplorerExecutor(QObject):
         if search_options.get("multi_query"):
             errors.append("Replacement of independent multi-queries is not supported")
             return outcome()
+        if search_options.get("cross_line"):
+            errors.append("Cross-line block replacement is not supported; disable Cross-line Block first")
+            return outcome()
         if any(len(value) > MAX_REPLACE_FILE_BYTES or len(value.encode("utf-8")) > MAX_REPLACE_FILE_BYTES
                for value in (search_query, replacement)):
             errors.append("Replacement query or value exceeds the 4 MiB limit")
@@ -728,7 +773,9 @@ class UnifiedFileExplorerExecutor(QObject):
     def _classify_content_file(path: str) -> str:
         """Classify a file as text or binary using a bounded byte sample."""
         with open(path, "rb") as fh:
-            sample = fh.read(TEXT_SAMPLE_BYTES)
+            sample = fh.read(TEXT_SAMPLE_BYTES + 1)
+        complete_sample = len(sample) <= TEXT_SAMPLE_BYTES
+        sample = sample[:TEXT_SAMPLE_BYTES]
 
         if not sample:
             return CONTENT_SCOPE_TEXT
@@ -737,7 +784,7 @@ class UnifiedFileExplorerExecutor(QObject):
             return CONTENT_SCOPE_BINARY
 
         try:
-            sample.decode("utf-8")
+            codecs.getincrementaldecoder("utf-8")().decode(sample, final=complete_sample)
         except UnicodeDecodeError:
             return CONTENT_SCOPE_BINARY
 
@@ -754,6 +801,70 @@ class UnifiedFileExplorerExecutor(QObject):
         if content_scope == CONTENT_SCOPE_BOTH:
             return True
         return file_kind == content_scope
+
+    @staticmethod
+    def _compile_cross_line_query(query, options):
+        if not isinstance(query, str) or not query:
+            raise ValueError("A nonempty block query is required")
+        if len(query) > MAX_CROSS_LINE_QUERY_BYTES or len(query.encode("utf-8")) > MAX_CROSS_LINE_QUERY_BYTES:
+            raise ValueError("Block query exceeds the 64 KiB limit")
+        if options.get("multi_query"):
+            raise ValueError("Cross-line block and multi-query modes cannot be combined")
+        if options.get("content_scope", CONTENT_SCOPE_TEXT) != CONTENT_SCOPE_TEXT:
+            raise ValueError("Cross-line block search supports Text/ASCII only, not Binary or Both")
+        query = query.replace("\r\n", "\n").replace("\r", "\n")
+        pattern = query if options.get("regex") else re.escape(query)
+        if options.get("whole_word"):
+            pattern = r"\b(?:" + pattern + r")\b"
+        flags = re.MULTILINE | re.DOTALL
+        if not options.get("case_sensitive"):
+            flags |= re.IGNORECASE
+        return re.compile(pattern, flags)
+
+    def _read_cross_line_text(self, path):
+        """Never fall back to an unbounded read, including after file growth."""
+        with open(path, "rb") as source:
+            if os.fstat(source.fileno()).st_size > MAX_CROSS_LINE_FILE_BYTES:
+                raise ValueError("Cross-line file exceeds the 4 MiB limit; file was not searched")
+            raw = bytearray()
+            while self.checkpoint():
+                chunk = source.read(min(65536, MAX_CROSS_LINE_FILE_BYTES + 1 - len(raw)))
+                if not chunk:
+                    if b"\x00" in raw:
+                        raise ValueError("Cross-line search does not support binary content")
+                    return raw.decode("utf-8")
+                raw.extend(chunk)
+                if len(raw) > MAX_CROSS_LINE_FILE_BYTES:
+                    raise ValueError("Cross-line file exceeds the 4 MiB limit; file was not searched")
+        return None
+
+    def _search_cross_line(self, text, regex, match_budget):
+        """Map monotonic block offsets to start lines/columns without a line-index array."""
+        if len(text) > MAX_CROSS_LINE_FILE_BYTES or len(text.encode("utf-8")) > MAX_CROSS_LINE_FILE_BYTES:
+            raise ValueError("Cross-line file exceeds the 4 MiB limit; file was not searched")
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+        if "\x00" in text:
+            raise ValueError("Cross-line search does not support binary content")
+        matches = []
+        line, line_start, scanned = 1, 0, 0
+        if not self.checkpoint():
+            return matches, False
+        for match in regex.finditer(text):
+            if not self.checkpoint():
+                break
+            if len(matches) >= match_budget:
+                return matches, True
+            start = match.start()
+            line += text.count("\n", scanned, start)
+            last_break = text.rfind("\n", scanned, start)
+            if last_break >= 0:
+                line_start = last_break + 1
+            scanned = start
+            snippet_start = max(line_start, start - 60)
+            snippet_end = min(len(text), match.end() + 60, snippet_start + MAX_SNIPPET_LENGTH)
+            snippet = text[snippet_start:snippet_end].replace("\n", "\\n")[:MAX_SNIPPET_LENGTH]
+            matches.append(SearchMatch(line=line, col=start - line_start, snippet=snippet))
+        return matches, False
 
     def _search_in_text(self, text: str, query: str, options: Dict[str, bool]) -> List[SearchMatch]:
         """Search for query in text and return matches."""

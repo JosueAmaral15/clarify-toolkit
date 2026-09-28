@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox,
 )
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QFont
 from src.i18n.translator import tr
 
@@ -159,35 +159,43 @@ class SearchOptionsPanel(QWidget):
         self._build_ui()
 
     def _build_ui(self):
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.lbl_options = QLabel(tr("search.lbl_options"))
-        layout.addWidget(self.lbl_options)
+        matching_row = QHBoxLayout()
+        layout.addLayout(matching_row)
+        matching_row.addWidget(self.lbl_options)
 
         # Case-sensitive
         self.chk_case = QCheckBox(tr("search.chk_case_sensitive"))
         self.chk_case.setToolTip(tr("search.tooltip_case_sensitive"))
         self.chk_case.toggled.connect(self._emit_options)
-        layout.addWidget(self.chk_case)
+        matching_row.addWidget(self.chk_case)
 
         # Whole word
         self.chk_word = QCheckBox(tr("search.chk_whole_word"))
         self.chk_word.setToolTip(tr("search.tooltip_whole_word"))
         self.chk_word.toggled.connect(self._emit_options)
-        layout.addWidget(self.chk_word)
+        matching_row.addWidget(self.chk_word)
 
         # Regex
         self.chk_regex = QCheckBox(tr("search.chk_regex"))
         self.chk_regex.setToolTip(tr("search.tooltip_regex"))
         self.chk_regex.toggled.connect(self._emit_options)
-        layout.addWidget(self.chk_regex)
+        matching_row.addWidget(self.chk_regex)
+        matching_row.addStretch()
 
-        # Multi-line (from Search/Replace) - CRITICAL FEATURE
-        self.chk_multi_query = QCheckBox(tr("search.chk_multi_line"))
+        self.chk_multi_query = QCheckBox(tr("search.chk_multi_query", "Multi-query"))
         self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
-        self.chk_multi_query.toggled.connect(self._emit_options)
-        layout.addWidget(self.chk_multi_query)
+        self.chk_cross_line = QCheckBox(tr("search.chk_cross_line", "Cross-line Block"))
+        self.chk_cross_line.setToolTip(tr("search.tooltip_cross_line"))
+        self.chk_multi_query.toggled.connect(self._on_multi_query_toggled)
+        self.chk_cross_line.toggled.connect(self._on_cross_line_toggled)
+        layout.addWidget(self.chk_multi_query, 0, Qt.AlignLeft)
+        layout.addWidget(self.chk_cross_line, 0, Qt.AlignLeft)
+        scope_row = QHBoxLayout()
+        layout.addLayout(scope_row)
 
         scope_tooltip = tr(
             "search.tooltip_content_scope",
@@ -198,7 +206,7 @@ class SearchOptionsPanel(QWidget):
         )
         self.lbl_content_scope = QLabel(tr("search.lbl_content_scope", "Content type:"))
         self.lbl_content_scope.setToolTip(scope_tooltip)
-        layout.addWidget(self.lbl_content_scope)
+        scope_row.addWidget(self.lbl_content_scope)
 
         self.combo_content_scope = QComboBox()
         self.combo_content_scope.addItem(tr("search.content_scope_text", "Text/ASCII"), "text")
@@ -206,9 +214,19 @@ class SearchOptionsPanel(QWidget):
         self.combo_content_scope.addItem(tr("search.content_scope_both", "Both"), "both")
         self.combo_content_scope.setToolTip(scope_tooltip)
         self.combo_content_scope.currentIndexChanged.connect(lambda _: self._emit_options())
-        layout.addWidget(self.combo_content_scope)
+        scope_row.addWidget(self.combo_content_scope)
 
-        layout.addStretch()
+        scope_row.addStretch()
+
+    def _on_multi_query_toggled(self, enabled):
+        if enabled:
+            self.chk_cross_line.setChecked(False)
+        self._emit_options()
+
+    def _on_cross_line_toggled(self, enabled):
+        if enabled:
+            self.chk_multi_query.setChecked(False)
+        self._emit_options()
 
     def _emit_options(self):
         self.options_changed.emit(self.get_options())
@@ -220,6 +238,7 @@ class SearchOptionsPanel(QWidget):
             "whole_word": self.chk_word.isChecked(),
             "regex": self.chk_regex.isChecked(),
             "multi_query": self.chk_multi_query.isChecked(),
+            "cross_line": self.chk_cross_line.isChecked(),
             "content_scope": self.combo_content_scope.currentData() or "text",
         }
 
@@ -229,6 +248,7 @@ class SearchOptionsPanel(QWidget):
         self.chk_word.setChecked(options.get("whole_word", False))
         self.chk_regex.setChecked(options.get("regex", False))
         self.chk_multi_query.setChecked(options.get("multi_query", False))
+        self.chk_cross_line.setChecked(options.get("cross_line", False))
         content_scope = options.get("content_scope", "text")
         index = self.combo_content_scope.findData(content_scope)
         self.combo_content_scope.setCurrentIndex(index if index >= 0 else 0)
@@ -242,8 +262,10 @@ class SearchOptionsPanel(QWidget):
         self.chk_word.setToolTip(tr("search.tooltip_whole_word"))
         self.chk_regex.setText(tr("search.chk_regex"))
         self.chk_regex.setToolTip(tr("search.tooltip_regex"))
-        self.chk_multi_query.setText(tr("search.chk_multi_line"))
+        self.chk_multi_query.setText(tr("search.chk_multi_query", "Multi-query"))
         self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
+        self.chk_cross_line.setText(tr("search.chk_cross_line", "Cross-line Block"))
+        self.chk_cross_line.setToolTip(tr("search.tooltip_cross_line"))
 
         self.lbl_content_scope.setText(tr("search.lbl_content_scope", "Content type:"))
         scope_tooltip = tr(

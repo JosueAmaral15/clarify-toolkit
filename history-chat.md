@@ -2876,3 +2876,28 @@ Plano imediato:
 - Apos header:35 itens abertos (30 legados fora da automacao+4 FE-PAR+1 CE-REC).
   Proximo fechar FE04 validado, depois CE-REC MUST, FE05/06/08. Preservar example.py,
   sem push/promocao, uma continuacao exata so apos etapa completa e sem retry incerto.
+
+## 2026-09-28 - Pos-acao - FE-PAR-04 validado apos retomada
+
+- Header24/organizacao commitados separadamente em136b44e; draft FE04 preservado
+  ate validacao. Fila nova CE-REC MUST complementa recovery existente, nao legados.
+- Cross-line Block explicito/mutuamente exclusivo de Multi-query, Text/ASCII;
+  query64 KiB,arquivo4 MiB,reader chunks/checkpoints/growth-check, positions
+  LF/CRLF/CR/Unicode e snippet escapado proximo ao match. Budget10000/file e50000
+  total sem overshoot, erro/parcial visivel e cache invalidado quando incompleto.
+- Binary/Both, arquivos especiais, UTF-8/NUL invalidos e Replace nesse modo
+  rejeitados explicitamente; source files nao sobrescritos. Decoder incremental
+  corrige sample cortado; API antiga/classificacao/modalidades testadas juntas.
+- 394 testes distintos passaram:313 Explorer(12.91s,243.7 MiB),52 shared(0.58s,
+  74.0 MiB),22 Editor/flows(4.55s,247.1 MiB),7 ThreadManager(0.14s,65.8 MiB).
+  Repeat84 cross-line/lifecycle(7.68s,213.6 MiB) inclui handle real fechado no cancel;
+  nao contar repeticoes duas vezes. Pylint4modulos passou(417.6 MiB), AST6Python,
+  JSON2 e diffcheck passaram. CapturaCross-line inspecionada(184.9 MiB).
+- Runs seriais isolados/offscreen guardados85%/600MiB/180s/pytest20s; RAM inicial
+  43.1%, nenhum processo de usuario encerrado. Evidencia focada, nao suite global,
+  leak-free/tema nativo/coverageglobal. Regex/IO em curso ainda nao interrompiveis;
+  discoveryFolder nao recebe teto global novo de RAM. Providers/dados reais nao usados.
+- TASKS atual:5 FE-PAR concluidos,3 pendentes +CE-REC-01 =4 desta fila; +30legados
+  fora da automacao =34 abertos. Proximo CE-REC MUST, depoisFE05/06/08. Commit local
+  desta etapa apos validar, example.py preservado, sem push/promocao. Um unico
+  dispatch nativo CE-REC depois do checkpoint; registrar resultado sem retry incerto.

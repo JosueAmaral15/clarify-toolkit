@@ -2,6 +2,7 @@
 
 Date: 2026-09-28
 Task: CE-HDR-01, explicitly requested after the FE04 resource stop.
+Implementation checkpoint: `136b44e` (local only).
 Branch: `COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f`, from stop journal `bdecb9a`.
 Scope: folder label and task organization only; the FE04 draft remains separately
 staged/validated, and CE-REC-01 recovery-on-close is not delivered by this change.

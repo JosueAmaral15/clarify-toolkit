@@ -1,5 +1,9 @@
 # File Explorer: Cross-Line Draft And Resource Stop
 
+Historical stop record. The draft was subsequently validated on resumption;
+see [current implementation evidence](FILE_EXPLORER_CROSS_LINE_VALIDATION_2026_09_28.md)
+and `TASKS.md` for current status/counts. The following stop evidence is preserved.
+
 Date: 2026-09-28
 Branch: `COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f`
 Base: validated FE-PAR-03 checkpoint `d4551cb` plus dispatch journal `5e1750d`.
