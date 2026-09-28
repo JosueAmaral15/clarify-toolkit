@@ -207,7 +207,7 @@ class FileExplorerWorker(QObject):
         filters: dict,
         conditions: list,
         logic_operator: str = "AND",
-        *, prepared: bool = False,
+        *, prepared: bool = False, target_scope: str = "folder", target_paths: list = None,
     ):
         """
         Execute search operation in worker thread.
@@ -247,6 +247,8 @@ class FileExplorerWorker(QObject):
                 conditions=conditions,
                 logic_operator=logic_operator,
                 prepared=prepared,
+                target_scope=target_scope,
+                target_paths=target_paths,
             )
             logger.debug(f"Search complete! Found {len(result.get('files', []))} files")
 
@@ -288,7 +290,7 @@ class FileExplorerWorker(QObject):
         filters: dict,
         conditions: list = None,
         logic_operator: str = "AND",
-        *, prepared: bool = False,
+        *, prepared: bool = False, target_scope: str = "folder", target_paths: list = None,
     ):
         """
         Execute browse operation in worker thread.
@@ -315,6 +317,8 @@ class FileExplorerWorker(QObject):
                 conditions=conditions,
                 logic_operator=logic_operator,
                 prepared=prepared,
+                target_scope=target_scope,
+                target_paths=target_paths,
             )
 
             if self._cancel_requested or self.executor._cancel:

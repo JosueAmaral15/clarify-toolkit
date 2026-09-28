@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 from PySide6.QtCore import QObject, Signal  # pylint: disable=no-name-in-module  # Qt dynamic
 
-from .file_list_executor import FileInfo, FileListExecutor
+from .file_list_executor import FileInfo, FileListExecutor, ListResult
 from .search_replace import preserve_case_like
 from ..utils.atomic_files import file_revision, write_existing_text_atomically
 from ..utils import read_text
@@ -43,6 +43,56 @@ BINARY_SNIPPET_CONTEXT_BYTES = 24
 CONTENT_SCOPE_TEXT = "text"
 CONTENT_SCOPE_BINARY = "binary"
 CONTENT_SCOPE_BOTH = "both"
+MAX_TARGET_PATHS = 1000
+MAX_TARGET_PATH_BYTES = 4096
+MAX_TARGET_TOTAL_BYTES = 1024 * 1024
+
+
+def normalize_target_paths(paths):
+    """Validate a bounded path snapshot without discovering any other targets."""
+    if not isinstance(paths, (list, tuple)) or len(paths) > MAX_TARGET_PATHS:
+        raise ValueError("At most 1000 explicit target paths are allowed")
+    normalized = []
+    seen = set()
+    total_bytes = 0
+    for raw_path in paths:
+        value = os.fspath(raw_path)
+        if not isinstance(value, str) or not value.strip() or "\x00" in value:
+            raise ValueError("Target paths must be nonempty filesystem paths")
+        if len(value) > MAX_TARGET_PATH_BYTES:
+            raise ValueError("Target path exceeds the 4096-byte limit")
+        path = os.path.abspath(value)
+        size = len(os.fsencode(path))
+        if size > MAX_TARGET_PATH_BYTES:
+            raise ValueError("Target path exceeds the 4096-byte limit")
+        total_bytes += size
+        if total_bytes > MAX_TARGET_TOTAL_BYTES:
+            raise ValueError("Explicit target paths exceed the 1 MiB total limit")
+        if path not in seen:
+            seen.add(path)
+            normalized.append(path)
+    return normalized
+
+
+def resolve_target_scope(directory, target_scope="folder", target_paths=None):
+    """Return a display/filter root and exact paths, or None for folder discovery."""
+    if target_scope == "selected":
+        paths = normalize_target_paths(target_paths)
+        if not paths:
+            raise ValueError("Select at least one result in the active view")
+        try:
+            root = os.path.commonpath([os.path.dirname(path) for path in paths])
+        except ValueError:
+            root = ""  # Different volumes: glob matching uses each path's parent.
+        return root, paths
+    if target_scope not in {"folder", "file"} or target_paths is not None:
+        raise ValueError("Invalid or ambiguous target scope")
+    path = normalize_target_paths([directory])[0]
+    if target_scope == "file":
+        if not os.path.isfile(path):
+            raise ValueError("File target must be an existing regular file")
+        return os.path.dirname(path), [path]
+    return path, None
 
 
 @dataclass
@@ -137,7 +187,8 @@ class UnifiedFileExplorerExecutor(QObject):
     # pylint: disable=too-many-positional-arguments  # Complex browse parameters required
     def execute_browse(
         self, directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None,
-        conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND", *, prepared: bool = False
+        conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND", *, prepared: bool = False,
+        target_scope: str = "folder", target_paths: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Execute browse operation (list files).
@@ -149,6 +200,8 @@ class UnifiedFileExplorerExecutor(QObject):
             filters: Filter configuration (includes include_globs, exclude_globs)
             conditions: Advanced conditions list (v2.9.116 - Phase 4)
             logic_operator: "AND" or "OR" for conditions (v2.9.116 - Phase 4)
+            target_scope: folder (default), file, or selected; explicit targets never recurse
+            target_paths: Bounded exact path snapshot, only for selected scope
 
         Returns:
             Dict with files and statistics
@@ -162,8 +215,25 @@ class UnifiedFileExplorerExecutor(QObject):
         )
         filters = filters or {}
 
+        try:
+            directory, paths = resolve_target_scope(directory, target_scope, target_paths)
+            candidates = filters.get("candidate_paths")
+            if paths is not None and candidates is not None:
+                allowed = set(normalize_target_paths(candidates))
+                paths = [path for path in paths if path in allowed]
+            elif paths is None and candidates is not None:
+                paths = candidates
+        except (ValueError, TypeError, OSError, UnicodeError) as exc:
+            return self._condition_failure(f"Invalid target: {exc}")
+
         # Step 1: Get base file list
-        result = FileListExecutor.list_files(directory, show_hidden, recursive, filters, checkpoint=self.checkpoint)
+        if paths is None:
+            result = FileListExecutor.list_files(directory, show_hidden, recursive, filters, checkpoint=self.checkpoint)
+        else:
+            scoped = self._execute_browse_from_candidates(
+                directory, paths, show_hidden, filters, explicit=target_scope != "folder"
+            )
+            result = ListResult([item.file_info for item in scoped["files"]], scoped["stats"]["errors"])
 
         file_list = result.files
 
@@ -200,18 +270,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         if include_globs or exclude_globs:
             def matches_glob(file_path: str, file_name: str, pattern: str) -> bool:
-                rel_path = os.path.relpath(file_path, directory)
-                rel_path_posix = rel_path.replace(os.sep, "/")
-                path_posix = file_path.replace(os.sep, "/")
-
-                return (
-                    pattern in file_path.split(os.sep)
-                    or fnmatch.fnmatch(file_name, pattern)
-                    or fnmatch.fnmatch(rel_path, pattern)
-                    or fnmatch.fnmatch(rel_path_posix, pattern)
-                    or fnmatch.fnmatch(file_path, pattern)
-                    or fnmatch.fnmatch(path_posix, pattern)
-                )
+                return self._matches_glob(file_path, file_name, pattern, directory or os.path.dirname(file_path))
 
             filtered_files = []
             for file_info in file_list:
@@ -251,6 +310,8 @@ class UnifiedFileExplorerExecutor(QObject):
         stats = FileListExecutor.calculate_statistics(file_list)
         stats["errors"] = (result.errors + condition_errors)[:MAX_OPERATION_ERRORS]
         stats["cancelled"] = self._cancel
+        if candidates is not None:
+            stats["candidate_paths_errors"] = result.errors
 
         return {"files": search_results, "stats": stats}
 
@@ -266,7 +327,7 @@ class UnifiedFileExplorerExecutor(QObject):
         filters: Dict[str, Any] = None,
         conditions: List[Dict[str, Any]] = None,
         logic_operator: str = "AND",
-        *, prepared: bool = False,
+        *, prepared: bool = False, target_scope: str = "folder", target_paths: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Execute search operation (filename and/or content).
@@ -300,10 +361,10 @@ class UnifiedFileExplorerExecutor(QObject):
             f"EXECUTOR execute_search() | Calling execute_browse("
             f"dir={directory}, show_hidden={show_hidden}, recursive={recursive})"
         )
-        if candidate_paths is not None:
-            browse_result = self._execute_browse_from_candidates(directory, candidate_paths, show_hidden, filters)
-        else:
-            browse_result = self.execute_browse(directory, show_hidden, recursive, filters, prepared=True)
+        browse_result = self.execute_browse(
+            directory, show_hidden, recursive, filters, prepared=True,
+            target_scope=target_scope, target_paths=target_paths,
+        )
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
         logger.debug(
@@ -454,10 +515,11 @@ class UnifiedFileExplorerExecutor(QObject):
         return {"files": search_results, "stats": stats}
 
     def _execute_browse_from_candidates(
-        self, directory: str, candidate_paths: List[str], show_hidden: bool, filters: Dict[str, Any]
+        self, directory: str, candidate_paths: List[str], show_hidden: bool, filters: Dict[str, Any],
+        *, explicit: bool = False,
     ) -> Dict[str, Any]:
         """Build search candidates from an explicit prior-result universe."""
-        directory_abs = os.path.abspath(directory)
+        directory_abs = os.path.abspath(directory) if directory else ""
         filters_without_candidates = dict(filters)
         filters_without_candidates.pop("candidate_paths", None)
 
@@ -469,6 +531,9 @@ class UnifiedFileExplorerExecutor(QObject):
         seen_paths = set()
 
         for raw_path in candidate_paths:
+            if explicit and len(errors) >= MAX_OPERATION_ERRORS:
+                errors[-1] += "; target error limit reached; remaining targets were not processed"
+                break
             if not self.checkpoint():
                 break
             try:
@@ -477,7 +542,7 @@ class UnifiedFileExplorerExecutor(QObject):
                     continue
                 seen_paths.add(path)
 
-                if os.path.commonpath([directory_abs, path]) != directory_abs:
+                if not explicit and os.path.commonpath([directory_abs, path]) != directory_abs:
                     errors.append(f"Candidate outside directory ignored: {raw_path}")
                     continue
 
@@ -485,8 +550,9 @@ class UnifiedFileExplorerExecutor(QObject):
                     errors.append(f"Candidate no longer exists: {raw_path}")
                     continue
 
-                rel_path = os.path.relpath(path, directory_abs)
-                if not show_hidden and self._path_has_hidden_part(rel_path):
+                root = directory_abs or os.path.dirname(path)
+                rel_path = os.path.relpath(path, root)
+                if not explicit and not show_hidden and self._path_has_hidden_part(rel_path):
                     continue
 
                 file_info = FileListExecutor._get_file_info(path)
@@ -503,14 +569,14 @@ class UnifiedFileExplorerExecutor(QObject):
                         continue
 
                 excluded = any(
-                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, directory_abs)
+                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, root)
                     for pattern in exclude_globs
                 )
                 if excluded:
                     continue
 
                 if include_globs and not any(
-                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, directory_abs)
+                    self._matches_glob(path, file_info.name.rstrip("/"), pattern, root)
                     for pattern in include_globs
                 ):
                     continue

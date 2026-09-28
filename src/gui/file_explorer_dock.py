@@ -48,13 +48,17 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QFrame,
     QMainWindow,
+    QAbstractItemView,
 )
 from PySide6.QtCore import Qt, QSettings, QThread, QEvent, QTimer
 from PySide6.QtGui import QAction, QShortcut, QKeySequence
 
-from src.core.file_explorer_executor import UnifiedFileExplorerExecutor
+from src.core.file_explorer_executor import (
+    UnifiedFileExplorerExecutor, MAX_TARGET_PATH_BYTES, normalize_target_paths, resolve_target_scope,
+)
 from src.i18n.translator import tooltip_tr, tr
 from src.utils.logger import get_logger
+from src.utils.atomic_files import file_revision
 
 from .base_dock import BaseDock
 from .panels import ResultsTree, FileExplorerWorker
@@ -159,6 +163,15 @@ class FileExplorerDock(BaseDock):
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
+        self.combo_target_scope.currentIndexChanged.connect(self._on_target_scope_changed)
+        self.ed_directory.textChanged.connect(self._invalidate_target_cache)
+        self.chk_recursive.toggled.connect(self._invalidate_target_cache)
+        self.chk_all.toggled.connect(self._invalidate_target_cache)
+        self.search_options_panel.options_changed.connect(self._invalidate_target_cache)
+        self.results_tree.itemSelectionChanged.connect(self._on_target_selection_changed)
+        self.table_manager.table.itemSelectionChanged.connect(self._on_target_selection_changed)
+        self.results_stack.currentChanged.connect(self._on_target_selection_changed)
+        self._on_target_scope_changed()
         self.installEventFilter(self)
         if parent is not None:
             parent.window().installEventFilter(self)
@@ -183,7 +196,14 @@ class FileExplorerDock(BaseDock):
         self.section_directory.setCollapsed(False)  # Start expanded
 
         # Directory input
+        self.lbl_target_scope = QLabel(tr("file_explorer.target_label", "Target:"))
+        self.combo_target_scope = QComboBox()
+        for label, value in (("Folder", "folder"), ("File", "file"), ("Selected Results", "selected")):
+            self.combo_target_scope.addItem(tr(f"file_explorer.target_{value}", label), value)
+        self.lbl_target_count = QLabel()
+        self.lbl_directory = QLabel(tr("file_list.lbl_directory"))
         self.ed_directory = QLineEdit()
+        self.ed_directory.setMaxLength(MAX_TARGET_PATH_BYTES)
         self.ed_directory.setPlaceholderText(tr("file_list.placeholder_directory"))
         self.btn_browse = QPushButton(tr("file_list.btn_browse"))
         self.btn_browse.clicked.connect(self._browse_directory)
@@ -313,7 +333,11 @@ class FileExplorerDock(BaseDock):
     def _apply_tooltips(self):
         """Apply internationalized tooltips to all widgets (v2.9.116)."""
         # Directory & Type section
-        self.ed_directory.setToolTip(tooltip_tr("file_list.ed_directory"))
+        scope = self.combo_target_scope.currentData()
+        self.ed_directory.setToolTip(tooltip_tr("file_list.ed_directory") if scope == "folder" else
+                                     tr("file_explorer.target_path_tooltip", "Explicit file path"))
+        self.combo_target_scope.setToolTip(tr("file_explorer.target_tooltip",
+                                             "Folder, one file, or selected results from the active view"))
         self.btn_browse.setToolTip(tooltip_tr("file_list.btn_browse"))
         self.btn_recent.setToolTip(tooltip_tr("file_list.btn_recent"))
         self.chk_all.setToolTip(tooltip_tr("file_list.chk_all"))
@@ -347,6 +371,11 @@ class FileExplorerDock(BaseDock):
 
         # Update labels
         self.lbl_type.setText(tr("file_list.lbl_type"))
+        self.lbl_target_scope.setText(tr("file_explorer.target_label", "Target:"))
+        for index, label in enumerate(("Folder", "File", "Selected Results")):
+            value = self.combo_target_scope.itemData(index)
+            self.combo_target_scope.setItemText(index, tr(f"file_explorer.target_{value}", label))
+        self._on_target_scope_changed()
 
         # Update ComboBox items
         current_index = self.combo_type.currentIndex()
@@ -394,10 +423,16 @@ class FileExplorerDock(BaseDock):
         # SECTION 1: Directory & Type
         # ----------------------------------------------------------------------------
         section1_layout = QVBoxLayout()
+        target_row = self._target_row = QHBoxLayout()
+        target_row.addWidget(self.lbl_target_scope)
+        target_row.addWidget(self.combo_target_scope, 0, Qt.AlignLeft)
+        target_row.addStretch()
+        section1_layout.addLayout(target_row)
+        section1_layout.addWidget(self.lbl_target_count)
 
         # Directory row
         dir_layout = QHBoxLayout()
-        dir_layout.addWidget(QLabel(tr("file_list.lbl_directory")))
+        dir_layout.addWidget(self.lbl_directory)
         dir_layout.addWidget(self.ed_directory)
         dir_layout.addWidget(self.btn_browse)
         dir_layout.addWidget(self.btn_recent)
@@ -484,7 +519,7 @@ class FileExplorerDock(BaseDock):
         left_layout.addStretch()  # Push everything to top
 
         # Wrap left panel in scroll area
-        left_scroll = QScrollArea()
+        left_scroll = self._controls_scroll = QScrollArea()
         left_scroll.setWidget(left_panel)
         left_scroll.setWidgetResizable(True)
         left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
@@ -652,7 +687,16 @@ class FileExplorerDock(BaseDock):
             self.layout.addWidget(self.button_box)
 
     def _browse_directory(self):
-        """Browse for directory."""
+        """Browse for the explicit path type, without changing the target mode."""
+        if self.combo_target_scope.currentData() == "selected":
+            return
+        if self.combo_target_scope.currentData() == "file":
+            path, _ = QFileDialog.getOpenFileName(
+                self, tr("file_explorer.target_file", "File"), self.ed_directory.text() or os.getcwd()
+            )
+            if path:
+                self.ed_directory.setText(path)
+            return
         directory = QFileDialog.getExistingDirectory(
             self,
             tr("file_list.dialog_select_directory"),
@@ -661,6 +705,64 @@ class FileExplorerDock(BaseDock):
         )
         if directory:
             self.ed_directory.setText(directory)
+
+    def _invalidate_target_cache(self, *_args):
+        self._last_content_search_universe = None
+
+    def _on_target_scope_changed(self, *_args):
+        scope = self.combo_target_scope.currentData()
+        self._invalidate_target_cache()
+        self.ed_directory.setEnabled(scope != "selected")
+        self.btn_browse.setEnabled(scope != "selected")
+        self.btn_recent.setEnabled(scope == "folder")
+        self.chk_recursive.setEnabled(scope == "folder")
+        self.chk_all.setEnabled(scope == "folder")
+        self.lbl_directory.setText(tr("file_list.lbl_directory") if scope == "folder" else
+                                   tr("file_explorer.target_path_label", "Path:"))
+        self.ed_directory.setPlaceholderText(tr("file_list.placeholder_directory") if scope == "folder" else
+                                            tr("file_explorer.target_file_placeholder", "File path..."))
+        if scope == "selected":
+            self.table_manager.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self._on_target_selection_changed()
+        # Keep the target selector visible even when legacy rows require scrolling.
+        margins = self.combo_target_scope.parentWidget().layout().contentsMargins()
+        outer = self.section_directory.content_layout.contentsMargins()
+        self._controls_scroll.setMinimumWidth(
+            self._target_row.minimumSize().width() + margins.left() + margins.right()
+            + outer.left() + outer.right() + 2 * self.section_directory.content_frame.frameWidth()
+            + self._controls_scroll.verticalScrollBar().sizeHint().width()
+        )
+        self._apply_tooltips()
+
+    def _selected_result_paths(self):
+        if self.results_stack.currentIndex() == 0:
+            return self.results_tree._collect_selected_result_paths(preserve_order=True)
+        return self.table_manager.get_selected_paths()
+
+    def _on_target_selection_changed(self, *_args):
+        selected = self.combo_target_scope.currentData() == "selected"
+        self.lbl_target_count.setVisible(selected)
+        if selected:
+            if not self._operation_running():
+                self._invalidate_target_cache()
+            count = len(self._selected_result_paths())
+            self.lbl_target_count.setText(tr("file_explorer.target_selected_count", "{0} selected").format(count))
+
+    def _snapshot_target(self):
+        scope = self.combo_target_scope.currentData()
+        value = self.ed_directory.text()
+        selected = self._selected_result_paths() if scope == "selected" else None
+        root, paths = resolve_target_scope(value, scope, selected)
+        if scope == "folder" and not os.path.isdir(root):
+            raise ValueError("Folder target must be an existing directory")
+        if scope != "selected" and not os.access(value, os.R_OK):
+            raise ValueError("Target path is not readable")
+        signature = (scope, root, tuple(paths) if paths is not None else None,
+                     self.chk_recursive.isChecked() if scope == "folder" else False,
+                     self.chk_all.isChecked() if scope == "folder" else True,
+                     file_revision(os.stat(paths[0])) if scope == "file" else None,
+                     tuple(sorted(self._get_search_options().items())))
+        return scope, value if scope != "selected" else root, root, paths, signature
 
     def _toggle_word_wrap(self, enabled: bool):
         """Toggle word wrap mode in results tree (v2.9.117)."""
@@ -877,7 +979,9 @@ class FileExplorerDock(BaseDock):
         else:
             self.results_status.clear()
 
-    def _get_incremental_candidate_paths(self, directory: str, content_query: str) -> Optional[List[str]]:
+    def _get_incremental_candidate_paths(
+        self, directory: str, content_query: str, target_signature=None
+    ) -> Optional[List[str]]:
         """Return previous result paths when the current search can be refined incrementally."""
         if not content_query:
             return None
@@ -891,21 +995,25 @@ class FileExplorerDock(BaseDock):
 
         if universe.get("content_query") != content_query:
             return None
+        if universe.get("target_signature") != target_signature:
+            return None
 
         return list(universe.get("paths", []))
 
     def _attach_incremental_universe_filter(
-        self, filters: Dict[str, Any], directory: str, content_query: str
+        self, filters: Dict[str, Any], directory: str, content_query: str, target_signature=None
     ) -> Optional[List[str]]:
         """Attach previous-result candidate paths to filters when incremental search applies."""
-        candidate_paths = self._get_incremental_candidate_paths(directory, content_query)
+        candidate_paths = self._get_incremental_candidate_paths(directory, content_query, target_signature)
         if candidate_paths is None:
             return None
 
         filters["candidate_paths"] = candidate_paths
         return candidate_paths
 
-    def _remember_content_search_universe(self, directory: str, content_query: str, files_list: List):
+    def _remember_content_search_universe(
+        self, directory: str, content_query: str, files_list: List, target_signature=None
+    ):
         """Store file paths from the latest content search as the next incremental universe."""
         if not content_query:
             self._last_content_search_universe = None
@@ -916,6 +1024,15 @@ class FileExplorerDock(BaseDock):
             "content_query": content_query,
             "paths": [search_result.file_info.path for search_result in files_list],
         }
+        if target_signature is not None:
+            try:
+                if self._snapshot_target()[-1] != target_signature:
+                    self._invalidate_target_cache()
+                    return
+            except (ValueError, TypeError, OSError, UnicodeError):
+                self._invalidate_target_cache()
+                return
+            self._last_content_search_universe["target_signature"] = target_signature
 
     def _format_permissions(self, stat_info, long_format: bool = False) -> str:
         """Format file permissions from stat info."""
@@ -999,35 +1116,11 @@ class FileExplorerDock(BaseDock):
             return
         # Start timer (v2.9.117 - B.4)
 
-        directory = self.ed_directory.text().strip()
-
-        if not directory:
-            logger.warning("Empty directory path provided")
-            QMessageBox.warning(self, tr("file_list.error_missing_title"), tr("file_list.error_missing_directory"))
-            return
-
-        # SECURITY OWASP A01: Path Traversal Prevention (CWE-22)
-        # Normalize and validate directory path
         try:
-            directory = os.path.abspath(directory)
-        except (OSError, ValueError) as e:
-            logger.error(f"Invalid directory path: {directory}", exc_info=True)
+            target_scope, target_value, directory, target_paths, target_signature = self._snapshot_target()
+        except (OSError, ValueError, TypeError, UnicodeError) as exc:
             QMessageBox.warning(
-                self, tr("file_list.error_invalid_title"), tr("file_list.error_invalid_path").format(str(e))
-            )
-            return
-
-        if not os.path.isdir(directory):
-            logger.error(f"Directory does not exist: {directory}")
-            QMessageBox.warning(
-                self, tr("file_list.error_invalid_title"), tr("file_list.error_not_exist").format(directory)
-            )
-            return
-
-        if not os.access(directory, os.R_OK):
-            logger.error(f"Permission denied for directory: {directory}")
-            QMessageBox.warning(
-                self, tr("file_list.error_permission_title"), tr("file_list.error_no_permission").format(directory)
+                self, tr("file_list.error_invalid_title"), str(exc)
             )
             return
 
@@ -1037,12 +1130,13 @@ class FileExplorerDock(BaseDock):
         )
 
         # Save to recent directories
-        self._add_to_recent(directory)
+        if target_scope == "folder":
+            self._add_to_recent(directory)
 
         # Get options
         show_hidden = self.chk_all.isChecked()
         human_readable = self.chk_human.isChecked()
-        recursive = self.chk_recursive.isChecked()
+        recursive = self.chk_recursive.isChecked() if target_scope == "folder" else False
         long_format = self.chk_long.isChecked()
 
         # Get file type filter (use data for i18n-safe comparison)
@@ -1102,7 +1196,9 @@ class FileExplorerDock(BaseDock):
         is_search = bool(filename_pattern or content_query)
 
         if is_search:
-            incremental_candidate_paths = self._attach_incremental_universe_filter(filters, directory, content_query)
+            incremental_candidate_paths = self._attach_incremental_universe_filter(
+                filters, directory, content_query, target_signature
+            )
             logger.info(
                 "Executing search operation",
                 extra={
@@ -1129,6 +1225,7 @@ class FileExplorerDock(BaseDock):
             # Store search parameters for handler (needed for history/stats)
             self._current_search_params = {
                 "directory": directory,
+                "target_signature": target_signature,
                 "filename_pattern": filename_pattern,
                 "content_query": content_query,
                 "search_options": search_options,
@@ -1139,9 +1236,10 @@ class FileExplorerDock(BaseDock):
             }
 
             self._launch_operation("search", dict(
-                directory=directory, filename_pattern=filename_pattern, content_query=content_query,
+                directory=target_value, filename_pattern=filename_pattern, content_query=content_query,
                 search_options=search_options, show_hidden=show_hidden, recursive=recursive,
                 filters=filters, conditions=conditions, logic_operator=logic_operator,
+                target_scope=target_scope, target_paths=target_paths if target_scope == "selected" else None,
             ))
 
             # Return early - results will be handled by _on_search_finished()
@@ -1175,8 +1273,9 @@ class FileExplorerDock(BaseDock):
             }
 
             self._launch_operation("browse", dict(
-                directory=directory, show_hidden=show_hidden, recursive=recursive,
+                directory=target_value, show_hidden=show_hidden, recursive=recursive,
                 filters=filters, conditions=conditions, logic_operator=logic_operator,
+                target_scope=target_scope, target_paths=target_paths if target_scope == "selected" else None,
             ))
 
             # Return early - results will be handled by _on_browse_finished()
@@ -1585,20 +1684,27 @@ class FileExplorerDock(BaseDock):
         from src.core.file_list_executor import FileInfo
         from src.core.file_explorer_executor import SearchResult
 
-        if self.results_stack.currentIndex() == 0:
-            paths = self.results_tree._collect_selected_result_paths(preserve_order=True)
-        else:
-            rows = sorted({item.row() for item in self.table_manager.table.selectedItems()})
-            paths = [
-                self.table_manager.table.item(row, 4).text()
-                for row in rows if self.table_manager.table.item(row, 4)
-            ]
-        unique_paths = dict.fromkeys(os.path.abspath(path) for path in paths)
+        unique_paths = normalize_target_paths(self._selected_result_paths())
         return [
             SearchResult(
                 FileInfo(os.path.basename(path), path, 0, "", "", "", "", False), [], 0
             ) for path in unique_paths if os.path.isfile(path)
         ]
+
+    def _replacement_targets(self):
+        scope = self.combo_target_scope.currentData()
+        if scope == "file":
+            from src.core.file_explorer_executor import SearchResult
+            from src.core.file_list_executor import FileListExecutor
+
+            _, paths = resolve_target_scope(self.ed_directory.text(), scope)
+            return [SearchResult(FileListExecutor._get_file_info(paths[0]), [], 0)]
+        files = self._selected_replacement_results()
+        if scope == "folder" and self.ed_directory.text().strip():
+            _, _, root, _, _ = self._snapshot_target()
+            if any(os.path.commonpath([root, item.file_info.path]) != root for item in files):
+                raise ValueError("Selected replacement target is outside the chosen folder")
+        return files
 
     def _operation_running(self):
         thread = getattr(self, "_worker_thread", None)
@@ -1741,7 +1847,11 @@ class FileExplorerDock(BaseDock):
         if not query:
             QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
             return
-        files = self._selected_replacement_results()
+        try:
+            files = self._replacement_targets()
+        except (OSError, ValueError, TypeError, UnicodeError) as exc:
+            QMessageBox.warning(self, tr("file_list.replace_failed_title"), str(exc))
+            return
         if not files:
             QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
@@ -2147,7 +2257,9 @@ class FileExplorerDock(BaseDock):
         if cancelled or result.get("stats", {}).get("errors"):
             self._last_content_search_universe = None
         else:
-            self._remember_content_search_universe(directory, content_query, files_list)
+            self._remember_content_search_universe(
+                directory, content_query, files_list, params.get("target_signature")
+            )
 
         # Update statistics (lightweight - just counters)
         self._update_statistics(files_list, time.time() - start_time)
@@ -2256,7 +2368,9 @@ class FileExplorerDock(BaseDock):
             files_data.sort(key=lambda x: x["path"].lower())
 
         # Enable multi-selection if in selection mode
-        if self.dialog_mode and hasattr(self, "chk_selection_mode") and self.chk_selection_mode.isChecked():
+        if self.combo_target_scope.currentData() == "selected":
+            self.table_manager.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        elif self.dialog_mode and hasattr(self, "chk_selection_mode") and self.chk_selection_mode.isChecked():
             self.table_manager.table.setSelectionMode(QAbstractItemView.MultiSelection)
         else:
             self.table_manager.table.setSelectionMode(QAbstractItemView.SingleSelection)

@@ -54,6 +54,7 @@ def docks(qapp, qtbot, monkeypatch):
             host.deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
     qapp.processEvents()
+    qtbot.waitUntil(lambda: not thread_manager._threads, timeout=3000)
     assert thread_manager.get_stats()["total_threads"] == 0
 
 
@@ -157,6 +158,7 @@ def test_real_worker_pause_resume_responsiveness_and_cleanup(kind, tmp_path, doc
     assert threads[0] == native and threads[0] != qapp.thread()
     assert not dock._launch_operation("browse", request("browse", tmp_path))
     assert len(thread_manager._threads) == 1
+    assert thread_manager._threads[dock._thread_id].finished_receiver.thread() == qapp.thread()
     button = dock._progress_label.pause_button
     button.setChecked(True)
     beats = []
@@ -483,6 +485,7 @@ def test_repeated_real_browse_has_no_retained_worker_or_progress(tmp_path, docks
     for _ in range(10):
         assert dock._launch_operation("browse", request("browse", tmp_path))
         references.extend([dock._worker, dock._worker_thread, dock._operation_receiver, dock.progress_dialog])
+        references.append(thread_manager._threads[dock._thread_id].finished_receiver)
         qtbot.waitUntil(lambda: not dock._operation_running(), timeout=3000)
         QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
         assert not thread_manager._threads

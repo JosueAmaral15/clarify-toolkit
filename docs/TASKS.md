@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - FE-PAR-07: pausa e lifecycle validados
+**Last Update**: 2026/09/28 - FE-PAR-03: alvos explicitos e cache validados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -12,9 +12,10 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado: **3 concluidos, 5 pendentes; 35 itens abertos no total (30 anteriores + 5).**
+Estado: **4 concluidos, 4 pendentes; 34 itens abertos no total (30 anteriores + 4).**
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
+Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -34,9 +35,17 @@ Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_
   diagnostico de condicao invalida em vez de retornar resultados sem filtro.
   UI emite dados canonicos; Clear Conditions nao chama deleteLater em dict.
   Shared filters mantem consumidores e foram testados separadamente.
-- [ ] **FE-PAR-03 / SHOULD: escopo de alvo explicito.** Arquivo unico, pasta ou
+- [x] **FE-PAR-03 / SHOULD: escopo de alvo explicito.** Arquivo unico, pasta ou
   resultados selecionados; nao percorrer irmaos nem ampliar selecao implicitamente.
   Invalidar cache incremental ao trocar escopo e testar as duas vistas.
+  Entregue: Folder compativel, File exato e Selected Results da vista ativa;
+  grupos nao expandem, diretorio selecionado nao percorre filhos e selecao vazia
+  nao vira busca em pasta. Replace em File exige confirmacao e usa so esse arquivo;
+  outros modos mantem selecao explicita. Cache inclui alvo, opcoes e revisao do
+  arquivo; alteracoes durante o worker nao restauram universo obsoleto.
+  Limites: 1000 caminhos, 4096 bytes/caminho, 1 MiB agregado e 50 erros de alvo.
+  69 novos casos e 345 testes focados distintos passaram, incluindo threads reais,
+  ambas vistas, nomes com espacos, limites e invalidacao; nao suite global.
 - [ ] **FE-PAR-04 / SHOULD: busca de bloco cross-line.** Opcao separada de
   multi-query, posicoes/snippets corretos, limites de bytes/matches e cancelamento;
   informar entradas grandes ou modos binarios nao suportados, sem truncar ocultamente.
@@ -55,14 +64,16 @@ Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_
   fechamento comum espera settlement, deleteLater desacopla a thread protegida.
   Escrita atomica atual termina sem force termination; arquivos seguintes param.
   36 casos novos de lifecycle e 276 testes focados distintos passaram, com guardas.
+  Follow-up FE-PAR-03: receiver independente e GUI-affine no registro central
+  evita callback perdido ao destruir dock/thread; cleanup repetido retestado.
   Regex/IO em curso nao sao interrompidos no meio: pausa/cancelam no checkpoint.
 - [ ] **FE-PAR-08 / COULD: coerencia de apresentacao.** Preferencia monospace
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa executavel: **FE-PAR-03 (SHOULD)**: alvo arquivo/pasta/selecao
-explicito, sem percorrer irmaos ou ampliar selecao, e cache incremental coerente.
-Depois FE-PAR-04, 05, 06 e 08. Continuacao autorizada e finita via monitor,
+Proxima etapa executavel: **FE-PAR-04 (SHOULD)**: busca de bloco cross-line
+separada de multi-query, posicoes/snippets corretos e entradas/resultados limitados.
+Depois FE-PAR-05, 06 e 08. Continuacao autorizada e finita via monitor,
 apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
 Um dispatch nativo por etapa concluida, sessao exata e sem retry incerto.
 Commits locais em COM-UUID; sem push/promocao com gates CI/security pendentes.

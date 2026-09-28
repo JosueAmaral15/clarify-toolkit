@@ -16,7 +16,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    from PySide6.QtCore import QThread, QObject
+    from PySide6.QtCore import QThread, QObject, Slot
     _PYSIDE = True
 except ImportError:
     _PYSIDE = False
@@ -24,6 +24,20 @@ except ImportError:
         """Stub QThread when PySide6 not available."""
     class QObject:  # pylint: disable=too-few-public-methods  # Stub class
         """Stub QObject when PySide6 not available."""
+
+
+if _PYSIDE:
+    class _ThreadFinishedReceiver(QObject):
+        """GUI-owned completion survives destruction of the thread's former dock."""
+
+        def __init__(self, manager, thread_id):
+            super().__init__()
+            self.manager = manager
+            self.thread_id = thread_id
+
+        @Slot()
+        def finished(self):
+            self.manager._on_thread_finished(self.thread_id)
 
 
 class FeatureType(Enum):
@@ -55,6 +69,7 @@ class ThreadInfo:
         self.cancel_callback = cancel_callback
         self.is_running = True
         self.exclusive = exclusive
+        self.finished_receiver = None
 
 
 class ThreadManager:
@@ -141,12 +156,18 @@ class ThreadManager:
             self._threads[thread_id] = info
 
             # Connect automatic cleanup
-            thread.finished.connect(lambda: self._on_thread_finished(thread_id))
+            if _PYSIDE:
+                info.finished_receiver = _ThreadFinishedReceiver(self, thread_id)
+                thread.finished.connect(info.finished_receiver.finished)
+            else:
+                thread.finished.connect(lambda: self._on_thread_finished(thread_id))
 
             return True
         except Exception:  # pylint: disable=broad-exception-caught  # Thread safety
             # If something goes wrong, release the lock
-            self._threads.pop(thread_id, None)
+            failed = self._threads.pop(thread_id, None)
+            if failed is not None and failed.finished_receiver is not None:
+                failed.finished_receiver.deleteLater()
             if exclusive:
                 self._feature_locks[feature].release()
             return False
@@ -204,6 +225,8 @@ class ThreadManager:
 
             # Remove thread from registry
             del self._threads[thread_id]
+            if info.finished_receiver is not None:
+                info.finished_receiver.deleteLater()
 
     def get_active_threads(self) -> Dict[FeatureType, int]:
         """Returns count of active threads per feature"""

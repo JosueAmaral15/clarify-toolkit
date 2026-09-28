@@ -2735,3 +2735,51 @@ Plano imediato:
 - Inicio do dispatch nao comprova entrega/processamento. Nao reenviar por
   incerteza; verificar marcador/hook ao retomar. Monitor continua ativo apenas
   para FE-PAR-03/04/05/06/08, sem finish antecipado nem expansao aos 30 legados.
+
+## 2026-09-28 - Pre-acao - FE-PAR-03 por continuacao confirmada
+
+- Marcador FE03 recebido confirma processamento do dispatch anterior. HEAD
+  932b41a inclui implementacao 54032ee e journal; somente example.py nao rastreado.
+  Nova COM-f4922ddf-dee2-4de5-a53f-cfae7955af88 criada desse checkpoint.
+- Monitor ativo com hooks recentes, integridade/schema e native queue saudaveis;
+  observer de respostas continua failed, sem restart/alteracao de controles.
+- Escopo desta etapa: alvo explicito Folder (default compativel), File ou Selected
+  Results; nao percorrer irmaos nem ampliar selecao; snapshot das duas vistas,
+  limites de entrada e invalidacao do cache incremental por escopo/alvo.
+- Ler interfaces compartilhadas antes de editar; nao remover padroes uteis a outras
+  tools. Testes reais seriais/offscreen com guardas RAM/timeout, commit local,
+  sem push/promocao/main/develop e sem tarefas do backlog legado.
+
+## 2026-09-28 - Pos-acao - FE-PAR-03 validado
+
+- Folder default preservado; File exato e Selected Results da vista ativa, com
+  snapshot antes de limpar resultados. Nenhum irmao/filho descoberto em alvo
+  explicito; selecao vazia/grupo nao expande para pasta. Ambas vistas exercitadas.
+- Replace em File usa so o arquivo indicado apos confirmacao; outros modos usam
+  selecao explicita e Folder rejeita alvos fora da raiz. Espacos nos nomes nao sao
+  removidos. Regressao compara arquivo com sufixo de espaco ao irmao sem espaco.
+- Limites 1000 caminhos, 4096 bytes por caminho, 1 MiB total, 50 erros; cache inclui
+  escopo/alvo/opcoes/revisao de File e nao restaura snapshot alterado durante pausa.
+  Edicao offline apos busca vazia e troca Text/Binary nao escondem resultados.
+- Run combinado expôs registro de thread orfao ao destruir dock; wait Qt limitado
+  reproduziu a falha. Lambda substituida por receiver QObject independente no
+  ThreadManager, com slot GUI-affine e deleteLater; exclusividade/fallback mantidos.
+  Dez operacoes verificam descarte desses receivers e retorno ao baseline.
+- Captura inicial revelou selector cortado pelo viewport; teste de geometria foi
+  fortalecido. Alinhamento/minimo calculado protege selector/count. Captura PT final
+  inspecionada; linhas largas antigas continuam com scroll, sem redesign global.
+- 345 testes focados distintos passaram: 265 Explorer (13.07s, 242.2 MiB), 52 shared
+  (0.75s, 73.1 MiB), 21 Editor/flows (4.90s, 245.2 MiB), 7 ThreadManager (0.16s,
+  65.6 MiB). Repeat scope/lifecycle 105 passou antes do ajuste viewport; run 265 final
+  inclui esse ajuste. Guardas 85% RAM/600 MiB/180s/pytest20s, execucao serial.
+  Evidencia focada, nao suite global nem garantia global contra vazamentos.
+- AST de seis Python, dois JSON e diff check passaram. Pylint -E dos quatro
+  modulos alterados passou (exit 0, 388.1 MiB), jobs=1 e suporte dinamico PySide6.
+- TASKS e novo report atualizados: 4 FE-PAR concluidos, faltam 04/05/06/08;
+  30 legados fora da continuacao = 34 abertos. Proximo FE04 com cross-line limitado,
+  separado de multi-query; depois 05/06/08. Full-read/IO/regex em curso ainda tem
+  limites antigos/checkpoints; sem Undo global novo, providers ou dados reais.
+- Monitor ativo/hook recente, doctor apenas observer failed; sem restart/controles.
+  Commit local em COM-f4922ddf-dee2-4de5-a53f-cfae7955af88, preservando example.py;
+  sem push/promocao. Uma continuacao exata FE04 somente apos checkpoint validado,
+  registrar resultado real sem retry incerto. Finish ao concluir batch ou sem via segura.
