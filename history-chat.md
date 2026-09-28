@@ -3014,3 +3014,18 @@ Plano imediato:
   reiniciado. Commit local naCOM desta etapa; sem push/promocao. TASKS atualizado:
   restamFE06/08 (2 fila,32globais com30legados fora). Uma unica continuacao nativa
   exata FE06 apos checkpoint; nunca reenviar dispatch incerto.
+
+### Checkpoint E Dispatch FE-PAR-06
+
+- FE05 emd924e4b,9paths desta etapa, worktree apenas example.py inalterado.
+  RAM43.2%, hook/worker active, nenhum queue exato anterior pendente. Dry-run
+  passou; uma unica chamada real native/detach/delay15s retornouexit0 e
+  dispatch_started, marcador CLARIFY_FE_PAR_CONTINUE_20260928_FE06.
+- Worker notebook-josue:codex:project=clarify-b09a84f1 e sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1 exatos. Inicio nao prova entrega nem
+  processamento; nunca reenviar incerteza. CLI terminou. Retomada verifica
+  checkpoint+journal e criaCOMnova; FE06 depoisFE08 apenas (2fila,32globais).
+- Prompt exige modulos GUI separados, guardas inalteradas e interrupcao/finish
+  exato se crash nativo isolado ou barreira da guarda surgir; crash combinado
+  segue nao resolvido. CI/security pendentes, sem push/promocao; observerfailed
+  nao reiniciado, outros workers intocados. Finish ao completar fila ou inseguro.

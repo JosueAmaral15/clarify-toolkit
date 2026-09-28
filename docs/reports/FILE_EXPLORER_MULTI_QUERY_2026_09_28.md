@@ -133,3 +133,16 @@ excluded from this automation. Only one exact-session native continuation after
 the validated local checkpoint; never retry uncertain dispatch. Finish the exact
 worker when this finite queue completes or cannot continue safely. Isolated tests
 do not clear CI/security, packaging, external coverage or native desktop UX gates.
+
+## Continuation Journal
+
+Validated FE05 checkpoint is `d924e4b` (9 scoped paths). Worktree then contained
+only unchanged/untracked `example.py`; RAM43.2%, exact worker/hook active, no
+previous exact-session queue process. Dry-run passed. Exactly one real native
+continuation with delay15s/detached queue was called for
+`CLARIFY_FE_PAR_CONTINUE_20260928_FE06`, the worker/session above. CLI exited0 with
+`dispatch_started`; this is initiation, not proof of delivery or processing.
+Never retry uncertainty. Next marker verifies this checkpoint plus this journal
+before making a fresh COM-UUID branch. The continuation carries the unresolved
+combined Qt crash and stop-on-isolated-crash/guard rule. Monitor remains active
+only for FE06/08, with finish on finite completion or unsafe continuation.
