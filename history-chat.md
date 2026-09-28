@@ -2917,3 +2917,45 @@ Plano imediato:
   ProximaCE-REC MUST (recovery/close do Editor), depoisFE05/06/08. Quatro pendencias
   nesta fila,34globais incluindo30legados fora da automacao; finish so ao completar
   ou sem via segura. Observerfailed conhecido nao reiniciado; sem GUI input.
+
+## 2026-09-28 - Pre-acao - CE-REC-01
+
+- Marcador CE01 recebido confirma processamento da continuacao, sem reenvio.
+  Checkpoint631994b e journal4d28cfb conferidos; novaCOM-e8a3ba95-8b6e-4792-ab9c-6458d4fadd5a.
+- Monitor/hook active; doctor apenas observerfailed conhecido. RAM46.8%, guardar
+  testes seriais85%/600MiB/180s e timeout20s. example.py hash inalterado.
+- Auditar store existente e integrar flush imediato em fechamento/DeferredDelete/
+  aboutToQuit, referencias salvas e falhas honestas sem sobrescrever originais.
+  Manter descarte intencional e cancelamento; nao expandir backlog nem push/promocao.
+
+## 2026-09-28 - Pos-acao - CE-REC-01
+
+- RecoveryStore existente reusado: buffers atuais/untitled/vazios/edit-only no
+  fechamento Dock/aba-tool/parent/DeferredDelete/aboutToQuit, com debounce por edicao.
+  Referencias pequenas com identidade/cursor para arquivos salvos, sem extrair texto.
+  Restore explicito cria buffer nao salvo sem origem conectada; referencia ausente,
+  alterada/binaria ou >2MiB informa falha, fica disponivel e exige inspecao manual.
+- Mantidos 2MiB/documento,20 snapshots,20MiB agregados, retencao ajustavel; escrita
+  atomica privada, file/directory fsync, leituras limitadas, metadata validada,
+  QLockFile sem espera e quotas que nao descartam outro draft silenciosamente.
+  Falhas impedem close normal; final shutdown registra apenas contagem, nao conteudo.
+- Save/Discard/Cancel de aba individual preservados; Save As cancelado nao fecha,
+  discard IO falho mantem tab/watch-state. Abas removidas param timers/deleteLater.
+  Timers/watchers da tool param; callbacks tardios ignorados; QObject-owned slots/
+  weakrefs e validade Qt evitam acesso apos exclusao e wrappers retidos.
+- 334 casos focados distintos:114 recovery/layout/flows(12.93s,252.8MiB),67 Editor
+  (7.00s,204.1MiB),153 Explorer scopes/lifecycle/cross-line(10.71s,217.8MiB).
+  87 casos novos, incluindo processo novo, quotas/IO/corrupcao, escolhas explicitas,
+  originais removidos/alterados e coleta de wrappers. Nao suite global/UX nativa.
+- Investigacao registrou Python global sem sympy (nao coletou); falhas iniciais de
+  teardown/validade Qt e pasta vazia extra no Explorer corrigidas/revalidadas.
+  Uma chamada antiga69 Editor incluiu2 fixtures MainWindow inadvertidamente, sem
+  updates live e dentro da guarda; final canonico67 exclui. Um lint inicial teve
+  overlap com run falho terminando; grupos pytest finais seriais e guardados.
+- AST6Python/JSON2/diffcheck passaram; Pylint-E4modulos exit0,417.7MiB, antes do commit.
+  RAM43.7%, guardas85%/600MiB/180s/pytest20s, sem providers/documentos reais.
+  example.py hash058053d...fcee preservado. TASKS marca CE-REC concluido;
+  faltam FE-PAR05/06/08 nesta fila,33globais com30legados fora da automacao.
+- Commit local nesta COM apos validar; sem push/promocao/gates contornados. Uma
+  unica continuacao nativa FE05 para sessao exata depois do checkpoint, sem retry
+  se resultado incerto; monitor termina quando fila finita completar ou insegura.

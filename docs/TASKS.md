@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - header24 e FE04 validados; proximo recovery no fechamento
+**Last Update**: 2026/09/28 - recovery no fechamento validado; proximo FE-PAR-05
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -10,8 +10,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
 primeiro; validar codigo ja em andamento e impedir perda de documentos tem
-precedencia sobre adicionar outras features. Contagem atual: **34 abertos = 30
-anteriores + 3 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
+precedencia sobre adicionar outras features. Contagem atual: **33 abertos = 30
+anteriores + 3 FE-PAR**; os dois novos itens Editor foram validados.
 
 - [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
   inicial16 por24, incluindo reticencias (21 + `...`), tooltip com caminho completo,
@@ -21,7 +21,7 @@ anteriores + 3 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
   Entregue: ate24, incluindo `...`, elisao adicional por largura sem mudar fonte,
   tooltip completo e plain text. 22 testes Editor/layout/flows passaram; captura
   wide/narrow inspecionada. [Evidencias](reports/EDITOR_HEADER_24_2026_09_28.md).
-- [ ] **CE-REC-01 / MUST: buffering recuperavel ao fechar Editor/Clarify.**
+- [x] **CE-REC-01 / MUST: buffering recuperavel ao fechar Editor/Clarify.**
   Aproveitar UnsavedRecoveryStore existente; nao criar uma segunda infraestrutura.
   Preservar os ultimos buffers de documentos abertos (incluindo conteudo sem
   caminho/nao salvo) em pasta local de recuperacao gerenciada, mesmo quando Editor
@@ -39,8 +39,20 @@ anteriores + 3 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
   Distinguir fechar Editor/app de descartar uma aba intencionalmente; respeitar
   Save/Discard/Cancel existentes. Testar edicao seguida de fechamento imediato,
   reabertura em nova instancia, multiplas abas, quota/IO/corrupcao/retencao e cleanup.
+  Entregue na COM-e8a3ba95-8b6e-4792-ab9c-6458d4fadd5a: flush imediato nos caminhos
+  Qt de fechamento/exclusao/saida, debounce reiniciado a cada edicao, referencias
+  de arquivos salvos com identidade/cursor, restore explicitamente nao salvo.
+  Timers/watchers param; receivers Qt-owned e weakrefs evitam retencao/callbacks
+  tardios. Descarte intencional remove snapshot; Save As cancelado nao fecha aba.
+  Storage privado/atomico existente reforcado com lock sem espera e quota sem
+  eviction silenciosa. Falha bloqueia close normal; final shutdown apenas informa.
+  Referencia removida/alterada/binaria ou >2 MiB fica disponivel e informa falha,
+  sem ler arquivo grande automaticamente; File > Open permite inspecao manual.
+  87 novos casos,114 recovery/layout/flows +67 Editor +153 Explorer passaram
+  (334 distintos), com guardas; nao suite global nem certificacao nativa.
+  [Evidencias e limites](reports/EDITOR_CLOSURE_RECOVERY_2026_09_28.md).
 
-Ordem finita: CE-HDR-01 e FE-PAR-04 concluidos; CE-REC-01 (MUST), depois
+Ordem finita: CE-HDR-01, CE-REC-01 e FE-PAR-04 concluidos; faltam
 FE-PAR-05/06/08. O requisito de recovery
 complementa a entrega historica de13/09 abaixo, nao a declara inexistente.
 Nao expandir automaticamente aos30 legados nem prometer recuperar alteracoes
@@ -59,7 +71,8 @@ Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER
 FE-PAR-04: [stop historico](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md) e
 [validacao apos retomada](reports/FILE_EXPLORER_CROSS_LINE_VALIDATION_2026_09_28.md).
 Stop anterior por RAM85% preservado no report; retomada com RAM43.1% manteve guardas
-e validou394 testes focados distintos. Nenhum dispatch FE05; proximo CE-REC-01.
+e validou394 testes focados distintos. CE-REC-01 retomado e validado acima;
+proximo FE-PAR-05, com um unico dispatch apos o novo checkpoint.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -124,8 +137,8 @@ e validou394 testes focados distintos. Nenhum dispatch FE05; proximo CE-REC-01.
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa: **CE-REC-01 (MUST)**, buffering/lifecycle recuperavel no Editor.
-Depois FE-PAR-05,06 e08. Nao iniciar backlog legado automaticamente.
+Proxima etapa: **FE-PAR-05 (SHOULD)**, consultas independentes por linha.
+Depois FE-PAR-06 e08. Nao iniciar backlog legado automaticamente.
 Continuacao anterior encerrada por pressao de memoria, sem dispatch seguinte.
 Retomada atual inclui apenas esta fila e os dois itens Editor explicitamente novos.
 Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,

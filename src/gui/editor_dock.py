@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import logging
 import os
 import uuid
 from datetime import datetime
@@ -32,7 +33,7 @@ from typing import List
 
 from PySide6.QtCore import (
     QDir, QEvent, QFileSystemWatcher, QObject, QRegularExpression, QSize, Qt,
-    QTimer
+    QTimer, Slot
 )
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar, QPushButton,
@@ -51,6 +52,7 @@ from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
 from src.product_identity import EDITOR_NAME
 
 from .base_dock import BaseDock
+from .editor_recovery_lifecycle import EditorRecoveryLifecycle
 from .json_editor_tab import JsonEditorTab
 from .widgets import EditorTab
 
@@ -525,6 +527,7 @@ class EditorDock(BaseDock):
 
     MAX_EXTERNAL_FILE_WATCHES = 128
     MAX_EXTERNAL_DIR_WATCHES = 128
+    handles_unsaved_tab_close = True
 
     def __init__(self, parent=None):
         # Initialize attributes BEFORE super().__init__() which calls _setup_ui()
@@ -555,9 +558,12 @@ class EditorDock(BaseDock):
             retention_hours=self.recovery_retention_hours
         )
         self._restored_recovery_ids: set[str] = set()
+        self._recovery_suspended = False
+        self._recovery_failures = 0
 
         # NOW call super().__init__() which triggers _setup_ui()
         super().__init__(EDITOR_NAME, parent)
+        self._recovery_lifecycle = EditorRecoveryLifecycle(self)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -625,8 +631,11 @@ class EditorDock(BaseDock):
         self._recovery_timer = QTimer(self)
         self._recovery_timer.setSingleShot(True)
         self._recovery_timer.setInterval(1500)
-        self._recovery_timer.timeout.connect(self._checkpoint_unsaved_tabs)
-        self.recovery_store.prune()
+        self._recovery_timer.timeout.connect(self._on_recovery_timeout)
+        try:
+            self.recovery_store.prune()
+        except (OSError, RecoverySnapshotError):
+            self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
 
         # Apply tooltips
         self._apply_tooltips()
@@ -813,6 +822,8 @@ class EditorDock(BaseDock):
         signature = self._file_disk_signature(file_path)
         setattr(tab, '_clarify_disk_path', file_path)
         setattr(tab, '_clarify_disk_signature', signature)
+        setattr(tab, '_clarify_recovery_source_signature',
+                self.recovery_store.source_signature(file_path))
         self._set_tab_external_state(tab, "clean" if signature is not None else "missing")
         self._refresh_external_file_watchers()
 
@@ -860,7 +871,8 @@ class EditorDock(BaseDock):
 
     def _refresh_external_file_watchers(self) -> None:
         """Watch open files and their parent folders without scanning folder trees."""
-        if not hasattr(self, '_file_watcher') or not hasattr(self, 'tab_widget'):
+        if (self._recovery_suspended or not hasattr(self, '_file_watcher')
+                or not hasattr(self, 'tab_widget')):
             return
 
         desired_files: set[str] = set()
@@ -896,11 +908,15 @@ class EditorDock(BaseDock):
 
     def _on_watched_file_changed(self, file_path: str) -> None:
         """Handle QFileSystemWatcher notifications for file content changes."""
+        if self._recovery_suspended:
+            return
         self._check_external_state_for_path(file_path)
         self._refresh_external_file_watchers()
 
     def _on_watched_directory_changed(self, directory_path: str) -> None:
         """Handle parent-folder notifications such as file removal or rename."""
+        if self._recovery_suspended:
+            return
         normalized_dir = self._normalized_file_path(directory_path)
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
@@ -1098,11 +1114,8 @@ class EditorDock(BaseDock):
 
         if hasattr(tab, 'modified_changed'):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
-            tab.modified_changed.connect(
-                lambda modified=False, t=tab: self._on_tab_recovery_state_changed(
-                    t, modified
-                )
-            )
+        if hasattr(tab, 'editor'):
+            tab.editor.textChanged.connect(self._recovery_lifecycle.schedule)
         if hasattr(tab, 'edit_only_changed'):
             tab.edit_only_changed.connect(lambda _enabled=False, t=tab: self._on_tab_mode_changed(t))
         if (
@@ -2872,7 +2885,7 @@ class EditorDock(BaseDock):
                     self.tab_widget.setCurrentIndex(index)
                     self._save_file_as()
                     # Check if actually saved (file_path set)
-                    if not tab.file_path:
+                    if not tab.file_path or tab.is_modified:
                         return  # User cancelled save, don't close
                 elif clicked == btn_clipboard:
                     # Copy to clipboard
@@ -2896,6 +2909,8 @@ class EditorDock(BaseDock):
                     if not tab.file_path:
                         self.tab_widget.setCurrentIndex(index)
                         self._save_file_as()
+                        if not tab.file_path or tab.is_modified:
+                            return
                     else:
                         # Handle different tab types
                         if isinstance(tab, JsonEditorTab):
@@ -2908,9 +2923,13 @@ class EditorDock(BaseDock):
                 elif reply == QMessageBox.Cancel:
                     return
 
+        if not self._discard_recovery_for_tab(tab):
+            return
         self._clear_tab_disk_state(tab, refresh_watchers=False)
-        self._discard_recovery_for_tab(tab)
+        for timer in tab.findChildren(QTimer):
+            timer.stop()
         self.tab_widget.removeTab(index)
+        tab.deleteLater()
         self._refresh_external_file_watchers()
         self.lbl_status.setText(f"Closed: {tab.get_tab_title()}")
         self._refresh_editor_menus()
@@ -2985,17 +3004,23 @@ class EditorDock(BaseDock):
     def _on_tab_recovery_state_changed(self, tab, modified: bool) -> None:
         """Schedule a snapshot for changed tabs or clear one after saving."""
         if modified:
-            self._recovery_timer.start()
+            if not self._recovery_suspended:
+                self._recovery_timer.start()
         else:
             self._discard_recovery_for_tab(tab)
 
-    def _checkpoint_unsaved_tabs(self) -> None:
-        """Persist all modified text buffers using bounded local snapshots."""
+    @Slot()
+    def _on_recovery_timeout(self) -> None:
+        if not self._recovery_suspended:
+            self._checkpoint_unsaved_tabs()
+
+    def _checkpoint_unsaved_tabs(self) -> bool:
+        """Persist buffers or saved-file references, without unbounded extraction."""
+        self._recovery_timer.stop()
         skipped = 0
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
-            if not hasattr(tab, "editor") or not getattr(tab, "is_modified", False):
-                self._discard_recovery_for_tab(tab)
+            if not hasattr(tab, "editor"):
                 continue
 
             snapshot_id = getattr(tab, "_clarify_recovery_id", "")
@@ -3010,34 +3035,85 @@ class EditorDock(BaseDock):
                 getattr(tab, "file_path", "") or ""
             )[1] or ".txt"
             try:
-                self.recovery_store.save(
-                    snapshot_id,
-                    title=display_name,
-                    content=tab.editor.toPlainText(),
-                    file_path=getattr(tab, "file_path", "") or "",
-                    extension=extension,
-                )
-            except (RecoverySnapshotError, OSError):
+                file_path = getattr(tab, "file_path", "") or ""
+                cursor = tab.editor.textCursor().position()
+                if file_path and not getattr(tab, "is_modified", False):
+                    self.recovery_store.save_reference(
+                        snapshot_id, title=display_name, file_path=file_path,
+                        extension=extension, cursor_position=cursor,
+                        source_signature=getattr(tab, '_clarify_recovery_source_signature', None),
+                    )
+                else:
+                    # Qt counts UTF-16 units. Reject huge documents before making a
+                    # Python string; the store then checks the exact UTF-8 size.
+                    if tab.editor.document().characterCount() - 1 > self.recovery_store.max_document_bytes:
+                        raise RecoverySnapshotError("Document exceeds bounded extraction limit")
+                    self.recovery_store.save(
+                        snapshot_id, title=display_name, content=tab.editor.toPlainText(),
+                        file_path=file_path or getattr(tab, '_clarify_recovery_source_path', ''),
+                        extension=extension, cursor_position=cursor,
+                    )
+            except (RecoverySnapshotError, OSError, UnicodeError):
                 skipped += 1
 
+        self._recovery_failures = skipped
         if skipped:
             self.lbl_status.setText(
                 tr("editor.status_recovery_skipped").format(count=skipped)
             )
+            logging.getLogger(__name__).warning("Editor recovery checkpoint failed for %d document(s)", skipped)
+        return skipped == 0
 
-    def _discard_recovery_for_tab(self, tab) -> None:
+    def _discard_recovery_for_tab(self, tab) -> bool:
         """Discard a tab's local recovery snapshot when no longer needed."""
         snapshot_id = getattr(tab, "_clarify_recovery_id", "") if tab else ""
         if snapshot_id:
-            self.recovery_store.discard(snapshot_id)
+            try:
+                self.recovery_store.discard(snapshot_id)
+                self._restored_recovery_ids.discard(snapshot_id)
+            except (OSError, RecoverySnapshotError):
+                self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
+                return False
+        return True
+
+    def _flush_recovery_on_close(self, *, final=False) -> bool:
+        """Normal close may be refused; final Qt shutdown can only report failure."""
+        success = self._checkpoint_unsaved_tabs()
+        if success or final:
+            self._recovery_suspended = True
+            for timer in self.findChildren(QTimer):
+                timer.stop()
+            watched = self._file_watcher.files() + self._file_watcher.directories()
+            if watched:
+                self._file_watcher.removePaths(watched)
+            self._watched_file_paths.clear()
+            self._watched_dir_paths.clear()
+            for index in range(self.tab_widget.count()):
+                tab = self.tab_widget.widget(index)
+                if hasattr(tab, 'set_auto_save'):
+                    tab.set_auto_save(False)
+        return success
+
+    def request_tab_close(self) -> bool:
+        """Closing the whole tool keeps buffers; individual tab discard does not."""
+        return self._flush_recovery_on_close()
+
+    def closeEvent(self, event):
+        if not self.request_tab_close():
+            event.ignore()
+            return
+        super().closeEvent(event)
 
     def _show_recovery_dialog(self) -> None:
         """Offer to recover or discard all currently available snapshots."""
-        snapshots = [
-            snapshot
-            for snapshot in self.recovery_store.list()
-            if snapshot.snapshot_id not in self._restored_recovery_ids
-        ]
+        try:
+            active_ids = {getattr(self.tab_widget.widget(index), '_clarify_recovery_id', '')
+                          for index in range(self.tab_widget.count())}
+            snapshots = [snapshot for snapshot in self.recovery_store.list()
+                         if snapshot.snapshot_id not in self._restored_recovery_ids | active_ids]
+        except (OSError, RecoverySnapshotError):
+            self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
+            return
         if not snapshots:
             QMessageBox.information(
                 self,
@@ -3061,28 +3137,44 @@ class EditorDock(BaseDock):
         dialog.exec_()
 
         if dialog.clickedButton() == discard_button:
-            self.recovery_store.discard_all()
+            try:
+                for snapshot in snapshots:
+                    self.recovery_store.discard(snapshot.snapshot_id)
+            except (OSError, RecoverySnapshotError):
+                self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
+                return
             self._restored_recovery_ids.clear()
             return
         if dialog.clickedButton() != recover_button:
             return
 
-        for snapshot in snapshots:
-            self._restore_recovery_snapshot(snapshot)
+        recovered = sum(self._restore_recovery_snapshot(snapshot) is not None for snapshot in snapshots)
+        if recovered != len(snapshots):
+            QMessageBox.warning(self, tr("editor.recovery_dialog_title"),
+                                tr("editor.recovery_unavailable").format(count=len(snapshots) - recovered))
         self.lbl_status.setText(
-            tr("editor.status_recovered_documents").format(count=len(snapshots))
+            tr("editor.status_recovered_documents").format(count=recovered)
         )
 
     def _restore_recovery_snapshot(self, snapshot):
         """Restore one snapshot as an unsaved tab, never over its source file."""
+        try:
+            content = (self.recovery_store.read_reference(snapshot)
+                       if snapshot.kind == "reference" else snapshot.content)
+        except (RecoverySnapshotError, OSError):
+            self.lbl_status.setText(tr("editor.recovery_unavailable").format(count=1))
+            return None
         display_name = tr("editor.recovered_name").format(name=snapshot.title)
         tab = self.load_generated_content(
-            snapshot.content,
+            content,
             display_name,
             extension=snapshot.extension,
         )
         setattr(tab, "_clarify_recovery_id", snapshot.snapshot_id)
         setattr(tab, "_clarify_recovery_source_path", snapshot.file_path)
+        cursor = tab.editor.textCursor()
+        cursor.setPosition(min(snapshot.cursor_position, tab.editor.document().characterCount() - 1))
+        tab.editor.setTextCursor(cursor)
         self._restored_recovery_ids.add(snapshot.snapshot_id)
         return tab
 
@@ -3100,7 +3192,10 @@ class EditorDock(BaseDock):
             return
         self.recovery_retention_hours = hours
         self.recovery_store.retention_hours = hours
-        self.recovery_store.prune()
+        try:
+            self.recovery_store.prune()
+        except (OSError, RecoverySnapshotError):
+            self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
         self.settings.setValue("recovery_retention_hours", hours)
 
     def _set_show_line_numbers_enabled(self, enabled: bool):

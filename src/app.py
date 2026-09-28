@@ -995,7 +995,8 @@ if _PYSIDE:
                 return
 
             # Check for unsaved changes (only for Editor)
-            if hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes):
+            if (not getattr(widget, 'handles_unsaved_tab_close', False)
+                    and hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes)):
                 if widget.has_unsaved_changes():
                     reply = QMessageBox.question(
                         self,
