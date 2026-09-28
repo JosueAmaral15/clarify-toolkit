@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - recovery no fechamento validado; proximo FE-PAR-05
+**Last Update**: 2026/09/28 - multi-query validado isoladamente; proximo FE-PAR-06
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -10,8 +10,8 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
 primeiro; validar codigo ja em andamento e impedir perda de documentos tem
-precedencia sobre adicionar outras features. Contagem atual: **33 abertos = 30
-anteriores + 3 FE-PAR**; os dois novos itens Editor foram validados.
+precedencia sobre adicionar outras features. Contagem atual: **32 abertos = 30
+anteriores + 2 FE-PAR**; os dois novos itens Editor foram validados.
 
 - [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
   inicial16 por24, incluindo reticencias (21 + `...`), tooltip com caminho completo,
@@ -52,8 +52,8 @@ anteriores + 3 FE-PAR**; os dois novos itens Editor foram validados.
   (334 distintos), com guardas; nao suite global nem certificacao nativa.
   [Evidencias e limites](reports/EDITOR_CLOSURE_RECOVERY_2026_09_28.md).
 
-Ordem finita: CE-HDR-01, CE-REC-01 e FE-PAR-04 concluidos; faltam
-FE-PAR-05/06/08. O requisito de recovery
+Ordem finita: CE-HDR-01, CE-REC-01 e FE-PAR-04/05 concluidos; faltam
+FE-PAR-06/08. O requisito de recovery
 complementa a entrega historica de13/09 abaixo, nao a declara inexistente.
 Nao expandir automaticamente aos30 legados nem prometer recuperar alteracoes
 feitas depois do ultimo checkpoint em caso de kill/queda abrupta de energia.
@@ -64,15 +64,19 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado FE-PAR: **5 concluidos, 3 pendentes**. Contagem geral na fila atual acima.
+Estado FE-PAR: **6 concluidos, 2 pendentes**. Contagem geral na fila atual acima.
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
 FE-PAR-04: [stop historico](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md) e
 [validacao apos retomada](reports/FILE_EXPLORER_CROSS_LINE_VALIDATION_2026_09_28.md).
 Stop anterior por RAM85% preservado no report; retomada com RAM43.1% manteve guardas
-e validou394 testes focados distintos. CE-REC-01 retomado e validado acima;
-proximo FE-PAR-05, com um unico dispatch apos o novo checkpoint.
+e validou394 testes focados distintos. CE-REC-01 retomado e validado acima.
+FE-PAR-05: [multi-query, validacao isolada e risco Qt](reports/FILE_EXPLORER_MULTI_QUERY_2026_09_28.md).
+Run combinado214 segfaultou; causa nativa nao confirmada. Modulos isolados passaram,
+sem provar resolucao desse crash. Continuar somente com isolamento por modulo GUI;
+se crash nativo isolado ocorrer, parar automacao e finalizar worker exato.
+Proximo FE-PAR-06, com um unico dispatch apos o novo checkpoint.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -115,9 +119,21 @@ proximo FE-PAR-05, com um unico dispatch apos o novo checkpoint.
   48 casos novos,313 Explorer,52 shared,22 Editor/flows e7 ThreadManager passaram
   (394 distintos); repeat84 cross-line/lifecycle, lint/AST/JSON e captura tambem.
   Regex/IO em curso nao tem deadline interno nem interrupcao a forca; nao suite global.
-- [ ] **FE-PAR-05 / SHOULD: consultas independentes por linha.** Conectar controle
+- [x] **FE-PAR-05 / SHOULD: consultas independentes por linha.** Conectar controle
   multi-query ao executor, manter separacao de cross-line, validar regex e limites;
   resultados deterministas e testes de consultas vazias, repetidas e sobrepostas.
+  Entregue na COM-a6d282af-6dff-466b-b6ac-0de83265ceb8: reuso de split_multi_query,
+  validacao strict antes da discovery e do worker, sem fallback regex silencioso.
+  Linhas vazias/comentarios ignorados, repeticoes deduplicadas, uma ocorrencia por
+  posicao, sobreposicoes de inicio diferente preservadas e ordem linha/coluna.
+  Text busca cada linha; Binary mantem linha1/offset de bytes e snippet seguro.
+  Limites64 KiB UTF-8,128 linhas ativas,4 MiB/arquivo,10000 matches/arquivo,
+  50000/operacao e50 erros; sem busca silenciosa de prefixo truncado.
+  Checkpoints cooperativos, parcial/cancelado sem cache, alvos exatos e ambas vistas;
+  Replace permanece rejeitado. Consumidores legados e CE recovery preservados.
+  70 novos casos;560 testes focados distintos passaram em processos isolados
+  seriais/offscreen com guardas. Run combinado214 teve segfault nao resolvido;
+  nao suite global nem certificacao de ausencia de falha nativa/leak.
 - [ ] **FE-PAR-06 / SHOULD: condicoes enriquecidas.** Whole Word por condicao,
   Starts/Ends With, scope e parametro; round-trip de presets e compatibilidade
   de condicoes anteriores. Reutilizar extracao de escopo existente.
@@ -137,8 +153,8 @@ proximo FE-PAR-05, com um unico dispatch apos o novo checkpoint.
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa: **FE-PAR-05 (SHOULD)**, consultas independentes por linha.
-Depois FE-PAR-06 e08. Nao iniciar backlog legado automaticamente.
+Proxima etapa: **FE-PAR-06 (SHOULD)**, condicoes enriquecidas.
+Depois FE-PAR-08. Nao iniciar backlog legado automaticamente.
 Continuacao anterior encerrada por pressao de memoria, sem dispatch seguinte.
 Retomada atual inclui apenas esta fila e os dois itens Editor explicitamente novos.
 Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,

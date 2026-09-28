@@ -16,6 +16,7 @@ import re
 import fnmatch
 import codecs
 import threading
+import heapq
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
 
@@ -23,6 +24,7 @@ from PySide6.QtCore import QObject, Signal  # pylint: disable=no-name-in-module 
 
 from .file_list_executor import FileInfo, FileListExecutor, ListResult
 from .search_replace import preserve_case_like
+from .multi_query import split_multi_query
 from ..utils.atomic_files import file_revision, write_existing_text_atomically
 from ..utils import read_text
 from ..utils.logger import get_logger
@@ -50,6 +52,10 @@ MAX_TARGET_TOTAL_BYTES = 1024 * 1024
 MAX_CROSS_LINE_FILE_BYTES = 4 * 1024 * 1024
 MAX_CROSS_LINE_QUERY_BYTES = 64 * 1024
 MAX_CROSS_LINE_MATCHES = 10000
+MAX_MULTI_QUERY_BYTES = 64 * 1024
+MAX_MULTI_QUERY_COUNT = 128
+MAX_MULTI_QUERY_FILE_BYTES = 4 * 1024 * 1024
+MAX_MULTI_QUERY_MATCHES = 10000
 
 
 def normalize_target_paths(paths):
@@ -360,14 +366,25 @@ class UnifiedFileExplorerExecutor(QObject):
         filters = dict(filters or {})
         candidate_paths = filters.get("candidate_paths")
         cross_line = bool(search_options.get("cross_line", False))
+        multi_query = bool(search_options.get("multi_query", False))
+        bounded_search = cross_line or multi_query
+        query_patterns = None
         block_regex = None
         if cross_line:
             try:
                 block_regex = self._compile_cross_line_query(content_query, search_options)
-            except (ValueError, TypeError, re.error) as exc:
+            except (ValueError, TypeError, UnicodeError, re.error) as exc:
                 stats = FileListExecutor.calculate_statistics([])
                 stats.update(errors=[f"Invalid cross-line search: {exc}"], total_matches=0,
                              files_with_matches=0, cancelled=self._cancel, cross_line=True, partial=True)
+                return {"files": [], "stats": stats}
+        if multi_query:
+            try:
+                query_patterns = self._compile_multi_queries(content_query, search_options)
+            except (ValueError, TypeError, UnicodeError, re.error) as exc:
+                stats = FileListExecutor.calculate_statistics([])
+                stats.update(errors=[f"Invalid multi-query search: {exc}"], total_matches=0,
+                             files_with_matches=0, cancelled=self._cancel, multi_query=True, partial=True)
                 return {"files": [], "stats": stats}
 
         # Step 1: List files
@@ -443,7 +460,7 @@ class UnifiedFileExplorerExecutor(QObject):
         for idx, file_info in enumerate(files_to_search, 1):
             if not self.checkpoint():
                 break
-            if cross_line and len(condition_errors) >= MAX_OPERATION_ERRORS:
+            if bounded_search and len(condition_errors) >= MAX_OPERATION_ERRORS:
                 condition_errors[-1] += "; error limit reached; remaining files were not searched"
                 break
 
@@ -455,7 +472,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 )
                 logger.warning(warning_msg, extra={"total_matches": total_match_count, "files_processed": idx})
                 self.error.emit(warning_msg)
-                if cross_line:
+                if bounded_search:
                     condition_errors.append(warning_msg)
                     match_limit_reached = True
                 break
@@ -469,8 +486,8 @@ class UnifiedFileExplorerExecutor(QObject):
 
             try:
                 # If no content query, just list matching files
-                if cross_line and not stat.S_ISREG(os.stat(file_info.path).st_mode):
-                    raise ValueError("Cross-line search requires a regular file")
+                if bounded_search and not stat.S_ISREG(os.stat(file_info.path).st_mode):
+                    raise ValueError("Block/multi-query search requires a regular file")
                 condition_cache = {}
                 if not self._matches_condition_objects(
                     file_info.path, condition_objects, condition_logic, condition_cache
@@ -487,7 +504,25 @@ class UnifiedFileExplorerExecutor(QObject):
                     content_scope_skipped += 1
                     continue
 
-                if file_kind == CONTENT_SCOPE_BINARY:
+                if multi_query:
+                    binary = file_kind == CONTENT_SCOPE_BINARY
+                    if binary:
+                        binary_files_searched += 1
+                    else:
+                        text_files_searched += 1
+                    data = condition_cache.get("text") if not binary else None
+                    if data is None:
+                        data = self._read_multi_query_content(file_info.path, binary)
+                    if data is None:
+                        break
+                    matches, limited = self._search_multi_queries(
+                        data, query_patterns[1 if binary else 0], binary,
+                        min(MAX_MULTI_QUERY_MATCHES, MAX_TOTAL_MATCHES - total_match_count),
+                    )
+                    if limited:
+                        condition_errors.append(f"Multi-query match limit reached for {file_info.path}; results are partial")
+                        match_limit_reached = True
+                elif file_kind == CONTENT_SCOPE_BINARY:
                     binary_files_searched += 1
                     matches = self._search_in_binary_file(file_info.path, content_query, search_options)
                 else:
@@ -528,6 +563,10 @@ class UnifiedFileExplorerExecutor(QObject):
         stats["cancelled"] = self._cancel
         if cross_line:
             stats.update(cross_line=True, partial=bool(condition_errors or self._cancel),
+                         match_limit_reached=match_limit_reached)
+        if multi_query:
+            stats.update(multi_query=True, partial=bool(condition_errors or self._cancel),
+                         query_count=len(query_patterns[0] or query_patterns[1]),
                          match_limit_reached=match_limit_reached)
         if candidate_paths is not None:
             stats["incremental_universe"] = True
@@ -801,6 +840,104 @@ class UnifiedFileExplorerExecutor(QObject):
         if content_scope == CONTENT_SCOPE_BOTH:
             return True
         return file_kind == content_scope
+
+    @staticmethod
+    def _compile_multi_queries(query, options):
+        """Reuse legacy line syntax, but reject invalid patterns before traversal."""
+        if not isinstance(query, str) or not query:
+            raise ValueError("At least one nonempty query is required")
+        if len(query) > MAX_MULTI_QUERY_BYTES or len(query.encode("utf-8")) > MAX_MULTI_QUERY_BYTES:
+            raise ValueError("Multi-query input exceeds the 64 KiB limit")
+        if options.get("cross_line"):
+            raise ValueError("Multi-query and cross-line block modes cannot be combined")
+        scope = options.get("content_scope", CONTENT_SCOPE_TEXT)
+        if scope not in (CONTENT_SCOPE_TEXT, CONTENT_SCOPE_BINARY, CONTENT_SCOPE_BOTH):
+            raise ValueError("Invalid multi-query content scope")
+        queries = split_multi_query(query.replace("\r\n", "\n").replace("\r", "\n"))
+        if not queries or len(queries) > MAX_MULTI_QUERY_COUNT:
+            raise ValueError("Between 1 and 128 nonempty/non-comment query lines are required")
+        queries = list(dict.fromkeys(queries))
+        flags = 0 if options.get("case_sensitive") else re.IGNORECASE
+        compiled = []
+        for binary in (False, True):
+            patterns = []
+            if scope != (CONTENT_SCOPE_TEXT if binary else CONTENT_SCOPE_BINARY):
+                for number, raw in enumerate(queries, 1):
+                    pattern = raw.encode("utf-8") if binary else raw
+                    if not options.get("regex"):
+                        pattern = re.escape(pattern)
+                    if options.get("whole_word"):
+                        pattern = ((rb"\b(?:" + pattern + rb")\b") if binary
+                                   else (r"\b(?:" + pattern + r")\b"))
+                    try:
+                        patterns.append(re.compile(pattern, flags))
+                    except re.error as exc:
+                        raise ValueError(f"Query {number} ({'Binary' if binary else 'Text'}): {exc}") from exc
+            compiled.append(patterns)
+        return compiled
+
+    def _read_multi_query_content(self, path, binary):
+        """Bound file bytes and growth, including binary inputs and cancellation."""
+        flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
+        fd = os.open(path, flags)
+        with os.fdopen(fd, "rb") as source:
+            info = os.fstat(source.fileno())
+            if not stat.S_ISREG(info.st_mode):
+                raise ValueError("Multi-query search requires a regular file")
+            if info.st_size > MAX_MULTI_QUERY_FILE_BYTES:
+                raise ValueError("Multi-query file exceeds the 4 MiB limit; file was not searched")
+            raw = bytearray()
+            while self.checkpoint():
+                chunk = source.read(min(65536, MAX_MULTI_QUERY_FILE_BYTES + 1 - len(raw)))
+                if not chunk:
+                    if binary:
+                        return bytes(raw)
+                    if b"\x00" in raw:
+                        raise ValueError("Multi-query Text mode does not support binary content")
+                    return raw.decode("utf-8")
+                raw.extend(chunk)
+                if len(raw) > MAX_MULTI_QUERY_FILE_BYTES:
+                    raise ValueError("Multi-query file exceeds the 4 MiB limit; file was not searched")
+        return None
+
+    def _search_multi_queries(self, data, patterns, binary, match_budget):
+        """Merge regex iterators by position; retain only one match per location."""
+        if len(data) > MAX_MULTI_QUERY_FILE_BYTES:
+            raise ValueError("Multi-query file exceeds the 4 MiB limit; file was not searched")
+        size = len(data) if binary else len(data.encode("utf-8"))
+        if size > MAX_MULTI_QUERY_FILE_BYTES:
+            raise ValueError("Multi-query file exceeds the 4 MiB limit; file was not searched")
+        if not binary and "\x00" in data:
+            raise ValueError("Multi-query Text mode does not support binary content")
+        matches = []
+        # Binary offsets follow the existing binary view contract; text patterns
+        # run on individual lines so escaped newlines cannot become block queries.
+        lines = [data] if binary else data.splitlines()
+        for line_number, line in enumerate(lines, 1):
+            heap = []
+            for index, pattern in enumerate(patterns):
+                if not self.checkpoint():
+                    return matches, False
+                iterator = pattern.finditer(line)
+                match = next(iterator, None)
+                if match is not None:
+                    heapq.heappush(heap, (match.start(), index, match, iterator))
+            last_position = None
+            while heap:
+                if not self.checkpoint():
+                    return matches, False
+                position, index, match, iterator = heapq.heappop(heap)
+                if position != last_position:
+                    if len(matches) >= match_budget:
+                        return matches, True
+                    snippet = (self._format_binary_snippet(line, position, match.end(), position) if binary
+                               else line[max(0, position - 60):max(0, position - 60) + MAX_SNIPPET_LENGTH])
+                    matches.append(SearchMatch(line=line_number, col=position, snippet=snippet))
+                    last_position = position
+                following = next(iterator, None)
+                if following is not None:
+                    heapq.heappush(heap, (following.start(), index, following, iterator))
+        return matches, False
 
     @staticmethod
     def _compile_cross_line_query(query, options):

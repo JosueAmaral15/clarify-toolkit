@@ -759,6 +759,7 @@
     "file_list.placeholder_directory": "Diretório para listar...",
     "file_explorer.target_label": "Alvo:",
     "search.chk_multi_query": "Multi-query",
+    "search.tooltip_independent_queries": "Consultas independentes, uma por linha. Linhas vazias e comentários # ignorados. Entrada: 64 KiB, 128 linhas ativas, 4 MiB/arquivo. Texto busca por linha; Binary usa offsets de bytes. Resultados na mesma posição são combinados. Substituição não suportada.",
     "search.chk_cross_line": "Bloco entre linhas",
     "search.tooltip_cross_line": "Buscar um bloco entre quebras de linha (somente Texto/ASCII). Regex usa ancoras multiline e dot-all. Limites: 4 MiB/arquivo, 64 KiB/consulta, 10000 matches/arquivo. Nao combina com multi-query.",
     "file_explorer.target_folder": "Pasta",

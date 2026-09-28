@@ -2972,3 +2972,45 @@ Plano imediato:
 - Inicio nao confirma entrega/processamento; nunca retry por incerteza. Retomada
   verifica d67a7d8+journal e criaCOMnova. Restam FE05/06/08 (3 fila,33globais).
   Fila legada30 excluida; finishworker ao completar ou sem caminho seguro.
+
+## 2026-09-28 - Pre-acao - FE-PAR-05
+
+- Marcador FE05 recebido confirma processamento, sem reenvio. Checkpointd67a7d8
+  e journal4263720 verificados; novaCOM-a6d282af-6dff-466b-b6ac-0de83265ceb8.
+- Hook/monitor active; doctor apenas observerfailed conhecido, sem restart. RAM44.2%.
+  example.py hash058053d...fcee inalterado; preservar CE recovery/escopos/lifecycle.
+- Reusar split_multi_query existente sem alterar consumidores legados. Consultas
+  independentes, regex strict por linha antes da discovery, Text/Binary/Both
+  explicitamente avaliados, budgets e dedup por posicao com ordem deterministica.
+- Testes seriais isolados .venv/offscreen,85%/600MiB/180s/pytest20s, sem full
+  MainWindow/providers/dados reais. Commit local; depoisFE06/08, nunca30legados.
+
+## 2026-09-28 - Pos-acao - FE-PAR-05
+
+- Multi-query conectado ao executor reutiliza split_multi_query sem alterar
+  consumidores antigos. Validacao regex strict por consulta antes da discovery/
+  worker; Text por linha, Binary/Both com offsets/snippets de bytes existentes.
+  Vazias/comentarios ignorados, repetidas deduplicadas, mesmo inicio combinado,
+  sobreposicoes de inicios distintos mantidas em ordem deterministica.
+- Limites64KiB UTF-8/128 linhas ativas/4MiB arquivo/10000 matches por arquivo/
+  50000 total/50 erros. Reader limitado detecta crescimento/UTF-8/NUL; sem prefixo
+  truncado silencioso. Heap de iteradores limitado e checkpoints cooperativos.
+  Pausa/cancel/close, alvos exatos, ambas vistas e identidade/cache preservados;
+  parcial/erro/cancel nao gera cache. Replace rejeitado, CE recovery inalterado.
+- Run combinado214 teve segfault nativo no teste cross-line pause/resume,
+  exit139/210.7MiB, sem guard acionado. Causa NAO confirmada nem corrigida;
+  isolamento posterior nao prova resolucao. Se falha nativa isolada reaparecer,
+  parar continuacoes e finish apenas worker exato. Nenhum user process encerrado.
+- 560 testes focados distintos passaram em processos seriais separados por modulo:
+  371 Explorer(70 novos/48 cross/69 scopes/36 lifecycle/148 anteriores),10 helper
+  legado e179 Editor(store39/close53/layout20/dock67,excluidos2 converter_switch).
+  Multi70 final8.91s/210.3MiB, cross48 final5.38s/209.5MiB, maxpytest241.9MiB.
+  Repeticoes nao contadas; suposicoes incorretas de APIs dos testes novos corrigidas.
+- Pylint-E3modulos passou391.2MiB, AST4Python/JSON2/diffcheck passaram. Guardas
+  mantidas85%/600MiB/180s/pytest20s incluindo fixtures; RAM43.1%. Nao suiteglobal,
+  UX nativa, leak-free ou liberacao CI/security. example.py hash058053d...fcee
+  preservado/excluido. Sem live providers/documentos reais/fullMainWindow.
+- Monitor active/hook recente, doctor apenas observerfailed conhecido nao
+  reiniciado. Commit local naCOM desta etapa; sem push/promocao. TASKS atualizado:
+  restamFE06/08 (2 fila,32globais com30legados fora). Uma unica continuacao nativa
+  exata FE06 apos checkpoint; nunca reenviar dispatch incerto.

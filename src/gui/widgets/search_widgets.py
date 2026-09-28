@@ -187,7 +187,7 @@ class SearchOptionsPanel(QWidget):
         matching_row.addStretch()
 
         self.chk_multi_query = QCheckBox(tr("search.chk_multi_query", "Multi-query"))
-        self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
+        self.chk_multi_query.setToolTip(tr("search.tooltip_independent_queries"))
         self.chk_cross_line = QCheckBox(tr("search.chk_cross_line", "Cross-line Block"))
         self.chk_cross_line.setToolTip(tr("search.tooltip_cross_line"))
         self.chk_multi_query.toggled.connect(self._on_multi_query_toggled)
@@ -263,7 +263,7 @@ class SearchOptionsPanel(QWidget):
         self.chk_regex.setText(tr("search.chk_regex"))
         self.chk_regex.setToolTip(tr("search.tooltip_regex"))
         self.chk_multi_query.setText(tr("search.chk_multi_query", "Multi-query"))
-        self.chk_multi_query.setToolTip(tr("search.tooltip_multi_line"))
+        self.chk_multi_query.setToolTip(tr("search.tooltip_independent_queries"))
         self.chk_cross_line.setText(tr("search.chk_cross_line", "Cross-line Block"))
         self.chk_cross_line.setToolTip(tr("search.tooltip_cross_line"))
 

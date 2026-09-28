@@ -1086,16 +1086,16 @@ class FileExplorerDock(BaseDock):
         - If both are empty/default: Browse mode (list all files)
         """
         filename_pattern = self.filename_panel.get_pattern()
-        content_query = self.content_panel.get_query()
+        has_content_query = self.content_panel.ed_query.document().characterCount() > 1
 
         # Auto-detect mode based on filters
-        has_search_criteria = bool(filename_pattern) or bool(content_query)
+        has_search_criteria = bool(filename_pattern) or has_content_query
 
         if has_search_criteria:
             # Search mode: user provided filters
             logger.info(
                 "Smart mode: SEARCH (filters detected)",
-                extra={"filename_pattern": filename_pattern, "content_query": bool(content_query)},
+                extra={"filename_pattern": filename_pattern, "content_query": has_content_query},
             )
         else:
             # Browse mode: no filters, list all files
@@ -1159,8 +1159,15 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # Get search parameters from new widgets
         filename_pattern = self.filename_panel.get_pattern()
-        content_query = self.content_panel.get_query()
         search_options = self._get_search_options()
+        if search_options.get("multi_query"):
+            from src.core.file_explorer_executor import MAX_MULTI_QUERY_BYTES
+            if self.content_panel.ed_query.document().characterCount() - 1 > MAX_MULTI_QUERY_BYTES:
+                self._invalidate_target_cache()
+                QMessageBox.critical(self, tr("file_explorer.error_title"),
+                                     "Multi-query input exceeds the 64 KiB limit")
+                return
+        content_query = self.content_panel.get_query()
         conditions = self.conditions_grid.get_conditions()
         logic_operator = self.conditions_grid.get_logic_operator()
 
@@ -1179,7 +1186,14 @@ class FileExplorerDock(BaseDock):
                 )
                 return
 
-        if content_query and search_options.get("regex", False):
+        if search_options.get("multi_query"):
+            try:
+                self.executor._compile_multi_queries(content_query, search_options)
+            except (ValueError, TypeError, UnicodeError, re.error) as exc:
+                self._invalidate_target_cache()
+                QMessageBox.critical(self, tr("file_explorer.error_title"), str(exc))
+                return
+        elif content_query and search_options.get("regex", False):
             try:
                 flags = 0 if search_options.get("case_sensitive", False) else re.IGNORECASE
                 re.compile(content_query, flags)

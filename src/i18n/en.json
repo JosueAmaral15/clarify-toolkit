@@ -740,6 +740,7 @@
   "file_list.placeholder_directory": "Directory to list...",
   "file_explorer.target_label": "Target:",
   "search.chk_multi_query": "Multi-query",
+  "search.tooltip_independent_queries": "Independent queries, one per line. Blank lines and # comments ignored. 64 KiB input, 128 active lines, 4 MiB/file. Text matches stay on individual lines; Binary uses byte offsets. Same-position matches are combined. Replacement is not supported.",
   "search.chk_cross_line": "Cross-line Block",
   "search.tooltip_cross_line": "Match one block across line breaks (Text/ASCII only). Regex uses multiline anchors and dot-all. Limits: 4 MiB/file, 64 KiB/query, 10000 matches/file. Cannot be combined with multi-query.",
   "file_explorer.target_folder": "Folder",
