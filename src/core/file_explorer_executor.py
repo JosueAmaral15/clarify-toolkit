@@ -14,6 +14,7 @@ import os
 import stat
 import re
 import fnmatch
+import threading
 from typing import Dict, List, Tuple, Any, Optional
 from dataclasses import dataclass
 
@@ -98,23 +99,45 @@ class UnifiedFileExplorerExecutor(QObject):
         super().__init__()
         self._cancel = False
         self._paused = False
+        self._control = threading.Condition()
+
+    def prepare_operation(self):
+        """Reset controls before dispatch, never after the user can cancel a worker."""
+        with self._control:
+            self._cancel = False
+            self._paused = False
+            self._control.notify_all()
+
+    def checkpoint(self):
+        """Wait without spinning when paused; cancellation always wakes waiters."""
+        with self._control:
+            while self._paused and not self._cancel:
+                self._control.wait()
+            return not self._cancel
 
     def cancel(self):
         """Cancel the operation."""
-        self._cancel = True
+        with self._control:
+            self._cancel = True
+            self._paused = False
+            self._control.notify_all()
 
     def pause(self):
         """Pause processing."""
-        self._paused = True
+        with self._control:
+            if not self._cancel:
+                self._paused = True
 
     def resume(self):
         """Resume processing."""
-        self._paused = False
+        with self._control:
+            self._paused = False
+            self._control.notify_all()
 
     # pylint: disable=too-many-positional-arguments  # Complex browse parameters required
     def execute_browse(
         self, directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None,
-        conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND"
+        conditions: List[Dict[str, Any]] = None, logic_operator: str = "AND", *, prepared: bool = False
     ) -> Dict[str, Any]:
         """
         Execute browse operation (list files).
@@ -130,7 +153,8 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with files and statistics
         """
-        self._cancel = False
+        if not prepared:
+            self.prepare_operation()
 
         logger.debug(
             f"EXECUTOR execute_browse() | ENTER - "
@@ -139,7 +163,7 @@ class UnifiedFileExplorerExecutor(QObject):
         filters = filters or {}
 
         # Step 1: Get base file list
-        result = FileListExecutor.list_files(directory, show_hidden, recursive, filters)
+        result = FileListExecutor.list_files(directory, show_hidden, recursive, filters, checkpoint=self.checkpoint)
 
         file_list = result.files
 
@@ -160,7 +184,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 return self._condition_failure(str(exc))
             filtered = []
             for file_info in file_list:
-                if self._cancel:
+                if not self.checkpoint():
                     break
                 try:
                     if self._matches_condition_objects(file_info.path, objects, logic):
@@ -191,6 +215,8 @@ class UnifiedFileExplorerExecutor(QObject):
 
             filtered_files = []
             for file_info in file_list:
+                if not self.checkpoint():
+                    break
                 file_path = file_info.path
                 file_name = file_info.name
 
@@ -224,6 +250,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         stats = FileListExecutor.calculate_statistics(file_list)
         stats["errors"] = (result.errors + condition_errors)[:MAX_OPERATION_ERRORS]
+        stats["cancelled"] = self._cancel
 
         return {"files": search_results, "stats": stats}
 
@@ -239,6 +266,7 @@ class UnifiedFileExplorerExecutor(QObject):
         filters: Dict[str, Any] = None,
         conditions: List[Dict[str, Any]] = None,
         logic_operator: str = "AND",
+        *, prepared: bool = False,
     ) -> Dict[str, Any]:
         """
         Execute search operation (filename and/or content).
@@ -260,7 +288,8 @@ class UnifiedFileExplorerExecutor(QObject):
 
         # BUGFIX: Reset cancel flag at start of each search
         # The executor instance is reused, so _cancel persists between searches
-        self._cancel = False
+        if not prepared:
+            self.prepare_operation()
 
         search_options = search_options or {}
         filters = dict(filters or {})
@@ -274,7 +303,7 @@ class UnifiedFileExplorerExecutor(QObject):
         if candidate_paths is not None:
             browse_result = self._execute_browse_from_candidates(directory, candidate_paths, show_hidden, filters)
         else:
-            browse_result = self.execute_browse(directory, show_hidden, recursive, filters)
+            browse_result = self.execute_browse(directory, show_hidden, recursive, filters, prepared=True)
 
         files_to_search = [sr.file_info for sr in browse_result["files"]]
         logger.debug(
@@ -336,7 +365,7 @@ class UnifiedFileExplorerExecutor(QObject):
         content_scope_skipped = 0
 
         for idx, file_info in enumerate(files_to_search, 1):
-            if self._cancel:
+            if not self.checkpoint():
                 break
 
             # Check global match limit (v2.9.120 - Memory optimization)
@@ -396,6 +425,7 @@ class UnifiedFileExplorerExecutor(QObject):
         stats["total_matches"] = sum(sr.match_count for sr in search_results)
         stats["files_with_matches"] = sum(1 for sr in search_results if sr.match_count > 0)
         stats["errors"] = condition_errors
+        stats["cancelled"] = self._cancel
         if candidate_paths is not None:
             stats["incremental_universe"] = True
             stats["candidate_paths_count"] = len(candidate_paths)
@@ -439,6 +469,8 @@ class UnifiedFileExplorerExecutor(QObject):
         seen_paths = set()
 
         for raw_path in candidate_paths:
+            if not self.checkpoint():
+                break
             try:
                 path = os.path.abspath(str(raw_path))
                 if path in seen_paths:
@@ -531,6 +563,7 @@ class UnifiedFileExplorerExecutor(QObject):
         preserve_case: bool = False,
         replace_all: bool = False,
         search_options: Dict[str, bool] = None,
+        *, prepared: bool = False,
     ) -> Dict[str, Any]:
         """
         Execute replace operation.
@@ -546,7 +579,8 @@ class UnifiedFileExplorerExecutor(QObject):
         Returns:
             Dict with replacement results
         """
-        self._cancel = False
+        if not prepared:
+            self.prepare_operation()
         search_options = search_options or {}
         replaced_count = 0
         files_modified = 0
@@ -581,7 +615,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         seen = set()
         for search_result in files:
-            if self._cancel:
+            if not self.checkpoint():
                 break
             file_path = os.path.abspath(search_result.file_info.path)
             if file_path in seen:
@@ -605,7 +639,7 @@ class UnifiedFileExplorerExecutor(QObject):
                     content, search_query, replacement, preserve_case, replace_all, search_options
                 )
                 if count > 0:
-                    if self._cancel:
+                    if not self.checkpoint():
                         break
                     write_existing_text_atomically(file_path, new_content, file_revision(info))
                     replaced_count += count
@@ -693,11 +727,13 @@ class UnifiedFileExplorerExecutor(QObject):
             MAX_MATCHES_PER_FILE = 10000  # pylint: disable=invalid-name  # Constant
 
             for line_num, line_text in enumerate(lines, 1):
-                if self._cancel:  # Allow cancellation
+                if not self.checkpoint():
                     break
 
                 try:
                     for match in regex.finditer(line_text):
+                        if not self.checkpoint():
+                            break
                         if match_count >= MAX_MATCHES_PER_FILE:
                             logger.warning("Max matches reached: %d", MAX_MATCHES_PER_FILE)
                             self.error.emit(f"Too many matches (>{MAX_MATCHES_PER_FILE}). Results truncated.")
@@ -775,7 +811,7 @@ class UnifiedFileExplorerExecutor(QObject):
 
         with open(path, "rb") as fh:
             while True:
-                if self._cancel:
+                if not self.checkpoint():
                     break
 
                 chunk = fh.read(BINARY_SEARCH_CHUNK_SIZE)
@@ -787,7 +823,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 new_data_start = len(carry)
 
                 for match in regex.finditer(window):
-                    if self._cancel:
+                    if not self.checkpoint():
                         break
                     if match.end() <= new_data_start:
                         continue
@@ -839,7 +875,7 @@ class UnifiedFileExplorerExecutor(QObject):
         count = 0
         output_bytes = 0
         for match in regex.finditer(text):
-            if self._cancel:
+            if not self.checkpoint():
                 return text, 0
             if count >= MAX_REPLACE_MATCHES:
                 raise ValueError("Replacement exceeds the 10000 matches per file limit")
@@ -924,6 +960,8 @@ class UnifiedFileExplorerExecutor(QObject):
         cache = content_cache if content_cache is not None else {}
 
         def evaluate(condition):
+            if not self.checkpoint():
+                return False
             if condition.field != "content":
                 return condition.matches(path)
             if not os.path.isfile(path):

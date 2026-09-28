@@ -184,10 +184,17 @@ class WindowSettings:
                 )
 
                 if reply == QMessageBox.No:
+                    thread_manager.resume_registration()
                     event.ignore()
                     return
 
-                # Force cleanup
+                from ..ui import FeatureType
+
+                if thread_manager.is_feature_running(FeatureType.FILE_EXPLORER):
+                    thread_manager.resume_registration()
+                    event.ignore()
+                    return
+                # Force cleanup applies only after protected writers have stopped.
                 thread_manager.force_cleanup()
 
         # Normal exit confirmation
@@ -215,6 +222,7 @@ class WindowSettings:
                 WindowSettings.save_geometry(main_window)
                 event.accept()
             else:
+                thread_manager.resume_registration()
                 event.ignore()
         else:
             WindowSettings.save_geometry(main_window)

@@ -42,13 +42,14 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QProgressDialog,
+    QProgressBar,
     QSplitter,
     QScrollArea,
     QStackedWidget,
     QFrame,
     QMainWindow,
 )
-from PySide6.QtCore import Qt, QSettings, QThread
+from PySide6.QtCore import Qt, QSettings, QThread, QEvent, QTimer
 from PySide6.QtGui import QAction, QShortcut, QKeySequence
 
 from src.core.file_explorer_executor import UnifiedFileExplorerExecutor
@@ -139,10 +140,11 @@ class FileExplorerDock(BaseDock):
 
         # Initialize unified executor (v2.9.116)
         self.executor = UnifiedFileExplorerExecutor()
-        self.executor.progress.connect(self._on_progress)
-        self.executor.progress_detailed.connect(self._on_progress_detailed)
-        self.executor.done.connect(self._on_execution_done)
-        self.executor.error.connect(self._on_execution_error)
+        self._operation_generation = 0
+        self._active_operation = False
+        self._discard_callbacks = False
+        self._close_action = None
+        self._operation_receiver = None
 
         # Progress dialog for long operations
         self.progress_dialog = None
@@ -157,6 +159,9 @@ class FileExplorerDock(BaseDock):
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
         super().__init__("File Explorer", parent)
+        self.installEventFilter(self)
+        if parent is not None:
+            parent.window().installEventFilter(self)
 
         # Connect to language change signal for dynamic translation update
         from src.i18n.translator import get_translator
@@ -1133,40 +1138,11 @@ class FileExplorerDock(BaseDock):
                 "start_time": time.time()
             }
 
-            # Create thread and worker
-            logger.debug("Creating worker thread...")
-            self._worker_thread = QThread(self)
-            self._worker = FileExplorerWorker(self.executor)
-            self._worker.moveToThread(self._worker_thread)
-            logger.debug(f"Worker moved to thread: {self._worker_thread}")
-
-            # Connect signals
-            self._worker.progress.connect(self._on_progress)
-            self._worker.progress_detailed.connect(self._on_progress_detailed)
-            self._worker.batch_ready.connect(self._on_batch_ready)  # NEW v2.9.123
-            self._worker.finished.connect(self._on_search_finished)
-            self._worker.error.connect(self._on_operation_error)
-            logger.debug("Signals connected")
-
-            # Start thread and execute search
-            # Capture worker in local variable to avoid None issues after cleanup
-            worker = self._worker
-            self._worker_thread.started.connect(
-                lambda: worker.execute_search(
-                    directory=directory,
-                    filename_pattern=filename_pattern,
-                    content_query=content_query,
-                    search_options=search_options,
-                    show_hidden=show_hidden,
-                    recursive=recursive,
-                    filters=filters,
-                    conditions=conditions,
-                    logic_operator=logic_operator
-                )
-            )
-            logger.debug("Starting thread...")
-            self._worker_thread.start()
-            logger.debug("Thread started, returning early")
+            self._launch_operation("search", dict(
+                directory=directory, filename_pattern=filename_pattern, content_query=content_query,
+                search_options=search_options, show_hidden=show_hidden, recursive=recursive,
+                filters=filters, conditions=conditions, logic_operator=logic_operator,
+            ))
 
             # Return early - results will be handled by _on_search_finished()
             return
@@ -1198,31 +1174,10 @@ class FileExplorerDock(BaseDock):
                 "start_time": time.time()
             }
 
-            # Create thread and worker
-            self._worker_thread = QThread(self)
-            self._worker = FileExplorerWorker(self.executor)
-            self._worker.moveToThread(self._worker_thread)
-
-            # Connect signals
-            self._worker.progress.connect(self._on_progress)
-            self._worker.progress_detailed.connect(self._on_progress_detailed)
-            self._worker.finished.connect(self._on_browse_finished)
-            self._worker.error.connect(self._on_operation_error)
-
-            # Start thread and execute browse
-            # Capture worker in local variable to avoid None issues after cleanup
-            worker = self._worker
-            self._worker_thread.started.connect(
-                lambda: worker.execute_browse(
-                    directory=directory,
-                    show_hidden=show_hidden,
-                    recursive=recursive,
-                    filters=filters,
-                    conditions=conditions,
-                    logic_operator=logic_operator
-                )
-            )
-            self._worker_thread.start()
+            self._launch_operation("browse", dict(
+                directory=directory, show_hidden=show_hidden, recursive=recursive,
+                filters=filters, conditions=conditions, logic_operator=logic_operator,
+            ))
 
             # Return early - results will be handled by _on_browse_finished()
             return
@@ -1585,6 +1540,10 @@ class FileExplorerDock(BaseDock):
 
     def accept(self):
         """Accept the parent dialog when running in dialog mode."""
+        if self._operation_running():
+            self._close_action = ("accept", self)
+            self._request_shutdown()
+            return
         self._dialog_result = QDialog.Accepted
         parent_dialog = self._parent_dialog()
         if parent_dialog is not None:
@@ -1594,6 +1553,10 @@ class FileExplorerDock(BaseDock):
 
     def reject(self):
         """Reject the parent dialog when running in dialog mode."""
+        if self._operation_running():
+            self._close_action = ("reject", self)
+            self._request_shutdown()
+            return
         self._dialog_result = QDialog.Rejected
         parent_dialog = self._parent_dialog()
         if parent_dialog is not None:
@@ -1639,7 +1602,129 @@ class FileExplorerDock(BaseDock):
 
     def _operation_running(self):
         thread = getattr(self, "_worker_thread", None)
-        return thread is not None and thread.isRunning()
+        return self._active_operation or (thread is not None and thread.isRunning())
+
+    def _launch_operation(self, kind, request):
+        from src.gui.panels.file_explorer_operation import ExplorerOperationReceiver
+        from src.ui import thread_manager, FeatureType
+
+        if self._operation_running():
+            return False
+        self._operation_generation += 1
+        self._operation_kind = kind
+        self._thread_id = f"file_explorer:{id(self)}:{self._operation_generation}"
+        self._cancel_requested = False
+        self._discard_callbacks = False
+        self._active_operation = True
+        self._worker_thread = QThread(self)
+        self._worker = FileExplorerWorker(self.executor)
+        self._worker.configure_operation(kind, **request)
+        receiver = ExplorerOperationReceiver(self, self._operation_generation)
+        self._operation_receiver = receiver
+        self._worker.progress.connect(receiver.progress)
+        self._worker.progress_detailed.connect(receiver.progress_detailed)
+        self._worker.batch_ready.connect(receiver.batch)
+        self._worker.diagnostic.connect(receiver.diagnostic)
+        self._worker.finished.connect(receiver.completed)
+        self._worker.error.connect(receiver.failed)
+        self._worker.settled.connect(self._worker_thread.quit, Qt.DirectConnection)
+        self._worker_thread.started.connect(self._worker.run_operation)
+        self._worker_thread.finished.connect(self._worker.deleteLater)
+        if not thread_manager.start_thread(
+            self._thread_id, self._worker_thread, self._worker, FeatureType.FILE_EXPLORER,
+            cancel_callback=self._worker.cancel, exclusive=False,
+        ):
+            self._worker_thread.finished.disconnect(self._worker.deleteLater)
+            self._worker.deleteLater()
+            self._cleanup_worker_thread()
+            self.results_status.setText("Cannot start while the application is shutting down")
+            return False
+        self._worker.moveToThread(self._worker_thread)
+        self._worker_thread.finished.connect(receiver.thread_finished)
+        self._ensure_progress_dialog()
+        self._worker_thread.start()
+        return True
+
+    def _finish_operation(self, generation, result, error):
+        if generation != self._operation_generation or not self._active_operation:
+            return
+        if self._worker_thread.isRunning():
+            QTimer.singleShot(10, self, lambda: self._finish_operation(generation, result, error))
+            return
+        discard = self._discard_callbacks
+        kind = self._operation_kind
+        action = self._close_action
+        self._close_action = None
+        self._close_progress_dialog()
+        self._cleanup_worker_thread()
+        if discard:
+            self._batch_processing_active = False
+            self.results_status.setText(tr("file_list.status_canceling", "Canceling...").rstrip(".") + " - stopped")
+        elif error or result is None:
+            self._on_operation_error(error or "Operation ended without a result")
+        else:
+            # Cancel remains meaningful until settlement, even if the result
+            # signal was already queued before the user's last click.
+            if self._cancel_requested:
+                result = dict(result)
+                if kind == "replace":
+                    result.update(success=False, cancelled=True)
+                    result["error"] = result.get("error") or "Operation cancelled"
+                else:
+                    result["files"] = []
+                    result["stats"] = dict(result.get("stats", {}), cancelled=True)
+                    if kind == "search":
+                        result["stats"].update(total_matches=0, files_with_matches=0)
+            getattr(self, f"_on_{kind}_finished")(result)
+        self._discard_callbacks = False
+        if action:
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            elif name in {"accept", "reject"}:
+                getattr(self, name)()
+            else:
+                target.close()
+
+    def _request_shutdown(self):
+        self._discard_callbacks = True
+        self._on_progress_canceled()
+
+    def request_tab_close(self):
+        if not self._operation_running():
+            return True
+        self._close_action = ("tab", self._main_window_ref)
+        self._request_shutdown()
+        return False
+
+    def closeEvent(self, event):
+        if self._operation_running():
+            self._close_action = ("close", self)
+            self._request_shutdown()
+            event.ignore()
+            return
+        super().closeEvent(event)
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.DeferredDelete and self._operation_running():
+            self._request_shutdown()
+            # Filtering DeferredDelete prevents Qt from posting deleteLater again.
+            # Keep the registered thread alive independently of its dying dock;
+            # Qt disconnects the dock-owned receiver during normal destruction.
+            thread = self._worker_thread
+            thread.setParent(None)
+            thread.finished.connect(thread.deleteLater)
+            if not thread.isRunning():
+                thread.deleteLater()
+            return False
+        if event.type() == QEvent.Close and self._operation_running():
+            self._close_action = ("close", watched)
+            self._request_shutdown()
+            event.ignore()
+            return True
+        return super().eventFilter(watched, event)
 
     def _on_replace_first(self):
         """Replace the first occurrence in each explicitly selected file."""
@@ -1681,32 +1766,17 @@ class FileExplorerDock(BaseDock):
                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
             return
 
-        from PySide6.QtCore import QThread
-        from src.gui.panels.file_explorer_worker import FileExplorerWorker
-
-        self._cancel_requested = False
         self._replace_all_requested = replace_all
-        self._worker_thread = QThread(self)
-        self._worker = FileExplorerWorker(self.executor)
-        self._worker.configure_replace(
+        self._launch_operation("replace", dict(
             files=files, search_text=query, replace_text=replacement,
             search_options=options, preserve_case=self.replace_panel.get_preserve_case(),
             replace_all=replace_all,
-        )
-        self._worker.moveToThread(self._worker_thread)
-        self._worker.progress.connect(self._on_progress)
-        self._worker.finished.connect(self._on_replace_finished)
-        self._worker.error.connect(self._on_operation_error)
-        self._worker_thread.started.connect(self._worker.run_replace)
-        self._worker_thread.finished.connect(self._worker.deleteLater)
-        self._ensure_progress_dialog()
-        self._worker_thread.start()
+        ))
 
     def _on_replace_finished(self, result):
         """Report partial results honestly; history contains counts, not file text."""
         if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+            self._close_progress_dialog()
         self._cleanup_worker_thread()
         modified = result.get("files_modified", 0)
         count = result.get("replacements_made", 0)
@@ -1806,19 +1876,40 @@ class FileExplorerDock(BaseDock):
         self.progress_dialog.setWindowTitle(tr("file_list.progress_title"))
         self.progress_dialog.setWindowModality(Qt.WindowModal)
         self.progress_dialog.setMinimumDuration(0)  # Show immediately
+        self.progress_dialog.setAutoClose(False)
+        self.progress_dialog.setAutoReset(False)
         self.progress_dialog.setFixedWidth(PROGRESS_DIALOG_WIDTH)
         self.progress_dialog.setSizeGripEnabled(False)
 
-        self._progress_label = QLabel(tr("file_list.progress_processing"), self.progress_dialog)
+        from src.gui.panels.file_explorer_operation import ExplorerProgressLabel
+
+        self._progress_label = ExplorerProgressLabel(tr("file_list.progress_processing"), self.progress_dialog)
         self._progress_label.setWordWrap(True)
         self._progress_label.setMaximumWidth(PROGRESS_DIALOG_LABEL_WIDTH)
         self._progress_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.progress_dialog.setLabel(self._progress_label)
+        self._progress_label.pause_requested.connect(self._on_pause_requested)
 
         self.progress_dialog.canceled.connect(self._on_progress_canceled)
         self.progress_dialog.show()  # Explicitly show
         self.progress_dialog.raise_()  # Bring to front
         logger.debug("Progress dialog created, shown, and raised")
+
+    def _close_progress_dialog(self):
+        if self.progress_dialog:
+            self.progress_dialog.blockSignals(True)
+            self.progress_dialog.close()
+            self.progress_dialog.deleteLater()
+            self.progress_dialog = None
+        self._progress_label = None
+
+    def _on_pause_requested(self, paused):
+        worker = getattr(self, "_worker", None)
+        if worker is None or self._cancel_requested:
+            return
+        worker.pause() if paused else worker.resume()
+        if self.progress_dialog:
+            self.progress_dialog.setLabelText(tr("status.paused") if paused else tr("file_list.progress_processing"))
 
     def _on_progress_canceled(self):
         """Cancel the active File Explorer operation from the progress dialog."""
@@ -1832,6 +1923,8 @@ class FileExplorerDock(BaseDock):
         if self.progress_dialog:
             self.progress_dialog.setLabelText(tr("file_list.status_canceling", "Canceling..."))
             self.progress_dialog.setCancelButtonText(tr("file_list.status_canceling", "Canceling..."))
+            if self._progress_label:
+                self._progress_label.pause_button.setEnabled(False)
 
     def _set_progress_dialog_message(
         self, message: str, current: Optional[int] = None, total: Optional[int] = None
@@ -1839,6 +1932,8 @@ class FileExplorerDock(BaseDock):
         """Update progress dialog label without exposing long paths in the modal."""
         self._ensure_progress_dialog()
         display_message = self._format_progress_message(message, current, total)
+        if self.executor._paused:
+            display_message = tr("status.paused") + "\n" + display_message
         self.progress_dialog.setLabelText(display_message)
 
         if self._progress_label:
@@ -1856,8 +1951,15 @@ class FileExplorerDock(BaseDock):
         """Handle detailed progress updates (v2.9.116)."""
         self._ensure_progress_dialog()
         percentage = int((current / total) * 100) if total > 0 else 0
-        self.progress_dialog.setValue(percentage)
+        self._set_progress_value(percentage)
         self._set_progress_dialog_message(message, current, total)
+
+    def _set_progress_value(self, value):
+        # Modal QProgressDialog.setValue() recursively processes queued callbacks.
+        # Updating its bar leaves delivery to the normal GUI event loop instead.
+        bar = self.progress_dialog.findChild(QProgressBar)
+        if bar is not None:
+            bar.setValue(value)
 
     def _on_batch_ready(self, batch: list, batch_num: int, total_batches: int):
         """
@@ -1908,11 +2010,14 @@ class FileExplorerDock(BaseDock):
         # Update progress dialog to show batch progress
         if self.progress_dialog:
             progress = int((batch_num / total_batches) * 100)
-            self.progress_dialog.setValue(progress)
-            self.progress_dialog.setLabelText(
+            self._set_progress_value(progress)
+            batch_message = (
                 f"Processing results: batch {batch_num}/{total_batches}\n"
                 f"({len(batch)} items in this batch)"
             )
+            if self.executor._paused:
+                batch_message = tr("status.paused") + "\n" + batch_message
+            self.progress_dialog.setLabelText(batch_message)
 
         # Add batch items to tree (this is the UI operation, but only 100 items)
         for file_path, matches_list in batch:
@@ -1949,32 +2054,30 @@ class FileExplorerDock(BaseDock):
             else:
                 logger.debug("User was in Tree mode, results already visible")
 
-            # Close progress dialog now that batching is complete
-            if self.progress_dialog:
-                logger.debug("Closing progress dialog (batching complete)")
-                self.progress_dialog.close()
-                self.progress_dialog = None
+            # Keep cancellation available until the native worker has stopped.
 
         # Return immediately - event loop can process other events!
         logger.debug(f"Batch {batch_num} processed, returning to event loop")
 
     def _cleanup_worker_thread(self):
-        """
-        Clean up worker thread after operation completes.
+        """Release only stopped threads; never block the GUI or terminate a write."""
+        from src.ui import thread_manager
 
-        This ensures proper thread lifecycle management and prevents resource leaks.
-        Called from _on_*_finished() and _on_operation_error() handlers.
-
-        Version: v2.9.122
-        """
-        if hasattr(self, '_worker_thread') and self._worker_thread:
-            self._worker_thread.quit()
-            self._worker_thread.wait()
-            self._worker_thread.deleteLater()
+        thread = getattr(self, "_worker_thread", None)
+        if thread is not None:
+            if thread.isRunning():
+                self._request_shutdown()
+                return False
+            thread_manager._on_thread_finished(getattr(self, "_thread_id", ""))
+            thread.deleteLater()
             self._worker_thread = None
-
-        if hasattr(self, '_worker'):
-            self._worker = None
+        receiver = self._operation_receiver
+        if receiver is not None:
+            receiver.deleteLater()
+            self._operation_receiver = None
+        self._worker = None
+        self._active_operation = False
+        return True
 
     def _on_search_finished(self, result):
         """
@@ -1992,12 +2095,10 @@ class FileExplorerDock(BaseDock):
 
         logger.debug("_on_search_finished() called!")
 
-        # NOTE v2.9.123: Don't close progress dialog here!
-        # It will be closed by _on_batch_ready() after last batch
+        # Normal completion arrives only after the native thread has stopped.
         if self.progress_dialog and not self._batch_processing_active:
             logger.debug("Closing progress dialog (no batching active)")
-            self.progress_dialog.close()
-            self.progress_dialog = None
+            self._close_progress_dialog()
 
         # Retrieve stored parameters
         params = self._current_search_params
@@ -2014,6 +2115,10 @@ class FileExplorerDock(BaseDock):
 
         # Get count from result (lightweight)
         files_list = result.get("files", [])
+        cancelled = result.get("stats", {}).get("cancelled", False)
+        if cancelled:
+            files_list = []
+            self._batch_processing_active = False
         total_files = len(files_list)
         total_matches = sum(len(sr.matches) for sr in files_list)
 
@@ -2028,17 +2133,18 @@ class FileExplorerDock(BaseDock):
             )
             # Close progress dialog since no batches will trigger this
             if self.progress_dialog:
-                self.progress_dialog.close()
-                self.progress_dialog = None
+                self._close_progress_dialog()
 
         # Update status bar (lightweight)
         self.results_status.setText(
             f"Found {total_files} file(s) with {total_matches} match(es)"
         )
+        if cancelled:
+            self.results_status.setText("Search cancelled")
 
         # Store for view sync (lightweight)
         self.last_was_search = True
-        if result.get("stats", {}).get("errors"):
+        if cancelled or result.get("stats", {}).get("errors"):
             self._last_content_search_universe = None
         else:
             self._remember_content_search_universe(directory, content_query, files_list)
@@ -2102,8 +2208,7 @@ class FileExplorerDock(BaseDock):
 
         # Close progress dialog
         if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+            self._close_progress_dialog()
 
         # Retrieve stored parameters
         params = self._current_browse_params
@@ -2198,6 +2303,8 @@ class FileExplorerDock(BaseDock):
 
         # Update status label
         self.results_status.setText(f"Found {len(files_list)} file(s)")
+        if result.get("stats", {}).get("cancelled"):
+            self.results_status.setText("Browse cancelled")
         self._report_result_errors(result)
 
         # Cleanup thread
@@ -2216,8 +2323,7 @@ class FileExplorerDock(BaseDock):
 
         # Close progress dialog
         if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+            self._close_progress_dialog()
 
         # Show error dialog
         QMessageBox.critical(
@@ -2233,8 +2339,7 @@ class FileExplorerDock(BaseDock):
         """Handle execution completion (v2.9.116)."""
         # Close progress dialog
         if self.progress_dialog:
-            self.progress_dialog.close()
-            self.progress_dialog = None
+            self._close_progress_dialog()
 
         # Results are already processed by _list_files() method
         # This is just for cleanup and optional status updates

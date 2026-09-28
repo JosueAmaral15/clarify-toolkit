@@ -2665,3 +2665,60 @@ Plano imediato:
 - Monitor permanece ativo para o batch autorizado, sem finish antecipado. Se
   nao houver retomada, entrega continua incerta; nenhum dos seis itens pendentes
   foi declarado concluido por causa do dispatch. Registro nao altera codigo.
+
+## 2026-09-28 - Pre-acao - FE-PAR-07 por continuacao nativa
+
+- Marcador CLARIFY_FE_PAR_CONTINUE_20260928_FE07 recebido nesta sessao confirma
+  processamento do dispatch anterior. Monitor ativo e hook recente verificados;
+  checkpoint 584709e + registro c5bd62c presentes, somente example.py alheio.
+- Nova branch COM criada do HEAD do checkpoint, incluindo registro de dispatch.
+  Escopo apenas FE-PAR-07: slots reais para search/browse/replace, pausa cooperativa,
+  cancelamento em pausa, fila unica por dock, cleanup e fechamento seguros.
+- Estender checkpoints opcionais no enumerador compartilhado sem remover APIs
+  uteis a outras tools; manter cancelados visiveis no gerenciamento de threads
+  enquanto ainda vivos. Nao terminar threads de escrita a forca ao fechar.
+- Validacao serial/offscreen limitada por RAM/tempo, documentar limitação de regex
+  nao interrompivel por checkpoint. Sem push/promocao nem expansao ao backlog legado.
+
+## 2026-09-28 - Pos-acao - FE-PAR-07 validado
+
+- Pausa cooperativa real via Condition.wait, Resume/Cancel acordam o worker;
+  controles resetados antes do dispatch, nunca no browse aninhado preparado.
+  Search/browse/replace executam em slot Qt fora da GUI com request copiado.
+- Uma operacao por dock, registro central preservando exclusividade das outras
+  tools; cancelados ainda vivos permanecem visiveis e entram no shutdown wait.
+  Receivers Qt por geracao descartam progresso/batches cancelados ou tardios;
+  resultado so finaliza apos settlement da thread nativa, sem wait bloqueante GUI.
+- Pause/Resume por icone/tooltip no progresso fixo; Cancel desabilita o controle.
+  Dialogs de progresso deletados, sem reentrancia de setValue modal nem fechamento
+  prematuro no ultimo batch. Captura offscreen inspecionada sem sobreposicao.
+- Fechar dock/aba/dialog/parent cancela sem callbacks de conclusao/historico;
+  deleteLater desacopla thread registrada do dock destruido e Qt desconecta receiver.
+  Escrever arquivo atual termina atomicamente; Cancel/close/delecao nao altera
+  proximo arquivo nem termina thread de escrita a forca. Exit recusado reabre registro.
+- Enumerador compartilhado recebe checkpoint opcional e evita ciclos de ancestrais,
+  mantendo links de diretorio nao ciclicos e APIs uteis a outras tools.
+- Testes iniciais expuseram snapshot ausente no teste e falha real ao filtrar
+  DeferredDelete (impedia repost/deleteLater). Corrigidos e retestados antes do commit.
+  Cancel apos resultado enfileirado tambem respeitado antes do settlement, sem
+  perder contagens de arquivos ja escritos nem sobrescrever texto Canceling.
+- Runs finais seriais: 196 Explorer incluindo 36 lifecycle (11.52s, 237.5 MiB),
+  52 shared conditions (0.76s, 73.5 MiB), 21 Editor/layout/flows (6.23s, 244.8 MiB),
+  7 ThreadManager (0.19s, 65.6 MiB). Total 276 testes distintos, nao suite global.
+  Dez operacoes repetidas deixam widgets/registro no baseline e workers/threads/
+  receivers/dialogs destruidos; evidencia focada, nao garantia global de zero leaks.
+- AST de nove arquivos e diff check passaram. Pylint -E em oito modulos passou
+  com jobs=1 e suporte Qt connect/disconnect (422.9 MiB). Primeira tentativa
+  teve apenas falso positivo de disconnect dinamico. Guardas 85% RAM, 600 MiB,
+  180s e timeout pytest 15/20s respeitadas; nenhum processo de usuario encerrado.
+- Limites honestos: regex/IO ja em curso aguardam checkpoint; commit atomico nao
+  e interrompido. Full-read/coleta de busca ainda existentes; FE-PAR-04 trata
+  cross-line limitado. Sem rollback multi-arquivo ou teto global de RAM do app.
+- Monitor/hook continuam ativos e recentes; doctor confirma schema/integridade,
+  5 hooks e native queue. Reply observer segue failed; nao reiniciado nem controles
+  alterados. Dry-run nativo FE03 passou com worker/sessao exatos e marcador unico.
+- TASKS atualizado: 3 FE-PAR concluidos, 5 pendentes + 30 legados = 35 abertos.
+  Proximo FE-PAR-03, depois 04/05/06/08, sem expandir automaticamente os legados.
+  Commit local na COM desta etapa; example.py excluido, sem push/main/develop.
+  Apos checkpoint, emitir uma unica continuacao FE03 destacada; registrar o
+  resultado real sem retry incerto. Finish somente ao terminar batch ou sem via segura.

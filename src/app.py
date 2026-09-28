@@ -991,6 +991,8 @@ if _PYSIDE:
             # Get widget at index
             widget = self.tabs.widget(index)
             tab_title = self.tabs.tabText(index)
+            if hasattr(widget, "request_tab_close") and not widget.request_tab_close():
+                return
 
             # Check for unsaved changes (only for Editor)
             if hasattr(widget, 'has_unsaved_changes') and callable(widget.has_unsaved_changes):

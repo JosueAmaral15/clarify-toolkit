@@ -65,7 +65,8 @@ class FileListExecutor:
 
     @staticmethod
     def list_files(
-        directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None
+        directory: str, show_hidden: bool = False, recursive: bool = False, filters: Dict[str, Any] = None,
+        *, checkpoint=None,
     ) -> ListResult:
         """
         List files in directory with optional filtering.
@@ -87,10 +88,14 @@ class FileListExecutor:
         errors = []
 
         # Collect files
-        collected = FileListExecutor._collect_files(directory, show_hidden, recursive, filters, depth=0)
+        collected = FileListExecutor._collect_files(
+            directory, show_hidden, recursive, filters, depth=0, checkpoint=checkpoint
+        )
 
         # Convert to FileInfo objects
         for filepath in collected:
+            if checkpoint is not None and not checkpoint():
+                break
             try:
                 file_info = FileListExecutor._get_file_info(filepath)
                 files.append(file_info)
@@ -102,10 +107,19 @@ class FileListExecutor:
 
     @staticmethod
     def _collect_files(
-        directory: str, show_hidden: bool, recursive: bool, filters: Dict[str, Any], depth: int = 0
+        directory: str, show_hidden: bool, recursive: bool, filters: Dict[str, Any], depth: int = 0,
+        *, checkpoint=None, ancestors=None,
     ) -> List[str]:
         """Collect file paths from directory."""
         files = []
+        if checkpoint is not None and not checkpoint():
+            return files
+        # Preserve useful directory links, but never recurse into an ancestor.
+        real_directory = os.path.realpath(directory)
+        ancestors = ancestors or frozenset()
+        if real_directory in ancestors:
+            return files
+        ancestors = ancestors | {real_directory}
 
         try:
             entries = os.listdir(directory)
@@ -113,6 +127,8 @@ class FileListExecutor:
             return files
 
         for entry in sorted(entries):
+            if checkpoint is not None and not checkpoint():
+                break
             # Skip hidden files if not showing all
             if not show_hidden and entry.startswith("."):
                 continue
@@ -135,7 +151,10 @@ class FileListExecutor:
                 # Check depth limit
                 max_depth = filters.get("depth", 0)
                 if not max_depth or depth < max_depth:
-                    files.extend(FileListExecutor._collect_files(filepath, show_hidden, recursive, filters, depth + 1))
+                    files.extend(FileListExecutor._collect_files(
+                        filepath, show_hidden, recursive, filters, depth + 1,
+                        checkpoint=checkpoint, ancestors=ancestors,
+                    ))
 
         return files
 

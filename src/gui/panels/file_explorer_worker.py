@@ -17,6 +17,7 @@ Author: GitHub Copilot CLI (following Protocolo Simplicidade 3)
 # pylint: disable=logging-fstring-interpolation  # Performance not critical
 
 from PySide6.QtCore import QObject, Signal, Slot
+from copy import deepcopy
 
 from ...core.file_explorer_executor import UnifiedFileExplorerExecutor
 from ...utils.logger import get_logger
@@ -52,6 +53,8 @@ class FileExplorerWorker(QObject):
     progress_detailed = Signal(int, int, str)   # (current, total, message)
     finished = Signal(object)                   # Result object
     error = Signal(str)                         # Error message
+    diagnostic = Signal(str)
+    settled = Signal()
 
     # Batch processing signal (v2.9.123)
     batch_ready = Signal(list, int, int)        # (batch_items, batch_num, total_batches)
@@ -75,19 +78,45 @@ class FileExplorerWorker(QObject):
 
     def configure_replace(self, **request):
         """Store an operation snapshot before moving to its thread."""
-        self._replace_request = request
+        self.configure_operation("replace", **request)
+
+    def configure_operation(self, kind, **request):
+        if kind not in {"search", "browse", "replace"}:
+            raise ValueError("Unknown File Explorer operation")
+        self._kind = kind
+        self._request = deepcopy(request)
+        self.executor.prepare_operation()
+
+    def pause(self):
+        self.executor.pause()
+
+    def resume(self):
+        self.executor.resume()
+
+    @Slot()
+    def run_operation(self):
+        """The only threaded entry point; terminal signal follows all cleanup."""
+        try:
+            self.executor.error.connect(self.diagnostic)
+            if self._cancel_requested:
+                if self._kind == "replace":
+                    self.finished.emit({
+                        "success": False, "cancelled": True, "replaced_count": 0,
+                        "replacements_made": 0, "files_modified": 0, "errors": [],
+                        "error": "Operation cancelled",
+                    })
+                else:
+                    self.finished.emit({"files": [], "stats": {"cancelled": True, "errors": []}})
+                return
+            getattr(self, f"execute_{self._kind}")(**self._request, prepared=True)
+        finally:
+            self.executor.error.disconnect(self.diagnostic)
+            self.settled.emit()
 
     @Slot()
     def run_replace(self):
         """Qt-bound entry point, executed in this worker's thread."""
-        if self._cancel_requested:
-            self.finished.emit({
-                "success": False, "cancelled": True, "replaced_count": 0,
-                "replacements_made": 0, "files_modified": 0, "errors": [],
-                "error": "Operation cancelled",
-            })
-            return
-        self.execute_replace(**self._replace_request)
+        self.run_operation()
 
     def _build_matches_dict(self, result: dict) -> dict:
         """
@@ -106,6 +135,8 @@ class FileExplorerWorker(QObject):
         matches_dict = {}
 
         for search_result in result.get("files", []):
+            if not self.executor.checkpoint():
+                break
             file_info = search_result.file_info
             file_path = file_info.path
 
@@ -113,6 +144,8 @@ class FileExplorerWorker(QObject):
                 # Content search: collect all matches
                 matches_list = []
                 for match in search_result.matches:
+                    if not self.executor.checkpoint():
+                        break
                     snippet = match.snippet if hasattr(match, "snippet") else ""
                     matches_list.append((match.line, match.col, snippet))
                 matches_dict[file_path] = matches_list
@@ -151,7 +184,7 @@ class FileExplorerWorker(QObject):
         # Emit batches
         for batch_num in range(total_batches):
             # Check for cancellation
-            if self._cancel_requested:
+            if self._cancel_requested or not self.executor.checkpoint():
                 logger.debug(f"Cancellation requested, stopping batch emission at {batch_num+1}/{total_batches}")
                 break
 
@@ -173,7 +206,8 @@ class FileExplorerWorker(QObject):
         recursive: bool,
         filters: dict,
         conditions: list,
-        logic_operator: str = "AND"
+        logic_operator: str = "AND",
+        *, prepared: bool = False,
     ):
         """
         Execute search operation in worker thread.
@@ -211,7 +245,8 @@ class FileExplorerWorker(QObject):
                 recursive=recursive,
                 filters=filters,
                 conditions=conditions,
-                logic_operator=logic_operator
+                logic_operator=logic_operator,
+                prepared=prepared,
             )
             logger.debug(f"Search complete! Found {len(result.get('files', []))} files")
 
@@ -223,6 +258,10 @@ class FileExplorerWorker(QObject):
             # NEW v2.9.123: Emit in batches for non-blocking UI
             logger.debug("Emitting matches in batches...")
             self._emit_in_batches(matches_dict, batch_size=100)
+
+            if self._cancel_requested or self.executor._cancel:
+                result["files"] = []
+                result["stats"].update(cancelled=True, total_matches=0, files_with_matches=0)
 
             # Emit finished with original result (for stats, history, etc.)
             logger.debug("Emitting finished signal...")
@@ -248,7 +287,8 @@ class FileExplorerWorker(QObject):
         recursive: bool,
         filters: dict,
         conditions: list = None,
-        logic_operator: str = "AND"
+        logic_operator: str = "AND",
+        *, prepared: bool = False,
     ):
         """
         Execute browse operation in worker thread.
@@ -273,9 +313,13 @@ class FileExplorerWorker(QObject):
                 recursive=recursive,
                 filters=filters,
                 conditions=conditions,
-                logic_operator=logic_operator
+                logic_operator=logic_operator,
+                prepared=prepared,
             )
 
+            if self._cancel_requested or self.executor._cancel:
+                result["files"] = []
+                result["stats"]["cancelled"] = True
             # Emit result to UI thread
             self.finished.emit(result)
 
@@ -297,6 +341,7 @@ class FileExplorerWorker(QObject):
         search_options: dict,
         preserve_case: bool = False,
         replace_all: bool = False,
+        *, prepared: bool = False,
     ):
         """
         Execute replace operation in worker thread.
@@ -319,6 +364,7 @@ class FileExplorerWorker(QObject):
                 search_options=search_options,
                 preserve_case=preserve_case,
                 replace_all=replace_all,
+                prepared=prepared,
             )
 
             # Emit result to UI thread

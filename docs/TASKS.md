@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - Paridade Search/Replace aprovada para File Explorer
+**Last Update**: 2026/09/28 - FE-PAR-07: pausa e lifecycle validados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -12,8 +12,9 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado: **2 concluidos, 6 pendentes; 36 itens abertos no total (30 anteriores + 6).**
+Estado: **3 concluidos, 5 pendentes; 35 itens abertos no total (30 anteriores + 5).**
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
+Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -23,8 +24,8 @@ Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATI
   compativel, contagens de resultados parciais e Preserve Case/backreferences.
   Limites: 4 MiB por entrada/saida, 1000 arquivos, 10000 matches por arquivo,
   50 erros; preserva CRLF/permissoes/metadados e rejeita links/edicoes concorrentes.
-  Confirmacao com preview limitado antes de Replace First/All; Undo global e
-  lifecycle/pause completo permanecem LEG-24 e FE-PAR-07, respectivamente.
+  Confirmacao com preview limitado antes de Replace First/All; Undo global
+  permanece LEG-24; lifecycle/pause foi entregue em FE-PAR-07.
 - [x] **FE-PAR-02 / MUST: condicoes coerentes.** Normalizar operadores numericos,
   avaliar valor/opcoes de condicoes de conteudo e AND/OR misto sem prefiltragem
   incorreta; compartilhar semantica com core filters e testar presets antigos.
@@ -45,18 +46,26 @@ Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATI
 - [ ] **FE-PAR-06 / SHOULD: condicoes enriquecidas.** Whole Word por condicao,
   Starts/Ends With, scope e parametro; round-trip de presets e compatibilidade
   de condicoes anteriores. Reutilizar extracao de escopo existente.
-- [ ] **FE-PAR-07 / MUST: pause/resume e ciclo de worker.** Pausa cooperativa
+- [x] **FE-PAR-07 / MUST: pause/resume e ciclo de worker.** Pausa cooperativa
   real, cancelamento durante pausa, uma operacao por dock, fechamento/cleanup
   seguro e ausencia de callbacks tardios; teste de responsividade e recursos.
+  Entregue: Condition.wait sem polling, cancelamento acorda a pausa, slots Qt
+  para search/browse/replace, registro central e uma operacao ativa por dock.
+  Receivers por geracao descartam callbacks apos cancelamento/fechamento;
+  fechamento comum espera settlement, deleteLater desacopla a thread protegida.
+  Escrita atomica atual termina sem force termination; arquivos seguintes param.
+  36 casos novos de lifecycle e 276 testes focados distintos passaram, com guardas.
+  Regex/IO em curso nao sao interrompidos no meio: pausa/cancelam no checkpoint.
 - [ ] **FE-PAR-08 / COULD: coerencia de apresentacao.** Preferencia monospace
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa executavel: **FE-PAR-07 (MUST)**, antes dos recursos SHOULD.
-Validar pausa/cancelamento/fechamento e threads reais de search/browse/replace;
-registrar operacoes no ciclo da aplicacao, sem force termination durante escrita.
-Depois FE-PAR-03, 04, 05, 06 e 08. Continuacao autorizada e finita via monitor,
+Proxima etapa executavel: **FE-PAR-03 (SHOULD)**: alvo arquivo/pasta/selecao
+explicito, sem percorrer irmaos ou ampliar selecao, e cache incremental coerente.
+Depois FE-PAR-04, 05, 06 e 08. Continuacao autorizada e finita via monitor,
 apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
+Um dispatch nativo por etapa concluida, sessao exata e sem retry incerto.
+Commits locais em COM-UUID; sem push/promocao com gates CI/security pendentes.
 
 ## Retomada de Estabilidade - 26/09/2026
 
