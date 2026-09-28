@@ -2,9 +2,49 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - FE-PAR-04: draft, validacao suspensa por RAM
+**Last Update**: 2026/09/28 - header24 validado; recovery organizado e FE04 retomado
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Fila Atual - Editor E File Explorer (28/09/2026)
+
+Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
+primeiro; validar codigo ja em andamento e impedir perda de documentos tem
+precedencia sobre adicionar outras features. Contagem atual: **35 abertos = 30
+anteriores + 4 FE-PAR + 1 novo item Editor**; atualizar ao validar cada etapa.
+
+- [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
+  inicial16 por24, incluindo reticencias (21 + `...`), tooltip com caminho completo,
+  plain text e sem sobrepor EXPLORER/arvore em sidebar estreita. Mudanca pequena
+  explicitamente solicitada; testar limites23/24/25, Unicode, escolha/cancelamento
+  de pasta e redimensionamento. Manter navegacao lazy/arquivos ocultos.
+  Entregue: ate24, incluindo `...`, elisao adicional por largura sem mudar fonte,
+  tooltip completo e plain text. 22 testes Editor/layout/flows passaram; captura
+  wide/narrow inspecionada. [Evidencias](reports/EDITOR_HEADER_24_2026_09_28.md).
+- [ ] **CE-REC-01 / MUST: buffering recuperavel ao fechar Editor/Clarify.**
+  Aproveitar UnsavedRecoveryStore existente; nao criar uma segunda infraestrutura.
+  Preservar os ultimos buffers de documentos abertos (incluindo conteudo sem
+  caminho/nao salvo) em pasta local de recuperacao gerenciada, mesmo quando Editor
+  ou aplicativo sao fechados antes do debounce. Nao usar TemporaryDirectory que
+  apaga os dados ao encerrar nem gravar por cima do arquivo de origem.
+  Auditar arquivos salvos sem alteracoes: registrar referencia/estado para reabrir,
+  sem duplicar grandes arquivos inutilmente; o conteudo nao salvo exige snapshot.
+  Recuperacao posterior deve permitir restaurar ou descartar explicitamente,
+  abrir buffers recuperados como nao salvos e tratar origem removida/alterada.
+  Integrar Close, fechamento da aba-tool/parent, DeferredDelete e aboutToQuit;
+  cancelar timers/conexoes com seguranca, sem callbacks tardios/retencao de widgets.
+  Manter escrita atomica, diretorio/arquivos privados, retencao ajustavel e limites
+  atuais (2 MiB/documento,20 documentos,20 MiB total); informar falhas/limites sem
+  dizer que um buffer foi salvo quando nao foi. Nao registrar conteudo nos logs.
+  Distinguir fechar Editor/app de descartar uma aba intencionalmente; respeitar
+  Save/Discard/Cancel existentes. Testar edicao seguida de fechamento imediato,
+  reabertura em nova instancia, multiplas abas, quota/IO/corrupcao/retencao e cleanup.
+
+Ordem finita: CE-HDR-01 concluido; validar/reparar FE-PAR-04 ja
+em andamento, CE-REC-01 (MUST), depois FE-PAR-05/06/08. O requisito de recovery
+complementa a entrega historica de13/09 abaixo, nao a declara inexistente.
+Nao expandir automaticamente aos30 legados nem prometer recuperar alteracoes
+feitas depois do ultimo checkpoint em caso de kill/queda abrupta de energia.
 
 ## File Explorer - Paridade Aprovada (28/09/2026)
 
@@ -12,13 +52,13 @@ Implementar em etapas verificadas, preservando consumidores compartilhados e
 limites de memoria. A fila abaixo acrescenta oito itens aos 30 existentes;
 LEG-24 continua responsavel por Undo/Redo global e rollback multi-arquivo.
 Ver [auditoria](reports/SEARCH_REPLACE_FILE_EXPLORER_PARITY_2026_09_28.md).
-Estado: **4 concluidos, 4 pendentes; 34 itens abertos no total (30 anteriores + 4).**
+Estado FE-PAR: **4 concluidos, 4 pendentes**. Contagem geral na fila atual acima.
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
 FE-PAR-04 em andamento: [draft e bloqueio de recursos](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md).
-RAM persistiu acima de 85%; nenhuma suite/lint desta etapa iniciada, nenhum commit
-de implementacao ou dispatch FE05. Monitor finalizado como idle por seguranca.
+Stop anterior: RAM persistiu acima de85%, sem suite/lint/commit de implementacao ou
+dispatch FE05. Retomada atual autorizada pelo usuario com RAM43.1%; manter guardas.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -82,8 +122,8 @@ de implementacao ou dispatch FE05. Monitor finalizado como idle por seguranca.
 
 Proxima etapa: **FE-PAR-04 (SHOULD)**: validar/reparar o draft cross-line quando
 houver headroom sustentado de RAM; ainda nao concluida. Depois FE-PAR-05, 06 e 08.
-Continuacao automatica encerrada por pressao de memoria, sem dispatch seguinte.
-Retomar monitor explicitamente apenas quando for seguro validar o draft.
+Continuacao anterior encerrada por pressao de memoria, sem dispatch seguinte.
+Retomada atual inclui apenas esta fila e os dois itens Editor explicitamente novos.
 Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,
 apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
 Um dispatch nativo por etapa concluida, sessao exata e sem retry incerto.
@@ -133,10 +173,12 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
 - [x] **SHOULD: completar LEG-27**: duplo clique/Enter em arquivo ou match abre
   Clarify Editor. Diretorios nao abrem arquivos em massa; clique simples seleciona.
 - [x] **SHOULD / Clarify Editor: nome da pasta atual ao lado de EXPLORER.**
-  Nome da raiz limitado a 16 caracteres (13 + `...` quando longo), caminho
+  Nome da raiz limitado a 24 caracteres (21 + `...` quando longo), caminho
   completo em tooltip e texto plain text. Atualiza na inicializacao, Open Folder
   e fallback. Validacao focada: 16 testes passaram, incluindo oito novos cenarios
   de header e regressao do layout; captura offscreen em tema escuro revisada.
+  Entrega inicial tinha limite16; CE-HDR-01 ampliou para24 com 22 testes relacionados
+  e elisao adicional no sidebar estreito, conforme report atual acima.
 - [x] **SHOULD / Clarify Editor: exibir arquivos e pastas ocultos no Explorer.**
   Filtro QFileSystemModel inclui Hidden e preserva NoDotAndDotDot. Casos reais
   cobrem .env, .env.example, .env example, subpasta oculta e abertura no Editor,

@@ -2840,3 +2840,39 @@ Plano imediato:
   example.py, sem reset/clean nem push/promocao. Faltam04/05/06/08 =4 aprovadas
   pendentes; +30 legados fora desta automacao =34 abertos. Retomar validacao antes
   de marcar FE04 completa ou commitar sua implementacao; nenhuma tarefa legada iniciada.
+
+## 2026-09-28 - Pre-acao - Organizacao Editor/recovery e retomada FE04
+
+- Usuario acrescentou buffering recuperavel apos fechar Editor/Clarify e mudou
+  limite do nome da pasta de16 para24; pediu organizar primeiro e seguir pendencias.
+- Preservar draft FE04 na COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f, journal bdecb9a,
+  example.py e demais alteracoes. RAM atual43.1%, permite reavaliar guardas sem
+  enfraquece-las. Monitor estava idle por stop seguro, retomar so esta fila finita.
+- RecoveryStore ja existe com snapshots privados/atomicos/retencao limitada.
+  Registrar CE-REC-01 como complemento de lifecycle/recuperacao, nao criar store
+  concorrente nem confundir com Undo globalLEG24. CE-HDR-01 aumenta limite para24.
+- Ordem: organizacao, ajuste pequeno solicitado do header; validar/reparar draft
+  FE04 ja em andamento antes de novas features; depois recovery MUST, FE05/06/08.
+  Validar serial/offscreen com guardas, commits locais por etapa, sem push/promocao.
+
+## 2026-09-28 - Pos-acao - Organizacao E CE-HDR-01
+
+- TASKS organiza dois itens novos separados dos FE-PAR/legados: CE-HDR-01 entregue
+  e CE-REC-01 MUST pendente, reusando recovery existente para buffers/fechamento.
+  CE-REC exige ultimos buffers/retencao privada, restore sem sobrescrever originais,
+  metadata/referencia para documentos salvos e testes de lifecycle/limites/falhas.
+- Header agora permite24 caracteres incluindo21+`...`; QLabel privado aplica
+  elisao adicional quando estreito e restaura ao expandir. Tooltip completo/plain
+  text preservados, sem escalar fonte ou mexer em navegacao/hidden-files.
+- 22 testes Editor/layout/flows passaram (4.55s,247.1 MiB), incluindo limites23/24/25,
+  Unicode, cancel/fallback e width/expand. Capturas wide/narrow inspecionadas sem
+  texto cortado/sobreposto; processo190.3 MiB, nao certificacao de tema nativo.
+  AST e lint focado incluindo EditorDock passaram (4 modulos,417.6 MiB), nao global.
+- Monitor retomado explicitamente para fila finita; doctor/hooks/native/schema OK,
+  apenas reply-observer continua failed. Sem restart de servicos/control changes.
+- FE04 retomado:48 novos casos,313 Explorer,52 shared,7 ThreadManager e22 Editor
+  passaram; repeticao84 cross-line/lifecycle passou com assert real de handle fechado.
+  Documentar/commitar FE04 separadamente depois deste header/organizacao.
+- Apos header:35 itens abertos (30 legados fora da automacao+4 FE-PAR+1 CE-REC).
+  Proximo fechar FE04 validado, depois CE-REC MUST, FE05/06/08. Preservar example.py,
+  sem push/promocao, uma continuacao exata so apos etapa completa e sem retry incerto.

@@ -59,10 +59,10 @@ def test_workspace_fills_available_height_on_resize(editor_window, qtbot, extens
 
 
 @pytest.mark.parametrize("name", [
-    "notes", "abcdefghijklmnop", "abcdefghijklmnop-more", "<b>folder-long-name",
-    "\u6587\u4ef6\u5939" * 6,
+    "notes", "abcdefghijklmnopqrstuvw", "abcdefghijklmnopqrstuvwx", "abcdefghijklmnopqrstuvwxy",
+    "<b>folder-long-name", "\u6587\u4ef6\u5939" * 9,
 ])
-def test_explorer_header_shows_current_folder_with_16_character_limit(
+def test_explorer_header_shows_current_folder_with_24_character_limit(
     editor_window, tmp_path, name
 ):
     _, dock = editor_window
@@ -70,9 +70,9 @@ def test_explorer_header_shows_current_folder_with_16_character_limit(
     folder.mkdir()
 
     assert dock._set_explorer_root(str(folder))
-    expected = name if len(name) <= 16 else name[:13] + "..."
+    expected = name if len(name) <= 24 else name[:21] + "..."
     assert dock.explorer_folder_label.text() == expected
-    assert len(dock.explorer_folder_label.text()) <= 16
+    assert len(dock.explorer_folder_label.text()) <= 24
     assert dock.explorer_folder_label.toolTip() == str(folder)
     assert dock.explorer_folder_label.textFormat() == QtCore.Qt.TextFormat.PlainText
     assert dock.explorer_title_label.text() == module.tr("editor.lbl_explorer")
@@ -82,7 +82,7 @@ def test_explorer_header_shows_current_folder_with_16_character_limit(
 def test_explorer_header_initial_root_and_fallback(editor_window, tmp_path):
     _, dock = editor_window
     name = tmp_path.name
-    assert dock.explorer_folder_label.text() == (name if len(name) <= 16 else name[:13] + "...")
+    assert dock.explorer_folder_label.text() == (name if len(name) <= 24 else name[:21] + "...")
     assert dock.explorer_folder_label.toolTip() == str(tmp_path)
 
     dock._set_explorer_root(str(tmp_path / "missing"))
@@ -101,7 +101,7 @@ def test_open_folder_updates_header_and_cancel_preserves_it(
     folder.mkdir()
     monkeypatch.setattr(module.QFileDialog, "getExistingDirectory", lambda *args: str(folder))
     dock._open_explorer_folder()
-    assert dock.explorer_folder_label.text() == folder.name[:13] + "..."
+    assert dock.explorer_folder_label.text() == folder.name[:21] + "..."
     assert dock.explorer_folder_label.toolTip() == str(folder)
 
     monkeypatch.setattr(module.QFileDialog, "getExistingDirectory", lambda *args: "")
@@ -127,6 +127,10 @@ def test_explorer_header_fits_narrow_sidebar(editor_window, tmp_path, qtbot):
     assert caption.geometry().right() < name.geometry().left()
     assert name.geometry().right() < dock.explorer_panel.width()
     assert dock.explorer_panel.width() <= 240
+    assert name.fontMetrics().horizontalAdvance(name.text()) <= name.contentsRect().width()
+    dock.editor_splitter.setSizes([450, 350])
+    qtbot.waitUntil(lambda: name.text() == folder.name[:21] + "...")
+    assert len(name.text()) == 24
 
 
 def test_explorer_lists_hidden_files_and_directories(editor_window, tmp_path, qtbot):

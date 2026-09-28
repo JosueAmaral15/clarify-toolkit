@@ -333,6 +333,28 @@ class _LineNumberController(QObject):
         return QColor("#f4f4f4"), QColor("#6b7280")
 
 
+class _ExplorerFolderLabel(QLabel):
+    """Keep the character cap separate from the available sidebar width."""
+
+    def set_folder_name(self, name):
+        self._caption = name if len(name) <= 24 else name[:21] + "..."
+        self._refresh_caption()
+
+    def _refresh_caption(self):
+        caption = getattr(self, "_caption", "")
+        if self.isVisible():
+            caption = self.fontMetrics().elidedText(caption, Qt.ElideRight, self.contentsRect().width())
+        self.setText(caption)
+
+    def resizeEvent(self, event):  # pylint: disable=invalid-name
+        super().resizeEvent(event)
+        self._refresh_caption()
+
+    def showEvent(self, event):  # pylint: disable=invalid-name
+        super().showEvent(event)
+        self._refresh_caption()
+
+
 class EditorDock(BaseDock):
     """
     Dock widget for integrated file editor.
@@ -643,7 +665,7 @@ class EditorDock(BaseDock):
         self.explorer_title_label.setSizePolicy(
             QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred
         )
-        self.explorer_folder_label = QLabel()
+        self.explorer_folder_label = _ExplorerFolderLabel()
         self.explorer_folder_label.setTextFormat(Qt.TextFormat.PlainText)
         self.explorer_folder_label.setSizePolicy(
             QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
@@ -676,8 +698,7 @@ class EditorDock(BaseDock):
         self.explorer_tree.setRootIndex(root_index)
         self.explorer_root_path = normalized
         folder_name = Path(normalized).name or normalized
-        display_name = folder_name if len(folder_name) <= 16 else folder_name[:13] + "..."
-        self.explorer_folder_label.setText(display_name)
+        self.explorer_folder_label.set_folder_name(folder_name)
         self.explorer_folder_label.setToolTip(normalized)
         if persist:
             self.settings.setValue("explorer_root_path", normalized)
