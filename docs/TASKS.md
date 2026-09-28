@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - FE-PAR-03: alvos explicitos e cache validados
+**Last Update**: 2026/09/28 - FE-PAR-04: draft, validacao suspensa por RAM
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -16,6 +16,9 @@ Estado: **4 concluidos, 4 pendentes; 34 itens abertos no total (30 anteriores + 
 Evidencias em [implementacao e testes](reports/FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md).
 Lifecycle em [FE-PAR-07 e testes reais](reports/FILE_EXPLORER_LIFECYCLE_2026_09_28.md).
 Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER_TARGET_SCOPES_2026_09_28.md).
+FE-PAR-04 em andamento: [draft e bloqueio de recursos](reports/FILE_EXPLORER_CROSS_LINE_2026_09_28.md).
+RAM persistiu acima de 85%; nenhuma suite/lint desta etapa iniciada, nenhum commit
+de implementacao ou dispatch FE05. Monitor finalizado como idle por seguranca.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista
@@ -49,6 +52,12 @@ Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER
 - [ ] **FE-PAR-04 / SHOULD: busca de bloco cross-line.** Opcao separada de
   multi-query, posicoes/snippets corretos, limites de bytes/matches e cancelamento;
   informar entradas grandes ou modos binarios nao suportados, sem truncar ocultamente.
+  Draft nao validado na COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f: controle separado,
+  limites 4 MiB/arquivo e 64 KiB/consulta, budgets de matches e diagnosticos,
+  posicoes LF/CRLF/Unicode, testes escritos e rejeicao explicita de Replace nesse modo.
+  Precisa executar regressao nova, Explorer/shared/Editor/lifecycle, lint e captura
+  antes de marcar entregue ou commitar codigo. Alteracoes de codigo permanecem
+  locais nao commitadas; preservar example.py. Nao tratar o draft como funcionando.
 - [ ] **FE-PAR-05 / SHOULD: consultas independentes por linha.** Conectar controle
   multi-query ao executor, manter separacao de cross-line, validar regex e limites;
   resultados deterministas e testes de consultas vazias, repetidas e sobrepostas.
@@ -71,9 +80,11 @@ Alvos e follow-up de cleanup em [FE-PAR-03 e testes reais](reports/FILE_EXPLORER
   compartilhada, log operacional limitado e estado de filtro por extensao
   descobrivel, sem novos controles duplicados ou expansao por hover.
 
-Proxima etapa executavel: **FE-PAR-04 (SHOULD)**: busca de bloco cross-line
-separada de multi-query, posicoes/snippets corretos e entradas/resultados limitados.
-Depois FE-PAR-05, 06 e 08. Continuacao autorizada e finita via monitor,
+Proxima etapa: **FE-PAR-04 (SHOULD)**: validar/reparar o draft cross-line quando
+houver headroom sustentado de RAM; ainda nao concluida. Depois FE-PAR-05, 06 e 08.
+Continuacao automatica encerrada por pressao de memoria, sem dispatch seguinte.
+Retomar monitor explicitamente apenas quando for seguro validar o draft.
+Quando retomada em condicoes seguras, a continuacao autorizada permanece finita,
 apenas nesta fila; observer de respostas failed nao sera reiniciado automaticamente.
 Um dispatch nativo por etapa concluida, sessao exata e sem retry incerto.
 Commits locais em COM-UUID; sem push/promocao com gates CI/security pendentes.

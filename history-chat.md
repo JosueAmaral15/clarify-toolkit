@@ -2798,3 +2798,45 @@ Plano imediato:
   log de entrega. Nao reenviar por incerteza. Verificar marcador/hook ao retomar,
   criando nova COM a partir do checkpoint e deste journal. Monitor continua ativo
   so para FE04/05/06/08. Nao expandir os 30 legados nem executar finish antecipado.
+
+## 2026-09-28 - Pre-acao - FE-PAR-04 por continuacao confirmada
+
+- Marcador FE04 recebido confirma processamento do envio anterior. HEAD 5e1750d
+  inclui checkpoint d4551cb e journal; apenas example.py nao rastreado, preservar.
+  Nova COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f criada desse HEAD.
+- Monitor ativo e hooks recentes; schema/integridade, native queue e controles
+  existentes saudaveis. Reply observer segue failed, sem restart/alteracao.
+- Implementar somente busca de bloco cross-line explicita, separada de multi-query,
+  com posicoes/snippets corretos, leitura/resultados limitados, erros honestos e
+  checkpoints cooperativos. Preservar modos antigos, alvos/cache e lifecycle.
+- RAM inicial 82.3%; nao iniciar testes/lint pesados sem headroom. Validacao serial
+  isolada/offscreen, guardas 85%/600 MiB/180s e timeout pytest. Commit local sem
+  push/promocao; depois FE05/06/08 apenas. Uma continuacao nativa por etapa validada.
+
+## 2026-09-28 - Pos-acao - FE-PAR-04 draft, stop seguro por RAM
+
+- Draft local: checkbox Cross-line Block separado/mutuamente exclusivo de multi-query;
+  validacao previa de consulta 64 KiB e modos Text/ASCII, reader 4 MiB com chunks e
+  checkpoints, posicoes/caracteres LF/CRLF, snippets escapados/limitados, budgets
+  10000 por arquivo/50000 totais e diagnosticos de parcial/erros. Preserva alvos/cache.
+- Rejeita Replace nesse modo antes de confirmar/escrever; nao usa semantica diferente
+  silenciosamente. Rejeita arquivos especiais antes de IO e corrige amostra UTF-8
+  cortada em multibyte via decoder incremental. Precisa de regressao compartilhada.
+- Novo arquivo de testes escrito: limites/growth/Unicode/regex/zero-width, modos,
+  ambos scopes/vistas, thread nativa e cancel/resume em pausa, cache e diagnosticos.
+  Nenhum teste coletado/executado, nenhum lint/capture. NAO declarar funcionando.
+- AST/JSON iniciais passaram antes dos ultimos guards/testes pequenos; nao validam
+  imports/runtime nem draft final. Evidencia anterior de 345 testes vale somente
+  para d4551cb, nao para as modificacoes desta etapa. Nenhum commit de implementacao.
+- RAM inicial 82.3%, cinco amostras 83.7-83.9; watch limitado de 180s nao obteve
+  cinco amostras abaixo de 78. Pressao ambiente cresceu para 85-86%, ultima85.7.
+  Firefox/content eram maiores consumidores; nenhum processo de usuario encerrado.
+  Nao iniciar validacao violando guarda85; nao reduzir limites para obter green.
+- Como nao e seguro validar agora, ai-presence finish exato/protocol2 retornou
+  exit0/status=idle. Monitor do Clarify finalizado, sem alterar servicos/outros workers.
+  Observer failed permanece conhecido. Nenhuma continuacao FE05 ou retry emitido.
+- TASKS/report registram FE04 em andamento, codigo/testes locais nao commitados
+  para retomar com headroom; commit apenas do journal de stop. Preservar draft e
+  example.py, sem reset/clean nem push/promocao. Faltam04/05/06/08 =4 aprovadas
+  pendentes; +30 legados fora desta automacao =34 abertos. Retomar validacao antes
+  de marcar FE04 completa ou commitar sua implementacao; nenhuma tarefa legada iniciada.
