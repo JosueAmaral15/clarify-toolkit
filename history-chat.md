@@ -2901,3 +2901,19 @@ Plano imediato:
   fora da automacao =34 abertos. Proximo CE-REC MUST, depoisFE05/06/08. Commit local
   desta etapa apos validar, example.py preservado, sem push/promocao. Um unico
   dispatch nativo CE-REC depois do checkpoint; registrar resultado sem retry incerto.
+
+### Checkpoint E Dispatch CE-REC-01
+
+- CE-HDR-01 em136b44e (5 arquivos), FE04 em631994b (11 arquivos), mesmaCOM desta
+  retomada, commits locais distintos. Worktree somente example.py nao rastreado;
+  hash058053d...fcee identico ao checkpoint anterior. Nenhum push/promocao.
+- Monitor active/hook recente, RAM46%, nenhum Codexqueue pendente. Dry-run exato
+  passou; uma unica chamada real native/exact-session esperou15s e retornou
+  exit0/dispatch_started, marcador CLARIFY_EDITOR_REC_CONTINUE_20260928_CE01,
+  worker notebook-josue:codex:project=clarify-b09a84f1 e sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1. CLI terminou; fila destacada autorizada.
+- Inicio nao comprova entrega/processamento; verificar marcador/hook na retomada,
+  criarCOMnova desse checkpoint+journal e nunca reenviar por incerteza.
+  ProximaCE-REC MUST (recovery/close do Editor), depoisFE05/06/08. Quatro pendencias
+  nesta fila,34globais incluindo30legados fora da automacao; finish so ao completar
+  ou sem via segura. Observerfailed conhecido nao reiniciado; sem GUI input.

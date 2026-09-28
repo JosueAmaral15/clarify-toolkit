@@ -2,6 +2,7 @@
 
 Date: 2026-09-28
 Task: FE-PAR-04. Branch: `COM-34c8502f-6eaf-416e-92e1-cd30adadbf3f`.
+Implementation checkpoint: `631994b` (local only).
 Ancestry: FE03 `d4551cb`, dispatch journal `5e1750d`, resource-stop journal
 `bdecb9a`, then header/task-organization checkpoint `136b44e`.
 The [resource-stop report](FILE_EXPLORER_CROSS_LINE_2026_09_28.md) remains a
@@ -102,3 +103,16 @@ for CE-REC-01, never retry uncertain dispatch. Finish when this finite queue end
 or cannot continue safely. No push/main/develop promotion with CI/security gates
 still unresolved. Rollback must retain prior scoped lifecycle/header work and
 unrelated files; review this stage's diff, do not reset the entire checkpoint.
+
+## Continuation Journal
+
+After commit `631994b`, the worktree contained only unrelated untracked `example.py`,
+with its prior SHA-256 unchanged. Hooks/status were current, RAM46%, no pending
+Codex queue process. Exact-session CE-REC-01 dry-run passed. One real native call
+waited15 seconds and returned exit0 / `dispatch_started`, targeting worker
+`notebook-josue:codex:project=clarify-b09a84f1` and session
+`019ea8a0-6d60-7f03-90b9-c420603158d1`, with marker
+`CLARIFY_EDITOR_REC_CONTINUE_20260928_CE01`. CLI exited; detached stdout/stderr do
+not provide delivery proof. Verify the received marker/hook at resumption, never
+retry uncertainty. No FE05 dispatch. Monitor remains active only for CE-REC-01
+and FE05/06/08, not the legacy backlog; finish at completion or a safety stop.
