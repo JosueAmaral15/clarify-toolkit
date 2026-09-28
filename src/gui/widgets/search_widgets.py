@@ -420,11 +420,15 @@ class ConditionsGrid(QWidget):
     def add_condition_row(self):
         """Add a new condition row."""
         row_widget = QWidget()
-        row_layout = QHBoxLayout(row_widget)
-        row_layout.setContentsMargins(0, 2, 0, 2)
+        layout = QVBoxLayout(row_widget)
+        layout.setContentsMargins(0, 2, 0, 2)
+        row_layout = QHBoxLayout()
+        layout.addLayout(row_layout)
 
         # Field selector (with technical names as user data)
         combo_field = QComboBox()
+        combo_field.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        combo_field.setMinimumContentsLength(8)
         # Add items with display text (translated) and user data (technical field name)
         combo_field.addItem(tr("search.field_filename"), "filename")
         combo_field.addItem(tr("search.field_path"), "path")
@@ -437,9 +441,12 @@ class ConditionsGrid(QWidget):
 
         # Operator selector
         combo_operator = QComboBox()
+        combo_operator.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        combo_operator.setMinimumContentsLength(10)
         from ...core.filters import OPERATOR_ALIASES
 
         for label in ("equals", "not equals", "contains", "not contains",
+                      "starts with", "ends with",
                       "greater than", "less than", "greater than or equal",
                       "less than or equal", "regex"):
             combo_operator.addItem(label, OPERATOR_ALIASES.get(label, label))
@@ -448,20 +455,46 @@ class ConditionsGrid(QWidget):
 
         # Value input
         line_value = QLineEdit()
+        from ...core.filters import MAX_CONDITION_TEXT_BYTES
+        line_value.setMaxLength(MAX_CONDITION_TEXT_BYTES)
+        line_value.setMinimumWidth(40)
         line_value.setPlaceholderText(tr("search.placeholder_value"))
         line_value.setToolTip(tr("search.tooltip_value"))
         row_layout.addWidget(line_value, 1)  # Stretch to fill space
+
+        options_layout = QHBoxLayout()
+        layout.addLayout(options_layout)
 
         # Options for content field
         chk_case = QCheckBox(tr("search.chk_case"))
         chk_case.setToolTip(tr("search.tooltip_case"))
         chk_case.setEnabled(True)  # Enable by default, will be managed by field selection
-        row_layout.addWidget(chk_case)
+        options_layout.addWidget(chk_case)
 
         chk_regex = QCheckBox(tr("search.chk_regex"))
         chk_regex.setToolTip(tr("search.tooltip_regex_option"))
         chk_regex.setEnabled(True)  # Enable by default, will be managed by field selection
-        row_layout.addWidget(chk_regex)
+        options_layout.addWidget(chk_regex)
+
+        chk_word = QCheckBox(tr("search.chk_whole_word"))
+        chk_word.setToolTip(tr("search.tooltip_condition_word"))
+        options_layout.addWidget(chk_word)
+        options_layout.addStretch()
+
+        scope_layout = QHBoxLayout()
+        layout.addLayout(scope_layout)
+        combo_scope = QComboBox()
+        combo_scope.setToolTip(tr("search.tooltip_condition_scope"))
+        for value, label in (("", "No scope"), ("brackets", "[]"), ("braces", "{}"),
+                             ("parentheses", "()"), ("custom", "Custom"), ("tag", "Any tag"),
+                             ("specific-tag", "Specific tag"), ("hierarchical", "Hierarchical")):
+            combo_scope.addItem(tr(f"search.condition_scope_{value or 'none'}", label), value)
+        scope_layout.addWidget(combo_scope)
+        line_scope = QLineEdit()
+        line_scope.setMaxLength(MAX_CONDITION_TEXT_BYTES)
+        line_scope.setPlaceholderText(tr("search_replace.placeholder_scope_value"))
+        line_scope.setToolTip(tr("search.tooltip_condition_parameter"))
+        scope_layout.addWidget(line_scope, 1)
 
         # Delete button
         btn_delete = QPushButton(tr("search.btn_delete"))
@@ -471,14 +504,21 @@ class ConditionsGrid(QWidget):
         row_layout.addWidget(btn_delete)
 
         # Enable/disable options based on field type
-        def on_field_changed(index):
-            field_data = combo_field.itemData(index)
+        def on_field_changed(*_args):
+            field_data = combo_field.currentData()
             # Enable Case and Regex for text fields: filename, path, ext, content
             is_text_field = field_data in ("filename", "path", "ext", "content")
             chk_case.setEnabled(is_text_field)
             chk_regex.setEnabled(is_text_field)
+            chk_word.setEnabled(is_text_field and combo_operator.currentData() in
+                                ("contains", "not contains", "regex"))
+            combo_scope.setEnabled(field_data == "content")
+            line_scope.setEnabled(field_data == "content" and combo_scope.currentData() in
+                                  ("custom", "specific-tag", "hierarchical"))
 
         combo_field.currentIndexChanged.connect(on_field_changed)
+        combo_operator.currentIndexChanged.connect(on_field_changed)
+        combo_scope.currentIndexChanged.connect(on_field_changed)
 
         # Set initial state
         on_field_changed(combo_field.currentIndex())
@@ -494,6 +534,9 @@ class ConditionsGrid(QWidget):
             "value": line_value,
             "case": chk_case,
             "regex": chk_regex,
+            "word": chk_word,
+            "scope": combo_scope,
+            "scope_value": line_scope,
         }
         self.condition_rows.append(row_data)
 
@@ -503,6 +546,9 @@ class ConditionsGrid(QWidget):
         line_value.textChanged.connect(self._emit_conditions)
         chk_case.stateChanged.connect(self._emit_conditions)
         chk_regex.stateChanged.connect(self._emit_conditions)
+        chk_word.stateChanged.connect(self._emit_conditions)
+        combo_scope.currentIndexChanged.connect(self._emit_conditions)
+        line_scope.textChanged.connect(self._emit_conditions)
 
     def _remove_condition_row(self, row_widget):
         """Remove a specific condition row."""
@@ -550,10 +596,42 @@ class ConditionsGrid(QWidget):
                 "value": value,
                 "case_sensitive": row_data["case"].isChecked(),
                 "regex": row_data["regex"].isChecked(),
+                "whole_word": row_data["word"].isChecked(),
+                "scope_type": row_data["scope"].currentData() if field == "content" else "",
+                "scope_value": row_data["scope_value"].text() if field == "content" else "",
             }
             conditions.append(condition)
 
         return conditions
+
+    def set_conditions(self, conditions, logic_operator="AND"):
+        """Restore validated mappings without emitting partially restored rows."""
+        from ...core.filters import Condition, MAX_CONDITIONS
+
+        if not isinstance(conditions, list) or len(conditions) > MAX_CONDITIONS:
+            raise ValueError("Condition presets require a list of at most 128 entries")
+        if not isinstance(logic_operator, str) or logic_operator.upper() not in {"AND", "OR"}:
+            raise ValueError("Condition logic must be AND or OR")
+        objects = [Condition.from_mapping(data) for data in conditions]
+        blocked = self.blockSignals(True)
+        try:
+            self.clear_conditions()
+            self.combo_logic.setCurrentText(logic_operator.upper())
+            for condition in objects:
+                self.add_condition_row()
+                row = self.condition_rows[-1]
+                row["field"].setCurrentIndex(row["field"].findData(condition.field))
+                row["operator"].setCurrentIndex(row["operator"].findData(condition.operator))
+                row["value"].setText(condition.value)
+                row["case"].setChecked(condition.case_sensitive)
+                row["regex"].setChecked(condition.use_regex)
+                row["word"].setChecked(condition.whole_word)
+                scope = "" if condition.scope_type == "none" else condition.scope_type
+                row["scope"].setCurrentIndex(row["scope"].findData(scope))
+                row["scope_value"].setText(condition.scope_value)
+        finally:
+            self.blockSignals(blocked)
+        self._emit_conditions()
 
     def get_logic_operator(self) -> str:
         """Get selected logic operator (AND/OR)."""

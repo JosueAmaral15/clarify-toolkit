@@ -3029,3 +3029,47 @@ Plano imediato:
   exato se crash nativo isolado ou barreira da guarda surgir; crash combinado
   segue nao resolvido. CI/security pendentes, sem push/promocao; observerfailed
   nao reiniciado, outros workers intocados. Finish ao completar fila ou inseguro.
+
+## 2026-09-28 - Pre-acao - FE-PAR-06
+
+- Marcador FE06 recebido confirma processamento sem reenvio. Checkpointd924e4b
+  e journal6c4ae07 conferidos; novaCOM-9c8a0ddf-ec84-47cd-a00d-f718bf01f720.
+- Doctor0.9.0 confirma5hooks/monitor/native queue; apenas observerfailed conhecido,
+  sem restart. RAM43.2%, example.py hash058053d...fcee preservado/excluido.
+- Auditar Condition/shared extract_scope_content, UI/presets e consumidores;
+  conectar Whole Word/Starts/Ends/scope/parametro com compatibilidade sem duplicar.
+- Modulos GUI isolados/seriais .venv/offscreen,85%/600MiB/180s/pytest20s com
+  fixtures; parar automacao/finish exato se crash isolado ou guarda bloquear.
+  Crash combinadoFE05 segue nao resolvido. Sem MainWindow/providers/dados reais,
+  push/promocao ou expansao aos30legados. DepoisFE08 apenas.
+
+## 2026-09-28 - Pos-acao - FE-PAR-06
+
+- ConditionsGrid ganhou Starts/Ends, Whole Word por condicao Contains/Not Contains,
+  scope/parametro content em linhas compactas. Condition e extractor compartilhados
+  reutilizados, inclusivehierarchical existente; opcoes irrelevantes desabilitadas.
+- Presets mantem filtros flat e incluemconditions/logic_operator, restaurados via
+  API nova validada com um sinal final. QSettings/JSON testados; antigosfilter-only
+  limpamcondicoes/AND. Erro de mapping/regex/scope informa falha sem alterarpainel.
+- Max128condicoes/64KiB UTF-8 por valor/parametro; reader4MiB existente preservado.
+  Extrator aceita teto opcional usado so peloExplorer: saida <= caracteres deentrada
+  impede duplicacao hierarquica excessiva e informa erro; consumidores antigos sem
+  teto mantidos. Regex efetiva, parametros ausentes/invalidos/capturas nao suportadas
+  validados; casosinvalidos nao viram scope irrestrito nem workerGUI.
+- Cache invalida em mudancas; assinatura inclui expressao eAND/OR, impedindo
+  restaurar universo obsoleto apos edicao duranteworker pausado. Escopos exatos,
+  duasvistas, multi-query/cross-line, budgets, lifecycle eCE recovery preservados.
+- 669testes focados distintos passaram:438Explorer(67novos+371regressoes),52core/
+  consumidores(42conditions/scope+10multi),179Editor.67novos finais5.57s/209.9MiB;
+  maxpytest241.9MiB. Repeticoes62/66/60 nao contadas; primeiro novo62 teve61pass+
+  uma expectativa incorreta sobreextensiondisabled, corrigida sem anteciparFE08.
+- Pylint-E5modulos exit0/391.3MiB, AST6/JSON2/diffcheck passaram. Testesmodulos
+  separados/seriais/offscreen guardados85%/600MiB/180s/pytest20s inclfixtures;
+  sem crashnativo/guardabort destaetapa. SegfaultcombinadoFE05 segueNAOresolvido;
+  parar continuacao/finishworker exato se crashisolado/guarda bloquear. Nao suite
+  global/UXnativa/leak-free. SemMainWindow/providers/dadosreais;2Editorfixturesexcluidos.
+- example.py hash058053d...fcee preservado/excluido; monitor/hookactive, doctor
+  somenteobserverfailed conhecido nao reiniciado. Commitlocalaposvalidar, sempush/
+  main/develop/gatescontornados. FaltasoFE08 nesta fila (1finita,31globais incluindo
+  30legados fora). Um dispatchnativeexatoaposcheckpoint; nuncaretryincerto. Finish
+  worker exato ao finalizarfila ou sem continuacaosegura.

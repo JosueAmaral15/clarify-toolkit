@@ -28,6 +28,9 @@ OPERATOR_ALIASES = {
     "greater than or equal": ">=", "less than or equal": "<=",
 }
 
+MAX_CONDITION_TEXT_BYTES = 64 * 1024
+MAX_CONDITIONS = 128
+
 
 def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
     """
@@ -66,7 +69,8 @@ def parse_hierarchical_ranges(scope_value: str) -> list[tuple[str, str]]:
     return ranges
 
 
-def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_regex: bool = False) -> str:
+def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_regex: bool = False,
+                              *, max_chars: int | None = None) -> str:
     """
     Apply hierarchical include/exclude filtering to HTML/XML content.
 
@@ -74,6 +78,7 @@ def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_rege
         text: The HTML/XML text to filter
         ranges: List of (action, selector) tuples from parse_hierarchical_ranges
         use_regex: Whether to treat selectors as regex patterns
+        max_chars: Optional output bound; omitted by legacy consumers
 
     Returns:
         Filtered text containing only included sections minus excluded sections
@@ -121,10 +126,14 @@ def apply_hierarchical_filter(text: str, ranges: list[tuple[str, str]], use_rege
                 for match in matches:
                     results = [r for r in results if r != match]
 
+        if max_chars is not None and sum(map(len, results)) + max(0, len(results) - 1) > max_chars:
+            raise ValueError("Content scope output exceeds the bounded input size")
+
     return '\n'.join(results) if results else ""
 
 
-def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use_regex: bool = False) -> str:
+def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use_regex: bool = False,
+                          *, max_chars: int | None = None) -> str:
     """
     Extract content within specified scope delimiters.
 
@@ -134,6 +143,7 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
             "specific-tag", "hierarchical", "" for no scope)
         scope_value: Additional value for custom delimiters, tag name, ranges
         use_regex: Whether to treat patterns as regex (for hierarchical ranges)
+        max_chars: Optional output bound, used by the bounded Explorer evaluator
 
     Returns:
         Concatenated content within all matching scopes
@@ -150,7 +160,7 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
     # Hierarchical include/exclude ranges
     if scope_type == "hierarchical":
         ranges = parse_hierarchical_ranges(scope_value)
-        return apply_hierarchical_filter(text, ranges, use_regex)
+        return apply_hierarchical_filter(text, ranges, use_regex, max_chars=max_chars)
 
     results = []
 
@@ -209,6 +219,8 @@ def extract_scope_content(text: str, scope_type: str, scope_value: str = "", use
         pattern = rf'<{tag}[^>]*>(.*?)</{tag}>'
         results = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
 
+    if max_chars is not None and sum(map(len, results)) + max(0, len(results) - 1) > max_chars:
+        raise ValueError("Content scope output exceeds the bounded input size")
     return '\n'.join(results) if results else ""
 
 
@@ -245,6 +257,11 @@ class Condition:
         )
         if condition.field not in {"filename", "path", "ext", "size", "mtime", "content"}:
             raise ValueError("Unknown condition field")
+        for text in (condition.value, condition.scope_value):
+            if not isinstance(text, str):
+                raise ValueError("Condition value and scope parameter must be text")
+            if len(text) > MAX_CONDITION_TEXT_BYTES or len(text.encode("utf-8")) > MAX_CONDITION_TEXT_BYTES:
+                raise ValueError("Condition value or scope parameter exceeds the 64 KiB limit")
         numeric = condition.field in {"size", "mtime"}
         allowed = {"equals", "not equals", ">", "<", ">=", "<="} if numeric else set(OPS) - {">", "<", ">=", "<="}
         if condition.operator not in allowed:
@@ -252,7 +269,36 @@ class Condition:
         if numeric and not math.isfinite(float(condition.value)):
             raise ValueError("Numeric condition requires a finite value")
         if condition.use_regex and not numeric:
-            re.compile(condition.value)
+            pattern = condition.value
+            if condition.whole_word and condition.operator in {"contains", "not contains"}:
+                pattern = r'\b(?:' + pattern + r')\b'
+            if condition.operator == "ends with":
+                pattern = r'(?:' + pattern + r')\Z'
+            re.compile(pattern, 0 if condition.case_sensitive else re.IGNORECASE)
+        if condition.field == "content":
+            scopes = {"", "none", "brackets", "braces", "parentheses", "custom",
+                      "tag", "specific-tag", "hierarchical"}
+            if not isinstance(condition.scope_type, str) or condition.scope_type not in scopes:
+                raise ValueError("Unknown content condition scope")
+            if not isinstance(condition.scope_value, str):
+                raise ValueError("Content scope parameter must be text")
+            if condition.scope_type == "custom":
+                delimiters = condition.scope_value.split(",", 1)
+                if len(delimiters) != 2 or not all(part.strip() for part in delimiters):
+                    raise ValueError("Custom scope requires nonempty begin,end delimiters")
+            if condition.scope_type in {"specific-tag", "hierarchical"} and not condition.scope_value.strip():
+                raise ValueError("Selected content scope requires a parameter")
+            if condition.scope_type == "specific-tag":
+                pattern = re.compile(rf'<{condition.scope_value.strip()}[^>]*>(.*?)</{condition.scope_value.strip()}>')
+                if pattern.groups != 1:
+                    raise ValueError("Specific tag parameter must not add capture groups")
+            if condition.scope_type == "hierarchical":
+                ranges = parse_hierarchical_ranges(condition.scope_value)
+                if not ranges:
+                    raise ValueError("Hierarchical scope requires valid include/exclude selectors")
+                for _, selector in ranges:
+                    if condition.use_regex and re.compile(selector).groups > 1:
+                        raise ValueError("Hierarchical scope regex supports at most one capture group")
         return condition
 
     # pylint: disable=too-many-return-statements  # String matching requires checking all operators
@@ -319,7 +365,8 @@ class Condition:
         return False
 
     # pylint: disable=too-many-return-statements  # Field validation requires early returns
-    def matches(self, path: str, *, content: str | None = None) -> bool:
+    def matches(self, path: str, *, content: str | None = None,
+                max_scope_chars: int | None = None) -> bool:
         """Check if path matches this condition."""
         try:
             if self.field == "filename":
@@ -343,10 +390,15 @@ class Condition:
                 txt = read_text(path) if content is None else content
                 # Apply scope filtering if specified
                 if self.scope_type and self.scope_type != "none":
-                    txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex)
+                    txt = extract_scope_content(txt, self.scope_type, self.scope_value, self.use_regex,
+                                                max_chars=max_scope_chars)
                 actual_value = txt
                 expected_value = self.value
                 return self._apply_string_matching(actual_value, expected_value, self.operator)
+        except ValueError:
+            if max_scope_chars is not None:
+                raise
+            return False
         except Exception:  # pylint: disable=broad-exception-caught  # Catch all file/parsing errors
             return False
         return False

@@ -20,6 +20,7 @@ Features:
 from __future__ import annotations
 
 import json
+import re
 from typing import Dict, Any, List, Callable, Optional
 from PySide6.QtCore import Signal, QSettings
 from PySide6.QtWidgets import (
@@ -166,7 +167,7 @@ class PresetManager(QWidget):
             QMessageBox.information(
                 self, tr("preset_manager.loaded_title"), tr("preset_manager.loaded_message").format(preset_name)
             )
-        except json.JSONDecodeError as e:
+        except (ValueError, TypeError, re.error) as e:
             QMessageBox.critical(self, tr("preset_manager.load_failed_title"), tr("preset_manager.load_error_message").format(e))
 
     def delete_preset(self):

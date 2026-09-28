@@ -1255,13 +1255,15 @@ class UnifiedFileExplorerExecutor(QObject):
 
     @staticmethod
     def _prepare_conditions(conditions, logic_operator):
-        from .filters import Condition
+        from .filters import Condition, MAX_CONDITIONS
 
         if not isinstance(logic_operator, str):
             raise ValueError("Condition logic must be AND or OR")
         logic = logic_operator.upper()
         if logic not in {"AND", "OR"}:
             raise ValueError("Condition logic must be AND or OR")
+        if conditions is not None and (not isinstance(conditions, list) or len(conditions) > MAX_CONDITIONS):
+            raise ValueError("Conditions require a list of at most 128 entries")
         return [Condition.from_mapping(data) for data in (conditions or [])], logic
 
     @staticmethod
@@ -1290,7 +1292,7 @@ class UnifiedFileExplorerExecutor(QObject):
                 if len(raw) > MAX_REPLACE_FILE_BYTES:
                     raise ValueError("Content condition file exceeds the 4 MiB limit")
                 cache["text"] = raw.decode("utf-8")
-            return condition.matches(path, content=cache["text"])
+            return condition.matches(path, content=cache["text"], max_scope_chars=len(cache["text"]))
 
         if not objects:
             return True

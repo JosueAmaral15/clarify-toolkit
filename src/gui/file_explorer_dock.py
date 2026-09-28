@@ -761,7 +761,9 @@ class FileExplorerDock(BaseDock):
                      self.chk_recursive.isChecked() if scope == "folder" else False,
                      self.chk_all.isChecked() if scope == "folder" else True,
                      file_revision(os.stat(paths[0])) if scope == "file" else None,
-                     tuple(sorted(self._get_search_options().items())))
+                     tuple(sorted(self._get_search_options().items())),
+                     tuple(tuple(sorted(condition.items())) for condition in self.conditions_grid.get_conditions()),
+                     self.conditions_grid.get_logic_operator())
         return scope, value if scope != "selected" else root, root, paths, signature
 
     def _toggle_word_wrap(self, enabled: bool):
@@ -1170,6 +1172,12 @@ class FileExplorerDock(BaseDock):
         content_query = self.content_panel.get_query()
         conditions = self.conditions_grid.get_conditions()
         logic_operator = self.conditions_grid.get_logic_operator()
+        try:
+            self.executor._prepare_conditions(conditions, logic_operator)
+        except (ValueError, TypeError, UnicodeError, re.error) as exc:
+            self._invalidate_target_cache()
+            QMessageBox.critical(self, tr("file_explorer.error_title"), str(exc))
+            return
 
         # SECURITY: Validate regex patterns BEFORE starting search
         # Prevents "Invalid regex pattern" errors during execution
@@ -1425,11 +1433,24 @@ class FileExplorerDock(BaseDock):
 
     def _get_current_filters(self) -> Dict[str, Any]:
         """Get current filter settings (for preset manager)."""
-        return self.filter_panel.get_filters()
+        filters = self.filter_panel.get_filters()
+        filters["conditions"] = self.conditions_grid.get_conditions()
+        filters["logic_operator"] = self.conditions_grid.get_logic_operator()
+        return filters
 
     def _apply_filters_to_widgets(self, filters: Dict[str, Any]):
         """Apply filter settings to widgets (for preset manager)."""
+        if not isinstance(filters, dict):
+            raise ValueError("Filter preset must be a mapping")
+        conditions = filters.get("conditions", [])
+        logic = filters.get("logic_operator", "AND")
+        # Validate condition data before changing either panel. Older filter-only
+        # presets have no conditions and must not retain a previous expression.
+        self.executor._prepare_conditions(conditions, logic)
+        if conditions is None:
+            raise ValueError("Condition presets require a list")
         self.filter_panel.set_filters(filters)
+        self.conditions_grid.set_conditions(conditions, logic)
 
     def _load_preferences(self):
         """Load saved preferences."""
@@ -1941,7 +1962,7 @@ class FileExplorerDock(BaseDock):
 
     def _on_conditions_changed(self, conditions: list):
         """Handle advanced conditions changes."""
-        # Could auto-filter results when conditions change
+        self._invalidate_target_cache()
 
     def _report_result_errors(self, result):
         """Keep completion diagnostics bounded and visible without repeated modals."""
