@@ -3073,3 +3073,19 @@ Plano imediato:
   main/develop/gatescontornados. FaltasoFE08 nesta fila (1finita,31globais incluindo
   30legados fora). Um dispatchnativeexatoaposcheckpoint; nuncaretryincerto. Finish
   worker exato ao finalizarfila ou sem continuacaosegura.
+
+### Checkpoint E Dispatch FE-PAR-08
+
+- FE06 commit local7353fc7,11 paths da etapa; worktree apenas example.py inalterado.
+  RAM43.7%, hook/worker active, sem queue exato anterior. Doctor somente observer
+  failed conhecido; sem restart. Sem push/promocao/gates contornados.
+- Dry-run passou e houve UMA chamada real native/detach/delay15s, exit0 e
+  dispatch_started para CLARIFY_FE_PAR_CONTINUE_20260928_FE08. Worker
+  notebook-josue:codex:project=clarify-b09a84f1 e sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1 exatos. CLI terminou; inicio nao comprova
+  entrega/processamento. Nao reenviar por incerteza. Retomada verifica checkpoint
+  e journal antes de novaCOM. Resta FE08 (1 finita,31 gerais com30legados fora).
+- Prompt carrega segfault combinado nao resolvido, modulos GUI isolados/guardas e
+  stop/finish exato se falha nativa isolada ou guarda bloquear. FE08 e a ultima
+  etapa: SEM novo dispatch/backlog legado depois; finalizar apenas worker exato
+  ao completar ou sem caminho seguro, deixando outros workers/services intocados.

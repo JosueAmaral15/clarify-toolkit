@@ -123,3 +123,17 @@ exit2 only for the previously failed reply-observer, not restarted. Exact worker
 Remaining **FE-PAR-08 only** (1 finite,31 overall including30 legacy excluded).
 One exact-session native continuation after validated local commit, never retry
 uncertain dispatch; finish the worker on finite completion or unsafe continuation.
+
+## Continuation Journal
+
+FE06 local checkpoint is `7353fc7` (11 scoped paths), worktree then only unchanged
+untracked `example.py`. Final RAM43.7%, exact worker/hook active, no previous exact
+queue process. Doctor still only reports the known failed reply-observer.
+Dry-run passed, then exactly one real native continuation was called for
+`CLARIFY_FE_PAR_CONTINUE_20260928_FE08`, delay15s/detached queue, exact worker and
+session above. CLI exited0 with `dispatch_started`: initiation, not proof of
+delivery or processing. Never retry uncertainty. Next marker checks this commit
+plus this journal, then creates a fresh COM-UUID branch. FE08 is the final finite
+item; its prompt explicitly forbids legacy expansion/further dispatch and requires
+finishing only the exact worker at completion or an unsafe validation barrier.
+No push or main/develop promotion occurred.
