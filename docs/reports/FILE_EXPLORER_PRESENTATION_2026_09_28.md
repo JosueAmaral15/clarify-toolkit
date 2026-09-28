@@ -121,5 +121,9 @@ Monitoring was verified active with5 hooks/DB integrity/native queue and0.9.0;
 doctor exit2 only for the previously failed reply-observer, not restarted.
 Auto-start is false, so a finished idle worker is not reactivated by later hooks.
 Only worker notebook-josue:codex:project=clarify-b09a84f1 and session
-019ea8a0-6d60-7f03-90b9-c420603158d1 are authorized. Finish will be recorded after
-the local checkpoint; other workers/services stay untouched. No new native dispatch.
+019ea8a0-6d60-7f03-90b9-c420603158d1 are authorized. Feature checkpoint ced3908
+committed locally on the branch above. Then ai-presence --dry-run finish targeted
+only that exact worker/session, exit0; status confirmed idle/current_task absent.
+The CLI dry-run suppresses notifications, not the local finish database event;
+no Discord/Telegram delivery occurred. Other workers retained their states and
+services were not changed. No new native dispatch or retry was attempted.

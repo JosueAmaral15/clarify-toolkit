@@ -3126,3 +3126,15 @@ Plano imediato:
   na COM atual, sem push/main/develop. Finish exato apos checkpoint local, sem
   novo dispatch; outros workers/services intocados. Monitor auto-start=false
   conferido para nao reativar worker idle por hooks posteriores ao finish.
+
+### Checkpoint E Finish Final
+
+- Feature commit local ced3908: somente9 caminhos FE08/docs/testes; sem push ou
+  promocao. Worktree preserva apenas example.py nao rastreado, hash inalterado.
+- ai-presence --dry-run finish executado uma vez para worker
+  notebook-josue:codex:project=clarify-b09a84f1/sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1, exit0; status confirmou idle/tarefa=-.
+  Dry-run suprime notificacoes externas, nao o evento finish local gravado.
+  Outros workers mantiveram estados e services nao foram alterados.
+- Fila aprovada encerrada:0 pendentes/30 legados fora do escopo. SEM dispatch
+  seguinte, sem retry ou inicio de novas tarefas. Risco Qt/CI/security nao resolvido.
