@@ -4,6 +4,7 @@ Date: 2026-09-28
 Branch: `COM-d6670c61-7bfa-4c1d-9edd-f26746140d8c`
 Base: implementation checkpoint `584709e`, followed by dispatch journal `c5bd62c`.
 Scope: **FE-PAR-07 only**, in the approved finite FE-PAR-01..08 batch.
+Implementation checkpoint: `54032ee` (local only).
 The [first-stage report](FILE_EXPLORER_PARITY_IMPLEMENTATION_2026_09_28.md)
 remains a historical record of FE-PAR-01/02, not the latest pending count.
 
@@ -84,9 +85,12 @@ schema/integrity, five hooks, native queue and existing automation/native contro
 are healthy. Doctor still returns error for the failed reply-observer service.
 No restart, migration, control change, GUI input or secret-file access occurred.
 The received FE07 marker confirms processing of the preceding dispatch.
-Dry-run of the exact worker/session FE03 continuation passed; one real detached
-native dispatch follows the local commit. Dispatch initiation alone does not
-prove delivery, and uncertainty must never cause a retry.
+Dry-run of the exact worker/session FE03 continuation passed. After local commit
+`54032ee`, one real native call waited 15 seconds and returned exit 0 /
+`dispatch_started`, targeting `019ea8a0-6d60-7f03-90b9-c420603158d1` and worker
+`notebook-josue:codex:project=clarify-b09a84f1`, with unique marker
+`CLARIFY_FE_PAR_CONTINUE_20260928_FE03`. CLI exited; detached initiation alone does
+not prove delivery. No retry; verify the received marker/hook at resumption.
 
 Remaining approved items: **FE-PAR-03, 04, 05, 06 and 08**. Next is explicit target
 scope (03), on a fresh COM-UUID branch from this stage's checkpoint. The 30 earlier

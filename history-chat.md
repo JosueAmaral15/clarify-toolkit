@@ -2722,3 +2722,16 @@ Plano imediato:
   Commit local na COM desta etapa; example.py excluido, sem push/main/develop.
   Apos checkpoint, emitir uma unica continuacao FE03 destacada; registrar o
   resultado real sem retry incerto. Finish somente ao terminar batch ou sem via segura.
+
+### Checkpoint E Dispatch FE-PAR-03
+
+- Implementacao FE-PAR-07 commitada em 54032ee na COM-d6670c61-7bfa-4c1d-9edd-
+  f26746140d8c, 12 arquivos proprios. Worktree ficou somente com example.py nao
+  rastreado; SHA-256 antes/depois identico. Nenhum push ou merge realizado.
+- Uma unica chamada real native/exact-session, marcador
+  CLARIFY_FE_PAR_CONTINUE_20260928_FE03, aguardou 15s e retornou exit 0 /
+  dispatch_started para worker clarify-b09a84f1 e sessao
+  019ea8a0-6d60-7f03-90b9-c420603158d1. CLI terminou; fila destacada autorizada.
+- Inicio do dispatch nao comprova entrega/processamento. Nao reenviar por
+  incerteza; verificar marcador/hook ao retomar. Monitor continua ativo apenas
+  para FE-PAR-03/04/05/06/08, sem finish antecipado nem expansao aos 30 legados.
