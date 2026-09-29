@@ -177,7 +177,6 @@ class MenuBuilder:
             "utilities": utilities_menu,
         }
 
-        editing_menu.addAction(main_window.act_open_search_replace)
         editing_menu.addAction(main_window.act_open_insert)
 
         json_menu.addAction(main_window.act_open_translate)

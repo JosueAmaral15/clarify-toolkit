@@ -2,15 +2,48 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/28 - FE-PAR-08 validado; fila finita concluida
+**Last Update**: 2026/09/29 - workspace/layouts concluidos apos retomada com RAM liberada
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Workspace E Layouts - Pedido Novo (29/09/2026)
+
+Escopo aprovado separado da fila FE-PAR concluida: **2 novos concluidos,0 novos
+pendentes +30 legados fora do escopo =30 abertos**. Sem nova continuacao automatica,
+push ou promocao. COM-3e8d2f98-0024-4bec-9009-bc4fa830f809:723 testes focados
+distintos passaram (56 novos), guardas inalteradas e um modulo GUI por processo.
+Pylint-E8, AST11/JSON2/Black3/diff limpos; geometria dos modos nas duas larguras e
+temas validada, capturas Qt inspecionadas. Nao e suite global nem startup completo.
+Stop historico RAM85% (treeRSS125.8MiB,signal15/exit125) preservado: nao foi pass
+nem crash nativo. Retomada autorizada apos usuario fechar aplicativos, com RAM
+aproximadamente37.6%; nenhum crash/guard abort nesta retomada. Crash Qt FE05 e
+gates CI/security continuam nao resolvidos.
+[Evidencias e limites](reports/SHARED_FILE_WORKSPACE_LAYOUTS_2026_09_29.md).
+
+- [x] **WS-MODE-01 / MUST:** um unico workspace File Explorer com modo compacto
+  Search/Replace e avancado File Explorer, seletor comum acima de Directory Type.
+  Remover entrada separada de Tools/Editing; rotas antigas devem abrir a mesma aba.
+  Compartilhar alvo/query/opcoes/resultados/selecao, uma operacao/worker por workspace;
+  filtros avancados continuam ativos no compacto com resumo visivel. Preservar
+  consumidores de SearchReplacePanel, escopos exatos/cache/lifecycle e recovery.
+  Entregue: seletor fixo fora do scroll lateral, resumo plain bounded1024,
+  filtros ocultos continuam efetivos. Uma instancia/aba/executor; pause/cancel/
+  close/delete de search e replace reais e ambas as vistas/escopos preservados.
+- [x] **LAY-TABS-01 / MUST:** corrigir registro Editor/File Explorer e tools lazy,
+  presets Compact/Standard/Advanced e layouts customizados para interface por abas.
+  Visibilidade/current/IDs estaveis e modo do workspace devem ser restaurados
+  depois das abas; nao fechar buffers, duplicar abas ou inicializar todos os tools.
+  Preservar consumidores dock-only e formatos anteriores quando aplicavel.
+  Entregue: presets por visibilidade de tabs, snapshot bounded128/64KiB de ordem/
+  current/modo, restore apos tabs e validacao de metadados; rotas por identidade,
+  Insert oculto/reaberto conserva buffer. Sem mostrar tabs fechadas como widgets
+  flutuantes, apagar buffers ou criar todos os tools. Removido resize tardio.
 
 ## Fila Atual - Editor E File Explorer (28/09/2026)
 
 Pedido novo do usuario, separado dos IDs FE-PAR e do backlog legado. Organizacao
 primeiro; validar codigo ja em andamento e impedir perda de documentos tem
-precedencia sobre adicionar outras features. Contagem atual: **30 abertos, todos
+precedencia sobre adicionar outras features. Contagem ao encerrar esta fila: **30 abertos, todos
 legados fora do escopo**; a fila finita FE-PAR/Editor foi validada e concluida.
 
 - [x] **CE-HDR-01 / COULD: nome da pasta com ate24 caracteres.** Substituir limite
@@ -77,7 +110,7 @@ Run combinado214 segfaultou; causa nativa nao confirmada. Modulos isolados passa
 sem provar resolucao desse crash. Continuar somente com isolamento por modulo GUI;
 se crash nativo isolado ocorrer, parar automacao e finalizar worker exato.
 FE-PAR-06: [condicoes, presets e cache](reports/FILE_EXPLORER_ENRICHED_CONDITIONS_2026_09_28.md).
-Proximo FE-PAR-08, com um unico dispatch apos o novo checkpoint.
+FE-PAR-08 concluido; fila encerrada, sem novo dispatch.
 
 - [x] **FE-PAR-01 / MUST: substituicao correta e segura.** Unificar contrato
   dock/worker/executor, encaminhar Preserve Case, respeitar selecao na vista

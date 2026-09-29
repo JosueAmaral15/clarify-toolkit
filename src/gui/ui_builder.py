@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget
 
 from ..gui.progress import ProgressManager
-from ..gui.panels import SearchReplacePanel, InsertPanel
+from ..gui.panels import InsertPanel
 from ..i18n.translator import tr
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ class UIBuilder:
     - Tab widget with close buttons
     - Progress manager
     - Status bar
-    - Search/Replace and Insert panels
+    - Shared file workspace and Insert panel
     """
 
     @staticmethod
@@ -77,16 +77,17 @@ class UIBuilder:
     @staticmethod
     def build_panels(main_window: 'MainWindow') -> None:
         """
-        Build Search/Replace and Insert panels.
+        Build the shared file workspace and Insert panel.
 
         Args:
             main_window: MainWindow instance
         """
-        # Create panels and pass progress_manager reference
-        main_window.tab_search = SearchReplacePanel(
-            parent=main_window,
-            progress_manager=main_window.progress_manager
-        )
+        from .file_explorer_dock import FileExplorerDock
+        main_window.dock_file_explorer = FileExplorerDock(main_window)
+        main_window.tab_search = main_window.dock_file_explorer
+        mode = main_window.dock_file_explorer.settings.value("workspace_mode", "compact")
+        main_window.dock_file_explorer.set_workspace_mode(
+            mode if mode in ("compact", "advanced") else "compact", persist=False)
         main_window.tab_insert = InsertPanel(
             parent=main_window,
             progress_manager=main_window.progress_manager
@@ -96,12 +97,11 @@ class UIBuilder:
         main_window.insert_panel = main_window.tab_insert
 
         # Add to tabs
-        main_window.tabs.addTab(main_window.tab_search, tr("ui_builder.tab_search"))
+        main_window._add_tool_tab(main_window.dock_file_explorer, tr("menu.tools.file_explorer"), "file_explorer")
+        main_window.tab_insert.setProperty("clarify_tool_id", "insert")
         main_window.tabs.addTab(main_window.tab_insert, tr("ui_builder.tab_insert"))
 
-        # Mark Search/Replace and Insert as not closeable initially (fixed tabs)
-        # They will be marked as closeable when saved to QSettings
-        # (v2.9.40 - Task: Tools as tabs)
+        # Keep both default pages visible initially; session restore may remove them.
 
     @staticmethod
     def finalize_ui(main_window: 'MainWindow') -> None:

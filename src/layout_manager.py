@@ -14,8 +14,10 @@ Version: 2.9.84
 """
 
 from typing import Dict, List
+import json
+from shiboken6 import isValid as is_valid
 from PySide6.QtCore import QSettings, QByteArray
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtWidgets import QMainWindow, QDockWidget
 
 from .utils.logger import get_logger
 
@@ -65,7 +67,43 @@ class LayoutManager:
             dock_widget: Instância do QDockWidget
         """
         self.docks[name] = dock_widget
+        dock_widget.setProperty("clarify_tool_id", name)
+        if not dock_widget.objectName():
+            dock_widget.setObjectName("dock_" + name)
         logger.debug("Dock registered: %s", name)
+
+    def _sync_tabs(self):
+        self.docks = {name: widget for name, widget in self.docks.items() if is_valid(widget)}
+        tabs = getattr(self.main_window, "tabs", None)
+        if tabs is not None:
+            for index in range(tabs.count()):
+                widget = tabs.widget(index)
+                name = widget.property("clarify_tool_id")
+                if name:
+                    self.register_dock(name, widget)
+        return tabs
+
+    def _is_open(self, widget, tabs):
+        if tabs is None or tabs.indexOf(widget) >= 0:
+            return True
+        return isinstance(widget, QDockWidget) and bool(self.main_window.dockWidgetArea(widget))
+
+    def _set_visibility(self, visible_names):
+        tabs = self._sync_tabs()
+        selected = tabs.currentWidget() if tabs is not None else None
+        if tabs is not None and tabs.count():
+            eligible = [i for i in range(tabs.count())
+                        if tabs.widget(i).property("clarify_tool_id") in visible_names]
+            # Never leave a live tab workspace blank when a preset's tools are closed.
+            if not eligible:
+                eligible = [max(0, tabs.currentIndex())]
+            for index in range(tabs.count()):
+                tabs.setTabVisible(index, index in eligible)
+            index = tabs.indexOf(selected) if selected is not None else -1
+            tabs.setCurrentIndex(index if index in eligible else eligible[0])
+        for name, widget in self.docks.items():
+            if self._is_open(widget, tabs) and (tabs is None or tabs.indexOf(widget) < 0):
+                widget.setVisible(name in visible_names)
 
     def save_layout(self, layout_name: str) -> None:
         """
@@ -74,6 +112,22 @@ class LayoutManager:
         Args:
             layout_name: Nome do layout (ex: "my_custom_layout")
         """
+        tabs = self._sync_tabs()
+        tab_state = []
+        if tabs is not None:
+            for index in range(tabs.count()):
+                widget = tabs.widget(index)
+                name = widget.property("clarify_tool_id")
+                if name:
+                    item = {"id": name, "visible": tabs.isTabVisible(index)}
+                    if hasattr(widget, "get_workspace_mode"):
+                        item["mode"] = widget.get_workspace_mode()
+                    tab_state.append(item)
+        if len(tab_state) > 128:
+            raise ValueError("A layout supports at most 128 registered tabs")
+        encoded = json.dumps(tab_state)
+        if len(encoded.encode("utf-8")) > 65536:
+            raise ValueError("Layout tab metadata exceeds 64 KiB")
         # Salvar geometry e state do QMainWindow
         geometry = self.main_window.saveGeometry()
         state = self.main_window.saveState()
@@ -82,12 +136,18 @@ class LayoutManager:
         self.settings.beginGroup(f"Layouts/{layout_name}")
         self.settings.setValue("geometry", geometry)
         self.settings.setValue("state", state)
+        self.settings.setValue("tabs", encoded)
+        current = tabs.currentWidget() if tabs is not None else None
+        self.settings.setValue("active_tab", current.property("clarify_tool_id") if current else "")
 
         # Salvar visibilidade de cada dock
         for dock_name, dock_widget in self.docks.items():
-            self.settings.setValue(f"dock_{dock_name}_visible", dock_widget.isVisible())
+            index = tabs.indexOf(dock_widget) if tabs is not None else -1
+            visible = tabs.isTabVisible(index) if index >= 0 else not dock_widget.isHidden()
+            self.settings.setValue(f"dock_{dock_name}_visible", visible)
 
         self.settings.endGroup()
+        self.settings.setValue("LastLayout", layout_name)
         self.settings.sync()
 
         logger.info("Layout saved: %s", layout_name)
@@ -102,6 +162,7 @@ class LayoutManager:
         Returns:
             True se o layout foi carregado com sucesso, False caso contrário
         """
+        tabs = self._sync_tabs()
         self.settings.beginGroup(f"Layouts/{layout_name}")
 
         # Verificar se o layout existe
@@ -113,15 +174,76 @@ class LayoutManager:
         # Restaurar geometry e state
         geometry = self.settings.value("geometry", type=QByteArray)
         state = self.settings.value("state", type=QByteArray)
+        raw_tabs = self.settings.value("tabs", None)
+        active_tab = self.settings.value("active_tab", "")
+        try:
+            records = None
+            if not isinstance(active_tab, str) or len(active_tab) > 512:
+                raise ValueError("Invalid layout active tab")
+            if raw_tabs is not None:
+                if (not isinstance(raw_tabs, str) or len(raw_tabs) > 65536
+                        or len(raw_tabs.encode("utf-8")) > 65536):
+                    raise ValueError("Invalid layout tab metadata")
+                records = json.loads(raw_tabs)
+                if not isinstance(records, list) or len(records) > 128:
+                    raise ValueError("Invalid layout tab list")
+                seen = set()
+                for item in records:
+                    if (not isinstance(item, dict) or not isinstance(item.get("id"), str)
+                            or not item["id"] or len(item["id"]) > 512
+                            or item["id"] in seen or not isinstance(item.get("visible"), bool)
+                            or item.get("mode") not in (None, "compact", "advanced")):
+                        raise ValueError("Invalid layout tab record")
+                    seen.add(item["id"])
+        except (ValueError, TypeError) as error:
+            self.settings.endGroup()
+            logger.warning("Cannot restore layout %s: %s", layout_name, error)
+            return False
 
-        if geometry and state:
-            self.main_window.restoreGeometry(geometry)
-            self.main_window.restoreState(state)
+        if geometry and not self.main_window.restoreGeometry(geometry):
+            self.settings.endGroup()
+            return False
+        if state and not self.main_window.restoreState(state):
+            self.settings.endGroup()
+            return False
 
         # Restaurar visibilidade dos docks
         for dock_name, dock_widget in self.docks.items():
-            visible = self.settings.value(f"dock_{dock_name}_visible", True, type=bool)
-            dock_widget.setVisible(visible)
+            if not self._is_open(dock_widget, tabs):
+                continue
+            index = tabs.indexOf(dock_widget) if tabs is not None else -1
+            if index < 0:
+                visible = self.settings.value(f"dock_{dock_name}_visible", True, type=bool)
+                dock_widget.setVisible(visible)
+
+        if tabs is not None:
+            if records is None:
+                visible_names = set()
+                for name in self.docks:
+                    key = f"dock_{name}_visible"
+                    if name == "file_explorer" and not self.settings.contains(key):
+                        key = "dock_search_visible"
+                    if self.settings.value(key, True, type=bool):
+                        visible_names.add(name)
+            else:
+                # Reorder existing tabs only; a layout never starts unopened tools.
+                position = 0
+                for item in records:
+                    widget = self.docks.get(item["id"])
+                    index = tabs.indexOf(widget) if widget is not None else -1
+                    if index >= 0:
+                        tabs.tabBar().moveTab(index, position)
+                        position += 1
+                        if item.get("mode") is not None and hasattr(widget, "set_workspace_mode"):
+                            widget.set_workspace_mode(item["mode"])
+                visible_names = {item["id"] for item in records if item["visible"]}
+                # Tools opened after this snapshot remain accessible.
+                visible_names.update(name for name in self.docks if name not in seen)
+            self._set_visibility(visible_names)
+            widget = self.docks.get(active_tab)
+            index = tabs.indexOf(widget) if widget is not None else -1
+            if index >= 0 and tabs.isTabVisible(index):
+                tabs.setCurrentIndex(index)
 
         self.settings.endGroup()
 
@@ -148,11 +270,12 @@ class LayoutManager:
         logger.info("Applying Compact preset")
 
         # Mostrar apenas Editor (se existir)
-        visible_docks = ["editor"]
-
-        for dock_name, dock_widget in self.docks.items():
-            should_be_visible = dock_name in visible_docks
-            dock_widget.setVisible(should_be_visible)
+        tabs = self._sync_tabs()
+        editor = self.docks.get("editor")
+        if (tabs is not None and (editor is None or tabs.indexOf(editor) < 0)
+                and hasattr(self.main_window, "_show_editor")):
+            self.main_window._show_editor()
+        self._set_visibility({"editor"})
 
         # Salvar este preset
         self.save_layout(self.PRESET_COMPACT)
@@ -163,21 +286,16 @@ class LayoutManager:
 
         Layout equilibrado:
         - Editor: Visível (central)
-        - Search: Visível
-        - Replace: Visível
+        - File Explorer/Search-Replace: Visível se aberto
         - Insert: Oculto
         - Set Operations: Oculto
-        - JSON Rewriter: Visível
+        - JSON Rewriter: Visível se aberto
         - Translate: Oculto
         """
         logger.info("Applying Standard preset")
 
         # Mostrar docks principais
-        visible_docks = ["editor", "search", "replace", "rewriter"]
-
-        for dock_name, dock_widget in self.docks.items():
-            should_be_visible = dock_name in visible_docks
-            dock_widget.setVisible(should_be_visible)
+        self._set_visibility({"editor", "file_explorer", "search", "replace", "rewriter"})
 
         # Salvar este preset
         self.save_layout(self.PRESET_STANDARD)
@@ -193,8 +311,8 @@ class LayoutManager:
         logger.info("Applying Advanced preset")
 
         # Mostrar todos os docks
-        for dock_widget in self.docks.values():
-            dock_widget.setVisible(True)
+        self._sync_tabs()
+        self._set_visibility(set(self.docks))
 
         # Salvar este preset
         self.save_layout(self.PRESET_ADVANCED)

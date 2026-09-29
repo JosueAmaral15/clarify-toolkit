@@ -65,13 +65,15 @@ class TabManager:
         dock_attr, class_name, tab_title, tab_id = TabManager.SIMPLE_TOOLS[tool_name]
 
         # Create dock if doesn't exist
-        if not hasattr(main_window, dock_attr):
+        if getattr(main_window, dock_attr, None) is None:
             from .. import gui
             dock_class = getattr(gui, class_name)
             setattr(main_window, dock_attr, dock_class(main_window))
 
         # Add to tabs
         dock = getattr(main_window, dock_attr)
+        if tool_name == "file_explorer":
+            main_window.tab_search = dock  # Compatibility route, not another panel.
         main_window._add_tool_tab(dock, tab_title, tab_id)
 
     @staticmethod
@@ -118,6 +120,7 @@ class TabManager:
     def show_file_explorer(main_window) -> None:
         """Show File Explorer as tab (unified File List + Advanced Search)."""
         TabManager.show_tool_tab(main_window, 'file_explorer')
+        main_window.dock_file_explorer.set_workspace_mode("advanced")
 
     @staticmethod
     def show_tutorials(main_window) -> None:

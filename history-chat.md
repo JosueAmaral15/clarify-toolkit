@@ -3138,3 +3138,83 @@ Plano imediato:
   Outros workers mantiveram estados e services nao foram alterados.
 - Fila aprovada encerrada:0 pendentes/30 legados fora do escopo. SEM dispatch
   seguinte, sem retry ou inicio de novas tarefas. Risco Qt/CI/security nao resolvido.
+
+## 2026-09-29 - Pre-acao - Workspace Unico E Layouts
+
+- Pedido novo aprovado: corrigir registro/layouts para abas e unir Search/Replace
+  compacto e File Explorer avancado em um workspace, com seletor acima de
+  Directory Type. Remover entrada Search/Replace de Tools/Editing; preservar
+  alvo/query/opcoes/resultados/selecao e filtros avancados ativos com resumo.
+- Duas tarefas novas, fora da fila FE-PAR concluida e dos30 legados. Base local
+  627e9e5, dependente de FE08; novaCOM-3e8d2f98-0024-4bec-9009-bc4fa830f809.
+  example.py preservado; sem push/promocao/dispatch ou alteracao de outros tools.
+- Reusar FileExplorerDock/executor/widgets em dois modos de apresentacao, sem
+  duplicar estado/workers; SearchReplacePanel compartilhado permanece disponivel.
+  Layouts usam visibilidade real de tabs, IDs estaveis e restore apos tabs existirem,
+  sem fechar documentos ou iniciar todos os tools para aplicar presets.
+- RAM72.1% na orientacao: tests isolados seriais/offscreen em .venv com guardas
+  RAM85%/RSS600MiB/wall180s/pytest20s incluindo fixtures. Sem MainWindow pesado,
+  documentos reais/providers. Crash Qt historico continua nao resolvido; parar
+  se crash isolado/guard abort ocorrer. Monitor da fila anterior fica idle.
+
+## 2026-09-29 - Pos-acao - Checkpoint Incompleto Por Guarda De RAM
+
+- Implementacao em working tree da COM atual: um FileExplorerDock com seletor
+  Search/Replace compacto/File Explorer avancado, mesmo estado/executor/resultados;
+  filtros avancados permanecem ativos e resumo plain bounded1024 no compacto.
+  Entrada separada Tools/Editing removida, rotas/fixed-tabs migradas para workspace
+  unico; SearchReplacePanel compartilhado nao alterado. AINDA NAO VALIDADO.
+- Registro Editor/File Explorer corrigido, tools lazy registrados; layout por
+  tabs e snapshots de ordem/visibilidade/aba ativa/modo, sem fechar buffers/criar
+  todos os tools. Restauracao apos tabs, IDs estaveis e protecao contra salvar
+  snapshot parcial no startup. Removido resize tardio1200x400 que anulava layouts.
+- Passaram14 casos antigos de layouts (1.19s/83.9MiB) e20 novos tab-layouts
+  (5.88s/235.9MiB), isolados/offscreen/temporarios e guardas ativas. Teste do
+  workspace foi terminado pela guarda RAM85%, treeRSS125.8MiB,signal15/exit125,
+  sem resumo pytest/passes. Nao e segfault, OOM provado ou evidencia de leak.
+  Parado trabalho automatico/testes/edicao funcional; nenhuma tentativa de retry.
+- Ainda faltam validar workspace (rotas/modes/escopos/selected/pausa/close),
+  layouts integrados/saved prefs, screenshots e regressões FE/CE/consumers;
+  AST/JSON/Pylint/diff final e possiveis correcoes apos retomada segura.
+- Sem commit de feature/push/promocao/dispatch. Todos os edits ficam em branch
+  isolada; example.py hash058053d...fcee inalterado. Nenhum processo alheio morto.
+  Worker exato confirmou idle/tarefa=-; nao foi reativado. Crash Qt FE05 historico
+  e gates CI/security continuam nao resolvidos. Restam2 novos pendentes+30legados
+  fora do escopo (32 gerais); fila FE-PAR anterior permanece encerrada.
+
+## 2026-09-29 - Pre-acao - Retomada Apos Liberacao De RAM
+
+- Usuario fechou aplicativos e autorizou continuar as tarefas pendentes.
+  Memoria disponivel verificada em aproximadamente 2388MiB/3799MiB; retomar
+  somente WS-MODE-01 e LAY-TABS-01 na COM existente, mantendo todos os edits.
+- Validar workspace/layouts e regressões isoladas com as mesmas guardas,
+  sem reduzir limites, providers ou startup pesado. Preservar example.py,
+  abort anterior e risco Qt historico nos registros. Sem push/promocao/dispatch.
+
+## 2026-09-29 - Pos-acao - Workspace E Layouts Validados
+
+- Retomada autorizada com RAM liberada; WS-MODE-01 e LAY-TABS-01 concluidos.
+  Um workspace/executor com Search/Replace compacto e File Explorer avancado,
+  seletor acima de Directory Type fora do scroll e filtros ativos com resumo
+  plain bounded1024. Entrada separada Tools/Editing removida, consumidores
+  compartilhados mantidos. Escopos, cache, ambas as vistas e workers preservados.
+- Presets agora gerenciam tabs reais, registro correto/IDs estaveis e snapshots
+  bounded128/64KiB; restauram ordem/visibilidade/current/modo apos tabs existirem.
+  Sem apagar buffers/criar todos os tools; Insert usa identidade e conserva
+  buffer ao revelar/reabrir; indices recalculados apos fechamento. Corrigidos
+  restore de fixed tabs sem open_tools, metadados invalidos e resize tardio.
+- 723 casos focados distintos passaram em23 modulos (56 novos);2 converter_switch
+  deselected intencionalmente para evitar startup completo. Tests Qt seriais,
+  temporarios/offscreen, RAM85%/treeRSS600MiB/wall180s/pytest20s incluindo fixtures.
+  Nenhum crash/guard abort nesta retomada, peak testes251.9MiB.8 capturas de modos/
+  temas/larguras, quatro inspecionadas; seletor nao sofre clipping. Linhas antigas
+  dos controles ainda usam scroll lateral/splitter, sem redesenho fora do escopo.
+- Pylint-E8 passou (386.4MiB); AST11/JSON2/Black3/diff limpos. E0213 anterior
+  no helper Factory corrigido com staticmethod e teste stub; import Shiboken
+  alinhado ao padrao existente. Sem claim de suite global, leak proof ou E2E.
+- TASKS/report atualizados, stop RAM85% anterior preservado. Commit local
+  escopado na COM existente; sem push/promocao/dispatch. example.py hash
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee preservado
+  e excluido do staging. Monitor anterior nao reativado, outros processos intactos.
+- Restam0 novos/30 legados fora do escopo. Crash Qt FE05 e gates CI/security
+  continuam nao resolvidos; nenhuma nova tarefa/continuacao iniciada.

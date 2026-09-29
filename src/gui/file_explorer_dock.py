@@ -62,6 +62,7 @@ from src.utils.logger import get_logger
 from src.utils.atomic_files import file_revision
 
 from .base_dock import BaseDock
+from .widgets.explorer_workspace_mode import ExplorerWorkspaceMode
 from .panels import ResultsTree, FileExplorerWorker
 from .widgets import (
     FileFilterPanel,
@@ -175,6 +176,13 @@ class FileExplorerDock(BaseDock):
         self.filter_panel.ed_extensions.textChanged.connect(self._on_extension_filter_changed)
         self.filter_panel.chk_use_ext_filter.toggled.connect(self._on_extension_filter_changed)
         self._update_extension_filter_state()
+        self.workspace_mode.mode_changed.connect(self.set_workspace_mode)
+        self.filter_panel.filters_changed.connect(self._update_compact_filter_summary)
+        self.conditions_grid.conditions_changed.connect(self._update_compact_filter_summary)
+        self.combo_type.currentIndexChanged.connect(self._update_compact_filter_summary)
+        self.ed_inc.textChanged.connect(self._update_compact_filter_summary)
+        self.ed_exc.textChanged.connect(self._update_compact_filter_summary)
+        self.set_workspace_mode("advanced", persist=False)
         self.combo_target_scope.currentIndexChanged.connect(self._on_target_scope_changed)
         self.ed_directory.textChanged.connect(self._invalidate_target_cache)
         self.chk_recursive.toggled.connect(self._invalidate_target_cache)
@@ -201,6 +209,7 @@ class FileExplorerDock(BaseDock):
 
     def _create_widgets(self):
         """Create UI widgets."""
+        self.workspace_mode = ExplorerWorkspaceMode()
         # ============================================================================
         # SECTION 1: Directory & Type (📁 - Collapsible)
         # ============================================================================
@@ -371,6 +380,7 @@ class FileExplorerDock(BaseDock):
         self.btn_list.setText(tr("file_list.btn_list"))
 
         # Update section titles
+        self.workspace_mode.retranslateUi()
         self.section_directory.setTitle(tr("file_list.section_directory"))
         self.section_search.setTitle(tr("file_list.section_search"))
         self._update_extension_filter_state()
@@ -425,6 +435,7 @@ class FileExplorerDock(BaseDock):
         # Presets section (if visible)
         if hasattr(self, "section_presets"):
             self.section_presets.setToolTip(tr("file_explorer.tooltip_presets"))
+        self._update_compact_filter_summary()
 
     def _create_layout(self):
         """Create horizontal splitter layout with controls on left, results on right (v2.9.117 - B.1)."""
@@ -540,6 +551,13 @@ class FileExplorerDock(BaseDock):
         left_scroll.setWidget(left_panel)
         left_scroll.setWidgetResizable(True)
         left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        # Keep mode selection reachable even when legacy controls scroll sideways.
+        left_workspace = QWidget()
+        workspace_layout = QVBoxLayout(left_workspace)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(8)
+        workspace_layout.addWidget(self.workspace_mode)
+        workspace_layout.addWidget(left_scroll)
 
         # ============================================================================
         # RIGHT PANEL: Results with QStackedWidget (v2.9.117 - B.2)
@@ -679,7 +697,7 @@ class FileExplorerDock(BaseDock):
         # HORIZONTAL SPLITTER: Left (controls) + Right (results)
         # ============================================================================
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.splitter.addWidget(left_scroll)
+        self.splitter.addWidget(left_workspace)
         self.splitter.addWidget(right_panel)
         self.splitter.setSizes([300, 900])  # 25% left, 75% right
         self.splitter.setStretchFactor(0, 1)  # Left panel can shrink
@@ -2147,6 +2165,58 @@ class FileExplorerDock(BaseDock):
         self.content_panel.set_font(font)
         self.replace_panel.set_font(font)
         self.operation_log.setFont(font)
+
+    def get_workspace_mode(self):
+        return self._workspace_mode
+
+    def set_workspace_mode(self, mode: str, *, persist=True):
+        """Switch presentation only; keep scopes, cache, selection and workers intact."""
+        if mode not in ("compact", "advanced"):
+            raise ValueError("Unknown workspace mode")
+        self._workspace_mode = mode
+        self.workspace_mode.set_mode(mode)
+        advanced = mode == "advanced"
+        for widget in (self.section_filters, self.section_conditions, self.chk_long,
+                       self.chk_human, self.lbl_type, self.combo_type):
+            widget.setVisible(advanced)
+        if hasattr(self, "section_presets"):
+            self.section_presets.setVisible(advanced)
+        self._update_compact_filter_summary()
+        if persist and not self.dialog_mode:
+            self.settings.setValue("workspace_mode", mode)
+
+    def _update_compact_filter_summary(self, *_args):
+        filters = self.filter_panel.get_filters()
+        parts = []
+        if filters["use_ext_filter"]:
+            extensions = filters["extensions"]
+            parts.append(tr("file_explorer.filter_extensions").format(
+                ", ".join(ext[:24] for ext in extensions[:4]) if extensions else
+                tr("file_explorer.extensions_all")))
+        if filters["size"]["min"] is not None or filters["size"]["max"] is not None:
+            parts.append(tr("file_explorer.filter_size").format(
+                filters["size"]["min"], filters["size"]["max"]))
+        if any(filters["mtime"].values()):
+            parts.append(tr("file_explorer.filter_dates").format(
+                filters["mtime"]["after"], filters["mtime"]["before"]))
+        if filters["regex"]["enabled"]:
+            parts.append(tr("file_explorer.filter_filename_regex"))
+        if filters["depth"]:
+            parts.append(tr("file_explorer.filter_depth").format(filters["depth"]))
+        if filters["exclude_dirs"]:
+            parts.append(tr("file_explorer.filter_exclusions").format(len(filters["exclude_dirs"])))
+        conditions = self.conditions_grid.get_conditions()
+        if conditions:
+            parts.append(tr("file_explorer.filter_conditions").format(
+                len(conditions), self.conditions_grid.get_logic_operator()))
+        if self.ed_inc.text().strip():
+            parts.append(tr("file_explorer.filter_include_globs"))
+        if self.ed_exc.text().strip():
+            parts.append(tr("file_explorer.filter_exclude_globs"))
+        if self.combo_type.currentData() != "any":
+            parts.append(self.combo_type.currentText())
+        self.workspace_mode.set_summary(tr("file_explorer.active_filters").format(
+            "; ".join(parts) if parts else tr("file_explorer.no_advanced_filters")))
 
     def changeEvent(self, event):
         super().changeEvent(event)

@@ -117,7 +117,7 @@ from .gui import DockFactory, MenuBuilder, WindowSettings
 # (All removed - unused in app.py)
 
 # Search/Replace/Insert Panels: worker and components (v2.9.114 - Phase 1.2 & 1.3)
-from .gui.panels import SearchReplacePanel, InsertPanel
+from .gui.panels import InsertPanel
 
 # CLI Module: command-line interface handlers (v2.9.114 - Phase 3.1)
 from .cli import build_parser
@@ -272,6 +272,7 @@ if _PYSIDE:
             # Initialize attributes (prevent pylint warnings)
             self.ICON_BASE_64 = None
             self.tab_search = None
+            self.dock_file_explorer = None
             self.tab_insert = None
             self.dock_text_to_json = None
             self.dock_set_operations = None
@@ -288,6 +289,8 @@ if _PYSIDE:
             self.dock_voice_programming = None
             self.dock_algorithm_analysis = None
             self.tool_tabs = {}
+            self._restoring_tabs = True
+            self.resize(1200, 800)
 
             # Fix: Configure window flags for Linux compatibility (v2.9.117)
             # Linux window managers (X11/Wayland) require explicit WindowMaximizeButtonHint
@@ -309,9 +312,6 @@ if _PYSIDE:
             # Install global event filter for Shift+Scroll horizontal scrolling (v2.9.115)
             app.installEventFilter(self)
 
-            # Restore last layout (v2.9.84)
-            self.layout_manager.restore_last_layout()
-
             # Force UI update to ensure widgets are properly rendered (fix for invisible widgets on startup)
             self.updateGeometry()
             QApplication.processEvents()
@@ -321,6 +321,8 @@ if _PYSIDE:
 
             # Restore tab state from previous session (v2.9.40)
             self._restore_tab_state()
+            self._register_docks_with_layout_manager()
+            self.layout_manager.restore_last_layout()
 
             # Force initialization of all tabs to prevent lazy rendering issues
             # Qt doesn't render widgets in non-visible tabs until they're activated
@@ -491,37 +493,17 @@ if _PYSIDE:
         # Lazy-loading show methods for tools as tabs (v2.9.40)
 
         def _show_search_replace(self):
-            """Show Search/Replace tab (v2.9.40.2 - reopen if closed)."""
-            tab_name = tr("ui_builder.tab_search")
-
-            # Search for existing tab by name (don't assume index)
-            for i in range(self.tabs.count()):
-                if self.tabs.tabText(i) == tab_name:
-                    self.tabs.setCurrentIndex(i)
-                    return
-
-            # Tab not found, create it at index 0
-            self.tab_search = SearchReplacePanel(parent=self, progress_manager=self.progress_manager)
-            self.tabs.insertTab(0, self.tab_search, tab_name)
-            self.tabs.setCurrentIndex(0)
-            QApplication.processEvents()
+            """Compatibility entry: the compact mode of the one file workspace."""
+            from .gui.tab_manager import TabManager
+            TabManager.show_tool_tab(self, "file_explorer")
+            self.dock_file_explorer.set_workspace_mode("compact")
 
         def _show_insert(self):
-            """Show Insert tab (v2.9.40.2 - reopen if closed)."""
-            tab_name = tr("ui_builder.tab_insert")
-
-            # Search for existing tab by name (don't assume index)
-            for i in range(self.tabs.count()):
-                if self.tabs.tabText(i) == tab_name:
-                    self.tabs.setCurrentIndex(i)
-                    return
-
-            # Tab not found, create it at index 1
-            expected_index = 1
-            self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
-            self.tabs.insertTab(expected_index, self.tab_insert, tab_name)
-            self.tabs.setCurrentIndex(expected_index)
-            QApplication.processEvents()
+            """Reveal or reopen Insert by identity, including layout-hidden tabs."""
+            if self.tab_insert is None:
+                self.tab_insert = InsertPanel(parent=self, progress_manager=self.progress_manager)
+            self.insert_panel = self.tab_insert
+            self._add_tool_tab(self.tab_insert, tr("ui_builder.tab_insert"), "insert")
 
         def _show_translate(self):
             """Show JSON Translate as tab (create on-demand)."""
@@ -948,21 +930,17 @@ if _PYSIDE:
             Returns:
                 Tab index where the tool was added
             """
-            # Check if tool is already open
-            if tool_name in self.tool_tabs:
-                _existing_widget, existing_index = self.tool_tabs[tool_name]
-                # Validate that the tab still exists at that index
-                if 0 <= existing_index < self.tabs.count():
-                    # Verify widget matches (tab might have been closed/reordered)
-                    if self.tabs.widget(existing_index) == _existing_widget:
-                        # Switch to existing tab
-                        self.tabs.setCurrentIndex(existing_index)
-                        return existing_index
-                # Tab index is invalid or widget doesn't match - remove stale entry
-                self.logger.warning(f"Tool '{tool_name}' tracked at invalid index {existing_index}, recreating...")
-                del self.tool_tabs[tool_name]
-                # Note: Don't delete dock attribute - _show_* methods will handle recreation
-
+            widget.setProperty("clarify_tool_id", tool_name)
+            manager = getattr(self, "layout_manager", None)
+            if manager is not None:
+                manager.register_dock(tool_name, widget)
+            existing = self.tabs.indexOf(widget)
+            if existing >= 0:
+                self.tool_tabs[tool_name] = (widget, existing)
+                self.tabs.setTabVisible(existing, True)
+                self.tabs.setCurrentIndex(existing)
+                self._save_tab_state()
+                return existing
             # Add new tab
             tab_index = self.tabs.addTab(widget, title)
 
@@ -1021,23 +999,11 @@ if _PYSIDE:
             self._restore_window_flags()
 
             # Remove from tracking dict
-            tool_name_to_remove = None
-            for tool_name, (tracked_widget, tracked_index) in self.tool_tabs.items():
-                if tracked_widget == widget:
-                    tool_name_to_remove = tool_name
-                    break
-
-            if tool_name_to_remove:
-                del self.tool_tabs[tool_name_to_remove]
-
-                # Update indices of remaining tools
-                updated_tools = {}
-                for tool_name, (tracked_widget, tracked_index) in self.tool_tabs.items():
-                    if tracked_index > index:
-                        updated_tools[tool_name] = (tracked_widget, tracked_index - 1)
-                    else:
-                        updated_tools[tool_name] = (tracked_widget, tracked_index)
-                self.tool_tabs = updated_tools
+            self.tool_tabs = {
+                name: (tracked, self.tabs.indexOf(tracked))
+                for name, (tracked, _old_index) in self.tool_tabs.items()
+                if tracked is not widget and self.tabs.indexOf(tracked) >= 0
+            }
 
             # Save tab state to QSettings
             self._save_tab_state()
@@ -1063,6 +1029,8 @@ if _PYSIDE:
 
             # Activate each tab briefly to force widget rendering
             for i in range(tab_count):
+                if not self.tabs.isTabVisible(i):
+                    continue
                 tab_name = self.tabs.tabText(i)
                 logger.info("  Activating tab %s: '%s'", i, tab_name)
                 self.tabs.setCurrentIndex(i)
@@ -1131,33 +1099,47 @@ if _PYSIDE:
         def _save_tab_state(self):
             """Save current tab state to settings (v2.9.40).
             v2.9.112: Don't save fixed tabs (Search/Replace, Insert) - only save if they're still open."""
-            # Get list of open tool names (exclude Search/Replace and Insert)
-            open_tools = []
-            for tool_name, (_widget, _index) in self.tool_tabs.items():
-                open_tools.append(tool_name)
+            if getattr(self, "_restoring_tabs", False):
+                return
+            open_tools = [self.tabs.widget(index).property("clarify_tool_id")
+                          for index in range(self.tabs.count())
+                          if self.tabs.widget(index).property("clarify_tool_id") not in (None, "insert")]
 
             # Check if fixed tabs are still open (v2.9.112)
             fixed_tabs_open = {
-                "search_replace": self.tabs.count() > 0 and self.tabs.widget(0) == self.tab_search,
-                "insert": self.tabs.count() > 1 and self.tabs.widget(1) == self.tab_insert
+                "search_replace": self.tab_search is not None and self.tabs.indexOf(self.tab_search) >= 0,
+                "insert": self.tab_insert is not None and self.tabs.indexOf(self.tab_insert) >= 0
             }
 
             # Save to settings
             self.settings.set("tabs_open_tools", open_tools)
             self.settings.set("tabs_fixed_open", fixed_tabs_open)  # Track if fixed tabs are open
             self.settings.set("tabs_current_index", self.tabs.currentIndex())
+            current = self.tabs.currentWidget()
+            self.settings.set("tabs_current_tool", current.property("clarify_tool_id") if current else None)
 
         def _restore_tab_state(self):
+            """Do not overwrite the saved snapshot while rebuilding its tabs."""
+            self._restoring_tabs = True
+            try:
+                self._restore_tab_state_impl()
+            finally:
+                self._restoring_tabs = False
+
+        def _restore_tab_state_impl(self):
             """Restore tab state from settings on startup (v2.9.40).
             v2.9.112: Don't restore fixed tabs if they were closed."""
             # Check if fixed tabs should be restored (v2.9.112)
             fixed_tabs_open = self.settings.get("tabs_fixed_open", {"search_replace": True, "insert": True})
+            saved_index = self.settings.get("tabs_current_index", 0)
+            saved_tool = self.settings.get("tabs_current_tool", None)
 
             # Remove fixed tabs if they were closed in previous session
             if not fixed_tabs_open.get("search_replace", True):
-                # Remove Search/Replace tab (index 0)
-                if self.tabs.count() > 0 and self.tabs.widget(0) == self.tab_search:
-                    self.tabs.removeTab(0)
+                index = self.tabs.indexOf(self.tab_search)
+                if index >= 0:
+                    self.tabs.removeTab(index)
+                    self.tool_tabs.pop("file_explorer", None)
 
             if not fixed_tabs_open.get("insert", True):
                 # Remove Insert tab (check current index since Search/Replace might be removed)
@@ -1169,11 +1151,12 @@ if _PYSIDE:
             # Get list of tools that were open
             open_tools = self.settings.get("tabs_open_tools", [])
 
-            if not open_tools:
-                return  # No tabs to restore
-
             # Reopen each tool
             for tool_name in open_tools:
+                if tool_name == "file_explorer":
+                    from .gui.tab_manager import TabManager
+                    TabManager.show_tool_tab(self, "file_explorer")
+                    continue
                 # Map tool_name to _show_* method
                 method_name = f"_show_{tool_name}"
                 if hasattr(self, method_name):
@@ -1184,7 +1167,10 @@ if _PYSIDE:
             import logging
             logger = logging.getLogger(__name__)
 
-            saved_index = self.settings.get("tabs_current_index", 0)
+            for index in range(self.tabs.count()):
+                if saved_tool and self.tabs.widget(index).property("clarify_tool_id") == saved_tool:
+                    saved_index = index
+                    break
             current_count = self.tabs.count()
 
             logger.info("Restoring tab state - Saved index: %s, Tab count: %s", saved_index, current_count)
@@ -1343,16 +1329,15 @@ if _PYSIDE:
             """
             # Register main docks
             dock_mapping = {
-                "editor": getattr(self, "editor_dock", None),
-                "search": getattr(self, "tab_search", None),
-                "replace": getattr(self, "replace_panel", None),
+                "editor": getattr(self, "dock_editor", None),
+                "file_explorer": getattr(self, "dock_file_explorer", None),
                 "insert": getattr(self, "insert_panel", None),
-                "set_operations": getattr(self, "set_operations_dock", None),
-                "rewriter": getattr(self, "rewriter_dock", None),
-                "translate": getattr(self, "translate_dock", None),
-                "ai_processor": getattr(self, "ai_processor_dock", None),
-                "case_converter": getattr(self, "case_converter_dock", None),
-                "json_search": getattr(self, "json_search_dock", None),
+                "set_operations": getattr(self, "dock_set_operations", None),
+                "rewriter": getattr(self, "dock_rewriter", None),
+                "translate": getattr(self, "dock_translate", None),
+                "ai_processor": getattr(self, "dock_ai_processor", None),
+                "case_converter": getattr(self, "dock_case_converter", None),
+                "json_search": getattr(self, "dock_json_search", None),
             }
 
             # Register only existing docks
@@ -1986,7 +1971,6 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     app = QApplication(sys.argv)
     win = MainWindow(app)
-    win.resize(1200, 400)
     win.show()
 
     # Force immediate rendering of all widgets (fix for invisible widgets on startup)

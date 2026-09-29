@@ -32,6 +32,7 @@ def test_tools_menu_uses_stable_functional_groups(qapp):
             "Utilities",
         }
         assert window.act_open_translate in groups["JSON"].actions()
+        assert window.act_open_search_replace not in groups["Editing"].actions()
         assert window.act_open_advanced_extractor in groups["JSON"].actions()
         assert window.act_open_google_translate in groups["Text and Translation"].actions()
         assert window.act_open_editorial_repair in groups["Text and Translation"].actions()

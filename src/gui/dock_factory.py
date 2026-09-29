@@ -72,6 +72,9 @@ class DockFactory:
 
         # Store in main window
         setattr(main_window, dock_attr_name, dock)
+        manager = getattr(main_window, "layout_manager", None)
+        if manager is not None:
+            manager.register_dock(dock_attr_name.removeprefix("dock_"), dock)
 
         # Add to main window
         if area is not None:
@@ -136,6 +139,7 @@ class DockFactory:
             main_window, JsonRewriterDock, 'dock_rewriter'
         )
 
+    @staticmethod
     def create_placeholder_replacer_dock(main_window: 'QMainWindow') -> 'QDockWidget':
         """Create Placeholder Replacer dock."""
         from ..gui import PlaceholderReplacerDock
