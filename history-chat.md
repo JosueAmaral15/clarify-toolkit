@@ -3421,3 +3421,18 @@ Plano imediato:
 - Antes do commit: staged diff-check/status e verificacao de arquivos. Depois,
   push somente da COM atual para origin, sem develop/main. A proxima sessao
   devera partir deste checkpoint em nova branch COM-UUID.
+
+## 2026-10-05 - Pos-acao - Checkpoint UI/Qt Publicado Na COM
+
+- Staged32 arquivos relacionados; example.py permaneceu untracked e fora do
+  indice. Diff-check passou e a busca por credenciais encontrou somente nome
+  de setting e valor de teste explicitamente ficticio.
+- Commit criado:1b0be16 `fix: stabilize Qt UI lifecycle and localization`,
+  com2280 insercoes/308 remocoes. Push criou e configurou tracking para
+  origin/COM-52f97c90-b745-4dbf-b9e0-883dabf9069c.
+- GitHub informou24 vulnerabilidades na branch padrao (1 critica,12 altas,
+  8 moderadas,3 baixas), atualizando a evidencia antiga de23. Nenhum PR,
+  merge ou alteracao em develop/main foi realizado.
+- Proxima sessao deve criar nova COM a partir deste checkpoint e tratar o MUST
+  de seguranca de dependencias de forma separada, com auditoria aplicavel ao
+  checkout antes de qualquer upgrade.
