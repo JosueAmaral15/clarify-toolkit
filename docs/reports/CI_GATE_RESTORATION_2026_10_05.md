@@ -94,3 +94,24 @@ coverage at or above 80%, uploads Codecov successfully and passes the exact-lock
 audit. A missing Codecov secret, account billing lock, coverage deficit or test
 failure is a real external/non-pass result and must not be hidden by lowering the
 gate.
+
+## Hosted Run Evidence
+
+Commit `5f4c81e` was pushed to the working branch and dispatched exactly once.
+GitHub Actions run `37377505762` was accepted for the correct branch and SHA but
+completed as `startup_failure` in about one second. The API reports zero jobs,
+zero check runs and no downloadable logs, so no project command ran.
+
+The repository reports Actions enabled with all actions allowed. The workflow is
+active, and `gh workflow view --yaml --ref` returns content byte-for-byte equal
+to the local file. These facts and actionlint exclude a stale push and the known
+local syntax/runtime problem; they do not reveal the remaining pre-job cause.
+The authenticated CLI lacks the additional `user` scope needed to read account
+billing, and no token scope was changed. The earlier account/billing restriction
+is consistent with this symptom but is not asserted as confirmed for this run.
+No uncertain dispatch was retried.
+
+The CI MUST therefore remains open. The next external action is to inspect or
+repair the GitHub account Actions/billing status, then manually rerun this exact
+commit once. Changing tests, coverage or dependency gates cannot repair a
+failure that happens before jobs are created.

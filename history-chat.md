@@ -3529,3 +3529,17 @@ Plano imediato:
   180s em tentativa anterior e nao foi apresentado como gate resolvido. Nenhum
   merge/promocao foi feito; example.py permanece fora do indice e no hash
   058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+
+## 2026-10-05 - Pos-push - Gate Hospedado Continua Bloqueado Antes Dos Jobs
+
+- Commit5f4c81e `ci: restore reproducible quality gates` publicado em
+  origin/COM-1851754a-2bb0-46de-a084-0f1293011b33; nenhum PR, merge ou promocao.
+- Um unico dispatch foi aceito no run37377505762 para branch/SHA corretos, mas
+  terminou em `startup_failure` apos cerca de1s, sem jobs, checks ou logs. O
+  workflow remoto e identico ao local, esta ativo e Actions permite todos os
+  actions; actionlint permanece limpo. Nenhum comando do projeto foi executado.
+- API de billing exige scope `user`; nao foi ampliado nem houve retry incerto.
+  O bloqueio pre-job e compativel com a restricao de conta/billing observada
+  antes, mas a causa atual nao foi declarada confirmada sem mensagem autoritativa.
+- Permanecem30 tarefas abertas: CI e seguranca aguardam gate remoto/integracao;
+  integracao Git aguarda PR revisado; Qt historico e legado continuam separados.

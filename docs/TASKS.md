@@ -347,6 +347,10 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   main/develop segue bloqueada por HTTP403 no plano GitHub privado; decisao de
   plano/visibilidade depende do usuario, sem mudanca automatica. Ver
   [evidencias atuais](reports/CI_GATE_RESTORATION_2026_10_05.md).
+  Run remoto37377505762 do commit5f4c81e ainda terminou em `startup_failure`
+  apos1s, com zero jobs/checks/logs. Workflow remoto confere byte a byte, esta
+  ativo e Actions esta habilitado; a API nao expoe a causa pre-job. Portanto o
+  bloqueio externo continua sem comprovacao de passagem e nao houve novo envio.
 - [ ] **SHOULD / Git: integrar trabalho pendente por PRs revisados.** Develop
   criado local/remoto de origin/main 63071da por solicitacao do usuario; fluxo
   COM-UUID -> PR develop -> PR main. Ver [guia Git](guides/reference/GIT_WORKFLOW_QUICK_REFERENCE.md).
