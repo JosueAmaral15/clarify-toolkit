@@ -83,10 +83,11 @@ class InitializationManager:
 
         # Initialize translator (Task #24 - v2.9.10)
         main_window.translator = get_translator()
-        main_window.translator.languageChanged.connect(main_window._on_language_changed)
 
         # Initialize settings manager
         main_window.settings = get_settings()
+        main_window.translator.switch_language(main_window.settings.get("language", "en"))
+        main_window.translator.languageChanged.connect(main_window._on_language_changed)
 
         # Initialize QSettings for accessibility (v2.9.40 - compatibility fix)
         main_window.settings.qsettings = QSettings("Clarify", "ClarifyApp")

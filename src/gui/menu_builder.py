@@ -12,6 +12,7 @@ Version: v2.9.114
 # pylint: disable=protected-access  # Accessing MainWindow internal methods
 # pylint: disable=unnecessary-lambda  # Lambda wrappers for consistency
 # pylint: disable=line-too-long  # Menu builder has long QAction lines
+# pylint: disable=no-name-in-module  # Qt/Shiboken export extension types dynamically
 
 from __future__ import annotations
 
@@ -37,6 +38,47 @@ class MenuBuilder:
             main_window: MainWindow instance
         """
         menu_bar = main_window.menuBar()
+        from PySide6.QtCore import QObject
+        from PySide6.QtCore import Qt
+        from PySide6.QtGui import QAction, QActionGroup, QShortcut
+        from PySide6.QtWidgets import QMenu
+        from shiboken6 import isValid
+
+        extensions = []
+        for key, (menu, original_actions) in getattr(main_window, "_menu_baseline", {}).items():
+            if not isValid(menu):
+                continue
+            for action in menu.actions():
+                if action in original_actions:
+                    continue
+                submenu = next((child for child in menu.findChildren(QMenu, options=Qt.FindDirectChildrenOnly)
+                                if child.menuAction() == action), None)
+                if submenu is not None:
+                    submenu.setParent(main_window)
+                elif action.parent() == menu:
+                    action.setParent(main_window)
+                extensions.append((key, action, submenu))
+        foreign_roots = [action for action in menu_bar.actions()
+                         if action not in getattr(main_window, "_menu_bar_baseline", ())]
+        for action in foreign_roots:
+            menu_bar.removeAction(action)
+            if action.parent() == menu_bar:
+                action.setParent(main_window)
+
+        states = {
+            name: (action.isEnabled(), action.isChecked())
+            for name, action in vars(main_window).items()
+            if name.startswith("act_") and not name.startswith("act_lang_")
+            and isinstance(action, QAction) and isValid(action)
+        }
+        # Defer destruction: a language action may still be emitting triggered.
+        for obj in getattr(main_window, "_owned_menu_objects", ()):
+            if isValid(obj):
+                if isinstance(obj, (QAction, QShortcut)):
+                    obj.setEnabled(False)
+                obj.deleteLater()
+        menu_bar.clear()
+        previous = {id(obj) for obj in main_window.findChildren(QObject)}
 
         MenuBuilder._build_file_menu(main_window, menu_bar)
         MenuBuilder._build_edit_menu(main_window, menu_bar)
@@ -48,6 +90,38 @@ class MenuBuilder:
         MenuBuilder._build_help_menu(main_window, menu_bar)
         MenuBuilder._build_about_menu(main_window, menu_bar)
         MenuBuilder._setup_shortcuts(main_window)
+        main_window._owned_menu_objects = [
+            obj for obj in main_window.findChildren(QObject)
+            if id(obj) not in previous
+            and isinstance(obj, (QAction, QActionGroup, QShortcut, QMenu))
+            and obj.parent() in (main_window, menu_bar)
+        ]
+        new_menus = {obj.property("clarify_menu_key"): obj
+                     for obj in main_window.findChildren(QMenu)
+                     if id(obj) not in previous and obj.property("clarify_menu_key")}
+        main_window._menu_baseline = {key: (menu, set(menu.actions())) for key, menu in new_menus.items()}
+        main_window._menu_bar_baseline = set(menu_bar.actions())
+        for key, action, submenu in extensions:
+            menu = new_menus[key]
+            if submenu is not None:
+                submenu.setParent(menu)
+            menu.addAction(action)
+        for action in foreign_roots:
+            menu_bar.addAction(action)
+        for name, (enabled, checked) in states.items():
+            action = getattr(main_window, name, None)
+            if isinstance(action, QAction):
+                action.setEnabled(enabled)
+                if action.isCheckable():
+                    action.setChecked(checked)
+
+    @staticmethod
+    def _add_menu(owner, key, default=None):
+        """Keep a stable identity for extension-preserving language rebuilds."""
+        from ..i18n import tr
+        menu = owner.addMenu(tr(key, default))
+        menu.setProperty("clarify_menu_key", key)
+        return menu
 
     @staticmethod
     def _build_file_menu(main_window, menu_bar) -> None:
@@ -55,11 +129,11 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_file = menu_bar.addMenu(tr("menu.file"))
+        m_file = MenuBuilder._add_menu(menu_bar, "menu.file")
         m_file.setObjectName("m_file")  # For plugin access
 
         # New Project from Template (v2.9.63)
-        main_window.act_new_from_template = QAction("New from Template...", main_window)
+        main_window.act_new_from_template = QAction(tr("menu.file.new_template"), main_window)
         main_window.act_new_from_template.setToolTip(tr("menu.tooltip_new_from_template"))
         main_window.act_new_from_template.setShortcut("Ctrl+Shift+N")
         m_file.addAction(main_window.act_new_from_template)
@@ -83,7 +157,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_edit = menu_bar.addMenu(tr("menu.edit"))
+        m_edit = MenuBuilder._add_menu(menu_bar, "menu.edit")
 
         main_window.act_undo = QAction(tr("menu.edit.undo"), main_window)
         main_window.act_undo.setShortcut("Ctrl+Z")
@@ -108,7 +182,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_tools = menu_bar.addMenu(tr("menu.tools"))
+        m_tools = MenuBuilder._add_menu(menu_bar, "menu.tools")
         main_window.tools_menu = m_tools
 
         # Fixed tabs accessibility (v2.9.40.2 - Task: menu for closed tabs)
@@ -160,14 +234,12 @@ class MenuBuilder:
         main_window.act_open_advanced_extractor.setShortcut("Ctrl+Shift+E")
 
         # Group tools by user workflow while preserving the public actions.
-        editing_menu = m_tools.addMenu(tr("menu.tools.group_editing", "Editing"))
-        json_menu = m_tools.addMenu(tr("menu.tools.group_json", "JSON"))
-        text_menu = m_tools.addMenu(
-            tr("menu.tools.group_text_translation", "Text and Translation")
-        )
-        ai_menu = m_tools.addMenu(tr("menu.tools.group_ai", "Artificial Intelligence"))
-        files_menu = m_tools.addMenu(tr("menu.tools.group_files", "Files"))
-        utilities_menu = m_tools.addMenu(tr("menu.tools.group_utilities", "Utilities"))
+        editing_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_editing", "Editing")
+        json_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_json", "JSON")
+        text_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_text_translation", "Text and Translation")
+        ai_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_ai", "Artificial Intelligence")
+        files_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_files", "Files")
+        utilities_menu = MenuBuilder._add_menu(m_tools, "menu.tools.group_utilities", "Utilities")
         main_window.tool_group_menus = {
             "editing": editing_menu,
             "json": json_menu,
@@ -242,7 +314,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_view = menu_bar.addMenu(tr("menu.view"))
+        m_view = MenuBuilder._add_menu(menu_bar, "menu.view")
 
         main_window.act_toggle_history = QAction(tr("menu.view.history"), main_window, checkable=True)
         main_window.act_toggle_history.setToolTip(tr("menu.tooltip_toggle_history"))
@@ -250,7 +322,7 @@ class MenuBuilder:
         m_view.addAction(main_window.act_toggle_history)
 
         # Layouts submenu (v2.9.84)
-        m_layouts = m_view.addMenu(tr("menu.view.layouts"))
+        m_layouts = MenuBuilder._add_menu(m_view, "menu.view.layouts")
         main_window.act_layout_compact = QAction(tr("menu.view.layouts.compact"), main_window)
         main_window.act_layout_standard = QAction(tr("menu.view.layouts.standard"), main_window)
         main_window.act_layout_advanced = QAction(tr("menu.view.layouts.advanced"), main_window)
@@ -276,7 +348,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_themes = menu_bar.addMenu(tr("menu.themes"))
+        m_themes = MenuBuilder._add_menu(menu_bar, "menu.themes")
 
         main_window.act_theme_system = QAction(tr("menu.themes.system"), main_window, checkable=True)
         main_window.act_theme_light = QAction(tr("menu.themes.light"), main_window, checkable=True)
@@ -296,13 +368,13 @@ class MenuBuilder:
         # pylint: disable=no-name-in-module  # Qt dynamic modules
         from PySide6.QtGui import QAction, QActionGroup
 
-        m_settings = menu_bar.addMenu(tr("menu.settings"))
+        m_settings = MenuBuilder._add_menu(menu_bar, "menu.settings")
         act_preferences = QAction(tr("menu.settings.preferences"), main_window)
         act_shortcuts = QAction(tr("menu.settings.shortcuts"), main_window)
         act_transparency = QAction(tr("menu.settings.transparency"), main_window)
 
         # Language submenu (Task #24 - v2.9.10, expanded v2.9.43)
-        m_language = m_settings.addMenu(tr("menu.settings.language"))
+        m_language = MenuBuilder._add_menu(m_settings, "menu.settings.language")
 
         # Create QActionGroup for radio button behavior (only one language selected at a time)
         lang_action_group = QActionGroup(main_window)
@@ -368,7 +440,7 @@ class MenuBuilder:
         m_settings.addSeparator()
 
         # Advanced submenu (v2.9.89, expanded v2.9.90)
-        m_advanced = m_settings.addMenu(tr("menu.settings.advanced"))
+        m_advanced = MenuBuilder._add_menu(m_settings, "menu.settings.advanced")
 
         # Configuration File Editor (v2.9.90)
         main_window.act_config_editor = QAction(tr("menu.settings.advanced.config_file"), main_window)
@@ -378,7 +450,7 @@ class MenuBuilder:
         m_advanced.addSeparator()
 
         # Error Reporting submenu
-        m_error_reporting = m_advanced.addMenu(tr("menu.settings.advanced.error_reporting"))
+        m_error_reporting = MenuBuilder._add_menu(m_advanced, "menu.settings.advanced.error_reporting")
         main_window.act_error_reporting_toggle = QAction(tr("menu.settings.advanced.enable_error_reporting"), main_window, checkable=True)
         main_window.act_error_reporting_toggle.setChecked(main_window.settings.qsettings.value("error_reporting/enabled", True, type=bool))
         main_window.act_error_reporting_toggle.triggered.connect(main_window._toggle_error_reporting)
@@ -410,10 +482,10 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_plugins = menu_bar.addMenu(tr("menu.plugins"))
+        m_plugins = MenuBuilder._add_menu(menu_bar, "menu.plugins")
 
         # Plugin Manager submenu
-        main_window.act_plugin_manager = QAction("🔌 Plugin Manager...", main_window)
+        main_window.act_plugin_manager = QAction(tr("menu.plugins.manager"), main_window)
         main_window.act_plugin_manager.setToolTip(tr("menu.tooltip_plugin_manager"))
         main_window.act_plugin_manager.setStatusTip(tr("menu.status.plugin_manager"))
         m_plugins.addAction(main_window.act_plugin_manager)
@@ -422,17 +494,18 @@ class MenuBuilder:
         m_plugins.addSeparator()
 
         # Installed plugins (dynamic menu based on discovered plugins)
+        main_window.plugin_actions = {}
         if hasattr(main_window, "plugin_loader"):
             metadata_list = main_window.plugin_loader.get_all_metadata()
             if metadata_list:
                 for metadata in metadata_list:
-                    status = "✅" if metadata.enabled else "❌"
-                    act = QAction(f"{status} {metadata.name}", main_window)
+                    act = QAction(metadata.name, main_window)
                     act.setToolTip(f"{metadata.description}\nv{metadata.version} by {metadata.author}")
                     act.setStatusTip(f"Toggle {metadata.name} plugin")
                     act.setCheckable(True)
                     act.setChecked(metadata.enabled)
                     act.triggered.connect(lambda checked, pid=metadata.id: main_window._toggle_plugin(pid, checked))
+                    main_window.plugin_actions[metadata.id] = act
                     m_plugins.addAction(act)
             else:
                 act_no_plugins = QAction(tr("menu.plugins.no_plugins"), main_window)
@@ -440,12 +513,22 @@ class MenuBuilder:
                 m_plugins.addAction(act_no_plugins)
 
     @staticmethod
+    def sync_plugin_actions(main_window) -> None:
+        """Reflect persisted plugin state after either UI entry point toggles it."""
+        for metadata in main_window.plugin_loader.get_all_metadata():
+            action = getattr(main_window, "plugin_actions", {}).get(metadata.id)
+            if action is not None:
+                blocked = action.blockSignals(True)
+                action.setChecked(metadata.enabled)
+                action.blockSignals(blocked)
+
+    @staticmethod
     def _build_help_menu(main_window, menu_bar) -> None:
         """Build Help menu (Task #45 - v2.9.15)."""
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_help = menu_bar.addMenu(tr("menu.help"))
+        m_help = MenuBuilder._add_menu(menu_bar, "menu.help")
 
         main_window.act_open_tutorials = QAction(tr("menu.help.tutorials"), main_window)
         main_window.act_open_tutorials.setToolTip(tr("menu.tooltip_open_tutorials"))
@@ -453,14 +536,14 @@ class MenuBuilder:
         main_window.act_open_tutorials.triggered.connect(main_window._show_tutorials)
 
         # AI Tutorial Assistant (v2.9.92)
-        main_window.act_ai_assistant = QAction("AI Tutorial Assistant", main_window)
+        main_window.act_ai_assistant = QAction(tr("tutorial_assistant.window_title"), main_window)
         main_window.act_ai_assistant.setToolTip(tr("menu.tooltip_ai_assistant"))
         main_window.act_ai_assistant.setStatusTip(tr("menu.status.ai_assistant"))
         m_help.addAction(main_window.act_ai_assistant)
         main_window.act_ai_assistant.triggered.connect(main_window._show_ai_assistant)
 
         # Keyboard Shortcuts Help (v2.9.33)
-        main_window.act_keyboard_shortcuts_help = QAction("Keyboard Shortcuts Help", main_window)
+        main_window.act_keyboard_shortcuts_help = QAction(tr("shortcuts.dialog.help_title"), main_window)
         main_window.act_keyboard_shortcuts_help.setToolTip(tr("menu.tooltip_keyboard_shortcuts"))
         main_window.act_keyboard_shortcuts_help.setStatusTip(tr("menu.status.keyboard_shortcuts_help"))
         main_window.act_keyboard_shortcuts_help.setShortcut("F1")
@@ -468,7 +551,7 @@ class MenuBuilder:
         main_window.act_keyboard_shortcuts_help.triggered.connect(main_window._show_keyboard_shortcuts_help)
 
         # Keyboard Shortcuts Customization (v2.9.62)
-        main_window.act_customize_shortcuts = QAction("Customize Shortcuts...", main_window)
+        main_window.act_customize_shortcuts = QAction(tr("shortcut_customizer.title"), main_window)
         main_window.act_customize_shortcuts.setToolTip(tr("menu.tooltip_customize_shortcuts"))
         main_window.act_customize_shortcuts.setStatusTip(tr("menu.status.customize_shortcuts"))
         main_window.act_customize_shortcuts.setShortcut("Ctrl+K Ctrl+S")
@@ -478,13 +561,13 @@ class MenuBuilder:
         m_help.addSeparator()
 
         # View Logs (v2.9.64 - Logging System Integration)
-        main_window.act_view_logs = QAction("📄 View Logs", main_window)
+        main_window.act_view_logs = QAction(tr("menu.help.view_logs"), main_window)
         main_window.act_view_logs.setToolTip(tr("menu.tooltip_view_logs"))
         m_help.addAction(main_window.act_view_logs)
         main_window.act_view_logs.triggered.connect(main_window._view_logs)
 
         # Update Checker (v2.9.45)
-        main_window.act_check_updates = QAction("🔄 Verificar Atualizações", main_window)
+        main_window.act_check_updates = QAction(tr("menu.help.check_updates"), main_window)
         main_window.act_check_updates.setToolTip(tr("menu.tooltip_check_updates"))
         m_help.addAction(main_window.act_check_updates)
         main_window.act_check_updates.triggered.connect(main_window._check_for_updates_manual)
@@ -495,7 +578,7 @@ class MenuBuilder:
         from ..i18n import tr
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
-        m_about = menu_bar.addMenu(tr("menu.about"))
+        m_about = MenuBuilder._add_menu(menu_bar, "menu.about")
         act_about = QAction(tr("menu.about.clarify"), main_window)
         m_about.addAction(act_about)
         act_about.triggered.connect(main_window._about_dialog)

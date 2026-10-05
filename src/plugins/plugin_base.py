@@ -202,11 +202,21 @@ class PluginBase:
         current_menu = None
         for part in parts:
             parent = menu_bar if current_menu is None else current_menu
+            root_key = f"menu.{part.lower().replace(' ', '_')}" if current_menu is None else None
             # Query owned menus directly: temporary QAction.menu() wrappers can
-            # invalidate QMenu objects on supported PySide6 versions.
+            # invalidate QMenu objects on supported PySide6 versions. A menu
+            # queued for deletion is still a QObject child, so require its own
+            # action to remain installed in the current parent.
             current_menu = next(
-                (menu for menu in parent.findChildren(QMenu, options=Qt.FindDirectChildrenOnly)
-                 if menu.title().replace("&", "").lower() == part.lower()),
+                (
+                    menu
+                    for menu in parent.findChildren(QMenu, options=Qt.FindDirectChildrenOnly)
+                    if menu.menuAction() in parent.actions()
+                    and (
+                        menu.title().replace("&", "").lower() == part.lower()
+                        or (root_key is not None and menu.property("clarify_menu_key") == root_key)
+                    )
+                ),
                 None,
             )
             if current_menu is None:

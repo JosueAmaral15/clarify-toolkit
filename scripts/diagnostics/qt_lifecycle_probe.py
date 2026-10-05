@@ -3,6 +3,11 @@
 Run with the project virtualenv (requires psutil). Default: three MainWindow
 cycles with deferred widget deletion. Use --mode theme for a simple-widget
 control, or --cleanup queued to compare the old processEvents-only fixture.
+Use --mode completion --gdb for isolated Explorer completion/GC regressions
+with native backtraces on a crash, without constructing the full MainWindow.
+Use --mode explorer-lifecycle --gdb for the existing module that aborted on
+2026-09-29, or --mode live-ui for the focused menu/dock repair regressions.
+Never run these test modules together with other GUI modules.
 """
 
 from __future__ import annotations
@@ -13,23 +18,40 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 
-
 ROOT = Path(__file__).resolve().parents[2]
+TEST_MODULES = {
+    "accessibility": "tests/test_accessibility.py",
+    "completion": "tests/test_qt_completion_lifecycle.py",
+    "explorer-lifecycle": "tests/test_file_explorer_lifecycle.py",
+    "live-ui": "tests/gui/test_live_ui_actions.py",
+    "plugin-system": "tests/test_plugin_system.py",
+    "theme-manager": "tests/test_theme_manager.py",
+    "tutorials-localization": "tests/gui/test_tutorials_localization.py",
+}
+
+
+def disable_core_dumps():
+    import resource
+
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 
 def worker(args):
-    import resource
     from unittest.mock import patch
 
-    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    disable_core_dumps()
     sys.path.insert(0, str(ROOT))
+    # pylint: disable=no-name-in-module  # PySide6 extension types are dynamic.
     from PySide6.QtCore import QCoreApplication, QEvent
     from PySide6.QtWidgets import QApplication, QMessageBox, QTextEdit
+
+    # pylint: enable=no-name-in-module
     from src.theme_manager import ThemeManager
 
     app = QApplication([])
@@ -56,8 +78,12 @@ def worker(args):
         app.processEvents()
         del widget
         gc.collect()
-        print(json.dumps({"cycle": cycle, "remaining_widgets": len(app.allWidgets()),
-                          "top_levels": len(app.topLevelWidgets())}), flush=True)
+        print(
+            json.dumps(
+                {"cycle": cycle, "remaining_widgets": len(app.allWidgets()), "top_levels": len(app.topLevelWidgets())}
+            ),
+            flush=True,
+        )
     print("PROBE_COMPLETE", flush=True)
     return 0
 
@@ -65,28 +91,81 @@ def worker(args):
 def monitored(args):
     import psutil
 
+    if args.gdb and shutil.which("gdb") is None:
+        print("Probe not started: gdb is not installed.", flush=True)
+        return 2
     if psutil.virtual_memory().percent >= 85:
         print("Probe not started: system RAM is already at least 85%.", flush=True)
         return 125
     with tempfile.TemporaryDirectory(prefix="clarify-qt-probe-") as directory:
         env = os.environ.copy()
-        env.update(HOME=directory, XDG_CONFIG_HOME=directory,
-                   CLARIFY_SETTINGS_FILE=str(Path(directory) / "settings.json"),
-                   CLARIFY_LOG_DIR=str(Path(directory) / "logs"),
-                   QT_QPA_PLATFORM="offscreen", OMP_NUM_THREADS="1")
-        command = [sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()),
-                   "--child", "--mode", args.mode, "--cleanup", args.cleanup,
-                   "--cycles", str(args.cycles)]
-        process = subprocess.Popen(command, cwd=ROOT, env=env, start_new_session=True)
+        env.update(
+            HOME=directory,
+            XDG_CONFIG_HOME=directory,
+            CLARIFY_SETTINGS_FILE=str(Path(directory) / "settings.json"),
+            CLARIFY_LOG_DIR=str(Path(directory) / "logs"),
+            QT_QPA_PLATFORM="offscreen",
+            OMP_NUM_THREADS="1",
+        )
+        command = [
+            sys.executable,
+            "-X",
+            "faulthandler",
+            str(Path(__file__).resolve()),
+            "--child",
+            "--mode",
+            args.mode,
+            "--cleanup",
+            args.cleanup,
+            "--cycles",
+            str(args.cycles),
+        ]
+        if args.mode in TEST_MODULES:
+            command = [
+                sys.executable,
+                "-X",
+                "faulthandler",
+                "-m",
+                "pytest",
+                TEST_MODULES[args.mode],
+                "-q",
+                "--maxfail=1",
+                "--timeout=20",
+                "--timeout-method=thread",
+                "-o",
+                "timeout_func_only=false",
+            ]
+        if args.gdb:
+            command = [
+                "gdb",
+                "-q",
+                "-nx",
+                "-nh",
+                "-batch",
+                "--return-child-result",
+                "-iex",
+                "set debuginfod enabled off",
+                "-ex",
+                "set pagination off",
+                "-ex",
+                "set print thread-events off",
+                "-ex",
+                "run",
+                "-ex",
+                "thread apply all bt 24",
+                "--args",
+                *command,
+            ]
+        process = subprocess.Popen(command, cwd=ROOT, env=env, start_new_session=True, preexec_fn=disable_core_dumps)
         started = time.monotonic()
+        wall_limit = 180 if args.mode in TEST_MODULES else 120
         peak_rss = 0
         reason = None
         try:
             while process.poll() is None:
                 try:
                     parent = psutil.Process(process.pid)
-                    rss = sum(p.memory_info().rss for p in
-                              [parent] + parent.children(recursive=True))
+                    rss = sum(p.memory_info().rss for p in [parent] + parent.children(recursive=True))
                     peak_rss = max(peak_rss, rss)
                 except psutil.Error:
                     rss = 0
@@ -94,8 +173,8 @@ def monitored(args):
                     reason = "system RAM reached 85%"
                 elif rss > 600 * 1024 * 1024:
                     reason = "process tree exceeded 600 MiB"
-                elif time.monotonic() - started > 120:
-                    reason = "120-second timeout"
+                elif time.monotonic() - started > wall_limit:
+                    reason = f"{wall_limit}-second timeout"
                 if reason:
                     break
                 time.sleep(0.25)
@@ -107,18 +186,25 @@ def monitored(args):
                 except subprocess.TimeoutExpired:
                     os.killpg(process.pid, signal.SIGKILL)
             code = process.wait()
-        print(json.dumps({"exit": code, "peak_tree_rss_mib": round(peak_rss / 1024**2, 1),
-                          "abort_reason": reason}), flush=True)
+        print(
+            json.dumps({"exit": code, "peak_tree_rss_mib": round(peak_rss / 1024**2, 1), "abort_reason": reason}),
+            flush=True,
+        )
         return 125 if reason else code if code >= 0 else 128 - code
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("theme", "window"), default="window")
+    parser.add_argument("--mode", choices=("theme", "window", *TEST_MODULES), default="window")
+    parser.add_argument(
+        "--gdb", action="store_true", help="Capture native backtraces with installed GDB (no downloads)"
+    )
     parser.add_argument("--cleanup", choices=("deferred", "queued"), default="deferred")
     parser.add_argument("--cycles", type=int, choices=range(1, 21), default=3)
     parser.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.child and args.mode in TEST_MODULES:
+        parser.error("test modules must run through the monitored parent")
     return worker(args) if args.child else monitored(args)
 
 

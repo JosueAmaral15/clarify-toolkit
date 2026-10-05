@@ -16,7 +16,7 @@ Date: 2025-12-02
 from typing import Optional
 
 # pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication, QWidget
 
 
@@ -277,9 +277,13 @@ class AccessibilityManager:
             Requires AT-SPI service on Linux (usually pre-installed).
             For Orca: `orca --enable-speech`
         """
-        # Qt automatically enables accessibility if screen reader is detected
-        # This method explicitly enables it
-        app.setAttribute(Qt.AA_UseDesktopOpenGL, True)  # Better screen reader compat
+        # Qt enables its accessibility bridge when the platform accessibility
+        # service is available. Application attributes such as the OpenGL
+        # backend must be configured before QApplication is constructed; the
+        # entry point already does that. Keep this hook for callers without
+        # mutating global Qt state after application startup.
+        if app is None:
+            raise ValueError("QApplication instance is required")
 
     @staticmethod
     # pylint: disable=too-many-positional-arguments  # RGB color pairs require 6 args

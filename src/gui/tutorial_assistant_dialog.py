@@ -4,18 +4,18 @@ Tutorial Assistant Dialog
 Non-modal chat dialog for AI-powered tutorial assistance.
 """
 # pylint: disable=no-name-in-module  # Qt dynamic modules
-# pylint: disable=no-member  # SettingsManager dynamic attributes
 # pylint: disable=invalid-name  # Qt method name convention
 
-from PySide6.QtCore import Qt, Signal, QThread
+from PySide6.QtCore import Qt, Signal, Slot, QThread
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QTextEdit, QVBoxLayout
 )
 
-from src.i18n.translator import tr, tooltip_tr
-from ..settings_manager import SettingsManager
+from src.i18n.translator import get_translator, tr
+from src.ui import FeatureType, thread_manager
+from ..settings_manager import get_settings
 from ..tutorial_assistant import get_assistant
 
 
@@ -31,7 +31,10 @@ class AssistantWorker(QThread):
 
     def run(self):
         """Execute query in background."""
-        response, success = self.assistant.ask(self.query)
+        try:
+            response, success = self.assistant.ask(self.query)
+        except Exception:  # pylint: disable=broad-exception-caught  # Keep failures in the worker protocol.
+            response, success = tr("tutorial_assistant.request_failed"), False
         self.response_ready.emit(response, success)
 
 
@@ -50,15 +53,39 @@ class TutorialAssistantDialog(QDialog):
     def __init__(self, parent=None, api_key: str = None):
         super().__init__(parent)
         self.assistant = get_assistant(api_key=api_key)
-        self.settings = SettingsManager()
+        self.settings = get_settings()
         self.worker = None
+        self._pending_response = None
+        self._close_pending = False
 
         # Feedback counters
-        self.thumbs_up_count = self.settings.get_value("tutorial_assistant/thumbs_up", 0, int)
-        self.thumbs_down_count = self.settings.get_value("tutorial_assistant/thumbs_down", 0, int)
+        self.thumbs_up_count = self._feedback_count("tutorial_assistant/thumbs_up")
+        self.thumbs_down_count = self._feedback_count("tutorial_assistant/thumbs_down")
 
         self._init_ui()
         self._check_availability()
+        get_translator().languageChanged.connect(self.retranslateUi)
+
+    def _feedback_count(self, key):
+        try:
+            return max(0, int(self.settings.get(key, 0)))
+        except (TypeError, ValueError):
+            return 0
+
+    @Slot()
+    def retranslateUi(self):
+        """Refresh controls without rewriting the user's conversation."""
+        self.setWindowTitle(tr("tutorial_assistant.window_title"))
+        self.header.setText(tr("tutorial_assistant.header"))
+        self.input_field.setPlaceholderText(tr("tutorial_assistant.placeholder_question"))
+        self.send_button.setText(tr("tutorial_assistant.btn_send"))
+        self.clear_button.setText(tr("tutorial_assistant.btn_clear"))
+        self.close_button.setText(tr("tutorial_assistant.btn_close"))
+        self.thumbs_up_button.setToolTip(tr("tutorial_assistant.tooltip_thumbs_up"))
+        self.thumbs_down_button.setToolTip(tr("tutorial_assistant.tooltip_thumbs_down"))
+        self.stats_label.setText(self._get_stats_text())
+        if self.worker is not None:
+            self.status_label.setText(tr("tutorial_assistant.waiting" if self._close_pending else "tutorial_assistant.thinking"))
 
     def _init_ui(self):
         """Initialize user interface."""
@@ -73,6 +100,7 @@ class TutorialAssistantDialog(QDialog):
 
         # Header
         header = QLabel(tr("tutorial_assistant.header"))
+        self.header = header
         header.setStyleSheet("font-size: 14pt; font-weight: bold; padding: 10px;")
         layout.addWidget(header)
 
@@ -117,13 +145,13 @@ class TutorialAssistantDialog(QDialog):
         actions_layout = QHBoxLayout()
 
         self.thumbs_up_button = QPushButton("👍")
-        self.thumbs_up_button.setToolTip(tooltip_tr("tutorial_assistant.tooltip_thumbs_up"))
+        self.thumbs_up_button.setToolTip(tr("tutorial_assistant.tooltip_thumbs_up"))
         self.thumbs_up_button.clicked.connect(self._thumbs_up)
         self.thumbs_up_button.setMaximumWidth(50)
         actions_layout.addWidget(self.thumbs_up_button)
 
         self.thumbs_down_button = QPushButton("👎")
-        self.thumbs_down_button.setToolTip(tooltip_tr("tutorial_assistant.tooltip_thumbs_down"))
+        self.thumbs_down_button.setToolTip(tr("tutorial_assistant.tooltip_thumbs_down"))
         self.thumbs_down_button.clicked.connect(self._thumbs_down)
         self.thumbs_down_button.setMaximumWidth(50)
         actions_layout.addWidget(self.thumbs_down_button)
@@ -148,17 +176,11 @@ class TutorialAssistantDialog(QDialog):
     def _check_availability(self):
         """Check if assistant is available."""
         if not self.assistant.is_available():
-            self._add_system_message(
-                "⚠️ Tutorial assistant is not available. "
-                "Please configure a Google Gemini API key in Settings."
-            )
+            self._add_system_message(tr("tutorial_assistant.unavailable"))
             self.input_field.setEnabled(False)
             self.send_button.setEnabled(False)
         else:
-            self._add_system_message(
-                "✅ Tutorial assistant ready! Ask me about JSON translation, "
-                "search & replace, JSON rewriting, or any other Clarify feature."
-            )
+            self._add_system_message(tr("tutorial_assistant.ready"))
 
     def _add_system_message(self, message: str):
         """Add system message to chat."""
@@ -170,7 +192,7 @@ class TutorialAssistantDialog(QDialog):
         escaped = message.replace("<", "&lt;").replace(">", "&gt;")
         self.chat_display.append(
             f"<div style='background-color: #e3f2fd; padding: 8px; border-radius: 5px; margin: 5px 0;'>"
-            f"<strong>You:</strong> {escaped}</div>"
+            f"<strong>{tr('tutorial_assistant.user')}:</strong> {escaped}</div>"
         )
         self._scroll_to_bottom()
 
@@ -180,7 +202,7 @@ class TutorialAssistantDialog(QDialog):
         escaped = message.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
         self.chat_display.append(
             f"<div style='background-color: {color}; padding: 8px; border-radius: 5px; margin: 5px 0;'>"
-            f"<strong>Assistant:</strong><br>{escaped}</div><br>"
+            f"<strong>{tr('tutorial_assistant.assistant')}:</strong><br>{escaped}</div><br>"
         )
         self._scroll_to_bottom()
 
@@ -193,57 +215,104 @@ class TutorialAssistantDialog(QDialog):
     def _send_message(self):
         """Send user message to assistant."""
         query = self.input_field.text().strip()
-        if not query:
+        if not query or self.worker is not None or not self.assistant.is_available():
             return
+
+        worker = AssistantWorker(self.assistant, query)
+        thread_id = f"tutorial_assistant:{id(worker)}"
+        if not thread_manager.start_thread(thread_id, worker, worker, FeatureType.TUTORIAL_ASSISTANT,
+                                           cancel_callback=worker.requestInterruption):
+            worker.deleteLater()
+            self.status_label.setText(tr("tutorial_assistant.busy"))
+            return
+        self.worker = worker
+        self._pending_response = None
 
         # Add user message
         self._add_user_message(query)
         self.input_field.clear()
 
         # Show typing indicator
-        self.status_label.setText("💭 AI is thinking...")
+        self.status_label.setText(tr("tutorial_assistant.thinking"))
         self.send_button.setEnabled(False)
         self.input_field.setEnabled(False)
+        self.clear_button.setEnabled(False)
 
         # Start worker thread
-        self.worker = AssistantWorker(self.assistant, query)
         self.worker.response_ready.connect(self._handle_response)
+        self.worker.finished.connect(self._worker_finished)
+        self.worker.finished.connect(self.worker.deleteLater)
         self.worker.start()
 
+    @Slot(str, bool)
     def _handle_response(self, response: str, success: bool):
         """Handle assistant response."""
+        self._pending_response = (response, success)
+
+    @Slot()
+    def _worker_finished(self):
+        response = self._pending_response
+        self._pending_response = None
+        self.worker = None
+        if self._close_pending:
+            self._close_pending = False
+            self.status_label.setText("")
+            self.send_button.setEnabled(True)
+            self.input_field.setEnabled(True)
+            self.clear_button.setEnabled(True)
+            self.close()
+            return
         # Clear typing indicator
         self.status_label.setText("")
         self.send_button.setEnabled(True)
         self.input_field.setEnabled(True)
+        self.clear_button.setEnabled(True)
         self.input_field.setFocus()
 
         # Add assistant message
-        self._add_assistant_message(response, success)
+        if response is not None:
+            self._add_assistant_message(*response)
 
     def _thumbs_up(self):
         """Record positive feedback."""
         self.thumbs_up_count += 1
-        self.settings.set_value("tutorial_assistant/thumbs_up", self.thumbs_up_count)
+        self.settings.set("tutorial_assistant/thumbs_up", self.thumbs_up_count)
         self.stats_label.setText(self._get_stats_text())
-        self._add_system_message("Thank you for the feedback! 👍")
+        self._add_system_message(tr("tutorial_assistant.feedback_up"))
 
     def _thumbs_down(self):
         """Record negative feedback."""
         self.thumbs_down_count += 1
-        self.settings.set_value("tutorial_assistant/thumbs_down", self.thumbs_down_count)
+        self.settings.set("tutorial_assistant/thumbs_down", self.thumbs_down_count)
         self.stats_label.setText(self._get_stats_text())
-        self._add_system_message("Thank you for the feedback. We'll work to improve! 👎")
+        self._add_system_message(tr("tutorial_assistant.feedback_down"))
 
     def _clear_chat(self):
         """Clear chat history."""
+        if self.worker is not None:
+            return
         self.chat_display.clear()
         self.assistant.reset_conversation()
-        self._add_system_message("Chat cleared. Feel free to ask a new question!")
+        self._add_system_message(tr("tutorial_assistant.cleared"))
 
     def _get_stats_text(self) -> str:
         """Get feedback stats text."""
-        return f"Feedback: 👍 {self.thumbs_up_count} | 👎 {self.thumbs_down_count}"
+        return tr("tutorial_assistant.feedback_stats").format(self.thumbs_up_count, self.thumbs_down_count)
+
+    def closeEvent(self, event):
+        if self.worker is not None:
+            self._close_pending = True
+            self.worker.requestInterruption()
+            self.status_label.setText(tr("tutorial_assistant.waiting"))
+            event.ignore()
+            return
+        super().closeEvent(event)
+
+    def reject(self):
+        if self.worker is not None:
+            self.close()
+        else:
+            super().reject()
 
     def keyPressEvent(self, event):
         """Handle key press events."""

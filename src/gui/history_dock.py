@@ -21,13 +21,13 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Dict, Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTreeWidget,
     QTreeWidgetItem, QLabel, QFileDialog, QMessageBox
 )
 
-from src.i18n.translator import tooltip_tr, tr
+from src.i18n.translator import get_translator, tooltip_tr, tr
 
 from .base_dock import BaseDock
 
@@ -53,6 +53,26 @@ class HistoryDock(BaseDock):
         self.max_entries = max_entries
         self.history: List[Dict[str, Any]] = []
         super().__init__("Operation History", parent)
+        get_translator().languageChanged.connect(self.retranslateUi)
+        self.retranslateUi()
+
+    @Slot()
+    def retranslateUi(self):  # pylint: disable=invalid-name
+        """Refresh labels without clearing history or the current selection."""
+        self.setWindowTitle(tr("history_dialog.title"))
+        self.lbl_header.setText(tr("history_dock.recent").format(len(self.history), self.max_entries))
+        self.tree_history.setHeaderLabels([tr("history_dock.header_time"), tr("history_dock.header_operation"),
+                                          tr("history_dock.header_details"), tr("history_dock.header_files")])
+        self.btn_clear.setText(tr("history.btn_clear"))
+        self.btn_export.setText(tr("history.btn_export"))
+        self.btn_refresh.setText(tr("history.btn_refresh"))
+        self._apply_tooltips()
+        for index, entry in enumerate(self.history):
+            item = self.tree_history.topLevelItem(index)
+            if item is not None:
+                display, full = self._format_details(entry['details'])
+                item.setText(2, display)
+                item.setToolTip(2, full if display != full else "")
 
     def _setup_ui(self) -> None:
         """Setup UI components."""
@@ -63,7 +83,7 @@ class HistoryDock(BaseDock):
     def _create_widgets(self) -> None:
         """Create all widgets for the history dock."""
         # Header label
-        self.lbl_header = QLabel(f"Recent Operations (max {self.max_entries} entries)")
+        self.lbl_header = QLabel(tr("history_dock.recent").format(0, self.max_entries))
         self.lbl_header.setStyleSheet("font-weight: bold; padding: 5px;")
 
         # Tree widget for history display
@@ -102,12 +122,10 @@ class HistoryDock(BaseDock):
         btn_layout.addStretch()
 
         # Main layout
-        main_layout = QVBoxLayout()
+        main_layout = self.layout
         main_layout.addWidget(self.lbl_header)
         main_layout.addWidget(self.tree_history)
         main_layout.addLayout(btn_layout)
-
-        self.main_widget.setLayout(main_layout)
 
     def _apply_tooltips(self) -> None:
         """Apply internationalized tooltips to all widgets (v2.9.68)."""
@@ -255,41 +273,8 @@ class HistoryDock(BaseDock):
             operation = entry['operation']
             details = entry['details']
 
-            # Format details string
-            detail_parts = []
-            if 'query' in details:
-                query_preview = details['query'][:50] + ("..." if len(details['query']) > 50 else "")
-                detail_parts.append(f"Query: {query_preview}")
-            if 'replacement' in details:
-                repl_preview = details['replacement'][:30] + ("..." if len(details['replacement']) > 30 else "")
-                detail_parts.append(f"→ {repl_preview}")
-            if 'mode' in details:
-                detail_parts.append(f"Mode: {details['mode']}")
-            if 'dictionary' in details:
-                import os
-                dict_name = os.path.basename(details['dictionary'])
-                detail_parts.append(f"Dict: {dict_name}")
-            if 'source_path' in details and details['source_path']:
-                import os
-                source_name = os.path.basename(details['source_path'])
-                detail_parts.append(f"Source: {source_name}")
-            if 'source_language' in details and 'target_language' in details:
-                detail_parts.append(
-                    f"{details['source_language']} → {details['target_language']}"
-                )
-            if 'transformations' in details:
-                trans = ', '.join(details['transformations'])
-                detail_parts.append(f"Trans: {trans}")
-            if 'matches_found' in details:
-                detail_parts.append(f"Matches: {details['matches_found']}")
-
-            details_str = " | ".join(detail_parts)
+            details_display, details_str = self._format_details(details)
             files_count = str(details.get('files_processed', '-'))
-
-            # Truncate long details to prevent horizontal expansion (v2.9.117)
-            details_display = details_str
-            if len(details_str) > 100:
-                details_display = details_str[:100] + "..."
 
             # Create tree item
             item = QTreeWidgetItem([timestamp, operation, details_display, files_count])
@@ -299,7 +284,33 @@ class HistoryDock(BaseDock):
             self.tree_history.addTopLevelItem(item)
 
         # Update header
-        self.lbl_header.setText(f"Recent Operations ({len(self.history)}/{self.max_entries} entries)")
+        self.lbl_header.setText(tr("history_dock.recent").format(len(self.history), self.max_entries))
+
+    @staticmethod
+    def _format_details(details: Dict[str, Any]) -> tuple[str, str]:
+        """Format bounded visible details while retaining the full tooltip."""
+        import os
+        parts = []
+        if 'query' in details:
+            query = details['query']
+            parts.append(f"{tr('history_dock.detail_query')}: {query[:50]}{'...' if len(query) > 50 else ''}")
+        if 'replacement' in details:
+            value = details['replacement']
+            parts.append(f"→ {value[:30]}{'...' if len(value) > 30 else ''}")
+        if 'mode' in details:
+            parts.append(f"{tr('history_dock.detail_mode')}: {details['mode']}")
+        if 'dictionary' in details:
+            parts.append(f"{tr('history_dock.detail_dictionary')}: {os.path.basename(details['dictionary'])}")
+        if details.get('source_path'):
+            parts.append(f"{tr('history_dock.detail_source')}: {os.path.basename(details['source_path'])}")
+        if 'source_language' in details and 'target_language' in details:
+            parts.append(f"{details['source_language']} → {details['target_language']}")
+        if 'transformations' in details:
+            parts.append(f"{tr('history_dock.detail_transformations')}: {', '.join(details['transformations'])}")
+        if 'matches_found' in details:
+            parts.append(f"{tr('history_dock.detail_matches')}: {details['matches_found']}")
+        full = " | ".join(parts)
+        return (full[:100] + "..." if len(full) > 100 else full), full
 
     def _execute_action(self) -> None:
         """Execute the main action (refresh display)."""

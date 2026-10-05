@@ -2,9 +2,26 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/09/29 - workspace/layouts concluidos apos retomada com RAM liberada
+**Last Update**: 2026/10/05 - reparos locais de crash e portugues revalidados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Falhas Reais E Portugues - Reparos Locais (04/10/2026)
+
+Lidos os crashes de29/09 do Assistant/Plugins e o core real do processo
+431630. O backtrace localiza `HistoryDock._create_layout` durante destruicao
+de `QLayout`; o dock agora reutiliza o layout do BaseDock. Corrigidos os
+metodos de settings/callbacks ausentes, lifecycle de plugins e Assistant,
+catalogos aninhados e partes da troca runtime para portugues em menus,
+History e Tutorials. A retomada de05/10 encontrou e corrigiu uma selecao de
+menu Qt ja removido da barra, mas ainda aguardando `DeferredDelete`. O estado
+atual passou60 testes funcionais diretamente afetados e47 testes do probe,
+com RAM85%/RSS600MiB/wall180s/pytest20s, sem guard abort ou crash nativo;
+Pylint-E, AST19, JSON7 e diff-check passaram. Black global ainda aponta14
+arquivos acumulados e nao foi aplicado para evitar churn. Nenhum commit ou push.
+Localizacao global LEG-10, crash historico FE05/MainWindow, CI e seguranca
+continuam abertos; nao foram criados checkboxes duplicados. Ver
+[evidencias e pendencias](reports/LIVE_UI_CRASH_FIXES_2026_09_29.md).
 
 ## Workspace E Layouts - Pedido Novo (29/09/2026)
 
@@ -288,6 +305,20 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   `scripts/diagnostics/qt_lifecycle_probe.py` limita RAM/tempo e registra widgets
   restantes. Tentativa de reproduzir a ordem da suite foi interrompida por RAM.
   Causa raiz e validacao da suite combinada continuam pendentes.
+  Atualizacao 29/09: auditado separadamente o signal11 FE05 em completion de
+  cross-line. Corrigida corrida demonstravel de callback antigo em ID de thread
+  reutilizado; isso nao comprova a causa do signal11. Um modulo lifecycle
+  isolado abortou com signal6/205.8MiB, sem barreira de recursos; diagnosticos
+  posteriores passaram, sem capturar causa nativa. Tarefa continua aberta,
+  sem commit/promocao do patch nesta etapa e sem retomar fila automatica.
+  Atualizacao 05/10:10 ciclos simples e duas execucoes de3 ciclos completos de
+  MainWindow passaram com zero widgets restantes, sem crash/guard abort e picos
+  ate209.2MiB. Corrigida chamada tardia de `AA_UseDesktopOpenGL` no helper de
+  acessibilidade; o atributo continua configurado antes do QApplication no
+  entry point e o aviso Qt nao reapareceu. Passaram24 testes de acessibilidade,
+  14 de tema e65 do probe. Ainda nao reproduz nem explica o crash historico,
+  portanto o item permanece aberto.
+  Ver [investigacao Qt atual](reports/QT_COMPLETION_INVESTIGATION_2026_09_29.md).
 - [ ] **MUST / seguranca: revisar e corrigir dependencias vulneraveis.** GitHub
   reporta 23 alertas abertos na branch padrao (1 critico, 12 altos, 7 moderados,
   3 baixos). O lock do checkpoint ainda usa anyio 4.12.1, afetado pelo alerta

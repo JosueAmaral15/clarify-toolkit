@@ -30,14 +30,15 @@ if _PYSIDE:
     class _ThreadFinishedReceiver(QObject):
         """GUI-owned completion survives destruction of the thread's former dock."""
 
-        def __init__(self, manager, thread_id):
+        def __init__(self, manager, thread_id, completion_token):
             super().__init__()
             self.manager = manager
             self.thread_id = thread_id
+            self.completion_token = completion_token
 
         @Slot()
         def finished(self):
-            self.manager._on_thread_finished(self.thread_id)
+            self.manager._on_thread_finished(self.thread_id, self.completion_token)
 
 
 class FeatureType(Enum):
@@ -52,6 +53,7 @@ class FeatureType(Enum):
     TEXT_EXTRACTOR = "text_extractor"
     PLACEHOLDER_REPLACER = "placeholder_replacer"
     AI_FILE_PROCESSOR = "ai_file_processor"
+    TUTORIAL_ASSISTANT = "tutorial_assistant"
 
 
 # pylint: disable=too-few-public-methods  # Data class
@@ -70,6 +72,7 @@ class ThreadInfo:
         self.is_running = True
         self.exclusive = exclusive
         self.finished_receiver = None
+        self.completion_token = object()
 
 
 class ThreadManager:
@@ -157,10 +160,14 @@ class ThreadManager:
 
             # Connect automatic cleanup
             if _PYSIDE:
-                info.finished_receiver = _ThreadFinishedReceiver(self, thread_id)
+                info.finished_receiver = _ThreadFinishedReceiver(
+                    self, thread_id, info.completion_token
+                )
                 thread.finished.connect(info.finished_receiver.finished)
             else:
-                thread.finished.connect(lambda: self._on_thread_finished(thread_id))
+                thread.finished.connect(
+                    lambda token=info.completion_token: self._on_thread_finished(thread_id, token)
+                )
 
             return True
         except Exception:  # pylint: disable=broad-exception-caught  # Thread safety
@@ -211,10 +218,14 @@ class ThreadManager:
                     count += 1
         return count
 
-    def _on_thread_finished(self, thread_id: str):
+    def _on_thread_finished(self, thread_id: str, completion_token=None):
         """Callback called when thread finishes"""
         if thread_id in self._threads:
             info = self._threads[thread_id]
+            # A queued native completion can arrive after explicit settlement
+            # and registration of another operation under the same public ID.
+            if completion_token is not None and completion_token is not info.completion_token:
+                return
 
             # Release feature lock
             try:

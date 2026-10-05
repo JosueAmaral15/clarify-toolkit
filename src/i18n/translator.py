@@ -61,6 +61,7 @@ class Translator(QObject):
             self._current_language = detected_lang
 
         # Load initial language
+        self._load_language("en")
         self._load_language(self._current_language)
 
     def _detect_system_locale(self) -> str:
@@ -132,10 +133,20 @@ class Translator(QObject):
 
         try:
             with open(translation_file, 'r', encoding='utf-8') as f:
-                self._translations[lang] = json.load(f)
+                self._translations[lang] = self._flatten_translations(json.load(f))
         except Exception as e:  # pylint: disable=broad-exception-caught  # Translation loading errors vary
             logger.error(f"Error loading translation {lang}: {e}")
             self._translations[lang] = {}
+
+    @staticmethod
+    def _flatten_translations(data: dict) -> Dict[str, str]:
+        """Accept nested catalogues, preserving explicit dotted-key overrides."""
+        result = {key: value for key, value in data.items() if isinstance(value, str)}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                for nested_key, text in Translator._flatten_translations(value).items():
+                    result.setdefault(f"{key}.{nested_key}", text)
+        return result
 
     def get(self, key: str, default: Optional[str] = None) -> str:
         """

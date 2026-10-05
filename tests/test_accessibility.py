@@ -200,13 +200,16 @@ class TestAccessibilityManager:
         # Black/white has maximum 21:1 ratio
         assert 20.5 <= ratio <= 21.5
 
-    def test_enable_screen_reader_support(self, qapp):
+    def test_enable_screen_reader_support(self, qapp, capfd):
         """Test enabling screen reader support."""
+        capfd.readouterr()
+
         # Should not crash
         AccessibilityManager.enable_screen_reader_support(qapp)
 
         # Qt's accessibility is enabled by default on modern systems
-        # We just verify the call doesn't crash
+        # and no application attribute may be set after QApplication exists.
+        assert "AA_UseDesktopOpenGL" not in capfd.readouterr().err
 
 
 class TestAccessibilityIntegration:

@@ -51,6 +51,26 @@ class TabManager:
     }
 
     @staticmethod
+    def translated_title(tool_id: str):
+        """Translate known tool labels without changing tab identities."""
+        from ..i18n import tr
+        keys = {
+            "translate": "menu.tools.json_translate",
+            "rewriter": "menu.tools.json_rewriter",
+            "tutorials": "menu.help.tutorials",
+            "insert": "ui_builder.tab_insert",
+            "unified_text_to_json": "menu.tools.text_to_json",
+        }
+        if tool_id in TabManager.SIMPLE_TOOLS:
+            return tr(keys.get(tool_id, f"menu.tools.{tool_id}"))
+        if tool_id in keys:
+            return tr(keys[tool_id])
+        if tool_id in {"set_operations", "calculator", "formula_builder", "editorial_repair",
+                       "boolean_logic", "voice_programming", "advanced_extractor"}:
+            return tr(f"menu.tools.{tool_id}")
+        return None
+
+    @staticmethod
     def show_tool_tab(main_window, tool_name: str) -> None:
         """
         Show a tool as tab (create on-demand).
@@ -74,7 +94,7 @@ class TabManager:
         dock = getattr(main_window, dock_attr)
         if tool_name == "file_explorer":
             main_window.tab_search = dock  # Compatibility route, not another panel.
-        main_window._add_tool_tab(dock, tab_title, tab_id)
+        main_window._add_tool_tab(dock, TabManager.translated_title(tab_id) or tab_title, tab_id)
 
     @staticmethod
     def show_translate(main_window) -> None:

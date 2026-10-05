@@ -482,7 +482,9 @@ if _PYSIDE:
 
         def _toggle_history(self, checked: bool):
             """Toggle history dock visibility."""
-            if not hasattr(self, 'dock_history'):
+            if getattr(self, 'dock_history', None) is None:
+                if not checked:
+                    return
                 self._open_history()
 
             if checked:
@@ -738,14 +740,15 @@ if _PYSIDE:
         def _show_ai_assistant(self):
             """Show AI Tutorial Assistant dialog (v2.9.92)."""
             from .gui.tutorial_assistant_dialog import TutorialAssistantDialog
-            from .settings_manager import SettingsManager
-
-            # Get Gemini API key from settings
-            settings = SettingsManager()
-            api_key = settings.get_value('ai_processor/gemini_api_key', '')  # pylint: disable=no-member
-
-            dialog = TutorialAssistantDialog(self, api_key=api_key)
+            from shiboken6 import isValid
+            dialog = getattr(self, '_tutorial_assistant_dialog', None)
+            if dialog is None or not isValid(dialog):
+                api_key = self.settings.get('ai_processor/gemini_api_key', '')
+                dialog = TutorialAssistantDialog(self, api_key=api_key)
+                self._tutorial_assistant_dialog = dialog
             dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
 
         def _about_dialog(self):
             """Show the product About dialog."""
@@ -812,6 +815,15 @@ if _PYSIDE:
             """Show plugin manager dialog (Phase 3.10)."""
             from .gui.plugin_manager_dialog import PluginManagerDialog
             PluginManagerDialog.show_plugin_manager(self.plugin_loader, self)
+
+        def _toggle_plugin(self, plugin_id: str, enabled: bool):
+            """Use the same checked lifecycle transition as the manager dialog."""
+            success = self.plugin_loader.set_plugin_enabled(plugin_id, enabled)
+            MenuBuilder.sync_plugin_actions(self)
+            if not success:
+                QMessageBox.warning(self, tr("dialog.plugin_manager.activation_failed"),
+                                    tr("plugin_manager.toggle_failed").format(plugin_id))
+            return success
 
         def _emit_plugin_event(self, event_name: str, data: dict):
             """
@@ -931,6 +943,8 @@ if _PYSIDE:
                 Tab index where the tool was added
             """
             widget.setProperty("clarify_tool_id", tool_name)
+            from .gui.tab_manager import TabManager
+            title = TabManager.translated_title(tool_name) or title
             manager = getattr(self, "layout_manager", None)
             if manager is not None:
                 manager.register_dock(tool_name, widget)
@@ -1292,26 +1306,14 @@ if _PYSIDE:
 
         def _retranslate_ui(self):
             """Retranslate all UI elements (Task #24 - v2.9.10)."""
-            # Window title
             self.setWindowTitle(tr("app.title"))
-
-            # Update menu texts
-            self.act_undo.setText(tr("menu.edit.undo"))
-            self.act_redo.setText(tr("menu.edit.redo"))
-            self.act_open_translate.setText(tr("menu.tools.json_translate"))
-            self.act_open_rewriter.setText(tr("menu.tools.json_rewriter"))
-            self.act_open_placeholder_replacer.setText(tr("menu.tools.placeholder_replacer"))
-            self.act_open_ai_processor.setText(tr("menu.tools.ai_processor"))
-            self.act_open_json_search.setText(tr("menu.tools.json_search"))
-            self.act_open_case_converter.setText(tr("menu.tools.case_converter"))
-            self.act_toggle_history.setText(tr("menu.view.history"))
-            self.act_theme_system.setText(tr("menu.themes.system"))
-            self.act_theme_light.setText(tr("menu.themes.light"))
-            self.act_theme_dark.setText(tr("menu.themes.dark"))
-
-            # Rebuild menu bar to update menu titles
-            self.menuBar().clear()
             self._build_menu()
+            from .gui.tab_manager import TabManager
+            for index in range(self.tabs.count()):
+                widget = self.tabs.widget(index)
+                title = TabManager.translated_title(widget.property("clarify_tool_id"))
+                if title is not None:
+                    self.tabs.setTabText(index, title)
 
         def _show_shortcuts(self):
             """Show keyboard shortcuts customization dialog (v2.9.33)."""
@@ -1530,8 +1532,15 @@ if _PYSIDE:
                 # Apply shortcut
                 ShortcutManager.add_shortcut_to_action(action, shortcut_name)
 
-                # Update tooltip with shortcut
-                shortcut = ShortcutManager.get_shortcut(shortcut_name)
+                # Keep a translated base; QAction defaults an unset tooltip to its label.
+                current_tip = action.toolTip()
+                description = (action.property("clarify_tooltip_base")
+                               or (current_tip if current_tip != action.text() else "")
+                               or action.statusTip()
+                               or tr(f"shortcuts.desc.{shortcut_name}", "")
+                               or description)
+                action.setProperty("clarify_tooltip_base", description)
+                shortcut = ShortcutManager.get_key_sequence(shortcut_name).toString()
                 if shortcut:
                     tooltip = f"{description} ({shortcut})"
                 else:

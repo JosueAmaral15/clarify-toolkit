@@ -3218,3 +3218,206 @@ Plano imediato:
   e excluido do staging. Monitor anterior nao reativado, outros processos intactos.
 - Restam0 novos/30 legados fora do escopo. Crash Qt FE05 e gates CI/security
   continuam nao resolvidos; nenhuma nova tarefa/continuacao iniciada.
+
+## 2026-09-29 - Pre-acao - Investigacao Do Crash Qt Historico
+
+- Usuario pediu tentar resolver agora o crash Qt historico. Escopo novo restrito
+  ao FE05 signal11 em completion de cross-line/pause/resume; nao iniciar legados.
+- Base eeeefca, COM-52f97c90-b745-4dbf-b9e0-883dabf9069c; example.py preservado.
+  Auditar evidencia e teardown/callbacks, reproduzir apenas em processo filho
+  isolado com guards RAM85%/treeRSS600MiB/wall180s/pytest20s. Sem GUI completa,
+  providers/documentos reais, push/promocao/dispatch ou reativacao do monitor.
+- Crash propositalmente investigado requer captura de diagnostico; nao repetir
+  runs sem hipotese nova nem prometer resolver por testes isolados verdes.
+
+## 2026-09-29 - Pos-acao - Qt Continua Em Investigacao
+
+- Demonstrada e corrigida localmente corrida de finished antigo contra novo
+  registro no mesmo ID. Token por registro preserva consumidores/locks, inclusive
+  reinicio do mesmo QThread; teste real falhou antes do patch. Nao comprovada
+  relacao causal com signal11 historico. Receiver deleteLater funcionou; nao
+  aplicada mudanca especulativa de parent/GC/versao de Qt.
+- 11 novos casos Qt passaram com GDB (GC em worker/GUI, pause/resume, tres
+  modos de busca, duas views, cleanup e registro). 20 testes do launcher e sete
+  testes legados do ThreadManager passaram em processos separados.
+- Barreira nativa: modulo lifecycle isolado abortou signal6/exit134, 205.8MiB,
+  sem guard de recursos, em completion/log de cancelamento durante commit atomico.
+  Runner serial parou; demais modulos e CE recovery nao foram revalidados.
+  Diagnosticos direcionados posteriores passaram (tres casos, modulo36 com
+  GDB/allocator normal/perturbado e tracer temporario/GC frequente), sem backtrace
+  nativo da falha. Isso NAO e correcao do crash nem suite verde.
+- Checkpoint FE05 d924e4b passou223 casos no GDB em worktree temporario removido;
+  ordem historica de modulos, nao o estado transitorio214 original. Base atual
+  antes do patch passou118 casos combinados apenas como diagnostico delimitado.
+- Pylint-E2, AST4, Black3 e diff-check passaram. Probe existente agora aceita
+  --mode completion ou explorer-lifecycle com --gdb, sem downloads/core dumps,
+  settings privados e guards RAM85%/treeRSS600MiB/wall180s/pytest20s.
+- Evidencia em docs/reports/QT_COMPLETION_INVESTIGATION_2026_09_29.md; TASKS.md
+  conserva30 checkboxes abertos. Falta causa nativa, confirmacao no baseline e
+  validacao da correcao antes de mais trabalho GUI. MainWindow/tema e risco
+  separado ainda aberto; CI/seguranca continuam bloqueando promocao.
+- Alteracoes ficam SEM COMMIT, push ou promocao por validacao incompleta, na COM
+  desta sessao. example.py intacto (SHA256058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee).
+  Sem novo dispatch/continuacao ou reativacao do monitor; workers/servicos alheios
+  nao foram alterados. Investigacao parcial, nao entrega declarada concluida.
+
+## 2026-09-29 - Orientacao Ao Usuario Sobre O Crash Qt
+
+- Usuario perguntou o que precisa fazer e como investigar/corrigir por conta
+  propria. Reconsultados report e probe atuais; nenhuma nova execucao GUI,
+  instalacao, mudanca de ambiente, commit ou push nesta resposta.
+- Recomendar captura unica com --mode explorer-lifecycle --gdb, log temporario
+  distinto e guards mantidos. Diferenciar signal nativo de abort_reason do guard;
+  run verde nao prova correcao de falha intermitente. Usar somente dados ficticios.
+- Causa ainda desconhecida; nao atribuir a falta de RAM nem ao ponto Python do
+  log. Auditar afinidade/ownership/cleanup se a evidencia apontar ao codigo;
+  comparar PySide mais recente apenas em ambiente separado, sem substituir a
+  .venv atual. Release notes oficiais citam fixes relevantes, nao causalidade.
+- Falta backtrace/causa nativa, comparacao do baseline e regressao limpa. Mantidos
+  os30 itens abertos e o patch local sem commit; nenhuma tarefa declarada resolvida.
+
+## 2026-09-29 - Resultado Do Diagnostico Executado Pelo Usuario
+
+- Usuario perguntou o significado da mensagem com caminho do log. Lido somente
+  /tmp/clarify-qt-gdb.ephOo3.log, sem executar novamente os testes.
+- Resultado: 36 testes lifecycle passaram em6.38s; processo GDB terminou
+  normalmente, exit0, pico da arvore384.2MiB, abort_reason null. Nenhuma falha
+  nativa ou barreira de recursos foi reproduzida nessa execucao.
+- A mensagem apenas informa onde stdout/stderr foram gravados. Run verde nao
+  comprova correcao do crash intermitente. Causa nativa/validacao continuam
+  pendentes; sem commit, push, mudanca de ambiente ou nova tarefa concluida.
+
+## 2026-09-29 - Pre-acao - Falhas Reais E Troca De Idioma
+
+- Usuario apresentou crashes reais de AI Tutorial Assistant, Plugins e History,
+  traducao parcial ao trocar idioma, avisos AT-SPI/QTextCursor/Xed e signal11
+  final no launcher. Ler reports privados indicados sem alterar settings/logs.
+- Escopo: corrigir causas Python comprovadas, auditar retranslation das janelas
+  envolvidas e callbacks do menu; manter segfault nativo separado sem presumir
+  causalidade. Testes leves/offscreen, seriais e guardados, sem startup completo,
+  providers, documentos reais, upgrades ou limpeza de configuracao do usuario.
+- Preservar patch Qt anterior sem commit, example.py e demais alteracoes; sem
+  push/promocao/dispatch. Registrar evidencia e pendencias antes de encerrar.
+
+## 2026-10-04 - Pre-acao - Retomada Dos Reparos E Portugues
+
+- Usuario confirmou que o idioma com traducao parcial e portugues e pediu para
+  prosseguir. Worktree e checkpoint continuam os mesmos, sem commit ou push.
+- Reparos locais ja feitos: Assistant/Plugins/History, traducoes aninhadas e
+  retranslation de menus/dialogos/abas. Core real do PID 431630 apontou
+  HistoryDock._create_layout durante destruicao nativa de QLayout; layout
+  duplicado foi removido. 79 testes focados passaram em processos guardados;
+  validacao global e crash Qt antigo do Explorer seguem pendentes.
+- Agora auditar especificamente controles em portugues nessas telas, registrar
+  limites honestos em TASKS/report, rodar novamente testes isolados, preservar
+  example.py e demais edicoes. Nao usar providers nem startup GUI completo.
+
+## 2026-10-04 - Pos-acao - Reparos Locais E Barreira De RAM
+
+- Confirmados nos relatórios privados os erros de metodo ausente do Assistant
+  e do menu Plugins. O core real do PID 431630 mostrou HistoryDock._create_layout
+  na destruicao de QLayout; eliminado o segundo layout sobre BaseDock.
+- Ajustados lifecycle/rollback de plugins, fechamento e callbacks do Assistant,
+  catalogos aninhados com fallback e retranslation parcial para portugues em
+  menus, abas, dialogos, History e Tutorials. A ultima alteracao em PluginBase
+  preserva o menu Tools traduzido, mas ainda nao foi validada.
+- 91 testes focados distintos passaram em modulos GUI isolados antes dessa
+  ultima alteracao, com guardas de RAM85%, RSS da arvore600MiB, wall180s e
+  pytest20s. Pylint-E, AST, JSON e diff-check tambem passaram antes dela.
+- O teste de integracao adicionado por ultimo foi interrompido pela guarda
+  RAM85% antes da coleta (exit125, RSS da arvore60.1MiB), nao por crash Qt.
+  Nao houve retry nem mais testes GUI. Estado final nao completamente validado.
+- Atualizados docs/TASKS.md e docs/reports/LIVE_UI_CRASH_FIXES_2026_09_29.md
+  com evidencias e pendencias. Permanecem 30 tarefas abertas, inclusive
+  localizacao LEG-10, crash historico FE05/MainWindow e gates CI/seguranca.
+  Sem commit, push, promocao ou dispatch; example.py e alteracoes alheias
+  preservados. Avisos AT-SPI/QTextCursor e problema Xed/gi nao receberam
+  causa comprovada nem alteracoes especulativas.
+
+## 2026-10-05 - Pre-acao - Retomada Monitorada Da Validacao
+
+- Usuario autorizou prosseguir, pediu uso dos recursos necessarios do projeto
+  ai-presence-monitor e informou que somente a GUI do ChatGPT esta aberta e
+  que a maquina possui8GiB de swap.
+- Estado inicial: branch COM-52f97c90-b745-4dbf-b9e0-883dabf9069c no commit
+  eeeefca, worktree acumulado preservado;3.7GiB de RAM fisica, aproximadamente
+  840MiB disponiveis,8GiB de swap total e6.2GiB livres.
+- Escopo desta retomada: preflight/start/status/finish sanitizados do monitor,
+  revalidar a ultima alteracao PluginBase e suites afetadas em processos
+  isolados, revisar o diff e registrar evidencia. Manter RAM85%, RSS600MiB,
+  wall180s e pytest20s; swap nao substitui a guarda de pressao fisica.
+- Nao usar GUI fallback, continue, provider, documento/configuracao real nem
+  startup completo. Preservar example.py e todas as alteracoes alheias. Sem
+  push ou promocao enquanto gates externos continuam abertos.
+
+## 2026-10-05 - Pos-acao - Validacao Retomada E Menu De Plugin Corrigido
+
+- Preflight do ai-presence0.9.0 passou: schema1 atual/integridade ok, cinco
+  hooks, codex queue, monitor e reply-observer ativos; GUI/remote fallback
+  desabilitados. Worker exato do Clarify iniciado uma vez em Protocol2.
+- Probe duravel ganhou modos isolados live-ui, plugin-system e
+  tutorials-localization; seus testes de construcao/guardas passaram47 casos.
+- Primeira execucao live-ui chegou ao teste antes bloqueado:15 casos passaram
+  e o16o encontrou duas raizes Qt pela contagem de um menu antigo aguardando
+  DeferredDelete (exit1, pico181.2MiB), sem crash nativo ou guard abort.
+- PluginBase agora considera somente QMenus cuja propria QAction permanece
+  instalada no pai atual. O teste considera apenas raizes visiveis/ativas e
+  confirma preservacao da acao do plugin apos nova troca de idioma.
+- Revalidacao serial atual: live-ui17/17 (pico200.3MiB), plugin-system16/16
+  (74.0MiB), tutorials-localization3/3 (195.1MiB), catalog lookup10/10 e i18n
+  expansion14/14. Total funcional diretamente afetado:60; probe:47.
+- Pylint-E em13 fontes/diagnostico, AST em19 Python, JSON em7 catalogos e
+  git diff --check passaram. Black global apontou14 arquivos acumulados que
+  seriam reformatados; nenhuma formatacao ampla foi aplicada.
+- TASKS e LIVE_UI_CRASH_FIXES atualizados. Continuam30 tarefas abertas:
+  inspecao desktop em portugues/LEG-10, crash historico FE05/MainWindow e
+  gates CI/seguranca. Nenhum provider, documento real ou startup completo.
+- example.py preservado no SHA256
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+  Sem commit, push, promocao, continue ou GUI automation nesta retomada.
+
+## 2026-10-05 - Pre-acao - Probes De Tema E MainWindow
+
+- Usuario pediu nova continuacao. Selecionado o primeiro item MUST executavel:
+  investigar ciclo repetido de janela/tema Qt, ainda separado do History
+  corrigido e do signal11 FE05 sem causa nativa confirmada.
+- Etapa limitada: iniciar worker Protocol2, executar uma vez o controle simples
+  de tema e, somente se passar e houver RAM, o probe offscreen de MainWindow.
+  HOME/settings/logs temporarios, updates e dialogs bloqueantes desativados,
+  RAM85%, RSS600MiB, wall120s e core dumps desabilitados.
+- Se houver signal nativo ou guard abort, parar sem retry. Nao usar providers,
+  documentos/configuracao reais, GUI fallback ou continue. Preservar worktree,
+  example.py e evidencias anteriores; sem commit/push/promocao.
+
+## 2026-10-05 - Pos-acao - Tema/MainWindow Sem Reproducao E Aviso Corrigido
+
+- Probe de tema simples passou10 ciclos dark/light/system, pico62.6MiB e zero
+  widgets remanescentes. Primeiro probe completo passou3 recriacoes de
+  MainWindow, pico208.8MiB e zero widgets/top-levels apos cada fechamento.
+- O primeiro probe completo revelou aviso repetivel: AA_UseDesktopOpenGL era
+  definido por AccessibilityManager depois da criacao do QApplication. O entry
+  point ja configura o atributo antes da criacao; removida a mutacao tardia,
+  que nao habilitava AT-SPI e violava a ordem exigida pelo Qt.
+- Regressao nova garante ausencia do aviso com QApplication existente.
+  Passaram24 testes de acessibilidade (pico77.4MiB),14 de ThemeManager
+  (69.2MiB) e65 do probe. Segundo probe completo passou3 ciclos, pico209.2MiB,
+  zero widgets e sem o aviso OpenGL. Nenhum crash ou guard abort.
+- Pylint-E, py_compile e diff-check passaram. Black indicou formatacao legada
+  em accessibility_manager/test_accessibility; nao foi aplicado em massa.
+- TASKS e QT_COMPLETION_INVESTIGATION atualizados. MUST Qt continua aberto:
+  esta nao reproducao nao explica o segfault historico combinado nem FE05.
+  Sem commit, push, promocao, provider, documento real, continue ou GUI fallback.
+
+## 2026-10-05 - Pre-acao - Checkpoint E Push Por Sessao
+
+- Usuario autorizou prosseguir com tarefas restantes e pediu commit/push por
+  sessao em branches de trabalho. Branch atual COM-52f97c90-b745-4dbf-b9e0-
+  883dabf9069c parte de eeeefca e contem os reparos acumulados/validados de
+  lifecycle Qt, History/Assistant/Plugins e localizacao em portugues.
+- Criar um checkpoint unico e coerente nesta COM, pois separar retroativamente
+  hunks interdependentes elevaria risco. Incluir fontes, testes, reports, TASKS
+  e diario relacionados; excluir explicitamente example.py, preservado no hash
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+- Antes do commit: staged diff-check/status e verificacao de arquivos. Depois,
+  push somente da COM atual para origin, sem develop/main. A proxima sessao
+  devera partir deste checkpoint em nova branch COM-UUID.

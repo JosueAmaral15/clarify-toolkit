@@ -278,6 +278,21 @@ class PluginLoader(QObject):
         if plugin_id in self.metadata:
             self.metadata[plugin_id].enabled = enabled
 
+    def set_plugin_enabled(self, plugin_id: str, enabled: bool) -> bool:
+        """Keep persisted and displayed state unchanged when a transition fails."""
+        metadata = self.metadata.get(plugin_id)
+        if metadata is None:
+            return False
+        previous = metadata.enabled
+        if previous == enabled:
+            return True
+        self.enable_plugin(plugin_id, enabled)
+        success = (self.activate_plugin(plugin_id) if enabled else
+                   plugin_id not in self.plugins or self.deactivate_plugin(plugin_id))
+        if not success:
+            self.enable_plugin(plugin_id, previous)
+        return bool(success)
+
     def emit_event(self, event_name: str, data: Dict[str, Any]):
         """
         Emit an event to all active plugins.
