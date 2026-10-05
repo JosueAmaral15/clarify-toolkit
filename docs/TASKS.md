@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/05 - reparos locais de crash e portugues revalidados
+**Last Update**: 2026/10/05 - lock de seguranca corrigido e auditado em branch COM
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -319,11 +319,19 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   14 de tema e65 do probe. Ainda nao reproduz nem explica o crash historico,
   portanto o item permanece aberto.
   Ver [investigacao Qt atual](reports/QT_COMPLETION_INVESTIGATION_2026_09_29.md).
-- [ ] **MUST / seguranca: revisar e corrigir dependencias vulneraveis.** GitHub
-  reporta 23 alertas abertos na branch padrao (1 critico, 12 altos, 7 moderados,
-  3 baixos). O lock do checkpoint ainda usa anyio 4.12.1, afetado pelo alerta
-  critico (<4.14.2). Atualizar com testes de compatibilidade e nova auditoria;
-  nao supor que os 23 alertas da principal sejam todos aplicaveis ao checkpoint.
+- [ ] **MUST / seguranca: revisar e corrigir dependencias vulneraveis.** A API do
+  GitHub reportou24 alertas abertos na branch padrao (1 critico,12 altos,
+  8 moderados,3 baixos);23 eram aplicaveis ao lock desta COM e `httplib2` nao
+  pertence ao lock atual. A branch COM-61bd5563-4023-4060-adee-4c560bb1bcfe
+  atualiza as versoes afetadas e tambem `click`/`virtualenv`, encontrados por
+  `pip-audit`. Auditoria estruturada dos96 pacotes fixados ficou sem achados;
+  64 testes focados passaram, sem provider ao vivo, crash nativo ou guard abort
+  nos testes. Uma tentativa separada de auditar toda a `.venv` foi interrompida
+  corretamente em RAM85,6%; repetida com folga, encontrou22 linhas somente em
+  `pip`, `httplib2` e `starlette`, componentes extras fora do lock. O item segue
+  aberto ate integrar a COM, recriar o ambiente somente pelo lock e confirmar o
+  rescan da branch padrao; nao e declaracao de seguranca global. Ver
+  [auditoria e limites](reports/DEPENDENCY_SECURITY_AUDIT_2026_10_05.md).
 - [ ] **MUST / integracao: restaurar CI e comprovar gates de promocao.** O run do
   checkpoint terminou em startup_failure sem jobs: causa ainda nao determinada.
   Revisar validacao dos workflows, instalacao de dependencias e constraints no

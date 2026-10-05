@@ -3436,3 +3436,45 @@ Plano imediato:
 - Proxima sessao deve criar nova COM a partir deste checkpoint e tratar o MUST
   de seguranca de dependencias de forma separada, com auditoria aplicavel ao
   checkout antes de qualquer upgrade.
+
+## 2026-10-05 - Pre-acao - Auditoria De Dependencias Vulneraveis
+
+- Nova sessao/branch criada a partir do checkpoint a6e699b:
+  COM-61bd5563-4023-4060-adee-4c560bb1bcfe. example.py permanece untracked e
+  fora do escopo.
+- Escopo MUST: reconciliar os24 alertas informados pelo GitHub na branch padrao
+  com manifests/lock efetivos desta COM; identificar ecossistema, dependencia
+  direta/transitiva, versao corrigida e compatibilidade antes de editar.
+- Comecar por auditoria somente leitura de pyproject/locks/workflows e, quando
+  acessivel, metadados sanitizados do Dependabot. Nao imprimir tokens, atualizar
+  pacotes indiscriminadamente nem alterar main/develop.
+- Aplicar somente atualizacoes minimas comprovadas, executar testes focados e
+  gates de lock/instalacao sem providers. Commit e push desta COM ao encerrar a
+  sessao; registrar impedimentos externos sem declarar seguranca global.
+
+## 2026-10-05 - Pos-acao - Lock Corrigido E Auditado Localmente
+
+- Reconciliados24 alertas da branch padrao:23 se aplicavam a esta COM;
+  `httplib2` pertence ao estado antigo da principal, nao ao lock atual. Foram
+  atualizados anyio, cryptography, black, pyasn1, uv, idna, urllib3, lxml,
+  pytest, Pygments e requests; a auditoria local acrescentou click/virtualenv.
+  Resolucao tambem atualizou typing-extensions/filelock e adicionou a dependencia
+  transitoria python-discovery, sem nova dependencia direta de runtime.
+- `poetry check --lock`, instalacao/dry-run e `pip check` passaram. Auditoria
+  estruturada dos96 pacotes exatos do lock, sem resolucao, retornou zero
+  vulnerabilidades conhecidas. Todos os13 thresholds revisados passaram e
+  `httplib2` foi confirmado ausente.
+- A `.venv` historica nao e lock-only: depois da correcao, auditoria ampla ainda
+  encontrou22 linhas em pip25.3, httplib2 0.31.2 e starlette 0.50.0, trazidos por
+  infraestrutura/pacotes extras. Nao removidos nem atualizados de modo forcado.
+  Uma tentativa foi parada corretamente em RAM85,6%; a repeticao iniciou com
+  folga, concluiu com pico79MiB e produziu o resultado acima.
+- Passaram64 testes focados: Gemini mockado6, Ollama local1, catalogo10, i18n14,
+  update controller3, plugins16, tutorial localization3 e documentos/DOCX11.
+  Modulos GUI isolados, sem provider ao vivo, crash nativo ou guard abort nos
+  testes; pico maximo199MiB. Cinco warnings legados de testes DOCX que retornam
+  bool foram preservados e registrados.
+- TASKS e report de auditoria atualizados. MUST de seguranca continua aberto ate
+  integrar a COM, recriar ambiente limpo pela lock, restaurar CI e confirmar
+  rescan da branch padrao. example.py segue fora do indice e no SHA256
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
