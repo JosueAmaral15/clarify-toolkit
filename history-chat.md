@@ -3489,3 +3489,43 @@ Plano imediato:
 - Sessao encerrada com30 checkboxes abertos em TASKS. Proxima prioridade MUST:
   restaurar CI e comprovar os gates de promocao; a integracao da COM de seguranca
   deve ocorrer por PR revisado depois desses gates.
+
+## 2026-10-05 - Pre-acao - Restauracao Dos Gates De CI
+
+- Usuario autorizou prosseguir. Nova sessao criada da branch publicada b46955d:
+  COM-1851754a-2bb0-46de-a084-0f1293011b33. Worker exato do Clarify iniciado
+  uma vez em Protocol2; example.py permanece untracked e fora do escopo.
+- Proximo MUST: identificar a causa real do `startup_failure`, corrigir sintaxe,
+  instalacao reproduzivel e gates incoerentes dos workflows sem reduzir criterios
+  para obter verde artificial. Comparar estado remoto e arquivos atuais antes de
+  editar; distinguir bloqueio externo de defeito do YAML/projeto.
+- Validacao sera serial e limitada por RAM85%, RSS600MiB e wall180s quando houver
+  Python/Qt. Sem provider ao vivo, documento real, merge ou promocao de
+  develop/main. Commit e push somente desta COM ao encerrar a sessao.
+
+## 2026-10-05 - Pos-acao - CI Reprodutivel E Coleta Isolada
+
+- Causa concreta do startup_failure identificada localmente com actionlint1.7.12:
+  `peaceiris/actions-gh-pages@v3` usa runtime removido. Docs passou a fixar o
+  commit de v4.1.0; todos os workflows atuais passam no actionlint.
+- CI, docs e benchmarks agora instalam pelo poetry.lock com Poetry2.1.3 e keyring
+  desativado. `psutil` virou dependencia direta de runtime e foi fixado em7.2.2;
+  requirements-docs raiz fixa Sphinx/theme/typehints. Benchmark de PR ganhou
+  trigger real e preserva resultados em RUNNER_TEMP entre checkouts.
+- Foram preservados37 diagnosticos historicos para uso manual, mas removidos da
+  coleta automatica por executarem rede, caminhos pessoais, escrita ou codigo no
+  import. A coleta ficou limpa:2477 testes em176 modulos exatamente reconciliados.
+  O novo runner de CI executa um modulo por processo e acumula cobertura antes de
+  aplicar o gate80%, evitando contaminacao de lifecycle Qt entre modulos.
+- Evidencia local:12 testes afetados passaram; smoke do runner4 passou;
+  lock/check/pip check passaram; auditoria das97 versoes exatas ficou sem
+  vulnerabilidades; Sphinx gerou HTML com64 warnings legados; Black/isort,
+  Pylint-E dos novos arquivos, compileall, diff-check e actionlint passaram.
+  Picos ficaram abaixo600MiB; uma primeira instalacao docs falhou por keyring
+  desktop, corrigida pela configuracao explicita. `.venv/bin/pip` tem launcher
+  antigo, mas `.venv/bin/python -m pip check` passa.
+- MUST de CI permanece aberto ate execucao remota comprovar os176 modulos,
+  cobertura80%, Codecov, checks incrementais e auditoria. Pylint global excedeu
+  180s em tentativa anterior e nao foi apresentado como gate resolvido. Nenhum
+  merge/promocao foi feito; example.py permanece fora do indice e no hash
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.

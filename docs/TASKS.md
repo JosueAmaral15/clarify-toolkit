@@ -333,12 +333,20 @@ Ver [matriz de evidencias dos 36 itens](reports/LEGACY_TASK_AUDIT_2026_09_27.md)
   rescan da branch padrao; nao e declaracao de seguranca global. Ver
   [auditoria e limites](reports/DEPENDENCY_SECURITY_AUDIT_2026_10_05.md).
 - [ ] **MUST / integracao: restaurar CI e comprovar gates de promocao.** O run do
-  checkpoint terminou em startup_failure sem jobs: causa ainda nao determinada.
-  Revisar validacao dos workflows, instalacao de dependencias e constraints no
-  shell; comprovar testes, cobertura, analise estatica e seguranca exigidos pelo
-  protocolo. Protecao de main/develop bloqueada por HTTP 403 no plano GitHub do
-  repo privado; decisao de plano/visibilidade depende do usuario, sem mudanca
-  automatica. Disciplina de PR/checks documentada, ainda sem enforcement remoto.
+  checkpoint terminou em startup_failure sem jobs. Atualizacao 05/10: actionlint
+  identificou `peaceiris/actions-gh-pages@v3` como runtime removido; docs usa agora
+  o commit de v4.1.0. CI/docs/benchmarks instalam pelo `poetry.lock`, desativam
+  keyring, evitam constraints interpretadas pelo shell e auditam97 versoes exatas.
+  A coleta automatica ficou limpa com2477 testes;176 modulos elegiveis rodam
+  serialmente em processos isolados com cobertura acumulada, evitando o ciclo Qt
+  combinado historicamente instavel. Actionlint, lock,12 testes focados, build
+  HTML com64 avisos legados e auditoria sem vulnerabilidades passaram localmente.
+  O item continua aberto ate um run remoto comprovar teste/cobertura80%, Codecov,
+  analise estatica incremental e seguranca. Pylint global nao e gate comprovado:
+  a tentativa local excedeu180s/pico422MiB e revelou divida legada. Protecao de
+  main/develop segue bloqueada por HTTP403 no plano GitHub privado; decisao de
+  plano/visibilidade depende do usuario, sem mudanca automatica. Ver
+  [evidencias atuais](reports/CI_GATE_RESTORATION_2026_10_05.md).
 - [ ] **SHOULD / Git: integrar trabalho pendente por PRs revisados.** Develop
   criado local/remoto de origin/main 63071da por solicitacao do usuario; fluxo
   COM-UUID -> PR develop -> PR main. Ver [guia Git](guides/reference/GIT_WORKFLOW_QUICK_REFERENCE.md).

@@ -12,11 +12,7 @@ Examples:
   - "has(item.id)" with limit=8 → "has(item" (cuts at .)
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from extractors.advanced_extractor import smart_truncate
+from src.extractors.advanced_extractor import smart_truncate
 
 
 def test_cut_at_hyphen():

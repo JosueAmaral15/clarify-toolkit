@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+env:
+  POETRY_VERSION: "2.1.3"
+  POETRY_KEYRING_ENABLED: "false"
+
 jobs:
   build-docs:
     runs-on: ubuntu-latest
@@ -26,19 +30,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            poetry.lock
+            requirements-docs.txt
           
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-docs.txt
+          python -m pip install "pip==26.2" "poetry==$POETRY_VERSION"
+          poetry config virtualenvs.create false
+          poetry install --no-root --no-interaction
+          python -m pip install --requirement requirements-docs.txt
           
       - name: Build Sphinx documentation
-        run: |
-          cd docs/api
-          make html
+        run: make -C docs/api html SPHINXOPTS="--keep-going"
           
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/api/_build/html
