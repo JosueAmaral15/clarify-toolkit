@@ -3543,3 +3543,33 @@ Plano imediato:
   antes, mas a causa atual nao foi declarada confirmada sem mensagem autoritativa.
 - Permanecem30 tarefas abertas: CI e seguranca aguardam gate remoto/integracao;
   integracao Git aguarda PR revisado; Qt historico e legado continuam separados.
+
+## 2026-10-06 - Pre-acao - Novos Requisitos Organizados
+
+- Usuario pediu registrar, antes de continuar, omissoes/paridade i18n, Tab no
+  Editor, isolamento de processamentos por tool/guia, recentes, Find com contagem
+  e anterior, nomes dos modos/reuso de busca no File Explorer e menus contextuais
+  do Explorer e das guias do Editor.
+- Nova branch criada do checkpoint publicado0af37e3:
+  COM-ca722c8c-a3a7-431f-ada1-487a4fb3c5b4. example.py permanece untracked e no
+  hash058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+- Revisar duplicidades antes de criar checkboxes: paridade/omissoes pertencem a
+  LEG-10 existente; as demais entregas devem ser novas, priorizadas e testaveis.
+  Threading deve isolar trabalhos longos por guia sem mover widgets Qt para fora
+  da GUI thread ou criar threads ociosas ilimitadas.
+
+## 2026-10-06 - Pos-acao - Fila Editor/File Explorer Registrada
+
+- TASKS recebeu8 itens novos: APP-THREAD-01, FE-REFINE-01, CE-INDENT-01,
+  CE-RECENT-01, CE-FIND-01, FE-MODE-I18N-01, CE-EXPLORER-CONTEXT-01 e
+  CE-TAB-CONTEXT-01. A contagem mecanica passou de30 para38 abertos.
+- LEG-10 foi ampliada, sem duplicacao, para auditar os sete catalogos por folhas,
+  quantidade/tipos/placeholders, chaves ausentes/extras e textos ainda em ingles.
+  Fallback nao sera aceito como traducao completa.
+- Requisitos receberam criterios de seguranca/lifecycle: widgets Qt na GUI thread,
+  workers limitados por guia/operacao, cache de refinamento com identidade e
+  invalidacao, Delete com confirmacao/lixeira, fechamento em lote respeitando
+  Save/Discard/Cancel e splits sem duplicar ownership/recovery.
+- Validacao documental:38 checkboxes abertos,8 novos IDs,1 LEG-10, diff-check
+  limpo. Nenhum codigo/teste runtime foi alterado ou executado nesta etapa;
+  example.py segue untracked e preservado no hash anterior.

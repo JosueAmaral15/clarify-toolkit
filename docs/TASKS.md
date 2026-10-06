@@ -2,9 +2,89 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/05 - lock de seguranca corrigido e auditado em branch COM
+**Last Update**: 2026/10/06 - novos requisitos de Editor, File Explorer, i18n e isolamento de processamento organizados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
+
+Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
+adiciona **8 tarefas abertas**; `LEG-10` foi ampliada na fila canonica para cobrir
+as omissoes i18n sem criar checkbox duplicado. Contagem atual: **38 tarefas
+abertas**. Implementar em etapas pequenas, preservando recovery do Editor,
+escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
+
+### MUST - Estabilidade E Processamento
+
+- [ ] **APP-THREAD-01: isolar processamentos por ferramenta e guia.** Auditar
+  operacoes que ainda bloqueiam a GUI e dar a cada guia ativa ownership explicito
+  de seus jobs internos, com fila/worker independente quando houver trabalho
+  demorado. Widgets e modelos Qt devem permanecer na GUI thread; mover somente
+  processamento e IO thread-safe para workers, pois criar uma OS thread permanente
+  por widget/guia violaria o contrato Qt e aumentaria memoria sem beneficio.
+  Reutilizar `ThreadManager` e workers existentes antes de criar infraestrutura.
+  Limitar concorrencia global e por guia, memoria/fila e tamanho de mensagens;
+  oferecer progresso, pausa/cancelamento cooperativos quando aplicavel e impedir
+  dois jobs conflitantes na mesma guia. Fechar guia/tool/app deve desconectar
+  sinais, cancelar ou aguardar settlement limitado e impedir callbacks tardios,
+  threads orfas e retencao de widgets. Testar duas guias da mesma tool e tools
+  diferentes em paralelo, erro, cancelamento, fechamento e pressao de recursos.
+- [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
+  checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
+  reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente
+  sem nova travessia quando o diretorio e o escopo efetivo nao mudaram. Reuso deve
+  ser opcional e visivel, nunca alterar implicitamente a selecao nem ampliar para
+  arquivos irmaos. Identidade do cache deve incluir diretorio canonico, tipo de
+  arquivo, extensoes, filtros, alvo e modo; invalidar em mudanca, resultado
+  parcial/erro/cancelamento, modificacao externa ou limites excedidos. Se o cache
+  nao for compativel, executar busca normal e informar isso sem prometer ganho.
+  Preservar budgets, ambas as vistas, pause/cancel/close e medir latencia/correta
+  equivalencia com a pesquisa completa.
+
+### SHOULD - Fluxos Do Editor E Nomes Da Interface
+
+- [ ] **CE-INDENT-01: indentacao por Tab e Shift+Tab.** Fazer `Tab` indentar e
+  `Shift+Tab` remover um nivel no Clarify Editor, para cursor ou multiplas linhas,
+  preservando selecao, undo/redo e line endings. Respeitar preferencia explicita
+  entre tab real e espacos/largura configurada; nao transformar Tab em navegacao
+  de foco enquanto o editor de texto estiver ativo. Cobrir inicio/fim de arquivo,
+  linhas vazias, selecao reversa e arquivos somente leitura.
+- [ ] **CE-RECENT-01: arquivos e pastas recentes.** Adicionar ao menu File listas
+  separadas `Open Recent File` e `Open Recent Folder`, com limite, deduplicacao,
+  ordem por uso recente, remocao de caminhos inexistentes e `Clear Recent`.
+  Reutilizar persistencia/recent paths existente quando compativel, sem armazenar
+  conteudo ou duplicar historico. Abrir arquivo deve reutilizar aba ja aberta;
+  abrir pasta deve atualizar Explorer/tooltip com o mesmo contrato de `Open Folder`.
+- [ ] **CE-FIND-01: contagem e navegacao completa no Find.** Exibir ocorrencia
+  atual e total (`n de m`) ao pesquisar com `Ctrl+F`, adicionar acao/botao
+  `Previous` alem de `Next` e manter navegacao circular coerente. Recalcular ao
+  mudar texto, consulta ou Case Sensitive/Whole Word/Regex; mostrar zero e erro
+  regex explicitamente, sem selecionar posicao invalida. Manter busca limitada,
+  atalhos acessiveis, tema e estado por aba sem travar documentos grandes.
+- [ ] **FE-MODE-I18N-01: nomes dos modos do workspace compartilhado.** Corrigir
+  os catalogos e a retranslation runtime para que `Compact Mode` e `Advanced
+  Mode` aparecam traduzidos em cada idioma. Os nomes funcionais `Search/Replace`
+  e `File Explorer` nao devem ser substituidos silenciosamente pelos nomes dos
+  modos: usar rotulo principal consistente e, se necessario, modo como descricao
+  secundaria/tooltip traduzido. Validar ingles, portugues e os outros cinco
+  catalogos, troca runtime, largura estreita e acessibilidade.
+- [ ] **CE-EXPLORER-CONTEXT-01: menu contextual de arquivos e pastas.** No painel
+  esquerdo do Clarify Editor, oferecer acoes coerentes por tipo: `Open`, `Open to
+  the Side`, `Rename`, `Delete`, `Reveal/Open in File Manager`, `Copy Path`,
+  `New File/Folder` para diretorios e `Analyze` quando houver consumidor seguro.
+  Desabilitar acoes inaplicaveis. Rename deve validar nome/colisao; Delete deve
+  preferir lixeira quando suportada, exigir confirmacao explicita, respeitar
+  symlinks/permissoes e nunca seguir recursivamente alvos externos. Atualizar o
+  modelo sem perder a raiz/selecoes; `Analyze` reutiliza APIs existentes com
+  entrada limitada e nunca envia conteudo a provider sem acao/confirmacao.
+- [ ] **CE-TAB-CONTEXT-01: menu contextual completo das guias de arquivo.** Somar
+  `Close`, `Close Others`, `Close All`, `Close Tabs to the Left`, `Close Tabs to
+  the Right`, `Split Down` e `Split Right` ao menu da guia, usando esses nomes ou
+  equivalentes traduzidos coerentes. Fechamentos em lote devem processar cada
+  buffer com Save/Discard/Cancel e recovery existentes, interrompendo sem perda
+  se o usuario cancelar. Splits devem mover/exibir a guia sem duplicar ownership
+  do documento, watchers ou snapshots e restaurar layout/foco ao fechar paines.
+  Cobrir primeira/ultima/unica guia, multiplos buffers alterados e retranslation.
 
 ## Falhas Reais E Portugues - Reparos Locais (04/10/2026)
 
@@ -375,7 +455,7 @@ Ver [registro de validacao](reports/STABILITY_VALIDATION_2026_09_26.md).
 ## Fila Canonica - Legado Auditado (27/09/2026)
 
 **Restam 23 itens legados + 3 validacoes de ambiente + 1 investigacao Qt +
-3 tarefas de seguranca/CI/integracao Git = 30
+3 tarefas de seguranca/CI/integracao Git + 8 tarefas novas = 38
 itens abertos nestas filas.** Isto nao e estimativa de sprints nem contagem de bugs; varios
 itens sao epicos. As anotacoes LEG junto aos textos originais sao referencias,
 nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
@@ -400,8 +480,14 @@ nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
   destino selecionavel, Gemini Flash como preferencia configuravel e chunking
   de LEG-06. Nao confundir com os tradutores Google existentes.
 - [ ] **LEG-10: revisao da localizacao atual.** Verificar strings/UI nos seis
-  idiomas-alvo e diferenciar termos tecnicos de ingles residual; catalogos ja
-  passam paridade de chaves. Nao repetir o antigo lote de 540 traducoes.
+  idiomas-alvo e diferenciar termos tecnicos de ingles residual. A afirmacao
+  historica de paridade nao deve ser tratada como verdade atual: auditar os sete
+  JSONs por caminhos de folhas aninhadas, quantidade, tipo e placeholders,
+  usando ingles como contrato canonico; listar chaves ausentes/extras e textos
+  ainda copiados do ingles. Tornar os conjuntos equivalentes sem apagar chaves
+  uteis nem preencher com traducao ficticia. Fallback para ingles evita crash,
+  mas nao conta como traducao concluida. Cobrir troca runtime e impedir regressao
+  com teste automatizado de paridade. Nao repetir cegamente o antigo lote de540.
 - [ ] **LEG-12: workspace hierarquico multi-arquivo JSON/TXT/TOON.** Busca por ID
   e hierarquia, edicao seletiva, merge e validacao; reutilizar conversores existentes.
 - [ ] **LEG-16: sugestoes de valores por JSON Schema.** Reutilizar diagnosticos,
