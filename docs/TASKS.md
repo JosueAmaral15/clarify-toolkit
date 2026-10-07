@@ -2,16 +2,17 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/07 - APP-THREAD-01 etapa 5 estabiliza replace em arquivos
+**Last Update**: 2026/10/07 - relatos de teste do Editor e direcao TOON organizados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-adiciona **8 tarefas abertas**; `LEG-10` foi ampliada na fila canonica para cobrir
-as omissoes i18n sem criar checkbox duplicado. Contagem atual: **38 tarefas
-abertas**. Implementar em etapas pequenas, preservando recovery do Editor,
+reune **14 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+`CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
+checkboxes duplicados. Contagem atual: **44 tarefas abertas**. Implementar em
+etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
 ### MUST - Estabilidade E Processamento
@@ -61,6 +62,14 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   nao for compativel, executar busca normal e informar isso sem prometer ganho.
   Preservar budgets, ambas as vistas, pause/cancel/close e medir latencia/correta
   equivalencia com a pesquisa completa.
+- [ ] **CE-FIRST-SAVE-01: limpar corretamente o estado apos o primeiro save.**
+  Corrigir o defeito relatado em que um arquivo continua com indicador de
+  inseguro, inconsistente ou nao salvo depois do primeiro `Save`/`Save As` bem
+  sucedido. Atualizar caminho, titulo, tooltip, watcher, baseline e estado dirty
+  como uma unica transicao; cancelar ou falhar deve preservar o indicador e o
+  buffer. Edicoes posteriores devem marca-lo novamente. Cobrir arquivo sem nome,
+  colisao, permissao/IO, encoding, escrita atomica e recovery sem declarar sucesso
+  antes da persistencia real.
 
 ### SHOULD - Fluxos Do Editor E Nomes Da Interface
 
@@ -76,12 +85,19 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   Reutilizar persistencia/recent paths existente quando compativel, sem armazenar
   conteudo ou duplicar historico. Abrir arquivo deve reutilizar aba ja aberta;
   abrir pasta deve atualizar Explorer/tooltip com o mesmo contrato de `Open Folder`.
-- [ ] **CE-FIND-01: contagem e navegacao completa no Find.** Exibir ocorrencia
-  atual e total (`n de m`) ao pesquisar com `Ctrl+F`, adicionar acao/botao
-  `Previous` alem de `Next` e manter navegacao circular coerente. Recalcular ao
-  mudar texto, consulta ou Case Sensitive/Whole Word/Regex; mostrar zero e erro
-  regex explicitamente, sem selecionar posicao invalida. Manter busca limitada,
-  atalhos acessiveis, tema e estado por aba sem travar documentos grandes.
+- [ ] **CE-FIND-01: Find completo, correto e persistente.** Corrigir primeiro o
+  defeito reproduzivel relatado: `Case Sensitive` e `Whole Word` nao estao sendo
+  respeitados no painel do Clarify Editor; `Regex` deve seguir o mesmo contrato e
+  expor erro de expressao invalida. Exibir ocorrencia atual e total (`n de m`),
+  adicionar `Previous` alem de `Next` e manter navegacao circular coerente.
+  Preservar o estado de Case Sensitive/Whole Word/Regex quando o painel for
+  fechado e reaberto, com escopo por aba ou preferencia global definido e testado,
+  sem uma aba alterar silenciosamente outra. Acrescentar radios mutuamente
+  exclusivos `Only Strings` e `Only Variables`, com semantica explicita por
+  linguagem e fallback honesto quando nao houver parser, alem de linhas inicial e
+  final opcionais, validadas e inclusivas. Recalcular ao mudar texto, consulta,
+  modo ou intervalo; mostrar zero/erro sem cursor invalido. Manter entradas,
+  resultados, memoria e tempo limitados, atalhos acessiveis, tema e traducao.
 - [ ] **FE-MODE-I18N-01: nomes dos modos do workspace compartilhado.** Corrigir
   os catalogos e a retranslation runtime para que `Compact Mode` e `Advanced
   Mode` aparecam traduzidos em cada idioma. Os nomes funcionais `Search/Replace`
@@ -91,8 +107,10 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   catalogos, troca runtime, largura estreita e acessibilidade.
 - [ ] **CE-EXPLORER-CONTEXT-01: menu contextual de arquivos e pastas.** No painel
   esquerdo do Clarify Editor, oferecer acoes coerentes por tipo: `Open`, `Open to
-  the Side`, `Rename`, `Delete`, `Reveal/Open in File Manager`, `Copy Path`,
-  `New File/Folder` para diretorios e `Analyze` quando houver consumidor seguro.
+  the Side`, `Rename`, `Delete`, `Reveal/Open in File Manager`, `Copy Absolute
+  Path`, `Copy Relative Path`, `New File/Folder` para diretorios e `Analyze` quando
+  houver consumidor seguro. O caminho relativo deve usar a raiz canonica da pasta
+  aberta e ficar indisponivel, com motivo visivel, quando nao puder ser calculado.
   Desabilitar acoes inaplicaveis. Rename deve validar nome/colisao; Delete deve
   preferir lixeira quando suportada, exigir confirmacao explicita, respeitar
   symlinks/permissoes e nunca seguir recursivamente alvos externos. Atualizar o
@@ -106,6 +124,46 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   se o usuario cancelar. Splits devem mover/exibir a guia sem duplicar ownership
   do documento, watchers ou snapshots e restaurar layout/foco ao fechar paines.
   Cobrir primeira/ultima/unica guia, multiplos buffers alterados e retranslation.
+- [ ] **CE-TAB-SYNC-01: sincronizar e reordenar abas com o Explorer.** Ao ativar
+  uma guia de arquivo, selecionar e revelar o item correspondente no painel do
+  Explorer sem mudar a raiz, abrir duplicata ou disparar IO desnecessario. Permitir
+  arrastar e soltar guias para reordena-las, preservando documento ativo, splits,
+  ownership, watchers, dirty/recovery e ordem persistida. Tratar arquivos fora da
+  pasta, removidos ou renomeados sem selecionar item incorreto; cobrir teclado,
+  mouse, multiplos splits e acessibilidade.
+- [ ] **CE-FOLDER-SESSION-01: restaurar as abas ao reabrir uma pasta.** Ao fechar
+  e depois abrir novamente uma pasta no Clarify Editor, recuperar o conjunto, a
+  ordem e a guia ativa dos arquivos daquela pasta. Persistir referencias e estado
+  de layout limitados, nao copias redundantes de conteudo; integrar buffers dirty
+  ao recovery existente e nunca sobrescrever originais. Ignorar ou informar com
+  seguranca caminhos removidos, movidos, sem permissao ou fora da raiz, sem impedir
+  a abertura da pasta. Oferecer configuracao para desativar/limpar a sessao.
+- [ ] **CE-TEMP-NOTES-01: notas temporarias persistentes gerenciadas pelo Editor.**
+  Adicionar acao explicita para salvar um buffer como nota temporaria, listar e
+  recuperar essas notas sem exigir caminho comum nem confundi-las com Save/Save As
+  ou snapshots de emergencia. Por padrao, excluir somente por acao explicita do
+  usuario; nas configuracoes, permitir retencao automatica opcional por idade,
+  incluindo 30 dias, com preview/confirmacao e criterio documentado. Usar storage
+  privado, atomico, limitado e sem sobrescrever originais; expor data/titulo,
+  falhas, quota e limpeza, com testes de restart, expiracao e corrupcao.
+- [ ] **APP-TOON-PRIMARY-01: transicao global do contexto JSON para TOON.** Fazer
+  inventario de nomes, modelos, schemas, import/export, documentacao e tools para
+  tornar TOON o contexto estrutural primario do Clarify, reutilizando conversores
+  e suporte TOON existentes (`LEG-12`, `LEG-13` e `LEG-29`) em vez de duplica-los.
+  Entregar primeiro uma decisao de arquitetura e plano de migracao incremental;
+  preservar abertura/exportacao JSON e compatibilidade de projetos/configuracoes
+  existentes. Nao renomear formatos, extensoes ou APIs em massa sem aliases,
+  migracao versionada, rollback e testes de round-trip sem perda.
+
+### COULD - Plugin De Midia
+
+- [ ] **PLUGIN-WQXR-01: radio WQXR New York Classical como plugin.** Integrar a
+  emissora por meio do sistema de plugins, com endpoint oficial configuravel e
+  sem incorporar conteudo de audio ao repositorio. Expor play/pause, volume,
+  estado de conexao e metadata quando disponivel; nao iniciar automaticamente.
+  Tratar indisponibilidade, reconexao limitada, mudanca do stream e ausencia de
+  backend de audio sem derrubar a aplicacao. Desabilitar/fechar plugin ou app deve
+  interromper rede/audio e liberar recursos; testes devem simular rede e player.
 
 ## Falhas Reais E Portugues - Reparos Locais (04/10/2026)
 

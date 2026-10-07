@@ -3788,3 +3788,34 @@ Plano imediato:
 - APP-THREAD-01 permanece aberto e TASKS continua com38 checkboxes. example.py
   permanece untracked/intacto; commit e push pertencem somente a branch
   COM-637d70ac-9212-4cf5-b776-6e05653a0c34 antes de uma continuacao nativa unica.
+
+## 2026-10-07 - Pre-acao - novos relatos de teste do Clarify Editor
+
+- O usuario desativou intencionalmente o transporte e a automacao para conversar;
+  esta etapa nao reativara monitor, hooks nem continuacao nativa.
+- Escopo exclusivamente documental: organizar em docs/TASKS.md os defeitos e
+  requisitos relatados para Find, abas/Explorer, primeiro salvamento, notas
+  temporarias, sessao por pasta, transicao global JSON para TOON e plugin WQXR.
+- CE-FIND-01 e CE-EXPLORER-CONTEXT-01 ja cobrem parte do pedido e serao ampliadas
+  em vez de receber tarefas duplicadas. Requisitos independentes terao IDs novos,
+  criterios verificaveis e prioridade proporcional ao risco.
+- Branch COM-93ac6656-86bc-44b8-9132-ebc0e9d73ddc criada de 6223133. O arquivo
+  example.py permanece untracked e fora desta alteracao.
+
+## 2026-10-07 - Pos-acao - novos relatos de teste do Clarify Editor
+
+- docs/TASKS.md passou de38 para44 checkboxes abertos. CE-FIND-01 agora registra
+  o defeito de Case Sensitive/Whole Word, persistencia de Case/Whole Word/Regex,
+  Previous, contagem atual/total, Only Strings/Only Variables e intervalo de linhas.
+- CE-EXPLORER-CONTEXT-01 foi ampliada com copia de caminho absoluto e relativo.
+  Foram adicionadas CE-FIRST-SAVE-01, CE-TAB-SYNC-01, CE-FOLDER-SESSION-01,
+  CE-TEMP-NOTES-01, APP-TOON-PRIMARY-01 e PLUGIN-WQXR-01, com criterios de
+  seguranca, compatibilidade, persistencia, lifecycle e testes.
+- A transicao TOON foi registrada como migracao arquitetural incremental que
+  reutiliza LEG-12/13/29 e preserva interoperabilidade JSON, nao como renomeacao
+  ampla imediata. WQXR ficou como plugin opt-in, sem autoplay e com cleanup.
+- Validacao documental: contagem44, IDs novos unicos e git diff --check limpo.
+  Nenhum codigo runtime ou teste GUI foi executado, pois esta etapa apenas organiza
+  requisitos. Transporte/automacao permaneceram desativados conforme o usuario.
+- example.py permaneceu untracked e intacto. Alteracoes prontas para commit e push
+  somente na branch COM-93ac6656-86bc-44b8-9132-ebc0e9d73ddc.
