@@ -193,6 +193,7 @@ class WindowSettings:
                 cooperative_only = (
                     FeatureType.FILE_EXPLORER,
                     FeatureType.GOOGLE_TRANSLATE,
+                    FeatureType.TEXT_EXTRACTOR,
                 )
                 if any(
                     thread_manager.is_feature_running(feature)

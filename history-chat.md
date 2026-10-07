@@ -3613,3 +3613,43 @@ Plano imediato:
 - Permanecem38 checkboxes abertos em TASKS.md. Esta sessao nao executou provider,
   documento real, CI remoto, merge ou promocao de main/develop; commit e push sao
   limitados a COM-919c6d08-2bf6-49bb-9b51-1826cbb60d92.
+
+## 2026-10-07 - Pre-acao - APP-THREAD-01 Etapa 2
+
+- Usuario confirmou uso do AI system monitor e autorizou continuar. Caminhos do
+  Clarify e do ai-presence-monitor foram reconhecidos sem nova indicacao; worker
+  exato notebook-josue:codex:project=clarify-b09a84f1 iniciado em Protocol2.
+- Nova branch COM-210432ad-3f5f-4bea-9fef-26fd0e3fd46d criada do checkpoint
+  publicado79d6d70. example.py permanece untracked, fora do escopo e no hash
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+- Escopo: auditar o lifecycle da extracao de UnifiedTextToJsonDock e substituir o
+  QThread.terminate comprovado por ownership/cancelamento/settlement seguros,
+  somente se o contrato atual permitir correcao limitada. Nao confundir com
+  QProcess.terminate de Terminal/Lynx nem ampliar para todos os workers legados.
+- Validacao deve permanecer serial/offscreen, um modulo GUI por processo, sem
+  arquivos reais do usuario, com RAM85%, treeRSS600MiB, wall180s e pytest20s.
+
+## 2026-10-07 - Pos-acao - APP-THREAD-01 Etapa 2
+
+- A extracao do UnifiedTextToJson/Format Converter nao estava apenas com cleanup
+  inseguro: a lambda ligada a QThread.started executava execute_extraction/read_text
+  no MainThread. O primeiro teste guardado expirou no terceiro caso, pico197,6MiB,
+  e o stack Python comprovou a afinidade errada; nao houve crash nativo nem barreira
+  de RAM. A chamada foi substituida por slot zero-argumento pertencente ao worker.
+- ExtractionWorker ganhou configuracao imutavel, cancelamento por threading.Event e
+  checkpoints antes/depois de texto, descoberta, leitura e processamento por arquivo.
+  O pre-scan agora falha explicitamente acima de100000 arquivos para limitar memoria.
+- Dock registra uma operacao por instancia como TEXT_EXTRACTOR, impede sobreposicao,
+  nao bloqueia mais a GUI com wait/terminate e so libera worker/thread/progresso no
+  finished nativo. Cancel, fechamento de dock/guia e app usam settlement cooperativo;
+  status reutiliza chaves i18n existentes nos sete catalogos.
+- Evidencia final isolada: lifecycle8, controles2, handoff Editor2, busca/substituicao4,
+  ThreadManager7, completion11 e Explorer lifecycle36; total70 testes aprovados,
+  picos66,5-213,1MiB. AST/compileall, Pylint-E selecionado, Black/isort dos arquivos
+  novos e diff-check passaram. Relatorio em
+  docs/reports/APP_THREAD_AUDIT_STAGE2_2026_10_07.md.
+- APP-THREAD-01 e os38 checkboxes permanecem abertos: outros workers/IO sincrono ainda
+  exigem auditoria. Leitura individual/process_text nao pode ser interrompido no meio,
+  mas cancelamento ocorre logo depois e nenhuma terminacao forcada e usada nesta tool.
+  example.py segue fora do indice e no hash conhecido; sem provider, documento real,
+  merge, main/develop ou CI remoto nesta etapa.

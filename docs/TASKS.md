@@ -32,6 +32,9 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   Etapa 1 (2026-10-07): Google Translate registrado no `ThreadManager`, com
   cancelamento cooperativo entre chunks/tentativas, exclusao por dock e fechamento
   adiado ate `QThread.finished`; auditoria dos demais tools continua pendente.
+  Etapa 2 (2026-10-07): extracao do Format Converter movida de fato para slot com
+  afinidade da worker thread, registrada e cancelavel sem `terminate()`/espera na
+  GUI; fechamento aguarda settlement e pre-scan limita-se a 100 mil arquivos.
 - [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

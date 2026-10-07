@@ -11,7 +11,10 @@ Created: 2026-02-03 (Programmer #3)
 Pattern: Based on FileExplorerWorker (file_explorer_worker.py)
 """
 
-from PySide6.QtCore import QObject, Signal
+import os
+import threading
+
+from PySide6.QtCore import QObject, Signal, Slot
 
 from src.utils.logger import get_logger
 
@@ -43,6 +46,8 @@ class ExtractionWorker(QObject):
     progress_detailed = Signal(int, int, str)   # (current, total, message)
     finished = Signal(str, str)                 # (text_output, json_output)
     error = Signal(str)                         # Error message
+    cancelled = Signal()
+    MAX_DISCOVERED_FILES = 100_000
     
     def __init__(self, extractor):
         """
@@ -53,13 +58,78 @@ class ExtractionWorker(QObject):
         """
         super().__init__()
         self.extractor = extractor
-        self._cancel_requested = False
+        self._cancel_event = threading.Event()
+        self._operation = None
+
+    @property
+    def is_cancelled(self) -> bool:
+        """Return whether cooperative cancellation was requested."""
+        return self._cancel_event.is_set()
+
+    def cancel(self) -> None:
+        """Request cancellation at the next safe checkpoint."""
+        self._cancel_event.set()
+
+    def _stop_if_cancelled(self) -> bool:
+        if not self.is_cancelled:
+            return False
+        self.cancelled.emit()
+        return True
+
+    def _discover_files(self, path, patterns):
+        """Discover matching files with cancellation checkpoints."""
+        if os.path.isfile(path):
+            return [path]
+
+        files = []
+        for root, _directories, filenames in os.walk(path):
+            if self.is_cancelled:
+                return None
+            for filename in filenames:
+                if self.is_cancelled:
+                    return None
+                if not patterns or any(filename.endswith(pattern) for pattern in patterns):
+                    files.append(os.path.join(root, filename))
+                    if len(files) > self.MAX_DISCOVERED_FILES:
+                        raise RuntimeError(
+                            "Extraction exceeds the "
+                            f"{self.MAX_DISCOVERED_FILES}-file safety limit"
+                        )
+        return files
+
+    def configure_operation(
+        self,
+        path=None,
+        text_content=None,
+        input_type_index=0,
+        with_quotation_marks=True,
+        indent=2,
+    ) -> None:
+        """Capture immutable inputs before the worker moves to its thread."""
+        self._operation = (
+            path,
+            text_content,
+            input_type_index,
+            with_quotation_marks,
+            indent,
+        )
+
+    @Slot()
+    def execute_configured(self) -> None:
+        """Execute the configured operation with QObject thread affinity."""
+        if self._operation is None:
+            self.error.emit("Extraction operation was not configured")
+            return
+        self.execute_extraction(*self._operation)
     
-    def execute_extraction(self, path: str = None, text_content: str = None,
-                          input_type_index: int = 0,
-                          #typescript_export: bool = False,
-                          with_quotation_marks: bool = True,
-                          indent: int = 2):
+    def execute_extraction(
+        self,
+        path: str = None,
+        text_content: str = None,
+        input_type_index: int = 0,
+        with_quotation_marks: bool = True,
+        indent: int = 2,
+    ):
         """
         Execute extraction operation in worker thread.
         
@@ -74,13 +144,20 @@ class ExtractionWorker(QObject):
         try:
             import json
             logger.debug(f"Worker.execute_extraction() | path={path}, input_type={input_type_index}")
+
+            if self._stop_if_cancelled():
+                return
             
             # Text mode
             if input_type_index == 2 and text_content:
                 logger.debug("Processing text directly")
                 self.progress.emit("Processing text input...")
-                
+
+                if self._stop_if_cancelled():
+                    return
                 path_lines, merged_json = self.extractor.process_text("TextInput", text_content)
+                if self._stop_if_cancelled():
+                    return
                 text_output = "\n".join(path_lines)
                 
                 # Format JSON
@@ -100,21 +177,16 @@ class ExtractionWorker(QObject):
             
             # Directory/File mode
             elif path:
-                import os
                 logger.debug(f"Processing path: {path}")
-                
+
                 # Pre-scan to count total files
-                from src.extractors.advanced_extractor import list_files
                 file_extensions = self.extractor.file_extensions
-                
-                if os.path.isdir(path):
-                    all_files = list(list_files(path, file_extensions))
-                    total_files = len(all_files)
-                    logger.debug(f"Found {total_files} files to process")
-                else:
-                    all_files = [path] if os.path.isfile(path) else []
-                    total_files = 1
-                
+                all_files = self._discover_files(path, file_extensions)
+                if all_files is None or self._stop_if_cancelled():
+                    return
+                total_files = len(all_files)
+                logger.debug(f"Found {total_files} files to process")
+
                 # Emit initial progress
                 self.progress.emit(f"Starting extraction...")
                 self.progress_detailed.emit(0, total_files, "Initializing...")
@@ -129,10 +201,10 @@ class ExtractionWorker(QObject):
                 
                 for idx, fp in enumerate(all_files, 1):
                     # Check for cancellation FIRST
-                    if self._cancel_requested:
+                    if self.is_cancelled:
                         logger.info(f"Extraction canceled by user at file {idx}/{total_files}")
-                        self.error.emit("Extraction canceled by user")
-                        return  # Exit early without emitting finished signal
+                        self.cancelled.emit()
+                        return
                     
                     # Emit progress for each file
                     filename = os.path.basename(fp)
@@ -144,7 +216,9 @@ class ExtractionWorker(QObject):
                     except Exception as e:
                         all_lines.append(f"<<ERROR reading {fp}: {e}>>")
                         continue
-                    
+
+                    if self._stop_if_cancelled():
+                        return
                     # Derive file-root token from filename
                     base = os.path.splitext(os.path.basename(fp))[0]
                     
@@ -160,7 +234,9 @@ class ExtractionWorker(QObject):
                         file_root = base[0:1].upper() + base[1:]
                     
                     lines, j = self.extractor.process_text(file_root, text)
-                    
+
+                    if self._stop_if_cancelled():
+                        return
                     if lines:
                         all_lines.append(f"# File: {fp}")
                         all_lines.extend(lines)
@@ -188,5 +264,7 @@ class ExtractionWorker(QObject):
                 self.error.emit("No input provided")
             
         except Exception as e:
+            if self._stop_if_cancelled():
+                return
             logger.error(f"Extraction error: {str(e)}", exc_info=True)
             self.error.emit(str(e))

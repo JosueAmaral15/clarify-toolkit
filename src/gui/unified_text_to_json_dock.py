@@ -41,6 +41,7 @@ from .extraction_worker import ExtractionWorker
 from src.extractors.advanced_extractor import AdvancedExtractor
 from src.i18n.translator import tooltip_tr, tr
 from src.converters.json_output_converter import convert_json_to_format
+from src.ui import FeatureType, thread_manager
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -597,6 +598,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     open_in_editor_and_switch_requested = Signal(str, str)  # (content, output_kind)
     
     def __init__(self, parent: QWidgetType | None = None):
+        self._main_window_ref = parent
         # Initialize JSX extraction state BEFORE calling super().__init__
         self.extraction_history: List[Dict[str, str]] = []
         self.avoid_keys_parameter = "equals"
@@ -615,6 +617,12 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
         
         # Flag to prevent signal processing during cleanup
         self._extraction_cleaning_up = False
+        self._extraction_cancel_requested = False
+        self._extraction_thread = None
+        self._extraction_worker = None
+        self._extraction_progress = None
+        self._extraction_close_action = None
+        self._extraction_thread_id = f"text_extractor:{id(self)}"
         
         super().__init__(tr("text_to_json.title", "Format Converter"), parent)
         self.setObjectName("UnifiedTextToJsonDock")
@@ -1358,6 +1366,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _jsx_run_extraction(self):
         """Execute the extraction with current settings using worker thread."""
+        if self._extraction_thread is not None:
+            return
         try:
             input_type_index = self.jsx_input_type_combo.currentIndex()
             
@@ -1503,6 +1513,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             
             # Create progress dialog
             self._extraction_cleaning_up = False  # Reset cleanup flag
+            self._extraction_cancel_requested = False
+            self.jsx_run_btn.setEnabled(False)
             self._extraction_progress = QProgressDialog(
                 "Initializing extraction...",
                 "Cancel",
@@ -1519,31 +1531,60 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             # Create worker thread
             self._extraction_thread = QThread(self)
             self._extraction_worker = ExtractionWorker(extractor)
+            self._extraction_worker.configure_operation(
+                path,
+                text_content,
+                input_type_index,
+                with_quotation_marks,
+                indent,
+            )
             self._extraction_worker.moveToThread(self._extraction_thread)
             
             # Connect signals
             self._extraction_worker.progress.connect(self._on_extraction_progress)
             self._extraction_worker.progress_detailed.connect(self._on_extraction_progress_detailed)
+            self._extraction_worker.finished.connect(
+                self._extraction_thread.quit, Qt.DirectConnection
+            )
+            self._extraction_worker.error.connect(
+                self._extraction_thread.quit, Qt.DirectConnection
+            )
+            self._extraction_worker.cancelled.connect(
+                self._extraction_thread.quit, Qt.DirectConnection
+            )
             self._extraction_worker.finished.connect(self._on_extraction_finished)
             self._extraction_worker.error.connect(self._on_extraction_error)
+            self._extraction_worker.cancelled.connect(self._on_extraction_cancelled)
             
             # Connect progress dialog cancel to worker cleanup
             self._extraction_progress.canceled.connect(self._on_extraction_canceled)
             
             # Start thread and trigger extraction
-            self._extraction_thread.started.connect(
-                lambda: self._extraction_worker.execute_extraction(
-                    path, text_content, input_type_index,
-                    #typescript_export, 
-                    with_quotation_marks, indent
-                )
+            thread = self._extraction_thread
+            worker = self._extraction_worker
+            thread.finished.connect(
+                lambda finished_thread=thread, finished_worker=worker:
+                self._on_extraction_thread_finished(finished_thread, finished_worker)
             )
-            self._extraction_thread.start()
+            thread.started.connect(worker.execute_configured)
+            if not thread_manager.start_thread(
+                self._extraction_thread_id,
+                thread,
+                worker,
+                FeatureType.TEXT_EXTRACTOR,
+                worker.cancel,
+                exclusive=False,
+            ):
+                self._reset_extraction_objects()
+                self._jsx_update_status(tr("advanced_extractor.error", "Error"))
+                return
+            thread.start()
             
             # Update status
             self._jsx_update_status("Extracting...")
             
         except Exception as e:
+            self._reset_extraction_objects()
             error_msg = f"Extraction failed: {str(e)}"
             self._jsx_update_status(f"❌ {error_msg}")
             self.show_error(
@@ -1553,7 +1594,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_progress(self, message: str):
         """Handle progress updates from extraction worker."""
-        if self._extraction_cleaning_up:
+        if self._extraction_cleaning_up or self._extraction_cancel_requested:
             return
         
         # Cache reference locally (atomic) to prevent TOCTOU race
@@ -1568,7 +1609,7 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_progress_detailed(self, current: int, total: int, message: str):
         """Handle detailed progress updates from extraction worker."""
-        if self._extraction_cleaning_up:
+        if self._extraction_cleaning_up or self._extraction_cancel_requested:
             return
         
         # Cache reference locally (atomic) to prevent TOCTOU race
@@ -1585,6 +1626,8 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
     
     def _on_extraction_finished(self, text_output: str, json_output: str):
         """Handle extraction completion with format conversion."""
+        if self._extraction_cancel_requested:
+            return
         try:
             # Get selected output format
             output_format = getattr(self, 'selected_output_format', 'JSON')
@@ -1721,14 +1764,13 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             self.notify_processing_completed()
             
         finally:
-            self._cleanup_extraction_thread()
+            pass
     
     def _on_extraction_error(self, error_msg: str):
         """Handle extraction error."""
         # Don't show status/dialog for user cancellation (already shown)
         if "canceled by user" in error_msg.lower():
-            # Cancellation already handled in _on_extraction_canceled
-            self._cleanup_extraction_thread()
+            # Cancellation is settled by the native thread completion.
             return
         
         # Show error for actual failures
@@ -1737,53 +1779,76 @@ class UnifiedTextToJsonDock(BaseDock, FileInputMixin):
             tr("advanced_extractor.error", "Error"),
             tr("advanced_extractor.run_error", f"Extraction failed: {error_msg}")
         )
-        self._cleanup_extraction_thread()
     
     def _on_extraction_canceled(self):
         """Handle extraction cancellation."""
-        # Set cleanup flag immediately
+        if self._extraction_worker is None or self._extraction_cancel_requested:
+            return
+        self._extraction_cancel_requested = True
+        self._extraction_worker.cancel()
+        if self._extraction_progress is not None:
+            self._extraction_progress.setLabelText(
+                tr("window_settings.status_canceling")
+            )
+            self._extraction_progress.setCancelButton(None)
+        self._jsx_update_status(tr("window_settings.status_canceling"))
+
+    def _on_extraction_cancelled(self):
+        """Report cooperative cancellation while native settlement continues."""
+        self._jsx_update_status(tr("json_rewriter.msg_cancelled_title"))
+
+    def _reset_extraction_objects(self):
+        """Reset an operation that never started or has already settled."""
         self._extraction_cleaning_up = True
-        
-        # Block signals at Qt level FIRST to stop queued signals
-        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
-            self._extraction_worker.blockSignals(True)
-        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
+        if self._extraction_progress is not None:
             self._extraction_progress.blockSignals(True)
-        
-        # Stop worker
-        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
-            self._extraction_worker._cancel_requested = True
-        
-        self._jsx_update_status("Extraction canceled")
-        self._cleanup_extraction_thread()
-    
-    def _cleanup_extraction_thread(self):
-        """Clean up worker thread and progress dialog."""
-        # Set cleanup flag
-        self._extraction_cleaning_up = True
-        
-        # Block signals at Qt level to prevent queued signals from being delivered
-        if hasattr(self, '_extraction_worker') and self._extraction_worker is not None:
-            self._extraction_worker.blockSignals(True)
-        
-        # Close progress dialog first (before setting to None)
-        if hasattr(self, '_extraction_progress') and self._extraction_progress is not None:
-            self._extraction_progress.blockSignals(True)  # Block canceled signal
             self._extraction_progress.close()
-            self._extraction_progress = None
-        
-        if hasattr(self, '_extraction_thread') and self._extraction_thread is not None:
-            self._extraction_thread.quit()
-            self._extraction_thread.wait(5000)  # Wait up to 5 seconds
-            if self._extraction_thread.isRunning():
-                self._extraction_thread.terminate()
-            self._extraction_thread = None
-        
-        if hasattr(self, '_extraction_worker'):
-            self._extraction_worker = None
-        
-        # Reset cleanup flag
+        self._extraction_progress = None
+        self._extraction_worker = None
+        self._extraction_thread = None
+        self._extraction_cancel_requested = False
         self._extraction_cleaning_up = False
+        if hasattr(self, "jsx_run_btn"):
+            self.jsx_run_btn.setEnabled(True)
+
+    def _on_extraction_thread_finished(self, thread, worker):
+        """Release GUI ownership only after the native thread has stopped."""
+        if thread is not self._extraction_thread or worker is not self._extraction_worker:
+            return
+        was_cancelled = self._extraction_cancel_requested
+        self._reset_extraction_objects()
+        thread.deleteLater()
+        if was_cancelled:
+            self._jsx_update_status(tr("json_rewriter.msg_cancelled_title"))
+
+        action = self._extraction_close_action
+        self._extraction_close_action = None
+        if action:
+            name, target = action
+            if name == "tab" and target is not None:
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                (target or self).close()
+
+    def request_tab_close(self):
+        """Defer tab removal until extraction settles."""
+        if self._extraction_thread is None:
+            return True
+        action = "tab" if self._main_window_ref is not None else "close"
+        self._extraction_close_action = (action, self._main_window_ref or self)
+        self._on_extraction_canceled()
+        return False
+
+    def closeEvent(self, event):
+        """Defer dock closure until extraction settles."""
+        if self._extraction_thread is not None:
+            self._extraction_close_action = ("close", self)
+            self._on_extraction_canceled()
+            event.ignore()
+            return
+        super().closeEvent(event)
     
     def _jsx_save_outputs(self):
         """Save outputs to files."""

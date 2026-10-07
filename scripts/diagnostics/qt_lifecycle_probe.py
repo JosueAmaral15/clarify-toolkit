@@ -37,6 +37,10 @@ TEST_MODULES = {
     "theme-manager": "tests/test_theme_manager.py",
     "thread-manager": "tests/test_thread_management_system.py",
     "tutorials-localization": "tests/gui/test_tutorials_localization.py",
+    "unified-extraction-lifecycle": "tests/gui/test_unified_extraction_lifecycle.py",
+    "unified-extractor-controls": "tests/gui/test_extractor_output_controls.py",
+    "unified-editor-switch": "tests/gui/test_unified_text_to_json_editor_switch.py",
+    "unified-search-replace": "tests/gui/test_unified_text_search_replace.py",
 }
 
 
