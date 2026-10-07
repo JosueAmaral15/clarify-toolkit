@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/07 - APP-THREAD-01 etapa 3 estabiliza busca do InsertPanel
+**Last Update**: 2026/10/07 - APP-THREAD-01 etapa 4 estabiliza busca do SearchReplacePanel
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -39,6 +39,11 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   com snapshot imutavel de widgets, cancelamento/pausa thread-safe, descoberta
   limitada a 100 mil arquivos e fechamento de guia/app sem liberar ownership antes
   de `QThread.finished`; demais consumidores/workers continuam pendentes.
+  Etapa 4 (2026-10-07): busca do SearchReplacePanel corrigida e registrada por
+  instancia, com snapshot imutavel, erros de setup locais, pausar/cancelar/fechar
+  cooperativos, callbacks por geracao e cleanup somente apos `QThread.finished`.
+  Duas instancias podem operar em paralelo e shutdown nao usa `terminate()`; o
+  replace sincrono e outros consumidores/workers continuam pendentes.
 - [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

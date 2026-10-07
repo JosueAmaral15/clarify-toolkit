@@ -35,12 +35,11 @@ Date: 2025
 # pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 from __future__ import annotations
-from dataclasses import dataclass
 import os
 import re
 import sys
 
-from typing import Iterator, List, Tuple
+from typing import List, Tuple
 
 from PySide6.QtCore import QObject, Qt, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import (
@@ -60,7 +59,7 @@ from ...i18n.translator import tr, tooltip_tr
 
 # Components from this package
 from .results_tree import ResultsTree
-from .search_worker import SearchWorker
+from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
 # Progress management
 from ..progress import OperationHistory
@@ -69,24 +68,6 @@ from ..progress import OperationHistory
 from ...ui import FeatureType, thread_manager
 
 logger = get_logger(__name__)
-
-
-@dataclass(frozen=True)
-class _InsertSearchRequest:
-    """Immutable file-discovery state captured on the GUI thread."""
-
-    root: str
-    include_globs: tuple[str, ...]
-    exclude_globs: tuple[str, ...]
-    conditions: tuple[Condition, ...]
-    logic_operator: str
-
-    def iter_files(self) -> Iterator[str]:
-        for file_path in walk_files(self.root, self.include_globs, self.exclude_globs):
-            if not self.conditions or filter_files_by_conditions(
-                (file_path,), self.conditions, self.logic_operator
-            ):
-                yield file_path
 
 
 class _InsertSearchReceiver(QObject):
@@ -556,7 +537,7 @@ class InsertPanel(QWidget):
             chk_word.setChecked(False)
             chk_regex.setChecked(False)
 
-    def _snapshot_search_request(self) -> _InsertSearchRequest:
+    def _snapshot_search_request(self) -> SearchFileRequest:
         """Read widget state once, before background discovery starts."""
         path = self.ed_path.text().strip()
 
@@ -584,11 +565,14 @@ class InsertPanel(QWidget):
 
         exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
         conditions, logic_operator = self._conds()
-        return _InsertSearchRequest(
+        return SearchFileRequest(
             root=path,
             include_globs=tuple(inc),
             exclude_globs=tuple(exc),
-            conditions=tuple(conditions),
+            conditions=tuple(
+                SearchConditionRequest.from_condition(condition)
+                for condition in conditions
+            ),
             logic_operator=logic_operator,
         )
 

@@ -3696,3 +3696,47 @@ Plano imediato:
   untracked e intacto no SHA-256 conhecido. Branch desta sessao:
   COM-cc57be69-3ced-4976-8643-48655aa2366e; commit/push e despacho unico de continue
   devem ocorrer apos a revisao final, mantendo o worker Protocol2 ativo.
+
+## 2026-10-07 - Pre-acao - APP-THREAD-01 Etapa 4
+
+- Continuacao nativa da etapa3 confirmada por evidencia posterior, nao apenas pelo
+  dispatch_started: UserPromptSubmit as15:05:15 e hooks PreToolUse/PostToolUse da
+  sessao exata019ea8a0-6d60-7f03-90b9-c420603158d1 foram persistidos. Worker
+  notebook-josue:codex:project=clarify-b09a84f1 permanece active em Protocol2.
+- Checkpoint f92e422 e branch publicada anterior foram verificados. Nova branch
+  COM-2dc0a424-0142-4746-b570-0607a45e63c2 criada exatamente desse commit;
+  example.py permanece untracked e intacto no SHA-256 conhecido.
+- Escopo limitado a APP-THREAD-01 etapa4: provar e corrigir lifecycle/ownership do
+  SearchReplacePanel e atualizar seus testes obsoletos. Widgets/modelos permanecem
+  na GUI thread; entradas devem ser imutaveis, operacoes independentes por painel,
+  descoberta limitada e pause/cancel/close cooperativos, sem terminate/callbacks
+  tardios. FE-REFINE, Editor, i18n e backlog legado ficam fora desta etapa.
+- Validacao serial/offscreen, um modulo GUI por processo, HOME temporario,
+  RAM85%, treeRSS600MiB, wall180s e pytest20s; sem provider ou documento real.
+
+## 2026-10-07 - Pos-acao - APP-THREAD-01 Etapa 4
+
+- Oito regressivos inicialmente falharam e provaram os defeitos: bloco duplicado
+  quebrava busca valida, regex invalida emitia sinais inexistentes, worker lia
+  QWidget via metodo ligado, exclusividade era global e cancel/close liberavam
+  ownership antes do finished. Search/Replace tambem podia sofrer terminate no
+  cleanup e o prefixo legado do AI Processor era tratado como progress manager.
+- Busca agora captura request e condicoes imutaveis na GUI, reconstrui Condition
+  apenas dentro da descoberta, registra uma operacao por painel e permite paineis
+  independentes. Receiver por geracao, resultado adiado, cancel/pause/close
+  cooperativos e cleanup apos QThread.finished impedem callbacks tardios.
+- Search/Replace foi protegido de terminate no ThreadManager e no fechamento do
+  aplicativo. O teste obsoleto passou a criar somente o painel real, sem iniciar
+  MainWindow nem esperar o antigo main_window.search_panel.
+- Evidencia isolada: Search lifecycle9, painel22, Insert lifecycle9, Insert26,
+  ThreadManager7, completion Qt11, Explorer lifecycle36 e progress18; total138
+  testes aprovados, picos62,6-242,3MiB, sem crash nativo ou guard abort.
+  Compileall, Pylint-E, Black/isort dos testes e diff-check passaram. Relatorio:
+  docs/reports/APP_THREAD_AUDIT_STAGE4_2026_10_07.md.
+- Auditoria nao bloqueante de tests/test_panels_integration.py obteve2 passes e15
+  falhas por APIs antigas, incluindo chamada real do JSON Editor a
+  InsertPanel.set_line_number ausente; nao foi mascarada nem incluida nos passes.
+  O replace sincrono do SearchReplacePanel e o proximo candidato APP-THREAD seguro.
+- APP-THREAD-01 permanece aberto e TASKS continua com38 checkboxes. example.py
+  permanece untracked/intacto; commit e push serao feitos apenas na branch
+  COM-2dc0a424-0142-4746-b570-0607a45e63c2 antes de uma unica continuacao nativa.

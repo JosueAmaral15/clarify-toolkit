@@ -194,6 +194,7 @@ class WindowSettings:
                     FeatureType.FILE_EXPLORER,
                     FeatureType.GOOGLE_TRANSLATE,
                     FeatureType.INSERT,
+                    FeatureType.SEARCH_REPLACE,
                     FeatureType.TEXT_EXTRACTOR,
                 )
                 if any(

@@ -7,13 +7,74 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 
 import fnmatch
 import os
+from dataclasses import dataclass
 from threading import Event
 
-from typing import Dict, List, Tuple, Callable, Optional
+from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 from PySide6.QtCore import QObject, Signal
 
-from ...utils import read_text
+from ...core import Condition, filter_files_by_conditions
+from ...utils import read_text, walk_files
+
+
+@dataclass(frozen=True)
+class SearchConditionRequest:
+    """Immutable condition copied from GUI-owned condition rows."""
+
+    field: str
+    operator: str
+    value: str
+    scope_type: str
+    scope_value: str
+    case_sensitive: bool
+    whole_word: bool
+    use_regex: bool
+
+    @classmethod
+    def from_condition(cls, condition: Condition) -> "SearchConditionRequest":
+        return cls(
+            field=condition.field,
+            operator=condition.operator,
+            value=condition.value,
+            scope_type=condition.scope_type,
+            scope_value=condition.scope_value,
+            case_sensitive=condition.case_sensitive,
+            whole_word=condition.whole_word,
+            use_regex=condition.use_regex,
+        )
+
+    def to_condition(self) -> Condition:
+        """Build a worker-owned condition from the immutable transfer object."""
+        return Condition(
+            field=self.field,
+            operator=self.operator,
+            value=self.value,
+            scope_type=self.scope_type,
+            scope_value=self.scope_value,
+            case_sensitive=self.case_sensitive,
+            whole_word=self.whole_word,
+            use_regex=self.use_regex,
+        )
+
+
+@dataclass(frozen=True)
+class SearchFileRequest:
+    """Immutable file-discovery state captured on the GUI thread."""
+
+    root: str
+    include_globs: tuple[str, ...]
+    exclude_globs: tuple[str, ...]
+    conditions: tuple[SearchConditionRequest, ...]
+    logic_operator: str
+
+    def iter_files(self) -> Iterator[str]:
+        conditions = tuple(condition.to_condition() for condition in self.conditions)
+        for file_path in walk_files(self.root, self.include_globs, self.exclude_globs):
+            if not conditions or filter_files_by_conditions(
+                (file_path,), conditions, self.logic_operator
+            ):
+                yield file_path
 
 
 class SearchWorker(QObject):

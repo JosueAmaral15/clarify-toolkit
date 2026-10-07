@@ -39,7 +39,7 @@ import sys
 
 from typing import List, Tuple
 
-from PySide6.QtCore import Qt, Signal, QThread, QEvent
+from PySide6.QtCore import QEvent, QObject, Qt, Signal, Slot, QThread
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
@@ -50,15 +50,15 @@ from PySide6.QtWidgets import (
 from src.i18n.translator import tr, tooltip_tr
 
 # Core functionality
-from ...core import SearchOptions, replace_in_text, Condition, filter_files_by_conditions
+from ...core import Condition, SearchOptions, replace_in_text
 
 # Utilities
-from ...utils import walk_files, read_text, write_text
+from ...utils import read_text, write_text
 from ...utils.logger import get_logger
 
 # Components from this package
 from .results_tree import ResultsTree
-from .search_worker import SearchWorker
+from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
 # Progress management
 from ..progress import OperationHistory
@@ -67,6 +67,38 @@ from ..progress import OperationHistory
 from ...ui import thread_manager, FeatureType, ProcessingModal
 
 logger = get_logger(__name__)
+_UNSET = object()
+
+
+class _SearchReplaceReceiver(QObject):
+    """GUI-thread receiver that rejects callbacks from superseded searches."""
+
+    def __init__(self, panel, generation):
+        super().__init__(panel)
+        self.panel = panel
+        self.generation = generation
+
+    @Slot(str)
+    def progress(self, current_path):
+        self.panel._on_search_progress(self.generation, current_path)
+
+    @Slot(int, int, str)
+    def progress_detailed(self, current, total, message):
+        self.panel._on_search_progress_detailed(
+            self.generation, current, total, message
+        )
+
+    @Slot(str)
+    def failed(self, message):
+        self.panel._on_search_error(self.generation, message)
+
+    @Slot(dict)
+    def completed(self, matches):
+        self.panel._on_search_done(self.generation, matches)
+
+    @Slot()
+    def thread_finished(self):
+        self.panel._on_search_thread_finished(self.generation)
 
 
 class SearchReplacePanel(QWidget):
@@ -85,9 +117,23 @@ class SearchReplacePanel(QWidget):
         super().__init__(parent)
         root = QVBoxLayout(self)
         self.processing_search = False
-        self.progress_manager = progress_manager
+        self.settings_prefix = (
+            progress_manager if isinstance(progress_manager, str) else "search_replace"
+        )
+        self.progress_manager = None if isinstance(progress_manager, str) else progress_manager
         self._current_task_id = None
+        self._current_progress_widget = None
         self._processing_modal = None  # Modal de progresso
+        self._search_thread = None
+        self._search_worker = None
+        self._search_receiver = None
+        self._search_thread_id = None
+        self._search_generation = 0
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        self._pending_search_result = _UNSET
+        self._search_metadata = None
+        self._close_action = None
 
         # Path row
         column = QVBoxLayout()
@@ -539,7 +585,8 @@ class SearchReplacePanel(QWidget):
         logic_op = self.combo_logic_op.currentText()
         return out, logic_op
 
-    def _iter_files(self) -> List[str]:
+    def _snapshot_search_request(self) -> SearchFileRequest:
+        """Read file-selection widgets once on the GUI thread."""
         path = self.ed_path.text().strip()
 
         # v2.9.0, v2.9.1: Handle extension filter (optional)
@@ -573,9 +620,21 @@ class SearchReplacePanel(QWidget):
 
         exc = [glob_pat.strip() for glob_pat in re.split(r"[;,]", self.ed_exc.text())
                if glob_pat.strip()]
-        files = list(walk_files(path, inc, exc))
         conds, logic_op = self._conds()
-        return filter_files_by_conditions(files, conds, logic_op)
+        return SearchFileRequest(
+            root=path,
+            include_globs=tuple(inc),
+            exclude_globs=tuple(exc),
+            conditions=tuple(
+                SearchConditionRequest.from_condition(condition)
+                for condition in conds
+            ),
+            logic_operator=logic_op,
+        )
+
+    def _iter_files(self) -> List[str]:
+        """Return files synchronously for replace and compatibility consumers."""
+        return list(self._snapshot_search_request().iter_files())
 
     def enable_buttons(self, state, include_buttons=True, include_advanced_conditions=True):
         if include_buttons:
@@ -607,184 +666,246 @@ class SearchReplacePanel(QWidget):
                 chk_regex.setEnabled(state)
 
     def _start_search_threaded(self):
-        if not self.processing_search:
-            # Check if feature is already running
-            if not thread_manager.can_start_feature(FeatureType.SEARCH_REPLACE):
-                QMessageBox.warning(
-                    self, tr("search_replace.msg_already_running_title"), tr("search_replace.msg_already_running")
-                )
-                return
+        if self._operation_running():
+            self.cancel_search()
+            return
 
-            self.results.print_message("Loading...")
+        self.results.print_message("Loading...")
+        filename_query = self.ed_filename_query.text().strip()
+        content_query = self.ed_query.toPlainText().strip()
+        if not filename_query and not content_query:
+            QMessageBox.warning(
+                self,
+                tr("search_replace.msg_no_query_title"),
+                tr("search_replace.msg_no_query"),
+            )
+            self.results.print_message("Search cancelled: no query provided")
+            return
 
-            # v2.9.112: Get file name and content queries
-            filename_query = self.ed_filename_query.text().strip()
-            content_query = self.ed_query.toPlainText().strip()
+        search_mode = "both"
+        if filename_query and not content_query:
+            search_mode = "filename_only"
+        elif content_query and not filename_query:
+            search_mode = "content_only"
 
-            # Validate: at least one field must be filled
-            if not filename_query and not content_query:
-                QMessageBox.warning(self, tr("search_replace.msg_no_query_title"), tr("search_replace.msg_no_query"))
-                self.results.print_message("Search cancelled: no query provided")
-                return
-
-            # Determine search mode
-            search_mode = "both"  # Default
-            if filename_query and not content_query:
-                search_mode = "filename_only"
-            elif content_query and not filename_query:
-                search_mode = "content_only"
-
-            # Get query text (v2.8.0 - support multi-query)
-            is_multi_query = self.chk_multi_query.isChecked() and hasattr(self, "ed_query_multi")
+        is_multi_query = self.chk_multi_query.isChecked() and hasattr(
+            self, "ed_query_multi"
+        )
+        query_text = (
+            self.ed_query_multi.toPlainText() if is_multi_query else content_query
+        )
+        pattern_text = None
+        multi_query_processor = None
+        try:
             if is_multi_query:
-                query_text = self.ed_query_multi.toPlainText()
-            else:
-                query_text = content_query
-
-            # v2.8.0: Prepare multi-query processor or single pattern
-            pattern_text = None
-            multi_query_processor = None
-
-            if is_multi_query:
-                # Import and create MultiQueryProcessor
                 from src.core.multi_query import MultiQueryProcessor
 
-                try:
-                    multi_query_processor = MultiQueryProcessor(
-                        multi_line_text=query_text,
-                        case_sensitive=self.chk_case.isChecked(),
-                        whole_word=self.chk_word.isChecked(),
-                        use_regex=self.chk_regex.isChecked(),
+                multi_query_processor = MultiQueryProcessor(
+                    multi_line_text=query_text,
+                    case_sensitive=self.chk_case.isChecked(),
+                    whole_word=self.chk_word.isChecked(),
+                    use_regex=self.chk_regex.isChecked(),
+                )
+                is_valid, error_msg = multi_query_processor.validate()
+                if not is_valid:
+                    raise ValueError(f"Invalid queries: {error_msg}")
+                if not multi_query_processor.get_query_count():
+                    raise ValueError(
+                        "No valid queries found. Add at least one search pattern."
                     )
-                    # Validate queries
-                    is_valid, error_msg = multi_query_processor.validate()
-                    if not is_valid:
-                        self.error.emit(f"Invalid queries: {error_msg}")
-                        self.done.emit({})
-                        return
+            elif search_mode != "filename_only":
+                pattern_text = SearchOptions(
+                    self.chk_case.isChecked(),
+                    self.chk_word.isChecked(),
+                    self.chk_regex.isChecked(),
+                ).compile(query_text)
+            request = self._snapshot_search_request()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self._report_search_setup_error(str(exc))
+            return
 
-                    # Check if there are any queries
-                    if not multi_query_processor.get_query_count():
-                        msg = "No valid queries found. Add at least one search pattern."
-                        self.error.emit(msg)
-                        self.done.emit({})
-                        return
-                except Exception as e:
-                    self.error.emit(f"Multi-query error: {e}")
-                    self.done.emit({})
-                    return
-            else:
-                # Single query mode - compile pattern (only if content_query exists)
-                if search_mode != "filename_only":
-                    try:
-                        pattern_text = SearchOptions(
-                            self.chk_case.isChecked(), self.chk_word.isChecked(), self.chk_regex.isChecked()
-                        ).compile(query_text)
-                    except Exception as e:
-                        self.error.emit(f"Invalid pattern: {e}")
-                        self.done.emit({})
-                        return
-                    self.error.emit(f"Invalid pattern: {e}")
-                    self.done.emit({})
-                    return
-
-            # Create processing modal (v2.7.0, v2.8.0 - multi-query info)
-            self._processing_modal = ProcessingModal(
-                title="Search/Replace Processing", parent=self, show_progress=True, show_cancel=True
+        self._dispose_processing_modal()
+        self._processing_modal = ProcessingModal(
+            title="Search/Replace Processing",
+            parent=self,
+            show_progress=True,
+            show_cancel=True,
+        )
+        if is_multi_query:
+            query_count = multi_query_processor.get_query_count()
+            self._processing_modal.set_title(
+                f"Searching Files ({query_count} queries)..."
             )
-            if is_multi_query:
-                query_count = multi_query_processor.get_query_count()
-                self._processing_modal.set_title(f"Searching Files ({query_count} queries)...")
-                self._processing_modal.set_status(f"Initializing multi-query search with {query_count} patterns...")
-            else:
-                self._processing_modal.set_title("Searching Files...")
-                self._processing_modal.set_status("Initializing search...")
-            self._processing_modal.start_loading_animation()
-            self._processing_modal.show()
-
-            # Create progress bar (v2.5.0, v2.8.0) - mantido para compatibilidade
-            if self.progress_manager:
-                import uuid
-
-                self._current_task_id = f"search_{uuid.uuid4().hex[:8]}"
-                if is_multi_query:
-                    query_count = multi_query_processor.get_query_count()
-                    task_label = f"Multi-Search ({query_count} queries)"
-                else:
-                    task_label = f"Search: {self.ed_query.toPlainText().strip()[:30]}"
-                self._current_progress_widget = self.progress_manager.add_task(self._current_task_id, task_label)
-
-            # Create thread and worker (v2.8.0 - multi-query support, v2.9.112 - filename search)
-            self._search_thread = QThread(self)
-            self._search_worker = SearchWorker(
-                pattern_text=pattern_text,
-                iter_files_fn=self._iter_files,
-                search_options_factory=lambda a, b, c: SearchOptions(a, b, c),
-                is_multi_query=is_multi_query,
-                multi_query_processor=multi_query_processor,
-                search_mode=search_mode,
-                filename_pattern=filename_query if filename_query else None,
+            self._processing_modal.set_status(
+                f"Initializing multi-query search with {query_count} patterns..."
             )
-            self._search_worker.moveToThread(self._search_thread)
+        else:
+            self._processing_modal.set_title("Searching Files...")
+            self._processing_modal.set_status("Initializing search...")
+        self._processing_modal.start_loading_animation()
+        self._processing_modal.show()
 
-            # Register thread with ThreadManager
+        if self.progress_manager:
             import uuid
 
-            thread_id = f"search_replace_{uuid.uuid4().hex[:8]}"
-            if not thread_manager.start_thread(
-                thread_id=thread_id,
-                thread=self._search_thread,
-                worker=self._search_worker,
-                feature=FeatureType.SEARCH_REPLACE,
-                cancel_callback=lambda: self._search_worker.cancel(),
-            ):
-                QMessageBox.warning(
-                    self, tr("search_replace_panel.msg_error_thread_title"), tr("search_replace_panel.msg_error_thread")
+            self._current_task_id = f"search_{uuid.uuid4().hex[:8]}"
+            query_count = (
+                multi_query_processor.get_query_count() if is_multi_query else 0
+            )
+            task_label = (
+                f"Multi-Search ({query_count} queries)"
+                if is_multi_query
+                else f"Search: {content_query[:30]}"
+            )
+            self._current_progress_widget = self.progress_manager.add_task(
+                self._current_task_id, task_label
+            )
+
+        self._search_generation += 1
+        generation = self._search_generation
+        self._search_thread_id = f"search_replace:{id(self)}:{generation}"
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        self._pending_search_result = _UNSET
+        self._search_metadata = {
+            "query": query_text,
+            "path": request.root,
+            "case_sensitive": self.chk_case.isChecked(),
+            "whole_word": self.chk_word.isChecked(),
+            "regex": self.chk_regex.isChecked(),
+            "sort_results": self.chk_sort_results.isChecked(),
+        }
+        self._search_thread = QThread(self)
+        self._search_worker = SearchWorker(
+            pattern_text=pattern_text,
+            iter_files_fn=request.iter_files,
+            search_options_factory=lambda a, b, c: SearchOptions(a, b, c),
+            is_multi_query=is_multi_query,
+            multi_query_processor=multi_query_processor,
+            search_mode=search_mode,
+            filename_pattern=filename_query or None,
+        )
+        self._search_receiver = _SearchReplaceReceiver(self, generation)
+        self._search_worker.moveToThread(self._search_thread)
+
+        worker = self._search_worker
+        native = self._search_thread
+        receiver = self._search_receiver
+        native.started.connect(worker.run)
+        worker.done.connect(receiver.completed)
+        worker.progress.connect(receiver.progress)
+        worker.progress_detailed.connect(receiver.progress_detailed)
+        worker.error.connect(receiver.failed)
+        worker.done.connect(worker.deleteLater)
+        worker.done.connect(native.quit, Qt.DirectConnection)
+        native.finished.connect(receiver.thread_finished)
+        native.finished.connect(native.deleteLater)
+
+        if not thread_manager.start_thread(
+            self._search_thread_id,
+            native,
+            worker,
+            FeatureType.SEARCH_REPLACE,
+            cancel_callback=worker.cancel,
+            exclusive=False,
+        ):
+            worker.deleteLater()
+            native.deleteLater()
+            receiver.deleteLater()
+            self._clear_search_references()
+            self._processing_modal.mark_completed(
+                success=False,
+                message="Cannot start while the application is shutting down",
+            )
+            return
+
+        self._processing_modal.cancel_requested.connect(
+            lambda current=generation: self.cancel_search(current)
+        )
+        if self._current_progress_widget:
+            self._current_progress_widget.cancel_requested.connect(
+                lambda _task_id, current=generation: self.cancel_search(current)
+            )
+            self._current_progress_widget.pause_requested.connect(
+                lambda _task_id, paused, current=generation: self._set_search_paused(
+                    current, paused
                 )
-                if self._processing_modal:
-                    self._processing_modal.close()
-                    self._processing_modal = None
-                return
+            )
 
-            # Connections
-            self._search_thread.started.connect(self._search_worker.run)
-            self._search_worker.done.connect(self._on_search_done)
-            self._search_worker.progress.connect(self._on_search_progress)
-            self._search_worker.progress_detailed.connect(self._on_search_progress_detailed)  # v2.5.0
-            self._search_worker.error.connect(self._on_search_error)
+        self.processing_search = True
+        self._set_search_controls_enabled(False)
+        native.start()
 
-            # Connect cancel from modal to worker (v2.7.0)
-            if self._processing_modal:
-                self._processing_modal.cancel_requested.connect(lambda: self._search_worker.cancel())
+    def _report_search_setup_error(self, message):
+        self.results.print_message(f"Search cancelled: {message}")
+        logger.error("Search setup failed: %s", message)
 
-            # Connect cancel and pause from progress bar to worker (v2.5.0+)
-            if self._current_progress_widget:
-                self._current_progress_widget.cancel_requested.connect(lambda _: self._search_worker.cancel())
-                self._current_progress_widget.pause_requested.connect(
-                    lambda _, paused: self._search_worker.pause() if paused else self._search_worker.resume()
-                )
+    def _dispose_processing_modal(self):
+        if self._processing_modal is None:
+            return
+        self._processing_modal.stop_loading_animation()
+        self._processing_modal.hide()
+        self._processing_modal.deleteLater()
+        self._processing_modal = None
 
-            # Cleanup
-            self._search_worker.done.connect(self._search_thread.quit)
-            self._search_worker.done.connect(self._search_worker.deleteLater)
-            self._search_thread.finished.connect(self._search_thread.deleteLater)
+    def _set_search_controls_enabled(self, enabled):
+        self.enable_buttons(
+            enabled,
+            include_advanced_conditions=not self.is_file.isChecked(),
+        )
+        for widget in (
+            self.ed_path,
+            self.is_file,
+            self.chk_use_ext_filter,
+            self.ed_extensions,
+            self.ed_inc,
+            self.ed_exc,
+            self.ed_filename_query,
+            self.ed_query,
+            self.chk_case,
+            self.chk_word,
+            self.chk_regex,
+            self.chk_multi_query,
+            self.chk_sort_results,
+            self.combo_logic_op,
+        ):
+            widget.setEnabled(enabled)
+        if hasattr(self, "ed_query_multi"):
+            self.ed_query_multi.setEnabled(enabled)
 
-            self._search_thread.start()
-            self.enable_buttons(False)
-            self.processing_search = True
-        else:
-            # Cancela processamento em andamento
-            if self._search_worker:
-                self._search_worker.cancel()
-            self.enable_buttons(True, include_advanced_conditions=True if not self.is_file.isChecked() else False)
-            self.processing_search = False
+    def _operation_running(self):
+        return self.processing_search or (
+            self._search_thread is not None and self._search_thread.isRunning()
+        )
 
-    def _on_search_progress(self, current_path: str):
+    def cancel_search(self, generation=None):
+        """Request cancellation without releasing ownership before settlement."""
+        if generation is not None and generation != self._search_generation:
+            return
+        if self._search_worker is None:
+            return
+        self._search_cancel_requested = True
+        self._search_worker.cancel()
+        if self._processing_modal:
+            self._processing_modal.set_status("Cancellation requested, please wait...")
+
+    def _set_search_paused(self, generation, paused):
+        if generation != self._search_generation or self._search_worker is None:
+            return
+        self._search_worker.pause() if paused else self._search_worker.resume()
+
+    def _on_search_progress(self, generation: int, current_path: str):
         """Legacy progress handler - kept for compatibility."""
-        pass
+        del current_path
+        if generation != self._search_generation:
+            return
 
-    def _on_search_progress_detailed(self, current: int, total: int, message: str):
+    def _on_search_progress_detailed(
+        self, generation: int, current: int, total: int, message: str
+    ):
         """New detailed progress handler (v2.5.0)."""
+        if generation != self._search_generation or self._discard_search_callbacks:
+            return
         # Update processing modal (v2.7.0)
         if self._processing_modal:
             progress = int((current / total * 100)) if total > 0 else 0
@@ -797,8 +918,10 @@ class SearchReplacePanel(QWidget):
             self._current_progress_widget.update_progress(current, total, message)
             self._current_progress_widget.add_log(f"Processing: {message}")
 
-    def _on_search_error(self, msg: str):
+    def _on_search_error(self, generation: int, msg: str):
         """Handle search errors."""
+        if generation != self._search_generation or self._discard_search_callbacks:
+            return
         # Update processing modal (v2.7.0)
         if self._processing_modal:
             self._processing_modal.log_message(f"ERROR: {msg}")
@@ -808,53 +931,127 @@ class SearchReplacePanel(QWidget):
             self._current_progress_widget.add_log(f"ERROR: {msg}")
         logger.error(msg)
 
-    def _on_search_done(self, matches: dict):
-        """Handle search completion with history tracking (v2.5.0+)."""
-        sort_results = self.chk_sort_results.isChecked()
-        self.results.populate(matches, sort_results)
-        self.enable_buttons(True, include_advanced_conditions=True if not self.is_file.isChecked() else False)
-        self.processing_search = False
+    def _on_search_done(self, generation: int, matches: dict):
+        """Store completion data until the native thread has settled."""
+        if generation == self._search_generation:
+            self._pending_search_result = matches
 
-        # Mark processing modal as complete (v2.7.0)
+    def _apply_search_result(self, matches, metadata):
+        """Apply a settled result on the GUI thread."""
+        self.results.populate(matches, metadata["sort_results"])
         if self._processing_modal:
             self._processing_modal.mark_completed(
-                success=True, message=f"Search completed successfully!\nFound matches in {len(matches)} file(s)."
+                success=True,
+                message=(
+                    "Search completed successfully!\n"
+                    f"Found matches in {len(matches)} file(s)."
+                ),
             )
-            # Modal remains open for user to review logs and close manually
-
-        # Mark progress as complete (v2.5.0)
         if self._current_progress_widget:
             self._current_progress_widget.set_complete(success=True)
-            self._current_progress_widget.add_log(f"Search completed: {len(matches)} files with matches")
+            self._current_progress_widget.add_log(
+                f"Search completed: {len(matches)} files with matches"
+            )
 
-        # Save to history (NEW - v2.5.0+, v2.9.6 - HistoryDock integration)
         try:
             history = OperationHistory()
-            query_text = self.ed_query.toPlainText().strip()
             total_matches = sum(len(items) for items in matches.values())
-
             history.add_operation(
                 "search",
                 {
-                    "query": query_text,
-                    "path": self.ed_path.text(),
+                    "query": metadata["query"],
+                    "path": metadata["path"],
                     "files_matched": len(matches),
                     "total_matches": total_matches,
-                    "case_sensitive": self.chk_case.isChecked(),
-                    "whole_word": self.chk_word.isChecked(),
-                    "regex": self.chk_regex.isChecked(),
+                    "case_sensitive": metadata["case_sensitive"],
+                    "whole_word": metadata["whole_word"],
+                    "regex": metadata["regex"],
                 },
             )
-
-            # Add to History Dock (v2.9.6)
             if hasattr(self, "dock_history"):
                 self.dock_history.add_operation(
-                    "Search", {"query": query_text, "files_processed": len(matches), "matches_found": total_matches}
+                    "Search",
+                    {
+                        "query": metadata["query"],
+                        "files_processed": len(matches),
+                        "matches_found": total_matches,
+                    },
                 )
-        except Exception as e:
-            logger.error(f"Failed to save history: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to save history: %s", exc)
 
-        # Don't auto-remove progress bar - let user close it manually
+    def _on_search_thread_finished(self, generation):
+        """Release controls and ownership only after native settlement."""
+        if generation != self._search_generation:
+            return
+        action = self._close_action
+        self._close_action = None
+        cancelled = self._search_cancel_requested
+        discard = self._discard_search_callbacks
+        result = self._pending_search_result
+        metadata = self._search_metadata
+        self._clear_search_references()
+        self.processing_search = False
+        self._set_search_controls_enabled(True)
+
+        if cancelled or discard:
+            if self._processing_modal:
+                self._processing_modal.mark_completed(
+                    success=False, message="Search cancelled."
+                )
+            if self._current_progress_widget:
+                self._current_progress_widget.set_complete(success=False)
+                self._current_progress_widget.add_log("Search cancelled")
+        elif result is _UNSET or metadata is None:
+            if self._processing_modal:
+                self._processing_modal.mark_completed(
+                    success=False, message="Search ended without a result."
+                )
+        else:
+            self._apply_search_result(result, metadata)
+
+        self._pending_search_result = _UNSET
+        self._search_metadata = None
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        if action:
+            self._dispose_processing_modal()
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                target.close()
+
+    def _clear_search_references(self):
+        receiver = self._search_receiver
+        self._search_thread = None
+        self._search_worker = None
+        self._search_receiver = None
+        self._search_thread_id = None
+        if receiver is not None:
+            receiver.deleteLater()
+
+    def request_tab_close(self):
+        if not self._operation_running():
+            return True
+        host = self.window()
+        if hasattr(host, "tabs") and hasattr(host, "_close_tab"):
+            self._close_action = ("tab", host)
+        self._discard_search_callbacks = True
+        self.cancel_search()
+        return False
+
+    def closeEvent(self, event):
+        if self._operation_running():
+            self._close_action = ("close", self)
+            self._discard_search_callbacks = True
+            self.cancel_search()
+            event.ignore()
+            return
+        self._dispose_processing_modal()
+        super().closeEvent(event)
 
     def _save_results(self):
         """Save search results to a text file."""
