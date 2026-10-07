@@ -29,9 +29,13 @@ TEST_MODULES = {
     "accessibility": "tests/test_accessibility.py",
     "completion": "tests/test_qt_completion_lifecycle.py",
     "explorer-lifecycle": "tests/test_file_explorer_lifecycle.py",
+    "google-translate-api": "tests/test_google_translate.py",
+    "google-translate-dock": "tests/test_google_translate_dock.py",
+    "google-translate-lifecycle": "tests/test_google_translate_lifecycle.py",
     "live-ui": "tests/gui/test_live_ui_actions.py",
     "plugin-system": "tests/test_plugin_system.py",
     "theme-manager": "tests/test_theme_manager.py",
+    "thread-manager": "tests/test_thread_management_system.py",
     "tutorials-localization": "tests/gui/test_tutorials_localization.py",
 }
 

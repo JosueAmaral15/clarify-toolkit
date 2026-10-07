@@ -54,6 +54,7 @@ class FeatureType(Enum):
     PLACEHOLDER_REPLACER = "placeholder_replacer"
     AI_FILE_PROCESSOR = "ai_file_processor"
     TUTORIAL_ASSISTANT = "tutorial_assistant"
+    GOOGLE_TRANSLATE = "google_translate"
 
 
 # pylint: disable=too-few-public-methods  # Data class
@@ -292,9 +293,13 @@ class ThreadManager:
         Usado apenas em emergência.
         """
         protected = {}
+        cooperative_only = {
+            FeatureType.FILE_EXPLORER,
+            FeatureType.GOOGLE_TRANSLATE,
+        }
         for thread_id, info in list(self._threads.items()):
             try:
-                if info.feature == FeatureType.FILE_EXPLORER and info.thread.isRunning():
+                if info.feature in cooperative_only and info.thread.isRunning():
                     self.cancel_thread(thread_id)
                     protected[thread_id] = info
                     continue

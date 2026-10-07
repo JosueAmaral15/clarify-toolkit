@@ -638,7 +638,8 @@ class GoogleTranslateAPI:
         progress_callback: Optional[Callable[[int, int, int, str], None]] = None,
         max_chunk_size: int = 4800,
         use_overlap: bool = True,
-        use_semantic_splitting: bool = True
+        use_semantic_splitting: bool = True,
+        cancel_callback: Optional[Callable[[], bool]] = None,
     ) -> TranslationResult:
         """
         Translate text with automatic chunking for large documents.
@@ -654,10 +655,27 @@ class GoogleTranslateAPI:
             max_chunk_size: Maximum characters per chunk (default 4800)
             use_overlap: Use 200-char context overlap between chunks (default True, Phase C.2)
             use_semantic_splitting: Use semantic boundaries (paragraphs, tables) for splitting (default True, Phase C.3)
+            cancel_callback: Optional callback returning True when work should stop
         
         Returns:
             TranslationResult with concatenated translation
         """
+        def cancelled() -> bool:
+            return bool(cancel_callback and cancel_callback())
+
+        def cancellable_sleep(seconds: float) -> bool:
+            deadline = time.monotonic() + seconds
+            while True:
+                if cancelled():
+                    return False
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return True
+                time.sleep(min(0.05, remaining))
+
+        if cancelled():
+            return TranslationResult(success=False, error_message="Translation cancelled")
+
         if not text or not text.strip():
             return TranslationResult(
                 success=False,
@@ -704,6 +722,9 @@ class GoogleTranslateAPI:
         detected_source_lang = from_lang
         
         for i, chunk in enumerate(chunks, start=1):
+            if cancelled():
+                return TranslationResult(success=False, error_message="Translation cancelled")
+
             # Update progress: Starting chunk
             percentage = int((i - 1) / total_chunks * 100)
             if progress_callback:
@@ -721,7 +742,11 @@ class GoogleTranslateAPI:
             chunk_result = None
             
             for attempt in range(max_attempts):
+                if cancelled():
+                    return TranslationResult(success=False, error_message="Translation cancelled")
                 chunk_result = self._translate_request(chunk, from_lang, to_lang)
+                if cancelled():
+                    return TranslationResult(success=False, error_message="Translation cancelled")
                 
                 if chunk_result.success:
                     break
@@ -730,7 +755,10 @@ class GoogleTranslateAPI:
                 
                 # Wait before retry (exponential backoff)
                 if attempt < max_attempts - 1:
-                    time.sleep(1.0 * (attempt + 1))
+                    if not cancellable_sleep(1.0 * (attempt + 1)):
+                        return TranslationResult(
+                            success=False, error_message="Translation cancelled"
+                        )
             
             # Check if chunk translation succeeded
             if not chunk_result or not chunk_result.success:
@@ -771,7 +799,10 @@ class GoogleTranslateAPI:
             
             # Rate limiting between chunks (avoid being blocked)
             if i < total_chunks:
-                time.sleep(0.5)
+                if not cancellable_sleep(0.5):
+                    return TranslationResult(
+                        success=False, error_message="Translation cancelled"
+                    )
         
         # Progress callback: Completion
         if progress_callback:

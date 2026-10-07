@@ -29,6 +29,9 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   sinais, cancelar ou aguardar settlement limitado e impedir callbacks tardios,
   threads orfas e retencao de widgets. Testar duas guias da mesma tool e tools
   diferentes em paralelo, erro, cancelamento, fechamento e pressao de recursos.
+  Etapa 1 (2026-10-07): Google Translate registrado no `ThreadManager`, com
+  cancelamento cooperativo entre chunks/tentativas, exclusao por dock e fechamento
+  adiado ate `QThread.finished`; auditoria dos demais tools continua pendente.
 - [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

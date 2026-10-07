@@ -223,6 +223,46 @@ class TestGoogleTranslateAPI:
         assert info['file_size_bytes'] > 0
         assert str(self.api.cache_dir) in info['cache_dir']
 
+    def test_chunked_translation_can_cancel_before_provider_call(self):
+        """Cancellation must stop discovery before any provider request."""
+        self.api._translate_request = Mock()
+
+        result = self.api.translate_text_chunked(
+            "Hello", "en", "pt", cancel_callback=lambda: True
+        )
+
+        assert not result.success
+        assert result.error_message == "Translation cancelled"
+        self.api._translate_request.assert_not_called()
+
+    def test_chunked_translation_stops_after_inflight_provider_call(self):
+        """A completed blocking request must not start another chunk after cancel."""
+        cancelled = False
+
+        def translate_once(*_args):
+            nonlocal cancelled
+            cancelled = True
+            return TranslationResult(
+                success=True,
+                translated_text="translated",
+                source_language="en",
+                target_language="pt",
+            )
+
+        self.api._translate_request = Mock(side_effect=translate_once)
+        result = self.api.translate_text_chunked(
+            "A" * 6000,
+            "en",
+            "pt",
+            max_chunk_size=1000,
+            use_overlap=False,
+            cancel_callback=lambda: cancelled,
+        )
+
+        assert not result.success
+        assert result.error_message == "Translation cancelled"
+        self.api._translate_request.assert_called_once()
+
 
 class TestTranslationResult:
     """Test TranslationResult dataclass."""

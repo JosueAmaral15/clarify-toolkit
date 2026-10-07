@@ -158,8 +158,9 @@ class TestGoogleTranslateDock:
             assert "Cache: 5 translations" in cache_text
             assert "1.0 KB" in cache_text
     
+    @patch('src.gui.google_translate_dock.thread_manager.start_thread', return_value=True)
     @patch('src.gui.google_translate_dock.TranslationWorker')
-    def test_translation_start(self, mock_worker_class):
+    def test_translation_start(self, mock_worker_class, mock_start_thread):
         """Test translation process initiation."""
         # Setup mock worker
         mock_worker = Mock()
@@ -174,6 +175,7 @@ class TestGoogleTranslateDock:
         
         # Verify worker was created and started
         mock_worker_class.assert_called_once()
+        mock_start_thread.assert_called_once()
         mock_worker.start.assert_called_once()
         
         # Verify UI state during translation
@@ -464,7 +466,7 @@ class TestTranslationWorker:
         
         # Verify API was called
         api.translate_text_chunked.assert_called_once_with(
-            "Hello", "en", "pt", progress_callback=ANY
+            "Hello", "en", "pt", progress_callback=ANY, cancel_callback=ANY
         )
         
         # Verify signals were emitted
@@ -521,7 +523,7 @@ class TestTranslationWorker:
             worker.run()
         
         api.translate_text_chunked.assert_called_once_with(
-            large_text, "en", "pt", progress_callback=ANY
+            large_text, "en", "pt", progress_callback=ANY, cancel_callback=ANY
         )
         
         # Verify final result combines chunks
@@ -562,7 +564,7 @@ class TestNotebookTranslationWorker:
         worker.run()
 
         api.translate_text_chunked.assert_called_once_with(
-            "Hello", "auto", "pt", progress_callback=ANY
+            "Hello", "auto", "pt", progress_callback=ANY, cancel_callback=ANY
         )
         emitted_notebook, preview, success, error, detected = (
             worker.translation_completed.emit.call_args.args

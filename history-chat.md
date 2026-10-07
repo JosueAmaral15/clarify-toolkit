@@ -3573,3 +3573,43 @@ Plano imediato:
 - Validacao documental:38 checkboxes abertos,8 novos IDs,1 LEG-10, diff-check
   limpo. Nenhum codigo/teste runtime foi alterado ou executado nesta etapa;
   example.py segue untracked e preservado no hash anterior.
+
+## 2026-10-07 - Pre-acao - APP-THREAD-01 Etapa 1
+
+- Usuario autorizou continuar as tarefas. Nova branch criada do checkpoint
+  publicado78ea34e: COM-919c6d08-2bf6-49bb-9b51-1826cbb60d92; example.py fica
+  fora do escopo e preservado no hash conhecido.
+- Escopo delimitado: mapear ownership/execucao de workers por tool/guia,
+  identificar operacoes ainda sincronas na GUI e corrigir primeiro um problema
+  comprovado de lifecycle, sem prometer concluir o epico APP-THREAD-01 inteiro.
+- Primeira evidencia: GoogleTranslateDock ainda usa `QThread.terminate()` em
+  cancelamento/fechamento, enquanto File Explorer ja possui cancelamento e
+  settlement cooperativos. Auditar workers/ThreadManager e testes existentes
+  antes de editar; manter widgets na GUI thread e reaproveitar APIs atuais.
+- Validar serialmente, um modulo GUI por processo, QT offscreen, HOME temporario,
+  pytest20s e guardas RAM85%/treeRSS600MiB/wall180s. Sem provider ao vivo,
+  documento real, push de main/develop ou reenvio do CI bloqueado.
+
+## 2026-10-07 - Pos-acao - APP-THREAD-01 Etapa 1
+
+- GoogleTranslateDock passou a registrar workers de texto/notebook no
+  ThreadManager com identidade por dock. A UI permanece ocupada ate o sinal
+  nativo `finished`, impedindo uma segunda operacao no intervalo entre resultado
+  e settlement; callbacks de resultado/erro sao suprimidos depois do cancelamento.
+- Removidos os usos de QThread.terminate no cancelamento e fechamento da traducao.
+  Fechamento de dock/guia e adiado ate cancelamento cooperativo; o fechamento do
+  aplicativo reconhece a feature e recusa terminacao forcada enquanto ela vive.
+  A API compartilhada agora verifica cancelamento antes/depois da chamada limitada
+  a10s, entre chunks/tentativas e durante esperas, sem mudar argumentos posicionais.
+- Auditoria e limites ficaram documentados em
+  docs/reports/APP_THREAD_AUDIT_STAGE1_2026_10_07.md. APP-THREAD-01 permanece aberto:
+  workers legados e IO sincrono das demais tools ainda exigem etapas isoladas.
+- Evidencia isolada: Google lifecycle6, dock27, API18, Explorer lifecycle36,
+  completion lifecycle11 e ThreadManager7, total105 testes aprovados. Picos ficaram
+  entre65,0 e242,2MiB; nenhum crash nativo ou aborto de guarda. AST/compileall,
+  Pylint-E selecionado e diff-check passaram. Black/isort global nao foi declarado
+  limpo porque arquivos legados ja falhavam no checkpoint; o novo teste e o runner
+  passam Black, e example.py segue intacto/untracked no hash conhecido.
+- Permanecem38 checkboxes abertos em TASKS.md. Esta sessao nao executou provider,
+  documento real, CI remoto, merge ou promocao de main/develop; commit e push sao
+  limitados a COM-919c6d08-2bf6-49bb-9b51-1826cbb60d92.

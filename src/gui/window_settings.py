@@ -190,7 +190,14 @@ class WindowSettings:
 
                 from ..ui import FeatureType
 
-                if thread_manager.is_feature_running(FeatureType.FILE_EXPLORER):
+                cooperative_only = (
+                    FeatureType.FILE_EXPLORER,
+                    FeatureType.GOOGLE_TRANSLATE,
+                )
+                if any(
+                    thread_manager.is_feature_running(feature)
+                    for feature in cooperative_only
+                ):
                     thread_manager.resume_registration()
                     event.ignore()
                     return

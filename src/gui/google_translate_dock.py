@@ -65,6 +65,7 @@ from ..translation.recent_paths import (
     record_translation_operation,
 )
 from ..i18n import tr, tooltip_tr
+from ..ui import FeatureType, thread_manager
 
 
 class TranslationWorker(QThread):
@@ -150,9 +151,13 @@ class TranslationWorker(QThread):
                 text_to_translate,
                 self.from_lang,
                 self.to_lang,
-                progress_callback=progress_callback
+                progress_callback=progress_callback,
+                cancel_callback=lambda: self.is_cancelled,
             )
-            
+
+            if self.is_cancelled:
+                return
+
             if not result.success:
                 self.translation_completed.emit("", False, result.error_message, self.from_lang)
                 return
@@ -182,7 +187,10 @@ class TranslationWorker(QThread):
             self.translation_completed.emit(final_result, True, "", detected_language)
 
         except Exception as e:
-            self.translation_completed.emit("", False, f"Translation error: {str(e)}", self.from_lang)
+            if not self.is_cancelled:
+                self.translation_completed.emit(
+                    "", False, f"Translation error: {str(e)}", self.from_lang
+                )
 
 
 class _NotebookTranslationCancelled(Exception):
@@ -246,7 +254,10 @@ class NotebookTranslationWorker(QThread):
                     self.from_lang,
                     self.to_lang,
                     progress_callback=report_chunk,
+                    cancel_callback=lambda: self.is_cancelled,
                 )
+                if self.is_cancelled:
+                    raise _NotebookTranslationCancelled()
                 if not result.success:
                     raise RuntimeError(result.error_message)
                 if completed_cells == 0 and result.source_language:
@@ -261,6 +272,8 @@ class NotebookTranslationWorker(QThread):
                 return result.translated_text
 
             translate_markdown_cells(self.notebook, translate_cell)
+            if self.is_cancelled:
+                return
             preview = notebook_markdown_text(self.notebook)
             self.translation_completed.emit(
                 self.notebook, preview, True, "", detected_language
@@ -288,10 +301,13 @@ class GoogleTranslateDock(BaseDock):
     open_in_editor_requested = Signal(str, str)
 
     def __init__(self, parent=None):
+        self._main_window_ref = parent
         self.api = GoogleTranslateAPI()
         self.recent_paths = TranslationRecentPaths()
         self.translation_worker = None
-        self._finished_workers = []  # Keep references to finished workers
+        self._close_action = None
+        self._cancel_requested = False
+        self._thread_id = f"google_translate:{id(self)}"
         self._last_detected_lang = None  # Store detected language from last translation
         self._pending_history_details = None
         
@@ -966,19 +982,10 @@ class GoogleTranslateDock(BaseDock):
         """Start background translation."""
         self._translated_notebook = None
         # Prevent starting new worker while one is running (fixes crash on duplicate calls)
-        if self.translation_worker and self.translation_worker.isRunning():
+        if self.translation_worker is not None:
             return
-        
-        # Disconnect signals from previous worker if it exists
-        if self.translation_worker:
-            try:
-                self.translation_worker.progress_updated.disconnect()
-                self.translation_worker.translation_completed.disconnect()
-                self.translation_worker.chunk_progress.disconnect()  # Phase B: Disconnect chunk signal
-                self.translation_worker.finished.disconnect()
-            except (TypeError, RuntimeError):
-                # Signals already disconnected or worker deleted
-                pass
+
+        self._cancel_requested = False
         
         # Update UI for translation in progress
         self.btn_translate.setEnabled(False)
@@ -1009,13 +1016,28 @@ class GoogleTranslateDock(BaseDock):
         # For QThread subclass, do NOT use finished->deleteLater pattern
         worker = self.translation_worker
         worker.finished.connect(lambda finished_worker=worker: self._on_worker_finished(finished_worker))
-        
+
+        if not thread_manager.start_thread(
+            self._thread_id,
+            worker,
+            worker,
+            FeatureType.GOOGLE_TRANSLATE,
+            worker.cancel,
+            exclusive=False,
+        ):
+            self.translation_worker = None
+            self._set_worker_controls_idle()
+            self.lbl_status.setText(tr("google_translate.status_failed"))
+            return
+
         worker.start()
 
     def _start_notebook_translation(self, notebook, from_lang: str, to_lang: str):
         """Start structure-preserving notebook translation."""
-        if self.translation_worker and self.translation_worker.isRunning():
+        if self.translation_worker is not None:
             return
+
+        self._cancel_requested = False
 
         self.btn_translate.setEnabled(False)
         self.btn_cancel.setEnabled(True)
@@ -1045,6 +1067,18 @@ class GoogleTranslateDock(BaseDock):
         worker.finished.connect(
             lambda finished_worker=worker: self._on_worker_finished(finished_worker)
         )
+        if not thread_manager.start_thread(
+            self._thread_id,
+            worker,
+            worker,
+            FeatureType.GOOGLE_TRANSLATE,
+            worker.cancel,
+            exclusive=False,
+        ):
+            self.translation_worker = None
+            self._set_worker_controls_idle()
+            self.lbl_status.setText(tr("google_translate.status_failed"))
+            return
         worker.start()
 
     def _on_notebook_translation_completed(
@@ -1088,11 +1122,6 @@ class GoogleTranslateDock(BaseDock):
         detected_lang: str = "",
     ):
         """Handle translation completion."""
-        # Reset UI
-        self.btn_translate.setEnabled(True)
-        self.btn_cancel.setEnabled(False)
-        self.progress_bar.setVisible(False)
-
         if not success:
             # Phase A: Clear state on translation failure
             self._translated_html = None
@@ -1228,29 +1257,40 @@ class GoogleTranslateDock(BaseDock):
         # Reset status color after delay
         QTimer.singleShot(5000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
-        # Worker cleanup handled by _on_worker_finished
-        self.translation_worker = None
-        self._pending_history_details = None
-
     def _on_worker_finished(self, worker):
-        """Handle worker thread finishing - keep reference alive."""
-        self._finished_workers.append(worker)
-        # Clean up old finished workers after delay to allow proper Qt cleanup
-        QTimer.singleShot(1000, self._cleanup_old_workers)
+        """Settle the operation only after the native thread has stopped."""
+        if worker is not self.translation_worker:
+            return
+        self.translation_worker = None
+        self._set_worker_controls_idle()
+        if self._cancel_requested:
+            self.lbl_status.setText(tr("google_translate.text_cancelled"))
+        self._pending_history_details = None
+        self._cancel_requested = False
 
-    def _cleanup_old_workers(self):
-        """Clean up finished worker references."""
-        self._finished_workers = [w for w in self._finished_workers if w.isRunning()]
+        action = self._close_action
+        self._close_action = None
+        if action:
+            name, target = action
+            if name == "tab" and target is not None:
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                (target or self).close()
+
+    def _set_worker_controls_idle(self):
+        """Restore controls after a worker has fully settled."""
+        self.btn_translate.setEnabled(True)
+        self.btn_cancel.setEnabled(False)
+        self.progress_bar.setVisible(False)
 
     def _cancel_translation(self):
         """Cancel ongoing translation."""
         if self.translation_worker and self.translation_worker.isRunning():
+            self._cancel_requested = True
             self.translation_worker.cancel()
-            self.translation_worker.terminate()
-
-            self.btn_translate.setEnabled(True)
             self.btn_cancel.setEnabled(False)
-            self.progress_bar.setVisible(False)
             self.lbl_status.setText(tr("google_translate.text_cancelled"))
             self._pending_history_details = None
 
@@ -1270,7 +1310,7 @@ class GoogleTranslateDock(BaseDock):
     def _reverse_translation(self):
         """Reverse source and target languages, swap input/output text, and auto-translate."""
         # Check if translation is currently running - if so, ignore the click
-        if self.translation_worker and self.translation_worker.isRunning():
+        if self.translation_worker is not None:
             return
         
         # Get current language codes (not display text)
@@ -1600,20 +1640,22 @@ class GoogleTranslateDock(BaseDock):
         self.lbl_status.setStyleSheet("color: #22C55E; font-weight: bold;")
         QTimer.singleShot(3000, lambda: self.lbl_status.setStyleSheet("color: #666; font-style: italic;"))
 
+    def request_tab_close(self):
+        """Defer tab removal until its worker has stopped."""
+        if self.translation_worker is None:
+            return True
+        action = "tab" if self._main_window_ref is not None else "close"
+        self._close_action = (action, self._main_window_ref or self)
+        self._cancel_translation()
+        return False
+
     def closeEvent(self, event):
-        """Handle dock close event - wait for running threads."""
-        if self.translation_worker and self.translation_worker.isRunning():
-            # Cancel and wait for thread to finish
-            self.translation_worker.cancel()
-            if not self.translation_worker.wait(3000):  # Wait up to 3 seconds
-                self.translation_worker.terminate()
-                self.translation_worker.wait()
-        
-        # Wait for any finished workers
-        for worker in self._finished_workers:
-            if worker.isRunning():
-                worker.wait(1000)
-        
+        """Defer dock closure until cooperative cancellation settles."""
+        if self.translation_worker is not None:
+            self._close_action = ("close", self)
+            self._cancel_translation()
+            event.ignore()
+            return
         super().closeEvent(event)
 
     def _update_cache_info(self):
