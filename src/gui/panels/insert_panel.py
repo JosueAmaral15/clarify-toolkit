@@ -35,13 +35,14 @@ Date: 2025
 # pylint: disable=logging-fstring-interpolation  # F-strings clearer
 
 from __future__ import annotations
+from dataclasses import dataclass
 import os
 import re
 import sys
 
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 
-from PySide6.QtCore import Qt, Signal, QThread, QTimer
+from PySide6.QtCore import QObject, Qt, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QFileDialog, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
@@ -65,8 +66,58 @@ from .search_worker import SearchWorker
 from ..progress import OperationHistory
 
 # Thread management
+from ...ui import FeatureType, thread_manager
 
 logger = get_logger(__name__)
+
+
+@dataclass(frozen=True)
+class _InsertSearchRequest:
+    """Immutable file-discovery state captured on the GUI thread."""
+
+    root: str
+    include_globs: tuple[str, ...]
+    exclude_globs: tuple[str, ...]
+    conditions: tuple[Condition, ...]
+    logic_operator: str
+
+    def iter_files(self) -> Iterator[str]:
+        for file_path in walk_files(self.root, self.include_globs, self.exclude_globs):
+            if not self.conditions or filter_files_by_conditions(
+                (file_path,), self.conditions, self.logic_operator
+            ):
+                yield file_path
+
+
+class _InsertSearchReceiver(QObject):
+    """GUI-thread receiver that rejects callbacks from superseded operations."""
+
+    def __init__(self, panel, generation):
+        super().__init__(panel)
+        self.panel = panel
+        self.generation = generation
+
+    @Slot(str)
+    def progress(self, current_path):
+        self.panel._on_search_progress(self.generation, current_path)
+
+    @Slot(int, int, str)
+    def progress_detailed(self, current, total, message):
+        self.panel._on_search_progress_detailed(
+            self.generation, current, total, message
+        )
+
+    @Slot(str)
+    def failed(self, message):
+        self.panel._on_search_error(self.generation, message)
+
+    @Slot(dict)
+    def completed(self, matches):
+        self.panel._on_search_done(self.generation, matches)
+
+    @Slot()
+    def thread_finished(self):
+        self.panel._on_search_thread_finished(self.generation)
 
 
 class InsertPanel(QWidget):
@@ -79,10 +130,21 @@ class InsertPanel(QWidget):
         super().__init__(parent)
         layout = QGridLayout(self)
         self.processing_search = False
-        self.progress_manager = progress_manager
+        # Older embedded consumers pass a settings-prefix string here. Keep the
+        # constructor compatible without mistaking that identifier for a manager.
+        self.settings_prefix = progress_manager if isinstance(progress_manager, str) else "insert"
+        self.progress_manager = None if isinstance(progress_manager, str) else progress_manager
         self._current_task_id = None
         self._current_progress_widget = None
         self._processing_modal = None  # Modal de progresso (v2.7.0)
+        self._search_thread = None
+        self._search_worker = None
+        self._search_receiver = None
+        self._search_thread_id = None
+        self._search_generation = 0
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        self._close_action = None
 
         layout.addWidget(QLabel(tr("insert_panel.lbl_root_path")), 0, 0)
         self.ed_path = QLineEdit()
@@ -469,7 +531,8 @@ class InsertPanel(QWidget):
             self.btn_browse.setEnabled(state)
 
         if include_advanced_conditions:
-            for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
+            for widgets in self.cond_list:
+                cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
                 cb_field.setEnabled(state)
                 cb_op.setEnabled(state)
                 ed.setEnabled(state)
@@ -482,17 +545,19 @@ class InsertPanel(QWidget):
                 chk_regex.setEnabled(state)
 
     def reset_advanced_conditions(self):
-        for cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex in self.cond_list:
-            cb_field.clear()
+        for widgets in self.cond_list:
+            cb_field, cb_op, ed, cb_scope, ed_scope_val, chk_case, chk_word, chk_regex = widgets[:8]
+            cb_field.setCurrentIndex(0)
             cb_op.setCurrentIndex(0)
-            ed.setCurrentIndex(0)
+            ed.clear()
             cb_scope.setCurrentIndex(0)
             ed_scope_val.clear()
             chk_case.setChecked(True)
             chk_word.setChecked(False)
             chk_regex.setChecked(False)
 
-    def _iter_files(self) -> List[str]:
+    def _snapshot_search_request(self) -> _InsertSearchRequest:
+        """Read widget state once, before background discovery starts."""
         path = self.ed_path.text().strip()
 
         # v2.9.0, v2.9.1: Handle extension filter (optional)
@@ -518,8 +583,18 @@ class InsertPanel(QWidget):
                 inc = ["*.*"]
 
         exc = [g.strip() for g in re.split(r"[;,]", self.ed_exc.text()) if g.strip()]
-        files = list(walk_files(path, inc, exc))
-        return filter_files_by_conditions(files, self._conds())
+        conditions, logic_operator = self._conds()
+        return _InsertSearchRequest(
+            root=path,
+            include_globs=tuple(inc),
+            exclude_globs=tuple(exc),
+            conditions=tuple(conditions),
+            logic_operator=logic_operator,
+        )
+
+    def _iter_files(self) -> List[str]:
+        """Return files synchronously for insertion and compatibility consumers."""
+        return list(self._snapshot_search_request().iter_files())
 
     def _schedule_live_refresh(self):
         if not self._conds():  # only trigger if there's at least 1 valid rule
@@ -531,85 +606,144 @@ class InsertPanel(QWidget):
         self._debounce_timer.start()
 
     def _start_search_threaded(self):
-        if not self.processing_search:
-            words = "|".join([ed.text().strip() for k, n, ed in self.cond_list if ed.text().strip()])
-            if words:
-                self.results.print_message("Loading...")
+        if self._operation_running():
+            self.cancel_search()
+            return
 
-                try:
-                    pattern_text = SearchOptions(False, False, True).compile(rf"(?:{words})")
-                except Exception as e:
-                    self.error.emit(f"Invalid pattern: {e}")
-                    self.done.emit({})
-                    return
+        words = "|".join(
+            widgets[2].text().strip()
+            for widgets in self.cond_list
+            if widgets[2].text().strip()
+        )
+        if not words:
+            return
 
-                # Create progress bar (v2.5.0)
-                if self.progress_manager:
-                    import uuid
+        self.results.print_message("Loading...")
+        try:
+            pattern_text = SearchOptions(False, False, True).compile(rf"(?:{words})")
+            request = self._snapshot_search_request()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.results.print_message(f"Invalid search: {exc}")
+            logger.error("Insert search setup failed: %s", exc)
+            return
 
-                    self._current_task_id = f"insert_search_{uuid.uuid4().hex[:8]}"
-                    self._current_progress_widget = self.progress_manager.add_task(
-                        self._current_task_id, f"Match Search: {words[:30]}"
-                    )
+        if self.progress_manager:
+            import uuid
 
-                # Create thread and worker
-                self._search_thread = QThread(self)
-                self._search_worker = SearchWorker(
-                    pattern_text=pattern_text,
-                    iter_files_fn=self._iter_files,
-                    search_options_factory=lambda a, b, c: SearchOptions(a, b, c),
+            self._current_task_id = f"insert_search_{uuid.uuid4().hex[:8]}"
+            self._current_progress_widget = self.progress_manager.add_task(
+                self._current_task_id, f"Match Search: {words[:30]}"
+            )
+
+        self._search_generation += 1
+        generation = self._search_generation
+        self._search_thread_id = f"insert_search:{id(self)}:{generation}"
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        self._search_thread = QThread(self)
+        self._search_worker = SearchWorker(
+            pattern_text=pattern_text,
+            iter_files_fn=request.iter_files,
+            search_options_factory=lambda a, b, c: SearchOptions(a, b, c),
+        )
+        self._search_receiver = _InsertSearchReceiver(self, generation)
+        self._search_worker.moveToThread(self._search_thread)
+
+        worker = self._search_worker
+        native = self._search_thread
+        receiver = self._search_receiver
+        native.started.connect(worker.run)
+        worker.done.connect(receiver.completed)
+        worker.progress.connect(receiver.progress)
+        worker.progress_detailed.connect(receiver.progress_detailed)
+        worker.error.connect(receiver.failed)
+        worker.done.connect(worker.deleteLater)
+        worker.done.connect(native.quit, Qt.DirectConnection)
+        native.finished.connect(receiver.thread_finished)
+        native.finished.connect(native.deleteLater)
+
+        if not thread_manager.start_thread(
+            self._search_thread_id,
+            native,
+            worker,
+            FeatureType.INSERT,
+            cancel_callback=worker.cancel,
+            exclusive=False,
+        ):
+            worker.deleteLater()
+            native.deleteLater()
+            receiver.deleteLater()
+            self._clear_search_references()
+            self.results.print_message("Cannot start while the application is shutting down")
+            return
+
+        if self._current_progress_widget:
+            self._current_progress_widget.cancel_requested.connect(
+                lambda _task_id, current=generation: self.cancel_search(current)
+            )
+            self._current_progress_widget.pause_requested.connect(
+                lambda _task_id, paused, current=generation: self._set_search_paused(
+                    current, paused
                 )
-                self._search_worker.moveToThread(self._search_thread)
+            )
 
-                # Connections
-                self._search_thread.started.connect(self._search_worker.run)
-                self._search_worker.done.connect(self._on_search_done)
-                self._search_worker.progress.connect(self._on_search_progress)
-                self._search_worker.progress_detailed.connect(self._on_search_progress_detailed)  # v2.5.0
-                self._search_worker.error.connect(self._on_search_error)
+        self.processing_search = True
+        self.enable_buttons(False)
+        native.start()
 
-                # Connect cancel and pause from progress bar to worker (v2.5.0+)
-                if self._current_progress_widget:
-                    self._current_progress_widget.cancel_requested.connect(lambda _: self._search_worker.cancel())
-                    self._current_progress_widget.pause_requested.connect(
-                        lambda _, paused: self._search_worker.pause() if paused else self._search_worker.resume()
-                    )
+    def _operation_running(self):
+        return self.processing_search or (
+            self._search_thread is not None and self._search_thread.isRunning()
+        )
 
-                # Cleanup
-                self._search_worker.done.connect(self._search_thread.quit)
-                self._search_worker.done.connect(self._search_worker.deleteLater)
-                self._search_thread.finished.connect(self._search_thread.deleteLater)
+    def cancel_search(self, generation=None):
+        """Request cancellation without releasing controls before settlement."""
+        if generation is not None and generation != self._search_generation:
+            return
+        if self._search_worker is None:
+            return
+        self._search_cancel_requested = True
+        self._search_worker.cancel()
 
-                self._search_thread.start()
-                self.enable_buttons(False)
-                self.processing_search = True
-        else:
-            self._search_worker.cancel()
-            self.enable_buttons(True, include_advanced_conditions=True if not self.is_file.isChecked() else False)
-            self.processing_search = False
+    def _set_search_paused(self, generation, paused):
+        if generation != self._search_generation or self._search_worker is None:
+            return
+        self._search_worker.pause() if paused else self._search_worker.resume()
 
-    def _on_search_progress(self, current_path: str):
+    def _on_search_progress(self, generation: int, current_path: str):
         """Legacy progress handler."""
-        pass
+        del current_path
+        if generation != self._search_generation:
+            return
 
-    def _on_search_progress_detailed(self, current: int, total: int, message: str):
+    def _on_search_progress_detailed(
+        self, generation: int, current: int, total: int, message: str
+    ):
         """New detailed progress handler (v2.5.0)."""
+        if generation != self._search_generation or self._discard_search_callbacks:
+            return
         if self._current_progress_widget:
             self._current_progress_widget.update_progress(current, total, message)
             self._current_progress_widget.add_log(f"Processing: {message}")
 
-    def _on_search_error(self, msg: str):
+    def _on_search_error(self, generation: int, msg: str):
         """Handle search errors."""
+        if generation != self._search_generation or self._discard_search_callbacks:
+            return
         if self._current_progress_widget:
             self._current_progress_widget.add_log(f"ERROR: {msg}")
         logger.error(msg)
 
-    def _on_search_done(self, matches: dict):
+    def _on_search_done(self, generation: int, matches: dict):
         """Handle search completion with history tracking (v2.5.0+)."""
+        if (
+            generation != self._search_generation
+            or self._discard_search_callbacks
+            or self._search_cancel_requested
+        ):
+            return
         sort_results = self.chk_sort_results.isChecked()
         self.results.populate(matches, sort_results)
-        self.enable_buttons(True, include_advanced_conditions=True if not self.is_file.isChecked() else False)
-        self.processing_search = False
 
         # Mark progress as complete (v2.5.0)
         if self._current_progress_widget:
@@ -629,6 +763,61 @@ class InsertPanel(QWidget):
             )
         except Exception as e:
             logger.error(f"Failed to save history: {e}")
+
+    def _on_search_thread_finished(self, generation):
+        """Release UI ownership only after native QThread settlement."""
+        if generation != self._search_generation:
+            return
+        action = self._close_action
+        self._close_action = None
+        cancelled = self._search_cancel_requested
+        self._clear_search_references()
+        self.processing_search = False
+        self.enable_buttons(
+            True,
+            include_advanced_conditions=not self.is_file.isChecked(),
+        )
+        if cancelled and self._current_progress_widget:
+            self._current_progress_widget.set_complete(success=False)
+            self._current_progress_widget.add_log("Search cancelled")
+        if action:
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                target.close()
+
+    def _clear_search_references(self):
+        receiver = self._search_receiver
+        self._search_thread = None
+        self._search_worker = None
+        self._search_receiver = None
+        self._search_thread_id = None
+        self._search_cancel_requested = False
+        self._discard_search_callbacks = False
+        if receiver is not None:
+            receiver.deleteLater()
+
+    def request_tab_close(self):
+        if not self._operation_running():
+            return True
+        host = self.window()
+        if hasattr(host, "tabs") and hasattr(host, "_close_tab"):
+            self._close_action = ("tab", host)
+        self._discard_search_callbacks = True
+        self.cancel_search()
+        return False
+
+    def closeEvent(self, event):
+        if self._operation_running():
+            self._close_action = ("close", self)
+            self._discard_search_callbacks = True
+            self.cancel_search()
+            event.ignore()
+            return
+        super().closeEvent(event)
 
     def _files(self) -> List[str]:
         path = self.ed_path.text().strip()

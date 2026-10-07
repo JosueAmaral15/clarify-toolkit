@@ -5,9 +5,9 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 # pylint: disable=no-name-in-module  # Qt dynamic modules
 # pylint: disable=broad-exception-caught  # GUI robustness
 
-import time
 import fnmatch
 import os
+from threading import Event
 
 from typing import Dict, List, Tuple, Callable, Optional
 
@@ -31,6 +31,7 @@ class SearchWorker(QObject):
     progress_detailed = Signal(int, int, str)  # (current, total, message) for progress bar
     done = Signal(dict)  # Final results
     error = Signal(str)  # Error messages
+    MAX_DISCOVERED_FILES = 100_000
 
     def __init__(self, pattern_text: str, iter_files_fn: Callable, search_options_factory,
                  is_multi_query: bool = False, multi_query_processor=None,
@@ -55,20 +56,34 @@ class SearchWorker(QObject):
         self.multi_query_processor = multi_query_processor  # v2.8.0
         self.search_mode = search_mode  # v2.9.112
         self.filename_pattern = filename_pattern  # v2.9.112
-        self._cancel = False
-        self._paused = False  # NEW - v2.5.0+
+        self._cancel_event = Event()
+        self._resume_event = Event()
+        self._resume_event.set()
+
+    @property
+    def is_cancelled(self) -> bool:
+        """Return the thread-safe cancellation state."""
+        return self._cancel_event.is_set()
 
     def cancel(self):
         """Cancel the search operation."""
-        self._cancel = True
+        self._cancel_event.set()
+        self._resume_event.set()
 
     def pause(self):
         """Pause processing (v2.5.0+)."""
-        self._paused = True
+        self._resume_event.clear()
 
     def resume(self):
         """Resume processing (v2.5.0+)."""
-        self._paused = False
+        self._resume_event.set()
+
+    def _wait_until_resumed(self) -> bool:
+        """Wait cooperatively and return False when cancellation wins."""
+        while not self._resume_event.wait(0.1):
+            if self.is_cancelled:
+                return False
+        return not self.is_cancelled
 
     def run(self):
         """
@@ -81,8 +96,22 @@ class SearchWorker(QObject):
         """
         matches: Dict[str, List[Tuple[int, int, str]]] = {}
 
-        # Collect all files first to know total count
-        files_to_process = list(self.iter_files_fn())
+        # Collect a bounded snapshot so progress has a stable denominator.
+        files_to_process = []
+        try:
+            for file_path in self.iter_files_fn():
+                if self.is_cancelled:
+                    self.done.emit({})
+                    return
+                files_to_process.append(file_path)
+                if len(files_to_process) > self.MAX_DISCOVERED_FILES:
+                    raise ValueError(
+                        f"Search exceeds the {self.MAX_DISCOVERED_FILES}-file safety limit"
+                    )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.error.emit(str(exc))
+            self.done.emit({})
+            return
 
         # v2.9.112: Filter by filename pattern if needed
         if self.search_mode in ("filename_only", "both") and self.filename_pattern:
@@ -98,12 +127,12 @@ class SearchWorker(QObject):
 
         for idx, file_path in enumerate(files_to_process, 1):
             # Check for cancellation
-            if self._cancel:
+            if self.is_cancelled:
                 break
 
             # Check for pause (NEW - v2.5.0+)
-            while self._paused and not self._cancel:
-                time.sleep(0.1)  # Wait while paused
+            if not self._wait_until_resumed():
+                break
 
             try:
                 # Emit detailed progress (current, total, message)
@@ -120,6 +149,8 @@ class SearchWorker(QObject):
 
                 # For content search or both modes, read and search file content
                 text = read_text(file_path)
+                if self.is_cancelled:
+                    break
                 lst: List[Tuple[int, int, str]] = []
 
                 # v2.8.0: Multi-query search support

@@ -296,6 +296,7 @@ class ThreadManager:
         cooperative_only = {
             FeatureType.FILE_EXPLORER,
             FeatureType.GOOGLE_TRANSLATE,
+            FeatureType.INSERT,
             FeatureType.TEXT_EXTRACTOR,
         }
         for thread_id, info in list(self._threads.items()):

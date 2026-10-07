@@ -3653,3 +3653,46 @@ Plano imediato:
   mas cancelamento ocorre logo depois e nenhuma terminacao forcada e usada nesta tool.
   example.py segue fora do indice e no hash conhecido; sem provider, documento real,
   merge, main/develop ou CI remoto nesta etapa.
+
+## 2026-10-07 - Pre-acao - APP-THREAD-01 Etapa 3
+
+- Usuario identificou corretamente que a etapa anterior usou apenas start/status/finish
+  do AI Presence Monitor e nao executou o protocolo de continuacao. O erro foi
+  operacional: o worker foi finalizado apesar de ainda haver tarefa concreta pendente.
+- Automacao persistente e transporte nativo foram confirmados habilitados. O worker
+  notebook-josue:codex:project=clarify-b09a84f1 foi reativado em Protocol2 e deve
+  permanecer active entre etapas; ao concluir esta etapa, uma unica continuacao para
+  a sessao exata sera despachada se as pre-condicoes continuarem satisfeitas.
+- Nova branch COM-cc57be69-3ced-4976-8643-48655aa2366e criada do checkpoint publicado
+  bfc4193. example.py permanece untracked e fora do escopo.
+- Escopo limitado: corrigir o lifecycle da busca do InsertPanel. A auditoria encontrou
+  worker nao registrado, callable ligado ao QWidget executado fora da GUI thread,
+  interface liberada antes de QThread.finished e ausencia de fechamento cooperativo.
+  Search/Replace, File Explorer e demais workers nao serao alterados nesta etapa.
+- Validacao: testes offscreen isolados, um modulo GUI por processo, HOME temporario,
+  RAM85%, treeRSS600MiB, wall180s e pytest20s; nenhum provider ou documento real.
+
+## 2026-10-07 - Pos-acao - APP-THREAD-01 Etapa 3
+
+- Confirmada a falha funcional anterior: InsertPanel desempacotava nove controles
+  como tres e sua busca nao iniciava. A busca agora captura entrada imutavel na GUI,
+  usa worker registrado por painel e nao consulta widgets fora da GUI thread.
+- SearchWorker passou a usar Events para pausa/cancelamento, acorda ao cancelar em
+  pausa, limita descoberta a100000 arquivos e sempre sinaliza settlement em erro.
+  Insert mantem controles/ownership ate QThread.finished, suprime callbacks tardios
+  e adia fechamento de guia; force cleanup/app close nao usam terminate nessa feature.
+- Compatibilidade dos consumidores embutidos foi preservada para os prefixos antigos
+  do AI Processor/JSON Editor. Corrigidos tambem os desempacotamentos de condicoes e
+  o reset de controles encontrados durante a mesma auditoria.
+- Evidencia isolada: lifecycle Insert9, Insert existente26, ThreadManager7,
+  completion Qt11 e Explorer lifecycle36; total89 aprovados, picos66,5-242,6MiB,
+  sem crash nativo ou guard abort. AST5/compileall, Pylint-E, Black/isort do teste
+  novo e diff-check passaram.
+- O modulo legado test_search_replace_panel permanece invalido por esperar o atributo
+  removido MainWindow.search_panel e falha antes do SearchWorker; nao foi contado como
+  evidencia. Isso e candidato concreto da etapa4, junto ao lifecycle proprio desse
+  painel, sem ampliar para outras tarefas.
+- APP-THREAD-01 permanece aberto e TASKS continua com38 checkboxes. example.py segue
+  untracked e intacto no SHA-256 conhecido. Branch desta sessao:
+  COM-cc57be69-3ced-4976-8643-48655aa2366e; commit/push e despacho unico de continue
+  devem ocorrer apos a revisao final, mantendo o worker Protocol2 ativo.
