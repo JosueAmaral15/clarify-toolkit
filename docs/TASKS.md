@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/07 - APP-THREAD-01 etapa 4 estabiliza busca do SearchReplacePanel
+**Last Update**: 2026/10/07 - APP-THREAD-01 etapa 5 estabiliza replace em arquivos
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -44,6 +44,12 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   cooperativos, callbacks por geracao e cleanup somente apos `QThread.finished`.
   Duas instancias podem operar em paralelo e shutdown nao usa `terminate()`; o
   replace sincrono e outros consumidores/workers continuam pendentes.
+  Etapa 5 (2026-10-07): replace em arquivos do SearchReplacePanel movido para
+  worker por instancia com plano imutavel e checkpoints cooperativos, reutilizando
+  limites, escrita atomica, preservacao de metadados e deteccao de conflito do
+  executor compartilhado. Busca/replace nao sobrepoem no mesmo painel, paineis
+  distintos continuam independentes e resultado/close aguardam `QThread.finished`.
+  Ownership dos paineis embutidos no AI Processor e outros workers permanecem.
 - [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

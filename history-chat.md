@@ -3740,3 +3740,51 @@ Plano imediato:
 - APP-THREAD-01 permanece aberto e TASKS continua com38 checkboxes. example.py
   permanece untracked/intacto; commit e push serao feitos apenas na branch
   COM-2dc0a424-0142-4746-b570-0607a45e63c2 antes de uma unica continuacao nativa.
+
+## 2026-10-07 - Pre-acao - APP-THREAD-01 Etapa 5
+
+- Continuacao nativa da etapa4 recebida na sessao exata
+  019ea8a0-6d60-7f03-90b9-c420603158d1. Worker
+  notebook-josue:codex:project=clarify-b09a84f1 permanece active em Protocol2;
+  configuracao dos hooks SessionStart/UserPromptSubmit/PreToolUse/PostToolUse/Stop
+  e processos de monitoramento foram verificados.
+- Checkpoint publicado ef5eed5 e history da etapa4 foram conferidos. Nova branch
+  COM-637d70ac-9212-4cf5-b776-6e05653a0c34 foi criada exatamente do checkpoint;
+  example.py permanece untracked no SHA-256
+  058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee.
+- Escopo limitado a APP-THREAD-01 etapa5: provar o bloqueio de GUI e estabilizar
+  somente SearchReplacePanel._do_replace, com plano imutavel, IO limitado,
+  ownership por painel, progresso/erro honestos e pause/cancel/close cooperativos.
+  Busca da etapa4, Insert/File Explorer, FE-REFINE, Editor, i18n e15 falhas da suite
+  de integracao antiga ficam fora desta etapa.
+- Validacao serial/offscreen, um modulo GUI por processo, HOME temporario,
+  RAM85%, treeRSS600MiB, wall180s e pytest20s; somente arquivos temporarios, sem
+  provider ou documentos reais.
+
+## 2026-10-07 - Pos-acao - APP-THREAD-01 Etapa 5
+
+- Dez regressivos falharam antes da correcao e provaram que _do_replace fazia
+  discovery, filtros, leitura, replace e escrita na GUI, sem worker, budgets,
+  cancelamento/pausa/close ou erro honesto. Query vazia e escrita direta tambem
+  deixavam risco de substituicao ampla, links e alteracao offline sem protecao.
+- Criados ReplaceFileRequest imutavel e SearchReplaceFileWorker. O painel delega
+  ao executor compartilhado do File Explorer: maximo1000 arquivos,4MiB por
+  arquivo/query/saida,10000 matches por arquivo,50 erros, texto UTF-8, escrita
+  atomica, metadados e rejeicao de link/revisao alterada.
+- Busca e replace compartilham uma operacao por painel; paineis distintos operam
+  independentemente. Pause/cancel acordam cooperativamente, controles e ownership
+  so sao liberados no QThread.finished, e close suprime dialogs/callbacks tardios.
+  O sinal emit_replace_request do AI Processor foi preservado sem criar file worker.
+- Evidencia isolada: replace lifecycle11, search lifecycle9, painel22, executor
+  replace33, Insert lifecycle9, ThreadManager7, completion11, Explorer lifecycle36,
+  construcao AI1 e progress18; total157 testes aprovados, picos62,7-235,3MiB,
+  sem crash nativo ou guard abort. Compileall/AST, Pylint-E/unused-import,
+  Black/isort dos novos arquivos e diff-check passaram. Relatorio:
+  docs/reports/APP_THREAD_AUDIT_STAGE5_2026_10_07.md.
+- Limite restante comprovado: fechar a guia pai AIProcessorDock nao propaga
+  settlement aos paineis Search/Replace e Insert embutidos, podendo deixar trabalho
+  oculto; replace em memoria do resultado AI ainda roda na GUI. Isso e candidato
+  concreto da etapa6, sem reabrir as15 falhas legadas ou outras filas.
+- APP-THREAD-01 permanece aberto e TASKS continua com38 checkboxes. example.py
+  permanece untracked/intacto; commit e push pertencem somente a branch
+  COM-637d70ac-9212-4cf5-b776-6e05653a0c34 antes de uma continuacao nativa unica.

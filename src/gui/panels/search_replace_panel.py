@@ -35,7 +35,6 @@ Date: 2025
 
 from __future__ import annotations
 import re
-import sys
 
 from typing import List, Tuple
 
@@ -50,14 +49,14 @@ from PySide6.QtWidgets import (
 from src.i18n.translator import tr, tooltip_tr
 
 # Core functionality
-from ...core import Condition, SearchOptions, replace_in_text
+from ...core import Condition, SearchOptions
 
 # Utilities
-from ...utils import read_text, write_text
 from ...utils.logger import get_logger
 
 # Components from this package
 from .results_tree import ResultsTree
+from .replace_worker import ReplaceFileRequest, SearchReplaceFileWorker
 from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
 # Progress management
@@ -101,6 +100,33 @@ class _SearchReplaceReceiver(QObject):
         self.panel._on_search_thread_finished(self.generation)
 
 
+class _FileReplaceReceiver(QObject):
+    """GUI-thread receiver for one panel-owned file replacement."""
+
+    def __init__(self, panel, generation):
+        super().__init__(panel)
+        self.panel = panel
+        self.generation = generation
+
+    @Slot(int, int, str)
+    def progress(self, current, total, message):
+        self.panel._on_replace_progress(
+            self.generation, current, total, message
+        )
+
+    @Slot(str)
+    def failed(self, message):
+        self.panel._on_replace_error(self.generation, message)
+
+    @Slot(object)
+    def completed(self, result):
+        self.panel._on_replace_done(self.generation, result)
+
+    @Slot()
+    def thread_finished(self):
+        self.panel._on_replace_thread_finished(self.generation)
+
+
 class SearchReplacePanel(QWidget):
     """
     Left-hand panel: path + include/exclude + search & replace controls.
@@ -133,6 +159,16 @@ class SearchReplacePanel(QWidget):
         self._discard_search_callbacks = False
         self._pending_search_result = _UNSET
         self._search_metadata = None
+        self.processing_replace = False
+        self._replace_thread = None
+        self._replace_worker = None
+        self._replace_receiver = None
+        self._replace_thread_id = None
+        self._replace_generation = 0
+        self._replace_cancel_requested = False
+        self._discard_replace_callbacks = False
+        self._pending_replace_result = _UNSET
+        self._replace_metadata = None
         self._close_action = None
 
         # Path row
@@ -667,7 +703,7 @@ class SearchReplacePanel(QWidget):
 
     def _start_search_threaded(self):
         if self._operation_running():
-            self.cancel_search()
+            self.cancel_operation()
             return
 
         self.results.print_message("Loading...")
@@ -862,11 +898,13 @@ class SearchReplacePanel(QWidget):
             self.ed_exc,
             self.ed_filename_query,
             self.ed_query,
+            self.ed_repl,
             self.chk_case,
             self.chk_word,
             self.chk_regex,
             self.chk_multi_query,
             self.chk_sort_results,
+            self.chk_preserve,
             self.combo_logic_op,
         ):
             widget.setEnabled(enabled)
@@ -874,9 +912,23 @@ class SearchReplacePanel(QWidget):
             self.ed_query_multi.setEnabled(enabled)
 
     def _operation_running(self):
-        return self.processing_search or (
-            self._search_thread is not None and self._search_thread.isRunning()
+        return (
+            self.processing_search
+            or self.processing_replace
+            or (
+                self._search_thread is not None and self._search_thread.isRunning()
+            )
+            or (
+                self._replace_thread is not None and self._replace_thread.isRunning()
+            )
         )
+
+    def cancel_operation(self):
+        """Cancel whichever operation this panel currently owns."""
+        if self._search_worker is not None:
+            self.cancel_search()
+        if self._replace_worker is not None:
+            self.cancel_replace()
 
     def cancel_search(self, generation=None):
         """Request cancellation without releasing ownership before settlement."""
@@ -1039,15 +1091,21 @@ class SearchReplacePanel(QWidget):
         host = self.window()
         if hasattr(host, "tabs") and hasattr(host, "_close_tab"):
             self._close_action = ("tab", host)
-        self._discard_search_callbacks = True
-        self.cancel_search()
+        if self._search_worker is not None:
+            self._discard_search_callbacks = True
+        if self._replace_worker is not None:
+            self._discard_replace_callbacks = True
+        self.cancel_operation()
         return False
 
     def closeEvent(self, event):
         if self._operation_running():
             self._close_action = ("close", self)
-            self._discard_search_callbacks = True
-            self.cancel_search()
+            if self._search_worker is not None:
+                self._discard_search_callbacks = True
+            if self._replace_worker is not None:
+                self._discard_replace_callbacks = True
+            self.cancel_operation()
             event.ignore()
             return
         self._dispose_processing_modal()
@@ -1099,40 +1157,259 @@ class SearchReplacePanel(QWidget):
             )
 
     def _do_replace(self, all_: bool):
-        try:
-            patt = SearchOptions(
-                self.chk_case.isChecked(), self.chk_word.isChecked(), self.chk_regex.isChecked()
-            ).compile(self.ed_query.toPlainText().strip())
-        except ValueError as e:
-            QMessageBox.critical(self, "Invalid pattern", str(e))
+        if self._operation_running():
+            self.cancel_operation()
             return
 
-        repl = self.ed_repl.toPlainText().strip()
-        preserve = self.chk_preserve.isChecked()
-        count_files = 0
-        for p in self._iter_files():
-            try:
-                text = read_text(p)
-                new, n = replace_in_text(text, patt, repl, preserve, 0 if all_ else 1)
-                if n > 0:
-                    write_text(p, new)
-                    count_files += 1
-            except Exception as e:
-                logger.warning(f"{p}: {e}")
+        try:
+            request = ReplaceFileRequest(
+                files=self._snapshot_search_request(),
+                query=self.ed_query.toPlainText().strip(),
+                replacement=self.ed_repl.toPlainText().strip(),
+                case_sensitive=self.chk_case.isChecked(),
+                whole_word=self.chk_word.isChecked(),
+                regex=self.chk_regex.isChecked(),
+                preserve_case=self.chk_preserve.isChecked(),
+                replace_all=all_,
+            )
+            request.validate()
+        except (ValueError, TypeError, UnicodeError, re.error) as exc:
+            self.results.print_message(f"Replace cancelled: {exc}")
+            QMessageBox.critical(self, "Invalid replacement", str(exc))
+            return
 
-        # Add to History Dock (v2.9.6)
+        self._dispose_processing_modal()
+        self._processing_modal = ProcessingModal(
+            title="Replacing in Files...",
+            parent=self,
+            show_progress=True,
+            show_cancel=True,
+        )
+        self._processing_modal.set_status("Discovering replacement targets...")
+        self._processing_modal.start_loading_animation()
+        self._processing_modal.show()
+
+        if self.progress_manager:
+            import uuid
+
+            self._current_task_id = f"replace_{uuid.uuid4().hex[:8]}"
+            self._current_progress_widget = self.progress_manager.add_task(
+                self._current_task_id, f"Replace: {request.query[:30]}"
+            )
+
+        self._replace_generation += 1
+        generation = self._replace_generation
+        self._replace_thread_id = f"search_replace_file:{id(self)}:{generation}"
+        self._replace_cancel_requested = False
+        self._discard_replace_callbacks = False
+        self._pending_replace_result = _UNSET
+        self._replace_metadata = {
+            "query": request.query,
+            "replacement": request.replacement,
+            "path": request.files.root,
+            "replace_all": request.replace_all,
+        }
+        self._replace_thread = QThread(self)
+        self._replace_worker = SearchReplaceFileWorker(request)
+        self._replace_receiver = _FileReplaceReceiver(self, generation)
+        self._replace_worker.moveToThread(self._replace_thread)
+
+        worker = self._replace_worker
+        native = self._replace_thread
+        receiver = self._replace_receiver
+        native.started.connect(worker.run)
+        worker.progress.connect(receiver.progress)
+        worker.error.connect(receiver.failed)
+        worker.done.connect(receiver.completed)
+        worker.settled.connect(worker.deleteLater)
+        worker.settled.connect(native.quit, Qt.DirectConnection)
+        native.finished.connect(receiver.thread_finished)
+        native.finished.connect(native.deleteLater)
+
+        if not thread_manager.start_thread(
+            self._replace_thread_id,
+            native,
+            worker,
+            FeatureType.SEARCH_REPLACE,
+            cancel_callback=worker.cancel,
+            exclusive=False,
+        ):
+            worker.deleteLater()
+            native.deleteLater()
+            receiver.deleteLater()
+            self._clear_replace_references()
+            self._processing_modal.mark_completed(
+                success=False,
+                message="Cannot start while the application is shutting down",
+            )
+            return
+
+        self._processing_modal.cancel_requested.connect(
+            lambda current=generation: self.cancel_replace(current)
+        )
+        if self._current_progress_widget:
+            self._current_progress_widget.cancel_requested.connect(
+                lambda _task_id, current=generation: self.cancel_replace(current)
+            )
+            self._current_progress_widget.pause_requested.connect(
+                lambda _task_id, paused, current=generation: self._set_replace_paused(
+                    current, paused
+                )
+            )
+
+        self.processing_replace = True
+        self._set_search_controls_enabled(False)
+        native.start()
+
+    def cancel_replace(self, generation=None):
+        if generation is not None and generation != self._replace_generation:
+            return
+        if self._replace_worker is None:
+            return
+        self._replace_cancel_requested = True
+        self._replace_worker.cancel()
+        if self._processing_modal:
+            self._processing_modal.set_status("Cancellation requested, please wait...")
+
+    def _set_replace_paused(self, generation, paused):
+        if generation != self._replace_generation or self._replace_worker is None:
+            return
+        self._replace_worker.pause() if paused else self._replace_worker.resume()
+
+    def _on_replace_progress(self, generation, current, total, message):
+        if generation != self._replace_generation or self._discard_replace_callbacks:
+            return
+        if self._processing_modal:
+            progress = int(current / total * 100) if total else 0
+            self._processing_modal.set_progress(progress)
+            self._processing_modal.set_status(message)
+            self._processing_modal.log_message(message)
+        if self._current_progress_widget:
+            self._current_progress_widget.update_progress(current, total, message)
+            self._current_progress_widget.add_log(message)
+
+    def _on_replace_error(self, generation, message):
+        if generation != self._replace_generation or self._discard_replace_callbacks:
+            return
+        logger.warning("Search/Replace file operation: %s", message)
+        if self._processing_modal:
+            self._processing_modal.log_message(f"ERROR: {message}")
+        if self._current_progress_widget:
+            self._current_progress_widget.add_log(f"ERROR: {message}")
+
+    def _on_replace_done(self, generation, result):
+        if generation == self._replace_generation:
+            self._pending_replace_result = result
+
+    @staticmethod
+    def _replace_error_summary(errors):
+        visible = list(errors[:5])
+        if len(errors) > len(visible):
+            visible.append(f"... and {len(errors) - len(visible)} more errors")
+        return "\n".join(visible)
+
+    def _apply_replace_result(self, result, metadata):
+        files_modified = result.get("files_modified", 0)
+        replacements = result.get("replacements_made", 0)
+        errors = result.get("errors", [])
+        status = (
+            f"Modified {files_modified} file(s); "
+            f"made {replacements} replacement(s)."
+        )
+        self.results.print_message(status)
+
+        if self._processing_modal:
+            self._processing_modal.mark_completed(
+                success=not errors,
+                message=status if not errors else f"{status}\nCompleted with errors.",
+            )
+        if self._current_progress_widget:
+            self._current_progress_widget.set_complete(success=not errors)
+            self._current_progress_widget.add_log(status)
+
         try:
             if hasattr(self, "dock_history"):
                 self.dock_history.add_operation(
                     "Replace",
-                    {"query": self.ed_query.toPlainText().strip(), "replacement": repl, "files_processed": count_files},
+                    {
+                        "query": metadata["query"],
+                        "replacement": metadata["replacement"],
+                        "path": metadata["path"],
+                        "files_processed": files_modified,
+                        "replacements": replacements,
+                        "errors": len(errors),
+                    },
                 )
-        except Exception as e:
-            logger.error(f"Failed to save to history dock: {e}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to save to history dock: %s", exc)
 
-        QMessageBox.information(
-            self,
-            tr("search_replace.msg_replace_title"),
-            tr("search_replace.msg_replace_success").format(count=count_files),
+        if errors:
+            QMessageBox.warning(
+                self,
+                tr("search_replace.msg_replace_title"),
+                f"{status}\n\n{self._replace_error_summary(errors)}",
+            )
+        else:
+            QMessageBox.information(
+                self,
+                tr("search_replace.msg_replace_title"),
+                tr("search_replace.msg_replace_success").format(
+                    count=files_modified
+                ),
+            )
+
+    def _on_replace_thread_finished(self, generation):
+        if generation != self._replace_generation:
+            return
+        action = self._close_action
+        self._close_action = None
+        result = self._pending_replace_result
+        cancelled = self._replace_cancel_requested or (
+            result is not _UNSET and result.get("cancelled", False)
         )
-        self.results.print_message()
+        discard = self._discard_replace_callbacks
+        metadata = self._replace_metadata
+        self._clear_replace_references()
+        self.processing_replace = False
+        self._set_search_controls_enabled(True)
+
+        if cancelled or discard:
+            files_modified = 0 if result is _UNSET else result.get("files_modified", 0)
+            message = f"Replacement cancelled after modifying {files_modified} file(s)."
+            if not discard:
+                self.results.print_message(message)
+                if self._processing_modal:
+                    self._processing_modal.mark_completed(success=False, message=message)
+                if self._current_progress_widget:
+                    self._current_progress_widget.set_complete(success=False)
+                    self._current_progress_widget.add_log(message)
+        elif result is _UNSET or metadata is None:
+            message = "Replacement ended without a result."
+            self.results.print_message(message)
+            if self._processing_modal:
+                self._processing_modal.mark_completed(success=False, message=message)
+        else:
+            self._apply_replace_result(result, metadata)
+
+        self._pending_replace_result = _UNSET
+        self._replace_metadata = None
+        self._replace_cancel_requested = False
+        self._discard_replace_callbacks = False
+        if action:
+            self._dispose_processing_modal()
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                target.close()
+
+    def _clear_replace_references(self):
+        receiver = self._replace_receiver
+        self._replace_thread = None
+        self._replace_worker = None
+        self._replace_receiver = None
+        self._replace_thread_id = None
+        if receiver is not None:
+            receiver.deleteLater()

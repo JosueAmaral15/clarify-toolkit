@@ -68,12 +68,16 @@ class SearchFileRequest:
     conditions: tuple[SearchConditionRequest, ...]
     logic_operator: str
 
-    def iter_files(self) -> Iterator[str]:
+    def iter_files(self, checkpoint=None) -> Iterator[str]:
         conditions = tuple(condition.to_condition() for condition in self.conditions)
         for file_path in walk_files(self.root, self.include_globs, self.exclude_globs):
+            if checkpoint is not None and not checkpoint():
+                return
             if not conditions or filter_files_by_conditions(
                 (file_path,), conditions, self.logic_operator
             ):
+                if checkpoint is not None and not checkpoint():
+                    return
                 yield file_path
 
 
