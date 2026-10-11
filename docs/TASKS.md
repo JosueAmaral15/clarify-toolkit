@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/07 - relatos de teste do Editor e direcao TOON organizados
+**Last Update**: 2026/10/11 - abertura de arquivo por caminho digitado organizada
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **14 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **15 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **44 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **45 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -85,6 +85,17 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   Reutilizar persistencia/recent paths existente quando compativel, sem armazenar
   conteudo ou duplicar historico. Abrir arquivo deve reutilizar aba ja aberta;
   abrir pasta deve atualizar Explorer/tooltip com o mesmo contrato de `Open Folder`.
+- [ ] **CE-OPEN-PATH-01: abrir arquivo por caminho digitado.** Adicionar ao menu
+  File uma acao `Open by Path...` que aceite texto com diretorios,
+  subdiretorios e nome do arquivo, sem obrigar o uso do seletor grafico. Aceitar
+  caminho absoluto e caminho relativo a raiz da pasta aberta, deixando essa base
+  explicita; expandir `~`, normalizar separadores e preservar Unicode sem executar
+  shell ou interpretar o texto como comando. Reutilizar a API central
+  `open_file_path()` e a aba existente para o mesmo arquivo. Validar entrada
+  vazia, caminho inexistente, diretorio, permissao, symlink, tamanho e tipo nao
+  suportado com erro claro, sem criar, alterar ou sobrescrever arquivos. Registrar
+  em recentes somente depois da abertura bem sucedida; manter entrada e historico
+  limitados, rotulo traduzivel, teclado acessivel e testes com espacos no caminho.
 - [ ] **CE-FIND-01: Find completo, correto e persistente.** Corrigir primeiro o
   defeito reproduzivel relatado: `Case Sensitive` e `Whole Word` nao estao sendo
   respeitados no painel do Clarify Editor; `Regex` deve seguir o mesmo contrato e

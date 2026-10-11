@@ -3819,3 +3819,27 @@ Plano imediato:
   requisitos. Transporte/automacao permaneceram desativados conforme o usuario.
 - example.py permaneceu untracked e intacto. Alteracoes prontas para commit e push
   somente na branch COM-93ac6656-86bc-44b8-9132-ebc0e9d73ddc.
+
+## 2026-10-11 - Pre-acao - abrir arquivo por caminho digitado
+
+- O usuario pediu uma tarefa do Clarify Editor para abrir um arquivo informando
+  textualmente o caminho completo, incluindo diretorios, subdiretorios e nome.
+- CE-RECENT-01 cobre historico, mas nao entrada textual. Sera criada uma tarefa
+  independente que reutilize a API central open_file_path(), sem duplicar o fluxo
+  de abertura nem criar arquivos quando o caminho digitado for invalido.
+- Escopo apenas documental em docs/TASKS.md. Branch
+  COM-26d95868-ddf6-4c8b-950e-4f04ba5fa793 criada de 33b5168; example.py deve
+  permanecer untracked e intacto.
+
+## 2026-10-11 - Pos-acao - abrir arquivo por caminho digitado
+
+- Criada CE-OPEN-PATH-01 como tarefa SHOULD do Clarify Editor. A acao prevista e
+  File > Open by Path..., com caminho absoluto ou relativo a pasta aberta,
+  expansao de ~, Unicode e espacos, sem shell ou criacao implicita de arquivo.
+- A tarefa exige reutilizar open_file_path(), reaproveitar aba aberta, registrar
+  recentes somente apos sucesso e informar entrada vazia, ausencia, diretorio,
+  permissao, symlink, tamanho ou tipo nao suportado.
+- docs/TASKS.md passou de44 para45 checkboxes abertos, sendo15 na fila
+  prioritaria. A tarefa aparece uma vez e git diff --check passou.
+- Nenhum codigo runtime ou teste GUI foi executado nesta alteracao documental.
+  example.py manteve o SHA-256 anterior e permaneceu fora do escopo.
