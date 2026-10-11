@@ -121,6 +121,8 @@ class TestEditorDockInitialization:
                 "toggle_line_comment",
                 "indent",
                 "outdent",
+                "indent_use_tabs",
+                "indent_width",
                 "move_line_up",
                 "move_line_down",
                 "insert_datetime",
@@ -166,6 +168,7 @@ class TestEditorDockInitialization:
         assert editor_dock.action_render_whitespace.isCheckable()
         assert editor_dock.action_show_line_numbers.isCheckable()
         assert editor_dock.action_show_explorer.isCheckable()
+        assert editor_dock.action_indent_use_tabs.isCheckable()
         assert hasattr(editor_dock, 'action_compare_with_saved')
         assert hasattr(editor_dock, 'action_reload_from_disk')
         assert hasattr(editor_dock, 'action_json_validate')

@@ -401,6 +401,8 @@ class EditorDock(BaseDock):
         "toggle_line_comment": {"text_key": "editor.btn_toggle_line_comment", "shortcut": "Ctrl+/"},
         "indent": {"text_key": "editor.btn_indent", "shortcuts": ("Ctrl+]", "Ctrl+I")},
         "outdent": {"text_key": "editor.btn_outdent", "shortcut": "Ctrl+["},
+        "indent_use_tabs": {"text_key": "editor.chk_indent_use_tabs", "checkable": True},
+        "indent_width": {"text_key": "editor.btn_indent_width"},
         "move_line_up": {"text_key": "editor.btn_move_line_up", "shortcut": "Alt+Up"},
         "move_line_down": {"text_key": "editor.btn_move_line_down", "shortcut": "Alt+Down"},
         "insert_datetime": {"text_key": "editor.btn_insert_datetime", "shortcut": "F5"},
@@ -446,7 +448,8 @@ class EditorDock(BaseDock):
                 "select_all", "select_line", None, "find", "find_replace",
                 "go_to_line",
                 None, "duplicate_line", "toggle_line_comment", "indent",
-                "outdent", "move_line_up", "move_line_down",
+                "outdent", "indent_use_tabs", "indent_width",
+                "move_line_up", "move_line_down",
                 "insert_datetime", "trim_trailing_spaces",
             ),
         },
@@ -523,6 +526,7 @@ class EditorDock(BaseDock):
         "render_whitespace": "render_whitespace_enabled",
         "show_line_numbers": "show_line_numbers_enabled",
         "show_explorer": "show_explorer_enabled",
+        "indent_use_tabs": "indent_use_tabs",
     }
 
     MAX_EXTERNAL_FILE_WATCHES = 128
@@ -545,6 +549,10 @@ class EditorDock(BaseDock):
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
         self.render_whitespace_enabled = self.settings.value("render_whitespace_enabled", False, type=bool)
+        self.indent_use_tabs = self.settings.value("indent_use_tabs", False, type=bool)
+        self.indent_width = max(
+            1, min(8, self.settings.value("indent_width", 4, type=int))
+        )
         self.show_explorer_enabled = self.settings.value(
             "show_explorer_enabled", True, type=bool
         )
@@ -1116,6 +1124,9 @@ class EditorDock(BaseDock):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
         if hasattr(tab, 'editor'):
             tab.editor.textChanged.connect(self._recovery_lifecycle.schedule)
+            if not getattr(tab, '_clarify_indent_filter_installed', False):
+                tab.editor.installEventFilter(self)
+                setattr(tab, '_clarify_indent_filter_installed', True)
         if hasattr(tab, 'edit_only_changed'):
             tab.edit_only_changed.connect(lambda _enabled=False, t=tab: self._on_tab_mode_changed(t))
         if (
@@ -1132,6 +1143,75 @@ class EditorDock(BaseDock):
         self._apply_word_wrap_to_tab(tab)
         self._apply_render_whitespace_to_tab(tab)
         self._apply_line_numbers_to_tab(tab)
+        self._apply_indentation_to_tab(tab)
+
+    def eventFilter(self, watched, event):  # pylint: disable=invalid-name
+        """Apply editor-only Tab behavior without intercepting other Qt shortcuts."""
+        if event.type() == QEvent.Type.KeyPress and event.key() in (
+            Qt.Key.Key_Tab,
+            Qt.Key.Key_Backtab,
+        ):
+            modifiers = event.modifiers()
+            unsupported = modifiers & (
+                Qt.KeyboardModifier.ControlModifier
+                | Qt.KeyboardModifier.AltModifier
+                | Qt.KeyboardModifier.MetaModifier
+            )
+            tab = self._tab_for_editor(watched)
+            if tab is not None and not watched.isReadOnly() and not unsupported:
+                is_outdent = (
+                    event.key() == Qt.Key.Key_Backtab
+                    or bool(modifiers & Qt.KeyboardModifier.ShiftModifier)
+                )
+                cursor = watched.textCursor()
+                if is_outdent:
+                    self._outdent_tab_lines(tab)
+                elif cursor.hasSelection():
+                    self._indent_tab_lines(tab)
+                else:
+                    cursor.insertText(self._indent_unit())
+                return True
+        return super().eventFilter(watched, event)
+
+    def _tab_for_editor(self, editor):
+        """Return the open tab that owns an editor widget."""
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if getattr(tab, 'editor', None) is editor:
+                return tab
+        return None
+
+    def _indent_unit(self) -> str:
+        return "\t" if self.indent_use_tabs else " " * self.indent_width
+
+    def _apply_indentation_to_tab(self, tab) -> None:
+        if not hasattr(tab, 'editor'):
+            return
+        space_width = tab.editor.fontMetrics().horizontalAdvance(" ")
+        tab.editor.setTabStopDistance(max(1, space_width * self.indent_width))
+
+    def _set_indent_use_tabs(self, enabled: bool) -> None:
+        self.indent_use_tabs = bool(enabled)
+        self.settings.setValue("indent_use_tabs", self.indent_use_tabs)
+        self._refresh_editor_menus()
+
+    def _set_indent_width(self, width: int | None = None) -> bool:
+        if width is None:
+            width, accepted = QInputDialog.getInt(
+                self,
+                tr("editor.indent_width_title"),
+                tr("editor.indent_width_prompt"),
+                self.indent_width,
+                1,
+                8,
+            )
+            if not accepted:
+                return False
+        self.indent_width = max(1, min(8, int(width)))
+        self.settings.setValue("indent_width", self.indent_width)
+        for index in range(self.tab_widget.count()):
+            self._apply_indentation_to_tab(self.tab_widget.widget(index))
+        return True
 
     def _setup_file_menu(self) -> None:
         """Create the local File menu bar actions."""
@@ -1213,6 +1293,8 @@ class EditorDock(BaseDock):
             "toggle_line_comment": lambda _checked=False: self._toggle_line_comment_current_tab(),
             "indent": lambda _checked=False: self._indent_current_lines(),
             "outdent": lambda _checked=False: self._outdent_current_lines(),
+            "indent_use_tabs": lambda checked: self._set_indent_use_tabs(checked),
+            "indent_width": lambda _checked=False: self._set_indent_width(),
             "move_line_up": lambda _checked=False: self._move_current_lines(-1),
             "move_line_down": lambda _checked=False: self._move_current_lines(1),
             "insert_datetime": lambda _checked=False: self._insert_datetime_current_tab(),
@@ -1428,11 +1510,40 @@ class EditorDock(BaseDock):
             # Other files → use simple text editor
             return EditorTab(file_path, self, edit_only_mode=edit_only)
 
+    def _settle_successful_save(self, tab, file_path: str, *, save_as: bool) -> bool:
+        """Commit all Editor state only after the file write has succeeded."""
+        normalized_path = self._normalized_file_path(file_path)
+        tab.file_path = normalized_path
+        tab.is_modified = False
+        if hasattr(tab, 'editor'):
+            tab.editor.document().setModified(False)
+        if hasattr(tab, 'auto_save_timer'):
+            tab.auto_save_timer.stop()
+
+        was_edit_only = bool(getattr(tab, 'edit_only_mode', False))
+        if was_edit_only:
+            tab.edit_only_mode = False
+            if hasattr(tab, '_update_visual_indicators'):
+                tab._update_visual_indicators()
+            if hasattr(tab, '_update_toolbar_visibility'):
+                tab._update_toolbar_visibility()
+
+        self._track_tab_disk_state(tab)
+        self._add_recent_file(normalized_path)
+        self._discard_recovery_for_tab(tab)
+        self._update_tab_title(tab)
+        self._refresh_editor_menus()
+        action = "Saved as" if save_as else "Saved"
+        self.lbl_status.setText(f"{action}: {os.path.basename(normalized_path)}")
+        if was_edit_only and hasattr(tab, 'edit_only_changed'):
+            tab.edit_only_changed.emit(False)
+        return True
+
     def _save_file(self):
         """Save current file (State pattern: behavior depends on edit_only_mode)."""
         tab = self.tab_widget.currentWidget()
         if not tab:
-            return
+            return False
 
         # Check if edit-only mode (State pattern)
         if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
@@ -1445,40 +1556,35 @@ class EditorDock(BaseDock):
             )
 
             if reply == QMessageBox.Yes:
-                self._save_file_as()
-            return
+                return self._save_file_as()
+            return False
 
         if not tab.file_path:
-            self._save_file_as()
-            return
+            return self._save_file_as()
 
         save_decision = self._save_decision_for_external_change(tab)
         if save_decision == "save_as":
-            self._save_file_as()
-            return
+            return self._save_file_as()
         if save_decision != "save":
-            return
+            return False
 
         # Handle different tab types
         if isinstance(tab, JsonEditorTab):
             success, error_msg = tab.save_file()
             if success:
-                self._track_tab_disk_state(tab)
-                self._update_tab_title(tab)
-                self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
+                return self._settle_successful_save(tab, tab.file_path, save_as=False)
             else:
                 QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed").format(error_msg))
         else:
             # EditorTab
             if tab.save_file():
-                self._track_tab_disk_state(tab)
-                self._update_tab_title(tab)
-                self.lbl_status.setText(f"Saved: {os.path.basename(tab.file_path)}")
+                return self._settle_successful_save(tab, tab.file_path, save_as=False)
             else:
                 QMessageBox.critical(
                     self, tr("editor.msg_error_title"),
                     tr("editor.msg_save_failed_path").format(tab.file_path)
                 )
+        return False
 
     def _save_file_as(self):
         """Save current file with new name."""
@@ -1501,22 +1607,14 @@ class EditorDock(BaseDock):
         if isinstance(tab, JsonEditorTab):
             success, error_msg = tab.save_file(file_path)
             if success:
-                self._track_tab_disk_state(tab)
-                self._update_tab_title(tab)
-                self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
-                self._refresh_editor_menus()
-                return True
+                return self._settle_successful_save(tab, file_path, save_as=True)
             else:
                 QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed").format(error_msg))
                 return False
         else:
             # EditorTab
             if tab.save_file(file_path):
-                self._track_tab_disk_state(tab)
-                self._update_tab_title(tab)
-                self.lbl_status.setText(f"Saved as: {os.path.basename(file_path)}")
-                self._refresh_editor_menus()
-                return True
+                return self._settle_successful_save(tab, file_path, save_as=True)
             else:
                 QMessageBox.critical(
                     self, tr("editor.msg_error_title"),
@@ -1653,15 +1751,42 @@ class EditorDock(BaseDock):
         return lines, min(start_line, len(lines) - 1), min(end_line, len(lines) - 1)
 
     @staticmethod
-    def _replace_editor_text(editor, new_text: str, cursor_position: int = 0) -> None:
-        """Replace editor text as a single undoable edit and restore cursor position."""
+    def _replace_editor_text(
+        editor,
+        new_text: str,
+        cursor_position: int = 0,
+        anchor_position: int | None = None,
+    ) -> None:
+        """Replace text as one undoable edit and restore cursor or selection."""
         cursor = editor.textCursor()
         cursor.beginEditBlock()
         cursor.select(QTextCursor.Document)
         cursor.insertText(new_text)
         cursor.endEditBlock()
-        cursor.setPosition(max(0, min(cursor_position, len(new_text))))
+        bounded_position = max(0, min(cursor_position, len(new_text)))
+        if anchor_position is not None and anchor_position != cursor_position:
+            bounded_anchor = max(0, min(anchor_position, len(new_text)))
+            cursor.setPosition(bounded_anchor)
+            cursor.setPosition(bounded_position, QTextCursor.KeepAnchor)
+        else:
+            cursor.setPosition(bounded_position)
         editor.setTextCursor(cursor)
+
+    @staticmethod
+    def _map_position_after_prefix_edits(
+        position: int,
+        edits: list[tuple[int, int, int]],
+    ) -> int:
+        """Map a text position after line-prefix insertions/removals."""
+        delta = 0
+        for start, removed, inserted in edits:
+            if position < start:
+                break
+            current_start = start + delta
+            if position <= start + removed:
+                return current_start + inserted
+            delta += inserted - removed
+        return position + delta
 
     @staticmethod
     def _comment_tokens_for_path(file_path: str | None) -> tuple[str, str]:
@@ -1736,20 +1861,32 @@ class EditorDock(BaseDock):
         self.lbl_status.setText(tr("editor.status_line_comment_toggled"))
 
     def _indent_current_lines(self):
-        """Indent current or selected lines by four spaces."""
+        """Indent current or selected lines with the configured unit."""
         tab = self.tab_widget.currentWidget()
         if not tab or not hasattr(tab, 'editor'):
             return
 
+        self._indent_tab_lines(tab)
+
+    def _indent_tab_lines(self, tab) -> None:
+        """Indent one tab's current/selected lines while preserving selection."""
         editor = tab.editor
+        original_cursor = editor.textCursor()
+        original_position = original_cursor.position()
+        original_anchor = original_cursor.anchor()
         lines, start_line, end_line = self._selected_line_range(editor)
+        original_starts = [self._line_start_position(lines, index) for index in range(len(lines))]
+        unit = self._indent_unit()
+        edits = []
         for index in range(start_line, end_line + 1):
-            lines[index] = "    " + lines[index]
+            edits.append((original_starts[index], 0, len(unit)))
+            lines[index] = unit + lines[index]
 
         self._replace_editor_text(
             editor,
             "".join(lines),
-            self._line_start_position(lines, start_line) + 4,
+            self._map_position_after_prefix_edits(original_position, edits),
+            self._map_position_after_prefix_edits(original_anchor, edits),
         )
         self.lbl_status.setText(
             tr("editor.status_lines_indented").format(count=end_line - start_line + 1)
@@ -1770,15 +1907,32 @@ class EditorDock(BaseDock):
         if not tab or not hasattr(tab, 'editor'):
             return
 
+        self._outdent_tab_lines(tab)
+
+    def _outdent_tab_lines(self, tab) -> None:
+        """Outdent one tab's current/selected lines while preserving selection."""
         editor = tab.editor
+        original_cursor = editor.textCursor()
+        original_position = original_cursor.position()
+        original_anchor = original_cursor.anchor()
         lines, start_line, end_line = self._selected_line_range(editor)
+        original_starts = [self._line_start_position(lines, index) for index in range(len(lines))]
+        edits = []
         for index in range(start_line, end_line + 1):
-            lines[index] = self._outdent_line(lines[index])[0]
+            original_line = lines[index]
+            if original_line.startswith("\t"):
+                remove_count = 1
+            else:
+                leading_spaces = len(original_line) - len(original_line.lstrip(" "))
+                remove_count = min(self.indent_width, leading_spaces)
+            edits.append((original_starts[index], remove_count, 0))
+            lines[index] = original_line[remove_count:]
 
         self._replace_editor_text(
             editor,
             "".join(lines),
-            self._line_start_position(lines, start_line),
+            self._map_position_after_prefix_edits(original_position, edits),
+            self._map_position_after_prefix_edits(original_anchor, edits),
         )
         self.lbl_status.setText(
             tr("editor.status_lines_outdented").format(count=end_line - start_line + 1)

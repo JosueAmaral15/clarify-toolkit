@@ -9,9 +9,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **15 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **13 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **45 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **43 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -62,7 +62,7 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   nao for compativel, executar busca normal e informar isso sem prometer ganho.
   Preservar budgets, ambas as vistas, pause/cancel/close e medir latencia/correta
   equivalencia com a pesquisa completa.
-- [ ] **CE-FIRST-SAVE-01: limpar corretamente o estado apos o primeiro save.**
+- [x] **CE-FIRST-SAVE-01: limpar corretamente o estado apos o primeiro save.**
   Corrigir o defeito relatado em que um arquivo continua com indicador de
   inseguro, inconsistente ou nao salvo depois do primeiro `Save`/`Save As` bem
   sucedido. Atualizar caminho, titulo, tooltip, watcher, baseline e estado dirty
@@ -70,15 +70,22 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   buffer. Edicoes posteriores devem marca-lo novamente. Cobrir arquivo sem nome,
   colisao, permissao/IO, encoding, escrita atomica e recovery sem declarar sucesso
   antes da persistencia real.
+  Entregue em 11/10/2026: settlement unico apos escrita atomica bem sucedida para
+  abas texto/JSON; path, dirty/document, edit-only, watcher, recovery, recentes,
+  titulo e menus agora mudam juntos. Falha/cancelamento preservam o buffer e o
+  indicador. Symlinks/hard links sao rejeitados sem alterar a origem.
 
 ### SHOULD - Fluxos Do Editor E Nomes Da Interface
 
-- [ ] **CE-INDENT-01: indentacao por Tab e Shift+Tab.** Fazer `Tab` indentar e
+- [x] **CE-INDENT-01: indentacao por Tab e Shift+Tab.** Fazer `Tab` indentar e
   `Shift+Tab` remover um nivel no Clarify Editor, para cursor ou multiplas linhas,
   preservando selecao, undo/redo e line endings. Respeitar preferencia explicita
   entre tab real e espacos/largura configurada; nao transformar Tab em navegacao
   de foco enquanto o editor de texto estiver ativo. Cobrir inicio/fim de arquivo,
   linhas vazias, selecao reversa e arquivos somente leitura.
+  Entregue em11/10/2026: filtro limitado aos editores intercepta somente Tab e
+  Shift+Tab sem Ctrl/Alt/Meta, preserva selecao/undo e usa tab real ou 1-8 espacos
+  conforme preferencias persistidas. Largura visual acompanha a configuracao.
 - [ ] **CE-RECENT-01: arquivos e pastas recentes.** Adicionar ao menu File listas
   separadas `Open Recent File` e `Open Recent Folder`, com limite, deduplicacao,
   ordem por uso recente, remocao de caminhos inexistentes e `Clear Recent`.

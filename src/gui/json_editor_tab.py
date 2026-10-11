@@ -40,6 +40,7 @@ from PySide6.QtGui import QColor, QFont, QTextCharFormat, QTextCursor, QTextForm
 from src.core.insert import insert_at_line
 from src.gui.panels import InsertPanel, RegexInsertPanel
 from src.i18n.translator import tr, tooltip_tr
+from src.utils.atomic_files import write_text_atomically
 
 from .dialogs import JsonSearchDialog
 from .json_validator import JsonValidator
@@ -916,6 +917,7 @@ class JsonEditorTab(QWidget):
             self.editor.setPlainText(content)
             self.editor.blockSignals(False)
             self.is_modified = False
+            self.editor.document().setModified(False)
             self.modified_changed.emit(False)
 
             # Validate and build tree
@@ -952,11 +954,11 @@ class JsonEditorTab(QWidget):
                 return (False, "Save cancelled by user")
 
         try:
-            with open(save_path, 'w', encoding='utf-8') as f:
-                f.write(text)
+            write_text_atomically(save_path, text)
 
             self.file_path = save_path
             self.is_modified = False
+            self.editor.document().setModified(False)
             self.modified_changed.emit(False)
 
             return (True, "")

@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from src.i18n.translator import tr, tooltip_tr
+from src.utils.atomic_files import write_text_atomically
 from .syntax_highlighter import SyntaxHighlighter
 
 
@@ -203,25 +204,16 @@ class EditorTab(QWidget):
             )
 
             if file_path:
-                # Save content
-                try:
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(self.editor.toPlainText())
-
-                    # Update state
+                if self.save_file(file_path):
                     self.edit_only_mode = False
-                    self.file_path = file_path
-                    self.is_modified = False
-                    self._setup_highlighter()
                     self._update_visual_indicators()
                     self._update_toolbar_visibility()
                     self.edit_only_changed.emit(False)
-                    self.modified_changed.emit(False)
-                except Exception as e:
+                else:
                     QMessageBox.critical(
                         self,
                         tr("editor_tab.save_error_title"),
-                        tr("editor_tab.save_error_message").format(e)
+                        tr("editor_tab.save_error_message").format(file_path)
                     )
 
     def _update_visual_indicators(self):
@@ -295,6 +287,7 @@ class EditorTab(QWidget):
             self.editor.setPlainText(content)
             self.editor.blockSignals(False)
             self.is_modified = False
+            self.editor.document().setModified(False)
             self.modified_changed.emit(False)
 
             # Setup highlighter
@@ -319,11 +312,12 @@ class EditorTab(QWidget):
             return False
 
         try:
-            with open(save_path, 'w', encoding='utf-8') as f:
-                f.write(self.editor.toPlainText())
+            write_text_atomically(save_path, self.editor.toPlainText())
 
             self.file_path = save_path
             self.is_modified = False
+            self.editor.document().setModified(False)
+            self.auto_save_timer.stop()
             self.modified_changed.emit(False)
 
             # Setup highlighter if new file

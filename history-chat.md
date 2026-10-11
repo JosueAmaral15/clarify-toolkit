@@ -3843,3 +3843,38 @@ Plano imediato:
   prioritaria. A tarefa aparece uma vez e git diff --check passou.
 - Nenhum codigo runtime ou teste GUI foi executado nesta alteracao documental.
   example.py manteve o SHA-256 anterior e permaneceu fora do escopo.
+
+## 2026-10-11 - Pre-acao - fila prioritaria do Clarify Editor
+
+- O usuario autorizou implementar as tarefas prioritarias do Clarify Editor ate
+  conclui-las, antes de iniciar as tarefas do File Explorer.
+- Branch COM-d55faf19-1012-409f-a6f2-11243e783b1f criada de 518ed23. example.py
+  permanece untracked e deve ficar intacto e fora de todos os commits.
+- Ordem inicial por risco: CE-FIRST-SAVE-01; auditoria e correcoes de Find;
+  indentacao; abertura/recentes; menus e sincronizacao de Explorer/abas; sessao de
+  pasta; notas temporarias. APP-TOON-PRIMARY-01 sera tratada como migracao
+  transversal somente depois da conclusao funcional do Editor.
+- Antes de editar, serao auditados codigo, testes, consumidores e historico. Cada
+  estagio tera regressivos focados e commit proprio; widgets/modelos Qt ficam na
+  GUI thread e IO/processamento limitado vai a workers apenas quando necessario.
+- Testes Qt serao offscreen, seriais e isolados por modulo, com HOME temporario,
+  RAM do sistema abaixo de85%, tree RSS abaixo de600MiB, wall180s e pytest20s.
+  Nenhum documento real, provider ao vivo ou automacao/continuacao nativa sera
+  usado; transporte permanece desativado conforme decisao do usuario.
+
+## 2026-10-11 - Checkpoint - Clarify Editor Stage 1
+
+- CE-FIRST-SAVE-01 e CE-INDENT-01 foram implementadas na branch
+  COM-d55faf19-1012-409f-a6f2-11243e783b1f. O primeiro salvamento agora usa
+  escrita atomica compartilhada e liquida caminho, dirty/document, edit-only,
+  watcher, recovery, titulo e menus somente depois da persistencia real.
+- Tab e Shift+Tab passaram a indentar/desindentar cursor ou selecao como uma
+  operacao undoable. A preferencia persistida aceita TAB real ou 1-8 espacos e
+  nao interfere nos atalhos com Ctrl, Alt ou Meta nem em abas somente leitura.
+- Evidencia isolada: 203 testes distintos passaram, incluindo 67 do EditorDock,
+  53 do lifecycle de recovery, 42 de recovery/escrita atomica, 20 de layout,
+  16 de edit-only e 5 regressivos novos. Pylint-E, py_compile, JSON e
+  git diff --check passaram; nao houve crash Qt nativo.
+- Dois disparos foram interrompidos preventivamente pelo limite global de 85%
+  de RAM e repetidos depois da queda de uso; o pico da arvore ficou abaixo de
+  243 MiB. example.py permaneceu untracked e fora do escopo.
