@@ -3893,3 +3893,17 @@ Plano imediato:
   npm/Next/Playwright de outro workspace. O recovery parcial nao foi contado; seu
   modulo de 53 casos havia passado integralmente no Stage 1. Nenhum processo
   alheio foi encerrado e os guards nao foram relaxados.
+
+## 2026-10-11 - Checkpoint - Clarify Editor Stage 3
+
+- CE-FIND-01 foi concluida com matcher puro compartilhado por navegacao e replace.
+  Case Sensitive, Whole Word e Regex agora se combinam; Previous/Next sao
+  circulares e o painel mostra total e posicao atual.
+- Opcoes e escopo persistem globalmente no Editor. Foram incluidos intervalos de
+  linhas inclusivos e radios All Text, Only Strings e Only Variables, com spans
+  lexicos para Python, JSON e JavaScript/TypeScript e fallback informado.
+- Limites: texto 2 MiB, consulta 4096 caracteres/16 KiB, 10 mil resultados e
+  deadline cooperativa de 0,75 s. Regex vazio e entradas invalidas falham sem
+  mover o cursor; Replace All permanece uma operacao undoable.
+- Passaram 89 casos completos (14 puros, 8 GUI novos e 67 EditorDock), pico
+  204,2 MiB, sem crash Qt ou guard abort nas execucoes finais.

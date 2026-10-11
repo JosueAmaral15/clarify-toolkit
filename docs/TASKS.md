@@ -9,9 +9,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **11 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **10 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **41 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **40 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -110,7 +110,7 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   raiz do Explorer, `~`, espacos e Unicode; limita entrada a 4096 caracteres e
   arquivo a 16 MiB, rejeita entrada vazia, ausente, diretorio, symlink, arquivo
   irregular ou ilegivel e chama exclusivamente `open_file_path()`.
-- [ ] **CE-FIND-01: Find completo, correto e persistente.** Corrigir primeiro o
+- [x] **CE-FIND-01: Find completo, correto e persistente.** Corrigir primeiro o
   defeito reproduzivel relatado: `Case Sensitive` e `Whole Word` nao estao sendo
   respeitados no painel do Clarify Editor; `Regex` deve seguir o mesmo contrato e
   expor erro de expressao invalida. Exibir ocorrencia atual e total (`n de m`),
@@ -123,6 +123,11 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   final opcionais, validadas e inclusivas. Recalcular ao mudar texto, consulta,
   modo ou intervalo; mostrar zero/erro sem cursor invalido. Manter entradas,
   resultados, memoria e tempo limitados, atalhos acessiveis, tema e traducao.
+  Entregue em 11/10/2026: matcher unico e limitado governa Next, Previous,
+  contagem `n de m`, Replace e Replace All com Case/Whole Word/Regex combinados.
+  Preferencias e escopo sao globais ao Editor e persistidos; intervalos inclusivos
+  por linha e escopos lexicos All/Strings/Variables cobrem Python, JSON e
+  JavaScript/TypeScript, com fallback visivel para tipo ou parse nao suportado.
 - [ ] **FE-MODE-I18N-01: nomes dos modos do workspace compartilhado.** Corrigir
   os catalogos e a retranslation runtime para que `Compact Mode` e `Advanced
   Mode` aparecam traduzidos em cada idioma. Os nomes funcionais `Search/Replace`

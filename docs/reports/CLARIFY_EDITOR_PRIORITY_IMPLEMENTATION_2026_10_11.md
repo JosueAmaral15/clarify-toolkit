@@ -116,3 +116,27 @@ from another workspace were active. The first EditorDock retry later passed all 
 cases. The recovery retry reached 18/53 before a global 85.3% stop with its own tree
 at 212.1 MiB; it is not counted as pass evidence. The same 53-case recovery module
 passed in Stage 1 before this Stage 2 menu/opening change.
+
+## Stage 3 Result - Complete
+
+Implemented `CE-FIND-01` through one pure, bounded matcher used by navigation and
+replacement rather than independent QTextDocument searches.
+
+- Case Sensitive, Whole Word and Regex now compose under the same match list.
+  Regex Whole Word is boundary-checked explicitly and empty-match regexes fail
+  visibly rather than looping or producing invalid cursor positions.
+- The dialog shows total matches and current `n of m`, supports circular Previous
+  and Next (`Shift+Enter` for Previous), and recalculates on query, option, scope,
+  line range or document changes.
+- Match preferences and semantic scope persist globally for Clarify Editor across
+  dialogs/tabs/instances. Inclusive start/end lines are optional and validated.
+- All Text, Only Strings and Only Variables use lexical spans for Python,
+  JSON/JSONL and JavaScript/TypeScript families. Unsupported file types or failed
+  Python tokenization fall back to all text with an explicit status message.
+- Search is limited to 2 MiB of text, 4096 query characters/16 KiB UTF-8, 10,000
+  matches and a 0.75-second cooperative scan deadline. Results are immutable
+  offsets; replacement is one undoable edit block and regex groups are expanded.
+
+Distinct complete passing cases: 89 (14 pure matcher, 8 new GUI and 67 existing
+EditorDock). Peak observed test-tree RSS was 204.2 MiB. No native Qt crash or guard
+abort occurred in final Stage 3 runs. Pylint-E, compile, JSON and diff checks pass.

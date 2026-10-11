@@ -32,23 +32,31 @@ from pathlib import Path
 from typing import List
 
 from PySide6.QtCore import (
-    QDir, QEvent, QFileSystemWatcher, QObject, QRegularExpression, QSize, Qt,
+    QDir, QEvent, QFileSystemWatcher, QObject, QSize, Qt,
     QTimer, Slot
 )
 from PySide6.QtWidgets import (
-    QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar, QPushButton,
+    QButtonGroup, QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar,
+    QPushButton, QRadioButton, QSpinBox,
     QVBoxLayout, QWidget,
     QLabel, QFileDialog, QMessageBox, QTextEdit, QTabWidget,
     QCheckBox, QFileSystemModel, QFrame, QMenu, QApplication, QSplitter,
     QTreeView, QSizePolicy
 )
 from PySide6.QtGui import (
-    QAction, QColor, QKeySequence, QPainter, QTextCursor, QTextDocument,
+    QAction, QColor, QKeySequence, QPainter, QTextCursor,
     QTextOption
 )
 
 from src.i18n.translator import tooltip_tr, tr
 from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
+from src.core.editor_find import (
+    MAX_QUERY_CHARS,
+    FindOptions,
+    FindValidationError,
+    find_matches,
+    replacement_for_match,
+)
 from src.product_identity import EDITOR_NAME
 
 from .base_dock import BaseDock
@@ -58,17 +66,35 @@ from .widgets import EditorTab
 
 
 class _EditorFindDialog(QDialog):
-    """Simple find/find-and-replace dialog for the active editor."""
+    """Bounded find/find-and-replace dialog for one editor document."""
 
-    def __init__(self, editor, replace_enabled: bool = False, parent=None):
+    def __init__(
+        self,
+        editor,
+        replace_enabled: bool = False,
+        parent=None,
+        *,
+        file_path: str | None = None,
+        state: dict | None = None,
+        state_changed=None,
+    ):
         super().__init__(parent)
         self.editor = editor
         self.replace_enabled = replace_enabled
+        self.file_path = file_path
+        self.state = state if state is not None else {}
+        self._state_changed = state_changed
+        self.matches = ()
+        self.current_match_index = -1
+        self._result_truncated = False
+        self._scope_fallback = False
+        self._mutating = False
 
         title_key = "editor.find_replace_dialog_title" if replace_enabled else "editor.find_dialog_title"
         self.setWindowTitle(tr(title_key))
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(560)
         self._setup_ui()
+        self._restore_state()
         self._connect_signals()
 
     def _setup_ui(self):
@@ -77,6 +103,7 @@ class _EditorFindDialog(QDialog):
         find_layout = QHBoxLayout()
         find_layout.addWidget(QLabel(tr("editor.lbl_find")))
         self.find_input = QLineEdit()
+        self.find_input.setMaxLength(MAX_QUERY_CHARS)
         find_layout.addWidget(self.find_input)
         layout.addLayout(find_layout)
 
@@ -97,11 +124,46 @@ class _EditorFindDialog(QDialog):
         options_layout.addStretch()
         layout.addLayout(options_layout)
 
+        scope_layout = QHBoxLayout()
+        scope_layout.addWidget(QLabel(tr("editor.lbl_find_scope")))
+        self.scope_group = QButtonGroup(self)
+        self.radio_all_text = QRadioButton(tr("editor.scope_all_text"))
+        self.radio_only_strings = QRadioButton(tr("editor.scope_only_strings"))
+        self.radio_only_variables = QRadioButton(tr("editor.scope_only_variables"))
+        for scope, button in (
+            ("all", self.radio_all_text),
+            ("strings", self.radio_only_strings),
+            ("variables", self.radio_only_variables),
+        ):
+            self.scope_group.addButton(button)
+            button.setProperty("find_scope", scope)
+            scope_layout.addWidget(button)
+        scope_layout.addStretch()
+        layout.addLayout(scope_layout)
+
+        line_layout = QHBoxLayout()
+        line_layout.addWidget(QLabel(tr("editor.lbl_start_line")))
+        self.start_line = QSpinBox()
+        self.start_line.setRange(0, self._plain_text_line_count())
+        self.start_line.setSpecialValueText(tr("editor.line_first"))
+        line_layout.addWidget(self.start_line)
+        line_layout.addWidget(QLabel(tr("editor.lbl_end_line")))
+        self.end_line = QSpinBox()
+        self.end_line.setRange(0, self._plain_text_line_count())
+        self.end_line.setSpecialValueText(tr("editor.line_last"))
+        line_layout.addWidget(self.end_line)
+        line_layout.addStretch()
+        layout.addLayout(line_layout)
+
         self.lbl_status = QLabel("")
         layout.addWidget(self.lbl_status)
 
         btn_layout = QHBoxLayout()
+        self.btn_find_previous = QPushButton(tr("editor.btn_find_previous"))
         self.btn_find_next = QPushButton(tr("editor.btn_find_next"))
+        self.btn_find_previous.setShortcut(QKeySequence("Shift+Enter"))
+        self.btn_find_next.setDefault(True)
+        btn_layout.addWidget(self.btn_find_previous)
         btn_layout.addWidget(self.btn_find_next)
 
         if self.replace_enabled:
@@ -116,6 +178,15 @@ class _EditorFindDialog(QDialog):
         layout.addLayout(btn_layout)
 
     def _connect_signals(self):
+        self.find_input.textChanged.connect(self._recalculate_matches)
+        self.chk_case_sensitive.toggled.connect(self._on_options_changed)
+        self.chk_whole_word.toggled.connect(self._on_options_changed)
+        self.chk_regex.toggled.connect(self._on_options_changed)
+        self.scope_group.buttonToggled.connect(self._on_scope_toggled)
+        self.start_line.valueChanged.connect(self._recalculate_matches)
+        self.end_line.valueChanged.connect(self._recalculate_matches)
+        self.editor.textChanged.connect(self._on_editor_text_changed)
+        self.btn_find_previous.clicked.connect(self._find_previous)
         self.btn_find_next.clicked.connect(self._find_next)
         self.find_input.returnPressed.connect(self._find_next)
         self.btn_close.clicked.connect(self.close)
@@ -124,123 +195,228 @@ class _EditorFindDialog(QDialog):
             self.btn_replace.clicked.connect(self._replace_current)
             self.btn_replace_all.clicked.connect(self._replace_all)
 
-    def _find_flags(self):
-        flags = QTextDocument.FindFlags()
-        if self.chk_case_sensitive.isChecked():
-            flags |= QTextDocument.FindCaseSensitively
-        if self.chk_whole_word.isChecked():
-            flags |= QTextDocument.FindWholeWords
-        return flags
+    def _restore_state(self) -> None:
+        self.chk_case_sensitive.setChecked(bool(self.state.get("case_sensitive", False)))
+        self.chk_whole_word.setChecked(bool(self.state.get("whole_word", False)))
+        self.chk_regex.setChecked(bool(self.state.get("regex", False)))
+        scope = self.state.get("scope", "all")
+        scope_buttons = {
+            "all": self.radio_all_text,
+            "strings": self.radio_only_strings,
+            "variables": self.radio_only_variables,
+        }
+        scope_buttons.get(scope, self.radio_all_text).setChecked(True)
 
-    def _find_target(self):
-        text = self.find_input.text()
-        if not text:
-            return None
+    def _save_state(self) -> None:
+        self.state.update(
+            {
+                "case_sensitive": self.chk_case_sensitive.isChecked(),
+                "whole_word": self.chk_whole_word.isChecked(),
+                "regex": self.chk_regex.isChecked(),
+                "scope": self._selected_scope(),
+            }
+        )
+        if self._state_changed is not None:
+            self._state_changed(dict(self.state))
 
-        if not self.chk_regex.isChecked():
-            return text
+    def _selected_scope(self) -> str:
+        button = self.scope_group.checkedButton()
+        return button.property("find_scope") if button is not None else "all"
 
-        options = QRegularExpression.PatternOptions()
-        if not self.chk_case_sensitive.isChecked():
-            options |= QRegularExpression.CaseInsensitiveOption
+    def _options(self) -> FindOptions:
+        return FindOptions(
+            case_sensitive=self.chk_case_sensitive.isChecked(),
+            whole_word=self.chk_whole_word.isChecked(),
+            regex=self.chk_regex.isChecked(),
+            scope=self._selected_scope(),
+            start_line=self.start_line.value() or None,
+            end_line=self.end_line.value() or None,
+        )
 
-        regex = QRegularExpression(text, options)
-        if not regex.isValid():
-            self.lbl_status.setText(
-                tr("editor.find_invalid_regex").format(error=regex.errorString())
+    def _on_options_changed(self, _checked=False) -> None:
+        self._save_state()
+        self._recalculate_matches()
+
+    def _on_scope_toggled(self, _button, checked: bool) -> None:
+        if checked:
+            self._on_options_changed()
+
+    def _plain_text_line_count(self) -> int:
+        """Use the same newline semantics as the pure matcher."""
+        return self.editor.toPlainText().count("\n") + 1
+
+    def _on_editor_text_changed(self) -> None:
+        if self._mutating:
+            return
+        line_count = self._plain_text_line_count()
+        self.start_line.setMaximum(line_count)
+        self.end_line.setMaximum(line_count)
+        self._recalculate_matches()
+
+    def _recalculate_matches(self, *_args) -> bool:
+        query = self.find_input.text()
+        self.matches = ()
+        self.current_match_index = -1
+        self._result_truncated = False
+        self._scope_fallback = False
+        if not query:
+            self._update_status()
+            return False
+        try:
+            result = find_matches(
+                self.editor.toPlainText(),
+                query,
+                self._options(),
+                file_path=self.file_path,
             )
-            return None
-        return regex
+        except FindValidationError as error:
+            self.lbl_status.setText(
+                tr("editor.find_error").format(error=error)
+            )
+            self._update_buttons()
+            return False
+        self.matches = result.matches
+        self._result_truncated = result.truncated
+        self._scope_fallback = result.scope_fallback
+        self._update_status()
+        return bool(self.matches)
+
+    def _update_buttons(self) -> None:
+        enabled = bool(self.matches)
+        self.btn_find_previous.setEnabled(enabled)
+        self.btn_find_next.setEnabled(enabled)
+        if self.replace_enabled:
+            self.btn_replace.setEnabled(enabled)
+            self.btn_replace_all.setEnabled(enabled)
+
+    def _update_status(self) -> None:
+        if not self.find_input.text():
+            status = ""
+        elif not self.matches:
+            status = tr("editor.find_no_matches")
+        elif self.current_match_index >= 0:
+            status = tr("editor.find_position").format(
+                current=self.current_match_index + 1,
+                total=len(self.matches),
+            )
+        elif self._result_truncated:
+            status = tr("editor.find_match_count_limited").format(
+                count=len(self.matches)
+            )
+        else:
+            status = tr("editor.find_match_count").format(count=len(self.matches))
+        if self._scope_fallback and self.find_input.text():
+            suffix = tr("editor.find_scope_fallback")
+            status = f"{status} {suffix}".strip()
+        self.lbl_status.setText(status)
+        self._update_buttons()
+
+    def _select_current_match(self) -> bool:
+        if not self.matches or self.current_match_index < 0:
+            return False
+        match = self.matches[self.current_match_index]
+        cursor = self.editor.textCursor()
+        cursor.setPosition(match.start)
+        cursor.setPosition(match.end, QTextCursor.KeepAnchor)
+        self.editor.setTextCursor(cursor)
+        self.editor.ensureCursorVisible()
+        self._update_status()
+        return True
 
     def _find_next(self) -> bool:
-        target = self._find_target()
-        if target is None:
+        if not self.matches and not self._recalculate_matches():
             return False
-
-        if self.editor.find(target, self._find_flags()):
-            self.lbl_status.setText("")
-            return True
-
-        cursor = self.editor.textCursor()
-        cursor.movePosition(QTextCursor.Start)
-        self.editor.setTextCursor(cursor)
-
-        if self.editor.find(target, self._find_flags()):
-            self.lbl_status.setText("")
-            return True
-
-        self.lbl_status.setText(tr("editor.find_no_matches"))
-        return False
-
-    @staticmethod
-    def _is_word_char(character: str) -> bool:
-        return bool(character) and (character.isalnum() or character == "_")
-
-    def _selection_is_whole_word(self) -> bool:
-        cursor = self.editor.textCursor()
-        start = cursor.selectionStart()
-        end = cursor.selectionEnd()
-        text = self.editor.toPlainText()
-        previous_char = text[start - 1] if start > 0 else ""
-        next_char = text[end] if end < len(text) else ""
-        return not self._is_word_char(previous_char) and not self._is_word_char(next_char)
-
-    def _selection_matches_find_text(self) -> bool:
-        find_text = self.find_input.text()
-        selected_text = self.editor.textCursor().selectedText()
-
-        if self.chk_whole_word.isChecked() and not self._selection_is_whole_word():
-            return False
-
-        if self.chk_regex.isChecked():
-            target = self._find_target()
-            if target is None:
-                return False
-            match = target.match(selected_text)
-            return (
-                match.hasMatch()
-                and match.capturedStart() == 0
-                and match.capturedEnd() == len(selected_text)
+        if self.current_match_index < 0:
+            position = self.editor.textCursor().selectionEnd()
+            self.current_match_index = next(
+                (
+                    index
+                    for index, match in enumerate(self.matches)
+                    if match.start >= position
+                ),
+                0,
             )
+        else:
+            self.current_match_index = (self.current_match_index + 1) % len(self.matches)
+        return self._select_current_match()
 
-        if self.chk_case_sensitive.isChecked():
-            return selected_text == find_text
-        return selected_text.lower() == find_text.lower()
+    def _find_previous(self) -> bool:
+        if not self.matches and not self._recalculate_matches():
+            return False
+        if self.current_match_index < 0:
+            position = self.editor.textCursor().selectionStart()
+            candidates = [
+                index
+                for index, match in enumerate(self.matches)
+                if match.end <= position
+            ]
+            self.current_match_index = candidates[-1] if candidates else len(self.matches) - 1
+        else:
+            self.current_match_index = (self.current_match_index - 1) % len(self.matches)
+        return self._select_current_match()
 
     def _replace_current(self):
-        if not self.find_input.text():
+        if not self.find_input.text() or not self.matches:
             return
-
-        if not self.editor.textCursor().hasSelection() or not self._selection_matches_find_text():
-            if not self._find_next():
-                return
-
+        if self.current_match_index < 0 and not self._find_next():
+            return
+        match = self.matches[self.current_match_index]
+        text = self.editor.toPlainText()
+        try:
+            replacement = replacement_for_match(
+                text[match.start:match.end],
+                self.find_input.text(),
+                self.replace_input.text(),
+                self._options(),
+            )
+        except FindValidationError as error:
+            self.lbl_status.setText(tr("editor.find_error").format(error=error))
+            return
         cursor = self.editor.textCursor()
-        if cursor.hasSelection():
-            cursor.insertText(self.replace_input.text())
+        cursor.setPosition(match.start)
+        cursor.setPosition(match.end, QTextCursor.KeepAnchor)
+        self._mutating = True
+        cursor.insertText(replacement)
+        self._mutating = False
+        self._recalculate_matches()
+        if self.matches:
+            self.current_match_index = next(
+                (
+                    index
+                    for index, candidate in enumerate(self.matches)
+                    if candidate.start >= match.start + len(replacement)
+                ),
+                0,
+            )
+            self._select_current_match()
+        else:
             self.lbl_status.setText(tr("editor.replace_one_complete"))
 
     def _replace_all(self):
-        find_text = self.find_input.text()
-        if not find_text:
+        if not self.find_input.text() or not self.matches:
             return
-
+        text = self.editor.toPlainText()
+        count = len(self.matches)
+        try:
+            for match in reversed(self.matches):
+                replacement = replacement_for_match(
+                    text[match.start:match.end],
+                    self.find_input.text(),
+                    self.replace_input.text(),
+                    self._options(),
+                )
+                text = text[:match.start] + replacement + text[match.end:]
+        except FindValidationError as error:
+            self.lbl_status.setText(tr("editor.find_error").format(error=error))
+            return
         cursor = self.editor.textCursor()
-        cursor.movePosition(QTextCursor.Start)
-        self.editor.setTextCursor(cursor)
-
-        count = 0
-        target = self._find_target()
-        if target is None:
-            return
-
-        while self.editor.find(target, self._find_flags()):
-            cursor = self.editor.textCursor()
-            if not cursor.hasSelection():
-                break
-            cursor.insertText(self.replace_input.text())
-            count += 1
-
+        self._mutating = True
+        cursor.beginEditBlock()
+        cursor.select(QTextCursor.Document)
+        cursor.insertText(text)
+        cursor.endEditBlock()
+        self._mutating = False
+        self._recalculate_matches()
         self.lbl_status.setText(tr("editor.replace_all_complete").format(count=count))
 
 
@@ -551,6 +727,15 @@ class EditorDock(BaseDock):
         self.settings = QSettings("Clarify", "EditorDock")
         self.recent_files = self._load_recent_paths("recent_files")
         self.recent_folders = self._load_recent_paths("recent_folders")
+        find_scope = self.settings.value("find/scope", "all", type=str)
+        self.find_state = {
+            "case_sensitive": self.settings.value(
+                "find/case_sensitive", False, type=bool
+            ),
+            "whole_word": self.settings.value("find/whole_word", False, type=bool),
+            "regex": self.settings.value("find/regex", False, type=bool),
+            "scope": find_scope if find_scope in {"all", "strings", "variables"} else "all",
+        }
         self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
@@ -2112,8 +2297,30 @@ class EditorDock(BaseDock):
         if not tab or not hasattr(tab, 'editor'):
             return
 
-        dialog = _EditorFindDialog(tab.editor, replace_enabled, self)
+        dialog = _EditorFindDialog(
+            tab.editor,
+            replace_enabled,
+            self,
+            file_path=getattr(tab, "file_path", None),
+            state=self.find_state,
+            state_changed=self._persist_find_state,
+        )
         dialog.exec()
+        dialog.deleteLater()
+
+    def _persist_find_state(self, state: dict) -> None:
+        """Persist the global Clarify Editor match preferences."""
+        scope = state.get("scope", "all")
+        if scope not in {"all", "strings", "variables"}:
+            scope = "all"
+        self.find_state = {
+            "case_sensitive": bool(state.get("case_sensitive", False)),
+            "whole_word": bool(state.get("whole_word", False)),
+            "regex": bool(state.get("regex", False)),
+            "scope": scope,
+        }
+        for key, value in self.find_state.items():
+            self.settings.setValue(f"find/{key}", value)
 
     def _show_go_to_line_dialog(self):
         """Show a dialog for jumping to a specific editor line."""

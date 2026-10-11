@@ -1236,7 +1236,7 @@ class TestFindReplaceFeature:
         dialog.chk_regex.setChecked(True)
 
         assert dialog._find_next() is False
-        assert dialog.lbl_status.text().startswith("Invalid regex:")
+        assert dialog.lbl_status.text().startswith("Find error:")
     
     def test_find_field_exists(self, qapp):
         """Test that find field exists in EditorDock."""
