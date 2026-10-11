@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/11 - abertura de arquivo por caminho digitado organizada
+**Last Update**: 2026/10/11 - recents e abertura por caminho no Editor entregues
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **13 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **11 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **43 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **41 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -83,16 +83,19 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   entre tab real e espacos/largura configurada; nao transformar Tab em navegacao
   de foco enquanto o editor de texto estiver ativo. Cobrir inicio/fim de arquivo,
   linhas vazias, selecao reversa e arquivos somente leitura.
-  Entregue em11/10/2026: filtro limitado aos editores intercepta somente Tab e
+  Entregue em 11/10/2026: filtro limitado aos editores intercepta somente Tab e
   Shift+Tab sem Ctrl/Alt/Meta, preserva selecao/undo e usa tab real ou 1-8 espacos
   conforme preferencias persistidas. Largura visual acompanha a configuracao.
-- [ ] **CE-RECENT-01: arquivos e pastas recentes.** Adicionar ao menu File listas
+- [x] **CE-RECENT-01: arquivos e pastas recentes.** Adicionar ao menu File listas
   separadas `Open Recent File` e `Open Recent Folder`, com limite, deduplicacao,
   ordem por uso recente, remocao de caminhos inexistentes e `Clear Recent`.
   Reutilizar persistencia/recent paths existente quando compativel, sem armazenar
   conteudo ou duplicar historico. Abrir arquivo deve reutilizar aba ja aberta;
   abrir pasta deve atualizar Explorer/tooltip com o mesmo contrato de `Open Folder`.
-- [ ] **CE-OPEN-PATH-01: abrir arquivo por caminho digitado.** Adicionar ao menu
+  Entregue em 11/10/2026: dois submenus MRU persistentes e independentes, limitados
+  a 10 caminhos normalizados, removem entradas ausentes, deduplicam por uso e
+  oferecem limpeza separada. Arquivos reutilizam a aba e pastas restauram Explorer.
+- [x] **CE-OPEN-PATH-01: abrir arquivo por caminho digitado.** Adicionar ao menu
   File uma acao `Open by Path...` que aceite texto com diretorios,
   subdiretorios e nome do arquivo, sem obrigar o uso do seletor grafico. Aceitar
   caminho absoluto e caminho relativo a raiz da pasta aberta, deixando essa base
@@ -103,6 +106,10 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   suportado com erro claro, sem criar, alterar ou sobrescrever arquivos. Registrar
   em recentes somente depois da abertura bem sucedida; manter entrada e historico
   limitados, rotulo traduzivel, teclado acessivel e testes com espacos no caminho.
+  Entregue em 11/10/2026: `File > Open by Path...` aceita absoluto, relativo a
+  raiz do Explorer, `~`, espacos e Unicode; limita entrada a 4096 caracteres e
+  arquivo a 16 MiB, rejeita entrada vazia, ausente, diretorio, symlink, arquivo
+  irregular ou ilegivel e chama exclusivamente `open_file_path()`.
 - [ ] **CE-FIND-01: Find completo, correto e persistente.** Corrigir primeiro o
   defeito reproduzivel relatado: `Case Sensitive` e `Whole Word` nao estao sendo
   respeitados no painel do Clarify Editor; `Regex` deve seguir o mesmo contrato e

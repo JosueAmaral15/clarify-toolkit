@@ -87,7 +87,10 @@ class TestEditorDockInitialization:
         assert file_actions == [
                 "new",
                 "open",
+                "open_path",
                 "open_folder",
+                "recent_files_menu",
+                "recent_folders_menu",
                 "recover_unsaved",
                 "recovery_retention",
                 "save",

@@ -3878,3 +3878,18 @@ Plano imediato:
 - Dois disparos foram interrompidos preventivamente pelo limite global de 85%
   de RAM e repetidos depois da queda de uso; o pico da arvore ficou abaixo de
   243 MiB. example.py permaneceu untracked e fora do escopo.
+
+## 2026-10-11 - Checkpoint - Clarify Editor Stage 2
+
+- CE-RECENT-01 e CE-OPEN-PATH-01 foram implementadas na mesma branch de trabalho.
+  File passou a oferecer historicos separados de arquivos e pastas, persistentes,
+  limitados a 10, deduplicados, podados e com limpeza independente.
+- Open, Open by Path e consumidores externos convergem em open_file_path(). A
+  entrada textual aceita absoluto, relativo ao Explorer, home, Unicode e espacos,
+  sem shell, com limites de 4096 caracteres/16 MiB e erros explicitos.
+- Passaram 98 casos completos: 11 novos, 67 do EditorDock e 20 de layout; pico
+  246,5 MiB e nenhum crash Qt. Pylint-E, py_compile, JSON e diff-check passaram.
+- Dois testes adicionais foram barrados pela RAM global acima de 85% durante
+  npm/Next/Playwright de outro workspace. O recovery parcial nao foi contado; seu
+  modulo de 53 casos havia passado integralmente no Stage 1. Nenhum processo
+  alheio foi encerrado e os guards nao foram relaxados.

@@ -375,6 +375,7 @@ class EditorDock(BaseDock):
     _ACTION_SPECS = {
         "new": {"text_key": "editor.btn_new", "shortcut": QKeySequence.StandardKey.New},
         "open": {"text_key": "editor.btn_open", "shortcut": QKeySequence.StandardKey.Open},
+        "open_path": {"text_key": "editor.btn_open_path"},
         "open_folder": {"text_key": "editor.btn_open_folder"},
         "recover_unsaved": {"text_key": "editor.btn_recover_unsaved"},
         "recovery_retention": {"text_key": "editor.btn_recovery_retention"},
@@ -433,7 +434,7 @@ class EditorDock(BaseDock):
             "attr": "menu_file",
             "title_key": "editor.menu_file",
             "items": (
-                "new", "open", "open_folder", "recover_unsaved",
+                "new", "open", "open_path", "open_folder", "recover_unsaved",
                 "recovery_retention", None,
                 "save", "save_as", "compare_with_saved",
                 "reload_from_disk", "enable_saving", "export", "close_tab",
@@ -531,11 +532,14 @@ class EditorDock(BaseDock):
 
     MAX_EXTERNAL_FILE_WATCHES = 128
     MAX_EXTERNAL_DIR_WATCHES = 128
+    MAX_TYPED_PATH_CHARS = 4096
+    MAX_TYPED_FILE_BYTES = 16 * 1024 * 1024
     handles_unsaved_tab_close = True
 
     def __init__(self, parent=None):
         # Initialize attributes BEFORE super().__init__() which calls _setup_ui()
         self.recent_files: List[str] = []
+        self.recent_folders: List[str] = []
         self.max_recent = 10
         self.untitled_counter = 0  # Counter for Untitled-N tabs
         self.normal_text_font_size = 10
@@ -545,6 +549,8 @@ class EditorDock(BaseDock):
         # Load auto-save preference from QSettings
         from PySide6.QtCore import QSettings
         self.settings = QSettings("Clarify", "EditorDock")
+        self.recent_files = self._load_recent_paths("recent_files")
+        self.recent_folders = self._load_recent_paths("recent_folders")
         self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
@@ -659,6 +665,13 @@ class EditorDock(BaseDock):
         for action_id, action in self._action_by_id.items():
             action.setToolTip(tooltip_tr(self._ACTION_SPECS[action_id]["text_key"]))
 
+        self.menu_recent_files.menuAction().setToolTip(
+            tooltip_tr("editor.menu_recent_files")
+        )
+        self.menu_recent_folders.menuAction().setToolTip(
+            tooltip_tr("editor.menu_recent_folders")
+        )
+
         # Tab Widget
         self.tab_widget.setToolTip(tooltip_tr("editor.tab_widget"))
 
@@ -729,8 +742,9 @@ class EditorDock(BaseDock):
             self.explorer_root_path,
         )
         if folder_path:
-            self._set_explorer_root(folder_path)
-            self._set_explorer_visible(True)
+            if self._set_explorer_root(folder_path):
+                self._add_recent_folder(folder_path)
+                self._set_explorer_visible(True)
 
     def _sync_explorer_root_index(self, _loaded_path: str) -> None:
         """Keep the selected root bound across loads without changing visibility."""
@@ -1216,6 +1230,17 @@ class EditorDock(BaseDock):
     def _setup_file_menu(self) -> None:
         """Create the local File menu bar actions."""
         self._setup_editor_menu("file")
+        self.menu_recent_files = QMenu(tr("editor.menu_recent_files"), self.menu_file)
+        self.menu_recent_folders = QMenu(
+            tr("editor.menu_recent_folders"), self.menu_file
+        )
+        self.menu_recent_files.menuAction().setData("recent_files_menu")
+        self.menu_recent_folders.menuAction().setData("recent_folders_menu")
+        self.menu_file.insertMenu(self.action_recover_unsaved, self.menu_recent_files)
+        self.menu_file.insertMenu(self.action_recover_unsaved, self.menu_recent_folders)
+        self.menu_recent_files.aboutToShow.connect(self._refresh_recent_menus)
+        self.menu_recent_folders.aboutToShow.connect(self._refresh_recent_menus)
+        self._refresh_recent_menus()
 
     def _setup_edit_menu(self) -> None:
         """Create the local Edit menu bar actions."""
@@ -1267,6 +1292,7 @@ class EditorDock(BaseDock):
         return {
             "new": lambda _checked=False: self._new_file(),
             "open": lambda _checked=False: self._open_file(),
+            "open_path": lambda _checked=False: self._open_file_by_path(),
             "open_folder": lambda _checked=False: self._open_explorer_folder(),
             "recover_unsaved": lambda _checked=False: self._show_recovery_dialog(),
             "recovery_retention": lambda _checked=False: self._set_recovery_retention(),
@@ -1450,47 +1476,63 @@ class EditorDock(BaseDock):
 
         file_path = file_paths[0]
         edit_only = chk_edit_only.isChecked() if layout else False
+        self.open_file_path(file_path, edit_only=edit_only)
 
-        # Check if already open
-        for i in range(self.tab_widget.count()):
-            tab = self.tab_widget.widget(i)
-            if hasattr(tab, 'file_path') and tab.file_path == file_path:
-                self.tab_widget.setCurrentIndex(i)
-                self.lbl_status.setText(f"File already open: {os.path.basename(file_path)}")
-                return
+    def _open_file_by_path(self) -> bool:
+        """Prompt for a path and open it through the public editor API."""
+        value, accepted = QInputDialog.getText(
+            self,
+            tr("editor.open_path_title"),
+            tr("editor.open_path_prompt"),
+        )
+        if not accepted:
+            return False
 
-        # Create appropriate tab based on file extension
-        tab = self._create_tab_for_file(file_path, edit_only)
+        try:
+            file_path = self._resolve_typed_file_path(value)
+        except ValueError as error:
+            QMessageBox.warning(self, tr("editor.open_path_error_title"), str(error))
+            return False
+        return self.open_file_path(file_path)
 
-        if not tab.load_file(file_path):
-            QMessageBox.critical(
-                self, tr("editor.file_open_error_title"),
-                tr("editor.file_open_error").format(file=file_path)
+    def _resolve_typed_file_path(self, value: str) -> str:
+        """Resolve and validate a user-entered file path without invoking a shell."""
+        raw_value = value.strip() if isinstance(value, str) else ""
+        if not raw_value:
+            raise ValueError(tr("editor.open_path_empty"))
+        if len(raw_value) > self.MAX_TYPED_PATH_CHARS:
+            raise ValueError(tr("editor.open_path_too_long"))
+        if "\x00" in raw_value:
+            raise ValueError(tr("editor.open_path_invalid"))
+
+        expanded = os.path.expanduser(raw_value)
+        if not os.path.isabs(expanded):
+            expanded = os.path.join(self.explorer_root_path, expanded)
+        normalized = self._normalized_file_path(expanded)
+
+        if os.path.islink(normalized):
+            raise ValueError(tr("editor.open_path_symlink"))
+        if not os.path.exists(normalized):
+            raise ValueError(tr("editor.open_path_missing").format(path=normalized))
+        if os.path.isdir(normalized):
+            raise ValueError(tr("editor.open_path_directory").format(path=normalized))
+        if not os.path.isfile(normalized):
+            raise ValueError(tr("editor.open_path_unsupported").format(path=normalized))
+        if not os.access(normalized, os.R_OK):
+            raise ValueError(tr("editor.open_path_unreadable").format(path=normalized))
+        try:
+            size = os.path.getsize(normalized)
+        except OSError as error:
+            raise ValueError(
+                tr("editor.open_path_stat_failed").format(error=error)
+            ) from error
+        if size > self.MAX_TYPED_FILE_BYTES:
+            raise ValueError(
+                tr("editor.open_path_too_large").format(
+                    limit=self.MAX_TYPED_FILE_BYTES // (1024 * 1024)
+                )
             )
-            return
-
-        # If edit-only, disconnect from file
-        if edit_only:
-            tab.file_path = None  # Disconnect from file
-
-        self._prepare_tab_for_dock(tab)
-
-        # Use display title (includes JSON icon if JSON file, 🔒 if edit-only)
-        index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
-        if not edit_only:
-            self._track_tab_disk_state(tab)
-            self._update_tab_title(tab)
-        self.tab_widget.setCurrentIndex(index)
-        self._refresh_editor_menus()
-
-        # Add to recent files (only if not edit-only)
-        if not edit_only:
-            self._add_recent_file(file_path)
-
-        # Update status with editor type and mode
-        editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
-        mode_text = " (Edit-Only)" if edit_only else ""
-        self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
+        return normalized
 
     def _create_tab_for_file(self, file_path: str, edit_only: bool = False):
         """
@@ -3411,37 +3453,164 @@ class EditorDock(BaseDock):
             # Reset status after 2 seconds
             QTimer.singleShot(2000, self, lambda: self._on_tab_changed(self.tab_widget.currentIndex()))
 
-    def _add_recent_file(self, file_path: str):
-        """Add file to recent files list."""
-        if file_path in self.recent_files:
-            self.recent_files.remove(file_path)
-        self.recent_files.insert(0, file_path)
-        self.recent_files = self.recent_files[:self.max_recent]
+    def _load_recent_paths(self, settings_key: str) -> List[str]:
+        """Load a bounded, normalized path list from QSettings."""
+        raw_value = self.settings.value(settings_key, "", type=str)
+        try:
+            values = json.loads(raw_value) if raw_value else []
+        except (TypeError, json.JSONDecodeError):
+            values = []
+        if not isinstance(values, list):
+            return []
 
-    def open_file_path(self, file_path: str, edit_only: bool = False):
+        paths: List[str] = []
+        for value in values:
+            if not isinstance(value, str) or len(value) > self.MAX_TYPED_PATH_CHARS:
+                continue
+            normalized = self._normalized_file_path(value)
+            if normalized and normalized not in paths:
+                paths.append(normalized)
+            if len(paths) >= self.max_recent:
+                break
+        return paths
+
+    def _store_recent_paths(self, settings_key: str, paths: List[str]) -> None:
+        """Persist one bounded recent-path list as explicit JSON."""
+        self.settings.setValue(
+            settings_key,
+            json.dumps(paths[: self.max_recent], ensure_ascii=False),
+        )
+
+    def _add_recent_path(self, path: str, *, folder: bool) -> None:
+        """Add a normalized path to the appropriate MRU list."""
+        normalized = self._normalized_file_path(path)
+        if not normalized:
+            return
+        paths = self.recent_folders if folder else self.recent_files
+        if normalized in paths:
+            paths.remove(normalized)
+        paths.insert(0, normalized)
+        del paths[self.max_recent :]
+        self._store_recent_paths("recent_folders" if folder else "recent_files", paths)
+
+    def _add_recent_file(self, file_path: str) -> None:
+        """Add a file to the persistent recent-files list."""
+        self._add_recent_path(file_path, folder=False)
+
+    def _add_recent_folder(self, folder_path: str) -> None:
+        """Add a folder to the persistent recent-folders list."""
+        self._add_recent_path(folder_path, folder=True)
+
+    def _prune_recent_paths(self) -> None:
+        """Remove stale entries without crossing the file/folder lists."""
+        recent_files = [path for path in self.recent_files if os.path.isfile(path)]
+        recent_folders = [
+            path for path in self.recent_folders if os.path.isdir(path)
+        ]
+        if recent_files != self.recent_files:
+            self.recent_files = recent_files
+            self._store_recent_paths("recent_files", self.recent_files)
+        if recent_folders != self.recent_folders:
+            self.recent_folders = recent_folders
+            self._store_recent_paths("recent_folders", self.recent_folders)
+
+    @staticmethod
+    def _recent_path_label(path: str) -> str:
+        """Return a concise menu label while keeping the full path as tooltip."""
+        name = Path(path).name or path
+        return name.replace("&", "&&")
+
+    def _populate_recent_menu(
+        self,
+        menu: QMenu,
+        paths: List[str],
+        opener,
+        clear_handler,
+    ) -> None:
+        """Populate one bounded recent menu with fresh QAction instances."""
+        menu.clear()
+        if not paths:
+            empty_action = menu.addAction(tr("editor.recent_none"))
+            empty_action.setEnabled(False)
+        else:
+            for path in paths:
+                action = menu.addAction(self._recent_path_label(path))
+                action.setToolTip(path)
+                action.triggered.connect(
+                    lambda _checked=False, selected=path: opener(selected)
+                )
+        menu.addSeparator()
+        clear_action = menu.addAction(tr("editor.clear_recent"))
+        clear_action.setEnabled(bool(paths))
+        clear_action.triggered.connect(clear_handler)
+
+    def _refresh_recent_menus(self) -> None:
+        """Prune stale entries and rebuild both recent-path menus."""
+        self._prune_recent_paths()
+        self._populate_recent_menu(
+            self.menu_recent_files,
+            self.recent_files,
+            self.open_file_path,
+            self._clear_recent_files,
+        )
+        self._populate_recent_menu(
+            self.menu_recent_folders,
+            self.recent_folders,
+            self._open_recent_folder,
+            self._clear_recent_folders,
+        )
+
+    def _clear_recent_files(self) -> None:
+        """Clear only the recent-files history."""
+        self.recent_files.clear()
+        self._store_recent_paths("recent_files", self.recent_files)
+        self._refresh_recent_menus()
+
+    def _clear_recent_folders(self) -> None:
+        """Clear only the recent-folders history."""
+        self.recent_folders.clear()
+        self._store_recent_paths("recent_folders", self.recent_folders)
+        self._refresh_recent_menus()
+
+    def _open_recent_folder(self, folder_path: str) -> bool:
+        """Restore a recent Explorer root if it still exists."""
+        normalized = self._normalized_file_path(folder_path)
+        if not os.path.isdir(normalized):
+            self._prune_recent_paths()
+            self._refresh_recent_menus()
+            return False
+        if not self._set_explorer_root(normalized):
+            return False
+        self._add_recent_folder(normalized)
+        self._set_explorer_visible(True)
+        return True
+
+    def open_file_path(self, file_path: str, edit_only: bool = False) -> bool:
         """
         Open file from external call (e.g., from search results).
 
         Public API method for integration with other tools.
         """
-        if not os.path.exists(file_path):
+        normalized_path = self._normalized_file_path(file_path)
+        if not normalized_path or not os.path.isfile(normalized_path):
             QMessageBox.warning(
                 self, tr("editor.msg_file_not_found_title"),
-                tr("editor.msg_file_not_found_msg").format(file_path)
+                tr("editor.msg_file_not_found_msg").format(normalized_path or file_path)
             )
-            return
+            return False
 
         # Check if already open
         for i in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(i)
-            if hasattr(tab, 'file_path') and tab.file_path == file_path:
+            open_path = self._normalized_file_path(getattr(tab, 'file_path', None))
+            if open_path and open_path == normalized_path:
                 self.tab_widget.setCurrentIndex(i)
-                return
+                return True
 
         # Create appropriate tab based on file extension
-        tab = self._create_tab_for_file(file_path, edit_only)
+        tab = self._create_tab_for_file(normalized_path, edit_only)
 
-        if tab.load_file(file_path):
+        if tab.load_file(normalized_path):
             # If edit-only, disconnect from file
             if edit_only:
                 tab.file_path = None
@@ -3455,13 +3624,22 @@ class EditorDock(BaseDock):
             self._refresh_editor_menus()
 
             if not edit_only:
-                self._add_recent_file(file_path)
+                self._add_recent_file(normalized_path)
 
             editor_type = "JSON Editor" if isinstance(tab, JsonEditorTab) else "Text Editor"
             mode_text = " (Edit-Only)" if edit_only else ""
-            self.lbl_status.setText(f"Opened in {editor_type}{mode_text}: {os.path.basename(file_path)}")
+            self.lbl_status.setText(
+                f"Opened in {editor_type}{mode_text}: {os.path.basename(normalized_path)}"
+            )
+            return True
         else:
-            QMessageBox.critical(self, tr("editor_dock.error_title"), f"Failed to open file:\n{file_path}")
+            QMessageBox.critical(
+                self,
+                tr("editor_dock.error_title"),
+                tr("editor.file_open_error").format(file=normalized_path),
+            )
+            tab.deleteLater()
+            return False
 
     def has_unsaved_changes(self) -> bool:
         """

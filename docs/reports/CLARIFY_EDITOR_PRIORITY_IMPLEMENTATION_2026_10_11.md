@@ -91,3 +91,28 @@ Two resource/test events are retained honestly:
 Compile/AST, two JSON catalogs, Pylint error checks and `git diff --check` passed.
 Black was applied only to the new isolated files because pre-existing modified
 modules are not globally Black-clean and broad formatting would add unrelated churn.
+
+## Stage 2 Result - Complete
+
+Implemented `CE-RECENT-01` and `CE-OPEN-PATH-01`.
+
+- File now contains separate recent-file and recent-folder submenus. Both retain
+  at most 10 normalized paths in Editor QSettings, deduplicate by most recent use,
+  prune missing entries and clear independently without storing file content.
+- The existing graphical Open action and the new Open by Path action converge on
+  `open_file_path()`. Existing tabs are reused by normalized path identity.
+- Typed paths accept absolute values, values relative to the current Explorer root,
+  home expansion, spaces and Unicode without shell interpretation. Validation is
+  bounded to 4096 path characters and 16 MiB files and reports empty, missing,
+  directory, symbolic-link, irregular-file, unreadable and stat failures.
+
+Distinct complete passing cases: 98 (11 new Stage 2 regressions, 67 EditorDock and
+20 Editor layout). Peak observed tree RSS was 246.5 MiB; no native Qt crash occurred.
+Compile, two JSON catalog parses, Pylint error checks and `git diff --check` passed.
+
+Resource limitation retained honestly: two EditorDock/recovery attempts were
+stopped by the system-RAM 85% guard while unrelated npm/Next/Playwright processes
+from another workspace were active. The first EditorDock retry later passed all 67
+cases. The recovery retry reached 18/53 before a global 85.3% stop with its own tree
+at 212.1 MiB; it is not counted as pass evidence. The same 53-case recovery module
+passed in Stage 1 before this Stage 2 menu/opening change.
