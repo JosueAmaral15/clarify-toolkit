@@ -58,9 +58,26 @@ Pylint error checks, Python compilation, parsing all seven JSON catalogs,
 presence of all four new keys, `git diff --check` and the unrelated `example.py`
 SHA-256 check passed.
 
+## Workspace Mode Localization
+
+`FE-MODE-I18N-01` was completed as a second bounded stage. The audit confirmed
+that Compact and Advanced are presentation modes of one `FileExplorerDock`:
+the compatibility Search/Replace action selects Compact without creating a
+second panel, and it is no longer inserted in the Editing submenu. The tab and
+window retain the translated File Explorer identity.
+
+The workspace group and both mode names are now native translations in all seven
+catalogs. Runtime retranslation updates button text, tooltip and accessible name.
+An isolated 220 px regression verifies that the longest localized label fits
+without replacing either functional tool name.
+
+Guarded validation passed 42 distinct cases: one new seven-language runtime and
+narrow-width case (208.2 MiB peak), 31 shared-workspace lifecycle/layout cases
+(217.1 MiB peak), and 10 catalog lookup cases (186.5 MiB peak). No native crash,
+timeout or resource-guard abort occurred.
+
 ## Remaining Priority Queue
 
-The canonical backlog has 34 open tasks, four in the active priority queue:
-`APP-THREAD-01`, `FE-MODE-I18N-01`, `APP-TOON-PRIMARY-01` and
-`PLUGIN-WQXR-01`. The next File Explorer-specific item is
-`FE-MODE-I18N-01`.
+The canonical backlog has 33 open tasks, three in the active priority queue:
+`APP-THREAD-01`, `APP-TOON-PRIMARY-01` and `PLUGIN-WQXR-01`. No open
+File Explorer-specific item remains in this priority queue.

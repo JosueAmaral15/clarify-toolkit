@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/14 - refinamento opt-in do File Explorer entregue
+**Last Update**: 2026/10/14 - modos do File Explorer traduzidos
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **4 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **3 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **34 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **33 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -135,13 +135,18 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   Preferencias e escopo sao globais ao Editor e persistidos; intervalos inclusivos
   por linha e escopos lexicos All/Strings/Variables cobrem Python, JSON e
   JavaScript/TypeScript, com fallback visivel para tipo ou parse nao suportado.
-- [ ] **FE-MODE-I18N-01: nomes dos modos do workspace compartilhado.** Corrigir
+- [x] **FE-MODE-I18N-01: nomes dos modos do workspace compartilhado.** Corrigir
   os catalogos e a retranslation runtime para que `Compact Mode` e `Advanced
   Mode` aparecam traduzidos em cada idioma. Os nomes funcionais `Search/Replace`
   e `File Explorer` nao devem ser substituidos silenciosamente pelos nomes dos
   modos: usar rotulo principal consistente e, se necessario, modo como descricao
   secundaria/tooltip traduzido. Validar ingles, portugues e os outros cinco
   catalogos, troca runtime, largura estreita e acessibilidade.
+  Entregue em 14/10/2026: `Workspace`, `Compact Mode` e `Advanced Mode` foram
+  traduzidos nos sete catalogos e atualizam em runtime. O titulo funcional
+  continua `File Explorer`; a rota legada `Search / Replace` apenas seleciona o
+  modo compacto do mesmo workspace e permanece fora de Editing. Texto, tooltip,
+  nome acessivel e geometria a 220 px foram validados sem duplicar controles.
 - [x] **CE-EXPLORER-CONTEXT-01: menu contextual de arquivos e pastas.** No painel
   esquerdo do Clarify Editor, oferecer acoes coerentes por tipo: `Open`, `Open to
   the Side`, `Rename`, `Delete`, `Reveal/Open in File Manager`, `Copy Absolute

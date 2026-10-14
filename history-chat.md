@@ -3978,3 +3978,19 @@ Plano imediato:
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 - Remaining canonical work: 34 open tasks, four in the active priority queue. The
   next File Explorer item is `FE-MODE-I18N-01`.
+
+## 2026-10-14 - File Explorer workspace modes localized
+
+- Continued from published checkpoint `0509f8c` on a fresh work branch and
+  completed `FE-MODE-I18N-01` without changing the shared-workspace architecture.
+- Confirmed that Search/Replace is only a compatibility route to Compact mode,
+  does not create another panel and is not inserted in Editing. File Explorer
+  remains the functional tab/window identity.
+- Translated the workspace group plus Compact/Advanced mode names in all seven
+  catalogs. Runtime text, tooltip and accessible name were validated at 220 px.
+- Guarded isolated validation passed 42 distinct cases: 1 new multilanguage
+  geometry case, 31 shared workspace cases and 10 catalog lookup cases. Peak tree
+  RSS was 217.1 MiB; no crash, timeout or guard abort occurred.
+- The canonical backlog now has 33 open tasks and three in the active priority
+  queue. No File Explorer-specific item remains there; `APP-THREAD-01` is the
+  highest-priority unfinished item.
