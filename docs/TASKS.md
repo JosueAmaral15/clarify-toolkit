@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/14 - menus, splits e sincronizacao do Editor entregues
+**Last Update**: 2026/10/14 - sessoes de pasta do Editor entregues
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **7 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **6 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **37 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **36 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -172,13 +172,18 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   da raiz canonica; itens externos/ausentes limpam a selecao. Drag-and-drop
   persiste ate 20 referencias de caminho e restaura apenas a ordem das abas ja
   abertas, sem abrir arquivos nem persistir conteudo.
-- [ ] **CE-FOLDER-SESSION-01: restaurar as abas ao reabrir uma pasta.** Ao fechar
+- [x] **CE-FOLDER-SESSION-01: restaurar as abas ao reabrir uma pasta.** Ao fechar
   e depois abrir novamente uma pasta no Clarify Editor, recuperar o conjunto, a
   ordem e a guia ativa dos arquivos daquela pasta. Persistir referencias e estado
   de layout limitados, nao copias redundantes de conteudo; integrar buffers dirty
   ao recovery existente e nunca sobrescrever originais. Ignorar ou informar com
   seguranca caminhos removidos, movidos, sem permissao ou fora da raiz, sem impedir
   a abertura da pasta. Oferecer configuracao para desativar/limpar a sessao.
+  Entregue em 14/10/2026: ate 20 sessoes com 20 referencias cada guardam ordem,
+  aba ativa e split em no maximo 256 KiB, sem copiar conteudo. Buffers dirty usam
+  `UnsavedRecoveryStore` e voltam como copias nao vinculadas ao original; caminhos
+  externos, ausentes, symlinks inseguros e ilegíveis sao ignorados e informados.
+  File oferece fechar pasta preservando abas, toggle e limpeza de sessoes.
 - [ ] **CE-TEMP-NOTES-01: notas temporarias persistentes gerenciadas pelo Editor.**
   Adicionar acao explicita para salvar um buffer como nota temporaria, listar e
   recuperar essas notas sem exigir caminho comum nem confundi-las com Save/Save As

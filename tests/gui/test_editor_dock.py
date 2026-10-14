@@ -89,6 +89,7 @@ class TestEditorDockInitialization:
                 "open",
                 "open_path",
                 "open_folder",
+                "close_folder",
                 "recent_files_menu",
                 "recent_folders_menu",
                 "recover_unsaved",
@@ -101,6 +102,8 @@ class TestEditorDockInitialization:
                 "export",
                 "close_tab",
                 "auto_save",
+                "restore_folder_sessions",
+                "clear_folder_sessions",
         ]
 
         edit_actions = [

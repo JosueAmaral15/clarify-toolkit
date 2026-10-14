@@ -555,6 +555,12 @@ class EditorDock(BaseDock):
         "open": {"text_key": "editor.btn_open", "shortcut": QKeySequence.StandardKey.Open},
         "open_path": {"text_key": "editor.btn_open_path"},
         "open_folder": {"text_key": "editor.btn_open_folder"},
+        "close_folder": {"text_key": "editor.btn_close_folder"},
+        "restore_folder_sessions": {
+            "text_key": "editor.chk_restore_folder_sessions",
+            "checkable": True,
+        },
+        "clear_folder_sessions": {"text_key": "editor.btn_clear_folder_sessions"},
         "recover_unsaved": {"text_key": "editor.btn_recover_unsaved"},
         "recovery_retention": {"text_key": "editor.btn_recovery_retention"},
         "save": {"text_key": "editor.btn_save", "shortcut": QKeySequence.StandardKey.Save},
@@ -612,11 +618,13 @@ class EditorDock(BaseDock):
             "attr": "menu_file",
             "title_key": "editor.menu_file",
             "items": (
-                "new", "open", "open_path", "open_folder", "recover_unsaved",
+                "new", "open", "open_path", "open_folder", "close_folder",
+                "recover_unsaved",
                 "recovery_retention", None,
                 "save", "save_as", "compare_with_saved",
                 "reload_from_disk", "enable_saving", "export", "close_tab",
-                None, "auto_save",
+                None, "auto_save", "restore_folder_sessions",
+                "clear_folder_sessions",
             ),
         },
         "edit": {
@@ -706,12 +714,16 @@ class EditorDock(BaseDock):
         "show_line_numbers": "show_line_numbers_enabled",
         "show_explorer": "show_explorer_enabled",
         "indent_use_tabs": "indent_use_tabs",
+        "restore_folder_sessions": "folder_sessions_enabled",
     }
 
     MAX_EXTERNAL_FILE_WATCHES = 128
     MAX_EXTERNAL_DIR_WATCHES = 128
     MAX_TYPED_PATH_CHARS = 4096
     MAX_TYPED_FILE_BYTES = 16 * 1024 * 1024
+    MAX_FOLDER_SESSIONS = 20
+    MAX_FOLDER_SESSION_FILES = 20
+    MAX_FOLDER_SESSIONS_BYTES = 256 * 1024
     handles_unsaved_tab_close = True
 
     def __init__(self, parent=None):
@@ -740,6 +752,12 @@ class EditorDock(BaseDock):
         }
         self._persisted_tab_order = self._load_persisted_tab_order()
         self._restoring_tab_order = False
+        self.folder_sessions_enabled = self.settings.value(
+            "folder_sessions_enabled", True, type=bool
+        )
+        self._folder_sessions = self._load_folder_sessions()
+        self._folder_session_ready = False
+        self._restoring_folder_session = False
         self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
@@ -767,6 +785,8 @@ class EditorDock(BaseDock):
         # NOW call super().__init__() which triggers _setup_ui()
         super().__init__(EDITOR_NAME, parent)
         self._recovery_lifecycle = EditorRecoveryLifecycle(self)
+        self._folder_session_ready = True
+        self._restore_folder_session(self.explorer_root_path)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -936,11 +956,26 @@ class EditorDock(BaseDock):
         self.split_panel.hide()
         self._split_source_tab = None
 
-    def _set_explorer_root(self, folder_path: str, *, persist: bool = True) -> bool:
+    def _set_explorer_root(
+        self,
+        folder_path: str,
+        *,
+        persist: bool = True,
+        restore_session: bool = True,
+        save_previous: bool = True,
+    ) -> bool:
         """Set a validated folder as the lazy explorer root."""
         normalized = self._normalized_file_path(folder_path)
         if not normalized or not os.path.isdir(normalized):
             normalized = str(Path.home())
+        previous = self._normalized_file_path(
+            getattr(self, "explorer_root_path", "")
+        )
+        changing_root = bool(previous and previous != normalized)
+        checkpoint_succeeded = True
+        if changing_root and self._folder_session_ready and save_previous:
+            checkpoint_succeeded = self._checkpoint_unsaved_tabs()
+            self._save_folder_session(previous)
         root_index = self.explorer_model.setRootPath(normalized)
         self.explorer_tree.setRootIndex(root_index)
         self.explorer_root_path = normalized
@@ -949,6 +984,15 @@ class EditorDock(BaseDock):
         self.explorer_folder_label.setToolTip(normalized)
         if persist:
             self.settings.setValue("explorer_root_path", normalized)
+        if (
+            changing_root
+            and restore_session
+            and self._folder_session_ready
+            and self.folder_sessions_enabled
+        ):
+            self._restore_folder_session(normalized)
+        if not checkpoint_succeeded:
+            self.lbl_status.setText(tr("editor.status_folder_session_failed"))
         return os.path.isdir(normalized)
 
     def _open_explorer_folder(self) -> None:
@@ -962,6 +1006,27 @@ class EditorDock(BaseDock):
             if self._set_explorer_root(folder_path):
                 self._add_recent_folder(folder_path)
                 self._set_explorer_visible(True)
+
+    def _close_explorer_folder(self) -> bool:
+        """Checkpoint and detach the current Explorer root without closing tabs."""
+        current = self._normalized_file_path(self.explorer_root_path)
+        home = self._normalized_file_path(str(Path.home()))
+        if not current or current == home:
+            return False
+        checkpoint_succeeded = self._checkpoint_unsaved_tabs()
+        self._save_folder_session(current)
+        if not self._set_explorer_root(
+            home, restore_session=False, save_previous=False
+        ):
+            return False
+        self.lbl_status.setText(
+            tr(
+                "editor.status_folder_closed"
+                if checkpoint_succeeded
+                else "editor.status_folder_closed_recovery_failed"
+            )
+        )
+        return True
 
     def _sync_explorer_root_index(self, _loaded_path: str) -> None:
         """Keep the selected root bound across loads without changing visibility."""
@@ -1297,6 +1362,298 @@ class EditorDock(BaseDock):
             if len(order) >= 20:
                 break
         return order
+
+    @staticmethod
+    def _canonical_path(path: str | None) -> str:
+        normalized = EditorDock._normalized_file_path(path)
+        return os.path.realpath(normalized) if normalized else ""
+
+    @classmethod
+    def _path_is_inside_root(cls, path: str | None, root: str | None) -> bool:
+        """Compare canonical paths without allowing a sibling-prefix escape."""
+        canonical_path = cls._canonical_path(path)
+        canonical_root = cls._canonical_path(root)
+        if not canonical_path or not canonical_root:
+            return False
+        try:
+            return os.path.commonpath([canonical_root, canonical_path]) == canonical_root
+        except ValueError:
+            return False
+
+    def _load_folder_sessions(self) -> list[dict]:
+        """Load bounded path-only folder sessions from Editor settings."""
+        raw_value = self.settings.value("folder_sessions", "", type=str)
+        if not raw_value or len(raw_value.encode("utf-8")) > self.MAX_FOLDER_SESSIONS_BYTES:
+            return []
+        try:
+            values = json.loads(raw_value)
+        except (TypeError, json.JSONDecodeError, UnicodeError):
+            return []
+        if not isinstance(values, list):
+            return []
+
+        sessions = []
+        roots = set()
+        for value in values:
+            if not isinstance(value, dict):
+                continue
+            root = value.get("root", "")
+            files = value.get("files", [])
+            if (
+                not isinstance(root, str)
+                or len(root) > self.MAX_TYPED_PATH_CHARS
+                or not isinstance(files, list)
+            ):
+                continue
+            canonical_root = self._canonical_path(root)
+            if not canonical_root or canonical_root in roots:
+                continue
+            bounded_files = []
+            for path in files:
+                if (
+                    isinstance(path, str)
+                    and len(path) <= self.MAX_TYPED_PATH_CHARS
+                    and self._path_is_inside_root(path, canonical_root)
+                ):
+                    canonical_file = self._canonical_path(path)
+                    if canonical_file not in bounded_files:
+                        bounded_files.append(canonical_file)
+                if len(bounded_files) >= self.MAX_FOLDER_SESSION_FILES:
+                    break
+            active = self._canonical_path(value.get("active", ""))
+            split = value.get("split")
+            if not isinstance(split, dict):
+                split = None
+            else:
+                split_path = self._canonical_path(split.get("path", ""))
+                orientation = split.get("orientation", "")
+                if split_path not in bounded_files or orientation not in {
+                    "horizontal",
+                    "vertical",
+                }:
+                    split = None
+                else:
+                    split = {"path": split_path, "orientation": orientation}
+            sessions.append(
+                {
+                    "root": canonical_root,
+                    "files": bounded_files,
+                    "active": active if active in bounded_files else "",
+                    "split": split,
+                    "updated_at": str(value.get("updated_at", ""))[:64],
+                }
+            )
+            roots.add(canonical_root)
+            if len(sessions) >= self.MAX_FOLDER_SESSIONS:
+                break
+        return sessions
+
+    def _store_folder_sessions(self) -> bool:
+        """Persist path references within one explicit total byte budget."""
+        sessions = self._folder_sessions[: self.MAX_FOLDER_SESSIONS]
+        while sessions:
+            payload = json.dumps(sessions, ensure_ascii=False, separators=(",", ":"))
+            if len(payload.encode("utf-8")) <= self.MAX_FOLDER_SESSIONS_BYTES:
+                self._folder_sessions = sessions
+                self.settings.setValue("folder_sessions", payload)
+                return True
+            sessions.pop()
+        self._folder_sessions = []
+        self.settings.setValue("folder_sessions", "[]")
+        return not bool(sessions)
+
+    def _tab_folder_identity(self, tab) -> str:
+        """Return a file/session identity without treating recovery as a file."""
+        return self._canonical_path(
+            getattr(tab, "file_path", "")
+            or getattr(tab, "_clarify_folder_source_path", "")
+            or getattr(tab, "_clarify_recovery_source_path", "")
+        )
+
+    def _save_folder_session(self, root: str | None = None) -> bool:
+        """Save bounded references, active identity and shared split layout."""
+        if (
+            not self.folder_sessions_enabled
+            or self._restoring_folder_session
+            or not self._folder_session_ready
+        ):
+            return False
+        canonical_root = self._canonical_path(root or self.explorer_root_path)
+        if not canonical_root:
+            return False
+
+        files = []
+        for tab in self._all_tab_objects():
+            path = self._tab_folder_identity(tab)
+            if path and self._path_is_inside_root(path, canonical_root):
+                if path not in files:
+                    files.append(path)
+            if len(files) >= self.MAX_FOLDER_SESSION_FILES:
+                break
+
+        active = self._tab_folder_identity(self.tab_widget.currentWidget())
+        if active not in files:
+            active = ""
+        split = None
+        split_path = self._tab_folder_identity(self._split_source_tab)
+        if split_path in files and not self.split_panel.isHidden():
+            split = {
+                "path": split_path,
+                "orientation": (
+                    "vertical"
+                    if self.editor_workspace_splitter.orientation() == Qt.Vertical
+                    else "horizontal"
+                ),
+            }
+        session = {
+            "root": canonical_root,
+            "files": files,
+            "active": active,
+            "split": split,
+            "updated_at": datetime.now().astimezone().isoformat(),
+        }
+        self._folder_sessions = [
+            item for item in self._folder_sessions if item.get("root") != canonical_root
+        ]
+        self._folder_sessions.insert(0, session)
+        del self._folder_sessions[self.MAX_FOLDER_SESSIONS :]
+        return self._store_folder_sessions()
+
+    def _session_for_root(self, root: str) -> dict | None:
+        canonical_root = self._canonical_path(root)
+        return next(
+            (
+                session
+                for session in self._folder_sessions
+                if session.get("root") == canonical_root
+            ),
+            None,
+        )
+
+    def _recovery_buffers_by_source(self) -> dict[str, object]:
+        """Index only dirty buffer snapshots; references reopen from disk."""
+        try:
+            snapshots = self.recovery_store.list()
+        except (OSError, RecoverySnapshotError):
+            return {}
+        indexed = {}
+        for snapshot in snapshots:
+            source = self._canonical_path(snapshot.file_path)
+            if snapshot.kind == "buffer" and source and source not in indexed:
+                indexed[source] = snapshot
+        return indexed
+
+    def _restore_folder_session(self, root: str) -> int:
+        """Restore valid references, preferring recovery copies for dirty files."""
+        if not self.folder_sessions_enabled or self._restoring_folder_session:
+            return 0
+        session = self._session_for_root(root)
+        if not session:
+            return 0
+        canonical_root = self._canonical_path(root)
+        recovery = self._recovery_buffers_by_source()
+        tabs_by_path = {
+            self._tab_folder_identity(tab): tab for tab in self._all_tab_objects()
+        }
+        restored = 0
+        skipped = 0
+        self._restoring_folder_session = True
+        try:
+            for path in session["files"][: self.MAX_FOLDER_SESSION_FILES]:
+                if not self._path_is_inside_root(path, canonical_root):
+                    skipped += 1
+                    continue
+                tab = tabs_by_path.get(path)
+                snapshot = recovery.get(path)
+                if tab is None and snapshot is not None:
+                    if snapshot.snapshot_id in self._restored_recovery_ids:
+                        skipped += 1
+                        continue
+                    tab = self._restore_recovery_snapshot(snapshot)
+                    if tab is not None:
+                        setattr(tab, "_clarify_folder_source_path", path)
+                elif tab is None:
+                    if (
+                        not os.path.isfile(path)
+                        or os.path.islink(path)
+                        or not os.access(path, os.R_OK)
+                    ):
+                        skipped += 1
+                        continue
+                    if self.open_file_path(path):
+                        tab = self.tab_widget.currentWidget()
+                if tab is None:
+                    skipped += 1
+                    continue
+                tabs_by_path[path] = tab
+                restored += 1
+
+            ordered_tabs = [
+                tabs_by_path[path]
+                for path in session["files"]
+                if path in tabs_by_path
+            ]
+            target_indices = sorted(
+                self.tab_widget.indexOf(tab)
+                for tab in ordered_tabs
+                if self.tab_widget.indexOf(tab) >= 0
+            )
+            for target_index, tab in zip(target_indices, ordered_tabs):
+                current_index = self.tab_widget.indexOf(tab)
+                if current_index >= 0 and current_index != target_index:
+                    self.tab_widget.tabBar().moveTab(current_index, target_index)
+
+            active_tab = tabs_by_path.get(session.get("active", ""))
+            if active_tab is not None:
+                self.tab_widget.setCurrentWidget(active_tab)
+            split = session.get("split")
+            split_tab = tabs_by_path.get(split.get("path", "")) if split else None
+            if split_tab is not None:
+                orientation = (
+                    Qt.Vertical
+                    if split.get("orientation") == "vertical"
+                    else Qt.Horizontal
+                )
+                self._show_split_view(split_tab, orientation)
+        finally:
+            self._restoring_folder_session = False
+        self._persist_tab_order()
+        if skipped:
+            self.lbl_status.setText(
+                tr("editor.status_folder_session_partial").format(
+                    restored=restored, skipped=skipped
+                )
+            )
+        elif restored:
+            self.lbl_status.setText(
+                tr("editor.status_folder_session_restored").format(count=restored)
+            )
+        return restored
+
+    def _set_folder_sessions_enabled(self, enabled: bool) -> None:
+        self.folder_sessions_enabled = bool(enabled)
+        self.settings.setValue(
+            "folder_sessions_enabled", self.folder_sessions_enabled
+        )
+        if self.folder_sessions_enabled:
+            self._save_folder_session()
+        self._refresh_editor_menus()
+
+    def _clear_folder_sessions(self, *, confirm: bool = True) -> bool:
+        if confirm:
+            reply = QMessageBox.question(
+                self,
+                tr("editor.clear_folder_sessions_title"),
+                tr("editor.clear_folder_sessions_message"),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return False
+        self._folder_sessions = []
+        self.settings.setValue("folder_sessions", "[]")
+        self.lbl_status.setText(tr("editor.status_folder_sessions_cleared"))
+        return True
 
     def _persist_tab_order(self) -> None:
         """Persist only bounded path references, never document content."""
@@ -1863,6 +2220,9 @@ class EditorDock(BaseDock):
             "open": lambda _checked=False: self._open_file(),
             "open_path": lambda _checked=False: self._open_file_by_path(),
             "open_folder": lambda _checked=False: self._open_explorer_folder(),
+            "close_folder": lambda _checked=False: self._close_explorer_folder(),
+            "restore_folder_sessions": self._set_folder_sessions_enabled,
+            "clear_folder_sessions": lambda _checked=False: self._clear_folder_sessions(),
             "recover_unsaved": lambda _checked=False: self._show_recovery_dialog(),
             "recovery_retention": lambda _checked=False: self._set_recovery_retention(),
             "save": lambda _checked=False: self._save_file(),
@@ -3972,6 +4332,8 @@ class EditorDock(BaseDock):
     def _flush_recovery_on_close(self, *, final=False) -> bool:
         """Normal close may be refused; final Qt shutdown can only report failure."""
         success = self._checkpoint_unsaved_tabs()
+        if success:
+            self._save_folder_session()
         if success or final:
             self._recovery_suspended = True
             for timer in self.findChildren(QTimer):

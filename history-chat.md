@@ -3924,3 +3924,19 @@ Plano imediato:
 - The next bounded Editor stage is `CE-FOLDER-SESSION-01`, followed by
   `CE-TEMP-NOTES-01`; File Explorer and cross-application backlog remain outside
   this completed checkpoint.
+
+## 2026-10-14 - Clarify Editor folder sessions completed
+
+- Continued with `CE-FOLDER-SESSION-01` after publishing Stage 4 at `21a215a`.
+- Added bounded path-only folder sessions (20 folders, 20 files each, 256 KiB),
+  restoring order, active tab and shared split without copying file content.
+- Dirty buffers reuse `UnsavedRecoveryStore` and restore as unsaved copies; the
+  original is never overwritten. Unsafe/missing references are skipped and
+  recovery failures do not block folder navigation or discard open tabs.
+- Added File actions to close a folder while preserving tabs, toggle restoration
+  and clear saved sessions without deleting recovery snapshots.
+- 157 distinct relevant cases passed. Peak tree RSS was 247.6 MiB; one earlier
+  run was stopped by the 85% global RAM guard during `freshclam` and rerun fully.
+  Static checks passed and `example.py` remained unchanged.
+- Remaining Clarify Editor priority task: `CE-TEMP-NOTES-01`. After it, the
+  prioritized queue moves to File Explorer/i18n/isolation work.

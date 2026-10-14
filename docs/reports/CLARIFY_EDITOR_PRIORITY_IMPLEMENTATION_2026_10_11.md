@@ -166,3 +166,30 @@ layout, 67 EditorDock and 53 recovery lifecycle). Peak observed test-tree RSS wa
 process; no native Qt crash or resource-guard abort occurred. Compile, two JSON
 catalog parses, Pylint error checks, Black for the two new test modules and
 `git diff --check` passed. The unrelated `example.py` hash remained unchanged.
+
+## Stage 5A Result - Complete
+
+Implemented `CE-FOLDER-SESSION-01`.
+
+- Folder sessions persist only canonical path references, tab order, active tab
+  and optional shared-split identity/orientation. Storage is capped at 20 folders,
+  20 files per folder and 256 KiB total; no document content is copied into
+  QSettings.
+- Reopening a folder or creating a new Editor instance restores readable regular
+  files without sibling traversal. Missing, external, unreadable or unsafe
+  references are skipped and reported without blocking folder navigation.
+- Dirty file-backed tabs are checkpointed through the existing private atomic
+  `UnsavedRecoveryStore` and restored as unsaved copies, never written over the
+  original. A recovery quota/I/O failure preserves open tabs and is reported but
+  does not block changing the Explorer root.
+- File now includes Close Folder, a checked Restore Folder Sessions preference and
+  explicit Clear Folder Sessions. Closing a folder detaches only the Explorer
+  root; open tabs and recovery snapshots remain intact.
+
+Distinct complete passing cases: 157 (6 new folder-session regressions, 11 opening
+and recents, 20 layout, 53 recovery lifecycle and 67 EditorDock). Peak observed
+test-tree RSS was 247.6 MiB. One earlier Stage 5A attempt was stopped at the global
+85% RAM guard while the system `freshclam` process was using about 612 MiB; the
+test process used 33.3 MiB and the affected modules were rerun completely after
+that process exited. No native Qt crash occurred. Compile, two JSON catalog parses,
+Pylint error checks, Black for the new test module and `git diff --check` passed.
