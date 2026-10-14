@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/14 - notas temporarias do Editor entregues
+**Last Update**: 2026/10/14 - refinamento opt-in do File Explorer entregue
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **5 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **4 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **35 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **34 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -51,7 +51,7 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   executor compartilhado. Busca/replace nao sobrepoem no mesmo painel, paineis
   distintos continuam independentes e resultado/close aguardam `QThread.finished`.
   Ownership dos paineis embutidos no AI Processor e outros workers permanecem.
-- [ ] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
+- [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente
   sem nova travessia quando o diretorio e o escopo efetivo nao mudaram. Reuso deve
@@ -62,6 +62,13 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   nao for compativel, executar busca normal e informar isso sem prometer ganho.
   Preservar budgets, ambas as vistas, pause/cancel/close e medir latencia/correta
   equivalencia com a pesquisa completa.
+  Entregue em 14/10/2026: checkbox persistido e traduzido nos sete catalogos,
+  desmarcado por padrao. O reuso continua limitado ao universo explicito da busca
+  anterior e so ocorre com diretorio, alvo, revisao, modo, consulta e filtros
+  compativeis; qualquer mudanca invalida o cache e usa a busca completa com status
+  visivel. Nenhuma travessia implicita, expansao de selecao ou novo worker foi
+  adicionada. Evidencia em
+  `docs/reports/FILE_EXPLORER_PRIORITY_IMPLEMENTATION_2026_10_14.md`.
 - [x] **CE-FIRST-SAVE-01: limpar corretamente o estado apos o primeiro save.**
   Corrigir o defeito relatado em que um arquivo continua com indicador de
   inseguro, inconsistente ou nao salvo depois do primeiro `Save`/`Save As` bem

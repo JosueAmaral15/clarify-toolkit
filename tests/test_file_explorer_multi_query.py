@@ -442,6 +442,7 @@ def test_incremental_repeat_respects_exact_scope_and_options(tmp_path, docks, qt
     path = tmp_path / 'target.txt'
     path.write_text('alpha beta')
     dock = docks()
+    dock.chk_reuse_previous.setChecked(True)
     set_scope(dock, 'file')
     dock.ed_directory.setText(str(path))
     dock.ed_exc.clear()

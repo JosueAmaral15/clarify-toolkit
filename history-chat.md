@@ -3957,3 +3957,24 @@ Plano imediato:
 - The canonical backlog now has 35 open tasks, 5 in the priority queue. The next
   priority is no longer Clarify Editor: it is the remaining File Explorer/i18n/
   isolation work, starting with the highest protocol priority after a fresh audit.
+
+## 2026-10-14 - File Explorer opt-in refinement completed
+
+- Continued from published Editor checkpoint `af06714` and completed
+  `FE-REFINE-01` without starting the broader backlog.
+- Exposed the existing candidate-result cache through a translated, persisted
+  `Reuse previous results` checkbox under `Directory & Type`, off by default.
+  Compatible reuse and full-search fallback are now explicit in the status.
+- Strengthened cache identity/invalidation for target, revision, modes, file
+  type, queries, conditions, extensions, globs and advanced filters. Oversized
+  content is not copied to build the signature; the bounded document revision is
+  used instead.
+- Final isolated guarded runs passed 147 distinct tests (8 incremental, 69 target
+  scope and 70 multi-query), with 215.1 MiB maximum passing tree RSS and no native
+  Qt crash. One earlier global-RAM guard stop was not counted; all affected tests
+  were rerun.
+- Static, compile, seven-catalog JSON and diff checks passed. `example.py`
+  remained unrelated and unchanged at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Remaining canonical work: 34 open tasks, four in the active priority queue. The
+  next File Explorer item is `FE-MODE-I18N-01`.

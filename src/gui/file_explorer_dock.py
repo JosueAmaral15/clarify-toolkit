@@ -187,6 +187,12 @@ class FileExplorerDock(BaseDock):
         self.ed_directory.textChanged.connect(self._invalidate_target_cache)
         self.chk_recursive.toggled.connect(self._invalidate_target_cache)
         self.chk_all.toggled.connect(self._invalidate_target_cache)
+        self.combo_type.currentIndexChanged.connect(self._invalidate_target_cache)
+        self.ed_inc.textChanged.connect(self._invalidate_target_cache)
+        self.ed_exc.textChanged.connect(self._invalidate_target_cache)
+        self.filename_panel.pattern_changed.connect(self._invalidate_target_cache)
+        self.content_panel.query_changed.connect(self._invalidate_target_cache)
+        self.filter_panel.filters_changed.connect(self._invalidate_target_cache)
         self.search_options_panel.options_changed.connect(self._invalidate_target_cache)
         self.results_tree.itemSelectionChanged.connect(self._on_target_selection_changed)
         self.table_manager.table.itemSelectionChanged.connect(self._on_target_selection_changed)
@@ -250,6 +256,11 @@ class FileExplorerDock(BaseDock):
         self.chk_sort_results = QCheckBox(tr("file_list.chk_sort_results"))
         self.chk_sort_results.setChecked(False)
         self.chk_sort_results.setToolTip(tr("file_list.tooltip_sort_results"))
+        self.chk_reuse_previous = QCheckBox(tr("file_explorer.reuse_previous"))
+        self.chk_reuse_previous.setChecked(
+            getattr(self, "reuse_previous_state", False)
+        )
+        self.chk_reuse_previous.toggled.connect(self._on_reuse_previous_toggled)
 
         # Include/Exclude globs (from Search/Replace) - CRITICAL FEATURE
         self.ed_inc = QLineEdit()
@@ -368,6 +379,9 @@ class FileExplorerDock(BaseDock):
         self.chk_long.setToolTip(tooltip_tr("file_list.chk_long"))
         self.chk_human.setToolTip(tooltip_tr("file_list.chk_human"))
         self.chk_recursive.setToolTip(tooltip_tr("file_list.chk_recursive"))
+        self.chk_reuse_previous.setToolTip(
+            tr("file_explorer.reuse_previous_tooltip")
+        )
         # Action button tooltip (v2.9.117 - B.7: Unified)
         self.btn_list.setToolTip(tooltip_tr("file_list.btn_list"))
 
@@ -392,6 +406,7 @@ class FileExplorerDock(BaseDock):
 
         # Update checkboxes
         self.chk_sort_results.setText(tr("file_list.chk_sort_results"))
+        self.chk_reuse_previous.setText(tr("file_explorer.reuse_previous"))
         self.chk_word_wrap.setText(tr("file_list.chk_word_wrap"))
         if hasattr(self, "chk_selection_mode"):
             self.chk_selection_mode.setText(tr("file_list.chk_selection_mode"))
@@ -478,6 +493,7 @@ class FileExplorerDock(BaseDock):
         # Options row 2: Sort results checkbox
         opts2_layout = QHBoxLayout()
         opts2_layout.addWidget(self.chk_sort_results)
+        opts2_layout.addWidget(self.chk_reuse_previous)
         opts2_layout.addStretch()
         section1_layout.addLayout(opts2_layout)
 
@@ -755,6 +771,12 @@ class FileExplorerDock(BaseDock):
     def _invalidate_target_cache(self, *_args):
         self._last_content_search_universe = None
 
+    def _on_reuse_previous_toggled(self, enabled: bool) -> None:
+        """Persist the explicit refinement choice; disabling drops stale state."""
+        self.settings.setValue("reuse_previous_results", bool(enabled))
+        if not enabled:
+            self._invalidate_target_cache()
+
     def _on_target_scope_changed(self, *_args):
         scope = self.combo_target_scope.currentData()
         self._invalidate_target_cache()
@@ -811,8 +833,26 @@ class FileExplorerDock(BaseDock):
                      tuple(tuple(sorted(condition.items())) for condition in self.conditions_grid.get_conditions()),
                      self.conditions_grid.get_logic_operator(),
                      self.filter_panel.chk_use_ext_filter.isChecked(),
-                     tuple(self.filter_panel.get_filters()["extensions"]))
+                     tuple(self.filter_panel.get_filters()["extensions"]),
+                     self.combo_type.currentData(),
+                     self.filename_panel.get_pattern(),
+                     self.content_panel.ed_query.document().revision(),
+                     self.ed_inc.text().strip(),
+                     self.ed_exc.text().strip(),
+                     self._freeze_cache_value(self.filter_panel.get_filters()))
         return scope, value if scope != "selected" else root, root, paths, signature
+
+    @staticmethod
+    def _freeze_cache_value(value):
+        """Convert nested filter state into a deterministic, hashable signature."""
+        if isinstance(value, dict):
+            return tuple(
+                (key, FileExplorerDock._freeze_cache_value(item))
+                for key, item in sorted(value.items())
+            )
+        if isinstance(value, (list, tuple)):
+            return tuple(FileExplorerDock._freeze_cache_value(item) for item in value)
+        return value
 
     def _toggle_word_wrap(self, enabled: bool):
         """Toggle word wrap mode in results tree (v2.9.117)."""
@@ -1033,6 +1073,8 @@ class FileExplorerDock(BaseDock):
         self, directory: str, content_query: str, target_signature=None
     ) -> Optional[List[str]]:
         """Return previous result paths when the current search can be refined incrementally."""
+        if not self.chk_reuse_previous.isChecked():
+            return None
         if not content_query:
             return None
 
@@ -1302,6 +1344,8 @@ class FileExplorerDock(BaseDock):
                 "incremental_candidate_count": (
                     len(incremental_candidate_paths) if incremental_candidate_paths is not None else None
                 ),
+                "refine_requested": self.chk_reuse_previous.isChecked(),
+                "refine_reused": incremental_candidate_paths is not None,
                 "start_time": time.time()
             }
 
@@ -1506,6 +1550,9 @@ class FileExplorerDock(BaseDock):
         self.chk_long_state = self.settings.value("long_format", True, type=bool)
         self.chk_human_state = self.settings.value("human_readable", True, type=bool)
         self.chk_recursive_state = self.settings.value("recursive", False, type=bool)
+        self.reuse_previous_state = self.settings.value(
+            "reuse_previous_results", False, type=bool
+        )
 
         # Load recent directories
         self.recent_dirs = self.settings.value("recent_directories", [], type=list)
@@ -1518,6 +1565,9 @@ class FileExplorerDock(BaseDock):
         self.settings.setValue("long_format", self.chk_long.isChecked())
         self.settings.setValue("human_readable", self.chk_human.isChecked())
         self.settings.setValue("recursive", self.chk_recursive.isChecked())
+        self.settings.setValue(
+            "reuse_previous_results", self.chk_reuse_previous.isChecked()
+        )
         self.settings.setValue("recent_directories", self.recent_dirs)
 
     def _update_statistics(self, files_list: List, elapsed_time: float):
@@ -2436,6 +2486,15 @@ class FileExplorerDock(BaseDock):
         )
         if cancelled:
             self.results_status.setText("Search cancelled")
+        elif params.get("refine_requested"):
+            refinement_key = (
+                "file_explorer.refine_reused"
+                if params.get("refine_reused")
+                else "file_explorer.refine_fallback"
+            )
+            self.results_status.setText(
+                self.results_status.text() + "; " + tr(refinement_key)
+            )
 
         # Store for view sync (lightweight)
         self.last_was_search = True

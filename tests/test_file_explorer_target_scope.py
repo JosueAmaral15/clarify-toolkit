@@ -311,6 +311,7 @@ def test_signature_prevents_reuse_across_files_in_same_parent(tmp_path, docks, q
     for path in (first, second):
         path.write_text("needle")
     dock = docks()
+    dock.chk_reuse_previous.setChecked(True)
     set_scope(dock, "file")
     dock.ed_directory.setText(str(first))
     dock.content_panel.set_query("needle")
