@@ -52,6 +52,7 @@ from PySide6.QtGui import (
 
 from src.i18n.translator import tooltip_tr, tr
 from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
+from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
 from src.core.editor_find import (
     MAX_QUERY_CHARS,
     FindOptions,
@@ -563,6 +564,9 @@ class EditorDock(BaseDock):
         "clear_folder_sessions": {"text_key": "editor.btn_clear_folder_sessions"},
         "recover_unsaved": {"text_key": "editor.btn_recover_unsaved"},
         "recovery_retention": {"text_key": "editor.btn_recovery_retention"},
+        "save_temp_note": {"text_key": "editor.btn_save_temp_note"},
+        "manage_temp_notes": {"text_key": "editor.btn_manage_temp_notes"},
+        "temp_note_retention": {"text_key": "editor.btn_temp_note_retention"},
         "save": {"text_key": "editor.btn_save", "shortcut": QKeySequence.StandardKey.Save},
         "save_as": {"text_key": "editor.btn_save_as", "shortcut": QKeySequence.StandardKey.SaveAs},
         "compare_with_saved": {"text_key": "editor.btn_compare_with_saved"},
@@ -620,7 +624,8 @@ class EditorDock(BaseDock):
             "items": (
                 "new", "open", "open_path", "open_folder", "close_folder",
                 "recover_unsaved",
-                "recovery_retention", None,
+                "recovery_retention", None, "save_temp_note",
+                "manage_temp_notes", "temp_note_retention", None,
                 "save", "save_as", "compare_with_saved",
                 "reload_from_disk", "enable_saving", "export", "close_tab",
                 None, "auto_save", "restore_folder_sessions",
@@ -666,6 +671,7 @@ class EditorDock(BaseDock):
     _ACTION_ENABLE_RULES = {
         "save": "has_tab",
         "save_as": "has_tab",
+        "save_temp_note": "has_editor",
         "compare_with_saved": "has_file_path",
         "reload_from_disk": "can_reload_from_disk",
         "enable_saving": "is_edit_only",
@@ -778,6 +784,20 @@ class EditorDock(BaseDock):
         self.recovery_store = UnsavedRecoveryStore(
             retention_hours=self.recovery_retention_hours
         )
+        self.temp_note_retention_days = max(
+            0,
+            min(
+                3650,
+                self.settings.value("temp_note_retention_days", 0, type=int),
+            ),
+        )
+        self.temp_note_store = TemporaryNoteStore()
+        self._temp_note_startup_failure = False
+        if self.temp_note_retention_days:
+            try:
+                self.temp_note_store.prune(self.temp_note_retention_days)
+            except (OSError, TemporaryNoteError):
+                self._temp_note_startup_failure = True
         self._restored_recovery_ids: set[str] = set()
         self._recovery_suspended = False
         self._recovery_failures = 0
@@ -787,6 +807,8 @@ class EditorDock(BaseDock):
         self._recovery_lifecycle = EditorRecoveryLifecycle(self)
         self._folder_session_ready = True
         self._restore_folder_session(self.explorer_root_path)
+        if self._temp_note_startup_failure:
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -2225,6 +2247,9 @@ class EditorDock(BaseDock):
             "clear_folder_sessions": lambda _checked=False: self._clear_folder_sessions(),
             "recover_unsaved": lambda _checked=False: self._show_recovery_dialog(),
             "recovery_retention": lambda _checked=False: self._set_recovery_retention(),
+            "save_temp_note": lambda _checked=False: self._save_current_as_temp_note(),
+            "manage_temp_notes": lambda _checked=False: self._show_temp_notes_dialog(),
+            "temp_note_retention": lambda _checked=False: self._set_temp_note_retention(),
             "save": lambda _checked=False: self._save_file(),
             "save_as": lambda _checked=False: self._save_file_as(),
             "compare_with_saved": lambda _checked=False: self._compare_current_tab_with_saved(),
@@ -4452,6 +4477,188 @@ class EditorDock(BaseDock):
         except (OSError, RecoverySnapshotError):
             self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
         self.settings.setValue("recovery_retention_hours", hours)
+
+    def _save_current_as_temp_note(self, title: str | None = None) -> bool:
+        """Save the current buffer as a private note without settling file state."""
+        tab = self.tab_widget.currentWidget()
+        if tab is None or not hasattr(tab, "editor"):
+            return False
+        if tab.editor.document().characterCount() - 1 > self.temp_note_store.max_note_bytes:
+            self.lbl_status.setText(tr("editor.status_temp_note_too_large"))
+            return False
+        if title is None:
+            default_title = getattr(tab, "_clarify_temp_note_title", "") or tab.get_tab_title()
+            title, accepted = QInputDialog.getText(
+                self,
+                tr("editor.temp_note_title"),
+                tr("editor.temp_note_title_prompt"),
+                text=default_title,
+            )
+            if not accepted:
+                return False
+        note_id = getattr(tab, "_clarify_temp_note_id", "") or uuid.uuid4().hex
+        display_name = getattr(tab, "_clarify_display_name", "") or tab.get_tab_title()
+        extension = os.path.splitext(display_name)[1] or os.path.splitext(
+            getattr(tab, "file_path", "") or ""
+        )[1] or ".txt"
+        try:
+            note = self.temp_note_store.save(
+                note_id,
+                title=title,
+                content=tab.editor.toPlainText(),
+                extension=extension,
+            )
+        except (OSError, UnicodeError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        setattr(tab, "_clarify_temp_note_id", note.note_id)
+        setattr(tab, "_clarify_temp_note_title", note.title)
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_saved").format(title=note.title)
+        )
+        return True
+
+    def _restore_temp_note(self, note_id: str):
+        """Open a note as an unsaved buffer, never as a normal file."""
+        for tab in self._all_tab_objects():
+            if getattr(tab, "_clarify_temp_note_id", "") == note_id:
+                self.tab_widget.setCurrentWidget(tab)
+                return tab
+        try:
+            note = self.temp_note_store.get(note_id)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return None
+        display_name = tr("editor.temp_note_display_name").format(title=note.title)
+        tab = self.load_generated_content(
+            note.content,
+            display_name,
+            extension=note.extension,
+        )
+        setattr(tab, "_clarify_temp_note_id", note.note_id)
+        setattr(tab, "_clarify_temp_note_title", note.title)
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_restored").format(title=note.title)
+        )
+        return tab
+
+    def _delete_temp_note(self, note_id: str, *, confirm: bool = True) -> bool:
+        try:
+            note = self.temp_note_store.get(note_id)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if confirm:
+            reply = QMessageBox.question(
+                self,
+                tr("editor.temp_note_delete_title"),
+                tr("editor.temp_note_delete_message").format(title=note.title),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return False
+        try:
+            self.temp_note_store.discard(note_id)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        for tab in self._all_tab_objects():
+            if getattr(tab, "_clarify_temp_note_id", "") == note_id:
+                delattr(tab, "_clarify_temp_note_id")
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_deleted").format(title=note.title)
+        )
+        return True
+
+    def _show_temp_notes_dialog(self) -> None:
+        try:
+            notes = self.temp_note_store.list()
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return
+        if not notes:
+            QMessageBox.information(
+                self,
+                tr("editor.temp_notes_title"),
+                tr("editor.temp_notes_empty"),
+            )
+            return
+        labels = [
+            f"{note.title} - {note.updated_at[:10]} - {note.note_id[:8]}"
+            for note in notes
+        ]
+        selected, accepted = QInputDialog.getItem(
+            self,
+            tr("editor.temp_notes_title"),
+            tr("editor.temp_notes_prompt"),
+            labels,
+            0,
+            False,
+        )
+        if not accepted:
+            return
+        note = notes[labels.index(selected)]
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle(tr("editor.temp_notes_title"))
+        dialog.setText(note.title)
+        restore_button = dialog.addButton(
+            tr("editor.temp_note_restore"), QMessageBox.AcceptRole
+        )
+        delete_button = dialog.addButton(
+            tr("editor.temp_note_delete"), QMessageBox.DestructiveRole
+        )
+        dialog.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
+        dialog.exec()
+        if dialog.clickedButton() == restore_button:
+            self._restore_temp_note(note.note_id)
+        elif dialog.clickedButton() == delete_button:
+            self._delete_temp_note(note.note_id)
+
+    def _set_temp_note_retention(self, days: int | None = None) -> bool:
+        """Set optional updated-at retention; zero always means manual deletion."""
+        if days is None:
+            days, accepted = QInputDialog.getInt(
+                self,
+                tr("editor.temp_note_retention_title"),
+                tr("editor.temp_note_retention_prompt"),
+                self.temp_note_retention_days,
+                0,
+                3650,
+            )
+            if not accepted:
+                return False
+        days = max(0, min(3650, int(days)))
+        try:
+            expired = self.temp_note_store.expired(days)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if expired:
+            reply = QMessageBox.question(
+                self,
+                tr("editor.temp_note_retention_title"),
+                tr("editor.temp_note_retention_confirm").format(count=len(expired)),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                return False
+            try:
+                self.temp_note_store.prune(days)
+            except (OSError, TemporaryNoteError):
+                self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+                return False
+        self.temp_note_retention_days = days
+        self.settings.setValue("temp_note_retention_days", days)
+        self.lbl_status.setText(
+            tr(
+                "editor.status_temp_note_retention_manual"
+                if days == 0
+                else "editor.status_temp_note_retention_days"
+            ).format(days=days)
+        )
+        return True
 
     def _set_show_line_numbers_enabled(self, enabled: bool):
         """Apply line-number visibility to the dock and all open tabs."""

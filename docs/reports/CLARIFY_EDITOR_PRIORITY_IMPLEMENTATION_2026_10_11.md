@@ -193,3 +193,27 @@ test-tree RSS was 247.6 MiB. One earlier Stage 5A attempt was stopped at the glo
 test process used 33.3 MiB and the affected modules were rerun completely after
 that process exited. No native Qt crash occurred. Compile, two JSON catalog parses,
 Pylint error checks, Black for the new test module and `git diff --check` passed.
+
+## Stage 5B Result - Complete
+
+Implemented `CE-TEMP-NOTES-01`, completing the Clarify Editor-specific priority
+queue in this report.
+
+- File now offers Save as Temporary Note, Manage Temporary Notes and Temporary
+  Note Retention. Saving a note never settles the tab's dirty state, changes its
+  file identity or writes the original; restoring always creates an unsaved tab.
+- `TemporaryNoteStore` uses a private 0700 directory, 0600 JSON records, a lock,
+  fsync plus atomic replace and no implicit eviction during save. Limits are 20
+  notes, 2 MiB per note and 20 MiB total; invalid, corrupt, symlinked or excessive
+  entries are rejected or pruned within those bounds.
+- Deletion is explicit by default and preserves any open editor buffer. Optional
+  retention is based on `updated_at`, supports 0 (manual) through 3650 days,
+  previews already-expired notes and requires confirmation when configured; later
+  application starts apply the saved positive policy automatically.
+
+Distinct complete passing cases: 157 (6 pure storage, 5 temporary-note GUI, 6
+folder-session, 67 EditorDock, 53 recovery lifecycle and 20 layout). Peak observed
+test-tree RSS was 245.9 MiB. One earlier GUI attempt was stopped at the global
+85.5% RAM guard with its tree at 89.5 MiB, then rerun completely. No native Qt
+crash occurred. Compile, two JSON catalog parses, Pylint error checks, Black and
+`git diff --check` passed; `example.py` remained unchanged.

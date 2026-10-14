@@ -3940,3 +3940,20 @@ Plano imediato:
   Static checks passed and `example.py` remained unchanged.
 - Remaining Clarify Editor priority task: `CE-TEMP-NOTES-01`. After it, the
   prioritized queue moves to File Explorer/i18n/isolation work.
+
+## 2026-10-14 - Clarify Editor temporary notes completed
+
+- Continued from published folder-session checkpoint `d8aa2a9` and completed
+  `CE-TEMP-NOTES-01`, the last Editor-specific item in the priority report.
+- Added a separate private atomic note store (20 notes, 2 MiB each, 20 MiB total)
+  and File actions to save, manage and configure retention. Notes do not clear
+  dirty state, change file identity, overwrite originals or masquerade as recovery.
+- Restore creates an unsaved tab; delete is manual by default and preserves open
+  buffers. Optional updated-at retention includes 30 days, confirms existing
+  expirations and applies the saved positive policy on later starts.
+- 157 distinct relevant cases passed; peak tree RSS was 245.9 MiB. One earlier
+  attempt hit the 85.5% global RAM guard and was rerun fully. Static checks passed,
+  no native Qt crash occurred and `example.py` remained unchanged.
+- The canonical backlog now has 35 open tasks, 5 in the priority queue. The next
+  priority is no longer Clarify Editor: it is the remaining File Explorer/i18n/
+  isolation work, starting with the highest protocol priority after a fresh audit.

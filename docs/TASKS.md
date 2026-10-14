@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/14 - sessoes de pasta do Editor entregues
+**Last Update**: 2026/10/14 - notas temporarias do Editor entregues
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **6 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **5 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **36 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **35 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -184,7 +184,7 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   `UnsavedRecoveryStore` e voltam como copias nao vinculadas ao original; caminhos
   externos, ausentes, symlinks inseguros e ilegíveis sao ignorados e informados.
   File oferece fechar pasta preservando abas, toggle e limpeza de sessoes.
-- [ ] **CE-TEMP-NOTES-01: notas temporarias persistentes gerenciadas pelo Editor.**
+- [x] **CE-TEMP-NOTES-01: notas temporarias persistentes gerenciadas pelo Editor.**
   Adicionar acao explicita para salvar um buffer como nota temporaria, listar e
   recuperar essas notas sem exigir caminho comum nem confundi-las com Save/Save As
   ou snapshots de emergencia. Por padrao, excluir somente por acao explicita do
@@ -192,6 +192,12 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   incluindo 30 dias, com preview/confirmacao e criterio documentado. Usar storage
   privado, atomico, limitado e sem sobrescrever originais; expor data/titulo,
   falhas, quota e limpeza, com testes de restart, expiracao e corrupcao.
+  Entregue em 14/10/2026: File permite salvar, listar/restaurar e excluir notas
+  em storage privado e atomico, limitado a 20 notas, 2 MiB por nota e 20 MiB no
+  total. Salvar como nota nao limpa dirty nem grava o arquivo original; restaurar
+  cria aba nao salva. Exclusao e manual por padrao, com retencao opcional por
+  `updated_at` entre 1 e 3650 dias (incluindo 30), preview/confirmacao ao ativar e
+  limpeza automatica em reinicios posteriores.
 - [ ] **APP-TOON-PRIMARY-01: transicao global do contexto JSON para TOON.** Fazer
   inventario de nomes, modelos, schemas, import/export, documentacao e tools para
   tornar TOON o contexto estrutural primario do Clarify, reutilizando conversores
