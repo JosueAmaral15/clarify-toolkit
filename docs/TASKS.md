@@ -2,16 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/11 - recents e abertura por caminho no Editor entregues
+**Last Update**: 2026/10/14 - menus, splits e sincronizacao do Editor entregues
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **10 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **7 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **40 tarefas abertas**. Implementar em
+checkboxes duplicados. Contagem atual: **37 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 
@@ -135,7 +135,7 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   modos: usar rotulo principal consistente e, se necessario, modo como descricao
   secundaria/tooltip traduzido. Validar ingles, portugues e os outros cinco
   catalogos, troca runtime, largura estreita e acessibilidade.
-- [ ] **CE-EXPLORER-CONTEXT-01: menu contextual de arquivos e pastas.** No painel
+- [x] **CE-EXPLORER-CONTEXT-01: menu contextual de arquivos e pastas.** No painel
   esquerdo do Clarify Editor, oferecer acoes coerentes por tipo: `Open`, `Open to
   the Side`, `Rename`, `Delete`, `Reveal/Open in File Manager`, `Copy Absolute
   Path`, `Copy Relative Path`, `New File/Folder` para diretorios e `Analyze` quando
@@ -146,7 +146,11 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   symlinks/permissoes e nunca seguir recursivamente alvos externos. Atualizar o
   modelo sem perder a raiz/selecoes; `Analyze` reutiliza APIs existentes com
   entrada limitada e nunca envia conteudo a provider sem acao/confirmacao.
-- [ ] **CE-TAB-CONTEXT-01: menu contextual completo das guias de arquivo.** Somar
+  Entregue em 14/10/2026: o menu contextual distingue arquivo, pasta e raiz e
+  oferece abertura, criacao exclusiva, rename sem overwrite, lixeira confirmada,
+  reveal, caminhos absoluto/relativo e preflight local de analise. Symlinks nao
+  sao seguidos durante exclusao e nenhuma analise chama provider implicitamente.
+- [x] **CE-TAB-CONTEXT-01: menu contextual completo das guias de arquivo.** Somar
   `Close`, `Close Others`, `Close All`, `Close Tabs to the Left`, `Close Tabs to
   the Right`, `Split Down` e `Split Right` ao menu da guia, usando esses nomes ou
   equivalentes traduzidos coerentes. Fechamentos em lote devem processar cada
@@ -154,13 +158,20 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   se o usuario cancelar. Splits devem mover/exibir a guia sem duplicar ownership
   do documento, watchers ou snapshots e restaurar layout/foco ao fechar paines.
   Cobrir primeira/ultima/unica guia, multiplos buffers alterados e retranslation.
-- [ ] **CE-TAB-SYNC-01: sincronizar e reordenar abas com o Explorer.** Ao ativar
+  Entregue em 14/10/2026: o menu real da barra de abas oferece fechamentos
+  unitarios/em lote com interrupcao no Cancel e splits inferior/direito que
+  compartilham o mesmo QTextDocument sem duplicar aba, watcher ou recovery.
+- [x] **CE-TAB-SYNC-01: sincronizar e reordenar abas com o Explorer.** Ao ativar
   uma guia de arquivo, selecionar e revelar o item correspondente no painel do
   Explorer sem mudar a raiz, abrir duplicata ou disparar IO desnecessario. Permitir
   arrastar e soltar guias para reordena-las, preservando documento ativo, splits,
   ownership, watchers, dirty/recovery e ordem persistida. Tratar arquivos fora da
   pasta, removidos ou renomeados sem selecionar item incorreto; cobrir teclado,
   mouse, multiplos splits e acessibilidade.
+  Entregue em 14/10/2026: a guia ativa revela somente arquivos existentes dentro
+  da raiz canonica; itens externos/ausentes limpam a selecao. Drag-and-drop
+  persiste ate 20 referencias de caminho e restaura apenas a ordem das abas ja
+  abertas, sem abrir arquivos nem persistir conteudo.
 - [ ] **CE-FOLDER-SESSION-01: restaurar as abas ao reabrir uma pasta.** Ao fechar
   e depois abrir novamente uma pasta no Clarify Editor, recuperar o conjunto, a
   ordem e a guia ativa dos arquivos daquela pasta. Persistir referencias e estado

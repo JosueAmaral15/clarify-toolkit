@@ -3907,3 +3907,20 @@ Plano imediato:
   mover o cursor; Replace All permanece uma operacao undoable.
 - Passaram 89 casos completos (14 puros, 8 GUI novos e 67 EditorDock), pico
   204,2 MiB, sem crash Qt ou guard abort nas execucoes finais.
+
+## 2026-10-14 - Clarify Editor priority Stage 4 completed
+
+- The user asked to continue the prioritized Clarify Editor work.
+- Completed `CE-EXPLORER-CONTEXT-01`, `CE-TAB-CONTEXT-01` and
+  `CE-TAB-SYNC-01`: safe Explorer actions, complete tab context actions, shared
+  document splits, Explorer selection sync and bounded tab-order persistence.
+- Validation used isolated offscreen Qt processes and temporary homes: 154
+  distinct passing cases (7 tab/split/sync, 7 Explorer context, 20 layout, 67
+  EditorDock and 53 recovery lifecycle). Peak observed tree RSS was 245.3 MiB;
+  no native crash or guard abort occurred.
+- Compile, JSON parsing, Pylint-E, Black for new tests and `git diff --check`
+  passed. `example.py` remained unrelated and unchanged at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- The next bounded Editor stage is `CE-FOLDER-SESSION-01`, followed by
+  `CE-TEMP-NOTES-01`; File Explorer and cross-application backlog remain outside
+  this completed checkpoint.

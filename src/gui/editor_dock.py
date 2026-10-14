@@ -32,7 +32,8 @@ from pathlib import Path
 from typing import List
 
 from PySide6.QtCore import (
-    QDir, QEvent, QFileSystemWatcher, QObject, QSize, Qt,
+    QDir, QEvent, QFile, QFileSystemWatcher, QModelIndex, QObject, QSize, Qt,
+    QUrl,
     QTimer, Slot
 )
 from PySide6.QtWidgets import (
@@ -44,7 +45,8 @@ from PySide6.QtWidgets import (
     QTreeView, QSizePolicy
 )
 from PySide6.QtGui import (
-    QAction, QColor, QKeySequence, QPainter, QTextCursor,
+    QAction, QColor, QDesktopServices, QKeySequence, QPainter, QTextCursor,
+    QTextDocument,
     QTextOption
 )
 
@@ -736,6 +738,8 @@ class EditorDock(BaseDock):
             "regex": self.settings.value("find/regex", False, type=bool),
             "scope": find_scope if find_scope in {"all", "strings", "variables"} else "all",
         }
+        self._persisted_tab_order = self._load_persisted_tab_order()
+        self._restoring_tab_order = False
         self.auto_save_enabled = self.settings.value("auto_save_enabled", False, type=bool)
         self.show_line_numbers_enabled = self.settings.value("show_line_numbers_enabled", False, type=bool)
         self.word_wrap_enabled = self.settings.value("word_wrap_enabled", True, type=bool)
@@ -811,8 +815,11 @@ class EditorDock(BaseDock):
         self.tab_widget = QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
+        self.editor_workspace_splitter = QSplitter(Qt.Horizontal)
+        self.editor_workspace_splitter.addWidget(self.tab_widget)
+        self._setup_split_panel()
         self.editor_splitter.addWidget(self.explorer_panel)
-        self.editor_splitter.addWidget(self.tab_widget)
+        self.editor_splitter.addWidget(self.editor_workspace_splitter)
         self.editor_splitter.setStretchFactor(0, 0)
         self.editor_splitter.setStretchFactor(1, 1)
         self.editor_splitter.setSizes([240, 760])
@@ -900,9 +907,34 @@ class EditorDock(BaseDock):
         for column in range(1, self.explorer_model.columnCount()):
             self.explorer_tree.hideColumn(column)
         self.explorer_tree.doubleClicked.connect(self._open_explorer_index)
+        self.explorer_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.explorer_tree.customContextMenuRequested.connect(
+            self._show_explorer_context_menu
+        )
         self.explorer_tree.setToolTip(tooltip_tr("editor.explorer_tree"))
         explorer_layout.addWidget(self.explorer_tree)
         self._set_explorer_root(self.explorer_root_path, persist=False)
+
+    def _setup_split_panel(self) -> None:
+        """Create a hidden secondary view that never owns a document."""
+        self.split_panel = QFrame(self.editor_workspace_splitter)
+        split_layout = QVBoxLayout(self.split_panel)
+        split_layout.setContentsMargins(0, 0, 0, 0)
+        split_header = QHBoxLayout()
+        self.split_title = QLabel("")
+        self.split_close_button = QPushButton("×")
+        self.split_close_button.setFixedSize(28, 28)
+        self.split_close_button.setToolTip(tr("editor.split_close"))
+        self.split_close_button.clicked.connect(self._close_split_view)
+        split_header.addWidget(self.split_title, 1)
+        split_header.addWidget(self.split_close_button)
+        split_layout.addLayout(split_header)
+        self.split_editor = QTextEdit(self.split_panel)
+        self.split_editor.setAcceptRichText(False)
+        split_layout.addWidget(self.split_editor, 1)
+        self.editor_workspace_splitter.addWidget(self.split_panel)
+        self.split_panel.hide()
+        self._split_source_tab = None
 
     def _set_explorer_root(self, folder_path: str, *, persist: bool = True) -> bool:
         """Set a validated folder as the lazy explorer root."""
@@ -945,6 +977,260 @@ class EditorDock(BaseDock):
         if os.path.isfile(file_path):
             self.open_file_path(file_path)
 
+    def _show_explorer_context_menu(self, pos) -> None:
+        index = self.explorer_tree.indexAt(pos)
+        if not index.isValid():
+            return
+        self._build_explorer_context_menu(index).exec(
+            self.explorer_tree.viewport().mapToGlobal(pos)
+        )
+
+    def _build_explorer_context_menu(self, index) -> QMenu:
+        """Build actions appropriate to the selected file-system item."""
+        menu = QMenu(self)
+        path = self._normalized_file_path(self.explorer_model.filePath(index))
+        is_directory = self.explorer_model.isDir(index)
+        is_root = path == self._normalized_file_path(self.explorer_root_path)
+        relative_path = self._relative_explorer_path(path)
+
+        def add(action_id: str, text_key: str, callback, enabled: bool = True):
+            action = menu.addAction(tr(text_key))
+            action.setData(action_id)
+            action.setEnabled(enabled)
+            action.triggered.connect(lambda _checked=False: callback())
+            return action
+
+        add("open", "editor.explorer_open", lambda: self.open_file_path(path), not is_directory)
+        add(
+            "open_side",
+            "editor.explorer_open_side",
+            lambda: self._open_explorer_to_side(path),
+            not is_directory,
+        )
+        menu.addSeparator()
+        add(
+            "new_file",
+            "editor.explorer_new_file",
+            lambda: self._prompt_create_explorer_item(path, folder=False),
+            is_directory,
+        )
+        add(
+            "new_folder",
+            "editor.explorer_new_folder",
+            lambda: self._prompt_create_explorer_item(path, folder=True),
+            is_directory,
+        )
+        add(
+            "rename",
+            "editor.explorer_rename",
+            lambda: self._rename_explorer_path(path),
+            not is_root,
+        )
+        add(
+            "delete",
+            "editor.explorer_delete",
+            lambda: self._delete_explorer_path(path),
+            not is_root,
+        )
+        menu.addSeparator()
+        add("reveal", "editor.explorer_reveal", lambda: self._reveal_explorer_path(path))
+        add("copy_absolute", "editor.explorer_copy_absolute", lambda: self._copy_path(path))
+        relative_action = add(
+            "copy_relative",
+            "editor.explorer_copy_relative",
+            lambda: self._copy_path(relative_path or ""),
+            relative_path is not None,
+        )
+        if relative_path is None:
+            relative_action.setToolTip(tr("editor.explorer_relative_unavailable"))
+        menu.addSeparator()
+        analysis_available = self._analysis_host() is not None
+        analyze_action = add(
+            "analyze",
+            "editor.explorer_analyze",
+            lambda: self._analyze_explorer_path(path),
+            analysis_available,
+        )
+        if not analysis_available:
+            analyze_action.setToolTip(tr("editor.explorer_analyze_unavailable"))
+        return menu
+
+    def _open_explorer_to_side(self, path: str) -> bool:
+        if not self.open_file_path(path):
+            return False
+        return self._show_split_view(self.tab_widget.currentWidget(), Qt.Horizontal)
+
+    def _relative_explorer_path(self, path: str) -> str | None:
+        """Return a path relative to the canonical root without escaping it."""
+        try:
+            root = os.path.realpath(self.explorer_root_path)
+            target = os.path.realpath(path)
+            if os.path.commonpath([root, target]) != root:
+                return None
+            return os.path.relpath(target, root)
+        except (OSError, ValueError):
+            return None
+
+    @staticmethod
+    def _validate_explorer_name(name: str) -> str:
+        candidate = name.strip()
+        if (
+            not candidate
+            or candidate in {".", ".."}
+            or len(candidate) > 255
+            or "\x00" in candidate
+            or "/" in candidate
+            or "\\" in candidate
+        ):
+            raise ValueError(tr("editor.explorer_invalid_name"))
+        return candidate
+
+    def _prompt_create_explorer_item(self, directory: str, *, folder: bool) -> bool:
+        key = "editor.explorer_new_folder" if folder else "editor.explorer_new_file"
+        name, accepted = QInputDialog.getText(self, tr(key), tr("editor.explorer_name_prompt"))
+        if not accepted:
+            return False
+        try:
+            created = self._create_explorer_item(directory, name, folder=folder)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, tr("editor.msg_error_title"), str(error))
+            return False
+        if not folder:
+            self.open_file_path(created)
+        return True
+
+    def _create_explorer_item(self, directory: str, name: str, *, folder: bool) -> str:
+        """Create one empty item exclusively inside a selected directory."""
+        parent = self._normalized_file_path(directory)
+        if not os.path.isdir(parent) or os.path.islink(parent):
+            raise ValueError(tr("editor.explorer_directory_required"))
+        candidate = self._validate_explorer_name(name)
+        path = os.path.join(parent, candidate)
+        if os.path.lexists(path):
+            raise FileExistsError(tr("editor.explorer_name_exists").format(name=candidate))
+        if folder:
+            os.mkdir(path, mode=0o700)
+        else:
+            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            os.close(descriptor)
+        return path
+
+    def _rename_explorer_path(self, path: str, new_name: str | None = None) -> bool:
+        """Rename locally without overwriting and update open-tab identities."""
+        old_path = self._normalized_file_path(path)
+        if old_path == self._normalized_file_path(self.explorer_root_path):
+            return False
+        if not os.path.lexists(old_path):
+            return False
+        if new_name is None:
+            new_name, accepted = QInputDialog.getText(
+                self,
+                tr("editor.explorer_rename"),
+                tr("editor.explorer_name_prompt"),
+                text=os.path.basename(old_path),
+            )
+            if not accepted:
+                return False
+        try:
+            candidate = self._validate_explorer_name(new_name)
+            new_path = os.path.join(os.path.dirname(old_path), candidate)
+            if os.path.lexists(new_path):
+                raise FileExistsError(
+                    tr("editor.explorer_name_exists").format(name=candidate)
+                )
+            was_directory = os.path.isdir(old_path) and not os.path.islink(old_path)
+            os.rename(old_path, new_path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, tr("editor.msg_error_title"), str(error))
+            return False
+        self._remap_open_tab_paths(old_path, new_path, include_children=was_directory)
+        self._persist_tab_order()
+        return True
+
+    def _remap_open_tab_paths(
+        self, old_path: str, new_path: str, *, include_children: bool
+    ) -> None:
+        for tab in self._all_tab_objects():
+            tab_path = self._normalized_file_path(getattr(tab, "file_path", None))
+            if not tab_path:
+                continue
+            replacement = None
+            if tab_path == old_path:
+                replacement = new_path
+            elif include_children:
+                try:
+                    if os.path.commonpath([old_path, tab_path]) == old_path:
+                        replacement = os.path.join(
+                            new_path, os.path.relpath(tab_path, old_path)
+                        )
+                except ValueError:
+                    pass
+            if replacement is None:
+                continue
+            tab.file_path = replacement
+            self._track_tab_disk_state(tab)
+            self._update_tab_title(tab)
+
+    def _delete_explorer_path(self, path: str) -> bool:
+        """Move one item to the platform trash after explicit confirmation."""
+        normalized = self._normalized_file_path(path)
+        if (
+            normalized == self._normalized_file_path(self.explorer_root_path)
+            or not os.path.lexists(normalized)
+        ):
+            return False
+        reply = QMessageBox.question(
+            self,
+            tr("editor.explorer_delete_title"),
+            tr("editor.explorer_delete_confirm").format(name=os.path.basename(normalized)),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return False
+        result = QFile.moveToTrash(normalized)
+        success = result[0] if isinstance(result, tuple) else bool(result)
+        if not success:
+            QMessageBox.warning(
+                self,
+                tr("editor.msg_error_title"),
+                tr("editor.explorer_trash_failed"),
+            )
+            return False
+        for tab in self._all_tab_objects():
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+        return True
+
+    @staticmethod
+    def _copy_path(path: str) -> bool:
+        if not path:
+            return False
+        QApplication.clipboard().setText(path)
+        return True
+
+    @staticmethod
+    def _reveal_explorer_path(path: str) -> bool:
+        target = path if os.path.isdir(path) else os.path.dirname(path)
+        return bool(QDesktopServices.openUrl(QUrl.fromLocalFile(target)))
+
+    def _analysis_host(self):
+        host = self.window()
+        return host if callable(getattr(host, "_show_algorithm_analysis", None)) else None
+
+    def _analyze_explorer_path(self, path: str) -> bool:
+        """Run only the bounded local preflight; provider work remains explicit."""
+        host = self._analysis_host()
+        if host is None:
+            return False
+        host._show_algorithm_analysis()
+        analysis = getattr(host, "dock_algorithm_analysis", None)
+        if analysis is None:
+            return False
+        analysis.path_input.setText(path)
+        analysis.run_preflight()
+        return True
+
     def _set_explorer_visible(self, visible: bool) -> None:
         """Show or hide the editor explorer and persist the preference."""
         self.show_explorer_enabled = visible
@@ -970,12 +1256,14 @@ class EditorDock(BaseDock):
         self.tab_widget.currentChanged.connect(self._on_tab_changed)
 
         # Context menu on tabs
-        self.tab_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab_widget.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.Expanding
         )
-        self.tab_widget.customContextMenuRequested.connect(self._show_tab_context_menu)
+        tab_bar = self.tab_widget.tabBar()
+        tab_bar.setContextMenuPolicy(Qt.CustomContextMenu)
+        tab_bar.customContextMenuRequested.connect(self._show_tab_context_menu)
+        tab_bar.tabMoved.connect(self._on_tab_moved)
 
     def _setup_external_file_watcher(self) -> None:
         """Create bounded watchers for files currently open in editor tabs."""
@@ -989,6 +1277,102 @@ class EditorDock(BaseDock):
         if not file_path:
             return ""
         return os.path.abspath(os.path.normpath(file_path))
+
+    def _load_persisted_tab_order(self) -> list[str]:
+        """Load a bounded file-backed tab order without opening any files."""
+        raw_value = self.settings.value("tab_order", "", type=str)
+        try:
+            values = json.loads(raw_value) if raw_value else []
+        except (TypeError, json.JSONDecodeError):
+            return []
+        if not isinstance(values, list):
+            return []
+        order = []
+        for value in values:
+            if not isinstance(value, str) or len(value) > self.MAX_TYPED_PATH_CHARS:
+                continue
+            normalized = self._normalized_file_path(value)
+            if normalized and normalized not in order:
+                order.append(normalized)
+            if len(order) >= 20:
+                break
+        return order
+
+    def _persist_tab_order(self) -> None:
+        """Persist only bounded path references, never document content."""
+        if self._restoring_tab_order:
+            return
+        order = []
+        for index in range(self.tab_widget.count()):
+            path = self._normalized_file_path(
+                getattr(self.tab_widget.widget(index), "file_path", None)
+            )
+            if path and path not in order:
+                order.append(path)
+            if len(order) >= 20:
+                break
+        self._persisted_tab_order = order
+        self.settings.setValue("tab_order", json.dumps(order, ensure_ascii=False))
+
+    def _apply_persisted_tab_order(self) -> None:
+        """Reorder already-open tabs by stored identity without changing ownership."""
+        if not self._persisted_tab_order or self.tab_widget.count() < 2:
+            return
+        rank = {path: index for index, path in enumerate(self._persisted_tab_order)}
+        tabs = self._all_tab_objects()
+        known = [
+            tab
+            for tab in tabs
+            if self._normalized_file_path(getattr(tab, "file_path", None)) in rank
+        ]
+        known.sort(
+            key=lambda tab: rank[
+                self._normalized_file_path(getattr(tab, "file_path", None))
+            ]
+        )
+        ordered = known + [tab for tab in tabs if tab not in known]
+        current = self.tab_widget.currentWidget()
+        self._restoring_tab_order = True
+        try:
+            for target_index, tab in enumerate(ordered):
+                current_index = self.tab_widget.indexOf(tab)
+                if current_index != target_index:
+                    self.tab_widget.tabBar().moveTab(current_index, target_index)
+            if current is not None:
+                self.tab_widget.setCurrentWidget(current)
+        finally:
+            self._restoring_tab_order = False
+
+    def _on_tab_moved(self, _from_index: int, _to_index: int) -> None:
+        self._persist_tab_order()
+
+    def _select_explorer_path(self, file_path: str | None) -> bool:
+        """Reveal a current file only when it is inside the active Explorer root."""
+        normalized = self._normalized_file_path(file_path)
+        root = self._normalized_file_path(self.explorer_root_path)
+        if not normalized or not os.path.exists(normalized):
+            self.explorer_tree.clearSelection()
+            self.explorer_tree.setCurrentIndex(QModelIndex())
+            return False
+        try:
+            inside_root = os.path.commonpath(
+                [os.path.realpath(root), os.path.realpath(normalized)]
+            ) == os.path.realpath(root)
+        except ValueError:
+            inside_root = False
+        if not inside_root:
+            self.explorer_tree.clearSelection()
+            self.explorer_tree.setCurrentIndex(QModelIndex())
+            return False
+        index = self.explorer_model.index(normalized)
+        if not index.isValid():
+            return False
+        self.explorer_tree.setCurrentIndex(index)
+        self.explorer_tree.scrollTo(index, QTreeView.PositionAtCenter)
+        parent = index.parent()
+        if parent.isValid():
+            self.explorer_tree.expand(parent)
+        return True
 
     @staticmethod
     def _file_disk_signature(file_path: str | None):
@@ -1568,32 +1952,129 @@ class EditorDock(BaseDock):
 
     def _show_tab_context_menu(self, pos):
         """Show context menu on tab right-click."""
-        # Get tab at position
         tab_bar = self.tab_widget.tabBar()
         index = tab_bar.tabAt(pos)
-
         if index < 0:
             return
+        self._build_tab_context_menu(index).exec(tab_bar.mapToGlobal(pos))
 
-        tab = self.tab_widget.widget(index)
-        if not hasattr(tab, 'edit_only_mode'):
-            return
-
-        # Create context menu
+    def _build_tab_context_menu(self, index: int) -> QMenu:
+        """Build a translated context menu bound to the clicked tab object."""
         menu = QMenu(self)
+        tab = self.tab_widget.widget(index)
+        if tab is None:
+            return menu
 
-        # Toggle edit-only action
-        if tab.edit_only_mode:
-            action_text = "Disable Edit-Only Mode"
-        else:
-            action_text = "Enable Edit-Only Mode"
+        def add(action_id: str, text_key: str, callback, enabled: bool = True):
+            action = menu.addAction(tr(text_key))
+            action.setData(action_id)
+            action.setEnabled(enabled)
+            action.triggered.connect(lambda _checked=False: callback())
+            return action
 
-        toggle_action = QAction(action_text, self)
-        toggle_action.triggered.connect(lambda: self._toggle_edit_only_for_tab(index))
-        menu.addAction(toggle_action)
+        add("close", "editor.tab_close", lambda: self._close_tab_object(tab))
+        add(
+            "close_others",
+            "editor.tab_close_others",
+            lambda: self._close_tab_objects(
+                [
+                    self.tab_widget.widget(position)
+                    for position in range(self.tab_widget.count())
+                    if self.tab_widget.widget(position) is not tab
+                ]
+            ),
+            self.tab_widget.count() > 1,
+        )
+        add(
+            "close_all",
+            "editor.tab_close_all",
+            lambda: self._close_tab_objects(self._all_tab_objects()),
+        )
+        add(
+            "close_left",
+            "editor.tab_close_left",
+            lambda: self._close_tab_objects(
+                [self.tab_widget.widget(position) for position in range(index)]
+            ),
+            index > 0,
+        )
+        add(
+            "close_right",
+            "editor.tab_close_right",
+            lambda: self._close_tab_objects(
+                [
+                    self.tab_widget.widget(position)
+                    for position in range(index + 1, self.tab_widget.count())
+                ]
+            ),
+            index < self.tab_widget.count() - 1,
+        )
+        menu.addSeparator()
+        add(
+            "split_down",
+            "editor.tab_split_down",
+            lambda: self._show_split_view(tab, Qt.Vertical),
+            hasattr(tab, "editor"),
+        )
+        add(
+            "split_right",
+            "editor.tab_split_right",
+            lambda: self._show_split_view(tab, Qt.Horizontal),
+            hasattr(tab, "editor"),
+        )
+        if hasattr(tab, "edit_only_mode"):
+            menu.addSeparator()
+            key = (
+                "editor.tab_disable_edit_only"
+                if tab.edit_only_mode
+                else "editor.tab_enable_edit_only"
+            )
+            add(
+                "toggle_edit_only",
+                key,
+                lambda: self._toggle_edit_only_for_tab(self.tab_widget.indexOf(tab)),
+            )
+        return menu
 
-        # Show menu
-        menu.exec_(tab_bar.mapToGlobal(pos))
+    def _all_tab_objects(self) -> list:
+        return [self.tab_widget.widget(index) for index in range(self.tab_widget.count())]
+
+    def _close_tab_object(self, tab) -> bool:
+        index = self.tab_widget.indexOf(tab)
+        return index < 0 or self._close_tab(index)
+
+    def _close_tab_objects(self, tabs: list) -> bool:
+        """Close tabs in visual order and stop immediately on cancellation."""
+        for tab in list(tabs):
+            if tab is not None and not self._close_tab_object(tab):
+                return False
+        return True
+
+    def _show_split_view(self, tab, orientation: Qt.Orientation) -> bool:
+        """Show a second view over the source tab's existing QTextDocument."""
+        if tab is None or not hasattr(tab, "editor"):
+            return False
+        self.editor_workspace_splitter.setOrientation(orientation)
+        self.split_editor.setDocument(tab.editor.document())
+        self.split_editor.setReadOnly(tab.editor.isReadOnly())
+        self.split_editor.setFont(tab.editor.font())
+        self.split_editor.setLineWrapMode(tab.editor.lineWrapMode())
+        self._split_source_tab = tab
+        self.split_title.setText(self._display_title_for_tab(tab))
+        self.split_title.setToolTip(getattr(tab, "file_path", "") or tab.get_tab_title())
+        self.split_panel.show()
+        self.editor_workspace_splitter.setSizes([1, 1])
+        self.split_editor.setFocus()
+        return True
+
+    def _close_split_view(self) -> None:
+        """Detach the shared document before its owning tab can be deleted."""
+        if self._split_source_tab is not None:
+            self.split_editor.setDocument(QTextDocument(self.split_editor))
+        self._split_source_tab = None
+        self.split_title.clear()
+        self.split_panel.hide()
+        self.tab_widget.setFocus()
 
     def _new_file(self, edit_only: bool = False):
         """Create new untitled file."""
@@ -1757,6 +2238,7 @@ class EditorDock(BaseDock):
 
         self._track_tab_disk_state(tab)
         self._add_recent_file(normalized_path)
+        self._persist_tab_order()
         self._discard_recovery_for_tab(tab)
         self._update_tab_title(tab)
         self._refresh_editor_menus()
@@ -3257,12 +3739,12 @@ class EditorDock(BaseDock):
 
     def _close_current_tab(self):
         """Close currently active tab."""
-        self._close_tab(self.tab_widget.currentIndex())
+        return self._close_tab(self.tab_widget.currentIndex())
 
-    def _close_tab(self, index: int):
+    def _close_tab(self, index: int) -> bool:
         """Close tab at index with edit-only mode handling."""
         if index < 0:
-            return
+            return False
 
         tab = self.tab_widget.widget(index)
 
@@ -3289,14 +3771,14 @@ class EditorDock(BaseDock):
                     self._save_file_as()
                     # Check if actually saved (file_path set)
                     if not tab.file_path or tab.is_modified:
-                        return  # User cancelled save, don't close
+                        return False  # User cancelled save, don't close
                 elif clicked == btn_clipboard:
                     # Copy to clipboard
                     clipboard = QApplication.clipboard()
                     clipboard.setText(tab.editor.toPlainText())
                     self.lbl_status.setText(tr("editor.status_copied"))
                 elif clicked == btn_cancel:
-                    return
+                    return False
                 # btn_discard falls through to remove tab
             else:
                 # Normal file-backed tab
@@ -3313,7 +3795,7 @@ class EditorDock(BaseDock):
                         self.tab_widget.setCurrentIndex(index)
                         self._save_file_as()
                         if not tab.file_path or tab.is_modified:
-                            return
+                            return False
                     else:
                         # Handle different tab types
                         if isinstance(tab, JsonEditorTab):
@@ -3322,20 +3804,25 @@ class EditorDock(BaseDock):
                             success = tab.save_file()
 
                         if not success:
-                            return  # Don't close if save failed
+                            return False  # Don't close if save failed
                 elif reply == QMessageBox.Cancel:
-                    return
+                    return False
 
         if not self._discard_recovery_for_tab(tab):
-            return
+            return False
+        if tab is self._split_source_tab:
+            self._close_split_view()
         self._clear_tab_disk_state(tab, refresh_watchers=False)
         for timer in tab.findChildren(QTimer):
             timer.stop()
+        title = tab.get_tab_title()
         self.tab_widget.removeTab(index)
         tab.deleteLater()
         self._refresh_external_file_watchers()
-        self.lbl_status.setText(f"Closed: {tab.get_tab_title()}")
+        self.lbl_status.setText(f"Closed: {title}")
         self._refresh_editor_menus()
+        self._persist_tab_order()
+        return True
 
     def _on_tab_changed(self, index: int):
         """Handle tab change with edit-only mode indicators."""
@@ -3344,6 +3831,7 @@ class EditorDock(BaseDock):
             self._check_tab_external_state(tab)
             self._update_tab_title(tab)
             self._refresh_editor_menus()
+            self._select_explorer_path(getattr(tab, "file_path", None))
 
             if self._show_external_status_for_current_tab():
                 return
@@ -3377,6 +3865,8 @@ class EditorDock(BaseDock):
         index = self.tab_widget.indexOf(tab)
         if index >= 0:
             self.tab_widget.setTabText(index, self._display_title_for_tab(tab))
+        if tab is self._split_source_tab:
+            self.split_title.setText(self._display_title_for_tab(tab))
 
     def _on_tab_mode_changed(self, tab: EditorTab):
         """Refresh title, status, and menu state after tab mode changes."""
@@ -3823,11 +4313,12 @@ class EditorDock(BaseDock):
                 tab.file_path = None
 
             self._prepare_tab_for_dock(tab)
-            index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+            self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
             if not edit_only:
                 self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
-            self.tab_widget.setCurrentIndex(index)
+            self._apply_persisted_tab_order()
+            self.tab_widget.setCurrentWidget(tab)
             self._refresh_editor_menus()
 
             if not edit_only:

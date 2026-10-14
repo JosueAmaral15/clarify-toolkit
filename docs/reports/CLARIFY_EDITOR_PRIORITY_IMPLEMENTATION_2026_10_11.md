@@ -134,9 +134,35 @@ replacement rather than independent QTextDocument searches.
   JSON/JSONL and JavaScript/TypeScript families. Unsupported file types or failed
   Python tokenization fall back to all text with an explicit status message.
 - Search is limited to 2 MiB of text, 4096 query characters/16 KiB UTF-8, 10,000
-  matches and a 0.75-second cooperative scan deadline. Results are immutable
-  offsets; replacement is one undoable edit block and regex groups are expanded.
+matches and a 0.75-second cooperative scan deadline. Results are immutable
+offsets; replacement is one undoable edit block and regex groups are expanded.
 
 Distinct complete passing cases: 89 (14 pure matcher, 8 new GUI and 67 existing
 EditorDock). Peak observed test-tree RSS was 204.2 MiB. No native Qt crash or guard
 abort occurred in final Stage 3 runs. Pylint-E, compile, JSON and diff checks pass.
+
+## Stage 4 Result - Complete
+
+Implemented `CE-EXPLORER-CONTEXT-01`, `CE-TAB-CONTEXT-01` and
+`CE-TAB-SYNC-01`.
+
+- The Explorer context menu now exposes only type-appropriate actions for open,
+  open to side, exclusive new file/folder, collision-safe rename, confirmed trash,
+  reveal, absolute/relative path copy and local analysis preflight. Root deletion
+  is disabled, symlinks are not traversed and provider work is never implicit.
+- The tab-bar context menu supports close, close others/all/left/right and stops
+  batch closing on the first Save/Discard/Cancel refusal. Split Down and Split
+  Right reuse the source tab's exact `QTextDocument`; no second tab, watcher,
+  recovery snapshot or ownership path is created, and closing the source first
+  detaches the secondary view.
+- Activating a file tab reveals it only when the canonical path exists inside the
+  current Explorer root. Dragged tab order persists at most 20 path references and
+  reorders only tabs already opened by the user; it never opens files or stores
+  document content.
+
+Distinct complete passing cases: 154 (7 tab/split/sync, 7 Explorer context, 20
+layout, 67 EditorDock and 53 recovery lifecycle). Peak observed test-tree RSS was
+245.3 MiB across the validated modules. All were run serially, one GUI module per
+process; no native Qt crash or resource-guard abort occurred. Compile, two JSON
+catalog parses, Pylint error checks, Black for the two new test modules and
+`git diff --check` passed. The unrelated `example.py` hash remained unchanged.
