@@ -41,7 +41,7 @@ from src.ai_processor import (
 )
 from src.core.filters import Condition
 from src.core.insert import insert_at_line
-from src.core.search_replace import replace_in_text
+from src.core.search_replace import SearchOptions
 from src.gui.panels import SearchReplacePanel, InsertPanel
 from src.gui.widgets import PathEntry
 from src.gui.workers import (
@@ -49,6 +49,9 @@ from src.gui.workers import (
     AIFileDiscoveryPlan,
     AIPathTarget,
     AIProcessorWorker,
+    AIResultReplacePlan,
+    AIResultReplaceWorker,
+    MAX_AI_RESULT_TEXT_CHARS,
 )
 from src.i18n.translator import tr, tooltip_tr
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
@@ -71,6 +74,11 @@ class AIProcessorDock(StandardToolDock):
         self._worker_thread_id = f"ai-processor-{id(self)}"
         self._pending_worker_result = _UNSET
         self._pending_worker_error = None
+        self._result_replace_worker = None
+        self._result_replace_generation = 0
+        self._result_replace_thread_id = f"ai-processor-result-replace-{id(self)}"
+        self._pending_result_replace = _UNSET
+        self._pending_result_replace_error = None
         self._cancel_requested = False
         self._discard_worker_callbacks = False
         self._close_action = None
@@ -404,10 +412,10 @@ class AIProcessorDock(StandardToolDock):
         search_replace_layout.addWidget(self.search_replace_panel)
 
         # Add button to trigger replace signal
-        btn_replace_results = QPushButton(tr("ai_processor.btn_apply_replace"))
-        btn_replace_results.setToolTip(tooltip_tr("ai_processor.tooltip_replace_results"))
-        btn_replace_results.clicked.connect(self.search_replace_panel.emit_replace_request)
-        search_replace_layout.addWidget(btn_replace_results)
+        self.btn_replace_results = QPushButton(tr("ai_processor.btn_apply_replace"))
+        self.btn_replace_results.setToolTip(tooltip_tr("ai_processor.tooltip_replace_results"))
+        self.btn_replace_results.clicked.connect(self.search_replace_panel.emit_replace_request)
+        search_replace_layout.addWidget(self.btn_replace_results)
 
         search_replace_group.setLayout(search_replace_layout)
         controls_layout.addWidget(search_replace_group)
@@ -888,6 +896,7 @@ class AIProcessorDock(StandardToolDock):
 
             self.btn_process.setEnabled(False)
             self.btn_interrupt.setEnabled(True)
+            self.btn_replace_results.setEnabled(False)
             self.clear_results(self.text_results)
             self.append_result(self.text_results, "[Preparation] Starting file discovery...")
 
@@ -905,9 +914,12 @@ class AIProcessorDock(StandardToolDock):
             self._cancel_requested = True
             self.worker.request_interrupt()
             self.append_result(self.text_results, "\n⚠️ Interrupt requested...")
+        elif self._result_replace_worker and self._result_replace_worker.isRunning():
+            self._cancel_requested = True
+            self._result_replace_worker.request_interrupt()
 
     def _processing_running(self):
-        return self.worker is not None
+        return self.worker is not None or self._result_replace_worker is not None
 
     def _embedded_operation_running(self):
         return any(
@@ -949,6 +961,7 @@ class AIProcessorDock(StandardToolDock):
         self._pending_worker_error = None
         self.btn_process.setEnabled(True)
         self.btn_interrupt.setEnabled(False)
+        self.btn_replace_results.setEnabled(True)
         worker.deleteLater()
 
         if not discard:
@@ -965,10 +978,61 @@ class AIProcessorDock(StandardToolDock):
         if self._close_action is not None:
             self._schedule_close_retry()
 
+    def _store_result_replace(self, generation, result):
+        if generation == self._result_replace_generation:
+            self._pending_result_replace = result
+
+    def _store_result_replace_error(self, generation, error):
+        if generation == self._result_replace_generation:
+            self._pending_result_replace_error = error
+
+    def _on_result_replace_finished(self, generation, worker, query):
+        if (
+            generation != self._result_replace_generation
+            or worker is not self._result_replace_worker
+        ):
+            worker.deleteLater()
+            return
+
+        result = self._pending_result_replace
+        error = self._pending_result_replace_error
+        cancelled = self._cancel_requested
+        discard = self._discard_worker_callbacks
+        self._result_replace_worker = None
+        self._pending_result_replace = _UNSET
+        self._pending_result_replace_error = None
+        self.btn_process.setEnabled(True)
+        self.btn_interrupt.setEnabled(False)
+        self.btn_replace_results.setEnabled(True)
+        worker.deleteLater()
+
+        if not discard:
+            if error is not None:
+                self.show_error("Replace Error", f"Error during replacement:\n\n{error}")
+            elif cancelled:
+                self.append_result(self.text_results, "\n⚠️ Replacement cancelled.")
+            elif result is _UNSET:
+                self.show_error("Replace Error", "Replacement ended without a result")
+            else:
+                new_content, replaced = result
+                self.text_results.setPlainText(new_content)
+                query_preview = query if len(query) <= 80 else f"{query[:77]}..."
+                self.show_info(
+                    "Replace Complete",
+                    f"Replaced {replaced} occurrence(s) of '{query_preview}'",
+                )
+
+        self._cancel_requested = False
+        if self._close_action is not None:
+            self._schedule_close_retry()
+
     def _request_operation_shutdown(self):
         if self.worker is not None:
             self._cancel_requested = True
             self.worker.request_interrupt()
+        if self._result_replace_worker is not None:
+            self._cancel_requested = True
+            self._result_replace_worker.request_interrupt()
         self.search_replace_panel.request_parent_shutdown()
         self.insert_panel.request_parent_shutdown()
 
@@ -1114,33 +1178,89 @@ class AIProcessorDock(StandardToolDock):
             preserve_case: Preserve case pattern
             count: Number of replacements (0 = all)
         """
-        # For results text, only file_content_query is used
+        if self._operation_running():
+            self.show_warning(
+                "Operation Running",
+                "Wait for the current AI Processor operation to finish or cancel it.",
+            )
+            return
+
         needle = file_content_query if file_content_query else file_name_query
-        content = self.text_results.toPlainText()
-        if not content:
+        document = self.text_results.document()
+        if document.isEmpty():
             self.show_warning("No Results", "No results to process. Run AI processor first.")
+            return
+        if max(0, document.characterCount() - 1) > MAX_AI_RESULT_TEXT_CHARS:
+            self.show_error(
+                "Replace Error",
+                "Result text exceeds the 4 MiB character safety limit",
+            )
             return
 
         try:
-            # Compile pattern
-            pattern = compile(needle, options)
-
-            # Execute replacement
-            new_content, num_replaced = replace_in_text(
-                content, pattern, replacement, preserve_case, count or 0
+            if not isinstance(options, SearchOptions):
+                raise TypeError("Replacement options must be SearchOptions")
+            plan = AIResultReplacePlan(
+                content=self.text_results.toPlainText(),
+                query=needle,
+                replacement=replacement,
+                case_sensitive=options.case_sensitive,
+                whole_word=options.whole_word,
+                use_regex=options.regex,
+                preserve_case=preserve_case,
+                count=count or 0,
+            )
+            worker = AIResultReplaceWorker(plan)
+            self._result_replace_generation += 1
+            generation = self._result_replace_generation
+            self._result_replace_worker = worker
+            self._pending_result_replace = _UNSET
+            self._pending_result_replace_error = None
+            self._cancel_requested = False
+            self._discard_worker_callbacks = False
+            worker.finished_ok.connect(
+                lambda result, current=generation: self._store_result_replace(
+                    current, result
+                )
+            )
+            worker.failed.connect(
+                lambda error, current=generation: self._store_result_replace_error(
+                    current, error
+                )
+            )
+            worker.finished.connect(
+                lambda current=generation, finished_worker=worker, query=needle: (
+                    self._on_result_replace_finished(
+                        current, finished_worker, query
+                    )
+                )
             )
 
-            # Update results
-            self.text_results.setPlainText(new_content)
+            from src.ui import FeatureType, thread_manager
 
-            # Show feedback
-            self.show_message(
-                "Replace Complete",
-                f"Replaced {num_replaced} occurrence(s) of '{needle}' with '{replacement}'"
-            )
+            if not thread_manager.start_thread(
+                self._result_replace_thread_id,
+                worker,
+                worker,
+                FeatureType.AI_FILE_PROCESSOR,
+                worker.request_interrupt,
+                exclusive=False,
+            ):
+                self._result_replace_worker = None
+                worker.deleteLater()
+                self.show_error(
+                    "Replace Error",
+                    "Cannot start replacement during application shutdown",
+                )
+                return
 
-        except Exception as e:
-            self.show_error("Replace Error", f"Error during replacement:\n\n{str(e)}")
+            self.btn_process.setEnabled(False)
+            self.btn_interrupt.setEnabled(True)
+            self.btn_replace_results.setEnabled(False)
+            worker.start()
+
+        except (TypeError, ValueError, UnicodeError) as exc:
+            self.show_error("Replace Error", f"Error during replacement:\n\n{exc}")
 
     def _handle_insert_in_prompt(self, line_no, text, mode):
         """

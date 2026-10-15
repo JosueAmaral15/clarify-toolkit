@@ -21,6 +21,12 @@ from src.core.filters import (
     Condition,
     filter_files_by_conditions,
 )
+from src.core.search_replace import (
+    MAX_IN_MEMORY_REPLACE_BYTES,
+    MAX_IN_MEMORY_REPLACE_MATCHES,
+    SearchOptions,
+    replace_in_text_bounded,
+)
 from src.gui.base_dock import ProcessorWorkerBase
 
 MAX_AI_TARGETS = 1_000
@@ -31,6 +37,8 @@ MAX_AI_EXTENSION_BYTES = 4_096
 MAX_AI_TOTAL_EXTENSION_BYTES = 64 * 1024
 MAX_AI_DISCOVERED_FILES = 100_000
 MAX_AI_CONDITION_CONTENT_BYTES = 4 * 1024 * 1024
+MAX_AI_RESULT_QUERY_BYTES = 64 * 1024
+MAX_AI_RESULT_TEXT_CHARS = MAX_IN_MEMORY_REPLACE_BYTES
 
 
 @dataclass(frozen=True)
@@ -189,6 +197,90 @@ class AIFileDiscoveryPlan:
             strict_errors=True,
         )
         return tuple(filtered), original_count, original_count - len(filtered)
+
+
+@dataclass(frozen=True)
+class AIResultReplacePlan:
+    """Immutable bounded replacement state copied from the result widgets."""
+
+    content: str
+    query: str
+    replacement: str
+    case_sensitive: bool
+    whole_word: bool
+    use_regex: bool
+    preserve_case: bool
+    count: int
+
+    def __post_init__(self):
+        if not isinstance(self.content, str) or not isinstance(self.query, str):
+            raise ValueError("Replacement content and query must be text")
+        if not isinstance(self.replacement, str):
+            raise ValueError("Replacement value must be text")
+        if not self.query:
+            raise ValueError("Replacement query must not be empty")
+        if len(self.content) > MAX_AI_RESULT_TEXT_CHARS:
+            raise ValueError("Result text exceeds the 4 MiB character safety limit")
+        if len(self.query) > MAX_AI_RESULT_QUERY_BYTES:
+            raise ValueError("Replacement query exceeds the 64 KiB safety limit")
+        if len(self.replacement) > MAX_IN_MEMORY_REPLACE_BYTES:
+            raise ValueError("Replacement value exceeds the 4 MiB safety limit")
+        if isinstance(self.count, bool) or not isinstance(self.count, int):
+            raise ValueError("Replacement count must be an integer")
+        if self.count < 0 or self.count > MAX_IN_MEMORY_REPLACE_MATCHES:
+            raise ValueError(f"Replacement count must be between 0 and {MAX_IN_MEMORY_REPLACE_MATCHES}")
+
+    def execute(self, checkpoint):
+        """Validate byte bounds, compile and replace on the worker thread."""
+        for value, limit, message in (
+            (
+                self.content,
+                MAX_IN_MEMORY_REPLACE_BYTES,
+                "Result text exceeds the 4 MiB safety limit",
+            ),
+            (
+                self.query,
+                MAX_AI_RESULT_QUERY_BYTES,
+                "Replacement query exceeds the 64 KiB safety limit",
+            ),
+            (
+                self.replacement,
+                MAX_IN_MEMORY_REPLACE_BYTES,
+                "Replacement value exceeds the 4 MiB safety limit",
+            ),
+        ):
+            if len(value.encode("utf-8")) > limit:
+                raise ValueError(message)
+        if not checkpoint():
+            return self.content, 0
+        pattern = SearchOptions(
+            case_sensitive=self.case_sensitive,
+            whole_word=self.whole_word,
+            regex=self.use_regex,
+        ).compile(self.query)
+        return replace_in_text_bounded(
+            self.content,
+            pattern,
+            self.replacement,
+            self.preserve_case,
+            self.count,
+            checkpoint=checkpoint,
+        )
+
+
+class AIResultReplaceWorker(ProcessorWorkerBase):
+    """Background worker for bounded replacement in rendered AI results."""
+
+    def __init__(self, plan: AIResultReplacePlan):
+        super().__init__()
+        self.plan = plan
+
+    def run(self):
+        try:
+            result = self.plan.execute(lambda: not self.check_interrupt())
+            self.emit_success(result)
+        except Exception as exc:
+            self.emit_error(str(exc))
 
 
 class AIProcessorWorker(ProcessorWorkerBase):

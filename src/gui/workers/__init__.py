@@ -9,6 +9,9 @@ from .ai_processor_worker import (
     AIFileDiscoveryPlan,
     AIPathTarget,
     AIProcessorWorker,
+    AIResultReplacePlan,
+    AIResultReplaceWorker,
+    MAX_AI_RESULT_TEXT_CHARS,
 )
 
 __all__ = [
@@ -16,4 +19,7 @@ __all__ = [
     "AIFileDiscoveryPlan",
     "AIPathTarget",
     "AIProcessorWorker",
+    "AIResultReplacePlan",
+    "AIResultReplaceWorker",
+    "MAX_AI_RESULT_TEXT_CHARS",
 ]

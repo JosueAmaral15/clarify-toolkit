@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/15 - lifecycle do AI Processor e corrida Qt corrigidos
+**Last Update**: 2026/10/15 - replace em memoria do AI Processor isolado da GUI
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -67,6 +67,19 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   contrato atual de quatro retornos e agora verifica os argumentos sem interacao.
   Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE7_2026_10_15.md`. Replace em
   memoria do AI Processor e outros consumidores/workers continuam pendentes.
+  Etapa 8 (2026-10-15): replace no resultado em memoria do AI Processor movido
+  para worker registrado e independente por dock, com plano imutavel, entradas,
+  saida e quantidade de matches limitadas e checkpoints cooperativos entre
+  matches. Um dock bloqueia operacoes sobrepostas; docks distintos continuam em
+  paralelo. Cancelamento e fechamento aguardam `QThread.finished`, descartam
+  callbacks tardios e aplicam `QTextDocument` somente na GUI thread. A auditoria
+  tambem corrigiu o uso acidental do `compile` nativo do Python e a chamada ao
+  metodo inexistente `show_message`. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE8_2026_10_15.md`. Outros consumidores e
+  workers continuam pendentes; uma chamada regex individual nao pode ser
+  interrompida no meio pelo motor `re` e permanece como limite documentado. A
+  retomada com margem de RAM concluiu a matriz final de 28 testes em processos
+  isolados, sem crash, timeout ou acionamento das guardas.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

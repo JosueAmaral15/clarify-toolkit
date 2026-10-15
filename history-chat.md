@@ -4136,3 +4136,62 @@ Plano imediato:
   replacement is the next bounded candidate, followed by other worker consumers.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-15 - Session start - APP-THREAD-01 Stage 8
+
+- Native continuation resumed from published checkpoint `df69d0d` after strict
+  AI Presence Monitor 0.10.5 diagnostics verified the exact active Protocol2
+  worker, five Codex hooks and native queue. The fresh branch is
+  `COM-46c601fe-b315-4810-9b03-aba036812569`.
+- This stage is restricted to auditing `AIProcessorDock` in-memory replacement
+  through `_handle_replace_in_results`: prove the actual GUI-thread cost and
+  SearchReplacePanel contracts before changing code, then move only bounded
+  immutable CPU work when evidence requires it.
+- Stage 7 discovery/filter guarantees, per-dock lifecycle and provider-free test
+  boundaries remain mandatory. TOON, WQXR, Editor UX, i18n and other backlog
+  items are outside scope; `example.py` must remain unchanged.
+
+## 2026-10-15 - Session stop - APP-THREAD-01 Stage 8
+
+- The audit proved synchronous GUI-thread replacement and two existing functional
+  defects: use of Python's built-in `compile` instead of `SearchOptions.compile`,
+  and a success call to the absent `show_message` method. The local implementation
+  now uses a registered per-dock worker, frozen bounded inputs, cooperative match
+  checkpoints, native-finished settlement and GUI-only result application.
+- Before final formatting, 28 distinct focused tests passed in isolated guarded
+  processes. The post-format repetition passed 17 tests, then the discovery test
+  process was stopped before collection because global RAM reached the required
+  85.0% barrier; that process used only 95.3 MiB tree RSS. There was no native
+  crash, but protocol requires stopping without retry.
+- Stage 8 code, tests, TASKS entry and report remain uncommitted on
+  `COM-46c601fe-b315-4810-9b03-aba036812569`. No push or further continuation was
+  performed. `example.py` remains deliberately untracked and untouched. Resume by
+  rerunning the complete guarded matrix with adequate global RAM headroom before
+  commit/push.
+
+## 2026-10-15 - Session resume - APP-THREAD-01 Stage 8
+
+- The user explicitly resumed work from Codex CLI and requested task automation.
+  The preserved branch remains `COM-46c601fe-b315-4810-9b03-aba036812569` at
+  checkpoint `df69d0d`, with the Stage 8 implementation, tests and documentation
+  still uncommitted and `example.py` still outside the tracked change set.
+- Memory preflight now reports about 2.2 GiB available and 30% physical RAM use.
+  Resume is limited to reactivating the exact Clarify Protocol2 worker, rerunning
+  the complete guarded Stage 8 matrix, final static/diff checks, and commit/push
+  only if every required gate passes without a native crash or guard barrier.
+
+## 2026-10-15 - Session completion - APP-THREAD-01 Stage 8
+
+- AI Presence Monitor 0.10.5 strict diagnostics passed with task automation,
+  native input, five hooks, Codex queue and both services healthy. The exact
+  Clarify worker was reactivated in Protocol2 for this bounded resume.
+- The complete post-format matrix passed once: 4 bounded replacement tests, 9 AI
+  result-replacement lifecycle tests, 4 parent lifecycle tests, 10 discovery and
+  filtering tests and 1 provider-free Ollama contract test. Peak tree RSS was
+  209.6 MiB; no crash, timeout or guard abort occurred.
+- Python compilation, Pylint-E 10.00/10, focused Black and `git diff --check`
+  passed. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Stage 8 is ready for a branch-only commit and push. `APP-THREAD-01` remains open
+  for other synchronous consumers; the documented standard-library regex
+  interruption limit remains. No unrelated backlog item was started.

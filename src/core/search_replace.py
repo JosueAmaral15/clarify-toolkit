@@ -2,12 +2,16 @@
 
 import re
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Callable, Tuple
+
+MAX_IN_MEMORY_REPLACE_BYTES = 4 * 1024 * 1024
+MAX_IN_MEMORY_REPLACE_MATCHES = 10_000
 
 
 @dataclass
 class SearchOptions:
     """Options for search operations."""
+
     case_sensitive: bool = False
     whole_word: bool = False
     regex: bool = False
@@ -46,8 +50,9 @@ def preserve_case_like(matched_text: str, replacement: str) -> str:
     return replacement
 
 
-def replace_in_text(content: str, pattern: re.Pattern, repl: str,
-                    preserve_case: bool = False, count: int = 0) -> Tuple[str, int]:
+def replace_in_text(
+    content: str, pattern: re.Pattern, repl: str, preserve_case: bool = False, count: int = 0
+) -> Tuple[str, int]:
     """
     Replace occurrences in 'content' using compiled 'pattern'.
     If preserve_case=True, each match adapts 'repl' to the match case.
@@ -63,3 +68,46 @@ def replace_in_text(content: str, pattern: re.Pattern, repl: str,
 
     new = pattern.sub(_repl, content, count=count)
     return new, num
+
+
+def replace_in_text_bounded(
+    content: str,
+    pattern: re.Pattern,
+    repl: str,
+    preserve_case: bool = False,
+    count: int = 0,
+    *,
+    checkpoint: Callable[[], bool] | None = None,
+    max_matches: int = MAX_IN_MEMORY_REPLACE_MATCHES,
+    max_output_bytes: int = MAX_IN_MEMORY_REPLACE_BYTES,
+) -> Tuple[str, int]:
+    """Replace text with cooperative checkpoints and bounded output."""
+    fragments = []
+    last_end = 0
+    replacements = 0
+    output_bytes = 0
+
+    for match in pattern.finditer(content):
+        if checkpoint is not None and not checkpoint():
+            return content, 0
+        if replacements >= max_matches:
+            raise ValueError(f"Replacement exceeds the {max_matches}-match safety limit")
+
+        value = preserve_case_like(match.group(0), repl) if preserve_case else repl
+        prefix = content[last_end : match.start()]
+        output_bytes += len(prefix.encode("utf-8")) + len(value.encode("utf-8"))
+        if output_bytes > max_output_bytes:
+            raise ValueError("Replacement output exceeds the 4 MiB safety limit")
+        fragments.extend((prefix, value))
+        last_end = match.end()
+        replacements += 1
+        if count and replacements >= count:
+            break
+
+    if checkpoint is not None and not checkpoint():
+        return content, 0
+    suffix = content[last_end:]
+    if output_bytes + len(suffix.encode("utf-8")) > max_output_bytes:
+        raise ValueError("Replacement output exceeds the 4 MiB safety limit")
+    fragments.append(suffix)
+    return "".join(fragments), replacements
