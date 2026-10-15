@@ -4067,3 +4067,72 @@ Plano imediato:
   stage. Its next bounded candidate is moving AI Processor discovery and advanced
   filtering off the GUI thread with an immutable, bounded plan; in-memory replace
   and other worker consumers remain after that.
+
+## 2026-10-15 - Session start - APP-THREAD-01 Stage 7
+
+- Native AI Presence Monitor continuation resumed from published checkpoint
+  `98cb876`; strict health, hooks, queue and the exact active Protocol2 worker were
+  verified before work. The fresh branch is
+  `COM-cf344bf5-40b5-4f03-a20e-bea534453234`.
+- This stage is restricted to proving and removing GUI-thread file discovery and
+  advanced-condition IO in `AIProcessorDock`, using immutable bounded worker
+  inputs. Stage 6 lifecycle guarantees must remain intact.
+- In-memory replacement, TOON, WQXR and the other canonical tasks are explicitly
+  outside this session. Temporary files and provider-free workers only;
+  `example.py` remains unrelated and must not be modified.
+
+## 2026-10-15 - Session stopped - APP-THREAD-01 Stage 7 test timeout
+
+- Proved the Stage 7 defect before editing: the initial regression observed
+  directory traversal on the GUI thread and failed as expected at 201.2 MiB.
+- Prepared a local immutable bounded discovery/filter plan. Directory traversal,
+  content filtering and validation now execute in the registered AI worker with
+  cooperative checkpoints, 100,000-file discovery and 4 MiB condition-content
+  limits. Existing shared APIs keep backward-compatible defaults.
+- The five new provider-free regressions passed at 208.6 MiB, and all four Stage 6
+  AI lifecycle regressions passed at 209.1 MiB. Existing condition suites also
+  passed 21, 10 and 60 cases respectively without a crash or guard abort.
+- The next shared-consumer module passed seven cases and then timed out while an
+  unrelated JSON Rewriter path blocked in `QMessageBox.critical()`. Pytest reported
+  the blocking stack; peak tree RSS was 198.3 MiB and no native crash occurred.
+- Per the explicit unresolved-blocking-failure rule, that module was not retried,
+  no static/final gate was claimed, and Stage 7 remains local and uncommitted on
+  `COM-cf344bf5-40b5-4f03-a20e-bea534453234` for the next diagnostic session.
+- `example.py` remains untracked and unchanged at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- The canonical count remains 33 open tasks. The immediate blocker is isolating
+  the modal JSON Rewriter integration timeout before Stage 7 can receive final
+  validation, documentation, commit and push.
+
+## 2026-10-15 - Session resumed - APP-THREAD-01 Stage 7 timeout diagnosis
+
+- The user confirmed that task automation is enabled. Strict diagnostics again
+  verified AI Presence Monitor 0.10.5, five Codex hooks, the native queue and
+  default-disabled GUI/remote fallback; only the exact Clarify Protocol2 worker
+  was restarted for this bounded session.
+- Work resumes on the preserved branch and checkpoint without changing
+  `example.py`. The first action is to diagnose the isolated JSON Rewriter modal
+  timeout from source and test contracts, without blindly rerunning the blocked
+  module or expanding Stage 7.
+
+## 2026-10-15 - Session completion - APP-THREAD-01 Stage 7
+
+- The JSON Rewriter timeout was an obsolete test contract, not a product or Qt
+  lifecycle crash: its mock returned three values for the current four-value API,
+  and the caught unpack error opened a blocking offscreen message box. The test
+  now stubs dialogs, uses the current contract and asserts forwarded conditions.
+- AI Processor path/extension/condition state is copied from widgets into a
+  bounded immutable plan. Semantic condition validation, recursive discovery,
+  content IO and filtering run in the existing per-dock worker; disabled filters
+  remain ignored and provider calls never start after invalid input, IO failure or
+  cooperative cancellation.
+- Final isolated validation passed 117 distinct tests across seven modules. Peak
+  process-tree RSS was 208.6 MiB; no native crash, timeout or resource-guard abort
+  occurred. Pylint-E scored 10.00/10; Python compilation, focused Black and
+  `git diff --check` passed.
+- Evidence is recorded in
+  `docs/reports/APP_THREAD_AUDIT_STAGE7_2026_10_15.md` and `docs/TASKS.md` retains
+  `APP-THREAD-01` as open. The canonical count remains 33; AI Processor in-memory
+  replacement is the next bounded candidate, followed by other worker consumers.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

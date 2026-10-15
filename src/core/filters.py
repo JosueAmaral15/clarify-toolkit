@@ -4,7 +4,7 @@ import os
 import math
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence
+from typing import Callable, Iterable, List, Sequence
 
 from ..utils.file_utils import read_text
 
@@ -405,7 +405,13 @@ class Condition:
 
 
 def filter_files_by_conditions(
-    files: Iterable[str], conds: Sequence[Condition], logic_operator: str = "AND"
+    files: Iterable[str],
+    conds: Sequence[Condition],
+    logic_operator: str = "AND",
+    *,
+    checkpoint: Callable[[], bool] | None = None,
+    max_content_bytes: int | None = None,
+    strict_errors: bool = False,
 ) -> List[str]:
     """
     Evaluate conditions against metadata and file content.
@@ -416,6 +422,9 @@ def filter_files_by_conditions(
         files: Files to filter
         conds: List of conditions to apply
         logic_operator: "AND" (all conditions must match) or "OR" (at least one must match)
+        checkpoint: Optional cooperative continuation callback
+        max_content_bytes: Optional per-file content limit
+        strict_errors: Re-raise file and condition errors instead of skipping them
     """
     conds = [c for c in (conds or []) if c.field and c.operator]
     if not conds:
@@ -425,22 +434,47 @@ def filter_files_by_conditions(
     logic_operator = logic_operator.upper()
 
     for file_path in files:
+        if checkpoint is not None and not checkpoint():
+            break
         try:
             cached_content = None
             content_error = False
 
             def evaluate(condition):
                 nonlocal cached_content, content_error
+                if checkpoint is not None and not checkpoint():
+                    return False
                 if condition.field == "content":
                     if content_error:
                         return False
                     if cached_content is None:
                         try:
-                            cached_content = read_text(file_path)
+                            if max_content_bytes is not None:
+                                if os.path.getsize(file_path) > max_content_bytes:
+                                    raise ValueError(
+                                        "Condition content exceeds the bounded input size"
+                                    )
+                                cached_content = read_text(
+                                    file_path, max_bytes=max_content_bytes + 1
+                                )
+                                if len(cached_content.encode("utf-8")) > max_content_bytes:
+                                    raise ValueError(
+                                        "Condition content exceeds the bounded input size"
+                                    )
+                            else:
+                                cached_content = read_text(file_path)
                         except (OSError, UnicodeError):
+                            if strict_errors:
+                                raise
                             content_error = True
                             return False
-                    return condition.matches(file_path, content=cached_content)
+                    if checkpoint is not None and not checkpoint():
+                        return False
+                    return condition.matches(
+                        file_path,
+                        content=cached_content,
+                        max_scope_chars=max_content_bytes,
+                    )
                 return condition.matches(file_path)
 
             if logic_operator == "OR":
@@ -453,6 +487,7 @@ def filter_files_by_conditions(
             if ok:
                 out.append(file_path)
         except Exception:  # pylint: disable=broad-exception-caught  # Filter robustness
-            pass
+            if strict_errors:
+                raise
 
     return out

@@ -15,6 +15,8 @@ Test Coverage:
 - TestIntegration: Integration tests with real Task #51 components
 """
 
+# pylint: disable=no-name-in-module  # Qt exposes dynamic bindings.
+
 import pytest
 
 # Integration tests require longer timeout (60s max)
@@ -172,8 +174,12 @@ class TestAutoDetectExtension:
 class TestJSONRewriterIntegration:
     """Test JSON Rewriter integration (mock-based)."""
     
-    @patch('src.gui.json_rewriter_dock.cli_dedupe')
-    def test_cli_dedupe_with_filters_applied(self, mock_cli_dedupe):
+    @patch("src.gui.json_rewriter_dock.QMessageBox.information")
+    @patch("src.gui.json_rewriter_dock.QMessageBox.critical")
+    @patch("src.gui.json_rewriter_dock.cli_dedupe")
+    def test_cli_dedupe_with_filters_applied(
+        self, mock_cli_dedupe, mock_critical, _mock_information
+    ):
         """Test that cli_dedupe is called with advanced_conditions parameter."""
         from src.gui.json_rewriter_dock import JsonRewriterDock
         from PySide6.QtWidgets import QApplication
@@ -202,22 +208,20 @@ class TestJSONRewriterIntegration:
             dock.ed_in.setText(str(test_file))
             dock.ed_out.setText(str(test_file))
             
-            # Mock cli_dedupe to return success
-            mock_cli_dedupe.return_value = ('{"key": "value"}', {}, {'dedupe': 0})
-            
-            # Execute rewrite (will fail due to missing other components, but we check the call)
-            try:
-                dock._rewrite()
-            except Exception:
-                pass  # Expected to fail, we only check if cli_dedupe was called correctly
-            
-            # Verify cli_dedupe was called with advanced_conditions
-            if mock_cli_dedupe.called:
-                call_args = mock_cli_dedupe.call_args
-                assert call_args is not None
-                # Check if advanced_conditions was passed
-                if len(call_args.args) > 1 or 'advanced_conditions' in call_args.kwargs:
-                    assert True  # Advanced conditions passed
+            mock_cli_dedupe.return_value = (
+                '{"key": "value"}',
+                {},
+                {"dedupe": 0},
+                {},
+            )
+
+            dock._rewrite()
+
+            mock_cli_dedupe.assert_called_once()
+            call_args = mock_cli_dedupe.call_args
+            assert call_args.kwargs["advanced_conditions"] == dock.advanced_conditions
+            assert call_args.kwargs["apply_all_types"] is False
+            mock_critical.assert_not_called()
     
     def test_qsettings_persistence(self):
         """Test QSettings persistence for advanced filters."""

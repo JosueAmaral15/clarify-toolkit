@@ -44,7 +44,12 @@ from src.core.insert import insert_at_line
 from src.core.search_replace import replace_in_text
 from src.gui.panels import SearchReplacePanel, InsertPanel
 from src.gui.widgets import PathEntry
-from src.gui.workers import AIProcessorWorker
+from src.gui.workers import (
+    AIConditionRequest,
+    AIFileDiscoveryPlan,
+    AIPathTarget,
+    AIProcessorWorker,
+)
 from src.i18n.translator import tr, tooltip_tr
 from src.utils.advanced_conditions import get_conditions_from_ui, apply_conditions_to_files
 from src.utils.logger import get_logger
@@ -777,6 +782,36 @@ class AIProcessorDock(StandardToolDock):
 
         return all_files
 
+    def _snapshot_processing_plan(self):
+        """Capture bounded discovery/filter state without performing file IO."""
+        targets = tuple(
+            AIPathTarget(entry.get_path(), entry.is_file())
+            for entry in self.path_entries
+            if entry.get_path()
+        )
+        ext_text = self.ed_extensions.text().strip()
+        extensions = tuple(
+            extension.strip()
+            for extension in ext_text.split(",")
+            if extension.strip()
+        )
+        filtering_enabled = self.adv_cond_group.isChecked()
+        conditions = (
+            tuple(
+                AIConditionRequest.from_condition(condition)
+                for condition in self._get_conditions()
+            )
+            if filtering_enabled
+            else ()
+        )
+        return AIFileDiscoveryPlan(
+            targets=targets,
+            extensions=extensions,
+            conditions=conditions,
+            logic_operator=self.combo_cond_logic.currentText().upper(),
+            filtering_enabled=filtering_enabled,
+        )
+
     def _process(self):
         """Start processing."""
         if self._processing_running():
@@ -788,36 +823,14 @@ class AIProcessorDock(StandardToolDock):
                 return
 
             client = self._get_client()
-            files = self._get_files()
-
-            # Apply advanced conditions BEFORE processing (Task #51 - v2.9.26)
-            original_count = len(files)
-            filtered_files, filtered_out = self._apply_advanced_conditions(files)
-
-            # Check if any files remain after filtering
-            if not filtered_files:
-                self.show_warning(
-                    "No Files Match Filters",
-                    f"All {original_count} file(s) were filtered out by advanced conditions.\n"
-                    "Please adjust your filters and try again."
-                )
-                return
-
-            # Show feedback about filtering
-            if filtered_out > 0:
-                filter_msg = (
-                    f"📊 Filtering: {len(filtered_files)} of {original_count} file(s) "
-                    f"({filtered_out} filtered out)\n"
-                )
-            else:
-                filter_msg = f"📊 Processing {len(filtered_files)} file(s) (no filters applied)\n"
+            discovery_plan = self._snapshot_processing_plan()
 
             # Don't reset session stats - accumulate
             self.last_responses = []
 
             # Start worker with filtered files
             worker = AIProcessorWorker(
-                tuple(filtered_files),
+                discovery_plan,
                 prompt,
                 client,
                 self.spin_max_bytes.value(),
@@ -876,7 +889,7 @@ class AIProcessorDock(StandardToolDock):
             self.btn_process.setEnabled(False)
             self.btn_interrupt.setEnabled(True)
             self.clear_results(self.text_results)
-            self.append_result(self.text_results, filter_msg)
+            self.append_result(self.text_results, "[Preparation] Starting file discovery...")
 
             # Save preferences for next session
             self._save_advanced_conditions_preferences()

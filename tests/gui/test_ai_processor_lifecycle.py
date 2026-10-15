@@ -76,9 +76,9 @@ def build_dock(monkeypatch, tmp_path, parent=None):
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("content", encoding="utf-8")
     dock.ed_prompt.setPlainText("summarize")
+    dock.path_entries[0].ed_path.setText(str(target))
+    dock.path_entries[0].chk_is_file.setChecked(True)
     monkeypatch.setattr(dock, "_get_client", lambda: object())
-    monkeypatch.setattr(dock, "_get_files", lambda: [str(target)])
-    monkeypatch.setattr(dock, "_apply_advanced_conditions", lambda files: (files, 0))
     monkeypatch.setattr(dock, "show_error", lambda *_args: None)
     monkeypatch.setattr(dock, "notify_processing_completed", lambda: False)
     return dock

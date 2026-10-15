@@ -58,6 +58,15 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   `deleteLater`; as threads de Search/Replace agora possuem lifecycle explicito e
   independente. Descoberta/filtros sincronos do AI Processor, seu replace em memoria
   e outros consumidores/workers continuam pendentes.
+  Etapa 7 (2026-10-15): descoberta recursiva e filtros avancados do AI Processor
+  movidos para o worker registrado por dock, a partir de snapshot imutavel e
+  limitado da GUI. O worker valida condicoes, percorre no maximo 100 mil arquivos,
+  limita conteudo de condicao a 4 MiB, reporta falhas de IO e verifica cancelamento
+  durante descoberta/filtro; filtros desativados preservam o comportamento anterior.
+  O teste legado do JSON Rewriter que bloqueava em dialogo modal foi alinhado ao
+  contrato atual de quatro retornos e agora verifica os argumentos sem interacao.
+  Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE7_2026_10_15.md`. Replace em
+  memoria do AI Processor e outros consumidores/workers continuam pendentes.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

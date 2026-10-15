@@ -110,7 +110,13 @@ def read_file_safe(file_path: str, max_bytes: Optional[int] = None) -> str:
         return f"<<ERROR reading {file_path}: {str(e)}>>"
 
 
-def list_files_recursive(directory: str, extensions: List[str]) -> List[str]:
+def list_files_recursive(
+    directory: str,
+    extensions: List[str],
+    *,
+    checkpoint: Optional[Callable[[], bool]] = None,
+    max_files: Optional[int] = None,
+) -> List[str]:
     """
     List all files in directory recursively, optionally filtered by extensions.
 
@@ -124,9 +130,17 @@ def list_files_recursive(directory: str, extensions: List[str]) -> List[str]:
     """
     files = []
     for root, _, filenames in os.walk(directory):
+        if checkpoint is not None and not checkpoint():
+            break
         for filename in filenames:
+            if checkpoint is not None and not checkpoint():
+                return files
             if not extensions or any(filename.endswith(ext) for ext in extensions):
                 files.append(os.path.join(root, filename))
+                if max_files is not None and len(files) > max_files:
+                    raise ValueError(
+                        f"File discovery exceeds the {max_files}-file remaining safety limit"
+                    )
     return files
 
 
