@@ -3994,3 +3994,76 @@ Plano imediato:
 - The canonical backlog now has 33 open tasks and three in the active priority
   queue. No File Explorer-specific item remains there; `APP-THREAD-01` is the
   highest-priority unfinished item.
+
+## 2026-10-15 - Session start - APP-THREAD-01 Stage 6
+
+- The user asked to continue the remaining canonical tasks one bounded stage per
+  session and to use AI Presence Monitor for lifecycle automation.
+- AI Presence Monitor 0.10.4 passed schema/strict doctor checks. Its monitor and
+  reply-observer services are active, five Codex hooks are installed, and the
+  exact Clarify project worker was already active with current-session hook
+  evidence; `start` was therefore not repeated.
+- Persistent task-input automation remains disabled, so this session will use
+  lifecycle/hooks only and will not silently enable transport, GUI fallback or
+  remote input.
+- This stage is limited to auditing and implementing the next proven blocking
+  consumer under `APP-THREAD-01`. TOON, WQXR and the legacy backlog remain out of
+  scope. `example.py` must remain untracked and unchanged.
+
+## 2026-10-15 - Session stopped - APP-THREAD-01 Stage 6 Qt crash
+
+- Proved that AI Processor work was not registered in `ThreadManager`, allowed
+  parent-tab removal before worker settlement and did not coordinate active
+  embedded Search/Replace or Insert operations. A bounded local implementation
+  and four provider-free lifecycle regressions were prepared.
+- The new AI Processor lifecycle module passed 4/4 cases under the 85% system
+  RAM, 600 MiB tree RSS and 180-second guards, peaking at 209.5 MiB. The existing
+  Search/Replace search lifecycle module then passed 9/9 cases at 202.2 MiB.
+- The separately executed existing replace lifecycle module suffered a native
+  `SIGSEGV` in `test_search_and_replace_share_one_panel_operation` after three
+  passing cases. Peak tree RSS was 201.1 MiB and the guard did not abort, so this
+  was not a configured memory-limit event.
+- Per the native-crash stop rule, the failed process was not retried, no further
+  validation or automatic continuation was attempted, and the incomplete Stage
+  6 changes were intentionally left local and uncommitted rather than published.
+- `example.py` remains untracked and unchanged at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- The canonical backlog therefore remains at 33 open tasks. `APP-THREAD-01`
+  remains the current priority and this reproducible Qt lifecycle crash is the
+  immediate blocker before Stage 6 can be validated and committed.
+
+## 2026-10-15 - Session resumed - APP-THREAD-01 Stage 6 crash investigation
+
+- The user confirmed that AI Presence Monitor task automation is enabled again
+  and asked to continue from the preserved local Stage 6 checkpoint.
+- AI Presence Monitor 0.10.5 passed strict doctor checks with task automation,
+  native input, activity synchronization and the Codex queue active. GUI fallback
+  and remote input remain disabled. The exact Clarify worker was started for this
+  bounded crash-investigation session.
+- This session will first isolate the Search/Replace native Qt `SIGSEGV`; Stage 6
+  will be committed and pushed only if the crash is understood or eliminated and
+  all bounded lifecycle gates pass. The other 32 open tasks remain out of scope.
+
+## 2026-10-15 - APP-THREAD-01 Stage 6 completed
+
+- Resumed the preserved AI Processor lifecycle checkpoint after the user enabled
+  AI Presence Monitor task automation. The exact project worker remained scoped
+  to this session; no GUI fallback, remote input or unrelated worker was used.
+- Captured the prior native crash under `gdb`: the GUI thread destroyed a panel-
+  parented `QThread` while its worker thread was processing `QObject::~QObject`.
+  Search and replace native threads now use explicit registry/panel ownership
+  through settlement instead of competing QObject-parent and `deleteLater` paths.
+- AI Processor work is now registered per dock, applies results only after native
+  settlement, prevents conflicting work in one dock and allows independent docks.
+  Parent close cooperatively settles its worker and embedded Search/Replace and
+  Insert operations, suppresses late callbacks and destroys the closed hidden dock.
+- Final guarded validation passed 53 distinct focused tests and 75 post-fix test
+  executions, including three independent runs of the formerly crashing 11-case
+  module. Maximum post-fix tree RSS was 206.8 MiB; no crash, timeout or guard abort
+  occurred. Compile, Pylint-E, Black and diff checks passed.
+- `example.py` remains untracked and unchanged at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- The backlog remains at 33 open tasks because `APP-THREAD-01` is broader than this
+  stage. Its next bounded candidate is moving AI Processor discovery and advanced
+  filtering off the GUI thread with an immutable, bounded plan; in-memory replace
+  and other worker consumers remain after that.

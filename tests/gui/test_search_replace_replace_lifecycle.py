@@ -82,6 +82,7 @@ def test_replace_uses_immutable_snapshot_off_gui(tmp_path, qtbot, monkeypatch, q
     monkeypatch.setattr(explorer_core.UnifiedFileExplorerExecutor, "execute_replace", capture)
 
     panel._do_replace(all_=True)
+    assert panel._replace_thread.parent() is None
     qtbot.waitUntil(entered.is_set, timeout=2000)
     panel.ed_query.setPlainText("changed")
     panel.ed_repl.setPlainText("changed")

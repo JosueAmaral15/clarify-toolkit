@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/14 - modos do File Explorer traduzidos
+**Last Update**: 2026/10/15 - lifecycle do AI Processor e corrida Qt corrigidos
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -50,7 +50,14 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   limites, escrita atomica, preservacao de metadados e deteccao de conflito do
   executor compartilhado. Busca/replace nao sobrepoem no mesmo painel, paineis
   distintos continuam independentes e resultado/close aguardam `QThread.finished`.
-  Ownership dos paineis embutidos no AI Processor e outros workers permanecem.
+  Etapa 6 (2026-10-15): processamento do AI Processor registrado por dock no
+  `ThreadManager`, com uma operacao por instancia, resultado aplicado somente apos
+  `QThread.finished`, cancelamento/fechamento cooperativos e propagacao de shutdown
+  aos paineis Search/Replace e Insert embutidos. Corrigida tambem a corrida nativa
+  em que `QThread(self)` podia ser destruida pelo painel enquanto o worker processava
+  `deleteLater`; as threads de Search/Replace agora possuem lifecycle explicito e
+  independente. Descoberta/filtros sincronos do AI Processor, seu replace em memoria
+  e outros consumidores/workers continuam pendentes.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

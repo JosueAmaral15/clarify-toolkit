@@ -299,6 +299,7 @@ class ThreadManager:
             FeatureType.INSERT,
             FeatureType.SEARCH_REPLACE,
             FeatureType.TEXT_EXTRACTOR,
+            FeatureType.AI_FILE_PROCESSOR,
         }
         for thread_id, info in list(self._threads.items()):
             try:

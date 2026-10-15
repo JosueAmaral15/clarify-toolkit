@@ -811,7 +811,9 @@ class SearchReplacePanel(QWidget):
             "regex": self.chk_regex.isChecked(),
             "sort_results": self.chk_sort_results.isChecked(),
         }
-        self._search_thread = QThread(self)
+        # The registry and panel references own the native thread until finished.
+        # Parenting it to the panel races panel teardown against worker deletion.
+        self._search_thread = QThread()
         self._search_worker = SearchWorker(
             pattern_text=pattern_text,
             iter_files_fn=request.iter_files,
@@ -1098,6 +1100,21 @@ class SearchReplacePanel(QWidget):
         self.cancel_operation()
         return False
 
+    def has_active_operation(self):
+        """Expose bounded child ownership to a containing tool."""
+        return self._operation_running()
+
+    def request_parent_shutdown(self):
+        """Cancel child work without independently closing the parent tab."""
+        if not self._operation_running():
+            return False
+        if self._search_worker is not None:
+            self._discard_search_callbacks = True
+        if self._replace_worker is not None:
+            self._discard_replace_callbacks = True
+        self.cancel_operation()
+        return True
+
     def closeEvent(self, event):
         if self._operation_running():
             self._close_action = ("close", self)
@@ -1209,7 +1226,9 @@ class SearchReplacePanel(QWidget):
             "path": request.files.root,
             "replace_all": request.replace_all,
         }
-        self._replace_thread = QThread(self)
+        # Keep native lifetime independent from panel teardown; settlement clears
+        # the explicit references and deleteLater runs on the GUI thread.
+        self._replace_thread = QThread()
         self._replace_worker = SearchReplaceFileWorker(request)
         self._replace_receiver = _FileReplaceReceiver(self, generation)
         self._replace_worker.moveToThread(self._replace_thread)

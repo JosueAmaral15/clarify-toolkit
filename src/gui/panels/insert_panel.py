@@ -794,6 +794,18 @@ class InsertPanel(QWidget):
         self.cancel_search()
         return False
 
+    def has_active_operation(self):
+        """Expose bounded child ownership to a containing tool."""
+        return self._operation_running()
+
+    def request_parent_shutdown(self):
+        """Cancel child work without independently closing the parent tab."""
+        if not self._operation_running():
+            return False
+        self._discard_search_callbacks = True
+        self.cancel_search()
+        return True
+
     def closeEvent(self, event):
         if self._operation_running():
             self._close_action = ("close", self)

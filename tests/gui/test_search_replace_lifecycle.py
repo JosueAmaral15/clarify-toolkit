@@ -59,6 +59,7 @@ def test_valid_search_uses_gui_snapshot_and_worker_thread(tmp_path, qtbot, monke
     panel._start_search_threaded()
 
     assert panel._search_thread is not None
+    assert panel._search_thread.parent() is None
     assert thread_manager.is_feature_running(FeatureType.SEARCH_REPLACE)
     qtbot.waitUntil(lambda: panel._search_thread is None, timeout=3000)
     assert worker_thread_matches == [True]

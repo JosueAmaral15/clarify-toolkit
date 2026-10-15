@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QSplitter, QWidget, QVBoxLayout, QScrollArea, QFrame, QFileDialog,
     QMessageBox
 )
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QTimer
 
 from src.ai_processor import (
     OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, OllamaClient, AVAILABLE_MODELS,
@@ -52,6 +52,7 @@ from src.utils.logger import get_logger
 from .base_dock import StandardToolDock
 
 logger = get_logger(__name__)
+_UNSET = object()
 
 
 class AIProcessorDock(StandardToolDock):
@@ -61,6 +62,14 @@ class AIProcessorDock(StandardToolDock):
         # Initialize attributes BEFORE calling super().__init__()
         # This prevents AttributeError when _setup_ui() calls _update_stats_display()
         self.worker = None
+        self._worker_generation = 0
+        self._worker_thread_id = f"ai-processor-{id(self)}"
+        self._pending_worker_result = _UNSET
+        self._pending_worker_error = None
+        self._cancel_requested = False
+        self._discard_worker_callbacks = False
+        self._close_action = None
+        self._close_retry_timer = None
         self.last_responses = []
 
         # Session stats
@@ -80,6 +89,10 @@ class AIProcessorDock(StandardToolDock):
 
         # NOW call parent __init__ which triggers _setup_ui()
         super().__init__("AI File Processor", parent)
+        self._close_retry_timer = QTimer(self)
+        self._close_retry_timer.setSingleShot(True)
+        self._close_retry_timer.setInterval(25)
+        self._close_retry_timer.timeout.connect(self._retry_deferred_close)
 
     def _setup_ui(self):
         """Setup UI components."""
@@ -766,6 +779,8 @@ class AIProcessorDock(StandardToolDock):
 
     def _process(self):
         """Start processing."""
+        if self._processing_running():
+            return
         try:
             prompt = self.ed_prompt.toPlainText().strip()
             if not prompt:
@@ -801,8 +816,8 @@ class AIProcessorDock(StandardToolDock):
             self.last_responses = []
 
             # Start worker with filtered files
-            self.worker = AIProcessorWorker(
-                filtered_files,  # Use filtered list instead of original
+            worker = AIProcessorWorker(
+                tuple(filtered_files),
                 prompt,
                 client,
                 self.spin_max_bytes.value(),
@@ -816,9 +831,47 @@ class AIProcessorDock(StandardToolDock):
                 scope_end_case=self.chk_end_case.isChecked(),
                 template_enabled=self.chk_enable_templates.isChecked()
             )
-            self.worker.progress.connect(self._on_progress)
-            self.worker.finished_ok.connect(self._on_finished)
-            self.worker.failed.connect(self._on_failed)
+            self._worker_generation += 1
+            generation = self._worker_generation
+            self.worker = worker
+            self._pending_worker_result = _UNSET
+            self._pending_worker_error = None
+            self._cancel_requested = False
+            self._discard_worker_callbacks = False
+            worker.progress.connect(
+                lambda message, current=generation: self._on_worker_progress(
+                    current, message
+                )
+            )
+            worker.finished_ok.connect(
+                lambda result, current=generation: self._store_worker_result(
+                    current, result
+                )
+            )
+            worker.failed.connect(
+                lambda error, current=generation: self._store_worker_error(
+                    current, error
+                )
+            )
+
+            from src.ui import FeatureType, thread_manager
+
+            if not thread_manager.start_thread(
+                self._worker_thread_id,
+                worker,
+                worker,
+                FeatureType.AI_FILE_PROCESSOR,
+                worker.request_interrupt,
+                exclusive=False,
+            ):
+                self.worker = None
+                self.show_error("Error", "Cannot start AI processing during shutdown")
+                return
+            worker.finished.connect(
+                lambda current=generation, finished_worker=worker: self._on_worker_finished(
+                    current, finished_worker
+                )
+            )
 
             self.btn_process.setEnabled(False)
             self.btn_interrupt.setEnabled(True)
@@ -828,7 +881,7 @@ class AIProcessorDock(StandardToolDock):
             # Save preferences for next session
             self._save_advanced_conditions_preferences()
 
-            self.worker.start()
+            worker.start()
 
         except Exception as e:
             self.show_error("Error", str(e))
@@ -836,8 +889,124 @@ class AIProcessorDock(StandardToolDock):
     def _interrupt(self):
         """Interrupt processing."""
         if self.worker and self.worker.isRunning():
+            self._cancel_requested = True
             self.worker.request_interrupt()
             self.append_result(self.text_results, "\n⚠️ Interrupt requested...")
+
+    def _processing_running(self):
+        return self.worker is not None
+
+    def _embedded_operation_running(self):
+        return any(
+            panel.has_active_operation()
+            for panel in (self.search_replace_panel, self.insert_panel)
+        )
+
+    def _operation_running(self):
+        return self._processing_running() or self._embedded_operation_running()
+
+    def _on_worker_progress(self, generation, message):
+        if (
+            generation != self._worker_generation
+            or self._discard_worker_callbacks
+            or self._cancel_requested
+        ):
+            return
+        self._on_progress(message)
+
+    def _store_worker_result(self, generation, responses):
+        if generation == self._worker_generation:
+            self._pending_worker_result = responses
+
+    def _store_worker_error(self, generation, error):
+        if generation == self._worker_generation:
+            self._pending_worker_error = error
+
+    def _on_worker_finished(self, generation, worker):
+        if generation != self._worker_generation or worker is not self.worker:
+            worker.deleteLater()
+            return
+
+        result = self._pending_worker_result
+        error = self._pending_worker_error
+        cancelled = self._cancel_requested
+        discard = self._discard_worker_callbacks
+        self.worker = None
+        self._pending_worker_result = _UNSET
+        self._pending_worker_error = None
+        self.btn_process.setEnabled(True)
+        self.btn_interrupt.setEnabled(False)
+        worker.deleteLater()
+
+        if not discard:
+            if error is not None:
+                self._on_failed(error)
+            elif cancelled:
+                self.append_result(self.text_results, "\n⚠️ Processing interrupted.")
+            elif result is not _UNSET:
+                self._on_finished(result)
+            else:
+                self._on_failed("AI processing ended without a result")
+
+        self._cancel_requested = False
+        if self._close_action is not None:
+            self._schedule_close_retry()
+
+    def _request_operation_shutdown(self):
+        if self.worker is not None:
+            self._cancel_requested = True
+            self.worker.request_interrupt()
+        self.search_replace_panel.request_parent_shutdown()
+        self.insert_panel.request_parent_shutdown()
+
+    def _schedule_close_retry(self):
+        if self._close_retry_timer is not None and not self._close_retry_timer.isActive():
+            self._close_retry_timer.start()
+
+    def _retry_deferred_close(self):
+        if self._operation_running():
+            self._schedule_close_retry()
+            return
+        action = self._close_action
+        self._close_action = None
+        self._discard_worker_callbacks = False
+        if action is None:
+            return
+        name, target = action
+        if name == "tab":
+            index = target.tabs.indexOf(self)
+            if index >= 0:
+                target._close_tab(index)
+        else:
+            target.close()
+
+    def request_tab_close(self):
+        """Defer tab removal until parent and embedded operations settle."""
+        if not self._operation_running():
+            QTimer.singleShot(0, self.deleteLater)
+            return True
+        host = self.window()
+        if hasattr(host, "tabs") and hasattr(host, "_close_tab"):
+            self._close_action = ("tab", host)
+        else:
+            self._close_action = ("close", self)
+        self._discard_worker_callbacks = True
+        self._request_operation_shutdown()
+        self._schedule_close_retry()
+        return False
+
+    def closeEvent(self, event):
+        """Wait for cooperative settlement before destroying the dock."""
+        if self._operation_running():
+            self._close_action = ("close", self)
+            self._discard_worker_callbacks = True
+            self._request_operation_shutdown()
+            self._schedule_close_retry()
+            event.ignore()
+            return
+        if self._close_retry_timer is not None:
+            self._close_retry_timer.stop()
+        super().closeEvent(event)
 
     def _on_progress(self, msg):
         """Handle progress update with enhanced features."""
