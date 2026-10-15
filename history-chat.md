@@ -4195,3 +4195,16 @@ Plano imediato:
 - Stage 8 is ready for a branch-only commit and push. `APP-THREAD-01` remains open
   for other synchronous consumers; the documented standard-library regex
   interruption limit remains. No unrelated backlog item was started.
+
+### Published checkpoint
+
+- Stage 8 was committed as `30f0647` (`fix: move AI result replacement off GUI
+  thread`) and pushed to
+  `origin/COM-46c601fe-b315-4810-9b03-aba036812569`. Neither `main` nor `develop`
+  was promoted or changed.
+- The remote reported existing Dependabot findings on the default branch; this
+  session did not alter dependencies or claim those security gates resolved.
+- The only remaining local path outside commits is the pre-existing untracked
+  `example.py`, whose preserved hash is recorded above. The next automated stage
+  must create a fresh COM-UUID branch from `30f0647` plus this journal commit and
+  remain limited to one concrete `APP-THREAD-01` consumer audit.
