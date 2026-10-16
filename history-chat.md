@@ -4449,3 +4449,17 @@ Plano imediato:
   synchronous ResultsTree path. `example.py` remains untracked and byte-identical
   at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published checkpoint
+
+- Stage 12 was committed as `9b8b791` (`fix: move Search Replace result saving
+  off GUI thread`) and pushed to
+  `origin/COM-7a8dc201-6c12-4a12-90e4-d639737d03e8`. Neither `main` nor `develop`
+  was changed.
+- The remote again reported 29 existing Dependabot findings on the default
+  branch. This stage changed no dependency and does not claim those findings or
+  external CI/security gates resolved.
+- The next bounded candidate is `FileExplorerDock._save_results`. It still
+  serializes and writes on the GUI thread, but uses `src.gui.results_tree` rather
+  than the panel ResultsTree and therefore requires a separate consumer audit
+  before any reuse or edit.
