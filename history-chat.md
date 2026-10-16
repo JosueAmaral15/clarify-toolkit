@@ -4463,3 +4463,35 @@ Plano imediato:
   serializes and writes on the GUI thread, but uses `src.gui.results_tree` rather
   than the panel ResultsTree and therefore requires a separate consumer audit
   before any reuse or edit.
+
+## 2026-10-16 - Session start - APP-THREAD-01 Stage 13
+
+- Native continuation resumed from published Stage 12 checkpoint `c063744` and
+  feature commit `9b8b791`. AI Presence Monitor 0.10.7 strict diagnostics
+  verified the exact active Protocol2 worker, five hooks, queue and services.
+- The fresh branch is `COM-e9791fa0-e650-457e-9556-fbdc4948af8f`. This stage is
+  restricted to auditing `FileExplorerDock._save_results`, resolving its actual
+  ResultsTree format/consumers and GUI-thread serialization/write cost.
+- Dialogs, tree/model access and final feedback must remain GUI-only. Reuse is
+  allowed only after proving compatible contracts; File Explorer scopes, views,
+  cache, filters, operation lifecycle and bounded log remain mandatory.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - APP-THREAD-01 Stage 13 implementation and validation
+
+- The audit corrected the initial premise: runtime resolution proves that
+  `FileExplorerDock` uses the shared `src.gui.panels.results_tree.ResultsTree`;
+  the separate `src.gui.results_tree` is not this path's consumer.
+- The original save path serialized and wrote on `Qt mainThread`; the guarded red
+  regression failed cleanly at 201.5 MiB. File Explorer now snapshots results on
+  the GUI thread and delegates bounded serialization plus atomic write IO to the
+  shared immutable export worker through the dock's existing operation gate.
+- Search, browse, replace and save remain mutually exclusive per dock; separate
+  docks remain independent. Cancellation, close, IO failure and shutdown wait
+  for `QThread.finished`, suppress late feedback and preserve existing targets.
+  Views, scopes, extension state, cache identity and bounded log are unchanged.
+- Nine isolated guarded modules passed 143 tests, with no native crash, timeout
+  or guard abort; peak process-tree RSS was 224.6 MiB. Black, Pylint error-only,
+  Python compilation and `git diff --check` passed. The publication checkpoint
+  remains to be completed.

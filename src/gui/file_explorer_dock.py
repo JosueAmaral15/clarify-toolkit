@@ -64,6 +64,7 @@ from src.utils.atomic_files import file_revision
 from .base_dock import BaseDock
 from .widgets.explorer_workspace_mode import ExplorerWorkspaceMode
 from .panels import ResultsTree, FileExplorerWorker
+from .panels.result_export import MatchResultExportPlan, MatchResultExportWorker
 from .widgets import (
     FileFilterPanel,
     PresetManager,
@@ -1885,6 +1886,54 @@ class FileExplorerDock(BaseDock):
         self._worker_thread.start()
         return True
 
+    def _launch_result_save(self, plan):
+        """Run one bounded result export through the dock's operation lifecycle."""
+        from src.gui.panels.file_explorer_operation import ExplorerOperationReceiver
+        from src.ui import thread_manager, FeatureType
+
+        if self._operation_running():
+            return False
+        self._operation_generation += 1
+        self._operation_kind = "save"
+        self._thread_id = f"file_explorer:{id(self)}:{self._operation_generation}"
+        self._cancel_requested = False
+        self._discard_callbacks = False
+        self._active_operation = True
+        self._worker_thread = QThread(self)
+        self._worker = MatchResultExportWorker(plan)
+        receiver = ExplorerOperationReceiver(self, self._operation_generation)
+        self._operation_receiver = receiver
+        self._worker.completed.connect(receiver.completed)
+        self._worker.failed.connect(receiver.failed)
+        self._worker.settled.connect(self._worker_thread.quit, Qt.DirectConnection)
+        self._worker_thread.started.connect(self._worker.run)
+        self._worker_thread.finished.connect(self._worker.deleteLater)
+        if not thread_manager.start_thread(
+            self._thread_id,
+            self._worker_thread,
+            self._worker,
+            FeatureType.FILE_EXPLORER,
+            cancel_callback=self._worker.cancel,
+            exclusive=False,
+        ):
+            self._worker_thread.finished.disconnect(self._worker.deleteLater)
+            self._worker.deleteLater()
+            self._cleanup_worker_thread()
+            self.results_status.setText(
+                "Cannot save results while the application is shutting down"
+            )
+            return False
+        self._worker.moveToThread(self._worker_thread)
+        self._worker_thread.finished.connect(receiver.thread_finished)
+        self._ensure_progress_dialog()
+        if self._progress_label:
+            self._progress_label.pause_button.setEnabled(False)
+        self._append_operation_log(tr("file_explorer.log_started").format("save"))
+        self.btn_save_results.setEnabled(False)
+        self.btn_export_csv.setEnabled(False)
+        self._worker_thread.start()
+        return True
+
     def _finish_operation(self, generation, result, error):
         if generation != self._operation_generation or not self._active_operation:
             return
@@ -1897,7 +1946,11 @@ class FileExplorerDock(BaseDock):
         self._close_action = None
         self._close_progress_dialog()
         self._cleanup_worker_thread()
-        if discard:
+        if kind == "save":
+            self.btn_save_results.setEnabled(True)
+            self.btn_export_csv.setEnabled(True)
+            self._finish_result_save(result, error, discard)
+        elif discard:
             self._batch_processing_active = False
             self.results_status.setText(tr("file_list.status_canceling", "Canceling...").rstrip(".") + " - stopped")
         elif error or result is None:
@@ -2160,7 +2213,12 @@ class FileExplorerDock(BaseDock):
 
     def _on_pause_requested(self, paused):
         worker = getattr(self, "_worker", None)
-        if worker is None or self._cancel_requested:
+        if (
+            worker is None
+            or self._cancel_requested
+            or not hasattr(worker, "pause")
+            or not hasattr(worker, "resume")
+        ):
             return
         worker.pause() if paused else worker.resume()
         if self.progress_dialog:
@@ -2714,6 +2772,8 @@ class FileExplorerDock(BaseDock):
 
     def _save_results(self):
         """Save search results to a text file (from Search/Replace)."""
+        if self._operation_running():
+            return
         # Get matches data from ResultsTree
         matches_data = self.results_tree.get_matches_data()
 
@@ -2733,24 +2793,66 @@ class FileExplorerDock(BaseDock):
             return  # User cancelled
 
         try:
-            # Export matches to text
-            text_content = self.results_tree.export_to_text()
-
-            # Write to file
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(text_content)
-
-            total_files = len(matches_data)
-            total_matches = sum(len(items) for items in matches_data.values())
-
-            QMessageBox.information(
+            plan = MatchResultExportPlan.from_matches(matches_data, file_path)
+        except (TypeError, ValueError, UnicodeError) as exc:
+            QMessageBox.critical(
                 self,
-                tr("file_list.results_saved_title"),
-                tr("file_list.results_saved_message").format(file_path, total_files, total_matches),
+                tr("file_list.error_title"),
+                tr("file_list.error_save_failed").format(str(exc)),
+            )
+            return
+
+        if not self._launch_result_save(plan):
+            QMessageBox.critical(
+                self,
+                tr("file_list.error_title"),
+                tr("file_list.error_save_failed").format(
+                    "Cannot save results while the application is shutting down"
+                ),
             )
 
-        except Exception as e:
-            QMessageBox.critical(self, tr("file_list.error_title"), tr("file_list.error_save_failed").format(str(e)))
+    def _finish_result_save(self, result, error, discard):
+        """Apply a settled result export without touching worker-owned data."""
+        if discard:
+            self.results_status.setText("Result saving stopped")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format("save", 0)
+            )
+            return
+        if error:
+            detail = str(error)[:OPERATION_LOG_MAX_ENTRY_CHARS]
+            self._append_operation_log(
+                tr("file_explorer.log_failed").format("save", detail)
+            )
+            self.results_status.setText("Result saving failed")
+            QMessageBox.critical(
+                self,
+                tr("file_list.error_title"),
+                tr("file_list.error_save_failed").format(error),
+            )
+            return
+        if self._cancel_requested or result is None:
+            self.results_status.setText("Result saving cancelled")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format("save", 0)
+            )
+            return
+
+        self.results_status.setText(
+            f"Saved {result.total_matches} match(es) from {result.total_files} file(s)"
+        )
+        self._append_operation_log(
+            tr("file_explorer.log_finished").format("save", result.total_files)
+        )
+        QMessageBox.information(
+            self,
+            tr("file_list.results_saved_title"),
+            tr("file_list.results_saved_message").format(
+                result.output_path,
+                result.total_files,
+                result.total_matches,
+            ),
+        )
 
 
 def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[List[str]]:

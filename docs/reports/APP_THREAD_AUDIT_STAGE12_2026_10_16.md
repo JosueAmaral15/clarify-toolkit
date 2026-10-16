@@ -11,9 +11,12 @@ file dialog, result-tree extraction, widgets and final feedback remain on the
 GUI thread.
 
 Search and file-replacement behavior, AI Processor Stages 6 through 10 and
-InsertPanel Stage 11 remain unchanged. File Explorer uses a different ResultsTree
-implementation and is not included. JSON Editor, TOON, WQXR, Editor UX, i18n
-and the legacy backlog are also excluded.
+InsertPanel Stage 11 remain unchanged. File Explorer is not included. JSON
+Editor, TOON, WQXR, Editor UX, i18n and the legacy backlog are also excluded.
+
+Stage 13 correction: later source and runtime inspection proved that File
+Explorer imports the same `src.gui.panels.results_tree.ResultsTree`; the separate
+`src.gui.results_tree` module is not the consumer on this path.
 
 ## Defect proof
 
@@ -80,6 +83,6 @@ because it would create unrelated formatting churn.
 
 `APP-THREAD-01` remains open because other synchronous consumers and workers
 still require bounded audits. The File Explorer result-save path is one concrete
-candidate, but it must be audited against its separate ResultsTree and current
-consumers rather than assuming the panel API applies. This stage does not claim
-application-wide Qt lifecycle or external CI/security gates resolved.
+candidate; Stage 13 subsequently audited it and proved the shared ResultsTree
+contract. This stage does not claim application-wide Qt lifecycle or external
+CI/security gates resolved.

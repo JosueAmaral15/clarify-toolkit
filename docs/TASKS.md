@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - salvamento do SearchReplacePanel isolado da GUI
+**Last Update**: 2026/10/16 - salvamento do FileExplorerDock isolado da GUI
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -127,9 +127,22 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   feedback tardio e aguardam `QThread.finished`, sem `terminate()`. A matriz
   posterior passou 90 testes focados em processos isolados, sem crash, timeout ou
   guarda. Evidencia em
-  `docs/reports/APP_THREAD_AUDIT_STAGE12_2026_10_16.md`. O File Explorer usa outra
-  ResultsTree e seu save sincrono requer auditoria separada; outros consumidores
-  e workers tambem continuam pendentes.
+  `docs/reports/APP_THREAD_AUDIT_STAGE12_2026_10_16.md`. A hipotese daquela etapa
+  de que o File Explorer usava outra `ResultsTree` foi corrigida pela auditoria
+  seguinte; outros consumidores e workers continuam pendentes.
+  Etapa 13 (2026-10-16): a auditoria de runtime confirmou que o FileExplorerDock
+  importa a mesma `src.gui.panels.results_tree.ResultsTree` usada pelos paineis,
+  e nao a implementacao legada `src.gui.results_tree`. Dialogo e extracao da
+  arvore permanecem na GUI; serializacao limitada e escrita atomica reutilizam o
+  plano imutavel compartilhado em worker registrado pelo dock. Search, browse,
+  replace e save compartilham uma operacao por dock; docks distintos permanecem
+  independentes. Cancelamento, erro, fechamento e shutdown preservam destinos,
+  removem temporarios, descartam feedback tardio e aguardam `QThread.finished`.
+  Escopos, vistas, filtros de extensao, identidade do cache e log limitado nao
+  sao alterados. A matriz passou 143 testes focados em processos isolados, sem
+  crash, timeout ou guarda. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE13_2026_10_16.md`. Exportacao CSV e outros
+  consumidores/workers ainda requerem auditorias limitadas separadas.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente
