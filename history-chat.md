@@ -4509,3 +4509,14 @@ Plano imediato:
   `FileExplorerDock._export_tree_to_csv`, which still serializes and writes all
   rows synchronously; its tree/table consumer contracts require a separate
   audit before reuse or modification.
+
+### Stage 14 continuation dispatch
+
+- One native exact-session continuation was issued with marker
+  `CLARIFY_APP_THREAD_CONTINUE_20261016_STAGE14` for worker
+  `notebook-josue:codex:project=clarify-b09a84f1` and session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`. It returned exit 0 and
+  `dispatch_started` after the configured 30-second delay.
+- Dispatch start does not prove delivery or processing. Do not retry it on
+  uncertainty; verify this marker and the hook evidence when Stage 14 resumes.
+  The Protocol2 worker remains active for `APP-THREAD-01`.
