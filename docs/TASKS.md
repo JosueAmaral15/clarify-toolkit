@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/15 - replace em memoria do AI Processor isolado da GUI
+**Last Update**: 2026/10/16 - salvamento de resultados do AI Processor isolado da GUI
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -93,6 +93,19 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   `docs/reports/APP_THREAD_AUDIT_STAGE9_2026_10_16.md`. Outros consumidores e
   workers continuam pendentes; uma chamada limitada de `insert_at_line` ja em
   execucao conclui antes de observar o checkpoint seguinte.
+  Etapa 10 (2026-10-16): serializacao e escrita dos resultados do AI Processor
+  movidas para worker registrado e independente por dock, depois de o dialogo
+  selecionar o destino na GUI thread. O plano imutavel limita 1.000 resultados,
+  4 MiB UTF-8 por resultado, 20 MiB totais e caminho de 4 KiB. A escrita usa o
+  `save_results` compartilhado com callback opcional retrocompativel, checkpoints
+  por resultado e arquivo temporario no diretorio de destino; `os.replace` so
+  publica uma escrita completa, preservando o arquivo anterior em erro/cancelamento.
+  Um dock impede Process/Replace/Insert/Save sobrepostos e docks distintos salvam
+  em paralelo. Cancelamento/fechamento aguardam `QThread.finished`, limpam temporarios
+  e descartam feedback tardio; dialogo e mensagens permanecem na GUI thread.
+  Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE10_2026_10_16.md`. Outros
+  consumidores e workers continuam pendentes; uma escrita individual limitada a
+  4 MiB conclui antes do checkpoint seguinte.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

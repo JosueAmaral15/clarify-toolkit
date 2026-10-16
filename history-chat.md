@@ -4137,6 +4137,27 @@ Plano imediato:
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
+## 2026-10-16 - Session completion - APP-THREAD-01 Stage 10
+
+- The source audit and clean red regression proved that the shared
+  `save_results` call ran synchronously on `Qt mainThread` (202.0 MiB peak RSS,
+  no crash or guard abort). The file dialog and all user feedback remain GUI-only.
+- Result serialization and IO now use a frozen, bounded plan and registered
+  per-dock worker. Limits are 1,000 results, 4 MiB UTF-8 per result, 20 MiB total
+  and a 4 KiB destination path. A private temporary file plus `os.replace` keeps
+  an existing destination intact on cancellation or IO failure.
+- The shared helper keeps its original output format and arguments while adding
+  an optional cooperative interruption callback. One operation runs per dock;
+  independent docks can save concurrently, and close waits for
+  `QThread.finished` without late feedback or `terminate()`.
+- Final validation passed 42 distinct tests across six isolated Qt processes.
+  Peak tree RSS was 208.5 MiB; no native crash, timeout or guard abort occurred.
+  Python compilation, Pylint-E, focused Black and `git diff --check` passed.
+- Evidence is in `docs/reports/APP_THREAD_AUDIT_STAGE10_2026_10_16.md`.
+  `APP-THREAD-01` remains open for other consumers. `example.py` remains untracked
+  and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-15 - Session start - APP-THREAD-01 Stage 8
 
 - Native continuation resumed from published checkpoint `df69d0d` after strict
@@ -4282,3 +4303,18 @@ Plano imediato:
 - The next bounded candidate is the AI Processor result-save path: keep file
   selection and all widgets on the GUI thread, prove synchronous write cost, and
   move only bounded immutable serialization/write work if evidence warrants it.
+
+## 2026-10-16 - Session start - APP-THREAD-01 Stage 10
+
+- Native continuation resumed from published Stage 9 journal checkpoint
+  `8571ad3`. AI Presence Monitor 0.10.7 strict diagnostics verified the exact
+  active Protocol2 worker, five Codex hooks, queue and services before this stage.
+- The fresh branch is `COM-a35e31fa-8d18-486a-8627-078263a728d3`. This stage is
+  restricted to auditing `AIProcessorDock._save` and the shared `save_results`
+  contract, proving GUI-thread write cost before any product edit.
+- File selection, widget/model access and final feedback must remain GUI-only.
+  Only bounded immutable serialization/write work may move to a registered
+  per-dock worker, with cooperative cancel/close and `QThread.finished`
+  settlement. InsertPanel file writes and all unrelated backlog remain excluded.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

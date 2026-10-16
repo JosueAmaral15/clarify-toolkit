@@ -12,9 +12,10 @@ Extracted from ai_processor_dock.py for better modularity.
 # pylint: disable=too-many-arguments  # Worker initialization
 
 import os
+import tempfile
 from dataclasses import dataclass
 
-from src.ai_processor import list_files_recursive, process_multiple_files
+from src.ai_processor import list_files_recursive, process_multiple_files, save_results
 from src.core.filters import (
     MAX_CONDITIONS,
     MAX_CONDITION_TEXT_BYTES,
@@ -43,6 +44,10 @@ MAX_AI_RESULT_TEXT_CHARS = MAX_IN_MEMORY_REPLACE_BYTES
 MAX_AI_PROMPT_BYTES = 4 * 1024 * 1024
 MAX_AI_INSERT_TEXT_BYTES = 1024 * 1024
 MAX_AI_INSERT_LINE = 10_000_000
+MAX_AI_SAVE_RESULTS = 1_000
+MAX_AI_SAVE_RESULT_BYTES = 4 * 1024 * 1024
+MAX_AI_SAVE_TOTAL_BYTES = 20 * 1024 * 1024
+MAX_AI_SAVE_PATH_BYTES = 4_096
 AI_INSERT_MODES = frozenset(
     {
         InsertMode.LEFT,
@@ -345,6 +350,94 @@ class AIPromptInsertWorker(ProcessorWorkerBase):
     def run(self):
         try:
             self.emit_success(self.plan.execute(lambda: not self.check_interrupt()))
+        except Exception as exc:
+            self.emit_error(str(exc))
+
+
+@dataclass(frozen=True)
+class AIResultSavePlan:
+    """Immutable bounded result snapshot and destination selected by the GUI."""
+
+    responses: tuple[str, ...]
+    output_path: str
+
+    def __post_init__(self):
+        if not isinstance(self.responses, tuple) or not self.responses:
+            raise ValueError("There are no AI results to save")
+        if len(self.responses) > MAX_AI_SAVE_RESULTS:
+            raise ValueError(f"At most {MAX_AI_SAVE_RESULTS} AI results can be saved")
+        if not isinstance(self.output_path, str) or not self.output_path:
+            raise ValueError("A result output path is required")
+        if (
+            len(self.output_path) > MAX_AI_SAVE_PATH_BYTES
+            or len(self.output_path.encode("utf-8")) > MAX_AI_SAVE_PATH_BYTES
+        ):
+            raise ValueError("Result output path exceeds the 4 KiB safety limit")
+
+        total_characters = 0
+        for response in self.responses:
+            if not isinstance(response, str):
+                raise ValueError("AI results must contain only text")
+            if len(response) > MAX_AI_SAVE_RESULT_BYTES:
+                raise ValueError("An AI result exceeds the 4 MiB safety limit")
+            total_characters += len(response)
+        if total_characters > MAX_AI_SAVE_TOTAL_BYTES:
+            raise ValueError("AI results exceed the 20 MiB total safety limit")
+
+    def execute(self, checkpoint):
+        """Validate UTF-8 size and atomically replace the selected output file."""
+        total_bytes = 0
+        for index, response in enumerate(self.responses, 1):
+            if not checkpoint():
+                return None
+            response_bytes = len(response.encode("utf-8"))
+            if response_bytes > MAX_AI_SAVE_RESULT_BYTES:
+                raise ValueError("An AI result exceeds the 4 MiB safety limit")
+            total_bytes += response_bytes + len(f"=== Result {index} ===\n\n".encode("utf-8"))
+            if total_bytes > MAX_AI_SAVE_TOTAL_BYTES:
+                raise ValueError("AI results exceed the 20 MiB total safety limit")
+
+        output_path = os.path.abspath(self.output_path)
+        output_directory = os.path.dirname(output_path)
+        os.makedirs(output_directory, exist_ok=True)
+        descriptor, temporary_path = tempfile.mkstemp(
+            prefix=".clarify-ai-results-",
+            suffix=".tmp",
+            dir=output_directory,
+        )
+        os.close(descriptor)
+        try:
+            completed = save_results(
+                self.responses,
+                temporary_path,
+                mode="write",
+                interrupt_check=lambda: not checkpoint(),
+            )
+            if not completed or not checkpoint():
+                return None
+            os.replace(temporary_path, output_path)
+            temporary_path = ""
+            return output_path
+        finally:
+            if temporary_path:
+                try:
+                    os.unlink(temporary_path)
+                except FileNotFoundError:
+                    pass
+
+
+class AIResultSaveWorker(ProcessorWorkerBase):
+    """Background worker for bounded atomic AI result serialization."""
+
+    def __init__(self, plan: AIResultSavePlan):
+        super().__init__()
+        self.plan = plan
+
+    def run(self):
+        try:
+            result = self.plan.execute(lambda: not self.check_interrupt())
+            if result is not None:
+                self.emit_success(result)
         except Exception as exc:
             self.emit_error(str(exc))
 

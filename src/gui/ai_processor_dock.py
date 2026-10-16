@@ -33,7 +33,7 @@ from PySide6.QtCore import Qt, QSettings, QTimer
 from src.ai_processor import (
     OpenAIClient, GeminiClient, ClaudeClient, PerplexityClient, OllamaClient, AVAILABLE_MODELS,
     count_tokens, estimate_cost, has_internet, is_openai_available, is_gemini_available,
-    is_claude_available, save_results,
+    is_claude_available,
     list_files_recursive as ai_list_files,
     list_openai_models, list_gemini_models, list_claude_models, list_perplexity_models,
     list_ollama_models,
@@ -52,6 +52,8 @@ from src.gui.workers import (
     AIPromptInsertWorker,
     AIResultReplacePlan,
     AIResultReplaceWorker,
+    AIResultSavePlan,
+    AIResultSaveWorker,
     MAX_AI_PROMPT_BYTES,
     MAX_AI_RESULT_TEXT_CHARS,
 )
@@ -86,6 +88,11 @@ class AIProcessorDock(StandardToolDock):
         self._prompt_insert_thread_id = f"ai-processor-prompt-insert-{id(self)}"
         self._pending_prompt_insert = _UNSET
         self._pending_prompt_insert_error = None
+        self._result_save_worker = None
+        self._result_save_generation = 0
+        self._result_save_thread_id = f"ai-processor-result-save-{id(self)}"
+        self._pending_result_save = _UNSET
+        self._pending_result_save_error = None
         self._cancel_requested = False
         self._discard_worker_callbacks = False
         self._close_action = None
@@ -905,6 +912,7 @@ class AIProcessorDock(StandardToolDock):
             self.btn_interrupt.setEnabled(True)
             self.btn_replace_results.setEnabled(False)
             self.btn_insert_prompt.setEnabled(False)
+            self.btn_save_results.setEnabled(False)
             self.clear_results(self.text_results)
             self.append_result(self.text_results, "[Preparation] Starting file discovery...")
 
@@ -928,6 +936,9 @@ class AIProcessorDock(StandardToolDock):
         elif self._prompt_insert_worker and self._prompt_insert_worker.isRunning():
             self._cancel_requested = True
             self._prompt_insert_worker.request_interrupt()
+        elif self._result_save_worker and self._result_save_worker.isRunning():
+            self._cancel_requested = True
+            self._result_save_worker.request_interrupt()
 
     def _processing_running(self):
         return any(
@@ -936,6 +947,7 @@ class AIProcessorDock(StandardToolDock):
                 self.worker,
                 self._result_replace_worker,
                 self._prompt_insert_worker,
+                self._result_save_worker,
             )
         )
 
@@ -981,6 +993,7 @@ class AIProcessorDock(StandardToolDock):
         self.btn_interrupt.setEnabled(False)
         self.btn_replace_results.setEnabled(True)
         self.btn_insert_prompt.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
         worker.deleteLater()
 
         if not discard:
@@ -1024,6 +1037,7 @@ class AIProcessorDock(StandardToolDock):
         self.btn_interrupt.setEnabled(False)
         self.btn_replace_results.setEnabled(True)
         self.btn_insert_prompt.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
         worker.deleteLater()
 
         if not discard:
@@ -1073,6 +1087,7 @@ class AIProcessorDock(StandardToolDock):
         self.btn_interrupt.setEnabled(False)
         self.btn_replace_results.setEnabled(True)
         self.btn_insert_prompt.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
         worker.deleteLater()
 
         if not discard:
@@ -1093,6 +1108,50 @@ class AIProcessorDock(StandardToolDock):
         if self._close_action is not None:
             self._schedule_close_retry()
 
+    def _store_result_save(self, generation, output_path):
+        if generation == self._result_save_generation:
+            self._pending_result_save = output_path
+
+    def _store_result_save_error(self, generation, error):
+        if generation == self._result_save_generation:
+            self._pending_result_save_error = error
+
+    def _on_result_save_finished(self, generation, worker):
+        if (
+            generation != self._result_save_generation
+            or worker is not self._result_save_worker
+        ):
+            worker.deleteLater()
+            return
+
+        output_path = self._pending_result_save
+        error = self._pending_result_save_error
+        cancelled = self._cancel_requested
+        discard = self._discard_worker_callbacks
+        self._result_save_worker = None
+        self._pending_result_save = _UNSET
+        self._pending_result_save_error = None
+        self.btn_process.setEnabled(True)
+        self.btn_interrupt.setEnabled(False)
+        self.btn_replace_results.setEnabled(True)
+        self.btn_insert_prompt.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
+        worker.deleteLater()
+
+        if not discard:
+            if error is not None:
+                self.show_error("Save Error", error)
+            elif output_path is not _UNSET:
+                self.show_info("Saved", f"Results saved to {output_path}")
+            elif cancelled:
+                self.show_info("Save Cancelled", "Result saving was cancelled.")
+            else:
+                self.show_error("Save Error", "Result saving ended without a result")
+
+        self._cancel_requested = False
+        if self._close_action is not None:
+            self._schedule_close_retry()
+
     def _request_operation_shutdown(self):
         if self.worker is not None:
             self._cancel_requested = True
@@ -1103,6 +1162,9 @@ class AIProcessorDock(StandardToolDock):
         if self._prompt_insert_worker is not None:
             self._cancel_requested = True
             self._prompt_insert_worker.request_interrupt()
+        if self._result_save_worker is not None:
+            self._cancel_requested = True
+            self._result_save_worker.request_interrupt()
         self.search_replace_panel.request_parent_shutdown()
         self.insert_panel.request_parent_shutdown()
 
@@ -1209,6 +1271,12 @@ class AIProcessorDock(StandardToolDock):
 
     def _save_results(self):
         """Save results to file."""
+        if self._operation_running():
+            self.show_warning(
+                "Operation Running",
+                "Wait for the current AI Processor operation to finish or cancel it.",
+            )
+            return
         if not self.last_responses:
             self.show_warning("No Results", "No results to save")
             return
@@ -1221,10 +1289,57 @@ class AIProcessorDock(StandardToolDock):
         )
         if path:
             try:
-                save_results(self.last_responses, path, mode='write')
-                self.show_info("Saved", f"Results saved to {path}")
-            except Exception as e:
-                self.show_error("Save Error", str(e))
+                plan = AIResultSavePlan(tuple(self.last_responses), path)
+                worker = AIResultSaveWorker(plan)
+                self._result_save_generation += 1
+                generation = self._result_save_generation
+                self._result_save_worker = worker
+                self._pending_result_save = _UNSET
+                self._pending_result_save_error = None
+                self._cancel_requested = False
+                self._discard_worker_callbacks = False
+                worker.finished_ok.connect(
+                    lambda output_path, current=generation: self._store_result_save(
+                        current, output_path
+                    )
+                )
+                worker.failed.connect(
+                    lambda error, current=generation: self._store_result_save_error(
+                        current, error
+                    )
+                )
+                worker.finished.connect(
+                    lambda current=generation, finished_worker=worker: (
+                        self._on_result_save_finished(current, finished_worker)
+                    )
+                )
+
+                from src.ui import FeatureType, thread_manager
+
+                if not thread_manager.start_thread(
+                    self._result_save_thread_id,
+                    worker,
+                    worker,
+                    FeatureType.AI_FILE_PROCESSOR,
+                    worker.request_interrupt,
+                    exclusive=False,
+                ):
+                    self._result_save_worker = None
+                    worker.deleteLater()
+                    self.show_error(
+                        "Save Error",
+                        "Cannot save results during application shutdown",
+                    )
+                    return
+
+                self.btn_process.setEnabled(False)
+                self.btn_interrupt.setEnabled(True)
+                self.btn_replace_results.setEnabled(False)
+                self.btn_insert_prompt.setEnabled(False)
+                self.btn_save_results.setEnabled(False)
+                worker.start()
+            except (TypeError, ValueError, UnicodeError) as exc:
+                self.show_error("Save Error", str(exc))
 
     def _clear(self):
         """Clear results."""
@@ -1328,6 +1443,7 @@ class AIProcessorDock(StandardToolDock):
             self.btn_interrupt.setEnabled(True)
             self.btn_replace_results.setEnabled(False)
             self.btn_insert_prompt.setEnabled(False)
+            self.btn_save_results.setEnabled(False)
             worker.start()
 
         except (TypeError, ValueError, UnicodeError) as exc:
@@ -1413,6 +1529,7 @@ class AIProcessorDock(StandardToolDock):
             self.btn_interrupt.setEnabled(True)
             self.btn_replace_results.setEnabled(False)
             self.btn_insert_prompt.setEnabled(False)
+            self.btn_save_results.setEnabled(False)
             worker.start()
 
         except (TypeError, ValueError, UnicodeError) as exc:

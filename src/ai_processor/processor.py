@@ -7,7 +7,7 @@ Core file processing logic for AI-powered batch operations.
 
 import os
 import re
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Sequence
 from .template_engine import render_prompt, has_templates
 
 
@@ -333,10 +333,11 @@ def process_multiple_files(
 
 
 def save_results(
-    results: List[str],
+    results: Sequence[str],
     output_path: str,
-    mode: str = 'write'
-) -> None:
+    mode: str = 'write',
+    interrupt_check: Optional[Callable[[], bool]] = None,
+) -> bool:
     """
     Save processing results to file.
 
@@ -344,12 +345,19 @@ def save_results(
         results: List of AI responses
         output_path: Output file path
         mode: 'write' (overwrite) or 'append'
+        interrupt_check: Optional callback returning True when writing should stop
+
+    Returns:
+        True when every result was written, False when interrupted
     """
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     mode_flag = 'a' if mode == 'append' else 'w'
     with open(output_path, mode_flag, encoding='utf-8') as f:
         for i, result in enumerate(results, 1):
+            if interrupt_check and interrupt_check():
+                return False
             f.write(f"=== Result {i} ===\n")
             f.write(result)
             f.write("\n\n")
+    return True
