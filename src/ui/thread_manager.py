@@ -16,7 +16,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    from PySide6.QtCore import QThread, QObject, Slot
+    from PySide6.QtCore import QThread, QObject, QTimer, Slot
     _PYSIDE = True
 except ImportError:
     _PYSIDE = False
@@ -38,7 +38,10 @@ if _PYSIDE:
 
         @Slot()
         def finished(self):
-            self.manager._on_thread_finished(self.thread_id, self.completion_token)
+            if not self.manager._on_thread_finished(
+                self.thread_id, self.completion_token
+            ):
+                QTimer.singleShot(1, self.finished)
 
 
 class FeatureType(Enum):
@@ -220,13 +223,20 @@ class ThreadManager:
         return count
 
     def _on_thread_finished(self, thread_id: str, completion_token=None):
-        """Callback called when thread finishes"""
+        """Release a registration only after the native thread fully exits."""
         if thread_id in self._threads:
             info = self._threads[thread_id]
             # A queued native completion can arrive after explicit settlement
             # and registration of another operation under the same public ID.
             if completion_token is not None and completion_token is not info.completion_token:
-                return
+                return True
+
+            # QThread.finished is emitted before platform-level thread teardown
+            # and DeferredDelete processing are guaranteed complete. Retaining
+            # ThreadInfo here prevents Python from collecting its worker on the
+            # GUI thread while QObject destruction is still running elsewhere.
+            if _PYSIDE and not info.thread.wait(0):
+                return False
 
             # Release feature lock
             try:
@@ -239,6 +249,7 @@ class ThreadManager:
             del self._threads[thread_id]
             if info.finished_receiver is not None:
                 info.finished_receiver.deleteLater()
+        return True
 
     def get_active_threads(self) -> Dict[FeatureType, int]:
         """Returns count of active threads per feature"""

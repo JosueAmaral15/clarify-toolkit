@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - Stage 14 interrompido por crash nativo Qt
+**Last Update**: 2026/10/16 - Stage 14 reparado e validado sob GDB
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -143,13 +143,17 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   crash, timeout ou guarda. Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE13_2026_10_16.md`. Exportacao CSV e outros
   consumidores/workers ainda requerem auditorias limitadas separadas.
-  Etapa 14 (2026-10-16, incompleta): os caminhos CSV de busca e navegacao foram
-  auditados e a prova vermelha confirmou serializacao/escrita na GUI. Uma
-  implementacao experimental limitada passou os cinco primeiros casos da matriz,
-  mas o processo sofreu crash nativo durante o caso de dois docks concorrentes.
-  A execucao foi interrompida sem retry, conforme a barreira de seguranca; a
-  causa raiz continua nao resolvida e a etapa nao deve ser considerada entregue.
-  Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE14_2026_10_16.md`.
+  Etapa 14 (2026-10-16): os caminhos CSV de busca e navegacao agora extraem
+  widgets somente na GUI e executam serializacao limitada e publicacao atomica em
+  worker registrado por dock. O core preservado localizou o primeiro SIGSEGV em
+  `QObject::~QObject` durante `DeferredDelete`: callbacks de `QThread.finished`
+  podiam liberar referencias Python antes do fim nativo real da thread. O
+  `ThreadManager` e o File Explorer agora conservam ownership enquanto `wait(0)`
+  indica teardown pendente e repetem o settlement pelo event loop sem bloquear a
+  GUI. A matriz passou 82 testes distintos em processos isolados, incluindo os
+  12 casos CSV e 36 casos historicos sob GDB, sem crash, timeout ou guarda.
+  Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE14_2026_10_16.md`. Outros
+  consumidores/workers de `APP-THREAD-01` continuam pendentes.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

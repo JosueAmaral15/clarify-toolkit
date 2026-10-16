@@ -44,6 +44,39 @@ def test_registry_receiver_deletion_is_really_deferred(registry):
         worker.deleteLater()
 
 
+def test_finished_registration_survives_until_native_thread_exit(registry, qapp, qtbot):
+    thread = QThread()
+    worker = QObject()
+    finish_entered = threading.Event()
+    release_finish = threading.Event()
+
+    def hold_native_finish():
+        finish_entered.set()
+        assert release_finish.wait(2)
+
+    assert registry.start_thread("native-finish", thread, worker, FeatureType.FILE_EXPLORER, exclusive=False)
+    thread.started.connect(thread.quit, Qt.DirectConnection)
+    thread.finished.connect(hold_native_finish, Qt.DirectConnection)
+    thread.start()
+    try:
+        qtbot.waitUntil(finish_entered.is_set, timeout=2000)
+        qapp.processEvents()
+
+        assert not thread.wait(0)
+        assert registry._threads["native-finish"].worker is worker
+
+        release_finish.set()
+        assert thread.wait(2000)
+        qtbot.waitUntil(lambda: "native-finish" not in registry._threads, timeout=2000)
+    finally:
+        release_finish.set()
+        thread.quit()
+        thread.wait(2000)
+        registry._on_thread_finished("native-finish")
+        thread.deleteLater()
+        worker.deleteLater()
+
+
 @pytest.mark.parametrize("exclusive", [False, True])
 @pytest.mark.parametrize("reuse_thread", [False, True])
 def test_queued_old_completion_cannot_remove_reused_registration(registry, qapp, exclusive, reuse_thread):

@@ -4551,3 +4551,27 @@ Plano imediato:
   feature and must not be merged or promoted without resolving the native crash.
 - Neither `main` nor `develop` changed. The remote again reported 29 pre-existing
   Dependabot findings on its default branch; no dependency was changed here.
+
+## 2026-10-16 - APP-THREAD-01 Stage 14 native cleanup repair
+
+- The user explicitly authorized repair after the preserved crash was inspected.
+  Systemd core PID 9657 showed the first fault in `QObject::~QObject` during a
+  worker-thread `DeferredDelete`; the later GUI-thread tcache abort was secondary.
+  Kernel evidence contained no OOM, MCE, EDAC or resource-guard event.
+- `QThread.finished` could reach GUI cleanup before native thread teardown was
+  complete. Both `ThreadManager` and `FileExplorerDock` now retain worker
+  ownership while `QThread.wait(0)` reports pending teardown and retry through
+  the GUI event loop without blocking, terminating or releasing references early.
+- A deterministic regression holds the native thread inside `finished` and
+  proves registry ownership survives that interval. The formerly crashing
+  two-dock case passed once under GDB, then the original-order 12-case CSV module
+  passed under GDB without a native fault.
+- Final isolated evidence comprises 82 distinct passing tests: 12 Stage 14 CSV,
+  12 shared completion/GC, 7 ThreadManager, 7 Stage 13 File Explorer save,
+  8 Stage 12 Search/Replace save and 36 historical File Explorer lifecycle
+  cases. The two native-sensitive modules exited normally under GDB; peak tree
+  RSS was 387.6 MiB and no RAM, RSS, wall or pytest guard fired.
+- PySide6/Qt/Shiboken remain consistent at 6.9.3. No package upgrade or broad
+  formatting rewrite was mixed into the repair. `APP-THREAD-01` remains open for
+  other consumers. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

@@ -2037,7 +2037,10 @@ class FileExplorerDock(BaseDock):
     def _finish_operation(self, generation, result, error):
         if generation != self._operation_generation or not self._active_operation:
             return
-        if self._worker_thread.isRunning():
+        # QThread.finished can reach this GUI receiver before native teardown and
+        # worker DeferredDelete processing have completed. Polling wait(0) keeps
+        # Python ownership intact without blocking the GUI event loop.
+        if not self._worker_thread.wait(0):
             QTimer.singleShot(10, self, lambda: self._finish_operation(generation, result, error))
             return
         discard = self._discard_callbacks
@@ -2574,7 +2577,7 @@ class FileExplorerDock(BaseDock):
 
         thread = getattr(self, "_worker_thread", None)
         if thread is not None:
-            if thread.isRunning():
+            if not thread.wait(0):
                 self._request_shutdown()
                 return False
             thread_manager._on_thread_finished(getattr(self, "_thread_id", ""))
