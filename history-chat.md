@@ -4414,3 +4414,38 @@ Plano imediato:
   uses the shared synchronous ResultsTree formatter and direct file writing. It
   can reuse the Stage 11 immutable export plan while preserving search/replace
   operation ownership and public formatting.
+
+## 2026-10-16 - Session start - APP-THREAD-01 Stage 12
+
+- Native continuation resumed from published Stage 11 checkpoint `b8bffee` and
+  feature commit `aaf6445`. AI Presence Monitor 0.10.7 strict diagnostics
+  verified the exact active Protocol2 worker, five hooks, queue and services.
+- The fresh branch is `COM-7a8dc201-6c12-4a12-90e4-d639737d03e8`. This stage is
+  restricted to auditing `SearchReplacePanel._save_results`, its shared
+  ResultsTree format and GUI-thread serialization/write cost.
+- Dialogs, tree extraction and final feedback must remain GUI-only. Any worker
+  must reuse the bounded immutable Stage 11 export API and join the existing
+  per-panel search/replace lifecycle without changing its public contracts.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - Session completion - APP-THREAD-01 Stage 12
+
+- The clean red regression proved that SearchReplacePanel result serialization
+  and writing ran on `Qt mainThread` at 195.6 MiB peak tree RSS. The panel now
+  reuses the Stage 11 frozen bounded export plan; dialogs and ResultsTree
+  extraction remain GUI-only while UTF-8 validation, serialization and atomic IO
+  execute in a registered worker.
+- Search, file replacement and result saving share one operation gate per panel.
+  Separate panels remain independent; cancellation, IO errors and every close
+  path preserve existing destinations, remove private temporaries, suppress late
+  feedback and settle through `QThread.finished` without `terminate()`.
+- Final validation passed 90 distinct focused tests across seven isolated
+  modules. Peak tree RSS was 235.9 MiB; no executed post-fix test had a native
+  crash, timeout or resource-guard abort. Python compilation, Pylint-E, focused
+  Black and `git diff --check` passed.
+- Evidence is in `docs/reports/APP_THREAD_AUDIT_STAGE12_2026_10_16.md`.
+  `APP-THREAD-01` remains open because File Explorer result saving uses a separate
+  synchronous ResultsTree path. `example.py` remains untracked and byte-identical
+  at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

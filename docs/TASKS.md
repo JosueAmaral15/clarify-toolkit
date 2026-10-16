@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - salvamento de resultados do InsertPanel isolado da GUI
+**Last Update**: 2026/10/16 - salvamento do SearchReplacePanel isolado da GUI
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -118,6 +118,18 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   isolados, sem novo crash, timeout ou guarda. Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE11_2026_10_16.md`. Outros consumidores e
   workers continuam pendentes.
+  Etapa 12 (2026-10-16): salvamento dos resultados do SearchReplacePanel passou
+  a reutilizar o plano imutavel, limites UTF-8 e publicacao atomica da Etapa 11.
+  Dialogo e extracao da arvore permanecem na GUI; serializacao e IO executam em
+  worker registrado por painel. Search, replace e save compartilham uma operacao
+  por painel, enquanto paineis distintos continuam independentes. Cancelamento,
+  erro e fechamento preservam destinos existentes, removem temporarios, descartam
+  feedback tardio e aguardam `QThread.finished`, sem `terminate()`. A matriz
+  posterior passou 90 testes focados em processos isolados, sem crash, timeout ou
+  guarda. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE12_2026_10_16.md`. O File Explorer usa outra
+  ResultsTree e seu save sincrono requer auditoria separada; outros consumidores
+  e workers tambem continuam pendentes.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

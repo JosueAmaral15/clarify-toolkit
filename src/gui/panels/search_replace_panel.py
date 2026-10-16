@@ -56,6 +56,7 @@ from ...utils.logger import get_logger
 
 # Components from this package
 from .results_tree import ResultsTree
+from .result_export import MatchResultExportPlan, MatchResultExportWorker
 from .replace_worker import ReplaceFileRequest, SearchReplaceFileWorker
 from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
@@ -127,6 +128,27 @@ class _FileReplaceReceiver(QObject):
         self.panel._on_replace_thread_finished(self.generation)
 
 
+class _ResultSaveReceiver(QObject):
+    """GUI-thread receiver for one panel-owned result export."""
+
+    def __init__(self, panel, generation):
+        super().__init__(panel)
+        self.panel = panel
+        self.generation = generation
+
+    @Slot(object)
+    def completed(self, result):
+        self.panel._store_save_result(self.generation, result)
+
+    @Slot(str)
+    def failed(self, message):
+        self.panel._store_save_error(self.generation, message)
+
+    @Slot()
+    def thread_finished(self):
+        self.panel._on_save_thread_finished(self.generation)
+
+
 class SearchReplacePanel(QWidget):
     """
     Left-hand panel: path + include/exclude + search & replace controls.
@@ -169,6 +191,15 @@ class SearchReplacePanel(QWidget):
         self._discard_replace_callbacks = False
         self._pending_replace_result = _UNSET
         self._replace_metadata = None
+        self._save_thread = None
+        self._save_worker = None
+        self._save_receiver = None
+        self._save_thread_id = None
+        self._save_generation = 0
+        self._save_cancel_requested = False
+        self._discard_save_callbacks = False
+        self._pending_save_result = _UNSET
+        self._pending_save_error = None
         self._close_action = None
 
         # Path row
@@ -912,6 +943,7 @@ class SearchReplacePanel(QWidget):
             widget.setEnabled(enabled)
         if hasattr(self, "ed_query_multi"):
             self.ed_query_multi.setEnabled(enabled)
+        self.btn_save_results.setEnabled(enabled)
 
     def _operation_running(self):
         return (
@@ -923,6 +955,7 @@ class SearchReplacePanel(QWidget):
             or (
                 self._replace_thread is not None and self._replace_thread.isRunning()
             )
+            or self._save_thread is not None
         )
 
     def cancel_operation(self):
@@ -931,6 +964,8 @@ class SearchReplacePanel(QWidget):
             self.cancel_search()
         if self._replace_worker is not None:
             self.cancel_replace()
+        if self._save_worker is not None:
+            self._cancel_save()
 
     def cancel_search(self, generation=None):
         """Request cancellation without releasing ownership before settlement."""
@@ -1097,6 +1132,8 @@ class SearchReplacePanel(QWidget):
             self._discard_search_callbacks = True
         if self._replace_worker is not None:
             self._discard_replace_callbacks = True
+        if self._save_worker is not None:
+            self._discard_save_callbacks = True
         self.cancel_operation()
         return False
 
@@ -1112,6 +1149,8 @@ class SearchReplacePanel(QWidget):
             self._discard_search_callbacks = True
         if self._replace_worker is not None:
             self._discard_replace_callbacks = True
+        if self._save_worker is not None:
+            self._discard_save_callbacks = True
         self.cancel_operation()
         return True
 
@@ -1122,6 +1161,8 @@ class SearchReplacePanel(QWidget):
                 self._discard_search_callbacks = True
             if self._replace_worker is not None:
                 self._discard_replace_callbacks = True
+            if self._save_worker is not None:
+                self._discard_save_callbacks = True
             self.cancel_operation()
             event.ignore()
             return
@@ -1130,6 +1171,8 @@ class SearchReplacePanel(QWidget):
 
     def _save_results(self):
         """Save search results to a text file."""
+        if self._operation_running():
+            return
         matches_data = self.results.get_matches_data()
 
         if not matches_data:
@@ -1148,30 +1191,134 @@ class SearchReplacePanel(QWidget):
             return  # User cancelled
 
         try:
-            # Export matches to text
-            text_content = self.results.export_to_text()
+            plan = MatchResultExportPlan.from_matches(matches_data, file_path)
+            self._save_generation += 1
+            generation = self._save_generation
+            self._save_thread_id = f"search_replace_save:{id(self)}:{generation}"
+            self._save_cancel_requested = False
+            self._discard_save_callbacks = False
+            self._pending_save_result = _UNSET
+            self._pending_save_error = None
+            self._save_thread = QThread()
+            self._save_worker = MatchResultExportWorker(plan)
+            self._save_receiver = _ResultSaveReceiver(self, generation)
 
-            # Write to file
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(text_content)
+            worker = self._save_worker
+            native = self._save_thread
+            receiver = self._save_receiver
+            native.started.connect(worker.run)
+            worker.completed.connect(receiver.completed)
+            worker.failed.connect(receiver.failed)
+            worker.settled.connect(native.quit, Qt.DirectConnection)
+            native.finished.connect(worker.deleteLater)
+            native.finished.connect(receiver.thread_finished)
+            native.finished.connect(native.deleteLater)
 
-            total_files = len(matches_data)
-            total_matches = sum(len(items) for items in matches_data.values())
+            if not thread_manager.start_thread(
+                self._save_thread_id,
+                native,
+                worker,
+                FeatureType.SEARCH_REPLACE,
+                cancel_callback=worker.cancel,
+                exclusive=False,
+            ):
+                worker.deleteLater()
+                native.deleteLater()
+                receiver.deleteLater()
+                self._clear_save_references()
+                QMessageBox.critical(
+                    self,
+                    tr("search_replace.msg_error_save_title"),
+                    tr("search_replace.msg_error_save").format(
+                        error="Cannot save results while the application is shutting down"
+                    ),
+                )
+                return
 
-            QMessageBox.information(
-                self,
-                tr("search_replace.msg_results_saved_title"),
-                tr("search_replace.msg_results_saved").format(
-                    file_path=file_path, total_files=total_files, total_matches=total_matches
-                ),
-            )
-
-        except Exception as e:
+            worker.moveToThread(native)
+            self._set_search_controls_enabled(False)
+            native.start()
+        except (TypeError, ValueError, UnicodeError) as exc:
             QMessageBox.critical(
                 self,
                 tr("search_replace.msg_error_save_title"),
-                tr("search_replace.msg_error_save").format(error=str(e)),
+                tr("search_replace.msg_error_save").format(error=str(exc)),
             )
+
+    def _cancel_save(self):
+        if self._save_worker is None:
+            return
+        self._save_cancel_requested = True
+        self._save_worker.cancel()
+
+    def _store_save_result(self, generation, result):
+        if generation == self._save_generation:
+            self._pending_save_result = result
+
+    def _store_save_error(self, generation, message):
+        if generation == self._save_generation:
+            self._pending_save_error = message
+
+    def _on_save_thread_finished(self, generation):
+        if generation != self._save_generation:
+            return
+        result = self._pending_save_result
+        error = self._pending_save_error
+        cancelled = self._save_cancel_requested
+        discard = self._discard_save_callbacks
+        action = self._close_action
+        self._close_action = None
+        self._clear_save_references()
+        self._set_search_controls_enabled(True)
+
+        if not discard:
+            if error is not None:
+                QMessageBox.critical(
+                    self,
+                    tr("search_replace.msg_error_save_title"),
+                    tr("search_replace.msg_error_save").format(error=error),
+                )
+            elif result is not _UNSET:
+                QMessageBox.information(
+                    self,
+                    tr("search_replace.msg_results_saved_title"),
+                    tr("search_replace.msg_results_saved").format(
+                        file_path=result.output_path,
+                        total_files=result.total_files,
+                        total_matches=result.total_matches,
+                    ),
+                )
+            elif not cancelled:
+                QMessageBox.critical(
+                    self,
+                    tr("search_replace.msg_error_save_title"),
+                    tr("search_replace.msg_error_save").format(
+                        error="Result saving ended without a result"
+                    ),
+                )
+
+        if action:
+            self._dispose_processing_modal()
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                target.close()
+
+    def _clear_save_references(self):
+        receiver = self._save_receiver
+        self._save_thread = None
+        self._save_worker = None
+        self._save_receiver = None
+        self._save_thread_id = None
+        self._save_cancel_requested = False
+        self._discard_save_callbacks = False
+        self._pending_save_result = _UNSET
+        self._pending_save_error = None
+        if receiver is not None:
+            receiver.deleteLater()
 
     def _do_replace(self, all_: bool):
         if self._operation_running():
