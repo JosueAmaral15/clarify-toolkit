@@ -4542,3 +4542,12 @@ Plano imediato:
   promoted. `example.py` remains untracked and unchanged.
 - The exact worker `notebook-josue:codex:project=clarify-b09a84f1` was finished
   through Protocol2 with status `idle` because this stage cannot continue safely.
+
+### Incomplete diagnostic checkpoint
+
+- The exact crash reproducer and experimental state were committed as `244e116`
+  (`wip: preserve Stage 14 CSV crash evidence`) and pushed only to
+  `origin/COM-0a107d66-686f-4edf-8fce-461c521b0373`. This is not a completed
+  feature and must not be merged or promoted without resolving the native crash.
+- Neither `main` nor `develop` changed. The remote again reported 29 pre-existing
+  Dependabot findings on its default branch; no dependency was changed here.
