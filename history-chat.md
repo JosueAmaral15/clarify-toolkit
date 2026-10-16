@@ -4269,3 +4269,16 @@ Plano imediato:
   `APP-THREAD-01` open for other consumers. `example.py` remains untracked and
   byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published checkpoint
+
+- Stage 9 was committed as `922f69d` (`fix: move AI prompt insertion off GUI
+  thread`) and pushed to
+  `origin/COM-6a2029c2-ae21-44cb-b45d-29a90be598f7`. Neither `main` nor `develop`
+  was changed.
+- The remote again reported 29 existing Dependabot findings on the default
+  branch. This stage changed no dependency and does not claim those findings or
+  CI/security gates resolved.
+- The next bounded candidate is the AI Processor result-save path: keep file
+  selection and all widgets on the GUI thread, prove synchronous write cost, and
+  move only bounded immutable serialization/write work if evidence warrants it.
