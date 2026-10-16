@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - salvamento de resultados do AI Processor isolado da GUI
+**Last Update**: 2026/10/16 - salvamento de resultados do InsertPanel isolado da GUI
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -106,6 +106,18 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE10_2026_10_16.md`. Outros
   consumidores e workers continuam pendentes; uma escrita individual limitada a
   4 MiB conclui antes do checkpoint seguinte.
+  Etapa 11 (2026-10-16): extracao da arvore de resultados e dialogo do InsertPanel
+  permanecem na GUI, enquanto serializacao limitada e escrita atomica foram
+  movidas para worker registrado e independente por painel. O snapshot imutavel
+  limita 100 mil arquivos, 50 mil matches, caminhos a 4 KiB UTF-8, snippets a
+  1 MiB UTF-8 e saida a 20 MiB; cancelamento/erro preservam o destino existente e
+  removem o temporario. Um crash nativo observado na primeira matriz revelou
+  lifecycle divergente; a thread de save agora e independente do QWidget,
+  registrada antes da mudanca de afinidade, e worker/UI so encerram ownership em
+  `QThread.finished`. A matriz posterior passou 126 testes focados em processos
+  isolados, sem novo crash, timeout ou guarda. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE11_2026_10_16.md`. Outros consumidores e
+  workers continuam pendentes.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

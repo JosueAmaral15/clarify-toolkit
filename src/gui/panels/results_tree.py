@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from ...i18n import tr
 from ...utils.logger import get_logger
+from .result_export import format_match_results
 
 logger = get_logger(__name__)
 
@@ -704,35 +705,7 @@ class ResultsTree(QTreeWidget):
         Export matches to formatted text string.
         Returns empty string if no matches.
         """
-        if not self._matches_data:
-            return ""
-
-        lines = []
-        total_files = len(self._matches_data)
-        total_matches = sum(len(items) for items in self._matches_data.values())
-
-        # Header
-        lines.append("=" * 80)
-        lines.append("CLARIFY - SEARCH RESULTS")
-        lines.append("=" * 80)
-        lines.append(f"Total files with matches: {total_files}")
-        lines.append(f"Total matches: {total_matches}")
-        lines.append("=" * 80)
-        lines.append("")
-
-        # Results by file
-        for file_path, items in self._matches_data.items():
-            lines.append(f"📁 {file_path}")
-            lines.append(f"   Matches: {len(items)}")
-            lines.append("-" * 80)
-
-            for line_num, col, snippet in items:
-                lines.append(f"   Line {line_num}, Col {col}:")
-                lines.append(f"      {snippet.strip()}")
-
-            lines.append("")
-
-        return "\n".join(lines)
+        return format_match_results(self._matches_data)
 
     def _build_context_menu(self) -> QMenu:
         """Build the context menu without displaying it."""

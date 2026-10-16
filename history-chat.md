@@ -4331,3 +4331,72 @@ Plano imediato:
   settlement. InsertPanel file writes and all unrelated backlog remain excluded.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - Session start - APP-THREAD-01 Stage 11
+
+- Native continuation resumed from published Stage 10 checkpoint `62a48c7` and
+  feature commit `6b2ba4b`. AI Presence Monitor 0.10.7 strict diagnostics
+  verified the exact active Protocol2 worker, five hooks, queue and services.
+- The fresh branch is `COM-ab7991c3-700c-4d1c-9e74-2216125fd631`. This stage is
+  restricted to auditing embedded `InsertPanel._save_results`, including its
+  actual `ResultsTree` extraction/export consumers and GUI-thread write cost.
+- Dialogs, widgets/models/tree extraction and final feedback remain GUI-only.
+  Only bounded immutable serialization/write IO may move to the panel's existing
+  registered lifecycle. Unrelated tools, Editor UX, i18n and backlog are excluded.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - Session stop - APP-THREAD-01 Stage 11
+
+- The audit proved that `InsertPanel._save_results` extracted the result tree,
+  serialized every match and wrote the destination synchronously on the GUI
+  thread. A clean red regression observed serialization on `Qt mainThread` at
+  194.2 MiB peak tree RSS, without a resource guard trigger.
+- A provisional bounded immutable export plan and registered per-panel worker
+  were implemented for investigation. Dialogs, tree extraction and user
+  feedback remained GUI-only; serialization, private temporary-file writing
+  and atomic destination replacement moved to worker-owned data.
+- The first complete run of the new nine-test GUI module crashed natively with
+  signal 11 in `test_one_export_per_panel_and_independent_panels` while waiting
+  for completion. The guard reported exit `-11`, 194.8 MiB peak tree RSS and
+  8.1 seconds elapsed, with no RAM, RSS, wall-time or pytest-timeout trigger.
+- The stage instruction requires an immediate stop after a native crash. The
+  test was not retried, no further diagnosis or continuation was dispatched,
+  and the provisional implementation was neither committed nor pushed. Branch
+  `COM-ab7991c3-700c-4d1c-9e74-2216125fd631` preserves the uncommitted forensic
+  state; `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - Session resume - APP-THREAD-01 Stage 11
+
+- The user explicitly authorized resuming after the prior native crash. The
+  exact Protocol2 worker was reactivated, and AI Presence Monitor 0.10.7 strict
+  diagnostics confirmed task automation, five Codex hooks, queue, services and
+  database health.
+- Work remains restricted to understanding and correcting the Stage 11
+  InsertPanel result-save lifecycle. The failed multi-panel test will not be
+  blindly repeated; lifecycle ownership and signal settlement will be audited
+  first, followed by narrower isolated regressions under the same guards.
+- Branch `COM-ab7991c3-700c-4d1c-9e74-2216125fd631` retains the provisional
+  forensic state. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - Session completion - APP-THREAD-01 Stage 11
+
+- The prior native failure had no retained core dump, so no unsupported native
+  backtrace is claimed. The audit corrected the concrete ownership risks first:
+  save threads are now independent from panel teardown, registration precedes
+  affinity transfer, and worker/UI cleanup waits for `QThread.finished`.
+- InsertPanel result extraction and dialogs remain GUI-only. A frozen bounded
+  plan now performs UTF-8 validation, serialization and private temporary-file
+  IO off the GUI thread, publishing atomically only after complete success.
+  Existing destinations survive cancellation or IO failure.
+- The formerly crashing two-panel case passed alone, and the complete validation
+  passed 126 distinct focused tests across nine isolated modules. Peak tree RSS
+  was 241.6 MiB; no post-fix native crash, timeout or resource-guard abort
+  occurred. Python compilation, Pylint-E, focused Black and `git diff --check`
+  passed.
+- Evidence is in `docs/reports/APP_THREAD_AUDIT_STAGE11_2026_10_16.md`.
+  `APP-THREAD-01` remains open for other bounded consumers. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

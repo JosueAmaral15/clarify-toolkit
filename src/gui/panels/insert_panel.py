@@ -59,6 +59,7 @@ from ...i18n.translator import tr, tooltip_tr
 
 # Components from this package
 from .results_tree import ResultsTree
+from .result_export import MatchResultExportPlan, MatchResultExportWorker
 from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
 # Progress management
@@ -68,6 +69,7 @@ from ..progress import OperationHistory
 from ...ui import FeatureType, thread_manager
 
 logger = get_logger(__name__)
+_UNSET = object()
 
 
 class _InsertSearchReceiver(QObject):
@@ -101,6 +103,27 @@ class _InsertSearchReceiver(QObject):
         self.panel._on_search_thread_finished(self.generation)
 
 
+class _InsertSaveReceiver(QObject):
+    """GUI-thread receiver that settles result exports after QThread.finished."""
+
+    def __init__(self, panel, generation):
+        super().__init__(panel)
+        self.panel = panel
+        self.generation = generation
+
+    @Slot(object)
+    def completed(self, result):
+        self.panel._store_save_result(self.generation, result)
+
+    @Slot(str)
+    def failed(self, message):
+        self.panel._store_save_error(self.generation, message)
+
+    @Slot()
+    def thread_finished(self):
+        self.panel._on_save_thread_finished(self.generation)
+
+
 class InsertPanel(QWidget):
     request_status = Signal(str)
     # Signal for external consumers (e.g., ai_processor_dock, json_editor_tab)
@@ -125,6 +148,15 @@ class InsertPanel(QWidget):
         self._search_generation = 0
         self._search_cancel_requested = False
         self._discard_search_callbacks = False
+        self._save_thread = None
+        self._save_worker = None
+        self._save_receiver = None
+        self._save_thread_id = None
+        self._save_generation = 0
+        self._save_cancel_requested = False
+        self._discard_save_callbacks = False
+        self._pending_save_result = _UNSET
+        self._pending_save_error = None
         self._close_action = None
 
         layout.addWidget(QLabel(tr("insert_panel.lbl_root_path")), 0, 0)
@@ -673,11 +705,15 @@ class InsertPanel(QWidget):
 
         self.processing_search = True
         self.enable_buttons(False)
+        self.btn_apply.setEnabled(False)
+        self.btn_save_results.setEnabled(False)
         native.start()
 
     def _operation_running(self):
-        return self.processing_search or (
-            self._search_thread is not None and self._search_thread.isRunning()
+        return (
+            self.processing_search
+            or self._search_thread is not None
+            or self._save_thread is not None
         )
 
     def cancel_search(self, generation=None):
@@ -693,6 +729,16 @@ class InsertPanel(QWidget):
         if generation != self._search_generation or self._search_worker is None:
             return
         self._search_worker.pause() if paused else self._search_worker.resume()
+
+    def _cancel_save(self):
+        if self._save_worker is None:
+            return
+        self._save_cancel_requested = True
+        self._save_worker.cancel()
+
+    def _cancel_active_operation(self):
+        self.cancel_search()
+        self._cancel_save()
 
     def _on_search_progress(self, generation: int, current_path: str):
         """Legacy progress handler."""
@@ -761,6 +807,8 @@ class InsertPanel(QWidget):
             True,
             include_advanced_conditions=not self.is_file.isChecked(),
         )
+        self.btn_apply.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
         if cancelled and self._current_progress_widget:
             self._current_progress_widget.set_complete(success=False)
             self._current_progress_widget.add_log("Search cancelled")
@@ -790,8 +838,11 @@ class InsertPanel(QWidget):
         host = self.window()
         if hasattr(host, "tabs") and hasattr(host, "_close_tab"):
             self._close_action = ("tab", host)
-        self._discard_search_callbacks = True
-        self.cancel_search()
+        if self._search_worker is not None:
+            self._discard_search_callbacks = True
+        if self._save_worker is not None:
+            self._discard_save_callbacks = True
+        self._cancel_active_operation()
         return False
 
     def has_active_operation(self):
@@ -802,15 +853,21 @@ class InsertPanel(QWidget):
         """Cancel child work without independently closing the parent tab."""
         if not self._operation_running():
             return False
-        self._discard_search_callbacks = True
-        self.cancel_search()
+        if self._search_worker is not None:
+            self._discard_search_callbacks = True
+        if self._save_worker is not None:
+            self._discard_save_callbacks = True
+        self._cancel_active_operation()
         return True
 
     def closeEvent(self, event):
         if self._operation_running():
             self._close_action = ("close", self)
-            self._discard_search_callbacks = True
-            self.cancel_search()
+            if self._search_worker is not None:
+                self._discard_search_callbacks = True
+            if self._save_worker is not None:
+                self._discard_save_callbacks = True
+            self._cancel_active_operation()
             event.ignore()
             return
         super().closeEvent(event)
@@ -931,6 +988,8 @@ class InsertPanel(QWidget):
 
     def _save_results(self):
         """Save match results to a text file."""
+        if self._operation_running():
+            return
         matches_data = self.results.get_matches_data()
 
         if not matches_data:
@@ -949,26 +1008,132 @@ class InsertPanel(QWidget):
             return  # User cancelled
 
         try:
-            # Export matches to text
-            text_content = self.results.export_to_text()
+            plan = MatchResultExportPlan.from_matches(matches_data, file_path)
+            self._save_generation += 1
+            generation = self._save_generation
+            self._save_thread_id = f"insert_save:{id(self)}:{generation}"
+            self._save_cancel_requested = False
+            self._discard_save_callbacks = False
+            self._pending_save_result = _UNSET
+            self._pending_save_error = None
+            # Keep native lifetime independent from panel teardown. Closing the
+            # panel is deferred until QThread.finished settles this operation.
+            self._save_thread = QThread()
+            self._save_worker = MatchResultExportWorker(plan)
+            self._save_receiver = _InsertSaveReceiver(self, generation)
 
-            # Write to file
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(text_content)
+            worker = self._save_worker
+            native = self._save_thread
+            receiver = self._save_receiver
+            native.started.connect(worker.run)
+            worker.completed.connect(receiver.completed)
+            worker.failed.connect(receiver.failed)
+            worker.settled.connect(native.quit, Qt.DirectConnection)
+            native.finished.connect(worker.deleteLater)
+            native.finished.connect(receiver.thread_finished)
+            native.finished.connect(native.deleteLater)
 
-            total_files = len(matches_data)
-            total_matches = sum(len(items) for items in matches_data.values())
+            if not thread_manager.start_thread(
+                self._save_thread_id,
+                native,
+                worker,
+                FeatureType.INSERT,
+                cancel_callback=worker.cancel,
+                exclusive=False,
+            ):
+                worker.deleteLater()
+                native.deleteLater()
+                receiver.deleteLater()
+                self._clear_save_references()
+                QMessageBox.critical(
+                    self,
+                    tr("insert_panel.msg_error_title"),
+                    tr("insert_panel.msg_error_save").format(
+                        "Cannot save results while the application is shutting down"
+                    ),
+                )
+                return
 
-            QMessageBox.information(
-                self,
-                tr("insert_panel.msg_results_saved_title"),
-                f"Match results saved successfully!\n\n"
-                f"File: {file_path}\n"
-                f"Total files: {total_files}\n"
-                f"Total matches: {total_matches}",
-            )
-
-        except Exception as e:
+            worker.moveToThread(native)
+            self.enable_buttons(False)
+            self.btn_apply.setEnabled(False)
+            self.btn_save_results.setEnabled(False)
+            native.start()
+        except (TypeError, ValueError, UnicodeError) as exc:
             QMessageBox.critical(
-                self, tr("insert_panel.msg_error_title"), tr("insert_panel.msg_error_save").format(str(e))
+                self,
+                tr("insert_panel.msg_error_title"),
+                tr("insert_panel.msg_error_save").format(str(exc)),
             )
+
+    def _store_save_result(self, generation, result):
+        if generation == self._save_generation:
+            self._pending_save_result = result
+
+    def _store_save_error(self, generation, message):
+        if generation == self._save_generation:
+            self._pending_save_error = message
+
+    def _on_save_thread_finished(self, generation):
+        if generation != self._save_generation:
+            return
+        result = self._pending_save_result
+        error = self._pending_save_error
+        cancelled = self._save_cancel_requested
+        discard = self._discard_save_callbacks
+        action = self._close_action
+        self._close_action = None
+        self._clear_save_references()
+        self.enable_buttons(
+            True,
+            include_advanced_conditions=not self.is_file.isChecked(),
+        )
+        self.btn_apply.setEnabled(True)
+        self.btn_save_results.setEnabled(True)
+
+        if not discard:
+            if error is not None:
+                QMessageBox.critical(
+                    self,
+                    tr("insert_panel.msg_error_title"),
+                    tr("insert_panel.msg_error_save").format(error),
+                )
+            elif result is not _UNSET:
+                QMessageBox.information(
+                    self,
+                    tr("insert_panel.msg_results_saved_title"),
+                    f"Match results saved successfully!\n\n"
+                    f"File: {result.output_path}\n"
+                    f"Total files: {result.total_files}\n"
+                    f"Total matches: {result.total_matches}",
+                )
+            elif not cancelled:
+                QMessageBox.critical(
+                    self,
+                    tr("insert_panel.msg_error_title"),
+                    tr("insert_panel.msg_error_save").format(
+                        "Result saving ended without a result"
+                    ),
+                )
+
+        if action:
+            name, target = action
+            if name == "tab":
+                index = target.tabs.indexOf(self)
+                if index >= 0:
+                    target._close_tab(index)
+            else:
+                target.close()
+
+    def _clear_save_references(self):
+        receiver = self._save_receiver
+        self._save_thread = None
+        self._save_worker = None
+        self._save_receiver = None
+        self._save_thread_id = None
+        self._save_cancel_requested = False
+        self._discard_save_callbacks = False
+        self._pending_save_result = _UNSET
+        self._pending_save_error = None
+        if receiver is not None:
+            receiver.deleteLater()
