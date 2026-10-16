@@ -4495,3 +4495,17 @@ Plano imediato:
   or guard abort; peak process-tree RSS was 224.6 MiB. Black, Pylint error-only,
   Python compilation and `git diff --check` passed. The publication checkpoint
   remains to be completed.
+
+### Published checkpoint
+
+- Stage 13 was committed as `d828318` (`fix: move File Explorer result saving
+  off GUI thread`) and pushed to
+  `origin/COM-e9791fa0-e650-457e-9556-fbdc4948af8f`. Neither `main` nor `develop`
+  was changed; `example.py` remains untracked and byte-identical.
+- The remote again reported 29 existing Dependabot findings on the default
+  branch. This stage changed no dependency and does not claim those findings or
+  external CI/security gates resolved.
+- `APP-THREAD-01` remains open. The next concrete bounded candidate is
+  `FileExplorerDock._export_tree_to_csv`, which still serializes and writes all
+  rows synchronously; its tree/table consumer contracts require a separate
+  audit before reuse or modification.
