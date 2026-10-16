@@ -4158,6 +4158,19 @@ Plano imediato:
   and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
+### Published checkpoint
+
+- Stage 10 was committed as `6b2ba4b` (`fix: move AI result saving off GUI
+  thread`) and pushed to
+  `origin/COM-a35e31fa-8d18-486a-8627-078263a728d3`. Neither `main` nor `develop`
+  was changed.
+- The remote again reported 29 existing Dependabot findings on the default
+  branch (1 critical, 16 high, 9 moderate and 3 low). This stage changed no
+  dependency and does not claim those findings or CI/security gates resolved.
+- The next bounded candidate is the embedded InsertPanel result-save path. It
+  must first prove synchronous serialization/write cost and preserve its current
+  export format and panel lifecycle before any implementation change.
+
 ## 2026-10-15 - Session start - APP-THREAD-01 Stage 8
 
 - Native continuation resumed from published checkpoint `df69d0d` after strict
