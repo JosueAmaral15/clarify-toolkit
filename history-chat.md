@@ -4208,3 +4208,64 @@ Plano imediato:
   `example.py`, whose preserved hash is recorded above. The next automated stage
   must create a fresh COM-UUID branch from `30f0647` plus this journal commit and
   remain limited to one concrete `APP-THREAD-01` consumer audit.
+
+## 2026-10-15 - Session start - APP-THREAD-01 Stage 9
+
+- Native continuation resumed from published Stage 8 journal checkpoint `d15c1d1`.
+  AI Presence Monitor 0.10.5 strict diagnostics verified the exact active
+  Protocol2 worker, five Codex hooks, queue and services. The fresh branch is
+  `COM-6a2029c2-ae21-44cb-b45d-29a90be598f7`.
+- This stage is restricted to auditing `AIProcessorDock._handle_insert_in_prompt`
+  and the actual embedded `InsertPanel` contract. It must prove GUI-thread cost
+  before edits, keep Qt document/widget access on the GUI thread, and move only
+  bounded immutable insertion work if warranted.
+- Stage 7 discovery/filter and Stage 8 result-replacement guarantees remain
+  mandatory. Save/export, TOON, WQXR, Editor UX, i18n and legacy backlog items are
+  excluded. `example.py` remains untracked at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-15 - Session stop - APP-THREAD-01 Stage 9
+
+- Source audit confirmed that `_handle_insert_in_prompt` calls shared
+  `insert_at_line` synchronously on the GUI thread and then calls the nonexistent
+  `show_message` method. The embedded `InsertPanel` public contract emits
+  `(line_no, text, mode)` and shared CLI/JSON Editor consumers remain out of scope.
+- The first red affinity regression aborted natively before reaching the product
+  method because the newly created test instantiated `AIProcessorDock` without a
+  `qtbot`/`QApplication` fixture. The stack ends in `StandardToolDock.__init__`;
+  guard reported exit `-6`, peak tree RSS 176.9 MiB and no resource trigger.
+  This is a test-harness defect, not evidence of an application insertion crash.
+- The stage instruction requires stopping on any native crash. No retry, harness
+  correction, implementation, validation, commit, push or further continuation
+  was performed. The fresh branch
+  `COM-6a2029c2-ae21-44cb-b45d-29a90be598f7` retains only the start/stop journal
+  and provisional red test plus the pre-existing untracked `example.py`.
+
+## 2026-10-16 - Session resume - APP-THREAD-01 Stage 9
+
+- The user explicitly authorized resumption and task automation. AI Presence
+  Monitor 0.10.7 strict diagnostics passed; the exact Clarify Protocol2 worker
+  was reactivated with five hooks, queue and services healthy.
+- Resume remains on `COM-6a2029c2-ae21-44cb-b45d-29a90be598f7`. The only allowed
+  initial correction is adding the missing Qt fixture to the provisional affinity
+  regression, then running it once under the unchanged RAM/RSS/wall/pytest guards.
+  Product edits require a clean red assertion proving GUI-thread execution.
+
+## 2026-10-16 - Session completion - APP-THREAD-01 Stage 9
+
+- The fixture-only rerun produced the required clean red assertion: shared
+  `insert_at_line` executed on `Qt mainThread` at 201.3 MiB peak tree RSS, without
+  crash or guard abort. The implementation now uses a frozen bounded plan and a
+  registered per-dock worker; prompt extraction/application remain GUI-only.
+- Prompt input/output are limited to 4 MiB, inserted text to 1 MiB and line to
+  1..10,000,000. Existing modes and the shared CLI/JSON Editor insertion API are
+  unchanged. One operation per dock, independent docks, cancel and deferred close
+  settle through `QThread.finished` without late callbacks or `terminate()`.
+- Final isolated validation passed 52 distinct tests across seven modules. Peak
+  tree RSS was 210.2 MiB; no post-fixture crash, timeout or guard abort occurred.
+  Python compilation, Pylint-E 10.00/10, focused Black and `git diff --check`
+  passed.
+- Evidence is in `docs/reports/APP_THREAD_AUDIT_STAGE9_2026_10_16.md`; TASKS keeps
+  `APP-THREAD-01` open for other consumers. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

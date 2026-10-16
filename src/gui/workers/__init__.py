@@ -9,8 +9,11 @@ from .ai_processor_worker import (
     AIFileDiscoveryPlan,
     AIPathTarget,
     AIProcessorWorker,
+    AIPromptInsertPlan,
+    AIPromptInsertWorker,
     AIResultReplacePlan,
     AIResultReplaceWorker,
+    MAX_AI_PROMPT_BYTES,
     MAX_AI_RESULT_TEXT_CHARS,
 )
 
@@ -19,7 +22,10 @@ __all__ = [
     "AIFileDiscoveryPlan",
     "AIPathTarget",
     "AIProcessorWorker",
+    "AIPromptInsertPlan",
+    "AIPromptInsertWorker",
     "AIResultReplacePlan",
     "AIResultReplaceWorker",
+    "MAX_AI_PROMPT_BYTES",
     "MAX_AI_RESULT_TEXT_CHARS",
 ]

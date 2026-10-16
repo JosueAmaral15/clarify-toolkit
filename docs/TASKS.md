@@ -80,6 +80,19 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   interrompida no meio pelo motor `re` e permanece como limite documentado. A
   retomada com margem de RAM concluiu a matriz final de 28 testes em processos
   isolados, sem crash, timeout ou acionamento das guardas.
+  Etapa 9 (2026-10-16): insercao no prompt em memoria do AI Processor movida para
+  worker registrado e independente por dock, preservando o contrato publico
+  `(line_no, text, mode)` do `InsertPanel` e o `insert_at_line` compartilhado por
+  CLI/JSON Editor. Prompt e saida ficam limitados a 4 MiB, texto inserido a 1 MiB
+  e linha ao intervalo 1..10.000.000; modos invalidos e limites falham antes de
+  alterar o documento. Um dock impede sobreposicao entre Process/Replace/Insert,
+  enquanto docks distintos continuam independentes. Cancelamento/fechamento
+  descartam resultado tardio e aplicacao em `QTextDocument` ocorre somente apos
+  `QThread.finished` na GUI thread. Corrigida tambem a chamada ao metodo ausente
+  `show_message`. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE9_2026_10_16.md`. Outros consumidores e
+  workers continuam pendentes; uma chamada limitada de `insert_at_line` ja em
+  execucao conclui antes de observar o checkpoint seguinte.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

@@ -27,6 +27,7 @@ from src.core.search_replace import (
     SearchOptions,
     replace_in_text_bounded,
 )
+from src.core.insert import InsertMode, insert_at_line
 from src.gui.base_dock import ProcessorWorkerBase
 
 MAX_AI_TARGETS = 1_000
@@ -39,6 +40,18 @@ MAX_AI_DISCOVERED_FILES = 100_000
 MAX_AI_CONDITION_CONTENT_BYTES = 4 * 1024 * 1024
 MAX_AI_RESULT_QUERY_BYTES = 64 * 1024
 MAX_AI_RESULT_TEXT_CHARS = MAX_IN_MEMORY_REPLACE_BYTES
+MAX_AI_PROMPT_BYTES = 4 * 1024 * 1024
+MAX_AI_INSERT_TEXT_BYTES = 1024 * 1024
+MAX_AI_INSERT_LINE = 10_000_000
+AI_INSERT_MODES = frozenset(
+    {
+        InsertMode.LEFT,
+        InsertMode.RIGHT,
+        InsertMode.REPLACE,
+        InsertMode.INSERT_ABOVE,
+        InsertMode.INSERT_BELOW,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -279,6 +292,59 @@ class AIResultReplaceWorker(ProcessorWorkerBase):
         try:
             result = self.plan.execute(lambda: not self.check_interrupt())
             self.emit_success(result)
+        except Exception as exc:
+            self.emit_error(str(exc))
+
+
+@dataclass(frozen=True)
+class AIPromptInsertPlan:
+    """Immutable bounded insertion state copied from the prompt widgets."""
+
+    content: str
+    line_no: int
+    text: str
+    mode: str
+
+    def __post_init__(self):
+        if not isinstance(self.content, str) or not isinstance(self.text, str):
+            raise ValueError("Prompt content and insertion value must be text")
+        if len(self.content) > MAX_AI_PROMPT_BYTES:
+            raise ValueError("Prompt text exceeds the 4 MiB character safety limit")
+        if len(self.text) > MAX_AI_INSERT_TEXT_BYTES:
+            raise ValueError("Insertion value exceeds the 1 MiB safety limit")
+        if isinstance(self.line_no, bool) or not isinstance(self.line_no, int):
+            raise ValueError("Insertion line must be an integer")
+        if self.line_no < 1 or self.line_no > MAX_AI_INSERT_LINE:
+            raise ValueError(f"Insertion line must be between 1 and {MAX_AI_INSERT_LINE}")
+        if self.mode not in AI_INSERT_MODES:
+            raise ValueError(f"Unknown insert mode: {self.mode}")
+
+    def execute(self, checkpoint):
+        """Validate byte bounds and rebuild prompt text on the worker thread."""
+        if len(self.content.encode("utf-8")) > MAX_AI_PROMPT_BYTES:
+            raise ValueError("Prompt text exceeds the 4 MiB safety limit")
+        if len(self.text.encode("utf-8")) > MAX_AI_INSERT_TEXT_BYTES:
+            raise ValueError("Insertion value exceeds the 1 MiB safety limit")
+        if not checkpoint():
+            return self.content
+        result = insert_at_line(self.content, self.line_no, self.text, self.mode)
+        if len(result.encode("utf-8")) > MAX_AI_PROMPT_BYTES:
+            raise ValueError("Inserted prompt exceeds the 4 MiB safety limit")
+        if not checkpoint():
+            return self.content
+        return result
+
+
+class AIPromptInsertWorker(ProcessorWorkerBase):
+    """Background worker for bounded insertion in the AI prompt."""
+
+    def __init__(self, plan: AIPromptInsertPlan):
+        super().__init__()
+        self.plan = plan
+
+    def run(self):
+        try:
+            self.emit_success(self.plan.execute(lambda: not self.check_interrupt()))
         except Exception as exc:
             self.emit_error(str(exc))
 
