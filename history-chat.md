@@ -4170,6 +4170,10 @@ Plano imediato:
 - The next bounded candidate is the embedded InsertPanel result-save path. It
   must first prove synchronous serialization/write cost and preserve its current
   export format and panel lifecycle before any implementation change.
+- Exactly one native continuation was authorized for the exact Codex session and
+  returned `dispatch_started` with marker
+  `CLARIFY_APP_THREAD_CONTINUE_20261016_STAGE11`. This is transport evidence only;
+  it is not treated as AI activity or completion, and no retry will be made.
 
 ## 2026-10-15 - Session start - APP-THREAD-01 Stage 8
 
