@@ -68,6 +68,7 @@ class FileListTableManager(QWidget):
         """
         super().__init__(parent)
         self._main_window_ref = main_window  # Store explicit main window reference
+        self._export_handler = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -448,6 +449,9 @@ class FileListTableManager(QWidget):
 
     def export_csv(self):
         """Export table to CSV file."""
+        if self._export_handler is not None:
+            self._export_handler()
+            return
         if not self.table.rowCount():
             QMessageBox.information(
                 self,
@@ -490,6 +494,10 @@ class FileListTableManager(QWidget):
             )
         except Exception as e:
             QMessageBox.critical(self, tr("file_list_table.export_failed_title"), tr("file_list_table.export_failed").format(error=e))
+
+    def set_export_handler(self, handler):
+        """Delegate embedded exports while preserving the standalone fallback."""
+        self._export_handler = handler
 
     def get_selected_paths(self) -> List[str]:
         """Get list of selected file paths."""

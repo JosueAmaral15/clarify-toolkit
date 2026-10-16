@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - salvamento do FileExplorerDock isolado da GUI
+**Last Update**: 2026/10/16 - Stage 14 interrompido por crash nativo Qt
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -143,6 +143,13 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   crash, timeout ou guarda. Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE13_2026_10_16.md`. Exportacao CSV e outros
   consumidores/workers ainda requerem auditorias limitadas separadas.
+  Etapa 14 (2026-10-16, incompleta): os caminhos CSV de busca e navegacao foram
+  auditados e a prova vermelha confirmou serializacao/escrita na GUI. Uma
+  implementacao experimental limitada passou os cinco primeiros casos da matriz,
+  mas o processo sofreu crash nativo durante o caso de dois docks concorrentes.
+  A execucao foi interrompida sem retry, conforme a barreira de seguranca; a
+  causa raiz continua nao resolvida e a etapa nao deve ser considerada entregue.
+  Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE14_2026_10_16.md`.
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente

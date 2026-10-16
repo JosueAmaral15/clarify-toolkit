@@ -23,7 +23,6 @@ v2.9.115 Integration:
 import os
 import re
 import time
-import csv
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
@@ -62,6 +61,7 @@ from src.utils.logger import get_logger
 from src.utils.atomic_files import file_revision
 
 from .base_dock import BaseDock
+from .csv_export import CsvExportPlan, CsvExportWorker
 from .widgets.explorer_workspace_mode import ExplorerWorkspaceMode
 from .panels import ResultsTree, FileExplorerWorker
 from .panels.result_export import MatchResultExportPlan, MatchResultExportWorker
@@ -353,6 +353,7 @@ class FileExplorerDock(BaseDock):
         # ============================================================================
         # Table Manager (extracted component)
         self.table_manager = FileListTableManager(parent=self, main_window=self._main_window_ref)
+        self.table_manager.set_export_handler(self._export_table_to_csv)
 
         # Enable tooltips for preview
         self.table_manager.table.setMouseTracking(True)
@@ -1610,6 +1611,8 @@ class FileExplorerDock(BaseDock):
         Export current results to CSV (v2.9.117 - B.5).
         Works for both browse mode (table) and search mode (tree).
         """
+        if self._operation_running():
+            return
         current_index = self.results_stack.currentIndex()
 
         if current_index == 1:
@@ -1621,6 +1624,8 @@ class FileExplorerDock(BaseDock):
 
     def _export_tree_to_csv(self):
         """Export ResultsTree matches to CSV file (v2.9.117 - B.5)."""
+        if self._operation_running():
+            return
         matches_data = self.results_tree.get_matches_data()
 
         if not matches_data:
@@ -1637,36 +1642,79 @@ class FileExplorerDock(BaseDock):
         if not filepath:
             return
 
+        headers = (
+            tr("file_list.csv_header_file"),
+            tr("file_list.csv_header_line"),
+            tr("file_list.csv_header_column"),
+            tr("file_list.csv_header_match"),
+        )
+        rows = (
+            (file_path, str(line), str(column), snippet.strip())
+            for file_path, matches in matches_data.items()
+            for line, column, snippet in matches
+        )
         try:
-            with open(filepath, "w", encoding="utf-8", newline="") as f:
-                writer = csv.writer(f)
+            plan = CsvExportPlan.from_rows(
+                headers,
+                rows,
+                filepath,
+                source_count=len(matches_data),
+            )
+        except (TypeError, ValueError, UnicodeError) as exc:
+            QMessageBox.critical(
+                self,
+                tr("file_list.export_failed_title"),
+                tr("file_list.export_failed_message").format(exc),
+            )
+            return
+        if not self._launch_csv_export(plan, "search"):
+            self._show_csv_launch_failure("search")
 
-                # Header
-                writer.writerow(
-                    [
-                        tr("file_list.csv_header_file"),
-                        tr("file_list.csv_header_line"),
-                        tr("file_list.csv_header_column"),
-                        tr("file_list.csv_header_match"),
-                    ]
+    def _export_table_to_csv(self):
+        """Snapshot the visible browse table before exporting off the GUI thread."""
+        if self._operation_running():
+            return
+        table = self.table_manager.table
+        row_count = table.rowCount()
+        if not row_count:
+            QMessageBox.information(
+                self.table_manager,
+                tr("table_manager.no_data_title"),
+                tr("table_manager.no_data_message"),
+            )
+            return
+        filepath, _ = QFileDialog.getSaveFileName(
+            self.table_manager,
+            tr("table_manager.export_dialog_title"),
+            "file_list.csv",
+            tr("table_manager.export_dialog_filter"),
+        )
+        if not filepath:
+            return
+
+        def table_rows():
+            for row in range(row_count):
+                yield tuple(
+                    table.item(row, column).text() if table.item(row, column) else ""
+                    for column in range(5)
                 )
 
-                # Data: Iterate through files and matches
-                for file_path, matches in matches_data.items():
-                    for line, col, snippet in matches:
-                        writer.writerow([file_path, line, col, snippet.strip()])
-
-            QMessageBox.information(
-                self,
-                tr("file_list.export_complete_title"),
-                tr("file_list.export_complete_message").format(
-                    filepath, sum(len(m) for m in matches_data.values()), len(matches_data)
-                ),
+        try:
+            plan = CsvExportPlan.from_rows(
+                ("Name", "Size", "Modified", "Permissions", "Path"),
+                table_rows(),
+                filepath,
+                source_count=row_count,
             )
-        except Exception as e:
+        except (TypeError, ValueError, UnicodeError) as exc:
             QMessageBox.critical(
-                self, tr("file_list.export_failed_title"), tr("file_list.export_failed_message").format(e)
+                self.table_manager,
+                tr("file_list_table.export_failed_title"),
+                tr("file_list_table.export_failed").format(error=exc),
             )
+            return
+        if not self._launch_csv_export(plan, "browse"):
+            self._show_csv_launch_failure("browse")
 
     def _add_to_recent(self, directory: str):
         """Add directory to recent list."""
@@ -1931,6 +1979,58 @@ class FileExplorerDock(BaseDock):
         self._append_operation_log(tr("file_explorer.log_started").format("save"))
         self.btn_save_results.setEnabled(False)
         self.btn_export_csv.setEnabled(False)
+        self.table_manager.btn_export.setEnabled(False)
+        self._worker_thread.start()
+        return True
+
+    def _launch_csv_export(self, plan, mode):
+        """Run one bounded CSV export through the dock operation lifecycle."""
+        from src.gui.panels.file_explorer_operation import ExplorerOperationReceiver
+        from src.ui import thread_manager, FeatureType
+
+        if self._operation_running():
+            return False
+        self._operation_generation += 1
+        self._operation_kind = f"csv_{mode}"
+        self._thread_id = f"file_explorer:{id(self)}:{self._operation_generation}"
+        self._cancel_requested = False
+        self._discard_callbacks = False
+        self._active_operation = True
+        self._worker_thread = QThread(self)
+        self._worker = CsvExportWorker(plan)
+        receiver = ExplorerOperationReceiver(self, self._operation_generation)
+        self._operation_receiver = receiver
+        self._worker.completed.connect(receiver.completed)
+        self._worker.failed.connect(receiver.failed)
+        self._worker.settled.connect(self._worker_thread.quit, Qt.DirectConnection)
+        self._worker_thread.started.connect(self._worker.run)
+        self._worker_thread.finished.connect(self._worker.deleteLater)
+        if not thread_manager.start_thread(
+            self._thread_id,
+            self._worker_thread,
+            self._worker,
+            FeatureType.FILE_EXPLORER,
+            cancel_callback=self._worker.cancel,
+            exclusive=False,
+        ):
+            self._worker_thread.finished.disconnect(self._worker.deleteLater)
+            self._worker.deleteLater()
+            self._cleanup_worker_thread()
+            self.results_status.setText(
+                "Cannot export CSV while the application is shutting down"
+            )
+            return False
+        self._worker.moveToThread(self._worker_thread)
+        self._worker_thread.finished.connect(receiver.thread_finished)
+        self._ensure_progress_dialog()
+        if self._progress_label:
+            self._progress_label.pause_button.setEnabled(False)
+        self._append_operation_log(
+            tr("file_explorer.log_started").format(f"csv {mode}")
+        )
+        self.btn_save_results.setEnabled(False)
+        self.btn_export_csv.setEnabled(False)
+        self.table_manager.btn_export.setEnabled(False)
         self._worker_thread.start()
         return True
 
@@ -1949,7 +2049,13 @@ class FileExplorerDock(BaseDock):
         if kind == "save":
             self.btn_save_results.setEnabled(True)
             self.btn_export_csv.setEnabled(True)
+            self.table_manager.btn_export.setEnabled(True)
             self._finish_result_save(result, error, discard)
+        elif kind in {"csv_search", "csv_browse"}:
+            self.btn_save_results.setEnabled(True)
+            self.btn_export_csv.setEnabled(True)
+            self.table_manager.btn_export.setEnabled(True)
+            self._finish_csv_export(kind.removeprefix("csv_"), result, error, discard)
         elif discard:
             self._batch_processing_active = False
             self.results_status.setText(tr("file_list.status_canceling", "Canceling...").rstrip(".") + " - stopped")
@@ -2853,6 +2959,80 @@ class FileExplorerDock(BaseDock):
                 result.total_matches,
             ),
         )
+
+    def _show_csv_launch_failure(self, mode):
+        detail = "Cannot export CSV while the application is shutting down"
+        if mode == "browse":
+            QMessageBox.critical(
+                self.table_manager,
+                tr("file_list_table.export_failed_title"),
+                tr("file_list_table.export_failed").format(error=detail),
+            )
+        else:
+            QMessageBox.critical(
+                self,
+                tr("file_list.export_failed_title"),
+                tr("file_list.export_failed_message").format(detail),
+            )
+
+    def _finish_csv_export(self, mode, result, error, discard):
+        """Apply settled CSV metadata and feedback on the GUI thread."""
+        label = f"csv {mode}"
+        if discard:
+            self.results_status.setText("CSV export stopped")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format(label, 0)
+            )
+            return
+        if error:
+            detail = str(error)[:OPERATION_LOG_MAX_ENTRY_CHARS]
+            self.results_status.setText("CSV export failed")
+            self._append_operation_log(
+                tr("file_explorer.log_failed").format(label, detail)
+            )
+            if mode == "browse":
+                QMessageBox.critical(
+                    self.table_manager,
+                    tr("file_list_table.export_failed_title"),
+                    tr("file_list_table.export_failed").format(error=error),
+                )
+            else:
+                QMessageBox.critical(
+                    self,
+                    tr("file_list.export_failed_title"),
+                    tr("file_list.export_failed_message").format(error),
+                )
+            return
+        if self._cancel_requested or result is None:
+            self.results_status.setText("CSV export cancelled")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format(label, 0)
+            )
+            return
+
+        self.results_status.setText(f"Exported {result.row_count} CSV row(s)")
+        self._append_operation_log(
+            tr("file_explorer.log_finished").format(label, result.row_count)
+        )
+        if mode == "browse":
+            self.table_manager.files_exported.emit(result.output_path)
+            QMessageBox.information(
+                self.table_manager,
+                tr("file_list_table.export_complete_title"),
+                tr("file_list_table.export_complete").format(
+                    filepath=result.output_path
+                ),
+            )
+        else:
+            QMessageBox.information(
+                self,
+                tr("file_list.export_complete_title"),
+                tr("file_list.export_complete_message").format(
+                    result.output_path,
+                    result.row_count,
+                    result.source_count,
+                ),
+            )
 
 
 def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[List[str]]:

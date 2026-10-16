@@ -4509,3 +4509,36 @@ Plano imediato:
   `FileExplorerDock._export_tree_to_csv`, which still serializes and writes all
   rows synchronously; its tree/table consumer contracts require a separate
   audit before reuse or modification.
+
+## 2026-10-16 - Session start - APP-THREAD-01 Stage 14
+
+- The exact continuation marker was received once and not retried. AI Presence
+  Monitor 0.10.7 strict diagnostics verified the active Protocol2 worker, five
+  hooks, native queue, database and services. Dispatch journal `fcbf3af` was
+  inspected on the Stage 13 branch.
+- Fresh branch `COM-0a107d66-686f-4edf-8fce-461c521b0373` was created exactly
+  from published checkpoint `6e01852`; feature commit `d828318` is present.
+- This stage is restricted to auditing File Explorer CSV export in search and
+  browse views. Qt dialogs/tree/table/model access and feedback remain GUI-only;
+  only proven bounded immutable serialization and atomic IO may move to workers.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-16 - APP-THREAD-01 Stage 14 native crash stop
+
+- Consumer inspection distinguished search ResultsTree CSV from browse-table
+  CSV, including headers, ordering, feedback and the `files_exported` signal.
+  The embedded table button was also proven to bypass the dock operation gate.
+- A guarded red regression failed twice as expected because serialization and
+  writing ran on `Qt mainThread` (204.3 MiB, no crash or guard trigger). An
+  experimental bounded worker then made the initial two affinity cases pass at
+  204.0 MiB.
+- The expanded 12-case module passed five cases and then suffered a native
+  segmentation fault/abort in the two-dock concurrency case. The trace included
+  `csv_export.py:170` in a worker and `_finish_csv_export` on the GUI thread;
+  exit was 250, peak RSS 207.9 MiB, and the resource guard did not trigger.
+- Per the explicit safety barrier, no retry or repair was attempted. Root cause
+  is unresolved, Stage 14 is incomplete and the experimental state must not be
+  promoted. `example.py` remains untracked and unchanged.
+- The exact worker `notebook-josue:codex:project=clarify-b09a84f1` was finished
+  through Protocol2 with status `idle` because this stage cannot continue safely.
