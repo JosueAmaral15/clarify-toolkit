@@ -4400,3 +4400,17 @@ Plano imediato:
   `APP-THREAD-01` remains open for other bounded consumers. `example.py` remains
   untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published checkpoint
+
+- Stage 11 was committed as `aaf6445` (`fix: move InsertPanel result saving off
+  GUI thread`) and pushed to
+  `origin/COM-ab7991c3-700c-4d1c-9e74-2216125fd631`. Neither `main` nor `develop`
+  was changed.
+- The remote again reported 29 existing Dependabot findings on the default
+  branch. This stage changed no dependency and does not claim those findings or
+  external CI/security gates resolved.
+- The next bounded candidate is `SearchReplacePanel._save_results`, which still
+  uses the shared synchronous ResultsTree formatter and direct file writing. It
+  can reuse the Stage 11 immutable export plan while preserving search/replace
+  operation ownership and public formatting.
