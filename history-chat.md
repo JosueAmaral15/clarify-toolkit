@@ -4593,3 +4593,29 @@ Plano imediato:
   `Ctrl+Alt+PageDown` defaults for previous/next Editor file tabs. The current
   Cinnamon bindings do not claim these combinations; OS and application
   conflict detection must still be retained.
+
+## 2026-10-18 - Recent Editor interactions completed
+
+- `CE-FIND-SELECTION-01`, `CE-ENTER-INDENT-01`, `CE-SMART-HOME-01` and
+  `CE-TAB-NAV-01` were implemented in feature commit `014e392`. Find and
+  Find/Replace now use a bounded active selection; Enter preserves indentation;
+  Home/Shift+Home alternate between first text and column zero; configurable
+  Ctrl+Alt+PageUp/PageDown actions navigate Editor file tabs without replacing
+  tool navigation.
+- Seven new regressions first failed on every requested behavior, then passed.
+  Final isolated evidence contains 115 distinct passing tests across the new
+  module, historical Editor priority stages, the 69-case Editor module and
+  keyboard shortcuts. Peak process-tree RSS was 226.3 MiB; there was no native
+  crash, timeout or RAM/RSS/wall guard abort.
+- All seven translation catalogs contain both new labels and parse as JSON.
+  `py_compile`, `git diff --check`, and Pylint errors-only for the production
+  files and new test passed. The broad legacy Editor test retains pre-existing
+  PySide6/Shiboken dynamic-import Pylint false positives, but all 69 tests pass.
+- The user-provided screenshot was committed byte-identical because the canonical
+  task links it as evidence. `example.py` remains untracked and byte-identical at
+  SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- The canonical queue now has 35 open tasks: `CE-DOCK-CHROME-01` and
+  `CE-RENAME-IMPORTS-01` are the two newest priorities, followed by the 33
+  previously open items. The next bounded stage is the dock chrome audit and
+  correction; rename-aware imports remains separate because it requires parser,
+  preview, confirmation and atomic-write contracts.
