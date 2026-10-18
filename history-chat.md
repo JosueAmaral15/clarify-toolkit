@@ -4783,3 +4783,47 @@ Plano imediato:
 - The remote again reported 29 pre-existing Dependabot findings on its default
   branch. Stage 15 changed no dependency and does not claim those security or CI
   gates resolved.
+
+## 2026-10-18 - Session start - APP-THREAD-01 Stage 16
+
+- The exact native continuation was received once from dispatch journal
+  `6efeec4`. AI Presence Monitor 0.10.7 reports the exact Clarify Protocol2
+  worker active, five hooks installed, native queue and database healthy, and
+  both user services active.
+- Work continues from published Stage 15 checkpoint `727de63` and feature commit
+  `f2406f9` on fresh branch
+  `COM-ced87440-c44e-4417-95a8-7035ef1b1911`. This stage is limited to proving
+  and, if warranted, moving bounded `ResultsTree._copy_all_content` filesystem
+  reads and serialization off the GUI thread while clipboard and widget access
+  remain GUI-only.
+- Existing 512 KiB/file and 2 MiB total limits, per-owner operation gates,
+  independent ownership, cooperative cancellation/close and asynchronous
+  `wait(0)` settlement remain mandatory. No Editor UX, providers, user documents
+  or unrelated backlog are in scope.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - APP-THREAD-01 Stage 16 completed
+
+- The audit proved that shared `ResultsTree._copy_all_content` performed
+  filesystem checks, binary sampling, bounded reads and serialization on the GUI
+  thread for Search/Replace, Insert and File Explorer; AI Processor inherited the
+  same behavior through its embedded panels. A temporary 2 MiB benchmark
+  confirmed GUI-thread execution before edits.
+- Exact result paths are now captured on the GUI and processed by a bounded
+  immutable worker plan on each existing owner gate. The established 512 KiB per
+  file and 2 MiB content caps remain, with 64 KiB reads and cooperative
+  cancellation. Clipboard, widgets, feedback and logs remain GUI-only after
+  native `wait(0)` settlement; close discards late results and no path terminates
+  a thread.
+- The final matrix passed 159 distinct tests in isolated guarded processes at a
+  213.1 MiB peak outside GDB. Completion 12/12 and Explorer 36/36 also passed
+  under GDB with normal inferior exits and 380.5/385.8 MiB internal peaks. An
+  initial Explorer GDB pass exposed a fixed 60 ms heartbeat assertion, not a
+  crash; its isolated parameter passed, the wait became condition-based and the
+  complete module then passed.
+- Compile, relevant Pylint-E, focused Black and diff checks passed. Evidence is
+  in `docs/reports/APP_THREAD_AUDIT_STAGE16_2026_10_18.md`.
+- `APP-THREAD-01` remains open for other bounded consumers; the canonical queue
+  remains 41 open items. `example.py` remains untracked and byte-identical at
+  SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

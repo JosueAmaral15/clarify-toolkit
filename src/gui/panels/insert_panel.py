@@ -60,6 +60,8 @@ from ...i18n.translator import tr, tooltip_tr
 # Components from this package
 from .results_tree import ResultsTree
 from .result_export import (
+    MatchContentClipboardPlan,
+    MatchContentClipboardWorker,
     MatchResultClipboardPlan,
     MatchResultClipboardWorker,
     MatchResultExportPlan,
@@ -348,6 +350,7 @@ class InsertPanel(QWidget):
         # Connect status label to results tree
         self.results.set_status_label(self.results_status)
         self.results.set_copy_all_handler(self._copy_all_results)
+        self.results.set_copy_all_content_handler(self._copy_all_result_content)
 
         results_widget = QWidget()
         results_widget.setLayout(results_layout)
@@ -1058,6 +1061,25 @@ class InsertPanel(QWidget):
                 "Cannot copy results while the application is shutting down"
             )
 
+    def _copy_all_result_content(self):
+        """Read bounded result-file content on this panel's operation gate."""
+        if self._operation_running():
+            self.results_status.setText("Another operation is already running")
+            return
+        try:
+            plan = MatchContentClipboardPlan.from_matches(
+                self.results.get_matches_data()
+            )
+        except (TypeError, ValueError, UnicodeError) as exc:
+            self.results_status.setText(f"Copy failed: {exc}")
+            return
+        if not self._start_result_transfer(
+            MatchContentClipboardWorker(plan), "content_clipboard"
+        ):
+            self.results_status.setText(
+                "Cannot copy file content while the application is shutting down"
+            )
+
     def _start_result_transfer(self, worker, operation_kind):
         """Launch one save or clipboard worker owned by this panel."""
         if self._operation_running():
@@ -1138,8 +1160,16 @@ class InsertPanel(QWidget):
         self.btn_save_results.setEnabled(True)
 
         if not discard:
-            if operation_kind == "clipboard" and error is not None:
+            if operation_kind in {"clipboard", "content_clipboard"} and error is not None:
                 self.results_status.setText(f"Copy failed: {error}")
+            elif operation_kind == "content_clipboard" and result is not _UNSET:
+                if result.text:
+                    QApplication.clipboard().setText(result.text)
+                self.results_status.setText(
+                    self.results._format_copy_content_status(result.stats.as_dict())
+                )
+            elif operation_kind == "content_clipboard" and not cancelled:
+                self.results_status.setText("Content copy ended without a result")
             elif operation_kind == "clipboard" and result is not _UNSET:
                 QApplication.clipboard().setText(result.text)
                 self.results_status.setText(

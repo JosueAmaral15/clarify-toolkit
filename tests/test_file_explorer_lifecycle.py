@@ -166,8 +166,8 @@ def test_real_worker_pause_resume_responsiveness_and_cleanup(kind, tmp_path, doc
     timer.setInterval(5)
     timer.timeout.connect(lambda: beats.append(True))
     timer.start()
-    qtbot.wait(60)
-    assert len(beats) >= 3 and not results
+    qtbot.waitUntil(lambda: len(beats) >= 3, timeout=500)
+    assert not results
     assert target.read_text() == "needle"
     assert button.geometry().right() < dock._progress_label.width()
     assert button.width() == 28

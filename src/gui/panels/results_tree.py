@@ -29,6 +29,10 @@ from PySide6.QtWidgets import (
 from ...i18n import tr
 from ...utils.logger import get_logger
 from .result_export import (
+    COPY_CONTENT_MAX_FILE_BYTES,
+    COPY_CONTENT_MAX_TOTAL_BYTES,
+    COPY_CONTENT_SAMPLE_BYTES,
+    MatchContentClipboardPlan,
     MatchResultClipboardPlan,
     format_match_results,
 )
@@ -39,9 +43,6 @@ ITEM_TYPE_ROLE = int(Qt.ItemDataRole.UserRole)
 PATH_ROLE = ITEM_TYPE_ROLE + 1
 RESULT_PATH_ROLE = ITEM_TYPE_ROLE + 2
 MATCH_DATA_ROLE = ITEM_TYPE_ROLE + 3
-COPY_CONTENT_SAMPLE_BYTES = 4096
-COPY_CONTENT_MAX_FILE_BYTES = 512 * 1024
-COPY_CONTENT_MAX_TOTAL_BYTES = 2 * 1024 * 1024
 DELETE_CONFIRM_PREVIEW_LIMIT = 8
 REPLACE_TEMPLATE_MAX_BYTES = 512 * 1024
 REPLACE_TEMPLATE_PREVIEW_CHARS = 2000
@@ -196,6 +197,7 @@ class ResultsTree(QTreeWidget):
         )
         self._matches_data: Dict[str, List[Tuple[int, int, str]]] = {}
         self._copy_all_handler: Optional[Callable[[], None]] = None
+        self._copy_all_content_handler: Optional[Callable[[], None]] = None
         self._word_wrap_enabled = False  # Default: no word wrap
 
         # Word wrap disabled by default - allow horizontal scroll (v2.9.117)
@@ -253,6 +255,10 @@ class ResultsTree(QTreeWidget):
     def set_copy_all_handler(self, handler: Optional[Callable[[], None]]):
         """Delegate potentially expensive clipboard serialization to its owner."""
         self._copy_all_handler = handler
+
+    def set_copy_all_content_handler(self, handler: Optional[Callable[[], None]]):
+        """Delegate result-file reads and content serialization to its owner."""
+        self._copy_all_content_handler = handler
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts like CTRL+C for copy."""
@@ -924,51 +930,15 @@ class ResultsTree(QTreeWidget):
         max_total_bytes: int = COPY_CONTENT_MAX_TOTAL_BYTES,
     ) -> Tuple[str, Dict[str, int]]:
         """Build bounded clipboard text with full content for result files."""
-        stats = {
-            "copied": 0,
-            "skipped_binary": 0,
-            "skipped_directory": 0,
-            "skipped_missing": 0,
-            "skipped_size": 0,
-            "skipped_total_limit": 0,
-            "skipped_error": 0,
-            "bytes_copied": 0,
-        }
-        sections = []
-
-        for path in self._matches_data.keys():
-            try:
-                if not os.path.exists(path):
-                    stats["skipped_missing"] += 1
-                    continue
-
-                if os.path.isdir(path):
-                    stats["skipped_directory"] += 1
-                    continue
-
-                file_size = os.path.getsize(path)
-                if file_size > max_file_bytes:
-                    stats["skipped_size"] += 1
-                    continue
-
-                if self._is_probably_binary_file(path):
-                    stats["skipped_binary"] += 1
-                    continue
-
-                if stats["bytes_copied"] + file_size > max_total_bytes:
-                    stats["skipped_total_limit"] += 1
-                    continue
-
-                with open(path, "r", encoding="utf-8") as file_obj:
-                    content = file_obj.read()
-
-                sections.append(f"===== {path} =====\n{content}")
-                stats["copied"] += 1
-                stats["bytes_copied"] += file_size
-            except (OSError, UnicodeError):
-                stats["skipped_error"] += 1
-
-        return "\n\n".join(sections), stats
+        plan = MatchContentClipboardPlan.from_matches(
+            self._matches_data,
+            max_file_bytes=max_file_bytes,
+            max_total_bytes=max_total_bytes,
+        )
+        result = plan.execute(lambda: True)
+        if result is None:
+            return "", {}
+        return result.text, result.stats.as_dict()
 
     @staticmethod
     def _format_copy_content_status(stats: Dict[str, int]) -> str:
@@ -997,7 +967,16 @@ class ResultsTree(QTreeWidget):
 
     def _copy_all_content(self):
         """Copy bounded textual content from all result files to clipboard."""
-        text, stats = self._build_all_content_clipboard_text()
+        if self._copy_all_content_handler is not None:
+            self._copy_all_content_handler()
+            return
+
+        try:
+            text, stats = self._build_all_content_clipboard_text()
+        except (TypeError, ValueError, UnicodeError) as exc:
+            if self._status_label:
+                self._status_label.setText(f"Copy failed: {exc}")
+            return
         if text:
             QApplication.clipboard().setText(text)
 

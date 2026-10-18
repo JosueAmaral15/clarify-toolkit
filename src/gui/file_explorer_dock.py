@@ -66,6 +66,8 @@ from .csv_export import CsvExportPlan, CsvExportWorker
 from .widgets.explorer_workspace_mode import ExplorerWorkspaceMode
 from .panels import ResultsTree, FileExplorerWorker
 from .panels.result_export import (
+    MatchContentClipboardPlan,
+    MatchContentClipboardWorker,
     MatchResultClipboardPlan,
     MatchResultClipboardWorker,
     MatchResultExportPlan,
@@ -641,6 +643,9 @@ class FileExplorerDock(BaseDock):
         # Connect status label to results tree
         self.results_tree.set_status_label(self.results_status)
         self.results_tree.set_copy_all_handler(self._copy_all_results)
+        self.results_tree.set_copy_all_content_handler(
+            self._copy_all_result_content
+        )
 
         # Create QStackedWidget to switch between browse/search views
         self.results_stack = QStackedWidget()
@@ -1957,6 +1962,14 @@ class FileExplorerDock(BaseDock):
             "Cannot copy results while the application is shutting down",
         )
 
+    def _launch_result_content_clipboard(self, plan):
+        """Run bounded result-file reading through the dock lifecycle."""
+        return self._launch_result_transfer(
+            MatchContentClipboardWorker(plan),
+            "content_clipboard",
+            "Cannot copy file content while the application is shutting down",
+        )
+
     def _launch_result_transfer(self, worker, operation_kind, failure_message):
         """Launch one result transfer through the existing per-dock gate."""
         from src.gui.panels.file_explorer_operation import ExplorerOperationReceiver
@@ -2082,6 +2095,11 @@ class FileExplorerDock(BaseDock):
             self.btn_export_csv.setEnabled(True)
             self.table_manager.btn_export.setEnabled(True)
             self._finish_result_clipboard(result, error, discard)
+        elif kind == "content_clipboard":
+            self.btn_save_results.setEnabled(True)
+            self.btn_export_csv.setEnabled(True)
+            self.table_manager.btn_export.setEnabled(True)
+            self._finish_result_content_clipboard(result, error, discard)
         elif kind in {"csv_search", "csv_browse"}:
             self.btn_save_results.setEnabled(True)
             self.btn_export_csv.setEnabled(True)
@@ -2965,6 +2983,23 @@ class FileExplorerDock(BaseDock):
                 "Cannot copy results while the application is shutting down"
             )
 
+    def _copy_all_result_content(self):
+        """Read bounded search-result file content away from the GUI thread."""
+        if self._operation_running():
+            self.results_status.setText("Another operation is already running")
+            return
+        try:
+            plan = MatchContentClipboardPlan.from_matches(
+                self.results_tree.get_matches_data()
+            )
+        except (TypeError, ValueError, UnicodeError) as exc:
+            self.results_status.setText(f"Copy failed: {exc}")
+            return
+        if not self._launch_result_content_clipboard(plan):
+            self.results_status.setText(
+                "Cannot copy file content while the application is shutting down"
+            )
+
     def _finish_result_clipboard(self, result, error, discard):
         """Publish worker-owned text to QApplication only after settlement."""
         if discard:
@@ -2994,6 +3029,41 @@ class FileExplorerDock(BaseDock):
         self._append_operation_log(
             tr("file_explorer.log_finished").format(
                 "clipboard", result.total_matches
+            )
+        )
+
+    def _finish_result_content_clipboard(self, result, error, discard):
+        """Publish bounded file content only after native worker settlement."""
+        operation_name = "content clipboard"
+        if discard:
+            self.results_status.setText("File content copying stopped")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format(operation_name, 0)
+            )
+            return
+        if error:
+            detail = str(error)[:OPERATION_LOG_MAX_ENTRY_CHARS]
+            self.results_status.setText(f"Copy failed: {detail}")
+            self._append_operation_log(
+                tr("file_explorer.log_failed").format(operation_name, detail)
+            )
+            return
+        if self._cancel_requested or result is None:
+            self.results_status.setText("File content copying cancelled")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format(operation_name, 0)
+            )
+            return
+
+        if result.text:
+            QApplication.clipboard().setText(result.text)
+        stats = result.stats.as_dict()
+        self.results_status.setText(
+            self.results_tree._format_copy_content_status(stats)
+        )
+        self._append_operation_log(
+            tr("file_explorer.log_finished").format(
+                operation_name, stats["copied"]
             )
         )
 

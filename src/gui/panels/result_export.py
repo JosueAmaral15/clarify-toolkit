@@ -17,6 +17,10 @@ MAX_RESULT_EXPORT_MATCHES = 50_000
 MAX_RESULT_EXPORT_PATH_BYTES = 4_096
 MAX_RESULT_EXPORT_SNIPPET_BYTES = 1024 * 1024
 MAX_RESULT_EXPORT_TOTAL_BYTES = 20 * 1024 * 1024
+COPY_CONTENT_SAMPLE_BYTES = 4096
+COPY_CONTENT_MAX_FILE_BYTES = 512 * 1024
+COPY_CONTENT_MAX_TOTAL_BYTES = 2 * 1024 * 1024
+COPY_CONTENT_READ_CHUNK_BYTES = 64 * 1024
 
 Match = tuple[int, int, str]
 MatchFile = tuple[str, tuple[Match, ...]]
@@ -261,6 +265,213 @@ class MatchResultClipboardWorker(QObject):
     settled = Signal()
 
     def __init__(self, plan: MatchResultClipboardPlan):
+        super().__init__()
+        self.plan = plan
+        self._cancel_event = Event()
+
+    @Slot()
+    def run(self):
+        try:
+            result = self.plan.execute(lambda: not self._cancel_event.is_set())
+            if result is not None:
+                self.completed.emit(result)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.failed.emit(str(exc))
+        finally:
+            self.settled.emit()
+
+    @Slot()
+    def cancel(self):
+        self._cancel_event.set()
+
+
+@dataclass(frozen=True)
+class MatchContentClipboardStats:
+    """Immutable counters for bounded result-file content collection."""
+
+    copied: int = 0
+    skipped_binary: int = 0
+    skipped_directory: int = 0
+    skipped_missing: int = 0
+    skipped_size: int = 0
+    skipped_total_limit: int = 0
+    skipped_error: int = 0
+    bytes_copied: int = 0
+
+    def as_dict(self) -> dict[str, int]:
+        """Return the legacy mapping consumed by ResultsTree status helpers."""
+        return {
+            "copied": self.copied,
+            "skipped_binary": self.skipped_binary,
+            "skipped_directory": self.skipped_directory,
+            "skipped_missing": self.skipped_missing,
+            "skipped_size": self.skipped_size,
+            "skipped_total_limit": self.skipped_total_limit,
+            "skipped_error": self.skipped_error,
+            "bytes_copied": self.bytes_copied,
+        }
+
+
+@dataclass(frozen=True)
+class MatchContentClipboardResult:
+    """Bounded result-file content for GUI-thread clipboard publication."""
+
+    text: str
+    stats: MatchContentClipboardStats
+
+
+def _is_probably_binary_sample(sample: bytes) -> bool:
+    """Apply the established bounded binary heuristic to one sample."""
+    if not sample:
+        return False
+    if b"\x00" in sample:
+        return True
+    try:
+        sample.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    allowed_controls = {7, 8, 9, 10, 12, 13, 27}
+    control_count = sum(
+        1 for byte in sample if byte < 32 and byte not in allowed_controls
+    )
+    return control_count / len(sample) > 0.30
+
+
+@dataclass(frozen=True)
+class MatchContentClipboardPlan:
+    """Immutable result paths read cooperatively away from Qt objects."""
+
+    paths: tuple[str, ...]
+    max_file_bytes: int = COPY_CONTENT_MAX_FILE_BYTES
+    max_total_bytes: int = COPY_CONTENT_MAX_TOTAL_BYTES
+
+    @classmethod
+    def from_matches(
+        cls,
+        matches: Mapping[str, Sequence[Match]],
+        max_file_bytes: int = COPY_CONTENT_MAX_FILE_BYTES,
+        max_total_bytes: int = COPY_CONTENT_MAX_TOTAL_BYTES,
+    ) -> "MatchContentClipboardPlan":
+        if not matches:
+            raise ValueError("There are no result files to copy")
+        if len(matches) > MAX_RESULT_EXPORT_FILES:
+            raise ValueError(
+                f"Content copy exceeds the {MAX_RESULT_EXPORT_FILES}-file safety limit"
+            )
+        if max_file_bytes <= 0 or max_total_bytes <= 0:
+            raise ValueError("Content copy byte limits must be positive")
+
+        paths = []
+        total_path_bytes = 0
+        for path in matches:
+            if not isinstance(path, str):
+                raise ValueError("Result paths must be text")
+            path_bytes = len(path.encode("utf-8"))
+            if path_bytes > MAX_RESULT_EXPORT_PATH_BYTES:
+                raise ValueError("A result path exceeds the 4 KiB safety limit")
+            total_path_bytes += path_bytes
+            if total_path_bytes > MAX_RESULT_EXPORT_TOTAL_BYTES:
+                raise ValueError("Result paths exceed the 20 MiB safety limit")
+            paths.append(path)
+        return cls(tuple(paths), max_file_bytes, max_total_bytes)
+
+    def execute(self, checkpoint) -> MatchContentClipboardResult | None:
+        """Read exact result paths with bounded bytes and cooperative checkpoints."""
+        counters = {
+            "copied": 0,
+            "skipped_binary": 0,
+            "skipped_directory": 0,
+            "skipped_missing": 0,
+            "skipped_size": 0,
+            "skipped_total_limit": 0,
+            "skipped_error": 0,
+            "bytes_copied": 0,
+        }
+        sections = []
+
+        for path in self.paths:
+            if not checkpoint():
+                return None
+            try:
+                if not os.path.exists(path):
+                    counters["skipped_missing"] += 1
+                    continue
+                if os.path.isdir(path):
+                    counters["skipped_directory"] += 1
+                    continue
+
+                file_size = os.path.getsize(path)
+                if file_size > self.max_file_bytes:
+                    counters["skipped_size"] += 1
+                    continue
+
+                with open(path, "rb") as file_obj:
+                    sample = file_obj.read(
+                        min(COPY_CONTENT_SAMPLE_BYTES, self.max_file_bytes + 1)
+                    )
+                    if len(sample) > self.max_file_bytes:
+                        counters["skipped_size"] += 1
+                        continue
+                    if _is_probably_binary_sample(sample):
+                        counters["skipped_binary"] += 1
+                        continue
+                    if (
+                        counters["bytes_copied"] + file_size
+                        > self.max_total_bytes
+                    ):
+                        counters["skipped_total_limit"] += 1
+                        continue
+
+                    raw_chunks = [sample]
+                    bytes_read = len(sample)
+                    while True:
+                        if not checkpoint():
+                            return None
+                        chunk = file_obj.read(
+                            min(
+                                COPY_CONTENT_READ_CHUNK_BYTES,
+                                self.max_file_bytes + 1 - bytes_read,
+                            )
+                        )
+                        if not chunk:
+                            break
+                        raw_chunks.append(chunk)
+                        bytes_read += len(chunk)
+                        if bytes_read > self.max_file_bytes:
+                            break
+
+                raw_content = b"".join(raw_chunks)
+                if len(raw_content) > self.max_file_bytes:
+                    counters["skipped_size"] += 1
+                    continue
+                if (
+                    counters["bytes_copied"] + len(raw_content)
+                    > self.max_total_bytes
+                ):
+                    counters["skipped_total_limit"] += 1
+                    continue
+
+                content = raw_content.decode("utf-8")
+                sections.append(f"===== {path} =====\n{content}")
+                counters["copied"] += 1
+                counters["bytes_copied"] += len(raw_content)
+            except (OSError, UnicodeError):
+                counters["skipped_error"] += 1
+
+        return MatchContentClipboardResult(
+            text="\n\n".join(sections),
+            stats=MatchContentClipboardStats(**counters),
+        )
+
+
+class MatchContentClipboardWorker(QObject):
+    """Worker that reads bounded result-file content cooperatively."""
+
+    completed = Signal(object)
+    failed = Signal(str)
+    settled = Signal()
+
+    def __init__(self, plan: MatchContentClipboardPlan):
         super().__init__()
         self.plan = plan
         self._cancel_event = Event()

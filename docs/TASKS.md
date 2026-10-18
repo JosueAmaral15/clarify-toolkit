@@ -249,6 +249,23 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   crash, excecao Qt, timeout ou guarda. Outros consumidores continuam pendentes.
   Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE15_2026_10_18.md`.
+  Etapa 16 (2026-10-18): `ResultsTree._copy_all_content` agora extrai somente
+  os caminhos do model na GUI e delega leitura, deteccao binaria e serializacao
+  a um plano imutavel cooperativo no gate ja pertencente a Search/Replace,
+  Insert ou File Explorer. AI Processor continua reutilizando os dois paineis
+  embutidos, sem ownership ou controle duplicado. Clipboard, status, log e todo
+  acesso Qt permanecem na GUI apos `QThread.finished` e `wait(0)`. Permanecem os
+  limites de 512 KiB/arquivo e 2 MiB de conteudo; paths sao adicionalmente
+  limitados pelos tetos compartilhados de 100000 arquivos, 4 KiB/path e 20 MiB
+  no snapshot, e arquivos sao lidos em blocos de 64 KiB com cancelamento
+  cooperativo. A matriz passou 159 testes distintos em processos isolados. Os
+  12 casos de completion e 36 do Explorer tambem passaram sob GDB, sem crash,
+  excecao Qt, timeout ou guarda. A primeira passagem GDB do Explorer revelou
+  apenas uma assercao temporal fragil de heartbeat; o caso isolado passou, a
+  espera fixa foi substituida por uma condicao limitada equivalente e o modulo
+  completo passou. Outros consumidores/workers de `APP-THREAD-01` continuam
+  pendentes. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE16_2026_10_18.md`.
 
 ### Fila Posterior - Clarify Editor E Chrome Das Tools (18/10/2026)
 
