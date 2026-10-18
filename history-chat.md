@@ -4827,3 +4827,43 @@ Plano imediato:
 - `APP-THREAD-01` remains open for other bounded consumers; the canonical queue
   remains 41 open items. `example.py` remains untracked and byte-identical at
   SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - New requirements reconciliation started
+
+- The user supplied seven current Clarify Editor/File Explorer requirements and
+  a large historical list spanning extraction, translation, repair,
+  information structuring, tools, distribution and Editor behavior.
+- This session will map the supplied list exhaustively against the canonical
+  `docs/TASKS.md`, current code and existing evidence. Existing tasks will be
+  expanded where the requirement belongs; only genuine gaps will receive new
+  task IDs. Historical unchecked markers will not be promoted automatically.
+- Stage 16 remains isolated and published at `6a2c4ce`. The reconciliation will
+  be committed separately on the current work branch, without modifying
+  `main`, `develop` or untracked `example.py`.
+
+## 2026-10-18 - New requirements reconciliation completed
+
+- The seven current reports were reconciled without duplicate backlog entries.
+  `APP-THREAD-01`, `CE-FIND-ENTER-01`, `CE-TEMP-NOTE-LIFECYCLE-01` and `LEG-23`
+  were expanded; thirteen genuine gaps received new bounded task IDs. The
+  canonical open count moved from 41 to 54.
+- The supplied historical list was mapped exhaustively in
+  `docs/reports/TASKS_RECONCILIATION_2026_10_18.md`. Existing extractor, File
+  Explorer, translation, information-structure, tool and Editor deliveries stay
+  closed. Remaining gaps include menu shortcuts, paste indentation regressions,
+  class/import observation, multiline line moves, dark result contrast, deeper
+  editorial review, safe incremental copy, AI file chat/agent registration and
+  release governance.
+- A structural scan found 859 Markdown files under `docs/`, with 295 files that
+  still contain unchecked markers. Because these are concentrated in historical
+  plans/reports/sessions, `DOCS-HISTORICAL-CHECKBOX-AUDIT-01` requires explicit
+  classification before any item can enter the canonical queue.
+- The requested color-coded lists of allegedly criminal people were not made an
+  executable task because they lack a lawful domain, evidence, access control and
+  appeal criteria; the report records the need for a neutral reformulation.
+- Documentation checks passed: exact open count, file/marker counts, unique new
+  IDs, report link and `git diff --check`. AI Presence Monitor 0.10.7 strict
+  diagnostics passed with the exact Clarify Protocol2 worker active, five hooks,
+  healthy database/queue and both user services active. No continuation was
+  dispatched. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

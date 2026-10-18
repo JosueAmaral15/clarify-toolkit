@@ -2,16 +2,17 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/18 - novos seguimentos do Clarify Editor registrados
+**Last Update**: 2026/10/18 - requisitos novos e lista historica reconciliados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Imediata - Clarify Editor (18/10/2026)
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
-abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito novos
-seguimentos foram registrados para depois da etapa corrente de `APP-THREAD-01`;
-a fila canonica possui agora **41 tarefas abertas**.
+abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
+seguimentos anteriores e treze lacunas confirmadas na reconciliacao de 18/10
+foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
+canonica possui agora **54 tarefas abertas**.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -106,6 +107,11 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   processamento e IO thread-safe para workers, pois criar uma OS thread permanente
   por widget/guia violaria o contrato Qt e aumentaria memoria sem beneficio.
   Reutilizar `ThreadManager` e workers existentes antes de criar infraestrutura.
+  Inventariar cada comando que inicia busca, leitura, serializacao, provider ou
+  outro processamento potencialmente demorado e provar por instrumentacao a
+  afinidade da GUI e do worker. Cada operacao cara deve executar fora da GUI e
+  poder continuar em segundo plano; comandos visuais curtos permanecem na GUI,
+  em vez de criar uma thread insegura para cada clique sem trabalho demorado.
   Limitar concorrencia global e por guia, memoria/fila e tamanho de mensagens;
   oferecer progresso, pausa/cancelamento cooperativos quando aplicavel e impedir
   dois jobs conflitantes na mesma guia. Fechar guia/tool/app deve desconectar
@@ -279,7 +285,9 @@ ser implementado em etapa limitada, testada e documentada.
   `Shift+Enter` pode executar `Find Previous` se nao conflitar com entrada
   multiline. Preservar Regex, Whole Word, Case Sensitive, escopos, contagem e
   navegacao circular de `CE-FIND-01`; nao capturar Enter no campo Replace nem no
-  texto principal e manter erro de regex invalida sem mover o cursor.
+  texto principal e manter erro de regex invalida sem mover o cursor. Uma tecla
+  deve produzir exatamente um avanco: eliminar a duplicacao atual entre o botao
+  default e `returnPressed`, cobrindo teclado principal, keypad e auto-repeat.
 - [ ] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
   remocao do chrome nativo enganoso em `CE-DOCK-CHROME-01` deve ser complementada
   por um unico controle acessivel que alterne entre tool acoplada e janela
@@ -320,12 +328,107 @@ ser implementado em etapa limitada, testada e documentada.
   arquivo comum nem limpar seu conteudo sem exclusao explicita; integrar quotas,
   escrita atomica, recovery e retencao opcional de `CE-TEMP-NOTES-01`, oferecer
   erro honesto de autosave e permitir alterar titulo, exportar ou excluir a nota.
+  `Save` e `Ctrl+S` devem atualizar a mesma nota sem abrir seletor de arquivo.
+  Somente `Save As...` converte a guia em arquivo normal: publicar o arquivo com
+  sucesso, atualizar path/watcher/recentes/dirty e entao remover a identidade e o
+  registro temporario. Cancelamento ou falha preserva integralmente a nota.
 - [ ] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
   Clarify Editor deve permanecer modeless e permitir interacao com editor, abas e
   janela principal enquanto estiver aberto. Preservar uma instancia coerente por
   Editor/workspace, selecao inicial, foco, estado persistido e cleanup sem
   callbacks tardios; evitar dialogs modais aninhados e cobrir close da guia/tool,
   troca de documento, splits, atalhos e navegacao pelos resultados.
+
+### Fila Reconciliada - Editor, File Explorer E Produto (18/10/2026)
+
+As tarefas abaixo sao lacunas confirmadas pela comparacao entre o pedido atual,
+o codigo e o backlog canonico. A lista historica fornecida foi mapeada
+integralmente em
+[Reconciliacao de requisitos de 18/10](reports/TASKS_RECONCILIATION_2026_10_18.md);
+itens ja entregues permanecem fechados e nao receberam IDs duplicados.
+
+#### MUST - Correcao E Contratos Verificaveis
+
+- [ ] **CE-MENU-SHORTCUTS-01: atalhos para todos os comandos aplicaveis.**
+  Inventariar todas as `QAction`s visiveis de File, Edit e View e atribuir a cada
+  comando executavel um atalho padrao ou configuravel, com deteccao de conflitos
+  entre Editor, tools e sistema operacional. Acoes de estado podem usar mnemonic
+  ou ficar explicitamente sem atalho quando houver justificativa de usabilidade;
+  a tela F1 deve refletir o registro real, sem tabelas paralelas divergentes.
+- [ ] **CE-PASTE-INDENT-01: preservar tabs e espacos entre documentos.** Ao
+  copiar/cortar de uma guia e colar em outra, preservar literalmente a
+  indentacao multiline de origem, incluindo tabs, espacos mistos, line endings e
+  selecao. Nao converter silenciosamente para a preferencia do destino; uma
+  conversao opcional futura deve ser comando explicito e undoable. Cobrir menu,
+  `Ctrl+V`, read-only, splits e undo/redo com caracteres invisiveis verificaveis.
+- [ ] **CE-CLASS-IMPORT-OBSERVER-01: observar classes e imports de forma
+  incremental.** Reutilizar `editor_reference_updates` e a arvore de contexto
+  para manter um indice limitado, inicialmente Python, de definicoes de classe,
+  imports e referencias durante open/save/rename. Eventos do usuario invalidam
+  somente arquivos afetados; parsing/IO pesado fica fora da GUI. Mudancas
+  sugeridas exigem preview e confirmacao, sem substituicao global cega, sem seguir
+  symlinks e com relatorio honesto de aliases, imports dinamicos e ambiguidades.
+- [ ] **CE-MOVE-LINES-SELECTION-01: corrigir Alt+Up/Down em selecoes multiline.**
+  Preservar texto, ordem, indentacao, line endings, selecao e cursor ao mover uma
+  ou varias linhas, inclusive selecao reversa, ultima quebra de linha e limites
+  do documento. Cada movimento deve ser uma unica operacao de undo; nao alterar
+  o documento quando o bloco ja estiver no limite.
+- [ ] **FE-DARK-RESULTS-01: garantir contraste dos resultados no tema escuro.**
+  Reproduzir o relato de texto invisivel na arvore e tabela do File Explorer,
+  remover cores fixas conflitantes e derivar foreground/background/selection da
+  paleta ativa. Validar resultados, resumo, hover, selecao, erro e troca runtime
+  entre System/Light/Dark, sem stylesheet parcial sobrescrever o tema global.
+- [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
+  `docs/`.** Os 859 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
+  em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
+  Inventariar esses marcadores por documento e classifica-los como evidencia
+  historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;
+  migrar somente o ultimo para este arquivo com ID, escopo e criterio de aceite,
+  sem reabrir automaticamente planos antigos.
+
+#### SHOULD - Recursos Novos Delimitados
+
+- [ ] **CE-FIND-AI-SIMILARITY-01: busca opcional por similaridade no Find.**
+  Adicionar checkbox desmarcado por padrao e claramente distinto de Regex/Whole
+  Word. Definir primeiro semantica, ranking, limiar e provider local/remoto;
+  exigir consentimento antes de enviar texto, limitar documento/consulta/saida,
+  permitir cancelamento e manter busca deterministica normal como fallback. A
+  contagem deve distinguir correspondencias exatas de sugestoes por similaridade.
+- [ ] **TEXT-EDITORIAL-DEEP-01: revisao gramatical e editorial aprofundada.**
+  Ampliar a fundacao do Digital Text Content Repairer para rodadas separadas de
+  gramatica, coerencia e reescrita para publicacao, sempre com diff, aceitacao por
+  mudanca e preservacao do original/formato. Providers nao podem ser tratados
+  como prova factual; privacidade, idioma, limites, custo e validacao humana devem
+  ficar explicitos.
+- [ ] **FE-SMART-COPY-01: copia incremental segura de arquivos atualizados.**
+  Planejar e executar copia somente de arquivos novos ou comprovadamente mais
+  atuais, com preview, comparacao por metadados e hash quando ambiguo, conflitos
+  explicitos e verificacao pos-copia. Nunca sobrescrever ou excluir silenciosamente;
+  preservar estrutura relativa, metadados suportados, cancelamento e log limitado.
+- [ ] **AI-FILE-CHAT-01: modo conversacional para processamento de arquivos.**
+  Reutilizar AI Processor, providers e limites existentes para uma conversa por
+  sessao sobre arquivos selecionados, com anexos/contexto visiveis, historico
+  limitado, cancelamento e limpeza. Nenhuma resposta altera arquivo sem preview e
+  confirmacao; nao copiar a plataforma ChatGPT nem armazenar credenciais/conteudo
+  sem consentimento.
+- [ ] **AI-AGENT-REGISTRY-01: cadastro explicito de agentes LLM.** Separar
+  provider, modelo e agente configurado, com nome, capacidades, limites, origem
+  local/remota e tools permitidas. Segredos ficam no mecanismo seguro existente e
+  nunca em logs/presets; validar conexao sem executar mudancas e exigir permissao
+  por tool para leitura, escrita, rede ou execucao.
+
+#### COULD - Distribuicao E Comunicacao
+
+- [ ] **DIST-OPEN-SOURCE-01: completar publicacao open source verificavel.**
+  Reconciliar a declaracao MIT do README/wiki com a ausencia atual de arquivo de
+  licenca na raiz, auditar terceiros/assets, adicionar politica de seguranca e
+  confirmar que nenhum segredo ou dado pessoal entra no repositorio. Publicacao,
+  release ou mudanca juridica exige aprovacao explicita do responsavel.
+- [ ] **DIST-OUTREACH-01: plano de divulgacao digital para usuarios.** Definir
+  publico, proposta, canais, materiais, metricas e suporte para compartilhar o
+  Clarify Toolkit sem alegacoes nao comprovadas. Produzir somente plano e assets
+  revisaveis; qualquer postagem, campanha paga, preco ou publicacao externa exige
+  confirmacao imediata antes do efeito externo.
 
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
@@ -938,7 +1041,9 @@ nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
 - [ ] **LEG-21: busca semantica textual entre arquivos.** Explicar resultados com
   IA ja existe; falta recuperar resultados por intencao, com limites e privacidade.
 - [ ] **LEG-23: distribuicao Linux.** Estudar formato/loja e custo de manutencao;
-  build reproduzivel, instalar/desinstalar e validar antes de publicar.
+  build reproduzivel, instalar/desinstalar e validar antes de publicar. Incluir
+  uma instalacao limpa e uma atualizacao no Linux Mint suportado, launcher/menu,
+  associacoes opcionais, remocao sem apagar dados do usuario e guia de rollback.
 - [ ] **LEG-28: geracao e traducao de algoritmos.** Definir linguagens/artefatos
   Python/JS/React, preview e validacao; analise existente nao compila nem executa.
 - [ ] **LEG-34: Formula Builder visual.** Reutilizar executor/templates e adicionar
