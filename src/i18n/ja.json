@@ -2365,5 +2365,20 @@
   "tooltip.google_translate.copy_result": "翻訳結果をクリップボードにコピー",
   "tooltip.google_translate.open_in_editor": "翻訳したテキストを Clarify Editor で開いて確認および編集します。",
   "tooltip.google_translate.clear_btn": "入力および出力テキストエリアをクリア | Ctrl+L",
-  "tooltip.google_translate.file_mode": "完全なテキストファイルを翻訳する場合に有効にする（.txtファイルを自動選択）"
+  "tooltip.google_translate.file_mode": "完全なテキストファイルを翻訳する場合に有効にする（.txtファイルを自動選択）",
+  "editor.explorer_undo_reference_update": "前回の参照更新を元に戻す",
+  "editor.reference_update_preview_title": "ローカル参照を更新",
+  "editor.reference_update_preview_message": "{files} 個のファイルの {changes} 件の変更を確認してください。適用しますか？",
+  "editor.reference_update_issues_title": "参照更新レポート",
+  "editor.reference_update_issues_message": "分析で、スキップ、未対応、または曖昧な項目が {count} 件報告されました。",
+  "editor.reference_update_error_title": "参照更新に失敗しました",
+  "editor.reference_update_analysis_failed": "名前の変更は完了しましたが、参照を安全に分析できませんでした：\n{error}",
+  "editor.reference_update_apply_failed": "予定された参照更新は完了しませんでした：\n{error}",
+  "editor.reference_update_undo_title": "参照更新を元に戻す",
+  "editor.reference_update_undo_message": "{files} 個のファイルを以前の内容に戻しますか？その後に変更されたファイルがある場合は停止します。",
+  "editor.reference_update_undo_failed": "参照更新を安全に元に戻せませんでした：\n{error}",
+  "editor.status_reference_updates_applied": "{files} 個のファイルに {changes} 件の参照更新を適用しました",
+  "editor.status_reference_updates_declined": "参照更新は適用されませんでした",
+  "editor.status_reference_updates_none": "名前の変更が完了しました。安全なローカル参照更新はありません",
+  "editor.status_reference_updates_undone": "前回の参照更新を元に戻しました"
 }

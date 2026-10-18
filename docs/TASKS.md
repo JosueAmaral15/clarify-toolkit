@@ -33,7 +33,7 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   tabs reais, espacos e arquivos somente leitura.
   Entregue em 18/10/2026: Return/Enter reutiliza apenas o prefixo existente antes
   do cursor, evita duplicacao ao dividir a indentacao e forma um bloco de undo.
-- [ ] **CE-RENAME-IMPORTS-01: atualizar referencias locais apos rename.** Ao
+- [x] **CE-RENAME-IMPORTS-01: atualizar referencias locais apos rename.** Ao
   renomear arquivo ou pasta pelo Explorer do Clarify Editor, oferecer analise de
   imports/referencias nos arquivos da raiz aberta, com preview e confirmacao
   antes de escrever. Usar parser ou atualizador consciente da linguagem quando
@@ -41,6 +41,14 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   cega nem atravessar symlinks/raiz. Escritas devem ser atomicas, limitadas e
   reversiveis, preservando encoding/line endings e relatando referencias nao
   suportadas ou ambiguas sem prometer correcao completa.
+  Entregue em 18/10/2026: renames de arquivo/pasta analisam imports Python
+  absolutos/relativos e imports ESM relativos JS/TS antes de qualquer escrita,
+  apresentam preview e confirmacao, excluem buffers modificados, preservam
+  UTF-8/BOM/line endings e aplicam uma transacao atomica com rollback e undo
+  explicito. Symlinks, raiz, arquivos, bytes, mudancas e preview possuem limites;
+  CommonJS, simbolos Python ambiguos e encodings nao suportados sao relatados sem
+  substituicao cega. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_RENAME_IMPORTS_2026_10_18.md`.
 
 ### SHOULD - Navegacao E Chrome Do Workspace
 

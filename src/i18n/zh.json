@@ -2365,5 +2365,20 @@
   "tooltip.google_translate.copy_result": "将翻译结果复制到剪贴板",
   "tooltip.google_translate.open_in_editor": "在 Clarify Editor 中打开翻译文本以供查看和编辑。",
   "tooltip.google_translate.clear_btn": "清除输入和输出文本区域 | Ctrl+L",
-  "tooltip.google_translate.file_mode": "启用以翻译完整的文本文件（自动选择 .txt 文件）"
+  "tooltip.google_translate.file_mode": "启用以翻译完整的文本文件（自动选择 .txt 文件）",
+  "editor.explorer_undo_reference_update": "撤销上次引用更新",
+  "editor.reference_update_preview_title": "更新本地引用",
+  "editor.reference_update_preview_message": "请检查 {files} 个文件中的 {changes} 处更改。是否应用？",
+  "editor.reference_update_issues_title": "引用更新报告",
+  "editor.reference_update_issues_message": "分析报告了 {count} 个已跳过、不支持或不明确的项目。",
+  "editor.reference_update_error_title": "引用更新失败",
+  "editor.reference_update_analysis_failed": "重命名已完成，但无法安全分析引用：\n{error}",
+  "editor.reference_update_apply_failed": "未完成任何计划的引用更新：\n{error}",
+  "editor.reference_update_undo_title": "撤销引用更新",
+  "editor.reference_update_undo_message": "是否恢复 {files} 个文件以前的内容？如果文件之后已更改，操作将停止。",
+  "editor.reference_update_undo_failed": "无法安全撤销引用更新：\n{error}",
+  "editor.status_reference_updates_applied": "已在 {files} 个文件中应用 {changes} 处引用更新",
+  "editor.status_reference_updates_declined": "未应用引用更新",
+  "editor.status_reference_updates_none": "重命名已完成；未找到安全的本地引用更新",
+  "editor.status_reference_updates_undone": "已撤销上次引用更新"
 }

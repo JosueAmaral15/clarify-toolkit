@@ -2373,5 +2373,20 @@
   "tooltip.google_translate.translate_btn": "Iniciar traducción usando Google Translate (servicio gratuito en línea)",
   "tooltip.google_translate.copy_result": "Copiar resultado de traducción al portapapeles",
   "tooltip.google_translate.clear_btn": "Limpiar áreas de texto de entrada y salida | Ctrl+L",
-  "tooltip.google_translate.file_mode": "Habilitar para traducir archivos de texto completos (selecciona archivos .txt automáticamente)"
+  "tooltip.google_translate.file_mode": "Habilitar para traducir archivos de texto completos (selecciona archivos .txt automáticamente)",
+  "editor.explorer_undo_reference_update": "Deshacer la última actualización de referencias",
+  "editor.reference_update_preview_title": "Actualizar referencias locales",
+  "editor.reference_update_preview_message": "Revise {changes} cambio(s) en {files} archivo(s). ¿Aplicar estas actualizaciones?",
+  "editor.reference_update_issues_title": "Informe de actualización de referencias",
+  "editor.reference_update_issues_message": "El análisis informó {count} elemento(s) omitido(s), no compatible(s) o ambiguo(s).",
+  "editor.reference_update_error_title": "Error al actualizar referencias",
+  "editor.reference_update_analysis_failed": "El cambio de nombre se completó, pero no se pudieron analizar las referencias de forma segura:\n{error}",
+  "editor.reference_update_apply_failed": "No se completó ninguna actualización planificada:\n{error}",
+  "editor.reference_update_undo_title": "Deshacer actualizaciones de referencias",
+  "editor.reference_update_undo_message": "¿Restaurar el contenido anterior de {files} archivo(s)? Se detendrá si un archivo cambió después.",
+  "editor.reference_update_undo_failed": "No se pudieron deshacer las actualizaciones de forma segura:\n{error}",
+  "editor.status_reference_updates_applied": "Se aplicaron {changes} actualización(es) en {files} archivo(s)",
+  "editor.status_reference_updates_declined": "No se aplicaron las actualizaciones de referencias",
+  "editor.status_reference_updates_none": "Cambio de nombre completado; no se encontraron actualizaciones locales seguras",
+  "editor.status_reference_updates_undone": "Se deshicieron las últimas actualizaciones de referencias"
 }

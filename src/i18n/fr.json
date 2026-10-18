@@ -2365,5 +2365,20 @@
   "tooltip.google_translate.copy_result": "Copier le résultat de la traduction dans le presse-papiers",
   "tooltip.google_translate.open_in_editor": "Ouvrir le texte traduit dans Clarify Editor pour révision et modification.",
   "tooltip.google_translate.clear_btn": "Effacer les zones de texte d'entrée et de sortie | Ctrl+L",
-  "tooltip.google_translate.file_mode": "Activer pour traduire des fichiers texte complets (sélectionne automatiquement les fichiers .txt)"
+  "tooltip.google_translate.file_mode": "Activer pour traduire des fichiers texte complets (sélectionne automatiquement les fichiers .txt)",
+  "editor.explorer_undo_reference_update": "Annuler la dernière mise à jour des références",
+  "editor.reference_update_preview_title": "Mettre à jour les références locales",
+  "editor.reference_update_preview_message": "Vérifiez {changes} modification(s) dans {files} fichier(s). Appliquer ces mises à jour ?",
+  "editor.reference_update_issues_title": "Rapport de mise à jour des références",
+  "editor.reference_update_issues_message": "L'analyse a signalé {count} élément(s) ignoré(s), non pris en charge ou ambigu(s).",
+  "editor.reference_update_error_title": "Échec de la mise à jour des références",
+  "editor.reference_update_analysis_failed": "Le renommage a réussi, mais les références n'ont pas pu être analysées en toute sécurité :\n{error}",
+  "editor.reference_update_apply_failed": "Aucune mise à jour planifiée n'a été effectuée :\n{error}",
+  "editor.reference_update_undo_title": "Annuler les mises à jour des références",
+  "editor.reference_update_undo_message": "Restaurer le contenu précédent de {files} fichier(s) ? L'opération s'arrête si un fichier a changé ensuite.",
+  "editor.reference_update_undo_failed": "Les mises à jour n'ont pas pu être annulées en toute sécurité :\n{error}",
+  "editor.status_reference_updates_applied": "{changes} mise(s) à jour appliquée(s) dans {files} fichier(s)",
+  "editor.status_reference_updates_declined": "Les mises à jour des références n'ont pas été appliquées",
+  "editor.status_reference_updates_none": "Renommage terminé ; aucune mise à jour locale sûre trouvée",
+  "editor.status_reference_updates_undone": "Dernières mises à jour des références annulées"
 }

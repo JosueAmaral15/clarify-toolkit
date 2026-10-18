@@ -2365,5 +2365,20 @@
   "tooltip.google_translate.copy_result": "Übersetzungsergebnis in Zwischenablage kopieren",
   "tooltip.google_translate.open_in_editor": "Den übersetzten Text zur Prüfung und Bearbeitung in Clarify Editor öffnen.",
   "tooltip.google_translate.clear_btn": "Eingabe- und Ausgabetextbereiche löschen | Strg+L",
-  "tooltip.google_translate.file_mode": "Aktivieren, um vollständige Textdateien zu übersetzen (wählt automatisch .txt-Dateien aus)"
+  "tooltip.google_translate.file_mode": "Aktivieren, um vollständige Textdateien zu übersetzen (wählt automatisch .txt-Dateien aus)",
+  "editor.explorer_undo_reference_update": "Letzte Referenzaktualisierung rückgängig machen",
+  "editor.reference_update_preview_title": "Lokale Referenzen aktualisieren",
+  "editor.reference_update_preview_message": "Prüfen Sie {changes} Änderung(en) in {files} Datei(en). Aktualisierungen anwenden?",
+  "editor.reference_update_issues_title": "Bericht zur Referenzaktualisierung",
+  "editor.reference_update_issues_message": "Die Analyse meldete {count} übersprungene, nicht unterstützte oder mehrdeutige Elemente.",
+  "editor.reference_update_error_title": "Referenzaktualisierung fehlgeschlagen",
+  "editor.reference_update_analysis_failed": "Die Umbenennung war erfolgreich, aber Referenzen konnten nicht sicher analysiert werden:\n{error}",
+  "editor.reference_update_apply_failed": "Keine geplante Referenzaktualisierung wurde abgeschlossen:\n{error}",
+  "editor.reference_update_undo_title": "Referenzaktualisierungen rückgängig machen",
+  "editor.reference_update_undo_message": "Vorherigen Inhalt von {files} Datei(en) wiederherstellen? Bei späteren Änderungen wird abgebrochen.",
+  "editor.reference_update_undo_failed": "Die Aktualisierungen konnten nicht sicher rückgängig gemacht werden:\n{error}",
+  "editor.status_reference_updates_applied": "{changes} Referenzaktualisierung(en) in {files} Datei(en) angewendet",
+  "editor.status_reference_updates_declined": "Referenzaktualisierungen wurden nicht angewendet",
+  "editor.status_reference_updates_none": "Umbenennung abgeschlossen; keine sicheren lokalen Aktualisierungen gefunden",
+  "editor.status_reference_updates_undone": "Letzte Referenzaktualisierungen rückgängig gemacht"
 }

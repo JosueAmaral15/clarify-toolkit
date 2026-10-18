@@ -53,6 +53,11 @@ from PySide6.QtGui import (
 from src.i18n.translator import tooltip_tr, tr
 from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
 from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
+from src.editor_reference_updates import (
+    ReferenceUpdateError,
+    analyze_rename_references,
+    apply_reference_updates,
+)
 from src.core.editor_find import (
     MAX_QUERY_CHARS,
     FindOptions,
@@ -813,6 +818,7 @@ class EditorDock(BaseDock):
         self._restored_recovery_ids: set[str] = set()
         self._recovery_suspended = False
         self._recovery_failures = 0
+        self._last_reference_update = None
 
         # NOW call super().__init__() which triggers _setup_ui()
         super().__init__(EDITOR_NAME, parent)
@@ -1126,6 +1132,12 @@ class EditorDock(BaseDock):
             not is_root,
         )
         add(
+            "undo_reference_update",
+            "editor.explorer_undo_reference_update",
+            self._undo_last_reference_update,
+            self._last_reference_update is not None,
+        )
+        add(
             "delete",
             "editor.explorer_delete",
             lambda: self._delete_explorer_path(path),
@@ -1244,6 +1256,153 @@ class EditorDock(BaseDock):
             return False
         self._remap_open_tab_paths(old_path, new_path, include_children=was_directory)
         self._persist_tab_order()
+        self._save_folder_session(self.explorer_root_path)
+        self._checkpoint_unsaved_tabs()
+        self._handle_reference_updates_after_rename(
+            old_path, new_path, is_directory=was_directory
+        )
+        return True
+
+    def _modified_open_paths(self) -> set[str]:
+        """Return file paths whose in-memory contents must never be overwritten."""
+        modified = set()
+        for tab in self._all_tab_objects():
+            file_path = self._normalized_file_path(getattr(tab, "file_path", None))
+            if not file_path:
+                continue
+            document_modified = bool(
+                hasattr(tab, "editor") and tab.editor.document().isModified()
+            )
+            if getattr(tab, "is_modified", False) or document_modified:
+                modified.add(file_path)
+        return modified
+
+    def _confirm_reference_update_plan(self, plan) -> bool:
+        """Show a bounded preview and require explicit confirmation before writes."""
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Question)
+        dialog.setWindowTitle(tr("editor.reference_update_preview_title"))
+        dialog.setText(
+            tr("editor.reference_update_preview_message").format(
+                changes=plan.change_count,
+                files=len(plan.updates),
+            )
+        )
+        dialog.setDetailedText(plan.preview())
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setDefaultButton(QMessageBox.No)
+        return dialog.exec() == QMessageBox.Yes
+
+    def _report_reference_update_plan(self, plan, *, applied: bool) -> None:
+        """Report unsupported, ambiguous or skipped references without hiding them."""
+        if applied:
+            self.lbl_status.setText(
+                tr("editor.status_reference_updates_applied").format(
+                    changes=plan.change_count,
+                    files=len(plan.updates),
+                )
+            )
+        elif plan.change_count:
+            self.lbl_status.setText(tr("editor.status_reference_updates_declined"))
+        else:
+            self.lbl_status.setText(tr("editor.status_reference_updates_none"))
+        if not plan.issues:
+            return
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Information)
+        dialog.setWindowTitle(tr("editor.reference_update_issues_title"))
+        dialog.setText(
+            tr("editor.reference_update_issues_message").format(
+                count=len(plan.issues)
+            )
+        )
+        dialog.setDetailedText("\n".join(plan.issues))
+        dialog.exec()
+
+    def _handle_reference_updates_after_rename(
+        self, old_path: str, new_path: str, *, is_directory: bool
+    ) -> None:
+        """Analyze one completed rename and apply only its confirmed safe plan."""
+        try:
+            plan = analyze_rename_references(
+                self.explorer_root_path,
+                old_path,
+                new_path,
+                is_directory=is_directory,
+                excluded_paths=self._modified_open_paths(),
+            )
+        except ReferenceUpdateError as error:
+            QMessageBox.warning(
+                self,
+                tr("editor.reference_update_error_title"),
+                tr("editor.reference_update_analysis_failed").format(error=error),
+            )
+            return
+        if not plan.updates:
+            self._report_reference_update_plan(plan, applied=False)
+            return
+        if not self._confirm_reference_update_plan(plan):
+            self._report_reference_update_plan(plan, applied=False)
+            return
+        try:
+            self._last_reference_update = apply_reference_updates(plan)
+        except ReferenceUpdateError as error:
+            QMessageBox.warning(
+                self,
+                tr("editor.reference_update_error_title"),
+                tr("editor.reference_update_apply_failed").format(error=error),
+            )
+            return
+        self._refresh_tabs_after_reference_update(self._last_reference_update.paths)
+        self._report_reference_update_plan(plan, applied=True)
+
+    def _refresh_tabs_after_reference_update(self, paths) -> None:
+        """Reload only clean affected tabs and refresh their watcher baselines."""
+        affected = {self._normalized_file_path(path) for path in paths}
+        for tab in self._all_tab_objects():
+            tab_path = self._normalized_file_path(getattr(tab, "file_path", None))
+            if tab_path not in affected:
+                continue
+            if getattr(tab, "is_modified", False) or tab.editor.document().isModified():
+                continue
+            cursor_position = tab.editor.textCursor().position()
+            if not tab.load_file(tab_path):
+                self._check_tab_external_state(tab)
+                continue
+            cursor = tab.editor.textCursor()
+            cursor.setPosition(min(cursor_position, tab.editor.document().characterCount() - 1))
+            tab.editor.setTextCursor(cursor)
+            self._track_tab_disk_state(tab)
+            self._update_tab_title(tab)
+
+    def _undo_last_reference_update(self) -> bool:
+        """Undo the latest rename reference transaction unless files changed later."""
+        transaction = self._last_reference_update
+        if transaction is None:
+            return False
+        reply = QMessageBox.question(
+            self,
+            tr("editor.reference_update_undo_title"),
+            tr("editor.reference_update_undo_message").format(
+                files=len(transaction.files)
+            ),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return False
+        try:
+            transaction.rollback()
+        except ReferenceUpdateError as error:
+            QMessageBox.warning(
+                self,
+                tr("editor.reference_update_error_title"),
+                tr("editor.reference_update_undo_failed").format(error=error),
+            )
+            return False
+        self._refresh_tabs_after_reference_update(transaction.paths)
+        self._last_reference_update = None
+        self.lbl_status.setText(tr("editor.status_reference_updates_undone"))
         return True
 
     def _remap_open_tab_paths(

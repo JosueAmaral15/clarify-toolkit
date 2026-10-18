@@ -4654,3 +4654,16 @@ Plano imediato:
   recent priority before the 33 prior tasks. `example.py` remains untracked and
   byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - Session start - CE-RENAME-IMPORTS-01
+
+- The exact native continuation arrived for published checkpoint `e1632c4` on
+  `COM-a8d3eac2-e838-469b-9e83-658194c79ef6`. AI Presence Monitor 0.10.7
+  reports the Clarify Protocol2 worker active, five hooks installed, native
+  queue available, healthy database integrity and both user services active.
+- This stage is limited to auditing and implementing bounded, language-aware
+  local import/reference updates after Editor Explorer file or folder renames,
+  with explicit preview/confirmation and safe writes. APP-THREAD and the legacy
+  queue remain outside this stage.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
