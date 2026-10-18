@@ -4774,3 +4774,12 @@ Plano imediato:
   which still performs filesystem reads on the GUI thread.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published checkpoint
+
+- Branch `COM-12cc0a24-5a8f-457c-8105-43787680ad91` was pushed with Stage 15
+  feature and investigation commit `f2406f9`; `main` and `develop` were not
+  changed.
+- The remote again reported 29 pre-existing Dependabot findings on its default
+  branch. Stage 15 changed no dependency and does not claim those security or CI
+  gates resolved.
