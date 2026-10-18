@@ -4906,3 +4906,11 @@ Plano imediato:
   counts and ID uniqueness passed; the reconciliation report was updated.
   `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published clarification checkpoint
+
+- Commit `fe4d16f` was pushed to
+  `COM-ced87440-c44e-4417-95a8-7035ef1b1911`. The default branches and
+  `example.py` were not changed. GitHub again reported the same 29 pre-existing
+  default-branch Dependabot findings; this documentation change added no
+  dependencies and did not resolve those gates.
