@@ -20,9 +20,9 @@ promove-lo.
 
 - Ponto de partida: 41 tarefas abertas.
 - Tarefas existentes ampliadas: `APP-THREAD-01`, `CE-FIND-ENTER-01`,
-  `CE-TEMP-NOTE-LIFECYCLE-01` e `LEG-23`.
-- Novas tarefas: 14.
-- Total depois da reconciliacao: 55 tarefas abertas.
+  `CE-TEMP-NOTE-LIFECYCLE-01`, `LEG-23` e `PLUGIN-WQXR-01`.
+- Novas tarefas: 15.
+- Total depois da reconciliacao: 56 tarefas abertas.
 - Nenhuma tarefa historica foi reaberta somente porque apareceu em outro arquivo.
 
 ## Requisitos Atuais
@@ -37,6 +37,8 @@ promove-lo.
 | Find por similaridade com IA | Novo `CE-FIND-AI-SIMILARITY-01`, opt-in, limitado e distinto de busca exata/regex. |
 | Processamentos nao podem bloquear a GUI | Ampliado em `APP-THREAD-01` com inventario e prova de afinidade. Operacoes caras recebem worker; criar uma thread permanente para cada botao sem trabalho caro foi rejeitado por seguranca Qt e consumo de memoria. |
 | Observar nomes de classes e imports | Novo `CE-CLASS-IMPORT-OBSERVER-01`, reutilizando atualizador de referencias e AST, inicialmente para Python. A verificacao ocorre somente ao sair da linha alterada, salvar ou sair do Editor; nao durante a digitacao incompleta. |
+| Clear All e Browse/Search fixo no File Explorer | Novo `FE-CLEAR-STICKY-ACTIONS-01`: reset global nao destrutivo e barra inferior fora da area rolavel. |
+| Ouvir WQXR-FM enquanto programa | `PLUGIN-WQXR-01` ampliada para playback unico em segundo plano entre arquivos/guias/tools, iniciado e encerrado explicitamente pelo usuario. |
 
 ## Lista Historica Fornecida
 
@@ -88,6 +90,9 @@ promove-lo.
 - **Tema escuro dos resultados:** o `ResultsTree` depende parcialmente da paleta
   e nao possui matriz dedicada de contraste/troca runtime; criado
   `FE-DARK-RESULTS-01`.
+- **Controles persistentes do File Explorer:** o reset atual cobre somente
+  condicoes avancadas e `Browse/Search` fica no layout rolavel; criado
+  `FE-CLEAR-STICKY-ACTIONS-01`.
 - **Copia inteligente de atualizados:** nao havia contrato canonico; criado
   `FE-SMART-COPY-01`.
 - **Chat do AI File Processor:** o Tutorial Assistant e conversacional, mas o AI

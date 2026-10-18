@@ -4914,3 +4914,30 @@ Plano imediato:
   `example.py` were not changed. GitHub again reported the same 29 pre-existing
   default-branch Dependabot findings; this documentation change added no
   dependencies and did not resolve those gates.
+
+## 2026-10-18 - File Explorer controls and WQXR clarification started
+
+- The user requested a global File Explorer `Clear All` action that restores all
+  form values to defaults and a `Browse/Search` action that remains fixed at the
+  bottom of the panel. The current code has only condition-level clear actions,
+  and the unified execution button is part of the scrolling left layout.
+- `PLUGIN-WQXR-01` already represents the requested classical radio. It will be
+  expanded rather than duplicated so playback can continue in the background
+  while the user programs or changes Clarify tools/tabs.
+
+## 2026-10-18 - File Explorer controls and WQXR clarification completed
+
+- Added `FE-CLEAR-STICKY-ACTIONS-01`: a translated global reset restores the
+  File Explorer form, transient results/cache and status to documented defaults
+  without deleting files, presets, recents or global preferences. It cannot
+  mutate an active immutable job. `Browse/Search`, reset and applicable
+  cancel/progress state stay in a fixed bottom action bar outside scrolling
+  options in both Compact and Advanced modes.
+- Expanded `PLUGIN-WQXR-01` for one user-started WQXR-FM stream that keeps
+  playing while files, tabs and tools change. Closing configuration UI does not
+  stop it; explicit Stop, plugin deactivation or application shutdown does, with
+  bounded reconnection and no automatic playback at startup.
+- The canonical queue is now 56 open items. Count, ID uniqueness, documentation
+  inventory and `git diff --check` passed. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

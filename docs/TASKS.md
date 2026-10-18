@@ -10,9 +10,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
-seguimentos anteriores e quatorze lacunas confirmadas na reconciliacao de 18/10
+seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **55 tarefas abertas**.
+canonica possui agora **56 tarefas abertas**.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -391,6 +391,16 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   remover cores fixas conflitantes e derivar foreground/background/selection da
   paleta ativa. Validar resultados, resumo, hover, selecao, erro e troca runtime
   entre System/Light/Dark, sem stylesheet parcial sobrescrever o tema global.
+- [ ] **FE-CLEAR-STICKY-ACTIONS-01: Clear All global e acoes fixas no rodape.**
+  Adicionar um botao traduzido `Clear All` que restaure todos os controles
+  editaveis de busca/substituicao, escopo, filtros, condicoes, extensoes, modos e
+  opcoes aos defaults documentados. Limpar resultados temporarios, cache e status
+  associados, sem excluir arquivos, presets, recentes ou preferencias globais.
+  Durante uma operacao, desabilitar o reset ate cancelamento/settlement para nao
+  alterar o plano imutavel em execucao. Manter `Browse/Search`, `Clear All` e o
+  cancelamento/progresso aplicavel em uma barra de acoes fixa na parte inferior,
+  fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
+  reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
   `docs/`.** Os 859 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
@@ -613,13 +623,18 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
 
 ### COULD - Plugin De Midia
 
-- [ ] **PLUGIN-WQXR-01: radio WQXR New York Classical como plugin.** Integrar a
+- [ ] **PLUGIN-WQXR-01: radio classica WQXR-FM New York como plugin.** Integrar a
   emissora por meio do sistema de plugins, com endpoint oficial configuravel e
   sem incorporar conteudo de audio ao repositorio. Expor play/pause, volume,
   estado de conexao e metadata quando disponivel; nao iniciar automaticamente.
+  Depois de iniciado pelo usuario, o audio deve continuar em segundo plano
+  enquanto ele programa, troca de arquivo, guia ou tool, sem bloquear a GUI nem
+  criar um player por tela. Fechar apenas a tela de configuracao nao interrompe a
+  reproducao; Stop, desativacao do plugin ou fechamento do aplicativo encerram o
+  stream e liberam rede/audio. Nao restaurar playback automaticamente no startup.
   Tratar indisponibilidade, reconexao limitada, mudanca do stream e ausencia de
-  backend de audio sem derrubar a aplicacao. Desabilitar/fechar plugin ou app deve
-  interromper rede/audio e liberar recursos; testes devem simular rede e player.
+  backend de audio sem derrubar a aplicacao. Testes devem simular rede, player,
+  troca de tool/guia, Stop, desativacao e shutdown.
 
 ## Falhas Reais E Portugues - Reparos Locais (04/10/2026)
 
