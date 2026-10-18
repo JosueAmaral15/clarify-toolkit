@@ -2,16 +2,81 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/16 - Stage 14 reparado e validado sob GDB
+**Last Update**: 2026/10/18 - fila recente do Clarify Editor priorizada
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Fila Imediata - Clarify Editor (18/10/2026)
+
+Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
+abertas**. Esta secao acrescentou **6 tarefas**; quatro foram concluidas e a fila
+canonica possui agora **35 tarefas abertas** (2 recentes e 33 anteriores).
+Executar em etapas limitadas e testadas, preservando
+recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
+
+### MUST - Correcao De Edicao E Integracao
+
+- [x] **CE-FIND-SELECTION-01: preencher Find/Replace com a selecao atual.** Ao
+  abrir Find, Find and Replace ou seus atalhos, copiar uma selecao textual nao
+  vazia da guia ativa para o campo Find, sem coloca-la no campo Replace. Limitar
+  o tamanho aceito, normalizar somente quebras de linha exigidas pelo widget e
+  nao substituir a consulta persistida quando nao houver selecao. Preservar
+  Case Sensitive, Whole Word, Regex, escopo, contagem e navegacao do
+  `CE-FIND-01`; cobrir selecao reversa, multiline, splits e documento read-only.
+  Entregue em 18/10/2026: Find e Find/Replace recebem a selecao ativa limitada,
+  normalizam separadores de paragrafo Qt e preservam opcoes persistidas.
+- [x] **CE-ENTER-INDENT-01: preservar indentacao ao pressionar Enter.** No editor
+  de texto, uma nova linha deve herdar o prefixo de tabs/espacos da linha atual
+  e respeitar a preferencia de indentacao existente, line endings, undo/redo e
+  selecao. Nao duplicar indentacao quando o editor nativo ou um modo especializado
+  ja a aplicou; cobrir linhas vazias, cursor no meio/fim, selecao substituida,
+  tabs reais, espacos e arquivos somente leitura.
+  Entregue em 18/10/2026: Return/Enter reutiliza apenas o prefixo existente antes
+  do cursor, evita duplicacao ao dividir a indentacao e forma um bloco de undo.
+- [ ] **CE-RENAME-IMPORTS-01: atualizar referencias locais apos rename.** Ao
+  renomear arquivo ou pasta pelo Explorer do Clarify Editor, oferecer analise de
+  imports/referencias nos arquivos da raiz aberta, com preview e confirmacao
+  antes de escrever. Usar parser ou atualizador consciente da linguagem quando
+  suportado, reutilizando `reference_updater`; nunca fazer substituicao textual
+  cega nem atravessar symlinks/raiz. Escritas devem ser atomicas, limitadas e
+  reversiveis, preservando encoding/line endings e relatando referencias nao
+  suportadas ou ambiguas sem prometer correcao completa.
+
+### SHOULD - Navegacao E Chrome Do Workspace
+
+- [x] **CE-SMART-HOME-01: Home inteligente compativel com selecao.** Fazer `Home`
+  alternar entre o primeiro caractere nao branco e a coluna zero da linha, como
+  no VS Code. `Shift+Home` deve estender/reduzir a selecao usando os mesmos
+  destinos sem perder a ancora; selecao existente, linhas vazias, tabs, RTL e
+  inicio/fim do documento devem permanecer deterministas e integrados a undo.
+  Entregue em 18/10/2026: Home alterna entre primeiro caractere nao branco e
+  coluna zero; Shift+Home conserva a ancora pelos mesmos dois destinos.
+- [ ] **CE-DOCK-CHROME-01: remover controles de janela sem significado.** Revisar
+  os botoes nativos destacados em
+  `docs/Screenshot from 2026-10-18 02-14-46.png`. No workspace acoplado, nao
+  apresentar maximize/close de janela como se o Editor fosse uma aplicacao
+  independente; expor somente acoplar/desacoplar quando esse estado existir e
+  manter fechamento da ferramenta pelo contrato de abas/menu principal. Cobrir
+  estado acoplado, flutuante, reacoplamento, tema, traducao e acessibilidade sem
+  remover controles necessarios da janela principal.
+- [x] **CE-TAB-NAV-01: atalhos para abas de arquivos.** Registrar `Previous File
+  Tab` em `Ctrl+Alt+PageUp` e `Next File Tab` em `Ctrl+Alt+PageDown`, substituindo
+  a ideia anterior de `Ctrl+Shift+Left/Right`. Integrar ao gerenciador configuravel
+  e sua deteccao de conflitos; nao interferir em `Ctrl+PageUp/PageDown`, que
+  alterna ferramentas, nem nos atalhos globais do sistema. Navegacao deve ser
+  circular e funcionar com reordenacao, splits, uma/unica aba e foco no editor.
+  Entregue em 18/10/2026: as acoes traduzidas e configuraveis navegam circularmente
+  apenas nas abas do Editor, mantendo Ctrl+PageUp/PageDown reservado as tools.
+  Evidencia conjunta dos quatro itens em
+  [Clarify Editor Recent Interactions](reports/CLARIFY_EDITOR_RECENT_INTERACTIONS_2026_10_18.md).
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
 Pedido novo do usuario, organizado antes de retomar implementacoes. Esta fila
-reune **3 tarefas abertas**; `LEG-10`, `CE-FIND-01` e
+reune **3 tarefas abertas** dentro desta secao; `LEG-10`, `CE-FIND-01` e
 `CE-EXPLORER-CONTEXT-01` foram ampliadas nas filas canonicas para evitar
-checkboxes duplicados. Contagem atual: **33 tarefas abertas**. Implementar em
+checkboxes duplicados. Antes da fila imediata de 18/10, a contagem era de
+**33 tarefas abertas**. Implementar em
 etapas pequenas, preservando recovery do Editor,
 escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
 

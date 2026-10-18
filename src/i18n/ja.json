@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "前のファイルタブ",
+  "editor.btn_next_file_tab": "次のファイルタブ",
   "tutorial_assistant.tooltip_thumbs_up": "役に立つ回答",
   "tutorial_assistant.tooltip_thumbs_down": "役に立たない",
   "history_dialog.no_operations": "（履歴に操作がありません）",

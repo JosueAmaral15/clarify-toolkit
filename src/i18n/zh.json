@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "上一个文件标签页",
+  "editor.btn_next_file_tab": "下一个文件标签页",
   "tutorial_assistant.tooltip_thumbs_up": "有帮助的回答",
   "tutorial_assistant.tooltip_thumbs_down": "没有帮助",
   "history_dialog.no_operations": "（历史记录中没有操作）",

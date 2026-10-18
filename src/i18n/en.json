@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "Previous File Tab",
+  "editor.btn_next_file_tab": "Next File Tab",
   "history_dock.detail_query": "Query",
   "history_dock.detail_mode": "Mode",
   "history_dock.detail_dictionary": "Dict",

@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "Vorheriger Dateireiter",
+  "editor.btn_next_file_tab": "Nächster Dateireiter",
   "tutorial_assistant.tooltip_thumbs_up": "Hilfreiche Antwort",
   "tutorial_assistant.tooltip_thumbs_down": "Nicht hilfreich",
   "history_dialog.no_operations": "(Keine Vorgänge im Verlauf)",

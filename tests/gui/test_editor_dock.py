@@ -145,6 +145,8 @@ class TestEditorDockInitialization:
         ]
         assert view_actions == [
                 "show_explorer",
+                "previous_file_tab",
+                "next_file_tab",
                 "word_wrap",
                 "render_whitespace",
                 "show_line_numbers",

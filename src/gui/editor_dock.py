@@ -61,6 +61,7 @@ from src.core.editor_find import (
     replacement_for_match,
 )
 from src.product_identity import EDITOR_NAME
+from src.shortcut_manager import ShortcutManager
 
 from .base_dock import BaseDock
 from .editor_recovery_lifecycle import EditorRecoveryLifecycle
@@ -603,6 +604,14 @@ class EditorDock(BaseDock):
         "small_text": {"text_key": "editor.btn_small_text"},
         "large_text": {"text_key": "editor.btn_large_text"},
         "normal_size": {"text_key": "editor.btn_normal_size"},
+        "previous_file_tab": {
+            "text_key": "editor.btn_previous_file_tab",
+            "shortcut_action": "previous_file_tab",
+        },
+        "next_file_tab": {
+            "text_key": "editor.btn_next_file_tab",
+            "shortcut_action": "next_file_tab",
+        },
         "json_format_2": {"text_key": "editor.btn_json_format_2"},
         "json_format_4": {"text_key": "editor.btn_json_format_4"},
         "json_minify": {"text_key": "editor.btn_json_minify"},
@@ -650,6 +659,7 @@ class EditorDock(BaseDock):
             "title_key": "editor.menu_view",
             "items": (
                 "show_explorer", None,
+                "previous_file_tab", "next_file_tab", None,
                 "word_wrap", "render_whitespace", "show_line_numbers",
                 None, "small_text", "large_text", "normal_size",
             ),
@@ -699,6 +709,8 @@ class EditorDock(BaseDock):
         "small_text": "has_editor",
         "large_text": "has_editor",
         "normal_size": "has_editor",
+        "previous_file_tab": "has_tab",
+        "next_file_tab": "has_tab",
         "json_format_2": "is_json_tab",
         "json_format_4": "is_json_tab",
         "json_minify": "is_json_tab",
@@ -2108,11 +2120,8 @@ class EditorDock(BaseDock):
         self._apply_indentation_to_tab(tab)
 
     def eventFilter(self, watched, event):  # pylint: disable=invalid-name
-        """Apply editor-only Tab behavior without intercepting other Qt shortcuts."""
-        if event.type() == QEvent.Type.KeyPress and event.key() in (
-            Qt.Key.Key_Tab,
-            Qt.Key.Key_Backtab,
-        ):
+        """Apply bounded editor key behavior without stealing global shortcuts."""
+        if event.type() == QEvent.Type.KeyPress:
             modifiers = event.modifiers()
             unsupported = modifiers & (
                 Qt.KeyboardModifier.ControlModifier
@@ -2120,9 +2129,15 @@ class EditorDock(BaseDock):
                 | Qt.KeyboardModifier.MetaModifier
             )
             tab = self._tab_for_editor(watched)
-            if tab is not None and not watched.isReadOnly() and not unsupported:
+            key = event.key()
+            if (
+                tab is not None
+                and not watched.isReadOnly()
+                and not unsupported
+                and key in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab)
+            ):
                 is_outdent = (
-                    event.key() == Qt.Key.Key_Backtab
+                    key == Qt.Key.Key_Backtab
                     or bool(modifiers & Qt.KeyboardModifier.ShiftModifier)
                 )
                 cursor = watched.textCursor()
@@ -2133,7 +2148,56 @@ class EditorDock(BaseDock):
                 else:
                     cursor.insertText(self._indent_unit())
                 return True
+            if (
+                tab is not None
+                and not watched.isReadOnly()
+                and not unsupported
+                and key in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+            ):
+                self._insert_indented_newline(watched)
+                return True
+            if tab is not None and not unsupported and key == Qt.Key.Key_Home:
+                self._move_to_smart_home(
+                    watched,
+                    keep_anchor=bool(
+                        modifiers & Qt.KeyboardModifier.ShiftModifier
+                    ),
+                )
+                return True
         return super().eventFilter(watched, event)
+
+    @staticmethod
+    def _insert_indented_newline(editor) -> None:
+        """Split the current line while inheriting its existing indentation."""
+        cursor = editor.textCursor()
+        block = cursor.block()
+        line = block.text()
+        column = max(0, cursor.position() - block.position())
+        prefix_length = len(line) - len(line.lstrip(" \t"))
+        inherited_prefix = line[:min(column, prefix_length)]
+        cursor.beginEditBlock()
+        cursor.insertText(f"\n{inherited_prefix}")
+        cursor.endEditBlock()
+        editor.setTextCursor(cursor)
+
+    @staticmethod
+    def _move_to_smart_home(editor, *, keep_anchor: bool) -> None:
+        """Toggle between first non-blank and physical start of the line."""
+        cursor = editor.textCursor()
+        block = cursor.block()
+        line = block.text()
+        first_text_column = len(line) - len(line.lstrip(" \t"))
+        current_column = max(0, cursor.position() - block.position())
+        target_column = (
+            0 if current_column == first_text_column else first_text_column
+        )
+        move_mode = (
+            QTextCursor.MoveMode.KeepAnchor
+            if keep_anchor
+            else QTextCursor.MoveMode.MoveAnchor
+        )
+        cursor.setPosition(block.position() + target_column, move_mode)
+        editor.setTextCursor(cursor)
 
     def _tab_for_editor(self, editor):
         """Return the open tab that owns an editor widget."""
@@ -2224,6 +2288,10 @@ class EditorDock(BaseDock):
         shortcuts = spec.get("shortcuts")
         if shortcuts:
             action.setShortcuts([QKeySequence(item) for item in shortcuts])
+        elif spec.get("shortcut_action"):
+            action.setShortcut(
+                ShortcutManager.get_key_sequence(spec["shortcut_action"])
+            )
         else:
             shortcut = spec.get("shortcut")
             if shortcut is not None:
@@ -2286,6 +2354,8 @@ class EditorDock(BaseDock):
             "small_text": lambda _checked=False: self._change_current_text_size(-1),
             "large_text": lambda _checked=False: self._change_current_text_size(1),
             "normal_size": lambda _checked=False: self._set_current_text_size(self.normal_text_font_size),
+            "previous_file_tab": lambda _checked=False: self._previous_file_tab(),
+            "next_file_tab": lambda _checked=False: self._next_file_tab(),
             "json_format_2": lambda _checked=False: self._format_current_json_tab(2),
             "json_format_4": lambda _checked=False: self._format_current_json_tab(4),
             "json_minify": lambda _checked=False: self._format_current_json_tab(None),
@@ -3172,8 +3242,34 @@ class EditorDock(BaseDock):
             state=self.find_state,
             state_changed=self._persist_find_state,
         )
+        selected_query = tab.editor.textCursor().selectedText()
+        selected_query = selected_query.replace("\u2029", "\n").replace(
+            "\u2028", "\n"
+        )
+        if selected_query:
+            dialog.find_input.setText(selected_query[:MAX_QUERY_CHARS])
+            dialog.find_input.selectAll()
         dialog.exec()
         dialog.deleteLater()
+
+    def _select_relative_file_tab(self, offset: int) -> bool:
+        """Select an Editor file tab relative to the current one."""
+        count = self.tab_widget.count()
+        if count <= 0:
+            return False
+        current = max(0, self.tab_widget.currentIndex())
+        self.tab_widget.setCurrentIndex((current + offset) % count)
+        tab = self.tab_widget.currentWidget()
+        editor = getattr(tab, "editor", None)
+        if editor is not None:
+            editor.setFocus(Qt.FocusReason.ShortcutFocusReason)
+        return True
+
+    def _previous_file_tab(self) -> bool:
+        return self._select_relative_file_tab(-1)
+
+    def _next_file_tab(self) -> bool:
+        return self._select_relative_file_tab(1)
 
     def _persist_find_state(self, state: dict) -> None:
         """Persist the global Clarify Editor match preferences."""

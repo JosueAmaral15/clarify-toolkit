@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "Pestaña de archivo anterior",
+  "editor.btn_next_file_tab": "Pestaña de archivo siguiente",
   "tutorial_assistant.tooltip_thumbs_up": "Respuesta útil",
   "tutorial_assistant.tooltip_thumbs_down": "Respuesta no útil",
   "history_dialog.no_operations": "(No hay operaciones en el historial)",

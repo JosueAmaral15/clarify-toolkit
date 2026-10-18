@@ -4575,3 +4575,21 @@ Plano imediato:
   formatting rewrite was mixed into the repair. `APP-THREAD-01` remains open for
   other consumers. `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - Session start - prioritized Editor and legacy queue
+
+- The user authorized continuation of the recent Clarify Editor requirements
+  and the 33 legacy tasks, with the newest Editor requirements taking priority.
+  The user also requested uninterrupted bounded execution through AI Presence
+  Monitor, with notification before proceeding whenever user help is required.
+- Current checkout is the published Stage 14 repair branch at `db72958`.
+  `docs/Screenshot from 2026-10-18 02-14-46.png` and `example.py` are untracked
+  user files and must remain unchanged.
+- The immediate work is to reconcile the canonical `docs/TASKS.md`, inspect the
+  screenshot and current Editor shortcut/dock contracts, verify AI Presence
+  Monitor Protocol2 state, and then implement the recent tasks in small tested
+  work branches before entering the older backlog.
+- Confirmed shortcut direction: use configurable `Ctrl+Alt+PageUp` and
+  `Ctrl+Alt+PageDown` defaults for previous/next Editor file tabs. The current
+  Cinnamon bindings do not claim these combinations; OS and application
+  conflict detection must still be retained.

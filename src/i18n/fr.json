@@ -1,4 +1,6 @@
 {
+  "editor.btn_previous_file_tab": "Onglet de fichier précédent",
+  "editor.btn_next_file_tab": "Onglet de fichier suivant",
   "tutorial_assistant.tooltip_thumbs_up": "Réponse utile",
   "tutorial_assistant.tooltip_thumbs_down": "Réponse inutile",
   "history_dialog.no_operations": "(Aucune opération dans l'historique)",

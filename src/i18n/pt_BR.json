@@ -1,4 +1,6 @@
 {
+    "editor.btn_previous_file_tab": "Aba de Arquivo Anterior",
+    "editor.btn_next_file_tab": "Próxima Aba de Arquivo",
   "history_dock.detail_query": "Busca",
   "history_dock.detail_mode": "Modo",
   "history_dock.detail_dictionary": "Dicionário",
