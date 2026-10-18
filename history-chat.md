@@ -4689,3 +4689,15 @@ Plano imediato:
   previously open task and remains outside this stage. `example.py` remains
   untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published checkpoint
+
+- Branch `COM-ab4e0f49-2038-40ff-a497-0420aff3818c` was pushed with feature
+  commit `1d964a2` and history checkpoint `189f199`; `main` and `develop` were
+  not changed. The remote again reported 29 pre-existing Dependabot findings on
+  the default branch; this stage changed no dependency and does not claim those
+  security or CI gates resolved.
+- The reconciled next bounded `APP-THREAD-01` candidate is the shared
+  `ResultsTree._copy_all` clipboard serialization identified but explicitly left
+  outside Stage 13. Any continuation must prove its GUI-thread cost and consumer
+  contracts before editing, keeping clipboard access on the GUI thread.
