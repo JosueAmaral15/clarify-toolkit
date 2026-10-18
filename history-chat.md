@@ -4701,3 +4701,45 @@ Plano imediato:
   `ResultsTree._copy_all` clipboard serialization identified but explicitly left
   outside Stage 13. Any continuation must prove its GUI-thread cost and consumer
   contracts before editing, keeping clipboard access on the GUI thread.
+
+## 2026-10-18 - Session start - APP-THREAD-01 Stage 15
+
+- The exact native continuation arrived for published checkpoint `8c1c4e5` on
+  `COM-ab4e0f49-2038-40ff-a497-0420aff3818c`. AI Presence Monitor 0.10.7
+  reports the exact Clarify Protocol2 worker active, five hooks installed, the
+  native queue available, healthy database integrity and both services active.
+- Work continues on fresh branch `COM-12cc0a24-5a8f-457c-8105-43787680ad91`
+  and is limited to proving and, if warranted, moving bounded immutable
+  `ResultsTree._copy_all` serialization off the GUI thread. Clipboard and every
+  Qt widget/model access remain on the GUI thread; native thread ownership must
+  survive until `wait(0)` confirms termination.
+- The user's eight new Editor/tool observations were reconciled as distinct
+  follow-up tasks after this stage, without reopening completed base contracts or
+  expanding Stage 15. The canonical queue now contains 41 open items.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - APP-THREAD-01 Stage 15 stopped safely
+
+- The audit proved that shared `ResultsTree._copy_all` synchronously formatted
+  all matches on the GUI thread. A 50,000-match bounded benchmark produced about
+  9.4 million characters and took about 66 ms before clipboard publication.
+- An uncommitted draft now uses a bounded immutable clipboard plan and the
+  existing Search/Replace, Insert and File Explorer owner gates. The AI Processor
+  reuses its embedded panel ownership. Clipboard publication remains on the GUI
+  thread and native wrappers are retained through `wait(0)` settlement.
+- 65 distinct tests passed in isolated guarded processes, including 11 new
+  clipboard cases, 24 historical result-save cases, 21 ResultsTree cases and 9
+  Search/Replace lifecycle cases. Peak observed process-tree RSS was 206.6 MiB;
+  there was no SIGSEGV, timeout or guard abort.
+- The adjacent historical Insert lifecycle module then exposed a blocking
+  ownership failure after five passes: with two panels, `ThreadManager` called
+  `wait(0)` on an already deleted `QThread`. The remaining cases could not run
+  because the stale registration survived. Per the exact continuation, the test
+  was not retried and no Stage 15 feature commit or push was made.
+- The eight newly reported Editor/tool requirements are recorded after
+  `APP-THREAD-01`; the canonical queue contains 41 open items. Evidence and the
+  required safe resume are in
+  `docs/reports/APP_THREAD_AUDIT_STAGE15_2026_10_18.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

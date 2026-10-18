@@ -2,15 +2,16 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/18 - chrome interno das tools corrigido
+**Last Update**: 2026/10/18 - novos seguimentos do Clarify Editor registrados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Imediata - Clarify Editor (18/10/2026)
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
-abertas**. Esta secao acrescentou **6 tarefas**; cinco foram concluidas e a fila
-canonica possui agora **34 tarefas abertas** (1 recente e 33 anteriores).
+abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito novos
+seguimentos foram registrados para depois da etapa corrente de `APP-THREAD-01`;
+a fila canonica possui agora **41 tarefas abertas**.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -235,6 +236,77 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   12 casos CSV e 36 casos historicos sob GDB, sem crash, timeout ou guarda.
   Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE14_2026_10_16.md`. Outros
   consumidores/workers de `APP-THREAD-01` continuam pendentes.
+  Tentativa da Etapa 15 (2026-10-18, interrompida): a serializacao limitada de
+  `ResultsTree._copy_all` foi comprovada na GUI e um rascunho passou 35 testes
+  diretos/historicos de clipboard e result-save. A validacao adjacente encontrou,
+  porem, uma corrida preexistente ou ainda nao reconciliada no lifecycle de busca
+  de duas instancias de `InsertPanel`: o `ThreadManager` recebeu `finished` depois
+  de o wrapper `QThread` ter sido destruido. Nao houve SIGSEGV nem guarda, mas a
+  condicao bloqueante encerrou a etapa sem feature commit ou push. Antes de
+  retomar, reproduzir e reparar esse ownership em etapa explicita e depois repetir
+  toda a matriz. Evidencia em
+  `docs/reports/APP_THREAD_AUDIT_STAGE15_2026_10_18.md`.
+
+### Fila Posterior - Clarify Editor E Chrome Das Tools (18/10/2026)
+
+Relatos adicionais do usuario, registrados para execucao **depois** da etapa
+corrente de `APP-THREAD-01`. Estes itens nao ampliam o escopo da Etapa 15 nem
+reabrem entregas anteriores: cada um complementa o contrato ja existente e deve
+ser implementado em etapa limitada, testada e documentada.
+
+- [ ] **CE-FIND-ENTER-01: Enter executa Find Next.** Quando o foco estiver no
+  campo de consulta do Find do Clarify Editor, `Enter` deve executar `Find Next`;
+  `Shift+Enter` pode executar `Find Previous` se nao conflitar com entrada
+  multiline. Preservar Regex, Whole Word, Case Sensitive, escopos, contagem e
+  navegacao circular de `CE-FIND-01`; nao capturar Enter no campo Replace nem no
+  texto principal e manter erro de regex invalida sem mover o cursor.
+- [ ] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
+  remocao do chrome nativo enganoso em `CE-DOCK-CHROME-01` deve ser complementada
+  por um unico controle acessivel que alterne entre tool acoplada e janela
+  desacoplada, com reacoplamento explicito e previsivel. Reutilizar o contrato do
+  workspace e da aba principal; preservar close/recovery, foco, geometria, tema,
+  traducao e shutdown, sem reintroduzir maximize/close internos sem significado.
+- [ ] **CE-STATUS-INFO-01: status de indentacao, cursor e linguagem.** Exibir na
+  barra de status do Clarify Editor o modo de indentacao (`Tabs` ou `Spaces` e
+  largura), linha e coluna atuais e a linguagem detectada. Atualizar ao trocar
+  guia, mover cursor, alterar preferencia, renomear/salvar arquivo ou mudar o
+  conteudo relevante; permitir fallback `Plain Text` e evitar parsing pesado na
+  GUI. Os indicadores devem ser traduziveis, acessiveis e nao redimensionar o
+  layout de forma instavel.
+- [ ] **CE-QUICK-TOOLBAR-01: barra de acesso rapido sob o menu.** Adicionar ao
+  Clarify Editor uma toolbar inspirada no Xed, abaixo de File/Edit/View/JSON,
+  com icones sem texto visivel para New, Open, Save, Undo, Redo, Cut, Copy,
+  Paste, Find, Replace e somente outros comandos de alta frequencia comprovada.
+  Reutilizar as mesmas `QAction`s, estados, atalhos e handlers dos menus, com
+  icones padrao/biblioteca existente, tooltip, nome acessivel, separadores e
+  comportamento responsivo; nao duplicar logica nem esconder o conteudo.
+- [ ] **CE-RECOVERY-REOPEN-01: restaurar integralmente buffers nao salvos.**
+  Validar e corrigir a integracao de `CE-REC-01` para que toda alteracao nao salva
+  e toda aba `Untitled *` existente ao fechar o Clarify Editor ou o Clarify volte
+  na proxima abertura, sem sobrescrever originais. Manter restauracao/descarte
+  explicitos, limites de 2 MiB por documento, 20 documentos e 20 MiB totais,
+  escrita privada/atomica e tratamento honesto de quota, corrupcao e IO; cobrir
+  fechamento imediato, tool-tab, janela principal, `aboutToQuit` e nova instancia.
+- [ ] **APP-SHORTCUTS-F1-01: tela funcional de atalhos pelo F1.** Fazer `F1`
+  abrir uma tela nao bloqueante e pesquisavel com todos os atalhos efetivamente
+  registrados, agrupados por contexto e atualizados apos customizacao. Reutilizar
+  o registro central para evitar lista divergente; preservar foco, traducao,
+  acessibilidade, conflitos e fechamento por Esc, sem interceptar F1 em dialogs
+  que tenham ajuda contextual propria.
+- [ ] **CE-TEMP-NOTE-LIFECYCLE-01: identidade e autosave de notas temporarias.**
+  Depois de `Save as Temporary Note`, a guia deve mostrar o titulo definido pelo
+  usuario em vez de `Untitled *`, assumir identidade de nota temporaria e salvar
+  automaticamente as edicoes posteriores por padrao. Nao tratar a nota como
+  arquivo comum nem limpar seu conteudo sem exclusao explicita; integrar quotas,
+  escrita atomica, recovery e retencao opcional de `CE-TEMP-NOTES-01`, oferecer
+  erro honesto de autosave e permitir alterar titulo, exportar ou excluir a nota.
+- [ ] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
+  Clarify Editor deve permanecer modeless e permitir interacao com editor, abas e
+  janela principal enquanto estiver aberto. Preservar uma instancia coerente por
+  Editor/workspace, selecao inicial, foco, estado persistido e cleanup sem
+  callbacks tardios; evitar dialogs modais aninhados e cobrir close da guia/tool,
+  troca de documento, splits, atalhos e navegacao pelos resultados.
+
 - [x] **FE-REFINE-01: refinar a pesquisa anterior no mesmo diretorio.** Adicionar
   checkbox traduzido na secao `Directory Type`, desmarcado por padrao, para
   reaproveitar candidatos/resultados da pesquisa anterior e filtra-los novamente
