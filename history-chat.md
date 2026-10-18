@@ -4137,28 +4137,6 @@ Plano imediato:
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
-## 2026-10-18 - CE-DOCK-CHROME-01 completed
-
-- Runtime inspection proved the highlighted buttons were the default close and
-  float controls of a `QDockWidget` embedded in the central tool `QTabWidget`.
-  The widget had `NoDockWidgetArea`; an isolated Qt probe showed that floating
-  worked one way but `setFloating(False)` could not reattach it. Native close
-  also bypassed the main tab's `request_tab_close()` settlement path.
-- Feature commit `9c3a837` centralizes embedded-tool preparation in `TabManager`.
-  Only QDockWidget tool pages receive `NoDockWidgetFeatures` and a zero-height,
-  non-interactive title widget. Normal pages and the main-window maximize/close
-  flags are unchanged; tab close remains the only visible close route.
-- A real offscreen Editor render showed no inner chrome and content beginning
-  directly below the tool tab. Final isolated evidence contains 138 distinct
-  passing tests: 4 chrome, 25 layouts, 20 Editor layout, 53 Editor recovery and
-  36 File Explorer lifecycle. Peak process-tree RSS was 253.6 MiB; no native
-  crash, timeout or RAM/RSS/wall guard fired. Compile, Pylint-E and diff checks
-  passed.
-- The canonical queue now has 34 open tasks: `CE-RENAME-IMPORTS-01` is the last
-  recent priority before the 33 prior tasks. `example.py` remains untracked and
-  byte-identical at SHA-256
-  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
-
 ## 2026-10-16 - Session completion - APP-THREAD-01 Stage 10
 
 - The source audit and clean red regression proved that the shared
@@ -4653,4 +4631,26 @@ Plano imediato:
   Editor recovery/close behavior, rename/import updates and legacy tasks remain
   outside this stage.
 - `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - CE-DOCK-CHROME-01 completed
+
+- Runtime inspection proved the highlighted buttons were the default close and
+  float controls of a `QDockWidget` embedded in the central tool `QTabWidget`.
+  The widget had `NoDockWidgetArea`; an isolated Qt probe showed that floating
+  worked one way but `setFloating(False)` could not reattach it. Native close
+  also bypassed the main tab's `request_tab_close()` settlement path.
+- Feature commit `9c3a837` centralizes embedded-tool preparation in `TabManager`.
+  Only QDockWidget tool pages receive `NoDockWidgetFeatures` and a zero-height,
+  non-interactive title widget. Normal pages and the main-window maximize/close
+  flags are unchanged; tab close remains the only visible close route.
+- A real offscreen Editor render showed no inner chrome and content beginning
+  directly below the tool tab. Final isolated evidence contains 138 distinct
+  passing tests: 4 chrome, 25 layouts, 20 Editor layout, 53 Editor recovery and
+  36 File Explorer lifecycle. Peak process-tree RSS was 253.6 MiB; no native
+  crash, timeout or RAM/RSS/wall guard fired. Compile, Pylint-E and diff checks
+  passed.
+- The canonical queue now has 34 open tasks: `CE-RENAME-IMPORTS-01` is the last
+  recent priority before the 33 prior tasks. `example.py` remains untracked and
+  byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
