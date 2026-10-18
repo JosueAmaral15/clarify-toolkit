@@ -4667,3 +4667,25 @@ Plano imediato:
   queue remain outside this stage.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - CE-RENAME-IMPORTS-01 completed
+
+- Feature commit `1d964a2` adds bounded, language-aware local reference analysis
+  after Editor Explorer file/folder renames. Python imports use AST/token spans;
+  relative ESM imports use a comment/string/template-aware lexical guard. Dirty
+  buffers, symlinks, root escapes, stale revisions and unsupported/ambiguous
+  references are never silently overwritten.
+- The user receives a bounded preview with No as the default before writes.
+  Confirmed updates use revision-bound atomic writes with rollback on partial
+  failure, and the Explorer exposes conflict-aware undo for the last successful
+  reference transaction. Open clean tabs, watchers, recovery snapshots and folder
+  sessions are refreshed without changing the completed dock-chrome behavior.
+- Final evidence contains 201 distinct passing tests: 13 new core, 7 new Qt,
+  97 focused Editor lifecycle/layout/chrome regressions, 69 broad Editor tests and
+  15 atomic/legacy-updater tests. Peak process-tree RSS was 248.3 MiB; there was
+  no native crash, timeout or RAM/RSS/wall guard abort. Compile, Pylint-E, seven
+  JSON catalogs and diff checks passed.
+- The canonical queue now has 33 open items. `APP-THREAD-01` is the highest-priority
+  previously open task and remains outside this stage. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
