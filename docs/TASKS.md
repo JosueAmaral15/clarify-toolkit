@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/18 - requisitos novos e lista historica reconciliados
+**Last Update**: 2026/10/18 - indentacao selecionada e observer de classes detalhados
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -10,9 +10,9 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
-seguimentos anteriores e treze lacunas confirmadas na reconciliacao de 18/10
+seguimentos anteriores e quatorze lacunas confirmadas na reconciliacao de 18/10
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **54 tarefas abertas**.
+canonica possui agora **55 tarefas abertas**.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -361,13 +361,26 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   selecao. Nao converter silenciosamente para a preferencia do destino; uma
   conversao opcional futura deve ser comando explicito e undoable. Cobrir menu,
   `Ctrl+V`, read-only, splits e undo/redo com caracteres invisiveis verificaveis.
+- [ ] **CE-INDENT-SELECTION-REGRESSION-01: respeitar Spaces ao indentar selecao.**
+  Reproduzir o caso em que selecionar uma ou varias linhas e pressionar `Tab`
+  insere `\t` apesar de `Use Tabs` estar desmarcado. Validar pelo controle real,
+  e nao somente alterando a propriedade interna: QAction, QSettings, reabertura
+  do Editor, troca de guia, arquivo existente/Untitled, split e atalhos de menu
+  devem usar exatamente a preferencia e largura visiveis. Cobrir tabs literais
+  preexistentes sem converte-los silenciosamente, Shift+Tab, undo/redo e exibicao
+  de whitespace; cada indentacao deve ser um unico bloco de undo.
 - [ ] **CE-CLASS-IMPORT-OBSERVER-01: observar classes e imports de forma
   incremental.** Reutilizar `editor_reference_updates` e a arvore de contexto
   para manter um indice limitado, inicialmente Python, de definicoes de classe,
   imports e referencias durante open/save/rename. Eventos do usuario invalidam
-  somente arquivos afetados; parsing/IO pesado fica fora da GUI. Mudancas
-  sugeridas exigem preview e confirmacao, sem substituicao global cega, sem seguir
-  symlinks e com relatorio honesto de aliases, imports dinamicos e ambiguidades.
+  somente arquivos afetados; parsing/IO pesado fica fora da GUI. Depois de uma
+  mudanca real no identificador da classe, iniciar a verificacao somente quando
+  o cursor sair da linha da definicao, no `Save` explicito ou ao sair da tela do
+  Clarify Editor. Nao notificar a cada tecla nem enquanto o nome/sintaxe estiver
+  incompleto; deduplicar os tres gatilhos e descartar snapshots obsoletos. Mudancas
+  sugeridas exigem parse valido, preview e confirmacao, sem substituicao global
+  cega, sem seguir symlinks e com relatorio honesto de aliases, imports dinamicos
+  e ambiguidades. Save/saida nao podem bloquear a GUI nem perder o buffer.
 - [ ] **CE-MOVE-LINES-SELECTION-01: corrigir Alt+Up/Down em selecoes multiline.**
   Preservar texto, ordem, indentacao, line endings, selecao e cursor ao mover uma
   ou varias linhas, inclusive selecao reversa, ultima quebra de linha e limites

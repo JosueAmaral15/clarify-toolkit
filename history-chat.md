@@ -4877,3 +4877,32 @@ Plano imediato:
 - GitHub again reported 29 pre-existing Dependabot findings on the default
   branch. This documentation-only change did not alter dependencies or claim
   that the unresolved security/CI gates passed.
+
+## 2026-10-18 - Editor indentation and class-observer clarifications started
+
+- The user reported that selected-line `Tab` can still insert literal tab
+  characters while the visible preference is configured for spaces. The code
+  routes selection indentation through `_indent_unit()`, and an existing test
+  passes only after assigning the internal property directly; the real
+  QAction/QSettings/reopen path therefore still needs a regression audit.
+- The class/import observer must not notify during an incomplete rename. Its
+  safe analysis boundaries are leaving the edited class-definition line,
+  explicit Save, or leaving the Clarify Editor after the class name changed.
+  Cross-file updates still require valid parsing, preview and confirmation.
+
+## 2026-10-18 - Editor indentation and class-observer clarifications completed
+
+- Added `CE-INDENT-SELECTION-REGRESSION-01` because the existing implementation
+  and test prove only the internal property path, not the reported visible
+  QAction/QSettings/reopen workflow. Acceptance now covers selected multiline
+  text, existing literal tabs, Shift+Tab, splits, multiple tabs, whitespace
+  rendering and one undo block while `Use Tabs` is disabled.
+- Expanded `CE-CLASS-IMPORT-OBSERVER-01` so a real class-identifier change is
+  evaluated only after the cursor leaves the definition line, explicit Save, or
+  leaving the Editor. The observer must deduplicate triggers, wait for valid
+  syntax, discard stale snapshots and never block Save/close or mutate imports
+  without preview and confirmation.
+- The canonical queue is now 55 open items. `git diff --check`, exact task/file
+  counts and ID uniqueness passed; the reconciliation report was updated.
+  `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

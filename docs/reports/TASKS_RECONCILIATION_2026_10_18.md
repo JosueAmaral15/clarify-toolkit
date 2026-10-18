@@ -21,8 +21,8 @@ promove-lo.
 - Ponto de partida: 41 tarefas abertas.
 - Tarefas existentes ampliadas: `APP-THREAD-01`, `CE-FIND-ENTER-01`,
   `CE-TEMP-NOTE-LIFECYCLE-01` e `LEG-23`.
-- Novas tarefas: 13.
-- Total depois da reconciliacao: 54 tarefas abertas.
+- Novas tarefas: 14.
+- Total depois da reconciliacao: 55 tarefas abertas.
 - Nenhuma tarefa historica foi reaberta somente porque apareceu em outro arquivo.
 
 ## Requisitos Atuais
@@ -32,10 +32,11 @@ promove-lo.
 | Save/Ctrl+S mantem nota temporaria; Save As converte em arquivo | Ampliado em `CE-TEMP-NOTE-LIFECYCLE-01`. A exclusao da nota ocorre somente depois da escrita atomica bem-sucedida. |
 | Atalhos para File, Edit e View | Novo `CE-MENU-SHORTCUTS-01`. O codigo atual possui comandos sem shortcut e o registro global nao cobre todas as acoes locais. |
 | Preservar indentacao ao colar entre arquivos | Novo `CE-PASTE-INDENT-01`. O paste atual delega diretamente ao Qt, mas nao existe regressao que prove tabs, espacos mistos, multiline e undo. |
+| Tab em texto selecionado ignora a preferencia Spaces | Novo `CE-INDENT-SELECTION-REGRESSION-01`. O core usa `_indent_unit()`, mas o teste existente atribui a propriedade diretamente e nao prova QAction, QSettings, reabertura ou troca de guia. |
 | Enter duplica Find Next | Ampliado em `CE-FIND-ENTER-01`. O painel atual combina botao default e `returnPressed`, duas rotas para a mesma tecla. |
 | Find por similaridade com IA | Novo `CE-FIND-AI-SIMILARITY-01`, opt-in, limitado e distinto de busca exata/regex. |
 | Processamentos nao podem bloquear a GUI | Ampliado em `APP-THREAD-01` com inventario e prova de afinidade. Operacoes caras recebem worker; criar uma thread permanente para cada botao sem trabalho caro foi rejeitado por seguranca Qt e consumo de memoria. |
-| Observar nomes de classes e imports | Novo `CE-CLASS-IMPORT-OBSERVER-01`, reutilizando atualizador de referencias e AST, inicialmente para Python. |
+| Observar nomes de classes e imports | Novo `CE-CLASS-IMPORT-OBSERVER-01`, reutilizando atualizador de referencias e AST, inicialmente para Python. A verificacao ocorre somente ao sair da linha alterada, salvar ou sair do Editor; nao durante a digitacao incompleta. |
 
 ## Lista Historica Fornecida
 
@@ -80,6 +81,10 @@ promove-lo.
   publicacao completa; criado `TEXT-EDITORIAL-DEEP-01`.
 - **Alt+Up/Down multiline:** o comando existe, mas o teste atual cobre somente
   uma linha; criado `CE-MOVE-LINES-SELECTION-01` para o defeito relatado.
+- **Tab com selecao e Spaces:** existe cobertura ao atribuir o estado interno,
+  mas o comportamento relatado pelo usuario mostra que o caminho real de
+  preferencia/persistencia nao esta garantido; criado
+  `CE-INDENT-SELECTION-REGRESSION-01`.
 - **Tema escuro dos resultados:** o `ResultsTree` depende parcialmente da paleta
   e nao possui matriz dedicada de contraste/troca runtime; criado
   `FE-DARK-RESULTS-01`.
