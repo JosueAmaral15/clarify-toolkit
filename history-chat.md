@@ -4743,3 +4743,34 @@ Plano imediato:
   `docs/reports/APP_THREAD_AUDIT_STAGE15_2026_10_18.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-18 - Session resumed - APP-THREAD-01 Stage 15 investigation
+
+- The user explicitly authorized investigating the blocking InsertPanel case and
+  proceeding with reports. The exact Clarify Protocol2 worker was reactivated for
+  session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- Work resumed on `COM-12cc0a24-5a8f-457c-8105-43787680ad91` from documentation
+  checkpoint `01e8b36`, preserving the uncommitted Stage 15 clipboard draft and
+  all unrelated files. Evidence was gathered before lifecycle edits.
+
+## 2026-10-18 - APP-THREAD-01 Stage 15 completed after investigation
+
+- The failure joined two previously valid contracts that had become
+  incompatible: Stage 3 left Insert search on a panel-owned `QThread(self)` with
+  direct deletion from `finished`; Stage 14 made `ThreadManager` retain wrappers
+  until `wait(0)` confirms native termination. With two panels, deletion won the
+  race and the manager received an invalid wrapper.
+- Insert search now uses a parentless native thread and all Search/Replace/Insert
+  search, replace, save and clipboard paths retain explicit ownership through
+  asynchronous `wait(0)` settlement. Clipboard formatting is bounded and runs
+  off the GUI; widget snapshots and final clipboard publication remain GUI-only.
+- The final matrix passed 149 distinct tests in isolated guarded processes. The
+  12 completion and 36 Explorer lifecycle cases also passed under GDB; both
+  inferiors exited normally at peaks 382.6/387.2 MiB. No native crash, Qt event
+  exception, timeout or RAM/RSS/wall guard occurred. Compile, Pylint-E and diff
+  checks passed; only the five new tests were formatted.
+- The canonical queue remains 41 open items because `APP-THREAD-01` still covers
+  other consumers. The next concrete candidate is bounded `Copy All Content`,
+  which still performs filesystem reads on the GUI thread.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

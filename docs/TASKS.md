@@ -236,15 +236,18 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   12 casos CSV e 36 casos historicos sob GDB, sem crash, timeout ou guarda.
   Evidencia em `docs/reports/APP_THREAD_AUDIT_STAGE14_2026_10_16.md`. Outros
   consumidores/workers de `APP-THREAD-01` continuam pendentes.
-  Tentativa da Etapa 15 (2026-10-18, interrompida): a serializacao limitada de
-  `ResultsTree._copy_all` foi comprovada na GUI e um rascunho passou 35 testes
-  diretos/historicos de clipboard e result-save. A validacao adjacente encontrou,
-  porem, uma corrida preexistente ou ainda nao reconciliada no lifecycle de busca
-  de duas instancias de `InsertPanel`: o `ThreadManager` recebeu `finished` depois
-  de o wrapper `QThread` ter sido destruido. Nao houve SIGSEGV nem guarda, mas a
-  condicao bloqueante encerrou a etapa sem feature commit ou push. Antes de
-  retomar, reproduzir e reparar esse ownership em etapa explicita e depois repetir
-  toda a matriz. Evidencia em
+  Etapa 15 (2026-10-18): `ResultsTree._copy_all` agora extrai o snapshot limitado
+  na GUI, serializa em worker cooperativo no gate do painel/dock e publica no
+  clipboard somente na GUI apos settlement nativo. Limites: 100000 arquivos,
+  50000 matches, 1 MiB/snippet e 20 MiB de saida. Search/Replace, Insert e File
+  Explorer preservam uma operacao por owner; AI Processor reutiliza seus paineis
+  embutidos. A validacao revelou a causa do bloqueio anterior: Insert ainda usava
+  `QThread(self)` e exclusao direta em `finished`, contrato anterior ao `wait(0)`
+  da Etapa 14. Insert search e os caminhos analogos search/replace agora conservam
+  wrappers ate `wait(0)`, sem bloquear nem usar `terminate()`. A matriz passou 149
+  testes distintos; 12 completion e 36 Explorer passaram tambem sob GDB, sem
+  crash, excecao Qt, timeout ou guarda. Outros consumidores continuam pendentes.
+  Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE15_2026_10_18.md`.
 
 ### Fila Posterior - Clarify Editor E Chrome Das Tools (18/10/2026)

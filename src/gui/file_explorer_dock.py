@@ -27,6 +27,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 from PySide6.QtWidgets import (
+    QApplication,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -64,7 +65,12 @@ from .base_dock import BaseDock
 from .csv_export import CsvExportPlan, CsvExportWorker
 from .widgets.explorer_workspace_mode import ExplorerWorkspaceMode
 from .panels import ResultsTree, FileExplorerWorker
-from .panels.result_export import MatchResultExportPlan, MatchResultExportWorker
+from .panels.result_export import (
+    MatchResultClipboardPlan,
+    MatchResultClipboardWorker,
+    MatchResultExportPlan,
+    MatchResultExportWorker,
+)
 from .widgets import (
     FileFilterPanel,
     PresetManager,
@@ -634,6 +640,7 @@ class FileExplorerDock(BaseDock):
 
         # Connect status label to results tree
         self.results_tree.set_status_label(self.results_status)
+        self.results_tree.set_copy_all_handler(self._copy_all_results)
 
         # Create QStackedWidget to switch between browse/search views
         self.results_stack = QStackedWidget()
@@ -1936,19 +1943,35 @@ class FileExplorerDock(BaseDock):
 
     def _launch_result_save(self, plan):
         """Run one bounded result export through the dock's operation lifecycle."""
+        return self._launch_result_transfer(
+            MatchResultExportWorker(plan),
+            "save",
+            "Cannot save results while the application is shutting down",
+        )
+
+    def _launch_result_clipboard(self, plan):
+        """Run bounded clipboard serialization through the dock lifecycle."""
+        return self._launch_result_transfer(
+            MatchResultClipboardWorker(plan),
+            "clipboard",
+            "Cannot copy results while the application is shutting down",
+        )
+
+    def _launch_result_transfer(self, worker, operation_kind, failure_message):
+        """Launch one result transfer through the existing per-dock gate."""
         from src.gui.panels.file_explorer_operation import ExplorerOperationReceiver
         from src.ui import thread_manager, FeatureType
 
         if self._operation_running():
             return False
         self._operation_generation += 1
-        self._operation_kind = "save"
+        self._operation_kind = operation_kind
         self._thread_id = f"file_explorer:{id(self)}:{self._operation_generation}"
         self._cancel_requested = False
         self._discard_callbacks = False
         self._active_operation = True
         self._worker_thread = QThread(self)
-        self._worker = MatchResultExportWorker(plan)
+        self._worker = worker
         receiver = ExplorerOperationReceiver(self, self._operation_generation)
         self._operation_receiver = receiver
         self._worker.completed.connect(receiver.completed)
@@ -1967,16 +1990,16 @@ class FileExplorerDock(BaseDock):
             self._worker_thread.finished.disconnect(self._worker.deleteLater)
             self._worker.deleteLater()
             self._cleanup_worker_thread()
-            self.results_status.setText(
-                "Cannot save results while the application is shutting down"
-            )
+            self.results_status.setText(failure_message)
             return False
         self._worker.moveToThread(self._worker_thread)
         self._worker_thread.finished.connect(receiver.thread_finished)
         self._ensure_progress_dialog()
         if self._progress_label:
             self._progress_label.pause_button.setEnabled(False)
-        self._append_operation_log(tr("file_explorer.log_started").format("save"))
+        self._append_operation_log(
+            tr("file_explorer.log_started").format(operation_kind)
+        )
         self.btn_save_results.setEnabled(False)
         self.btn_export_csv.setEnabled(False)
         self.table_manager.btn_export.setEnabled(False)
@@ -2054,6 +2077,11 @@ class FileExplorerDock(BaseDock):
             self.btn_export_csv.setEnabled(True)
             self.table_manager.btn_export.setEnabled(True)
             self._finish_result_save(result, error, discard)
+        elif kind == "clipboard":
+            self.btn_save_results.setEnabled(True)
+            self.btn_export_csv.setEnabled(True)
+            self.table_manager.btn_export.setEnabled(True)
+            self._finish_result_clipboard(result, error, discard)
         elif kind in {"csv_search", "csv_browse"}:
             self.btn_save_results.setEnabled(True)
             self.btn_export_csv.setEnabled(True)
@@ -2919,6 +2947,55 @@ class FileExplorerDock(BaseDock):
                     "Cannot save results while the application is shutting down"
                 ),
             )
+
+    def _copy_all_results(self):
+        """Copy search results without serializing them on the GUI thread."""
+        if self._operation_running():
+            self.results_status.setText("Another operation is already running")
+            return
+        try:
+            plan = MatchResultClipboardPlan.from_matches(
+                self.results_tree.get_matches_data()
+            )
+        except (TypeError, ValueError, UnicodeError) as exc:
+            self.results_status.setText(f"Copy failed: {exc}")
+            return
+        if not self._launch_result_clipboard(plan):
+            self.results_status.setText(
+                "Cannot copy results while the application is shutting down"
+            )
+
+    def _finish_result_clipboard(self, result, error, discard):
+        """Publish worker-owned text to QApplication only after settlement."""
+        if discard:
+            self.results_status.setText("Result copying stopped")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format("clipboard", 0)
+            )
+            return
+        if error:
+            detail = str(error)[:OPERATION_LOG_MAX_ENTRY_CHARS]
+            self.results_status.setText(f"Copy failed: {detail}")
+            self._append_operation_log(
+                tr("file_explorer.log_failed").format("clipboard", detail)
+            )
+            return
+        if self._cancel_requested or result is None:
+            self.results_status.setText("Result copying cancelled")
+            self._append_operation_log(
+                tr("file_explorer.log_cancelled").format("clipboard", 0)
+            )
+            return
+
+        QApplication.clipboard().setText(result.text)
+        self.results_status.setText(
+            f"Copied all results ({result.total_matches} matches) to clipboard"
+        )
+        self._append_operation_log(
+            tr("file_explorer.log_finished").format(
+                "clipboard", result.total_matches
+            )
+        )
 
     def _finish_result_save(self, result, error, discard):
         """Apply a settled result export without touching worker-owned data."""

@@ -43,7 +43,7 @@ from typing import List, Tuple
 
 from PySide6.QtCore import QObject, Qt, Signal, Slot, QThread, QTimer
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QFileDialog, QGridLayout,
+    QApplication, QCheckBox, QComboBox, QFileDialog, QGridLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
     QMessageBox, QPlainTextEdit, QPushButton, QScrollArea,
     QSpinBox, QSplitter, QVBoxLayout, QWidget
@@ -59,7 +59,12 @@ from ...i18n.translator import tr, tooltip_tr
 
 # Components from this package
 from .results_tree import ResultsTree
-from .result_export import MatchResultExportPlan, MatchResultExportWorker
+from .result_export import (
+    MatchResultClipboardPlan,
+    MatchResultClipboardWorker,
+    MatchResultExportPlan,
+    MatchResultExportWorker,
+)
 from .search_worker import SearchConditionRequest, SearchFileRequest, SearchWorker
 
 # Progress management
@@ -157,6 +162,7 @@ class InsertPanel(QWidget):
         self._discard_save_callbacks = False
         self._pending_save_result = _UNSET
         self._pending_save_error = None
+        self._save_operation_kind = None
         self._close_action = None
 
         layout.addWidget(QLabel(tr("insert_panel.lbl_root_path")), 0, 0)
@@ -341,6 +347,7 @@ class InsertPanel(QWidget):
 
         # Connect status label to results tree
         self.results.set_status_label(self.results_status)
+        self.results.set_copy_all_handler(self._copy_all_results)
 
         results_widget = QWidget()
         results_widget.setLayout(results_layout)
@@ -656,7 +663,10 @@ class InsertPanel(QWidget):
         self._search_thread_id = f"insert_search:{id(self)}:{generation}"
         self._search_cancel_requested = False
         self._discard_search_callbacks = False
-        self._search_thread = QThread(self)
+        # The registry and panel references own the native thread until wait(0)
+        # confirms platform teardown. Parenting it to the panel can destroy the
+        # wrapper before ThreadManager finishes its settlement check.
+        self._search_thread = QThread()
         self._search_worker = SearchWorker(
             pattern_text=pattern_text,
             iter_files_fn=request.iter_files,
@@ -676,7 +686,6 @@ class InsertPanel(QWidget):
         worker.done.connect(worker.deleteLater)
         worker.done.connect(native.quit, Qt.DirectConnection)
         native.finished.connect(receiver.thread_finished)
-        native.finished.connect(native.deleteLater)
 
         if not thread_manager.start_thread(
             self._search_thread_id,
@@ -687,8 +696,6 @@ class InsertPanel(QWidget):
             exclusive=False,
         ):
             worker.deleteLater()
-            native.deleteLater()
-            receiver.deleteLater()
             self._clear_search_references()
             self.results.print_message("Cannot start while the application is shutting down")
             return
@@ -798,6 +805,11 @@ class InsertPanel(QWidget):
         """Release UI ownership only after native QThread settlement."""
         if generation != self._search_generation:
             return
+        if self._search_thread is not None and not self._search_thread.wait(0):
+            QTimer.singleShot(
+                10, self, lambda: self._on_search_thread_finished(generation)
+            )
+            return
         action = self._close_action
         self._close_action = None
         cancelled = self._search_cancel_requested
@@ -822,6 +834,7 @@ class InsertPanel(QWidget):
                 target.close()
 
     def _clear_search_references(self):
+        native = self._search_thread
         receiver = self._search_receiver
         self._search_thread = None
         self._search_worker = None
@@ -829,6 +842,8 @@ class InsertPanel(QWidget):
         self._search_thread_id = None
         self._search_cancel_requested = False
         self._discard_search_callbacks = False
+        if native is not None:
+            native.deleteLater()
         if receiver is not None:
             receiver.deleteLater()
 
@@ -1009,42 +1024,7 @@ class InsertPanel(QWidget):
 
         try:
             plan = MatchResultExportPlan.from_matches(matches_data, file_path)
-            self._save_generation += 1
-            generation = self._save_generation
-            self._save_thread_id = f"insert_save:{id(self)}:{generation}"
-            self._save_cancel_requested = False
-            self._discard_save_callbacks = False
-            self._pending_save_result = _UNSET
-            self._pending_save_error = None
-            # Keep native lifetime independent from panel teardown. Closing the
-            # panel is deferred until QThread.finished settles this operation.
-            self._save_thread = QThread()
-            self._save_worker = MatchResultExportWorker(plan)
-            self._save_receiver = _InsertSaveReceiver(self, generation)
-
-            worker = self._save_worker
-            native = self._save_thread
-            receiver = self._save_receiver
-            native.started.connect(worker.run)
-            worker.completed.connect(receiver.completed)
-            worker.failed.connect(receiver.failed)
-            worker.settled.connect(native.quit, Qt.DirectConnection)
-            native.finished.connect(worker.deleteLater)
-            native.finished.connect(receiver.thread_finished)
-            native.finished.connect(native.deleteLater)
-
-            if not thread_manager.start_thread(
-                self._save_thread_id,
-                native,
-                worker,
-                FeatureType.INSERT,
-                cancel_callback=worker.cancel,
-                exclusive=False,
-            ):
-                worker.deleteLater()
-                native.deleteLater()
-                receiver.deleteLater()
-                self._clear_save_references()
+            if not self._start_result_transfer(MatchResultExportWorker(plan), "save"):
                 QMessageBox.critical(
                     self,
                     tr("insert_panel.msg_error_title"),
@@ -1052,19 +1032,79 @@ class InsertPanel(QWidget):
                         "Cannot save results while the application is shutting down"
                     ),
                 )
-                return
-
-            worker.moveToThread(native)
-            self.enable_buttons(False)
-            self.btn_apply.setEnabled(False)
-            self.btn_save_results.setEnabled(False)
-            native.start()
         except (TypeError, ValueError, UnicodeError) as exc:
             QMessageBox.critical(
                 self,
                 tr("insert_panel.msg_error_title"),
                 tr("insert_panel.msg_error_save").format(str(exc)),
             )
+
+    def _copy_all_results(self):
+        """Serialize all result text on this panel's existing operation gate."""
+        if self._operation_running():
+            self.results_status.setText("Another operation is already running")
+            return
+        try:
+            plan = MatchResultClipboardPlan.from_matches(
+                self.results.get_matches_data()
+            )
+        except (TypeError, ValueError, UnicodeError) as exc:
+            self.results_status.setText(f"Copy failed: {exc}")
+            return
+        if not self._start_result_transfer(
+            MatchResultClipboardWorker(plan), "clipboard"
+        ):
+            self.results_status.setText(
+                "Cannot copy results while the application is shutting down"
+            )
+
+    def _start_result_transfer(self, worker, operation_kind):
+        """Launch one save or clipboard worker owned by this panel."""
+        if self._operation_running():
+            return False
+        self._save_generation += 1
+        generation = self._save_generation
+        self._save_thread_id = f"insert_{operation_kind}:{id(self)}:{generation}"
+        self._save_cancel_requested = False
+        self._discard_save_callbacks = False
+        self._pending_save_result = _UNSET
+        self._pending_save_error = None
+        self._save_operation_kind = operation_kind
+        # Keep native lifetime independent from panel teardown. Closing the
+        # panel is deferred until QThread.finished settles this operation.
+        self._save_thread = QThread()
+        self._save_worker = worker
+        self._save_receiver = _InsertSaveReceiver(self, generation)
+
+        native = self._save_thread
+        receiver = self._save_receiver
+        native.started.connect(worker.run)
+        worker.completed.connect(receiver.completed)
+        worker.failed.connect(receiver.failed)
+        worker.settled.connect(native.quit, Qt.DirectConnection)
+        native.finished.connect(worker.deleteLater)
+        native.finished.connect(receiver.thread_finished)
+
+        if not thread_manager.start_thread(
+            self._save_thread_id,
+            native,
+            worker,
+            FeatureType.INSERT,
+            cancel_callback=worker.cancel,
+            exclusive=False,
+        ):
+            worker.deleteLater()
+            native.deleteLater()
+            receiver.deleteLater()
+            self._clear_save_references()
+            return False
+
+        worker.moveToThread(native)
+        self.enable_buttons(False)
+        self.btn_apply.setEnabled(False)
+        self.btn_save_results.setEnabled(False)
+        native.start()
+        return True
 
     def _store_save_result(self, generation, result):
         if generation == self._save_generation:
@@ -1077,10 +1117,16 @@ class InsertPanel(QWidget):
     def _on_save_thread_finished(self, generation):
         if generation != self._save_generation:
             return
+        if self._save_thread is not None and not self._save_thread.wait(0):
+            QTimer.singleShot(
+                10, self, lambda: self._on_save_thread_finished(generation)
+            )
+            return
         result = self._pending_save_result
         error = self._pending_save_error
         cancelled = self._save_cancel_requested
         discard = self._discard_save_callbacks
+        operation_kind = self._save_operation_kind
         action = self._close_action
         self._close_action = None
         self._clear_save_references()
@@ -1092,7 +1138,16 @@ class InsertPanel(QWidget):
         self.btn_save_results.setEnabled(True)
 
         if not discard:
-            if error is not None:
+            if operation_kind == "clipboard" and error is not None:
+                self.results_status.setText(f"Copy failed: {error}")
+            elif operation_kind == "clipboard" and result is not _UNSET:
+                QApplication.clipboard().setText(result.text)
+                self.results_status.setText(
+                    f"Copied all results ({result.total_matches} matches) to clipboard"
+                )
+            elif operation_kind == "clipboard" and not cancelled:
+                self.results_status.setText("Copy ended without a result")
+            elif error is not None:
                 QMessageBox.critical(
                     self,
                     tr("insert_panel.msg_error_title"),
@@ -1126,6 +1181,7 @@ class InsertPanel(QWidget):
                 target.close()
 
     def _clear_save_references(self):
+        native = self._save_thread
         receiver = self._save_receiver
         self._save_thread = None
         self._save_worker = None
@@ -1135,5 +1191,8 @@ class InsertPanel(QWidget):
         self._discard_save_callbacks = False
         self._pending_save_result = _UNSET
         self._pending_save_error = None
+        self._save_operation_kind = None
+        if native is not None:
+            native.deleteLater()
         if receiver is not None:
             receiver.deleteLater()

@@ -16,7 +16,7 @@ import sys
 import tempfile
 
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from PySide6.QtCore import QFile, Qt, QTimer, QModelIndex, QRect
 from PySide6.QtGui import QColor, QPainter, QTextDocument
@@ -28,7 +28,10 @@ from PySide6.QtWidgets import (
 
 from ...i18n import tr
 from ...utils.logger import get_logger
-from .result_export import format_match_results
+from .result_export import (
+    MatchResultClipboardPlan,
+    format_match_results,
+)
 
 logger = get_logger(__name__)
 
@@ -192,6 +195,7 @@ class ResultsTree(QTreeWidget):
         """
         )
         self._matches_data: Dict[str, List[Tuple[int, int, str]]] = {}
+        self._copy_all_handler: Optional[Callable[[], None]] = None
         self._word_wrap_enabled = False  # Default: no word wrap
 
         # Word wrap disabled by default - allow horizontal scroll (v2.9.117)
@@ -245,6 +249,10 @@ class ResultsTree(QTreeWidget):
     def set_status_label(self, label):
         """Set the status label widget for showing position info (v2.5.1)."""
         self._status_label = label
+
+    def set_copy_all_handler(self, handler: Optional[Callable[[], None]]):
+        """Delegate potentially expensive clipboard serialization to its owner."""
+        self._copy_all_handler = handler
 
     def keyPressEvent(self, event):
         """Handle keyboard shortcuts like CTRL+C for copy."""
@@ -867,16 +875,27 @@ class ResultsTree(QTreeWidget):
 
     def _copy_all(self):
         """Copy all results to clipboard (v2.9.2)."""
-        text = self.export_to_text()
-        if text:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(text)
+        if self._copy_all_handler is not None:
+            self._copy_all_handler()
+            return
 
-            # Show feedback
+        # Standalone trees keep a bounded synchronous fallback. Application
+        # consumers install an owner handler and serialize on their worker gate.
+        try:
+            plan = MatchResultClipboardPlan.from_matches(self._matches_data)
+            result = plan.execute(lambda: True)
+        except (TypeError, ValueError, UnicodeError) as exc:
             if self._status_label:
-                total_matches = sum(len(items) for items in self._matches_data.values())
-                self._status_label.setText(f"✅ Copied all results ({total_matches} matches) to clipboard")
-                QTimer.singleShot(3000, lambda: self._status_label.setText(""))
+                self._status_label.setText(f"Copy failed: {exc}")
+            return
+        if result is None or not result.text:
+            return
+        QApplication.clipboard().setText(result.text)
+        if self._status_label:
+            self._status_label.setText(
+                f"✅ Copied all results ({result.total_matches} matches) to clipboard"
+            )
+            QTimer.singleShot(3000, lambda: self._status_label.setText(""))
 
     @staticmethod
     def _is_probably_binary_file(path: str) -> bool:

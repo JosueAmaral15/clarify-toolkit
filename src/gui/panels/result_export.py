@@ -204,3 +204,78 @@ class MatchResultExportWorker(QObject):
     @Slot()
     def cancel(self):
         self._cancel_event.set()
+
+
+@dataclass(frozen=True)
+class MatchResultClipboardResult:
+    """Bounded serialized text returned for GUI-thread clipboard publication."""
+
+    text: str
+    total_files: int
+    total_matches: int
+
+
+@dataclass(frozen=True)
+class MatchResultClipboardPlan:
+    """Immutable match snapshot serialized away from Qt widgets and models."""
+
+    matches: tuple[MatchFile, ...]
+    total_matches: int
+
+    @classmethod
+    def from_matches(
+        cls,
+        matches: Mapping[str, Sequence[Match]],
+    ) -> "MatchResultClipboardPlan":
+        # Reuse the established export validation and immutable snapshot contract.
+        validated = MatchResultExportPlan.from_matches(matches, "clipboard.txt")
+        return cls(validated.matches, validated.total_matches)
+
+    def execute(self, checkpoint) -> MatchResultClipboardResult | None:
+        """Build bounded text cooperatively without touching QApplication."""
+        chunks = []
+        total_bytes = 0
+        first_line = True
+        for line in iter_match_result_lines(self.matches):
+            if not checkpoint():
+                return None
+            chunk = line if first_line else f"\n{line}"
+            first_line = False
+            total_bytes += len(chunk.encode("utf-8"))
+            if total_bytes > MAX_RESULT_EXPORT_TOTAL_BYTES:
+                raise ValueError("Clipboard results exceed the 20 MiB safety limit")
+            chunks.append(chunk)
+
+        return MatchResultClipboardResult(
+            text="".join(chunks),
+            total_files=len(self.matches),
+            total_matches=self.total_matches,
+        )
+
+
+class MatchResultClipboardWorker(QObject):
+    """Worker that serializes an immutable clipboard plan cooperatively."""
+
+    completed = Signal(object)
+    failed = Signal(str)
+    settled = Signal()
+
+    def __init__(self, plan: MatchResultClipboardPlan):
+        super().__init__()
+        self.plan = plan
+        self._cancel_event = Event()
+
+    @Slot()
+    def run(self):
+        try:
+            result = self.plan.execute(lambda: not self._cancel_event.is_set())
+            if result is not None:
+                self.completed.emit(result)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            self.failed.emit(str(exc))
+        finally:
+            self.settled.emit()
+
+    @Slot()
+    def cancel(self):
+        self._cancel_event.set()
