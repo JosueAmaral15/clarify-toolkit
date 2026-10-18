@@ -4619,3 +4619,16 @@ Plano imediato:
   previously open items. The next bounded stage is the dock chrome audit and
   correction; rename-aware imports remains separate because it requires parser,
   preview, confirmation and atomic-write contracts.
+
+## 2026-10-18 - Session start - CE-DOCK-CHROME-01
+
+- The exact native continuation arrived for published checkpoint `5a126a7` on
+  `COM-5f5e0edf-3119-4897-96f7-7e09b039e1de`. AI Presence Monitor 0.10.7
+  reports the Clarify Protocol2 worker active, five hooks installed, native queue
+  available, database integrity healthy and both user services active.
+- This stage is limited to proving and correcting the misleading inner dock
+  controls highlighted in the committed screenshot. Main-window controls,
+  Editor recovery/close behavior, rename/import updates and legacy tasks remain
+  outside this stage.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

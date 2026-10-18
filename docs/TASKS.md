@@ -2,15 +2,15 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/18 - fila recente do Clarify Editor priorizada
+**Last Update**: 2026/10/18 - chrome interno das tools corrigido
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
 ## Fila Imediata - Clarify Editor (18/10/2026)
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
-abertas**. Esta secao acrescentou **6 tarefas**; quatro foram concluidas e a fila
-canonica possui agora **35 tarefas abertas** (2 recentes e 33 anteriores).
+abertas**. Esta secao acrescentou **6 tarefas**; cinco foram concluidas e a fila
+canonica possui agora **34 tarefas abertas** (1 recente e 33 anteriores).
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -51,7 +51,7 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   inicio/fim do documento devem permanecer deterministas e integrados a undo.
   Entregue em 18/10/2026: Home alterna entre primeiro caractere nao branco e
   coluna zero; Shift+Home conserva a ancora pelos mesmos dois destinos.
-- [ ] **CE-DOCK-CHROME-01: remover controles de janela sem significado.** Revisar
+- [x] **CE-DOCK-CHROME-01: remover controles de janela sem significado.** Revisar
   os botoes nativos destacados em
   `docs/Screenshot from 2026-10-18 02-14-46.png`. No workspace acoplado, nao
   apresentar maximize/close de janela como se o Editor fosse uma aplicacao
@@ -59,6 +59,14 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   manter fechamento da ferramenta pelo contrato de abas/menu principal. Cobrir
   estado acoplado, flutuante, reacoplamento, tema, traducao e acessibilidade sem
   remover controles necessarios da janela principal.
+  Entregue em 18/10/2026: a auditoria comprovou que as tools sao `QDockWidget`
+  dentro do `QTabWidget`, sem area de dock; o float nativo cria uma janela que
+  nao reacopla e o close ignora o contrato da aba. A rota central de inclusao
+  agora remove os recursos e a title bar nativos somente nesse estado embutido,
+  preserva os flags da janela principal e mantem fechamento/recovery pela aba.
+  Uma futura opcao real de desacoplamento deve oferecer reacoplamento explicito;
+  o toggle nativo incompleto nao e mais exibido. Evidencia em
+  [Clarify Editor Dock Chrome](reports/CLARIFY_EDITOR_DOCK_CHROME_2026_10_18.md).
 - [x] **CE-TAB-NAV-01: atalhos para abas de arquivos.** Registrar `Previous File
   Tab` em `Ctrl+Alt+PageUp` e `Next File Tab` em `Ctrl+Alt+PageDown`, substituindo
   a ideia anterior de `Ctrl+Shift+Left/Right`. Integrar ao gerenciador configuravel

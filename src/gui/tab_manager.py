@@ -12,6 +12,7 @@ Version: v2.9.114
 """
 # pylint: disable=import-outside-toplevel  # Lazy loading pattern
 # pylint: disable=protected-access  # TabManager works with MainWindow internals
+# pylint: disable=no-name-in-module  # PySide6 exposes Qt classes dynamically
 
 from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Tuple
@@ -49,6 +50,33 @@ class TabManager:
         'file_explorer': ('dock_file_explorer', 'FileExplorerDock', 'File Explorer', 'file_explorer'),
         'tutorials': ('dock_tutorials', 'TutorialsDock', 'Tutorials', 'tutorials'),
     }
+
+    @staticmethod
+    def prepare_embedded_tool(widget) -> None:
+        """Hide native QDockWidget chrome when the dock is used as a tab page."""
+        from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QDockWidget, QSizePolicy, QWidget
+
+        if not isinstance(widget, QDockWidget):
+            return
+        if getattr(widget, "_clarify_embedded_tool_chrome", False):
+            return
+
+        widget._clarify_native_dock_features = widget.features()
+        widget._clarify_native_title_bar = widget.titleBarWidget()
+        title_bar = QWidget(widget)
+        title_bar.setObjectName("clarify_embedded_tool_title_bar")
+        title_bar.setAccessibleName("")
+        title_bar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        title_bar.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        title_bar.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        title_bar.setFixedHeight(0)
+        widget.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
+        widget.setTitleBarWidget(title_bar)
+        widget._clarify_embedded_tool_chrome = True
 
     @staticmethod
     def translated_title(tool_id: str):

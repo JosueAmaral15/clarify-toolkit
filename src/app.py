@@ -944,6 +944,7 @@ if _PYSIDE:
             """
             widget.setProperty("clarify_tool_id", tool_name)
             from .gui.tab_manager import TabManager
+            TabManager.prepare_embedded_tool(widget)
             title = TabManager.translated_title(tool_name) or title
             manager = getattr(self, "layout_manager", None)
             if manager is not None:
