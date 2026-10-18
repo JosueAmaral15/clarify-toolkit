@@ -4783,3 +4783,19 @@ Plano imediato:
 - The remote again reported 29 pre-existing Dependabot findings on its default
   branch. Stage 15 changed no dependency and does not claim those security or CI
   gates resolved.
+
+### Stage 16 continuation journal
+
+- The dry-run passed and exactly one native continuation was invoked for exact
+  session `019ea8a0-6d60-7f03-90b9-c420603158d1`, worker
+  `notebook-josue:codex:project=clarify-b09a84f1`, marker
+  `CLARIFY_APP_THREAD_CONTINUE_20261018_STAGE16`, delay 60 seconds and detached
+  queue. The next bounded candidate is `ResultsTree._copy_all_content`.
+- The invocation process remained alive during the configured delay, then exited;
+  the exact active worker synchronized activity at 08:47:59 and no duplicate
+  continuation process remained. The command's final `dispatch_started` output
+  was not captured before the executor wait ended, so initiation is recorded but
+  delivery/processing is not claimed. This uncertain dispatch must not be retried.
+- Any received continuation must verify checkpoint `727de63`, feature commit
+  `f2406f9` and this journal before creating a fresh COM-UUID branch. The exact
+  worker remains active for `APP-THREAD-01`.
