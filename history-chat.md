@@ -4948,3 +4948,37 @@ Plano imediato:
   `COM-ced87440-c44e-4417-95a8-7035ef1b1911`. No default branch, dependency or
   unrelated file changed. GitHub again reported the same 29 pre-existing
   Dependabot findings on its default branch.
+
+## 2026-10-19 - CE-INDENT-SELECTION-REGRESSION-01 started
+
+- Work resumes from published checkpoint `44340c3` on fresh branch
+  `COM-953b3953-5ce6-49d9-8058-ae5c11110b1c`, one task only. The exact Clarify
+  Protocol2 worker is active; AI Presence Monitor 0.10.7 strict diagnostics,
+  database, five hooks, native queue and both user services are healthy.
+- The reported defect is selected-line `Tab` producing literal tabs while the
+  visible preference says Spaces. Existing code uses `_indent_unit()` and one
+  test passes only after setting `indent_use_tabs` directly, so this stage first
+  reproduces QAction/QSettings/reopen/tab/split behavior before editing.
+- Validation will use isolated offscreen Editor modules with temporary HOME,
+  serial processes and existing RAM/RSS/wall/pytest guards. No providers, user
+  documents or full MainWindow fixture are in scope. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-19 - CE-INDENT-SELECTION-REGRESSION-01 completed
+
+- The defect was isolated to the split editor: it did not install the
+  `EditorDock` event filter, was not mapped back to its source tab and menu
+  actions continued to use the primary view's cursor. The repaired routing now
+  follows the focused view and applies the persisted Spaces/Tabs width to both
+  views without converting existing literal tabs.
+- New regressions exercise the visible QAction, QSettings, reopening a second
+  EditorDock, multiline selection, split keyboard/menu actions, Shift+Tab and a
+  single undo. The guarded serial matrix passed 96 tests across five isolated
+  GUI modules; peak tree RSS was 226.7 MiB, with no native crash, timeout or
+  RAM/RSS/wall guard abort.
+- `py_compile`, Pylint errors-only and `git diff --check` passed. Broad Black
+  churn in the legacy EditorDock was explicitly removed before final validation.
+  `CE-INDENT-SELECTION-REGRESSION-01` is closed and the canonical queue now has
+  55 open tasks. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

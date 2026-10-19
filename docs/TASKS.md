@@ -10,9 +10,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
-seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10
+seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
+uma delas agora concluida,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **56 tarefas abertas**.
+canonica possui agora **55 tarefas abertas**.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -361,7 +362,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   selecao. Nao converter silenciosamente para a preferencia do destino; uma
   conversao opcional futura deve ser comando explicito e undoable. Cobrir menu,
   `Ctrl+V`, read-only, splits e undo/redo com caracteres invisiveis verificaveis.
-- [ ] **CE-INDENT-SELECTION-REGRESSION-01: respeitar Spaces ao indentar selecao.**
+- [x] **CE-INDENT-SELECTION-REGRESSION-01: respeitar Spaces ao indentar selecao.**
   Reproduzir o caso em que selecionar uma ou varias linhas e pressionar `Tab`
   insere `\t` apesar de `Use Tabs` estar desmarcado. Validar pelo controle real,
   e nao somente alterando a propriedade interna: QAction, QSettings, reabertura
@@ -369,6 +370,12 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   devem usar exatamente a preferencia e largura visiveis. Cobrir tabs literais
   preexistentes sem converte-los silenciosamente, Shift+Tab, undo/redo e exibicao
   de whitespace; cada indentacao deve ser um unico bloco de undo.
+  **Entregue em 19/10/2026:** o editor dividido passou a participar do mesmo
+  roteamento de foco, preferencia e largura visual da guia de origem. `Tab`,
+  `Shift+Tab` e as acoes de menu agora operam sobre a view realmente ativa sem
+  converter tabs literais existentes. A preferencia visivel foi validada por
+  QAction, QSettings e uma nova instancia do Editor. Evidencia detalhada em
+  [Clarify Editor indentation selection](reports/CLARIFY_EDITOR_INDENTATION_SELECTION_2026_10_19.md).
 - [ ] **CE-CLASS-IMPORT-OBSERVER-01: observar classes e imports de forma
   incremental.** Reutilizar `editor_reference_updates` e a arvore de contexto
   para manter um indice limitado, inicialmente Python, de definicoes de classe,
@@ -402,7 +409,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 859 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 860 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;

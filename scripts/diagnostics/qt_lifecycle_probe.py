@@ -28,6 +28,11 @@ ROOT = Path(__file__).resolve().parents[2]
 TEST_MODULES = {
     "accessibility": "tests/test_accessibility.py",
     "completion": "tests/test_qt_completion_lifecycle.py",
+    "editor-dock": "tests/gui/test_editor_dock.py",
+    "editor-priority-stage1": "tests/gui/test_editor_priority_stage1.py",
+    "editor-priority-stage4-tabs": "tests/gui/test_editor_priority_stage4_tabs.py",
+    "editor-priority-stage5-sessions": "tests/gui/test_editor_priority_stage5_sessions.py",
+    "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
     "explorer-lifecycle": "tests/test_file_explorer_lifecycle.py",
     "google-translate-api": "tests/test_google_translate.py",
     "google-translate-dock": "tests/test_google_translate_dock.py",

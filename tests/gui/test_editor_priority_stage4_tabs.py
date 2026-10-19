@@ -104,6 +104,33 @@ def test_split_view_shares_document_without_duplicate_tab_or_watcher(qtbot, tmp_
     assert dock._split_source_tab is None
 
 
+def test_split_selected_tab_uses_visible_spaces_preference(qtbot, tmp_path, monkeypatch):
+    """Selected-line Tab in a split must use the same visible Spaces setting."""
+    settings = QtCore.QSettings(str(tmp_path / "split-indent.ini"), QtCore.QSettings.IniFormat)
+    settings.setValue("indent_width", 3)
+    dock, settings = make_dock(qtbot, tmp_path, monkeypatch, settings=settings)
+    if dock.action_indent_use_tabs.isChecked():
+        dock.action_indent_use_tabs.trigger()
+
+    tab = open_files(dock, tmp_path, ["split.txt"])[0]
+    tab.editor.setPlainText("one\ntwo")
+    assert dock._show_split_view(tab, QtCore.Qt.Horizontal)
+    dock.split_editor.selectAll()
+
+    qtbot.keyClick(dock.split_editor, QtCore.Qt.Key_Tab)
+
+    assert tab.editor.toPlainText() == "   one\n   two"
+    dock.split_editor.undo()
+    assert tab.editor.toPlainText() == "one\ntwo"
+
+    dock.split_editor.selectAll()
+    dock.action_indent.trigger()
+    assert tab.editor.toPlainText() == "   one\n   two"
+    dock.split_editor.selectAll()
+    qtbot.keyClick(dock.split_editor, QtCore.Qt.Key_Backtab)
+    assert tab.editor.toPlainText() == "one\ntwo"
+
+
 def test_closing_split_source_detaches_secondary_document(qtbot, tmp_path, monkeypatch):
     dock, _settings = make_dock(qtbot, tmp_path, monkeypatch)
     tab = open_files(dock, tmp_path, ["a.txt"])[0]

@@ -7,7 +7,7 @@ from functools import partial
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QInputDialog
 
 from src.editor_recovery import UnsavedRecoveryStore
 from src.gui import editor_dock as editor_dock_module
@@ -126,3 +126,47 @@ def test_tab_character_preference_is_persisted(dock):
     assert dock.indent_width == 8
     assert dock.settings.value("indent_use_tabs", False, type=bool) is True
     assert dock.settings.value("indent_width", 0, type=int) == 8
+
+
+def test_visible_spaces_preference_persists_and_indents_selected_lines(dock, qtbot, monkeypatch):
+    """The visible action and persisted state must drive selected-line Tab."""
+    if dock.action_indent_use_tabs.isChecked():
+        dock.action_indent_use_tabs.trigger()
+    else:
+        dock.action_indent_use_tabs.trigger()
+        assert dock.indent_use_tabs is True
+        dock.action_indent_use_tabs.trigger()
+
+    monkeypatch.setattr(QInputDialog, "getInt", lambda *_args, **_kwargs: (3, True))
+    dock.action_indent_width.trigger()
+
+    assert dock.action_indent_use_tabs.isChecked() is False
+    assert dock.settings.value("indent_use_tabs", True, type=bool) is False
+    assert dock.settings.value("indent_width", 0, type=int) == 3
+
+    reopened = editor_dock_module.EditorDock()
+    qtbot.addWidget(reopened)
+    try:
+        assert reopened.action_indent_use_tabs.isChecked() is False
+        assert reopened.indent_width == 3
+        reopened._new_file()
+        tab = reopened.tab_widget.currentWidget()
+        tab.editor.setPlainText("one\ntwo")
+        tab.editor.selectAll()
+
+        qtbot.keyClick(tab.editor, Qt.Key_Tab)
+
+        assert tab.editor.toPlainText() == "   one\n   two"
+        tab.editor.undo()
+        assert tab.editor.toPlainText() == "one\ntwo"
+
+        tab.editor.setPlainText("\tone\n\ttwo")
+        tab.editor.selectAll()
+        qtbot.keyClick(tab.editor, Qt.Key_Tab)
+        assert tab.editor.toPlainText() == "   \tone\n   \ttwo"
+        tab.editor.selectAll()
+        qtbot.keyClick(tab.editor, Qt.Key_Backtab)
+        assert tab.editor.toPlainText() == "\tone\n\ttwo"
+    finally:
+        reopened.close()
+        reopened.deleteLater()

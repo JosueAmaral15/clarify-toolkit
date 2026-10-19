@@ -758,6 +758,7 @@ class EditorDock(BaseDock):
         self.normal_text_font_size = 10
         self.min_text_font_size = 6
         self.max_text_font_size = 48
+        self._last_active_editor = None
 
         # Load auto-save preference from QSettings
         from PySide6.QtCore import QSettings
@@ -989,12 +990,14 @@ class EditorDock(BaseDock):
         split_header.addWidget(self.split_title, 1)
         split_header.addWidget(self.split_close_button)
         split_layout.addLayout(split_header)
+        self._split_source_tab = None
         self.split_editor = QTextEdit(self.split_panel)
         self.split_editor.setAcceptRichText(False)
+        self.split_editor.installEventFilter(self)
+        self._apply_indentation_to_editor(self.split_editor)
         split_layout.addWidget(self.split_editor, 1)
         self.editor_workspace_splitter.addWidget(self.split_panel)
         self.split_panel.hide()
-        self._split_source_tab = None
 
     def _set_explorer_root(
         self,
@@ -2280,6 +2283,8 @@ class EditorDock(BaseDock):
 
     def eventFilter(self, watched, event):  # pylint: disable=invalid-name
         """Apply bounded editor key behavior without stealing global shortcuts."""
+        if event.type() == QEvent.Type.FocusIn and self._tab_for_editor(watched) is not None:
+            self._last_active_editor = watched
         if event.type() == QEvent.Type.KeyPress:
             modifiers = event.modifiers()
             unsupported = modifiers & (
@@ -2301,9 +2306,9 @@ class EditorDock(BaseDock):
                 )
                 cursor = watched.textCursor()
                 if is_outdent:
-                    self._outdent_tab_lines(tab)
+                    self._outdent_tab_lines(tab, editor=watched)
                 elif cursor.hasSelection():
-                    self._indent_tab_lines(tab)
+                    self._indent_tab_lines(tab, editor=watched)
                 else:
                     cursor.insertText(self._indent_unit())
                 return True
@@ -2360,11 +2365,23 @@ class EditorDock(BaseDock):
 
     def _tab_for_editor(self, editor):
         """Return the open tab that owns an editor widget."""
+        if editor is self.split_editor:
+            return self._split_source_tab
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
             if getattr(tab, 'editor', None) is editor:
                 return tab
         return None
+
+    def _active_editor_for_tab(self, tab):
+        """Return the focused view for a tab, including its split view."""
+        if (
+            self._last_active_editor is self.split_editor
+            and self._split_source_tab is tab
+            and not self.split_panel.isHidden()
+        ):
+            return self.split_editor
+        return tab.editor
 
     def _indent_unit(self) -> str:
         return "\t" if self.indent_use_tabs else " " * self.indent_width
@@ -2372,8 +2389,11 @@ class EditorDock(BaseDock):
     def _apply_indentation_to_tab(self, tab) -> None:
         if not hasattr(tab, 'editor'):
             return
-        space_width = tab.editor.fontMetrics().horizontalAdvance(" ")
-        tab.editor.setTabStopDistance(max(1, space_width * self.indent_width))
+        self._apply_indentation_to_editor(tab.editor)
+
+    def _apply_indentation_to_editor(self, editor) -> None:
+        space_width = editor.fontMetrics().horizontalAdvance(" ")
+        editor.setTabStopDistance(max(1, space_width * self.indent_width))
 
     def _set_indent_use_tabs(self, enabled: bool) -> None:
         self.indent_use_tabs = bool(enabled)
@@ -2396,6 +2416,7 @@ class EditorDock(BaseDock):
         self.settings.setValue("indent_width", self.indent_width)
         for index in range(self.tab_widget.count()):
             self._apply_indentation_to_tab(self.tab_widget.widget(index))
+        self._apply_indentation_to_editor(self.split_editor)
         return True
 
     def _setup_file_menu(self) -> None:
@@ -2673,21 +2694,25 @@ class EditorDock(BaseDock):
         self.split_editor.setReadOnly(tab.editor.isReadOnly())
         self.split_editor.setFont(tab.editor.font())
         self.split_editor.setLineWrapMode(tab.editor.lineWrapMode())
+        self._apply_indentation_to_editor(self.split_editor)
         self._split_source_tab = tab
         self.split_title.setText(self._display_title_for_tab(tab))
         self.split_title.setToolTip(getattr(tab, "file_path", "") or tab.get_tab_title())
         self.split_panel.show()
         self.editor_workspace_splitter.setSizes([1, 1])
         self.split_editor.setFocus()
+        self._last_active_editor = self.split_editor
         return True
 
     def _close_split_view(self) -> None:
         """Detach the shared document before its owning tab can be deleted."""
+        source_tab = self._split_source_tab
         if self._split_source_tab is not None:
             self.split_editor.setDocument(QTextDocument(self.split_editor))
         self._split_source_tab = None
         self.split_title.clear()
         self.split_panel.hide()
+        self._last_active_editor = getattr(source_tab, "editor", None)
         self.tab_widget.setFocus()
 
     def _new_file(self, edit_only: bool = False):
@@ -3189,11 +3214,11 @@ class EditorDock(BaseDock):
         if not tab or not hasattr(tab, 'editor'):
             return
 
-        self._indent_tab_lines(tab)
+        self._indent_tab_lines(tab, editor=self._active_editor_for_tab(tab))
 
-    def _indent_tab_lines(self, tab) -> None:
+    def _indent_tab_lines(self, tab, *, editor=None) -> None:
         """Indent one tab's current/selected lines while preserving selection."""
-        editor = tab.editor
+        editor = editor or tab.editor
         original_cursor = editor.textCursor()
         original_position = original_cursor.position()
         original_anchor = original_cursor.anchor()
@@ -3230,11 +3255,11 @@ class EditorDock(BaseDock):
         if not tab or not hasattr(tab, 'editor'):
             return
 
-        self._outdent_tab_lines(tab)
+        self._outdent_tab_lines(tab, editor=self._active_editor_for_tab(tab))
 
-    def _outdent_tab_lines(self, tab) -> None:
+    def _outdent_tab_lines(self, tab, *, editor=None) -> None:
         """Outdent one tab's current/selected lines while preserving selection."""
-        editor = tab.editor
+        editor = editor or tab.editor
         original_cursor = editor.textCursor()
         original_position = original_cursor.position()
         original_anchor = original_cursor.anchor()

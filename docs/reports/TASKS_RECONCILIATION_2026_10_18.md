@@ -10,7 +10,7 @@ Esta revisao fez duas verificacoes diferentes:
    Markdown ainda abertos.
 
 A segunda verificacao nao e uma auditoria semantica conclusiva de cada frase dos
-859 arquivos Markdown. Ela encontrou 295 arquivos com pelo menos um marcador
+860 arquivos Markdown. Ela encontrou 295 arquivos com pelo menos um marcador
 `- [ ]`; a maioria esta em planos, relatorios, sessoes e estudos historicos. O
 roadmap canonico continua sendo `docs/TASKS.md`, e a nova tarefa
 `DOCS-HISTORICAL-CHECKBOX-AUDIT-01` exige classificar cada marcador antes de
@@ -22,7 +22,8 @@ promove-lo.
 - Tarefas existentes ampliadas: `APP-THREAD-01`, `CE-FIND-ENTER-01`,
   `CE-TEMP-NOTE-LIFECYCLE-01`, `LEG-23` e `PLUGIN-WQXR-01`.
 - Novas tarefas: 15.
-- Total depois da reconciliacao: 56 tarefas abertas.
+- Total imediatamente depois da reconciliacao: 56 tarefas abertas; a entrega de
+  `CE-INDENT-SELECTION-REGRESSION-01` em 19/10 reduziu o total atual para 55.
 - Nenhuma tarefa historica foi reaberta somente porque apareceu em outro arquivo.
 
 ## Requisitos Atuais
@@ -32,7 +33,7 @@ promove-lo.
 | Save/Ctrl+S mantem nota temporaria; Save As converte em arquivo | Ampliado em `CE-TEMP-NOTE-LIFECYCLE-01`. A exclusao da nota ocorre somente depois da escrita atomica bem-sucedida. |
 | Atalhos para File, Edit e View | Novo `CE-MENU-SHORTCUTS-01`. O codigo atual possui comandos sem shortcut e o registro global nao cobre todas as acoes locais. |
 | Preservar indentacao ao colar entre arquivos | Novo `CE-PASTE-INDENT-01`. O paste atual delega diretamente ao Qt, mas nao existe regressao que prove tabs, espacos mistos, multiline e undo. |
-| Tab em texto selecionado ignora a preferencia Spaces | Novo `CE-INDENT-SELECTION-REGRESSION-01`. O core usa `_indent_unit()`, mas o teste existente atribui a propriedade diretamente e nao prova QAction, QSettings, reabertura ou troca de guia. |
+| Tab em texto selecionado ignora a preferencia Spaces | `CE-INDENT-SELECTION-REGRESSION-01` entregue em 19/10. A view dividida agora compartilha roteamento de foco, preferencia e largura visual; QAction, QSettings, reabertura, tabs literais, Shift+Tab e undo foram validados. |
 | Enter duplica Find Next | Ampliado em `CE-FIND-ENTER-01`. O painel atual combina botao default e `returnPressed`, duas rotas para a mesma tecla. |
 | Find por similaridade com IA | Novo `CE-FIND-AI-SIMILARITY-01`, opt-in, limitado e distinto de busca exata/regex. |
 | Processamentos nao podem bloquear a GUI | Ampliado em `APP-THREAD-01` com inventario e prova de afinidade. Operacoes caras recebem worker; criar uma thread permanente para cada botao sem trabalho caro foi rejeitado por seguranca Qt e consumo de memoria. |
@@ -66,6 +67,9 @@ promove-lo.
   Tab/Shift+Tab, tabs/espacos, abas arrastaveis, splits, abertura por caminho,
   selecao inicial no Find, recentes, sessao de pasta, menus de contexto e atalhos
   principais ja possuem entregas documentadas.
+- **Indentacao selecionada no Editor:** `CE-INDENT-SELECTION-REGRESSION-01` foi
+  concluida em 19/10; a view dividida e as acoes de menu usam a preferencia
+  Spaces/Tabs da guia ativa, com persistencia e regressao isolada.
 - **CLI:** `src/cli/parser.py` ja oferece search, replace, insert, translate,
   gtranslate e dedupe, integrado ao entrypoint `python -m src`; portanto nao foi
   criada uma segunda tarefa de CLI.
@@ -83,10 +87,6 @@ promove-lo.
   publicacao completa; criado `TEXT-EDITORIAL-DEEP-01`.
 - **Alt+Up/Down multiline:** o comando existe, mas o teste atual cobre somente
   uma linha; criado `CE-MOVE-LINES-SELECTION-01` para o defeito relatado.
-- **Tab com selecao e Spaces:** existe cobertura ao atribuir o estado interno,
-  mas o comportamento relatado pelo usuario mostra que o caminho real de
-  preferencia/persistencia nao esta garantido; criado
-  `CE-INDENT-SELECTION-REGRESSION-01`.
 - **Tema escuro dos resultados:** o `ResultsTree` depende parcialmente da paleta
   e nao possui matriz dedicada de contraste/troca runtime; criado
   `FE-DARK-RESULTS-01`.
