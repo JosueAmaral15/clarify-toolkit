@@ -5098,3 +5098,14 @@ Plano imediato:
   provider or unrelated user file changed. GitHub still reports 31 findings on
   its default branch (2 critical, 17 high, 9 moderate and 3 low); these remain
   unresolved external security gates outside this bounded crash repair.
+
+### Automation handoff
+
+- AI Presence Monitor 0.10.7 was revalidated after publication: strict doctor,
+  schema/database, five Codex hooks, native queue, monitor/reply services and
+  controls were healthy; the exact Clarify Protocol2 worker remained active.
+- A dry run resolved the exact native session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, then one authorized native dispatch
+  was started for `CE-REDO-SHORTCUT-01` from checkpoint `5a3b264`. The result is
+  only `dispatch_started`, not proof of delivery or processing. It was not and
+  must not be retried without later exact-session evidence.
