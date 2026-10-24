@@ -5044,3 +5044,16 @@ Plano imediato:
   its default branch (2 critical, 17 high, 9 moderate and 3 low), up from the 29
   reported at the previous checkpoint; this documentation stage neither caused
   nor resolved those security gates.
+
+### Automation continuation dispatch
+
+- The exact worker/profile preflight and dry-run succeeded for native session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`. One real continuation was invoked with
+  a 60-second delay for `CRASH-20261021-OPTIONS-SIGNAL-01`.
+- The command exceeded the caller's 30-second capture window while waiting, then
+  its process exited after the configured delay through the self-session detached
+  path. That path provides only `dispatch_started`; it intentionally does not
+  write `observation:automation:continue`. Current Codex hooks prove this session
+  remains active, not that the queued prompt was delivered or interpreted.
+- The dispatch is therefore not retried. Automation stays enabled and the
+  Protocol2 worker stays active while the 86-item canonical queue remains open.
