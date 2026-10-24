@@ -5035,3 +5035,12 @@ Plano imediato:
   published, one exact-session native continuation will start the highest-priority
   bounded item, `CRASH-20261021-OPTIONS-SIGNAL-01`; the Protocol2 worker remains
   active because the canonical queue is not complete.
+
+### Published October 24 requirements checkpoint
+
+- Commit `80cfa95` was pushed to
+  `COM-66130361-78bf-483d-8205-0caadc855204`. No default branch, application
+  dependency or unrelated source file changed. GitHub reported 31 findings on
+  its default branch (2 critical, 17 high, 9 moderate and 3 low), up from the 29
+  reported at the previous checkpoint; this documentation stage neither caused
+  nor resolved those security gates.
