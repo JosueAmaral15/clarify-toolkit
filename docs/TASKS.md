@@ -13,7 +13,8 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 uma delas agora concluida,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **86 tarefas abertas** apos a reconciliacao de 24/10.
+canonica possui agora **85 tarefas abertas** apos a conclusao de
+`CRASH-20261021-OPTIONS-SIGNAL-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -100,7 +101,7 @@ checkboxes. O mapeamento integral e as decisoes ficam em
 
 ### MUST - Crashes, Regressões E Contratos Centrais
 
-- [ ] **CRASH-20261021-OPTIONS-SIGNAL-01: investigar e eliminar o TypeError do
+- [x] **CRASH-20261021-OPTIONS-SIGNAL-01: investigar e eliminar o TypeError do
   Editor.** Reproduzir o crash `options_changed() only accepts 0 argument(s), 1
   given` registrado em `~/.config/clarify/crashes/crash_20261021_051012.txt`.
   Inventariar conexoes de sinais de checkbox/radio/combo para slots sem parametro,
@@ -108,6 +109,12 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   o caminho ou se existe outro consumidor. Adicionar regressao com sinal real,
   troca de opcoes, fechamento e reabertura; nao encerrar como corrigido apenas
   porque a assinatura atual aceita `_checked`.
+  Entregue em 24/10/2026: o Find ja aceitava `toggled(bool)`; a reproducao
+  isolou o crash em `OperationOptionsWidget`, que conectava checkbox, radio e
+  combo com payload diretamente a `Signal()` sem argumentos. Adaptadores
+  privados agora normalizam os payloads e a troca de radio notifica apenas o
+  novo modo marcado. Evidencia em
+  [Options Signal Crash](reports/CRASH_OPTIONS_SIGNAL_2026_10_24.md).
 - [ ] **CE-REDO-SHORTCUT-01: corrigir e unificar os atalhos de Redo.** Fazer
   `Ctrl+Shift+Z` funcionar no Clarify Editor e manter `Ctrl+Y` como alternativa,
   ambos acionando a mesma QAction sobre a view ativa, inclusive split. Integrar
@@ -618,7 +625,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 861 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 862 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;

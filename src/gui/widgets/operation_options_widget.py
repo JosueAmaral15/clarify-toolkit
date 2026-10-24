@@ -146,19 +146,28 @@ class OperationOptionsWidget(QWidget):
     def _connect_signals(self) -> None:
         """Connect internal signals."""
         # Emit options_changed when any option is modified
-        self.chk_intersection.toggled.connect(self.options_changed.emit)
-        self.chk_union.toggled.connect(self.options_changed.emit)
-        self.chk_difference.toggled.connect(self.options_changed.emit)
-        self.chk_symmetric.toggled.connect(self.options_changed.emit)
+        self.chk_intersection.toggled.connect(self._emit_options_changed)
+        self.chk_union.toggled.connect(self._emit_options_changed)
+        self.chk_difference.toggled.connect(self._emit_options_changed)
+        self.chk_symmetric.toggled.connect(self._emit_options_changed)
 
-        self.comp_mode_group.buttonToggled.connect(self.options_changed.emit)
+        self.comp_mode_group.buttonToggled.connect(self._on_comparison_mode_toggled)
 
-        self.chk_ignore_case_keys.toggled.connect(self.options_changed.emit)
-        self.chk_ignore_case_values.toggled.connect(self.options_changed.emit)
-        self.chk_skip_empty.toggled.connect(self.options_changed.emit)
-        self.chk_arrays_ignore_order.toggled.connect(self.options_changed.emit)
+        self.chk_ignore_case_keys.toggled.connect(self._emit_options_changed)
+        self.chk_ignore_case_values.toggled.connect(self._emit_options_changed)
+        self.chk_skip_empty.toggled.connect(self._emit_options_changed)
+        self.chk_arrays_ignore_order.toggled.connect(self._emit_options_changed)
 
-        self.combo_output.currentIndexChanged.connect(self.options_changed.emit)
+        self.combo_output.currentIndexChanged.connect(self._emit_options_changed)
+
+    def _emit_options_changed(self, *_args) -> None:
+        """Normalize payload-bearing Qt signals to the public no-argument signal."""
+        self.options_changed.emit()
+
+    def _on_comparison_mode_toggled(self, _button, checked: bool) -> None:
+        """Notify once after the newly selected comparison mode is checked."""
+        if checked:
+            self.options_changed.emit()
 
     def _apply_accessibility(self) -> None:
         """Apply accessibility labels."""

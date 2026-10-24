@@ -5044,3 +5044,49 @@ Plano imediato:
   its default branch (2 critical, 17 high, 9 moderate and 3 low), up from the 29
   reported at the previous checkpoint; this documentation stage neither caused
   nor resolved those security gates.
+
+## 2026-10-24 - CRASH-20261021-OPTIONS-SIGNAL-01 started
+
+- Work starts from requested published checkpoint `c478b87` on fresh branch
+  `COM-0bf1cfa7-92ff-4908-8421-213cd6ec47e9`, limited to the options signal/slot
+  crash. The later automation-dispatch diary commit is intentionally not part of
+  this branch because the continuation specified the earlier checkpoint.
+- AI Presence Monitor 0.10.7 strict preflight passed: schema, database, five
+  hooks, native queue, monitor/reply services and tray autostart are healthy. The
+  exact Clarify Protocol2 worker is active with task automation and native input
+  enabled; GUI and remote fallbacks are disabled.
+- The crash report contains only `TypeError: options_changed() only accepts 0
+  argument(s), 1 given!`, without a Python stack. The current Editor Find slot
+  accepts `_checked`, but that alone is not proof of the original emitter or of
+  complete repair. Investigation will inventory real signal connections and
+  reproduce controls before any source change.
+- Validation is limited to temporary HOME, isolated serial offscreen Qt modules,
+  system RAM 85%, tree RSS 600 MiB, wall 180 s and pytest timeout 20 s. No
+  providers or user documents are in scope. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-24 - CRASH-20261021-OPTIONS-SIGNAL-01 completed
+
+- The current Editor Find `_on_options_changed(self, _checked=False)` already
+  accepts `QCheckBox.toggled(bool)` and its eight focused Stage 3 tests pass. The
+  crash report's exact TypeError was instead reproduced in Set Operations:
+  `OperationOptionsWidget` connected checkbox, button-group and combo signals
+  carrying payloads directly to its public zero-argument `options_changed`
+  signal.
+- The minimal repair routes checkbox/combo payloads through a private adapter
+  and emits once for only the newly checked comparison radio. The public signal
+  remains argument-free. Twelve real-widget regressions cover every affected
+  control plus close/reopen; the original reproduction now yields exactly one
+  notification without an exception.
+- Guarded serial validation passed in separate processes: 12 operation-option
+  tests at 191.4 MiB peak tree RSS, 8 existing Editor Find tests at 198.3 MiB,
+  and 50 set-operation domain tests at 63.5 MiB. Python compilation, Pylint-E,
+  scoped Black checks and `git diff --check` passed. No native crash, timeout,
+  RAM guard, provider or user document was involved.
+- `docs/TASKS.md` now records 85 open canonical tasks. The documentation audit
+  has 862 Markdown files and 297 files with historical open markers; the prior
+  295-file figure was stale already at the starting checkpoint. Evidence is in
+  `docs/reports/CRASH_OPTIONS_SIGNAL_2026_10_24.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
