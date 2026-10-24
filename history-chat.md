@@ -5090,3 +5090,11 @@ Plano imediato:
   `docs/reports/CRASH_OPTIONS_SIGNAL_2026_10_24.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 24 options-signal checkpoint
+
+- Feature commit `9eb6a27` was pushed to
+  `COM-0bf1cfa7-92ff-4908-8421-213cd6ec47e9`. No default branch, dependency,
+  provider or unrelated user file changed. GitHub still reports 31 findings on
+  its default branch (2 critical, 17 high, 9 moderate and 3 low); these remain
+  unresolved external security gates outside this bounded crash repair.
