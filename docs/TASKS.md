@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/18 - indentacao selecionada e observer de classes detalhados
+**Last Update**: 2026/10/24 - reconciliacao de Editor, tools, graficos e automacao
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -13,7 +13,7 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 uma delas agora concluida,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **55 tarefas abertas**.
+canonica possui agora **86 tarefas abertas** apos a reconciliacao de 24/10.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -88,6 +88,200 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   apenas nas abas do Editor, mantendo Ctrl+PageUp/PageDown reservado as tools.
   Evidencia conjunta dos quatro itens em
   [Clarify Editor Recent Interactions](reports/CLARIFY_EDITOR_RECENT_INTERACTIONS_2026_10_18.md).
+
+## Fila Reconciliada - Requisitos De 24/10/2026
+
+Os 45 apontamentos de `docs/new-clarify-tasks2.txt` foram comparados com codigo,
+testes e tarefas canonicas. Esta revisao adiciona **31 tarefas abertas** e amplia
+`APP-THREAD-01`, `CE-FIND-ENTER-01`, `CE-FIND-MODELESS-01`,
+`CE-MENU-SHORTCUTS-01`, `CE-TEMP-NOTE-LIFECYCLE-01` e `LEG-34`, sem duplicar
+checkboxes. O mapeamento integral e as decisoes ficam em
+[Reconciliacao de requisitos de 24/10](reports/TASKS_RECONCILIATION_2026_10_24.md).
+
+### MUST - Crashes, Regressões E Contratos Centrais
+
+- [ ] **CRASH-20261021-OPTIONS-SIGNAL-01: investigar e eliminar o TypeError do
+  Editor.** Reproduzir o crash `options_changed() only accepts 0 argument(s), 1
+  given` registrado em `~/.config/clarify/crashes/crash_20261021_051012.txt`.
+  Inventariar conexoes de sinais de checkbox/radio/combo para slots sem parametro,
+  identificar a tela e o gesto exatos e provar se `_on_options_changed` ja corrige
+  o caminho ou se existe outro consumidor. Adicionar regressao com sinal real,
+  troca de opcoes, fechamento e reabertura; nao encerrar como corrigido apenas
+  porque a assinatura atual aceita `_checked`.
+- [ ] **CE-REDO-SHORTCUT-01: corrigir e unificar os atalhos de Redo.** Fazer
+  `Ctrl+Shift+Z` funcionar no Clarify Editor e manter `Ctrl+Y` como alternativa,
+  ambos acionando a mesma QAction sobre a view ativa, inclusive split. Integrar
+  ao gerenciador configuravel e a deteccao de conflitos; cobrir layout de teclado,
+  guia read-only, pilha vazia, undo/redo sucessivos e ausencia de acionamento duplo.
+- [ ] **CE-FIND-STATE-HISTORY-01: limpar, lembrar e retomar consultas por arquivo.**
+  Adicionar `Clear` ao Find e Replace, preservando opcoes que nao forem parte do
+  reset documentado. Guardar historico limitado e privado de consultas e replaces
+  por identidade de arquivo/buffer, com botao explicito para recuperar o valor
+  anterior quando nao houver selecao. Ao reabrir ou mover o cursor, recalcular o
+  resultado mais proximo a partir da posicao atual e atualizar `n de m`, sem pular
+  ou executar a busca automaticamente. Limpar/fechar arquivo deve remover estado
+  conforme politica explicita, sem persistir conteudo sensivel indefinidamente.
+- [ ] **CE-FIND-SCOPE-NEGATION-01: comentarios, inversao e Regex negativo.**
+  Acrescentar `Only Comments` aos escopos lexicos e um modo opt-in de busca
+  invertida. Antes de implementar a inversao, confirmar se a unidade e linha,
+  token ou intervalo; nao retornar cada lacuna entre matches. Regex validas com
+  lookahead negativo, como `^(?!\s*def).*`, devem compilar e navegar sem crash,
+  enquanto expressoes invalidas mostram erro sem mover cursor. Preservar limites,
+  linhas inicial/final, Case/Whole Word, Replace seguro e fallback de parser.
+- [ ] **CE-SMART-HOME-VISUAL-LINE-01: aplicar Home a linha visual atual.** Em
+  texto com word-wrap, `Home` deve alternar entre a primeira coluna e o primeiro
+  caractere nao branco da linha visual onde o cursor aparece, nao o inicio do
+  bloco/paragrafo logico. Preservar o contrato entregue para linhas sem wrap,
+  `Shift+Home`, tabs, bidi, zoom, resize, split e linhas visuais vazias.
+- [ ] **FE-COMPACT-ISOLATION-01: impedir opcoes Advanced ocultas no modo Compact.**
+  O plano imutavel de uma pesquisa Compact deve usar somente controles visiveis e
+  defaults documentados; valores antigos de filtros/condicoes Advanced nao podem
+  alterar candidatos, cache ou resultados enquanto ocultos. Alternar modos deve
+  preservar os valores para retorno ao Advanced sem aplica-los no Compact, com
+  identidade de cache, presets e testes comparativos explicitos.
+- [ ] **APP-TOOL-TAB-CLOSE-01: fechar a ferramenta ativa com Ctrl+W.** Quando o
+  foco pertencer ao workspace principal, `Ctrl+W` fecha a aba de ferramenta ativa
+  usando seu contrato de close/cancel/recovery. No Clarify Editor, definir
+  precedencia clara entre fechar arquivo e fechar tool para nao perder buffers;
+  dialogs e campos nao podem receber o atalho indevidamente. Integrar registro,
+  customizacao, F1 e deteccao de conflitos.
+- [ ] **APP-JOB-CENTER-01: colocar operacoes em segundo plano e acompanha-las.**
+  Criar um centro unico, limitado e acessivel de jobs por tool/guia, com estado,
+  progresso, inicio, duracao e estimativa honesta quando calculavel. Operacoes
+  compativeis oferecem `Run in Background`, pausa/cancelamento cooperativos e
+  retorno ao owner sem bloquear a GUI. Nao inventar ETA sem amostras; limpar jobs
+  encerrados por politica limitada e integrar shutdown/lifecycle de `APP-THREAD-01`.
+- [ ] **CE-FOLDER-SESSION-SWITCH-REGRESSION-01: provar troca entre projetos.**
+  Validar o contrato entregue de sessoes ao fechar pasta A, abrir B e voltar a A:
+  ordem, guia ativa, splits e buffers dirty recuperaveis devem permanecer isolados
+  por raiz. Nenhuma aba de A pode aparecer em B; falha/quota/path removido deve ser
+  reportado sem perder snapshots. Corrigir somente defeitos reproduzidos.
+- [ ] **CE-TAB-COPY-PATH-01: copiar caminhos pelo menu das guias.** Adicionar
+  `Copy Absolute Path` e `Copy Relative Path` ao menu contextual de arquivo, usando
+  a raiz canonica do Explorer e o mesmo helper seguro do painel lateral. Desabilitar
+  com motivo para Untitled, nota temporaria, arquivo ausente ou externo; nunca
+  resolver symlink para fora silenciosamente e manter clipboard na GUI thread.
+- [ ] **TERMINAL-UX-01: evoluir o runner para terminal interativo delimitado.**
+  Posicionar prompt/campo no rodape e executar por Enter. Auditar um backend PTY
+  mantido e compativel com PySide6 antes de prometer emulacao completa: stdin,
+  Ctrl+C, sinais, resize, cwd, ANSI, historico, selecao e processos interativos.
+  Remover Run/Stop da superficie principal somente quando Enter/Ctrl+C tiverem
+  equivalentes acessiveis; preservar limites, cleanup de filhos e seguranca.
+- [ ] **APP-TOOLS-SHORTCUTS-01: cobrir todas as ferramentas acionaveis.**
+  Inventariar acoes de `Tools`, incluindo Insert, e atribuir atalhos configuraveis
+  onde forem ergonomicos. Detectar conflitos com Editor, navegacao, SO e widgets;
+  comandos sem atalho precisam de justificativa explicita. F1 e tooltips devem
+  derivar do mesmo registro, com testes de abertura/reuso/fechamento da tool.
+- [ ] **APP-TOOLS-INSERT-CATEGORY-01: mover Insert de Editing para Files.** Alterar
+  somente a taxonomia do menu `Tools`, preservando identidade, instancia, layout,
+  atalhos, traducoes, testes e integracoes do `InsertPanel`. Atualizar favoritos ou
+  estado persistido por alias/migracao para nao quebrar configuracoes antigas.
+- [ ] **PLUGIN-DISCORD-NOTIFICATIONS-01: substituir Slack por Discord.** Migrar o
+  plugin e seus textos/configuracoes para webhooks Discord, com segredo fora de
+  logs/repositorio, teste explicito e eventos opt-in para processamentos demorados
+  de cada tool. Definir rate limit, deduplicacao, payload limitado, timeout e
+  cancelamento; migrar/desativar configuracao Slack sem enviar nada automaticamente.
+- [ ] **SET-OPERATIONS-VALIDATION-01: validar JSON Set Operations ponta a ponta.**
+  Criar fixtures sinteticas auditaveis para intersecao, uniao, diferenca e XOR nos
+  modos key/value/path, tipos, arrays, vazios e erros; executar backend e GUI
+  isolada com resultados esperados calculados independentemente. Preparar roteiro
+  manual reproduzivel para o usuario, sem usar documentos reais por padrao nem
+  declarar confiabilidade apenas pelos testes historicos.
+
+### SHOULD - Editor, Visualizacoes E Ferramentas
+
+- [ ] **CE-CODE-FOLDING-01: recolher e expandir escopos de codigo.** Implementar
+  folding orientado por parser quando suportado, inicialmente Python, para classes,
+  funcoes, metodos e blocos, com marcadores junto aos line numbers. Preservar
+  documento/cursor/selecao, nao apagar texto, atualizar incrementalmente e oferecer
+  fallback sem folding quando a linguagem ou parse nao for confiavel.
+- [ ] **CE-SYMBOL-BREADCRUMB-01: mostrar contexto de classe/metodo/funcao.** Exibir
+  uma barra opcional no topo do Editor com a cadeia de simbolos que contem o cursor
+  e navegacao para simbolos do documento. Reutilizar o indice/parser de folding e
+  do observer de classes, sem parse pesado na GUI; atualizar por geracao e lidar
+  honestamente com sintaxe incompleta, Plain Text e splits.
+- [ ] **CE-PARAGRAPH-NAV-01: navegar por paragrafos com Ctrl+Up/Down.** Definir
+  movimentos deterministas entre inicio/fim do bloco atual e blocos adjacentes,
+  seguindo comportamento de editores de texto sem conflitar com atalhos globais.
+  `Ctrl+Shift+Up/Down` deve estender selecao quando aplicavel; cobrir wrap, linhas
+  vazias, listas, CRLF, inicio/fim e splits sem alterar conteudo.
+- [ ] **CE-VOICE-PROGRAMMING-01: incorporar ditado de algoritmos ao Editor.** Mover
+  a entrada de Voice Programming da categoria AI para uma opcao do Clarify Editor
+  e definir pipeline STT -> recuperacao local/RAG -> LLM -> preview de codigo.
+  Exigir consentimento para microfone/provider, mostrar contexto enviado, limitar
+  retencao/custo e nunca aplicar codigo sem preview/confirmacao. Reutilizar providers
+  e comandos existentes, mantendo fallback de transcricao sem LLM quando possivel.
+- [ ] **INFO-GRAPH-VIEW-01: oferecer grafo e JSON em Information Structure.**
+  Manter JSON como representacao formal e adicionar uma visualizacao interativa de
+  nos/arestas para arquivos, imports, classes, metodos e funcoes, com relacoes
+  tipadas e filtros. Estudar os recursos fornecidos em `resources_to_implement_on_clarify/cytoscape using`
+  e `math-tree-expression`, mas importar apenas codigo/licencas compativeis. A GUI
+  deve permitir alternar JSON/Grafo, selecionar um no e rastrear `quem usa quem`,
+  com layout/cancelamento limitados e sem servidor web obrigatorio sem justificativa.
+- [ ] **EDITORIAL-RESULT-VIEW-01: corrigir nome e apresentar diagnosticos graficos.**
+  Corrigir a traducao da guia Editorial Repair e oferecer alternancia JSON/View
+  para `Run Local Diagnostics`, preservando o JSON integral como fonte. A view
+  deve separar rotulos, valores, severidades e acoes acessiveis; avaliar HTML/CSS,
+  widgets Qt, NiceGUI ou Flet por compatibilidade e custo, sem combinar frameworks
+  apenas por estetica nem iniciar servidor/processo extra sem necessidade.
+- [ ] **BOOLEAN-TRUTH-TABLE-VIEW-01: exibir tabela verdade grafica e JSON.**
+  Renderizar entradas e resultado em tabela acessivel, virtualizada e copiavel,
+  com destaque de minterms/maxterms e limite atual de variaveis, mantendo JSON
+  alternavel para interoperabilidade. Escolher Qt ou outra tecnologia somente apos
+  medir custo, tema, exportacao, testes e memoria; nao duplicar o motor SymPy.
+- [ ] **CLOCK-MULTI-INSTANCE-01: alarmes, cronometros e timers multiplos.** Trocar
+  a pagina Clock por Alarms e permitir colecoes limitadas de alarmes, stopwatches
+  e timers independentes, com nome, add/remove/start/pause/reset e notificacao.
+  Definir persistencia de alarmes, timezone/DST, repeticao, suspensao do sistema,
+  feedback sonoro e cleanup; listas devem escalar sem criar uma thread por item.
+- [ ] **APP-RAG-CHATBOT-01: chatbot integrado com RAG do projeto.** Oferecer uma
+  conversa geral para duvidas e preenchimentos assistidos, reutilizando providers,
+  cadastro de agentes e indices RAG existentes. Contexto, arquivos e tool calls
+  devem ser visiveis e consentidos; escrita exige preview/confirmacao, historico e
+  quotas sao limitados e segredos nao entram em logs. Distinguir do Tutorial
+  Assistant e do chat especializado de arquivos para evitar tres backends paralelos.
+- [ ] **APP-FEEDBACK-01: canal de sugestoes e erros ao autor.** Adicionar uma
+  entrada Feedback com categoria, descricao, versao e anexos opcionais. Definir
+  primeiro endpoint, identidade do destinatario, consentimento, privacidade e
+  comportamento offline; preview deve mostrar exatamente o que sera enviado e
+  nunca incluir logs, paths ou documentos automaticamente.
+- [ ] **APP-RESULT-PRESENTATION-AUDIT-01: revisar saidas JSON das demais tools.**
+  Inventariar resultados atuais e classificar onde JSON e fonte tecnica adequada,
+  onde uma view grafica agrega valor e onde ambas sao necessarias. Excluir desta
+  auditoria Information Structure, Editorial Repair e Boolean Logic, ja mapeadas.
+  Apresentar recomendacao e custo antes de modificar qualquer tool, conforme pedido
+  do usuario; nao introduzir Playwright/NiceGUI/Flet como dependencia por padrao.
+- [ ] **APP-BRANDING-SPLASH-01: icone de detetive e splash de inicializacao.**
+  Criar e validar uma identidade minimalista de detetive com lupa para icone em
+  tamanhos de app/desktop e variante mais detalhada no splash. O splash deve ser
+  nao bloqueante, acessivel, rapido e mostrar o texto aprovado pelo usuario,
+  corrigindo a gramatica somente apos confirmacao; nao esconder startup travado e
+  respeitar reduced motion, tema e empacotamento.
+
+### COULD - Estudos E Definicao Conjunta
+
+- [ ] **CE-UI-MATERIAL-STUDY-01: avaliar PyQtMaterial no Clarify Editor.** Criar
+  spike isolado para compatibilidade real com PySide6, ThemeManager, widgets
+  customizados, acessibilidade, dark/light runtime, animacoes, desempenho e
+  manutencao. Comparar refatoracao incremental com QSS/Qt nativo e medir consumo;
+  NiceGUI/Flet nao devem ser combinados no mesmo Editor sem uma fronteira e ganho
+  comprovados. Implementacao depende de decisao registrada e rollback visual.
+- [ ] **UI-PLAYWRIGHT-ASSESSMENT-01: definir o papel do Playwright.** Verificar se
+  existe superficie web real que justifique Playwright. Para Qt nativo, manter
+  pytest-qt, screenshots e probes; usar Playwright apenas em componentes HTML/web
+  isolados se ele testar comportamento que Qt nao cobre. Documentar dependencia,
+  browsers, CI/RAM, sandbox, manutencao e decisao de adotar ou rejeitar.
+- [ ] **LYNX-VIABILITY-01: reavaliar o navegador textual.** Reproduzir a mensagem
+  de navegador nao aceito em URLs publicas controladas, separar limitacao do site,
+  user-agent, JavaScript, TLS e do proprio Lynx, e comparar manutencao/seguranca
+  com alternativas. Manter, restringir ou remover a tool somente apos evidencia;
+  nao prometer compatibilidade com sites que exigem navegador moderno.
+- [ ] **CALCULATOR-MEMORY-REVIEW-01: redefinir Calculator Memory Slots com o
+  usuario.** Documentar o comportamento atual de cinco slots persistentes para
+  resultados JSON, estatisticas, comparacao e operacoes. Antes de alterar a tool,
+  obter respostas sobre origem dos dados, duracao da memoria, operacoes esperadas,
+  relacao com Set Operations e se slots fixos ainda fazem sentido. Produzir fluxo
+  e prototipo revisaveis; nenhuma reformulacao deve partir de suposicoes.
 
 ## Fila Prioritaria - Editor, File Explorer E Isolamento (06/10/2026)
 
@@ -273,6 +467,11 @@ escopos/cache/lifecycle do File Explorer e consumidores compartilhados.
   completo passou. Outros consumidores/workers de `APP-THREAD-01` continuam
   pendentes. Evidencia em
   `docs/reports/APP_THREAD_AUDIT_STAGE16_2026_10_18.md`.
+  Ampliacao de 24/10/2026: a auditoria restante deve incluir cada processamento
+  iniciado por botao, dialog ou painel de arquivo/conteudo e provar que trabalho
+  caro executa fora da GUI. Dialogs de progresso nao podem tornar o processamento
+  modal; operacoes elegiveis integram o centro de jobs de `APP-JOB-CENTER-01` e
+  continuam em segundo plano com ownership, cancelamento e settlement existentes.
 
 ### Fila Posterior - Clarify Editor E Chrome Das Tools (18/10/2026)
 
@@ -289,6 +488,8 @@ ser implementado em etapa limitada, testada e documentada.
   texto principal e manter erro de regex invalida sem mover o cursor. Uma tecla
   deve produzir exatamente um avanco: eliminar a duplicacao atual entre o botao
   default e `returnPressed`, cobrindo teclado principal, keypad e auto-repeat.
+  Confirmado em 24/10/2026: `Enter` e `Shift+Enter` sao respectivamente Next e
+  Previous; nenhuma das teclas pode acionar duas rotas de navegacao.
 - [ ] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
   remocao do chrome nativo enganoso em `CE-DOCK-CHROME-01` deve ser complementada
   por um unico controle acessivel que alterne entre tool acoplada e janela
@@ -333,12 +534,17 @@ ser implementado em etapa limitada, testada e documentada.
   Somente `Save As...` converte a guia em arquivo normal: publicar o arquivo com
   sucesso, atualizar path/watcher/recentes/dirty e entao remover a identidade e o
   registro temporario. Cancelamento ou falha preserva integralmente a nota.
+  `Manage Temporary Notes` deve usar lista rolavel, pesquisavel e navegavel por
+  teclado, com metadados e acoes por item; nao usar dropdown para a colecao.
 - [ ] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
   Clarify Editor deve permanecer modeless e permitir interacao com editor, abas e
   janela principal enquanto estiver aberto. Preservar uma instancia coerente por
   Editor/workspace, selecao inicial, foco, estado persistido e cleanup sem
   callbacks tardios; evitar dialogs modais aninhados e cobrir close da guia/tool,
   troca de documento, splits, atalhos e navegacao pelos resultados.
+  Oferecer alternancia persistida entre painel inferior acoplado, inspirado no
+  Xed, e janela flutuante modeless. Ambos reutilizam o mesmo estado/controlador e
+  nunca podem existir simultaneamente como duas sessoes divergentes.
 
 ### Fila Reconciliada - Editor, File Explorer E Produto (18/10/2026)
 
@@ -356,6 +562,9 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   entre Editor, tools e sistema operacional. Acoes de estado podem usar mnemonic
   ou ficar explicitamente sem atalho quando houver justificativa de usabilidade;
   a tela F1 deve refletir o registro real, sem tabelas paralelas divergentes.
+  Incluir `Ctrl+H` como Replace no Editor, reconciliando o `Ctrl+R` local legado,
+  e revisar todos os comandos restantes de File/Edit/View. O defeito especifico
+  de Redo fica isolado em `CE-REDO-SHORTCUT-01`.
 - [ ] **CE-PASTE-INDENT-01: preservar tabs e espacos entre documentos.** Ao
   copiar/cortar de uma guia e colar em outra, preservar literalmente a
   indentacao multiline de origem, incluindo tabs, espacos mistos, line endings e
@@ -409,7 +618,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 860 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 861 arquivos Markdown incluem 295 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;
@@ -1083,6 +1292,10 @@ nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
   Python/JS/React, preview e validacao; analise existente nao compila nem executa.
 - [ ] **LEG-34: Formula Builder visual.** Reutilizar executor/templates e adicionar
   canvas de arquivos/operadores e preview real de resultados com limites de recursos.
+  Antes de implementar, revisar com o usuario por que o fluxo atual e confuso ou
+  nao funcional: objetivo da formula, fontes de entrada, significado de `previous`
+  e slots, validacao por etapa, saidas intermediarias e formato do resultado.
+  Provar um workflow sintetico ponta a ponta e obter aprovacao do prototipo.
 
 ### WOULD - Pesquisa Dependente De Definicao
 

@@ -4990,3 +4990,48 @@ Plano imediato:
   `example.py` were not changed. GitHub reported the same 29 pre-existing
   Dependabot findings on its default branch; this task added no dependencies and
   did not resolve those security gates.
+
+## 2026-10-24 - New Clarify requirements reconciliation started
+
+- The user established an explicit automation rule: before continuing future
+  task sessions, verify whether AI Presence Monitor automation is available. If
+  unavailable, notify the user because disabling it may have been accidental;
+  if available, use it to continue the finite task queue.
+- Preflight passed for AI Presence Monitor 0.10.7: schema and database integrity,
+  strict doctor, five Codex hooks, native queue, monitor/reply services and tray
+  autostart are healthy. The exact Clarify Protocol2 worker is active with task
+  automation and native input enabled; GUI and remote fallbacks remain disabled.
+- Documentation-only reconciliation starts from published checkpoint `2c4b68e`
+  on fresh branch `COM-66130361-78bf-483d-8205-0caadc855204`. The source file
+  `docs/new-clarify-tasks2.txt` contains 45 user observations/requirements and
+  remains untracked while it is audited against the canonical roadmap.
+- `docs/new-clarify-tasks2.txt` is preserved at SHA-256
+  `93bc705b90caa262b1e70e83f3e10dc698556142da1911333093284befe29bd9`;
+  `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-24 - New Clarify requirements reconciliation completed
+
+- All 45 source items were mapped in
+  `docs/reports/TASKS_RECONCILIATION_2026_10_24.md`. The canonical roadmap adds
+  31 bounded tasks and expands six existing task IDs, increasing the open count
+  from 55 to 86 without duplicate IDs. Calculator Memory Slots and Formula
+  Builder now contain explicit questions for the required joint definition.
+- Concrete evidence was retained: the 21/10 crash is a signal/slot `TypeError`;
+  Terminal is currently a bounded QProcess runner; Clock has single instances;
+  Slack is a real webhook plugin; Lynx is a limited `-dump` integration; the
+  supplied Cytoscape and math-tree-expression references exist but have not been
+  imported or licensed by assumption.
+- Structural validation passed: 45 mapping rows, 86 open canonical checkboxes,
+  861 Markdown files, 295 Markdown files with open historical markers, no
+  duplicate task IDs and clean `git diff --check`. No application code changed,
+  so GUI/unit tests were not run for this documentation-only stage.
+- `docs/new-clarify-tasks2.txt` is now intended to be tracked as source evidence
+  with its original SHA-256
+  `93bc705b90caa262b1e70e83f3e10dc698556142da1911333093284befe29bd9`.
+  `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Automation remains healthy and enabled. After this documentation checkpoint is
+  published, one exact-session native continuation will start the highest-priority
+  bounded item, `CRASH-20261021-OPTIONS-SIGNAL-01`; the Protocol2 worker remains
+  active because the canonical queue is not complete.
