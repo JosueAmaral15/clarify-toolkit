@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/25 - isolamento de sessoes de pasta no Clarify Editor
+**Last Update**: 2026/10/25 - copia segura de caminhos pelas guias do Editor
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -13,8 +13,8 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 quatro delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **80 tarefas abertas** apos a conclusao de
-`CE-FOLDER-SESSION-SWITCH-REGRESSION-01`.
+canonica possui agora **79 tarefas abertas** apos a conclusao de
+`CE-TAB-COPY-PATH-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -203,11 +203,17 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   origem removida ou erro de leitura sao informados sem apagar snapshots validos.
   Evidencia em
   [Clarify Editor Folder Session Switch](reports/CLARIFY_EDITOR_FOLDER_SESSION_SWITCH_2026_10_25.md).
-- [ ] **CE-TAB-COPY-PATH-01: copiar caminhos pelo menu das guias.** Adicionar
+- [x] **CE-TAB-COPY-PATH-01: copiar caminhos pelo menu das guias.** Adicionar
   `Copy Absolute Path` e `Copy Relative Path` ao menu contextual de arquivo, usando
   a raiz canonica do Explorer e o mesmo helper seguro do painel lateral. Desabilitar
   com motivo para Untitled, nota temporaria, arquivo ausente ou externo; nunca
   resolver symlink para fora silenciosamente e manter clipboard na GUI thread.
+  Entregue em 25/10/2026: as duas acoes operam sobre a guia clicada e reutilizam
+  um resolvedor compartilhado com o Explorer lateral. O caminho e revalidado no
+  clique contra a raiz canonica; arquivo removido, externo, buffer sem nome, nota
+  temporaria e symlink que escapa da raiz deixam ambas as acoes desabilitadas com
+  motivo visivel. O clipboard recusa chamadas fora da GUI thread. Evidencia em
+  [Clarify Editor Tab Copy Path](reports/CLARIFY_EDITOR_TAB_COPY_PATH_2026_10_25.md).
 - [ ] **TERMINAL-UX-01: evoluir o runner para terminal interativo delimitado.**
   Posicionar prompt/campo no rodape e executar por Enter. Auditar um backend PTY
   mantido e compativel com PySide6 antes de prometer emulacao completa: stdin,

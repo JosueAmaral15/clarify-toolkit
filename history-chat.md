@@ -5386,3 +5386,42 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+## 2026-10-25 - CE-TAB-COPY-PATH-01 started
+
+- Work starts from published checkpoint `cc94ab1` on fresh branch
+  `COM-073bbbd8-29b7-4eec-b280-04092dca7ef6`, limited to safe absolute and
+  relative path actions in the Clarify Editor file-tab context menu. The
+  subsequent automation journal `f9a971a` was verified but excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2 with task automation and native input enabled. Schema integrity,
+  five hooks and the monitor/reply/tray/hook processes were verified.
+- The audit will reuse the existing Explorer path-copy contract where safe and
+  first reproduce gaps for normal files, external paths, missing files,
+  symlink escapes, Untitled buffers and temporary notes. Clipboard access must
+  remain on the GUI thread.
+- Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-25 - CE-TAB-COPY-PATH-01 completed
+
+- The pre-edit guarded regression reproduced the missing contract with
+  `KeyError: 'copy_absolute'`; file tabs had no absolute or relative path
+  actions. The failure exited normally at 201.2 MiB without a native crash.
+- The tab menu now copies from the clicked file tab through the same canonical
+  resolver used by the Explorer panel. Both actions revalidate at trigger time
+  and provide a visible reason when disabled for Untitled/recovered buffers,
+  temporary notes, removed files, external files or symlink escapes.
+- Clipboard publication is GUI-thread-only. A real worker-thread regression
+  verifies rejection without changing the existing clipboard. Folder sessions,
+  splits, watchers, notes, recovery, Find and Home remain covered.
+- Guarded serial validation passed 190 distinct tests across eleven isolated Qt
+  modules. Peak tree RSS was 227.6 MiB; no native crash, timeout or guard abort
+  occurred. Compilation, Pylint-E, scoped Black, seven JSON parses and diff
+  checks passed. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_TAB_COPY_PATH_2026_10_25.md`; the canonical queue
+  now has 79 open tasks.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

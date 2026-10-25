@@ -33,7 +33,7 @@ from typing import List
 
 from PySide6.QtCore import (
     QDir, QEvent, QFile, QFileSystemWatcher, QModelIndex, QObject, QSize, Qt,
-    QUrl,
+    QThread, QUrl,
     QTimer, Slot
 )
 from PySide6.QtWidgets import (
@@ -1341,10 +1341,13 @@ class EditorDock(BaseDock):
     def _build_explorer_context_menu(self, index) -> QMenu:
         """Build actions appropriate to the selected file-system item."""
         menu = QMenu(self)
+        menu.setToolTipsVisible(True)
         path = self._normalized_file_path(self.explorer_model.filePath(index))
         is_directory = self.explorer_model.isDir(index)
         is_root = path == self._normalized_file_path(self.explorer_root_path)
-        relative_path = self._relative_explorer_path(path)
+        absolute_path, relative_path, unavailable_key = self._safe_path_copy_values(
+            path
+        )
 
         def add(action_id: str, text_key: str, callback, enabled: bool = True):
             action = menu.addAction(tr(text_key))
@@ -1393,15 +1396,22 @@ class EditorDock(BaseDock):
         )
         menu.addSeparator()
         add("reveal", "editor.explorer_reveal", lambda: self._reveal_explorer_path(path))
-        add("copy_absolute", "editor.explorer_copy_absolute", lambda: self._copy_path(path))
+        absolute_action = add(
+            "copy_absolute",
+            "editor.explorer_copy_absolute",
+            lambda: self._copy_safe_path(path, relative=False),
+            absolute_path is not None,
+        )
         relative_action = add(
             "copy_relative",
             "editor.explorer_copy_relative",
-            lambda: self._copy_path(relative_path or ""),
+            lambda: self._copy_safe_path(path, relative=True),
             relative_path is not None,
         )
-        if relative_path is None:
-            relative_action.setToolTip(tr("editor.explorer_relative_unavailable"))
+        if unavailable_key:
+            reason = tr(unavailable_key)
+            self._set_action_unavailable_reason(absolute_action, reason)
+            self._set_action_unavailable_reason(relative_action, reason)
         menu.addSeparator()
         analysis_available = self._analysis_host() is not None
         analyze_action = add(
@@ -1421,14 +1431,70 @@ class EditorDock(BaseDock):
 
     def _relative_explorer_path(self, path: str) -> str | None:
         """Return a path relative to the canonical root without escaping it."""
+        _absolute, relative, _reason = self._safe_path_copy_values(path)
+        return relative
+
+    def _safe_path_copy_values(
+        self, path: str | None
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve bounded copy values inside the canonical Explorer root."""
+        normalized = self._normalized_file_path(path)
+        if not normalized or not os.path.exists(normalized):
+            return None, None, "editor.path_copy_unavailable_missing"
         try:
-            root = os.path.realpath(self.explorer_root_path)
-            target = os.path.realpath(path)
-            if os.path.commonpath([root, target]) != root:
-                return None
-            return os.path.relpath(target, root)
+            lexical_root = self._normalized_file_path(self.explorer_root_path)
+            canonical_root = os.path.realpath(lexical_root)
+            canonical_target = os.path.realpath(normalized)
+            if os.path.commonpath([canonical_root, canonical_target]) != canonical_root:
+                reason = (
+                    "editor.path_copy_unavailable_symlink"
+                    if os.path.commonpath([lexical_root, normalized]) == lexical_root
+                    else "editor.path_copy_unavailable_external"
+                )
+                return None, None, reason
+            return normalized, os.path.relpath(canonical_target, canonical_root), None
         except (OSError, ValueError):
-            return None
+            return None, None, "editor.path_copy_unavailable_external"
+
+    def _tab_path_copy_values(
+        self, tab
+    ) -> tuple[str | None, str | None, str | None]:
+        """Resolve copy values only for a normal file-backed editor tab."""
+        if tab is None:
+            return None, None, "editor.path_copy_unavailable_untitled"
+        if getattr(tab, "_clarify_temp_note_id", ""):
+            return None, None, "editor.path_copy_unavailable_temp_note"
+        file_path = getattr(tab, "file_path", None)
+        if not file_path:
+            return None, None, "editor.path_copy_unavailable_untitled"
+        return self._safe_path_copy_values(file_path)
+
+    @staticmethod
+    def _set_action_unavailable_reason(action: QAction, reason: str) -> None:
+        """Expose why a disabled path action cannot run."""
+        action.setToolTip(reason)
+        action.setStatusTip(reason)
+        action.setWhatsThis(reason)
+
+    def _copy_safe_path(self, path: str, *, relative: bool) -> bool:
+        """Revalidate an Explorer path immediately before publishing it."""
+        absolute_path, relative_path, reason_key = self._safe_path_copy_values(path)
+        value = relative_path if relative else absolute_path
+        if value is None:
+            if reason_key:
+                self.lbl_status.setText(tr(reason_key))
+            return False
+        return self._copy_path(value)
+
+    def _copy_tab_path(self, tab, *, relative: bool) -> bool:
+        """Revalidate a clicked tab identity immediately before copying it."""
+        absolute_path, relative_path, reason_key = self._tab_path_copy_values(tab)
+        value = relative_path if relative else absolute_path
+        if value is None:
+            if reason_key:
+                self.lbl_status.setText(tr(reason_key))
+            return False
+        return self._copy_path(value)
 
     @staticmethod
     def _validate_explorer_name(name: str) -> str:
@@ -1710,7 +1776,13 @@ class EditorDock(BaseDock):
 
     @staticmethod
     def _copy_path(path: str) -> bool:
-        if not path:
+        app = QApplication.instance()
+        if (
+            not isinstance(path, str)
+            or not path
+            or app is None
+            or QThread.currentThread() != app.thread()
+        ):
             return False
         QApplication.clipboard().setText(path)
         return True
@@ -2958,6 +3030,7 @@ class EditorDock(BaseDock):
     def _build_tab_context_menu(self, index: int) -> QMenu:
         """Build a translated context menu bound to the clicked tab object."""
         menu = QMenu(self)
+        menu.setToolTipsVisible(True)
         tab = self.tab_widget.widget(index)
         if tab is None:
             return menu
@@ -3006,6 +3079,24 @@ class EditorDock(BaseDock):
             ),
             index < self.tab_widget.count() - 1,
         )
+        menu.addSeparator()
+        absolute_path, relative_path, unavailable_key = self._tab_path_copy_values(tab)
+        absolute_action = add(
+            "copy_absolute",
+            "editor.explorer_copy_absolute",
+            lambda: self._copy_tab_path(tab, relative=False),
+            absolute_path is not None,
+        )
+        relative_action = add(
+            "copy_relative",
+            "editor.explorer_copy_relative",
+            lambda: self._copy_tab_path(tab, relative=True),
+            relative_path is not None,
+        )
+        if unavailable_key:
+            reason = tr(unavailable_key)
+            self._set_action_unavailable_reason(absolute_action, reason)
+            self._set_action_unavailable_reason(relative_action, reason)
         menu.addSeparator()
         add(
             "split_down",

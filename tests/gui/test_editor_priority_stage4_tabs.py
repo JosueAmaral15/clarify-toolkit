@@ -47,6 +47,8 @@ def test_tab_context_menu_has_complete_bounded_actions(qtbot, tmp_path, monkeypa
         "close_all",
         "close_left",
         "close_right",
+        "copy_absolute",
+        "copy_relative",
         "split_down",
         "split_right",
         "toggle_edit_only",
