@@ -74,6 +74,30 @@ from .json_editor_tab import JsonEditorTab
 from .widgets import EditorTab
 
 
+class _EditorFindHistory:
+    """Private bounded query/replacement history for one open editor buffer."""
+
+    def __init__(self, max_entries: int = 5):
+        self.max_entries = max(1, int(max_entries))
+        self.entries: list[tuple[str, str]] = []
+
+    def remember(self, query: str, replacement: str = "") -> None:
+        query = str(query)[:MAX_QUERY_CHARS]
+        replacement = str(replacement)[:MAX_QUERY_CHARS]
+        if not query:
+            return
+        entry = (query, replacement)
+        self.entries = [item for item in self.entries if item != entry]
+        self.entries.insert(0, entry)
+        del self.entries[self.max_entries :]
+
+    def current(self) -> tuple[str, str]:
+        return self.entries[0] if self.entries else ("", "")
+
+    def clear(self) -> None:
+        self.entries.clear()
+
+
 class _EditorFindDialog(QDialog):
     """Bounded find/find-and-replace dialog for one editor document."""
 
@@ -86,6 +110,8 @@ class _EditorFindDialog(QDialog):
         file_path: str | None = None,
         state: dict | None = None,
         state_changed=None,
+        history: _EditorFindHistory | None = None,
+        selection_query: str = "",
     ):
         super().__init__(parent)
         self.editor = editor
@@ -93,6 +119,9 @@ class _EditorFindDialog(QDialog):
         self.file_path = file_path
         self.state = state if state is not None else {}
         self._state_changed = state_changed
+        self.history = history if history is not None else _EditorFindHistory()
+        self._selection_query = str(selection_query)[:MAX_QUERY_CHARS]
+        self._history_index = -1 if self._selection_query else 0
         self.matches = ()
         self.current_match_index = -1
         self._result_truncated = False
@@ -105,6 +134,10 @@ class _EditorFindDialog(QDialog):
         self._setup_ui()
         self._restore_state()
         self._connect_signals()
+        self._recalculate_matches()
+        if self.find_input.text():
+            self._sync_current_match_to_cursor()
+        self._update_history_button()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -114,9 +147,17 @@ class _EditorFindDialog(QDialog):
         self.find_input = QLineEdit()
         self.find_input.setMaxLength(MAX_QUERY_CHARS)
         find_layout.addWidget(self.find_input)
+        self.btn_previous_value = QPushButton(
+            tr("editor.btn_find_previous_value")
+        )
+        self.btn_previous_value.setToolTip(
+            tr("editor.tooltip_find_previous_value")
+        )
+        find_layout.addWidget(self.btn_previous_value)
         layout.addLayout(find_layout)
 
         self.replace_input = QLineEdit()
+        self.replace_input.setMaxLength(MAX_QUERY_CHARS)
         if self.replace_enabled:
             replace_layout = QHBoxLayout()
             replace_layout.addWidget(QLabel(tr("editor.lbl_replace")))
@@ -181,6 +222,8 @@ class _EditorFindDialog(QDialog):
             btn_layout.addWidget(self.btn_replace)
             btn_layout.addWidget(self.btn_replace_all)
 
+        self.btn_clear = QPushButton(tr("editor.btn_find_clear"))
+        btn_layout.addWidget(self.btn_clear)
         btn_layout.addStretch()
         self.btn_close = QPushButton(tr("editor.btn_close"))
         btn_layout.addWidget(self.btn_close)
@@ -188,6 +231,8 @@ class _EditorFindDialog(QDialog):
 
     def _connect_signals(self):
         self.find_input.textChanged.connect(self._recalculate_matches)
+        self.find_input.textEdited.connect(self._on_value_edited)
+        self.replace_input.textEdited.connect(self._on_value_edited)
         self.chk_case_sensitive.toggled.connect(self._on_options_changed)
         self.chk_whole_word.toggled.connect(self._on_options_changed)
         self.chk_regex.toggled.connect(self._on_options_changed)
@@ -195,6 +240,11 @@ class _EditorFindDialog(QDialog):
         self.start_line.valueChanged.connect(self._recalculate_matches)
         self.end_line.valueChanged.connect(self._recalculate_matches)
         self.editor.textChanged.connect(self._on_editor_text_changed)
+        self.editor.cursorPositionChanged.connect(
+            self._on_editor_cursor_position_changed
+        )
+        self.btn_previous_value.clicked.connect(self._restore_previous_value)
+        self.btn_clear.clicked.connect(self._clear_find_state)
         self.btn_find_previous.clicked.connect(self._find_previous)
         self.btn_find_next.clicked.connect(self._find_next)
         self.find_input.returnPressed.connect(self._find_next)
@@ -215,6 +265,13 @@ class _EditorFindDialog(QDialog):
             "variables": self.radio_only_variables,
         }
         scope_buttons.get(scope, self.radio_all_text).setChecked(True)
+        if self._selection_query:
+            query, replacement = self._selection_query, ""
+        else:
+            query, replacement = self.history.current()
+        self.find_input.setText(query)
+        if self.replace_enabled:
+            self.replace_input.setText(replacement)
 
     def _save_state(self) -> None:
         self.state.update(
@@ -261,6 +318,15 @@ class _EditorFindDialog(QDialog):
         self.start_line.setMaximum(line_count)
         self.end_line.setMaximum(line_count)
         self._recalculate_matches()
+        self._sync_current_match_to_cursor()
+
+    def _on_editor_cursor_position_changed(self) -> None:
+        if not self._mutating and self.matches:
+            self._sync_current_match_to_cursor()
+
+    def _on_value_edited(self, _text: str) -> None:
+        self._history_index = -1
+        self._update_history_button()
 
     def _recalculate_matches(self, *_args) -> bool:
         query = self.find_input.text()
@@ -298,6 +364,98 @@ class _EditorFindDialog(QDialog):
             self.btn_replace.setEnabled(enabled)
             self.btn_replace_all.setEnabled(enabled)
 
+    def _sync_current_match_to_cursor(self) -> None:
+        """Report the nearest match without moving or selecting editor text."""
+        if not self.matches:
+            self.current_match_index = -1
+            self._update_status()
+            return
+
+        cursor = self.editor.textCursor()
+        selection_start = cursor.selectionStart()
+        selection_end = cursor.selectionEnd()
+        exact_selection = next(
+            (
+                index
+                for index, match in enumerate(self.matches)
+                if match.start == selection_start and match.end == selection_end
+            ),
+            None,
+        )
+        if exact_selection is not None and cursor.hasSelection():
+            self.current_match_index = exact_selection
+        else:
+            position = cursor.position()
+
+            def distance(match) -> int:
+                if position < match.start:
+                    return match.start - position
+                if position > match.end:
+                    return position - match.end
+                return 0
+
+            self.current_match_index = min(
+                range(len(self.matches)),
+                key=lambda index: (distance(self.matches[index]), index),
+            )
+        self._update_status()
+
+    def _remember_current_values(self) -> None:
+        query = self.find_input.text()
+        if self.replace_enabled:
+            replacement = self.replace_input.text()
+        else:
+            replacement = next(
+                (
+                    prior_replacement
+                    for prior_query, prior_replacement in self.history.entries
+                    if prior_query == query
+                ),
+                "",
+            )
+        self.history.remember(
+            query,
+            replacement,
+        )
+        self._history_index = 0
+        self._update_history_button()
+
+    def _update_history_button(self) -> None:
+        has_selection = bool(self._selection_query)
+        self.btn_previous_value.setVisible(not has_selection)
+        next_index = self._history_index + 1
+        self.btn_previous_value.setEnabled(
+            not has_selection and next_index < len(self.history.entries)
+        )
+
+    def _restore_previous_value(self) -> bool:
+        if self._selection_query:
+            return False
+        next_index = self._history_index + 1
+        if next_index >= len(self.history.entries):
+            self._update_history_button()
+            return False
+        self._history_index = next_index
+        query, replacement = self.history.entries[next_index]
+        self.find_input.setText(query)
+        if self.replace_enabled:
+            self.replace_input.setText(replacement)
+        self._sync_current_match_to_cursor()
+        self._update_history_button()
+        return True
+
+    def _clear_find_state(self) -> None:
+        self.history.clear()
+        self._history_index = 0
+        self.find_input.clear()
+        self.replace_input.clear()
+        self.matches = ()
+        self.current_match_index = -1
+        self._result_truncated = False
+        self._scope_fallback = False
+        self._update_status()
+        self._update_history_button()
+
     def _update_status(self) -> None:
         if not self.find_input.text():
             status = ""
@@ -333,6 +491,7 @@ class _EditorFindDialog(QDialog):
         return True
 
     def _find_next(self) -> bool:
+        self._remember_current_values()
         if not self.matches and not self._recalculate_matches():
             return False
         if self.current_match_index < 0:
@@ -350,6 +509,7 @@ class _EditorFindDialog(QDialog):
         return self._select_current_match()
 
     def _find_previous(self) -> bool:
+        self._remember_current_values()
         if not self.matches and not self._recalculate_matches():
             return False
         if self.current_match_index < 0:
@@ -365,6 +525,7 @@ class _EditorFindDialog(QDialog):
         return self._select_current_match()
 
     def _replace_current(self):
+        self._remember_current_values()
         if not self.find_input.text() or not self.matches:
             return
         if self.current_match_index < 0 and not self._find_next():
@@ -402,6 +563,7 @@ class _EditorFindDialog(QDialog):
             self.lbl_status.setText(tr("editor.replace_one_complete"))
 
     def _replace_all(self):
+        self._remember_current_values()
         if not self.find_input.text() or not self.matches:
             return
         text = self.editor.toPlainText()
@@ -427,6 +589,21 @@ class _EditorFindDialog(QDialog):
         self._mutating = False
         self._recalculate_matches()
         self.lbl_status.setText(tr("editor.replace_all_complete").format(count=count))
+
+    def closeEvent(self, event):  # pylint: disable=invalid-name
+        self._remember_current_values()
+        for signal, slot in (
+            (self.editor.textChanged, self._on_editor_text_changed),
+            (
+                self.editor.cursorPositionChanged,
+                self._on_editor_cursor_position_changed,
+            ),
+        ):
+            try:
+                signal.disconnect(slot)
+            except (RuntimeError, TypeError):
+                pass
+        super().closeEvent(event)
 
 
 class _LineNumberArea(QWidget):
@@ -751,6 +928,8 @@ class EditorDock(BaseDock):
     MAX_FOLDER_SESSIONS = 20
     MAX_FOLDER_SESSION_FILES = 20
     MAX_FOLDER_SESSIONS_BYTES = 256 * 1024
+    MAX_FIND_HISTORY_BUFFERS = 20
+    MAX_FIND_HISTORY_ENTRIES = 5
     handles_unsaved_tab_close = True
 
     def __init__(self, parent=None):
@@ -824,6 +1003,7 @@ class EditorDock(BaseDock):
         self._recovery_suspended = False
         self._recovery_failures = 0
         self._last_reference_update = None
+        self._find_history_by_buffer: dict[str, _EditorFindHistory] = {}
 
         # NOW call super().__init__() which triggers _setup_ui()
         super().__init__(EDITOR_NAME, parent)
@@ -3444,23 +3624,50 @@ class EditorDock(BaseDock):
         if not tab or not hasattr(tab, 'editor'):
             return
 
+        editor = self._active_editor_for_tab(tab)
+        selected_query = editor.textCursor().selectedText()
+        selected_query = selected_query.replace("\u2029", "\n").replace(
+            "\u2028", "\n"
+        )
+
         dialog = _EditorFindDialog(
-            tab.editor,
+            editor,
             replace_enabled,
             self,
             file_path=getattr(tab, "file_path", None),
             state=self.find_state,
             state_changed=self._persist_find_state,
-        )
-        selected_query = tab.editor.textCursor().selectedText()
-        selected_query = selected_query.replace("\u2029", "\n").replace(
-            "\u2028", "\n"
+            history=self._find_history_for_tab(tab),
+            selection_query=selected_query,
         )
         if selected_query:
-            dialog.find_input.setText(selected_query[:MAX_QUERY_CHARS])
             dialog.find_input.selectAll()
         dialog.exec()
         dialog.deleteLater()
+
+    @staticmethod
+    def _find_buffer_identity(tab) -> str:
+        identity = getattr(tab, "_clarify_find_identity", "")
+        if not identity:
+            identity = uuid.uuid4().hex
+            setattr(tab, "_clarify_find_identity", identity)
+        return identity
+
+    def _find_history_for_tab(self, tab) -> _EditorFindHistory:
+        identity = self._find_buffer_identity(tab)
+        history = self._find_history_by_buffer.pop(identity, None)
+        if history is None:
+            history = _EditorFindHistory(self.MAX_FIND_HISTORY_ENTRIES)
+        self._find_history_by_buffer[identity] = history
+        while len(self._find_history_by_buffer) > self.MAX_FIND_HISTORY_BUFFERS:
+            oldest_identity = next(iter(self._find_history_by_buffer))
+            self._find_history_by_buffer.pop(oldest_identity)
+        return history
+
+    def _discard_find_history(self, tab) -> None:
+        identity = getattr(tab, "_clarify_find_identity", "")
+        if identity:
+            self._find_history_by_buffer.pop(identity, None)
 
     def _select_relative_file_tab(self, offset: int) -> bool:
         """Select an Editor file tab relative to the current one."""
@@ -4503,6 +4710,7 @@ class EditorDock(BaseDock):
             return False
         if tab is self._split_source_tab:
             self._close_split_view()
+        self._discard_find_history(tab)
         self._clear_tab_disk_state(tab, refresh_watchers=False)
         for timer in tab.findChildren(QTimer):
             timer.stop()
@@ -4688,6 +4896,7 @@ class EditorDock(BaseDock):
         if not self.request_tab_close():
             event.ignore()
             return
+        self._find_history_by_buffer.clear()
         super().closeEvent(event)
 
     def _show_recovery_dialog(self) -> None:

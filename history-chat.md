@@ -5148,3 +5148,44 @@ Plano imediato:
   dependency or unrelated user file changed. GitHub still reports 31 findings
   on its default branch (2 critical, 17 high, 9 moderate and 3 low); these
   unresolved external security gates are outside this bounded Editor repair.
+
+## 2026-10-24 - CE-FIND-STATE-HISTORY-01 started
+
+- Work resumes from requested published checkpoint `67d9dee` on fresh branch
+  `COM-6ea25995-c3b8-4193-bab8-8724358cebd8`, limited to Clarify Editor
+  Find/Replace state, bounded history, Clear and nearest-result recalculation.
+  The subsequent automation journal was inspected on the parent branch but is
+  intentionally excluded from this checkpoint-derived branch.
+- AI Presence Monitor 0.10.7 strict validation passed: schema/database, five
+  hooks, native queue, monitor/reply services and automation controls are
+  healthy. The exact Clarify Protocol2 worker and session remain active.
+- Investigation will reproduce gaps before editing and audit file/buffer
+  identity, cursor signals, split views, close cleanup, recovery and folder
+  session consumers. Tests remain serial/offscreen with temporary HOME, RAM
+  85%, tree RSS 600 MiB, wall 180 seconds and pytest timeout 20 seconds; no
+  providers or user documents are in scope.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-25 - CE-FIND-STATE-HISTORY-01 completed
+
+- The audit reproduced four concrete gaps: no Clear action, no per-buffer
+  query/replacement history, stale total-only status after cursor movement and
+  Find targeting the primary editor even when the split view was active.
+- Find/Replace now keeps a private bounded in-memory history: five pairs per
+  buffer, twenty buffers per dock and 4096 characters per value. Closing a tab
+  removes its history; closing the Editor clears all histories. No query or
+  replacement is stored in settings, recovery snapshots or folder sessions.
+- Clear removes only the current values, results and buffer history while
+  preserving match options and line bounds. Reopen and cursor movement report
+  the nearest `n of m` without moving the cursor or selection. Previous Values
+  is explicit and hidden for selection-prefilled dialogs; active splits are
+  honored.
+- Guarded serial validation passed 107 distinct tests across six isolated Qt
+  modules, with peak tree RSS 226.7 MiB and no native crash or guard abort. The
+  first focused run exposed only a multiline test-fixture normalization issue;
+  the corrected fixture and the product tests passed.
+- Compilation, seven JSON parses, Pylint-E, scoped Black and diff checks passed.
+  The canonical queue now has 83 open tasks. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

@@ -1,4 +1,7 @@
 {
+  "editor.btn_find_clear": "クリア",
+  "editor.btn_find_previous_value": "前の値",
+  "editor.tooltip_find_previous_value": "このドキュメントの前の検索語と置換語を復元",
   "editor.btn_previous_file_tab": "前のファイルタブ",
   "editor.btn_next_file_tab": "次のファイルタブ",
   "tutorial_assistant.tooltip_thumbs_up": "役に立つ回答",

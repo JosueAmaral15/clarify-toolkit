@@ -1,4 +1,7 @@
 {
+  "editor.btn_find_clear": "Limpiar",
+  "editor.btn_find_previous_value": "Valores anteriores",
+  "editor.tooltip_find_previous_value": "Restaurar la búsqueda y el reemplazo anteriores de este documento",
   "editor.btn_previous_file_tab": "Pestaña de archivo anterior",
   "editor.btn_next_file_tab": "Pestaña de archivo siguiente",
   "tutorial_assistant.tooltip_thumbs_up": "Respuesta útil",

@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/24 - reconciliacao de Editor, tools, graficos e automacao
+**Last Update**: 2026/10/25 - estado e historico privado do Find/Replace
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -11,10 +11,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
-uma delas agora concluida,
+duas delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **84 tarefas abertas** apos a conclusao de
-`CE-REDO-SHORTCUT-01`.
+canonica possui agora **83 tarefas abertas** apos a conclusao de
+`CE-FIND-STATE-HISTORY-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -127,7 +127,7 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   paralelo, e a acao resolve somente a view ativa do split. Read-only e pilha
   vazia sao no-op honestos; o contexto nao escapa da ferramenta. Evidencia em
   [Clarify Editor Redo Shortcuts](reports/CLARIFY_EDITOR_REDO_SHORTCUTS_2026_10_24.md).
-- [ ] **CE-FIND-STATE-HISTORY-01: limpar, lembrar e retomar consultas por arquivo.**
+- [x] **CE-FIND-STATE-HISTORY-01: limpar, lembrar e retomar consultas por arquivo.**
   Adicionar `Clear` ao Find e Replace, preservando opcoes que nao forem parte do
   reset documentado. Guardar historico limitado e privado de consultas e replaces
   por identidade de arquivo/buffer, com botao explicito para recuperar o valor
@@ -135,6 +135,15 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   resultado mais proximo a partir da posicao atual e atualizar `n de m`, sem pular
   ou executar a busca automaticamente. Limpar/fechar arquivo deve remover estado
   conforme politica explicita, sem persistir conteudo sensivel indefinidamente.
+  Entregue em 25/10/2026: cada buffer aberto mantem em memoria ate cinco pares
+  consulta/substituicao, limitados a 4096 caracteres por campo; o dock limita o
+  conjunto a vinte buffers e descarta o estado ao fechar a guia ou a ferramenta.
+  `Clear` remove somente valores, resultados e historico daquele buffer, mantendo
+  opcoes e limites de linha. Reabrir o painel e mover o cursor recalculam o match
+  mais proximo e mostram `n de m` sem mover cursor ou selecao; um controle
+  explicito recupera valores anteriores quando a abertura nao veio de selecao.
+  O estado privado nao entra em QSettings, recovery ou sessao de pasta. Evidencia
+  em [Clarify Editor Find State History](reports/CLARIFY_EDITOR_FIND_STATE_HISTORY_2026_10_25.md).
 - [ ] **CE-FIND-SCOPE-NEGATION-01: comentarios, inversao e Regex negativo.**
   Acrescentar `Only Comments` aos escopos lexicos e um modo opt-in de busca
   invertida. Antes de implementar a inversao, confirmar se a unidade e linha,
@@ -632,7 +641,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 863 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 864 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;

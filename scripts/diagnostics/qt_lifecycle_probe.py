@@ -29,6 +29,7 @@ TEST_MODULES = {
     "accessibility": "tests/test_accessibility.py",
     "completion": "tests/test_qt_completion_lifecycle.py",
     "editor-dock": "tests/gui/test_editor_dock.py",
+    "editor-find-state-history": "tests/gui/test_editor_find_state_history.py",
     "editor-priority-stage1": "tests/gui/test_editor_priority_stage1.py",
     "editor-priority-stage3": "tests/gui/test_editor_priority_stage3.py",
     "editor-priority-stage4-tabs": "tests/gui/test_editor_priority_stage4_tabs.py",

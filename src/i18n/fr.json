@@ -1,4 +1,7 @@
 {
+  "editor.btn_find_clear": "Effacer",
+  "editor.btn_find_previous_value": "Valeurs précédentes",
+  "editor.tooltip_find_previous_value": "Restaurer la recherche et le remplacement précédents de ce document",
   "editor.btn_previous_file_tab": "Onglet de fichier précédent",
   "editor.btn_next_file_tab": "Onglet de fichier suivant",
   "tutorial_assistant.tooltip_thumbs_up": "Réponse utile",
