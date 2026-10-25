@@ -5386,3 +5386,14 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+### Automation continuation after folder-session switching
+
+- The next bounded Clarify Editor task is `CE-TAB-COPY-PATH-01`, limited to
+  safe absolute/relative path actions in the file-tab context menu and reuse of
+  the existing Explorer path-copy contract.
+- A dry-run validated the exact worker, session and native transport. One real
+  continuation then targeted session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1` from checkpoint `cc94ab1`.
+- The command returned `dispatch_started`, not delivery confirmation. No retry
+  was attempted; the Protocol2 worker remains active.
