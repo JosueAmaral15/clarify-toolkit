@@ -46,15 +46,19 @@ def test_match_options_and_scope_survive_dialog_reopen(qapp):
     dialog.chk_case_sensitive.setChecked(True)
     dialog.chk_whole_word.setChecked(True)
     dialog.chk_regex.setChecked(True)
-    dialog.radio_only_variables.setChecked(True)
+    dialog.radio_only_comments.setChecked(True)
+    dialog.chk_inverted.setChecked(True)
+    dialog.cmb_inverted_unit.setCurrentIndex(dialog.cmb_inverted_unit.findData("interval"))
     dialog.close()
 
     reopened = module._EditorFindDialog(editor, state=state)
     assert reopened.chk_case_sensitive.isChecked()
     assert reopened.chk_whole_word.isChecked()
     assert reopened.chk_regex.isChecked()
-    assert reopened.radio_only_variables.isChecked()
-    assert persisted[-1]["scope"] == "variables"
+    assert reopened.radio_only_comments.isChecked()
+    assert reopened.chk_inverted.isChecked()
+    assert reopened.cmb_inverted_unit.currentData() == "interval"
+    assert persisted[-1]["scope"] == "comments"
 
 
 def test_line_range_and_python_lexical_scopes(qapp):
@@ -129,6 +133,8 @@ def test_editor_dock_persists_global_find_preferences(qtbot, tmp_path, monkeypat
             "whole_word": True,
             "regex": True,
             "scope": "strings",
+            "inverted": True,
+            "inverted_unit": "token",
         }
     )
 
@@ -139,4 +145,6 @@ def test_editor_dock_persists_global_find_preferences(qtbot, tmp_path, monkeypat
         "whole_word": True,
         "regex": True,
         "scope": "strings",
+        "inverted": True,
+        "inverted_unit": "token",
     }

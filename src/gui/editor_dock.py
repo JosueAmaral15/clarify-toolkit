@@ -37,7 +37,7 @@ from PySide6.QtCore import (
     QTimer, Slot
 )
 from PySide6.QtWidgets import (
-    QButtonGroup, QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar,
+    QButtonGroup, QComboBox, QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar,
     QPushButton, QRadioButton, QSpinBox,
     QVBoxLayout, QWidget,
     QLabel, QFileDialog, QMessageBox, QTextEdit, QTabWidget,
@@ -180,16 +180,33 @@ class _EditorFindDialog(QDialog):
         self.radio_all_text = QRadioButton(tr("editor.scope_all_text"))
         self.radio_only_strings = QRadioButton(tr("editor.scope_only_strings"))
         self.radio_only_variables = QRadioButton(tr("editor.scope_only_variables"))
+        self.radio_only_comments = QRadioButton(tr("editor.scope_only_comments"))
         for scope, button in (
             ("all", self.radio_all_text),
             ("strings", self.radio_only_strings),
             ("variables", self.radio_only_variables),
+            ("comments", self.radio_only_comments),
         ):
             self.scope_group.addButton(button)
             button.setProperty("find_scope", scope)
             scope_layout.addWidget(button)
         scope_layout.addStretch()
         layout.addLayout(scope_layout)
+
+        inverted_layout = QHBoxLayout()
+        self.chk_inverted = QCheckBox(tr("editor.chk_inverted_search"))
+        inverted_layout.addWidget(self.chk_inverted)
+        inverted_layout.addWidget(QLabel(tr("editor.lbl_inverted_unit")))
+        self.cmb_inverted_unit = QComboBox()
+        for key in ("line", "token", "interval"):
+            self.cmb_inverted_unit.addItem(
+                tr(f"editor.inverted_unit_{key}"),
+                key,
+            )
+        self.cmb_inverted_unit.setEnabled(False)
+        inverted_layout.addWidget(self.cmb_inverted_unit)
+        inverted_layout.addStretch()
+        layout.addLayout(inverted_layout)
 
         line_layout = QHBoxLayout()
         line_layout.addWidget(QLabel(tr("editor.lbl_start_line")))
@@ -237,6 +254,10 @@ class _EditorFindDialog(QDialog):
         self.chk_whole_word.toggled.connect(self._on_options_changed)
         self.chk_regex.toggled.connect(self._on_options_changed)
         self.scope_group.buttonToggled.connect(self._on_scope_toggled)
+        self.chk_inverted.toggled.connect(self._on_inverted_toggled)
+        self.cmb_inverted_unit.currentIndexChanged.connect(
+            self._on_options_changed
+        )
         self.start_line.valueChanged.connect(self._recalculate_matches)
         self.end_line.valueChanged.connect(self._recalculate_matches)
         self.editor.textChanged.connect(self._on_editor_text_changed)
@@ -263,8 +284,15 @@ class _EditorFindDialog(QDialog):
             "all": self.radio_all_text,
             "strings": self.radio_only_strings,
             "variables": self.radio_only_variables,
+            "comments": self.radio_only_comments,
         }
         scope_buttons.get(scope, self.radio_all_text).setChecked(True)
+        inverted_unit = self.state.get("inverted_unit", "line")
+        unit_index = self.cmb_inverted_unit.findData(inverted_unit)
+        self.cmb_inverted_unit.setCurrentIndex(max(0, unit_index))
+        inverted = bool(self.state.get("inverted", False))
+        self.chk_inverted.setChecked(inverted)
+        self.cmb_inverted_unit.setEnabled(inverted)
         if self._selection_query:
             query, replacement = self._selection_query, ""
         else:
@@ -280,6 +308,8 @@ class _EditorFindDialog(QDialog):
                 "whole_word": self.chk_whole_word.isChecked(),
                 "regex": self.chk_regex.isChecked(),
                 "scope": self._selected_scope(),
+                "inverted": self.chk_inverted.isChecked(),
+                "inverted_unit": self.cmb_inverted_unit.currentData() or "line",
             }
         )
         if self._state_changed is not None:
@@ -297,6 +327,8 @@ class _EditorFindDialog(QDialog):
             scope=self._selected_scope(),
             start_line=self.start_line.value() or None,
             end_line=self.end_line.value() or None,
+            inverted=self.chk_inverted.isChecked(),
+            inverted_unit=self.cmb_inverted_unit.currentData() or "line",
         )
 
     def _on_options_changed(self, _checked=False) -> None:
@@ -306,6 +338,10 @@ class _EditorFindDialog(QDialog):
     def _on_scope_toggled(self, _button, checked: bool) -> None:
         if checked:
             self._on_options_changed()
+
+    def _on_inverted_toggled(self, checked: bool) -> None:
+        self.cmb_inverted_unit.setEnabled(checked)
+        self._on_options_changed()
 
     def _plain_text_line_count(self) -> int:
         """Use the same newline semantics as the pure matcher."""
@@ -361,8 +397,9 @@ class _EditorFindDialog(QDialog):
         self.btn_find_previous.setEnabled(enabled)
         self.btn_find_next.setEnabled(enabled)
         if self.replace_enabled:
-            self.btn_replace.setEnabled(enabled)
-            self.btn_replace_all.setEnabled(enabled)
+            replacement_enabled = enabled and not self.chk_inverted.isChecked()
+            self.btn_replace.setEnabled(replacement_enabled)
+            self.btn_replace_all.setEnabled(replacement_enabled)
 
     def _sync_current_match_to_cursor(self) -> None:
         """Report the nearest match without moving or selecting editor text."""
@@ -475,6 +512,13 @@ class _EditorFindDialog(QDialog):
         if self._scope_fallback and self.find_input.text():
             suffix = tr("editor.find_scope_fallback")
             status = f"{status} {suffix}".strip()
+        if (
+            self.replace_enabled
+            and self.chk_inverted.isChecked()
+            and self.find_input.text()
+        ):
+            suffix = tr("editor.find_inverted_replace_disabled")
+            status = f"{status} {suffix}".strip()
         self.lbl_status.setText(status)
         self._update_buttons()
 
@@ -526,6 +570,9 @@ class _EditorFindDialog(QDialog):
 
     def _replace_current(self):
         self._remember_current_values()
+        if self.chk_inverted.isChecked():
+            self._update_status()
+            return
         if not self.find_input.text() or not self.matches:
             return
         if self.current_match_index < 0 and not self._find_next():
@@ -564,6 +611,9 @@ class _EditorFindDialog(QDialog):
 
     def _replace_all(self):
         self._remember_current_values()
+        if self.chk_inverted.isChecked():
+            self._update_status()
+            return
         if not self.find_input.text() or not self.matches:
             return
         text = self.editor.toPlainText()
@@ -949,13 +999,26 @@ class EditorDock(BaseDock):
         self.recent_files = self._load_recent_paths("recent_files")
         self.recent_folders = self._load_recent_paths("recent_folders")
         find_scope = self.settings.value("find/scope", "all", type=str)
+        inverted_unit = self.settings.value(
+            "find/inverted_unit", "line", type=str
+        )
         self.find_state = {
             "case_sensitive": self.settings.value(
                 "find/case_sensitive", False, type=bool
             ),
             "whole_word": self.settings.value("find/whole_word", False, type=bool),
             "regex": self.settings.value("find/regex", False, type=bool),
-            "scope": find_scope if find_scope in {"all", "strings", "variables"} else "all",
+            "scope": (
+                find_scope
+                if find_scope in {"all", "strings", "variables", "comments"}
+                else "all"
+            ),
+            "inverted": self.settings.value("find/inverted", False, type=bool),
+            "inverted_unit": (
+                inverted_unit
+                if inverted_unit in {"line", "token", "interval"}
+                else "line"
+            ),
         }
         self._persisted_tab_order = self._load_persisted_tab_order()
         self._restoring_tab_order = False
@@ -3717,13 +3780,18 @@ class EditorDock(BaseDock):
     def _persist_find_state(self, state: dict) -> None:
         """Persist the global Clarify Editor match preferences."""
         scope = state.get("scope", "all")
-        if scope not in {"all", "strings", "variables"}:
+        if scope not in {"all", "strings", "variables", "comments"}:
             scope = "all"
+        inverted_unit = state.get("inverted_unit", "line")
+        if inverted_unit not in {"line", "token", "interval"}:
+            inverted_unit = "line"
         self.find_state = {
             "case_sensitive": bool(state.get("case_sensitive", False)),
             "whole_word": bool(state.get("whole_word", False)),
             "regex": bool(state.get("regex", False)),
             "scope": scope,
+            "inverted": bool(state.get("inverted", False)),
+            "inverted_unit": inverted_unit,
         }
         for key, value in self.find_state.items():
             self.settings.setValue(f"find/{key}", value)

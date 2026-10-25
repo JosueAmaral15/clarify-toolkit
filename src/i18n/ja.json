@@ -1,4 +1,11 @@
 {
+  "editor.chk_inverted_search": "反転検索",
+  "editor.find_inverted_replace_disabled": "反転検索では置換を使用できません。",
+  "editor.lbl_inverted_unit": "反転単位:",
+  "editor.inverted_unit_line": "行",
+  "editor.inverted_unit_token": "トークン",
+  "editor.inverted_unit_interval": "区間",
+  "editor.scope_only_comments": "コメントのみ",
   "editor.btn_find_clear": "クリア",
   "editor.btn_find_previous_value": "前の値",
   "editor.tooltip_find_previous_value": "このドキュメントの前の検索語と置換語を復元",

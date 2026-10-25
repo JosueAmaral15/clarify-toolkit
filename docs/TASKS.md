@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/25 - Home inteligente em linhas visuais
+**Last Update**: 2026/10/25 - comentarios e busca invertida no Find
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -11,10 +11,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
-tres delas agora concluidas,
+quatro delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **82 tarefas abertas** apos a conclusao de
-`CE-SMART-HOME-VISUAL-LINE-01`.
+canonica possui agora **81 tarefas abertas** apos a conclusao de
+`CE-FIND-SCOPE-NEGATION-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -144,13 +144,22 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   explicito recupera valores anteriores quando a abertura nao veio de selecao.
   O estado privado nao entra em QSettings, recovery ou sessao de pasta. Evidencia
   em [Clarify Editor Find State History](reports/CLARIFY_EDITOR_FIND_STATE_HISTORY_2026_10_25.md).
-- [ ] **CE-FIND-SCOPE-NEGATION-01: comentarios, inversao e Regex negativo.**
+- [x] **CE-FIND-SCOPE-NEGATION-01: comentarios, inversao e Regex negativo.**
   Acrescentar `Only Comments` aos escopos lexicos e um modo opt-in de busca
   invertida. Antes de implementar a inversao, confirmar se a unidade e linha,
   token ou intervalo; nao retornar cada lacuna entre matches. Regex validas com
   lookahead negativo, como `^(?!\s*def).*`, devem compilar e navegar sem crash,
   enquanto expressoes invalidas mostram erro sem mover cursor. Preservar limites,
   linhas inicial/final, Case/Whole Word, Replace seguro e fallback de parser.
+  Entregue em 25/10/2026: a decisao do usuario tornou `Line` a unidade padrao e
+  manteve `Token` e `Interval` como opcoes explicitas. Linha retorna linhas nao
+  vazias sem match; Token retorna palavras Unicode sem match; Intervalo agrega
+  blocos maximos de linhas consecutivas sem match, nunca lacunas entre caracteres.
+  `Only Comments` cobre Python, JS/TS e JSON5 sem confundir marcadores dentro de
+  strings. Regex multiline validas descartam apenas spans vazios; regex invalidas
+  continuam reportadas sem mover o cursor. Replace fica explicitamente
+  desabilitado na inversao para evitar escrita ambigua. Evidencia em
+  [Clarify Editor Find Scope Negation](reports/CLARIFY_EDITOR_FIND_SCOPE_NEGATION_2026_10_25.md).
 - [x] **CE-SMART-HOME-VISUAL-LINE-01: aplicar Home a linha visual atual.** Em
   texto com word-wrap, `Home` deve alternar entre a primeira coluna e o primeiro
   caractere nao branco da linha visual onde o cursor aparece, nao o inicio do
@@ -648,7 +657,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 865 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 866 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;

@@ -1,4 +1,11 @@
 {
+  "editor.chk_inverted_search": "反向搜索",
+  "editor.find_inverted_replace_disabled": "反向搜索已禁用替换。",
+  "editor.lbl_inverted_unit": "反向单位：",
+  "editor.inverted_unit_line": "行",
+  "editor.inverted_unit_token": "词元",
+  "editor.inverted_unit_interval": "区间",
+  "editor.scope_only_comments": "仅评论",
   "editor.btn_find_clear": "清除",
   "editor.btn_find_previous_value": "上一组值",
   "editor.tooltip_find_previous_value": "恢复此文档之前的搜索和替换内容",

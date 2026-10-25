@@ -5280,3 +5280,47 @@ Plano imediato:
   `CE-FIND-SCOPE-NEGATION-01`, still requires the user's choice between line,
   token or interval as the inverted-search unit. The Protocol2 worker remains
   active.
+
+## 2026-10-25 - CE-FIND-SCOPE-NEGATION-01 started
+
+- The user resolved the pending contract: inverted search offers Line, Token
+  and Interval units, with Line selected by default. Interval means maximal
+  contiguous groups of nonmatching lines, not every character gap between
+  positive matches. Token means bounded Unicode word tokens.
+- Work starts from published Smart Home checkpoint `203275e` on fresh branch
+  `COM-e83ad129-559d-4be4-952e-50b05d3904e7`, limited to comments scope,
+  inverted units and valid negative-regex behavior in Clarify Editor Find.
+- Inverted replacement will be explicitly disabled because replacing an entire
+  line, token or interval is semantically different from replacing the query
+  match and would otherwise risk destructive ambiguous writes. Ordinary
+  replacement remains unchanged.
+- The exact Clarify Protocol2 worker is active. Tests remain serial/offscreen
+  with temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and pytest
+  timeout 20 seconds; providers and user documents are excluded.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-25 - CE-FIND-SCOPE-NEGATION-01 completed
+
+- The user selected Line as the default inverted-search unit and requested
+  Token and Interval as explicit alternatives. Interval is implemented as
+  maximal contiguous groups of nonmatching lines, never arbitrary character
+  gaps; Token uses bounded Unicode words.
+- Find now exposes Only Comments for Python, JS/TS and JSON5, with quoted-string
+  markers excluded. Regex uses multiline anchors and omits zero-length spans,
+  allowing valid negative-lookahead expressions while retaining explicit errors
+  for invalid syntax without cursor movement.
+- Inversion composes with Case Sensitive, Whole Word, lexical scopes and line
+  bounds under existing document/query/time/result budgets. It refuses a
+  truncated positive universe. Replace controls are disabled with an explicit
+  status because replacing complement units would be ambiguous and destructive.
+- Guarded serial validation passed 119 distinct tests across six isolated
+  modules, with peak tree RSS 227.2 MiB and no native crash, timeout or guard
+  abort. One initial pure test had two expected JS offsets one column too high;
+  correcting that fixture required no product change.
+- Compilation, Pylint-E, scoped Black, seven JSON parses and diff checks passed.
+  Evidence is in
+  `docs/reports/CLARIFY_EDITOR_FIND_SCOPE_NEGATION_2026_10_25.md`. The canonical
+  queue now has 81 open tasks. `example.py` remains untracked and byte-identical
+  at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

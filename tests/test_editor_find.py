@@ -47,6 +47,26 @@ def test_python_string_and_variable_scopes_are_distinct():
     assert spans(variables) == [(0, 4), (20, 24)]
 
 
+def test_python_and_script_comment_scopes_ignore_string_markers():
+    python_text = 'value = "# string"  # comment marker\n'
+    python_comments = find_matches(
+        python_text,
+        "marker",
+        FindOptions(scope="comments"),
+        file_path="sample.py",
+    )
+    assert spans(python_comments) == [(30, 36)]
+
+    script_text = 'const value = "// string"; // line marker\n/* block marker */'
+    script_comments = find_matches(
+        script_text,
+        "marker",
+        FindOptions(scope="comments"),
+        file_path="sample.ts",
+    )
+    assert spans(script_comments) == [(35, 41), (51, 57)]
+
+
 def test_json_strings_and_keys_have_explicit_scopes():
     text = '{"name": "name", "other": 1}'
     strings = find_matches(text, "name", FindOptions(scope="strings"), file_path="sample.json")
@@ -77,10 +97,80 @@ def test_regex_groups_expand_for_replacement():
     assert replacement_for_match("item-12", r"item-(\d+)", r"value-\1", options) == "value-12"
 
 
-@pytest.mark.parametrize("query", ["(", "^", "a*"])
-def test_invalid_or_empty_matching_regex_is_rejected(query):
+def test_invalid_regex_is_rejected():
     with pytest.raises(FindValidationError):
-        find_matches("abc", query, FindOptions(regex=True))
+        find_matches("abc", "(", FindOptions(regex=True))
+
+
+def test_valid_negative_regex_skips_empty_matches_and_uses_lines():
+    text = "value = 1\ndef function():\n    pass\n"
+    result = find_matches(
+        text,
+        r"^(?!\s*def).*",
+        FindOptions(regex=True),
+        file_path="sample.py",
+    )
+    assert spans(result) == [(0, 9), (26, 34)]
+
+
+def test_inverted_line_is_default_and_respects_line_range():
+    text = "alpha\nbeta hit\ngamma\ndelta hit\n"
+    result = find_matches(text, "hit", FindOptions(inverted=True))
+    assert spans(result) == [(0, 5), (15, 20)]
+
+    bounded = find_matches(
+        text,
+        "hit",
+        FindOptions(inverted=True, start_line=2, end_line=3),
+    )
+    assert spans(bounded) == [(15, 20)]
+
+
+def test_inverted_token_returns_unicode_words_without_query_matches():
+    text = "hit alpha beta-hit ação gamma"
+    result = find_matches(
+        text,
+        "hit",
+        FindOptions(inverted=True, inverted_unit="token"),
+    )
+    assert [text[start:end] for start, end in spans(result)] == [
+        "alpha",
+        "beta",
+        "ação",
+        "gamma",
+    ]
+
+
+def test_inverted_interval_groups_nonmatching_lines_not_character_gaps():
+    text = "alpha\nbeta\nhit\ngamma\ndelta\nhit\n"
+    result = find_matches(
+        text,
+        "hit",
+        FindOptions(inverted=True, inverted_unit="interval"),
+    )
+    assert spans(result) == [(0, 10), (15, 26)]
+    assert [text[start:end] for start, end in spans(result)] == [
+        "alpha\nbeta",
+        "gamma\ndelta",
+    ]
+
+
+def test_inverted_units_validate_and_scope_candidates():
+    with pytest.raises(FindValidationError, match="unit"):
+        find_matches(
+            "alpha",
+            "hit",
+            FindOptions(inverted=True, inverted_unit="character-gap"),
+        )
+
+    text = 'name = "hit value"\nother = plain\n'
+    result = find_matches(
+        text,
+        "hit",
+        FindOptions(inverted=True, inverted_unit="token", scope="strings"),
+        file_path="sample.py",
+    )
+    assert [text[start:end] for start, end in spans(result)] == ["value"]
 
 
 def test_query_and_match_budgets_are_enforced():

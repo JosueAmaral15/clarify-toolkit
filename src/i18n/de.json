@@ -1,4 +1,11 @@
 {
+  "editor.chk_inverted_search": "Invertierte Suche",
+  "editor.find_inverted_replace_disabled": "Ersetzen ist bei der invertierten Suche deaktiviert.",
+  "editor.lbl_inverted_unit": "Invertierte Einheit:",
+  "editor.inverted_unit_line": "Zeile",
+  "editor.inverted_unit_token": "Token",
+  "editor.inverted_unit_interval": "Intervall",
+  "editor.scope_only_comments": "Nur Kommentare",
   "editor.btn_find_clear": "Leeren",
   "editor.btn_find_previous_value": "Vorherige Werte",
   "editor.tooltip_find_previous_value": "Vorherige Suche und Ersetzung für dieses Dokument wiederherstellen",

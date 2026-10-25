@@ -1,4 +1,11 @@
 {
+  "editor.chk_inverted_search": "Recherche inversée",
+  "editor.find_inverted_replace_disabled": "Le remplacement est désactivé pour la recherche inversée.",
+  "editor.lbl_inverted_unit": "Unité inversée :",
+  "editor.inverted_unit_line": "Ligne",
+  "editor.inverted_unit_token": "Jeton",
+  "editor.inverted_unit_interval": "Intervalle",
+  "editor.scope_only_comments": "Commentaires uniquement",
   "editor.btn_find_clear": "Effacer",
   "editor.btn_find_previous_value": "Valeurs précédentes",
   "editor.tooltip_find_previous_value": "Restaurer la recherche et le remplacement précédents de ce document",
