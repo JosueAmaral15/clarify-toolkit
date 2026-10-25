@@ -582,7 +582,11 @@ class EditorDock(BaseDock):
         "close_tab": {"text_key": "editor.btn_close_tab", "shortcut": QKeySequence.StandardKey.Close},
         "auto_save": {"text_key": "editor.chk_auto_save", "checkable": True},
         "undo": {"text_key": "editor.btn_undo", "shortcut": QKeySequence.StandardKey.Undo},
-        "redo": {"text_key": "editor.btn_redo", "shortcut": QKeySequence.StandardKey.Redo},
+        "redo": {
+            "text_key": "editor.btn_redo",
+            "shortcut_action": "redo",
+            "shortcut_context": Qt.ShortcutContext.WidgetWithChildrenShortcut,
+        },
         "cut": {"text_key": "editor.btn_cut", "shortcut": QKeySequence.StandardKey.Cut},
         "copy": {"text_key": "editor.btn_copy", "shortcut": QKeySequence.StandardKey.Copy},
         "paste": {"text_key": "editor.btn_paste", "shortcut": QKeySequence.StandardKey.Paste},
@@ -2294,6 +2298,10 @@ class EditorDock(BaseDock):
             )
             tab = self._tab_for_editor(watched)
             key = event.key()
+            if tab is not None and self._event_matches_shortcut(event, "redo"):
+                self._last_active_editor = watched
+                self.action_redo.trigger()
+                return True
             if (
                 tab is not None
                 and not watched.isReadOnly()
@@ -2329,6 +2337,15 @@ class EditorDock(BaseDock):
                 )
                 return True
         return super().eventFilter(watched, event)
+
+    @staticmethod
+    def _event_matches_shortcut(event, action_name: str) -> bool:
+        """Match one editor key event against the active configurable shortcut."""
+        pressed = QKeySequence(event.keyCombination())
+        return any(
+            pressed.matches(shortcut) == QKeySequence.SequenceMatch.ExactMatch
+            for shortcut in ShortcutManager.get_key_sequences(action_name)
+        )
 
     @staticmethod
     def _insert_indented_newline(editor) -> None:
@@ -2469,8 +2486,8 @@ class EditorDock(BaseDock):
         if shortcuts:
             action.setShortcuts([QKeySequence(item) for item in shortcuts])
         elif spec.get("shortcut_action"):
-            action.setShortcut(
-                ShortcutManager.get_key_sequence(spec["shortcut_action"])
+            action.setShortcuts(
+                ShortcutManager.get_key_sequences(spec["shortcut_action"])
             )
         else:
             shortcut = spec.get("shortcut")
@@ -2478,6 +2495,10 @@ class EditorDock(BaseDock):
                 if isinstance(shortcut, str):
                     shortcut = QKeySequence(shortcut)
                 action.setShortcut(shortcut)
+
+        shortcut_context = spec.get("shortcut_context")
+        if shortcut_context is not None:
+            action.setShortcutContext(shortcut_context)
 
         setattr(self, f"action_{action_id}", action)
         self._action_by_id[action_id] = action
@@ -2983,10 +3004,15 @@ class EditorDock(BaseDock):
         """Redo the last undone change in the current editor."""
         tab = self.tab_widget.currentWidget()
         if not tab or not hasattr(tab, 'editor'):
-            return
+            return False
 
-        tab.editor.redo()
+        editor = self._active_editor_for_tab(tab)
+        if editor.isReadOnly() or not editor.document().isRedoAvailable():
+            return False
+
+        editor.redo()
         self.lbl_status.setText(tr("editor.status_redone"))
+        return True
 
     def _copy_current_tab(self):
         """Copy current editor content to clipboard."""

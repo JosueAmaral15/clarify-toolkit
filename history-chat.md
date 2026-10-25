@@ -5098,3 +5098,45 @@ Plano imediato:
   provider or unrelated user file changed. GitHub still reports 31 findings on
   its default branch (2 critical, 17 high, 9 moderate and 3 low); these remain
   unresolved external security gates outside this bounded crash repair.
+
+## 2026-10-24 - CE-REDO-SHORTCUT-01 started
+
+- Work resumes from requested published checkpoint `5a3b264` on fresh branch
+  `COM-1ff420da-9c4b-4470-9d2d-497d190941db`, limited to the Clarify Editor
+  Redo action and shortcut contract. The subsequent automation journal commit
+  was inspected on the parent branch but is intentionally not part of this
+  checkpoint-derived branch.
+- AI Presence Monitor 0.10.7 strict validation passed: schema/database, five
+  hooks, native queue, monitor/reply services and automation controls are
+  healthy. The exact Clarify Protocol2 worker and session remain active.
+- Investigation will reproduce the current action/shortcut behavior before
+  editing, then audit active-view and split routing, configurable conflict
+  handling and duplicate activation. Tests remain serial and offscreen with
+  temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and pytest timeout
+  20 seconds; providers and user documents are excluded.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-24 - CE-REDO-SHORTCUT-01 completed
+
+- Pre-edit probes proved the Editor QAction exposed only `Ctrl+Y`, ignored a
+  custom Redo shortcut and always called the primary view even when the split
+  was active. Both conventional keys changed text only through native
+  `QTextEdit` handling and emitted the shared QAction zero times.
+- `ShortcutManager` now models `Ctrl+Shift+Z` as a portable Redo alias beside
+  `Ctrl+Y`, includes aliases in conflict detection and action registration, and
+  lets a customization replace the full default set. The Editor consumes a
+  matching key event once, triggers the same tool-scoped QAction and routes Redo
+  through the active primary/split view. Read-only and empty stacks are no-ops.
+- Guarded serial validation passed 112 distinct tests: 6 focused Redo, 3 alias
+  manager, 26 existing shortcut manager, 8 tabs/splits and 69 Editor dock. Peak
+  tree RSS was 226.0 MiB. The initial focused run passed its product assertions
+  but exposed a test-only parent-ownership teardown error; after explicit dock
+  detachment, the isolated rerun passed without native crash or guard abort.
+- Python compilation, Pylint-E, scoped Black checks and `git diff --check`
+  passed. A physical alternate keyboard layout was unavailable; portable Qt key
+  combinations were exercised instead. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_REDO_SHORTCUTS_2026_10_24.md`.
+- The canonical queue now has 84 open tasks. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

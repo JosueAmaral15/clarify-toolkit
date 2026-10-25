@@ -13,8 +13,8 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 uma delas agora concluida,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **85 tarefas abertas** apos a conclusao de
-`CRASH-20261021-OPTIONS-SIGNAL-01`.
+canonica possui agora **84 tarefas abertas** apos a conclusao de
+`CE-REDO-SHORTCUT-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -115,11 +115,18 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   privados agora normalizam os payloads e a troca de radio notifica apenas o
   novo modo marcado. Evidencia em
   [Options Signal Crash](reports/CRASH_OPTIONS_SIGNAL_2026_10_24.md).
-- [ ] **CE-REDO-SHORTCUT-01: corrigir e unificar os atalhos de Redo.** Fazer
+- [x] **CE-REDO-SHORTCUT-01: corrigir e unificar os atalhos de Redo.** Fazer
   `Ctrl+Shift+Z` funcionar no Clarify Editor e manter `Ctrl+Y` como alternativa,
   ambos acionando a mesma QAction sobre a view ativa, inclusive split. Integrar
   ao gerenciador configuravel e a deteccao de conflitos; cobrir layout de teclado,
   guia read-only, pilha vazia, undo/redo sucessivos e ausencia de acionamento duplo.
+  Entregue em 24/10/2026: `Ctrl+Y` e `Ctrl+Shift+Z` sao aliases portaveis do
+  mesmo QAction, registrados no `ShortcutManager`, substituidos em conjunto por
+  customizacao e reconhecidos na deteccao de conflitos. O filtro do editor
+  encaminha cada gesto uma unica vez, sem deixar o `QTextEdit` executar Redo em
+  paralelo, e a acao resolve somente a view ativa do split. Read-only e pilha
+  vazia sao no-op honestos; o contexto nao escapa da ferramenta. Evidencia em
+  [Clarify Editor Redo Shortcuts](reports/CLARIFY_EDITOR_REDO_SHORTCUTS_2026_10_24.md).
 - [ ] **CE-FIND-STATE-HISTORY-01: limpar, lembrar e retomar consultas por arquivo.**
   Adicionar `Clear` ao Find e Replace, preservando opcoes que nao forem parte do
   reset documentado. Guardar historico limitado e privado de consultas e replaces
@@ -625,7 +632,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 862 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 863 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;

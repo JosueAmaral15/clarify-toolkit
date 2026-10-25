@@ -88,6 +88,12 @@ class ShortcutManager:
         "about": ("Ctrl+Shift+I", "About Clarify"),
     }
 
+    # Additional defaults for actions that conventionally have more than one
+    # portable key sequence. A custom shortcut replaces the complete default set.
+    SHORTCUT_ALIASES = {
+        "redo": ("Ctrl+Shift+Z",),
+    }
+
     # OS-specific shortcuts that might conflict (for notification purposes)
     OS_SHORTCUTS = {
         "Linux": [
@@ -134,6 +140,17 @@ class ShortcutManager:
         return QKeySequence(shortcut) if shortcut else QKeySequence()
 
     @classmethod
+    def get_key_sequences(cls, action_name: str) -> List[QKeySequence]:
+        """Return every active key sequence for an action."""
+        shortcut, _ = cls.get_shortcut(action_name)
+        if not shortcut:
+            return []
+        shortcuts = [shortcut]
+        if action_name not in cls._custom_shortcuts:
+            shortcuts.extend(cls.SHORTCUT_ALIASES.get(action_name, ()))
+        return [QKeySequence(item) for item in shortcuts]
+
+    @classmethod
     def get_description(cls, action_name: str) -> str:
         """Get description for an action."""
         _, description = cls.get_shortcut(action_name)
@@ -142,9 +159,7 @@ class ShortcutManager:
     @classmethod
     def add_shortcut_to_action(cls, action: QAction, action_name: str) -> None:
         """Add shortcut to a QAction."""
-        key_seq = cls.get_key_sequence(action_name)
-        if not key_seq.isEmpty():
-            action.setShortcut(key_seq)
+        action.setShortcuts(cls.get_key_sequences(action_name))
 
     @classmethod
     def get_all_shortcuts(cls) -> Dict[str, Tuple[str, str]]:
@@ -203,8 +218,13 @@ class ShortcutManager:
         Returns list of conflicting action names.
         """
         conflicts = []
-        for action_name, (shortcut, _) in cls.get_all_shortcuts().items():
-            if shortcut.lower() == key_sequence.lower():
+        normalized = QKeySequence(key_sequence).toString(QKeySequence.PortableText).lower()
+        for action_name in cls.SHORTCUTS:
+            active = {
+                shortcut.toString(QKeySequence.PortableText).lower()
+                for shortcut in cls.get_key_sequences(action_name)
+            }
+            if normalized in active:
                 conflicts.append(action_name)
         return conflicts
 
@@ -273,6 +293,9 @@ class ShortcutManager:
                 if shortcut:
                     # Mark custom shortcuts with *
                     marker = "*" if action in cls._custom_shortcuts else " "
+                    if action not in cls._custom_shortcuts:
+                        aliases = cls.SHORTCUT_ALIASES.get(action, ())
+                        shortcut = " / ".join((shortcut, *aliases))
                     lines.append(f" {marker} {shortcut:25} {description}")
 
         lines.append("\n" + "=" * 70)
