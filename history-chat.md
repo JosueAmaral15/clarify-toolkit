@@ -5335,3 +5335,17 @@ Plano imediato:
   delivery.
 - No further continuation was dispatched. The exact Protocol2 worker remains
   active while the broader authorized queue still has open tasks.
+
+### Automation continuation after Find scope-negation
+
+- The user explicitly authorized continued automation. AI Presence Monitor
+  0.10.7 passed schema, database, five-hook, native-queue, service and control
+  checks; the exact Clarify worker remained active under Protocol2.
+- The next bounded Clarify Editor task is
+  `CE-FOLDER-SESSION-SWITCH-REGRESSION-01`, selected because it first proves the
+  existing A-to-B-to-A session contract and permits only reproduced fixes.
+- A dry-run validated the exact worker/session and native transport. One real
+  continuation then targeted session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1` from checkpoint `4118b96`. The command
+  returned `dispatch_started`, not delivery confirmation, so no retry was
+  attempted.
