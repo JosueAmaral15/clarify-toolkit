@@ -36,6 +36,7 @@ TEST_MODULES = {
     "editor-priority-stage5-sessions": "tests/gui/test_editor_priority_stage5_sessions.py",
     "editor-redo-shortcuts": "tests/gui/test_editor_redo_shortcuts.py",
     "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
+    "editor-smart-home-visual": "tests/gui/test_editor_smart_home_visual.py",
     "explorer-lifecycle": "tests/test_file_explorer_lifecycle.py",
     "google-translate-api": "tests/test_google_translate.py",
     "google-translate-dock": "tests/test_google_translate_dock.py",

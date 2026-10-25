@@ -5233,3 +5233,37 @@ Plano imediato:
   unvalidated implementation was not committed or pushed. The task remains open
   on local branch `COM-951ed0bf-7198-48c4-97c7-124fff0dea05`; the exact worker
   remains active. `example.py` remains untracked and byte-identical.
+
+### CE-SMART-HOME-VISUAL-LINE-01 resumed after user authorization
+
+- The user explicitly authorized resumption. Global RAM was 35.2 percent with
+  2461 MiB available; the exact Clarify Protocol2 worker remained active.
+- The previously prepared implementation and seven focused regressions were
+  intact and `git diff --check` passed. Validation resumes with the same serial
+  offscreen probe and resource limits; the prior guard termination is not
+  counted as passing or failing product evidence.
+
+## 2026-10-25 - CE-SMART-HOME-VISUAL-LINE-01 completed
+
+- Home now derives the current wrapped visual range from QTextLayout instead of
+  jumping to the start/indentation of the whole logical block. Positions are
+  clamped, unavailable layouts retain the prior fallback and whitespace-only
+  visual segments stay at their own start.
+- Home and Shift+Home share the same visual destinations; selection anchors,
+  tabs/spaces, empty blocks, bidi text, resize/zoom, read-only views and active
+  splits are covered. Cursor movement leaves text, document revision and undo
+  availability unchanged.
+- After the user-authorized resume at 35.2 percent global RAM, guarded serial
+  validation passed 97 distinct tests across five isolated Qt modules. Peak
+  tree RSS was 225.6 MiB; no native crash, timeout or guard abort occurred in
+  the resumed run. The earlier 85-percent guard termination remains documented
+  and is not counted as test evidence.
+- The first resumed focused run identified only an incorrect test assumption:
+  two tabs wrapped inside a 150 px viewport. The unwrapped compatibility case
+  now explicitly uses 500 px; the product implementation was unchanged and the
+  rerun passed.
+- Compilation, Pylint-E, scoped Black and diff checks passed. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_SMART_HOME_VISUAL_LINE_2026_10_25.md`. The
+  canonical queue now has 82 open tasks. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

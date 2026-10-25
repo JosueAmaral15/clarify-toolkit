@@ -2543,14 +2543,40 @@ class EditorDock(BaseDock):
 
     @staticmethod
     def _move_to_smart_home(editor, *, keep_anchor: bool) -> None:
-        """Toggle between first non-blank and physical start of the line."""
+        """Toggle within the current visual line without editing the document."""
         cursor = editor.textCursor()
         block = cursor.block()
-        line = block.text()
-        first_text_column = len(line) - len(line.lstrip(" \t"))
-        current_column = max(0, cursor.position() - block.position())
+        text = block.text()
+        current_column = max(
+            0,
+            min(len(text), cursor.position() - block.position()),
+        )
+        visual_start = 0
+        visual_end = len(text)
+        layout = block.layout()
+        if layout is not None and layout.lineCount() > 0:
+            visual_line = layout.lineForTextPosition(current_column)
+            if visual_line.isValid():
+                visual_start = max(0, min(len(text), visual_line.textStart()))
+                visual_end = max(
+                    visual_start,
+                    min(
+                        len(text),
+                        visual_start + visual_line.textLength(),
+                    ),
+                )
+
+        visual_text = text[visual_start:visual_end]
+        stripped_visual_text = visual_text.lstrip(" \t")
+        first_text_column = (
+            visual_start + len(visual_text) - len(stripped_visual_text)
+            if stripped_visual_text
+            else visual_start
+        )
         target_column = (
-            0 if current_column == first_text_column else first_text_column
+            visual_start
+            if current_column == first_text_column
+            else first_text_column
         )
         move_mode = (
             QTextCursor.MoveMode.KeepAnchor

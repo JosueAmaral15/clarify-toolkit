@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/25 - estado e historico privado do Find/Replace
+**Last Update**: 2026/10/25 - Home inteligente em linhas visuais
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -11,10 +11,10 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 Pedido mais recente do usuario, priorizado antes das **33 tarefas anteriormente
 abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
-duas delas agora concluidas,
+tres delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **83 tarefas abertas** apos a conclusao de
-`CE-FIND-STATE-HISTORY-01`.
+canonica possui agora **82 tarefas abertas** apos a conclusao de
+`CE-SMART-HOME-VISUAL-LINE-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -151,11 +151,18 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   lookahead negativo, como `^(?!\s*def).*`, devem compilar e navegar sem crash,
   enquanto expressoes invalidas mostram erro sem mover cursor. Preservar limites,
   linhas inicial/final, Case/Whole Word, Replace seguro e fallback de parser.
-- [ ] **CE-SMART-HOME-VISUAL-LINE-01: aplicar Home a linha visual atual.** Em
+- [x] **CE-SMART-HOME-VISUAL-LINE-01: aplicar Home a linha visual atual.** Em
   texto com word-wrap, `Home` deve alternar entre a primeira coluna e o primeiro
   caractere nao branco da linha visual onde o cursor aparece, nao o inicio do
   bloco/paragrafo logico. Preservar o contrato entregue para linhas sem wrap,
   `Shift+Home`, tabs, bidi, zoom, resize, split e linhas visuais vazias.
+  Entregue em 25/10/2026: `Home` deriva o intervalo visual atual pelo
+  `QTextLayout`, alterna entre seu inicio e o primeiro caractere nao branco e
+  usa o comportamento logico anterior somente quando o layout ainda nao esta
+  disponivel. Offsets sao limitados ao bloco; segmentos apenas com whitespace
+  permanecem em seu proprio inicio. `Shift+Home` conserva a ancora e nenhuma
+  rota altera texto, revisao ou pilha de undo. Evidencia em
+  [Clarify Editor Smart Home Visual Line](reports/CLARIFY_EDITOR_SMART_HOME_VISUAL_LINE_2026_10_25.md).
 - [ ] **FE-COMPACT-ISOLATION-01: impedir opcoes Advanced ocultas no modo Compact.**
   O plano imutavel de uma pesquisa Compact deve usar somente controles visiveis e
   defaults documentados; valores antigos de filtros/condicoes Advanced nao podem
@@ -641,7 +648,7 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
-  `docs/`.** Os 864 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
+  `docs/`.** Os 865 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
   Inventariar esses marcadores por documento e classifica-los como evidencia
   historica, obsoleto, duplicado, bloqueado ou requisito canonico ainda valido;
