@@ -5198,3 +5198,15 @@ Plano imediato:
   findings on its default branch (3 critical, 20 high, 9 moderate and 3 low);
   these unresolved external security gates remain outside this bounded Editor
   repair.
+
+### Automation continuation journal
+
+- `CE-FIND-SCOPE-NEGATION-01` remains pending because the user must define
+  whether inverted search operates on lines, tokens or intervals. It was not
+  implemented or dispatched automatically.
+- A dry-run validated one native continuation for exact worker
+  `notebook-josue:codex:project=clarify-b09a84f1` and session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`. One real dispatch then targeted the
+  next independent task, `CE-SMART-HOME-VISUAL-LINE-01`, from checkpoint
+  `094c65c`. The command returned `dispatch_started`; delivery was not yet
+  confirmed, so no retry was attempted.
