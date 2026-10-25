@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/25 - comentarios e busca invertida no Find
+**Last Update**: 2026/10/25 - isolamento de sessoes de pasta no Clarify Editor
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -13,8 +13,8 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 quatro delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **81 tarefas abertas** apos a conclusao de
-`CE-FIND-SCOPE-NEGATION-01`.
+canonica possui agora **80 tarefas abertas** apos a conclusao de
+`CE-FOLDER-SESSION-SWITCH-REGRESSION-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -190,11 +190,19 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   compativeis oferecem `Run in Background`, pausa/cancelamento cooperativos e
   retorno ao owner sem bloquear a GUI. Nao inventar ETA sem amostras; limpar jobs
   encerrados por politica limitada e integrar shutdown/lifecycle de `APP-THREAD-01`.
-- [ ] **CE-FOLDER-SESSION-SWITCH-REGRESSION-01: provar troca entre projetos.**
+- [x] **CE-FOLDER-SESSION-SWITCH-REGRESSION-01: provar troca entre projetos.**
   Validar o contrato entregue de sessoes ao fechar pasta A, abrir B e voltar a A:
   ordem, guia ativa, splits e buffers dirty recuperaveis devem permanecer isolados
   por raiz. Nenhuma aba de A pode aparecer em B; falha/quota/path removido deve ser
   reportado sem perder snapshots. Corrigir somente defeitos reproduzidos.
+  Entregue em 25/10/2026: cada aba de arquivo recebe a raiz canonica que a possui;
+  fechar ou trocar a pasta salva a sessao e desacopla somente as abas daquela raiz,
+  sem descartar seus snapshots. A reabertura recupera ordem, guia ativa, split e
+  conteudo dirty; referencias limpas reutilizam a identidade de recovery sem criar
+  copias sucessivas. Falhas de checkpoint abortam a troca antes de alterar a UI, e
+  origem removida ou erro de leitura sao informados sem apagar snapshots validos.
+  Evidencia em
+  [Clarify Editor Folder Session Switch](reports/CLARIFY_EDITOR_FOLDER_SESSION_SWITCH_2026_10_25.md).
 - [ ] **CE-TAB-COPY-PATH-01: copiar caminhos pelo menu das guias.** Adicionar
   `Copy Absolute Path` e `Copy Relative Path` ao menu contextual de arquivo, usando
   a raiz canonica do Explorer e o mesmo helper seguro do painel lateral. Desabilitar

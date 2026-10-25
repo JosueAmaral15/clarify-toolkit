@@ -5335,3 +5335,43 @@ Plano imediato:
   delivery.
 - No further continuation was dispatched. The exact Protocol2 worker remains
   active while the broader authorized queue still has open tasks.
+
+## 2026-10-25 - CE-FOLDER-SESSION-SWITCH-REGRESSION-01 started
+
+- Work starts from published checkpoint `4118b96` on fresh branch
+  `COM-355494f1-aadf-4ce5-91d1-bc033af5ff7a`, limited to proving and, only if
+  reproduced, repairing Clarify Editor folder-session switching. The subsequent
+  dispatch journal `f568c03` was verified but intentionally excluded.
+- AI Presence Monitor 0.10.7 passed schema/database, five hooks, native queue,
+  service and automation-control checks. The exact Clarify worker is active
+  under Protocol2; global RAM was 43.6 percent.
+- The audit will use only temporary folder A/B roots and files. It must cover
+  canonical-root isolation, tab order, active tab, split ownership, dirty-buffer
+  recovery, removed paths, quotas, IO errors and watcher cleanup without changing
+  Save/Discard/Cancel, temporary notes or completed Find/Home behavior.
+- Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds; providers and user documents
+  are excluded. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-25 - CE-FOLDER-SESSION-SWITCH-REGRESSION-01 completed
+
+- The pre-edit guarded regression reproduced the defect: after changing from
+  folder A to B, both A tabs remained visible (`2`, expected `0`). The source
+  audit also proved that a failed recovery checkpoint did not abort the root
+  change.
+- Tabs are now owned by a canonical workspace root. Folder close/switch saves
+  the bounded session, detaches only that root's tabs without discarding
+  snapshots, and restores order, active tab, split and dirty contents when the
+  root returns. Matching clean references reuse their recovery identity.
+- Checkpoint quota/IO failures abort before UI mutation. Removed paths and
+  recovery-list IO failures are reported while valid snapshots remain intact;
+  timers and watchers for detached tabs are cleaned without invoking the
+  individual-tab discard path.
+- Guarded serial validation passed 184 distinct tests across ten isolated Qt
+  modules. Peak tree RSS was 227.2 MiB; no native crash, timeout or guard abort
+  occurred. Compilation, Pylint-E and diff checks passed. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_FOLDER_SESSION_SWITCH_2026_10_25.md`; the
+  canonical queue now has 80 open tasks.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

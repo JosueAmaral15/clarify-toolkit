@@ -36,6 +36,8 @@ TEST_MODULES = {
     "editor-priority-stage3": "tests/gui/test_editor_priority_stage3.py",
     "editor-priority-stage4-tabs": "tests/gui/test_editor_priority_stage4_tabs.py",
     "editor-priority-stage5-sessions": "tests/gui/test_editor_priority_stage5_sessions.py",
+    "editor-priority-stage5-notes": "tests/gui/test_editor_priority_stage5_notes.py",
+    "editor-recovery-lifecycle": "tests/gui/test_editor_recovery_lifecycle.py",
     "editor-redo-shortcuts": "tests/gui/test_editor_redo_shortcuts.py",
     "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
     "editor-smart-home-visual": "tests/gui/test_editor_smart_home_visual.py",

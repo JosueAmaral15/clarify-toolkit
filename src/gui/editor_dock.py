@@ -1262,10 +1262,19 @@ class EditorDock(BaseDock):
             getattr(self, "explorer_root_path", "")
         )
         changing_root = bool(previous and previous != normalized)
-        checkpoint_succeeded = True
-        if changing_root and self._folder_session_ready and save_previous:
-            checkpoint_succeeded = self._checkpoint_unsaved_tabs()
-            self._save_folder_session(previous)
+        switching_session = (
+            changing_root
+            and self._folder_session_ready
+            and self.folder_sessions_enabled
+        )
+        if switching_session:
+            if not self._checkpoint_unsaved_tabs():
+                self.lbl_status.setText(tr("editor.status_folder_session_failed"))
+                return False
+            if save_previous and not self._save_folder_session(previous):
+                self.lbl_status.setText(tr("editor.status_folder_session_failed"))
+                return False
+            self._detach_folder_tabs(previous)
         root_index = self.explorer_model.setRootPath(normalized)
         self.explorer_tree.setRootIndex(root_index)
         self.explorer_root_path = normalized
@@ -1281,8 +1290,6 @@ class EditorDock(BaseDock):
             and self.folder_sessions_enabled
         ):
             self._restore_folder_session(normalized)
-        if not checkpoint_succeeded:
-            self.lbl_status.setText(tr("editor.status_folder_session_failed"))
         return os.path.isdir(normalized)
 
     def _open_explorer_folder(self) -> None:
@@ -1298,24 +1305,15 @@ class EditorDock(BaseDock):
                 self._set_explorer_visible(True)
 
     def _close_explorer_folder(self) -> bool:
-        """Checkpoint and detach the current Explorer root without closing tabs."""
+        """Checkpoint and detach the current Explorer root without losing buffers."""
         current = self._normalized_file_path(self.explorer_root_path)
         home = self._normalized_file_path(str(Path.home()))
         if not current or current == home:
             return False
-        checkpoint_succeeded = self._checkpoint_unsaved_tabs()
-        self._save_folder_session(current)
-        if not self._set_explorer_root(
-            home, restore_session=False, save_previous=False
-        ):
+        if not self._set_explorer_root(home, restore_session=False):
+            self.lbl_status.setText(tr("editor.status_folder_closed_recovery_failed"))
             return False
-        self.lbl_status.setText(
-            tr(
-                "editor.status_folder_closed"
-                if checkpoint_succeeded
-                else "editor.status_folder_closed_recovery_failed"
-            )
-        )
+        self.lbl_status.setText(tr("editor.status_folder_closed"))
         return True
 
     def _sync_explorer_root_index(self, _loaded_path: str) -> None:
@@ -1913,6 +1911,63 @@ class EditorDock(BaseDock):
             or getattr(tab, "_clarify_recovery_source_path", "")
         )
 
+    def _tab_folder_root(self, tab) -> str:
+        """Return the canonical workspace owner assigned to one editor tab."""
+        if tab is None:
+            return ""
+        if hasattr(tab, "_clarify_folder_root"):
+            return self._canonical_path(getattr(tab, "_clarify_folder_root", ""))
+        identity = self._tab_folder_identity(tab)
+        current_root = self._canonical_path(self.explorer_root_path)
+        if identity and self._path_is_inside_root(identity, current_root):
+            setattr(tab, "_clarify_folder_root", current_root)
+            return current_root
+        return ""
+
+    def _assign_tab_folder_root(self, tab, root: str | None = None) -> str:
+        """Assign ownership only when a tab identity is inside the workspace."""
+        canonical_root = self._canonical_path(root or self.explorer_root_path)
+        identity = self._tab_folder_identity(tab)
+        assigned = (
+            canonical_root
+            if identity and self._path_is_inside_root(identity, canonical_root)
+            else ""
+        )
+        setattr(tab, "_clarify_folder_root", assigned)
+        return assigned
+
+    def _detach_folder_tabs(self, root: str) -> int:
+        """Remove one workspace's tabs while retaining their recovery snapshots."""
+        canonical_root = self._canonical_path(root)
+        tabs = [
+            tab
+            for tab in self._all_tab_objects()
+            if self._tab_folder_root(tab) == canonical_root
+        ]
+        if self._split_source_tab in tabs:
+            self._close_split_view()
+        for tab in reversed(tabs):
+            snapshot_id = getattr(tab, "_clarify_recovery_id", "")
+            if snapshot_id:
+                self._restored_recovery_ids.discard(snapshot_id)
+            self._discard_find_history(tab)
+            self._clear_tab_disk_state(tab, refresh_watchers=False)
+            for timer in tab.findChildren(QTimer):
+                timer.stop()
+            index = self.tab_widget.indexOf(tab)
+            if index >= 0:
+                self.tab_widget.removeTab(index)
+            tab.deleteLater()
+        self._last_active_editor = (
+            getattr(self.tab_widget.currentWidget(), "editor", None)
+            if self.tab_widget.count()
+            else None
+        )
+        self._refresh_external_file_watchers()
+        self._refresh_editor_menus()
+        self._persist_tab_order()
+        return len(tabs)
+
     def _save_folder_session(self, root: str | None = None) -> bool:
         """Save bounded references, active identity and shared split layout."""
         if (
@@ -1928,7 +1983,7 @@ class EditorDock(BaseDock):
         files = []
         for tab in self._all_tab_objects():
             path = self._tab_folder_identity(tab)
-            if path and self._path_is_inside_root(path, canonical_root):
+            if path and self._tab_folder_root(tab) == canonical_root:
                 if path not in files:
                     files.append(path)
             if len(files) >= self.MAX_FOLDER_SESSION_FILES:
@@ -1973,16 +2028,23 @@ class EditorDock(BaseDock):
             None,
         )
 
-    def _recovery_buffers_by_source(self) -> dict[str, object]:
-        """Index only dirty buffer snapshots; references reopen from disk."""
+    def _recovery_snapshots_by_source(self) -> dict[str, object] | None:
+        """Index snapshots by source, preferring a dirty buffer over a reference."""
         try:
             snapshots = self.recovery_store.list()
         except (OSError, RecoverySnapshotError):
-            return {}
+            self.lbl_status.setText(
+                tr("editor.status_recovery_skipped").format(count=1)
+            )
+            return None
         indexed = {}
         for snapshot in snapshots:
             source = self._canonical_path(snapshot.file_path)
-            if snapshot.kind == "buffer" and source and source not in indexed:
+            current = indexed.get(source)
+            if source and (
+                current is None
+                or (snapshot.kind == "buffer" and current.kind != "buffer")
+            ):
                 indexed[source] = snapshot
         return indexed
 
@@ -1994,7 +2056,9 @@ class EditorDock(BaseDock):
         if not session:
             return 0
         canonical_root = self._canonical_path(root)
-        recovery = self._recovery_buffers_by_source()
+        recovery = self._recovery_snapshots_by_source()
+        if recovery is None:
+            return 0
         tabs_by_path = {
             self._tab_folder_identity(tab): tab for tab in self._all_tab_objects()
         }
@@ -2008,7 +2072,7 @@ class EditorDock(BaseDock):
                     continue
                 tab = tabs_by_path.get(path)
                 snapshot = recovery.get(path)
-                if tab is None and snapshot is not None:
+                if tab is None and snapshot is not None and snapshot.kind == "buffer":
                     if snapshot.snapshot_id in self._restored_recovery_ids:
                         skipped += 1
                         continue
@@ -2028,6 +2092,14 @@ class EditorDock(BaseDock):
                 if tab is None:
                     skipped += 1
                     continue
+                self._assign_tab_folder_root(tab, canonical_root)
+                if (
+                    snapshot is not None
+                    and snapshot.kind == "reference"
+                    and tuple(snapshot.source_signature or ())
+                    == tuple(self.recovery_store.source_signature(path) or ())
+                ):
+                    setattr(tab, "_clarify_recovery_id", snapshot.snapshot_id)
                 tabs_by_path[path] = tab
                 restored += 1
 
@@ -5491,6 +5563,7 @@ class EditorDock(BaseDock):
                 tab.file_path = None
 
             self._prepare_tab_for_dock(tab)
+            self._assign_tab_folder_root(tab)
             self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
             if not edit_only:
                 self._track_tab_disk_state(tab)
