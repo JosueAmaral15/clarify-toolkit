@@ -5198,3 +5198,38 @@ Plano imediato:
   findings on its default branch (3 critical, 20 high, 9 moderate and 3 low);
   these unresolved external security gates remain outside this bounded Editor
   repair.
+
+## 2026-10-25 - CE-SMART-HOME-VISUAL-LINE-01 started
+
+- Work resumes from published checkpoint `094c65c` on fresh branch
+  `COM-951ed0bf-7198-48c4-97c7-124fff0dea05`, limited to Home and Shift+Home on
+  the current QTextLayout visual line under word wrap. The later automation
+  journal on the parent work branch is intentionally excluded.
+- AI Presence Monitor 0.10.7 validation passed: schema/database, five hooks,
+  native queue, monitor/reply services and automation controls are healthy. The
+  exact Clarify worker is active under Protocol2.
+- Investigation will reproduce the logical-block defect before editing and
+  audit QTextLayout line geometry, tabs, empty visual lines, bidi, zoom/resize,
+  active splits, selection anchors, read-only behavior and undo invariants.
+  Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds; providers and user documents
+  are excluded.
+- `CE-FIND-SCOPE-NEGATION-01` remains outside this stage pending the user's
+  choice of inversion unit. `example.py` remains untracked and byte-identical
+  at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### CE-SMART-HOME-VISUAL-LINE-01 stopped by resource guard
+
+- The pre-edit isolated reproduction proved the defect: on a wrapped paragraph,
+  the cursor was on the second visual line starting at block column 21, but the
+  old Home implementation targeted logical-block column 4.
+- A bounded implementation and seven focused regressions were prepared locally.
+  The first guarded Qt run was terminated by the probe with `SIGTERM` because
+  global system RAM reached the configured 85 percent barrier. The test process
+  tree itself peaked at only 110.4 MiB and emitted no pytest result, native crash
+  or Python failure before termination.
+- Per the explicit stop-on-guard instruction, the test was not retried and the
+  unvalidated implementation was not committed or pushed. The task remains open
+  on local branch `COM-951ed0bf-7198-48c4-97c7-124fff0dea05`; the exact worker
+  remains active. `example.py` remains untracked and byte-identical.
