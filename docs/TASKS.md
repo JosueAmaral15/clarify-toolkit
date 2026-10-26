@@ -592,13 +592,21 @@ ser implementado em etapa limitada, testada e documentada.
   Editor acompanha a troca de idioma em runtime. As chaves diretamente usadas
   pela barra estao completas nos sete catalogos. Evidencia em
   [Clarify Editor Quick Toolbar](reports/CLARIFY_EDITOR_QUICK_TOOLBAR_2026_10_26.md).
-- [ ] **CE-RECOVERY-REOPEN-01: restaurar integralmente buffers nao salvos.**
+- [x] **CE-RECOVERY-REOPEN-01: restaurar integralmente buffers nao salvos.**
   Validar e corrigir a integracao de `CE-REC-01` para que toda alteracao nao salva
   e toda aba `Untitled *` existente ao fechar o Clarify Editor ou o Clarify volte
   na proxima abertura, sem sobrescrever originais. Manter restauracao/descarte
   explicitos, limites de 2 MiB por documento, 20 documentos e 20 MiB totais,
   escrita privada/atomica e tratamento honesto de quota, corrupcao e IO; cobrir
   fechamento imediato, tool-tab, janela principal, `aboutToQuit` e nova instancia.
+  Entregue em 26/10/2026: uma oferta nao modal de inicializacao apresenta os
+  snapshots ainda nao representados pela sessao de pasta ou por uma guia ativa,
+  com acoes explicitas de restaurar, descartar ou manter para depois. Buffers
+  dirty salvos e `Untitled` reaparecem como copias nao vinculadas, sem escrever
+  na origem; referencias removidas/alteradas e falhas de IO permanecem retidas e
+  sao informadas. O armazenamento existente, suas cotas e os contratos de
+  fechamento/cleanup foram preservados. Evidencia em
+  [Clarify Editor Recovery Reopen](reports/CLARIFY_EDITOR_RECOVERY_REOPEN_2026_10_26.md).
 - [ ] **APP-SHORTCUTS-F1-01: tela funcional de atalhos pelo F1.** Fazer `F1`
   abrir uma tela nao bloqueante e pesquisavel com todos os atalhos efetivamente
   registrados, agrupados por contexto e atualizados apos customizacao. Reutilizar

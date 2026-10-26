@@ -42,6 +42,8 @@ TEST_MODULES = {
     "editor-priority-stage5-notes": "tests/gui/test_editor_priority_stage5_notes.py",
     "editor-quick-toolbar": "tests/gui/test_editor_quick_toolbar.py",
     "editor-recovery-lifecycle": "tests/gui/test_editor_recovery_lifecycle.py",
+    "editor-recovery-reopen": "tests/gui/test_editor_recovery_reopen.py",
+    "editor-recovery-store": "tests/test_editor_recovery.py",
     "editor-redo-shortcuts": "tests/gui/test_editor_redo_shortcuts.py",
     "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
     "editor-smart-home-visual": "tests/gui/test_editor_smart_home_visual.py",

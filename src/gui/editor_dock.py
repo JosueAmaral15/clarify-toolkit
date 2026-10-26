@@ -1202,6 +1202,7 @@ class EditorDock(BaseDock):
         self._restored_recovery_ids: set[str] = set()
         self._recovery_suspended = False
         self._recovery_failures = 0
+        self._recovery_offer_dismissed = False
         self._last_reference_update = None
         self._find_history_by_buffer: dict[str, _EditorFindHistory] = {}
 
@@ -1210,6 +1211,7 @@ class EditorDock(BaseDock):
         self._recovery_lifecycle = EditorRecoveryLifecycle(self)
         self._folder_session_ready = True
         self._restore_folder_session(self.explorer_root_path)
+        self._refresh_recovery_offer()
         if self._temp_note_startup_failure:
             self.lbl_status.setText(tr("editor.status_temp_note_failure"))
 
@@ -1250,6 +1252,8 @@ class EditorDock(BaseDock):
 
         self.layout.addLayout(menu_row)
         self.layout.addWidget(self.quick_toolbar)
+        self._setup_recovery_offer()
+        self.layout.addWidget(self.recovery_offer)
 
         # Tab widget for multiple files
         self.editor_splitter = QSplitter(Qt.Horizontal)
@@ -1363,6 +1367,31 @@ class EditorDock(BaseDock):
             action.setIcon(QIcon.fromTheme(theme_name, fallback_icon))
             self.quick_toolbar.addAction(action)
 
+    def _setup_recovery_offer(self) -> None:
+        """Create a non-modal startup decision bar for pending snapshots."""
+        self.recovery_offer = QFrame(self.main_widget)
+        self.recovery_offer.setObjectName("editor_recovery_offer")
+        self.recovery_offer.setFrameShape(QFrame.Shape.StyledPanel)
+        self.recovery_offer.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        offer_layout = QHBoxLayout(self.recovery_offer)
+        offer_layout.setContentsMargins(8, 4, 8, 4)
+        self.lbl_recovery_offer = QLabel(self.recovery_offer)
+        self.lbl_recovery_offer.setTextFormat(Qt.TextFormat.PlainText)
+        self.lbl_recovery_offer.setWordWrap(True)
+        offer_layout.addWidget(self.lbl_recovery_offer, 1)
+        self.btn_recovery_offer_recover = QPushButton(self.recovery_offer)
+        self.btn_recovery_offer_discard = QPushButton(self.recovery_offer)
+        self.btn_recovery_offer_cancel = QPushButton(self.recovery_offer)
+        offer_layout.addWidget(self.btn_recovery_offer_recover)
+        offer_layout.addWidget(self.btn_recovery_offer_discard)
+        offer_layout.addWidget(self.btn_recovery_offer_cancel)
+        self.recovery_offer.setProperty("pending_count", 0)
+        self.recovery_offer.hide()
+        self._retranslate_recovery_offer()
+
     def _refresh_quick_toolbar_accessibility(self) -> None:
         """Keep full translated names available while button text stays hidden."""
         self.quick_toolbar.setAccessibleName(tr("editor.quick_toolbar"))
@@ -1376,6 +1405,25 @@ class EditorDock(BaseDock):
                 continue
             button.setAccessibleName(action.text())
             button.setAccessibleDescription(action.toolTip())
+
+    def _retranslate_recovery_offer(self) -> None:
+        """Refresh the recovery bar without reading persistent storage."""
+        count = int(self.recovery_offer.property("pending_count") or 0)
+        self.lbl_recovery_offer.setText(
+            tr("editor.recovery_dialog_message").format(count=count)
+        )
+        controls = (
+            (self.btn_recovery_offer_recover, "editor.btn_recover_all"),
+            (self.btn_recovery_offer_discard, "editor.btn_discard_all"),
+            (self.btn_recovery_offer_cancel, "editor.btn_cancel"),
+        )
+        for button, key in controls:
+            text = tr(key)
+            button.setText(text)
+            button.setAccessibleName(text)
+        self.recovery_offer.setAccessibleName(
+            tr("editor.recovery_dialog_title")
+        )
 
     def _setup_explorer_panel(self) -> None:
         """Create a lazy filesystem navigation tree for the editor sidebar."""
@@ -2028,6 +2076,16 @@ class EditorDock(BaseDock):
 
         for action_id, handler in handlers.items():
             self._action_by_id[action_id].triggered.connect(handler)
+
+        self.btn_recovery_offer_recover.clicked.connect(
+            self._recover_pending_snapshots
+        )
+        self.btn_recovery_offer_discard.clicked.connect(
+            self._discard_pending_snapshots
+        )
+        self.btn_recovery_offer_cancel.clicked.connect(
+            self._dismiss_recovery_offer
+        )
 
         self._file_watcher.fileChanged.connect(self._on_watched_file_changed)
         self._file_watcher.directoryChanged.connect(self._on_watched_directory_changed)
@@ -3162,6 +3220,7 @@ class EditorDock(BaseDock):
         self.menu_recent_files.setTitle(tr("editor.menu_recent_files"))
         self.menu_recent_folders.setTitle(tr("editor.menu_recent_folders"))
         self._apply_tooltips()
+        self._retranslate_recovery_offer()
         self._retranslate_status_info(language)
 
     def _indent_unit(self) -> str:
@@ -5522,15 +5581,90 @@ class EditorDock(BaseDock):
         self._find_history_by_buffer.clear()
         super().closeEvent(event)
 
+    def _pending_recovery_snapshots(self):
+        """Return snapshots not already represented by this Editor instance."""
+        try:
+            active_ids = {
+                getattr(self.tab_widget.widget(index), "_clarify_recovery_id", "")
+                for index in range(self.tab_widget.count())
+            }
+            active_ids.discard("")
+            return [
+                snapshot
+                for snapshot in self.recovery_store.list()
+                if snapshot.snapshot_id
+                not in self._restored_recovery_ids | active_ids
+            ]
+        except (OSError, RecoverySnapshotError):
+            self.lbl_status.setText(
+                tr("editor.status_recovery_skipped").format(count=1)
+            )
+            return None
+
+    def _refresh_recovery_offer(self) -> bool:
+        """Expose pending snapshots without blocking the Editor workspace."""
+        snapshots = self._pending_recovery_snapshots()
+        count = len(snapshots) if snapshots is not None else 0
+        self.recovery_offer.setProperty("pending_count", count)
+        self._retranslate_recovery_offer()
+        visible = bool(count and not self._recovery_offer_dismissed)
+        self.recovery_offer.setVisible(visible)
+        return visible
+
+    def _recover_pending_snapshots(self) -> int:
+        """Restore every available pending snapshot as an unsaved tab."""
+        snapshots = self._pending_recovery_snapshots()
+        if snapshots is None:
+            self.recovery_offer.hide()
+            return 0
+        recovered = sum(
+            self._restore_recovery_snapshot(snapshot) is not None
+            for snapshot in snapshots
+        )
+        failed = len(snapshots) - recovered
+        self._recovery_offer_dismissed = False
+        self._refresh_recovery_offer()
+        if failed:
+            self.lbl_status.setText(
+                tr("editor.recovery_unavailable").format(count=failed)
+            )
+        else:
+            self.lbl_status.setText(
+                tr("editor.status_recovered_documents").format(count=recovered)
+            )
+        return recovered
+
+    def _discard_pending_snapshots(self) -> int:
+        """Discard only snapshots not represented by active tabs."""
+        snapshots = self._pending_recovery_snapshots()
+        if snapshots is None:
+            self.recovery_offer.hide()
+            return 0
+        discarded = 0
+        failures = 0
+        for snapshot in snapshots:
+            try:
+                self.recovery_store.discard(snapshot.snapshot_id)
+                discarded += 1
+            except (OSError, RecoverySnapshotError):
+                failures += 1
+        self._recovery_offer_dismissed = False
+        self._refresh_recovery_offer()
+        if failures:
+            self.lbl_status.setText(
+                tr("editor.status_recovery_skipped").format(count=failures)
+            )
+        return discarded
+
+    def _dismiss_recovery_offer(self) -> None:
+        """Keep pending snapshots for a later explicit decision."""
+        self._recovery_offer_dismissed = True
+        self.recovery_offer.hide()
+
     def _show_recovery_dialog(self) -> None:
         """Offer to recover or discard all currently available snapshots."""
-        try:
-            active_ids = {getattr(self.tab_widget.widget(index), '_clarify_recovery_id', '')
-                          for index in range(self.tab_widget.count())}
-            snapshots = [snapshot for snapshot in self.recovery_store.list()
-                         if snapshot.snapshot_id not in self._restored_recovery_ids | active_ids]
-        except (OSError, RecoverySnapshotError):
-            self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
+        snapshots = self._pending_recovery_snapshots()
+        if snapshots is None:
             return
         if not snapshots:
             QMessageBox.information(
@@ -5562,6 +5696,8 @@ class EditorDock(BaseDock):
                 self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
                 return
             self._restored_recovery_ids.clear()
+            self._recovery_offer_dismissed = False
+            self._refresh_recovery_offer()
             return
         if dialog.clickedButton() != recover_button:
             return
@@ -5573,6 +5709,8 @@ class EditorDock(BaseDock):
         self.lbl_status.setText(
             tr("editor.status_recovered_documents").format(count=recovered)
         )
+        self._recovery_offer_dismissed = False
+        self._refresh_recovery_offer()
 
     def _restore_recovery_snapshot(self, snapshot):
         """Restore one snapshot as an unsaved tab, never over its source file."""

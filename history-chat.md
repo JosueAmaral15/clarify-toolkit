@@ -5639,3 +5639,44 @@ Plano imediato:
 - The exact Protocol2 worker remains active for the authorized Clarify queue.
   A next native continuation may be issued only after controls, hooks, session
   and this checkpoint are revalidated.
+
+## 2026-10-26 - CE-RECOVERY-REOPEN-01 started
+
+- Work starts from published checkpoint `e91a3fd` on fresh branch
+  `COM-006a1310-c7c2-461e-9ab8-d9214f9b75b9`, limited to auditing and repairing
+  unsaved-buffer persistence across Editor, tool-tab, parent and application
+  close/reopen paths. The later dispatch journal `50fc73a` was verified and
+  intentionally excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, the native Codex queue and both
+  services are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit will reuse `UnsavedRecoveryStore`, prove gaps with temporary roots
+  and new Editor instances, and preserve storage quotas, explicit
+  restore/discard, originals, folder isolation and all completed Editor chrome.
+  Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-26 - CE-RECOVERY-REOPEN-01 completed
+
+- The existing recovery lifecycle already persisted dirty saved and Untitled
+  buffers through immediate Editor, tool-tab, reparented parent, MainWindow,
+  `aboutToQuit` and deferred-deletion paths, but a new Editor instance did not
+  surface pending Untitled or out-of-folder snapshots without the user finding
+  the modal File menu action.
+- A non-modal startup offer now presents only snapshots not already restored by
+  the canonical folder session or represented by active tabs. Recover opens
+  unsaved copies without overwriting originals, Discard removes only pending
+  snapshots, and Cancel retains them for a later instance.
+- Changed or removed references and discard/IO failures remain retained and are
+  reported honestly. `UnsavedRecoveryStore` remains the sole backend with its
+  private atomic writes and 2 MiB/document, 20-document and 20 MiB total limits.
+- Guarded serial validation passed 252 distinct tests across 13 isolated
+  modules, peaking at 251.6 MiB. No native crash, timeout or guard abort
+  occurred. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_RECOVERY_REOPEN_2026_10_26.md`; 74 canonical
+  tasks remain open.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
