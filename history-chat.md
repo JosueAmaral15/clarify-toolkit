@@ -5436,3 +5436,14 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+### Automation continuation after tab-copy path
+
+- The next bounded Clarify Editor task is `CE-FIND-ENTER-01`, selected because
+  it is a recent confirmed regression with a narrow contract: one Next action
+  for Enter and one Previous action for Shift+Enter in the query field.
+- A dry-run validated the exact worker, session and native transport. One real
+  continuation then targeted session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1` from checkpoint `b215e81`.
+- The command returned `dispatch_started`, not delivery confirmation. No retry
+  was attempted; the Protocol2 worker remains active.
