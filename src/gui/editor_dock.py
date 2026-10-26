@@ -42,10 +42,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
     QLabel, QFileDialog, QMessageBox, QTextEdit, QTabWidget,
     QCheckBox, QFileSystemModel, QFrame, QMenu, QApplication, QSplitter,
-    QTreeView, QSizePolicy
+    QTreeView, QSizePolicy, QStyle, QToolBar
 )
 from PySide6.QtGui import (
-    QAction, QColor, QDesktopServices, QKeySequence, QPainter, QTextCursor,
+    QAction, QColor, QDesktopServices, QIcon, QKeySequence, QPainter, QTextCursor,
     QTextDocument,
     QTextOption
 )
@@ -1089,6 +1089,25 @@ class EditorDock(BaseDock):
         "restore_folder_sessions": "folder_sessions_enabled",
     }
 
+    _QUICK_TOOLBAR_ITEMS = (
+        "new", "open", "save", None,
+        "undo", "redo", None,
+        "cut", "copy", "paste", None,
+        "find", "find_replace",
+    )
+    _QUICK_TOOLBAR_ICONS = {
+        "new": ("document-new", QStyle.StandardPixmap.SP_FileIcon),
+        "open": ("document-open", QStyle.StandardPixmap.SP_DialogOpenButton),
+        "save": ("document-save", QStyle.StandardPixmap.SP_DialogSaveButton),
+        "undo": ("edit-undo", QStyle.StandardPixmap.SP_ArrowBack),
+        "redo": ("edit-redo", QStyle.StandardPixmap.SP_ArrowForward),
+        "cut": ("edit-cut", QStyle.StandardPixmap.SP_DialogCancelButton),
+        "copy": ("edit-copy", QStyle.StandardPixmap.SP_FileIcon),
+        "paste": ("edit-paste", QStyle.StandardPixmap.SP_DialogApplyButton),
+        "find": ("edit-find", QStyle.StandardPixmap.SP_FileDialogContentsView),
+        "find_replace": ("edit-find-replace", QStyle.StandardPixmap.SP_BrowserReload),
+    }
+
     MAX_EXTERNAL_FILE_WATCHES = 128
     MAX_EXTERNAL_DIR_WATCHES = 128
     MAX_TYPED_PATH_CHARS = 4096
@@ -1196,8 +1215,7 @@ class EditorDock(BaseDock):
 
     def _setup_ui(self):
         """Setup UI components."""
-        # Toolbar
-        toolbar = QHBoxLayout()
+        menu_row = QHBoxLayout()
 
         self.menu_bar = QMenuBar()
         self.menu_bar.setObjectName("editor_menu_bar")
@@ -1223,13 +1241,15 @@ class EditorDock(BaseDock):
         self._setup_edit_menu()
         self._setup_view_menu()
         self._setup_json_menu()
+        self._setup_quick_toolbar()
         self._refresh_editor_menus()
         self._setup_external_file_watcher()
 
-        toolbar.addWidget(self.menu_bar)
-        toolbar.addStretch()
+        menu_row.addWidget(self.menu_bar)
+        menu_row.addStretch()
 
-        self.layout.addLayout(toolbar)
+        self.layout.addLayout(menu_row)
+        self.layout.addWidget(self.quick_toolbar)
 
         # Tab widget for multiple files
         self.editor_splitter = QSplitter(Qt.Horizontal)
@@ -1273,7 +1293,7 @@ class EditorDock(BaseDock):
         self.layout.addLayout(status_layout)
 
         self._status_translation_connected = True
-        get_translator().languageChanged.connect(self._retranslate_status_info)
+        get_translator().languageChanged.connect(self._retranslate_editor_ui)
         self._update_editor_status_indicators()
 
         self._recovery_timer = QTimer(self)
@@ -1299,6 +1319,8 @@ class EditorDock(BaseDock):
         for action_id, action in self._action_by_id.items():
             action.setToolTip(tooltip_tr(self._ACTION_SPECS[action_id]["text_key"]))
 
+        self._refresh_quick_toolbar_accessibility()
+
         self.menu_recent_files.menuAction().setToolTip(
             tooltip_tr("editor.menu_recent_files")
         )
@@ -1311,6 +1333,49 @@ class EditorDock(BaseDock):
 
         # Status Label
         self.lbl_status.setToolTip(tooltip_tr("editor.lbl_status"))
+
+    def _setup_quick_toolbar(self) -> None:
+        """Expose frequent commands through their existing shared actions."""
+        self.quick_toolbar = QToolBar(self.main_widget)
+        self.quick_toolbar.setObjectName("editor_quick_toolbar")
+        self.quick_toolbar.setMovable(False)
+        self.quick_toolbar.setFloatable(False)
+        self.quick_toolbar.setOrientation(Qt.Orientation.Horizontal)
+        self.quick_toolbar.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+        self.quick_toolbar.setIconSize(QSize(20, 20))
+        self.quick_toolbar.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self.quick_toolbar.setStyleSheet(
+            "QToolBar#editor_quick_toolbar { border: none; padding: 2px; }"
+        )
+
+        for action_id in self._QUICK_TOOLBAR_ITEMS:
+            if action_id is None:
+                self.quick_toolbar.addSeparator()
+                continue
+            action = self._action_by_id[action_id]
+            theme_name, fallback = self._QUICK_TOOLBAR_ICONS[action_id]
+            fallback_icon = self.style().standardIcon(fallback)
+            action.setIcon(QIcon.fromTheme(theme_name, fallback_icon))
+            self.quick_toolbar.addAction(action)
+
+    def _refresh_quick_toolbar_accessibility(self) -> None:
+        """Keep full translated names available while button text stays hidden."""
+        self.quick_toolbar.setAccessibleName(tr("editor.quick_toolbar"))
+        self.quick_toolbar.setToolTip(tooltip_tr("editor.quick_toolbar"))
+        for action_id in self._QUICK_TOOLBAR_ITEMS:
+            if action_id is None:
+                continue
+            action = self._action_by_id[action_id]
+            button = self.quick_toolbar.widgetForAction(action)
+            if button is None:
+                continue
+            button.setAccessibleName(action.text())
+            button.setAccessibleDescription(action.toolTip())
 
     def _setup_explorer_panel(self) -> None:
         """Create a lazy filesystem navigation tree for the editor sidebar."""
@@ -3087,6 +3152,17 @@ class EditorDock(BaseDock):
     def _retranslate_status_info(self, _language=None) -> None:
         """Refresh indicator templates after a runtime language switch."""
         self._update_editor_status_indicators()
+
+    def _retranslate_editor_ui(self, language=None) -> None:
+        """Retranslate the local menu, shared actions, toolbar and status row."""
+        for menu_spec in self._MENU_SPECS.values():
+            getattr(self, menu_spec["attr"]).setTitle(tr(menu_spec["title_key"]))
+        for action_id, action in self._action_by_id.items():
+            action.setText(tr(self._ACTION_SPECS[action_id]["text_key"]))
+        self.menu_recent_files.setTitle(tr("editor.menu_recent_files"))
+        self.menu_recent_folders.setTitle(tr("editor.menu_recent_folders"))
+        self._apply_tooltips()
+        self._retranslate_status_info(language)
 
     def _indent_unit(self) -> str:
         return "\t" if self.indent_use_tabs else " " * self.indent_width
@@ -5438,7 +5514,7 @@ class EditorDock(BaseDock):
         if getattr(self, "_status_translation_connected", False):
             try:
                 get_translator().languageChanged.disconnect(
-                    self._retranslate_status_info
+                    self._retranslate_editor_ui
                 )
             except (RuntimeError, TypeError):
                 pass

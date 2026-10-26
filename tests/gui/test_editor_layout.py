@@ -1,5 +1,7 @@
 """The editor workspace must expand between its compact menu and status rows."""
 
+# pylint: disable=no-name-in-module  # PySide6 exposes Qt classes dynamically.
+
 from functools import partial
 from pathlib import Path
 
@@ -46,10 +48,19 @@ def test_workspace_fills_available_height_on_resize(editor_window, qtbot, extens
 
         workspace = dock.editor_splitter.geometry()
         menu_bottom = dock.menu_bar.mapTo(dock.main_widget, dock.menu_bar.rect().bottomLeft()).y()
+        toolbar_top = dock.quick_toolbar.mapTo(
+            dock.main_widget, dock.quick_toolbar.rect().topLeft()
+        ).y()
+        toolbar_bottom = dock.quick_toolbar.mapTo(
+            dock.main_widget, dock.quick_toolbar.rect().bottomLeft()
+        ).y()
         status_top = dock.lbl_status.mapTo(dock.main_widget, dock.lbl_status.rect().topLeft()).y()
-        assert workspace.top() - menu_bottom <= 16
+        assert 0 < toolbar_top - menu_bottom <= 16
+        assert 0 < workspace.top() - toolbar_bottom <= 16
         assert status_top - workspace.bottom() <= 16
-        assert workspace.height() >= dock.main_widget.height() - 100
+        assert workspace.height() >= (
+            dock.main_widget.height() - 100 - dock.quick_toolbar.height()
+        )
         assert dock.tab_widget.height() >= workspace.height() - 4
         if extension:
             assert dock.tab_widget.currentWidget().editor.height() >= workspace.height() - 120

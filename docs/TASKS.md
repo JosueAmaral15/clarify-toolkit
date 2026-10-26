@@ -577,13 +577,21 @@ ser implementado em etapa limitada, testada e documentada.
   desconhecidas usam `Plain Text`. Textos completos permanecem disponiveis para
   acessibilidade e tooltip, com templates nos sete catalogos. Evidencia em
   [Clarify Editor Status Info](reports/CLARIFY_EDITOR_STATUS_INFO_2026_10_26.md).
-- [ ] **CE-QUICK-TOOLBAR-01: barra de acesso rapido sob o menu.** Adicionar ao
+- [x] **CE-QUICK-TOOLBAR-01: barra de acesso rapido sob o menu.** Adicionar ao
   Clarify Editor uma toolbar inspirada no Xed, abaixo de File/Edit/View/JSON,
   com icones sem texto visivel para New, Open, Save, Undo, Redo, Cut, Copy,
   Paste, Find, Replace e somente outros comandos de alta frequencia comprovada.
   Reutilizar as mesmas `QAction`s, estados, atalhos e handlers dos menus, com
   icones padrao/biblioteca existente, tooltip, nome acessivel, separadores e
   comportamento responsivo; nao duplicar logica nem esconder o conteudo.
+  Entregue em 26/10/2026: a barra iconografica fica imediatamente abaixo do
+  menu e reutiliza as dez `QAction`s existentes, agrupadas por arquivo,
+  historico, clipboard e busca. Estados, atalhos, handlers e split ativo
+  permanecem compartilhados; nao ha rota duplicada. Icones do tema possuem
+  fallback Qt, textos completos ficam em tooltip/nome acessivel e o chrome do
+  Editor acompanha a troca de idioma em runtime. As chaves diretamente usadas
+  pela barra estao completas nos sete catalogos. Evidencia em
+  [Clarify Editor Quick Toolbar](reports/CLARIFY_EDITOR_QUICK_TOOLBAR_2026_10_26.md).
 - [ ] **CE-RECOVERY-REOPEN-01: restaurar integralmente buffers nao salvos.**
   Validar e corrigir a integracao de `CE-REC-01` para que toda alteracao nao salva
   e toda aba `Untitled *` existente ao fechar o Clarify Editor ou o Clarify volte

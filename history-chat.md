@@ -5587,3 +5587,43 @@ Plano imediato:
   Task automation and native input remain enabled; GUI and remote input remain
   disabled. One exact-session continuation may now be issued for the next
   canonical Editor item only.
+
+## 2026-10-26 - CE-QUICK-TOOLBAR-01 started
+
+- Work starts from published checkpoint `750fa72` on fresh branch
+  `COM-be530f88-793f-4e7d-ad3e-9b854ce0ff10`, limited to one responsive,
+  icon-only Clarify Editor quick toolbar. The later dispatch journal `a6f18c3`
+  was verified and intentionally excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, the native Codex queue and both
+  services are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit found a local menu bar backed by shared `QAction` objects and an
+  older per-tab toolbar that `EditorDock` deliberately hides. The new regression
+  will require shared action identity, icon-only buttons, stable layout,
+  accessibility and runtime translations before implementation.
+- Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds. `example.py` remains untracked
+  and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-26 - CE-QUICK-TOOLBAR-01 completed
+
+- The pre-edit guarded regression proved that no shared quick toolbar existed;
+  it failed normally at 200.6 MiB without a native crash or guard abort.
+- One icon-only toolbar now sits between the File/Edit/View/JSON menu and
+  workspace. Its ten buttons reuse the exact New, Open, Save, Undo, Redo, Cut,
+  Copy, Paste, Find and Find/Replace `QAction`s, including state, shortcuts,
+  one handler route and active split behavior.
+- Desktop-theme icons have Qt fallbacks. Full translated tooltips and
+  accessible names update at runtime; the directly required keys are complete
+  and unique in all seven catalogs. Existing unrelated Google Translate
+  duplicates in `es.json` remain outside this stage.
+- Guarded serial validation passed 247 distinct tests across 15 isolated
+  modules, peaking at 247.5 MiB. Light, narrow and dark offscreen captures had
+  no overlap. No native crash, timeout or guard abort occurred. Compilation,
+  Pylint-E, scoped Black, JSON and diff checks passed. Evidence is in
+  `docs/reports/CLARIFY_EDITOR_QUICK_TOOLBAR_2026_10_26.md`; 75 canonical tasks
+  remain open.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
