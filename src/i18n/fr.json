@@ -1,4 +1,10 @@
 {
+  "editor.status_indent_tabs": "Tabulations : {width}",
+  "editor.status_indent_spaces": "Espaces : {width}",
+  "editor.status_cursor_position": "Lig {line}, Col {column}",
+  "editor.status_cursor_unavailable": "Lig -, Col -",
+  "editor.status_language": "Langage : {language}",
+  "editor.status_language_plain_text": "Texte brut",
   "tool_window.detach": "Détacher l’outil actuel",
   "tool_window.detach_tooltip": "Ouvrir l’outil actuel dans une fenêtre séparée",
   "tool_window.attach": "Rattacher l’outil",

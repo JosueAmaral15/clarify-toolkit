@@ -5534,3 +5534,42 @@ Plano imediato:
 - The exact Protocol2 worker remains reserved for the Clarify queue; one next
   native continuation may be issued only after its controls and session are
   revalidated.
+
+## 2026-10-26 - CE-STATUS-INFO-01 started
+
+- Work starts from published checkpoint `822f786` on fresh branch
+  `COM-944720fe-0a0b-4e65-8aa6-661b5b43409d`, limited to Clarify Editor status
+  indicators for indentation, cursor position and bounded language detection.
+  The subsequent automation journal `94112b0` was verified but excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, the native Codex queue and monitor
+  services are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit will map existing status widgets, active tab/split identity,
+  indentation preferences, cursor signals, save/rename paths and syntax
+  metadata before implementation. Tests remain serial/offscreen with temporary
+  HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and pytest timeout 20
+  seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-26 - CE-STATUS-INFO-01 completed
+
+- The guarded pre-edit regression proved that the Editor exposed no persistent
+  indentation, cursor or language status widgets. It failed normally at 200.8
+  MiB without a native crash or guard abort.
+- Three stable accessible indicators now report Tabs/Spaces plus width, the
+  active view's line and column, and detected language with translated Plain
+  Text fallback. They follow tab/split focus, cursor, indentation preferences,
+  Save As, Explorer rename, generated content and runtime language changes.
+- Detection reuses path/highlighter metadata. Only metadata-free extensionless
+  buffers read content, limited to the first block and 512 characters for a
+  shebang; no heavy parser, timer or background callback was introduced.
+- Guarded serial validation passed 231 distinct tests across 13 isolated
+  modules, peaking at 245.3 MiB. No native crash, timeout or guard abort
+  occurred. Compilation, Pylint-E, scoped Black, JSON and diff checks passed.
+  Evidence is in
+  `docs/reports/CLARIFY_EDITOR_STATUS_INFO_2026_10_26.md`; 76 canonical tasks
+  remain open.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

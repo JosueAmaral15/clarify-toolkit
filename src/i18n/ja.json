@@ -1,4 +1,10 @@
 {
+  "editor.status_indent_tabs": "タブ: {width}",
+  "editor.status_indent_spaces": "スペース: {width}",
+  "editor.status_cursor_position": "行 {line}、列 {column}",
+  "editor.status_cursor_unavailable": "行 -、列 -",
+  "editor.status_language": "言語: {language}",
+  "editor.status_language_plain_text": "プレーンテキスト",
   "tool_window.detach": "現在のツールを切り離す",
   "tool_window.detach_tooltip": "現在のツールを別ウィンドウで開く",
   "tool_window.attach": "ツールを再結合",

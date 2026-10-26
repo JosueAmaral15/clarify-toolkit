@@ -1,4 +1,10 @@
 {
+  "editor.status_indent_tabs": "制表符：{width}",
+  "editor.status_indent_spaces": "空格：{width}",
+  "editor.status_cursor_position": "行 {line}，列 {column}",
+  "editor.status_cursor_unavailable": "行 -，列 -",
+  "editor.status_language": "语言：{language}",
+  "editor.status_language_plain_text": "纯文本",
   "tool_window.detach": "分离当前工具",
   "tool_window.detach_tooltip": "在单独窗口中打开当前工具",
   "tool_window.attach": "重新停靠工具",

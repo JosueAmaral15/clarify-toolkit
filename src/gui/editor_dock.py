@@ -50,7 +50,7 @@ from PySide6.QtGui import (
     QTextOption
 )
 
-from src.i18n.translator import tooltip_tr, tr
+from src.i18n.translator import get_translator, tooltip_tr, tr
 from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
 from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
 from src.editor_reference_updates import (
@@ -797,6 +797,40 @@ class _ExplorerFolderLabel(QLabel):
         self._refresh_caption()
 
 
+class _EditorStatusIndicator(QLabel):
+    """Fixed-width accessible status text that elides without shifting layout."""
+
+    def __init__(self, object_name: str, width: int, parent=None):
+        super().__init__(parent)
+        self._full_text = ""
+        self.setObjectName(object_name)
+        self.setFixedWidth(width)
+        self.setMargin(4)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+
+    def set_value(self, text: str) -> None:
+        """Publish complete accessible text and an elided visible caption."""
+        self._full_text = str(text)
+        self.setAccessibleName(self._full_text)
+        self.setToolTip(self._full_text)
+        self._refresh_text()
+
+    def _refresh_text(self) -> None:
+        available = max(1, self.contentsRect().width())
+        visible = self.fontMetrics().elidedText(
+            self._full_text,
+            Qt.TextElideMode.ElideRight,
+            available,
+        )
+        super().setText(visible)
+
+    def resizeEvent(self, event):  # pylint: disable=invalid-name
+        super().resizeEvent(event)
+        self._refresh_text()
+
+
 class EditorDock(BaseDock):
     """
     Dock widget for integrated file editor.
@@ -811,6 +845,62 @@ class EditorDock(BaseDock):
     - Find/Replace (basic)
     - Recent files list
     """
+
+    _LANGUAGE_BY_SUFFIX = {
+        ".bash": "Shell Script",
+        ".c": "C",
+        ".cc": "C++",
+        ".cfg": "INI",
+        ".cpp": "C++",
+        ".css": "CSS",
+        ".cxx": "C++",
+        ".go": "Go",
+        ".h": "C Header",
+        ".hpp": "C++ Header",
+        ".htm": "HTML",
+        ".html": "HTML",
+        ".ini": "INI",
+        ".ipynb": "Jupyter Notebook",
+        ".java": "Java",
+        ".js": "JavaScript",
+        ".json": "JSON",
+        ".jsx": "React JSX",
+        ".kt": "Kotlin",
+        ".less": "Less",
+        ".lua": "Lua",
+        ".md": "Markdown",
+        ".php": "PHP",
+        ".py": "Python",
+        ".r": "R",
+        ".rb": "Ruby",
+        ".rs": "Rust",
+        ".sass": "Sass",
+        ".scss": "SCSS",
+        ".sh": "Shell Script",
+        ".sql": "SQL",
+        ".toml": "TOML",
+        ".toon": "TOON",
+        ".ts": "TypeScript",
+        ".tsx": "React TSX",
+        ".xml": "XML",
+        ".yaml": "YAML",
+        ".yml": "YAML",
+        ".zsh": "Zsh",
+    }
+    _LANGUAGE_BY_FILE_TYPE = {
+        "bash": "Shell Script",
+        "htm": "HTML",
+        "html": "HTML",
+        "javascript": "JavaScript",
+        "js": "JavaScript",
+        "json": "JSON",
+        "jsx": "React JSX",
+        "py": "Python",
+        "python": "Python",
+        "ts": "TypeScript",
+        "tsx": "React TSX",
+        "typescript": "TypeScript",
+    }
 
     _ACTION_SPECS = {
         "new": {"text_key": "editor.btn_new", "shortcut": QKeySequence.StandardKey.New},
@@ -1168,7 +1258,23 @@ class EditorDock(BaseDock):
         self.lbl_status.setStyleSheet("color: #6A9955;")
         status_layout.addWidget(self.lbl_status)
         status_layout.addStretch()
+        self.status_indent_label = _EditorStatusIndicator(
+            "editor_status_indent", 116, self.main_widget
+        )
+        self.status_cursor_label = _EditorStatusIndicator(
+            "editor_status_cursor", 124, self.main_widget
+        )
+        self.status_language_label = _EditorStatusIndicator(
+            "editor_status_language", 152, self.main_widget
+        )
+        status_layout.addWidget(self.status_indent_label)
+        status_layout.addWidget(self.status_cursor_label)
+        status_layout.addWidget(self.status_language_label)
         self.layout.addLayout(status_layout)
+
+        self._status_translation_connected = True
+        get_translator().languageChanged.connect(self._retranslate_status_info)
+        self._update_editor_status_indicators()
 
         self._recovery_timer = QTimer(self)
         self._recovery_timer.setSingleShot(True)
@@ -1269,6 +1375,9 @@ class EditorDock(BaseDock):
         self.split_editor = QTextEdit(self.split_panel)
         self.split_editor.setAcceptRichText(False)
         self.split_editor.installEventFilter(self)
+        self.split_editor.cursorPositionChanged.connect(
+            self._update_editor_status_indicators
+        )
         self._apply_indentation_to_editor(self.split_editor)
         split_layout.addWidget(self.split_editor, 1)
         self.editor_workspace_splitter.addWidget(self.split_panel)
@@ -2679,6 +2788,14 @@ class EditorDock(BaseDock):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
         if hasattr(tab, 'editor'):
             tab.editor.textChanged.connect(self._recovery_lifecycle.schedule)
+            if not getattr(tab, '_clarify_status_signals_connected', False):
+                tab.editor.cursorPositionChanged.connect(
+                    lambda t=tab: self._on_editor_status_cursor_changed(t)
+                )
+                tab.editor.textChanged.connect(
+                    lambda t=tab: self._on_editor_status_content_changed(t)
+                )
+                setattr(tab, '_clarify_status_signals_connected', True)
             if not getattr(tab, '_clarify_indent_filter_installed', False):
                 tab.editor.installEventFilter(self)
                 setattr(tab, '_clarify_indent_filter_installed', True)
@@ -2704,6 +2821,7 @@ class EditorDock(BaseDock):
         """Apply bounded editor key behavior without stealing global shortcuts."""
         if event.type() == QEvent.Type.FocusIn and self._tab_for_editor(watched) is not None:
             self._last_active_editor = watched
+            self._update_editor_status_indicators()
         if event.type() == QEvent.Type.KeyPress:
             modifiers = event.modifiers()
             unsupported = modifiers & (
@@ -2841,6 +2959,135 @@ class EditorDock(BaseDock):
             return self.split_editor
         return tab.editor
 
+    @staticmethod
+    def _first_editor_line(tab) -> str:
+        """Read at most one bounded block for extensionless shebang detection."""
+        editor = getattr(tab, "editor", None)
+        if editor is None:
+            return ""
+        block = editor.document().firstBlock()
+        return block.text()[:512] if block.isValid() else ""
+
+    def _language_path_suffix(self, tab) -> str:
+        """Return explicit suffix metadata without scanning document content."""
+        candidates = (
+            getattr(tab, "file_path", ""),
+            getattr(tab, "_clarify_language_extension", ""),
+            getattr(tab, "_clarify_display_name", ""),
+        )
+        for candidate in candidates:
+            if not candidate:
+                continue
+            suffix = os.path.splitext(str(candidate))[1].lower()
+            if suffix:
+                return suffix
+        return ""
+
+    @staticmethod
+    def _language_from_shebang(first_line: str) -> str | None:
+        """Recognize common extensionless scripts from one bounded first line."""
+        line = first_line.strip().lower()
+        if not line.startswith("#!"):
+            return None
+        checks = (
+            (("python",), "Python"),
+            (("node", "deno"), "JavaScript"),
+            (("bash", "/sh", " sh"), "Shell Script"),
+            (("zsh",), "Zsh"),
+            (("ruby",), "Ruby"),
+            (("php",), "PHP"),
+            (("lua",), "Lua"),
+            (("rscript",), "R"),
+        )
+        for markers, language in checks:
+            if any(marker in line for marker in markers):
+                return language
+        return None
+
+    def _language_for_tab(self, tab) -> str:
+        """Resolve language from existing tab metadata with a bounded fallback."""
+        if tab is None:
+            return tr("editor.status_language_plain_text")
+        if isinstance(tab, JsonEditorTab):
+            return "JSON"
+
+        suffix = self._language_path_suffix(tab)
+        if suffix:
+            return self._LANGUAGE_BY_SUFFIX.get(
+                suffix,
+                tr("editor.status_language_plain_text"),
+            )
+
+        highlighter = getattr(tab, "highlighter", None)
+        file_type = str(getattr(highlighter, "file_type", "") or "").lower()
+        if file_type in self._LANGUAGE_BY_FILE_TYPE:
+            return self._LANGUAGE_BY_FILE_TYPE[file_type]
+
+        return self._language_from_shebang(
+            self._first_editor_line(tab)
+        ) or tr("editor.status_language_plain_text")
+
+    def _language_depends_on_content(self, tab) -> bool:
+        """Only extensionless, metadata-free tabs need first-line rechecks."""
+        if tab is None or isinstance(tab, JsonEditorTab):
+            return False
+        if self._language_path_suffix(tab):
+            return False
+        highlighter = getattr(tab, "highlighter", None)
+        file_type = str(getattr(highlighter, "file_type", "") or "").lower()
+        return file_type not in self._LANGUAGE_BY_FILE_TYPE
+
+    def _on_editor_status_cursor_changed(self, tab) -> None:
+        """Refresh only when the emitting view owns the active cursor."""
+        if tab is not self.tab_widget.currentWidget():
+            return
+        if self._active_editor_for_tab(tab) is getattr(tab, "editor", None):
+            self._update_editor_status_indicators()
+
+    def _on_editor_status_content_changed(self, tab) -> None:
+        """Recheck only bounded content-dependent language metadata."""
+        if (
+            tab is self.tab_widget.currentWidget()
+            and self._language_depends_on_content(tab)
+        ):
+            self._update_editor_status_indicators()
+
+    def _update_editor_status_indicators(self) -> None:
+        """Publish indentation, active cursor and language without parsing files."""
+        indent_key = (
+            "editor.status_indent_tabs"
+            if self.indent_use_tabs
+            else "editor.status_indent_spaces"
+        )
+        self.status_indent_label.set_value(
+            tr(indent_key).format(width=self.indent_width)
+        )
+
+        tab = self.tab_widget.currentWidget()
+        editor = (
+            self._active_editor_for_tab(tab)
+            if tab is not None and hasattr(tab, "editor")
+            else None
+        )
+        if editor is None:
+            cursor_text = tr("editor.status_cursor_unavailable")
+        else:
+            cursor = editor.textCursor()
+            cursor_text = tr("editor.status_cursor_position").format(
+                line=cursor.blockNumber() + 1,
+                column=cursor.positionInBlock() + 1,
+            )
+        self.status_cursor_label.set_value(cursor_text)
+        self.status_language_label.set_value(
+            tr("editor.status_language").format(
+                language=self._language_for_tab(tab)
+            )
+        )
+
+    def _retranslate_status_info(self, _language=None) -> None:
+        """Refresh indicator templates after a runtime language switch."""
+        self._update_editor_status_indicators()
+
     def _indent_unit(self) -> str:
         return "\t" if self.indent_use_tabs else " " * self.indent_width
 
@@ -2857,6 +3104,7 @@ class EditorDock(BaseDock):
         self.indent_use_tabs = bool(enabled)
         self.settings.setValue("indent_use_tabs", self.indent_use_tabs)
         self._refresh_editor_menus()
+        self._update_editor_status_indicators()
 
     def _set_indent_width(self, width: int | None = None) -> bool:
         if width is None:
@@ -2875,6 +3123,7 @@ class EditorDock(BaseDock):
         for index in range(self.tab_widget.count()):
             self._apply_indentation_to_tab(self.tab_widget.widget(index))
         self._apply_indentation_to_editor(self.split_editor)
+        self._update_editor_status_indicators()
         return True
 
     def _setup_file_menu(self) -> None:
@@ -3183,6 +3432,7 @@ class EditorDock(BaseDock):
         self.editor_workspace_splitter.setSizes([1, 1])
         self.split_editor.setFocus()
         self._last_active_editor = self.split_editor
+        self._update_editor_status_indicators()
         return True
 
     def _close_split_view(self) -> None:
@@ -3195,6 +3445,7 @@ class EditorDock(BaseDock):
         self.split_panel.hide()
         self._last_active_editor = getattr(source_tab, "editor", None)
         self.tab_widget.setFocus()
+        self._update_editor_status_indicators()
 
     def _new_file(self, edit_only: bool = False):
         """Create new untitled file."""
@@ -5010,6 +5261,7 @@ class EditorDock(BaseDock):
 
     def _on_tab_changed(self, index: int):
         """Handle tab change with edit-only mode indicators."""
+        self._update_editor_status_indicators()
         if index >= 0:
             tab = self.tab_widget.widget(index)
             self._check_tab_external_state(tab)
@@ -5051,6 +5303,8 @@ class EditorDock(BaseDock):
             self.tab_widget.setTabText(index, self._display_title_for_tab(tab))
         if tab is self._split_source_tab:
             self.split_title.setText(self._display_title_for_tab(tab))
+        if tab is self.tab_widget.currentWidget():
+            self._update_editor_status_indicators()
 
     def _on_tab_mode_changed(self, tab: EditorTab):
         """Refresh title, status, and menu state after tab mode changes."""
@@ -5181,6 +5435,14 @@ class EditorDock(BaseDock):
         if not self.request_tab_close():
             event.ignore()
             return
+        if getattr(self, "_status_translation_connected", False):
+            try:
+                get_translator().languageChanged.disconnect(
+                    self._retranslate_status_info
+                )
+            except (RuntimeError, TypeError):
+                pass
+            self._status_translation_connected = False
         self._find_history_by_buffer.clear()
         super().closeEvent(event)
 
@@ -5753,6 +6015,7 @@ class EditorDock(BaseDock):
             tab = EditorTab(None, self, edit_only_mode=edit_only)
 
         setattr(tab, "_clarify_display_name", display_name)
+        setattr(tab, "_clarify_language_extension", normalized_extension)
         self._prepare_tab_for_dock(tab)
         tab.editor.setPlainText(content)
         tab.is_modified = not edit_only

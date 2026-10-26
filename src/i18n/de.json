@@ -1,4 +1,10 @@
 {
+  "editor.status_indent_tabs": "Tabs: {width}",
+  "editor.status_indent_spaces": "Leerzeichen: {width}",
+  "editor.status_cursor_position": "Z. {line}, Sp. {column}",
+  "editor.status_cursor_unavailable": "Z. -, Sp. -",
+  "editor.status_language": "Sprache: {language}",
+  "editor.status_language_plain_text": "Nur Text",
   "tool_window.detach": "Aktuelles Werkzeug abkoppeln",
   "tool_window.detach_tooltip": "Aktuelles Werkzeug in einem separaten Fenster öffnen",
   "tool_window.attach": "Werkzeug wieder ankoppeln",

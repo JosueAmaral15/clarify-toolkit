@@ -44,6 +44,7 @@ TEST_MODULES = {
     "editor-redo-shortcuts": "tests/gui/test_editor_redo_shortcuts.py",
     "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
     "editor-smart-home-visual": "tests/gui/test_editor_smart_home_visual.py",
+    "editor-status-info": "tests/gui/test_editor_status_info.py",
     "editor-tab-copy-path": "tests/gui/test_editor_tab_copy_path.py",
     "explorer-lifecycle": "tests/test_file_explorer_lifecycle.py",
     "google-translate-api": "tests/test_google_translate.py",

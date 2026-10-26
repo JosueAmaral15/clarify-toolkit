@@ -562,13 +562,21 @@ ser implementado em etapa limitada, testada e documentada.
   reutiliza o contrato da aba, e o shutdown reacopla as tools antes do
   encerramento. Evidencia em
   [Tool Dock Toggle](reports/CLARIFY_TOOL_DOCK_TOGGLE_2026_10_26.md).
-- [ ] **CE-STATUS-INFO-01: status de indentacao, cursor e linguagem.** Exibir na
+- [x] **CE-STATUS-INFO-01: status de indentacao, cursor e linguagem.** Exibir na
   barra de status do Clarify Editor o modo de indentacao (`Tabs` ou `Spaces` e
   largura), linha e coluna atuais e a linguagem detectada. Atualizar ao trocar
   guia, mover cursor, alterar preferencia, renomear/salvar arquivo ou mudar o
   conteudo relevante; permitir fallback `Plain Text` e evitar parsing pesado na
   GUI. Os indicadores devem ser traduziveis, acessiveis e nao redimensionar o
   layout de forma instavel.
+  Entregue em 26/10/2026: tres indicadores de largura estavel exibem modo e
+  largura de indentacao, linha/coluna da view ativa e linguagem. Eles acompanham
+  tabs, splits, cursor, preferencias, Save As, rename e mudancas relevantes em
+  buffers sem extensao. A deteccao prioriza caminho/highlighter e limita o
+  fallback de shebang ao primeiro bloco de 512 caracteres; extensoes
+  desconhecidas usam `Plain Text`. Textos completos permanecem disponiveis para
+  acessibilidade e tooltip, com templates nos sete catalogos. Evidencia em
+  [Clarify Editor Status Info](reports/CLARIFY_EDITOR_STATUS_INFO_2026_10_26.md).
 - [ ] **CE-QUICK-TOOLBAR-01: barra de acesso rapido sob o menu.** Adicionar ao
   Clarify Editor uma toolbar inspirada no Xed, abaixo de File/Edit/View/JSON,
   com icones sem texto visivel para New, Open, Save, Undo, Redo, Cut, Copy,

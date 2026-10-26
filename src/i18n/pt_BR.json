@@ -1,4 +1,10 @@
 {
+    "editor.status_indent_tabs": "Tabs: {width}",
+    "editor.status_indent_spaces": "Espaços: {width}",
+    "editor.status_cursor_position": "Lin {line}, Col {column}",
+    "editor.status_cursor_unavailable": "Lin -, Col -",
+    "editor.status_language": "Linguagem: {language}",
+    "editor.status_language_plain_text": "Texto simples",
     "tool_window.detach": "Desacoplar ferramenta atual",
     "tool_window.detach_tooltip": "Abrir a ferramenta atual em uma janela separada",
     "tool_window.attach": "Reacoplar ferramenta",
