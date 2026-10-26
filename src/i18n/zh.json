@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "分离当前工具",
+  "tool_window.detach_tooltip": "在单独窗口中打开当前工具",
+  "tool_window.attach": "重新停靠工具",
+  "tool_window.attach_tooltip": "将此工具返回主工作区",
+  "tool_window.detached": "已分离",
+  "tool_window.unavailable": "没有可分离的工具",
   "editor.chk_inverted_search": "反向搜索",
   "editor.find_inverted_replace_disabled": "反向搜索已禁用替换。",
   "editor.lbl_inverted_unit": "反向单位：",

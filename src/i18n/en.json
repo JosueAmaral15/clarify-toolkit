@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "Detach current tool",
+  "tool_window.detach_tooltip": "Open the current tool in a separate window",
+  "tool_window.attach": "Reattach tool",
+  "tool_window.attach_tooltip": "Return this tool to the main workspace",
+  "tool_window.detached": "Detached",
+  "tool_window.unavailable": "No tool is available to detach",
   "editor.btn_previous_file_tab": "Previous File Tab",
   "editor.btn_next_file_tab": "Next File Tab",
   "history_dock.detail_query": "Query",

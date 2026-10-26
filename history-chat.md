@@ -5486,3 +5486,39 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+## 2026-10-26 - TOOL-DOCK-TOGGLE-01 started
+
+- Work starts from published checkpoint `17df16d` on fresh branch
+  `COM-d19633c5-e7f2-4381-987a-39b76c18378b`, limited to one accessible and
+  predictable dock/undock control for Clarify tool workspaces. The subsequent
+  automation journal commits were verified but intentionally excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, the native Codex queue and monitor
+  services are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit will reproduce the missing control and map `BaseDock`, MainWindow,
+  tool-tab and prior dock-chrome contracts before implementation. Tests remain
+  serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180
+  seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-26 - TOOL-DOCK-TOGGLE-01 completed
+
+- The pre-edit guarded regression proved the missing contract: the tool-tab
+  workspace had no top-right dock/undock control. It failed normally at 196.3
+  MiB without a native crash or guard abort.
+- The workspace now has one icon-only accessible control for the current tool.
+  It moves the same widget instance into a managed top-level window whose only
+  internal command explicitly returns the tool to the main workspace.
+- Stable tab order, focus, geometry, translations, session-open state and
+  layout visibility are preserved. Detached close reuses `_close_tab()` and its
+  recovery/veto lifecycle; accepted application shutdown reattaches tools before
+  existing cleanup. QWidget transitions are GUI-thread-only.
+- Guarded serial validation passed 241 distinct tests across nine isolated
+  modules, peaking at 255.8 MiB. No native crash, timeout or guard abort
+  occurred. Compilation, Pylint-E, scoped Black, JSON and diff checks passed.
+  Evidence is in `docs/reports/CLARIFY_TOOL_DOCK_TOGGLE_2026_10_26.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

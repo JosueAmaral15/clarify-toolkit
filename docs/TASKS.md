@@ -549,12 +549,19 @@ ser implementado em etapa limitada, testada e documentada.
   o botao default e a conexao `returnPressed` duplicada foram removidos. Replace,
   limites de linha e documento mantem Enter nativo. Evidencia em
   [Clarify Editor Find Enter](reports/CLARIFY_EDITOR_FIND_ENTER_2026_10_26.md).
-- [ ] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
+- [x] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
   remocao do chrome nativo enganoso em `CE-DOCK-CHROME-01` deve ser complementada
   por um unico controle acessivel que alterne entre tool acoplada e janela
   desacoplada, com reacoplamento explicito e previsivel. Reutilizar o contrato do
   workspace e da aba principal; preservar close/recovery, foco, geometria, tema,
   traducao e shutdown, sem reintroduzir maximize/close internos sem significado.
+  Entregue em 26/10/2026: um unico controle iconografico e acessivel no canto
+  da barra de tools desacopla a ferramenta atual em uma janela real; a janela
+  oferece somente a acao explicita de reacoplar. A mesma instancia, ordem,
+  foco, geometria e estado de sessao sao preservados. Fechar a janela destacada
+  reutiliza o contrato da aba, e o shutdown reacopla as tools antes do
+  encerramento. Evidencia em
+  [Tool Dock Toggle](reports/CLARIFY_TOOL_DOCK_TOGGLE_2026_10_26.md).
 - [ ] **CE-STATUS-INFO-01: status de indentacao, cursor e linguagem.** Exibir na
   barra de status do Clarify Editor o modo de indentacao (`Tabs` ou `Spaces` e
   largura), linha e coluna atuais e a linguagem detectada. Atualizar ao trocar

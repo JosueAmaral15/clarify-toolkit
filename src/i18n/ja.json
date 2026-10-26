@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "現在のツールを切り離す",
+  "tool_window.detach_tooltip": "現在のツールを別ウィンドウで開く",
+  "tool_window.attach": "ツールを再結合",
+  "tool_window.attach_tooltip": "このツールをメインワークスペースに戻す",
+  "tool_window.detached": "切り離し済み",
+  "tool_window.unavailable": "切り離せるツールがありません",
   "editor.chk_inverted_search": "反転検索",
   "editor.find_inverted_replace_disabled": "反転検索では置換を使用できません。",
   "editor.lbl_inverted_unit": "反転単位:",

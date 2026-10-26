@@ -944,6 +944,9 @@ if _PYSIDE:
             """
             widget.setProperty("clarify_tool_id", tool_name)
             from .gui.tab_manager import TabManager
+            tool_window_manager = TabManager.ensure_tool_window_manager(self)
+            if tool_window_manager.activate_detached(widget):
+                return -1
             TabManager.prepare_embedded_tool(widget)
             title = TabManager.translated_title(tool_name) or title
             manager = getattr(self, "layout_manager", None)
@@ -951,6 +954,7 @@ if _PYSIDE:
                 manager.register_dock(tool_name, widget)
             existing = self.tabs.indexOf(widget)
             if existing >= 0:
+                tool_window_manager.register_attached(widget)
                 self.tool_tabs[tool_name] = (widget, existing)
                 self.tabs.setTabVisible(existing, True)
                 self.tabs.setCurrentIndex(existing)
@@ -961,6 +965,7 @@ if _PYSIDE:
 
             # Track the tab
             self.tool_tabs[tool_name] = (widget, tab_index)
+            tool_window_manager.register_attached(widget)
 
             # Switch to new tab
             self.tabs.setCurrentIndex(tab_index)
@@ -1008,6 +1013,9 @@ if _PYSIDE:
 
             # Remove tab
             self.tabs.removeTab(index)
+            tool_window_manager = getattr(self, "tool_window_manager", None)
+            if tool_window_manager is not None:
+                tool_window_manager.forget(widget)
 
             # Fix: Restore MainWindow window flags after removing tab (v2.9.117)
             # QDockWidget as tab can interfere with MainWindow flags on Linux
@@ -1017,7 +1025,11 @@ if _PYSIDE:
             self.tool_tabs = {
                 name: (tracked, self.tabs.indexOf(tracked))
                 for name, (tracked, _old_index) in self.tool_tabs.items()
-                if tracked is not widget and self.tabs.indexOf(tracked) >= 0
+                if tracked is not widget and (
+                    self.tabs.indexOf(tracked) >= 0
+                    or (tool_window_manager is not None
+                        and tool_window_manager.is_detached(tracked))
+                )
             }
 
             # Save tab state to QSettings
@@ -1116,14 +1128,27 @@ if _PYSIDE:
             v2.9.112: Don't save fixed tabs (Search/Replace, Insert) - only save if they're still open."""
             if getattr(self, "_restoring_tabs", False):
                 return
-            open_tools = [self.tabs.widget(index).property("clarify_tool_id")
-                          for index in range(self.tabs.count())
-                          if self.tabs.widget(index).property("clarify_tool_id") not in (None, "insert")]
+            tool_window_manager = getattr(self, "tool_window_manager", None)
+            open_widgets = (
+                tool_window_manager.ordered_open_widgets()
+                if tool_window_manager is not None
+                else [self.tabs.widget(index) for index in range(self.tabs.count())]
+            )
+            open_tools = [widget.property("clarify_tool_id") for widget in open_widgets
+                          if widget.property("clarify_tool_id") not in (None, "insert")]
 
             # Check if fixed tabs are still open (v2.9.112)
             fixed_tabs_open = {
-                "search_replace": self.tab_search is not None and self.tabs.indexOf(self.tab_search) >= 0,
-                "insert": self.tab_insert is not None and self.tabs.indexOf(self.tab_insert) >= 0
+                "search_replace": self.tab_search is not None and (
+                    self.tabs.indexOf(self.tab_search) >= 0
+                    or (tool_window_manager is not None
+                        and tool_window_manager.is_detached(self.tab_search))
+                ),
+                "insert": self.tab_insert is not None and (
+                    self.tabs.indexOf(self.tab_insert) >= 0
+                    or (tool_window_manager is not None
+                        and tool_window_manager.is_detached(self.tab_insert))
+                )
             }
 
             # Save to settings
@@ -1315,6 +1340,9 @@ if _PYSIDE:
                 title = TabManager.translated_title(widget.property("clarify_tool_id"))
                 if title is not None:
                     self.tabs.setTabText(index, title)
+            tool_window_manager = getattr(self, "tool_window_manager", None)
+            if tool_window_manager is not None:
+                tool_window_manager.retranslate_ui()
 
         def _show_shortcuts(self):
             """Show keyboard shortcuts customization dialog (v2.9.33)."""
@@ -1942,6 +1970,9 @@ if _PYSIDE:
             """Handle window close event using WindowSettings (v2.9.114 - Phase 3.5)."""
             WindowSettings.handle_close_event(self, event)
             if event.isAccepted():
+                tool_window_manager = getattr(self, "tool_window_manager", None)
+                if tool_window_manager is not None:
+                    tool_window_manager.reattach_all(activate=False)
                 self._updates_closed = True
                 timer = getattr(self, "_update_timer", None)
                 if timer is not None:

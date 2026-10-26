@@ -86,6 +86,9 @@ class LayoutManager:
     def _is_open(self, widget, tabs):
         if tabs is None or tabs.indexOf(widget) >= 0:
             return True
+        tool_window_manager = getattr(self.main_window, "tool_window_manager", None)
+        if tool_window_manager is not None and tool_window_manager.is_detached(widget):
+            return True
         return isinstance(widget, QDockWidget) and bool(self.main_window.dockWidgetArea(widget))
 
     def _set_visibility(self, visible_names):

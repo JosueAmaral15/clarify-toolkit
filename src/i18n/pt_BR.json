@@ -1,4 +1,10 @@
 {
+    "tool_window.detach": "Desacoplar ferramenta atual",
+    "tool_window.detach_tooltip": "Abrir a ferramenta atual em uma janela separada",
+    "tool_window.attach": "Reacoplar ferramenta",
+    "tool_window.attach_tooltip": "Retornar esta ferramenta ao espaço de trabalho principal",
+    "tool_window.detached": "Desacoplada",
+    "tool_window.unavailable": "Nenhuma ferramenta está disponível para desacoplar",
     "editor.btn_previous_file_tab": "Aba de Arquivo Anterior",
     "editor.btn_next_file_tab": "Próxima Aba de Arquivo",
   "history_dock.detail_query": "Busca",

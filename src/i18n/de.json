@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "Aktuelles Werkzeug abkoppeln",
+  "tool_window.detach_tooltip": "Aktuelles Werkzeug in einem separaten Fenster öffnen",
+  "tool_window.attach": "Werkzeug wieder ankoppeln",
+  "tool_window.attach_tooltip": "Dieses Werkzeug in den Hauptarbeitsbereich zurückbringen",
+  "tool_window.detached": "Abgekoppelt",
+  "tool_window.unavailable": "Kein Werkzeug zum Abkoppeln verfügbar",
   "editor.chk_inverted_search": "Invertierte Suche",
   "editor.find_inverted_replace_disabled": "Ersetzen ist bei der invertierten Suche deaktiviert.",
   "editor.lbl_inverted_unit": "Invertierte Einheit:",

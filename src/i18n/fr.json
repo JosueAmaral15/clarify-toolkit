@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "Détacher l’outil actuel",
+  "tool_window.detach_tooltip": "Ouvrir l’outil actuel dans une fenêtre séparée",
+  "tool_window.attach": "Rattacher l’outil",
+  "tool_window.attach_tooltip": "Ramener cet outil dans l’espace de travail principal",
+  "tool_window.detached": "Détaché",
+  "tool_window.unavailable": "Aucun outil n’est disponible pour être détaché",
   "editor.chk_inverted_search": "Recherche inversée",
   "editor.find_inverted_replace_disabled": "Le remplacement est désactivé pour la recherche inversée.",
   "editor.lbl_inverted_unit": "Unité inversée :",

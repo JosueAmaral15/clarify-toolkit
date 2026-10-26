@@ -52,6 +52,17 @@ class TabManager:
     }
 
     @staticmethod
+    def ensure_tool_window_manager(main_window):
+        """Create the one workspace-level dock/undock controller on demand."""
+        manager = getattr(main_window, "tool_window_manager", None)
+        if manager is None:
+            from .tool_window_manager import ToolWindowManager
+
+            manager = ToolWindowManager(main_window)
+            main_window.tool_window_manager = manager
+        return manager
+
+    @staticmethod
     def prepare_embedded_tool(widget) -> None:
         """Hide native QDockWidget chrome when the dock is used as a tab page."""
         from PySide6.QtCore import Qt

@@ -1,4 +1,10 @@
 {
+  "tool_window.detach": "Desacoplar herramienta actual",
+  "tool_window.detach_tooltip": "Abrir la herramienta actual en una ventana separada",
+  "tool_window.attach": "Volver a acoplar la herramienta",
+  "tool_window.attach_tooltip": "Devolver esta herramienta al espacio de trabajo principal",
+  "tool_window.detached": "Desacoplada",
+  "tool_window.unavailable": "No hay ninguna herramienta disponible para desacoplar",
   "editor.chk_inverted_search": "Búsqueda invertida",
   "editor.find_inverted_replace_disabled": "El reemplazo está desactivado para la búsqueda invertida.",
   "editor.lbl_inverted_unit": "Unidad invertida:",
