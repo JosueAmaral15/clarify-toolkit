@@ -5639,3 +5639,18 @@ Plano imediato:
 - The exact Protocol2 worker remains active for the authorized Clarify queue.
   A next native continuation may be issued only after controls, hooks, session
   and this checkpoint are revalidated.
+
+### October 26 Editor recovery-reopen continuation journal
+
+- After publishing checkpoint `e91a3fd`, AI Presence Monitor 0.10.7 revalidated
+  the exact active Clarify Protocol2 worker, schema integrity, five hooks, Codex
+  queue and both services. Task automation and native input were enabled; GUI
+  and remote input remained disabled.
+- A dry run resolved only `CE-RECOVERY-REOPEN-01`, worker
+  `notebook-josue:codex:project=clarify-b09a84f1` and exact session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1` without accessing input or the
+  database. One real native continuation was then issued with zero delay.
+- The command returned `dispatch_started`, not delivery confirmation, and will
+  not be retried. The continuation must branch from `e91a3fd`, audit and reuse
+  `UnsavedRecoveryStore`, preserve all completed Editor chrome/lifecycle work
+  and keep `example.py` byte-identical.
