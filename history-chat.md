@@ -5522,3 +5522,15 @@ Plano imediato:
   Evidence is in `docs/reports/CLARIFY_TOOL_DOCK_TOGGLE_2026_10_26.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 26 tool dock-toggle checkpoint
+
+- Feature commit `c010aad` was pushed to
+  `COM-d19633c5-e7f2-4381-987a-39b76c18378b`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch (3 critical,
+  21 high, 11 moderate and 3 low). These unresolved external security gates
+  remain outside this bounded UI delivery.
+- The exact Protocol2 worker remains reserved for the Clarify queue; one next
+  native continuation may be issued only after its controls and session are
+  revalidated.
