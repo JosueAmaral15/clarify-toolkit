@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/25 - copia segura de caminhos pelas guias do Editor
+**Last Update**: 2026/10/26 - navegacao unica por Enter no Find do Editor
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -13,8 +13,8 @@ abertas**. Esta secao acrescentou **6 tarefas**, todas concluidas. Oito
 seguimentos anteriores e quinze lacunas confirmadas na reconciliacao de 18/10,
 quatro delas agora concluidas,
 foram registrados para depois da etapa corrente de `APP-THREAD-01`; a fila
-canonica possui agora **79 tarefas abertas** apos a conclusao de
-`CE-TAB-COPY-PATH-01`.
+canonica possui agora **78 tarefas abertas** apos a conclusao de
+`CE-FIND-ENTER-01`.
 Executar em etapas limitadas e testadas, preservando
 recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
 
@@ -533,7 +533,7 @@ corrente de `APP-THREAD-01`. Estes itens nao ampliam o escopo da Etapa 15 nem
 reabrem entregas anteriores: cada um complementa o contrato ja existente e deve
 ser implementado em etapa limitada, testada e documentada.
 
-- [ ] **CE-FIND-ENTER-01: Enter executa Find Next.** Quando o foco estiver no
+- [x] **CE-FIND-ENTER-01: Enter executa Find Next.** Quando o foco estiver no
   campo de consulta do Find do Clarify Editor, `Enter` deve executar `Find Next`;
   `Shift+Enter` pode executar `Find Previous` se nao conflitar com entrada
   multiline. Preservar Regex, Whole Word, Case Sensitive, escopos, contagem e
@@ -543,6 +543,12 @@ ser implementado em etapa limitada, testada e documentada.
   default e `returnPressed`, cobrindo teclado principal, keypad e auto-repeat.
   Confirmado em 24/10/2026: `Enter` e `Shift+Enter` sao respectivamente Next e
   Previous; nenhuma das teclas pode acionar duas rotas de navegacao.
+  Entregue em 26/10/2026: o campo de consulta possui uma unica rota de teclado;
+  Return/Enter e keypad executam Next uma vez, Shift+Enter executa Previous uma
+  vez e eventos auto-repeat sao consumidos sem novos avancos. O shortcut global,
+  o botao default e a conexao `returnPressed` duplicada foram removidos. Replace,
+  limites de linha e documento mantem Enter nativo. Evidencia em
+  [Clarify Editor Find Enter](reports/CLARIFY_EDITOR_FIND_ENTER_2026_10_26.md).
 - [ ] **TOOL-DOCK-TOGGLE-01: oferecer acoplamento e desacoplamento reais.** A
   remocao do chrome nativo enganoso em `CE-DOCK-CHROME-01` deve ser complementada
   por um unico controle acessivel que alterne entre tool acoplada e janela

@@ -228,8 +228,6 @@ class _EditorFindDialog(QDialog):
         btn_layout = QHBoxLayout()
         self.btn_find_previous = QPushButton(tr("editor.btn_find_previous"))
         self.btn_find_next = QPushButton(tr("editor.btn_find_next"))
-        self.btn_find_previous.setShortcut(QKeySequence("Shift+Enter"))
-        self.btn_find_next.setDefault(True)
         btn_layout.addWidget(self.btn_find_previous)
         btn_layout.addWidget(self.btn_find_next)
 
@@ -245,6 +243,10 @@ class _EditorFindDialog(QDialog):
         self.btn_close = QPushButton(tr("editor.btn_close"))
         btn_layout.addWidget(self.btn_close)
         layout.addLayout(btn_layout)
+        for button in self.findChildren(QPushButton):
+            button.setAutoDefault(False)
+            button.setDefault(False)
+        self.find_input.installEventFilter(self)
 
     def _connect_signals(self):
         self.find_input.textChanged.connect(self._recalculate_matches)
@@ -268,7 +270,6 @@ class _EditorFindDialog(QDialog):
         self.btn_clear.clicked.connect(self._clear_find_state)
         self.btn_find_previous.clicked.connect(self._find_previous)
         self.btn_find_next.clicked.connect(self._find_next)
-        self.find_input.returnPressed.connect(self._find_next)
         self.btn_close.clicked.connect(self.close)
 
         if self.replace_enabled:
@@ -639,6 +640,33 @@ class _EditorFindDialog(QDialog):
         self._mutating = False
         self._recalculate_matches()
         self.lbl_status.setText(tr("editor.replace_all_complete").format(count=count))
+
+    def eventFilter(self, watched, event):  # pylint: disable=invalid-name
+        """Route query-field Enter keys through exactly one navigation path."""
+        if (
+            watched is self.find_input
+            and event.type() == QEvent.Type.KeyPress
+            and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+        ):
+            navigation_modifiers = event.modifiers() & (
+                Qt.KeyboardModifier.ShiftModifier
+                | Qt.KeyboardModifier.ControlModifier
+                | Qt.KeyboardModifier.AltModifier
+                | Qt.KeyboardModifier.MetaModifier
+            )
+            if navigation_modifiers not in (
+                Qt.KeyboardModifier.NoModifier,
+                Qt.KeyboardModifier.ShiftModifier,
+            ):
+                return False
+            if not event.isAutoRepeat():
+                if navigation_modifiers == Qt.KeyboardModifier.ShiftModifier:
+                    self._find_previous()
+                else:
+                    self._find_next()
+            event.accept()
+            return True
+        return super().eventFilter(watched, event)
 
     def closeEvent(self, event):  # pylint: disable=invalid-name
         self._remember_current_values()

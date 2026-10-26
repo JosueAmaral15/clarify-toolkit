@@ -5436,3 +5436,42 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+## 2026-10-26 - CE-FIND-ENTER-01 started
+
+- Work starts from published checkpoint `b215e81` on fresh branch
+  `COM-7688039c-8b9b-4fc0-98a2-deaa51f8186c`, limited to deterministic Enter
+  and Shift+Enter navigation in the Clarify Editor Find query field. The
+  subsequent automation journal `eb018c8` was verified but excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2 with task automation and native input enabled. Schema integrity,
+  five hooks and monitor/reply/tray/hook processes were verified; RAM remained
+  below the configured guard.
+- The audit will first reproduce actual signal delivery and navigation counts
+  for Return, Enter, Shift+Enter, keypad and auto-repeat. Replace fields,
+  line-bound controls and editor documents must retain their native behavior.
+- Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS 600 MiB,
+  wall 180 seconds and pytest timeout 20 seconds. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-26 - CE-FIND-ENTER-01 completed
+
+- The pre-edit guarded regression proved duplicate delivery: one Return press
+  selected match index `1` instead of `0` because `returnPressed` and the
+  default Find Next button both ran. The failing process exited normally at
+  195.6 MiB without a native crash.
+- The query field now owns the only Return/Enter route. Main and keypad Enter
+  invoke Next once; Shift+Enter invokes Previous once; auto-repeat is consumed
+  without navigating again. Global Shift+Enter, implicit default buttons and
+  the duplicate signal connection were removed.
+- Replace input, line-bound controls and the editor document retain native Enter
+  behavior. Invalid regex cursor stability, match counts, scopes, state/history,
+  splits and recovery remain covered.
+- Guarded serial validation passed 188 distinct tests across nine isolated Qt
+  modules. Peak tree RSS was 227.3 MiB; no native crash, timeout or guard abort
+  occurred. Compilation, Pylint-E, scoped Black and diff checks passed. Evidence
+  is in `docs/reports/CLARIFY_EDITOR_FIND_ENTER_2026_10_26.md`; the canonical
+  queue now has 78 open tasks.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

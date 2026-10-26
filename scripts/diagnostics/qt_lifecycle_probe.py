@@ -30,6 +30,7 @@ TEST_MODULES = {
     "completion": "tests/test_qt_completion_lifecycle.py",
     "editor-dock": "tests/gui/test_editor_dock.py",
     "editor-find-core": "tests/test_editor_find.py",
+    "editor-find-enter": "tests/gui/test_editor_find_enter.py",
     "editor-find-state-history": "tests/gui/test_editor_find_state_history.py",
     "editor-find-scope-negation": "tests/gui/test_editor_find_scope_negation.py",
     "editor-priority-stage1": "tests/gui/test_editor_priority_stage1.py",
