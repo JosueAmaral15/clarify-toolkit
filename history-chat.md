@@ -5693,3 +5693,14 @@ Plano imediato:
   native Codex queue, both services and the exact active Protocol2 worker.
   Task automation and native input remain enabled; GUI and remote input remain
   disabled. The next concrete canonical task is `APP-SHORTCUTS-F1-01`.
+
+### Native continuation journal
+
+- One dry-run selected the exact worker
+  `notebook-josue:codex:project=clarify-b09a84f1`, exact session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, local native transport and the
+  `CLARIFY_EDITOR_CONTINUE_20261026_F1` marker.
+- One real 15-second continuation returned exit 0 with `dispatch_started` for
+  `APP-SHORTCUTS-F1-01`. This proves process initiation only, not delivery or
+  processing; it must not be retried without inspecting later exact-session
+  hook evidence.
