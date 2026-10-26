@@ -5680,3 +5680,16 @@ Plano imediato:
   tasks remain open.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 26 Editor recovery-reopen checkpoint
+
+- Feature commit `ebd877f` was pushed to
+  `COM-006a1310-c7c2-461e-9ab8-d9214f9b75b9`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch (3 critical,
+  21 high, 11 moderate and 3 low). These unresolved external security gates
+  remain outside this bounded Editor delivery.
+- AI Presence Monitor 0.10.7 revalidated schema integrity, five hooks, the
+  native Codex queue, both services and the exact active Protocol2 worker.
+  Task automation and native input remain enabled; GUI and remote input remain
+  disabled. The next concrete canonical task is `APP-SHORTCUTS-F1-01`.
