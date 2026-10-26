@@ -5387,21 +5387,6 @@ Plano imediato:
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
 
-### October 26 dock-toggle continuation journal
-
-- After publishing checkpoint `17df16d`, AI Presence Monitor 0.10.7 again
-  verified schema integrity, five installed hooks, an available Codex queue,
-  active monitor/reply services, task automation and native input. GUI and
-  remote input remained disabled.
-- A dry run resolved the exact Clarify worker and session without accessing
-  input or the database. One real native continuation was then issued for only
-  `TOOL-DOCK-TOGGLE-01` in session
-  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
-- The command returned `dispatch_started`. This is not delivery confirmation,
-  so the dispatch will not be retried. The continuation is anchored to
-  checkpoint `17df16d`, must create a fresh `COM-UUID` branch, and must preserve
-  untracked `example.py` byte-identically.
-
 ## 2026-10-25 - CE-TAB-COPY-PATH-01 started
 
 - Work starts from published checkpoint `cc94ab1` on fresh branch
@@ -5501,3 +5486,18 @@ Plano imediato:
   remain outside this bounded Editor delivery.
 - The exact Protocol2 worker remains active with task automation and native
   input enabled for session `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+
+### October 26 dock-toggle continuation journal
+
+- After publishing checkpoint `17df16d`, AI Presence Monitor 0.10.7 again
+  verified schema integrity, five installed hooks, an available Codex queue,
+  active monitor/reply services, task automation and native input. GUI and
+  remote input remained disabled.
+- A dry run resolved the exact Clarify worker and session without accessing
+  input or the database. One real native continuation was then issued for only
+  `TOOL-DOCK-TOGGLE-01` in session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- The command returned `dispatch_started`. This is not delivery confirmation,
+  so the dispatch will not be retried. The continuation is anchored to
+  checkpoint `17df16d`, must create a fresh `COM-UUID` branch, and must preserve
+  untracked `example.py` byte-identically.
