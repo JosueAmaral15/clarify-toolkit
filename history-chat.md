@@ -5587,3 +5587,18 @@ Plano imediato:
   Task automation and native input remain enabled; GUI and remote input remain
   disabled. One exact-session continuation may now be issued for the next
   canonical Editor item only.
+
+### October 26 Editor quick-toolbar continuation journal
+
+- After publishing checkpoint `750fa72`, AI Presence Monitor 0.10.7 again
+  verified the exact active Clarify Protocol2 worker, schema, five hooks, Codex
+  queue and background services. Task automation and native input were enabled;
+  GUI and remote input remained disabled.
+- A dry run resolved only `CE-QUICK-TOOLBAR-01`, worker
+  `notebook-josue:codex:project=clarify-b09a84f1` and exact session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1` without accessing input or the
+  database. One real native continuation was then issued with zero delay.
+- The command returned `dispatch_started`, not delivery confirmation, and will
+  not be retried. The continuation must branch from `750fa72`, preserve status
+  indicators and all prior Editor lifecycle contracts, and keep `example.py`
+  byte-identical.
