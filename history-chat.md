@@ -5534,3 +5534,16 @@ Plano imediato:
 - The exact Protocol2 worker remains reserved for the Clarify queue; one next
   native continuation may be issued only after its controls and session are
   revalidated.
+
+### October 26 Editor status-info continuation journal
+
+- After publishing checkpoint `822f786`, AI Presence Monitor 0.10.7 again
+  verified schema integrity, five hooks, the Codex queue, active services, task
+  automation and native input. GUI and remote input remained disabled.
+- A dry run resolved the exact Clarify worker and session without accessing
+  input or the database. One real native continuation was then issued for only
+  `CE-STATUS-INFO-01` in session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- The command returned `dispatch_started`, not delivery confirmation, and will
+  not be retried. The continuation must branch from `822f786`, preserve the
+  completed dock-toggle lifecycle and keep `example.py` byte-identical.
