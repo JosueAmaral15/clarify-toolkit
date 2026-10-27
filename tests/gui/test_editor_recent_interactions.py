@@ -34,7 +34,7 @@ def dock(qapp, qtbot, monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize("replace_enabled", [False, True])
-def test_find_actions_prefill_the_selected_text(dock, monkeypatch, replace_enabled):
+def test_find_actions_prefill_the_selected_text(dock, replace_enabled):
     """Find and Replace both use the active selection as the query."""
     dock._new_file()
     editor = dock.tab_widget.currentWidget().editor
@@ -43,16 +43,10 @@ def test_find_actions_prefill_the_selected_text(dock, monkeypatch, replace_enabl
     cursor.setPosition(6)
     cursor.setPosition(12, QTextCursor.MoveMode.KeepAnchor)
     editor.setTextCursor(cursor)
-    observed = []
-    monkeypatch.setattr(
-        module._EditorFindDialog,
-        "exec",
-        lambda dialog: observed.append(dialog.find_input.text()),
-    )
-
     dock._show_find_dialog(replace_enabled)
 
-    assert observed == ["needle"]
+    assert dock._find_dialog.find_input.text() == "needle"
+    assert dock._find_dialog.replace_enabled is replace_enabled
 
 
 def test_enter_preserves_the_current_line_indentation(dock, qtbot):

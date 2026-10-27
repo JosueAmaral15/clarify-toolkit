@@ -28,6 +28,8 @@
   "tool_window.unavailable": "Aucun outil n’est disponible pour être détaché",
   "editor.chk_inverted_search": "Recherche inversée",
   "editor.find_inverted_replace_disabled": "Le remplacement est désactivé pour la recherche inversée.",
+  "editor.btn_find_dock": "Ancrer en bas",
+  "editor.btn_find_float": "Ouvrir dans une fenêtre flottante",
   "editor.lbl_inverted_unit": "Unité inversée :",
   "editor.inverted_unit_line": "Ligne",
   "editor.inverted_unit_token": "Jeton",

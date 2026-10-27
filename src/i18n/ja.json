@@ -28,6 +28,8 @@
   "tool_window.unavailable": "切り離せるツールがありません",
   "editor.chk_inverted_search": "反転検索",
   "editor.find_inverted_replace_disabled": "反転検索では置換を使用できません。",
+  "editor.btn_find_dock": "下部にドッキング",
+  "editor.btn_find_float": "フローティングウィンドウで開く",
   "editor.lbl_inverted_unit": "反転単位:",
   "editor.inverted_unit_line": "行",
   "editor.inverted_unit_token": "トークン",

@@ -28,6 +28,8 @@
   "tool_window.unavailable": "Kein Werkzeug zum Abkoppeln verfügbar",
   "editor.chk_inverted_search": "Invertierte Suche",
   "editor.find_inverted_replace_disabled": "Ersetzen ist bei der invertierten Suche deaktiviert.",
+  "editor.btn_find_dock": "Unten andocken",
+  "editor.btn_find_float": "Als schwebendes Fenster öffnen",
   "editor.lbl_inverted_unit": "Invertierte Einheit:",
   "editor.inverted_unit_line": "Zeile",
   "editor.inverted_unit_token": "Token",

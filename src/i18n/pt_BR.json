@@ -626,6 +626,8 @@
     "editor.find_invalid_regex": "Regex invalido: {error}",
     "editor.find_error": "Erro na busca: {error}",
     "editor.find_inverted_replace_disabled": "A substituição fica desativada na busca invertida.",
+    "editor.btn_find_dock": "Acoplar na Parte Inferior",
+    "editor.btn_find_float": "Abrir como Janela Flutuante",
     "editor.find_match_count": "{count} ocorrência(s)",
     "editor.find_match_count_limited": "{count}+ ocorrências (limite atingido)",
     "editor.find_position": "{current} de {total}",

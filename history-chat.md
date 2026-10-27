@@ -5805,3 +5805,43 @@ Plano imediato:
 - The next concrete canonical Editor task is `CE-FIND-MODELESS-01`; at most one
   exact-session native continuation may be sent after this checkpoint is
   committed and pushed, with no retry if dispatch state is uncertain.
+
+## 2026-10-27 - CE-FIND-MODELESS-01 started
+
+- Work starts from published checkpoint `fe9cc97` on fresh branch
+  `COM-90f133b5-e40b-4b9b-a3c4-43fb6b8cf1ba`, limited to one coherent
+  Find/Replace session that can switch between a lower docked panel and a
+  floating modeless window. The subsequent dispatch journal `4eb0861` was
+  verified and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, native queue, both services and tray
+  autostart are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit will reproduce current opening, state/history, active split,
+  shortcut, translation and close-cleanup behavior before changing product code.
+  Tests remain isolated and serial with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - CE-FIND-MODELESS-01 completed
+
+- The reproduction intercepted the existing Find action and proved that it
+  called blocking `QDialog.exec()`, created a fresh dialog per command and had
+  no lower-panel host or persisted presentation mode.
+- Find and Find/Replace now share one modeless workspace session. The same
+  widget moves between a lower docked panel and a floating window while keeping
+  selection prefill, private buffer history, match options, lexical/inverted
+  scopes, line bounds, counters and single Enter navigation.
+- Tab changes and split focus retarget that session without cloning it. Runtime
+  language changes refresh its labels, and last-tab/Editor close disconnects
+  document and translation signals before deferred deletion.
+- Guarded serial validation passed 279 distinct tests across 18 isolated
+  modules, peaking at 249.2 MiB. There was no native crash, timeout or guard
+  abort; Pylint-E, Python compilation, seven JSON parses and `git diff --check`
+  passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_FIND_MODELESS_2026_10_27.md`; 71 canonical tasks
+  remain open after this delivery.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

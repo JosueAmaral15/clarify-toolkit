@@ -28,6 +28,8 @@
   "tool_window.unavailable": "No hay ninguna herramienta disponible para desacoplar",
   "editor.chk_inverted_search": "Búsqueda invertida",
   "editor.find_inverted_replace_disabled": "El reemplazo está desactivado para la búsqueda invertida.",
+  "editor.btn_find_dock": "Acoplar en la parte inferior",
+  "editor.btn_find_float": "Abrir como ventana flotante",
   "editor.lbl_inverted_unit": "Unidad invertida:",
   "editor.inverted_unit_line": "Línea",
   "editor.inverted_unit_token": "Token",

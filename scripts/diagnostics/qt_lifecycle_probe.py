@@ -31,6 +31,7 @@ TEST_MODULES = {
     "editor-dock": "tests/gui/test_editor_dock.py",
     "editor-find-core": "tests/test_editor_find.py",
     "editor-find-enter": "tests/gui/test_editor_find_enter.py",
+    "editor-find-modeless": "tests/gui/test_editor_find_modeless.py",
     "editor-find-state-history": "tests/gui/test_editor_find_state_history.py",
     "editor-layout": "tests/gui/test_editor_layout.py",
     "editor-notes-store": "tests/test_editor_notes.py",

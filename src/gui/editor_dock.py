@@ -113,6 +113,8 @@ class _EditorFindDialog(QDialog):
         state_changed=None,
         history: _EditorFindHistory | None = None,
         selection_query: str = "",
+        close_requested=None,
+        presentation_toggle_requested=None,
     ):
         super().__init__(parent)
         self.editor = editor
@@ -128,13 +130,19 @@ class _EditorFindDialog(QDialog):
         self._result_truncated = False
         self._scope_fallback = False
         self._mutating = False
+        self._close_requested = close_requested
+        self._presentation_toggle_requested = presentation_toggle_requested
+        self._presentation_mode = "floating"
+        self._shutting_down = False
+        self._translation_connected = False
 
-        title_key = "editor.find_replace_dialog_title" if replace_enabled else "editor.find_dialog_title"
-        self.setWindowTitle(tr(title_key))
         self.setMinimumWidth(560)
         self._setup_ui()
         self._restore_state()
         self._connect_signals()
+        get_translator().languageChanged.connect(self._retranslate_ui)
+        self._translation_connected = True
+        self._retranslate_ui()
         self._recalculate_matches()
         if self.find_input.text():
             self._sync_current_match_to_cursor()
@@ -144,31 +152,27 @@ class _EditorFindDialog(QDialog):
         layout = QVBoxLayout(self)
 
         find_layout = QHBoxLayout()
-        find_layout.addWidget(QLabel(tr("editor.lbl_find")))
+        self.lbl_find = QLabel()
+        find_layout.addWidget(self.lbl_find)
         self.find_input = QLineEdit()
         self.find_input.setMaxLength(MAX_QUERY_CHARS)
         find_layout.addWidget(self.find_input)
-        self.btn_previous_value = QPushButton(
-            tr("editor.btn_find_previous_value")
-        )
-        self.btn_previous_value.setToolTip(
-            tr("editor.tooltip_find_previous_value")
-        )
+        self.btn_previous_value = QPushButton()
         find_layout.addWidget(self.btn_previous_value)
         layout.addLayout(find_layout)
 
         self.replace_input = QLineEdit()
         self.replace_input.setMaxLength(MAX_QUERY_CHARS)
-        if self.replace_enabled:
-            replace_layout = QHBoxLayout()
-            replace_layout.addWidget(QLabel(tr("editor.lbl_replace")))
-            replace_layout.addWidget(self.replace_input)
-            layout.addLayout(replace_layout)
+        replace_layout = QHBoxLayout()
+        self.lbl_replace = QLabel()
+        replace_layout.addWidget(self.lbl_replace)
+        replace_layout.addWidget(self.replace_input)
+        layout.addLayout(replace_layout)
 
         options_layout = QHBoxLayout()
-        self.chk_case_sensitive = QCheckBox(tr("editor.chk_case_sensitive"))
-        self.chk_whole_word = QCheckBox(tr("editor.chk_whole_word"))
-        self.chk_regex = QCheckBox(tr("editor.chk_regex"))
+        self.chk_case_sensitive = QCheckBox()
+        self.chk_whole_word = QCheckBox()
+        self.chk_regex = QCheckBox()
         options_layout.addWidget(self.chk_case_sensitive)
         options_layout.addWidget(self.chk_whole_word)
         options_layout.addWidget(self.chk_regex)
@@ -176,12 +180,13 @@ class _EditorFindDialog(QDialog):
         layout.addLayout(options_layout)
 
         scope_layout = QHBoxLayout()
-        scope_layout.addWidget(QLabel(tr("editor.lbl_find_scope")))
+        self.lbl_find_scope = QLabel()
+        scope_layout.addWidget(self.lbl_find_scope)
         self.scope_group = QButtonGroup(self)
-        self.radio_all_text = QRadioButton(tr("editor.scope_all_text"))
-        self.radio_only_strings = QRadioButton(tr("editor.scope_only_strings"))
-        self.radio_only_variables = QRadioButton(tr("editor.scope_only_variables"))
-        self.radio_only_comments = QRadioButton(tr("editor.scope_only_comments"))
+        self.radio_all_text = QRadioButton()
+        self.radio_only_strings = QRadioButton()
+        self.radio_only_variables = QRadioButton()
+        self.radio_only_comments = QRadioButton()
         for scope, button in (
             ("all", self.radio_all_text),
             ("strings", self.radio_only_strings),
@@ -195,30 +200,28 @@ class _EditorFindDialog(QDialog):
         layout.addLayout(scope_layout)
 
         inverted_layout = QHBoxLayout()
-        self.chk_inverted = QCheckBox(tr("editor.chk_inverted_search"))
+        self.chk_inverted = QCheckBox()
         inverted_layout.addWidget(self.chk_inverted)
-        inverted_layout.addWidget(QLabel(tr("editor.lbl_inverted_unit")))
+        self.lbl_inverted_unit = QLabel()
+        inverted_layout.addWidget(self.lbl_inverted_unit)
         self.cmb_inverted_unit = QComboBox()
         for key in ("line", "token", "interval"):
-            self.cmb_inverted_unit.addItem(
-                tr(f"editor.inverted_unit_{key}"),
-                key,
-            )
+            self.cmb_inverted_unit.addItem("", key)
         self.cmb_inverted_unit.setEnabled(False)
         inverted_layout.addWidget(self.cmb_inverted_unit)
         inverted_layout.addStretch()
         layout.addLayout(inverted_layout)
 
         line_layout = QHBoxLayout()
-        line_layout.addWidget(QLabel(tr("editor.lbl_start_line")))
+        self.lbl_start_line = QLabel()
+        line_layout.addWidget(self.lbl_start_line)
         self.start_line = QSpinBox()
         self.start_line.setRange(0, self._plain_text_line_count())
-        self.start_line.setSpecialValueText(tr("editor.line_first"))
         line_layout.addWidget(self.start_line)
-        line_layout.addWidget(QLabel(tr("editor.lbl_end_line")))
+        self.lbl_end_line = QLabel()
+        line_layout.addWidget(self.lbl_end_line)
         self.end_line = QSpinBox()
         self.end_line.setRange(0, self._plain_text_line_count())
-        self.end_line.setSpecialValueText(tr("editor.line_last"))
         line_layout.addWidget(self.end_line)
         line_layout.addStretch()
         layout.addLayout(line_layout)
@@ -227,27 +230,29 @@ class _EditorFindDialog(QDialog):
         layout.addWidget(self.lbl_status)
 
         btn_layout = QHBoxLayout()
-        self.btn_find_previous = QPushButton(tr("editor.btn_find_previous"))
-        self.btn_find_next = QPushButton(tr("editor.btn_find_next"))
+        self.btn_find_previous = QPushButton()
+        self.btn_find_next = QPushButton()
         btn_layout.addWidget(self.btn_find_previous)
         btn_layout.addWidget(self.btn_find_next)
 
-        if self.replace_enabled:
-            self.btn_replace = QPushButton(tr("editor.btn_replace"))
-            self.btn_replace_all = QPushButton(tr("editor.btn_replace_all"))
-            btn_layout.addWidget(self.btn_replace)
-            btn_layout.addWidget(self.btn_replace_all)
+        self.btn_replace = QPushButton()
+        self.btn_replace_all = QPushButton()
+        btn_layout.addWidget(self.btn_replace)
+        btn_layout.addWidget(self.btn_replace_all)
 
-        self.btn_clear = QPushButton(tr("editor.btn_find_clear"))
+        self.btn_clear = QPushButton()
         btn_layout.addWidget(self.btn_clear)
         btn_layout.addStretch()
-        self.btn_close = QPushButton(tr("editor.btn_close"))
+        self.btn_toggle_presentation = QPushButton()
+        btn_layout.addWidget(self.btn_toggle_presentation)
+        self.btn_close = QPushButton()
         btn_layout.addWidget(self.btn_close)
         layout.addLayout(btn_layout)
         for button in self.findChildren(QPushButton):
             button.setAutoDefault(False)
             button.setDefault(False)
         self.find_input.installEventFilter(self)
+        self._update_replace_visibility()
 
     def _connect_signals(self):
         self.find_input.textChanged.connect(self._recalculate_matches)
@@ -263,19 +268,152 @@ class _EditorFindDialog(QDialog):
         )
         self.start_line.valueChanged.connect(self._recalculate_matches)
         self.end_line.valueChanged.connect(self._recalculate_matches)
-        self.editor.textChanged.connect(self._on_editor_text_changed)
-        self.editor.cursorPositionChanged.connect(
-            self._on_editor_cursor_position_changed
-        )
+        self._connect_editor_signals()
         self.btn_previous_value.clicked.connect(self._restore_previous_value)
         self.btn_clear.clicked.connect(self._clear_find_state)
         self.btn_find_previous.clicked.connect(self._find_previous)
         self.btn_find_next.clicked.connect(self._find_next)
         self.btn_close.clicked.connect(self.close)
+        self.btn_toggle_presentation.clicked.connect(
+            self._request_presentation_toggle
+        )
+        self.btn_replace.clicked.connect(self._replace_current)
+        self.btn_replace_all.clicked.connect(self._replace_all)
 
-        if self.replace_enabled:
-            self.btn_replace.clicked.connect(self._replace_current)
-            self.btn_replace_all.clicked.connect(self._replace_all)
+    def _connect_editor_signals(self) -> None:
+        self.editor.textChanged.connect(self._on_editor_text_changed)
+        self.editor.cursorPositionChanged.connect(
+            self._on_editor_cursor_position_changed
+        )
+
+    def _disconnect_editor_signals(self) -> None:
+        editor = getattr(self, "editor", None)
+        if editor is None:
+            return
+        for signal, slot in (
+            (editor.textChanged, self._on_editor_text_changed),
+            (
+                editor.cursorPositionChanged,
+                self._on_editor_cursor_position_changed,
+            ),
+        ):
+            try:
+                signal.disconnect(slot)
+            except (RuntimeError, TypeError):
+                pass
+
+    def bind_editor(
+        self,
+        editor,
+        *,
+        replace_enabled: bool,
+        file_path: str | None,
+        history: _EditorFindHistory,
+        selection_query: str = "",
+    ) -> None:
+        """Retarget this one session to an active Editor buffer or split."""
+        history_changed = history is not self.history
+        editor_changed = editor is not self.editor
+        if history_changed:
+            self._remember_current_values()
+        if editor_changed:
+            self._disconnect_editor_signals()
+            self.editor = editor
+            self._connect_editor_signals()
+
+        self.replace_enabled = bool(replace_enabled)
+        self.file_path = file_path
+        self.history = history
+        self._selection_query = str(selection_query)[:MAX_QUERY_CHARS]
+        self._history_index = -1 if self._selection_query else 0
+        self._update_replace_visibility()
+        self._retranslate_ui()
+
+        line_count = self._plain_text_line_count()
+        self.start_line.setMaximum(line_count)
+        self.end_line.setMaximum(line_count)
+        if self._selection_query:
+            self.find_input.setText(self._selection_query)
+            self.find_input.selectAll()
+        elif history_changed:
+            query, replacement = self.history.current()
+            self.find_input.setText(query)
+            self.replace_input.setText(replacement)
+        self._recalculate_matches()
+        if self.find_input.text():
+            self._sync_current_match_to_cursor()
+        self._update_history_button()
+
+    def _request_presentation_toggle(self) -> None:
+        if self._presentation_toggle_requested is not None:
+            self._presentation_toggle_requested()
+
+    def _update_replace_visibility(self) -> None:
+        for widget in (
+            self.lbl_replace,
+            self.replace_input,
+            self.btn_replace,
+            self.btn_replace_all,
+        ):
+            widget.setVisible(self.replace_enabled)
+
+    def set_presentation_mode(self, mode: str) -> None:
+        """Refresh controls after the owner reparents this same session."""
+        self._presentation_mode = (
+            "floating" if mode == "floating" else "docked"
+        )
+        self._retranslate_ui()
+
+    def _retranslate_ui(self, _language=None) -> None:
+        title_key = (
+            "editor.find_replace_dialog_title"
+            if self.replace_enabled
+            else "editor.find_dialog_title"
+        )
+        self.setWindowTitle(tr(title_key))
+        controls = (
+            (self.lbl_find, "editor.lbl_find"),
+            (self.lbl_replace, "editor.lbl_replace"),
+            (self.chk_case_sensitive, "editor.chk_case_sensitive"),
+            (self.chk_whole_word, "editor.chk_whole_word"),
+            (self.chk_regex, "editor.chk_regex"),
+            (self.lbl_find_scope, "editor.lbl_find_scope"),
+            (self.radio_all_text, "editor.scope_all_text"),
+            (self.radio_only_strings, "editor.scope_only_strings"),
+            (self.radio_only_variables, "editor.scope_only_variables"),
+            (self.radio_only_comments, "editor.scope_only_comments"),
+            (self.chk_inverted, "editor.chk_inverted_search"),
+            (self.lbl_inverted_unit, "editor.lbl_inverted_unit"),
+            (self.lbl_start_line, "editor.lbl_start_line"),
+            (self.lbl_end_line, "editor.lbl_end_line"),
+            (self.btn_previous_value, "editor.btn_find_previous_value"),
+            (self.btn_find_previous, "editor.btn_find_previous"),
+            (self.btn_find_next, "editor.btn_find_next"),
+            (self.btn_replace, "editor.btn_replace"),
+            (self.btn_replace_all, "editor.btn_replace_all"),
+            (self.btn_clear, "editor.btn_find_clear"),
+            (self.btn_close, "editor.btn_close"),
+        )
+        for widget, key in controls:
+            widget.setText(tr(key))
+        for index, key in enumerate(("line", "token", "interval")):
+            self.cmb_inverted_unit.setItemText(
+                index,
+                tr(f"editor.inverted_unit_{key}"),
+            )
+        self.start_line.setSpecialValueText(tr("editor.line_first"))
+        self.end_line.setSpecialValueText(tr("editor.line_last"))
+        toggle_key = (
+            "editor.btn_find_dock"
+            if self._presentation_mode == "floating"
+            else "editor.btn_find_float"
+        )
+        self.btn_toggle_presentation.setText(tr(toggle_key))
+        self.btn_toggle_presentation.setAccessibleName(tr(toggle_key))
+        self.btn_previous_value.setToolTip(
+            tr("editor.tooltip_find_previous_value")
+        )
+        self._update_status()
 
     def _restore_state(self) -> None:
         self.chk_case_sensitive.setChecked(bool(self.state.get("case_sensitive", False)))
@@ -671,18 +809,29 @@ class _EditorFindDialog(QDialog):
 
     def closeEvent(self, event):  # pylint: disable=invalid-name
         self._remember_current_values()
-        for signal, slot in (
-            (self.editor.textChanged, self._on_editor_text_changed),
-            (
-                self.editor.cursorPositionChanged,
-                self._on_editor_cursor_position_changed,
-            ),
-        ):
+        if self._close_requested is not None and not self._shutting_down:
+            event.ignore()
+            self._close_requested()
+            return
+        self._disconnect_editor_signals()
+        if self._translation_connected:
             try:
-                signal.disconnect(slot)
+                get_translator().languageChanged.disconnect(
+                    self._retranslate_ui
+                )
             except (RuntimeError, TypeError):
                 pass
+            self._translation_connected = False
         super().closeEvent(event)
+
+    def shutdown(self) -> None:
+        """Release session callbacks before the owning Editor is destroyed."""
+        if self._shutting_down:
+            return
+        self._shutting_down = True
+        self._close_requested = None
+        self._presentation_toggle_requested = None
+        self.close()
 
 
 class _LineNumberArea(QWidget):
@@ -1303,6 +1452,15 @@ class EditorDock(BaseDock):
         self._recovery_offer_dismissed = False
         self._last_reference_update = None
         self._find_history_by_buffer: dict[str, _EditorFindHistory] = {}
+        self._find_dialog = None
+        find_presentation_mode = self.settings.value(
+            "find/presentation_mode", "docked", type=str
+        )
+        self._find_presentation_mode = (
+            find_presentation_mode
+            if find_presentation_mode in {"docked", "floating"}
+            else "docked"
+        )
 
         # NOW call super().__init__() which triggers _setup_ui()
         super().__init__(EDITOR_NAME, parent)
@@ -1373,6 +1531,18 @@ class EditorDock(BaseDock):
         self.editor_splitter.setSizes([240, 760])
         self.explorer_panel.setVisible(self.show_explorer_enabled)
         self.layout.addWidget(self.editor_splitter, 1)
+
+        self._find_panel_host = QFrame(self.main_widget)
+        self._find_panel_host.setObjectName("editor_find_panel_host")
+        self._find_panel_host.setFrameShape(QFrame.Shape.StyledPanel)
+        self._find_panel_layout = QVBoxLayout(self._find_panel_host)
+        self._find_panel_layout.setContentsMargins(0, 0, 0, 0)
+        self._find_panel_host.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self._find_panel_host.hide()
+        self.layout.addWidget(self._find_panel_host)
 
         # Status bar
         status_layout = QHBoxLayout()
@@ -3048,6 +3218,8 @@ class EditorDock(BaseDock):
         if event.type() == QEvent.Type.FocusIn and self._tab_for_editor(watched) is not None:
             self._last_active_editor = watched
             self._update_editor_status_indicators()
+            if self._find_session_is_visible():
+                self._bind_find_session_to_active_editor()
         if event.type() == QEvent.Type.KeyPress:
             modifiers = event.modifiers()
             unsupported = modifiers & (
@@ -3688,6 +3860,8 @@ class EditorDock(BaseDock):
         self.split_editor.setFocus()
         self._last_active_editor = self.split_editor
         self._update_editor_status_indicators()
+        if self._find_session_is_visible():
+            self._bind_find_session_to_active_editor()
         return True
 
     def _close_split_view(self) -> None:
@@ -3701,6 +3875,8 @@ class EditorDock(BaseDock):
         self._last_active_editor = getattr(source_tab, "editor", None)
         self.tab_widget.setFocus()
         self._update_editor_status_indicators()
+        if self._find_session_is_visible():
+            self._bind_find_session_to_active_editor()
 
     def _new_file(self, edit_only: bool = False):
         """Create new untitled file."""
@@ -4420,7 +4596,7 @@ class EditorDock(BaseDock):
         self._set_current_text_size(current_size + delta)
 
     def _show_find_dialog(self, replace_enabled: bool):
-        """Show find or find-and-replace dialog for the current editor."""
+        """Show the workspace's one modeless Find/Replace session."""
         tab = self.tab_widget.currentWidget()
         if not tab or not hasattr(tab, 'editor'):
             return
@@ -4431,20 +4607,133 @@ class EditorDock(BaseDock):
             "\u2028", "\n"
         )
 
-        dialog = _EditorFindDialog(
-            editor,
-            replace_enabled,
-            self,
-            file_path=getattr(tab, "file_path", None),
-            state=self.find_state,
-            state_changed=self._persist_find_state,
-            history=self._find_history_for_tab(tab),
-            selection_query=selected_query,
+        if self._find_dialog is None:
+            self._find_dialog = _EditorFindDialog(
+                editor,
+                replace_enabled,
+                self._find_panel_host,
+                file_path=getattr(tab, "file_path", None),
+                state=self.find_state,
+                state_changed=self._persist_find_state,
+                history=self._find_history_for_tab(tab),
+                selection_query=selected_query,
+                close_requested=self._hide_find_session,
+                presentation_toggle_requested=self._toggle_find_presentation,
+            )
+            self._find_dialog.setAttribute(Qt.WA_DeleteOnClose, False)
+            self._find_panel_layout.addWidget(self._find_dialog)
+        else:
+            self._find_dialog.bind_editor(
+                editor,
+                replace_enabled=replace_enabled,
+                file_path=getattr(tab, "file_path", None),
+                history=self._find_history_for_tab(tab),
+                selection_query=selected_query,
+            )
+
+        self._apply_find_presentation(show=True)
+        self._find_dialog.find_input.setFocus(
+            Qt.FocusReason.ShortcutFocusReason
         )
         if selected_query:
-            dialog.find_input.selectAll()
-        dialog.exec()
+            self._find_dialog.find_input.selectAll()
+
+    def _find_session_is_visible(self) -> bool:
+        dialog = self._find_dialog
+        return bool(dialog is not None and not dialog.isHidden())
+
+    def _bind_find_session_to_active_editor(self) -> bool:
+        """Retarget a visible session after a tab or split focus change."""
+        if self._find_dialog is None:
+            return False
+        tab = self.tab_widget.currentWidget()
+        if tab is None or not hasattr(tab, "editor"):
+            return False
+        editor = self._active_editor_for_tab(tab)
+        self._find_dialog.bind_editor(
+            editor,
+            replace_enabled=self._find_dialog.replace_enabled,
+            file_path=getattr(tab, "file_path", None),
+            history=self._find_history_for_tab(tab),
+        )
+        return True
+
+    def _apply_find_presentation(self, *, show: bool) -> None:
+        """Reparent the same session between its lower and window hosts."""
+        dialog = self._find_dialog
+        if dialog is None:
+            return
+        dialog.hide()
+        if self._find_presentation_mode == "floating":
+            self._find_panel_layout.removeWidget(dialog)
+            self._find_panel_host.hide()
+            dialog.setParent(self, Qt.WindowType.Dialog)
+            dialog.setMinimumWidth(560)
+            geometry = self.settings.value("find/floating_geometry")
+            if geometry:
+                dialog.restoreGeometry(geometry)
+        else:
+            dialog.setParent(self._find_panel_host, Qt.WindowType.Widget)
+            if self._find_panel_layout.indexOf(dialog) < 0:
+                self._find_panel_layout.addWidget(dialog)
+            dialog.setMinimumWidth(0)
+            self._find_panel_host.setVisible(show)
+        dialog.set_presentation_mode(self._find_presentation_mode)
+        if show:
+            dialog.show()
+            if self._find_presentation_mode == "floating":
+                dialog.raise_()
+                dialog.activateWindow()
+
+    def _toggle_find_presentation(self) -> None:
+        """Persist and apply the other presentation without cloning state."""
+        dialog = self._find_dialog
+        if dialog is None:
+            return
+        if self._find_presentation_mode == "floating":
+            self.settings.setValue(
+                "find/floating_geometry", dialog.saveGeometry()
+            )
+            self._find_presentation_mode = "docked"
+        else:
+            self._find_presentation_mode = "floating"
+        self.settings.setValue(
+            "find/presentation_mode", self._find_presentation_mode
+        )
+        self._apply_find_presentation(show=True)
+        dialog.find_input.setFocus(Qt.FocusReason.ShortcutFocusReason)
+
+    def _hide_find_session(self) -> None:
+        """Hide the reusable session without retaining a second UI."""
+        dialog = self._find_dialog
+        if dialog is None:
+            return
+        dialog._remember_current_values()
+        if self._find_presentation_mode == "floating":
+            self.settings.setValue(
+                "find/floating_geometry", dialog.saveGeometry()
+            )
+        dialog.hide()
+        self._find_panel_host.hide()
+        tab = self.tab_widget.currentWidget()
+        if tab is not None and hasattr(tab, "editor"):
+            self._active_editor_for_tab(tab).setFocus(
+                Qt.FocusReason.ShortcutFocusReason
+            )
+
+    def _shutdown_find_session(self) -> None:
+        """Disconnect and delete the one session during owner teardown."""
+        dialog = self._find_dialog
+        if dialog is None:
+            return
+        if self._find_presentation_mode == "floating" and dialog.isVisible():
+            self.settings.setValue(
+                "find/floating_geometry", dialog.saveGeometry()
+            )
+        self._find_dialog = None
+        dialog.shutdown()
         dialog.deleteLater()
+        self._find_panel_host.hide()
 
     @staticmethod
     def _find_buffer_identity(tab) -> str:
@@ -5541,6 +5830,8 @@ class EditorDock(BaseDock):
         self._update_editor_status_indicators()
         if index >= 0:
             tab = self.tab_widget.widget(index)
+            if self._find_session_is_visible():
+                self._bind_find_session_to_active_editor()
             self._check_tab_external_state(tab)
             self._update_tab_title(tab)
             self._refresh_editor_menus()
@@ -5569,6 +5860,7 @@ class EditorDock(BaseDock):
             else:
                 self.lbl_status.setText(f"{editor_type}{mode_text}: {tab.get_tab_title()}")
         else:
+            self._shutdown_find_session()
             self._refresh_editor_menus()
             self.lbl_status.setText(tr("editor.lbl_status_ready"))
             self.lbl_status.setStyleSheet("color: #6A9955;")
@@ -5721,6 +6013,7 @@ class EditorDock(BaseDock):
         if not self.request_tab_close():
             event.ignore()
             return
+        self._shutdown_find_session()
         if getattr(self, "_status_translation_connected", False):
             try:
                 get_translator().languageChanged.disconnect(

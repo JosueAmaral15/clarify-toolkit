@@ -643,7 +643,7 @@ ser implementado em etapa limitada, testada e documentada.
   usa lista pesquisavel e navegavel com restaurar, renomear, exportar e excluir,
   mantendo cotas, recovery e retencao. Evidencia em
   [Clarify Editor Temporary Note Lifecycle](reports/CLARIFY_EDITOR_TEMP_NOTE_LIFECYCLE_2026_10_27.md).
-- [ ] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
+- [x] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
   Clarify Editor deve permanecer modeless e permitir interacao com editor, abas e
   janela principal enquanto estiver aberto. Preservar uma instancia coerente por
   Editor/workspace, selecao inicial, foco, estado persistido e cleanup sem
@@ -652,6 +652,14 @@ ser implementado em etapa limitada, testada e documentada.
   Oferecer alternancia persistida entre painel inferior acoplado, inspirado no
   Xed, e janela flutuante modeless. Ambos reutilizam o mesmo estado/controlador e
   nunca podem existir simultaneamente como duas sessoes divergentes.
+  Entregue em 27/10/2026: Find e Find/Replace agora reutilizam uma unica sessao
+  por workspace, sem `QDialog.exec()`, alternando o mesmo widget entre painel
+  inferior e janela flutuante modeless. Modo e geometria flutuante persistem;
+  selecao, historico privado por buffer, opcoes, escopos, limites, contadores,
+  Enter, splits e traducao em runtime permanecem coerentes. Fechamento da guia
+  final ou do Editor desconecta documentos, traducao e callbacks sem sessao
+  tardia. Evidencia em
+  [Clarify Editor Modeless Find/Replace](reports/CLARIFY_EDITOR_FIND_MODELESS_2026_10_27.md).
 
 ### Fila Reconciliada - Editor, File Explorer E Produto (18/10/2026)
 

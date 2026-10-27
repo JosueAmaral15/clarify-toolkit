@@ -624,6 +624,8 @@
   "editor.find_invalid_regex": "Invalid regex: {error}",
   "editor.find_error": "Find error: {error}",
   "editor.find_inverted_replace_disabled": "Replacement is disabled for inverted search.",
+  "editor.btn_find_dock": "Dock at Bottom",
+  "editor.btn_find_float": "Open as Floating Window",
   "editor.find_match_count": "{count} match(es)",
   "editor.find_match_count_limited": "{count}+ matches (limit reached)",
   "editor.find_position": "{current} of {total}",

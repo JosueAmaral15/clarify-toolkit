@@ -8,7 +8,7 @@ import pytest
 from PySide6 import QtCore
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QDialog, QTextEdit
+from PySide6.QtWidgets import QTextEdit
 
 from src.editor_notes import TemporaryNoteStore
 from src.editor_recovery import UnsavedRecoveryStore
@@ -184,7 +184,7 @@ def test_dock_histories_are_isolated_bounded_and_removed_with_tab(dock, monkeypa
     assert len(dock._find_history_by_buffer) == dock.MAX_FIND_HISTORY_BUFFERS
 
 
-def test_find_dialog_uses_active_split_and_does_not_persist_private_values(dock, monkeypatch):
+def test_find_dialog_uses_active_split_and_does_not_persist_private_values(dock):
     dock._new_file()
     tab = dock.tab_widget.currentWidget()
     tab.editor.setPlainText("primary selected")
@@ -193,30 +193,11 @@ def test_find_dialog_uses_active_split_and_does_not_persist_private_values(dock,
     cursor.setPosition(8)
     cursor.setPosition(16, QTextCursor.MoveMode.KeepAnchor)
     dock.split_editor.setTextCursor(cursor)
-    observed = {}
-
-    class FakeDialog:
-        def __init__(self, editor, replace_enabled, parent, **kwargs):
-            observed.update(
-                editor=editor,
-                replace_enabled=replace_enabled,
-                parent=parent,
-                kwargs=kwargs,
-            )
-            self.find_input = type("Input", (), {"selectAll": lambda self: None})()
-
-        def exec(self):
-            return QDialog.DialogCode.Accepted
-
-        def deleteLater(self):
-            return None
-
-    monkeypatch.setattr(module, "_EditorFindDialog", FakeDialog)
     dock._show_find_dialog(True)
 
-    assert observed["editor"] is dock.split_editor
-    assert observed["kwargs"]["selection_query"] == "selected"
-    assert observed["kwargs"]["history"] is dock._find_history_for_tab(tab)
+    assert dock._find_dialog.editor is dock.split_editor
+    assert dock._find_dialog.find_input.text() == "selected"
+    assert dock._find_dialog.history is dock._find_history_for_tab(tab)
     settings_keys = {str(key) for key in dock.settings.allKeys()}
     assert not any("query" in key or "replacement" in key or "history" in key for key in settings_keys)
 
