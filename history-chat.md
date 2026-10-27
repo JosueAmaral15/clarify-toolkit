@@ -5693,3 +5693,57 @@ Plano imediato:
   native Codex queue, both services and the exact active Protocol2 worker.
   Task automation and native input remain enabled; GUI and remote input remain
   disabled. The next concrete canonical task is `APP-SHORTCUTS-F1-01`.
+
+## 2026-10-26 - APP-SHORTCUTS-F1-01 started
+
+- Work starts from published checkpoint `d3b2cdb` on fresh branch
+  `COM-c04fcfbe-b12f-4abd-9342-9cd14dac0861`, limited to one non-blocking,
+  searchable F1 shortcut reference derived from the effective central registry.
+  The subsequent continuation journal `746361e` was verified and deliberately
+  excluded from the work branch.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, native queue and both services are
+  healthy; task automation and native input are enabled while GUI and remote
+  input remain disabled.
+- The audit will prove the current F1 defect and inspect central registrations,
+  effective customizations, menus and dialog shortcut contexts before product
+  edits. Tests remain serial/offscreen with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - APP-SHORTCUTS-F1-01 completed
+
+- The F1 audit reproduced two competing routes and a modal reference rendered
+  from static declarations rather than effective bindings. A single Help-menu
+  action now opens one reusable, searchable, non-modal reference generated from
+  the live central registry.
+- Main-window and Editor actions share that registry without duplicate command
+  handlers. Customizations refresh live bindings and the open reference;
+  contexts, conflicts, runtime translation, accessibility, focus, Esc close and
+  child-dialog contextual F1 behavior are covered by focused regressions.
+- Guarded serial validation passed 308 distinct tests across 16 isolated
+  modules, with 22 legacy dialog tests skipped by their existing import guard.
+  Peak tree RSS was 252.9 MiB; no native crash, timeout or guard abort occurred.
+  Pylint-E, compileall, seven catalog parses and `git diff --check` also passed.
+- Evidence is in
+  `docs/reports/CLARIFY_APP_SHORTCUTS_F1_2026_10_27.md`; 73 canonical tasks
+  remain open after this delivery.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 27 F1 shortcut-reference checkpoint
+
+- Feature commit `f298e96` was pushed to
+  `COM-c04fcfbe-b12f-4abd-9342-9cd14dac0861`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch (3 critical,
+  21 high, 11 moderate and 3 low). These unresolved external security gates
+  remain outside this bounded shortcut-reference delivery.
+- AI Presence Monitor 0.10.7 revalidated current schema/integrity, five Codex
+  hooks, native queue, monitor/reply services and tray autostart. The exact
+  Clarify Protocol2 worker and session remain active; task automation and native
+  input are enabled while GUI and remote input remain disabled.
+- The next concrete canonical Editor task is `CE-TEMP-NOTE-LIFECYCLE-01`; at
+  most one exact-session native continuation may be sent after this checkpoint
+  is committed and pushed, with no retry if dispatch state is uncertain.
