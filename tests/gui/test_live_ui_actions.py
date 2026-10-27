@@ -224,7 +224,7 @@ def test_language_action_can_replace_its_own_menu_safely(window, qapp):
         assert not isValid(action)
         assert window.act_lang_pt.isChecked()
         assert window.act_ai_assistant.text() == tr("tutorial_assistant.window_title")
-        assert len(window.findChildren(QShortcut)) == 5
+        assert len(window.findChildren(QShortcut)) == 2
     finally:
         window.translator.languageChanged.disconnect(window._on_language_changed)
 

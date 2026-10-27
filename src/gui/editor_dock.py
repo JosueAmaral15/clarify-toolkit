@@ -3325,6 +3325,23 @@ class EditorDock(BaseDock):
         if shortcut_context is not None:
             action.setShortcutContext(shortcut_context)
 
+        if action.shortcuts():
+            menu_id = next(
+                (
+                    candidate
+                    for candidate, menu_spec in self._MENU_SPECS.items()
+                    if action_id in menu_spec["items"]
+                ),
+                "edit",
+            )
+            shortcut_action = spec.get("shortcut_action")
+            ShortcutManager.register_action(
+                action,
+                shortcut_action or f"editor.{action_id}",
+                category=f"Editor {menu_id.title()}",
+                managed=bool(shortcut_action),
+            )
+
         setattr(self, f"action_{action_id}", action)
         self._action_by_id[action_id] = action
         return action

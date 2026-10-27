@@ -10,9 +10,41 @@ v2.9.33 - Comprehensive Keyboard Shortcuts System
 
 # pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
 
+from dataclasses import dataclass
 import platform
 from typing import Dict, List, Tuple
-from PySide6.QtGui import QKeySequence, QAction
+from weakref import WeakKeyDictionary
+
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from shiboken6 import isValid
+
+
+class _ShortcutEvents(QObject):
+    """GUI-thread notifications for effective shortcut binding changes."""
+
+    changed = Signal()
+
+
+@dataclass(frozen=True)
+class RegisteredShortcut:
+    """One deduplicated shortcut currently bound to a live Qt object."""
+
+    action_name: str
+    category: str
+    label: str
+    sequences: tuple[str, ...]
+    customized: bool
+    enabled: bool
+
+
+@dataclass(frozen=True)
+class _ShortcutBinding:
+    action_name: str
+    category: str
+    label: str
+    label_key: str
+    managed: bool
 
 
 class ShortcutManager:
@@ -118,6 +150,13 @@ class ShortcutManager:
 
     # Custom shortcuts (loaded from settings)
     _custom_shortcuts: Dict[str, str] = {}
+    _bindings = WeakKeyDictionary()
+    _events = _ShortcutEvents()
+
+    @classmethod
+    def events(cls) -> _ShortcutEvents:
+        """Return the shared GUI-thread notifier for registry consumers."""
+        return cls._events
 
     @classmethod
     def get_shortcut(cls, action_name: str) -> Tuple[str, str]:
@@ -158,8 +197,165 @@ class ShortcutManager:
 
     @classmethod
     def add_shortcut_to_action(cls, action: QAction, action_name: str) -> None:
-        """Add shortcut to a QAction."""
-        action.setShortcuts(cls.get_key_sequences(action_name))
+        """Apply and register a managed shortcut on a QAction."""
+        cls.register_action(action, action_name)
+
+    @classmethod
+    def register_action(
+        cls,
+        action: QAction,
+        action_name: str,
+        *,
+        category: str | None = None,
+        label: str = "",
+        label_key: str = "",
+        managed: bool | None = None,
+    ) -> None:
+        """Register a live QAction, optionally managed by the central defaults."""
+        if managed is None:
+            managed = action_name in cls.SHORTCUTS
+        if managed:
+            action.setShortcuts(cls.get_key_sequences(action_name))
+        cls._register_target(
+            action,
+            action_name,
+            category=category,
+            label=label,
+            label_key=label_key,
+            managed=managed,
+        )
+
+    @classmethod
+    def register_shortcut(
+        cls,
+        shortcut: QShortcut,
+        action_name: str,
+        *,
+        category: str | None = None,
+        label: str = "",
+        label_key: str = "",
+        managed: bool | None = None,
+    ) -> None:
+        """Register a live QShortcut using the same effective registry."""
+        if managed is None:
+            managed = action_name in cls.SHORTCUTS
+        if managed:
+            shortcut.setKey(cls.get_key_sequence(action_name))
+        cls._register_target(
+            shortcut,
+            action_name,
+            category=category,
+            label=label,
+            label_key=label_key,
+            managed=managed,
+        )
+
+    @classmethod
+    def _register_target(
+        cls,
+        target,
+        action_name: str,
+        *,
+        category: str | None,
+        label: str,
+        label_key: str,
+        managed: bool,
+    ) -> None:
+        binding = _ShortcutBinding(
+            action_name=action_name,
+            category=category or cls.get_category(action_name),
+            label=label,
+            label_key=label_key,
+            managed=managed,
+        )
+        is_new = target not in cls._bindings
+        cls._bindings[target] = binding
+        target.setProperty("clarify_shortcut_action", action_name)
+        target.setProperty("clarify_shortcut_category", binding.category)
+        if is_new:
+            target.destroyed.connect(lambda *_unused: cls._events.changed.emit())
+        cls._events.changed.emit()
+
+    @classmethod
+    def _refresh_registered_targets(cls) -> None:
+        stale = []
+        for target, binding in list(cls._bindings.items()):
+            if not isValid(target):
+                stale.append(target)
+                continue
+            if not binding.managed:
+                continue
+            if isinstance(target, QAction):
+                target.setShortcuts(cls.get_key_sequences(binding.action_name))
+            elif isinstance(target, QShortcut):
+                target.setKey(cls.get_key_sequence(binding.action_name))
+        for target in stale:
+            cls._bindings.pop(target, None)
+        cls._events.changed.emit()
+
+    @classmethod
+    def get_registered_shortcuts(cls, owner=None) -> List[RegisteredShortcut]:
+        """Return deduplicated bindings backed by live Qt objects under owner."""
+        registered = {}
+        stale = []
+        for target, binding in list(cls._bindings.items()):
+            if not isValid(target):
+                stale.append(target)
+                continue
+            if owner is not None and not cls._belongs_to(target, owner):
+                continue
+            try:
+                if isinstance(target, QAction):
+                    sequences = tuple(
+                        sequence.toString(QKeySequence.PortableText)
+                        for sequence in target.shortcuts()
+                        if not sequence.isEmpty()
+                    )
+                    label = target.text().replace("&", "") or binding.label
+                    enabled = target.isEnabled()
+                else:
+                    sequence = target.key()
+                    sequences = (sequence.toString(QKeySequence.PortableText),) if not sequence.isEmpty() else ()
+                    if binding.label_key:
+                        from src.i18n import tr  # pylint: disable=import-outside-toplevel
+
+                        label = tr(binding.label_key, binding.label)
+                    else:
+                        label = binding.label or cls.get_description(binding.action_name)
+                    enabled = target.isEnabled()
+            except RuntimeError:
+                stale.append(target)
+                continue
+            if not sequences:
+                continue
+            item = RegisteredShortcut(
+                action_name=binding.action_name,
+                category=binding.category,
+                label=label or binding.action_name,
+                sequences=sequences,
+                customized=binding.action_name in cls._custom_shortcuts,
+                enabled=enabled,
+            )
+            key = (item.action_name, item.category, item.label, item.sequences)
+            registered[key] = item
+        for target in stale:
+            cls._bindings.pop(target, None)
+        return sorted(
+            registered.values(),
+            key=lambda item: (item.category.casefold(), item.label.casefold()),
+        )
+
+    @staticmethod
+    def _belongs_to(target, owner) -> bool:
+        current = target
+        while current is not None:
+            if current is owner:
+                return True
+            try:
+                current = current.parent()
+            except RuntimeError:
+                return False
+        return False
 
     @classmethod
     def get_all_shortcuts(cls) -> Dict[str, Tuple[str, str]]:
@@ -188,6 +384,7 @@ class ShortcutManager:
             pass
 
         cls._custom_shortcuts[action_name] = key_sequence
+        cls._refresh_registered_targets()
         return True
 
     @classmethod
@@ -195,16 +392,19 @@ class ShortcutManager:
         """Reset shortcut to default."""
         if action_name in cls._custom_shortcuts:
             del cls._custom_shortcuts[action_name]
+            cls._refresh_registered_targets()
 
     @classmethod
     def reset_all_custom_shortcuts(cls) -> None:
         """Reset all shortcuts to defaults."""
         cls._custom_shortcuts.clear()
+        cls._refresh_registered_targets()
 
     @classmethod
     def load_custom_shortcuts(cls, custom_dict: Dict[str, str]) -> None:
         """Load custom shortcuts from settings."""
         cls._custom_shortcuts = custom_dict.copy()
+        cls._refresh_registered_targets()
 
     @classmethod
     def get_custom_shortcuts(cls) -> Dict[str, str]:

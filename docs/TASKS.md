@@ -607,12 +607,20 @@ ser implementado em etapa limitada, testada e documentada.
   sao informadas. O armazenamento existente, suas cotas e os contratos de
   fechamento/cleanup foram preservados. Evidencia em
   [Clarify Editor Recovery Reopen](reports/CLARIFY_EDITOR_RECOVERY_REOPEN_2026_10_26.md).
-- [ ] **APP-SHORTCUTS-F1-01: tela funcional de atalhos pelo F1.** Fazer `F1`
+- [x] **APP-SHORTCUTS-F1-01: tela funcional de atalhos pelo F1.** Fazer `F1`
   abrir uma tela nao bloqueante e pesquisavel com todos os atalhos efetivamente
   registrados, agrupados por contexto e atualizados apos customizacao. Reutilizar
   o registro central para evitar lista divergente; preservar foco, traducao,
   acessibilidade, conflitos e fechamento por Esc, sem interceptar F1 em dialogs
   que tenham ajuda contextual propria.
+  Entregue em 27/10/2026: a rota duplicada de `F1` foi removida e a acao unica
+  abre uma referencia modeless reutilizavel, pesquisavel e gerada apenas pelos
+  `QAction`/`QShortcut` vivos do registro central. A tela agrupa por contexto,
+  reflete customizacoes imediatamente, sinaliza conflitos, acompanha traducao em
+  runtime, preserva ajuda contextual dos dialogs e fecha por `Esc` sem destruir
+  seu estado. Acoes existentes do menu principal e do Clarify Editor passaram a
+  participar do mesmo registro sem alterar seus handlers. Evidencia em
+  [Clarify Application F1 Shortcut Reference](reports/CLARIFY_APP_SHORTCUTS_F1_2026_10_27.md).
 - [ ] **CE-TEMP-NOTE-LIFECYCLE-01: identidade e autosave de notas temporarias.**
   Depois de `Save as Temporary Note`, a guia deve mostrar o titulo definido pelo
   usuario em vez de `Untitled *`, assumir identidade de nota temporaria e salvar

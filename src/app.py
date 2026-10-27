@@ -1437,69 +1437,17 @@ if _PYSIDE:
             dialog.exec()
 
         def _show_keyboard_shortcuts_help(self):
-            """Show keyboard shortcuts help page (read-only view)."""
-            from .shortcut_manager import ShortcutManager
-            from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QLineEdit, QLabel
+            """Present the single non-blocking effective shortcut reference."""
+            from shiboken6 import isValid
 
-            dialog = QDialog(self)
-            dialog.setWindowTitle("Keyboard Shortcuts Reference")
-            dialog.setMinimumSize(700, 600)
+            from .gui.shortcut_reference_dialog import ShortcutReferenceDialog
 
-            layout = QVBoxLayout()
-
-            # Search box
-            search_layout = QHBoxLayout()
-            search_label = QLabel(tr("app.lbl_shortcuts_search"))
-            search_box = QLineEdit()
-            search_box.setPlaceholderText(tr("app.placeholder_shortcuts"))
-            search_layout.addWidget(search_label)
-            search_layout.addWidget(search_box)
-            layout.addLayout(search_layout)
-
-            # Text view
-            text_edit = QTextEdit()
-            text_edit.setReadOnly(True)
-            text_edit.setPlainText(ShortcutManager.format_shortcuts_table())
-            text_edit.setStyleSheet("font-family: monospace;")
-            layout.addWidget(text_edit)
-
-            # Filter function
-            def filter_text():
-                search_text = search_box.text().lower()
-                full_text = ShortcutManager.format_shortcuts_table()
-
-                if not search_text:
-                    text_edit.setPlainText(full_text)
-                    return
-
-                # Filter lines containing search text
-                filtered_lines = []
-                for line in full_text.split('\n'):
-                    if search_text in line.lower():
-                        filtered_lines.append(line)
-
-                text_edit.setPlainText('\n'.join(filtered_lines))
-
-            search_box.textChanged.connect(filter_text)
-
-            # Buttons
-            btn_layout = QHBoxLayout()
-
-            customize_btn = QPushButton(tr("app.btn_customize"))
-            customize_btn.setToolTip(tooltip_tr("app.tooltip_customize"))
-            customize_btn.clicked.connect(lambda: (dialog.close(), self._show_shortcuts()))
-
-            close_btn = QPushButton(tr("app.btn_close"))
-            close_btn.clicked.connect(dialog.accept)
-
-            btn_layout.addWidget(customize_btn)
-            btn_layout.addStretch()
-            btn_layout.addWidget(close_btn)
-
-            layout.addLayout(btn_layout)
-
-            dialog.setLayout(layout)
-            dialog.exec()
+            dialog = getattr(self, "_shortcut_reference_dialog", None)
+            if dialog is None or not isValid(dialog):
+                dialog = ShortcutReferenceDialog(self)
+                dialog.customize_requested.connect(self._show_shortcuts)
+                self._shortcut_reference_dialog = dialog
+            dialog.present()
 
         def _on_shortcuts_changed(self, new_custom_shortcuts: dict):
             """Handle shortcuts changed from dialog (v2.9.33)."""

@@ -127,6 +127,7 @@ class MenuBuilder:
     def _build_file_menu(main_window, menu_bar) -> None:
         """Build File menu."""
         from ..i18n import tr
+        from ..shortcut_manager import ShortcutManager
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_file = MenuBuilder._add_menu(menu_bar, "menu.file")
@@ -136,6 +137,12 @@ class MenuBuilder:
         main_window.act_new_from_template = QAction(tr("menu.file.new_template"), main_window)
         main_window.act_new_from_template.setToolTip(tr("menu.tooltip_new_from_template"))
         main_window.act_new_from_template.setShortcut("Ctrl+Shift+N")
+        ShortcutManager.register_action(
+            main_window.act_new_from_template,
+            "new_project_template",
+            category="File",
+            managed=False,
+        )
         m_file.addAction(main_window.act_new_from_template)
         main_window.act_new_from_template.triggered.connect(main_window._new_from_template)
         m_file.addSeparator()
@@ -147,9 +154,10 @@ class MenuBuilder:
         main_window.act_open_editor.triggered.connect(lambda: main_window._show_editor())
         m_file.addSeparator()
 
-        act_exit = QAction(tr("menu.file.exit"), main_window)
-        act_exit.triggered.connect(main_window.close)
-        m_file.addAction(act_exit)
+        main_window.act_exit = QAction(tr("menu.file.exit"), main_window)
+        ShortcutManager.register_action(main_window.act_exit, "exit")
+        main_window.act_exit.triggered.connect(main_window.close)
+        m_file.addAction(main_window.act_exit)
 
     @staticmethod
     def _build_edit_menu(main_window, menu_bar) -> None:
@@ -526,6 +534,8 @@ class MenuBuilder:
     def _build_help_menu(main_window, menu_bar) -> None:
         """Build Help menu (Task #45 - v2.9.15)."""
         from ..i18n import tr
+        from ..shortcut_manager import ShortcutManager
+        from PySide6.QtCore import Qt
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_help = MenuBuilder._add_menu(menu_bar, "menu.help")
@@ -546,7 +556,10 @@ class MenuBuilder:
         main_window.act_keyboard_shortcuts_help = QAction(tr("shortcuts.dialog.help_title"), main_window)
         main_window.act_keyboard_shortcuts_help.setToolTip(tr("menu.tooltip_keyboard_shortcuts"))
         main_window.act_keyboard_shortcuts_help.setStatusTip(tr("menu.status.keyboard_shortcuts_help"))
-        main_window.act_keyboard_shortcuts_help.setShortcut("F1")
+        ShortcutManager.register_action(main_window.act_keyboard_shortcuts_help, "help")
+        main_window.act_keyboard_shortcuts_help.setShortcutContext(
+            Qt.ShortcutContext.WindowShortcut
+        )
         m_help.addAction(main_window.act_keyboard_shortcuts_help)
         main_window.act_keyboard_shortcuts_help.triggered.connect(main_window._show_keyboard_shortcuts_help)
 
@@ -554,9 +567,12 @@ class MenuBuilder:
         main_window.act_customize_shortcuts = QAction(tr("shortcut_customizer.title"), main_window)
         main_window.act_customize_shortcuts.setToolTip(tr("menu.tooltip_customize_shortcuts"))
         main_window.act_customize_shortcuts.setStatusTip(tr("menu.status.customize_shortcuts"))
-        main_window.act_customize_shortcuts.setShortcut("Ctrl+K Ctrl+S")
+        ShortcutManager.register_action(
+            main_window.act_customize_shortcuts,
+            "keyboard_shortcuts",
+        )
         m_help.addAction(main_window.act_customize_shortcuts)
-        main_window.act_customize_shortcuts.triggered.connect(main_window._customize_shortcuts)
+        main_window.act_customize_shortcuts.triggered.connect(main_window._show_shortcuts)
 
         m_help.addSeparator()
 
@@ -576,37 +592,39 @@ class MenuBuilder:
     def _build_about_menu(main_window, menu_bar) -> None:
         """Build About menu."""
         from ..i18n import tr
+        from ..shortcut_manager import ShortcutManager
         from PySide6.QtGui import QAction  # pylint: disable=no-name-in-module
 
         m_about = MenuBuilder._add_menu(menu_bar, "menu.about")
-        act_about = QAction(tr("menu.about.clarify"), main_window)
-        m_about.addAction(act_about)
-        act_about.triggered.connect(main_window._about_dialog)
+        main_window.act_about = QAction(tr("menu.about.clarify"), main_window)
+        ShortcutManager.register_action(main_window.act_about, "about")
+        m_about.addAction(main_window.act_about)
+        main_window.act_about.triggered.connect(main_window._about_dialog)
 
     @staticmethod
     def _setup_shortcuts(main_window) -> None:
         """Setup keyboard shortcuts."""
         from ..shortcut_manager import ShortcutManager
         # pylint: disable=no-name-in-module  # Qt dynamic modules
-        from PySide6.QtGui import QKeySequence, QShortcut
-
-        # Exit shortcut
-        shortcut_exit = QShortcut(ShortcutManager.get_key_sequence("exit"), main_window)
-        shortcut_exit.activated.connect(main_window.close)
-
-        # Help shortcut
-        shortcut_help = QShortcut(ShortcutManager.get_key_sequence("help"), main_window)
-        shortcut_help.activated.connect(main_window._show_shortcuts)
-
-        # About shortcut
-        shortcut_about = QShortcut(ShortcutManager.get_key_sequence("about"), main_window)
-        shortcut_about.activated.connect(main_window._about_dialog)
+        from PySide6.QtGui import QShortcut
 
         # Tab navigation shortcuts (v2.9.113)
-        shortcut_next_tab = QShortcut(QKeySequence("Ctrl+PgDown"), main_window)
+        shortcut_next_tab = QShortcut(main_window)
+        ShortcutManager.register_shortcut(
+            shortcut_next_tab,
+            "next_dock_dynamic",
+            label="Next tool",
+            label_key="shortcuts.desc.next_tool_dynamic",
+        )
         shortcut_next_tab.activated.connect(main_window._next_tab)
 
-        shortcut_prev_tab = QShortcut(QKeySequence("Ctrl+PgUp"), main_window)
+        shortcut_prev_tab = QShortcut(main_window)
+        ShortcutManager.register_shortcut(
+            shortcut_prev_tab,
+            "prev_dock_dynamic",
+            label="Previous tool",
+            label_key="shortcuts.desc.prev_tool_dynamic",
+        )
         shortcut_prev_tab.activated.connect(main_window._previous_tab)
 
         # Apply all shortcuts to menu items with tooltips (v2.9.33)
