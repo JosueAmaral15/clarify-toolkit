@@ -256,10 +256,22 @@ class EditorTab(QWidget):
             return
 
         ext = os.path.splitext(self.file_path)[1].lstrip('.')
+        if (
+            self.highlighter is not None
+            and self.highlighter.document() is self.editor.document()
+            and self.highlighter.file_type == ext
+        ):
+            return
+        if self.highlighter is not None:
+            self.highlighter.setDocument(None)
         self.highlighter = SyntaxHighlighter(self.editor.document(), ext)
 
     def _on_text_changed(self):
         """Handle text changes."""
+        # QSyntaxHighlighter may emit QTextEdit.textChanged while applying only
+        # character formats. That is presentation work, not a user edit.
+        if not self.editor.document().isModified():
+            return
         if not self.is_modified:
             self.is_modified = True
             self.modified_changed.emit(True)

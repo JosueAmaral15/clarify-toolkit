@@ -4154,6 +4154,49 @@ Plano imediato:
   exact-session native continuation may be issued after this history checkpoint
   is committed and pushed, with no retry if dispatch state is uncertain.
 
+## 2026-10-27 - CE-OPEN-CLEAN-STATE-REGRESSION-01 started
+
+- Work starts from published documentation checkpoint `42357c3` and feature
+  commit `df50c2b` on fresh branch
+  `COM-1c5e398c-e4c0-4e73-8ef2-69fac8806235`. The subsequent native dispatch
+  journal `c9ba6d6` was verified as a direct child and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2 with five hooks, native queue, services and tray healthy. The
+  Clarify profile has task automation/native input enabled while GUI and remote
+  input remain disabled; the strict doctor also reports the global automation
+  default as disabled, which does not override the enabled exact profile.
+- The audit is limited to proving and correcting an existing file that receives
+  an unsaved marker during successful bounded open/setup. Untitled numbering,
+  read-only theming, Find highlighting, F2, File Explorer, APP-THREAD,
+  multi-window and legacy work remain excluded.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - CE-OPEN-CLEAN-STATE-REGRESSION-01 completed
+
+- The isolated reproduction proved the text-only defect after initial event
+  settlement: the tab changed from `sample.txt` to `sample.txt *` while
+  `QTextDocument.isModified()` stayed false. JSON remained clean.
+- `EditorTab` created one highlighter in its constructor and another in
+  `load_file`; deferred formatting from the second emitted `textChanged`, which
+  the custom flag treated as a user edit. Matching highlighters are now reused,
+  and a real type change detaches the previous instance first.
+- Text and JSON dirty handlers now require Qt's document-modified state. Visual
+  formatting is ignored, while real edits, invalid decoding, external changes,
+  Reload, recent opens, edit-only opens and first Save As retain distinct
+  behavior.
+- Guarded serial validation passed 237 distinct tests across 14 isolated GUI
+  modules, peaking at 252.4 MiB. There was no native crash, timeout or guard
+  abort. Compilation, focused Pylint-E, probe-key AST validation, new-test
+  formatting and diff checks passed; pre-existing whole-file Black churn in the
+  two product modules was deliberately not applied.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_OPEN_CLEAN_STATE_2026_10_27.md`; 81 canonical
+  tasks remain open. The next reconciled Editor task is
+  `CE-UNTITLED-DENSE-NAMES-01`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently

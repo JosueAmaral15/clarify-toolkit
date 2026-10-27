@@ -716,7 +716,7 @@ janela, ownership, sessao, provider, RAG e tool calls.
   F1 e os testes exercitam teclas reais, isolamento entre tools, customizacao ao
   vivo e ausencia de ativacao duplicada. Evidencia em
   `docs/reports/CLARIFY_EDITOR_MENU_SHORTCUTS_2026_10_27.md`.
-- [ ] **CE-OPEN-CLEAN-STATE-REGRESSION-01: arquivo aberto inicia limpo.** Ao
+- [x] **CE-OPEN-CLEAN-STATE-REGRESSION-01: arquivo aberto inicia limpo.** Ao
   abrir do sistema de arquivos um documento cujo conteudo foi carregado com
   sucesso, a guia nao pode exibir `*`, estado inseguro ou indicador de nao salvo.
   Estabelecer baseline somente depois da leitura completa, sem transformar sinais
@@ -724,6 +724,14 @@ janela, ownership, sessao, provider, RAG e tool calls.
   reload parcial, erro de decoding, mudanca externa e recovery continuam
   distintos; Save/Discard/Cancel e `CE-FIRST-SAVE-01` devem permanecer coerentes.
   Cobrir texto/JSON, arquivo vazio, read-only, splits, watcher e abertura recente.
+  **Entregue em 27/10/2026:** a reproducao mostrou que a segunda instancia de
+  `SyntaxHighlighter` do editor de texto emitia `textChanged` tardio mesmo com
+  `QTextDocument.modified=False`, adicionando `*` depois da abertura. O
+  highlighter agora e reutilizado por documento/tipo, e texto/JSON ignoram
+  notificacoes puramente visuais ao decidir dirty. Abertura normal, recente e
+  edit-only, Save As, Reload, decoding invalido, mudanca externa e edicao real
+  foram validados separadamente. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_OPEN_CLEAN_STATE_2026_10_27.md`.
 - [ ] **CE-UNTITLED-DENSE-NAMES-01: numerar Untitled pelas guias abertas.** O
   primeiro buffer sem arquivo deve aparecer como `Untitled *`, o segundo como
   `Untitled-2 *` e assim por diante conforme a ordem atual dos buffers sem nome,

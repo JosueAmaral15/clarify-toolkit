@@ -230,6 +230,10 @@ class JsonEditorTab(QWidget):
 
     def _on_text_changed(self):
         """Handle text changes - mark as modified and schedule validation."""
+        # Syntax highlighting changes formatting without changing document
+        # content. Keep the dirty state tied to QTextDocument semantics.
+        if not self.editor.document().isModified():
+            return
         if not self.is_modified:
             self.is_modified = True
             self.modified_changed.emit(True)
