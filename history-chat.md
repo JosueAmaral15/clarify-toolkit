@@ -4137,6 +4137,48 @@ Plano imediato:
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
+### Published October 27 Editor menu-shortcuts checkpoint
+
+- Feature commit `df50c2b` was pushed to
+  `COM-c3cada21-2a3c-472d-89d7-6f3a6419f7bd`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch: 3 critical,
+  21 high, 11 moderate and 3 low. These unresolved external security gates
+  remain outside this bounded Editor delivery.
+- AI Presence Monitor 0.10.7 revalidated schema integrity, five Codex hooks,
+  native queue, both services, tray autostart and the exact active Protocol2
+  worker. Task automation and native input remain enabled; GUI and remote input
+  remain disabled. The configured exact session is
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- The next reconciled Editor priority is `CE-EXPLORER-RENAME-F2-01`. At most one
+  exact-session native continuation may be issued after this history checkpoint
+  is committed and pushed, with no retry if dispatch state is uncertain.
+
+## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
+
+- The user clarified that `Untitled-N` is a dense display ordinal for currently
+  open unnamed buffers, not a historical ID. A new task keeps stable internal
+  buffer identity while renumbering visible titles after create, close, reorder,
+  restore or conversion.
+- New bounded regressions cover files incorrectly marked dirty immediately after
+  open, read-only views losing the active theme and Find match highlights whose
+  visual spans drift during Next/Previous navigation. The supplied
+  `self.node_requested` example is preserved as a deterministic test fixture;
+  no external project file needs to be modified.
+- The existing temporary-note lifecycle already requires the tab to assume its
+  note title. A follow-up task adds one accessible quick-toolbar action after
+  Replace and a non-color-only state for zero versus existing notes, while
+  revalidating that delivered title/identity transition.
+- The completed generic dock toggle remains the foundation. Follow-up tasks add
+  discoverable `Floating Window`/`Dock at Bottom` actions to every tool, then
+  build independent Clarify windows, independent Editor windows with different
+  roots and multiple owned instances of the same tool. This architecture work is
+  ordered after the local Editor correctness fixes.
+- The canonical queue now has 82 open tasks. The next reconciled task is
+  `CE-OPEN-CLEAN-STATE-REGRESSION-01`, before F2 rename and the larger
+  multi-window work. `example.py` remains untracked and byte-identical at
+  SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-16 - Session completion - APP-THREAD-01 Stage 10
 
 - The source audit and clean red regression proved that the shared

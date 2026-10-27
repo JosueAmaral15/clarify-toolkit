@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/26 - navegacao unica por Enter no Find do Editor
+**Last Update**: 2026/10/27 - estado de guias, Find e instancias de janelas/tools
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -684,14 +684,19 @@ integralmente em
 [Reconciliacao de requisitos de 18/10](reports/TASKS_RECONCILIATION_2026_10_18.md);
 itens ja entregues permanecem fechados e nao receberam IDs duplicados.
 
-**Sequencia reconciliada em 27/10/2026:** depois da etapa ativa
-`CE-MENU-SHORTCUTS-01`, executar `CE-EXPLORER-RENAME-F2-01`,
-`CE-SELECTION-OCCURRENCES-01` e `CE-LINE-VISIBILITY-FILTER-01` como entregas
-locais e limitadas. Em seguida, consolidar backend e permissoes em
-`APP-RAG-CHATBOT-01`, reutiliza-los em `AI-FILE-CHAT-01` e somente entao ampliar
-`CE-VOICE-PROGRAMMING-01` para conversa por voz. Essa ordem evita atalhos
-conflitantes e tres implementacoes independentes de sessao, provider, RAG e
-tool calls.
+**Sequencia reconciliada em 27/10/2026:** depois de `CE-MENU-SHORTCUTS-01`,
+corrigir primeiro `CE-OPEN-CLEAN-STATE-REGRESSION-01`,
+`CE-UNTITLED-DENSE-NAMES-01`, `CE-READONLY-THEME-01` e
+`CE-FIND-HIGHLIGHT-ALIGNMENT-01`; em seguida entregar
+`CE-TEMP-NOTE-TOOLBAR-STATE-01`, `CE-EXPLORER-RENAME-F2-01`,
+`CE-SELECTION-OCCURRENCES-01` e `CE-LINE-VISIBILITY-FILTER-01` como etapas
+locais limitadas. Mudancas arquiteturais seguem depois, na ordem
+`TOOL-DOCK-PLACEMENT-ACTIONS-01`, `APP-MULTI-WINDOW-01`,
+`CE-MULTI-WINDOW-01` e `APP-TOOL-MULTI-INSTANCE-01`. Por fim, consolidar backend
+e permissoes em `APP-RAG-CHATBOT-01`, reutiliza-los em `AI-FILE-CHAT-01` e
+somente entao ampliar `CE-VOICE-PROGRAMMING-01` para conversa por voz. Essa
+ordem trata regressões antes de recursos e evita implementacoes independentes de
+janela, ownership, sessao, provider, RAG e tool calls.
 
 #### MUST - Correcao E Contratos Verificaveis
 
@@ -711,6 +716,46 @@ tool calls.
   F1 e os testes exercitam teclas reais, isolamento entre tools, customizacao ao
   vivo e ausencia de ativacao duplicada. Evidencia em
   `docs/reports/CLARIFY_EDITOR_MENU_SHORTCUTS_2026_10_27.md`.
+- [ ] **CE-OPEN-CLEAN-STATE-REGRESSION-01: arquivo aberto inicia limpo.** Ao
+  abrir do sistema de arquivos um documento cujo conteudo foi carregado com
+  sucesso, a guia nao pode exibir `*`, estado inseguro ou indicador de nao salvo.
+  Estabelecer baseline somente depois da leitura completa, sem transformar sinais
+  de inicializacao do widget/highlighter em edicao do usuario. Alteracoes reais,
+  reload parcial, erro de decoding, mudanca externa e recovery continuam
+  distintos; Save/Discard/Cancel e `CE-FIRST-SAVE-01` devem permanecer coerentes.
+  Cobrir texto/JSON, arquivo vazio, read-only, splits, watcher e abertura recente.
+- [ ] **CE-UNTITLED-DENSE-NAMES-01: numerar Untitled pelas guias abertas.** O
+  primeiro buffer sem arquivo deve aparecer como `Untitled *`, o segundo como
+  `Untitled-2 *` e assim por diante conforme a ordem atual dos buffers sem nome,
+  nunca conforme um contador historico incremental. Ao criar, fechar, reordenar,
+  restaurar ou converter uma guia em arquivo/nota, recalcular nomes densos sem
+  lacunas (`Untitled-17` nao pode permanecer quando existem apenas duas guias
+  sem nome). Separar o rotulo mutavel da identidade interna estavel do buffer e
+  preservar recovery, historico Find, splits, foco, acessibilidade e traducoes.
+- [ ] **CE-READONLY-THEME-01: preservar tema ao alternar somente leitura.**
+  Reproduzir a guia que fica branca ao ativar read-only e remover paleta/QSS
+  fixos que sobrescrevam o tema atual. O estado somente leitura deve mudar apenas
+  editabilidade e seu indicador acessivel, mantendo background, foreground,
+  selecao, cursor, line numbers, Find highlights e syntax highlighting coerentes
+  nos temas System/Light/Dark e em troca runtime, inclusive em splits.
+- [ ] **CE-FIND-HIGHLIGHT-ALIGNMENT-01: alinhar marcacoes de todos os matches.**
+  Reproduzir a sobra/falta visual ao navegar repetidamente com Find Next usando
+  `self.node_requested` no trecho
+  `self.tree_view.node_double_clicked.connect(lambda node: self.node_requested.emit())`.
+  Fazer selecao atual e marcacoes secundarias usarem os mesmos spans do matcher,
+  sem erro de offset entre indices Python, UTF-16 do Qt, regex, Whole Word ou
+  limites de linha. Preservar todos os matches marcados enquanto apenas o atual
+  muda de estilo; cobrir Unicode, CRLF, zoom, wrap, splits, Previous, navegacao
+  circular e edicao durante painel aberto com limites de quantidade/tempo.
+- [ ] **CE-TEMP-NOTE-TOOLBAR-STATE-01: acesso rapido e estado de notas.**
+  Acrescentar depois de Replace um botao iconografico que reutilize a QAction
+  `Save as Temporary Note`. O estado sem notas e com notas existentes deve usar
+  icone/indicador visual distinto, mas nunca depender somente de cor; tooltip,
+  accessible name e contador limitado devem explicar o estado. Atualizar ao
+  salvar, restaurar, renomear, converter, excluir, expirar ou falhar, sem listar
+  conteudo sensivel. Revalidar o contrato ja entregue: apos salvar, a guia assume
+  imediatamente o titulo da nota e deixa de aparecer como `Untitled`, mantendo
+  autosave e identidade temporaria.
 - [ ] **CE-EXPLORER-RENAME-F2-01: renomear item do Explorer com F2.** Quando um
   unico arquivo ou diretorio valido estiver selecionado no Explorer do Clarify
   Editor, `F2` deve abrir o mesmo fluxo seguro de rename usado pelo menu de
@@ -798,6 +843,36 @@ tool calls.
   cursor, splits, recovery e troca de arquivo; estados de visibilidade nao podem
   ser gravados no documento nem fazer uma linha editada desaparecer sem regra
   previsivel. Processamento caro deve ser cancelavel e fora da GUI.
+- [ ] **TOOL-DOCK-PLACEMENT-ACTIONS-01: expor Floating Window e Dock at Bottom.**
+  Complementar `TOOL-DOCK-TOGGLE-01` com as mesmas duas acoes descobríveis em
+  cada aba de ferramenta (Editor, File Explorer, Insert e demais): destacar a
+  instancia como `Floating Window` e reacopla-la na area inferior principal com
+  `Dock at Bottom`. Reutilizar a mesma instancia e o mesmo lifecycle, sem recriar
+  estado, perder recovery ou reintroduzir close/maximize enganoso. Preservar
+  foco, ordem, geometria, tema, traducao, acessibilidade e shutdown; desabilitar
+  com motivo quando uma transicao estiver em settlement.
+- [ ] **APP-MULTI-WINDOW-01: permitir novas janelas do Clarify Tools.** Adicionar
+  comando explicito para criar outra `MainWindow` no mesmo processo, com menus,
+  workspace, tema e preferencias coerentes, mas ownership independente de tabs,
+  docks e jobs. Fechar uma janela nao encerra as demais; shutdown final deve
+  aguardar settlement de cada owner. Auditar singletons, sinais globais, stores,
+  recovery, atalhos, providers e persistencia para evitar callbacks cruzados,
+  duplicacao de autosave ou corrupcao por escrita concorrente.
+- [ ] **CE-MULTI-WINDOW-01: permitir janelas independentes do Clarify Editor.**
+  Depois da fundacao de `APP-MULTI-WINDOW-01`, permitir abrir um novo workspace
+  de Editor em janela propria e escolher uma pasta diferente em cada janela.
+  Isolar raiz canonica, Explorer, sessoes de pasta, tabs, splits, Find, watchers,
+  recovery e notas por owner, compartilhando apenas stores com locking/IDs
+  seguros. Arquivos iguais em duas janelas exigem deteccao honesta de conflito
+  externo; fechamento/restauracao nao pode mover buffers para a janela errada.
+- [ ] **APP-TOOL-MULTI-INSTANCE-01: permitir varias instancias da mesma tool.**
+  Clicar novamente em File Explorer, Insert ou outra ferramenta deve poder criar
+  uma nova aba numerada e independente, em vez de apenas focar uma instancia
+  singleton. Introduzir factory e identidade por instancia, com QWidget/model,
+  operacao, thread, progresso, cancelamento, log e cleanup pertencentes ao owner;
+  servicos globais compartilhados nao podem carregar estado visual da instancia.
+  Integrar nomes, reorder, floating/docking, layouts, atalhos e shutdown, e
+  impedir late callbacks ou resultados enviados a outra aba.
 
 - [ ] **CE-FIND-AI-SIMILARITY-01: busca opcional por similaridade no Find.**
   Adicionar checkbox desmarcado por padrao e claramente distinto de Regex/Whole
