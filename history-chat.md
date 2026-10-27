@@ -5845,3 +5845,21 @@ Plano imediato:
   remain open after this delivery.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 27 modeless Find/Replace checkpoint
+
+- Feature commit `8f3e9b1` was pushed to
+  `COM-90f133b5-e40b-4b9b-a3c4-43fb6b8cf1ba`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch (3 critical,
+  21 high, 11 moderate and 3 low). These unresolved external security gates
+  remain outside this bounded Editor delivery.
+- AI Presence Monitor 0.10.7 revalidated schema integrity, five Codex hooks,
+  native queue, both services, tray autostart and the exact active Protocol2
+  worker. Task automation and native input remain enabled; GUI and remote input
+  remain disabled. The configured exact session is
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- The next recent priority in the canonical Editor queue is
+  `CE-MENU-SHORTCUTS-01`; at most one exact-session native continuation may be
+  issued after this history checkpoint is committed and pushed, without retry
+  if dispatch state is uncertain.
