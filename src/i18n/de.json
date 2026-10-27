@@ -19,7 +19,7 @@
   "editor.btn_find": "Suchen",
   "tooltip.editor.btn_find": "Text im aktuellen Dokument suchen | Strg+F",
   "editor.btn_find_replace": "Suchen und Ersetzen",
-  "tooltip.editor.btn_find_replace": "Text im aktuellen Dokument suchen und ersetzen | Strg+R",
+  "tooltip.editor.btn_find_replace": "Text im aktuellen Dokument suchen und ersetzen | Strg+H",
   "tool_window.detach": "Aktuelles Werkzeug abkoppeln",
   "tool_window.detach_tooltip": "Aktuelles Werkzeug in einem separaten Fenster öffnen",
   "tool_window.attach": "Werkzeug wieder ankoppeln",

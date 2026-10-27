@@ -211,5 +211,6 @@ def test_editor_existing_actions_join_effective_registry(window, qtbot, tmp_path
     }
 
     assert expected <= action_names
-    assert "editor.find" in action_names
+    assert "find" in action_names
+    assert "replace" in action_names
     assert any(binding.category == "Editor Edit" for binding in bindings)

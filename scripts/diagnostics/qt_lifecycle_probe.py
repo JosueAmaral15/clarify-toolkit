@@ -32,6 +32,7 @@ TEST_MODULES = {
     "editor-find-core": "tests/test_editor_find.py",
     "editor-find-enter": "tests/gui/test_editor_find_enter.py",
     "editor-find-modeless": "tests/gui/test_editor_find_modeless.py",
+    "editor-menu-shortcuts": "tests/gui/test_editor_menu_shortcuts.py",
     "editor-find-state-history": "tests/gui/test_editor_find_state_history.py",
     "editor-layout": "tests/gui/test_editor_layout.py",
     "editor-notes-store": "tests/test_editor_notes.py",

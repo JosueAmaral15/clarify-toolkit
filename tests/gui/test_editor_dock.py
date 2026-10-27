@@ -193,9 +193,9 @@ class TestEditorDockInitialization:
         assert editor_dock.action_copy.shortcut() == QKeySequence("Ctrl+C")
         assert editor_dock.action_paste.shortcut() == QKeySequence("Ctrl+V")
         assert editor_dock.action_find.shortcut() == QKeySequence("Ctrl+F")
-        assert editor_dock.action_find_replace.shortcut() == QKeySequence("Ctrl+R")
+        assert editor_dock.action_find_replace.shortcut() == QKeySequence("Ctrl+H")
         assert editor_dock.action_go_to_line.shortcut() == QKeySequence("Ctrl+G")
-        assert editor_dock.action_select_line.shortcut() == QKeySequence("Ctrl+L")
+        assert editor_dock.action_select_line.shortcut() == QKeySequence("Ctrl+Alt+Shift+L")
         assert QKeySequence("Ctrl+I") in editor_dock.action_indent.shortcuts()
 
 

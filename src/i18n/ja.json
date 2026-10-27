@@ -19,7 +19,7 @@
   "editor.btn_find": "検索",
   "tooltip.editor.btn_find": "現在の文書内のテキストを検索する | Ctrl+F",
   "editor.btn_find_replace": "検索と置換",
-  "tooltip.editor.btn_find_replace": "現在の文書内のテキストを検索して置換する | Ctrl+R",
+  "tooltip.editor.btn_find_replace": "現在の文書内のテキストを検索して置換する | Ctrl+H",
   "tool_window.detach": "現在のツールを切り離す",
   "tool_window.detach_tooltip": "現在のツールを別ウィンドウで開く",
   "tool_window.attach": "ツールを再結合",

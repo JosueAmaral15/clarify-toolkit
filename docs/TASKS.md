@@ -260,10 +260,16 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   vazias, listas, CRLF, inicio/fim e splits sem alterar conteudo.
 - [ ] **CE-VOICE-PROGRAMMING-01: incorporar ditado de algoritmos ao Editor.** Mover
   a entrada de Voice Programming da categoria AI para uma opcao do Clarify Editor
-  e definir pipeline STT -> recuperacao local/RAG -> LLM -> preview de codigo.
+  e separar tres fluxos: ditado simples de texto, programacao por voz e conversa
+  por voz com o agente LLM global. Definir pipeline STT -> recuperacao local/RAG
+  -> LLM -> preview de codigo e auditar o projeto externo
+  `Artificial Intelligence Projects/SecretaryRobot` para reaproveitar somente
+  contratos, componentes e licencas compativeis, sem copiar credenciais, estado
+  ou dependencias pesadas automaticamente.
   Exigir consentimento para microfone/provider, mostrar contexto enviado, limitar
   retencao/custo e nunca aplicar codigo sem preview/confirmacao. Reutilizar providers
   e comandos existentes, mantendo fallback de transcricao sem LLM quando possivel.
+  Captacao, transcricao e inferencia devem ser cancelaveis e executadas fora da GUI.
 - [ ] **INFO-GRAPH-VIEW-01: oferecer grafo e JSON em Information Structure.**
   Manter JSON como representacao formal e adicionar uma visualizacao interativa de
   nos/arestas para arquivos, imports, classes, metodos e funcoes, com relacoes
@@ -293,6 +299,15 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   devem ser visiveis e consentidos; escrita exige preview/confirmacao, historico e
   quotas sao limitados e segredos nao entram em logs. Distinguir do Tutorial
   Assistant e do chat especializado de arquivos para evitar tres backends paralelos.
+  O acesso global deve usar um icone acessivel de balao de conversa que abre um
+  unico painel modeless; fechar o painel nao apaga a sessao e `View` permite
+  reabri-lo. Auditar e adaptar os recursos existentes em
+  `resources_to_implement_on_clarify/dga_llm_interpreter` e
+  `resources_to_implement_on_clarify/requisite_to_ChatGPT`, alem do atual Tutorial
+  Assistant/AI Processor, antes de criar backend novo. Integrar as ferramentas
+  graficas e operacionais compativeis do interpreter por um registro limitado de
+  tool calls: o usuario deve ver chamada, argumentos, resultado e permissoes;
+  leitura, escrita, execucao ou rede nunca podem ocorrer implicitamente.
 - [ ] **APP-FEEDBACK-01: canal de sugestoes e erros ao autor.** Adicionar uma
   entrada Feedback com categoria, descricao, versao e anexos opcionais. Definir
   primeiro endpoint, identidade do destinatario, consentimento, privacidade e
@@ -669,9 +684,18 @@ integralmente em
 [Reconciliacao de requisitos de 18/10](reports/TASKS_RECONCILIATION_2026_10_18.md);
 itens ja entregues permanecem fechados e nao receberam IDs duplicados.
 
+**Sequencia reconciliada em 27/10/2026:** depois da etapa ativa
+`CE-MENU-SHORTCUTS-01`, executar `CE-EXPLORER-RENAME-F2-01`,
+`CE-SELECTION-OCCURRENCES-01` e `CE-LINE-VISIBILITY-FILTER-01` como entregas
+locais e limitadas. Em seguida, consolidar backend e permissoes em
+`APP-RAG-CHATBOT-01`, reutiliza-los em `AI-FILE-CHAT-01` e somente entao ampliar
+`CE-VOICE-PROGRAMMING-01` para conversa por voz. Essa ordem evita atalhos
+conflitantes e tres implementacoes independentes de sessao, provider, RAG e
+tool calls.
+
 #### MUST - Correcao E Contratos Verificaveis
 
-- [ ] **CE-MENU-SHORTCUTS-01: atalhos para todos os comandos aplicaveis.**
+- [x] **CE-MENU-SHORTCUTS-01: atalhos para todos os comandos aplicaveis.**
   Inventariar todas as `QAction`s visiveis de File, Edit e View e atribuir a cada
   comando executavel um atalho padrao ou configuravel, com deteccao de conflitos
   entre Editor, tools e sistema operacional. Acoes de estado podem usar mnemonic
@@ -680,6 +704,21 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   Incluir `Ctrl+H` como Replace no Editor, reconciliando o `Ctrl+R` local legado,
   e revisar todos os comandos restantes de File/Edit/View. O defeito especifico
   de Redo fica isolado em `CE-REDO-SHORTCUT-01`.
+  **Entregue em 27/10/2026:** todas as acoes visiveis de File/Edit/View usam o
+  registro central configuravel e o escopo da arvore do Editor. Replace usa
+  somente `Ctrl+H`; `Ctrl+R` deixou de acionar o painel. O conflito padrao de
+  Set Operations foi removido, aliases e acordes continuam visiveis na referencia
+  F1 e os testes exercitam teclas reais, isolamento entre tools, customizacao ao
+  vivo e ausencia de ativacao duplicada. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_MENU_SHORTCUTS_2026_10_27.md`.
+- [ ] **CE-EXPLORER-RENAME-F2-01: renomear item do Explorer com F2.** Quando um
+  unico arquivo ou diretorio valido estiver selecionado no Explorer do Clarify
+  Editor, `F2` deve abrir o mesmo fluxo seguro de rename usado pelo menu de
+  contexto, com preview de atualizacoes de imports quando aplicavel. Registrar o
+  atalho no `ShortcutManager`, limitar o contexto a arvore com foco e nao capturar
+  F2 no documento, Find, dialogs ou outras tools. Cobrir raiz, selecao vazia ou
+  multipla, item removido, read-only, cancelamento, symlink fora da raiz, runtime
+  translation e conflito/customizacao sem criar uma segunda rota de rename.
 - [ ] **CE-PASTE-INDENT-01: preservar tabs e espacos entre documentos.** Ao
   copiar/cortar de uma guia e colar em outra, preservar literalmente a
   indentacao multiline de origem, incluindo tabs, espacos mistos, line endings e
@@ -742,6 +781,24 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
 
 #### SHOULD - Recursos Novos Delimitados
 
+- [ ] **CE-SELECTION-OCCURRENCES-01: destacar ocorrencias do texto selecionado.**
+  Oferecer uma preferencia habilitavel nas configuracoes para marcar, sem abrir
+  Find, as demais ocorrencias exatas do texto selecionado no documento ativo.
+  Nao alterar texto, selecao, cursor ou undo; distinguir visualmente a selecao
+  primaria e limpar marcacoes ao perder selecao, trocar buffer/split ou desativar
+  a opcao. Definir Case Sensitive/Whole Word de forma explicita, limitar tamanho
+  da selecao e quantidade de marcacoes e fazer atualizacao incremental/debounce
+  para documentos grandes sem bloquear a GUI.
+- [ ] **CE-LINE-VISIBILITY-FILTER-01: ocultar linhas por lista de padroes.**
+  Adicionar ao Find/Replace um modo separado e nao destrutivo de invisibilidade
+  que aceite uma lista limitada de padroes literais ou regex e oculte somente as
+  linhas correspondentes na view ativa. Validar cada regex antes de aplicar,
+  informar quantidade de linhas visiveis/ocultas e oferecer `Show All`/limpeza
+  sempre acessivel. Preservar conteudo, Save, clipboard, undo, line numbers,
+  cursor, splits, recovery e troca de arquivo; estados de visibilidade nao podem
+  ser gravados no documento nem fazer uma linha editada desaparecer sem regra
+  previsivel. Processamento caro deve ser cancelavel e fora da GUI.
+
 - [ ] **CE-FIND-AI-SIMILARITY-01: busca opcional por similaridade no Find.**
   Adicionar checkbox desmarcado por padrao e claramente distinto de Regex/Whole
   Word. Definir primeiro semantica, ranking, limiar e provider local/remoto;
@@ -760,11 +817,14 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
   explicitos e verificacao pos-copia. Nunca sobrescrever ou excluir silenciosamente;
   preservar estrutura relativa, metadados suportados, cancelamento e log limitado.
 - [ ] **AI-FILE-CHAT-01: modo conversacional para processamento de arquivos.**
-  Reutilizar AI Processor, providers e limites existentes para uma conversa por
-  sessao sobre arquivos selecionados, com anexos/contexto visiveis, historico
-  limitado, cancelamento e limpeza. Nenhuma resposta altera arquivo sem preview e
-  confirmacao; nao copiar a plataforma ChatGPT nem armazenar credenciais/conteudo
-  sem consentimento.
+  No Open AI File Processor, oferecer um seletor explicito entre processamento
+  em massa e conversa, preservando o fluxo atual no primeiro modo. O modo de chat
+  deve reutilizar a sessao, providers, RAG, permissoes e tool-call registry de
+  `APP-RAG-CHATBOT-01`, depois da auditoria de `dga_llm_interpreter` e
+  `requisite_to_ChatGPT`, para conversar sobre arquivos selecionados com
+  anexos/contexto visiveis, historico limitado, cancelamento e limpeza. Nenhuma
+  resposta altera arquivo sem preview e confirmacao; nao copiar a plataforma
+  ChatGPT/DeepSeek nem armazenar credenciais ou conteudo sem consentimento.
 - [ ] **AI-AGENT-REGISTRY-01: cadastro explicito de agentes LLM.** Separar
   provider, modelo e agente configurado, com nome, capacidades, limites, origem
   local/remota e tools permitidas. Segredos ficam no mecanismo seguro existente e

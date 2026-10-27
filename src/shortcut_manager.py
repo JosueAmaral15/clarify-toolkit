@@ -59,7 +59,6 @@ class ShortcutManager:
         "save_as": ("Ctrl+Shift+S", "Save as..."),
         "close_tab": ("Ctrl+W", "Close current tab"),
         "exit": ("Ctrl+Q", "Exit application"),
-
         # Edit operations
         "copy": ("Ctrl+C", "Copy"),
         "paste": ("Ctrl+V", "Paste"),
@@ -69,12 +68,11 @@ class ShortcutManager:
         "redo": ("Ctrl+Y", "Redo"),
         "find": ("Ctrl+F", "Find/Search"),
         "replace": ("Ctrl+H", "Replace"),
-
         # Tools (Docks)
         "open_editor": ("Ctrl+E", "Open Editor"),
         "open_json_search": ("Ctrl+Shift+F", "JSON Search"),
         "open_json_rewriter": ("Ctrl+Shift+R", "JSON Rewriter"),
-        "open_set_operations": ("Ctrl+Shift+S", "Set Operations"),
+        "open_set_operations": ("Ctrl+K, Ctrl+Shift+S", "Set Operations"),
         "open_ai_processor": ("Ctrl+Shift+A", "AI Processor"),
         "open_case_converter": ("Ctrl+Shift+C", "Case Converter"),
         "open_advanced_extractor": ("Ctrl+Shift+E", "Advanced Extractor"),
@@ -82,7 +80,6 @@ class ShortcutManager:
         "open_placeholder_replacer": ("Ctrl+Shift+P", "Placeholder Replacer"),
         "open_translate": ("Ctrl+Shift+T", "JSON Translate"),
         "open_file_list": ("Ctrl+Shift+L", "File List"),
-
         # Navigation
         "next_dock": ("Ctrl+Tab", "Next dock"),
         "prev_dock": ("Ctrl+Shift+Tab", "Previous dock"),
@@ -99,7 +96,6 @@ class ShortcutManager:
         "jump_dock_7": ("Ctrl+7", "Jump to dock 7 (Advanced Extractor)"),
         "jump_dock_8": ("Ctrl+8", "Jump to dock 8 (Placeholder Replacer)"),
         "jump_dock_9": ("Ctrl+9", "Jump to dock 9 (JSON Translate)"),
-
         # View
         "toggle_fullscreen": ("F11", "Toggle fullscreen"),
         "toggle_history": ("Ctrl+Shift+H", "Toggle history panel"),
@@ -107,23 +103,57 @@ class ShortcutManager:
         "zoom_out": ("Ctrl+-", "Zoom out"),
         "reset_zoom": ("Ctrl+0", "Reset zoom"),
         "horizontal_scroll": ("Shift+Scroll / Ctrl+Shift+Scroll", "Horizontal scroll"),
-
         # Processing
         "process": ("F5", "Process/Run"),
         "interrupt": ("Esc", "Interrupt/Cancel"),
         "clear": ("Ctrl+L", "Clear results"),
-
         # Help
         "help": ("F1", "Show help"),
         "keyboard_shortcuts": ("Ctrl+K Ctrl+S", "Keyboard shortcuts"),
         "tutorials": ("Ctrl+Shift+?", "Open tutorials"),
         "about": ("Ctrl+Shift+I", "About Clarify"),
+        # Clarify Editor: File
+        "editor.file.open_path": ("Ctrl+Alt+O", "Open file by typed path"),
+        "editor.file.open_folder": ("Ctrl+K, Ctrl+O", "Open folder"),
+        "editor.file.close_folder": ("Ctrl+K, Ctrl+F", "Close folder"),
+        "editor.file.recover_unsaved": ("Ctrl+K, Ctrl+U", "Recover unsaved documents"),
+        "editor.file.recovery_retention": ("Ctrl+K, Ctrl+Shift+U", "Set recovery retention"),
+        "editor.file.save_temp_note": ("Ctrl+K, Ctrl+T", "Save as temporary note"),
+        "editor.file.manage_temp_notes": ("Ctrl+K, Ctrl+M", "Manage temporary notes"),
+        "editor.file.temp_note_retention": ("Ctrl+K, Ctrl+Shift+T", "Set temporary-note retention"),
+        "editor.file.compare_with_saved": ("Ctrl+K, Ctrl+D", "Compare with saved file"),
+        "editor.file.reload_from_disk": ("Ctrl+K, Ctrl+R", "Reload from disk"),
+        "editor.file.enable_saving": ("Ctrl+K, Ctrl+E", "Enable saving"),
+        "editor.file.export": ("Ctrl+K, Ctrl+X", "Export current document"),
+        "editor.file.auto_save": ("Ctrl+K, Ctrl+A", "Toggle auto-save"),
+        "editor.file.restore_folder_sessions": ("Ctrl+K, Ctrl+Shift+R", "Toggle folder-session restore"),
+        "editor.file.clear_folder_sessions": ("Ctrl+K, Ctrl+Shift+C", "Clear folder sessions"),
+        # Clarify Editor: Edit
+        "editor.edit.delete": ("Delete", "Delete selection"),
+        "editor.edit.select_line": ("Ctrl+Alt+Shift+L", "Select current line"),
+        "editor.edit.go_to_line": ("Ctrl+G", "Go to line"),
+        "editor.edit.duplicate_line": ("Ctrl+D", "Duplicate line or selection"),
+        "editor.edit.toggle_line_comment": ("Ctrl+/", "Toggle line comment"),
+        "editor.edit.indent": ("Ctrl+]", "Indent line or selection"),
+        "editor.edit.outdent": ("Ctrl+[", "Outdent line or selection"),
+        "editor.edit.indent_use_tabs": ("Ctrl+K, Ctrl+Tab", "Toggle tabs for indentation"),
+        "editor.edit.indent_width": ("Ctrl+K, Ctrl+I", "Set indentation width"),
+        "editor.edit.move_line_up": ("Alt+Up", "Move line or selection up"),
+        "editor.edit.move_line_down": ("Alt+Down", "Move line or selection down"),
+        "editor.edit.insert_datetime": ("Ctrl+K, Ctrl+5", "Insert date and time"),
+        "editor.edit.trim_trailing_spaces": ("Ctrl+K, Ctrl+W", "Trim trailing spaces"),
+        # Clarify Editor: View
+        "editor.view.show_explorer": ("Ctrl+K, Ctrl+B", "Toggle Editor Explorer"),
+        "editor.view.word_wrap": ("Alt+Z", "Toggle word wrap"),
+        "editor.view.render_whitespace": ("Ctrl+K, Ctrl+.", "Toggle whitespace rendering"),
+        "editor.view.show_line_numbers": ("Ctrl+K, Ctrl+L", "Toggle line numbers"),
     }
 
     # Additional defaults for actions that conventionally have more than one
     # portable key sequence. A custom shortcut replaces the complete default set.
     SHORTCUT_ALIASES = {
         "redo": ("Ctrl+Shift+Z",),
+        "editor.edit.indent": ("Ctrl+I",),
     }
 
     # OS-specific shortcuts that might conflict (for notification purposes)
@@ -131,20 +161,20 @@ class ShortcutManager:
         "Linux": [
             "Ctrl+Alt+T",  # Terminal
             "Ctrl+Alt+L",  # Lock screen
-            "Alt+F4",      # Close window
-            "Super+L",     # Lock
+            "Alt+F4",  # Close window
+            "Super+L",  # Lock
         ],
         "Windows": [
-            "Win+L",       # Lock
+            "Win+L",  # Lock
             "Ctrl+Shift+Esc",  # Task Manager
-            "Alt+F4",      # Close window
-            "Win+D",       # Show desktop
+            "Alt+F4",  # Close window
+            "Win+D",  # Show desktop
         ],
         "Darwin": [  # macOS
-            "Cmd+Q",       # Quit
-            "Cmd+H",       # Hide
-            "Cmd+M",       # Minimize
-            "Cmd+Space",   # Spotlight
+            "Cmd+Q",  # Quit
+            "Cmd+H",  # Hide
+            "Cmd+M",  # Minimize
+            "Cmd+Space",  # Spotlight
         ],
     }
 
@@ -421,8 +451,7 @@ class ShortcutManager:
         normalized = QKeySequence(key_sequence).toString(QKeySequence.PortableText).lower()
         for action_name in cls.SHORTCUTS:
             active = {
-                shortcut.toString(QKeySequence.PortableText).lower()
-                for shortcut in cls.get_key_sequences(action_name)
+                shortcut.toString(QKeySequence.PortableText).lower() for shortcut in cls.get_key_sequences(action_name)
             }
             if normalized in active:
                 conflicts.append(action_name)
@@ -445,16 +474,47 @@ class ShortcutManager:
     @classmethod
     def get_category(cls, action_name: str) -> str:
         """Get category for an action."""
+        editor_prefixes = {
+            "editor.file.": "Editor File",
+            "editor.edit.": "Editor Edit",
+            "editor.view.": "Editor View",
+        }
+        for prefix, category in editor_prefixes.items():
+            if action_name.startswith(prefix):
+                return category
         categories = {
             "File": ["new_file", "open_file", "save_file", "save_as", "close_tab", "exit"],
             "Edit": ["copy", "paste", "cut", "select_all", "undo", "redo", "find", "replace"],
-            "Tools": ["open_editor", "open_json_search", "open_json_rewriter", "open_set_operations",
-                     "open_ai_processor", "open_case_converter", "open_advanced_extractor", "open_text_to_json",
-                     "open_placeholder_replacer", "open_translate", "open_file_list"],
-            "Navigation": ["next_dock", "prev_dock", "next_dock_dynamic", "prev_dock_dynamic",
-                          "next_file_tab", "previous_file_tab",
-                          "jump_dock_1", "jump_dock_2", "jump_dock_3", "jump_dock_4", "jump_dock_5",
-                          "jump_dock_6", "jump_dock_7", "jump_dock_8", "jump_dock_9"],
+            "Tools": [
+                "open_editor",
+                "open_json_search",
+                "open_json_rewriter",
+                "open_set_operations",
+                "open_ai_processor",
+                "open_case_converter",
+                "open_advanced_extractor",
+                "open_text_to_json",
+                "open_placeholder_replacer",
+                "open_translate",
+                "open_file_list",
+            ],
+            "Navigation": [
+                "next_dock",
+                "prev_dock",
+                "next_dock_dynamic",
+                "prev_dock_dynamic",
+                "next_file_tab",
+                "previous_file_tab",
+                "jump_dock_1",
+                "jump_dock_2",
+                "jump_dock_3",
+                "jump_dock_4",
+                "jump_dock_5",
+                "jump_dock_6",
+                "jump_dock_7",
+                "jump_dock_8",
+                "jump_dock_9",
+            ],
             "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom", "horizontal_scroll"],
             "Processing": ["process", "interrupt", "clear"],
             "Help": ["help", "keyboard_shortcuts", "tutorials", "about"],
@@ -473,13 +533,36 @@ class ShortcutManager:
         categories = {
             "File Operations": ["new_file", "open_file", "save_file", "save_as", "close_tab", "exit"],
             "Edit Operations": ["copy", "paste", "cut", "select_all", "undo", "redo", "find", "replace"],
-            "Tools (Docks)": ["open_editor", "open_json_search", "open_json_rewriter", "open_set_operations",
-                             "open_ai_processor", "open_case_converter", "open_advanced_extractor", "open_text_to_json",
-                             "open_placeholder_replacer", "open_translate", "open_file_list"],
-            "Navigation": ["next_dock", "prev_dock", "next_dock_dynamic", "prev_dock_dynamic",
-                          "next_file_tab", "previous_file_tab",
-                          "jump_dock_1", "jump_dock_2", "jump_dock_3", "jump_dock_4", "jump_dock_5",
-                          "jump_dock_6", "jump_dock_7", "jump_dock_8", "jump_dock_9"],
+            "Tools (Docks)": [
+                "open_editor",
+                "open_json_search",
+                "open_json_rewriter",
+                "open_set_operations",
+                "open_ai_processor",
+                "open_case_converter",
+                "open_advanced_extractor",
+                "open_text_to_json",
+                "open_placeholder_replacer",
+                "open_translate",
+                "open_file_list",
+            ],
+            "Navigation": [
+                "next_dock",
+                "prev_dock",
+                "next_dock_dynamic",
+                "prev_dock_dynamic",
+                "next_file_tab",
+                "previous_file_tab",
+                "jump_dock_1",
+                "jump_dock_2",
+                "jump_dock_3",
+                "jump_dock_4",
+                "jump_dock_5",
+                "jump_dock_6",
+                "jump_dock_7",
+                "jump_dock_8",
+                "jump_dock_9",
+            ],
             "View": ["toggle_fullscreen", "toggle_history", "zoom_in", "zoom_out", "reset_zoom", "horizontal_scroll"],
             "Processing": ["process", "interrupt", "clear"],
             "Help": ["help", "keyboard_shortcuts", "tutorials", "about"],

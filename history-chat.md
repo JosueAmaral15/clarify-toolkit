@@ -5863,3 +5863,48 @@ Plano imediato:
   `CE-MENU-SHORTCUTS-01`; at most one exact-session native continuation may be
   issued after this history checkpoint is committed and pushed, without retry
   if dispatch state is uncertain.
+
+## 2026-10-27 - CE-MENU-SHORTCUTS-01 started
+
+- Work starts from published checkpoint `cac705c` on fresh branch
+  `COM-c3cada21-2a3c-472d-89d7-6f3a6419f7bd`, limited to the Clarify Editor
+  File/Edit/View shortcut inventory and its central registry. Subsequent native
+  dispatch journal `7994623` was verified and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker and session active
+  under Protocol2. Schema integrity, five hooks, native queue, services and tray
+  autostart are healthy; task automation/native input are enabled while GUI and
+  remote input remain disabled.
+- Seven new user requirements were reconciled without implementation expansion:
+  three new canonical tasks cover Explorer rename with F2, selected-occurrence
+  highlighting and line visibility filters; the existing global chatbot, AI File
+  chat and voice-programming tasks now capture reusable DGA/ChatGPT resources,
+  graphical tool calls and SecretaryRobot voice contracts. Their dependency
+  order is explicit in `docs/TASKS.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - CE-MENU-SHORTCUTS-01 completed
+
+- The audit reproduced three concrete defects: File/Edit/View mixed direct and
+  centrally managed shortcuts, executable commands were missing bindings, and
+  Replace used legacy `Ctrl+R`. The default registry also assigned
+  `Ctrl+Shift+S` to both Save As and Set Operations.
+- Every visible File/Edit/View action now uses the effective central registry
+  and Editor widget-tree context. The actions are associated with `EditorDock`,
+  which makes real key events work from documents and splits while keeping them
+  isolated from other tools. Replace uses only `Ctrl+H`; Set Operations uses a
+  conflict-free chord.
+- Live customization, aliases, chords and conflicts remain sourced by the F1
+  reference without a parallel table. All seven catalogs show the current
+  Find/Replace shortcut text.
+- Guarded serial validation executed 314 passing tests plus 22 existing guarded
+  skips across 19 isolated modules, peaking at 251.6 MiB. The four directly
+  affected modules passed another 113 tests after formatting, peaking at
+  227.7 MiB. No native crash, timeout or guard abort occurred; compilation,
+  JSON parsing, focused Pylint-E and diff checks passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_MENU_SHORTCUTS_2026_10_27.md`; 73 canonical tasks
+  remain open after this delivery. The next reconciled Editor task is
+  `CE-EXPLORER-RENAME-F2-01`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

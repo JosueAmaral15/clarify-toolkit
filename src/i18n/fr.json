@@ -19,7 +19,7 @@
   "editor.btn_find": "Rechercher",
   "tooltip.editor.btn_find": "Rechercher du texte dans le document actuel | Ctrl+F",
   "editor.btn_find_replace": "Rechercher et remplacer",
-  "tooltip.editor.btn_find_replace": "Rechercher et remplacer dans le document actuel | Ctrl+R",
+  "tooltip.editor.btn_find_replace": "Rechercher et remplacer dans le document actuel | Ctrl+H",
   "tool_window.detach": "Détacher l’outil actuel",
   "tool_window.detach_tooltip": "Ouvrir l’outil actuel dans une fenêtre séparée",
   "tool_window.attach": "Rattacher l’outil",

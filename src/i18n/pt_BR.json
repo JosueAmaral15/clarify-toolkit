@@ -2405,7 +2405,7 @@
     "tooltip.editor.btn_enable_saving": "Converter para editor com arquivo (sair do modo sandbox) | Ctrl+Shift+E | Ctrl+E para abrir Editor",
     "tooltip.editor.btn_export": "Exportar conteúdo para arquivo (alternativa ao Salvar Como para modo somente edição) | Ctrl+E para abrir Editor",
     "tooltip.editor.btn_find": "Buscar texto na aba atual do editor | Ctrl+F | Ctrl+E para abrir Editor",
-    "tooltip.editor.btn_find_replace": "Buscar e substituir texto na aba atual do editor | Ctrl+R | Ctrl+E para abrir Editor",
+    "tooltip.editor.btn_find_replace": "Buscar e substituir texto na aba atual do editor | Ctrl+H | Ctrl+E para abrir Editor",
     "tooltip.editor.btn_go_to_line": "Ir para uma linha especifica na aba atual do editor | Ctrl+G | Ctrl+E para abrir Editor",
     "tooltip.editor.btn_indent": "Indentar a linha atual ou as linhas selecionadas | Ctrl+] | Ctrl+E para abrir Editor",
     "tooltip.editor.btn_indent_width": "Escolher a quantidade de espaços exibidos ou inseridos em cada nível de indentação",

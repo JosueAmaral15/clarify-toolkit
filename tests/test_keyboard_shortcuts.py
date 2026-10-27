@@ -119,8 +119,8 @@ class TestShortcutManager(unittest.TestCase):
 
     def test_get_conflicts_no_conflicts(self):
         """Test conflict detection when there are no conflicts."""
-        conflicts = ShortcutManager.get_conflicts("Ctrl+G")
-        # Ctrl+G is not used by any default shortcut
+        conflicts = ShortcutManager.get_conflicts("Ctrl+Alt+Shift+F12")
+        # This sequence is intentionally absent from the defaults.
         self.assertEqual(conflicts, [])
 
     def test_get_conflicts_with_conflict(self):
@@ -132,10 +132,10 @@ class TestShortcutManager(unittest.TestCase):
     def test_get_conflicts_multiple(self):
         """Test detecting multiple conflicts."""
         # Set two actions to the same shortcut
-        ShortcutManager.set_custom_shortcut("undo", "Ctrl+G")
-        ShortcutManager.set_custom_shortcut("redo", "Ctrl+G")
+        ShortcutManager.set_custom_shortcut("undo", "Ctrl+Alt+Shift+F12")
+        ShortcutManager.set_custom_shortcut("redo", "Ctrl+Alt+Shift+F12")
 
-        conflicts = ShortcutManager.get_conflicts("Ctrl+G")
+        conflicts = ShortcutManager.get_conflicts("Ctrl+Alt+Shift+F12")
         self.assertIn("undo", conflicts)
         self.assertIn("redo", conflicts)
 

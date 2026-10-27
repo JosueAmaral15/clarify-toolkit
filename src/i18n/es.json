@@ -19,7 +19,7 @@
   "editor.btn_find": "Buscar",
   "tooltip.editor.btn_find": "Buscar texto en el documento actual | Ctrl+F",
   "editor.btn_find_replace": "Buscar y reemplazar",
-  "tooltip.editor.btn_find_replace": "Buscar y reemplazar texto en el documento actual | Ctrl+R",
+  "tooltip.editor.btn_find_replace": "Buscar y reemplazar texto en el documento actual | Ctrl+H",
   "tool_window.detach": "Desacoplar herramienta actual",
   "tool_window.detach_tooltip": "Abrir la herramienta actual en una ventana separada",
   "tool_window.attach": "Volver a acoplar la herramienta",
