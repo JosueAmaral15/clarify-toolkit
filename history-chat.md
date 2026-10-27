@@ -4216,6 +4216,20 @@ Plano imediato:
   continuation may be attempted exactly once after this history checkpoint is
   committed and pushed; uncertain transport must not be retried.
 
+### Native continuation journal for the next Editor stage
+
+- A dry run validated the exact active Protocol2 worker, session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, local native transport, zero delay,
+  one-shot authorization and the `CE-UNTITLED-DENSE-NAMES-01` message. It did
+  not emit input or access the monitor database.
+- The single authorized real invocation completed with exit code zero and
+  state `dispatch_started` at 2026-10-27 17:23:22 -0300. This proves only that
+  the detached native queue process was created for the exact session.
+- Read-only inspection of the session journal found the marker only in the
+  command and its `dispatch_started` output, not as a delivered user message.
+  No `input_emitted` or delivery confirmation is claimed, and the dispatch was
+  not retried. The exact worker remains active for the authorized queue.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently
