@@ -4275,6 +4275,19 @@ Plano imediato:
   committed and pushed, using one-shot authorization and no retry for an
   uncertain transport state.
 
+### Native continuation journal for the read-only theme stage
+
+- A dry run validated the exact active Protocol2 worker, session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, local native transport, zero delay,
+  one-shot authorization and the `CE-READONLY-THEME-01` message. It emitted no
+  input and accessed no monitor database state.
+- The single authorized real invocation completed with exit code zero and
+  `dispatch_started`. This proves only that the detached native queue process
+  was created for the exact session; no `input_emitted` or delivery
+  confirmation is claimed.
+- The dispatch was not retried. The exact Protocol2 worker remains active for
+  the authorized Clarify queue.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently
