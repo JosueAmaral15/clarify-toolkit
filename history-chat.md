@@ -4179,6 +4179,23 @@ Plano imediato:
   multi-window work. `example.py` remains untracked and byte-identical at
   SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
+### Native continuation journal - CE-OPEN-CLEAN-STATE-REGRESSION-01
+
+- The published checkpoint and remote ref both resolved to `42357c3` on
+  `COM-c3cada21-2a3c-472d-89d7-6f3a6419f7bd`; the functional shortcut commit is
+  `df50c2b`.
+- The dry-run selected only worker
+  `notebook-josue:codex:project=clarify-b09a84f1`, native local transport and
+  exact session `019ea8a0-6d60-7f03-90b9-c420603158d1`, with zero delay and a
+  detached self-session process.
+- Exactly one real native continuation was issued for
+  `CE-OPEN-CLEAN-STATE-REGRESSION-01`. Its initial result was
+  `dispatch_started`; this proves only that the detached transport process was
+  created, not delivery or execution. It was not retried. A later exact-session
+  hook must provide the next evidence.
+- `example.py` remained the only untracked path and stayed byte-identical at
+  SHA-256 `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-16 - Session completion - APP-THREAD-01 Stage 10
 
 - The source audit and clean red regression proved that the shared
