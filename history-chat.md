@@ -5863,3 +5863,16 @@ Plano imediato:
   `CE-MENU-SHORTCUTS-01`; at most one exact-session native continuation may be
   issued after this history checkpoint is committed and pushed, without retry
   if dispatch state is uncertain.
+
+### October 27 menu-shortcuts continuation journal
+
+- The native-only dry-run selected exact worker
+  `notebook-josue:codex:project=clarify-b09a84f1`, exact session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, zero delay and detached delivery for
+  `CE-MENU-SHORTCUTS-01` from checkpoint `cac705c`.
+- Exactly one real native continuation returned `dispatch_started`. This proves
+  that transport started, not that the message was delivered; no retry was or
+  will be attempted while that outcome is uncertain.
+- The worker remains active under Protocol2 with task automation and native
+  input enabled, while GUI and remote input remain disabled. The next stage
+  must verify this subsequent journal before creating its fresh work branch.
