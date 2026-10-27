@@ -5747,3 +5747,61 @@ Plano imediato:
 - The next concrete canonical Editor task is `CE-TEMP-NOTE-LIFECYCLE-01`; at
   most one exact-session native continuation may be sent after this checkpoint
   is committed and pushed, with no retry if dispatch state is uncertain.
+
+## 2026-10-27 - CE-TEMP-NOTE-LIFECYCLE-01 started
+
+- Work starts from published checkpoint `7b7e2a1` on fresh branch
+  `COM-e5fdfdad-303d-41a2-82e8-870c9c644d30`, limited to temporary-note
+  identity, autosave and conversion through Save As. The subsequent dispatch
+  journal `f5befce` was verified and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, native queue, both services and tray
+  autostart are healthy; task automation and native input are enabled while GUI
+  and remote input remain disabled.
+- The audit will reproduce existing temporary-note behavior using only
+  temporary data before changing storage, Editor tab identity, Save, Save As,
+  recovery, folder-session or close-path contracts. Tests remain isolated and
+  serial with temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and
+  pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - CE-TEMP-NOTE-LIFECYCLE-01 completed
+
+- The audit proved that temporary notes retained normal file identity, dirty
+  state and `Untitled` presentation, so Save could target the original file;
+  later edits were not autosaved and Save As did not remove note storage.
+- Temporary notes now have a clean titled identity, bounded atomic autosave and
+  one Save path shared by Ctrl+S and close settlement. Save As converts only
+  after normal-file write and note cleanup both succeed; cancellation and every
+  failure retain the note, with honest partial-copy reporting when applicable.
+- Individual-tab, Editor, parent and application close paths flush owned timers.
+  Clean notes avoid duplicate recovery snapshots, and callbacks revalidate note
+  identity so late timer delivery cannot recreate a converted/deleted note.
+- The note manager is now a searchable keyboard list with restore, rename,
+  export and explicit delete. Existing 2 MiB/note, 20-note and 20 MiB total
+  quotas, private atomic storage and optional retention remain unchanged.
+- Guarded serial validation passed 304 distinct tests across 16 isolated
+  modules, peaking at 253.5 MiB. There was no native crash or guard abort;
+  Pylint-E, compileall, seven JSON parses and `git diff --check` passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_TEMP_NOTE_LIFECYCLE_2026_10_27.md`; 72 canonical
+  tasks remain open after this delivery.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published October 27 temporary-note lifecycle checkpoint
+
+- Feature commit `7924764` was pushed to
+  `COM-e5fdfdad-303d-41a2-82e8-870c9c644d30`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch (3 critical,
+  21 high, 11 moderate and 3 low). These unresolved external security gates
+  remain outside this bounded Editor delivery.
+- AI Presence Monitor 0.10.7 revalidated schema/integrity, five Codex hooks,
+  native queue, both services and tray autostart. The exact Clarify Protocol2
+  worker/session remain active; task automation and native input are enabled,
+  while GUI and remote input remain disabled.
+- The next concrete canonical Editor task is `CE-FIND-MODELESS-01`; at most one
+  exact-session native continuation may be sent after this checkpoint is
+  committed and pushed, with no retry if dispatch state is uncertain.
