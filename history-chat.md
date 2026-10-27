@@ -5805,3 +5805,17 @@ Plano imediato:
 - The next concrete canonical Editor task is `CE-FIND-MODELESS-01`; at most one
   exact-session native continuation may be sent after this checkpoint is
   committed and pushed, with no retry if dispatch state is uncertain.
+
+### October 27 Find modeless continuation dispatch journal
+
+- After checkpoint `fe9cc97` was pushed, AI Presence Monitor 0.10.7 dry-run
+  validated one native continuation for `CE-FIND-MODELESS-01`, targeting only
+  worker `notebook-josue:codex:project=clarify-b09a84f1` and exact session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`.
+- The one real detached call returned exit 0 with `dispatch_started`. This is
+  evidence that native queue initiation succeeded, not proof that the message
+  was delivered or processed. It was not retried and must not be retried from
+  this journal.
+- The continuation instructs the next run to create a fresh COM-UUID branch
+  from published checkpoint `fe9cc97` and deliberately exclude this subsequent
+  journal commit. The exact Protocol2 worker remains active.
