@@ -4216,6 +4216,48 @@ Plano imediato:
   continuation may be attempted exactly once after this history checkpoint is
   committed and pushed; uncertain transport must not be retried.
 
+## 2026-10-27 - CE-UNTITLED-DENSE-NAMES-01 started
+
+- Work starts from published checkpoint `dc6b7c0` and feature commit `b4efce1`
+  on fresh branch `COM-f2ce947a-7674-40b4-8bb3-64169750d06c`. The subsequent
+  continuation journal `8b1c139` was verified and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, native queue, both services and tray
+  autostart are healthy; native input is enabled while persistent task
+  automation, GUI fallback and remote input are disabled.
+- The stage is limited to dense visible Untitled names by current open-tab
+  order while preserving stable internal identities, recovery, Find history,
+  temporary notes, folder sessions, splits, watchers and clean file opens.
+- Reproduction and validation use only temporary data and serial isolated Qt
+  processes with temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds
+  and pytest timeout 20 seconds. `example.py` remains untracked and
+  byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-27 - CE-UNTITLED-DENSE-NAMES-01 completed
+
+- The guarded pre-change regression reproduced the historical-counter defect:
+  after opening three unnamed buffers and closing the second, the remaining
+  titles were `Untitled` and `Untitled-3` instead of a dense sequence.
+- The historical counter and per-instance `get_tab_title` override were
+  removed. Every prepared tab now has a stable private buffer UUID, while a
+  separate mutable display attribute is recalculated from current visual order.
+- Renumbering now settles after create, close, reorder, Save As, temporary-note
+  adoption, file conversion, folder detachment and legacy recovery. Explicit
+  generated names, note titles and file names remain unchanged; recovery and
+  Find identities, split documents, focus, watchers and clean-open state remain
+  independent.
+- Guarded serial validation passed 342 distinct tests across 23 isolated
+  modules, peaking at 255.2 MiB. No native crash, timeout or guard abort
+  occurred; compilation, Pylint-E, Black for the new regression, probe/task-ID
+  checks and `git diff --check` passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_UNTITLED_DENSE_NAMES_2026_10_27.md`; 80 canonical
+  tasks remain open. The next reconciled Editor task is
+  `CE-READONLY-THEME-01`. `example.py` remains untracked and byte-identical at
+  SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently

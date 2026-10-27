@@ -732,7 +732,7 @@ janela, ownership, sessao, provider, RAG e tool calls.
   edit-only, Save As, Reload, decoding invalido, mudanca externa e edicao real
   foram validados separadamente. Evidencia em
   `docs/reports/CLARIFY_EDITOR_OPEN_CLEAN_STATE_2026_10_27.md`.
-- [ ] **CE-UNTITLED-DENSE-NAMES-01: numerar Untitled pelas guias abertas.** O
+- [x] **CE-UNTITLED-DENSE-NAMES-01: numerar Untitled pelas guias abertas.** O
   primeiro buffer sem arquivo deve aparecer como `Untitled *`, o segundo como
   `Untitled-2 *` e assim por diante conforme a ordem atual dos buffers sem nome,
   nunca conforme um contador historico incremental. Ao criar, fechar, reordenar,
@@ -740,6 +740,13 @@ janela, ownership, sessao, provider, RAG e tool calls.
   lacunas (`Untitled-17` nao pode permanecer quando existem apenas duas guias
   sem nome). Separar o rotulo mutavel da identidade interna estavel do buffer e
   preservar recovery, historico Find, splits, foco, acessibilidade e traducoes.
+  **Entregue em 27/10/2026:** o contador historico e a sobrescrita dinamica de
+  `get_tab_title` foram removidos. Cada buffer recebe uma identidade UUID
+  privada e estavel, enquanto o rotulo Untitled e recalculado pela ordem visual
+  atual depois de criar, fechar, reordenar, salvar, converter em nota ou
+  restaurar snapshots legados. Titulos explicitos, notas, arquivos, IDs de
+  recovery e historico Find permanecem independentes. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_UNTITLED_DENSE_NAMES_2026_10_27.md`.
 - [ ] **CE-READONLY-THEME-01: preservar tema ao alternar somente leitura.**
   Reproduzir a guia que fica branca ao ativar read-only e remover paleta/QSS
   fixos que sobrescrevam o tema atual. O estado somente leitura deve mudar apenas

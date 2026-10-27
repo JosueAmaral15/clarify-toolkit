@@ -1372,7 +1372,6 @@ class EditorDock(BaseDock):
         self.recent_files: List[str] = []
         self.recent_folders: List[str] = []
         self.max_recent = 10
-        self.untitled_counter = 0  # Counter for Untitled-N tabs
         self.normal_text_font_size = 10
         self.min_text_font_size = 6
         self.max_text_font_size = 48
@@ -2559,6 +2558,7 @@ class EditorDock(BaseDock):
             if index >= 0:
                 self.tab_widget.removeTab(index)
             tab.deleteLater()
+        self._renumber_untitled_tabs()
         self._last_active_editor = (
             getattr(self.tab_widget.currentWidget(), "editor", None)
             if self.tab_widget.count()
@@ -2817,6 +2817,7 @@ class EditorDock(BaseDock):
             self._restoring_tab_order = False
 
     def _on_tab_moved(self, _from_index: int, _to_index: int) -> None:
+        self._renumber_untitled_tabs()
         self._persist_tab_order()
 
     def _select_explorer_path(self, file_path: str | None) -> bool:
@@ -3173,6 +3174,8 @@ class EditorDock(BaseDock):
 
     def _prepare_tab_for_dock(self, tab) -> None:
         """Wire tab signals and hide tab-local file/edit controls."""
+        if not getattr(tab, "_clarify_buffer_identity", ""):
+            setattr(tab, "_clarify_buffer_identity", uuid.uuid4().hex)
         if hasattr(tab, 'toolbar'):
             tab.toolbar.setVisible(False)
 
@@ -3835,6 +3838,42 @@ class EditorDock(BaseDock):
     def _all_tab_objects(self) -> list:
         return [self.tab_widget.widget(index) for index in range(self.tab_widget.count())]
 
+    @staticmethod
+    def _is_dense_untitled_tab(tab) -> bool:
+        """Return whether a tab needs an order-derived visible Untitled name."""
+        return bool(
+            tab is not None
+            and not getattr(tab, "file_path", None)
+            and not getattr(tab, "_clarify_display_name", "")
+            and not getattr(tab, "_clarify_temp_note_id", "")
+        )
+
+    @staticmethod
+    def _is_legacy_untitled_title(title: str) -> bool:
+        """Recognize prior sparse Untitled labels without treating them as IDs."""
+        if title == "Untitled":
+            return True
+        prefix = "Untitled-"
+        suffix = title[len(prefix) :] if title.startswith(prefix) else ""
+        return bool(suffix.isdigit() and int(suffix) >= 2)
+
+    def _renumber_untitled_tabs(self) -> None:
+        """Refresh mutable Untitled labels from current visual tab order."""
+        ordinal = 0
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if self._is_dense_untitled_tab(tab):
+                ordinal += 1
+                title = "Untitled" if ordinal == 1 else f"Untitled-{ordinal}"
+                setattr(tab, "_clarify_untitled_display_name", title)
+            elif hasattr(tab, "_clarify_untitled_display_name"):
+                delattr(tab, "_clarify_untitled_display_name")
+            self.tab_widget.setTabText(index, self._display_title_for_tab(tab))
+        if self._split_source_tab is not None:
+            self.split_title.setText(
+                self._display_title_for_tab(self._split_source_tab)
+            )
+
     def _close_tab_object(self, tab) -> bool:
         index = self.tab_widget.indexOf(tab)
         return index < 0 or self._close_tab(index)
@@ -3884,24 +3923,12 @@ class EditorDock(BaseDock):
 
     def _new_file(self, edit_only: bool = False):
         """Create new untitled file."""
-        # Increment counter for unique names
-        self.untitled_counter += 1
-
         # Create text editor tab
         tab = EditorTab(None, self, edit_only_mode=edit_only)
         self._prepare_tab_for_dock(tab)
 
-        # Set custom title with counter
-        if self.untitled_counter > 1:
-            custom_title = f"Untitled-{self.untitled_counter}"
-        else:
-            custom_title = "Untitled"
-
-        # Override get_tab_title temporarily
-        original_get_tab_title = tab.get_tab_title
-        tab.get_tab_title = lambda: custom_title if not tab.file_path else original_get_tab_title()
-
         index = self.tab_widget.addTab(tab, tab.get_display_title())
+        self._renumber_untitled_tabs()
         self.tab_widget.setCurrentIndex(index)
         self._refresh_editor_menus()
 
@@ -4047,6 +4074,7 @@ class EditorDock(BaseDock):
         self._add_recent_file(normalized_path)
         self._persist_tab_order()
         self._discard_recovery_for_tab(tab)
+        self._renumber_untitled_tabs()
         self._update_tab_title(tab)
         self._refresh_editor_menus()
         action = "Saved as" if save_as else "Saved"
@@ -5822,6 +5850,7 @@ class EditorDock(BaseDock):
             timer.stop()
         title = tab.get_tab_title()
         self.tab_widget.removeTab(index)
+        self._renumber_untitled_tabs()
         tab.deleteLater()
         self._refresh_external_file_watchers()
         self.lbl_status.setText(f"Closed: {title}")
@@ -6174,6 +6203,13 @@ class EditorDock(BaseDock):
             display_name,
             extension=snapshot.extension,
         )
+        if (
+            not snapshot.file_path
+            and self._is_legacy_untitled_title(snapshot.title)
+        ):
+            if hasattr(tab, "_clarify_display_name"):
+                delattr(tab, "_clarify_display_name")
+            self._renumber_untitled_tabs()
         setattr(tab, "_clarify_recovery_id", snapshot.snapshot_id)
         setattr(tab, "_clarify_recovery_source_path", snapshot.file_path)
         cursor = tab.editor.textCursor()
@@ -6289,7 +6325,7 @@ class EditorDock(BaseDock):
         if hasattr(tab, "modified_changed"):
             tab.modified_changed.emit(False)
         self._refresh_external_file_watchers()
-        self._update_tab_title(tab)
+        self._renumber_untitled_tabs()
         self._persist_tab_order()
         self._refresh_editor_menus()
 
@@ -6813,6 +6849,7 @@ class EditorDock(BaseDock):
             self._prepare_tab_for_dock(tab)
             self._assign_tab_folder_root(tab)
             self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+            self._renumber_untitled_tabs()
             if not edit_only:
                 self._track_tab_disk_state(tab)
                 self._update_tab_title(tab)
@@ -6888,6 +6925,7 @@ class EditorDock(BaseDock):
         tab.is_modified = not edit_only
 
         index = self.tab_widget.addTab(tab, self._display_title_for_tab(tab))
+        self._renumber_untitled_tabs()
         self.tab_widget.setCurrentIndex(index)
         self._refresh_editor_menus()
 
@@ -6916,6 +6954,7 @@ class EditorDock(BaseDock):
         
         # Add tab with name "Untitled.txt"
         index = self.tab_widget.addTab(tab, "Untitled.txt")
+        self._renumber_untitled_tabs()
         self.tab_widget.setCurrentIndex(index)
         self._refresh_editor_menus()
         

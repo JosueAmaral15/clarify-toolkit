@@ -191,23 +191,20 @@ class TestEditorTabEditOnlyMode:
 class TestEditorDockEditOnlyIntegration:
     """Test EditorDock integration with edit-only mode."""
     
-    def test_new_file_untitled_counter(self, editor_dock):
-        """Test Untitled-N counter for multiple new files."""
-        # Create first file
+    def test_new_file_untitled_names_follow_open_tab_order(self, editor_dock):
+        """Test dense Untitled names without a historical display counter."""
         editor_dock._new_file(edit_only=False)
-        assert editor_dock.untitled_counter == 1
-        
-        # Create second file
         editor_dock._new_file(edit_only=False)
-        assert editor_dock.untitled_counter == 2
-        
-        # Check titles
+
         tab1 = editor_dock.tab_widget.widget(0)
         tab2 = editor_dock.tab_widget.widget(1)
-        
-        # First tab: "Untitled", second tab: "Untitled-2"
-        assert "Untitled" in tab1.get_tab_title()
-        assert "Untitled-2" in tab2.get_tab_title()
+
+        assert tab1.get_tab_title() == "Untitled"
+        assert tab2.get_tab_title() == "Untitled-2"
+        assert tab1._clarify_buffer_identity != tab2._clarify_buffer_identity
+
+        assert editor_dock._close_tab(0)
+        assert tab2.get_tab_title() == "Untitled"
     
     def test_open_file_with_edit_only_checkbox(self, editor_dock, monkeypatch, qapp):
         """Test opening file with edit-only checkbox."""

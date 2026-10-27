@@ -976,6 +976,9 @@ class JsonEditorTab(QWidget):
         display_name = getattr(self, "_clarify_display_name", None)
         if display_name:
             return display_name
+        untitled_name = getattr(self, "_clarify_untitled_display_name", None)
+        if untitled_name:
+            return untitled_name
         return "Untitled.json"
 
     def get_display_title(self) -> str:
