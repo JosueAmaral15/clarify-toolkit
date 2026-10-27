@@ -4197,6 +4197,25 @@ Plano imediato:
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
 
+### Published October 27 clean-open checkpoint
+
+- Feature commit `b4efce1` was pushed to
+  `COM-1c5e398c-e4c0-4e73-8ef2-69fac8806235`. No default branch, provider,
+  dependency or unrelated user file changed.
+- GitHub reports 38 Dependabot findings on its default branch: 3 critical,
+  21 high, 11 moderate and 3 low. These unresolved external security gates
+  remain outside this bounded Editor delivery.
+- AI Presence Monitor 0.10.7 revalidated schema integrity, five Codex hooks,
+  native queue, both services, tray autostart and the exact active Protocol2
+  worker/session. Persistent task automation is now disabled for the Clarify
+  profile; native input remains enabled while GUI and remote input remain
+  disabled. This task instruction authorizes at most one exact-session native
+  continuation, so any next dispatch must use only `--authorize-once` without
+  changing persistent controls.
+- The next reconciled Editor priority is `CE-UNTITLED-DENSE-NAMES-01`. A native
+  continuation may be attempted exactly once after this history checkpoint is
+  committed and pushed; uncertain transport must not be retried.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently
