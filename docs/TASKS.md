@@ -621,7 +621,7 @@ ser implementado em etapa limitada, testada e documentada.
   seu estado. Acoes existentes do menu principal e do Clarify Editor passaram a
   participar do mesmo registro sem alterar seus handlers. Evidencia em
   [Clarify Application F1 Shortcut Reference](reports/CLARIFY_APP_SHORTCUTS_F1_2026_10_27.md).
-- [ ] **CE-TEMP-NOTE-LIFECYCLE-01: identidade e autosave de notas temporarias.**
+- [x] **CE-TEMP-NOTE-LIFECYCLE-01: identidade e autosave de notas temporarias.**
   Depois de `Save as Temporary Note`, a guia deve mostrar o titulo definido pelo
   usuario em vez de `Untitled *`, assumir identidade de nota temporaria e salvar
   automaticamente as edicoes posteriores por padrao. Nao tratar a nota como
@@ -634,6 +634,15 @@ ser implementado em etapa limitada, testada e documentada.
   registro temporario. Cancelamento ou falha preserva integralmente a nota.
   `Manage Temporary Notes` deve usar lista rolavel, pesquisavel e navegavel por
   teclado, com metadados e acoes por item; nao usar dropdown para a colecao.
+  Entregue em 27/10/2026: a nota agora se desconecta de qualquer arquivo de
+  origem, assume o titulo informado sem `Untitled *` e usa autosave atomico
+  proprio. `Save`/`Ctrl+S` atualizam a mesma nota; `Save As...` somente remove a
+  identidade e o registro depois de gravar o arquivo e concluir a limpeza, com
+  preservacao integral em cancelamento ou falha. Fechamento de guia, Editor,
+  parent e aplicacao faz flush dos timers sem callbacks tardios. O gerenciador
+  usa lista pesquisavel e navegavel com restaurar, renomear, exportar e excluir,
+  mantendo cotas, recovery e retencao. Evidencia em
+  [Clarify Editor Temporary Note Lifecycle](reports/CLARIFY_EDITOR_TEMP_NOTE_LIFECYCLE_2026_10_27.md).
 - [ ] **CE-FIND-MODELESS-01: painel Find nao bloqueante.** O Find/Replace do
   Clarify Editor deve permanecer modeless e permitir interacao com editor, abas e
   janela principal enquanto estiver aberto. Preservar uma instancia coerente por

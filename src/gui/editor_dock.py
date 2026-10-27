@@ -38,7 +38,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtWidgets import (
     QButtonGroup, QComboBox, QDialog, QHBoxLayout, QInputDialog, QLineEdit, QMenuBar,
-    QPushButton, QRadioButton, QSpinBox,
+    QListWidget, QListWidgetItem, QPushButton, QRadioButton, QSpinBox,
     QVBoxLayout, QWidget,
     QLabel, QFileDialog, QMessageBox, QTextEdit, QTabWidget,
     QCheckBox, QFileSystemModel, QFrame, QMenu, QApplication, QSplitter,
@@ -67,6 +67,7 @@ from src.core.editor_find import (
 )
 from src.product_identity import EDITOR_NAME
 from src.shortcut_manager import ShortcutManager
+from src.utils.atomic_files import write_text_atomically
 
 from .base_dock import BaseDock
 from .editor_recovery_lifecycle import EditorRecoveryLifecycle
@@ -831,6 +832,101 @@ class _EditorStatusIndicator(QLabel):
         self._refresh_text()
 
 
+class _TemporaryNotesDialog(QDialog):
+    """Searchable, keyboard-navigable actions for bounded temporary notes."""
+
+    def __init__(self, notes, parent=None):
+        super().__init__(parent)
+        self.requested_action = ""
+        self.selected_note_id = ""
+        self.setWindowTitle(tr("editor.temp_notes_title"))
+        self.setMinimumSize(560, 380)
+
+        layout = QVBoxLayout(self)
+        self.search_box = QLineEdit(self)
+        self.search_box.setClearButtonEnabled(True)
+        self.search_box.setPlaceholderText(tr("editor.temp_notes_search"))
+        self.search_box.setAccessibleName(tr("editor.temp_notes_search"))
+        layout.addWidget(self.search_box)
+
+        self.note_list = QListWidget(self)
+        self.note_list.setSortingEnabled(True)
+        self.note_list.setAccessibleName(tr("editor.temp_notes_title"))
+        for note in notes:
+            item = QListWidgetItem(
+                f"{note.title} - {note.updated_at[:19]} - {note.note_id[:8]}"
+            )
+            item.setData(Qt.ItemDataRole.UserRole, note.note_id)
+            self.note_list.addItem(item)
+        layout.addWidget(self.note_list, 1)
+
+        buttons = QHBoxLayout()
+        self.restore_button = QPushButton(tr("editor.temp_note_restore"), self)
+        self.rename_button = QPushButton(tr("editor.explorer_rename"), self)
+        self.export_button = QPushButton(tr("editor.btn_export"), self)
+        self.delete_button = QPushButton(tr("editor.temp_note_delete"), self)
+        self.close_button = QPushButton(tr("app.btn_close"), self)
+        for button in (
+            self.restore_button,
+            self.rename_button,
+            self.export_button,
+            self.delete_button,
+        ):
+            buttons.addWidget(button)
+        buttons.addStretch()
+        buttons.addWidget(self.close_button)
+        layout.addLayout(buttons)
+
+        self.search_box.textChanged.connect(self._filter_notes)
+        self.note_list.itemSelectionChanged.connect(self._update_actions)
+        self.note_list.itemDoubleClicked.connect(
+            lambda _item: self._choose("restore")
+        )
+        self.restore_button.clicked.connect(lambda: self._choose("restore"))
+        self.rename_button.clicked.connect(lambda: self._choose("rename"))
+        self.export_button.clicked.connect(lambda: self._choose("export"))
+        self.delete_button.clicked.connect(lambda: self._choose("delete"))
+        self.close_button.clicked.connect(self.reject)
+        if self.note_list.count():
+            self.note_list.setCurrentRow(0)
+        self._update_actions()
+
+    def _filter_notes(self, text: str) -> None:
+        needle = text.strip().casefold()
+        for index in range(self.note_list.count()):
+            item = self.note_list.item(index)
+            item.setHidden(bool(needle and needle not in item.text().casefold()))
+        current = self.note_list.currentItem()
+        if current is None or current.isHidden():
+            self.note_list.clearSelection()
+            for index in range(self.note_list.count()):
+                item = self.note_list.item(index)
+                if not item.isHidden():
+                    self.note_list.setCurrentItem(item)
+                    break
+        self._update_actions()
+
+    def _update_actions(self) -> None:
+        current = self.note_list.currentItem()
+        enabled = current is not None and not current.isHidden()
+        for button in (
+            self.restore_button,
+            self.rename_button,
+            self.export_button,
+            self.delete_button,
+        ):
+            button.setEnabled(enabled)
+
+    def _choose(self, action: str) -> None:
+        item = self.note_list.currentItem()
+        if item is None or item.isHidden():
+            return
+        self.requested_action = action
+        self.selected_note_id = str(item.data(Qt.ItemDataRole.UserRole) or "")
+        if self.selected_note_id:
+            self.accept()
+
+
 class EditorDock(BaseDock):
     """
     Dock widget for integrated file editor.
@@ -845,6 +941,8 @@ class EditorDock(BaseDock):
     - Find/Replace (basic)
     - Recent files list
     """
+
+    TEMP_NOTE_AUTOSAVE_INTERVAL_MS = 500
 
     _LANGUAGE_BY_SUFFIX = {
         ".bash": "Shell Script",
@@ -2911,6 +3009,11 @@ class EditorDock(BaseDock):
             tab.modified_changed.connect(lambda _modified=False, t=tab: self._update_tab_title(t))
         if hasattr(tab, 'editor'):
             tab.editor.textChanged.connect(self._recovery_lifecycle.schedule)
+            if not getattr(tab, "_clarify_temp_note_autosave_connected", False):
+                tab.editor.textChanged.connect(
+                    lambda t=tab: self._schedule_temp_note_autosave(t)
+                )
+                setattr(tab, "_clarify_temp_note_autosave_connected", True)
             if not getattr(tab, '_clarify_status_signals_connected', False):
                 tab.editor.cursorPositionChanged.connect(
                     lambda t=tab: self._on_editor_status_cursor_changed(t)
@@ -3760,6 +3863,7 @@ class EditorDock(BaseDock):
                 tab._update_toolbar_visibility()
 
         self._track_tab_disk_state(tab)
+        self._assign_tab_folder_root(tab)
         self._add_recent_file(normalized_path)
         self._persist_tab_order()
         self._discard_recovery_for_tab(tab)
@@ -3776,6 +3880,9 @@ class EditorDock(BaseDock):
         tab = self.tab_widget.currentWidget()
         if not tab:
             return False
+
+        if getattr(tab, "_clarify_temp_note_id", ""):
+            return self._save_temp_note_tab(tab)
 
         # Check if edit-only mode (State pattern)
         if hasattr(tab, 'edit_only_mode') and tab.edit_only_mode:
@@ -3824,6 +3931,13 @@ class EditorDock(BaseDock):
         if not tab:
             return False
 
+        if (
+            getattr(tab, "_clarify_temp_note_id", "")
+            and (getattr(tab, "is_modified", False) or tab.editor.document().isModified())
+            and not self._save_temp_note_tab(tab)
+        ):
+            return False
+
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save File As",
@@ -3839,6 +3953,8 @@ class EditorDock(BaseDock):
         if isinstance(tab, JsonEditorTab):
             success, error_msg = tab.save_file(file_path)
             if success:
+                if not self._finalize_temp_note_conversion(tab):
+                    return False
                 return self._settle_successful_save(tab, file_path, save_as=True)
             else:
                 QMessageBox.critical(self, tr("editor.msg_error_title"), tr("editor.msg_save_failed").format(error_msg))
@@ -3846,6 +3962,8 @@ class EditorDock(BaseDock):
         else:
             # EditorTab
             if tab.save_file(file_path):
+                if not self._finalize_temp_note_conversion(tab):
+                    return False
                 return self._settle_successful_save(tab, file_path, save_as=True)
             else:
                 QMessageBox.critical(
@@ -5334,6 +5452,13 @@ class EditorDock(BaseDock):
 
         tab = self.tab_widget.widget(index)
 
+        if (
+            getattr(tab, "_clarify_temp_note_id", "")
+            and (getattr(tab, "is_modified", False) or tab.editor.document().isModified())
+            and not self._save_temp_note_tab(tab)
+        ):
+            return False
+
         # Check if modified
         if hasattr(tab, 'is_modified') and tab.is_modified:
             # Special handling for edit-only tabs (requirement #6)
@@ -5505,6 +5630,13 @@ class EditorDock(BaseDock):
             tab = self.tab_widget.widget(index)
             if not hasattr(tab, "editor"):
                 continue
+            if (
+                getattr(tab, "_clarify_temp_note_id", "")
+                and not getattr(tab, "is_modified", False)
+                and not tab.editor.document().isModified()
+            ):
+                self._discard_recovery_for_tab(tab)
+                continue
 
             snapshot_id = getattr(tab, "_clarify_recovery_id", "")
             if not snapshot_id:
@@ -5561,8 +5693,10 @@ class EditorDock(BaseDock):
 
     def _flush_recovery_on_close(self, *, final=False) -> bool:
         """Normal close may be refused; final Qt shutdown can only report failure."""
-        success = self._checkpoint_unsaved_tabs()
-        if success:
+        notes_saved = self._flush_temp_note_autosaves()
+        recovery_saved = self._checkpoint_unsaved_tabs()
+        success = notes_saved and recovery_saved
+        if recovery_saved:
             self._save_folder_session()
         if success or final:
             self._recovery_suspended = True
@@ -5771,13 +5905,182 @@ class EditorDock(BaseDock):
             self.lbl_status.setText(tr("editor.status_recovery_skipped").format(count=1))
         self.settings.setValue("recovery_retention_hours", hours)
 
-    def _save_current_as_temp_note(self, title: str | None = None) -> bool:
-        """Save the current buffer as a private note without settling file state."""
-        tab = self.tab_widget.currentWidget()
-        if tab is None or not hasattr(tab, "editor"):
+    def _open_temp_note_tab(self, note_id: str):
+        return next(
+            (
+                tab
+                for tab in self._all_tab_objects()
+                if getattr(tab, "_clarify_temp_note_id", "") == note_id
+            ),
+            None,
+        )
+
+    @staticmethod
+    def _temp_note_extension(tab) -> str:
+        language_extension = getattr(tab, "_clarify_language_extension", "") or ""
+        if language_extension.startswith(".") and len(language_extension) > 1:
+            return language_extension
+        candidates = (
+            getattr(tab, "file_path", "") or "",
+            getattr(tab, "_clarify_display_name", "") or "",
+            tab.get_tab_title(),
+        )
+        return next(
+            (os.path.splitext(value)[1] for value in candidates if os.path.splitext(value)[1]),
+            ".txt",
+        )
+
+    def _ensure_temp_note_autosave_timer(self, tab) -> QTimer:
+        timer = getattr(tab, "_clarify_temp_note_autosave_timer", None)
+        if timer is None:
+            timer = QTimer(tab)
+            timer.setSingleShot(True)
+            timer.setInterval(self.TEMP_NOTE_AUTOSAVE_INTERVAL_MS)
+            timer.timeout.connect(lambda t=tab: self._autosave_temp_note(t))
+            setattr(tab, "_clarify_temp_note_autosave_timer", timer)
+        return timer
+
+    def _autosave_temp_note(self, tab) -> bool:
+        """Ignore queued timer delivery after conversion, deletion or close."""
+        if (
+            self._recovery_suspended
+            or self.tab_widget.indexOf(tab) < 0
+            or not getattr(tab, "_clarify_temp_note_id", "")
+        ):
             return False
+        return self._save_temp_note_tab(tab)
+
+    def _schedule_temp_note_autosave(self, tab) -> None:
+        if (
+            not self._recovery_suspended
+            and getattr(tab, "_clarify_temp_note_id", "")
+            and self.tab_widget.indexOf(tab) >= 0
+        ):
+            self._ensure_temp_note_autosave_timer(tab).start()
+
+    def _adopt_temp_note(self, tab, note) -> None:
+        timer = self._ensure_temp_note_autosave_timer(tab)
+        timer.stop()
+        if hasattr(tab, "auto_save_timer"):
+            tab.auto_save_timer.stop()
+        tab.file_path = None
+        setattr(tab, "_clarify_temp_note_id", note.note_id)
+        setattr(tab, "_clarify_temp_note_title", note.title)
+        setattr(tab, "_clarify_display_name", note.title)
+        setattr(tab, "_clarify_language_extension", note.extension)
+        setattr(tab, "_clarify_folder_root", "")
+        for attribute in (
+            "_clarify_folder_source_path",
+            "_clarify_recovery_source_path",
+            "_clarify_recovery_source_signature",
+        ):
+            if hasattr(tab, attribute):
+                delattr(tab, attribute)
+        if getattr(tab, "edit_only_mode", False):
+            tab.edit_only_mode = False
+            if hasattr(tab, "_update_visual_indicators"):
+                tab._update_visual_indicators()
+            if hasattr(tab, "_update_toolbar_visibility"):
+                tab._update_toolbar_visibility()
+        tab.is_modified = False
+        tab.editor.document().setModified(False)
+        self._clear_tab_disk_state(tab, refresh_watchers=False)
+        if self._discard_recovery_for_tab(tab) and hasattr(
+            tab, "_clarify_recovery_id"
+        ):
+            delattr(tab, "_clarify_recovery_id")
+        if hasattr(tab, "modified_changed"):
+            tab.modified_changed.emit(False)
+        self._refresh_external_file_watchers()
+        self._update_tab_title(tab)
+        self._persist_tab_order()
+        self._refresh_editor_menus()
+
+    def _save_temp_note_tab(self, tab, *, title: str | None = None) -> bool:
+        """Atomically save one bounded buffer while retaining note identity."""
+        if tab is None or self.tab_widget.indexOf(tab) < 0 or not hasattr(tab, "editor"):
+            return False
+        timer = getattr(tab, "_clarify_temp_note_autosave_timer", None)
+        if timer is not None:
+            timer.stop()
         if tab.editor.document().characterCount() - 1 > self.temp_note_store.max_note_bytes:
             self.lbl_status.setText(tr("editor.status_temp_note_too_large"))
+            return False
+        note_id = getattr(tab, "_clarify_temp_note_id", "") or uuid.uuid4().hex
+        note_title = title if title is not None else getattr(
+            tab, "_clarify_temp_note_title", ""
+        )
+        if not str(note_title).strip():
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        try:
+            note = self.temp_note_store.save(
+                note_id,
+                title=str(note_title),
+                content=tab.editor.toPlainText(),
+                extension=self._temp_note_extension(tab),
+            )
+        except (OSError, UnicodeError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        self._adopt_temp_note(tab, note)
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_saved").format(title=note.title)
+        )
+        return True
+
+    def _flush_temp_note_autosaves(self) -> bool:
+        """Flush every pending note before any Editor or application close path."""
+        success = True
+        for tab in self._all_tab_objects():
+            if not getattr(tab, "_clarify_temp_note_id", ""):
+                continue
+            timer = getattr(tab, "_clarify_temp_note_autosave_timer", None)
+            pending = bool(timer is not None and timer.isActive())
+            modified = bool(
+                getattr(tab, "is_modified", False)
+                or tab.editor.document().isModified()
+            )
+            if (pending or modified) and not self._save_temp_note_tab(tab):
+                success = False
+        return success
+
+    def _finalize_temp_note_conversion(self, tab) -> bool:
+        """Remove note storage only after Save As has written the normal file."""
+        note_id = getattr(tab, "_clarify_temp_note_id", "")
+        if not note_id:
+            return True
+        try:
+            self.temp_note_store.discard(note_id)
+        except (OSError, TemporaryNoteError):
+            tab.file_path = None
+            tab.is_modified = False
+            tab.editor.document().setModified(False)
+            if hasattr(tab, "auto_save_timer"):
+                tab.auto_save_timer.stop()
+            self._clear_tab_disk_state(tab)
+            self._update_tab_title(tab)
+            self._refresh_editor_menus()
+            self.lbl_status.setText(
+                tr("editor.status_temp_note_conversion_failure")
+            )
+            return False
+        timer = getattr(tab, "_clarify_temp_note_autosave_timer", None)
+        if timer is not None:
+            timer.stop()
+        for attribute in (
+            "_clarify_temp_note_id",
+            "_clarify_temp_note_title",
+            "_clarify_display_name",
+        ):
+            if hasattr(tab, attribute):
+                delattr(tab, attribute)
+        return True
+
+    def _save_current_as_temp_note(self, title: str | None = None) -> bool:
+        """Adopt the current buffer as a private, autosaved temporary note."""
+        tab = self.tab_widget.currentWidget()
+        if tab is None or not hasattr(tab, "editor"):
             return False
         if title is None:
             default_title = getattr(tab, "_clarify_temp_note_title", "") or tab.get_tab_title()
@@ -5789,27 +6092,7 @@ class EditorDock(BaseDock):
             )
             if not accepted:
                 return False
-        note_id = getattr(tab, "_clarify_temp_note_id", "") or uuid.uuid4().hex
-        display_name = getattr(tab, "_clarify_display_name", "") or tab.get_tab_title()
-        extension = os.path.splitext(display_name)[1] or os.path.splitext(
-            getattr(tab, "file_path", "") or ""
-        )[1] or ".txt"
-        try:
-            note = self.temp_note_store.save(
-                note_id,
-                title=title,
-                content=tab.editor.toPlainText(),
-                extension=extension,
-            )
-        except (OSError, UnicodeError, TemporaryNoteError):
-            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
-            return False
-        setattr(tab, "_clarify_temp_note_id", note.note_id)
-        setattr(tab, "_clarify_temp_note_title", note.title)
-        self.lbl_status.setText(
-            tr("editor.status_temp_note_saved").format(title=note.title)
-        )
-        return True
+        return self._save_temp_note_tab(tab, title=title)
 
     def _restore_temp_note(self, note_id: str):
         """Open a note as an unsaved buffer, never as a normal file."""
@@ -5822,14 +6105,12 @@ class EditorDock(BaseDock):
         except (OSError, TemporaryNoteError):
             self.lbl_status.setText(tr("editor.status_temp_note_failure"))
             return None
-        display_name = tr("editor.temp_note_display_name").format(title=note.title)
         tab = self.load_generated_content(
             note.content,
-            display_name,
+            note.title,
             extension=note.extension,
         )
-        setattr(tab, "_clarify_temp_note_id", note.note_id)
-        setattr(tab, "_clarify_temp_note_title", note.title)
+        self._adopt_temp_note(tab, note)
         self.lbl_status.setText(
             tr("editor.status_temp_note_restored").format(title=note.title)
         )
@@ -5859,8 +6140,72 @@ class EditorDock(BaseDock):
         for tab in self._all_tab_objects():
             if getattr(tab, "_clarify_temp_note_id", "") == note_id:
                 delattr(tab, "_clarify_temp_note_id")
+                if hasattr(tab, "_clarify_temp_note_title"):
+                    delattr(tab, "_clarify_temp_note_title")
+                timer = getattr(tab, "_clarify_temp_note_autosave_timer", None)
+                if timer is not None:
+                    timer.stop()
+                tab.is_modified = True
+                tab.editor.document().setModified(True)
+                self._recovery_timer.start()
+                if hasattr(tab, "modified_changed"):
+                    tab.modified_changed.emit(True)
+                self._update_tab_title(tab)
         self.lbl_status.setText(
             tr("editor.status_temp_note_deleted").format(title=note.title)
+        )
+        return True
+
+    def _rename_temp_note(self, note_id: str, title: str) -> bool:
+        tab = self._open_temp_note_tab(note_id)
+        if tab is not None:
+            return self._save_temp_note_tab(tab, title=title)
+        try:
+            note = self.temp_note_store.get(note_id)
+            renamed = self.temp_note_store.save(
+                note.note_id,
+                title=title,
+                content=note.content,
+                extension=note.extension,
+            )
+        except (OSError, UnicodeError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_saved").format(title=renamed.title)
+        )
+        return True
+
+    def _export_temp_note(self, note_id: str, file_path: str | None = None) -> bool:
+        tab = self._open_temp_note_tab(note_id)
+        if tab is not None and (
+            getattr(tab, "is_modified", False) or tab.editor.document().isModified()
+        ):
+            if not self._save_temp_note_tab(tab):
+                return False
+        try:
+            note = self.temp_note_store.get(note_id)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if file_path is None:
+            file_path, _selected_filter = QFileDialog.getSaveFileName(
+                self,
+                tr("editor.btn_export"),
+                f"{note.title}{note.extension}",
+                "All Files (*)",
+            )
+        if not file_path:
+            return False
+        try:
+            write_text_atomically(file_path, note.content)
+        except (OSError, UnicodeError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_exported").format(
+                name=os.path.basename(file_path)
+            )
         )
         return True
 
@@ -5877,36 +6222,30 @@ class EditorDock(BaseDock):
                 tr("editor.temp_notes_empty"),
             )
             return
-        labels = [
-            f"{note.title} - {note.updated_at[:10]} - {note.note_id[:8]}"
-            for note in notes
-        ]
-        selected, accepted = QInputDialog.getItem(
-            self,
-            tr("editor.temp_notes_title"),
-            tr("editor.temp_notes_prompt"),
-            labels,
-            0,
-            False,
-        )
-        if not accepted:
+        dialog = _TemporaryNotesDialog(notes, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
-        note = notes[labels.index(selected)]
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle(tr("editor.temp_notes_title"))
-        dialog.setText(note.title)
-        restore_button = dialog.addButton(
-            tr("editor.temp_note_restore"), QMessageBox.AcceptRole
-        )
-        delete_button = dialog.addButton(
-            tr("editor.temp_note_delete"), QMessageBox.DestructiveRole
-        )
-        dialog.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
-        dialog.exec()
-        if dialog.clickedButton() == restore_button:
-            self._restore_temp_note(note.note_id)
-        elif dialog.clickedButton() == delete_button:
-            self._delete_temp_note(note.note_id)
+        note_id = dialog.selected_note_id
+        if dialog.requested_action == "restore":
+            self._restore_temp_note(note_id)
+        elif dialog.requested_action == "delete":
+            self._delete_temp_note(note_id)
+        elif dialog.requested_action == "rename":
+            try:
+                note = self.temp_note_store.get(note_id)
+            except (OSError, TemporaryNoteError):
+                self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+                return
+            title, accepted = QInputDialog.getText(
+                self,
+                tr("editor.temp_note_title"),
+                tr("editor.temp_note_title_prompt"),
+                text=note.title,
+            )
+            if accepted:
+                self._rename_temp_note(note_id, title)
+        elif dialog.requested_action == "export":
+            self._export_temp_note(note_id)
 
     def _set_temp_note_retention(self, days: int | None = None) -> bool:
         """Set optional updated-at retention; zero always means manual deletion."""

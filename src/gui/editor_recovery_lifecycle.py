@@ -1,5 +1,7 @@
 """Qt-owned lifecycle hooks for the Editor's existing recovery store."""
 
+# pylint: disable=no-name-in-module  # PySide and shiboken expose dynamic APIs.
+
 import weakref
 
 from PySide6.QtCore import QEvent, QObject, Slot
@@ -53,7 +55,9 @@ class EditorRecoveryLifecycle(QObject):
         elif kind == QEvent.Type.DeferredDelete:
             dock._flush_recovery_on_close(final=True)
         elif kind == QEvent.Type.Close and watched is not dock:
-            if not dock._checkpoint_unsaved_tabs():
+            notes_saved = dock._flush_temp_note_autosaves()
+            recovery_saved = dock._checkpoint_unsaved_tabs()
+            if not (notes_saved and recovery_saved):
                 event.ignore()
                 return True
         elif kind == QEvent.Type.Hide and watched is not dock and watched.isWindow():

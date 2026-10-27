@@ -40,8 +40,9 @@ def test_save_note_does_not_settle_dirty_file_or_modify_original(qtbot, tmp_path
     tab.editor.setPlainText("note version")
 
     assert dock._save_current_as_temp_note("Reminder")
-    assert tab.is_modified
-    assert tab.file_path == str(source)
+    assert not tab.is_modified
+    assert tab.file_path is None
+    assert tab.get_tab_title() == "Reminder"
     assert source.read_text(encoding="utf-8") == "original"
     assert dock.temp_note_store.get(tab._clarify_temp_note_id).content == "note version"
 
@@ -52,7 +53,8 @@ def test_restore_reuses_open_note_and_delete_preserves_buffer(qtbot, tmp_path, m
 
     tab = dock._restore_temp_note(note.note_id)
     assert tab.file_path is None
-    assert tab.is_modified
+    assert not tab.is_modified
+    assert tab.get_tab_title() == "Reminder"
     assert tab.editor.toPlainText() == "remember"
     assert dock._restore_temp_note(note.note_id) is tab
     assert dock.tab_widget.count() == 1
