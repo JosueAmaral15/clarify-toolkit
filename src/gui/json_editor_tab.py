@@ -88,6 +88,7 @@ class JsonEditorTab(QWidget):
 
         self._setup_ui()
         self._connect_signals()
+        self._update_mode_accessibility()
 
         if file_path:
             self.load_file(file_path)
@@ -216,6 +217,16 @@ class JsonEditorTab(QWidget):
         self.btn_collapse.clicked.connect(self.tree.collapseAll)
         self.btn_expand.clicked.connect(self.tree.expandAll)
         self.schema_key_completer.activated[str].connect(self._insert_schema_completion)
+
+    def _update_mode_accessibility(self):
+        """Expose edit-only state without replacing theme or validation styles."""
+        self.editor.setProperty("clarifyEditOnly", self.edit_only_mode)
+        description = (
+            tr("editor_tab.edit_only_title")
+            if self.edit_only_mode
+            else tooltip_tr("json_editor.tooltip_editor")
+        )
+        self.editor.setAccessibleDescription(description)
 
     def eventFilter(self, watched, event):
         """Handle editor-level shortcuts that QTextEdit does not expose directly."""
@@ -1005,4 +1016,5 @@ class JsonEditorTab(QWidget):
         # JsonEditorTab inherits EditorTab functionality but can override
         # For now, just emit signal - EditorDock will handle
         self.edit_only_mode = not self.edit_only_mode
+        self._update_mode_accessibility()
         self.edit_only_changed.emit(self.edit_only_mode)

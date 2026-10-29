@@ -50,6 +50,7 @@ TEST_MODULES = {
     "editor-recovery-lifecycle": "tests/gui/test_editor_recovery_lifecycle.py",
     "editor-recovery-reopen": "tests/gui/test_editor_recovery_reopen.py",
     "editor-recovery-store": "tests/test_editor_recovery.py",
+    "editor-readonly-theme": "tests/gui/test_editor_readonly_theme.py",
     "editor-redo-shortcuts": "tests/gui/test_editor_redo_shortcuts.py",
     "editor-recent-interactions": "tests/gui/test_editor_recent_interactions.py",
     "editor-rename-imports": "tests/gui/test_editor_rename_imports.py",

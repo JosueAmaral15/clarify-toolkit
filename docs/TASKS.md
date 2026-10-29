@@ -747,12 +747,20 @@ janela, ownership, sessao, provider, RAG e tool calls.
   restaurar snapshots legados. Titulos explicitos, notas, arquivos, IDs de
   recovery e historico Find permanecem independentes. Evidencia em
   `docs/reports/CLARIFY_EDITOR_UNTITLED_DENSE_NAMES_2026_10_27.md`.
-- [ ] **CE-READONLY-THEME-01: preservar tema ao alternar somente leitura.**
+- [x] **CE-READONLY-THEME-01: preservar tema ao alternar somente leitura.**
   Reproduzir a guia que fica branca ao ativar read-only e remover paleta/QSS
   fixos que sobrescrevam o tema atual. O estado somente leitura deve mudar apenas
   editabilidade e seu indicador acessivel, mantendo background, foreground,
   selecao, cursor, line numbers, Find highlights e syntax highlighting coerentes
   nos temas System/Light/Dark e em troca runtime, inclusive em splits.
+  **Entregue em 29/10/2026:** a reproducao isolada confirmou que o modo
+  Edit-Only do editor de texto aplicava fundo `#FFF8DC` e texto preto por QSS,
+  sobrescrevendo o tema escuro. O indicador agora conserva apenas a borda,
+  deixa paleta, selecao e cursor sob controle do tema e expoe estado acessivel
+  traduzivel em texto e JSON. O modo Edit-Only continua sendo um sandbox
+  editavel; o read-only real do Qt continua somente leitura e ambos acompanham
+  trocas Light/Dark, inclusive em splits. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_READONLY_THEME_2026_10_29.md`.
 - [ ] **CE-FIND-HIGHLIGHT-ALIGNMENT-01: alinhar marcacoes de todos os matches.**
   Reproduzir a sobra/falta visual ao navegar repetidamente com Find Next usando
   `self.node_requested` no trecho

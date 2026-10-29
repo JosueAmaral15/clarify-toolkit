@@ -3499,6 +3499,13 @@ class EditorDock(BaseDock):
         self.menu_recent_files.setTitle(tr("editor.menu_recent_files"))
         self.menu_recent_folders.setTitle(tr("editor.menu_recent_folders"))
         self._apply_tooltips()
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            refresh_accessibility = getattr(
+                tab, "_update_mode_accessibility", None
+            )
+            if callable(refresh_accessibility):
+                refresh_accessibility()
         self._retranslate_recovery_offer()
         self._retranslate_status_info(language)
 

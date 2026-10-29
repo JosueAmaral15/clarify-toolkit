@@ -85,6 +85,8 @@ class TestEditorTabEditOnlyMode:
         stylesheet = tab.editor.styleSheet()
         assert "#FFD700" in stylesheet  # Golden border color
         assert "border" in stylesheet.lower()
+        assert "background" not in stylesheet.lower()
+        assert "color:" not in stylesheet.lower()
         
         tab.deleteLater()
     

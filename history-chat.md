@@ -4275,6 +4275,24 @@ Plano imediato:
   committed and pushed, using one-shot authorization and no retry for an
   uncertain transport state.
 
+## 2026-10-29 - CE-READONLY-THEME-01 started
+
+- Work starts from published checkpoint `aab693f` and feature commit `17a2b83`
+  on fresh branch `COM-ccf0b7a8-dad8-4f6e-874d-66e9bc4cb690`. The subsequent
+  continuation journal `fc48f0c` was verified and deliberately excluded.
+- AI Presence Monitor 0.10.7 reports the exact Clarify worker active under
+  Protocol2. Schema integrity, five hooks, native queue, services and tray are
+  healthy; persistent task automation is disabled and no continuation will be
+  dispatched after this user-requested final stage.
+- The stage is limited to reproducing and correcting theme loss when text or
+  JSON editor views enter read-only/edit-only state, including runtime themes
+  and shared splits. Find alignment, note toolbar, F2, File Explorer,
+  APP-THREAD, multi-window and legacy tasks remain excluded.
+- Tests use temporary data and serial isolated Qt processes with temporary
+  HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and pytest timeout
+  20 seconds. `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
 ## 2026-10-27 - Editor tab, Find and multi-window requirements reconciled
 
 - The user clarified that `Untitled-N` is a dense display ordinal for currently
@@ -4494,6 +4512,26 @@ Plano imediato:
   settlement. InsertPanel file writes and all unrelated backlog remain excluded.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-10-29 - CE-READONLY-THEME-01 completed
+
+- The isolated reproduction confirmed that text Edit-Only mode forced
+  `#FFF8DC` background and black text over the active Dark theme. It failed at
+  the exact fixed-color assertion with 195.1 MiB peak RSS and no native crash.
+- Edit-Only now retains only its border indicator. Text and JSON editors leave
+  background, foreground, selection and cursor colors to the application
+  theme, expose translated accessible mode state and retain their existing
+  editable-sandbox semantics. Actual Qt read-only views remain non-editable.
+- Guarded serial validation passed 186 distinct tests across 12 isolated
+  modules, peaking at 255.9 MiB. No native crash, timeout or guard abort
+  occurred; compilation, focused Pylint-E and diff checks passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_READONLY_THEME_2026_10_29.md`; 79 canonical
+  tasks remain open after this delivery.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Per the user's explicit instruction, no AI Presence continuation or other
+  automation was dispatched after this stage.
 
 ## 2026-10-16 - Session start - APP-THREAD-01 Stage 11
 

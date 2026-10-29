@@ -111,6 +111,17 @@ class EditorTab(QWidget):
         self.btn_copy.setToolTip(tooltip_tr("editor.btn_copy"))
         self.btn_export.setToolTip(tooltip_tr("editor.btn_export"))
         self.btn_enable_saving.setToolTip(tooltip_tr("editor.btn_enable_saving"))
+        self._update_mode_accessibility()
+
+    def _update_mode_accessibility(self):
+        """Expose edit-only state without relying on its visual border."""
+        self.editor.setProperty("clarifyEditOnly", self.edit_only_mode)
+        description = (
+            tr("editor_tab.edit_only_title")
+            if self.edit_only_mode
+            else tooltip_tr("editor.editor")
+        )
+        self.editor.setAccessibleDescription(description)
 
     def _setup_toolbar(self):
         """Setup toolbar with edit-only mode buttons."""
@@ -218,13 +229,12 @@ class EditorTab(QWidget):
 
     def _update_visual_indicators(self):
         """Update visual indicators for edit-only mode."""
+        self._update_mode_accessibility()
         if self.edit_only_mode:
-            # Golden border indicator
+            # The application palette owns background, text and selection colors.
             self.editor.setStyleSheet("""
                 QTextEdit {
                     border: 3px solid #FFD700;
-                    background-color: #FFF8DC;
-                    color: #000000;
                 }
             """)
         else:
