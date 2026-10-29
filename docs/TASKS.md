@@ -291,6 +291,12 @@ checkboxes. O mapeamento integral e as decisoes ficam em
 - [ ] **CLOCK-MULTI-INSTANCE-01: alarmes, cronometros e timers multiplos.** Trocar
   a pagina Clock por Alarms e permitir colecoes limitadas de alarmes, stopwatches
   e timers independentes, com nome, add/remove/start/pause/reset e notificacao.
+  Cada timer em execucao deve oferecer campos e um comando explicito para
+  acrescentar um ou mais minutos sem reiniciar nem perder o tempo ja decorrido.
+  Controles `+` distintos devem criar outro timer, outro cronometro ou outro
+  alarme, sem reutilizar indevidamente o estado da instancia atual. A pagina
+  renomeada para `Alarms` deve reunir e distinguir visual e semanticamente as
+  tres categorias, preservando operacoes independentes e acessibilidade.
   Definir persistencia de alarmes, timezone/DST, repeticao, suspensao do sistema,
   feedback sonoro e cleanup; listas devem escalar sem criar uma thread por item.
 - [ ] **APP-RAG-CHATBOT-01: chatbot integrado com RAG do projeto.** Oferecer uma
@@ -686,8 +692,8 @@ itens ja entregues permanecem fechados e nao receberam IDs duplicados.
 
 **Sequencia reconciliada em 27/10/2026:** depois de `CE-MENU-SHORTCUTS-01`,
 corrigir primeiro `CE-OPEN-CLEAN-STATE-REGRESSION-01`,
-`CE-UNTITLED-DENSE-NAMES-01`, `CE-READONLY-THEME-01` e
-`CE-FIND-HIGHLIGHT-ALIGNMENT-01`; em seguida entregar
+`CE-UNTITLED-DENSE-NAMES-01`, `CE-READONLY-THEME-01`,
+`CE-FIND-HIGHLIGHT-ALIGNMENT-01` e `CE-FIND-SCOPE-COMBINATION-01`; em seguida entregar
 `CE-TEMP-NOTE-TOOLBAR-STATE-01`, `CE-EXPLORER-RENAME-F2-01`,
 `CE-SELECTION-OCCURRENCES-01` e `CE-LINE-VISIBILITY-FILTER-01` como etapas
 locais limitadas. Mudancas arquiteturais seguem depois, na ordem
@@ -770,6 +776,19 @@ janela, ownership, sessao, provider, RAG e tool calls.
   limites de linha. Preservar todos os matches marcados enquanto apenas o atual
   muda de estilo; cobrir Unicode, CRLF, zoom, wrap, splits, Previous, navegacao
   circular e edicao durante painel aberto com limites de quantidade/tempo.
+- [ ] **CE-FIND-SCOPE-COMBINATION-01: combinar escopos lexicos no Find.**
+  Substituir o grupo mutuamente exclusivo atual por dois radios: `All Text` e
+  `Selected lexical scopes`. Quando o segundo estiver ativo, mostrar checkboxes
+  independentes para `Only Strings`, `Only Variables` e `Only Comments`,
+  permitindo qualquer combinacao nao vazia entre as tres categorias em vez de
+  trata-las como escopos disjuntos. Desabilitar ou explicar uma selecao lexical
+  vazia, preservar estado por sessao/buffer conforme o contrato existente e
+  definir explicitamente uniao, deduplicacao e ordem dos spans sobrepostos.
+  Integrar Case Sensitive, Whole Word, Regex, inversao por Line/Token/Interval,
+  limites de linha, contagem `n de m`, Replace e runtime translation sem criar
+  rotas paralelas de busca. Cobrir linguagens suportadas, Plain Text, parser
+  indisponivel, comentarios dentro de strings, strings interpoladas, splits e
+  presets legados com migracao deterministica para o novo modelo.
 - [ ] **CE-TEMP-NOTE-TOOLBAR-STATE-01: acesso rapido e estado de notas.**
   Acrescentar depois de Replace um botao iconografico que reutilize a QAction
   `Save as Temporary Note`. O estado sem notas e com notas existentes deve usar

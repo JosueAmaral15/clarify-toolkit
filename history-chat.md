@@ -4544,6 +4544,27 @@ Plano imediato:
 - The user requested that this session end after the current stage. No next
   task was started and no AI Presence continuation was requested or emitted.
 
+## 2026-10-29 - Follow-up requirements reconciled in TASKS.md
+
+- This documentation-only session was limited to reconciling the user's latest
+  Editor, tool-window and Clock requirements. No product code, test behavior,
+  provider, dependency or automation state was changed.
+- Dense Untitled names, read-only theme preservation and clean file opening are
+  already delivered under their existing canonical IDs. Find highlight
+  alignment, temporary-note toolbar state, tool placement, application/Editor
+  multi-window behavior and multiple tool instances were already open and were
+  not duplicated.
+- A new `CE-FIND-SCOPE-COMBINATION-01` task defines `All Text` versus a selected
+  lexical-scope mode with combinable Strings, Variables and Comments checkboxes.
+  `CLOCK-MULTI-INSTANCE-01` now explicitly includes adding minutes to a running
+  timer, `+` controls for independent timers/stopwatches/alarms and the Alarms
+  page organization.
+- The canonical backlog now contains 80 open tasks. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Per the user's instruction, the session ends after this documentation update;
+  no implementation task or AI Presence continuation was started.
+
 ## 2026-10-16 - Session start - APP-THREAD-01 Stage 11
 
 - Native continuation resumed from published Stage 10 checkpoint `62a48c7` and
