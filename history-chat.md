@@ -4565,6 +4565,29 @@ Plano imediato:
 - Per the user's instruction, the session ends after this documentation update;
   no implementation task or AI Presence continuation was started.
 
+## 2026-10-30 - Settings, recovery, notes and File Searcher requirements reconciled
+
+- This documentation-only session added seven bounded canonical tasks and did
+  not change product code, tests, providers, dependencies or automation state.
+- Recovery is prioritized first: new profiles retain recoverable unsaved content
+  for 30 days by default, while existing user choices, quotas, private atomic
+  storage and honest failure reporting remain protected.
+- Appearance defaults and a safe settings reset are separate tasks. The Dark
+  theme and the visible Window Transparency value of 96% apply only to profiles
+  without an existing preference; reset requires preview, backup and exclusion
+  of user documents, notes, recovery, credentials and plugins.
+- Manage Temporary Notes gains translated Close, bounded Open All, confirmed
+  Delete All, ordered up/down controls and combined-or-separate Export All.
+- File Searcher work is ordered as visual Search/Replace separation, an explicit
+  Replace preflight dialog for optional reuse of compatible prior results, and
+  only then the public File Explorer to File Searcher rename with compatibility
+  aliases. Reuse remains unchecked by default and is never silently enabled.
+- The canonical backlog now contains 87 open tasks. `example.py` remains
+  untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- No implementation task or AI Presence continuation was started; this session
+  ends after the documentation checkpoint is published.
+
 ## 2026-10-16 - Session start - APP-THREAD-01 Stage 11
 
 - Native continuation resumed from published Stage 10 checkpoint `62a48c7` and

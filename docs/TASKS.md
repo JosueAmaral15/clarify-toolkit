@@ -704,6 +704,15 @@ somente entao ampliar `CE-VOICE-PROGRAMMING-01` para conversa por voz. Essa
 ordem trata regressões antes de recursos e evita implementacoes independentes de
 janela, ownership, sessao, provider, RAG e tool calls.
 
+**Sequencia reconciliada em 30/10/2026:** tratar primeiro a preservacao de dados
+em `CE-RECOVERY-RETENTION-30D-01`; depois consolidar defaults e reversibilidade
+em `APP-DEFAULT-APPEARANCE-01` e `APP-SETTINGS-RESET-01`; completar o gerenciador
+de notas em `CE-TEMP-NOTE-MANAGER-BULK-01`; por fim separar busca/substituicao e
+confirmar o universo de Replace em `FE-SEARCH-REPLACE-SECTIONS-01` e
+`FE-REPLACE-REUSE-CONFIRM-01`. A renomeacao publica
+`FE-RENAME-FILE-SEARCHER-01` vem depois dos contratos funcionais para evitar
+churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
+
 #### MUST - Correcao E Contratos Verificaveis
 
 - [x] **CE-MENU-SHORTCUTS-01: atalhos para todos os comandos aplicaveis.**
@@ -798,6 +807,26 @@ janela, ownership, sessao, provider, RAG e tool calls.
   conteudo sensivel. Revalidar o contrato ja entregue: apos salvar, a guia assume
   imediatamente o titulo da nota e deixa de aparecer como `Untitled`, mantendo
   autosave e identidade temporaria.
+- [ ] **CE-RECOVERY-RETENTION-30D-01: usar 30 dias como retencao padrao.**
+  Alterar o default de `Recover Unsaved...` de 24 horas para 30 dias em perfis
+  novos, mantendo o intervalo configuravel e sem sobrescrever silenciosamente a
+  escolha de usuarios existentes. Auditar por que a mensagem `No recent unsaved
+  documents are available.` aparece: ela deve distinguir ausencia real de
+  snapshots, expiracao, quota, corrupcao, IO e snapshots ja representados pela
+  sessao atual. Conteudo dirty e Untitled deve ser persistido em armazenamento
+  secundario privado e atomico pelo periodo configurado, sem escrever nos
+  originais; preservar limites por documento/quantidade/total, limpeza previsivel,
+  restore/discard explicitos e relatorio honesto quando algo nao puder ser salvo.
+- [ ] **CE-TEMP-NOTE-MANAGER-BULK-01: traduzir e ampliar Manage Temporary Notes.**
+  Traduzir `Close` e todos os novos controles nos catalogos suportados. Adicionar
+  `Delete All` com contagem, preview e confirmacao destrutiva; `Open All` com
+  limites e relatorio parcial; e `Export All`, permitindo escolher entre um unico
+  arquivo estruturado ou arquivos separados, sem apagar notas apos exportar.
+  Adicionar controles acessiveis de mover para cima e para baixo (`^`/`v` ou
+  icones equivalentes) para ordenar o item selecionado, persistindo a ordem sem
+  usar o titulo como identidade. Desabilitar acoes quando inaplicaveis e cobrir
+  lista vazia, selecao, quota, colisao de nomes, falha atomica, cancelamento,
+  runtime translation e navegacao por teclado.
 - [ ] **CE-EXPLORER-RENAME-F2-01: renomear item do Explorer com F2.** Quando um
   unico arquivo ou diretorio valido estiver selecionado no Explorer do Clarify
   Editor, `F2` deve abrir o mesmo fluxo seguro de rename usado pelo menu de
@@ -858,6 +887,49 @@ janela, ownership, sessao, provider, RAG e tool calls.
   cancelamento/progresso aplicavel em uma barra de acoes fixa na parte inferior,
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
+- [ ] **APP-DEFAULT-APPEARANCE-01: tema escuro e transparencia 96 por padrao.**
+  Em perfil novo, selecionar Dark como tema inicial e mostrar `96%` em
+  `Settings > Window Transparency`. Auditar a semantica atual do controle para
+  que o valor exibido e o efeito sejam coerentes: se a API interna usa opacidade,
+  converter explicitamente sem tornar a janela quase invisivel. Aplicar o default
+  somente quando nao existe preferencia do usuario; preservar migracao, runtime
+  theme, dialogs, janelas destacadas e acessibilidade em System/Light/Dark.
+- [ ] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
+  Oferecer em Settings uma acao traduzida para redefinir configuracoes, com
+  preview das categorias afetadas, confirmacao e escolha entre reset global ou
+  por secao quando praticavel. Fazer backup atomico antes da alteracao, explicar
+  o que exige reinicio e aplicar imediatamente apenas valores hot-reload seguros.
+  Nao apagar documentos, notas, recovery, historico operacional, plugins,
+  credenciais ou dados do usuario sem uma opcao separada e confirmacao especifica.
+  O reset deve restaurar inclusive os defaults documentados de tema Dark e
+  Window Transparency 96%, sem deixar QSettings/config YAML divergentes.
+- [ ] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
+  Organizar o File Explorer/File Searcher em duas secoes ou sessoes claramente
+  distintas: uma para localizar e filtrar arquivos e outra para configurar e
+  executar substituicoes. Manter integracao e compartilhamento controlado de
+  escopo/resultados, mas nao misturar controles destrutivos com os campos de
+  busca. A secao Replace deve ser recolhivel ou ativada explicitamente, mostrar
+  preview/contagens e permanecer desabilitada sem universo valido. Preservar
+  Compact/Advanced, ambos os result views, presets, cache, pause/cancel/close,
+  tema, traducao e alturas reduzidas sem duplicar widgets ou estado divergente.
+- [ ] **FE-REPLACE-REUSE-CONFIRM-01: confirmar universo antes de Replace With.**
+  Ao acionar `Replace With`, abrir um dialogo de confirmacao que informe consulta,
+  diretorio/escopo, quantidade de arquivos/matches e se `Reuse Previous Results`
+  sera usado como universo para a busca de preflight exibida a direita. A opcao
+  continua desmarcada por padrao e nunca pode ser ativada silenciosamente; o
+  dialogo deve permitir habilita-la explicitamente quando diretorio, identidade
+  de cache e resultados anteriores forem compativeis. Se recusada ou invalida,
+  executar descoberta completa no escopo atual. Nenhuma escrita ocorre antes do
+  preview e da confirmacao final; invalidacao, arquivos alterados, resultados
+  vazios/parciais, cancelamento e erros devem impedir substituicao obsoleta.
+- [ ] **FE-RENAME-FILE-SEARCHER-01: renomear File Explorer para File Searcher.**
+  Alterar o nome publico da ferramenta em menus, aba, atalhos, tooltips,
+  acessibilidade, ajuda F1, presets, layouts, historico e todos os catalogos i18n.
+  Preservar IDs internos, chaves persistidas, APIs, sessoes e aliases necessarios
+  para compatibilidade; nao fazer renomeacao textual cega de classes/modulos nem
+  quebrar o Explorer lateral do Clarify Editor, que continua sendo um navegador
+  de arquivos distinto. Documentar migracao e cobrir restauracao de workspace e
+  configuracoes antigas sem criar duas ferramentas publicas equivalentes.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
   `docs/`.** Os 866 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.
