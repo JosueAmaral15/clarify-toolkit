@@ -1098,7 +1098,9 @@ if _PYSIDE:
         def _apply_tab_close_button_style(self):
             """Apply theme-appropriate styling to tab close buttons (v2.9.40)."""
             # Get current theme
-            current_theme = self.settings.get("theme", "system")
+            from .appearance_defaults import DEFAULT_THEME
+
+            current_theme = self.settings.get("theme", DEFAULT_THEME)
 
             # Define close button colors based on theme
             if current_theme == "dark":
@@ -1241,6 +1243,8 @@ if _PYSIDE:
             else:
                 mode = "dark"
             apply_theme(QApplication.instance(), mode)
+            self.settings.set("theme", mode)
+            self._apply_tab_close_button_style()
             # persist
             cfg = load_prefs()
             if not cfg.has_section("THEME"):

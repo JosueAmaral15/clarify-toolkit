@@ -20,7 +20,16 @@ Version: v2.9.114
 # pylint: disable=broad-exception-caught  # GUI robustness
 
 from __future__ import annotations
+from configparser import ConfigParser
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+from ..appearance_defaults import (
+    DEFAULT_THEME,
+    DEFAULT_WINDOW_OPACITY_PERCENT,
+    normalize_opacity_percent,
+    opacity_percent_to_qt,
+)
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QCloseEvent
@@ -42,7 +51,7 @@ class WindowSettings:
         from PySide6.QtWidgets import QApplication
 
         # Apply saved theme
-        theme_mode = main_window.settings.get("theme", "system")
+        theme_mode = main_window.settings.get("theme", DEFAULT_THEME)
         if theme_mode == "light":
             main_window.act_theme_light.setChecked(True)
             ThemeManager.apply_theme(QApplication.instance(), "light")
@@ -54,60 +63,70 @@ class WindowSettings:
             ThemeManager.apply_theme(QApplication.instance(), "system")
 
         # Apply saved transparency (Task #18 - v2.9.9)
-        saved_opacity = int(main_window.settings.get("window_opacity", 100))
-        opacity = saved_opacity / 100.0
-        main_window.setWindowOpacity(opacity)
+        saved_opacity = normalize_opacity_percent(
+            main_window.settings.get("window_opacity", DEFAULT_WINDOW_OPACITY_PERCENT)
+        )
+        WindowSettings.apply_window_opacity_percent(main_window, saved_opacity)
+        restyle_tabs = getattr(main_window, "_apply_tab_close_button_style", None)
+        if callable(restyle_tabs):
+            restyle_tabs()
 
-        # Apply to all existing docks
+    @staticmethod
+    def apply_window_opacity_percent(main_window, opacity_percent: int) -> None:
+        """Apply displayed opacity percent to the main and existing tool windows."""
+        opacity = opacity_percent_to_qt(opacity_percent)
+        main_window.setWindowOpacity(opacity)
         WindowSettings._apply_opacity_to_docks(main_window, opacity)
 
     @staticmethod
     def _apply_opacity_to_docks(main_window, opacity: float) -> None:
-        """Apply opacity to all existing docks."""
+        """Apply opacity to all existing docks and detached tool hosts."""
+        from PySide6.QtWidgets import QDockWidget
+
         dock_names = [
             'dock_translate', 'dock_rewriter', 'dock_text_extractor',
             'dock_placeholder_replacer', 'dock_ai_processor',
             'dock_json_search', 'dock_case_converter', 'dock_history'
         ]
+        windows = list(main_window.findChildren(QDockWidget))
         for dock_name in dock_names:
-            if hasattr(main_window, dock_name):
-                getattr(main_window, dock_name).setWindowOpacity(opacity)
+            dock = getattr(main_window, dock_name, None)
+            if dock is not None and dock not in windows:
+                windows.append(dock)
+        manager = getattr(main_window, "tool_window_manager", None)
+        if manager is not None:
+            windows.extend(manager.detached_windows())
+        for window in windows:
+            window.setWindowOpacity(opacity)
 
     @staticmethod
     def restore_prefs(main_window) -> None:
         """
-        Restore preferences (theme) from config file.
+        Migrate a legacy theme only when JSON settings have no explicit choice.
 
         Args:
             main_window: MainWindow instance
         """
-        from ..theme_manager import ThemeManager
-        from PySide6.QtWidgets import QApplication
+        settings = main_window.settings
+        has_saved_value = getattr(settings, "has_saved_value", None)
+        if callable(has_saved_value) and has_saved_value("theme"):
+            return
 
-        # Note: load_prefs is now in translators.json_translate_helpers
-        # This is a simplified version that loads theme only
-        try:
-            from configparser import ConfigParser
-            from pathlib import Path
-
-            cfg = ConfigParser()
-            config_path = Path.home() / ".clarify" / "preferences.ini"
-            if config_path.exists():
-                cfg.read(config_path)
-                mode = cfg.get("THEME", "mode", fallback="system")
-            else:
-                mode = "system"
-        except Exception:
-            mode = "system"
-
-        # Apply theme
-        if mode == "light":
-            main_window.act_theme_light.setChecked(True)
-        elif mode == "dark":
-            main_window.act_theme_dark.setChecked(True)
-        else:
-            main_window.act_theme_system.setChecked(True)
-        ThemeManager.apply_theme(QApplication.instance(), mode)
+        for config_path in (
+            Path.home() / ".config" / "clarify.conf",
+            Path.home() / ".clarify" / "preferences.ini",
+        ):
+            if not config_path.exists():
+                continue
+            try:
+                cfg = ConfigParser()
+                cfg.read(config_path, encoding="utf-8")
+                mode = cfg.get("THEME", "mode", fallback="").strip().lower()
+            except (OSError, ValueError):
+                continue
+            if mode in {"system", "light", "dark"}:
+                settings.set("theme", mode)
+                return
 
     @staticmethod
     def save_geometry(main_window) -> None:

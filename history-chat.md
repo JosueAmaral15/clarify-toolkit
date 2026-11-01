@@ -6222,3 +6222,39 @@ Plano imediato:
   is in `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_2026_11_01.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - APP-DEFAULT-APPEARANCE-01 started
+
+- Work starts from published checkpoint `ce584d1` on fresh branch
+  `COM-be0ccc8f-0b7d-4647-9aa9-c0b1ef3b722c`, limited to new-profile theme
+  and window-opacity defaults. Existing user choices remain authoritative.
+- AI Presence Monitor 0.10.7 reports the exact Clarify Protocol2 worker active.
+  Task automation and the exact-session prompt rule are enabled; GUI and remote
+  transports remain disabled.
+- The initial audit reproduced `system` and 100% opacity defaults. The displayed
+  96% requirement will be mapped explicitly to Qt opacity `0.96`, avoiding the
+  unsafe interpretation of 96% transparency as an almost invisible window.
+- Validation remains serial and isolated with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - APP-DEFAULT-APPEARANCE-01 completed
+
+- New profiles now start in Dark with displayed window opacity 96%, converted
+  explicitly to Qt opacity `0.96`. Existing JSON preferences remain
+  authoritative, and legacy theme migration runs only when no JSON theme was
+  stored.
+- Runtime theme choices persist in the active settings store. Existing and new
+  detached tool windows follow opacity updates, while the transparency dialog
+  exposes the opacity/transparency relationship and accessible slider metadata.
+- Serial guarded validation passed 36 focused tests and one complete isolated
+  MainWindow lifecycle cycle. Peak tree RSS was 208.5 MiB; no native crash,
+  timeout or guard abort occurred. Compilation, 9 AST parses, 7 JSON parses,
+  focused Pylint-E and `git diff --check` passed.
+- Evidence is in
+  `docs/reports/CLARIFY_APP_DEFAULT_APPEARANCE_2026_11_01.md`. There are 85
+  canonical open task markers after this stage; `APP-SETTINGS-RESET-01` remains
+  open and was not implemented.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

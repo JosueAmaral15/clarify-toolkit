@@ -894,7 +894,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   cancelamento/progresso aplicavel em uma barra de acoes fixa na parte inferior,
   fora da area rolavel, visivel em Compact/Advanced, tema, traducao e alturas
   reduzidas sem sobrepor conteudo ou alterar o tamanho do workspace.
-- [ ] **APP-DEFAULT-APPEARANCE-01: tema escuro e transparencia 96 por padrao.**
+- [x] **APP-DEFAULT-APPEARANCE-01: tema escuro e transparencia 96 por padrao.**
   Em perfil novo, selecionar Dark como tema inicial e mostrar `96%` em
   `Settings > Window Transparency`. Auditar a semantica atual do controle para
   que o valor exibido e o efeito sejam coerentes: se a API interna usa opacidade,

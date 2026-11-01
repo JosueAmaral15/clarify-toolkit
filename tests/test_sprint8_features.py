@@ -32,7 +32,8 @@ def test_settings_manager():
     try:
         # Test initialization
         settings = SettingsManager(temp_config)
-        assert settings.get("theme") == "system", "Default theme should be 'system'"
+        assert settings.get("theme") == "dark", "Default theme should be 'dark'"
+        assert settings.get("window_opacity") == 96, "Default window opacity should be 96%"
         print("  ✓ Settings initialized with defaults")
         
         # Test set/get
@@ -71,7 +72,7 @@ def test_settings_manager():
         
         # Test reset to defaults
         settings.reset_to_defaults()
-        assert settings.get("theme") == "system", "Should reset to default"
+        assert settings.get("theme") == "dark", "Should reset to default"
         assert settings.get("auto_save") == True, "Should reset to default"
         print("  ✓ Reset to defaults working")
         

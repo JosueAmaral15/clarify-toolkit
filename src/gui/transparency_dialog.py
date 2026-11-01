@@ -19,6 +19,11 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n.translator import tr
+from src.appearance_defaults import (
+    DEFAULT_WINDOW_OPACITY_PERCENT,
+    normalize_opacity_percent,
+)
+from src.gui.window_settings import WindowSettings
 
 
 class TransparencyDialog(QDialog):
@@ -48,7 +53,7 @@ class TransparencyDialog(QDialog):
 
         # Info label
         info_label = QLabel(
-            "Adjust the transparency level for all windows and docks.\n"
+            "Window visibility uses opacity.\n"
             "0% = Fully transparent, 100% = Fully opaque"
         )
         info_label.setWordWrap(True)
@@ -67,6 +72,10 @@ class TransparencyDialog(QDialog):
         self.opacity_slider.setValue(self._get_saved_opacity())
         self.opacity_slider.setTickPosition(QSlider.TicksBelow)
         self.opacity_slider.setTickInterval(10)
+        self.opacity_slider.setAccessibleName("Window opacity percentage")
+        self.opacity_slider.setAccessibleDescription(
+            "Higher values make application windows more opaque and easier to read."
+        )
         self.opacity_slider.valueChanged.connect(self._update_transparency_preview)
         slider_layout.addWidget(self.opacity_slider)
 
@@ -74,7 +83,7 @@ class TransparencyDialog(QDialog):
         trans_layout.addLayout(slider_layout)
 
         # Value display
-        self.opacity_label = QLabel(f"Current: {self.opacity_slider.value()}%")
+        self.opacity_label = QLabel(self._opacity_summary(self.opacity_slider.value()))
         self.opacity_label.setAlignment(Qt.AlignCenter)
         self.opacity_label.setStyleSheet("font-weight: bold; font-size: 14pt;")
         trans_layout.addWidget(self.opacity_label)
@@ -91,31 +100,19 @@ class TransparencyDialog(QDialog):
         self.setLayout(layout)
 
     def _get_saved_opacity(self):
-        """Get saved opacity value from settings (default 100%)."""
-        return int(self.settings.get("window_opacity", 100))
+        """Get saved opacity value from settings."""
+        return normalize_opacity_percent(
+            self.settings.get("window_opacity", DEFAULT_WINDOW_OPACITY_PERCENT)
+        )
+
+    @staticmethod
+    def _opacity_summary(value: int) -> str:
+        return f"Current opacity: {value}% ({100 - value}% transparent)"
 
     def _update_transparency_preview(self, value):
         """Update transparency in real-time for preview."""
-        opacity = value / 100.0
-        self.main_window.setWindowOpacity(opacity)
-        self.opacity_label.setText(f"Current: {value}%")
-
-        # Apply to all existing docks
-        dock_names = [
-            "dock_translate",
-            "dock_rewriter",
-            "dock_text_extractor",
-            "dock_placeholder_replacer",
-            "dock_ai_processor",
-            "dock_json_search",
-            "dock_case_converter",
-            "dock_history",
-        ]
-        for dock_name in dock_names:
-            if hasattr(self.main_window, dock_name):
-                dock = getattr(self.main_window, dock_name)
-                if dock:
-                    dock.setWindowOpacity(opacity)
+        WindowSettings.apply_window_opacity_percent(self.main_window, value)
+        self.opacity_label.setText(self._opacity_summary(value))
 
     def _save_and_close(self):
         """Save transparency setting and close dialog."""

@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional, Dict
 
+from .appearance_defaults import DEFAULT_THEME, DEFAULT_WINDOW_OPACITY_PERCENT
 from .utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,7 +24,8 @@ class SettingsManager:
 
     # Default settings
     DEFAULTS = {
-        "theme": "system",  # system, light, dark
+        "theme": DEFAULT_THEME,  # system, light, dark
+        "window_opacity": DEFAULT_WINDOW_OPACITY_PERCENT,
         "language": "en",
         "recent_files": [],
         "max_recent_files": 10,
@@ -48,6 +50,7 @@ class SettingsManager:
         else:
             self.config_file = Path(config_file)
 
+        self._stored_keys: set[str] = set()
         self.settings = self.DEFAULTS.copy()
         self.load()
 
@@ -57,7 +60,10 @@ class SettingsManager:
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     loaded = json.load(f)
+                    if not isinstance(loaded, dict):
+                        raise ValueError("Settings root must be a JSON object")
                     # Merge with defaults (in case new settings were added)
+                    self._stored_keys.update(loaded)
                     self.settings.update(loaded)
             except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - keep defaults on error
                 logger.warning(f"Failed to load settings: {e}")
@@ -78,9 +84,14 @@ class SettingsManager:
         """Get a setting value."""
         return self.settings.get(key, default)
 
+    def has_saved_value(self, key: str) -> bool:
+        """Return whether a key came from, or was written to, persistent settings."""
+        return key in self._stored_keys
+
     def set(self, key: str, value: Any) -> None:
         """Set a setting value and save."""
         self.settings[key] = value
+        self._stored_keys.add(key)
         self.save()
 
     def add_recent_file(self, file_path: str) -> None:
@@ -127,6 +138,7 @@ class SettingsManager:
     def reset_to_defaults(self) -> None:
         """Reset all settings to defaults."""
         self.settings = self.DEFAULTS.copy()
+        self._stored_keys = set(self.settings)
         self.save()
 
     def get_all(self) -> dict:
@@ -136,6 +148,7 @@ class SettingsManager:
     def update_multiple(self, settings_dict: dict) -> None:
         """Update multiple settings at once."""
         self.settings.update(settings_dict)
+        self._stored_keys.update(settings_dict)
         self.save()
 
 

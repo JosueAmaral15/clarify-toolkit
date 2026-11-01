@@ -27,6 +27,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 TEST_MODULES = {
     "accessibility": "tests/test_accessibility.py",
+    "default-appearance": "tests/gui/test_default_appearance.py",
     "completion": "tests/test_qt_completion_lifecycle.py",
     "editor-dock": "tests/gui/test_editor_dock.py",
     "editor-edit-only": "tests/test_edit_only_mode.py",
@@ -74,6 +75,7 @@ TEST_MODULES = {
     "operation-options-signal": "tests/gui/test_operation_options_signal.py",
     "plugin-system": "tests/test_plugin_system.py",
     "set-operations": "tests/test_set_operations.py",
+    "settings-shortcuts": "tests/test_sprint8_features.py",
     "theme-manager": "tests/test_theme_manager.py",
     "tab-layouts": "tests/test_tab_layouts.py",
     "thread-manager": "tests/test_thread_management_system.py",

@@ -42,6 +42,7 @@ class DetachedToolWindow(QMainWindow):
         self._allow_close = False
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
         self.setObjectName("clarify_detached_tool_window")
+        self.setWindowOpacity(manager.main_window.windowOpacity())
 
         header = QFrame(self)
         header.setObjectName("clarify_detached_tool_header")
@@ -126,6 +127,10 @@ class ToolWindowManager(QObject):
     def ordered_open_widgets(self) -> list[QWidget]:
         """Return live attached and detached tools in stable workspace order."""
         return [widget for widget in self._tool_order if is_valid(widget) and self.is_open(widget)]
+
+    def detached_windows(self) -> tuple["DetachedToolWindow", ...]:
+        """Return live detached hosts for shared appearance updates."""
+        return tuple(record.window for record in self._detached.values())
 
     def activate_detached(self, widget: QWidget) -> bool:
         """Raise an existing detached host instead of silently reattaching it."""
