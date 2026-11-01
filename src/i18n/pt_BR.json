@@ -2936,5 +2936,22 @@
         "error_title": "Erro",
         "error_no_main_window": "Não foi possível encontrar a janela principal para abrir o editor",
         "error_open_editor": "Não foi possível abrir arquivo no editor: {0}\n{1}"
+    },
+    "settings_reset": {
+        "action": "Redefinir Configurações...", "title": "Redefinir Configurações",
+        "intro": "Escolha quais preferências restaurar. Um backup privado será criado antes de qualquer alteração.",
+        "scope": "Escopo da redefinição", "all": "Todas as categorias de configurações", "selected": "Categorias selecionadas",
+        "preview": "Preferências que serão restauradas:",
+        "protected": "Documentos, arquivos recentes, notas temporárias, recuperações, histórico operacional, plugins, credenciais, layouts e dados de sessão não serão apagados.",
+        "section": {
+            "appearance": "Aparência", "appearance.detail": "Tema escuro e opacidade da janela em 96%",
+            "general": "Geral", "general.detail": "Idioma, confirmações, salvamento automático e outras preferências do aplicativo",
+            "shortcuts": "Atalhos de teclado", "shortcuts.detail": "Atalhos personalizados retornam aos padrões",
+            "advanced": "Avançado", "advanced.detail": "Preferências de log, desempenho, IA, editor e caminhos"
+        },
+        "restart": "Reinicie o Clarify para aplicar completamente as configurações avançadas.",
+        "confirm_title": "Confirmar redefinição", "confirm": "Criar um backup e restaurar as preferências selecionadas?",
+        "error_title": "Falha ao redefinir configurações", "error": "Nenhuma preferência foi alterada com segurança.\n\n{error}",
+        "success_title": "Configurações redefinidas", "success": "As preferências selecionadas foram restauradas.\n\nBackup: {path}"
     }
 }

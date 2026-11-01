@@ -2429,5 +2429,22 @@
   "editor.status_reference_updates_applied": "已在 {files} 个文件中应用 {changes} 处引用更新",
   "editor.status_reference_updates_declined": "未应用引用更新",
   "editor.status_reference_updates_none": "重命名已完成；未找到安全的本地引用更新",
-  "editor.status_reference_updates_undone": "已撤销上次引用更新"
+  "editor.status_reference_updates_undone": "已撤销上次引用更新",
+  "settings_reset": {
+    "action": "重置设置...", "title": "重置设置",
+    "intro": "选择要恢复的首选项。任何更改前都会创建私有备份。",
+    "scope": "重置范围", "all": "所有设置类别", "selected": "所选类别",
+    "preview": "将恢复的首选项：",
+    "protected": "不会删除文档、最近文件、临时笔记、恢复快照、操作历史、插件、凭据、布局或会话数据。",
+    "section": {
+      "appearance": "外观", "appearance.detail": "深色主题和96%窗口不透明度",
+      "general": "常规", "general.detail": "语言、确认、自动保存和其他应用首选项",
+      "shortcuts": "键盘快捷键", "shortcuts.detail": "自定义快捷键恢复为默认值",
+      "advanced": "高级", "advanced.detail": "日志、性能、AI、编辑器和路径首选项"
+    },
+    "restart": "请重启Clarify以完全应用高级设置。",
+    "confirm_title": "确认重置设置", "confirm": "创建备份并恢复所选首选项？",
+    "error_title": "设置重置失败", "error": "未能安全更改任何首选项。\n\n{error}",
+    "success_title": "设置重置完成", "success": "已恢复所选首选项。\n\n备份：{path}"
+  }
 }

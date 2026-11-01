@@ -2437,5 +2437,22 @@
   "editor.status_reference_updates_applied": "Se aplicaron {changes} actualización(es) en {files} archivo(s)",
   "editor.status_reference_updates_declined": "No se aplicaron las actualizaciones de referencias",
   "editor.status_reference_updates_none": "Cambio de nombre completado; no se encontraron actualizaciones locales seguras",
-  "editor.status_reference_updates_undone": "Se deshicieron las últimas actualizaciones de referencias"
+  "editor.status_reference_updates_undone": "Se deshicieron las últimas actualizaciones de referencias",
+  "settings_reset": {
+    "action": "Restablecer configuración...", "title": "Restablecer configuración",
+    "intro": "Elija las preferencias que desea restaurar. Se crea una copia privada antes de cualquier cambio.",
+    "scope": "Alcance", "all": "Todas las categorías", "selected": "Categorías seleccionadas",
+    "preview": "Preferencias que se restaurarán:",
+    "protected": "No se eliminan documentos, archivos recientes, notas temporales, recuperaciones, historial, plugins, credenciales, diseños ni datos de sesión.",
+    "section": {
+      "appearance": "Apariencia", "appearance.detail": "Tema oscuro y opacidad de ventana del 96%",
+      "general": "General", "general.detail": "Idioma, confirmaciones, guardado automático y otras preferencias",
+      "shortcuts": "Atajos de teclado", "shortcuts.detail": "Los atajos personalizados vuelven a sus valores predeterminados",
+      "advanced": "Avanzado", "advanced.detail": "Registro, rendimiento, IA, editor y rutas"
+    },
+    "restart": "Reinicie Clarify para aplicar completamente la configuración avanzada.",
+    "confirm_title": "Confirmar restablecimiento", "confirm": "¿Crear una copia y restaurar las preferencias seleccionadas?",
+    "error_title": "Error al restablecer", "error": "No se modificó ninguna preferencia de forma segura.\n\n{error}",
+    "success_title": "Configuración restablecida", "success": "Se restauraron las preferencias seleccionadas.\n\nCopia: {path}"
+  }
 }

@@ -25,7 +25,8 @@ class TestConfigManagerInit:
         config = ConfigManager(str(config_file))
         
         assert config.config_file == config_file
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
+        assert config.get("app.window_opacity") == 96
         assert config.get("logging.level") == "INFO"
         assert config.get("editor.font_size") == 12
     
@@ -69,7 +70,7 @@ class TestConfigManagerGetSet:
         config_file = tmp_path / "config.yaml"
         config = ConfigManager(str(config_file))
         
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
     
     def test_get_nested_value(self, tmp_path):
         """Test getting nested value with dot notation."""
@@ -176,7 +177,7 @@ class TestConfigManagerSave:
         config = ConfigManager(str(config_file))
         
         # Should use defaults
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
         
         # Should create backup of invalid file
         backups = list(config_file.parent.glob("*_invalid.yaml.bak"))
@@ -220,7 +221,7 @@ class TestConfigManagerReset:
         config.reset_to_defaults()
         
         # Should be back to defaults
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
         assert config.get("editor.font_size") == 12
     
     def test_reset_creates_backup(self, tmp_path):
@@ -255,7 +256,7 @@ class TestConfigManagerMigration:
         
         # Mock Path.home() to return tmp_path
         with patch("src.config_manager.Path.home", return_value=tmp_path):
-            config = ConfigManager(str(config_file))
+            config = ConfigManager(str(config_file), migrate_legacy=True)
         
         # Should migrate settings
         assert config.get("app.theme") == "dark"

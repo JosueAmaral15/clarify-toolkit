@@ -380,6 +380,7 @@ class MenuBuilder:
         act_preferences = QAction(tr("menu.settings.preferences"), main_window)
         act_shortcuts = QAction(tr("menu.settings.shortcuts"), main_window)
         act_transparency = QAction(tr("menu.settings.transparency"), main_window)
+        main_window.act_reset_settings = QAction(tr("settings_reset.action"), main_window)
 
         # Language submenu (Task #24 - v2.9.10, expanded v2.9.43)
         m_language = MenuBuilder._add_menu(m_settings, "menu.settings.language")
@@ -445,6 +446,7 @@ class MenuBuilder:
         m_settings.addAction(act_preferences)
         m_settings.addAction(act_shortcuts)
         m_settings.addAction(act_transparency)
+        m_settings.addAction(main_window.act_reset_settings)
         m_settings.addSeparator()
 
         # Advanced submenu (v2.9.89, expanded v2.9.90)
@@ -482,6 +484,7 @@ class MenuBuilder:
         act_preferences.triggered.connect(main_window._show_preferences)
         act_shortcuts.triggered.connect(main_window._show_shortcuts)
         act_transparency.triggered.connect(main_window._show_transparency_dialog)
+        main_window.act_reset_settings.triggered.connect(main_window._show_settings_reset)
         act_clear_recent.triggered.connect(main_window._clear_recent_files)
 
     @staticmethod

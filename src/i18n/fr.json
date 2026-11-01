@@ -2429,5 +2429,22 @@
   "editor.status_reference_updates_applied": "{changes} mise(s) à jour appliquée(s) dans {files} fichier(s)",
   "editor.status_reference_updates_declined": "Les mises à jour des références n'ont pas été appliquées",
   "editor.status_reference_updates_none": "Renommage terminé ; aucune mise à jour locale sûre trouvée",
-  "editor.status_reference_updates_undone": "Dernières mises à jour des références annulées"
+  "editor.status_reference_updates_undone": "Dernières mises à jour des références annulées",
+  "settings_reset": {
+    "action": "Réinitialiser les paramètres...", "title": "Réinitialiser les paramètres",
+    "intro": "Choisissez les préférences à restaurer. Une sauvegarde privée est créée avant toute modification.",
+    "scope": "Portée", "all": "Toutes les catégories", "selected": "Catégories sélectionnées",
+    "preview": "Préférences qui seront restaurées :",
+    "protected": "Les documents, fichiers récents, notes temporaires, récupérations, historique, plugins, identifiants, dispositions et données de session ne sont pas supprimés.",
+    "section": {
+      "appearance": "Apparence", "appearance.detail": "Thème sombre et opacité de fenêtre à 96 %",
+      "general": "Général", "general.detail": "Langue, confirmations, sauvegarde automatique et autres préférences",
+      "shortcuts": "Raccourcis clavier", "shortcuts.detail": "Les raccourcis personnalisés reviennent aux valeurs par défaut",
+      "advanced": "Avancé", "advanced.detail": "Journalisation, performances, IA, éditeur et chemins"
+    },
+    "restart": "Redémarrez Clarify pour appliquer complètement les paramètres avancés.",
+    "confirm_title": "Confirmer la réinitialisation", "confirm": "Créer une sauvegarde et restaurer les préférences sélectionnées ?",
+    "error_title": "Échec de la réinitialisation", "error": "Aucune préférence n'a été modifiée en toute sécurité.\n\n{error}",
+    "success_title": "Paramètres réinitialisés", "success": "Les préférences sélectionnées ont été restaurées.\n\nSauvegarde : {path}"
+  }
 }

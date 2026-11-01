@@ -901,7 +901,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   converter explicitamente sem tornar a janela quase invisivel. Aplicar o default
   somente quando nao existe preferencia do usuario; preservar migracao, runtime
   theme, dialogs, janelas destacadas e acessibilidade em System/Light/Dark.
-- [ ] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
+- [x] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
   Oferecer em Settings uma acao traduzida para redefinir configuracoes, com
   preview das categorias afetadas, confirmacao e escolha entre reset global ou
   por secao quando praticavel. Fazer backup atomico antes da alteracao, explicar
@@ -910,6 +910,17 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   credenciais ou dados do usuario sem uma opcao separada e confirmacao especifica.
   O reset deve restaurar inclusive os defaults documentados de tema Dark e
   Window Transparency 96%, sem deixar QSettings/config YAML divergentes.
+  Concluido em 01/11/2026: `Settings > Reset Settings...` oferece preview,
+  confirmacao e reset global ou por Appearance, General, Shortcuts e Advanced.
+  O coordenador cria primeiro um bundle privado e atomico dos stores JSON, YAML,
+  QSettings e preferencias legadas, aplica somente chaves conhecidas e faz
+  rollback em falha. Recentes, geometria/sessoes, documentos, notas, recovery,
+  historico, layouts, plugins, credenciais e chaves desconhecidas permanecem
+  preservados. Dark/96% foram alinhados em JSON, YAML, QSettings e legado; paths
+  explicitos de `ConfigManager` nao migram mais o HOME real implicitamente.
+  Evidencia isolada: 7 testes core, 4 GUI/runtime, 24 ConfigManager, 8 appearance,
+  4 settings/shortcuts e 10 catalog lookup passaram sob RAM 85%, RSS 600 MiB,
+  wall 180 s e pytest 20 s, sem crash nativo ou abort do guard.
 - [ ] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
   Organizar o File Explorer/File Searcher em duas secoes ou sessoes claramente
   distintas: uma para localizar e filtrar arquivos e outra para configurar e

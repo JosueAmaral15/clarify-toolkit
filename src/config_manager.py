@@ -17,6 +17,7 @@ Features:
 
 import json
 import shutil
+from copy import deepcopy
 from configparser import ConfigParser
 from datetime import datetime
 from pathlib import Path
@@ -25,6 +26,8 @@ from typing import Any, Dict, Optional
 import yaml
 
 from .utils.logger import get_logger
+from .utils.atomic_files import write_text_atomically
+from .appearance_defaults import DEFAULT_THEME, DEFAULT_WINDOW_OPACITY_PERCENT
 
 logger = get_logger(__name__)
 
@@ -49,7 +52,8 @@ class ConfigManager:
     # Default configuration structure
     DEFAULTS = {
         "app": {
-            "theme": "system",  # system | light | dark
+            "theme": DEFAULT_THEME,  # system | light | dark
+            "window_opacity": DEFAULT_WINDOW_OPACITY_PERCENT,
             "language": "en",  # en | pt-br | es | fr | de | zh | ja
             "max_recent_files": 10,
             "confirm_on_exit": True,
@@ -97,6 +101,7 @@ class ConfigManager:
                 "type": "object",
                 "properties": {
                     "theme": {"type": "string", "enum": ["system", "light", "dark"]},
+                    "window_opacity": {"type": "integer", "minimum": 20, "maximum": 100},
                     "language": {"type": "string", "pattern": "^[a-z]{2}(-[a-z]{2})?$"},
                     "max_recent_files": {"type": "integer", "minimum": 0, "maximum": 50},
                     "confirm_on_exit": {"type": "boolean"},
@@ -152,19 +157,29 @@ class ConfigManager:
         },
     }
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(
+        self,
+        config_file: Optional[str] = None,
+        *,
+        migrate_legacy: Optional[bool] = None,
+    ):
         """
         Initialize configuration manager.
 
         Args:
             config_file: Path to config.yaml (default: ~/.config/clarify/config.yaml)
         """
-        if config_file is None:
+        using_default_path = config_file is None
+        if using_default_path:
             config_dir = Path.home() / ".config" / "clarify"
             config_dir.mkdir(parents=True, exist_ok=True)
             self.config_file = config_dir / "config.yaml"
         else:
             self.config_file = Path(config_file)
+
+        # Explicit paths are commonly used for tests and isolated profiles. They
+        # must never inspect or move legacy files from the real HOME implicitly.
+        self._migrate_legacy = using_default_path if migrate_legacy is None else migrate_legacy
 
         self.config: Dict[str, Any] = {}
         self._load_or_create()
@@ -175,7 +190,7 @@ class ConfigManager:
             self._load()
         else:
             # First time: try migration from old formats
-            migrated = self._migrate_from_legacy()
+            migrated = self._migrate_from_legacy() if self._migrate_legacy else False
             if not migrated:
                 # No legacy config, use defaults
                 self.config = self._deep_copy(self.DEFAULTS)
@@ -218,8 +233,8 @@ class ConfigManager:
             logger.warning(f"Config validation failed: {e}")
             logger.warning("Some settings may be invalid")
 
-    def save(self) -> None:
-        """Save configuration to YAML file."""
+    def save(self, *, raise_on_error: bool = False) -> bool:
+        """Save configuration atomically and report whether it succeeded."""
         try:
             # Backup existing file before overwrite
             if self.config_file.exists():
@@ -228,15 +243,20 @@ class ConfigManager:
             # Ensure directory exists
             self.config_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # Write YAML with comments
-            with open(self.config_file, "w", encoding="utf-8") as f:
-                f.write("# Clarify Configuration File\n")
-                f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("# Edit with care or use Settings → Advanced in the app\n\n")
-                yaml.dump(self.config, f, default_flow_style=False, sort_keys=False)
+            content = (
+                "# Clarify Configuration File\n"
+                f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                "# Edit with care or use Settings -> Advanced in the app\n\n"
+                + yaml.dump(self.config, default_flow_style=False, sort_keys=False)
+            )
+            write_text_atomically(self.config_file, content)
+            return True
 
         except Exception as e:  # pylint: disable=broad-exception-caught  # File write errors vary
             logger.error(f"Error saving config: {e}")
+            if raise_on_error:
+                raise
+            return False
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -314,9 +334,9 @@ class ConfigManager:
             self.save()
 
     def reset_to_defaults(self) -> None:
-        """Reset all settings to defaults."""
+        """Reset known preferences while preserving unknown user-owned keys."""
         self._backup_file(suffix="_before_reset")
-        self.config = self._deep_copy(self.DEFAULTS)
+        self.config = self._reset_known_values(self.config, self.DEFAULTS)
         self.save()
 
     def get_all(self) -> Dict[str, Any]:
@@ -352,6 +372,16 @@ class ConfigManager:
             return [self._deep_copy(item) for item in obj]
         else:
             return obj
+
+    def _reset_known_values(self, current: Dict, defaults: Dict) -> Dict:
+        """Overlay default leaves without deleting unknown nested keys."""
+        result = deepcopy(current) if isinstance(current, dict) else {}
+        for key, value in defaults.items():
+            if isinstance(value, dict):
+                result[key] = self._reset_known_values(result.get(key, {}), value)
+            else:
+                result[key] = deepcopy(value)
+        return result
 
     def _backup_file(self, suffix: str = "") -> None:
         """
@@ -428,6 +458,12 @@ class ConfigManager:
                     self.set("app.language", value, save=False)
                     migrated_any = True
 
+            if settings.contains("window_opacity"):
+                value = settings.value("window_opacity", type=int)
+                if value is not None:
+                    self.set("app.window_opacity", value, save=False)
+                    migrated_any = True
+
             # Migrate update checker
             if settings.contains("update_checker/enabled"):
                 value = settings.value("update_checker/enabled", type=bool)
@@ -453,6 +489,7 @@ class ConfigManager:
             # Map old keys to new structure
             mapping = {
                 "theme": "app.theme",
+                "window_opacity": "app.window_opacity",
                 "language": "app.language",
                 "max_recent_files": "app.max_recent_files",
                 "confirm_on_exit": "app.confirm_on_exit",

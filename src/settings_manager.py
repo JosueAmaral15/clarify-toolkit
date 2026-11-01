@@ -10,10 +10,12 @@ v2.9.33 - Added keyboard shortcuts customization support
 
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Optional, Dict
 
 from .appearance_defaults import DEFAULT_THEME, DEFAULT_WINDOW_OPACITY_PERCENT
+from .utils.atomic_files import write_text_atomically
 from .utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -41,6 +43,15 @@ class SettingsManager:
         "custom_shortcuts": {},  # v2.9.33 - Keyboard shortcuts customization
     }
 
+    # State and user-data keys intentionally excluded: recent_files,
+    # window_geometry, last_directory, and any unknown session keys.
+    RESETTABLE_KEYS = frozenset({
+        "theme", "window_opacity", "language", "max_recent_files",
+        "auto_save", "completion_sound", "show_tooltips", "confirm_on_exit",
+        "ai_provider", "remember_api_keys", "default_extensions",
+        "custom_shortcuts",
+    })
+
     def __init__(self, config_file: Optional[str] = None):
         """Initialize settings manager."""
         if config_file is None:
@@ -51,7 +62,7 @@ class SettingsManager:
             self.config_file = Path(config_file)
 
         self._stored_keys: set[str] = set()
-        self.settings = self.DEFAULTS.copy()
+        self.settings = deepcopy(self.DEFAULTS)
         self.load()
 
     def load(self) -> None:
@@ -69,16 +80,18 @@ class SettingsManager:
                 logger.warning(f"Failed to load settings: {e}")
                 # Keep defaults on error
 
-    def save(self) -> None:
-        """Save settings to disk."""
+    def save(self, *, raise_on_error: bool = False) -> bool:
+        """Save settings atomically and report whether persistence succeeded."""
         try:
-            # Create directory if needed
             self.config_file.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(self.settings, f, indent=2)
+            content = json.dumps(self.settings, indent=2, ensure_ascii=False) + "\n"
+            write_text_atomically(self.config_file, content)
+            return True
         except Exception as e:  # pylint: disable=broad-exception-caught  # Robustness - fail gracefully
             logger.error(f"Failed to save settings: {e}")
+            if raise_on_error:
+                raise
+            return False
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get a setting value."""
@@ -136,9 +149,10 @@ class SettingsManager:
         self.set("custom_shortcuts", shortcuts)
 
     def reset_to_defaults(self) -> None:
-        """Reset all settings to defaults."""
-        self.settings = self.DEFAULTS.copy()
-        self._stored_keys = set(self.settings)
+        """Reset preferences while retaining user data and session state."""
+        for key in self.RESETTABLE_KEYS:
+            self.settings[key] = deepcopy(self.DEFAULTS[key])
+        self._stored_keys.update(self.RESETTABLE_KEYS)
         self.save()
 
     def get_all(self) -> dict:

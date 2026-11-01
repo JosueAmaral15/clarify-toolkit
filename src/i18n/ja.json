@@ -2429,5 +2429,22 @@
   "editor.status_reference_updates_applied": "{files} 個のファイルに {changes} 件の参照更新を適用しました",
   "editor.status_reference_updates_declined": "参照更新は適用されませんでした",
   "editor.status_reference_updates_none": "名前の変更が完了しました。安全なローカル参照更新はありません",
-  "editor.status_reference_updates_undone": "前回の参照更新を元に戻しました"
+  "editor.status_reference_updates_undone": "前回の参照更新を元に戻しました",
+  "settings_reset": {
+    "action": "設定をリセット...", "title": "設定をリセット",
+    "intro": "復元する設定を選択してください。変更前に非公開バックアップが作成されます。",
+    "scope": "リセット範囲", "all": "すべての設定カテゴリ", "selected": "選択したカテゴリ",
+    "preview": "復元される設定:",
+    "protected": "文書、最近のファイル、一時メモ、復元データ、履歴、プラグイン、認証情報、レイアウト、セッションデータは削除されません。",
+    "section": {
+      "appearance": "外観", "appearance.detail": "ダークテーマとウィンドウ不透明度96%",
+      "general": "一般", "general.detail": "言語、確認、自動保存、その他の設定",
+      "shortcuts": "キーボードショートカット", "shortcuts.detail": "カスタムショートカットを既定値に戻す",
+      "advanced": "詳細", "advanced.detail": "ログ、性能、AI、エディター、パス設定"
+    },
+    "restart": "詳細設定を完全に適用するにはClarifyを再起動してください。",
+    "confirm_title": "リセットの確認", "confirm": "バックアップを作成して選択した設定を復元しますか？",
+    "error_title": "設定のリセットに失敗", "error": "設定は安全に変更されませんでした。\n\n{error}",
+    "success_title": "設定のリセット完了", "success": "選択した設定を復元しました。\n\nバックアップ: {path}"
+  }
 }

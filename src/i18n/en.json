@@ -2909,5 +2909,22 @@
   "table_manager.tooltip_size_dir": "Size: - (directory)",
   "table_manager.tooltip_modified": "Modified",
   "table_manager.tooltip_permissions": "Permissions",
-  "table_manager.tooltip_path": "Path"
+  "table_manager.tooltip_path": "Path",
+  "settings_reset": {
+    "action": "Reset Settings...", "title": "Reset Settings",
+    "intro": "Choose which preferences to restore. A private backup is created before any change.",
+    "scope": "Reset scope", "all": "All settings categories", "selected": "Selected categories",
+    "preview": "Preferences that will be restored:",
+    "protected": "Documents, recent files, temporary notes, recovery snapshots, operational history, plugins, credentials, layouts, and session data are not deleted.",
+    "section": {
+      "appearance": "Appearance", "appearance.detail": "Dark theme and 96% window opacity",
+      "general": "General", "general.detail": "Language, prompts, auto-save and other application preferences",
+      "shortcuts": "Keyboard shortcuts", "shortcuts.detail": "Custom shortcuts return to their defaults",
+      "advanced": "Advanced", "advanced.detail": "Logging, performance, AI, editor and path preferences"
+    },
+    "restart": "Restart Clarify to apply advanced settings completely.",
+    "confirm_title": "Confirm settings reset", "confirm": "Create a backup and restore the selected preferences?",
+    "error_title": "Settings reset failed", "error": "No preferences were changed safely.\n\n{error}",
+    "success_title": "Settings reset complete", "success": "The selected preferences were restored.\n\nBackup: {path}"
+  }
 }

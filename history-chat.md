@@ -6258,3 +6258,47 @@ Plano imediato:
   open and was not implemented.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - APP-SETTINGS-RESET-01 started
+
+- Work starts from published checkpoint `be1d9b1` on fresh branch
+  `COM-8c89d334-1b1a-44f8-9fa4-ce64287b9d3e`, limited to a safe settings-reset
+  workflow. File Searcher, Editor UX, broader i18n and legacy tasks remain out
+  of scope.
+- AI Presence Monitor 0.10.7 reports the exact Protocol2 worker active, five
+  hooks installed and the native queue available. The 60-second native
+  continuation delivered this stage; the 271-minute red-inactivity rule remains
+  only as the token-exhaustion fallback.
+- The audit will cover JSON settings, QSettings, YAML/config and legacy INI
+  consumers with temporary HOME only. Documents, notes, recovery, history,
+  plugins and credentials are protected from implicit reset.
+- Validation remains serial and isolated with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - APP-SETTINGS-RESET-01 completed
+
+- Settings now provides one translated reset action with explicit category
+  preview, global or section-level selection, confirmation and restart guidance.
+- A bounded private backup bundle is published before mutation. JSON, YAML,
+  QSettings and existing legacy preferences reset only known leaves; recent
+  files, sessions, documents, notes, recovery, operational history, plugins,
+  credentials, layouts and unknown keys are preserved. Failure rolls back.
+- Dark and 96% opacity now agree across stores. Safe appearance, language,
+  shortcut and reporting values hot-reload; Advanced remains restart-bound.
+- The audit exposed that an explicit temporary ConfigManager path could migrate
+  real HOME settings. The moved JSON was immediately restored, the implicit
+  migration was disabled for explicit paths, and regression coverage proves it.
+  The restored HOME JSON hash is
+  `64994a40111d92e6244a970c1c5d0e5632a9b3e44fb1c490c59a1886b093b7bc`;
+  no `.migrated` copy remains.
+- Guarded serial validation passed 57 focused tests: 7 reset core, 4 reset GUI,
+  24 ConfigManager, 8 appearance, 4 settings/shortcuts and 10 translations.
+  Peak tree RSS was 197.5 MiB; no native crash, timeout or guard abort occurred.
+  Compilation, seven JSON parses, focused Pylint-E and diff checks passed.
+- Evidence is in
+  `docs/reports/CLARIFY_APP_SETTINGS_RESET_2026_11_01.md`. No further native
+  continuation was configured, as required by the user authorization.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

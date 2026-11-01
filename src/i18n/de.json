@@ -2429,5 +2429,22 @@
   "editor.status_reference_updates_applied": "{changes} Referenzaktualisierung(en) in {files} Datei(en) angewendet",
   "editor.status_reference_updates_declined": "Referenzaktualisierungen wurden nicht angewendet",
   "editor.status_reference_updates_none": "Umbenennung abgeschlossen; keine sicheren lokalen Aktualisierungen gefunden",
-  "editor.status_reference_updates_undone": "Letzte Referenzaktualisierungen rückgängig gemacht"
+  "editor.status_reference_updates_undone": "Letzte Referenzaktualisierungen rückgängig gemacht",
+  "settings_reset": {
+    "action": "Einstellungen zurücksetzen...", "title": "Einstellungen zurücksetzen",
+    "intro": "Wählen Sie die wiederherzustellenden Einstellungen. Vor jeder Änderung wird eine private Sicherung erstellt.",
+    "scope": "Umfang", "all": "Alle Einstellungskategorien", "selected": "Ausgewählte Kategorien",
+    "preview": "Wiederherzustellende Einstellungen:",
+    "protected": "Dokumente, zuletzt verwendete Dateien, temporäre Notizen, Wiederherstellungen, Verlauf, Plugins, Anmeldedaten, Layouts und Sitzungsdaten werden nicht gelöscht.",
+    "section": {
+      "appearance": "Darstellung", "appearance.detail": "Dunkles Design und 96 % Fensterdeckkraft",
+      "general": "Allgemein", "general.detail": "Sprache, Bestätigungen, automatisches Speichern und weitere Einstellungen",
+      "shortcuts": "Tastenkombinationen", "shortcuts.detail": "Benutzerdefinierte Tastenkombinationen werden zurückgesetzt",
+      "advanced": "Erweitert", "advanced.detail": "Protokollierung, Leistung, KI, Editor und Pfade"
+    },
+    "restart": "Starten Sie Clarify neu, um erweiterte Einstellungen vollständig anzuwenden.",
+    "confirm_title": "Zurücksetzen bestätigen", "confirm": "Sicherung erstellen und ausgewählte Einstellungen wiederherstellen?",
+    "error_title": "Zurücksetzen fehlgeschlagen", "error": "Keine Einstellungen wurden sicher geändert.\n\n{error}",
+    "success_title": "Einstellungen zurückgesetzt", "success": "Die ausgewählten Einstellungen wurden wiederhergestellt.\n\nSicherung: {path}"
+  }
 }

@@ -1290,6 +1290,60 @@ if _PYSIDE:
             from .gui.transparency_dialog import TransparencyDialog
             TransparencyDialog.show_transparency_dialog(self)
 
+        def _show_settings_reset(self):
+            """Preview, back up, and reset selected preference categories."""
+            from pathlib import Path
+
+            from PySide6.QtWidgets import QDialog
+
+            from .config_manager import ConfigManager
+            from .gui.settings_reset_dialog import SettingsResetDialog
+            from .settings_reset import ResetSection, SettingsResetCoordinator
+            from .shortcut_manager import ShortcutManager
+
+            config_path = Path.home() / ".config" / "clarify" / "config.yaml"
+            coordinator = SettingsResetCoordinator(
+                self.settings,
+                config=ConfigManager(str(config_path), migrate_legacy=False),
+                qsettings=self.settings.qsettings,
+            )
+            dialog = SettingsResetDialog(coordinator, self)
+            if (
+                dialog.exec() != QDialog.DialogCode.Accepted
+                or dialog.reset_result is None
+            ):
+                return
+
+            result = dialog.reset_result
+            sections = set(result.sections)
+            if ResetSection.APPEARANCE in sections:
+                WindowSettings.apply_saved_settings(self)
+            if ResetSection.GENERAL in sections:
+                self.translator.switch_language(self.settings.get("language", "en"))
+            if ResetSection.SHORTCUTS in sections:
+                ShortcutManager.load_custom_shortcuts(
+                    self.settings.get_custom_shortcuts()
+                )
+                self._apply_shortcuts_to_menu()
+
+            for action_name, key, default in (
+                ("act_error_reporting_toggle", "error_reporting/enabled", True),
+                ("act_system_info_toggle", "error_reporting/include_system_info", True),
+                ("act_auto_github_toggle", "error_reporting/auto_open_github", False),
+            ):
+                action = getattr(self, action_name, None)
+                if action is not None:
+                    action.setChecked(
+                        self.settings.qsettings.value(key, default, type=bool)
+                    )
+
+            message = tr("settings_reset.success").format(
+                path=str(result.backup_path)
+            )
+            if result.restart_required:
+                message += "\n\n" + tr("settings_reset.restart")
+            QMessageBox.information(self, tr("settings_reset.success_title"), message)
+
         def _switch_language(self, lang: str):
             """Switch application language at runtime (Task #24 - v2.9.10, expanded v2.9.43)."""
             # QActionGroup handles radio button behavior automatically - no need to setChecked
