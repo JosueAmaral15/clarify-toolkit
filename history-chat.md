@@ -6164,3 +6164,41 @@ Plano imediato:
   `CE-EXPLORER-RENAME-F2-01`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - CE-RECOVERY-RETENTION-30D-01 started
+
+- Work starts from documentation checkpoint `36c8f4c` on fresh branch
+  `COM-0c4c6fff-e75b-4248-89b1-c68de724304a`, limited to the default recovery
+  retention and honest empty-recovery diagnostics. Existing user preferences
+  must remain authoritative.
+- AI Presence Monitor 0.10.7 reports the exact Clarify Protocol2 worker active.
+  Task automation and the exact-session native prompt rule are enabled; GUI and
+  remote transport remain disabled. The previous uncertain dispatch was not
+  retried.
+- The audit reproduced two literal 24-hour defaults and silent pruning of
+  expired, corrupt or over-quota snapshots. Tests will remain serial and
+  isolated with temporary HOME, RAM 85%, tree RSS 600 MiB, wall 180 seconds and
+  pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - CE-RECOVERY-RETENTION-30D-01 checkpointed, validation pending
+
+- New profiles now use the shared 30-day recovery default while a stored user
+  preference remains authoritative. Bounded inventory diagnostics distinguish
+  expiration, corruption, storage limits, already-open snapshots and I/O/lock
+  failures; transient I/O no longer deletes a snapshot as corrupt.
+- The initial store suite passed 41 tests at 91.0 MiB peak tree RSS. Final
+  compilation, seven JSON parses, focused Pylint-E and `git diff --check`
+  passed after I/O hardening.
+- The serial GUI probe was stopped before test execution because global RAM
+  reached the 85% guard at only 111.5 MiB process-tree RSS. There was no native
+  crash. The task remains open and the checkpoint is explicitly partial until
+  store, GUI, lifecycle and reopen suites can run safely.
+- AI Presence Monitor remains active for the exact Clarify worker, with task
+  automation and its exact-session native prompt rule enabled. GUI and remote
+  transports remain disabled.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_PARTIAL_2026_11_01.md`.
+  `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

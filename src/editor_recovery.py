@@ -15,7 +15,7 @@ from typing import Iterable
 from PySide6.QtCore import QLockFile, QStandardPaths
 
 
-DEFAULT_RETENTION_HOURS = 24
+DEFAULT_RETENTION_HOURS = 30 * 24
 DEFAULT_MAX_SNAPSHOTS = 20
 DEFAULT_MAX_DOCUMENT_BYTES = 2 * 1024 * 1024
 DEFAULT_MAX_TOTAL_BYTES = 20 * 1024 * 1024
@@ -36,6 +36,24 @@ class RecoverySnapshot:
     kind: str = "buffer"
     source_signature: tuple[int, ...] | None = None
     cursor_position: int = 0
+
+
+@dataclass(frozen=True)
+class RecoveryPruneReport:
+    """Counts why snapshots were removed during one bounded inventory pass."""
+
+    expired: int = 0
+    invalid: int = 0
+    over_count: int = 0
+    over_total_bytes: int = 0
+
+    @property
+    def over_quota(self) -> int:
+        return self.over_count + self.over_total_bytes
+
+    @property
+    def removed(self) -> int:
+        return self.expired + self.invalid + self.over_quota
 
 
 class UnsavedRecoveryStore:
@@ -208,12 +226,22 @@ class UnsavedRecoveryStore:
 
     def list(self) -> list[RecoverySnapshot]:
         """Return valid, recent snapshots newest first."""
+        snapshots, _report = self.list_with_report()
+        return snapshots
+
+    def list_with_report(
+        self,
+    ) -> tuple[list[RecoverySnapshot], RecoveryPruneReport]:
+        """Return recent snapshots and bounded cleanup reasons from this pass."""
         if not self.root.exists():
-            return []
+            return [], RecoveryPruneReport()
         with self._locked():
-            self._prune_unlocked()
+            report = self._prune_unlocked()
             snapshots = list(self._read_valid_snapshots())
-        return sorted(snapshots, key=lambda item: item.updated_at, reverse=True)
+        return (
+            sorted(snapshots, key=lambda item: item.updated_at, reverse=True),
+            report,
+        )
 
     def discard(self, snapshot_id: str) -> None:
         """Delete one snapshot if present."""
@@ -231,23 +259,28 @@ class UnsavedRecoveryStore:
             for path in self.root.glob("*.json"):
                 path.unlink(missing_ok=True)
 
-    def prune(self) -> None:
+    def prune(self) -> RecoveryPruneReport:
         """Remove expired, corrupt, excessive, and over-budget snapshots."""
         if not self.root.exists():
-            return
+            return RecoveryPruneReport()
         with self._locked():
-            self._prune_unlocked()
+            return self._prune_unlocked()
 
-    def _prune_unlocked(self) -> None:
+    def _prune_unlocked(self) -> RecoveryPruneReport:
         if not self.root.exists():
-            return
+            return RecoveryPruneReport()
 
         cutoff = datetime.now(timezone.utc) - timedelta(hours=self.retention_hours)
         entries = []
+        expired = 0
+        invalid = 0
+        over_count = 0
+        over_total_bytes = 0
         for path in self.root.glob("*.json"):
             snapshot = self._read(path)
             if snapshot is None:
                 path.unlink(missing_ok=True)
+                invalid += 1
                 continue
             try:
                 updated = datetime.fromisoformat(snapshot.updated_at)
@@ -255,19 +288,31 @@ class UnsavedRecoveryStore:
                     updated = updated.replace(tzinfo=timezone.utc)
             except ValueError:
                 path.unlink(missing_ok=True)
+                invalid += 1
                 continue
             if updated < cutoff:
                 path.unlink(missing_ok=True)
+                expired += 1
                 continue
             entries.append((updated, path, path.stat().st_size))
 
         entries.sort(reverse=True)
         retained_bytes = 0
         for index, (_updated, path, size) in enumerate(entries):
-            if index >= self.max_snapshots or retained_bytes + size > self.max_total_bytes:
+            if index >= self.max_snapshots:
                 path.unlink(missing_ok=True)
+                over_count += 1
+            elif retained_bytes + size > self.max_total_bytes:
+                path.unlink(missing_ok=True)
+                over_total_bytes += 1
             else:
                 retained_bytes += size
+        return RecoveryPruneReport(
+            expired=expired,
+            invalid=invalid,
+            over_count=over_count,
+            over_total_bytes=over_total_bytes,
+        )
 
     def _read_valid_snapshots(self) -> Iterable[RecoverySnapshot]:
         for path in self.root.glob("*.json"):
@@ -314,7 +359,7 @@ class UnsavedRecoveryStore:
             if len(snapshot.content.encode("utf-8")) > self.max_document_bytes:
                 return None
             return snapshot
-        except (OSError, UnicodeError, ValueError, TypeError, AttributeError, RecursionError):
+        except (UnicodeError, ValueError, TypeError, AttributeError, RecursionError):
             return None
 
     def _path(self, snapshot_id: str) -> Path:

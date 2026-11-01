@@ -9,7 +9,11 @@ import sys
 
 import pytest
 
-from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
+from src.editor_recovery import (
+    DEFAULT_RETENTION_HOURS,
+    RecoverySnapshotError,
+    UnsavedRecoveryStore,
+)
 from PySide6.QtCore import QLockFile
 
 
@@ -47,6 +51,69 @@ def test_prune_removes_expired_snapshot(tmp_path):
 
     assert store.list() == []
     assert not path.exists()
+
+
+def test_default_retention_keeps_twenty_nine_day_snapshot(tmp_path):
+    assert DEFAULT_RETENTION_HOURS == 30 * 24
+    store = UnsavedRecoveryStore(tmp_path)
+    store.save("recent", title="Recent", content="recover me")
+    path = tmp_path / "recent.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["updated_at"] = (
+        datetime.now(timezone.utc) - timedelta(days=29)
+    ).isoformat()
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+    assert [snapshot.snapshot_id for snapshot in store.list()] == ["recent"]
+
+
+def test_recovery_inventory_reports_expired_corrupt_and_quota_cleanup(tmp_path):
+    store = UnsavedRecoveryStore(tmp_path, max_snapshots=1)
+    store.save("keep", title="Keep", content="current")
+
+    expired = tmp_path / "expired.json"
+    expired.write_text((tmp_path / "keep.json").read_text(encoding="utf-8"), encoding="utf-8")
+    expired_data = json.loads(expired.read_text(encoding="utf-8"))
+    expired_data["snapshot_id"] = "expired"
+    expired_data["updated_at"] = (
+        datetime.now(timezone.utc) - timedelta(days=31)
+    ).isoformat()
+    expired.write_text(json.dumps(expired_data), encoding="utf-8")
+
+    (tmp_path / "corrupt.json").write_text("not json", encoding="utf-8")
+    extra = tmp_path / "extra.json"
+    extra.write_text((tmp_path / "keep.json").read_text(encoding="utf-8"), encoding="utf-8")
+    extra_data = json.loads(extra.read_text(encoding="utf-8"))
+    extra_data["snapshot_id"] = "extra"
+    extra_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    extra.write_text(json.dumps(extra_data), encoding="utf-8")
+
+    snapshots, report = store.list_with_report()
+
+    assert len(snapshots) == 1
+    assert report.expired == 1
+    assert report.invalid == 1
+    assert report.over_count == 1
+    assert report.over_total_bytes == 0
+
+
+def test_inventory_io_failure_is_reported_without_deleting_snapshot(
+    tmp_path, monkeypatch
+):
+    store = UnsavedRecoveryStore(tmp_path)
+    store.save("keep", title="Keep", content="current")
+    original_open = os.open
+
+    def fail_snapshot_open(path, flags, *args, **kwargs):
+        if str(path).endswith("keep.json"):
+            raise OSError("synthetic inventory failure")
+        return original_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", fail_snapshot_open)
+
+    with pytest.raises(OSError, match="synthetic inventory failure"):
+        store.list_with_report()
+    assert (tmp_path / "keep.json").exists()
 
 
 def test_save_reports_count_quota_without_evicting_other_buffers(tmp_path):

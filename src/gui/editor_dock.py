@@ -51,7 +51,12 @@ from PySide6.QtGui import (
 )
 
 from src.i18n.translator import get_translator, tooltip_tr, tr
-from src.editor_recovery import RecoverySnapshotError, UnsavedRecoveryStore
+from src.editor_recovery import (
+    DEFAULT_RETENTION_HOURS,
+    RecoveryPruneReport,
+    RecoverySnapshotError,
+    UnsavedRecoveryStore,
+)
 from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
 from src.editor_reference_updates import (
     ReferenceUpdateError,
@@ -1426,8 +1431,16 @@ class EditorDock(BaseDock):
         self.explorer_root_path = self.settings.value(
             "explorer_root_path", str(Path.home()), type=str
         )
-        self.recovery_retention_hours = self.settings.value(
-            "recovery_retention_hours", 24, type=int
+        self.recovery_retention_hours = max(
+            1,
+            min(
+                30 * 24,
+                self.settings.value(
+                    "recovery_retention_hours",
+                    DEFAULT_RETENTION_HOURS,
+                    type=int,
+                ),
+            ),
         )
         self.recovery_store = UnsavedRecoveryStore(
             retention_hours=self.recovery_retention_hours
@@ -1450,6 +1463,8 @@ class EditorDock(BaseDock):
         self._recovery_suspended = False
         self._recovery_failures = 0
         self._recovery_offer_dismissed = False
+        self._last_recovery_prune_report = RecoveryPruneReport()
+        self._recovery_already_open_count = 0
         self._last_reference_update = None
         self._find_history_by_buffer: dict[str, _EditorFindHistory] = {}
         self._find_dialog = None
@@ -6068,22 +6083,58 @@ class EditorDock(BaseDock):
     def _pending_recovery_snapshots(self):
         """Return snapshots not already represented by this Editor instance."""
         try:
+            snapshots, report = self.recovery_store.list_with_report()
             active_ids = {
                 getattr(self.tab_widget.widget(index), "_clarify_recovery_id", "")
                 for index in range(self.tab_widget.count())
             }
             active_ids.discard("")
+            represented_ids = self._restored_recovery_ids | active_ids
+            if report.removed or snapshots:
+                self._last_recovery_prune_report = report
+            self._recovery_already_open_count = sum(
+                snapshot.snapshot_id in represented_ids for snapshot in snapshots
+            )
             return [
                 snapshot
-                for snapshot in self.recovery_store.list()
-                if snapshot.snapshot_id
-                not in self._restored_recovery_ids | active_ids
+                for snapshot in snapshots
+                if snapshot.snapshot_id not in represented_ids
             ]
         except (OSError, RecoverySnapshotError):
+            self._last_recovery_prune_report = RecoveryPruneReport()
+            self._recovery_already_open_count = 0
             self.lbl_status.setText(
                 tr("editor.status_recovery_skipped").format(count=1)
             )
             return None
+
+    def _recovery_empty_message(self) -> str:
+        """Explain why the latest bounded recovery inventory is empty."""
+        report = self._last_recovery_prune_report
+        details = []
+        if report.expired:
+            details.append(
+                tr("editor.recovery_reason_expired").format(count=report.expired)
+            )
+        if report.invalid:
+            details.append(
+                tr("editor.recovery_reason_invalid").format(count=report.invalid)
+            )
+        if report.over_quota:
+            details.append(
+                tr("editor.recovery_reason_quota").format(count=report.over_quota)
+            )
+        if self._recovery_already_open_count:
+            details.append(
+                tr("editor.recovery_reason_already_open").format(
+                    count=self._recovery_already_open_count
+                )
+            )
+        if not details:
+            return tr("editor.recovery_none_message")
+        return tr("editor.recovery_none_detailed_message").format(
+            details="; ".join(details)
+        )
 
     def _refresh_recovery_offer(self) -> bool:
         """Expose pending snapshots without blocking the Editor workspace."""
@@ -6149,12 +6200,17 @@ class EditorDock(BaseDock):
         """Offer to recover or discard all currently available snapshots."""
         snapshots = self._pending_recovery_snapshots()
         if snapshots is None:
+            QMessageBox.warning(
+                self,
+                tr("editor.recovery_none_title"),
+                tr("editor.recovery_store_unavailable"),
+            )
             return
         if not snapshots:
             QMessageBox.information(
                 self,
                 tr("editor.recovery_none_title"),
-                tr("editor.recovery_none_message"),
+                self._recovery_empty_message(),
             )
             return
 
