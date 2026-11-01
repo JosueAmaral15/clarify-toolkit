@@ -581,7 +581,7 @@
     "editor.recovery_reason_invalid": "{count} corrompido(s) ou inválido(s)",
     "editor.recovery_reason_quota": "{count} removido(s) pelos limites de armazenamento",
     "editor.recovery_reason_already_open": "{count} já aberto(s) nesta sessão",
-    "editor.recovery_store_unavailable": "Não foi possível ler o armazenamento de recuperação devido a uma falha de E/S ou de bloqueio.",
+    "editor.recovery_store_unavailable": "Falha ao ler o armazenamento de recuperação devido a um erro de E/S ou de bloqueio.",
     "editor.recovery_none_title": "Nada para Recuperar",
     "editor.recovery_retention_message": "Manter snapshots de recuperação por esta quantidade de horas:",
     "editor.recovery_retention_title": "Retenção da Recuperação",

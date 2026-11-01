@@ -480,7 +480,7 @@
   "editor.recovery_reason_invalid": "破損または無効 {count} 件",
   "editor.recovery_reason_quota": "ストレージ制限により削除 {count} 件",
   "editor.recovery_reason_already_open": "このセッションですでに開いているもの {count} 件",
-  "editor.recovery_store_unavailable": "入出力またはロックのエラーにより、復元ストレージを読み取れませんでした。",
+  "editor.recovery_store_unavailable": "入出力またはロックのエラーにより、復元ストレージの読み取りに失敗しました。",
   "editor.recovery_none_title": "復元対象なし",
   "editor.recovery_retention_message": "復元スナップショットを保持する時間:",
   "editor.recovery_retention_title": "復元保持期間",

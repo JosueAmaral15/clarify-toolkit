@@ -6202,3 +6202,23 @@ Plano imediato:
   `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_PARTIAL_2026_11_01.md`.
   `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - CE-RECOVERY-RETENTION-30D-01 completed
+
+- The automation pause was traced to a consumed one-shot prompt rule in
+  `failed_or_uncertain`, while task automation itself remained enabled. A new
+  user-authorized exact-session rule was created with a different ID; the old
+  uncertain dispatch was not retried.
+- Final validation exposed and corrected two compatibility defects: the public
+  recovery `list()` interception contract was restored, and inventory I/O
+  failures now use the non-blocking status surface instead of a modal warning.
+- The final serial set passed 105 distinct tests: 42 store, 5 retention, 53
+  lifecycle and 5 reopen. Peak tree RSS was 220.5 MiB; no final run had a native
+  crash, timeout or resource-guard abort. Another 10 translation-catalog tests,
+  compilation, JSON parsing, focused Pylint-E with PySide dynamic suppressions
+  and `git diff --check` passed.
+- New profiles use 30 days, existing preferences and all quotas remain intact,
+  and cleanup reasons are explicit without exposing recovered content. Evidence
+  is in `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_2026_11_01.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

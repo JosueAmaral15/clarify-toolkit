@@ -579,7 +579,7 @@
   "editor.recovery_reason_invalid": "{count} corrupt or invalid",
   "editor.recovery_reason_quota": "{count} removed by storage limits",
   "editor.recovery_reason_already_open": "{count} already open in this session",
-  "editor.recovery_store_unavailable": "Recovery storage could not be read because of an I/O or lock failure.",
+  "editor.recovery_store_unavailable": "Recovery storage read failed because of an I/O or lock error.",
   "editor.recovery_none_title": "Nothing to Recover",
   "editor.recovery_retention_message": "Keep recovery snapshots for this many hours:",
   "editor.recovery_retention_title": "Recovery Retention",

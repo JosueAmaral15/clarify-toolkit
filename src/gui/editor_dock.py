@@ -6103,9 +6103,7 @@ class EditorDock(BaseDock):
         except (OSError, RecoverySnapshotError):
             self._last_recovery_prune_report = RecoveryPruneReport()
             self._recovery_already_open_count = 0
-            self.lbl_status.setText(
-                tr("editor.status_recovery_skipped").format(count=1)
-            )
+            self.lbl_status.setText(tr("editor.recovery_store_unavailable"))
             return None
 
     def _recovery_empty_message(self) -> str:
@@ -6200,11 +6198,6 @@ class EditorDock(BaseDock):
         """Offer to recover or discard all currently available snapshots."""
         snapshots = self._pending_recovery_snapshots()
         if snapshots is None:
-            QMessageBox.warning(
-                self,
-                tr("editor.recovery_none_title"),
-                tr("editor.recovery_store_unavailable"),
-            )
             return
         if not snapshots:
             QMessageBox.information(

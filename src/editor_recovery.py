@@ -76,6 +76,7 @@ class UnsavedRecoveryStore:
         self.max_snapshots = max(1, int(max_snapshots))
         self.max_document_bytes = max(1, int(max_document_bytes))
         self.max_total_bytes = max(1, int(max_total_bytes))
+        self._last_prune_report = RecoveryPruneReport()
 
     def save(
         self,
@@ -226,22 +227,20 @@ class UnsavedRecoveryStore:
 
     def list(self) -> list[RecoverySnapshot]:
         """Return valid, recent snapshots newest first."""
-        snapshots, _report = self.list_with_report()
-        return snapshots
+        if not self.root.exists():
+            self._last_prune_report = RecoveryPruneReport()
+            return []
+        with self._locked():
+            self._last_prune_report = self._prune_unlocked()
+            snapshots = list(self._read_valid_snapshots())
+        return sorted(snapshots, key=lambda item: item.updated_at, reverse=True)
 
     def list_with_report(
         self,
     ) -> tuple[list[RecoverySnapshot], RecoveryPruneReport]:
         """Return recent snapshots and bounded cleanup reasons from this pass."""
-        if not self.root.exists():
-            return [], RecoveryPruneReport()
-        with self._locked():
-            report = self._prune_unlocked()
-            snapshots = list(self._read_valid_snapshots())
-        return (
-            sorted(snapshots, key=lambda item: item.updated_at, reverse=True),
-            report,
-        )
+        snapshots = self.list()
+        return snapshots, self._last_prune_report
 
     def discard(self, snapshot_id: str) -> None:
         """Delete one snapshot if present."""

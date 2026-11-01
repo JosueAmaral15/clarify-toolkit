@@ -807,7 +807,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   conteudo sensivel. Revalidar o contrato ja entregue: apos salvar, a guia assume
   imediatamente o titulo da nota e deixa de aparecer como `Untitled`, mantendo
   autosave e identidade temporaria.
-- [ ] **CE-RECOVERY-RETENTION-30D-01: usar 30 dias como retencao padrao.**
+- [x] **CE-RECOVERY-RETENTION-30D-01: usar 30 dias como retencao padrao.**
   Alterar o default de `Recover Unsaved...` de 24 horas para 30 dias em perfis
   novos, mantendo o intervalo configuravel e sem sobrescrever silenciosamente a
   escolha de usuarios existentes. Auditar por que a mensagem `No recent unsaved
@@ -817,6 +817,13 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   secundario privado e atomico pelo periodo configurado, sem escrever nos
   originais; preservar limites por documento/quantidade/total, limpeza previsivel,
   restore/discard explicitos e relatorio honesto quando algo nao puder ser salvo.
+  **Entregue em 01/11/2026:** perfis novos usam um unico default de 720 horas,
+  sem sobrescrever preferencias existentes. O inventario limitado distingue
+  expiracao, corrupcao, limpeza por quota, snapshots ja abertos e falha de
+  I/O/lock; falha transitoria nao apaga snapshot como corrompido e e reportada
+  sem modal bloqueante. O contrato publico `list()` e quotas anteriores foram
+  preservados. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_2026_11_01.md`.
 - [ ] **CE-TEMP-NOTE-MANAGER-BULK-01: traduzir e ampliar Manage Temporary Notes.**
   Traduzir `Close` e todos os novos controles nos catalogos suportados. Adicionar
   `Delete All` com contagem, preview e confirmacao destrutiva; `Open All` com

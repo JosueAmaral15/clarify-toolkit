@@ -84,7 +84,6 @@ def test_explicit_recovery_reports_inventory_io_failure(
     qtbot, tmp_path, monkeypatch
 ):
     dock = _create_dock(qtbot, tmp_path, monkeypatch)
-    messages = []
 
     def fail_inventory():
         raise OSError("synthetic inventory failure")
@@ -93,9 +92,9 @@ def test_explicit_recovery_reports_inventory_io_failure(
     monkeypatch.setattr(
         module.QMessageBox,
         "warning",
-        lambda _parent, _title, message: messages.append(message),
+        lambda *_args: (_ for _ in ()).throw(AssertionError("unexpected modal")),
     )
 
     dock._show_recovery_dialog()
 
-    assert messages == [module.tr("editor.recovery_store_unavailable")]
+    assert dock.lbl_status.text() == module.tr("editor.recovery_store_unavailable")

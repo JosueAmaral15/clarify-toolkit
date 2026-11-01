@@ -480,7 +480,7 @@
   "editor.recovery_reason_invalid": "{count} 个损坏或无效",
   "editor.recovery_reason_quota": "{count} 个因存储限制而移除",
   "editor.recovery_reason_already_open": "{count} 个已在此会话中打开",
-  "editor.recovery_store_unavailable": "由于输入输出或锁定错误，无法读取恢复存储。",
+  "editor.recovery_store_unavailable": "由于输入输出或锁定错误，读取恢复存储失败。",
   "editor.recovery_none_title": "没有可恢复内容",
   "editor.recovery_retention_message": "恢复快照保留小时数：",
   "editor.recovery_retention_title": "恢复保留时间",
