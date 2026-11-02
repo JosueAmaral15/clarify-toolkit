@@ -2454,5 +2454,23 @@
     "confirm_title": "Confirmar restablecimiento", "confirm": "¿Crear una copia y restaurar las preferencias seleccionadas?",
     "error_title": "Error al restablecer", "error": "No se modificó ninguna preferencia de forma segura.\n\n{error}",
     "success_title": "Configuración restablecida", "success": "Se restauraron las preferencias seleccionadas.\n\nCopia: {path}"
-  }
+  },
+  "editor.temp_notes_close": "Cerrar",
+  "editor.temp_notes_move_up": "Mover la nota seleccionada arriba (Alt+Arriba)",
+  "editor.temp_notes_move_down": "Mover la nota seleccionada abajo (Alt+Abajo)",
+  "editor.temp_notes_open_all": "Abrir todo",
+  "editor.temp_notes_export_all": "Exportar todo...",
+  "editor.temp_notes_delete_all": "Eliminar todo...",
+  "editor.temp_notes_more": "... y {count} más",
+  "editor.temp_notes_delete_all_title": "Eliminar todas las notas temporales",
+  "editor.temp_notes_delete_all_message": "¿Eliminar permanentemente {count} nota(s) temporal(es)? Los búferes abiertos se conservarán como documentos sin guardar.\n\n{preview}",
+  "editor.temp_notes_open_all_report": "Se abrieron {opened} de {total} nota(s) temporal(es).",
+  "editor.temp_notes_open_all_partial": "Se abrieron {opened} de {total} nota(s); no se pudieron abrir {failed}.",
+  "editor.temp_notes_export_bundle": "Un archivo JSON estructurado",
+  "editor.temp_notes_export_separate": "Archivos separados en una carpeta nueva",
+  "editor.temp_notes_export_prompt": "Elija el formato de exportación:",
+  "editor.status_temp_note_order_saved": "Orden de notas temporales guardado.",
+  "editor.status_temp_note_order_failure": "No se pudo guardar el orden de las notas temporales.",
+  "editor.status_temp_notes_deleted_all": "Se eliminaron {count} nota(s) temporal(es).",
+  "editor.status_temp_notes_exported_all": "Se exportaron {count} nota(s) temporal(es) a {path}."
 }

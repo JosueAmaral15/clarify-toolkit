@@ -2446,5 +2446,23 @@
     "confirm_title": "リセットの確認", "confirm": "バックアップを作成して選択した設定を復元しますか？",
     "error_title": "設定のリセットに失敗", "error": "設定は安全に変更されませんでした。\n\n{error}",
     "success_title": "設定のリセット完了", "success": "選択した設定を復元しました。\n\nバックアップ: {path}"
-  }
+  },
+  "editor.temp_notes_close": "閉じる",
+  "editor.temp_notes_move_up": "選択したメモを上へ移動 (Alt+上)",
+  "editor.temp_notes_move_down": "選択したメモを下へ移動 (Alt+下)",
+  "editor.temp_notes_open_all": "すべて開く",
+  "editor.temp_notes_export_all": "すべてエクスポート...",
+  "editor.temp_notes_delete_all": "すべて削除...",
+  "editor.temp_notes_more": "...ほか{count}件",
+  "editor.temp_notes_delete_all_title": "一時メモをすべて削除",
+  "editor.temp_notes_delete_all_message": "{count}件の一時メモを完全に削除しますか？開いているバッファーは未保存文書として保持されます。\n\n{preview}",
+  "editor.temp_notes_open_all_report": "{total}件中{opened}件の一時メモを開きました。",
+  "editor.temp_notes_open_all_partial": "{total}件中{opened}件を開き、{failed}件は開けませんでした。",
+  "editor.temp_notes_export_bundle": "1つの構造化JSONファイル",
+  "editor.temp_notes_export_separate": "新しいフォルダー内の個別ファイル",
+  "editor.temp_notes_export_prompt": "エクスポート形式を選択:",
+  "editor.status_temp_note_order_saved": "一時メモの順序を保存しました。",
+  "editor.status_temp_note_order_failure": "一時メモの順序を保存できませんでした。",
+  "editor.status_temp_notes_deleted_all": "{count}件の一時メモを削除しました。",
+  "editor.status_temp_notes_exported_all": "{count}件の一時メモを{path}へエクスポートしました。"
 }

@@ -2926,5 +2926,23 @@
     "confirm_title": "Confirm settings reset", "confirm": "Create a backup and restore the selected preferences?",
     "error_title": "Settings reset failed", "error": "No preferences were changed safely.\n\n{error}",
     "success_title": "Settings reset complete", "success": "The selected preferences were restored.\n\nBackup: {path}"
-  }
+  },
+  "editor.temp_notes_close": "Close",
+  "editor.temp_notes_move_up": "Move selected note up (Alt+Up)",
+  "editor.temp_notes_move_down": "Move selected note down (Alt+Down)",
+  "editor.temp_notes_open_all": "Open All",
+  "editor.temp_notes_export_all": "Export All...",
+  "editor.temp_notes_delete_all": "Delete All...",
+  "editor.temp_notes_more": "... and {count} more",
+  "editor.temp_notes_delete_all_title": "Delete All Temporary Notes",
+  "editor.temp_notes_delete_all_message": "Permanently delete {count} temporary note(s)? Open buffers will be preserved as unsaved documents.\n\n{preview}",
+  "editor.temp_notes_open_all_report": "Opened {opened} of {total} temporary note(s).",
+  "editor.temp_notes_open_all_partial": "Opened {opened} of {total} temporary note(s); {failed} could not be opened.",
+  "editor.temp_notes_export_bundle": "One structured JSON file",
+  "editor.temp_notes_export_separate": "Separate files in a new folder",
+  "editor.temp_notes_export_prompt": "Choose the export format:",
+  "editor.status_temp_note_order_saved": "Temporary-note order saved.",
+  "editor.status_temp_note_order_failure": "Temporary-note order could not be saved.",
+  "editor.status_temp_notes_deleted_all": "Deleted {count} temporary note(s).",
+  "editor.status_temp_notes_exported_all": "Exported {count} temporary note(s) to {path}."
 }

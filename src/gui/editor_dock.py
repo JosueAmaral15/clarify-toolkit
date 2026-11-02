@@ -57,7 +57,12 @@ from src.editor_recovery import (
     RecoverySnapshotError,
     UnsavedRecoveryStore,
 )
-from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
+from src.editor_notes import (
+    TemporaryNoteError,
+    TemporaryNoteStore,
+    export_notes_bundle,
+    export_notes_separately,
+)
 from src.editor_reference_updates import (
     ReferenceUpdateError,
     analyze_rename_references,
@@ -989,11 +994,13 @@ class _EditorStatusIndicator(QLabel):
 class _TemporaryNotesDialog(QDialog):
     """Searchable, keyboard-navigable actions for bounded temporary notes."""
 
-    def __init__(self, notes, parent=None):
+    def __init__(self, notes, parent=None, *, reorder_callback=None):
         super().__init__(parent)
         self.requested_action = ""
         self.selected_note_id = ""
-        self.setWindowTitle(tr("editor.temp_notes_title"))
+        self.selected_note_ids: list[str] = []
+        self._reorder_callback = reorder_callback
+        self._translation_connected = False
         self.setMinimumSize(560, 380)
 
         layout = QVBoxLayout(self)
@@ -1004,8 +1011,9 @@ class _TemporaryNotesDialog(QDialog):
         layout.addWidget(self.search_box)
 
         self.note_list = QListWidget(self)
-        self.note_list.setSortingEnabled(True)
+        self.note_list.setSortingEnabled(False)
         self.note_list.setAccessibleName(tr("editor.temp_notes_title"))
+        self.note_list.installEventFilter(self)
         for note in notes:
             item = QListWidgetItem(
                 f"{note.title} - {note.updated_at[:19]} - {note.note_id[:8]}"
@@ -1014,12 +1022,38 @@ class _TemporaryNotesDialog(QDialog):
             self.note_list.addItem(item)
         layout.addWidget(self.note_list, 1)
 
+        order_buttons = QHBoxLayout()
+        self.move_up_button = QPushButton(self)
+        self.move_down_button = QPushButton(self)
+        self.move_up_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowUp))
+        self.move_down_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowDown))
+        self.move_up_button.setFixedWidth(36)
+        self.move_down_button.setFixedWidth(36)
+        self.move_up_button.setToolTip(tr("editor.temp_notes_move_up"))
+        self.move_down_button.setToolTip(tr("editor.temp_notes_move_down"))
+        self.move_up_button.setAccessibleName(tr("editor.temp_notes_move_up"))
+        self.move_down_button.setAccessibleName(tr("editor.temp_notes_move_down"))
+        order_buttons.addWidget(self.move_up_button)
+        order_buttons.addWidget(self.move_down_button)
+        order_buttons.addStretch()
+        layout.addLayout(order_buttons)
+
+        bulk_buttons = QHBoxLayout()
+        self.open_all_button = QPushButton(tr("editor.temp_notes_open_all"), self)
+        self.export_all_button = QPushButton(tr("editor.temp_notes_export_all"), self)
+        self.delete_all_button = QPushButton(tr("editor.temp_notes_delete_all"), self)
+        bulk_buttons.addWidget(self.open_all_button)
+        bulk_buttons.addWidget(self.export_all_button)
+        bulk_buttons.addWidget(self.delete_all_button)
+        bulk_buttons.addStretch()
+        layout.addLayout(bulk_buttons)
+
         buttons = QHBoxLayout()
         self.restore_button = QPushButton(tr("editor.temp_note_restore"), self)
         self.rename_button = QPushButton(tr("editor.explorer_rename"), self)
         self.export_button = QPushButton(tr("editor.btn_export"), self)
         self.delete_button = QPushButton(tr("editor.temp_note_delete"), self)
-        self.close_button = QPushButton(tr("app.btn_close"), self)
+        self.close_button = QPushButton(tr("editor.temp_notes_close"), self)
         for button in (
             self.restore_button,
             self.rename_button,
@@ -1040,10 +1074,45 @@ class _TemporaryNotesDialog(QDialog):
         self.rename_button.clicked.connect(lambda: self._choose("rename"))
         self.export_button.clicked.connect(lambda: self._choose("export"))
         self.delete_button.clicked.connect(lambda: self._choose("delete"))
+        self.open_all_button.clicked.connect(lambda: self._choose_bulk("open_all"))
+        self.export_all_button.clicked.connect(lambda: self._choose_bulk("export_all"))
+        self.delete_all_button.clicked.connect(lambda: self._choose_bulk("delete_all"))
+        self.move_up_button.clicked.connect(lambda: self._move_selected(-1))
+        self.move_down_button.clicked.connect(lambda: self._move_selected(1))
         self.close_button.clicked.connect(self.reject)
         if self.note_list.count():
             self.note_list.setCurrentRow(0)
+        get_translator().languageChanged.connect(self._retranslate_ui)
+        self._translation_connected = True
+        self._retranslate_ui()
         self._update_actions()
+
+    def _retranslate_ui(self) -> None:
+        self.setWindowTitle(tr("editor.temp_notes_title"))
+        self.search_box.setPlaceholderText(tr("editor.temp_notes_search"))
+        self.search_box.setAccessibleName(tr("editor.temp_notes_search"))
+        self.note_list.setAccessibleName(tr("editor.temp_notes_title"))
+        self.move_up_button.setToolTip(tr("editor.temp_notes_move_up"))
+        self.move_down_button.setToolTip(tr("editor.temp_notes_move_down"))
+        self.move_up_button.setAccessibleName(tr("editor.temp_notes_move_up"))
+        self.move_down_button.setAccessibleName(tr("editor.temp_notes_move_down"))
+        self.open_all_button.setText(tr("editor.temp_notes_open_all"))
+        self.export_all_button.setText(tr("editor.temp_notes_export_all"))
+        self.delete_all_button.setText(tr("editor.temp_notes_delete_all"))
+        self.restore_button.setText(tr("editor.temp_note_restore"))
+        self.rename_button.setText(tr("editor.explorer_rename"))
+        self.export_button.setText(tr("editor.btn_export"))
+        self.delete_button.setText(tr("editor.temp_note_delete"))
+        self.close_button.setText(tr("editor.temp_notes_close"))
+
+    def closeEvent(self, event):  # pylint: disable=invalid-name
+        if self._translation_connected:
+            try:
+                get_translator().languageChanged.disconnect(self._retranslate_ui)
+            except (RuntimeError, TypeError):
+                pass
+            self._translation_connected = False
+        super().closeEvent(event)
 
     def _filter_notes(self, text: str) -> None:
         needle = text.strip().casefold()
@@ -1060,6 +1129,19 @@ class _TemporaryNotesDialog(QDialog):
                     break
         self._update_actions()
 
+    def eventFilter(self, watched, event):  # pylint: disable=invalid-name
+        if watched is self.note_list and event.type() == QEvent.Type.KeyPress:
+            if event.modifiers() == Qt.KeyboardModifier.AltModifier:
+                if event.key() == Qt.Key.Key_Up:
+                    self._move_selected(-1)
+                    event.accept()
+                    return True
+                if event.key() == Qt.Key.Key_Down:
+                    self._move_selected(1)
+                    event.accept()
+                    return True
+        return super().eventFilter(watched, event)
+
     def _update_actions(self) -> None:
         current = self.note_list.currentItem()
         enabled = current is not None and not current.isHidden()
@@ -1070,6 +1152,19 @@ class _TemporaryNotesDialog(QDialog):
             self.delete_button,
         ):
             button.setEnabled(enabled)
+        has_notes = self.note_list.count() > 0
+        for button in (
+            self.open_all_button,
+            self.export_all_button,
+            self.delete_all_button,
+        ):
+            button.setEnabled(has_notes)
+        row = self.note_list.currentRow()
+        can_reorder = enabled and not self.search_box.text().strip()
+        self.move_up_button.setEnabled(can_reorder and row > 0)
+        self.move_down_button.setEnabled(
+            can_reorder and 0 <= row < self.note_list.count() - 1
+        )
 
     def _choose(self, action: str) -> None:
         item = self.note_list.currentItem()
@@ -1079,6 +1174,55 @@ class _TemporaryNotesDialog(QDialog):
         self.selected_note_id = str(item.data(Qt.ItemDataRole.UserRole) or "")
         if self.selected_note_id:
             self.accept()
+
+    def _choose_bulk(self, action: str) -> None:
+        note_ids = self._note_ids()
+        if not note_ids:
+            return
+        self.requested_action = action
+        self.selected_note_ids = note_ids
+        self.accept()
+
+    def _note_ids(self) -> list[str]:
+        return [
+            str(self.note_list.item(index).data(Qt.ItemDataRole.UserRole) or "")
+            for index in range(self.note_list.count())
+        ]
+
+    def _set_note_order(self, note_ids: list[str]) -> None:
+        items = {}
+        while self.note_list.count():
+            item = self.note_list.takeItem(0)
+            items[str(item.data(Qt.ItemDataRole.UserRole) or "")] = item
+        for note_id in note_ids:
+            item = items.pop(note_id, None)
+            if item is not None:
+                self.note_list.addItem(item)
+        for item in items.values():
+            self.note_list.addItem(item)
+
+    def _move_selected(self, offset: int) -> None:
+        if self.search_box.text().strip():
+            return
+        row = self.note_list.currentRow()
+        target = row + int(offset)
+        if row < 0 or target < 0 or target >= self.note_list.count():
+            return
+        previous = self._note_ids()
+        updated = previous.copy()
+        updated[row], updated[target] = updated[target], updated[row]
+        self._set_note_order(updated)
+        self.note_list.setCurrentRow(target)
+        try:
+            saved = self._reorder_callback is None or bool(
+                self._reorder_callback(updated)
+            )
+        except (OSError, TemporaryNoteError):
+            saved = False
+        if not saved:
+            self._set_note_order(previous)
+            self.note_list.setCurrentRow(row)
+        self._update_actions()
 
 
 class EditorDock(BaseDock):
@@ -6526,8 +6670,17 @@ class EditorDock(BaseDock):
         except (OSError, TemporaryNoteError):
             self.lbl_status.setText(tr("editor.status_temp_note_failure"))
             return False
+        self._detach_deleted_temp_note_tabs({note_id})
+        self.lbl_status.setText(
+            tr("editor.status_temp_note_deleted").format(title=note.title)
+        )
+        return True
+
+    def _detach_deleted_temp_note_tabs(self, note_ids) -> None:
+        """Keep open content as dirty buffers after deleting note storage."""
+        deleted = set(note_ids)
         for tab in self._all_tab_objects():
-            if getattr(tab, "_clarify_temp_note_id", "") == note_id:
+            if getattr(tab, "_clarify_temp_note_id", "") in deleted:
                 delattr(tab, "_clarify_temp_note_id")
                 if hasattr(tab, "_clarify_temp_note_title"):
                     delattr(tab, "_clarify_temp_note_title")
@@ -6540,10 +6693,6 @@ class EditorDock(BaseDock):
                 if hasattr(tab, "modified_changed"):
                     tab.modified_changed.emit(True)
                 self._update_tab_title(tab)
-        self.lbl_status.setText(
-            tr("editor.status_temp_note_deleted").format(title=note.title)
-        )
-        return True
 
     def _rename_temp_note(self, note_id: str, title: str) -> bool:
         tab = self._open_temp_note_tab(note_id)
@@ -6598,20 +6747,158 @@ class EditorDock(BaseDock):
         )
         return True
 
+    def _reorder_temp_notes(self, note_ids) -> bool:
+        try:
+            self.temp_note_store.reorder(note_ids)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_order_failure"))
+            return False
+        self.lbl_status.setText(tr("editor.status_temp_note_order_saved"))
+        return True
+
+    def _open_all_temp_notes(self) -> bool:
+        try:
+            notes = self.temp_note_store.list()
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if not notes:
+            self.lbl_status.setText(tr("editor.temp_notes_empty"))
+            return False
+        notes = notes[: self.temp_note_store.max_notes]
+        opened = sum(
+            1 for note in notes if self._restore_temp_note(note.note_id) is not None
+        )
+        failed = len(notes) - opened
+        message_key = (
+            "editor.temp_notes_open_all_report"
+            if failed == 0
+            else "editor.temp_notes_open_all_partial"
+        )
+        message = tr(message_key).format(
+            opened=opened,
+            failed=failed,
+            total=len(notes),
+        )
+        self.lbl_status.setText(message)
+        if failed:
+            QMessageBox.warning(self, tr("editor.temp_notes_title"), message)
+        return failed == 0
+
+    def _delete_all_temp_notes(self, *, confirm: bool = True) -> bool:
+        try:
+            notes = self.temp_note_store.list()
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if not notes:
+            self.lbl_status.setText(tr("editor.temp_notes_empty"))
+            return False
+        if confirm:
+            preview = "\n".join(f"- {note.title}" for note in notes[:10])
+            if len(notes) > 10:
+                preview += "\n" + tr("editor.temp_notes_more").format(
+                    count=len(notes) - 10
+                )
+            answer = QMessageBox.question(
+                self,
+                tr("editor.temp_notes_delete_all_title"),
+                tr("editor.temp_notes_delete_all_message").format(
+                    count=len(notes),
+                    preview=preview,
+                ),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
+            if answer != QMessageBox.Yes:
+                return False
+        note_ids = [note.note_id for note in notes]
+        try:
+            deleted = self.temp_note_store.discard_many(note_ids)
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        self._detach_deleted_temp_note_tabs(note_ids)
+        self.lbl_status.setText(
+            tr("editor.status_temp_notes_deleted_all").format(count=deleted)
+        )
+        return deleted == len(note_ids)
+
+    def _export_all_temp_notes(
+        self,
+        *,
+        mode: str | None = None,
+        destination: str | None = None,
+    ) -> bool:
+        if not self._flush_temp_note_autosaves():
+            return False
+        try:
+            notes = self.temp_note_store.list()
+        except (OSError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        if not notes:
+            self.lbl_status.setText(tr("editor.temp_notes_empty"))
+            return False
+        if mode is None:
+            bundle_label = tr("editor.temp_notes_export_bundle")
+            separate_label = tr("editor.temp_notes_export_separate")
+            selected, accepted = QInputDialog.getItem(
+                self,
+                tr("editor.temp_notes_export_all"),
+                tr("editor.temp_notes_export_prompt"),
+                [bundle_label, separate_label],
+                0,
+                False,
+            )
+            if not accepted:
+                return False
+            mode = "bundle" if selected == bundle_label else "separate"
+        try:
+            if mode == "bundle":
+                if destination is None:
+                    destination, _selected_filter = QFileDialog.getSaveFileName(
+                        self,
+                        tr("editor.temp_notes_export_all"),
+                        "clarify-temporary-notes.json",
+                        "JSON (*.json)",
+                    )
+                if not destination:
+                    return False
+                exported_path = export_notes_bundle(notes, destination)
+            elif mode == "separate":
+                if destination is None:
+                    destination = QFileDialog.getExistingDirectory(
+                        self,
+                        tr("editor.temp_notes_export_all"),
+                    )
+                if not destination:
+                    return False
+                exported_path = export_notes_separately(notes, destination)
+            else:
+                return False
+        except (OSError, UnicodeError, TemporaryNoteError):
+            self.lbl_status.setText(tr("editor.status_temp_note_failure"))
+            return False
+        self.lbl_status.setText(
+            tr("editor.status_temp_notes_exported_all").format(
+                count=len(notes),
+                path=str(exported_path),
+            )
+        )
+        return True
+
     def _show_temp_notes_dialog(self) -> None:
         try:
             notes = self.temp_note_store.list()
         except (OSError, TemporaryNoteError):
             self.lbl_status.setText(tr("editor.status_temp_note_failure"))
             return
-        if not notes:
-            QMessageBox.information(
-                self,
-                tr("editor.temp_notes_title"),
-                tr("editor.temp_notes_empty"),
-            )
-            return
-        dialog = _TemporaryNotesDialog(notes, self)
+        dialog = _TemporaryNotesDialog(
+            notes,
+            self,
+            reorder_callback=self._reorder_temp_notes,
+        )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         note_id = dialog.selected_note_id
@@ -6635,6 +6922,12 @@ class EditorDock(BaseDock):
                 self._rename_temp_note(note_id, title)
         elif dialog.requested_action == "export":
             self._export_temp_note(note_id)
+        elif dialog.requested_action == "open_all":
+            self._open_all_temp_notes()
+        elif dialog.requested_action == "delete_all":
+            self._delete_all_temp_notes()
+        elif dialog.requested_action == "export_all":
+            self._export_all_temp_notes()
 
     def _set_temp_note_retention(self, days: int | None = None) -> bool:
         """Set optional updated-at retention; zero always means manual deletion."""

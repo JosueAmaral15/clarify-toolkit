@@ -6,7 +6,12 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from src.editor_notes import TemporaryNoteError, TemporaryNoteStore
+from src.editor_notes import (
+    TemporaryNoteError,
+    TemporaryNoteStore,
+    export_notes_bundle,
+    export_notes_separately,
+)
 
 
 def test_note_round_trip_update_and_new_store_instance(tmp_path):
@@ -90,3 +95,84 @@ def test_symlink_storage_root_is_rejected(tmp_path):
 
     with pytest.raises(TemporaryNoteError, match="symlink"):
         store.save("one", title="One", content="content")
+
+
+def test_note_order_is_persistent_by_identity_not_title(tmp_path):
+    store = TemporaryNoteStore(tmp_path)
+    store.save("one", title="Zulu", content="one")
+    store.save("two", title="Alpha", content="two")
+    assert [note.note_id for note in store.list()] == ["one", "two"]
+
+    store.reorder(["two", "one"])
+    store.save("two", title="Renamed", content="updated")
+
+    reopened = TemporaryNoteStore(tmp_path)
+    assert [note.note_id for note in reopened.list()] == ["two", "one"]
+    reopened.discard("two")
+    assert [note.note_id for note in reopened.list()] == ["one"]
+
+
+def test_discard_many_rolls_back_when_staging_fails(tmp_path, monkeypatch):
+    store = TemporaryNoteStore(tmp_path)
+    store.save("one", title="One", content="one")
+    store.save("two", title="Two", content="two")
+    real_replace = os.replace
+
+    def fail_second_stage(source, destination):
+        if os.path.basename(source) == "two.json" and ".delete-" in os.path.basename(destination):
+            raise OSError("injected staging failure")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(os, "replace", fail_second_stage)
+    with pytest.raises(TemporaryNoteError, match="delete notes atomically"):
+        store.discard_many(["one", "two"])
+
+    assert [note.note_id for note in store.list()] == ["one", "two"]
+    assert store.get("one").content == "one"
+    assert store.get("two").content == "two"
+
+
+def test_bundle_export_is_atomic_structured_and_non_destructive(tmp_path):
+    store = TemporaryNoteStore(tmp_path / "notes")
+    store.save("one", title="One", content="alpha", extension=".md")
+    destination = tmp_path / "all-notes.json"
+
+    export_notes_bundle(store.list(), destination)
+
+    payload = json.loads(destination.read_text(encoding="utf-8"))
+    assert payload["format"] == "clarify-temporary-notes"
+    assert payload["version"] == 1
+    assert payload["notes"][0]["note_id"] == "one"
+    assert payload["notes"][0]["content"] == "alpha"
+    assert store.get("one").content == "alpha"
+
+
+def test_separate_export_resolves_names_and_cleans_failed_stage(tmp_path, monkeypatch):
+    store = TemporaryNoteStore(tmp_path / "notes")
+    store.save("one", title="Same/Title", content="one", extension=".txt")
+    store.save("two", title="Same/Title", content="two", extension=".txt")
+    export_parent = tmp_path / "exports"
+    export_parent.mkdir()
+
+    exported = export_notes_separately(store.list(), export_parent)
+    assert sorted(path.name for path in exported.iterdir()) == [
+        "Same_Title-2.txt",
+        "Same_Title.txt",
+    ]
+    assert {path.read_text(encoding="utf-8") for path in exported.iterdir()} == {"one", "two"}
+
+    from src import editor_notes as notes_module
+    real_write = notes_module.write_text_atomically
+    calls = 0
+
+    def fail_second_write(path, content):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected export failure")
+        return real_write(path, content)
+
+    monkeypatch.setattr(notes_module, "write_text_atomically", fail_second_write)
+    with pytest.raises(TemporaryNoteError, match="export notes"):
+        export_notes_separately(store.list(), export_parent)
+    assert not list(export_parent.glob(".clarify-note-export-*"))

@@ -2446,5 +2446,23 @@
     "confirm_title": "确认重置设置", "confirm": "创建备份并恢复所选首选项？",
     "error_title": "设置重置失败", "error": "未能安全更改任何首选项。\n\n{error}",
     "success_title": "设置重置完成", "success": "已恢复所选首选项。\n\n备份：{path}"
-  }
+  },
+  "editor.temp_notes_close": "关闭",
+  "editor.temp_notes_move_up": "上移所选笔记（Alt+上）",
+  "editor.temp_notes_move_down": "下移所选笔记（Alt+下）",
+  "editor.temp_notes_open_all": "全部打开",
+  "editor.temp_notes_export_all": "全部导出...",
+  "editor.temp_notes_delete_all": "全部删除...",
+  "editor.temp_notes_more": "...以及另外{count}项",
+  "editor.temp_notes_delete_all_title": "删除所有临时笔记",
+  "editor.temp_notes_delete_all_message": "永久删除{count}条临时笔记？已打开的缓冲区将保留为未保存文档。\n\n{preview}",
+  "editor.temp_notes_open_all_report": "已打开{total}条临时笔记中的{opened}条。",
+  "editor.temp_notes_open_all_partial": "已打开{total}条中的{opened}条；{failed}条无法打开。",
+  "editor.temp_notes_export_bundle": "一个结构化JSON文件",
+  "editor.temp_notes_export_separate": "新文件夹中的独立文件",
+  "editor.temp_notes_export_prompt": "选择导出格式：",
+  "editor.status_temp_note_order_saved": "临时笔记顺序已保存。",
+  "editor.status_temp_note_order_failure": "无法保存临时笔记顺序。",
+  "editor.status_temp_notes_deleted_all": "已删除{count}条临时笔记。",
+  "editor.status_temp_notes_exported_all": "已将{count}条临时笔记导出到{path}。"
 }

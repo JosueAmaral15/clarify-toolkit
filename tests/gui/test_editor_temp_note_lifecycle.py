@@ -233,7 +233,9 @@ def test_note_manager_is_searchable_list_with_per_item_actions(qtbot, tmp_path, 
     qtbot.addWidget(dialog)
 
     assert dialog.note_list.count() == 2
-    assert dialog.note_list.isSortingEnabled()
+    assert not dialog.note_list.isSortingEnabled()
+    assert dialog.note_list.item(0).data(module.Qt.ItemDataRole.UserRole) == "one"
+    assert dialog.note_list.item(1).data(module.Qt.ItemDataRole.UserRole) == "two"
     dialog.search_box.setText("beta")
     assert dialog.note_list.item(0).isHidden() != dialog.note_list.item(1).isHidden()
     assert dialog.restore_button.isEnabled()

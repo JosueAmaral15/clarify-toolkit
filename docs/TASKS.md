@@ -824,7 +824,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   sem modal bloqueante. O contrato publico `list()` e quotas anteriores foram
   preservados. Evidencia em
   `docs/reports/CLARIFY_EDITOR_RECOVERY_RETENTION_2026_11_01.md`.
-- [ ] **CE-TEMP-NOTE-MANAGER-BULK-01: traduzir e ampliar Manage Temporary Notes.**
+- [x] **CE-TEMP-NOTE-MANAGER-BULK-01: traduzir e ampliar Manage Temporary Notes.**
   Traduzir `Close` e todos os novos controles nos catalogos suportados. Adicionar
   `Delete All` com contagem, preview e confirmacao destrutiva; `Open All` com
   limites e relatorio parcial; e `Export All`, permitindo escolher entre um unico
@@ -834,6 +834,13 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   usar o titulo como identidade. Desabilitar acoes quando inaplicaveis e cobrir
   lista vazia, selecao, quota, colisao de nomes, falha atomica, cancelamento,
   runtime translation e navegacao por teclado.
+  **Entregue em 01/11/2026:** o gerenciador oferece Open All, Export All e
+  Delete All com limites, relatorio parcial, preview e confirmacao destrutiva.
+  A exportacao atomica e nao destrutiva permite um JSON estruturado ou arquivos
+  separados com nomes seguros. A ordem e persistida por ID estavel e pode ser
+  alterada por controles acessiveis ou `Alt+Up/Down`; a interface reage a
+  traducao em tempo de execucao nos sete catalogos. Evidencia em
+  `docs/reports/CLARIFY_EDITOR_TEMP_NOTE_MANAGER_BULK_2026_11_01.md`.
 - [ ] **CE-EXPLORER-RENAME-F2-01: renomear item do Explorer com F2.** Quando um
   unico arquivo ou diretorio valido estiver selecionado no Explorer do Clarify
   Editor, `F2` deve abrir o mesmo fluxo seguro de rename usado pelo menu de

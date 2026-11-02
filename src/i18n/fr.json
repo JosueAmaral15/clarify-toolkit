@@ -2446,5 +2446,23 @@
     "confirm_title": "Confirmer la réinitialisation", "confirm": "Créer une sauvegarde et restaurer les préférences sélectionnées ?",
     "error_title": "Échec de la réinitialisation", "error": "Aucune préférence n'a été modifiée en toute sécurité.\n\n{error}",
     "success_title": "Paramètres réinitialisés", "success": "Les préférences sélectionnées ont été restaurées.\n\nSauvegarde : {path}"
-  }
+  },
+  "editor.temp_notes_close": "Fermer",
+  "editor.temp_notes_move_up": "Déplacer la note sélectionnée vers le haut (Alt+Haut)",
+  "editor.temp_notes_move_down": "Déplacer la note sélectionnée vers le bas (Alt+Bas)",
+  "editor.temp_notes_open_all": "Tout ouvrir",
+  "editor.temp_notes_export_all": "Tout exporter...",
+  "editor.temp_notes_delete_all": "Tout supprimer...",
+  "editor.temp_notes_more": "... et {count} de plus",
+  "editor.temp_notes_delete_all_title": "Supprimer toutes les notes temporaires",
+  "editor.temp_notes_delete_all_message": "Supprimer définitivement {count} note(s) temporaire(s) ? Les tampons ouverts seront conservés comme documents non enregistrés.\n\n{preview}",
+  "editor.temp_notes_open_all_report": "{opened} note(s) temporaire(s) ouverte(s) sur {total}.",
+  "editor.temp_notes_open_all_partial": "{opened} note(s) ouverte(s) sur {total} ; {failed} n'ont pas pu être ouvertes.",
+  "editor.temp_notes_export_bundle": "Un fichier JSON structuré",
+  "editor.temp_notes_export_separate": "Fichiers séparés dans un nouveau dossier",
+  "editor.temp_notes_export_prompt": "Choisissez le format d'exportation :",
+  "editor.status_temp_note_order_saved": "Ordre des notes temporaires enregistré.",
+  "editor.status_temp_note_order_failure": "Impossible d'enregistrer l'ordre des notes temporaires.",
+  "editor.status_temp_notes_deleted_all": "{count} note(s) temporaire(s) supprimée(s).",
+  "editor.status_temp_notes_exported_all": "{count} note(s) temporaire(s) exportée(s) vers {path}."
 }

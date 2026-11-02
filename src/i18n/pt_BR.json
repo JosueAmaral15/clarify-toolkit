@@ -2953,5 +2953,23 @@
         "confirm_title": "Confirmar redefinição", "confirm": "Criar um backup e restaurar as preferências selecionadas?",
         "error_title": "Falha ao redefinir configurações", "error": "Nenhuma preferência foi alterada com segurança.\n\n{error}",
         "success_title": "Configurações redefinidas", "success": "As preferências selecionadas foram restauradas.\n\nBackup: {path}"
-    }
+    },
+    "editor.temp_notes_close": "Fechar",
+    "editor.temp_notes_move_up": "Mover nota selecionada para cima (Alt+Up)",
+    "editor.temp_notes_move_down": "Mover nota selecionada para baixo (Alt+Down)",
+    "editor.temp_notes_open_all": "Abrir Tudo",
+    "editor.temp_notes_export_all": "Exportar Tudo...",
+    "editor.temp_notes_delete_all": "Excluir Tudo...",
+    "editor.temp_notes_more": "... e mais {count}",
+    "editor.temp_notes_delete_all_title": "Excluir Todas as Notas Temporárias",
+    "editor.temp_notes_delete_all_message": "Excluir permanentemente {count} nota(s) temporária(s)? Buffers abertos serão preservados como documentos não salvos.\n\n{preview}",
+    "editor.temp_notes_open_all_report": "Foram abertas {opened} de {total} nota(s) temporária(s).",
+    "editor.temp_notes_open_all_partial": "Foram abertas {opened} de {total} nota(s); {failed} não puderam ser abertas.",
+    "editor.temp_notes_export_bundle": "Um arquivo JSON estruturado",
+    "editor.temp_notes_export_separate": "Arquivos separados em uma nova pasta",
+    "editor.temp_notes_export_prompt": "Escolha o formato de exportação:",
+    "editor.status_temp_note_order_saved": "Ordem das notas temporárias salva.",
+    "editor.status_temp_note_order_failure": "Não foi possível salvar a ordem das notas temporárias.",
+    "editor.status_temp_notes_deleted_all": "Foram excluídas {count} nota(s) temporária(s).",
+    "editor.status_temp_notes_exported_all": "Foram exportadas {count} nota(s) temporária(s) para {path}."
 }

@@ -2446,5 +2446,23 @@
     "confirm_title": "Zurücksetzen bestätigen", "confirm": "Sicherung erstellen und ausgewählte Einstellungen wiederherstellen?",
     "error_title": "Zurücksetzen fehlgeschlagen", "error": "Keine Einstellungen wurden sicher geändert.\n\n{error}",
     "success_title": "Einstellungen zurückgesetzt", "success": "Die ausgewählten Einstellungen wurden wiederhergestellt.\n\nSicherung: {path}"
-  }
+  },
+  "editor.temp_notes_close": "Schließen",
+  "editor.temp_notes_move_up": "Ausgewählte Notiz nach oben verschieben (Alt+Auf)",
+  "editor.temp_notes_move_down": "Ausgewählte Notiz nach unten verschieben (Alt+Ab)",
+  "editor.temp_notes_open_all": "Alle öffnen",
+  "editor.temp_notes_export_all": "Alle exportieren...",
+  "editor.temp_notes_delete_all": "Alle löschen...",
+  "editor.temp_notes_more": "... und {count} weitere",
+  "editor.temp_notes_delete_all_title": "Alle temporären Notizen löschen",
+  "editor.temp_notes_delete_all_message": "{count} temporäre Notiz(en) dauerhaft löschen? Geöffnete Puffer bleiben als ungespeicherte Dokumente erhalten.\n\n{preview}",
+  "editor.temp_notes_open_all_report": "{opened} von {total} temporären Notiz(en) geöffnet.",
+  "editor.temp_notes_open_all_partial": "{opened} von {total} Notiz(en) geöffnet; {failed} konnten nicht geöffnet werden.",
+  "editor.temp_notes_export_bundle": "Eine strukturierte JSON-Datei",
+  "editor.temp_notes_export_separate": "Separate Dateien in einem neuen Ordner",
+  "editor.temp_notes_export_prompt": "Exportformat auswählen:",
+  "editor.status_temp_note_order_saved": "Reihenfolge der temporären Notizen gespeichert.",
+  "editor.status_temp_note_order_failure": "Reihenfolge der temporären Notizen konnte nicht gespeichert werden.",
+  "editor.status_temp_notes_deleted_all": "{count} temporäre Notiz(en) gelöscht.",
+  "editor.status_temp_notes_exported_all": "{count} temporäre Notiz(en) nach {path} exportiert."
 }
