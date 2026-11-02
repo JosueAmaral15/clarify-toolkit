@@ -6393,3 +6393,18 @@ Plano imediato:
   `docs/reports/CLARIFY_FILE_SEARCHER_SECTIONS_2026_11_01.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published Search/Replace sections checkpoint and next continuation
+
+- Feature commit `7f86a3f` was pushed to
+  `COM-f4e804c5-81ba-4cee-8d30-2dad6169eedc`. No default branch, provider,
+  dependency or unrelated user file changed; 82 canonical open task markers
+  remain.
+- AI Presence Monitor 0.10.7 revalidated the exact active Protocol2 worker,
+  schema/database health, five hooks, native queue, both services and tray
+  autostart. Task/native automation is enabled; GUI/remote input and scheduled
+  prompt rules remain disabled.
+- `FE-REPLACE-REUSE-CONFIRM-01` is the next bounded task in the latest
+  reconciled sequence. One exact-session native continuation with a 60-second
+  delay will be issued after this journal checkpoint is committed and pushed;
+  an uncertain dispatch must not be retried.
