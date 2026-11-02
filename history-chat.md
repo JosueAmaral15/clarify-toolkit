@@ -6354,3 +6354,42 @@ Plano imediato:
   bounded stage. One exact-session native continuation with a 60-second delay
   will be issued after this journal checkpoint is committed and pushed; an
   uncertain dispatch must not be retried.
+
+## 2026-11-01 - FE-SEARCH-REPLACE-SECTIONS-01 started
+
+- The exact native continuation was delivered. Work starts from published
+  checkpoint `5df3639` on fresh branch
+  `COM-f4e804c5-81ba-4cee-8d30-2dad6169eedc`, limited to visually separating
+  Search and Replace in File Explorer without renaming the tool.
+- AI Presence Monitor 0.10.7 reports the exact Clarify Protocol2 worker active,
+  schema integrity healthy, five hooks installed, native queue and both services
+  available. Task/native automation is enabled; GUI/remote input and scheduled
+  prompt rules remain disabled.
+- The audit will prove the current Compact/Advanced widget ownership, result
+  universe, presets, cache and operation-gate contracts before edits. Replace
+  must remain disabled without a valid bounded universe and must not gain an
+  implicit reuse or write path in this stage.
+- Validation remains serial and isolated with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - FE-SEARCH-REPLACE-SECTIONS-01 completed
+
+- File Explorer now presents Search and Replace in separate sections while
+  retaining one shared query/result/cache/lifecycle state. Replace starts
+  collapsed and stays available in both Compact and Advanced presentations.
+- Replace actions are disabled without query plus an explicit valid universe or
+  during another dock operation. A bounded accessible summary reports selected
+  files and known current-result matches, previews at most five elided paths and
+  is included in the existing final confirmation before writes.
+- Single-file scope does not discover siblings; Tree and Table selections remain
+  equivalent. No implicit Reuse Previous Results, preflight or new write route
+  was introduced, leaving `FE-REPLACE-REUSE-CONFIRM-01` separate and open.
+- Guarded serial validation passed 228 focused tests across eleven isolated
+  processes. Peak tree RSS was 218.2 MiB; no native crash, timeout or guard abort
+  occurred. Compilation, AST/JSON parsing, focused Pylint-E and diff checks
+  passed. Evidence is in
+  `docs/reports/CLARIFY_FILE_SEARCHER_SECTIONS_2026_11_01.md`.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

@@ -201,6 +201,7 @@ class FileExplorerDock(BaseDock):
         self.ed_exc.textChanged.connect(self._invalidate_target_cache)
         self.filename_panel.pattern_changed.connect(self._invalidate_target_cache)
         self.content_panel.query_changed.connect(self._invalidate_target_cache)
+        self.content_panel.query_changed.connect(self._update_replace_availability)
         self.filter_panel.filters_changed.connect(self._invalidate_target_cache)
         self.search_options_panel.options_changed.connect(self._invalidate_target_cache)
         self.results_tree.itemSelectionChanged.connect(self._on_target_selection_changed)
@@ -295,7 +296,7 @@ class FileExplorerDock(BaseDock):
             self.chk_selection_mode.setToolTip(tr("file_list.tooltip_selection_mode"))
 
         # ============================================================================
-        # SECTION 2: Search & Replace (🔍 - Collapsible)
+        # SECTION 2: Search (🔍 - Collapsible)
         # ============================================================================
         self.section_search = CollapsibleSection(tr("file_list.section_search"))
         self.section_search.setCollapsed(False)  # Start expanded
@@ -305,6 +306,16 @@ class FileExplorerDock(BaseDock):
         self.content_panel = ContentQueryPanel()
         self.search_options_panel = SearchOptionsPanel()
         self.replace_panel = ReplacePanel()
+        self.replace_panel.set_buttons_enabled(False)
+
+        self.section_replace = CollapsibleSection(
+            tr("file_list.section_replace", "Replace")
+        )
+        self.section_replace.setCollapsed(True)
+        self.replace_status = QLabel()
+        self.replace_status.setObjectName("replace_status")
+        self.replace_status.setTextFormat(Qt.TextFormat.PlainText)
+        self.replace_status.setWordWrap(True)
 
         # Connect search widget signals (only for Replace operations, not auto-search)
         # Auto-search DISABLED: search only happens when user clicks Browse/Search button
@@ -407,6 +418,7 @@ class FileExplorerDock(BaseDock):
         self.workspace_mode.retranslateUi()
         self.section_directory.setTitle(tr("file_list.section_directory"))
         self.section_search.setTitle(tr("file_list.section_search"))
+        self.section_replace.setTitle(tr("file_list.section_replace", "Replace"))
         self._update_extension_filter_state()
         self.section_log.setTitle(tr("file_explorer.operation_log"))
         self.operation_log.setAccessibleName(tr("file_explorer.operation_log"))
@@ -445,10 +457,14 @@ class FileExplorerDock(BaseDock):
 
         # Search & Replace section
         self.section_search.setToolTip(tr("file_list.tooltip_section_search"))
+        self.section_replace.setToolTip(
+            tr("file_explorer.tooltip_replace_section")
+        )
         self.filename_panel.setToolTip(tr("file_explorer.tooltip_filename_panel"))
         self.content_panel.setToolTip(tr("file_explorer.tooltip_content_panel"))
         self.search_options_panel.setToolTip(tr("file_explorer.tooltip_search_options"))
         self.search_options_panel.retranslateUi()
+        self.replace_panel.retranslateUi()
         self.replace_panel.setToolTip(tr("file_explorer.tooltip_replace_panel"))
 
         # Filters section
@@ -461,6 +477,7 @@ class FileExplorerDock(BaseDock):
         if hasattr(self, "section_presets"):
             self.section_presets.setToolTip(tr("file_explorer.tooltip_presets"))
         self._update_compact_filter_summary()
+        self._update_replace_availability()
 
     def _create_layout(self):
         """Create horizontal splitter layout with controls on left, results on right (v2.9.117 - B.1)."""
@@ -535,19 +552,29 @@ class FileExplorerDock(BaseDock):
         left_layout.addWidget(self.section_directory)
 
         # ----------------------------------------------------------------------------
-        # SECTION 2: Search & Replace
+        # SECTION 2: Search
         # ----------------------------------------------------------------------------
         section2_layout = QVBoxLayout()
         section2_layout.addWidget(self.filename_panel)
         section2_layout.addWidget(self.content_panel)
         section2_layout.addWidget(self.search_options_panel)
-        section2_layout.addWidget(self.replace_panel)
 
         # Wrap in widget for CollapsibleSection
         section2_widget = QWidget()
         section2_widget.setLayout(section2_layout)
         self.section_search.setContent(section2_widget)
         left_layout.addWidget(self.section_search)
+
+        # ----------------------------------------------------------------------------
+        # SECTION 2B: Replace (explicitly activated and collapsed by default)
+        # ----------------------------------------------------------------------------
+        replace_layout = QVBoxLayout()
+        replace_layout.addWidget(self.replace_status)
+        replace_layout.addWidget(self.replace_panel)
+        replace_widget = QWidget()
+        replace_widget.setLayout(replace_layout)
+        self.section_replace.setContent(replace_widget)
+        left_layout.addWidget(self.section_replace)
 
         # ----------------------------------------------------------------------------
         # SECTION 3: Filters (v2.9.117 - B.6: CollapsibleSection)
@@ -815,6 +842,7 @@ class FileExplorerDock(BaseDock):
             + self._controls_scroll.verticalScrollBar().sizeHint().width()
         )
         self._apply_tooltips()
+        self._update_replace_availability()
 
     def _selected_result_paths(self):
         if self.results_stack.currentIndex() == 0:
@@ -829,6 +857,63 @@ class FileExplorerDock(BaseDock):
                 self._invalidate_target_cache()
             count = len(self._selected_result_paths())
             self.lbl_target_count.setText(tr("file_explorer.target_selected_count", "{0} selected").format(count))
+        self._update_replace_availability()
+
+    @staticmethod
+    def _replacement_path_key(path: str) -> str:
+        return os.path.normcase(os.path.realpath(os.path.abspath(path)))
+
+    def _update_replace_availability(self, *_args) -> None:
+        """Expose one bounded replacement universe without running discovery."""
+        if not hasattr(self, "replace_status"):
+            return
+        enabled = False
+        tooltip = ""
+        if self._operation_running():
+            message = tr("file_explorer.replace_busy")
+        elif not self.content_panel.get_query():
+            message = tr("file_explorer.replace_no_query")
+        else:
+            try:
+                targets = self._replacement_targets()
+            except (OSError, ValueError, TypeError, UnicodeError):
+                targets = []
+            if not targets:
+                message = tr("file_explorer.replace_no_targets")
+            else:
+                enabled = True
+                paths = [item.file_info.path for item in targets]
+                preview = [self._elide_middle(path, 120) for path in paths[:5]]
+                tooltip = "\n".join(preview)
+                if len(paths) > 5:
+                    tooltip += f"\n... ({len(paths)} files)"
+                known_results = (
+                    {
+                        self._replacement_path_key(path): matches
+                        for path, matches in self.last_search_results.items()
+                    }
+                    if self.last_was_search
+                    else {}
+                )
+                selected_matches = [
+                    known_results.get(self._replacement_path_key(path))
+                    for path in paths
+                ]
+                if selected_matches and all(
+                    matches is not None for matches in selected_matches
+                ):
+                    message = tr("file_explorer.replace_ready_known").format(
+                        files=len(paths),
+                        matches=sum(len(matches) for matches in selected_matches),
+                    )
+                else:
+                    message = tr("file_explorer.replace_ready_unknown").format(
+                        files=len(paths)
+                    )
+        self.replace_panel.set_buttons_enabled(enabled)
+        self.replace_status.setText(message)
+        self.replace_status.setAccessibleName(message)
+        self.replace_status.setToolTip(tooltip or message)
 
     def _snapshot_target(self):
         scope = self.combo_target_scope.currentData()
@@ -1082,6 +1167,7 @@ class FileExplorerDock(BaseDock):
             self.results_status.setText(status_text)
         else:
             self.results_status.clear()
+        self._update_replace_availability()
 
     def _get_incremental_candidate_paths(
         self, directory: str, content_query: str, target_signature=None
@@ -1916,6 +2002,7 @@ class FileExplorerDock(BaseDock):
         self._cancel_requested = False
         self._discard_callbacks = False
         self._active_operation = True
+        self._update_replace_availability()
         self._worker_thread = QThread(self)
         self._worker = FileExplorerWorker(self.executor)
         self._worker.configure_operation(kind, **request)
@@ -1983,6 +2070,7 @@ class FileExplorerDock(BaseDock):
         self._cancel_requested = False
         self._discard_callbacks = False
         self._active_operation = True
+        self._update_replace_availability()
         self._worker_thread = QThread(self)
         self._worker = worker
         receiver = ExplorerOperationReceiver(self, self._operation_generation)
@@ -2032,6 +2120,7 @@ class FileExplorerDock(BaseDock):
         self._cancel_requested = False
         self._discard_callbacks = False
         self._active_operation = True
+        self._update_replace_availability()
         self._worker_thread = QThread(self)
         self._worker = CsvExportWorker(plan)
         receiver = ExplorerOperationReceiver(self, self._operation_generation)
@@ -2222,7 +2311,10 @@ class FileExplorerDock(BaseDock):
         summary = tr("file_list.confirm_replace_message").format(len(files))
         mode = "All occurrences per file" if replace_all else "First occurrence per file"
         preview = "\n".join(self._elide_middle(item.file_info.path, 120) for item in files[:5])
-        summary += f"\n\n{mode}\nFind: {query[:160]!r}\nReplace: {replacement[:160]!r}\n\n{preview}"
+        summary += (
+            f"\n\n{mode}\n{self.replace_status.text()}\n"
+            f"Find: {query[:160]!r}\nReplace: {replacement[:160]!r}\n\n{preview}"
+        )
         if len(files) > 5:
             summary += f"\n... ({len(files)} files)"
         if QMessageBox.question(self, tr("file_list.confirm_replace_title"), summary,
@@ -2442,6 +2534,7 @@ class FileExplorerDock(BaseDock):
         for widget in (self.section_filters, self.section_conditions, self.chk_long,
                        self.chk_human, self.lbl_type, self.combo_type):
             widget.setVisible(advanced)
+        self.section_replace.setVisible(True)
         if hasattr(self, "section_presets"):
             self.section_presets.setVisible(advanced)
         self._update_compact_filter_summary()
@@ -2635,6 +2728,7 @@ class FileExplorerDock(BaseDock):
             self._operation_receiver = None
         self._worker = None
         self._active_operation = False
+        self._update_replace_availability()
         return True
 
     def _on_search_finished(self, result):

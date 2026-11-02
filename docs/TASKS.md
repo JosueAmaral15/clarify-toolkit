@@ -928,7 +928,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   Evidencia isolada: 7 testes core, 4 GUI/runtime, 24 ConfigManager, 8 appearance,
   4 settings/shortcuts e 10 catalog lookup passaram sob RAM 85%, RSS 600 MiB,
   wall 180 s e pytest 20 s, sem crash nativo ou abort do guard.
-- [ ] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
+- [x] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
   Organizar o File Explorer/File Searcher em duas secoes ou sessoes claramente
   distintas: uma para localizar e filtrar arquivos e outra para configurar e
   executar substituicoes. Manter integracao e compartilhamento controlado de
@@ -937,6 +937,14 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   preview/contagens e permanecer desabilitada sem universo valido. Preservar
   Compact/Advanced, ambos os result views, presets, cache, pause/cancel/close,
   tema, traducao e alturas reduzidas sem duplicar widgets ou estado divergente.
+  **Entregue em 01/11/2026:** Search e Replace agora usam secoes distintas;
+  Replace inicia recolhida e suas acoes ficam desabilitadas sem consulta e
+  universo explicito valido. Um resumo acessivel e limitado informa arquivos e,
+  quando disponivel nos resultados atuais, matches conhecidos; o mesmo resumo e
+  incluido na confirmacao anterior a escrita. Tree/Table, Compact/Advanced,
+  presets, cache, lifecycle e o default desmarcado de Reuse Previous Results
+  foram preservados. Evidencia em
+  `docs/reports/CLARIFY_FILE_SEARCHER_SECTIONS_2026_11_01.md`.
 - [ ] **FE-REPLACE-REUSE-CONFIRM-01: confirmar universo antes de Replace With.**
   Ao acionar `Replace With`, abrir um dialogo de confirmacao que informe consulta,
   diretorio/escopo, quantidade de arquivos/matches e se `Reuse Previous Results`

@@ -303,9 +303,9 @@ class ReplacePanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Label
-        label = QLabel(tr("search.lbl_replace"))
-        label.setToolTip(tr("search.tooltip_replace"))
-        layout.addWidget(label)
+        self.lbl_replace = QLabel(tr("search.lbl_replace"))
+        self.lbl_replace.setToolTip(tr("search.tooltip_replace"))
+        layout.addWidget(self.lbl_replace)
 
         # Text editor
         self.ed_replace = QTextEdit()
@@ -334,6 +334,18 @@ class ReplacePanel(QWidget):
         options_layout.addWidget(self.btn_replace_all)
 
         layout.addLayout(options_layout)
+
+    def retranslateUi(self):  # pylint: disable=invalid-name
+        """Refresh labels without replacing the shared widget state."""
+        self.lbl_replace.setText(tr("search.lbl_replace"))
+        self.lbl_replace.setToolTip(tr("search.tooltip_replace"))
+        self.ed_replace.setPlaceholderText(tr("search.placeholder_replace"))
+        self.chk_preserve_case.setText(tr("search.chk_preserve_case"))
+        self.chk_preserve_case.setToolTip(tr("search.tooltip_preserve_case"))
+        self.btn_replace_first.setText(tr("search.btn_replace_first"))
+        self.btn_replace_first.setToolTip(tr("search.tooltip_replace_first"))
+        self.btn_replace_all.setText(tr("search.btn_replace_all"))
+        self.btn_replace_all.setToolTip(tr("search.tooltip_replace_all"))
 
     def get_replacement(self) -> str:
         """Get replacement text."""
