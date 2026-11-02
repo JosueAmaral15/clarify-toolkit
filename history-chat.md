@@ -6339,3 +6339,18 @@ Plano imediato:
   `docs/reports/CLARIFY_EDITOR_TEMP_NOTE_MANAGER_BULK_2026_11_01.md`.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+### Published temporary-note checkpoint and next continuation
+
+- Feature commit `f8adb3a` was pushed to
+  `COM-916cea16-2f75-4e0f-a574-ba7f94505759`. No default branch, provider,
+  dependency or unrelated user file changed; 83 canonical open task markers
+  remain.
+- AI Presence Monitor 0.10.7 revalidated schema integrity, the exact active
+  Protocol2 worker, five Codex hooks, native queue, monitor/reply services and
+  tray autostart. Task automation and native input are enabled; GUI/remote input
+  and scheduled prompt rules are disabled.
+- The latest reconciled sequence makes `FE-SEARCH-REPLACE-SECTIONS-01` the next
+  bounded stage. One exact-session native continuation with a 60-second delay
+  will be issued after this journal checkpoint is committed and pushed; an
+  uncertain dispatch must not be retried.
