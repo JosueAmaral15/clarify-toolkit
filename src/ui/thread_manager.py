@@ -235,8 +235,18 @@ class ThreadManager:
             # and DeferredDelete processing are guaranteed complete. Retaining
             # ThreadInfo here prevents Python from collecting its worker on the
             # GUI thread while QObject destruction is still running elsewhere.
-            if _PYSIDE and not info.thread.wait(0):
-                return False
+            if _PYSIDE:
+                try:
+                    if not info.thread.wait(0):
+                        return False
+                except RuntimeError:
+                    # A parentless thread may delete its native QObject on
+                    # finished before this queued settlement retry. An invalid
+                    # wrapper proves there is no live native thread to retain.
+                    logger.debug(
+                        "[ThreadManager] Native thread already deleted while settling %s",
+                        thread_id,
+                    )
 
             # Release feature lock
             try:

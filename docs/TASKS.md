@@ -945,7 +945,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   presets, cache, lifecycle e o default desmarcado de Reuse Previous Results
   foram preservados. Evidencia em
   `docs/reports/CLARIFY_FILE_SEARCHER_SECTIONS_2026_11_01.md`.
-- [ ] **FE-REPLACE-REUSE-CONFIRM-01: confirmar universo antes de Replace With.**
+- [x] **FE-REPLACE-REUSE-CONFIRM-01: confirmar universo antes de Replace With.**
   Ao acionar `Replace With`, abrir um dialogo de confirmacao que informe consulta,
   diretorio/escopo, quantidade de arquivos/matches e se `Reuse Previous Results`
   sera usado como universo para a busca de preflight exibida a direita. A opcao
@@ -955,6 +955,16 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   executar descoberta completa no escopo atual. Nenhuma escrita ocorre antes do
   preview e da confirmacao final; invalidacao, arquivos alterados, resultados
   vazios/parciais, cancelamento e erros devem impedir substituicao obsoleta.
+  **Entregue em 01/11/2026:** Replace agora solicita primeiro um preflight
+  somente para leitura com consulta, substituicao, escopo e contagens atuais.
+  Um cache anterior so pode ser habilitado explicitamente no dialogo quando
+  diretorio, assinatura do alvo, consulta e resultados sao compativeis; caso
+  contrario, a descoberta completa usa o escopo exato atual. O preview popula
+  Tree/Table pela busca existente e resultados vazios, parciais, cancelados,
+  com erros, acima do limite ou obsoletos bloqueiam a escrita. Uma segunda
+  confirmacao informa arquivos, matches e universo efetivamente usado, com
+  revisoes revalidadas antes do worker atomico de Replace. Evidencia em
+  `docs/reports/CLARIFY_FILE_SEARCHER_REUSE_CONFIRM_2026_11_01.md`.
 - [ ] **FE-RENAME-FILE-SEARCHER-01: renomear File Explorer para File Searcher.**
   Alterar o nome publico da ferramenta em menus, aba, atalhos, tooltips,
   acessibilidade, ajuda F1, presets, layouts, historico e todos os catalogos i18n.

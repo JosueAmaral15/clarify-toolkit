@@ -6408,3 +6408,36 @@ Plano imediato:
   reconciled sequence. One exact-session native continuation with a 60-second
   delay will be issued after this journal checkpoint is committed and pushed;
   an uncertain dispatch must not be retried.
+
+## 2026-11-01 - FE-REPLACE-REUSE-CONFIRM-01 started
+
+- Resumed from published checkpoint `ed5bc2d` on fresh branch
+  `COM-5df6ef1d-0736-424a-869a-75a75842cf3c`, with the exact Clarify
+  Protocol2 worker active and all monitor health checks passing.
+- Scope is limited to an explicit, translated replacement preflight: optional
+  compatible cached-universe reuse, right-side read-only preview, stale and
+  partial-result rejection, and a separate final write confirmation.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-01 - FE-REPLACE-REUSE-CONFIRM-01 completed
+
+- Replace now has a translated read-only preflight before any write. The first
+  confirmation reports query, replacement, exact scope, current counts and
+  cache compatibility; compatible previous results can only be enabled through
+  its explicit checkbox and otherwise complete discovery is used.
+- The preview is displayed through the existing Tree/Table search pipeline.
+  Empty, partial, cancelled, errored, over-budget or stale previews stop the
+  flow. A separate final confirmation reports the effective universe and file
+  and match counts; file revisions are rechecked before atomic replacement.
+- A parent-delete lifecycle regression exposed a queued `QThread` settlement
+  race. `ThreadManager` now releases a registration safely when Qt has already
+  deleted the native parentless thread object.
+- Guarded validation passed 242 focused tests across isolated processes, with
+  peak tree RSS 216.3 MiB. One intermediate test-only modal timeout and the
+  lifecycle failure are documented in the evidence report; both were resolved,
+  and no native crash or guard abort occurred.
+- Evidence is in
+  `docs/reports/CLARIFY_FILE_SEARCHER_REUSE_CONFIRM_2026_11_01.md`. There are
+  now 74 open canonical task markers. `example.py` remains untracked and
+  byte-identical.

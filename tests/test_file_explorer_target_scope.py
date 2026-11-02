@@ -417,7 +417,6 @@ def test_explicit_file_replacement_ignores_sibling_selection_and_requires_confir
     dock.ed_directory.setText(str(target))
     dock.content_panel.set_query("needle")
     dock.replace_panel.set_replacement("changed")
-    monkeypatch.setattr(dock, "_list_files", lambda: None)
     questions = []
     threads = []
     original = dock.executor.execute_replace
@@ -434,8 +433,11 @@ def test_explicit_file_replacement_ignores_sibling_selection_and_requires_confir
 
     monkeypatch.setattr(QMessageBox, "question", confirm)
     dock._start_replace(True)
-    qtbot.waitUntil(lambda: not dock._operation_running(), timeout=3000)
+    if approved:
+        qtbot.waitUntil(lambda: bool(threads), timeout=5000)
+        qtbot.waitUntil(lambda: not dock._operation_running(), timeout=5000)
     assert questions and str(target) in questions[0] and str(sibling) not in questions[0]
+    assert len(questions) == (2 if approved else 1)
     assert target.read_text() == ("changed" if approved else "needle")
     assert sibling.read_text() == "needle"
     assert threads == ([True] if approved else [])
@@ -453,7 +455,6 @@ def test_whitespace_in_explicit_filename_is_never_trimmed(operation, tmp_path, d
     dock.content_panel.set_query("needle" if operation != "browse" else "")
     if operation == "replace":
         dock.replace_panel.set_replacement("changed")
-        monkeypatch.setattr(dock, "_list_files", lambda: None)
         monkeypatch.setattr(QMessageBox, "question", lambda *_a: QMessageBox.Yes)
         dock._start_replace(True)
     else:
@@ -468,7 +469,9 @@ def test_whitespace_in_explicit_filename_is_never_trimmed(operation, tmp_path, d
     assert sibling.read_text() == "needle"
 
 
-def test_folder_replacement_rejects_outside_selection(tmp_path, docks, monkeypatch):
+def test_folder_replacement_never_expands_to_outside_selection(
+    tmp_path, docks, qtbot, monkeypatch,
+):
     folder = tmp_path / "folder"
     folder.mkdir()
     outside = tmp_path / "outside.txt"
@@ -478,6 +481,8 @@ def test_folder_replacement_rejects_outside_selection(tmp_path, docks, monkeypat
     select_paths(dock, 1, [outside])
     dock.ed_directory.setText(str(folder))
     dock.content_panel.set_query("needle")
-    monkeypatch.setattr(QMessageBox, "question", lambda *_a: pytest.fail("Unsafe target confirmation"))
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a: QMessageBox.Yes)
+    monkeypatch.setattr(QMessageBox, "information", lambda *_a: QMessageBox.Ok)
     dock._start_replace(True)
-    assert not dock._operation_running() and outside.read_text() == "needle"
+    qtbot.waitUntil(lambda: not dock._operation_running(), timeout=5000)
+    assert outside.read_text() == "needle"

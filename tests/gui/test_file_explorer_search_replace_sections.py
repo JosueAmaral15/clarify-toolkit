@@ -161,6 +161,8 @@ def test_confirmation_contains_bounded_universe_summary_before_launch(
 
     dock._start_replace(True)
 
-    assert questions and dock.replace_status.text() in questions[0]
+    assert questions and "Find: needle" in questions[0]
+    assert "Current results: 1 file(s), 0 match(es)" in questions[0]
     assert str(target) in questions[0]
-    assert launches and launches[0][0] == "replace"
+    assert launches and launches[0][0] == "search"
+    assert all(kind != "replace" for kind, _request in launches)

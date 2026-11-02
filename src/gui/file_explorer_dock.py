@@ -152,6 +152,7 @@ class FileExplorerDock(BaseDock):
         self.last_was_search = False  # Track if last operation was search or browse
         self._user_manually_changed_view = False  # Track if user manually switched view (v2.9.118 bugfix)
         self._last_content_search_universe = None  # Explicit candidate universe for incremental search
+        self._pending_replace_preflight = None
 
         self._load_preferences()
 
@@ -864,7 +865,7 @@ class FileExplorerDock(BaseDock):
         return os.path.normcase(os.path.realpath(os.path.abspath(path)))
 
     def _update_replace_availability(self, *_args) -> None:
-        """Expose one bounded replacement universe without running discovery."""
+        """Expose whether the current exact scope can run a replacement preflight."""
         if not hasattr(self, "replace_status"):
             return
         enabled = False
@@ -875,18 +876,21 @@ class FileExplorerDock(BaseDock):
             message = tr("file_explorer.replace_no_query")
         else:
             try:
+                scope, _value, _root, paths, _signature = self._snapshot_target()
                 targets = self._replacement_targets()
             except (OSError, ValueError, TypeError, UnicodeError):
+                scope = None
+                paths = None
                 targets = []
-            if not targets:
+            if not targets and scope != "folder":
                 message = tr("file_explorer.replace_no_targets")
             else:
                 enabled = True
-                paths = [item.file_info.path for item in targets]
-                preview = [self._elide_middle(path, 120) for path in paths[:5]]
+                target_paths = [item.file_info.path for item in targets]
+                preview = [self._elide_middle(path, 120) for path in target_paths[:5]]
                 tooltip = "\n".join(preview)
-                if len(paths) > 5:
-                    tooltip += f"\n... ({len(paths)} files)"
+                if len(target_paths) > 5:
+                    tooltip += f"\n... ({len(target_paths)} files)"
                 known_results = (
                     {
                         self._replacement_path_key(path): matches
@@ -897,18 +901,21 @@ class FileExplorerDock(BaseDock):
                 )
                 selected_matches = [
                     known_results.get(self._replacement_path_key(path))
-                    for path in paths
+                    for path in target_paths
                 ]
-                if selected_matches and all(
+                if scope == "folder" and not target_paths:
+                    message = tr("file_explorer.replace_ready_scope")
+                    tooltip = self.ed_directory.text().strip()
+                elif selected_matches and all(
                     matches is not None for matches in selected_matches
                 ):
                     message = tr("file_explorer.replace_ready_known").format(
-                        files=len(paths),
+                        files=len(target_paths),
                         matches=sum(len(matches) for matches in selected_matches),
                     )
                 else:
                     message = tr("file_explorer.replace_ready_unknown").format(
-                        files=len(paths)
+                        files=len(target_paths)
                     )
         self.replace_panel.set_buttons_enabled(enabled)
         self.replace_status.setText(message)
@@ -1175,6 +1182,12 @@ class FileExplorerDock(BaseDock):
         """Return previous result paths when the current search can be refined incrementally."""
         if not self.chk_reuse_previous.isChecked():
             return None
+        return self._compatible_previous_paths(directory, content_query, target_signature)
+
+    def _compatible_previous_paths(
+        self, directory: str, content_query: str, target_signature=None
+    ) -> Optional[List[str]]:
+        """Return a compatible cached universe without changing the user's choice."""
         if not content_query:
             return None
 
@@ -1190,7 +1203,8 @@ class FileExplorerDock(BaseDock):
         if universe.get("target_signature") != target_signature:
             return None
 
-        return list(universe.get("paths", []))
+        paths = list(universe.get("paths", []))
+        return paths
 
     def _attach_incremental_universe_filter(
         self, filters: Dict[str, Any], directory: str, content_query: str, target_signature=None
@@ -2196,6 +2210,7 @@ class FileExplorerDock(BaseDock):
             self._finish_csv_export(kind.removeprefix("csv_"), result, error, discard)
         elif discard:
             self._batch_processing_active = False
+            self._pending_replace_preflight = None
             self.results_status.setText(tr("file_list.status_canceling", "Canceling...").rstrip(".") + " - stopped")
         elif error or result is None:
             detail = (error or "No result")[:OPERATION_LOG_MAX_ENTRY_CHARS]
@@ -2234,6 +2249,7 @@ class FileExplorerDock(BaseDock):
 
     def _request_shutdown(self):
         self._discard_callbacks = True
+        self._pending_replace_preflight = None
         self._on_progress_canceled()
 
     def request_tab_close(self):
@@ -2286,11 +2302,12 @@ class FileExplorerDock(BaseDock):
             QMessageBox.warning(self, tr("file_list.no_query_title"), tr("file_list.no_query_message"))
             return
         try:
+            scope, _target_value, directory, _target_paths, target_signature = self._snapshot_target()
             files = self._replacement_targets()
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
             QMessageBox.warning(self, tr("file_list.replace_failed_title"), str(exc))
             return
-        if not files:
+        if not files and scope != "folder":
             QMessageBox.warning(self, tr("file_list.no_selection_title"), tr("file_list.no_selection_message"))
             return
         from src.core.file_explorer_executor import MAX_REPLACE_FILES
@@ -2308,24 +2325,191 @@ class FileExplorerDock(BaseDock):
                                 "Cross-line block replacement is not supported; disable Cross-line Block first.")
             return
         replacement = self.replace_panel.get_replacement()
-        summary = tr("file_list.confirm_replace_message").format(len(files))
-        mode = "All occurrences per file" if replace_all else "First occurrence per file"
-        preview = "\n".join(self._elide_middle(item.file_info.path, 120) for item in files[:5])
-        summary += (
-            f"\n\n{mode}\n{self.replace_status.text()}\n"
-            f"Find: {query[:160]!r}\nReplace: {replacement[:160]!r}\n\n{preview}"
+        compatible_paths = self._compatible_previous_paths(directory, query, target_signature)
+        approved, reuse_previous = self._confirm_replace_preflight(
+            query=query,
+            replacement=replacement,
+            scope=scope,
+            directory=directory,
+            files=files,
+            compatible_paths=compatible_paths,
         )
-        if len(files) > 5:
-            summary += f"\n... ({len(files)} files)"
-        if QMessageBox.question(self, tr("file_list.confirm_replace_title"), summary,
-                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No) != QMessageBox.Yes:
+        if not approved:
             return
+        self.chk_reuse_previous.setChecked(reuse_previous)
+        self._pending_replace_preflight = {
+            "query": query,
+            "replacement": replacement,
+            "options": options,
+            "preserve_case": self.replace_panel.get_preserve_case(),
+            "replace_all": replace_all,
+            "target_signature": target_signature,
+            "scope": scope,
+            "directory": directory,
+            "reuse_previous": reuse_previous,
+        }
+        self._list_files()
+        if not self._operation_running():
+            self._pending_replace_preflight = None
 
-        self._replace_all_requested = replace_all
+    def _confirm_replace_preflight(
+        self, *, query, replacement, scope, directory, files, compatible_paths
+    ):
+        """Confirm a read-only preflight and allow only explicit compatible reuse."""
+        known_matches = sum(
+            len(self.last_search_results.get(item.file_info.path, [])) for item in files
+        )
+        file_count = len(files)
+        scope_text = directory if scope == "folder" else (
+            files[0].file_info.path if scope == "file" and files else
+            tr("file_explorer.replace_selected_scope").format(files=file_count)
+        )
+        summary = tr("file_explorer.replace_preflight_message").format(
+            query=query[:160],
+            replacement=replacement[:160],
+            scope=self._elide_middle(scope_text, 240),
+            files=file_count,
+            matches=known_matches,
+            reuse=(
+                tr("file_explorer.replace_reuse_available")
+                if compatible_paths else tr("file_explorer.replace_reuse_unavailable")
+            ),
+        )
+        if not compatible_paths:
+            accepted = QMessageBox.question(
+                self,
+                tr("file_explorer.replace_preflight_title"),
+                summary,
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            ) == QMessageBox.Yes
+            return accepted, False
+
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Question)
+        message.setWindowTitle(tr("file_explorer.replace_preflight_title"))
+        message.setText(summary)
+        message.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        message.setDefaultButton(QMessageBox.No)
+        reuse = QCheckBox(tr("file_explorer.replace_reuse_checkbox"), message)
+        reuse.setChecked(self.chk_reuse_previous.isChecked())
+        reuse.setAccessibleName(reuse.text())
+        message.setCheckBox(reuse)
+        accepted = message.exec() == QMessageBox.Yes
+        return accepted, bool(accepted and reuse.isChecked())
+
+    def _complete_replace_preflight(self, result):
+        """Validate the displayed preview before offering the separate write step."""
+        plan = self._pending_replace_preflight
+        self._pending_replace_preflight = None
+        if not plan:
+            return
+        stats = result.get("stats", {})
+        files = result.get("files", [])
+        total_matches = sum(item.match_count for item in files)
+        from src.core.file_explorer_executor import MAX_REPLACE_FILES
+        if stats.get("cancelled") or stats.get("partial") or stats.get("errors"):
+            QMessageBox.warning(
+                self,
+                tr("file_list.replace_failed_title"),
+                tr("file_explorer.replace_preflight_incomplete"),
+            )
+            return
+        if len(files) > MAX_REPLACE_FILES:
+            QMessageBox.warning(
+                self,
+                tr("file_list.replace_failed_title"),
+                tr("file_explorer.replace_preflight_too_many").format(
+                    limit=MAX_REPLACE_FILES
+                ),
+            )
+            return
+        if not files or not total_matches:
+            QMessageBox.information(
+                self,
+                tr("file_explorer.replace_preflight_title"),
+                tr("file_explorer.replace_preflight_empty"),
+            )
+            return
+        if plan["scope"] == "selected":
+            current_signature = self._current_search_params.get("target_signature")
+            selected_paths = {
+                self._replacement_path_key(path)
+                for path in (plan["target_signature"][2] or ())
+            }
+            returned_paths_are_selected = all(
+                self._replacement_path_key(item.file_info.path) in selected_paths
+                for item in files
+            )
+        else:
+            returned_paths_are_selected = True
+            try:
+                current_signature = self._snapshot_target()[-1]
+            except (OSError, ValueError, TypeError, UnicodeError):
+                current_signature = None
+        if (
+            current_signature != plan["target_signature"]
+            or not returned_paths_are_selected
+            or self.content_panel.get_query() != plan["query"]
+            or dict(self.search_options_panel.get_options()) != plan["options"]
+            or self.replace_panel.get_replacement() != plan["replacement"]
+            or self.replace_panel.get_preserve_case() != plan["preserve_case"]
+        ):
+            QMessageBox.warning(
+                self,
+                tr("file_list.replace_failed_title"),
+                tr("file_explorer.replace_preflight_stale"),
+            )
+            return
+        try:
+            revisions = {
+                item.file_info.path: file_revision(os.lstat(item.file_info.path))
+                for item in files
+            }
+        except OSError:
+            QMessageBox.warning(
+                self,
+                tr("file_list.replace_failed_title"),
+                tr("file_explorer.replace_preflight_stale"),
+            )
+            return
+        summary = tr("file_explorer.replace_final_message").format(
+            files=len(files),
+            matches=total_matches,
+            reuse=(
+                tr("file_explorer.replace_reuse_used")
+                if plan["reuse_previous"] else tr("file_explorer.replace_full_discovery_used")
+            ),
+        )
+        if QMessageBox.question(
+            self,
+            tr("file_list.confirm_replace_title"),
+            summary,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        ) != QMessageBox.Yes:
+            return
+        try:
+            if any(
+                file_revision(os.lstat(path)) != revision
+                for path, revision in revisions.items()
+            ):
+                raise ValueError("stale")
+        except (OSError, ValueError):
+            QMessageBox.warning(
+                self,
+                tr("file_list.replace_failed_title"),
+                tr("file_explorer.replace_preflight_stale"),
+            )
+            return
+        self._replace_all_requested = plan["replace_all"]
         self._launch_operation("replace", dict(
-            files=files, search_text=query, replace_text=replacement,
-            search_options=options, preserve_case=self.replace_panel.get_preserve_case(),
-            replace_all=replace_all,
+            files=files,
+            search_text=plan["query"],
+            replace_text=plan["replacement"],
+            search_options=plan["options"],
+            preserve_case=plan["preserve_case"],
+            replace_all=plan["replace_all"],
         ))
 
     def _on_replace_finished(self, result):
@@ -2856,6 +3040,7 @@ class FileExplorerDock(BaseDock):
         self._cleanup_worker_thread()
 
         self._report_result_errors(result)
+        self._complete_replace_preflight(result)
 
     def _on_browse_finished(self, result):
         """
@@ -2985,6 +3170,8 @@ class FileExplorerDock(BaseDock):
         Version: v2.9.122
         """
         from PySide6.QtWidgets import QMessageBox
+
+        self._pending_replace_preflight = None
 
         # Close progress dialog
         if self.progress_dialog:

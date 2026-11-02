@@ -230,6 +230,9 @@ def test_dock_replacement_runs_off_gui_and_preserves_case(qapp, qtbot, tmp_path,
     dock = FileExplorerDock()
     qtbot.addWidget(dock)
     populate_dock(dock, [path])
+    dock.combo_target_scope.setCurrentIndex(
+        dock.combo_target_scope.findData("selected")
+    )
     dock.results_stack.setCurrentIndex(1)
     dock.table_manager.table.selectRow(0)
     dock.content_panel.set_query("cat")
@@ -238,15 +241,16 @@ def test_dock_replacement_runs_off_gui_and_preserves_case(qapp, qtbot, tmp_path,
     monkeypatch.setattr(QMessageBox, "question", lambda *args: QMessageBox.Yes)
     monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
     monkeypatch.setattr(QMessageBox, "warning", lambda *args: QMessageBox.Ok)
-    monkeypatch.setattr(dock, "_list_files", lambda: None)
     threads = []
+    completions = []
+    monkeypatch.setattr(dock, "_on_replace_finished", completions.append)
     original = dock.executor.execute_replace
     def capture(**kwargs):
         threads.append(QThread.currentThread() == qapp.thread())
         return original(**kwargs)
     monkeypatch.setattr(dock.executor, "execute_replace", capture)
     dock._start_replace(replace_all)
-    qtbot.waitUntil(lambda: getattr(dock, "_worker_thread", None) is None, timeout=5000)
+    qtbot.waitUntil(lambda: bool(completions), timeout=5000)
     assert threads == [False]
     assert path.read_text() == ("DOG DOG" if replace_all else "DOG CAT")
     assert dock.progress_dialog is None
@@ -274,6 +278,9 @@ def test_declined_confirmation_never_starts_worker(qapp, tmp_path, monkeypatch):
     dock = FileExplorerDock()
     try:
         populate_dock(dock, [path])
+        dock.combo_target_scope.setCurrentIndex(
+            dock.combo_target_scope.findData("selected")
+        )
         dock.results_stack.setCurrentIndex(1)
         dock.table_manager.table.selectRow(0)
         dock.content_panel.set_query("cat")
