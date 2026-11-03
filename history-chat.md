@@ -5838,7 +5838,7 @@ Plano imediato:
 - GitHub reports 38 Dependabot findings on its default branch (3 critical,
   21 high, 11 moderate and 3 low). These unresolved external security gates
   remain outside this bounded Editor delivery.
-- AI Presence Monitor 0.10.7 revalidated the exact active Protocol2 worker,
+- AI Presence Monitor 0.11.3 revalidated the exact active Protocol2 worker,
   schema integrity, five hooks, Codex queue and both background services.
   Task automation and native input remain enabled; GUI and remote input remain
   disabled. One exact-session continuation may now be issued for the next
@@ -6441,3 +6441,17 @@ Plano imediato:
   `docs/reports/CLARIFY_FILE_SEARCHER_REUSE_CONFIRM_2026_11_01.md`. There are
   now 74 open canonical task markers. `example.py` remains untracked and
   byte-identical.
+
+### Published replacement-preflight feature and next continuation
+
+- Feature commit `32cdf8f` was pushed to
+  `COM-5df6ef1d-0736-424a-869a-75a75842cf3c`. No default branch, provider,
+  dependency or unrelated user file changed.
+- AI Presence Monitor 0.10.7 revalidated the exact active Protocol2 worker,
+  five hooks, native queue, services and prompt-rule state. Task/native
+  automation remains enabled; GUI/remote fallback and scheduled prompts remain
+  disabled.
+- `FE-RENAME-FILE-SEARCHER-01` is the next concrete unblocked item in the
+  reconciled sequence. One exact-session native continuation with a 60-second
+  delay will be issued after this checkpoint is committed and pushed; an
+  uncertain dispatch must not be retried.
