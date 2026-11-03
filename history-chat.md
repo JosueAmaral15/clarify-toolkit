@@ -6455,3 +6455,17 @@ Plano imediato:
   reconciled sequence. One exact-session native continuation with a 60-second
   delay will be issued after this checkpoint is committed and pushed; an
   uncertain dispatch must not be retried.
+
+### Native continuation issued
+
+- Documentation checkpoint `147ba50` was pushed on
+  `COM-5df6ef1d-0736-424a-869a-75a75842cf3c` after feature commit `32cdf8f`.
+- A dry-run validated the exact worker, Protocol2, native transport, session
+  `019ea8a0-6d60-7f03-90b9-c420603158d1`, activity synchronization and the
+  60-second delay without accessing the queue or database.
+- Exactly one real detached continuation for `FE-RENAME-FILE-SEARCHER-01` was
+  issued. Its exact process was observed during the delay and exited afterward;
+  the detached transport emitted no textual delivery receipt, so independent
+  delivery confirmation is unavailable. It was not retried.
+- `example.py` remains the only untracked path and is byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
