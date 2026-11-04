@@ -82,7 +82,7 @@ class FileExplorerWorker(QObject):
 
     def configure_operation(self, kind, **request):
         if kind not in {"search", "browse", "replace"}:
-            raise ValueError("Unknown File Explorer operation")
+            raise ValueError("Unknown File Searcher operation")
         self._kind = kind
         self._request = deepcopy(request)
         self.executor.prepare_operation()

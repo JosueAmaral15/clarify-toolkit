@@ -965,7 +965,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   confirmacao informa arquivos, matches e universo efetivamente usado, com
   revisoes revalidadas antes do worker atomico de Replace. Evidencia em
   `docs/reports/CLARIFY_FILE_SEARCHER_REUSE_CONFIRM_2026_11_01.md`.
-- [ ] **FE-RENAME-FILE-SEARCHER-01: renomear File Explorer para File Searcher.**
+- [x] **FE-RENAME-FILE-SEARCHER-01: renomear File Explorer para File Searcher.**
   Alterar o nome publico da ferramenta em menus, aba, atalhos, tooltips,
   acessibilidade, ajuda F1, presets, layouts, historico e todos os catalogos i18n.
   Preservar IDs internos, chaves persistidas, APIs, sessoes e aliases necessarios
@@ -973,6 +973,14 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   quebrar o Explorer lateral do Clarify Editor, que continua sendo um navegador
   de arquivos distinto. Documentar migracao e cobrir restauracao de workspace e
   configuracoes antigas sem criar duas ferramentas publicas equivalentes.
+  **Entregue em 03/11/2026:** a ferramenta agora aparece como File Searcher em
+  menus, aba, titulo, progresso, status, historico, F1/atalhos, integracoes com
+  AI Processor/Information Structure, manual e nos sete catalogos. IDs, classes,
+  modulos, formato de resultados, chaves de preset/sessao e a chave persistida
+  de atalho `open_file_list` permanecem compativeis. O Explorer lateral do
+  Clarify Editor e referencias ao gerenciador de arquivos do sistema nao foram
+  renomeados. Evidencia em
+  `docs/reports/CLARIFY_FILE_SEARCHER_PUBLIC_RENAME_2026_11_03.md`.
 - [ ] **DOCS-HISTORICAL-CHECKBOX-AUDIT-01: classificar marcadores antigos de
   `docs/`.** Os 866 arquivos Markdown incluem 297 arquivos com `- [ ]`, sobretudo
   em `programmers`, `action-plans`, `sprints`, `reports`, `sessions` e `study`.

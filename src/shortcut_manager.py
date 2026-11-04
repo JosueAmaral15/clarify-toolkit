@@ -79,7 +79,8 @@ class ShortcutManager:
         "open_text_to_json": ("Ctrl+Shift+J", "Text to JSON"),
         "open_placeholder_replacer": ("Ctrl+Shift+P", "Placeholder Replacer"),
         "open_translate": ("Ctrl+Shift+T", "JSON Translate"),
-        "open_file_list": ("Ctrl+Shift+L", "File List"),
+        # Compatibility key retained for existing shortcut customizations.
+        "open_file_list": ("Ctrl+Shift+L", "File Searcher"),
         # Navigation
         "next_dock": ("Ctrl+Tab", "Next dock"),
         "prev_dock": ("Ctrl+Shift+Tab", "Previous dock"),

@@ -1551,7 +1551,7 @@ if _PYSIDE:
                 (self.act_open_text_to_json, "open_text_to_json", "Convert text to JSON / Extract from JSX"),
                 (self.act_open_placeholder_replacer, "open_placeholder_replacer", "Replace placeholders in text"),
                 (self.act_open_translate, "open_translate", "Translate JSON content"),
-                (self.act_open_file_explorer, "open_file_explorer", "Unified file explorer with advanced search"),
+                (self.act_open_file_explorer, "open_file_list", "Unified file searcher with advanced search"),
                 (self.act_open_advanced_extractor, "open_advanced_extractor", "Extract JSX/HTML with advanced options"),
 
                 # View menu

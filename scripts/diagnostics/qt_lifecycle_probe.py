@@ -70,6 +70,7 @@ TEST_MODULES = {
     "explorer-presentation": "tests/test_file_explorer_presentation.py",
     "explorer-replace": "tests/test_file_explorer_replace.py",
     "explorer-replace-reuse-confirm": "tests/gui/test_file_explorer_replace_reuse_confirm.py",
+    "file-searcher-public-rename": "tests/gui/test_file_searcher_public_rename.py",
     "explorer-search-replace-sections": "tests/gui/test_file_explorer_search_replace_sections.py",
     "explorer-target-scope": "tests/test_file_explorer_target_scope.py",
     "explorer-table-refresh": "tests/test_file_explorer_table_refresh.py",

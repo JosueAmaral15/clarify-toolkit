@@ -6455,3 +6455,37 @@ Plano imediato:
   reconciled sequence. One exact-session native continuation with a 60-second
   delay will be issued after this checkpoint is committed and pushed; an
   uncertain dispatch must not be retried.
+
+## 2026-11-03 - FE-RENAME-FILE-SEARCHER-01 started
+
+- Resumed from published replacement-preflight checkpoint `147ba50` on fresh
+  branch `COM-254556ee-11ee-441b-907d-1a19ff7b6622`, with the exact Clarify
+  Protocol2 worker, hooks, native queue and prompt-rule state verified.
+- Scope is limited to the public rename from File Explorer to File Searcher.
+  Internal `file_explorer` IDs, classes, modules, settings, sessions and
+  compatibility contracts remain unchanged; the Clarify Editor Explorer is
+  explicitly outside this rename.
+- The initial audit reproduced old public labels in menus, tabs, F1 shortcut
+  descriptions, integration messages, operation history and incomplete i18n
+  catalog coverage. Tests will capture those public and compatibility
+  contracts before implementation.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-03 - FE-RENAME-FILE-SEARCHER-01 completed
+
+- File Explorer is now publicly named File Searcher in menus, tabs, runtime
+  titles, progress/status text, translated history, F1/shortcut surfaces, AI
+  explanation handoffs, Information Structure and the user manual. All seven
+  i18n catalogs carry localized public names.
+- Compatibility was preserved: `file_explorer` IDs, `FileExplorerDock`, module
+  paths, QSettings, sessions, presets, result format and the persisted shortcut
+  key `open_file_list` did not change. The Clarify Editor Explorer and operating
+  system file-manager labels remain distinct.
+- Guarded validation passed 158 distinct focused tests in isolated processes,
+  with peak tree RSS 254.9 MiB. Python compile/AST, seven JSON catalogs,
+  Pylint-E and `git diff --check` also passed; there was no native crash, guard
+  abort, provider access or user-document access.
+- Evidence is in
+  `docs/reports/CLARIFY_FILE_SEARCHER_PUBLIC_RENAME_2026_11_03.md`. There are 80
+  open canonical task markers. `example.py` remains untracked and byte-identical.

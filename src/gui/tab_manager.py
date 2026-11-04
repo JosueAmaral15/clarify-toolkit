@@ -47,7 +47,7 @@ class TabManager:
                           'Case Converter', 'case_converter'),
         'google_translate': ('dock_google_translate', 'GoogleTranslateDock', 'Google Translate', 'google_translate'),
         'jsx_extractor': ('dock_jsx_extractor', 'JSXExtractorDock', 'JSX Extractor', 'jsx_extractor'),
-        'file_explorer': ('dock_file_explorer', 'FileExplorerDock', 'File Explorer', 'file_explorer'),
+        'file_explorer': ('dock_file_explorer', 'FileExplorerDock', 'File Searcher', 'file_explorer'),
         'tutorials': ('dock_tutorials', 'TutorialsDock', 'Tutorials', 'tutorials'),
     }
 
@@ -177,7 +177,7 @@ class TabManager:
 
     @staticmethod
     def show_file_explorer(main_window) -> None:
-        """Show File Explorer as tab (unified File List + Advanced Search)."""
+        """Show File Searcher as a tab while preserving its compatibility ID."""
         TabManager.show_tool_tab(main_window, 'file_explorer')
         main_window.dock_file_explorer.set_workspace_mode("advanced")
 

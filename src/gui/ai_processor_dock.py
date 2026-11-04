@@ -561,7 +561,7 @@ class AIProcessorDock(StandardToolDock):
         file_paths: List[str],
         max_bytes: int,
     ) -> int:
-        """Prepare AI Processor to explain File Explorer result files without starting processing."""
+        """Prepare AI Processor to explain File Searcher results without processing."""
         needed_entries = max(1, len(file_paths))
         while len(self.path_entries) < needed_entries:
             self._add_path_entry()
@@ -586,7 +586,7 @@ class AIProcessorDock(StandardToolDock):
         self.append_result(
             self.text_results,
             (
-                "Prepared from File Explorer. Review the prompt, provider, model, "
+                "Prepared from File Searcher. Review the prompt, provider, model, "
                 "API key and max bytes before clicking Process."
             ),
         )

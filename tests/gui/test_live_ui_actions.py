@@ -1,5 +1,7 @@
 """Actual menu paths, with no MainWindow startup or installed plugin execution."""
 
+# pylint: disable=no-name-in-module  # PySide6 and shiboken expose symbols dynamically.
+
 import gc
 from unittest.mock import Mock
 
@@ -18,6 +20,7 @@ from src.i18n import get_translator, tr
 from src.plugin_loader import PluginLoader, PluginMetadata
 from src.plugins.plugin_base import PluginBase
 from src.settings_manager import SettingsManager
+from src.shortcut_manager import ShortcutManager
 
 
 def settle(qapp):
@@ -183,6 +186,18 @@ def test_language_changes_translate_tabs_without_changing_visibility_identity(wi
     assert window.tabs.tabText(2) == tr("ui_builder.tab_insert")
     assert window.tabs.tabText(3) == "old"
     assert TabManager.translated_title("unknown") is None
+
+
+def test_file_searcher_shortcut_uses_legacy_persisted_key_in_f1_registry(window):
+    MenuBuilder.build_all_menus(window)
+    action = window.act_open_file_explorer
+
+    assert action.property("clarify_shortcut_action") == "open_file_list"
+    assert [item.toString() for item in action.shortcuts()] == ["Ctrl+Shift+L"]
+    registered = ShortcutManager.get_registered_shortcuts(window)
+    entry = next(item for item in registered if item.action_name == "open_file_list")
+    assert entry.label == tr("menu.tools.file_explorer")
+    assert entry.sequences == ("Ctrl+Shift+L",)
 
 
 def test_plugin_entries_and_submenus_survive_language_menu_cleanup(window, qapp):

@@ -176,7 +176,7 @@ class FileExplorerDock(BaseDock):
 
         # Always initialize as BaseDock (QDockWidget)
         # Dialog mode only adds OK/Cancel buttons, doesn't change widget type
-        super().__init__("File Explorer", parent)
+        super().__init__(tr("file_list.title", "File Searcher"), parent)
         font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         font.setPointSizeF(self.font().pointSizeF())
         search_panel = getattr(self._main_window_ref, "tab_search", None)
@@ -2541,7 +2541,9 @@ class FileExplorerDock(BaseDock):
                     "cancelled": result.get("cancelled", False), "errors": len(errors),
                 })
                 if hasattr(self, "dock_history"):
-                    label = "File Explorer Replace All" if self._replace_all_requested else "File Explorer Replace First"
+                    label = (tr("file_explorer.history_replace_all")
+                             if self._replace_all_requested
+                             else tr("file_explorer.history_replace_first"))
                     self.dock_history.add_operation(label, {
                         "files_modified": modified, "replacements": count,
                         "cancelled": result.get("cancelled", False), "errors": len(errors),
@@ -3023,7 +3025,7 @@ class FileExplorerDock(BaseDock):
             # Add to History Dock if available
             if hasattr(self, "dock_history"):
                 self.dock_history.add_operation(
-                    "File Explorer Search",
+                    tr("file_explorer.history_search"),
                     {
                         "directory": directory,
                         "pattern": filename_pattern or content_query,
@@ -3146,7 +3148,8 @@ class FileExplorerDock(BaseDock):
             # Add to History Dock if available
             if hasattr(self, "dock_history"):
                 self.dock_history.add_operation(
-                    "File Explorer Browse", {"directory": directory, "files_found": len(files_data)}
+                    tr("file_explorer.history_browse"),
+                    {"directory": directory, "files_found": len(files_data)},
                 )
         except Exception as e:
             logger.error(f"Failed to save history: {e}")
@@ -3485,7 +3488,7 @@ def show_file_explorer_dialog(parent=None, initial_dir: str = "") -> Optional[Li
         ...     print(f"Selected {len(files)} files")
     """
     dialog = QDialog(parent)
-    dialog.setWindowTitle(tr("file_list.title", "File Explorer"))
+    dialog.setWindowTitle(tr("file_list.title", "File Searcher"))
     layout = QVBoxLayout(dialog)
 
     explorer = FileExplorerDock(dialog, dialog_mode=True)

@@ -1,5 +1,7 @@
 """Read-only interface for bounded information structure analyzers."""
 
+# pylint: disable=no-name-in-module  # PySide6 exposes Qt classes dynamically.
+
 from __future__ import annotations
 
 import json
@@ -36,7 +38,7 @@ class InformationStructureDock(QWidget):
     MAX_OUTPUT_CHARS = 2_000_000
 
     MODES = (
-        ("folder", "Folder map from File Explorer"),
+        ("folder", "Folder map from File Searcher"),
         ("sqlite", "SQLite schema graph"),
         ("python", "Python context and function graph"),
         ("text", "Loose text hierarchy"),
@@ -119,7 +121,7 @@ class InformationStructureDock(QWidget):
         self.input_label.setVisible(mode not in {"folder", "sqlite"})
         self.input_edit.setVisible(mode not in {"folder", "sqlite"})
         if mode == "folder":
-            self.path_input.setPlaceholderText("Use File Explorer > Folder map from results")
+            self.path_input.setPlaceholderText("Use File Searcher > Folder map from results")
         elif mode == "sqlite":
             self.path_input.setPlaceholderText("Select a read-only SQLite database")
         elif mode == "python":
@@ -134,7 +136,7 @@ class InformationStructureDock(QWidget):
             self.path_input.setText(selected)
 
     def prepare_folder_map(self, root: str, paths: list[str]) -> None:
-        """Receive an existing File Explorer result set without rescanning."""
+        """Receive an existing File Searcher result set without rescanning."""
         self._folder_root = root
         self._folder_paths = list(paths)
         self.mode_combo.setCurrentIndex(self.mode_combo.findData("folder"))
@@ -156,7 +158,7 @@ class InformationStructureDock(QWidget):
             mode = self._mode()
             if mode == "folder":
                 if not self._folder_root or not self._folder_paths:
-                    raise ValueError("Open this mode from File Explorer results")
+                    raise ValueError("Open this mode from File Searcher results")
                 result = folder_map_from_paths(self._folder_root, self._folder_paths)
             elif mode == "sqlite":
                 result = sqlite_schema_graph(self.path_input.text().strip())

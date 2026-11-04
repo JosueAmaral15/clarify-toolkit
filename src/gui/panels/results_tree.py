@@ -1172,8 +1172,8 @@ class ResultsTree(QTreeWidget):
         stats: Dict[str, int],
         scope: str,
     ) -> str:
-        """Build a bounded prompt for AI explanation of File Explorer results."""
-        scope_label = "selected File Explorer results" if scope == "selected" else "all current File Explorer results"
+        """Build a bounded prompt for AI explanation of File Searcher results."""
+        scope_label = "selected File Searcher results" if scope == "selected" else "all current File Searcher results"
         skipped = (
             stats["skipped_binary"]
             + stats["skipped_directory"]
@@ -1183,7 +1183,7 @@ class ResultsTree(QTreeWidget):
             + stats["skipped_error"]
         )
         lines = [
-            "Explain these File Explorer search results.",
+            "Explain these File Searcher search results.",
             "",
             "Instructions:",
             "- Explain the relevant purpose or role of each file.",
@@ -1272,7 +1272,7 @@ class ResultsTree(QTreeWidget):
         return getattr(main_window, "dock_ai_processor", None)
 
     def _prepare_ai_explanation(self):
-        """Prepare the AI Processor to explain selected or all File Explorer results."""
+        """Prepare the AI Processor to explain selected or all File Searcher results."""
         if not self._matches_data:
             return
 

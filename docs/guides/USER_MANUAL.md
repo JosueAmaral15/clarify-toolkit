@@ -8,7 +8,7 @@
    - Tradução de JSON
    - Reescrita de JSON
    - Substituição de Placeholders
-   - File Explorer e Busca de Conteúdo
+   - File Searcher e Busca de Conteúdo
    - Gerenciamento de Arquivos Recentes
    - Preferências e Configurações Persistentes
    - Atalhos de Teclado
@@ -72,8 +72,8 @@ O Clarify Toolkit é uma aplicação desktop para manipulação, tradução e ge
 - Apenas **Include value** gera uma lista plana dos valores extraídos, sem nomes de chave. Com ambos desativados, a saída é `{}`.
 - No modo de entrada **Text**, `Ctrl+F` abre busca e substituição. `Enter` no campo de busca avança para a próxima ocorrência; **Replace** altera a ocorrência atual e **Replace All** respeita as opções Regex, Case sensitive e Whole word.
 
-### File Explorer e Busca de Conteúdo
-- Abra o **File Explorer**, escolha um diretório e informe um nome de arquivo ou uma consulta de conteúdo. Sem critérios de busca, o comando principal apenas lista os arquivos.
+### File Searcher e Busca de Conteúdo
+- Abra o **File Searcher**, escolha um diretório e informe um nome de arquivo ou uma consulta de conteúdo. Sem critérios de busca, o comando principal apenas lista os arquivos.
 - Em **Tipo de conteúdo**, selecione:
   - **Texto/ASCII (padrão):** pesquisa somente arquivos classificados como texto decodificável.
   - **Binários:** pesquisa a consulta codificada em UTF-8 nos bytes dos arquivos classificados como binários.
@@ -108,10 +108,10 @@ O Clarify Toolkit é uma aplicação desktop para manipulação, tradução e ge
 ### Clarify Editor
 - Use **File > Open Folder...** para definir a raiz do explorador lateral. A árvore carrega o sistema de arquivos sob demanda e abre arquivos com clique duplo.
 - Use **View > Show Explorer** para mostrar ou ocultar a lateral; a pasta e a visibilidade são persistidas.
-- O explorador lateral é apenas para navegação. Pesquisas de conteúdo, filtros e substituições continuam centralizados no **File Explorer**.
+- O explorador lateral é apenas para navegação. Pesquisas de conteúdo, filtros e substituições continuam centralizados no **File Searcher**.
 
 ### Information Structure
-- Use **Tools > Files > Information Structure** para análises estruturais limitadas e somente leitura: mapa dos resultados do File Explorer sem nova varredura, esquema SQLite aberto em modo read-only, contexto AST Python, agrupamento de parágrafos, ancestralidade por DOI e visualizações hierárquicas.
+- Use **Tools > Files > Information Structure** para análises estruturais limitadas e somente leitura: mapa dos resultados do File Searcher sem nova varredura, esquema SQLite aberto em modo read-only, contexto AST Python, agrupamento de parágrafos, ancestralidade por DOI e visualizações hierárquicas.
 - A saída é JSON e pode ser aberta como uma nova aba não salva do Clarify Editor.
 
 ### Editorial Repair
