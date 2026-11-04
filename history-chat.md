@@ -6489,3 +6489,20 @@ Plano imediato:
 - Evidence is in
   `docs/reports/CLARIFY_FILE_SEARCHER_PUBLIC_RENAME_2026_11_03.md`. There are 80
   open canonical task markers. `example.py` remains untracked and byte-identical.
+
+### Published File Searcher rename and next continuation
+
+- Feature commit `48df4e4` was pushed to
+  `COM-254556ee-11ee-441b-907d-1a19ff7b6622`. No default branch, provider,
+  dependency or unrelated user file changed.
+- AI Presence Monitor 0.11.3 revalidated the exact active Protocol2 worker,
+  schema 2 integrity, five hooks, native queue, monitor/reply/prompt-rule
+  observer services and tray autostart. Task automation, native input and
+  activity sync are enabled; GUI/remote fallback and scheduled prompt rules
+  remain disabled.
+- `DOCS-HISTORICAL-CHECKBOX-AUDIT-01` is the next concrete unblocked item in
+  the canonical sequence. Its exact-session native continuation was dry-run
+  successfully and then invoked once with a 60-second delay. The real command
+  exited 0 without textual output; this is recorded as an accepted dispatch
+  attempt, not proof that Codex processed the message, and it will not be
+  retried.
