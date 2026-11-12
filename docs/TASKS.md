@@ -42,7 +42,7 @@ boundary.
   remains open for reviewed integration, clean-environment validation and the
   GitHub default-branch rescan. Evidence:
   [Dependabot Default-Branch Status](reports/DEPENDABOT_DEFAULT_BRANCH_STATUS_2026_11_12.md).
-- [ ] **CLI-HELP-ENTRYPOINT-01: make top-level `--help` exit without launching
+- [x] **CLI-HELP-ENTRYPOINT-01: make top-level `--help` exit without launching
   the GUI.** Reproduce `python -m src --help` in an isolated process and correct
   argument routing so it prints parser help and exits successfully without
   creating `QApplication`, `MainWindow`, plugins, migrations or background
@@ -50,6 +50,11 @@ boundary.
   cover `-h`, `--help`, invalid top-level options and subcommand help.
   Discovered on 12/11/2026 while validating the English README: top-level
   `--help` initialized the full GUI and remained alive until explicitly stopped.
+  Delivered on 12/11/2026: every explicit argument now passes through the CLI
+  parser; only no arguments or the standalone `--gui` flag select the graphical
+  path. Five isolated regressions cover long and short help, invalid options,
+  GUI/subcommand conflicts and the no-argument GUI default. Evidence:
+  [CLI Help Entry-Point Repair](reports/CLI_HELP_ENTRYPOINT_2026_11_12.md).
 - [ ] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
   Reproduce the reported case from a terminal where closing the Clarify window
   leaves the launcher or Python process alive. Correlate `~/.config/clarify/crashes`

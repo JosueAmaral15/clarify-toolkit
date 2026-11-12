@@ -105,9 +105,10 @@ poetry run python -m src insert ./notes.txt 10 "New line" --mode insert_below
 poetry run python -m src dedupe input.ts --join-keys --eliminate-duplicates -o output.ts
 ```
 
-Use `--help` on a subcommand for its current arguments:
+Use `--help` on the entry point or a subcommand for the current arguments:
 
 ```bash
+poetry run python -m src --help
 poetry run python -m src search --help
 ```
 

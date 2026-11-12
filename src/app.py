@@ -1953,10 +1953,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
 
-    # If a subcommand is present, run as CLI-only.
-    if argv and argv[0] in {"search","replace","insert","translate","gtranslate","dedupe"}:
+    # Every explicit argument belongs to the CLI parser. The GUI remains the
+    # default only when no arguments are supplied or --gui is requested.
+    if argv:
         args = parser.parse_args(argv)
-        return args.func(args)
+        if args.cmd:
+            if args.gui:
+                parser.error("--gui cannot be combined with a CLI subcommand")
+            return args.func(args)
+        if not args.gui:
+            parser.print_help()
+            return 0
 
     # Otherwise, run the GUI (PySide6 must be available)
     if not _PYSIDE:
@@ -1967,7 +1974,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Set Qt attributes before creating QApplication
     QApplication.setAttribute(Qt.AA_UseDesktopOpenGL, True)
 
-    app = QApplication(sys.argv)
+    app = QApplication([sys.argv[0]])
     win = MainWindow(app)
     win.show()
 

@@ -6450,3 +6450,18 @@ Plano imediato:
   and `git diff --check` passed. Two pre-existing broken links in the canonical
   task file were corrected. No GUI suite was run, and the end-to-end shutdown
   task remains blocked by its resource-guarded lifecycle proof.
+
+## 2026-11-12 - Top-level CLI help no longer launches the GUI
+
+- Work continued on fresh branch
+  `COM-8b5e15be-f977-42ec-a4f1-184761471dbc`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- The reproduced `python -m src --help` defect came from routing only recognized
+  first-position subcommands through `argparse`. Explicit arguments now always
+  pass through the parser; no arguments and standalone `--gui` retain graphical
+  startup.
+- Top-level `-h`/`--help` exits successfully, invalid options exit with status
+  2, and combining `--gui` with a subcommand is rejected before Qt startup.
+- Five focused tests passed, including four real subprocess regressions with
+  bounded timeouts and a no-argument GUI-default contract. Compilation,
+  Pylint-E and diff checks passed without a full GUI run.
