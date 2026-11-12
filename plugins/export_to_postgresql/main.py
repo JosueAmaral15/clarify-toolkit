@@ -26,6 +26,35 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 
+def _validate_table_name(table_name):
+    """Validate one PostgreSQL identifier without changing its spelling."""
+    if not isinstance(table_name, str) or not table_name:
+        raise ValueError("Table name must not be empty.")
+    if "\x00" in table_name or any(ord(char) < 32 for char in table_name):
+        raise ValueError("Table name must not contain control characters.")
+    if len(table_name.encode("utf-8")) > 63:
+        raise ValueError("Table name must not exceed 63 UTF-8 bytes.")
+    return table_name
+
+
+def _postgresql_statements(sql_module, table_name):
+    """Compose SQL with a quoted identifier and parameterized values."""
+    identifier = sql_module.Identifier(_validate_table_name(table_name))
+    create_statement = sql_module.SQL(
+        """
+        CREATE TABLE IF NOT EXISTS {table} (
+            id SERIAL PRIMARY KEY,
+            data JSONB NOT NULL,
+            imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    ).format(table=identifier)
+    insert_statement = sql_module.SQL(
+        "INSERT INTO {table} (data) VALUES (%s)"
+    ).format(table=identifier)
+    return create_statement, insert_statement
+
+
 class PostgreSQLConfigDialog(QDialog):
     """Configuration dialog for PostgreSQL connection."""
     
@@ -172,6 +201,7 @@ class ExportToPostgreSQLPlugin(PluginBase):
         """
         try:
             import psycopg2
+            from psycopg2 import sql
             from psycopg2.extras import Json
         except ImportError:
             self.show_message(
@@ -199,29 +229,20 @@ class ExportToPostgreSQLPlugin(PluginBase):
             
             # Create table if not exists
             table_name = config["table"]
-            cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {table_name} (
-                    id SERIAL PRIMARY KEY,
-                    data JSONB NOT NULL,
-                    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
+            create_statement, insert_statement = _postgresql_statements(
+                sql, table_name
+            )
+            cursor.execute(create_statement)
             
             # Insert data
             if isinstance(data, list):
                 # Batch insert for arrays
                 for item in data:
-                    cursor.execute(
-                        f"INSERT INTO {table_name} (data) VALUES (%s)",
-                        (Json(item),)
-                    )
+                    cursor.execute(insert_statement, (Json(item),))
                 count = len(data)
             else:
                 # Single insert for objects
-                cursor.execute(
-                    f"INSERT INTO {table_name} (data) VALUES (%s)",
-                    (Json(data),)
-                )
+                cursor.execute(insert_statement, (Json(data),))
                 count = 1
             
             # Commit transaction

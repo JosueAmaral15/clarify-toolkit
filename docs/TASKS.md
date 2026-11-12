@@ -15,6 +15,19 @@ boundary.
 
 ### MUST - Security And Runtime Integrity
 
+- [ ] **SEC-CODE-SCANNING-22: remediate the 22 default-branch code-scanning
+  alerts.** Classify every GitHub Code Scanning alert against its exact source
+  and consumer contract, fix confirmed defects in bounded severity-first stages,
+  and add regressions for each security boundary. Do not dismiss alerts without
+  recorded evidence. Require focused tests, reviewed integration into the
+  default branch and a GitHub rescan before marking an alert resolved.
+  In progress on 12/11/2026: the authenticated API reports 2 high, 13 medium
+  and 7 low alerts. The first stage covers the confirmed PostgreSQL identifier
+  injection and unsafe ODT archive extraction findings. Stage 1 is implemented
+  and locally validated on its work branch; the task remains open for the other
+  alerts, reviewed integration and a default-branch rescan. Evidence:
+  [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
+
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**
   Audit the complete Git history with redacted output, classify every finding as
   a real credential, example or false positive, and record file, commit, rule and

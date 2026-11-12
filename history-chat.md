@@ -1,5 +1,23 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Code scanning remediation started
+
+- The user asked why automation was not active and pointed to 22 GitHub Code
+  Scanning vulnerabilities. The exact Clarify Protocol2 worker was started and
+  verified active; task automation and native input are enabled.
+- The authenticated GitHub API confirmed 2 high, 13 medium and 7 low alerts on
+  `main`. Work started on an isolated branch with the two confirmed high
+  findings: PostgreSQL identifier injection and unrestricted ODT ZIP extraction.
+- Untracked `example.py` and `docs/short-description.txt` remain preserved and
+  outside the change set.
+- Stage 1 replaced interpolated PostgreSQL table names with quoted
+  `psycopg2.sql.Identifier` composition and replaced unrestricted ODT
+  `extractall()` with contained, type-checked and size-bounded extraction. The
+  latter also covers medium alert #7 at the same operation.
+- Security, plugin and mapper modules completed 32 focused tests. Compilation,
+  constrained Pylint-E and diff checks passed; one legacy mapper test initially
+  failed collection until its documented `PYTHONPATH=src` requirement was set.
+
 Este arquivo funciona como diario local da conversa sobre este projeto. A ideia e registrar contexto recente e antigo para que uma pessoa ou IA consiga retomar o trabalho mesmo depois de perder memoria de conversas anteriores.
 
 ## Regra de uso

@@ -28,6 +28,7 @@ import json
 import os
 import psutil
 import re
+import stat
 import sys
 import tempfile
 import zipfile
@@ -39,6 +40,99 @@ from xml.dom import minidom
 
 from odf import opendocument, text as odf_text, style as odf_style, table as odf_table, draw as odf_draw
 from odf.element import Text as ODFText
+
+
+_ODT_ARCHIVE_MAX_ENTRIES = 4096
+_ODT_ARCHIVE_MAX_MEMBER_BYTES = 64 * 1024 * 1024
+_ODT_ARCHIVE_MAX_TOTAL_BYTES = 512 * 1024 * 1024
+_ODT_ARCHIVE_MAX_COMPRESSION_RATIO = 200
+_ARCHIVE_COPY_CHUNK_BYTES = 1024 * 1024
+
+
+def _safe_odt_member_path(extract_dir: str, member: zipfile.ZipInfo) -> str:
+    """Return a contained extraction path for a regular ODT ZIP member."""
+    name = member.filename
+    if not name or "\x00" in name or "\\" in name:
+        raise ValueError(f"Unsafe ODT archive member name: {name!r}")
+
+    normalized = name.rstrip("/")
+    parts = normalized.split("/") if normalized else []
+    if not parts or name.startswith("/") or any(
+        part in ("", ".", "..") for part in parts
+    ):
+        raise ValueError(f"Unsafe ODT archive member path: {name!r}")
+    if len(parts[0]) >= 2 and parts[0][1] == ":":
+        raise ValueError(f"Unsafe ODT archive member path: {name!r}")
+
+    mode = member.external_attr >> 16
+    file_type = stat.S_IFMT(mode)
+    if file_type and not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
+        raise ValueError(f"Unsupported ODT archive member type: {name!r}")
+
+    root = os.path.realpath(extract_dir)
+    target = os.path.realpath(os.path.join(root, *parts))
+    if os.path.commonpath((root, target)) != root:
+        raise ValueError(f"ODT archive member escapes extraction root: {name!r}")
+    return target
+
+
+def _extract_odt_archive_safely(archive: zipfile.ZipFile, extract_dir: str) -> None:
+    """Extract a bounded ODT archive without traversal or link entries."""
+    members = archive.infolist()
+    if len(members) > _ODT_ARCHIVE_MAX_ENTRIES:
+        raise ValueError(
+            f"ODT archive contains too many entries ({len(members)} > "
+            f"{_ODT_ARCHIVE_MAX_ENTRIES})."
+        )
+
+    planned = []
+    seen_paths = set()
+    total_size = 0
+    for member in members:
+        target = _safe_odt_member_path(extract_dir, member)
+        normalized_target = os.path.normcase(target)
+        if normalized_target in seen_paths:
+            raise ValueError(f"Duplicate ODT archive member: {member.filename!r}")
+        seen_paths.add(normalized_target)
+
+        if member.file_size > _ODT_ARCHIVE_MAX_MEMBER_BYTES:
+            raise ValueError(f"ODT archive member is too large: {member.filename!r}")
+        total_size += member.file_size
+        if total_size > _ODT_ARCHIVE_MAX_TOTAL_BYTES:
+            raise ValueError("ODT archive exceeds the total extraction size limit.")
+        if member.file_size and (
+            member.compress_size == 0
+            or member.file_size / member.compress_size
+            > _ODT_ARCHIVE_MAX_COMPRESSION_RATIO
+        ):
+            raise ValueError(
+                "ODT archive member has an unsafe compression ratio: "
+                f"{member.filename!r}"
+            )
+        planned.append((member, target))
+
+    for member, target in planned:
+        if member.is_dir():
+            os.makedirs(target, exist_ok=True)
+            continue
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        copied = 0
+        with archive.open(member, "r") as source, open(target, "xb") as destination:
+            while True:
+                chunk = source.read(_ARCHIVE_COPY_CHUNK_BYTES)
+                if not chunk:
+                    break
+                copied += len(chunk)
+                if copied > member.file_size or copied > _ODT_ARCHIVE_MAX_MEMBER_BYTES:
+                    raise ValueError(
+                        "ODT archive member exceeded its declared size: "
+                        f"{member.filename!r}"
+                    )
+                destination.write(chunk)
+        if copied != member.file_size:
+            raise ValueError(
+                f"ODT archive member size mismatch: {member.filename!r}"
+            )
 
 
 # ============================================================================
@@ -1667,7 +1761,7 @@ def create_odt_from_original(original_odt_path: str, html: str, css_manager_or_p
         os.makedirs(extract_dir, exist_ok=True)
         
         with zipfile.ZipFile(original_odt_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_dir)
+            _extract_odt_archive_safely(zip_ref, extract_dir)
         
         print(f"[ODT Fix] Extracted original ODT structure ({len(os.listdir(extract_dir))} top-level items)")
         
