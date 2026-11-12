@@ -12,7 +12,8 @@ Date: 2025-12-10
 """
 
 import json
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -20,8 +21,67 @@ from datetime import datetime
 
 
 from .utils.logger import get_logger
+from .utils.atomic_files import write_text_atomically
 
 logger = get_logger(__name__)
+
+
+def _validated_template_target(root: Path, raw_path: Any) -> Path:
+    """Resolve one portable relative template path within ``root``."""
+    if not isinstance(raw_path, str) or not raw_path:
+        raise ValueError("Template file path must be a non-empty string")
+    if any(ord(character) < 32 or ord(character) == 127 for character in raw_path):
+        raise ValueError(f"Template file path contains control characters: {raw_path!r}")
+
+    windows_path = PureWindowsPath(raw_path)
+    normalized = raw_path.replace("\\", "/")
+    parts = normalized.split("/")
+    if (
+        PurePosixPath(normalized).is_absolute()
+        or windows_path.is_absolute()
+        or windows_path.drive
+    ):
+        raise ValueError(f"Template file path must be relative: {raw_path!r}")
+    if any(part in ("", ".", "..") for part in parts):
+        raise ValueError(f"Template file path contains an unsafe segment: {raw_path!r}")
+
+    target = (root / Path(*parts)).resolve(strict=False)
+    if target == root or not target.is_relative_to(root):
+        raise ValueError(f"Template file path escapes the target directory: {raw_path!r}")
+    return target
+
+
+def _build_template_file_plan(template: "ProjectTemplate", root: Path):
+    """Validate every file before the project target is modified."""
+    plan = []
+    seen_targets = set()
+    for index, file_info in enumerate(template.files):
+        if not isinstance(file_info, dict):
+            raise ValueError(f"Template file entry {index} must be an object")
+        if "path" not in file_info or "content" not in file_info:
+            raise ValueError(f"Template file entry {index} requires path and content")
+        if not isinstance(file_info["content"], str):
+            raise ValueError(f"Template file content must be text at entry {index}")
+
+        target = _validated_template_target(root, file_info["path"])
+        normalized_target = os.path.normcase(os.fspath(target))
+        if normalized_target in seen_targets:
+            raise ValueError(f"Template contains a duplicate output path: {file_info['path']!r}")
+        if target.exists() and not target.is_file():
+            raise ValueError(f"Template output is not a regular file: {file_info['path']!r}")
+        for parent in target.parents:
+            if parent == root:
+                break
+            if parent.exists() and not parent.is_dir():
+                raise ValueError(f"Template output parent is not a directory: {file_info['path']!r}")
+        seen_targets.add(normalized_target)
+        plan.append((target, file_info["content"]))
+
+    planned_paths = {target for target, _content in plan}
+    for target in planned_paths:
+        if any(parent in planned_paths for parent in target.parents if parent != root):
+            raise ValueError(f"Template output conflicts with a parent file: {target}")
+    return plan
 
 @dataclass
 class ProjectTemplate:
@@ -276,24 +336,37 @@ class TemplateManager:
         if not template:
             raise ValueError(f"Template not found: {template_id}")
 
-        target_dir = Path(target_dir)
-        target_dir.mkdir(parents=True, exist_ok=True)
+        requested_root = Path(target_dir)
+        root = requested_root.resolve(strict=False)
+        if root.exists() and not root.is_dir():
+            raise ValueError(f"Template target is not a directory: {requested_root}")
+        plan = _build_template_file_plan(template, root)
 
-        # Create files
-        for file_info in template.files:
-            file_path = target_dir / file_info["path"]
-
-            if file_path.exists() and not overwrite:
-                continue
-
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-
-            try:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(file_info["content"])
-            except (IOError, OSError, PermissionError) as e:
-                logger.error(f"Failed to write template file {file_path}: {e}")
-                raise RuntimeError(f"Cannot create template file {file_path}: {e}") from e
+        written = 0
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+            for file_path, content in plan:
+                if file_path.exists() and not overwrite:
+                    continue
+                parent = file_path.parent.resolve(strict=False)
+                if not parent.is_relative_to(root):
+                    raise ValueError(f"Template output parent escaped the target: {file_path}")
+                parent.mkdir(parents=True, exist_ok=True)
+                if not parent.resolve(strict=True).is_relative_to(root):
+                    raise ValueError(f"Template output parent escaped the target: {file_path}")
+                write_text_atomically(file_path, content)
+                written += 1
+        except (OSError, ValueError) as e:
+            logger.error(
+                "Template creation stopped after %d file(s) at %s: %s",
+                written,
+                requested_root,
+                e,
+            )
+            raise RuntimeError(
+                f"Template creation stopped after {written} file(s); "
+                f"partial output may remain in {requested_root}: {e}"
+            ) from e
 
         return True
 

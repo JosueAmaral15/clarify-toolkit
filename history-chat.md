@@ -1,5 +1,32 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - Template output containment stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `2acc97d` on fresh branch
+  `COM-a1aca2d8-d561-46b4-a915-2cc82d395b1d`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Audit alert #17 before editing. Custom templates are loaded from local JSON,
+  and the current creator makes the target root then writes each joined path
+  without a complete preflight, allowing traversal and partial output.
+- Build and validate the whole output plan before creating the target root,
+  reject ambiguous or escaping paths, then reuse the existing atomic text-file
+  writer. Test only generated temporary templates and roots.
+
+## 2026-11-12 - Post-action - Template output containment stage
+
+- Alert #17 was confirmed. Project creation now validates the entire custom or
+  built-in template plan before creating the target root, including portable
+  absolute/parent/control checks, canonical symlink containment, duplicate and
+  file/directory conflict detection.
+- Valid nested templates use the shared atomic writer. Invalid definitions
+  produce no project output; later I/O failures report the completed file count
+  and warn that partial output may remain.
+- Eleven security regressions, five existing template-manager tests and three
+  atomic-file tests passed in isolated runs. Compilation, Ruff, Pylint-E and
+  diff checks passed. No provider, browser or user document was used.
+- The GitHub alert remains open pending reviewed integration into `main` and a
+  default-branch rescan.
+
 ## 2026-11-12 - Pre-action - Compressed document amplification stage
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `0793141` on fresh branch

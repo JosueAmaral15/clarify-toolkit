@@ -153,10 +153,40 @@ parsing is avoided.
 No provider, browser, user document or full GUI was used. These alerts remain
 open until reviewed integration and the default-branch scan.
 
+## Stage 6 - Project Template Output Containment
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #17 | CWE-22 | `src/template_manager.py` | Confirmed | Build and validate the complete template output plan before creating the target root; reject absolute, parent, empty, control-containing, duplicate, conflicting and canonically escaping paths; write accepted text files through the existing atomic writer. |
+
+Custom template JSON is loaded from the user template directory and previously
+reached `target_dir / file_info["path"]` directly. The new preflight interprets
+both slash styles consistently, resolves existing symlinks, requires every
+target and existing ancestor to remain compatible with a regular file, and
+detects file/directory collisions before any project output is created. If an
+I/O failure occurs after preflight, the raised error states how many files were
+completed and that partial output may remain.
+
+### Stage 6 Validation
+
+- `tests/security/test_code_scanning_template_paths.py`: 11 passed. Temporary
+  templates cover POSIX and Windows traversal/absolute forms, empty and control
+  paths, preflight ordering, symlink escape, existing-parent and planned-parent
+  conflicts, valid nested paths, atomic-write use and explicit partial-failure
+  reporting. Peak process-tree RSS was 63.8 MiB.
+- `tests/test_template_manager.py`: 5 passed, preserving built-in lookup,
+  categories and normal blank-project creation. The isolated guarded run peaked
+  at 62.3 MiB; the module was rerun after the final preflight refinement.
+- `tests/test_atomic_files.py`: 3 passed with peak process-tree RSS of 61.8 MiB.
+- Python compilation, Ruff, Pylint-E and `git diff --check` passed.
+
+No provider, browser, user document or full GUI was used. This alert remains
+open until reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 3 medium alerts not yet covered by a candidate correction: resource
-  consumption, path traversal and missing authentication.
+- 2 medium alerts not yet covered by a candidate correction: resource
+  consumption and missing authentication.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.
 

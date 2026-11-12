@@ -34,7 +34,9 @@ boundary.
   for alerts #14 and #20 while retaining the trusted report templates. Stage 5
   validates ODT and DOCX ZIP metadata before parser construction for compressed
   data amplification alerts #21 and #8, retaining valid document/media support.
-  Evidence:
+  Stage 6 preflights every project-template output path and uses contained
+  atomic writes for path-traversal alert #17, without partially creating a
+  project when the template definition itself is invalid. Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**
