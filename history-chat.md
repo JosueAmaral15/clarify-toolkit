@@ -6344,3 +6344,8 @@ Plano imediato:
   canonical open task markers after this stage.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+- Remote SHA verification matched feature commit `c7b3e0b` on
+  `COM-df4374fe-207f-405b-86ec-6c93872b1afb`. The exact Clarify Protocol2
+  worker was finished once and reported `idle`; no continuation was scheduled.
+  Two identical late dispatches for the already completed settings-reset stage
+  at obsolete checkpoint `be1d9b1` were not retried.
