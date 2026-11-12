@@ -183,10 +183,48 @@ completed and that partial output may remain.
 No provider, browser, user document or full GUI was used. This alert remains
 open until reviewed integration and the default-branch scan.
 
+## Stage 7 - Bounded Numeric-Key Reconstruction
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #22 | CWE-400 | `src/set_operations.py` | Confirmed | Preserve list-origin metadata in flattened mappings, preflight the complete reconstruction tree and reject per-list size, sparse-padding or combined-list budgets before allocating result lists. |
+
+The legacy reconstructor treated every nested numeric path segment as a list
+index and appended placeholders until the index existed. Generated JSON with a
+large numeric object key could therefore request excessive memory. The same
+logic also produced incorrect round trips for normal lists, root lists and
+numeric object keys. Flattening now retains private list-container metadata
+without changing the public dot-notation mapping. Legacy external flat maps
+remain supported within explicit bounds.
+
+Calculator union and all set-operation comparison paths retain the same flat
+key notation. Calculator reconstruction now carries structural metadata from
+both inputs. The audit also reproduced a separate pre-existing normalization
+contract defect in `CalculatorOperations.intersection` and `difference` before
+they reach reconstruction; that behavior was not changed or attributed to
+alert #22.
+
+### Stage 7 Validation
+
+- `tests/security/test_code_scanning_numeric_keys.py`: 14 passed. Coverage
+  includes normal and root arrays, nested objects, numeric object keys, nested
+  arrays, selected-result metadata, calculator union, oversized and sparse
+  indices, combined budgets and conflicting paths. Peak process-tree RSS was
+  63.5 MiB.
+- `tests/test_set_operations.py`: 50 passed with peak process-tree RSS of
+  63.0 MiB, preserving flattening, comparisons and set operations.
+- `tests/gui/test_legacy_feature_workflows.py`: 8 passed in one isolated
+  offscreen GUI process with peak process-tree RSS of 207.8 MiB.
+- Python compilation, focused Ruff checks, Pylint-E and `git diff --check`
+  passed. No native crash or resource-guard abort occurred.
+
+No provider, browser or user document was used. This alert remains open until
+reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 2 medium alerts not yet covered by a candidate correction: resource
-  consumption and missing authentication.
+- 1 medium alert not yet covered by a candidate correction: missing
+  authentication.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.
 

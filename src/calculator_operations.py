@@ -74,7 +74,12 @@ class CalculatorOperations:
         try:
             # Set operations expects files, but we have data directly
             # We'll use the internal logic by creating temp dicts
-            from .set_operations import flatten_json, normalize_for_comparison, unflatten_json
+            from .set_operations import (
+                flatten_json,
+                normalize_for_comparison,
+                preserve_flattened_structure,
+                unflatten_json,
+            )
 
             # Flatten both datasets
             flat_a = flatten_json(data_a)
@@ -100,7 +105,7 @@ class CalculatorOperations:
                         result_flat[key] = flat_a[key]
 
             # Unflatten result
-            result = unflatten_json(result_flat)
+            result = unflatten_json(preserve_flattened_structure(result_flat, flat_a, flat_b))
 
             count_a = len(flat_a)
             count_b = len(flat_b)
@@ -127,7 +132,12 @@ class CalculatorOperations:
             Tuple (success: bool, result: Optional[Dict], message: str)
         """
         try:
-            from .set_operations import flatten_json, normalize_for_comparison, unflatten_json
+            from .set_operations import (
+                flatten_json,
+                normalize_for_comparison,
+                preserve_flattened_structure,
+                unflatten_json,
+            )
 
             # Flatten both datasets
             flat_a = flatten_json(data_a)
@@ -143,7 +153,7 @@ class CalculatorOperations:
             result_flat.update(flat_b)  # B overwrites conflicts
 
             # Unflatten result
-            result = unflatten_json(result_flat)
+            result = unflatten_json(preserve_flattened_structure(result_flat, flat_a, flat_b))
 
             count_a = len(flat_a)
             count_b = len(flat_b)
@@ -170,7 +180,12 @@ class CalculatorOperations:
             Tuple (success: bool, result: Optional[Dict], message: str)
         """
         try:
-            from .set_operations import flatten_json, normalize_for_comparison, unflatten_json
+            from .set_operations import (
+                flatten_json,
+                normalize_for_comparison,
+                preserve_flattened_structure,
+                unflatten_json,
+            )
 
             # Flatten both datasets
             flat_a = flatten_json(data_a)
@@ -195,7 +210,7 @@ class CalculatorOperations:
                         result_flat[key] = flat_a[key]
 
             # Unflatten result
-            result = unflatten_json(result_flat)
+            result = unflatten_json(preserve_flattened_structure(result_flat, flat_a, flat_b))
 
             count_a = len(flat_a)
             count_b = len(flat_b)

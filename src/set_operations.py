@@ -20,13 +20,47 @@ Version: 2.9.32
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Set, Tuple
 
 
 
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+MAX_RECONSTRUCTED_LIST_ITEMS = 100_000
+MAX_SPARSE_LIST_PADDING = 10_000
+MAX_TOTAL_RECONSTRUCTED_LIST_ITEMS = 1_000_000
+
+
+class _FlattenedJson(dict):
+    """Flat JSON values plus paths whose original containers were lists."""
+
+    def __init__(self, *args, list_paths: Iterable[Tuple[str, ...]] = (), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.list_paths = frozenset(list_paths)
+
+
+class _ReconstructionNode:
+    """Allocation-free intermediate node used to validate flattened input."""
+
+    __slots__ = ("children", "has_value", "value")
+
+    def __init__(self):
+        self.children: Dict[Any, "_ReconstructionNode"] = {}
+        self.has_value = False
+        self.value: Any = None
+
+
+def preserve_flattened_structure(
+    values: Mapping[str, Any], *sources: Mapping[str, Any]
+) -> Dict[str, Any]:
+    """Return ``values`` with list-origin metadata retained from flat sources."""
+
+    list_paths = set()
+    for source in sources:
+        list_paths.update(getattr(source, "list_paths", ()))
+    return _FlattenedJson(values, list_paths=list_paths)
 
 def validate_file_path(file_path: str) -> bool:
     """
@@ -87,20 +121,30 @@ def flatten_json(obj: Any, parent_key: str = "", sep: str = ".") -> Dict[str, An
         >>> flatten_json({"items": [1, 2, 3]})
         {'items.0': 1, 'items.1': 2, 'items.2': 3}
     """
-    items = []
+    flattened: Dict[str, Any] = {}
+    list_paths: Set[Tuple[str, ...]] = set()
+    initial_path = tuple(parent_key.split(sep)) if parent_key else ()
 
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            items.extend(flatten_json(v, new_key, sep).items())
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj):
-            new_key = f"{parent_key}{sep}{i}" if parent_key else str(i)
-            items.extend(flatten_json(v, new_key, sep).items())
-    else:
-        return {parent_key: obj}
+    def visit(value: Any, flat_key: str, logical_path: Tuple[str, ...]) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                key_text = str(key)
+                child_key = f"{flat_key}{sep}{key_text}" if flat_key else key_text
+                visit(child, child_key, (*logical_path, key_text))
+            return
 
-    return dict(items)
+        if isinstance(value, list):
+            list_paths.add(logical_path)
+            for index, child in enumerate(value):
+                index_text = str(index)
+                child_key = f"{flat_key}{sep}{index_text}" if flat_key else index_text
+                visit(child, child_key, (*logical_path, index_text))
+            return
+
+        flattened[flat_key] = value
+
+    visit(obj, parent_key, initial_path)
+    return _FlattenedJson(flattened, list_paths=list_paths)
 
 
 def unflatten_json(flat_dict: Dict[str, Any], sep: str = ".") -> Any:
@@ -120,46 +164,100 @@ def unflatten_json(flat_dict: Dict[str, Any], sep: str = ".") -> Any:
         >>> unflatten_json({'items.0': 1, 'items.1': 2})
         {'items': [1, 2]}
     """
-    nested = {}
+    if not flat_dict:
+        return {}
 
+    parsed_paths: List[Tuple[Tuple[str, ...], Any]] = []
     for key, value in flat_dict.items():
-        parts = key.split(sep)
-        current = nested
+        if not isinstance(key, str) or not key:
+            raise ValueError("Flattened JSON keys must be non-empty strings")
+        parsed_paths.append((tuple(key.split(sep)), value))
 
-        for i, part in enumerate(parts[:-1]):
-            # Determine if next level should be list or dict
-            next_part = parts[i + 1]
-            is_next_array = next_part.isdigit()
+    metadata_available = hasattr(flat_dict, "list_paths")
+    list_paths: Set[Tuple[str, ...]] = set(getattr(flat_dict, "list_paths", ()))
+    if not metadata_available:
+        # Backward compatibility for the documented ``items.0`` flat format.
+        # Root numeric keys remain object keys unless flatten_json supplied the
+        # original root-list metadata.
+        for parts, _value in parsed_paths:
+            for depth in range(1, len(parts)):
+                if parts[depth].isdigit():
+                    list_paths.add(parts[:depth])
 
-            if part not in current:
-                current[part] = [] if is_next_array else {}
+    root = _ReconstructionNode()
+    indices_by_path: Dict[Tuple[str, ...], Set[int]] = {}
 
-            if isinstance(current[part], list):
-                idx = int(part) if part.isdigit() else 0
-                # Extend list if needed
-                while len(current[part]) <= idx:
-                    current[part].append(None)
-                if current[part][idx] is None:
-                    current[part][idx] = [] if is_next_array else {}
-                current = current[part][idx]
+    for parts, value in parsed_paths:
+        node = root
+        logical_path: Tuple[str, ...] = ()
+        for part in parts:
+            if node.has_value:
+                raise ValueError(
+                    f"Flattened path {sep.join(logical_path)!r} conflicts with a container"
+                )
+            if logical_path in list_paths:
+                if not part.isdigit() or str(int(part)) != part:
+                    raise ValueError(
+                        f"Invalid list index {part!r} at {sep.join(logical_path) or '<root>'}"
+                    )
+                child_key: Any = int(part)
+                indices_by_path.setdefault(logical_path, set()).add(child_key)
             else:
-                current = current[part]
+                child_key = part
 
-        # Set the final value
-        final_key = parts[-1]
-        if final_key.isdigit() and isinstance(current, dict):
-            # Convert to list if numeric keys
-            current = []
+            node = node.children.setdefault(child_key, _ReconstructionNode())
+            logical_path = (*logical_path, part)
 
-        if isinstance(current, list):
-            idx = int(final_key)
-            while len(current) <= idx:
-                current.append(None)
-            current[idx] = value
-        else:
-            current[final_key] = value
+        if node.children:
+            raise ValueError(f"Flattened path {sep.join(parts)!r} conflicts with a container")
+        node.has_value = True
+        node.value = value
 
-    return nested
+    total_list_items = 0
+    for path, indices in indices_by_path.items():
+        required_items = max(indices) + 1
+        if required_items > MAX_RECONSTRUCTED_LIST_ITEMS:
+            raise ValueError(
+                f"List at {sep.join(path) or '<root>'} requires {required_items} items; "
+                f"limit is {MAX_RECONSTRUCTED_LIST_ITEMS}"
+            )
+        sparse_padding = required_items - len(indices)
+        if sparse_padding > MAX_SPARSE_LIST_PADDING:
+            raise ValueError(
+                f"List at {sep.join(path) or '<root>'} requires {sparse_padding} "
+                f"placeholder items; limit is {MAX_SPARSE_LIST_PADDING}"
+            )
+        total_list_items += required_items
+
+    if total_list_items > MAX_TOTAL_RECONSTRUCTED_LIST_ITEMS:
+        raise ValueError(
+            f"Reconstructed lists require {total_list_items} items; "
+            f"combined limit is {MAX_TOTAL_RECONSTRUCTED_LIST_ITEMS}"
+        )
+
+    def materialize(node: _ReconstructionNode, path: Tuple[str, ...]) -> Any:
+        if node.has_value:
+            if node.children:
+                raise ValueError(f"Flattened path {sep.join(path)!r} has both value and children")
+            return node.value
+
+        if path in list_paths:
+            if any(not isinstance(key, int) for key in node.children):
+                raise ValueError(f"Mixed object keys and list indices at {sep.join(path) or '<root>'}")
+            size = max(node.children, default=-1) + 1
+            result_list = [None] * size
+            for index, child in node.children.items():
+                result_list[index] = materialize(child, (*path, str(index)))
+            return result_list
+
+        if any(not isinstance(key, str) for key in node.children):
+            raise ValueError(f"List indices are not valid object keys at {sep.join(path) or '<root>'}")
+        return {
+            key: materialize(child, (*path, key))
+            for key, child in node.children.items()
+        }
+
+    return materialize(root, ())
 
 
 def normalize_for_comparison(value: Any, arrays_ignore_order: bool = False) -> Any:

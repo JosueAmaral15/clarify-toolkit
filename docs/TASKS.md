@@ -36,7 +36,10 @@ boundary.
   data amplification alerts #21 and #8, retaining valid document/media support.
   Stage 6 preflights every project-template output path and uses contained
   atomic writes for path-traversal alert #17, without partially creating a
-  project when the template definition itself is invalid. Evidence:
+  project when the template definition itself is invalid. Stage 7 preserves
+  list-origin metadata during flattening and rejects oversized, sparse or
+  cumulatively excessive list reconstruction before allocation for resource
+  consumption alert #22, while retaining numeric JSON object keys. Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**

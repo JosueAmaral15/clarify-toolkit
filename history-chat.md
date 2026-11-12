@@ -1,5 +1,34 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - Numeric-key reconstruction limits
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `0db2aa9` on fresh branch
+  `COM-a6fa417d-37d8-4829-83ed-040cdabe45d9`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Alert #22 is confirmed: legacy reconstruction extends a list until a numeric
+  path segment exists, without bounding the index or sparse padding. Focused
+  reproduction also showed incorrect round trips for ordinary arrays and
+  numeric object keys.
+- Preserve the public flattened key notation while carrying list-origin
+  metadata internally, preflight every reconstruction before allocating lists,
+  and validate the set/calculator consumers with generated data only.
+
+## 2026-11-12 - Post-action - Numeric-key reconstruction limits
+
+- Alert #22 was confirmed. Flattened mappings now retain private list-origin
+  metadata, and reconstruction validates per-list size, sparse padding,
+  combined list size and path conflicts before materializing result lists.
+- Normal arrays, root arrays, nested objects and numeric object keys now round
+  trip without changing the public dot-notation mapping. Calculator result
+  reconstruction carries metadata from both inputs; a separate pre-existing
+  intersection/difference normalization defect was recorded but not expanded
+  into this security stage.
+- Fourteen security regressions, 50 set-operation tests and eight isolated GUI
+  workflow tests passed. Compilation, Ruff, Pylint-E and diff checks passed;
+  peak process-tree RSS was 207.8 MiB and no guard or native crash occurred.
+- The GitHub alert remains open pending reviewed integration into `main` and a
+  default-branch rescan. No provider, browser or user document was used.
+
 ## 2026-11-12 - Pre-action - Template output containment stage
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `2acc97d` on fresh branch
