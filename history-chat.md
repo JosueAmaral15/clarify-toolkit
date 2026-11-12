@@ -1,5 +1,32 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - Compressed document amplification stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `0793141` on fresh branch
+  `COM-5347561c-4780-4079-bfb5-2eec176c8ff6`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Audit alerts #21 and #8 before editing. The initial trace confirmed that the
+  ODF and python-docx parsers materialize package parts before the later custom
+  image loops, so validation must precede parser construction.
+- Reuse bounded ZIP metadata validation for ODT and DOCX while retaining ODT
+  extraction path containment. Test only generated temporary packages and do
+  not investigate the separate XML entity alert.
+
+## 2026-11-12 - Post-action - Compressed document amplification stage
+
+- Alerts #21 and #8 were confirmed. One shared archive boundary now limits ZIP
+  entries, member bytes, total expanded/compressed bytes and compression ratio
+  before either the ODF or python-docx parser materializes document content.
+- ODT custom image reading uses the same validated file stream, while the
+  Stage 1 contained extraction helper reuses the shared resource validation.
+  DOCX passes its validated stream directly to python-docx.
+- Ten focused tests, eleven Stage 1 security regressions and five legacy ODT
+  mapper regressions passed in separate guarded processes. Valid generated ODT
+  and DOCX files still translate; bomb parsers are proven not to run. Static
+  checks passed within the recorded legacy Ruff boundary.
+- Both GitHub alerts remain open pending reviewed integration into `main` and a
+  default-branch rescan. No provider, browser or user document was used.
+
 ## 2026-11-12 - Pre-action - HTML and SVG injection stage
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `d178630` on fresh branch

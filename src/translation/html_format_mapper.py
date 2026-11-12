@@ -41,11 +41,9 @@ from xml.dom import minidom
 from odf import opendocument, text as odf_text, style as odf_style, table as odf_table, draw as odf_draw
 from odf.element import Text as ODFText
 
+from .archive_security import DOCUMENT_ARCHIVE_LIMITS, validate_zip_archive
 
-_ODT_ARCHIVE_MAX_ENTRIES = 4096
-_ODT_ARCHIVE_MAX_MEMBER_BYTES = 64 * 1024 * 1024
-_ODT_ARCHIVE_MAX_TOTAL_BYTES = 512 * 1024 * 1024
-_ODT_ARCHIVE_MAX_COMPRESSION_RATIO = 200
+_ODT_ARCHIVE_MAX_MEMBER_BYTES = DOCUMENT_ARCHIVE_LIMITS.max_member_bytes
 _ARCHIVE_COPY_CHUNK_BYTES = 1024 * 1024
 
 
@@ -78,16 +76,10 @@ def _safe_odt_member_path(extract_dir: str, member: zipfile.ZipInfo) -> str:
 
 def _extract_odt_archive_safely(archive: zipfile.ZipFile, extract_dir: str) -> None:
     """Extract a bounded ODT archive without traversal or link entries."""
-    members = archive.infolist()
-    if len(members) > _ODT_ARCHIVE_MAX_ENTRIES:
-        raise ValueError(
-            f"ODT archive contains too many entries ({len(members)} > "
-            f"{_ODT_ARCHIVE_MAX_ENTRIES})."
-        )
+    members = validate_zip_archive(archive, label="ODT")
 
     planned = []
     seen_paths = set()
-    total_size = 0
     for member in members:
         target = _safe_odt_member_path(extract_dir, member)
         normalized_target = os.path.normcase(target)
@@ -95,20 +87,6 @@ def _extract_odt_archive_safely(archive: zipfile.ZipFile, extract_dir: str) -> N
             raise ValueError(f"Duplicate ODT archive member: {member.filename!r}")
         seen_paths.add(normalized_target)
 
-        if member.file_size > _ODT_ARCHIVE_MAX_MEMBER_BYTES:
-            raise ValueError(f"ODT archive member is too large: {member.filename!r}")
-        total_size += member.file_size
-        if total_size > _ODT_ARCHIVE_MAX_TOTAL_BYTES:
-            raise ValueError("ODT archive exceeds the total extraction size limit.")
-        if member.file_size and (
-            member.compress_size == 0
-            or member.file_size / member.compress_size
-            > _ODT_ARCHIVE_MAX_COMPRESSION_RATIO
-        ):
-            raise ValueError(
-                "ODT archive member has an unsafe compression ratio: "
-                f"{member.filename!r}"
-            )
         planned.append((member, target))
 
     for member, target in planned:
@@ -725,57 +703,57 @@ class HTMLFormatMapper:
             - image_manager: ODTImageManager with extracted images (or None if no images)
             - table_manager: ODTTableManager with extracted tables (or None if no tables)
         """
-        doc = opendocument.load(file_path)
-        css_manager = CSSClassManager()
-        image_manager = ODTImageManager()  # Phase 1: Create image manager
-        table_manager = ODTTableManager()  # Phase 2: Create table manager
-        segments: List[HTMLSegment] = []
-        
-        # Build style dictionary
-        styles = HTMLFormatMapper._build_style_dict(doc)
-        
-        # Phase 1: Extract images from ODT Pictures/ folder
-        try:
-            with zipfile.ZipFile(file_path, 'r') as odt_zip:
-                # Get list of image files in Pictures/ folder
-                image_files = [f for f in odt_zip.namelist() if f.startswith('Pictures/') and not f.endswith('/')]
-                
-                if image_files:
-                    print(f"[ODT Extract] Found {len(image_files)} image(s) in Pictures/")
-                    
-                    for img_path in image_files:
-                        # Read image binary data
-                        with odt_zip.open(img_path) as img_file:
-                            blob = img_file.read()
-                        
-                        # Determine format from extension
-                        img_ext = os.path.splitext(img_path)[1].lower()
-                        img_format = {
-                            '.png': 'png',
-                            '.jpg': 'jpeg',
-                            '.jpeg': 'jpeg',
-                            '.gif': 'gif',
-                        }.get(img_ext, 'unknown')
-                        
-                        # Default size (will be refined when we parse draw:frame)
-                        # For now, use default 3in x 2in (7.62cm x 5.08cm)
-                        width_cm = 7.62
-                        height_cm = 5.08
-                        
-                        # Add to image manager
-                        image_id = image_manager.add_image(
-                            blob=blob,
-                            img_format=img_format,
-                            width_cm=width_cm,
-                            height_cm=height_cm,
-                            original_href=img_path
-                        )
-                        
-                        print(f"[ODT Extract] Stored {image_id} from {img_path}")
-                else:
-                    print(f"[ODT Extract] No images found in Pictures/")
-        except Exception as e:
-            print(f"[ODT Extract] Warning: Could not extract images: {e}")
+        with open(file_path, "rb") as source:
+            with zipfile.ZipFile(source, "r") as odt_zip:
+                validate_zip_archive(odt_zip, label="ODT")
+            source.seek(0)
+            doc = opendocument.load(source)
+            css_manager = CSSClassManager()
+            image_manager = ODTImageManager()  # Phase 1: Create image manager
+            table_manager = ODTTableManager()  # Phase 2: Create table manager
+            segments: List[HTMLSegment] = []
+
+            # Build style dictionary
+            styles = HTMLFormatMapper._build_style_dict(doc)
+
+            # Phase 1: Extract images from the same validated ODT stream.
+            try:
+                source.seek(0)
+                with zipfile.ZipFile(source, 'r') as odt_zip:
+                    image_files = [
+                        name
+                        for name in odt_zip.namelist()
+                        if name.startswith('Pictures/') and not name.endswith('/')
+                    ]
+
+                    if image_files:
+                        print(f"[ODT Extract] Found {len(image_files)} image(s) in Pictures/")
+
+                        for img_path in image_files:
+                            with odt_zip.open(img_path) as img_file:
+                                blob = img_file.read()
+
+                            img_ext = os.path.splitext(img_path)[1].lower()
+                            img_format = {
+                                '.png': 'png',
+                                '.jpg': 'jpeg',
+                                '.jpeg': 'jpeg',
+                                '.gif': 'gif',
+                            }.get(img_ext, 'unknown')
+
+                            image_id = image_manager.add_image(
+                                blob=blob,
+                                img_format=img_format,
+                                width_cm=7.62,
+                                height_cm=5.08,
+                                original_href=img_path
+                            )
+
+                            print(f"[ODT Extract] Stored {image_id} from {img_path}")
+                    else:
+                        print("[ODT Extract] No images found in Pictures/")
+            except Exception as e:
+                print(f"[ODT Extract] Warning: Could not extract images: {e}")
         
         # Process all text elements (paragraphs, headings, AND tables) in document order
         # Phase 2: Also detect tables

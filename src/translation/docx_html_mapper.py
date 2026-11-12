@@ -24,6 +24,7 @@ Session: Phase 3 - DOCX Translation Implementation
 
 import html
 import hashlib
+import zipfile
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from io import BytesIO
@@ -31,6 +32,8 @@ from typing import Dict, List, Optional
 
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
+
+from .archive_security import validate_zip_archive
 
 
 # ============================================================================
@@ -591,7 +594,11 @@ class DocxHtmlMapper:
     def __init__(self, docx_path: str):
         """Initialize mapper with DOCX file path."""
         self.docx_path = docx_path
-        self.doc = Document(docx_path)
+        with open(docx_path, "rb") as source:
+            with zipfile.ZipFile(source, "r") as archive:
+                validate_zip_archive(archive, label="DOCX")
+            source.seek(0)
+            self.doc = Document(source)
         self.css_manager = CSSClassManager()
         self.image_manager = ImageManager()
         self.table_manager = TableManager()

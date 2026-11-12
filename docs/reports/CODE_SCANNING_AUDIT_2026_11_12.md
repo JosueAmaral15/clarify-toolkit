@@ -122,11 +122,41 @@ views remain unchanged.
 No browser, provider, user document or full GUI was opened. The alerts remain
 open until reviewed integration and the default-branch scan.
 
+## Stage 5 - Compressed Document Amplification
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #21 | CWE-409 | `src/translation/html_format_mapper.py` | Confirmed | Validate the complete ODT ZIP before ODF parser construction, then read custom `Pictures/` entries from the same validated stream. Retain the contained extraction contract from Stage 1. |
+| #8 | CWE-409 | `src/translation/docx_html_mapper.py` | Confirmed | Validate the complete DOCX ZIP before python-docx constructs and materializes its package, then give the parser the same validated stream. |
+
+The shared document-archive boundary limits entries to 4,096, each expanded
+member to 64 MiB, total expanded and compressed bytes to 512 MiB, and the
+per-member compression ratio to 200. Validation happens before either parser
+loads XML parts or embedded media; reopening a path between validation and
+parsing is avoided.
+
+### Stage 5 Validation
+
+- `tests/security/test_code_scanning_archives.py`: 10 passed. Generated
+  temporary archives cover entry count, member size, total compressed and
+  expanded size, compression ratio, parser-not-called behavior for ODT and DOCX
+  bombs, the documented default limits, and successful translation of valid
+  generated ODT and DOCX documents. Peak process-tree RSS was 87.4 MiB.
+- `tests/security/test_code_scanning_high.py`: 11 passed, preserving the Stage 1
+  ODT path, link and extraction protections. Peak process-tree RSS was 72.1 MiB.
+- `tests/com8/test_html_format_mapper_COM8.py`: 5 passed with its required
+  legacy `PYTHONPATH=src`. Peak process-tree RSS was 66.6 MiB.
+- Python compilation, focused Ruff checks, Pylint-E and `git diff --check`
+  passed. The broad legacy mapper retains pre-existing Ruff debt outside this
+  change; syntax/error rules and all new code passed.
+
+No provider, browser, user document or full GUI was used. These alerts remain
+open until reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 5 medium alerts not yet covered by a candidate correction: resource
-  consumption, compressed-data amplification, path traversal and missing
-  authentication.
+- 3 medium alerts not yet covered by a candidate correction: resource
+  consumption, path traversal and missing authentication.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.
 

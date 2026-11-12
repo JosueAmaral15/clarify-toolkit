@@ -31,7 +31,10 @@ boundary.
   adds a shared spreadsheet-cell neutralization boundary for CSV/XLSX alerts
   #2, #3 and #4 without changing raw non-spreadsheet exports. Stage 4 escapes
   untrusted names, JSON keys and values in generated HTML and SVG text contexts
-  for alerts #14 and #20 while retaining the trusted report templates. Evidence:
+  for alerts #14 and #20 while retaining the trusted report templates. Stage 5
+  validates ODT and DOCX ZIP metadata before parser construction for compressed
+  data amplification alerts #21 and #8, retaining valid document/media support.
+  Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**
