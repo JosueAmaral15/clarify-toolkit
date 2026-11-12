@@ -49,7 +49,8 @@ class ConfigManager:
     # Default configuration structure
     DEFAULTS = {
         "app": {
-            "theme": "system",  # system | light | dark
+            "theme": "dark",  # system | light | dark
+            "window_opacity": 96,
             "language": "en",  # en | pt-br | es | fr | de | zh | ja
             "max_recent_files": 10,
             "confirm_on_exit": True,
@@ -97,6 +98,7 @@ class ConfigManager:
                 "type": "object",
                 "properties": {
                     "theme": {"type": "string", "enum": ["system", "light", "dark"]},
+                    "window_opacity": {"type": "integer", "minimum": 20, "maximum": 100},
                     "language": {"type": "string", "pattern": "^[a-z]{2}(-[a-z]{2})?$"},
                     "max_recent_files": {"type": "integer", "minimum": 0, "maximum": 50},
                     "confirm_on_exit": {"type": "boolean"},

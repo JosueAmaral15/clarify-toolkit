@@ -25,7 +25,7 @@ class TestConfigManagerInit:
         config = ConfigManager(str(config_file))
         
         assert config.config_file == config_file
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
         assert config.get("logging.level") == "INFO"
         assert config.get("editor.font_size") == 12
     
@@ -69,7 +69,7 @@ class TestConfigManagerGetSet:
         config_file = tmp_path / "config.yaml"
         config = ConfigManager(str(config_file))
         
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
     
     def test_get_nested_value(self, tmp_path):
         """Test getting nested value with dot notation."""
@@ -176,7 +176,7 @@ class TestConfigManagerSave:
         config = ConfigManager(str(config_file))
         
         # Should use defaults
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
         
         # Should create backup of invalid file
         backups = list(config_file.parent.glob("*_invalid.yaml.bak"))
@@ -213,14 +213,14 @@ class TestConfigManagerReset:
         config = ConfigManager(str(config_file))
         
         # Modify settings
-        config.set("app.theme", "dark", save=False)
+        config.set("app.theme", "light", save=False)
         config.set("editor.font_size", 16, save=False)
         
         # Reset
         config.reset_to_defaults()
         
         # Should be back to defaults
-        assert config.get("app.theme") == "system"
+        assert config.get("app.theme") == "dark"
         assert config.get("editor.font_size") == 12
     
     def test_reset_creates_backup(self, tmp_path):

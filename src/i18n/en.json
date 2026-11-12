@@ -2909,5 +2909,9 @@
   "table_manager.tooltip_size_dir": "Size: - (directory)",
   "table_manager.tooltip_modified": "Modified",
   "table_manager.tooltip_permissions": "Permissions",
-  "table_manager.tooltip_path": "Path"
+  "table_manager.tooltip_path": "Path",
+  "settings_reset": {
+    "action": "Reset Settings...", "title": "Reset Settings", "introduction": "Choose the preference categories to restore. Review the preview before confirming.", "all": "All resettable settings", "protected": "Not affected: documents, recent files, temporary notes, recovery snapshots, operational history, custom layouts, presets, plugins, credentials and API keys.", "reset_selected": "Reset Selected", "confirm_title": "Confirm Settings Reset", "confirm": "A backup will be created before resetting these categories:{categories}\n\nContinue?", "error_title": "Settings Reset Failed", "error": "No settings were intentionally left partially reset. Details: {error}", "success_title": "Settings Reset Complete", "success": "Settings were reset. Backup: {backup}", "success_restart": "Settings were reset. Appearance was applied now; restart Clarify to apply the remaining changes. Backup: {backup}",
+    "category": {"appearance": "Appearance", "appearance_detail": "Theme and window opacity. Applies immediately; defaults are Dark and 96% opacity.", "general": "General", "general_detail": "Language, confirmations, tooltips, auto-save, update checks and general limits. Recent files and paths are preserved.", "shortcuts": "Keyboard shortcuts", "shortcuts_detail": "Restores customized shortcuts to their defaults.", "workspace": "Workspace", "workspace_detail": "Clears saved window geometry and active workspace selection. Custom layouts and open-document sessions are preserved.", "tools": "Tool preferences", "tools_detail": "Restores safe Editor and File Searcher behavior/display preferences. Queries, sessions, notes and presets are preserved.", "advanced": "Advanced", "advanced_detail": "Restores logging, performance and non-secret AI defaults. Credentials and provider data are preserved."}
+  }
 }
