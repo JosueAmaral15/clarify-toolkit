@@ -27,6 +27,11 @@ on:
         description: 'Sizes to benchmark (comma-separated MB)'
         required: false
         default: '1,5'
+        type: choice
+        options:
+          - '1'
+          - '1,5'
+          - '1,5,10'
       operations:
         description: 'Operations to benchmark'
         required: false
@@ -43,6 +48,12 @@ on:
         description: 'Number of runs per benchmark'
         required: false
         default: '3'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '5'
 
 permissions:
   contents: read
@@ -90,11 +101,15 @@ jobs:
       
       - name: 🏃 Run benchmarks (Full)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          BENCHMARK_SIZES: ${{ inputs.sizes || '1,5' }}
+          BENCHMARK_OPERATIONS: ${{ inputs.operations || 'all' }}
+          BENCHMARK_RUNS: ${{ inputs.runs || '3' }}
         run: |
           python -m benchmarks \
-            --sizes ${{ inputs.sizes || '1,5' }} \
-            --operations ${{ inputs.operations || 'all' }} \
-            --runs ${{ inputs.runs || '3' }} \
+            --sizes "$BENCHMARK_SIZES" \
+            --operations "$BENCHMARK_OPERATIONS" \
+            --runs "$BENCHMARK_RUNS" \
             --output benchmarks/results_full.json
       
       - name: 📊 Display results

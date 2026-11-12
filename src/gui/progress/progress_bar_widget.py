@@ -7,6 +7,8 @@ Extracted from app.py (v2.9.114).
 # pylint: disable=broad-exception-caught  # Robustness
 
 from datetime import datetime
+import platform
+import subprocess
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QPushButton
@@ -14,6 +16,29 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QProgre
 from src.i18n.translator import tr, tooltip_tr
 
 from .progress_details_dialog import ProgressDetailsDialog
+
+
+_MACOS_NOTIFICATION_SCRIPT = """
+on run argv
+    display notification (item 2 of argv) with title (item 1 of argv)
+end run
+""".strip()
+
+
+def _notification_fallback_command(system: str, title: str, message: str):
+    """Build a shell-free notification command for a supported platform."""
+    if system == "Linux":
+        return ["notify-send", "--", title, message]
+    if system == "Darwin":
+        return [
+            "osascript",
+            "-e",
+            _MACOS_NOTIFICATION_SCRIPT,
+            "--",
+            title,
+            message,
+        ]
+    return None
 
 
 class ProgressBarWidget(QWidget):
@@ -168,18 +193,12 @@ class ProgressBarWidget(QWidget):
         except ImportError:
             # Fallback: use system notification if available
             try:
-                import subprocess
-                import platform
-
-                system = platform.system()
-                if system == "Linux":
-                    subprocess.run(["notify-send", title, message], check=False)
-                elif system == "Darwin":  # macOS
-                    subprocess.run(
-                        ["osascript", "-e", f'display notification "{message}" with title "{title}"'], check=False
-                    )
-                # Windows would use win10toast, but skipping for now
-            except Exception:
+                command = _notification_fallback_command(
+                    platform.system(), title, message
+                )
+                if command is not None:
+                    subprocess.run(command, check=False, timeout=5)
+            except (OSError, subprocess.TimeoutExpired):
                 pass  # Notifications not available, silently continue
 
     def _on_pause_clicked(self):

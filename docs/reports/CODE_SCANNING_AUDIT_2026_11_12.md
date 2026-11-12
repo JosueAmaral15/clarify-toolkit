@@ -40,13 +40,40 @@ No live database, provider, user document or full GUI startup was used. GitHub
 alerts remain open until this branch is reviewed, integrated and scanned on
 `main`.
 
+## Stage 2 - Command Injection
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #15 | CWE-78 | `src/gui/results_tree.py` | Confirmed | Replace Windows `cmd /c start` and all platform command launchers with `QDesktopServices.openUrl(QUrl.fromLocalFile(...))`. Apply the same contract to the active `src/gui/panels/results_tree.py` consumer while retaining the compatibility widget. |
+| #10 | CWE-78 | `.github/workflows/benchmarks.yml` | Confirmed | Convert free-form size and run dispatch fields to enumerated choices; pass all dispatch values through step environment variables and quote each argument rather than interpolating expressions into shell source. |
+| #19 | CWE-78 | `src/gui/progress/progress_bar_widget.py` | Confirmed | Keep the AppleScript program immutable and pass the title and message as separate `argv` values after `--`; keep Linux notification values as separate arguments as well. |
+
+### Stage 2 Validation
+
+- `tests/security/test_code_scanning_commands.py`: 4 passed. The tests preserve
+  shell metacharacters as local-URL data, forbid `cmd /c start` in both result
+  tree implementations, prove that notification data is absent from the
+  AppleScript program, and parse the workflow to verify choice inputs and quoted
+  environment arguments.
+- `tests/test_results_tree_unicode_hierarchy.py`: 21 passed.
+- `tests/test_progress_system.py`: 18 passed.
+- `tests/test_benchmarks.py`: 10 passed.
+- Python compilation, workflow YAML parsing and `git diff --check` passed.
+  Pylint-E reported only its known inability to introspect the dynamic PySide6
+  `QUrl` and `QDesktopServices` exports; suppressing only `no-name-in-module`
+  produced a clean result.
+
+No desktop command, notification provider, benchmark workflow, user file or
+full GUI was launched. The findings remain open until reviewed integration and
+the default-branch scan.
+
 ## Remaining Inventory
 
-- 13 medium alerts: resource consumption, compressed-data amplification, XSS,
-  path traversal, missing authentication, command injection and CSV formula
-  injection.
-- 7 low alerts: command injection, XML entity expansion, insecure temporary
-  files and regular-expression complexity.
+- 10 medium alerts not yet covered by a candidate correction: resource
+  consumption, compressed-data amplification, XSS, path traversal, missing
+  authentication and CSV formula injection.
+- 6 low alerts not yet covered by a candidate correction: XML entity expansion,
+  insecure temporary files and regular-expression complexity.
 
 Each remaining alert stays open until its source and consumers have been
 reviewed and focused evidence is recorded here. No alert is to be dismissed

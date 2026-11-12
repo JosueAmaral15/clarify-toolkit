@@ -25,7 +25,9 @@ boundary.
   and 7 low alerts. The first stage covers the confirmed PostgreSQL identifier
   injection and unsafe ODT archive extraction findings. Stage 1 is implemented
   and locally validated on its work branch; the task remains open for the other
-  alerts, reviewed integration and a default-branch rescan. Evidence:
+  alerts, reviewed integration and a default-branch rescan. Stage 2 implements
+  shell-free file opening, immutable AppleScript notification arguments and
+  allowlisted benchmark dispatch inputs for alerts #15, #19 and #10. Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**

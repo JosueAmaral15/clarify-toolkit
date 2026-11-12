@@ -18,8 +18,6 @@ Date: 2025-12-24
 # pylint: disable=broad-exception-caught  # GUI robustness
 
 import os
-import subprocess
-import sys
 
 from typing import Dict, List, Tuple
 
@@ -31,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n.translator import tr
+from .desktop_services import open_local_file
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -297,13 +296,7 @@ class ResultsTree(QTreeWidget):
         for path in file_paths:
             if os.path.isfile(path):
                 try:
-                    if sys.platform.startswith("darwin"):
-                        subprocess.run(["open", path], check=False, timeout=5)
-                    elif os.name == "nt":
-                        subprocess.run(["cmd", "/c", "start", "", path], check=False, timeout=5)
-                    else:
-                        subprocess.run(["xdg-open", path], check=False, timeout=5)
-                    opened_count += 1
+                    opened_count += int(open_local_file(path))
                 except Exception as e:
                     logger.error(f"Error opening {path}: {e}")
 
@@ -335,13 +328,7 @@ class ResultsTree(QTreeWidget):
         for path in self._matches_data.keys():
             if os.path.isfile(path):
                 try:
-                    if sys.platform.startswith("darwin"):
-                        subprocess.run(["open", path], check=False, timeout=5)
-                    elif os.name == "nt":
-                        subprocess.run(["cmd", "/c", "start", "", path], check=False, timeout=5)
-                    else:
-                        subprocess.run(["xdg-open", path], check=False, timeout=5)
-                    opened_count += 1
+                    opened_count += int(open_local_file(path))
                 except Exception as e:
                     logger.error(f"Error opening {path}: {e}")
 

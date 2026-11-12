@@ -1,5 +1,31 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - Code scanning command injection stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `24f3e91` on fresh branch
+  `COM-7aaee515-b0fa-445e-8bc7-934430b97f2a`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Audit alerts #15, #10 and #19 before editing. Confirm actual consumers and
+  replace command interpreters with data-only APIs, enumerated workflow inputs
+  and immutable scripts with separate arguments.
+- Validate with temporary data and serial bounded tests; do not investigate or
+  modify unrelated code-scanning alerts in this stage.
+
+## 2026-11-12 - Post-action - Code scanning command injection stage
+
+- Alerts #15, #10 and #19 were confirmed. Result files now open through Qt
+  desktop URLs without a command interpreter; workflow-dispatch sizes and runs
+  are enumerated and values reach the benchmark CLI as quoted environment
+  arguments; macOS notification text reaches an immutable AppleScript through
+  `argv` rather than source interpolation.
+- The active result tree and its legacy compatibility counterpart share the
+  same shell-free helper. No consumer was deleted.
+- Four security regressions and 49 nearby consumer tests passed in serial
+  isolated processes. Compilation, workflow parsing, constrained Pylint-E and
+  diff checks passed. No desktop program, workflow or user document was opened.
+- The three GitHub alerts remain open pending reviewed integration into `main`
+  and a default-branch rescan.
+
 ## 2026-11-12 - Code scanning remediation started
 
 - The user asked why automation was not active and pointed to 22 GitHub Code

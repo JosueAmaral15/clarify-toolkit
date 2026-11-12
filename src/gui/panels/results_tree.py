@@ -12,7 +12,6 @@ Extracted from app.py (v2.9.114 - Phase 1.2).
 
 import json
 import os
-import sys
 import tempfile
 
 from datetime import datetime
@@ -28,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from ...i18n import tr
 from ...utils.logger import get_logger
+from ..desktop_services import open_local_file
 from .result_export import (
     COPY_CONTENT_MAX_FILE_BYTES,
     COPY_CONTENT_MAX_TOTAL_BYTES,
@@ -2003,8 +2003,6 @@ class ResultsTree(QTreeWidget):
 
     def _open_selected_files(self):
         """Open selected files in system default application (v2.9.2)."""
-        import subprocess as sp
-
         selected_items = self.selectedItems()
         if not selected_items:
             return
@@ -2017,13 +2015,7 @@ class ResultsTree(QTreeWidget):
         for path in file_paths:
             if os.path.isfile(path):
                 try:
-                    if sys.platform.startswith("darwin"):
-                        sp.run(["open", path], check=False)
-                    elif os.name == "nt":
-                        sp.run(["cmd", "/c", "start", "", path], check=False)
-                    else:
-                        sp.run(["xdg-open", path], check=False)
-                    opened_count += 1
+                    opened_count += int(open_local_file(path))
                 except Exception as e:
                     logger.error(f"Error opening {path}: {e}")
 
@@ -2034,8 +2026,6 @@ class ResultsTree(QTreeWidget):
 
     def _open_all_files(self):
         """Open all files from results in system default application (v2.9.2)."""
-        import subprocess as sp
-
         if not self._matches_data:
             return
 
@@ -2057,13 +2047,7 @@ class ResultsTree(QTreeWidget):
         for path in self._matches_data.keys():
             if os.path.isfile(path):
                 try:
-                    if sys.platform.startswith("darwin"):
-                        sp.run(["open", path], check=False)
-                    elif os.name == "nt":
-                        sp.run(["cmd", "/c", "start", "", path], check=False)
-                    else:
-                        sp.run(["xdg-open", path], check=False)
-                    opened_count += 1
+                    opened_count += int(open_local_file(path))
                 except Exception as e:
                     logger.error(f"Error opening {path}: {e}")
 
