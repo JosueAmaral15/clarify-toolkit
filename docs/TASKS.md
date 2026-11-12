@@ -100,7 +100,7 @@ multiline. O requisito de som foi incorporado a `CLOCK-MULTI-INSTANCE-01`.
 
 ### MUST - Consistencia De Arquivos E Recuperacao
 
-- [ ] **CE-EXTERNAL-RELOAD-UX-01: revalidar reload de arquivo alterado
+- [x] **CE-EXTERNAL-RELOAD-UX-01: revalidar reload de arquivo alterado
   externamente.** Auditar a entrega historica de `Reload from Disk` com watchers
   reais e reproduzir alteracao por outro aplicativo e pelo File Searcher. Quando
   a assinatura do disco mudar, informar origem/estado de modo acessivel e pedir
@@ -111,6 +111,13 @@ multiline. O requisito de som foi incorporado a `CLOCK-MULTI-INSTANCE-01`.
   sobrescrever conteudo dirty, recovery ou nota temporaria silenciosamente; cobrir
   arquivo removido/renomeado, evento duplicado, auto-save pausado, erro de IO e
   mudanca durante o dialogo sem bloquear a GUI.
+  Entregue em 12/11/2026: o watcher apenas sinaliza a revisao externa e pausa o
+  auto-save; a substituicao exige `Reload from Disk` e confirmacao adicional para
+  buffer dirty. A leitura UTF-8 e limitada, valida a mesma revisao antes, durante
+  e imediatamente depois da leitura/aplicacao, preserva BOM, LF/CRLF/CR,
+  cursor/selecao e rejeita arquivo ausente, grande, invalido ou alterado de novo.
+  A recarga autorizada estabelece um novo baseline e limpa o undo anterior.
+  Evidencia em [Clarify Editor External Reload](reports/CLARIFY_EDITOR_EXTERNAL_RELOAD_2026_11_12.md).
 - [ ] **CE-FIND-ESCAPED-CONTROLS-01: reconhecer quebras de linha no Find/Replace.**
   Permitir que o usuario pesquise e substitua caracteres de controle por escapes
   explicitos, inicialmente `\\n`, `\\r`, `\\t` e `\\0`, distinguindo texto

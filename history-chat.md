@@ -6308,3 +6308,39 @@ Plano imediato:
   healthy. No new continuation will be scheduled for this stage.
 - After remote SHA verification, that exact worker was finished once and changed
   to `idle`; no other worker/service was changed and no continuation was sent.
+
+## 2026-11-12 - CE-EXTERNAL-RELOAD-UX-01 started
+
+- Fresh user authorization resumed the prioritized queue after the completed
+  settings-reset stage. Work starts from published checkpoint `ec833fa` on fresh
+  branch `COM-df4374fe-207f-405b-86ec-6c93872b1afb`.
+- Scope is limited to auditing and correcting the existing Clarify Editor
+  external-file watcher and `Reload from Disk` authorization/consistency path.
+  No other newly registered Editor, Clock, File Searcher or legacy task is part
+  of this stage.
+- AI Presence Monitor 0.13.0 passed doctor/schema checks; exact Protocol2 worker
+  `notebook-josue:codex:project=clarify-b09a84f1` was started once. Automation,
+  native input, five hooks and observer services are available; GUI/remote input
+  and scheduled prompts remain disabled.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-12 - CE-EXTERNAL-RELOAD-UX-01 completed
+
+- The Editor watcher now only warns and pauses auto-save. Explicit Reload from
+  Disk authorization uses one bounded stable UTF-8 revision and rejects missing,
+  oversized, invalid or concurrently changed files without replacing the
+  buffer. Dirty-buffer refusal is preserved.
+- Text and JSON reloads preserve UTF-8 BOM, LF/CRLF/CR style and bounded cursor
+  or selection positions. An authorized reload becomes the clean baseline and
+  intentionally clears the previous undo stack; a subsequent disk change stays
+  marked external.
+- All external-change UI is available through the seven runtime catalogs. The
+  new regression module and related open/recovery/JSON modules passed 31 tests
+  in isolated offscreen processes, with no native crash or guard abort. Pylint-E,
+  AST, JSON/key parity and diff checks passed.
+- Evidence is in
+  `docs/reports/CLARIFY_EDITOR_EXTERNAL_RELOAD_2026_11_12.md`. There are 92
+  canonical open task markers after this stage.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.

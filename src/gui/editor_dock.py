@@ -80,6 +80,15 @@ from .json_editor_tab import JsonEditorTab
 from .widgets import EditorTab
 
 
+class _ExternalReloadError(RuntimeError):
+    """A stable external-file revision could not be read safely."""
+
+    def __init__(self, reason: str, detail: str = ""):
+        super().__init__(detail or reason)
+        self.reason = reason
+        self.detail = detail
+
+
 class _EditorFindHistory:
     """Private bounded query/replacement history for one open editor buffer."""
 
@@ -2875,12 +2884,48 @@ class EditorDock(BaseDock):
         except OSError:
             return None
 
+        return EditorDock._stat_disk_signature(stat_result)
+
+    @staticmethod
+    def _stat_disk_signature(stat_result):
+        """Return comparable metadata for a path or open file descriptor."""
         return (
             stat_result.st_mtime_ns,
             stat_result.st_size,
             getattr(stat_result, 'st_ino', 0),
             getattr(stat_result, 'st_dev', 0),
+            getattr(stat_result, 'st_ctime_ns', 0),
         )
+
+    def _read_stable_reload_text(self, file_path: str) -> tuple[str, tuple[int, ...]]:
+        """Read one bounded UTF-8 revision without accepting a concurrent replacement."""
+        before_path = self._file_disk_signature(file_path)
+        if before_path is None:
+            raise _ExternalReloadError("missing")
+        if before_path[1] > self.MAX_TYPED_FILE_BYTES:
+            raise _ExternalReloadError("too_large")
+
+        try:
+            with open(file_path, "rb") as file_obj:
+                before_fd = self._stat_disk_signature(os.fstat(file_obj.fileno()))
+                payload = file_obj.read(self.MAX_TYPED_FILE_BYTES + 1)
+                after_fd = self._stat_disk_signature(os.fstat(file_obj.fileno()))
+        except OSError as error:
+            raise _ExternalReloadError("read", str(error)) from error
+
+        after_path = self._file_disk_signature(file_path)
+        if len(payload) > self.MAX_TYPED_FILE_BYTES:
+            raise _ExternalReloadError("too_large")
+        if (
+            before_path != before_fd
+            or before_fd != after_fd
+            or after_path != after_fd
+        ):
+            raise _ExternalReloadError("changed_again")
+        try:
+            return payload.decode("utf-8"), after_fd
+        except UnicodeDecodeError as error:
+            raise _ExternalReloadError("decode", str(error)) from error
 
     def _tab_tracked_file_path(self, tab) -> str:
         """Return the file-backed path currently tracked for a tab."""
@@ -3089,17 +3134,19 @@ class EditorDock(BaseDock):
 
         if external_state == "modified":
             self.lbl_status.setStyleSheet("color: #DCDCAA; font-weight: bold;")
-            self.lbl_status.setText(
-                "File changed on disk: "
-                f"{filename}. Use File > Reload from Disk, Compare with Saved, "
-                "Save, or Save As."
+            message = tr("editor.external_reload.status_modified").format(
+                file=filename
             )
+            self.lbl_status.setText(message)
+            self.lbl_status.setAccessibleDescription(message)
             return True
 
         self.lbl_status.setStyleSheet("color: #F44747; font-weight: bold;")
-        self.lbl_status.setText(
-            f"File missing on disk: {filename}. Use Save As or Close Tab."
+        message = tr("editor.external_reload.status_missing").format(
+            file=filename
         )
+        self.lbl_status.setText(message)
+        self.lbl_status.setAccessibleDescription(message)
         return True
 
     def _save_decision_for_external_change(self, tab) -> str:
@@ -3110,17 +3157,19 @@ class EditorDock(BaseDock):
 
         file_path = self._tab_tracked_file_path(tab)
         filename = os.path.basename(file_path) if file_path else tab.get_tab_title()
-        message = (
-            f"'{filename}' changed on disk after it was opened."
+        message_key = (
+            "editor.external_reload.changed"
             if external_state == "modified"
-            else f"'{filename}' is missing on disk."
+            else "editor.external_reload.missing"
         )
 
         dialog = QMessageBox(self)
-        dialog.setWindowTitle("External File Change")
-        dialog.setText(message)
-        dialog.setInformativeText("Choose how to handle the editor buffer.")
-        btn_keep = dialog.addButton("Keep Editor Version", QMessageBox.AcceptRole)
+        dialog.setWindowTitle(tr("editor.external_reload.title"))
+        dialog.setText(tr(message_key).format(file=filename))
+        dialog.setInformativeText(tr("editor.external_reload.save_prompt"))
+        btn_keep = dialog.addButton(
+            tr("editor.external_reload.keep_editor"), QMessageBox.AcceptRole
+        )
         btn_save_as = dialog.addButton(tr("editor.btn_save_as"), QMessageBox.ActionRole)
         btn_cancel = dialog.addButton(tr("editor.btn_cancel"), QMessageBox.RejectRole)
 
@@ -5730,22 +5779,58 @@ class EditorDock(BaseDock):
             self._show_external_status_for_current_tab()
             QMessageBox.warning(
                 self,
-                "File Missing",
-                f"File no longer exists on disk:\n{file_path}",
+                tr("editor.external_reload.missing_title"),
+                tr("editor.external_reload.missing_path").format(path=file_path),
             )
             return False
 
         if getattr(tab, 'is_modified', False):
             reply = QMessageBox.question(
                 self,
-                "Reload from Disk",
-                "Reloading will discard unsaved editor changes.\n\nContinue?",
+                tr("editor.external_reload.reload_title"),
+                tr("editor.external_reload.reload_dirty"),
                 QMessageBox.Yes | QMessageBox.No,
             )
             if reply != QMessageBox.Yes:
                 return False
 
-        if not tab.load_file(file_path):
+        cursor = tab.editor.textCursor()
+        cursor_position = cursor.position()
+        anchor_position = cursor.anchor()
+
+        try:
+            content, loaded_signature = self._read_stable_reload_text(file_path)
+        except _ExternalReloadError as error:
+            message_key = f"editor.external_reload.error_{error.reason}"
+            message = tr(message_key).format(
+                path=file_path,
+                limit=self.MAX_TYPED_FILE_BYTES // (1024 * 1024),
+                error=error.detail,
+            )
+            QMessageBox.warning(
+                self,
+                tr("editor.external_reload.error_title"),
+                message,
+            )
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+            self._show_external_status_for_current_tab()
+            return False
+
+        if self._file_disk_signature(file_path) != loaded_signature:
+            QMessageBox.warning(
+                self,
+                tr("editor.external_reload.error_title"),
+                tr("editor.external_reload.error_changed_again").format(
+                    path=file_path, limit=0, error=""
+                ),
+            )
+            self._check_tab_external_state(tab)
+            self._update_tab_title(tab)
+            self._show_external_status_for_current_tab()
+            return False
+
+        if not tab.load_text_content(content, file_path):
             QMessageBox.critical(
                 self,
                 tr("editor.file_open_error_title"),
@@ -5753,11 +5838,42 @@ class EditorDock(BaseDock):
             )
             return False
 
-        self._track_tab_disk_state(tab)
+        cursor = tab.editor.textCursor()
+        document_limit = max(0, tab.editor.document().characterCount() - 1)
+        cursor.setPosition(min(anchor_position, document_limit))
+        cursor.setPosition(
+            min(cursor_position, document_limit),
+            QTextCursor.KeepAnchor
+            if anchor_position != cursor_position
+            else QTextCursor.MoveAnchor,
+        )
+        tab.editor.setTextCursor(cursor)
+
+        setattr(tab, '_clarify_disk_path', file_path)
+        setattr(tab, '_clarify_disk_signature', loaded_signature)
+        current_signature = self._file_disk_signature(file_path)
+        if current_signature == loaded_signature:
+            setattr(
+                tab,
+                '_clarify_recovery_source_signature',
+                self.recovery_store.source_signature(file_path),
+            )
+            self._set_tab_external_state(tab, "clean")
+        else:
+            setattr(tab, '_clarify_recovery_source_signature', None)
+            self._set_tab_external_state(tab, "modified")
+        self._refresh_external_file_watchers()
         self._update_tab_title(tab)
         self._refresh_editor_menus()
         self.lbl_status.setStyleSheet("color: #6A9955;")
-        self.lbl_status.setText(f"Reloaded from disk: {os.path.basename(file_path)}")
+        if current_signature == loaded_signature:
+            message = tr("editor.external_reload.reloaded").format(
+                file=os.path.basename(file_path)
+            )
+            self.lbl_status.setText(message)
+            self.lbl_status.setAccessibleDescription(message)
+        else:
+            self._show_external_status_for_current_tab()
         return True
 
     def _enable_saving_current_tab(self):

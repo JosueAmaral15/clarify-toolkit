@@ -924,23 +924,52 @@ class JsonEditorTab(QWidget):
     def load_file(self, file_path: str) -> bool:
         """Load JSON file into editor."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, 'r', encoding='utf-8', newline='') as f:
                 content = f.read()
-
-            self.file_path = file_path
-            self.editor.blockSignals(True)
-            self.editor.setPlainText(content)
-            self.editor.blockSignals(False)
-            self.is_modified = False
-            self.editor.document().setModified(False)
-            self.modified_changed.emit(False)
-
-            # Validate and build tree
-            self._validate()
-
-            return True
+            return self.load_text_content(content, file_path)
         except Exception as _:
             return False
+
+    def load_text_content(self, content: str, file_path: str) -> bool:
+        """Apply JSON text already read from one stable on-disk revision."""
+        if not isinstance(content, str) or not file_path:
+            return False
+        has_utf8_bom = content.startswith("\ufeff")
+        if has_utf8_bom:
+            content = content[1:]
+        self._clarify_utf8_bom = has_utf8_bom
+        self._clarify_line_ending = self._detect_line_ending(content)
+        self.file_path = file_path
+        self.editor.blockSignals(True)
+        try:
+            self.editor.setPlainText(content)
+        finally:
+            self.editor.blockSignals(False)
+        self.is_modified = False
+        self.editor.document().setModified(False)
+        self.modified_changed.emit(False)
+        self._validate()
+        return True
+
+    @staticmethod
+    def _detect_line_ending(content: str) -> str:
+        """Return the first line-ending style present in loaded JSON text."""
+        for position, character in enumerate(content):
+            if character == "\n":
+                return "\n"
+            if character == "\r":
+                return "\r\n" if content[position : position + 2] == "\r\n" else "\r"
+        return "\n"
+
+    def _serialized_text(self) -> str:
+        """Serialize JSON using the loaded UTF-8 text format."""
+        content = self.editor.toPlainText()
+        line_ending = getattr(self, "_clarify_line_ending", "\n")
+        if line_ending != "\n":
+            content = content.replace("\n", line_ending)
+        if getattr(self, "_clarify_utf8_bom", False):
+            content = "\ufeff" + content
+        return content
 
     def save_file(self, file_path: Optional[str] = None) -> Tuple[bool, str]:
         """
@@ -969,7 +998,7 @@ class JsonEditorTab(QWidget):
                 return (False, "Save cancelled by user")
 
         try:
-            write_text_atomically(save_path, text)
+            write_text_atomically(save_path, self._serialized_text())
 
             self.file_path = save_path
             self.is_modified = False
