@@ -2,9 +2,66 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/11/12 - reload externo, escopos, Find, linguagem e recuperacao
+**Last Update**: 2026/11/12 - security audit, English canonical language, Aligner readiness and shutdown
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
+
+## Immediate Security, Internationalization And Release Queue (12/11/2026)
+
+This queue precedes feature work because unresolved secret findings, repository
+integration conflicts and incomplete process shutdown can invalidate release or
+external-program evidence. External submission remains a separate user approval
+boundary.
+
+### MUST - Security And Runtime Integrity
+
+- [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**
+  Audit the complete Git history with redacted output, classify every finding as
+  a real credential, example or false positive, and record file, commit, rule and
+  rationale without reproducing secret values. Revoke or rotate any real
+  credential before considering history cleanup. Use fingerprint-specific
+  allowlisting only for reviewed false positives, ignore local reports, rerun the
+  complete scan and require zero unreviewed findings. Do not rewrite published
+  history without a separate impact analysis and explicit user approval.
+  Delivered on 12/11/2026: all seven redacted findings were reviewed. One was a
+  natural-language `Dropbox etc` collision and six were deliberately insecure
+  example API keys in protocol documentation, including one repeated historical
+  location. Fingerprint-specific exceptions preserve detection elsewhere; the
+  full 1,621-commit rescan completed with zero unreviewed findings. Evidence:
+  [Gitleaks History Audit](reports/GITLEAKS_HISTORY_AUDIT_2026_11_12.md).
+- [ ] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
+  Reproduce the reported case from a terminal where closing the Clarify window
+  leaves the launcher or Python process alive. Correlate `~/.config/clarify/crashes`
+  with Qt threads, workers, timers, subprocesses and the shell launcher; identify
+  the exact owner that prevents final exit. Close cooperatively with bounded
+  waits, preserve recovery and diagnostic writes, stop child processes, and
+  never rely on `QThread.terminate()`. Add a subprocess regression proving that
+  normal Close returns the terminal prompt with no surviving Clarify descendants.
+
+### MUST - Canonical English And Localization
+
+- [ ] **DOCS-ENGLISH-CANONICAL-01: make English the canonical project language.**
+  Rewrite the root `README.md` in English and keep Portuguese, when useful, in
+  `README.pt-BR.md` or clearly localized documentation. Audit maintained source
+  comments, docstrings, contributor/developer documentation, task records,
+  reports and user-facing fallback strings so canonical content is English.
+  Preserve translated UI catalogs and historical evidence rather than deleting
+  localization; route every user-facing string through i18n, keep translation
+  keys equivalent, update links and badges, and add a bounded check that prevents
+  new Portuguese canonical content without blocking legitimate pt-BR resources.
+
+### SHOULD - Aligner Project Recognition
+
+- [ ] **RELEASE-ALIGNER-READINESS-01: prepare Clarify Toolkit for recognized
+  development-project review.** Treat the Clarify Toolkit as the user's own
+  open-source development project for the Aligner/Labelbox BYOP workflow. Preserve
+  original authorship and Git history; verify the public repository URL, MIT
+  license detection, English README, contribution/security policies, reproducible
+  setup, current tests and security evidence. Produce a concise project summary
+  and evidence checklist, explicitly distinguish verified facts from pending
+  work, and block readiness while Gitleaks, dependency, CI or privacy findings
+  remain unresolved. Never submit the external application or represent the user
+  without a separate final review and explicit approval.
 
 ## Fila Imediata - Clarify Editor (18/10/2026)
 

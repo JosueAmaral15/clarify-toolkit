@@ -64,6 +64,9 @@ test_*.html
 # Logs
 *.log
 
+# Local security audit output (the committed policy is .gitleaksignore)
+audit-gitleaks.json
+
 # Temporary files (Protocolo Simplicidade 3 - Etapa 11)
 *.tmp
 *.bak

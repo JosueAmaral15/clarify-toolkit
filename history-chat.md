@@ -6387,3 +6387,23 @@ Plano imediato:
 - WIP commit `7c9f298` was pushed to the isolated branch; GitHub reported that
   the repository now redirects to `JosueAmaral15/clarify-toolkit`. The exact
   Protocol2 worker was finished once and is idle. No continuation was scheduled.
+
+## 2026-11-12 - Repository integration and release-readiness triage
+
+- The user reported `git pull` conflicts, seven Gitleaks findings, crash-folder
+  errors, a Clarify process that remains alive after the window is closed, and
+  the intention to present Clarify Toolkit as a recognized Aligner/Labelbox BYOP
+  development project. The referenced ChatGPT discussion was read without
+  submitting or changing any external form.
+- The interrupted pull had conflicts only in `pyproject.toml` and `poetry.lock`.
+  Resolution preserved branch dependencies actually consumed by the code and
+  incorporated the Dependabot minimums from `main`; Poetry regenerated one
+  coherent lock. `poetry check --lock`, a dry-run install and nine focused
+  dependency-consumer tests passed.
+- All seven redacted Gitleaks findings were classified as false positives: one
+  prose collision and six deliberately insecure protocol examples. Exact
+  fingerprints were allowlisted, the local JSON report was ignored, and a full
+  1,621-commit rescan returned zero unreviewed findings.
+- `DOCS-ENGLISH-CANONICAL-01`, `APP-SHUTDOWN-PROCESS-01` and
+  `RELEASE-ALIGNER-READINESS-01` were added to the canonical queue. External
+  submission remains blocked on explicit final user review and approval.
