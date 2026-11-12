@@ -1,5 +1,31 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - Spreadsheet formula injection stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `5a086fc` on fresh branch
+  `COM-9197016a-37eb-4608-8330-44907686c83b`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Audit alerts #2, #3 and #4 across CSV and XLSX outputs, keeping JSON and other
+  raw formats unchanged. Apply one shared neutralization boundary only when
+  writing spreadsheet cells.
+- Cover equals, plus, minus, at sign, tab and carriage-return prefixes with
+  temporary-file regressions; do not investigate other alerts in this stage.
+
+## 2026-11-12 - Post-action - Spreadsheet formula injection stage
+
+- Alerts #2, #3 and #4 were confirmed. A shared spreadsheet boundary now
+  neutralizes dangerous string prefixes in the affected CSV and XLSX outputs;
+  safe strings, numbers, source dictionaries and raw JSON remain unchanged.
+- File Finder now delegates quoting to `csv.writer` instead of constructing CSV
+  rows manually. Export Manager and Statistics Dialog apply the same helper only
+  when writing spreadsheet cells.
+- Ten regressions passed using temporary CSV/JSON files and controlled XLSX
+  workbooks. The initial collection could not import optional `openpyxl`; tests
+  were adapted without installing it. Compilation, Ruff, Pylint-E and diff
+  checks passed after one unused test import was removed.
+- The three GitHub alerts remain open pending reviewed integration into `main`
+  and a default-branch rescan.
+
 ## 2026-11-12 - Pre-action - Code scanning command injection stage
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `24f3e91` on fresh branch

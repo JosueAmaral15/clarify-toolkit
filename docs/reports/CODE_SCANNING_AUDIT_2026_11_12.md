@@ -67,11 +67,39 @@ No desktop command, notification provider, benchmark workflow, user file or
 full GUI was launched. The findings remain open until reviewed integration and
 the default-branch scan.
 
+## Stage 3 - Spreadsheet Formula Injection
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #2 | CWE-1236 | `src/export_manager.py` | Confirmed | Neutralize string keys and values only at the CSV/XLSX cell boundary; preserve numbers and raw JSON, YAML and TOML data. |
+| #3 | CWE-1236 | `src/utils/file_finder.py` | Confirmed | Replace hand-built CSV quoting with `csv.writer` and neutralize attacker-controlled names and paths before writing cells. |
+| #4 | CWE-1236 | `src/gui/statistics_dialog.py` | Confirmed | Neutralize visible table values when writing CSV and XLSX while leaving the source statistics and JSON export unchanged. |
+
+The shared `neutralize_spreadsheet_cell` helper prefixes strings beginning with
+`=`, `+`, `-`, `@`, tab or carriage return with an apostrophe. Safe strings and
+non-text values are returned unchanged.
+
+### Stage 3 Validation
+
+- `tests/security/test_code_scanning_spreadsheets.py`: 10 passed. Coverage
+  includes every dangerous prefix, safe and numeric values, real temporary CSV
+  and JSON files, file-finder names, statistics exports and controlled XLSX
+  workbook cells.
+- The first collection attempt stopped before tests because optional `openpyxl`
+  is not installed in `.venv`. The final test uses a minimal controlled workbook
+  double for the XLSX write contract; no dependency was installed or network
+  request made.
+- Python compilation, Ruff, Pylint-E and `git diff --check` passed after removing
+  one unused test import reported by Ruff.
+
+No user file, provider, spreadsheet application or full GUI was opened. These
+alerts remain open until reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 10 medium alerts not yet covered by a candidate correction: resource
-  consumption, compressed-data amplification, XSS, path traversal, missing
-  authentication and CSV formula injection.
+- 7 medium alerts not yet covered by a candidate correction: resource
+  consumption, compressed-data amplification, XSS, path traversal and missing
+  authentication.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.
 

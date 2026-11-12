@@ -27,7 +27,9 @@ boundary.
   and locally validated on its work branch; the task remains open for the other
   alerts, reviewed integration and a default-branch rescan. Stage 2 implements
   shell-free file opening, immutable AppleScript notification arguments and
-  allowlisted benchmark dispatch inputs for alerts #15, #19 and #10. Evidence:
+  allowlisted benchmark dispatch inputs for alerts #15, #19 and #10. Stage 3
+  adds a shared spreadsheet-cell neutralization boundary for CSV/XLSX alerts
+  #2, #3 and #4 without changing raw non-spreadsheet exports. Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**

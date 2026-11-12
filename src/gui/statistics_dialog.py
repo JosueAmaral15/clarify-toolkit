@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.i18n.translator import tr
+from src.utils.spreadsheet_security import neutralize_spreadsheet_cell
 
 
 class StatisticsDialog(QDialog):
@@ -242,7 +243,9 @@ class StatisticsDialog(QDialog):
                         for col in range(self.removal_table.columnCount()):
                             item = self.removal_table.item(row, col)
                             row_data.append(item.text() if item else "")
-                        writer.writerow(row_data)
+                        writer.writerow(
+                            [neutralize_spreadsheet_cell(value) for value in row_data]
+                        )
 
             QMessageBox.information(self, tr("statistics.msg_success_title"),
                 tr("statistics.msg_exported_csv").format(filename=filename))
@@ -309,7 +312,9 @@ class StatisticsDialog(QDialog):
                     for col in range(self.removal_table.columnCount()):
                         item = self.removal_table.item(row, col)
                         row_data.append(item.text() if item else "")
-                    sheet.append(row_data)
+                    sheet.append(
+                        [neutralize_spreadsheet_cell(value) for value in row_data]
+                    )
 
             workbook.save(filename)
             QMessageBox.information(self, tr("statistics.msg_success_title"),

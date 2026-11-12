@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, TYPE_CHECKING
 
+from .utils.spreadsheet_security import neutralize_spreadsheet_cell
+
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget
 
@@ -142,7 +144,10 @@ class ExportManager:
                     # Handle complex values
                     if isinstance(value, (dict, list)):
                         value = json.dumps(value, ensure_ascii=False)
-                    writer.writerow([key, value])
+                    writer.writerow([
+                        neutralize_spreadsheet_cell(key),
+                        neutralize_spreadsheet_cell(value),
+                    ])
         finally:
             if modal:
                 modal.close()
@@ -211,8 +216,8 @@ class ExportManager:
                 if isinstance(value, (dict, list)):
                     value = json.dumps(value, ensure_ascii=False)
 
-                ws[f'A{row}'] = key
-                ws[f'B{row}'] = value
+                ws[f'A{row}'] = neutralize_spreadsheet_cell(key)
+                ws[f'B{row}'] = neutralize_spreadsheet_cell(value)
                 row += 1
 
             # Auto-adjust column widths

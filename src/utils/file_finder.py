@@ -5,6 +5,7 @@ Module for advanced file and directory search with conditions.
 Provides GUI dialog with filters: filename regex, size range, date range, type filter.
 """
 
+import csv
 import os
 import re
 from datetime import datetime
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QDateTime
 
 from ..i18n.translator import tr
+from .spreadsheet_security import neutralize_spreadsheet_cell
 
 
 # pylint: disable=too-few-public-methods  # Qt dialog class
@@ -347,9 +349,9 @@ class AdvancedFileSearchDialog(QDialog):
             return
 
         try:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                # Header
-                f.write("Name,Path,Size (bytes),Size (MB),Modified\n")
+            with open(filepath, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["Name", "Path", "Size (bytes)", "Size (MB)", "Modified"])
 
                 # Data
                 for path, stat in self.results:
@@ -358,14 +360,13 @@ class AdvancedFileSearchDialog(QDialog):
                     mtime = datetime.fromtimestamp(stat.st_mtime)
                     mtime_str = mtime.strftime("%Y-%m-%d %H:%M:%S")
 
-                    # Escape commas in path/name
-                    name = name.replace('"', '""')
-                    path = path.replace('"', '""')
-
-                    f.write(
-                        f'"{name}","{path}",{stat.st_size},'
-                        f'{size_mb:.2f},{mtime_str}\n'
-                    )
+                    writer.writerow([
+                        neutralize_spreadsheet_cell(name),
+                        neutralize_spreadsheet_cell(path),
+                        stat.st_size,
+                        f"{size_mb:.2f}",
+                        mtime_str,
+                    ])
 
             QMessageBox.information(
                 self,
