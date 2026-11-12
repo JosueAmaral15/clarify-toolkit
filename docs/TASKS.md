@@ -2,7 +2,7 @@
 
 **Author**: Josué Amaral  
 **Date**: 2025/10/01  
-**Last Update**: 2026/10/27 - estado de guias, Find e instancias de janelas/tools
+**Last Update**: 2026/11/12 - reload externo, escopos, Find, linguagem e recuperacao
 
 Este documento contém todas as tarefas de desenvolvimento do Clarify organizadas por prioridade usando o método MoSCoW (Must Have, Should Have, Could Have, Would Have).
 
@@ -89,6 +89,93 @@ recovery, splits, watchers, documentos compartilhados e o lifecycle Qt reparado.
   apenas nas abas do Editor, mantendo Ctrl+PageUp/PageDown reservado as tools.
   Evidencia conjunta dos quatro itens em
   [Clarify Editor Recent Interactions](reports/CLARIFY_EDITOR_RECENT_INTERACTIONS_2026_10_18.md).
+
+## Requisitos Registrados - Clarify Editor E Clock (12/11/2026)
+
+Requisitos novos registrados para execucao posterior. Esta revisao apenas organiza
+e deduplica o backlog; nao declara nenhuma funcionalidade abaixo como entregue.
+`CE-PARAGRAPH-NAV-01` e `CE-MOVE-LINES-SELECTION-01` ja cobrem, respectivamente,
+`Ctrl+Up/Down` entre limites de paragrafo e `Alt+Up/Down` para mover uma selecao
+multiline. O requisito de som foi incorporado a `CLOCK-MULTI-INSTANCE-01`.
+
+### MUST - Consistencia De Arquivos E Recuperacao
+
+- [ ] **CE-EXTERNAL-RELOAD-UX-01: revalidar reload de arquivo alterado
+  externamente.** Auditar a entrega historica de `Reload from Disk` com watchers
+  reais e reproduzir alteracao por outro aplicativo e pelo File Searcher. Quando
+  a assinatura do disco mudar, informar origem/estado de modo acessivel e pedir
+  autorizacao antes de substituir o buffer; oferecer `Reload`, `Keep Editor
+  Version` e, quando houver edicao local, comparacao ou `Save As...`. Revalidar
+  imediatamente antes da leitura para evitar TOCTOU, preservar encoding, BOM,
+  line endings, cursor, selecao, splits e undo conforme contrato explicito. Nunca
+  sobrescrever conteudo dirty, recovery ou nota temporaria silenciosamente; cobrir
+  arquivo removido/renomeado, evento duplicado, auto-save pausado, erro de IO e
+  mudanca durante o dialogo sem bloquear a GUI.
+- [ ] **CE-FIND-ESCAPED-CONTROLS-01: reconhecer quebras de linha no Find/Replace.**
+  Permitir que o usuario pesquise e substitua caracteres de controle por escapes
+  explicitos, inicialmente `\\n`, `\\r`, `\\t` e `\\0`, distinguindo texto
+  literal (`\\` + `n`) de nova linha real. Definir interacao deterministica com
+  Regex, Case Sensitive, Whole Word, selecao, escopos lexicos, limites de linha e
+  line endings LF/CRLF/CR; preview deve mostrar a interpretacao e Replace nunca
+  deve converter o documento inteiro ou seus line endings por efeito colateral.
+  Cobrir escapes invalidos, barra final, Unicode, contagem `n de m`, splits e undo.
+- [ ] **CE-LANGUAGE-OVERRIDE-01: permitir linguagem manual e syntax highlight em
+  notas.** Adicionar seletor traduzido de linguagem por buffer, com `Auto Detect`
+  e `Plain Text`, reutilizando o registro de highlighters existente. A escolha
+  manual deve prevalecer sobre extensao enquanto ativa, persistir em recovery,
+  sessao de pasta e nota temporaria por identidade estavel, e sobreviver a rename,
+  Save As e reabertura sem alterar conteudo. Notas com titulo/extensao `.py` devem
+  poder usar Python mesmo sem caminho no filesystem. Atualizar indicador de
+  linguagem, tema, splits e troca runtime; parser/highlighter indisponivel deve
+  cair honestamente para Plain Text sem parse pesado ou callbacks tardios.
+- [ ] **CE-SOFT-DELETED-RECOVERY-01: recuperar notas e buffers descartados por
+  tres dias.** Ao excluir uma nota temporaria ou confirmar o descarte/fechamento
+  de um buffer nao salvo, mover snapshot privado para uma lixeira de recovery com
+  retencao padrao de 72 horas, em vez de apagar imediatamente. Oferecer lista,
+  restore e exclusao definitiva com confirmacao; distinguir esse prazo da retencao
+  normal de 30 dias de `CE-RECOVERY-RETENTION-30D-01`. Usar escrita atomica,
+  quotas e limpeza previsivel; nao sobrescrever originais, nao restaurar duas
+  vezes, reportar corrupcao/IO/quota e preservar consentimento `Save/Discard/Cancel`.
+
+### SHOULD - Navegacao, Visual E Edicao
+
+- [ ] **CE-SCOPE-BOUNDARIES-01: indicar inicio e fim do escopo de codigo.** Para
+  linguagens suportadas, inicialmente Python, mostrar sob demanda os limites do
+  escopo que contem o cursor para `class`, `def`, `for`, `while` e `if`, incluindo
+  cadeia de pais. Reutilizar parser/indice de `CE-CODE-FOLDING-01` e
+  `CE-SYMBOL-BREADCRUMB-01`; nao inferir somente por busca textual. Destacar sem
+  alterar o documento, permitir navegar ao inicio/fim, atualizar por geracao e
+  tratar `elif/else`, decoradores, blocos aninhados, sintaxe incompleta, tabs,
+  splits e Plain Text com fallback honesto e sem parse pesado na GUI.
+- [ ] **CE-TAB-NAV-ALIASES-01: adicionar aliases Ctrl+Shift+PageUp/PageDown.**
+  Se a deteccao central nao encontrar conflito ativo, registrar
+  `Ctrl+Shift+PageUp` e `Ctrl+Shift+PageDown` como aliases configuraveis das mesmas
+  QActions de `Ctrl+Alt+PageUp/PageDown` para alternar abas de arquivos. Cada gesto
+  deve navegar exatamente uma vez e somente no Clarify Editor; preservar
+  `Ctrl+PageUp/PageDown` para ferramentas, F1, layouts de teclado, customizacao,
+  splits, reordenacao, uma unica guia e isolamento de dialogs/campos.
+- [ ] **CE-FINAL-NEWLINE-01: garantir newline final por preferencia.** Adicionar
+  opcao explicita para garantir ao menos uma quebra de linha no fim do arquivo ao
+  salvar, desmarcada ou definida por politica documentada sem alterar perfis
+  existentes silenciosamente. Aplicar no mesmo bloco de Save/Save As/auto-save,
+  respeitando LF/CRLF/CR e sem acumular linhas vazias; fechamento so pode modificar
+  conteudo apos consentimento e nunca salvar implicitamente um buffer que seria
+  descartado. Cobrir arquivo vazio, read-only, nota temporaria, conflito externo,
+  undo/dirty, encoding, falha atomica e formatadores que ja inserem newline.
+- [ ] **CE-RIGHT-MARGIN-01: manter respiro visual no lado direito.** Garantir no
+  minimo 10 px de margem interna direita na viewport de texto para que glifos,
+  cursor, selecao, Find highlights e scrollbar nao sejam cortados. Derivar o
+  espacamento do estilo/escala sem inserir espacos no documento nem usar QSS que
+  quebre temas; validar wrap ligado/desligado, zoom, DPI, line numbers, splits,
+  barras horizontal/vertical e System/Light/Dark.
+- [ ] **CE-FIND-HISTORY-ARROWS-01: navegar historico pelo campo Find.** Quando o
+  campo `Find:` tiver foco, `Up` recupera a consulta anterior e `Down` avanca para
+  a proxima, usando o historico privado e limitado de
+  `CE-FIND-STATE-HISTORY-01`. Nao executar busca/navegacao automaticamente, nao
+  capturar setas em Replace, limites de linha ou documento e preservar o rascunho
+  atual ao entrar/sair do historico. Cobrir historico vazio, duplicatas,
+  selecao-prefill, cursor no texto, splits, Clear, fechamento do buffer e limite
+  de tamanho sem persistir conteudo sensivel.
 
 ## Fila Reconciliada - Requisitos De 24/10/2026
 
@@ -299,6 +386,12 @@ checkboxes. O mapeamento integral e as decisoes ficam em
   tres categorias, preservando operacoes independentes e acessibilidade.
   Definir persistencia de alarmes, timezone/DST, repeticao, suspensao do sistema,
   feedback sonoro e cleanup; listas devem escalar sem criar uma thread por item.
+  Alarmes e timers devem oferecer som de alarme real, com volume/mudo, preview e
+  fallback acessivel. Incorporar um asset local curto obtido de fonte com licenca
+  redistribuivel e registrar origem/licenca no repositorio; nao depender de
+  download em runtime, nao iniciar audio sem acao/alarme configurado e interromper
+  playback no stop, exclusao e shutdown. Preservar o feedback sonoro global sem
+  tocar duas vezes e cobrir backend de audio indisponivel.
 - [ ] **APP-RAG-CHATBOT-01: chatbot integrado com RAG do projeto.** Oferecer uma
   conversa geral para duvidas e preenchimentos assistidos, reutilizando providers,
   cadastro de agentes e indices RAG existentes. Contexto, arquivos e tool calls
@@ -901,7 +994,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   converter explicitamente sem tornar a janela quase invisivel. Aplicar o default
   somente quando nao existe preferencia do usuario; preservar migracao, runtime
   theme, dialogs, janelas destacadas e acessibilidade em System/Light/Dark.
-- [ ] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
+- [x] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
   Oferecer em Settings uma acao traduzida para redefinir configuracoes, com
   preview das categorias afetadas, confirmacao e escolha entre reset global ou
   por secao quando praticavel. Fazer backup atomico antes da alteracao, explicar
@@ -910,6 +1003,10 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   credenciais ou dados do usuario sem uma opcao separada e confirmacao especifica.
   O reset deve restaurar inclusive os defaults documentados de tema Dark e
   Window Transparency 96%, sem deixar QSettings/config YAML divergentes.
+  Iniciada em 2026-11-04 e concluida em 2026-11-12: categorias explicitas,
+  preview/confirmacao traduzidos,
+  backup ZIP atomico privado, rollback fiel e allowlists que preservam dados do
+  usuario. Evidencia: `docs/reports/APP_SETTINGS_RESET_2026_11_04.md`.
 - [ ] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
   Organizar o File Explorer/File Searcher em duas secoes ou sessoes claramente
   distintas: uma para localizar e filtrar arquivos e outra para configurar e

@@ -2429,5 +2429,6 @@
   "editor.status_reference_updates_applied": "{files} 個のファイルに {changes} 件の参照更新を適用しました",
   "editor.status_reference_updates_declined": "参照更新は適用されませんでした",
   "editor.status_reference_updates_none": "名前の変更が完了しました。安全なローカル参照更新はありません",
-  "editor.status_reference_updates_undone": "前回の参照更新を元に戻しました"
+  "editor.status_reference_updates_undone": "前回の参照更新を元に戻しました",
+  "settings_reset": {"action": "設定をリセット...", "title": "設定をリセット", "introduction": "復元する設定カテゴリを選び、確認前にプレビューしてください。", "all": "リセット可能なすべての設定", "protected": "文書、最近のファイル、一時ノート、復旧データ、履歴、カスタムレイアウト、プリセット、プラグイン、認証情報、APIキーは変更されません。", "reset_selected": "選択項目をリセット", "confirm_title": "設定リセットの確認", "confirm": "次のカテゴリをリセットする前にバックアップします:{categories}\n\n続行しますか?", "error_title": "設定リセット失敗", "error": "意図的な部分状態は残していません。詳細: {error}", "success_title": "設定をリセットしました", "success": "設定をリセットしました。バックアップ: {backup}", "success_restart": "設定をリセットしました。外観は適用済みです。その他はClarifyを再起動してください。バックアップ: {backup}", "category": {"appearance": "外観", "appearance_detail": "テーマと不透明度。直ちに適用され、既定値はダークと96%です。", "general": "一般", "general_detail": "言語、確認、ヒント、自動保存、更新、制限。最近のファイルとパスは保持します。", "shortcuts": "キーボードショートカット", "shortcuts_detail": "カスタムショートカットを既定値に戻します。", "workspace": "ワークスペース", "workspace_detail": "ウィンドウ位置と選択をリセットし、カスタムレイアウトとセッションは保持します。", "tools": "ツール設定", "tools_detail": "EditorとFile Searcherの安全な設定を復元し、検索、セッション、ノート、プリセットは保持します。", "advanced": "詳細", "advanced_detail": "ログ、性能、秘密でないAI設定を復元し、認証情報は保持します。"}}
 }

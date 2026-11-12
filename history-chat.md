@@ -6258,3 +6258,51 @@ Plano imediato:
   open and was not implemented.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-04 - APP-SETTINGS-RESET-01 started
+
+- Resumed from published appearance checkpoint `be1d9b1` on fresh branch
+  `COM-cf6e1fb7-9456-4851-bae8-8b6a410d738c`. The interrupted documentation
+  audit was preserved in a local-only WIP commit on its own branch and was not
+  pushed or marked complete.
+- Scope is limited to auditing and safely resetting actual settings stores:
+  JSON `SettingsManager`, QSettings and supported config/legacy preferences.
+  Documents, recovery, temporary notes, history, plugins and credentials are
+  excluded unless a separate explicit choice and confirmation exists.
+- AI Presence Monitor 0.12.0 reports the exact Clarify Protocol2 worker active,
+  schema 3 healthy, five hooks and native queue available. Task/native
+  automation is enabled; GUI/remote fallback and scheduled prompts are disabled.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-12 - APP-SETTINGS-RESET-01 completed
+
+- Resumed the interrupted stage on branch
+  `COM-cf6e1fb7-9456-4851-bae8-8b6a410d738c` at `be1d9b1`; no stale pytest
+  process remained active and `example.py` stayed byte-identical.
+- Added translated `Settings > Reset Settings...` preview, global or six-category
+  selection, confirmation and restart guidance. Appearance is the only category
+  hot-reloaded immediately.
+- `SettingsResetService` coordinates JSON, config YAML, QSettings and existing
+  legacy INI through explicit allowlists. It creates a private `0600` ZIP using
+  a temporary file, fsync and replace before mutation; failures restore original
+  bytes and in-memory state. Dark/96% and default language remain aligned where
+  applicable.
+- Documents, recent files/paths, temporary notes, recovery, histories, custom
+  layouts, presets, plugins, credentials and API keys are excluded explicitly.
+- Registered, without implementing, nine 12/11 requirements in `TASKS.md`:
+  authorized external reload, Find escapes, manual language/note highlighting,
+  72-hour soft-delete, scope bounds, tab aliases, final newline, right margin and
+  Find-history arrows. Paragraph navigation and Alt+Up/Down were deduplicated;
+  licensed alarm sound was folded into `CLOCK-MULTI-INSTANCE-01` without runtime
+  download.
+- Final isolated/offscreen validation with temporary HOME, pytest20s, wall180s,
+  RAM85% and treeRSS600MiB passed 33 core + 4 reset GUI + 8 appearance + 17 menu
+  tests (62 total). Peaks were 78,728/200,084/202,832/209,548 KiB. Pylint-E
+  10.00/10, AST8, JSON7, unique task IDs and `git diff --check` passed; there was
+  no native crash or guard abort. Four pre-existing ReturnNotNone warnings in
+  `test_sprint8_features.py` remain outside scope.
+- AI Presence Monitor 0.13.0 reported exact worker
+  `notebook-josue:codex:project=clarify-b09a84f1` active in Protocol2; doctor,
+  schema3, five hooks, queue, monitor/reply/prompt-rule services and controls were
+  healthy. No new continuation will be scheduled for this stage.
