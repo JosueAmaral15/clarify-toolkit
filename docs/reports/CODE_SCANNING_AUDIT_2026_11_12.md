@@ -95,10 +95,37 @@ non-text values are returned unchanged.
 No user file, provider, spreadsheet application or full GUI was opened. These
 alerts remain open until reviewed integration and the default-branch scan.
 
+## Stage 4 - Generated HTML And SVG Injection
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #14 | CWE-79 | `src/diff_analyzer.py` | Confirmed | Escape untrusted file names, flattened JSON keys and serialized JSON values as HTML text before inserting them into the trusted diff-report template. |
+| #20 | CWE-79 | `src/venn_diagram_generator.py` | Confirmed | Escape untrusted file names and other dynamic SVG text-node values while retaining the generator's fixed SVG elements and attributes. |
+
+Both export APIs receive names or content derived from files selected by the
+user. Before this stage, closing tags could leave their intended text nodes and
+introduce active HTML or SVG elements. The correction is applied only at the
+HTML/XML text serialization boundary; source dictionaries, Venn data and Qt
+views remain unchanged.
+
+### Stage 4 Validation
+
+- `tests/security/test_code_scanning_xss.py`: 2 passed. Temporary exports cover
+  script elements, event-handler payloads, closing `title`, `span`, `pre` and
+  `text` tags, ampersands, source-data preservation and well-formed SVG parsing
+  with no injected script node. Peak process-tree RSS was 63.2 MiB.
+- Prior security regressions passed in separate isolated processes:
+  `test_code_scanning_high.py` (11), `test_code_scanning_commands.py` (4) and
+  `test_code_scanning_spreadsheets.py` (10).
+- Python compilation, Ruff, Pylint-E and `git diff --check` passed.
+
+No browser, provider, user document or full GUI was opened. The alerts remain
+open until reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 7 medium alerts not yet covered by a candidate correction: resource
-  consumption, compressed-data amplification, XSS, path traversal and missing
+- 5 medium alerts not yet covered by a candidate correction: resource
+  consumption, compressed-data amplification, path traversal and missing
   authentication.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.

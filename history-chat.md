@@ -1,5 +1,32 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - HTML and SVG injection stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `d178630` on fresh branch
+  `COM-57429c46-203b-43c4-9b17-71effcd97438`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Audit alerts #14 and #20 before editing. Confirm whether untrusted file names,
+  JSON keys and values reach generated HTML or SVG text contexts and apply
+  context-correct escaping without changing trusted templates.
+- Validate script, event-handler and closing-tag payloads using temporary
+  exports only; do not open a browser or investigate other alerts in this stage.
+
+## 2026-11-12 - Post-action - HTML and SVG injection stage
+
+- Alerts #14 and #20 were confirmed. The diff exporter now escapes dynamic file
+  names, flattened JSON keys and serialized values in HTML text contexts. The
+  Venn exporter applies the same boundary to dynamic SVG text nodes while
+  retaining its fixed elements and attributes.
+- Two temporary-file attack regressions passed and prove that closing tags,
+  scripts and event-handler payloads remain text. The generated SVG also parses
+  as well-formed XML without an injected script element; source data is not
+  mutated.
+- The 11 high-severity, 4 command-injection and 10 spreadsheet regressions
+  passed separately. Compilation, Ruff, Pylint-E and diff checks passed. No
+  browser, provider, user document or full GUI was opened.
+- Both GitHub alerts remain open pending reviewed integration into `main` and a
+  default-branch rescan.
+
 ## 2026-11-12 - Pre-action - Spreadsheet formula injection stage
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `5a086fc` on fresh branch

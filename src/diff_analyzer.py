@@ -7,8 +7,9 @@ Date: 2025/12/23
 Version: 2.9.99
 """
 
-from typing import Any, Dict
 import json
+from html import escape
+from typing import Any, Dict
 
 
 class DiffAnalyzer:
@@ -165,12 +166,17 @@ class DiffAnalyzer:
             file_b_name: Name of second file
             output_path: Output HTML file path
         """
+        def text(value: Any) -> str:
+            return escape(str(value), quote=False)
+
+        file_a_text = text(file_a_name)
+        file_b_text = text(file_b_name)
         html_lines = []
         html_lines.append("<!DOCTYPE html>")
         html_lines.append("<html>")
         html_lines.append("<head>")
         html_lines.append("<meta charset='UTF-8'>")
-        html_lines.append(f"<title>Diff: {file_a_name} vs {file_b_name}</title>")
+        html_lines.append(f"<title>Diff: {file_a_text} vs {file_b_text}</title>")
         html_lines.append("<style>")
         html_lines.append("body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; }")
         html_lines.append(".container { display: flex; gap: 20px; }")
@@ -185,7 +191,7 @@ class DiffAnalyzer:
         html_lines.append("</style>")
         html_lines.append("</head>")
         html_lines.append("<body>")
-        html_lines.append(f"<h1>Diff Viewer: {file_a_name} vs {file_b_name}</h1>")
+        html_lines.append(f"<h1>Diff Viewer: {file_a_text} vs {file_b_text}</h1>")
 
         # Summary
         html_lines.append("<div class='summary'>")
@@ -200,28 +206,28 @@ class DiffAnalyzer:
 
         # Panel A
         html_lines.append("<div class='panel'>")
-        html_lines.append(f"<h2>{file_a_name}</h2>")
+        html_lines.append(f"<h2>{file_a_text}</h2>")
         html_lines.append("<pre>")
 
         # Only in A (green)
         for key, value in sorted(diff_result['only_in_a'].items()):
-            val_json = json.dumps(value)
+            val_json = text(json.dumps(value))
             html_lines.append(
-                f"<span class='only-a'><span class='key'>{key}:</span> {val_json}</span>"
+                f"<span class='only-a'><span class='key'>{text(key)}:</span> {val_json}</span>"
             )
 
         # Common (yellow)
         for key, values in sorted(diff_result['common'].items()):
-            val_json = json.dumps(values['a'])
+            val_json = text(json.dumps(values['a']))
             html_lines.append(
-                f"<span class='common'><span class='key'>{key}:</span> {val_json}</span>"
+                f"<span class='common'><span class='key'>{text(key)}:</span> {val_json}</span>"
             )
 
         # Modified (orange) - show value from A
         for key, values in sorted(diff_result['modified'].items()):
-            val_json = json.dumps(values['a'])
+            val_json = text(json.dumps(values['a']))
             html_lines.append(
-                f"<span class='modified'><span class='key'>{key}:</span> {val_json}</span>"
+                f"<span class='modified'><span class='key'>{text(key)}:</span> {val_json}</span>"
             )
 
         html_lines.append("</pre>")
@@ -229,22 +235,28 @@ class DiffAnalyzer:
 
         # Panel B
         html_lines.append("<div class='panel'>")
-        html_lines.append(f"<h2>{file_b_name}</h2>")
+        html_lines.append(f"<h2>{file_b_text}</h2>")
         html_lines.append("<pre>")
 
         # Only in B (red)
         for key, value in sorted(diff_result['only_in_b'].items()):
-            html_lines.append(f"<span class='only-b'><span class='key'>{key}:</span> {json.dumps(value)}</span>")
+            html_lines.append(
+                f"<span class='only-b'><span class='key'>{text(key)}:</span> "
+                f"{text(json.dumps(value))}</span>"
+            )
 
         # Common (yellow)
         for key, values in sorted(diff_result['common'].items()):
-            html_lines.append(f"<span class='common'><span class='key'>{key}:</span> {json.dumps(values['b'])}</span>")
+            html_lines.append(
+                f"<span class='common'><span class='key'>{text(key)}:</span> "
+                f"{text(json.dumps(values['b']))}</span>"
+            )
 
         # Modified (orange) - show value from B
         for key, values in sorted(diff_result['modified'].items()):
-            val_json = json.dumps(values['b'])
+            val_json = text(json.dumps(values['b']))
             html_lines.append(
-                f"<span class='modified'><span class='key'>{key}:</span> {val_json}</span>"
+                f"<span class='modified'><span class='key'>{text(key)}:</span> {val_json}</span>"
             )
 
         html_lines.append("</pre>")

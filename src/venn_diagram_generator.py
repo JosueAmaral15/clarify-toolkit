@@ -12,7 +12,8 @@ Date: 2025-12-23
 Version: v2.9.107
 """
 
-from typing import Dict, List, Any, Tuple
+from html import escape
+from typing import Any, Dict, List, Tuple
 
 
 class VennDiagramGenerator:
@@ -225,6 +226,9 @@ class VennDiagramGenerator:
             venn_data: Venn diagram data from generate()
             output_path: Path to save SVG file
         """
+        def text(value: Any) -> str:
+            return escape(str(value), quote=False)
+
         # SVG parameters
         width = 600
         height = 400
@@ -242,7 +246,10 @@ class VennDiagramGenerator:
         # Build SVG
         svg_lines = []
         svg_lines.append(f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">')
-        svg_lines.append(f'  <title>Venn Diagram: {venn_data["file_a_name"]} vs {venn_data["file_b_name"]}</title>')
+        svg_lines.append(
+            f'  <title>Venn Diagram: {text(venn_data["file_a_name"])} vs '
+            f'{text(venn_data["file_b_name"])}</title>'
+        )
 
         # Circle A
         svg_lines.append(f'  <circle cx="{center_a_x}" cy="{center_a_y}" r="{radius}" ')
@@ -254,24 +261,24 @@ class VennDiagramGenerator:
 
         # Labels
         svg_lines.append(f'  <text x="{center_a_x - 80}" y="{center_a_y}" font-size="14" font-weight="bold">')
-        svg_lines.append(f'    {venn_data["file_a_name"]}</text>')
+        svg_lines.append(f'    {text(venn_data["file_a_name"])}</text>')
 
         svg_lines.append(f'  <text x="{center_b_x + 40}" y="{center_b_y}" font-size="14" font-weight="bold">')
-        svg_lines.append(f'    {venn_data["file_b_name"]}</text>')
+        svg_lines.append(f'    {text(venn_data["file_b_name"])}</text>')
 
         # Counts
         svg_lines.append(f'  <text x="{center_a_x - 40}" y="{center_a_y + 5}" font-size="18" font-weight="bold">')
-        svg_lines.append(f'    {only_a["count"]}</text>')
+        svg_lines.append(f'    {text(only_a["count"])}</text>')
 
         svg_lines.append(f'  <text x="{width // 2 - 10}" y="{center_a_y + 5}" font-size="18" font-weight="bold">')
-        svg_lines.append(f'    {intersection["count"]}</text>')
+        svg_lines.append(f'    {text(intersection["count"])}</text>')
 
         svg_lines.append(f'  <text x="{center_b_x + 30}" y="{center_b_y + 5}" font-size="18" font-weight="bold">')
-        svg_lines.append(f'    {only_b["count"]}</text>')
+        svg_lines.append(f'    {text(only_b["count"])}</text>')
 
         # Summary
         svg_lines.append(f'  <text x="10" y="{height - 10}" font-size="12">')
-        svg_lines.append(f'    {venn_data["summary"]}</text>')
+        svg_lines.append(f'    {text(venn_data["summary"])}</text>')
 
         svg_lines.append('</svg>')
 
