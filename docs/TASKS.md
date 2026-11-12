@@ -36,6 +36,20 @@ boundary.
   wait for GitHub to rescan the default branch, and require zero unexplained
   critical/high findings before Aligner readiness. Do not dismiss alerts merely
   because a work branch contains newer versions.
+  Partial on 12/11/2026: the authenticated GitHub API reports one open alert,
+  `requests < 2.33.0`. `origin/main` still locks `2.32.5`, while the reviewed
+  work branch locks `2.34.2`. No further package edit is indicated; the task
+  remains open for reviewed integration, clean-environment validation and the
+  GitHub default-branch rescan. Evidence:
+  [Dependabot Default-Branch Status](reports/DEPENDABOT_DEFAULT_BRANCH_STATUS_2026_11_12.md).
+- [ ] **CLI-HELP-ENTRYPOINT-01: make top-level `--help` exit without launching
+  the GUI.** Reproduce `python -m src --help` in an isolated process and correct
+  argument routing so it prints parser help and exits successfully without
+  creating `QApplication`, `MainWindow`, plugins, migrations or background
+  services. Preserve no-argument GUI startup and every existing subcommand;
+  cover `-h`, `--help`, invalid top-level options and subcommand help.
+  Discovered on 12/11/2026 while validating the English README: top-level
+  `--help` initialized the full GUI and remained alive until explicitly stopped.
 - [ ] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
   Reproduce the reported case from a terminal where closing the Clarify window
   leaves the launcher or Python process alive. Correlate `~/.config/clarify/crashes`
@@ -62,6 +76,11 @@ boundary.
   localization; route every user-facing string through i18n, keep translation
   keys equivalent, update links and badges, and add a bounded check that prevents
   new Portuguese canonical content without blocking legitimate pt-BR resources.
+  Partial on 12/11/2026: the root `README.md` was rewritten in English against
+  current package, CLI, repository and documentation contracts. Stale coverage,
+  completion and test-count claims were removed, and repository links now target
+  `clarify-toolkit`. The broader source, contributor, security, task/report and
+  translation-key audit remains open.
 
 ### SHOULD - Aligner Project Recognition
 
@@ -1860,8 +1879,8 @@ nao novos checkboxes. Detalhes/evidencias ficam na matriz vinculada acima.
 **Data Início**: 25/12/2025  
 **Data Conclusão**: Janeiro 2026 (v2.9.116)  
 **Progresso**: ✅ **100% COMPLETO**  
-**Documento Completo**: [INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md](../INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md)  
-**Verificação**: [PHASE_4_COMPLETION_REPORT.md](../PHASE_4_COMPLETION_REPORT.md)
+**Documento Completo**: [INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md](action-plans/INTEGRATION_PLAN_SEARCH_TO_FILEEXPLORER.md)
+**Verificação**: [PHASE_4_COMPLETION_REPORT.md](reports/PHASE_4_COMPLETION_REPORT.md)
 
 > Nota de coerência (29/07/2026): esta seção preserva o histórico da integração v2.9.116. A fila operacional atual do File Explorer fica em "Fila Prioritária - File Explorer Stability, Coherence and Cleanup"; blocos antigos não devem ser tratados como tarefas abertas sem revalidação.
 

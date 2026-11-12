@@ -6428,3 +6428,25 @@ Plano imediato:
   the work branch lock contains newer patched packages. A canonical task now
   requires validated integration and a default-branch rescan before Aligner
   readiness can be claimed.
+
+## 2026-11-12 - English README and default-branch security status
+
+- Work continued on fresh branch
+  `COM-d12b952b-9b30-4c73-babb-04bb9051ea40`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- The root `README.md` was rewritten in English against current repository,
+  package, CLI and documentation contracts. Stale completion, coverage, test
+  count and old-repository claims were removed; installation and CI links now
+  use `JosueAmaral15/clarify-toolkit`.
+- The authenticated GitHub API reported one open Dependabot alert:
+  `requests < 2.33.0`. `origin/main` locks `2.32.5`, while this reviewed work
+  line locks `2.34.2`. The canonical task remains open for integration, clean
+  lock-derived validation and GitHub's default-branch rescan.
+- README validation exposed a separate CLI defect: top-level
+  `python -m src --help` launches the full GUI and stays alive. The process was
+  stopped, the README was corrected to document only subcommand help, and
+  `CLI-HELP-ENTRYPOINT-01` now records the bounded fix and regression contract.
+- `poetry check --lock`, subcommand-help execution, local Markdown-link checks
+  and `git diff --check` passed. Two pre-existing broken links in the canonical
+  task file were corrected. No GUI suite was run, and the end-to-end shutdown
+  task remains blocked by its resource-guarded lifecycle proof.
