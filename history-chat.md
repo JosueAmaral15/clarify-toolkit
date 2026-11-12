@@ -6306,3 +6306,5 @@ Plano imediato:
   `notebook-josue:codex:project=clarify-b09a84f1` active in Protocol2; doctor,
   schema3, five hooks, queue, monitor/reply/prompt-rule services and controls were
   healthy. No new continuation will be scheduled for this stage.
+- After remote SHA verification, that exact worker was finished once and changed
+  to `idle`; no other worker/service was changed and no continuation was sent.
