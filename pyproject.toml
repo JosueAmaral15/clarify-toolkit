@@ -27,7 +27,7 @@ excel = [
 ]
 dev = [
     "black>=23.0.0",
-    "pylint>=3.0.0",
+    "pylint>=4.0.9",
     "isort>=5.0.0",
     "pre-commit>=3.0.0",
     "pytest>=8.0.0",
