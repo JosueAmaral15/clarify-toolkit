@@ -29,6 +29,13 @@ boundary.
   location. Fingerprint-specific exceptions preserve detection elsewhere; the
   full 1,621-commit rescan completed with zero unreviewed findings. Evidence:
   [Gitleaks History Audit](reports/GITLEAKS_HISTORY_AUDIT_2026_11_12.md).
+- [ ] **SEC-DEPENDABOT-DEFAULT-BRANCH-01: clear default-branch dependency
+  alerts.** Reconcile every open GitHub Dependabot alert with the resolved lock,
+  direct constraints and actual runtime consumers. Validate patched versions in
+  an isolated environment, merge through the documented develop/main workflow,
+  wait for GitHub to rescan the default branch, and require zero unexplained
+  critical/high findings before Aligner readiness. Do not dismiss alerts merely
+  because a work branch contains newer versions.
 - [ ] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
   Reproduce the reported case from a terminal where closing the Clarify window
   leaves the launcher or Python process alive. Correlate `~/.config/clarify/crashes`
@@ -37,6 +44,12 @@ boundary.
   waits, preserve recovery and diagnostic writes, stop child processes, and
   never rely on `QThread.terminate()`. Add a subprocess regression proving that
   normal Close returns the terminal prompt with no surviving Clarify descendants.
+  Partial on 12/11/2026: repeated crash reports were traced to the shortcut
+  registry emitting through a Qt signal source already deleted during shutdown.
+  The guarded emission fix and 14 focused shortcut tests passed. The full-window
+  probe was stopped by the 85% system-RAM guard, so the terminal-process defect
+  remains open and no end-to-end fix is claimed. Evidence:
+  [Shutdown Triage](reports/APP_SHUTDOWN_TRIAGE_2026_11_12.md).
 
 ### MUST - Canonical English And Localization
 

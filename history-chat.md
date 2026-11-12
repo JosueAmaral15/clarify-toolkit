@@ -6407,3 +6407,24 @@ Plano imediato:
 - `DOCS-ENGLISH-CANONICAL-01`, `APP-SHUTDOWN-PROCESS-01` and
   `RELEASE-ALIGNER-READINESS-01` were added to the canonical queue. External
   submission remains blocked on explicit final user review and approval.
+
+## 2026-11-12 - Shutdown crash correction and bounded stop
+
+- Work continued on fresh branch
+  `COM-6b09623d-061e-4a57-a391-95908dec2948`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Recent crash reports consistently showed `ShortcutManager` target destruction
+  emitting through a shared Qt signal source already deleted during application
+  teardown. Emission is now validity-checked and race-tolerant; a later live
+  session recreates the notifier only when requested.
+- One new teardown regression, three keyboard-alias tests and ten shortcut
+  reference tests passed in isolated offscreen processes. Compilation,
+  Pylint-E and diff checks passed.
+- The full-window lifecycle probe was stopped when total system RAM reached the
+  85% guard; its process tree peaked at 74.3 MiB. No retry was made. The terminal
+  process issue remains open and the report explicitly does not claim an
+  end-to-end shutdown fix.
+- GitHub currently shows open Dependabot alerts on the default branch even though
+  the work branch lock contains newer patched packages. A canonical task now
+  requires validated integration and a default-branch rescan before Aligner
+  readiness can be claimed.

@@ -186,7 +186,22 @@ class ShortcutManager:
     @classmethod
     def events(cls) -> _ShortcutEvents:
         """Return the shared GUI-thread notifier for registry consumers."""
+        if not isValid(cls._events):
+            cls._events = _ShortcutEvents()
         return cls._events
+
+    @classmethod
+    def _emit_changed(cls, *_unused) -> None:
+        """Ignore teardown notifications after Qt deletes the shared emitter."""
+        events = cls._events
+        if not isValid(events):
+            return
+        try:
+            events.changed.emit()
+        except RuntimeError:
+            # Qt can invalidate the C++ object between isValid() and emit()
+            # while QApplication is destroying top-level objects.
+            return
 
     @classmethod
     def get_shortcut(cls, action_name: str) -> Tuple[str, str]:
@@ -303,8 +318,8 @@ class ShortcutManager:
         target.setProperty("clarify_shortcut_action", action_name)
         target.setProperty("clarify_shortcut_category", binding.category)
         if is_new:
-            target.destroyed.connect(lambda *_unused: cls._events.changed.emit())
-        cls._events.changed.emit()
+            target.destroyed.connect(cls._emit_changed)
+        cls._emit_changed()
 
     @classmethod
     def _refresh_registered_targets(cls) -> None:
@@ -321,7 +336,7 @@ class ShortcutManager:
                 target.setKey(cls.get_key_sequence(binding.action_name))
         for target in stale:
             cls._bindings.pop(target, None)
-        cls._events.changed.emit()
+        cls._emit_changed()
 
     @classmethod
     def get_registered_shortcuts(cls, owner=None) -> List[RegisteredShortcut]:
