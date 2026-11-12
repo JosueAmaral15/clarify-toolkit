@@ -126,6 +126,11 @@ multiline. O requisito de som foi incorporado a `CLOCK-MULTI-INSTANCE-01`.
   line endings LF/CRLF/CR; preview deve mostrar a interpretacao e Replace nunca
   deve converter o documento inteiro ou seus line endings por efeito colateral.
   Cobrir escapes invalidos, barra final, Unicode, contagem `n de m`, splits e undo.
+  WIP interrompido com seguranca em 12/11/2026 na branch
+  `COM-535f82ab-ac3e-4afe-bfcf-37f1f4ae19a0`: 29 testes puros passaram, mas o
+  primeiro modulo GUI foi abortado pelo guard quando a RAM do sistema atingiu
+  86% (limite 85%). Nenhum retry foi feito; a tarefa permanece aberta ate a
+  validacao GUI isolada e as regressoes existentes serem executadas.
 - [ ] **CE-LANGUAGE-OVERRIDE-01: permitir linguagem manual e syntax highlight em
   notas.** Adicionar seletor traduzido de linguagem por buffer, com `Auto Detect`
   e `Plain Text`, reutilizando o registro de highlighters existente. A escolha

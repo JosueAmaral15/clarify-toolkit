@@ -1,4 +1,8 @@
 {
+  "editor.chk_interpret_escapes": "解释控制转义 (\\n, \\r, \\t, \\0)",
+  "editor.find_escape_preview": "解释后的查找：{query}",
+  "editor.find_escape_preview_with_replace": "解释后的查找：{query} | 替换：{replacement}",
+  "editor.find_regex_escape_preview": "正则表达式模式使用正则表达式转义语法。",
   "editor.status_indent_tabs": "制表符：{width}",
   "editor.status_indent_spaces": "空格：{width}",
   "editor.status_cursor_position": "行 {line}，列 {column}",

@@ -1,4 +1,8 @@
 {
+  "editor.chk_interpret_escapes": "Interpretar escapes de control (\\n, \\r, \\t, \\0)",
+  "editor.find_escape_preview": "Búsqueda interpretada: {query}",
+  "editor.find_escape_preview_with_replace": "Búsqueda interpretada: {query} | reemplazo: {replacement}",
+  "editor.find_regex_escape_preview": "El modo Regex usa la sintaxis de escapes de expresiones regulares.",
   "editor.status_indent_tabs": "Tabulaciones: {width}",
   "editor.status_indent_spaces": "Espacios: {width}",
   "editor.status_cursor_position": "Lín {line}, Col {column}",

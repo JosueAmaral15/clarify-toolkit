@@ -23,6 +23,7 @@ class FindOptions:
     case_sensitive: bool = False
     whole_word: bool = False
     regex: bool = False
+    interpret_escapes: bool = False
     scope: str = "all"
     start_line: int | None = None
     end_line: int | None = None
@@ -114,6 +115,50 @@ _IDENTIFIER_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 _JSON_KEY_RE = re.compile(r'"(?:\\.|[^"\\])*"(?=\s*:)', re.DOTALL)
 _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 _INVERTED_UNITS = {"line", "token", "interval"}
+_CONTROL_ESCAPES = {
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "0": "\0",
+    "\\": "\\",
+}
+
+
+def interpret_literal_control_escapes(value: str) -> str:
+    """Decode the explicit bounded escape vocabulary used by literal Find."""
+    output: list[str] = []
+    index = 0
+    while index < len(value):
+        character = value[index]
+        if character != "\\":
+            output.append(character)
+            index += 1
+            continue
+        if index + 1 >= len(value):
+            raise FindValidationError("control escape ends with a backslash")
+        escape = value[index + 1]
+        if escape not in _CONTROL_ESCAPES:
+            raise FindValidationError(f"unsupported control escape: \\{escape}")
+        output.append(_CONTROL_ESCAPES[escape])
+        index += 2
+    return "".join(output)
+
+
+def control_escape_preview(value: str, *, max_chars: int = 160) -> str:
+    """Render decoded controls visibly without placing them in a QLabel."""
+    decoded = interpret_literal_control_escapes(value)
+    visible = "".join(
+        {
+            "\n": "<LF>",
+            "\r": "<CR>",
+            "\t": "<TAB>",
+            "\0": "<NUL>",
+        }.get(character, character)
+        for character in decoded
+    )
+    if len(visible) > max_chars:
+        return visible[: max_chars - 3] + "..."
+    return visible
 
 
 def find_matches(
@@ -136,7 +181,12 @@ def find_matches(
     else:
         semantic_spans = _intersect_spans(semantic_spans, search_start, search_end)
 
-    pattern = _compile_pattern(query, options)
+    effective_query = (
+        interpret_literal_control_escapes(query)
+        if options.interpret_escapes and not options.regex
+        else query
+    )
+    pattern = _compile_pattern(effective_query, options)
     matches, truncated = _positive_matches(
         text,
         pattern,
@@ -326,6 +376,8 @@ def replacement_for_match(
 ) -> str:
     """Expand regex groups using the same options as discovery."""
     if not options.regex:
+        if options.interpret_escapes:
+            return interpret_literal_control_escapes(replacement)
         return replacement
     pattern = _compile_pattern(query, options)
     match = pattern.fullmatch(matched_text)

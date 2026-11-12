@@ -67,6 +67,7 @@ from src.core.editor_find import (
     MAX_QUERY_CHARS,
     FindOptions,
     FindValidationError,
+    control_escape_preview,
     find_matches,
     replacement_for_match,
 )
@@ -187,11 +188,17 @@ class _EditorFindDialog(QDialog):
         self.chk_case_sensitive = QCheckBox()
         self.chk_whole_word = QCheckBox()
         self.chk_regex = QCheckBox()
+        self.chk_interpret_escapes = QCheckBox()
         options_layout.addWidget(self.chk_case_sensitive)
         options_layout.addWidget(self.chk_whole_word)
         options_layout.addWidget(self.chk_regex)
         options_layout.addStretch()
         layout.addLayout(options_layout)
+
+        layout.addWidget(self.chk_interpret_escapes)
+        self.lbl_escape_preview = QLabel("")
+        self.lbl_escape_preview.setWordWrap(True)
+        layout.addWidget(self.lbl_escape_preview)
 
         scope_layout = QHBoxLayout()
         self.lbl_find_scope = QLabel()
@@ -275,6 +282,8 @@ class _EditorFindDialog(QDialog):
         self.chk_case_sensitive.toggled.connect(self._on_options_changed)
         self.chk_whole_word.toggled.connect(self._on_options_changed)
         self.chk_regex.toggled.connect(self._on_options_changed)
+        self.chk_interpret_escapes.toggled.connect(self._on_options_changed)
+        self.replace_input.textChanged.connect(self._update_escape_preview)
         self.scope_group.buttonToggled.connect(self._on_scope_toggled)
         self.chk_inverted.toggled.connect(self._on_inverted_toggled)
         self.cmb_inverted_unit.currentIndexChanged.connect(
@@ -391,6 +400,7 @@ class _EditorFindDialog(QDialog):
             (self.chk_case_sensitive, "editor.chk_case_sensitive"),
             (self.chk_whole_word, "editor.chk_whole_word"),
             (self.chk_regex, "editor.chk_regex"),
+            (self.chk_interpret_escapes, "editor.chk_interpret_escapes"),
             (self.lbl_find_scope, "editor.lbl_find_scope"),
             (self.radio_all_text, "editor.scope_all_text"),
             (self.radio_only_strings, "editor.scope_only_strings"),
@@ -427,12 +437,17 @@ class _EditorFindDialog(QDialog):
         self.btn_previous_value.setToolTip(
             tr("editor.tooltip_find_previous_value")
         )
+        self._update_escape_preview()
         self._update_status()
 
     def _restore_state(self) -> None:
         self.chk_case_sensitive.setChecked(bool(self.state.get("case_sensitive", False)))
         self.chk_whole_word.setChecked(bool(self.state.get("whole_word", False)))
         self.chk_regex.setChecked(bool(self.state.get("regex", False)))
+        self.chk_interpret_escapes.setChecked(
+            bool(self.state.get("interpret_escapes", False))
+        )
+        self.chk_interpret_escapes.setEnabled(not self.chk_regex.isChecked())
         scope = self.state.get("scope", "all")
         scope_buttons = {
             "all": self.radio_all_text,
@@ -461,6 +476,7 @@ class _EditorFindDialog(QDialog):
                 "case_sensitive": self.chk_case_sensitive.isChecked(),
                 "whole_word": self.chk_whole_word.isChecked(),
                 "regex": self.chk_regex.isChecked(),
+                "interpret_escapes": self.chk_interpret_escapes.isChecked(),
                 "scope": self._selected_scope(),
                 "inverted": self.chk_inverted.isChecked(),
                 "inverted_unit": self.cmb_inverted_unit.currentData() or "line",
@@ -478,6 +494,7 @@ class _EditorFindDialog(QDialog):
             case_sensitive=self.chk_case_sensitive.isChecked(),
             whole_word=self.chk_whole_word.isChecked(),
             regex=self.chk_regex.isChecked(),
+            interpret_escapes=self.chk_interpret_escapes.isChecked(),
             scope=self._selected_scope(),
             start_line=self.start_line.value() or None,
             end_line=self.end_line.value() or None,
@@ -486,8 +503,31 @@ class _EditorFindDialog(QDialog):
         )
 
     def _on_options_changed(self, _checked=False) -> None:
+        self.chk_interpret_escapes.setEnabled(not self.chk_regex.isChecked())
         self._save_state()
         self._recalculate_matches()
+
+    def _update_escape_preview(self, *_args) -> None:
+        """Show how literal controls will be interpreted before navigation."""
+        if self.chk_regex.isChecked():
+            message = tr("editor.find_regex_escape_preview")
+        elif not self.chk_interpret_escapes.isChecked():
+            message = ""
+        else:
+            try:
+                query = control_escape_preview(self.find_input.text())
+                if self.replace_enabled:
+                    replacement = control_escape_preview(self.replace_input.text())
+                    message = tr("editor.find_escape_preview_with_replace").format(
+                        query=query,
+                        replacement=replacement,
+                    )
+                else:
+                    message = tr("editor.find_escape_preview").format(query=query)
+            except FindValidationError as error:
+                message = tr("editor.find_error").format(error=error)
+        self.lbl_escape_preview.setText(message)
+        self.lbl_escape_preview.setAccessibleName(message)
 
     def _on_scope_toggled(self, _button, checked: bool) -> None:
         if checked:
@@ -519,6 +559,7 @@ class _EditorFindDialog(QDialog):
         self._update_history_button()
 
     def _recalculate_matches(self, *_args) -> bool:
+        self._update_escape_preview()
         query = self.find_input.text()
         self.matches = ()
         self.current_match_index = -1

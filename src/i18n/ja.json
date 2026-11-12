@@ -1,4 +1,8 @@
 {
+  "editor.chk_interpret_escapes": "制御エスケープを解釈 (\\n, \\r, \\t, \\0)",
+  "editor.find_escape_preview": "解釈後の検索: {query}",
+  "editor.find_escape_preview_with_replace": "解釈後の検索: {query} | 置換: {replacement}",
+  "editor.find_regex_escape_preview": "正規表現モードでは正規表現のエスケープ構文を使用します。",
   "editor.status_indent_tabs": "タブ: {width}",
   "editor.status_indent_spaces": "スペース: {width}",
   "editor.status_cursor_position": "行 {line}、列 {column}",

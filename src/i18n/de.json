@@ -1,4 +1,8 @@
 {
+  "editor.chk_interpret_escapes": "Steuerzeichen-Escapes interpretieren (\\n, \\r, \\t, \\0)",
+  "editor.find_escape_preview": "Interpretierte Suche: {query}",
+  "editor.find_escape_preview_with_replace": "Interpretierte Suche: {query} | Ersetzung: {replacement}",
+  "editor.find_regex_escape_preview": "Der Regex-Modus verwendet die Escape-Syntax regulärer Ausdrücke.",
   "editor.status_indent_tabs": "Tabs: {width}",
   "editor.status_indent_spaces": "Leerzeichen: {width}",
   "editor.status_cursor_position": "Z. {line}, Sp. {column}",

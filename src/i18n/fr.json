@@ -1,4 +1,8 @@
 {
+  "editor.chk_interpret_escapes": "Interpréter les échappements de contrôle (\\n, \\r, \\t, \\0)",
+  "editor.find_escape_preview": "Recherche interprétée : {query}",
+  "editor.find_escape_preview_with_replace": "Recherche interprétée : {query} | remplacement : {replacement}",
+  "editor.find_regex_escape_preview": "Le mode Regex utilise la syntaxe d’échappement des expressions régulières.",
   "editor.status_indent_tabs": "Tabulations : {width}",
   "editor.status_indent_spaces": "Espaces : {width}",
   "editor.status_cursor_position": "Lig {line}, Col {column}",

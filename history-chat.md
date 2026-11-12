@@ -6349,3 +6349,38 @@ Plano imediato:
   worker was finished once and reported `idle`; no continuation was scheduled.
   Two identical late dispatches for the already completed settings-reset stage
   at obsolete checkpoint `be1d9b1` were not retried.
+
+## 2026-11-12 - CE-FIND-ESCAPED-CONTROLS-01 started
+
+- Continued the canonical MUST queue from published external-reload checkpoint
+  `fe036b3` on fresh branch
+  `COM-535f82ab-ac3e-4afe-bfcf-37f1f4ae19a0`.
+- Scope is limited to explicit `\\n`, `\\r`, `\\t` and `\\0` interpretation in
+  Clarify Editor Find/Replace, including deterministic interaction with regex,
+  lexical scopes, line bounds, counters and undo. File Searcher, language
+  override, Clock and the remaining backlog are excluded.
+- AI Presence Monitor 0.13.0 passed doctor/schema checks after the failed prompt
+  rule observer was restarted. The exact Protocol2 worker was started once;
+  task automation, native input, five hooks and all three observer services are
+  active, while GUI and remote fallback remain disabled.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-12 - CE-FIND-ESCAPED-CONTROLS-01 paused by resource guard
+
+- Pre-change evidence reproduced 11 missing pure contracts and five missing GUI
+  controls. The WIP adds explicit opt-in literal interpretation for `\\n`,
+  `\\r`, `\\t`, `\\0` and `\\\\`, a bounded visible preview, strict invalid
+  escape errors, persisted UI state and unchanged native Regex semantics.
+- The new 11 pure regressions and the existing 18 matcher regressions passed.
+  Python compilation and seven-catalog JSON parsing also passed before the GUI
+  run.
+- The first isolated GUI run was terminated when system RAM reached 86%, above
+  the 85% guard, while process-tree RSS was only 64.6 MiB. The surviving pytest
+  child was explicitly terminated; no pytest process remains. No retry or
+  continuation dispatch was attempted.
+- The task stays open on branch
+  `COM-535f82ab-ac3e-4afe-bfcf-37f1f4ae19a0` pending isolated GUI and existing
+  Find regression validation. `example.py` remains untracked and byte-identical
+  at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
