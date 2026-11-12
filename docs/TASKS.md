@@ -55,7 +55,7 @@ boundary.
   path. Five isolated regressions cover long and short help, invalid options,
   GUI/subcommand conflicts and the no-argument GUI default. Evidence:
   [CLI Help Entry-Point Repair](reports/CLI_HELP_ENTRYPOINT_2026_11_12.md).
-- [ ] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
+- [x] **APP-SHUTDOWN-PROCESS-01: make Close terminate the application process.**
   Reproduce the reported case from a terminal where closing the Clarify window
   leaves the launcher or Python process alive. Correlate `~/.config/clarify/crashes`
   with Qt threads, workers, timers, subprocesses and the shell launcher; identify
@@ -67,7 +67,13 @@ boundary.
   registry emitting through a Qt signal source already deleted during shutdown.
   The guarded emission fix and 14 focused shortcut tests passed. The full-window
   probe was stopped by the 85% system-RAM guard, so the terminal-process defect
-  remains open and no end-to-end fix is claimed. Evidence:
+  remained open at that checkpoint. Completed on 12/11/2026: a guarded
+  one-cycle MainWindow probe exited with no widgets remaining, followed by a
+  real `python -m src` subprocess regression that entered the Qt event loop,
+  accepted normal Close, returned status 0 in 9.11 seconds, created no crash
+  report and left no descendant process. The acceptance path used temporary
+  settings with exit confirmation already disabled; it did not force
+  `app.quit()` or terminate a Qt thread. Evidence:
   [Shutdown Triage](reports/APP_SHUTDOWN_TRIAGE_2026_11_12.md).
 
 ### MUST - Canonical English And Localization

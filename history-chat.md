@@ -6465,3 +6465,19 @@ Plano imediato:
 - Five focused tests passed, including four real subprocess regressions with
   bounded timeouts and a no-argument GUI-default contract. Compilation,
   Pylint-E and diff checks passed without a full GUI run.
+
+## 2026-11-12 - End-to-end accepted Close process proof
+
+- Work continued on fresh branch
+  `COM-f07d0953-578d-46cd-875c-ee80478ba817`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- A one-cycle MainWindow probe completed with zero widgets/top-level windows,
+  208.4 MiB peak RSS and no resource-guard abort.
+- A new subprocess regression launches the real `python -m src` event loop under
+  temporary settings and schedules a normal `MainWindow.close()`. The first
+  diagnostic correctly showed the default Exit Clarify prompt awaiting input;
+  the final test models an already accepted prompt with `confirm_on_exit=false`
+  rather than forcing application or thread termination.
+- The real process returned status 0 in 9.11 seconds, created no crash report and
+  left no descendant PID. `APP-SHUTDOWN-PROCESS-01` is now complete; launcher
+  dependency-install branches were not part of this process-lifecycle proof.

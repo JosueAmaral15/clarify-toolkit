@@ -35,20 +35,42 @@ Their later `destroyed` callbacks then emitted through an invalid C++ object.
 - Existing shortcut-reference regressions: 10 passed.
 - Python compilation, Pylint errors-only and `git diff --check`: passed.
 
-An isolated full-window lifecycle probe was attempted with temporary HOME,
-offscreen Qt and the existing RAM/RSS/wall guards. The guard stopped the probe
-when total system RAM reached 85%; the process tree itself peaked at only 74.3
-MiB. It was not retried.
+An initial isolated full-window lifecycle probe was attempted with temporary
+HOME, offscreen Qt and the existing RAM/RSS/wall guards. The guard stopped that
+run when total system RAM reached 85%; the process tree itself peaked at only
+74.3 MiB.
 
-## Remaining evidence required
+After system pressure fell, one bounded MainWindow construction/close cycle
+completed with zero remaining widgets, zero remaining top-level windows and
+208.4 MiB peak process-tree RSS. That probe does not itself enter the normal
+application event loop, so a separate subprocess regression was added.
 
-This correction closes the reproduced shortcut crash only. It does not yet prove
-why the real launcher remains alive. A later run with sufficient RAM must:
+## End-to-End Process Evidence
 
-1. launch the real application in a bounded subprocess group;
-2. close it through the normal accepted MainWindow path;
-3. capture active Qt threads, `QThreadPool`, timers and child processes;
-4. assert that the Python process and launcher exit within the bounded timeout;
-5. confirm that no new crash report or descendant process remains.
+`tests/test_application_shutdown_process.py` launches the actual
+`python -m src` entry point with:
 
-Until that test passes, `APP-SHUTDOWN-PROCESS-01` remains open.
+- a temporary HOME, XDG configuration root, settings file and log directory;
+- offscreen Qt and no user documents or provider calls;
+- an opt-in diagnostic timer that invokes `MainWindow.close()` from the real Qt
+  event loop;
+- the normal accepted-close preference (`confirm_on_exit=false`) to model a user
+  who already accepted or disabled the exit prompt;
+- 85% system-RAM, 600 MiB process-tree RSS and 45-second wall guards.
+
+The regression does not call `app.quit()`, does not use `QThread.terminate()`
+and does not kill a passing child. It requires status 0, the real MainWindow
+startup marker, no shortcut signal-source error, no crash report and no
+surviving descendant PID.
+
+The isolated regression passed in 9.11 seconds. A preceding diagnostic run
+correctly timed out while the default exit-confirmation dialog awaited input;
+that was a test-harness interaction, not counted as product evidence. Seeding
+the accepted preference exercised the same normal close path without bypassing
+`MainWindow.closeEvent`.
+
+Together with the shortcut-emitter correction and its 14 focused regressions,
+this closes `APP-SHUTDOWN-PROCESS-01`. The Linux launcher waits on this same
+module process; its separate environment/dependency-install branches were not
+executed by this regression and remain launcher concerns rather than evidence of
+a lingering application process.

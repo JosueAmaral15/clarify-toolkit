@@ -135,7 +135,7 @@ logger = get_logger(__name__)
 _PYSIDE = True
 
 try:
-    from PySide6.QtCore import QByteArray, QEvent, Qt
+    from PySide6.QtCore import QByteArray, QEvent, QTimer, Qt
     from PySide6.QtGui import QAction, QFontDatabase, QPixmap, QIcon
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QDockWidget, QMessageBox
@@ -1975,7 +1975,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     QApplication.setAttribute(Qt.AA_UseDesktopOpenGL, True)
 
     app = QApplication([sys.argv[0]])
+    diagnostic_close_ms = os.environ.get("CLARIFY_DIAGNOSTIC_AUTOCLOSE_MS")
     win = MainWindow(app)
+    if diagnostic_close_ms is not None:
+        try:
+            close_delay = int(diagnostic_close_ms)
+        except ValueError:
+            logger.error("CLARIFY_DIAGNOSTIC_AUTOCLOSE_MS must be an integer")
+            win.close()
+            return 2
+        if not 1 <= close_delay <= 10_000:
+            logger.error("CLARIFY_DIAGNOSTIC_AUTOCLOSE_MS must be between 1 and 10000")
+            win.close()
+            return 2
+        app.lastWindowClosed.connect(lambda: logger.info("Diagnostic: lastWindowClosed emitted"))
+        app.aboutToQuit.connect(lambda: logger.info("Diagnostic: aboutToQuit emitted"))
+
+        def diagnostic_close():
+            logger.info("Diagnostic: MainWindow.close() returned %s", win.close())
+
+            def report_remaining_windows():
+                windows = [
+                    f"{type(widget).__name__}(visible={widget.isVisible()})"
+                    for widget in app.topLevelWidgets()
+                ]
+                logger.info("Diagnostic: remaining top-level widgets: %s", windows)
+
+            QTimer.singleShot(250, report_remaining_windows)
+
+        QTimer.singleShot(close_delay, diagnostic_close)
+
     win.show()
 
     # Force immediate rendering of all widgets (fix for invisible widgets on startup)
