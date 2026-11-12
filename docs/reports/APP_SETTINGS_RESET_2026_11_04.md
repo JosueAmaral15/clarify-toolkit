@@ -44,3 +44,12 @@ disabled, per-test timeout 20 seconds, wall limit 180 seconds, system RAM barrie
 No native crash, resource-guard abort, live provider, real user document or full
 MainWindow startup was used. The existing four `PytestReturnNotNoneWarning`
 warnings in `tests/test_sprint8_features.py` remain unrelated and unchanged.
+
+## Fresh-branch revalidation
+
+The completed implementation was replayed from its exact parent checkpoint
+`be1d9b1` onto `COM-15a949d5-511c-4a46-825d-959e631e442d` and revalidated on
+2026-11-12. The same 62 tests passed in four isolated processes; peak
+process-tree RSS was 204.0 MiB. Pylint-E, eight AST parses, all i18n JSON
+catalogs and `git diff --check` passed. No native crash, timeout, guard abort,
+provider, user document or full MainWindow startup was involved.

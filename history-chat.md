@@ -6308,3 +6308,16 @@ Plano imediato:
   healthy. No new continuation will be scheduled for this stage.
 - After remote SHA verification, that exact worker was finished once and changed
   to `idle`; no other worker/service was changed and no continuation was sent.
+
+## 2026-11-12 - APP-SETTINGS-RESET-01 fresh-branch revalidation
+
+- Verified the exact Protocol2 worker, five hooks, enabled prompt rule and
+  checkpoint `be1d9b1`, then recreated the completed settings-reset delivery on
+  fresh branch `COM-15a949d5-511c-4a46-825d-959e631e442d` without adding new
+  product scope.
+- Repeated 62 isolated tests with temporary HOME and the required RAM, RSS,
+  wall-time and pytest guards. All passed; peak tree RSS was 204.0 MiB and the
+  four pre-existing return-value warnings remained unchanged.
+- Pylint-E, eight AST parses, all translation catalogs and `git diff --check`
+  passed. Untracked `example.py` remained byte-identical; other untracked files
+  were not modified or included.
