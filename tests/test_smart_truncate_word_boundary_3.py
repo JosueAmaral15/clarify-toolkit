@@ -12,11 +12,7 @@ Examples:
   - "has(item.id)" with limit=8 → "has(item" (cuts at .)
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-from extractors.advanced_extractor import smart_truncate
+from src.extractors.advanced_extractor import smart_truncate
 
 
 def test_cut_at_hyphen():
@@ -101,11 +97,11 @@ def test_avoid_cut_false():
 
 
 def main():
-    print("="*80)
+    print("=" * 80)
     print("TEST: smart_truncate with word boundary detection")
-    print("="*80)
+    print("=" * 80)
     print()
-    
+
     tests = [
         test_cut_at_hyphen,
         test_cut_at_dot,
@@ -114,12 +110,12 @@ def main():
         test_whitespace_still_works,
         test_underscore_not_boundary,
         test_direction_after,
-        test_avoid_cut_false
+        test_avoid_cut_false,
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test in tests:
         try:
             test()
@@ -130,14 +126,15 @@ def main():
         except Exception as e:
             print(f"❌ ERROR: {test.__name__}: {e}")
             import traceback
+
             traceback.print_exc()
             failed += 1
-    
+
     print()
-    print("="*80)
+    print("=" * 80)
     print(f"RESULTS: {passed}/{len(tests)} passed, {failed} failed")
-    print("="*80)
-    
+    print("=" * 80)
+
     if failed == 0:
         print("✅ ALL TESTS PASSED")
         return True

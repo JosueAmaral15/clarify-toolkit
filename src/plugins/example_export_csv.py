@@ -1,11 +1,12 @@
 """Example plugin: Export JSON to CSV format."""
+
 # pylint: disable=no-name-in-module  # PySide6 has dynamic module structure
 # pylint: disable=import-error  # Example plugin - imports may not resolve in all contexts
 # pylint: disable=too-few-public-methods  # Example plugin - single activate method sufficient
 # pylint: disable=wrong-import-position  # Path manipulation required before local imports
-import sys
-import os
 import csv
+import os
+import sys
 
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
@@ -16,6 +17,7 @@ from plugins.plugin_base import PluginBase
 
 class ExportCSVPlugin(PluginBase):
     """Plugin to export current JSON data to CSV format."""
+
     name = "Exportar JSON para CSV"
     description = "Exporta o JSON atual para um arquivo CSV."
 
@@ -29,7 +31,7 @@ class ExportCSVPlugin(PluginBase):
         if not path:
             return
         try:
-            with open(path, 'w', newline='', encoding='utf-8') as f:
+            with open(path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 if isinstance(data, dict):
                     writer.writerow(data.keys())
@@ -44,5 +46,4 @@ class ExportCSVPlugin(PluginBase):
         except (IOError, OSError, PermissionError) as e:
             QMessageBox.critical(app, "Erro", f"Falha ao salvar CSV: {e}")
             return
-                writer.writerow([str(data)])
         QMessageBox.information(app, "Exportar CSV", f"Arquivo salvo em: {path}")

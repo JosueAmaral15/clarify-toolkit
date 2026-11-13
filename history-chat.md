@@ -1095,3 +1095,36 @@ Plano imediato:
   - `python -m json.tool src/i18n/en.json` e `src/i18n/pt_BR.json` passaram.
   - `git diff --check` nos arquivos tocados passou.
   - Testes focados passaram: `29 passed in 31.92s`.
+
+## 2026-11-13 - Pre-acao - Recuperacao da CI e preparacao publica
+
+- Pedido do usuario: transformar os proximos passos recomendados em plano de acao e executa-los.
+- Estado confirmado:
+  - O PR 19 foi integrado em `main` com README raiz em ingles e auditoria Gitleaks documentada.
+  - O job Pylint passou, mas pytest falhou durante a coleta antes de executar testes.
+  - `tests/com8/test_cli_direct_COM8.py` e um diagnostico executavel historico: usa caminho pessoal, provedor ao vivo e `sys.exit()` durante importacao.
+  - A linha de desenvolvimento contem uma restauracao de CI anterior que sera auditada e reaproveitada apenas onde for compativel com a `main` publica.
+  - O disco tinha aproximadamente 500 MiB livres; o worktree minimo existente sera reutilizado e operacoes pesadas serao evitadas.
+- Escopo desta etapa:
+  - Restaurar coleta e execucao reproduziveis da CI em branch nova baseada em `origin/main`.
+  - Validar localmente com limites, publicar por PR e examinar os checks hospedados.
+  - Reauditar o repositorio publico e preparar evidencias para o Alignerr sem iniciar timer ou enviar avaliacao.
+  - Planejar, mas nao executar em massa, a reconciliacao das branches maiores.
+- Rollback: fechar o PR antes do merge ou reverter seu merge por novo PR; nenhum documento do usuario ou arquivo nao relacionado sera alterado.
+
+## 2026-11-13 - Pos-acao local - Recuperacao da CI publica
+
+- A falha do PR 19 foi reproduzida como erro de coleta, nao como regressao do README ou do Gitleaks.
+- Implementado:
+  - instalacao reproduzivel das dependencias travadas com Poetry;
+  - politica explicita para retirar diagnosticos executaveis historicos da coleta automatizada, sem apaga-los;
+  - execucao serial de cada modulo de teste em processo isolado, acumulando cobertura;
+  - jobs separados para testes, verificacoes estaticas e consistencia do lock;
+  - `psutil` registrado como dependencia direta do runtime;
+  - correcao do import do teste de truncamento e de uma linha com indentacao invalida no plugin de exemplo CSV.
+- Evidencias locais:
+  - 1.533 testes coletados sem erro;
+  - 9 testes passaram no smoke do runner isolado;
+  - `compileall`, Black, isort, Pylint-E, `poetry check --lock`, YAML e `git diff --check` passaram;
+  - Gitleaks analisou 1.647 commits e 56,25 MB da arvore atual sem achados.
+- Limite honesto: a suite completa sera executada no GitHub Actions depois do push. A tarefa permanece aberta ate o resultado hospedado ser analisado.
