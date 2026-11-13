@@ -39,7 +39,11 @@ boundary.
   project when the template definition itself is invalid. Stage 7 preserves
   list-origin metadata during flattening and rejects oversized, sparse or
   cumulatively excessive list reconstruction before allocation for resource
-  consumption alert #22, while retaining numeric JSON object keys. Evidence:
+  consumption alert #22, while retaining numeric JSON object keys. Stage 8
+  makes the experimental REST API fail closed without a validated Bearer token,
+  protects document and translation operations, rejects accidental remote bind
+  and constrains translation fields for missing-authentication alert #16.
+  Evidence:
   [Code Scanning Audit](reports/CODE_SCANNING_AUDIT_2026_11_12.md).
 
 - [x] **SEC-GITLEAKS-HISTORY-01: classify and close every Gitleaks finding.**

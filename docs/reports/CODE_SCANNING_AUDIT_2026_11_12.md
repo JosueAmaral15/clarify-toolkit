@@ -221,10 +221,45 @@ alert #22.
 No provider, browser or user document was used. This alert remains open until
 reviewed integration and the default-branch scan.
 
+## Stage 8 - REST API Authentication
+
+| Alert | CWE | Location | Classification | Remediation |
+| --- | --- | --- | --- | --- |
+| #16 | CWE-306 | `src/rest_api.py` | Confirmed | Fail closed unless a validated environment-provided Bearer token exists; protect document and translation routes with constant-time validation; keep only the fixed health response public; require explicit remote-bind opt-in and reject undeclared translation fields. |
+
+The experimental `ClarifyAPI` class had no authentication and exposed the
+current JSON document plus translation operations. Repository-wide source and
+test inspection found no CLI, GUI or test constructor and no live lifecycle;
+the wiki incorrectly claimed a Settings activation path. The FAQ now describes
+the actual embedding status and links to a migration guide. No existing
+consumer was deleted.
+
+`CLARIFY_API_TOKEN` must contain 32-512 printable ASCII bytes before the API can
+be constructed. The token is never accepted through a command-line option or
+included in responses or listener configuration. `/json` and `/translate` use
+FastAPI's Bearer security dependency and `secrets.compare_digest`; `/status`
+remains public because it is a fixed bounded response that never reads
+application state. Translation accepts only validated `json` and `lang` fields.
+Non-loopback binding requires an explicit embedding-code opt-in, with TLS still
+required for remote deployment.
+
+### Stage 8 Validation
+
+- `tests/security/test_code_scanning_rest_auth.py`: 16 passed through a local
+  in-process `TestClient`. Coverage includes missing/weak/unsafe tokens,
+  loopback and remote configuration, public health isolation, missing/invalid
+  credentials, constant-time comparison, document absence, strict translation
+  payloads, OpenAPI security and simulated `uvicorn.run` arguments. Peak
+  process-tree RSS was 90.6 MiB.
+- Python compilation, focused Ruff checks, Pylint-E and `git diff --check`
+  passed. No network listener, native crash or resource-guard abort occurred.
+
+No provider, browser or user document was used. This alert remains open until
+reviewed integration and the default-branch scan.
+
 ## Remaining Inventory
 
-- 1 medium alert not yet covered by a candidate correction: missing
-  authentication.
+- No high or medium alert remains without a candidate correction.
 - 6 low alerts not yet covered by a candidate correction: XML entity expansion,
   insecure temporary files and regular-expression complexity.
 

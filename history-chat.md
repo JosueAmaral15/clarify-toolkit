@@ -1,5 +1,35 @@
 # History Chat - Clarify
 
+## 2026-11-12 - Pre-action - REST API authentication stage
+
+- Continue `SEC-CODE-SCANNING-22` from checkpoint `f0eb523` on fresh branch
+  `COM-2f5ab1d1-1c7c-4839-9c87-2f7f74adff30`, preserving untracked
+  `example.py` and `docs/short-description.txt` byte-identically.
+- Alert #16 is confirmed: the experimental FastAPI module exposes the current
+  JSON document and translation operation without authentication. No CLI, GUI
+  or test currently constructs `ClarifyAPI`; the wiki's Settings activation
+  claim is not implemented.
+- Keep the static, application-independent health response public; require an
+  explicit validated Bearer token for document and translation endpoints,
+  reject accidental remote binding, constrain translation payload fields and
+  test only through an in-process client.
+
+## 2026-11-12 - Post-action - REST API authentication stage
+
+- Alert #16 was confirmed. The experimental API now fails closed without a
+  validated environment-provided token, compares Bearer credentials in constant
+  time and protects document and translation operations. Only the fixed health
+  response remains public and it never accesses application state.
+- Translation rejects undeclared fields, remote binding requires explicit
+  embedding-code opt-in, and the migration guide keeps credentials out of
+  source, arguments, logs and responses. The inaccurate Settings activation
+  claim in the FAQ was corrected.
+- Sixteen in-process regressions passed with peak tree RSS 90.6 MiB. Compilation,
+  Ruff, Pylint-E and diff checks passed without a network listener, provider,
+  browser, user document, native crash or guard abort.
+- The GitHub alert remains open pending reviewed integration into `main` and a
+  default-branch rescan.
+
 ## 2026-11-12 - Pre-action - Numeric-key reconstruction limits
 
 - Continue `SEC-CODE-SCANNING-22` from checkpoint `0db2aa9` on fresh branch

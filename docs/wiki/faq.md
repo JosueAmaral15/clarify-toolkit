@@ -270,7 +270,10 @@ See CLI help: `python -m src --help`
 See [Plugin Development](advanced/plugins.md) (draft).
 
 ### Q: Is there a REST API?
-**A**: Experimental REST API exists (`src/rest_api.py`) but is disabled by default. Enable in `Settings → Advanced → REST API`.
+**A**: An experimental embedding API exists in `src/rest_api.py`, but it is not
+currently connected to a Settings, GUI or CLI activation path. Embedded use
+requires explicit Bearer-token configuration; see
+[REST API Authentication](../security/REST_API_AUTHENTICATION.md).
 
 **Warning**: API is unstable and may change significantly.
 
