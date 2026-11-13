@@ -17,6 +17,11 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - Acceptance: collection succeeds, each failure identifies its module, lock checks pass, and hosted evidence is recorded honestly.
   - Local checkpoint 2026-11-13: implementation complete; 1,533 tests collect, isolated smoke has 9 passes, compile/lock/format/Gitleaks checks pass. Hosted PR evidence remains pending.
 - [ ] **PUBLIC-REPO-AUDIT-01 (MUST)**: after the CI pull request, verify the English README, MIT license, local links, Gitleaks history/worktree scans, and current GitHub checks/security state.
+- [ ] **SEC-CODE-SCANNING-22 (MUST)**: resolve the 22 open GitHub Code Scanning alerts on public `main` in bounded reviewed stages.
+  - Current inventory: 2 high, 13 medium and 7 low alerts.
+  - Integrate already validated security commits only after dependency/order review and passing CI; do not bulk-merge the accumulated security branch.
+  - Prioritize high alerts #1 (SQL injection) and #11 (path traversal), then medium alerts, then low alerts.
+  - Acceptance: fixes and regressions are merged, a fresh scan closes or supersedes each alert, and no alert is dismissed without evidence.
 - [ ] **ALIGNERR-CCCLI-READINESS-01 (MUST)**: prepare an evidence-backed project description, public repository URL, validation summary, and at least twenty hours of concrete remaining development work for the CC-CLI project-creation evaluation. Starting a timer or submitting remains a user-controlled boundary.
 - [ ] **BRANCH-RECONCILIATION-01 (SHOULD)**: inventory unpublished branch chains and propose bounded pull requests in dependency order; do not bulk-merge the accumulated development graph.
 - [ ] **DOCS-ENGLISH-01 (SHOULD)**: keep the root `README.md` in English and progressively migrate public project documentation and user-facing source text to English while retaining localized catalogs and explicitly localized documentation.

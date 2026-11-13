@@ -1128,3 +1128,16 @@ Plano imediato:
   - `compileall`, Black, isort, Pylint-E, `poetry check --lock`, YAML e `git diff --check` passaram;
   - Gitleaks analisou 1.647 commits e 56,25 MB da arvore atual sem achados.
 - Limite honesto: a suite completa sera executada no GitHub Actions depois do push. A tarefa permanece aberta ate o resultado hospedado ser analisado.
+
+## 2026-11-13 - Diagnostico hospedado 1 - Ambiente Poetry
+
+- O PR 20 executou tres jobs: `Lock consistency` passou; testes e estatica falharam durante a instalacao, antes da coleta.
+- Causa comprovada: Poetry e as dependencias do projeto compartilhavam o Python global do runner. A instalacao atualizou `virtualenv` via `pre-commit` enquanto Poetry ainda usava a API anterior, causando `ImportError` em `virtualenv.util.path.write_file`.
+- Correcao: Poetry passa a viver em venv temporario independente; o projeto continua instalado no interpretador de teste com `POETRY_VIRTUALENVS_CREATE=false`.
+- O GitHub Code Scanning foi consultado e possui 22 alertas abertos na `main`: 2 altos, 13 medios e 7 baixos. A fila de seguranca sera integrada em etapas depois que a CI estiver operacional.
+
+## 2026-11-13 - Diagnostico hospedado 2 - Caminho do pytest
+
+- No PR 21, os jobs de lock e estatica passaram e a instalacao isolada terminou corretamente.
+- A coleta falhou em tres testes COM8 validos porque o console script `pytest` hospedado nao incluiu o checkout no caminho de importacao; o pacote raiz `src` nao foi encontrado.
+- A coleta foi alinhada ao runner e a validacao local com `python -m pytest`. Nenhum desses testes foi excluido.

@@ -52,3 +52,31 @@ remains open until the published pull request proves dependency installation,
 collection, module execution, coverage and artifact behavior. Any failing
 module will be reported and repaired as a separate evidenced defect rather than
 silenced or converted into a broad exclusion.
+
+## Hosted Attempt 1
+
+Run `43428086533` proved that lock validation passes, but test and static jobs
+failed while installing dependencies. Poetry 2.1.3 had been installed into the
+same global Python environment that received the project lock. Installing the
+project's development dependencies updated `virtualenv` through `pre-commit`
+while Poetry was still importing the older module, producing
+`ImportError: cannot import name 'write_file' from 'virtualenv.util.path'`.
+
+The workflow now installs Poetry into a runner-temporary virtual environment
+and invokes it with `POETRY_VIRTUALENVS_CREATE=false`. Project dependencies are
+still installed into the test interpreter, but they can no longer mutate the
+running Poetry toolchain. This is an installation-isolation repair, not a
+dependency exclusion or a hidden retry.
+
+## Hosted Attempt 2
+
+Run `43453625076` proved the environment repair: lock and static jobs passed,
+and the test job completed dependency installation. Collection then found three
+valid COM8 modules that import the root `src` package but could not resolve it.
+The workflow had invoked the installed `pytest` console script, whose executable
+directory became `sys.path[0]` in the hosted environment. Local validation had
+used `python -m pytest`, which correctly includes the checkout working directory.
+
+The collection command now also uses `python -m pytest`, matching the isolated
+runner and the successful local command. The three modules remain collected;
+no test or import failure was added to the exclusion policy.
