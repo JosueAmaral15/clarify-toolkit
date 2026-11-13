@@ -1135,3 +1135,9 @@ Plano imediato:
 - Causa comprovada: Poetry e as dependencias do projeto compartilhavam o Python global do runner. A instalacao atualizou `virtualenv` via `pre-commit` enquanto Poetry ainda usava a API anterior, causando `ImportError` em `virtualenv.util.path.write_file`.
 - Correcao: Poetry passa a viver em venv temporario independente; o projeto continua instalado no interpretador de teste com `POETRY_VIRTUALENVS_CREATE=false`.
 - O GitHub Code Scanning foi consultado e possui 22 alertas abertos na `main`: 2 altos, 13 medios e 7 baixos. A fila de seguranca sera integrada em etapas depois que a CI estiver operacional.
+
+## 2026-11-13 - Diagnostico hospedado 2 - Caminho do pytest
+
+- No PR 21, os jobs de lock e estatica passaram e a instalacao isolada terminou corretamente.
+- A coleta falhou em tres testes COM8 validos porque o console script `pytest` hospedado nao incluiu o checkout no caminho de importacao; o pacote raiz `src` nao foi encontrado.
+- A coleta foi alinhada ao runner e a validacao local com `python -m pytest`. Nenhum desses testes foi excluido.

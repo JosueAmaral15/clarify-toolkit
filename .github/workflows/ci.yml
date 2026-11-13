@@ -56,7 +56,7 @@ jobs:
           POETRY_VIRTUALENVS_CREATE=false "$RUNNER_TEMP/poetry/bin/poetry" install -E dev --no-root --no-interaction
 
       - name: Verify test collection
-        run: pytest tests --collect-only -q --timeout=20
+        run: python -m pytest tests --collect-only -q --timeout=20
 
       - name: Run tests with coverage
         run: python scripts/ci/run_tests_by_module.py --timeout=20 --fail-under=70

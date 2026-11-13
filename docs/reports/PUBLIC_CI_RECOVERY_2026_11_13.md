@@ -67,3 +67,16 @@ and invokes it with `POETRY_VIRTUALENVS_CREATE=false`. Project dependencies are
 still installed into the test interpreter, but they can no longer mutate the
 running Poetry toolchain. This is an installation-isolation repair, not a
 dependency exclusion or a hidden retry.
+
+## Hosted Attempt 2
+
+Run `43453625076` proved the environment repair: lock and static jobs passed,
+and the test job completed dependency installation. Collection then found three
+valid COM8 modules that import the root `src` package but could not resolve it.
+The workflow had invoked the installed `pytest` console script, whose executable
+directory became `sys.path[0]` in the hosted environment. Local validation had
+used `python -m pytest`, which correctly includes the checkout working directory.
+
+The collection command now also uses `python -m pytest`, matching the isolated
+runner and the successful local command. The three modules remain collected;
+no test or import failure was added to the exclusion policy.
