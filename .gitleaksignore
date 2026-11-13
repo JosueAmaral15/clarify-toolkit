@@ -1,0 +1,12 @@
+# Audited historical false positives. Keep entries fingerprint-specific so new
+# findings in the same documentation remain visible.
+425a7b478a1b492f1d73da4a91525137f209bc9b:docs/STEP_1_0_READING_LOG.md:dropbox-api-token:3785
+854443c63ed0ede50593ac533042ff08ade912ee:docs/protocolos/SIMPLICITY_PROTOCOL_3.md:generic-api-key:5724
+956e3eec78ea9384894911db34f25cb3de7e5285:docs/protocolos/PROTOCOLO_SIMPLICIDADE_1.md:generic-api-key:3724
+956e3eec78ea9384894911db34f25cb3de7e5285:docs/protocolos/PROTOCOLO_SIMPLICIDADE_3.md:generic-api-key:4186
+956e3eec78ea9384894911db34f25cb3de7e5285:docs/protocolos/PROTOCOLO_SIMPLICIDADE_2.md:generic-api-key:6052
+a2b2ec213bd5dca1a808b692f410a63b395d3e3f:docs/PROTOCOLO_SIMPLICIDADE_2.md:generic-api-key:731
+20b1f8f0ca1e55485c90891e9952fdba6f294daf:docs/PROTOCOLO_SIMPLICIDADE_2.md:generic-api-key:731
+# Current-tree aliases of the same reviewed content.
+docs/protocols/simplicity/SIMPLICITY_PROTOCOL_3.md:generic-api-key:12603
+docs/sessions/steps/STEP_1_0_READING_LOG.md:dropbox-api-token:3785
