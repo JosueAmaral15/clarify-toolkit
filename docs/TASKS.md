@@ -8,6 +8,22 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
 
 ---
 
+## Public Repository Readiness - 2026-11-13
+
+- [ ] **CI-PUBLIC-RECOVERY-01 (MUST)**: restore reproducible hosted CI collection and execution from `main`.
+  - Install dependencies from `poetry.lock` rather than a partial ad hoc list.
+  - Keep historical scripts that use personal paths, live providers, import-time writes, or `sys.exit()` out of automated pytest collection without deleting them.
+  - Run eligible GUI modules in isolated serial processes and retain explicit timeouts.
+  - Acceptance: collection succeeds, each failure identifies its module, lock checks pass, and hosted evidence is recorded honestly.
+- [ ] **PUBLIC-REPO-AUDIT-01 (MUST)**: after the CI pull request, verify the English README, MIT license, local links, Gitleaks history/worktree scans, and current GitHub checks/security state.
+- [ ] **ALIGNERR-CCCLI-READINESS-01 (MUST)**: prepare an evidence-backed project description, public repository URL, validation summary, and at least twenty hours of concrete remaining development work for the CC-CLI project-creation evaluation. Starting a timer or submitting remains a user-controlled boundary.
+- [ ] **BRANCH-RECONCILIATION-01 (SHOULD)**: inventory unpublished branch chains and propose bounded pull requests in dependency order; do not bulk-merge the accumulated development graph.
+- [ ] **DOCS-ENGLISH-01 (SHOULD)**: keep the root `README.md` in English and progressively migrate public project documentation and user-facing source text to English while retaining localized catalogs and explicitly localized documentation.
+
+Action plan: [`docs/plans/PUBLIC_REPOSITORY_ACTION_PLAN_2026_11_13.md`](plans/PUBLIC_REPOSITORY_ACTION_PLAN_2026_11_13.md).
+
+---
+
 ## 🚧 EM PROGRESSO - v2.9.116: Integração Search/Replace → File Explorer
 
 **Data Início**: 25/12/2025  
