@@ -1111,3 +1111,20 @@ Plano imediato:
   - Reauditar o repositorio publico e preparar evidencias para o Alignerr sem iniciar timer ou enviar avaliacao.
   - Planejar, mas nao executar em massa, a reconciliacao das branches maiores.
 - Rollback: fechar o PR antes do merge ou reverter seu merge por novo PR; nenhum documento do usuario ou arquivo nao relacionado sera alterado.
+
+## 2026-11-13 - Pos-acao local - Recuperacao da CI publica
+
+- A falha do PR 19 foi reproduzida como erro de coleta, nao como regressao do README ou do Gitleaks.
+- Implementado:
+  - instalacao reproduzivel das dependencias travadas com Poetry;
+  - politica explicita para retirar diagnosticos executaveis historicos da coleta automatizada, sem apaga-los;
+  - execucao serial de cada modulo de teste em processo isolado, acumulando cobertura;
+  - jobs separados para testes, verificacoes estaticas e consistencia do lock;
+  - `psutil` registrado como dependencia direta do runtime;
+  - correcao do import do teste de truncamento e de uma linha com indentacao invalida no plugin de exemplo CSV.
+- Evidencias locais:
+  - 1.533 testes coletados sem erro;
+  - 9 testes passaram no smoke do runner isolado;
+  - `compileall`, Black, isort, Pylint-E, `poetry check --lock`, YAML e `git diff --check` passaram;
+  - Gitleaks analisou 1.647 commits e 56,25 MB da arvore atual sem achados.
+- Limite honesto: a suite completa sera executada no GitHub Actions depois do push. A tarefa permanece aberta ate o resultado hospedado ser analisado.

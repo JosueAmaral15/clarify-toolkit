@@ -15,6 +15,7 @@ Este documento contém todas as tarefas de desenvolvimento do Clarify organizada
   - Keep historical scripts that use personal paths, live providers, import-time writes, or `sys.exit()` out of automated pytest collection without deleting them.
   - Run eligible GUI modules in isolated serial processes and retain explicit timeouts.
   - Acceptance: collection succeeds, each failure identifies its module, lock checks pass, and hosted evidence is recorded honestly.
+  - Local checkpoint 2026-11-13: implementation complete; 1,533 tests collect, isolated smoke has 9 passes, compile/lock/format/Gitleaks checks pass. Hosted PR evidence remains pending.
 - [ ] **PUBLIC-REPO-AUDIT-01 (MUST)**: after the CI pull request, verify the English README, MIT license, local links, Gitleaks history/worktree scans, and current GitHub checks/security state.
 - [ ] **ALIGNERR-CCCLI-READINESS-01 (MUST)**: prepare an evidence-backed project description, public repository URL, validation summary, and at least twenty hours of concrete remaining development work for the CC-CLI project-creation evaluation. Starting a timer or submitting remains a user-controlled boundary.
 - [ ] **BRANCH-RECONCILIATION-01 (SHOULD)**: inventory unpublished branch chains and propose bounded pull requests in dependency order; do not bulk-merge the accumulated development graph.
