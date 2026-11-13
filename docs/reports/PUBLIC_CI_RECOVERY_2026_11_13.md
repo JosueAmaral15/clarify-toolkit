@@ -52,3 +52,18 @@ remains open until the published pull request proves dependency installation,
 collection, module execution, coverage and artifact behavior. Any failing
 module will be reported and repaired as a separate evidenced defect rather than
 silenced or converted into a broad exclusion.
+
+## Hosted Attempt 1
+
+Run `43428086533` proved that lock validation passes, but test and static jobs
+failed while installing dependencies. Poetry 2.1.3 had been installed into the
+same global Python environment that received the project lock. Installing the
+project's development dependencies updated `virtualenv` through `pre-commit`
+while Poetry was still importing the older module, producing
+`ImportError: cannot import name 'write_file' from 'virtualenv.util.path'`.
+
+The workflow now installs Poetry into a runner-temporary virtual environment
+and invokes it with `POETRY_VIRTUALENVS_CREATE=false`. Project dependencies are
+still installed into the test interpreter, but they can no longer mutate the
+running Poetry toolchain. This is an installation-isolation repair, not a
+dependency exclusion or a hidden retry.
