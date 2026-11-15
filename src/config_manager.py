@@ -24,6 +24,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from .appearance_defaults import DEFAULT_THEME, DEFAULT_WINDOW_OPACITY_PERCENT
 from .utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -49,7 +50,8 @@ class ConfigManager:
     # Default configuration structure
     DEFAULTS = {
         "app": {
-            "theme": "system",  # system | light | dark
+            "theme": DEFAULT_THEME,  # system | light | dark
+            "window_opacity": DEFAULT_WINDOW_OPACITY_PERCENT,
             "language": "en",  # en | pt-br | es | fr | de | zh | ja
             "max_recent_files": 10,
             "confirm_on_exit": True,
@@ -97,6 +99,7 @@ class ConfigManager:
                 "type": "object",
                 "properties": {
                     "theme": {"type": "string", "enum": ["system", "light", "dark"]},
+                    "window_opacity": {"type": "integer", "minimum": 20, "maximum": 100},
                     "language": {"type": "string", "pattern": "^[a-z]{2}(-[a-z]{2})?$"},
                     "max_recent_files": {"type": "integer", "minimum": 0, "maximum": 50},
                     "confirm_on_exit": {"type": "boolean"},
@@ -152,19 +155,31 @@ class ConfigManager:
         },
     }
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(
+        self,
+        config_file: Optional[str] = None,
+        *,
+        migrate_legacy: Optional[bool] = None,
+    ):
         """
         Initialize configuration manager.
 
         Args:
             config_file: Path to config.yaml (default: ~/.config/clarify/config.yaml)
         """
-        if config_file is None:
+        using_default_path = config_file is None
+        if using_default_path:
             config_dir = Path.home() / ".config" / "clarify"
             config_dir.mkdir(parents=True, exist_ok=True)
             self.config_file = config_dir / "config.yaml"
         else:
             self.config_file = Path(config_file)
+
+        # Explicit paths represent isolated profiles unless migration is
+        # deliberately requested. They must not inspect or move real HOME data.
+        self._migrate_legacy = (
+            using_default_path if migrate_legacy is None else migrate_legacy
+        )
 
         self.config: Dict[str, Any] = {}
         self._load_or_create()
@@ -175,7 +190,7 @@ class ConfigManager:
             self._load()
         else:
             # First time: try migration from old formats
-            migrated = self._migrate_from_legacy()
+            migrated = self._migrate_from_legacy() if self._migrate_legacy else False
             if not migrated:
                 # No legacy config, use defaults
                 self.config = self._deep_copy(self.DEFAULTS)

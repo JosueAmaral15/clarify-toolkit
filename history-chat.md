@@ -6258,3 +6258,43 @@ Plano imediato:
   open and was not implemented.
 - `example.py` remains untracked and byte-identical at SHA-256
   `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-15 - APP-SETTINGS-RESET-01 started
+
+- Work starts from published checkpoint `be1d9b1` on fresh branch
+  `COM-b65ec8c4-80ea-4b0a-b6d6-bf7efc273bbc`, limited to safe settings reset.
+- AI Presence Monitor 0.13.1 reports the exact Clarify Protocol2 worker active,
+  task automation and native input enabled, five Codex hooks installed, schema
+  integrity OK and all three user services active. No Prompt Rule is scheduled;
+  no further continuation will be configured for this stage.
+- The audit will cover JSON `SettingsManager`, `QSettings`, config/legacy stores
+  and every reset consumer before edits. User documents, temporary notes,
+  recovery snapshots, operational history, plugins and credentials stay outside
+  reset scope unless separately and explicitly authorized.
+- Validation remains serial and isolated with temporary HOME, RAM 85%, tree RSS
+  600 MiB, wall 180 seconds and pytest timeout 20 seconds.
+- `example.py` remains untracked and byte-identical at SHA-256
+  `058053d87c818d699cde0f00d670bca0e1c6ad857caa9758ea6a556d7c64fcee`.
+
+## 2026-11-15 - APP-SETTINGS-RESET-01 completed
+
+- The previous reset was reproduced as JSON-only: it removed recent files,
+  created no backup and left YAML and QSettings divergent. The new translated
+  Settings action previews six categories and confirms before changing them.
+- Reset now creates a private atomic ZIP backup and applies explicit allowlists
+  transactionally across JSON, YAML, QSettings and existing legacy INI files.
+  A failure rolls back all touched stores. Documents, recent files, paths,
+  notes, recovery, operational history, layouts, presets, plugins, credentials
+  and API keys remain untouched.
+- Dark and 96% opacity are aligned across stores. Appearance alone is safely
+  hot-reloaded; all other selected categories provide restart guidance.
+- An isolated failing regression exposed that explicit ConfigManager paths
+  could migrate real HOME data. Explicit paths now disable migration unless the
+  caller opts in, and the regression passes.
+- Guarded validation passed 63 tests: 34 core/config, 4 reset dialog, 8 default
+  appearance and 17 live UI actions. Peak tree RSS was 203.2 MiB. Pylint-E/F,
+  8 AST parses, 7 JSON parses and `git diff --check` passed; no native crash,
+  timeout or guard abort occurred. Evidence is in
+  `docs/reports/CLARIFY_APP_SETTINGS_RESET_2026_11_15.md`.
+- `example.py` and `docs/short-description.txt` remain untracked and
+  byte-identical. No continuation was configured for another task.

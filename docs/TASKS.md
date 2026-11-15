@@ -901,7 +901,7 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   converter explicitamente sem tornar a janela quase invisivel. Aplicar o default
   somente quando nao existe preferencia do usuario; preservar migracao, runtime
   theme, dialogs, janelas destacadas e acessibilidade em System/Light/Dark.
-- [ ] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
+- [x] **APP-SETTINGS-RESET-01: restaurar configuracoes padrao com seguranca.**
   Oferecer em Settings uma acao traduzida para redefinir configuracoes, com
   preview das categorias afetadas, confirmacao e escolha entre reset global ou
   por secao quando praticavel. Fazer backup atomico antes da alteracao, explicar
@@ -910,6 +910,10 @@ churn de i18n, menus, atalhos, presets e documentacao durante as correcoes.
   credenciais ou dados do usuario sem uma opcao separada e confirmacao especifica.
   O reset deve restaurar inclusive os defaults documentados de tema Dark e
   Window Transparency 96%, sem deixar QSettings/config YAML divergentes.
+  Concluido em 2026-11-15 no checkpoint isolado: seis categorias explicitas,
+  backup ZIP privado e atomico, rollback transacional e allowlists por store.
+  Somente aparencia recebe hot reload; as demais categorias orientam reinicio.
+  Evidencia: `docs/reports/CLARIFY_APP_SETTINGS_RESET_2026_11_15.md`.
 - [ ] **FE-SEARCH-REPLACE-SECTIONS-01: separar visualmente Search e Replace.**
   Organizar o File Explorer/File Searcher em duas secoes ou sessoes claramente
   distintas: uma para localizar e filtrar arquivos e outra para configurar e

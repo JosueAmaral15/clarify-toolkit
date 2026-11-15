@@ -2429,5 +2429,6 @@
   "editor.status_reference_updates_applied": "已在 {files} 个文件中应用 {changes} 处引用更新",
   "editor.status_reference_updates_declined": "未应用引用更新",
   "editor.status_reference_updates_none": "重命名已完成；未找到安全的本地引用更新",
-  "editor.status_reference_updates_undone": "已撤销上次引用更新"
+  "editor.status_reference_updates_undone": "已撤销上次引用更新",
+  "settings_reset": {"action": "重置设置...", "title": "重置设置", "introduction": "选择要恢复的设置类别，并在确认前查看预览。", "all": "所有可重置设置", "protected": "不会影响文档、最近文件、临时笔记、恢复快照、历史、自定义布局、预设、插件、凭据和API密钥。", "reset_selected": "重置所选项", "confirm_title": "确认重置设置", "confirm": "重置以下类别前将创建备份:{categories}\n\n继续吗?", "error_title": "设置重置失败", "error": "未故意留下部分重置状态。详情: {error}", "success_title": "设置已重置", "success": "设置已重置。备份: {backup}", "success_restart": "设置已重置。外观已应用；请重启Clarify应用其余更改。备份: {backup}", "category": {"appearance": "外观", "appearance_detail": "主题和窗口不透明度。立即应用；默认为深色和96%。", "general": "常规", "general_detail": "语言、确认、提示、自动保存、更新和限制。保留最近文件和路径。", "shortcuts": "键盘快捷键", "shortcuts_detail": "将自定义快捷键恢复为默认值。", "workspace": "工作区", "workspace_detail": "重置窗口几何和活动选择。保留自定义布局和文档会话。", "tools": "工具首选项", "tools_detail": "恢复Editor和File Searcher的安全选项。保留查询、会话、笔记和预设。", "advanced": "高级", "advanced_detail": "恢复日志、性能和非机密AI默认值。保留凭据。"}}
 }

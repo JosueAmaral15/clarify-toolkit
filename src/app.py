@@ -1290,6 +1290,11 @@ if _PYSIDE:
             from .gui.transparency_dialog import TransparencyDialog
             TransparencyDialog.show_transparency_dialog(self)
 
+        def _show_settings_reset(self):
+            """Preview and reset only explicitly supported preference categories."""
+            from .gui.settings_reset_dialog import show_settings_reset
+            show_settings_reset(self)
+
         def _switch_language(self, lang: str):
             """Switch application language at runtime (Task #24 - v2.9.10, expanded v2.9.43)."""
             # QActionGroup handles radio button behavior automatically - no need to setChecked
